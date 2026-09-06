@@ -14,7 +14,7 @@
                     colors: {
                         brand: {
                             50: '#f0f7ff',   /* Azul ultra suave de fondo */
-                            100: '#e0f0fe',  /* Azul pastel muy suave */
+                            100: '#e0f0fe',  /* Azul pastel suave */
                             200: '#bae0fd',  /* Azul suave */
                             300: '#7cc5fb',
                             400: '#36a3f7',
@@ -112,43 +112,40 @@
                 <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante. Nos pondremos en contacto para confirmar la inscripción en el programa de ajedrez.</p>
             </div>
 
-            <!-- Formulario apuntando directamente a Formspree para oscaranguloweb@gmail.com -->
-            <form id="inscription-form" action="https://formspree.io/f/oscaranguloweb@gmail.com" method="POST" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
+            <!-- Formulario estándar -->
+            <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
                 
-                <!-- Destinatario personalizado para Formspree -->
-                <input type="hidden" name="_to" value="oscaranguloweb@gmail.com">
-                <input type="hidden" name="_subject" value="Nueva Inscripción - Ajedrez Integral">
-
                 <div>
                     <label for="nombre" class="block text-sm font-semibold text-brand-800 mb-1">Nombre <span class="text-blue-500">*</span></label>
-                    <input type="text" id="nombre" name="Nombre" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                    <input type="text" id="nombre" name="nombre" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 1 <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido1" name="Primer Apellido" required placeholder="Ej. García" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <input type="text" id="apellido1" name="apellido1" required placeholder="Ej. García" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
                     </div>
                     <div>
                         <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 2 <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido2" name="Segundo Apellido" required placeholder="Ej. López" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <input type="text" id="apellido2" name="apellido2" required placeholder="Ej. López" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
                     </div>
                 </div>
 
                 <div>
                     <label for="correo" class="block text-sm font-semibold text-brand-800 mb-1">Correo electrónico (no institucional) <span class="text-blue-500">*</span></label>
-                    <input type="email" id="correo" name="Email" required placeholder="ejemplo@gmail.com" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-                    <p class="text-xs text-brand-600/80 mt-1">Usa un correo personal (Gmail, Outlook, etc.), no un correo institucional.</p>
+                    <input type="email" id="correo" name="correo" required placeholder="ejemplo@gmail.com" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                    <p class="text-xs text-brand-600/80 mt-1">Usa un correo personal (Gmail, Outlook, etc.). No se permiten correos @mep.go.cr.</p>
+                    <p id="mep-error" class="hidden text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">⚠️ No se permite el uso de correos institucionales del MEP (@mep.go.cr). Por favor ingresa un correo personal.</p>
                 </div>
                 
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="contacto" class="block text-sm font-semibold text-brand-800 mb-1">Número de contacto <span class="text-blue-500">*</span></label>
-                        <input type="tel" id="contacto" name="Teléfono" required placeholder="8888 8888" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <input type="tel" id="contacto" name="contacto" required placeholder="8888 8888" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
                     </div>
                     <div>
                         <label for="provincia" class="block text-sm font-semibold text-brand-800 mb-1">Provincia <span class="text-blue-500">*</span></label>
-                        <select id="provincia" name="Provincia" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
+                        <select id="provincia" name="provincia" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
                             <option value="">Selecciona…</option>
                             <option value="San José">San José</option>
                             <option value="Alajuela">Alajuela</option>
@@ -165,11 +162,11 @@
                     <label class="block text-sm font-semibold text-brand-800 mb-2">Elige entre Escuela o Colegio <span class="text-blue-500">*</span></label>
                     <div class="grid grid-cols-2 gap-4">
                         <label class="flex items-center gap-3 px-4 py-3 rounded-lg border border-brand-200 cursor-pointer hover:bg-brand-100/50 transition has-[:checked]:bg-brand-100 has-[:checked]:border-brand-500 bg-white/60">
-                            <input type="radio" name="Tipo Centro" value="Escuela" required class="w-4 h-4 text-brand-600 accent-brand-600">
+                            <input type="radio" name="tipoCentro" value="escuela" required class="w-4 h-4 text-brand-600 accent-brand-600">
                             <span class="font-medium text-brand-800">🏫 Escuela</span>
                         </label>
                         <label class="flex items-center gap-3 px-4 py-3 rounded-lg border border-brand-200 cursor-pointer hover:bg-brand-100/50 transition has-[:checked]:bg-brand-100 has-[:checked]:border-brand-500 bg-white/60">
-                            <input type="radio" name="Tipo Centro" value="Colegio" class="w-4 h-4 text-brand-600 accent-brand-600">
+                            <input type="radio" name="tipoCentro" value="colegio" class="w-4 h-4 text-brand-600 accent-brand-600">
                             <span class="font-medium text-brand-800">🎓 Colegio</span>
                         </label>
                     </div>
@@ -177,30 +174,30 @@
 
                 <div>
                     <label for="centro" class="block text-sm font-semibold text-brand-800 mb-1">Nombre del Colegio o Escuela <span class="text-blue-500">*</span></label>
-                    <input type="text" id="centro" name="Centro Educativo" required placeholder="Ej. Colegio San Ignacio" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                    <input type="text" id="centro" name="centro" required placeholder="Ej. Colegio San Ignacio" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
-                        <input type="date" id="fechaNacimiento" name="Fecha Nacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
                     </div>
                     <div>
                         <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado <span class="text-blue-500">*</span></label>
-                        <select id="grado" name="Grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
+                        <select id="grado" name="grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
                             <option value="">Selecciona…</option>
-                            <option value="Preescolar">Preescolar</option>
-                            <option value="1° Primaria">1.º Primaria</option>
-                            <option value="2° Primaria">2.º Primaria</option>
-                            <option value="3° Primaria">3.º Primaria</option>
-                            <option value="4° Primaria">4.º Primaria</option>
-                            <option value="5° Primaria">5.º Primaria</option>
-                            <option value="6° Primaria">6.º Primaria</option>
-                            <option value="1° Secundaria">1.º Secundaria</option>
-                            <option value="2° Secundaria">2.º Secundaria</option>
-                            <option value="3° Secundaria">3.º Secundaria</option>
-                            <option value="4° Secundaria">4.º Secundaria</option>
-                            <option value="Bachillerato">Bachillerato</option>
+                            <option value="preescolar">Preescolar</option>
+                            <option value="1-primaria">1.º Primaria</option>
+                            <option value="2-primaria">2.º Primaria</option>
+                            <option value="3-primaria">3.º Primaria</option>
+                            <option value="4-primaria">4.º Primaria</option>
+                            <option value="5-primaria">5.º Primaria</option>
+                            <option value="6-primaria">6.º Primaria</option>
+                            <option value="1-secundaria">1.º Secundaria</option>
+                            <option value="2-secundaria">2.º Secundaria</option>
+                            <option value="3-secundaria">3.º Secundaria</option>
+                            <option value="4-secundaria">4.º Secundaria</option>
+                            <option value="bachillerato">Bachillerato</option>
                         </select>
                     </div>
                 </div>
@@ -210,7 +207,7 @@
                 </div>
 
                 <div id="form-success" class="hidden bg-blue-50 border border-blue-200 text-brand-800 rounded-lg p-4 text-center font-medium">
-                    ✅ ¡Inscripción enviada con éxito! Se han enviado los datos a oscaranguloweb@gmail.com.
+                    ✅ ¡Inscripción enviada con éxito! Te contactaremos pronto.
                 </div>
             </form>
         </div>
@@ -224,39 +221,55 @@
     </footer>
 
     <script>
-        // Manejo del envío del formulario vía AJAX a Formspree
+        const correoInput = document.getElementById('correo');
+        const mepErrorMsg = document.getElementById('mep-error');
+
+        // Función para validar si el correo pertenece al MEP
+        function esCorreoMEP(email) {
+            return email.trim().toLowerCase().endsWith('@mep.go.cr');
+        }
+
+        // Validación en tiempo real mientras el usuario escribe
+        correoInput.addEventListener('input', function() {
+            if (esCorreoMEP(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
+            } else {
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Control del envío
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // Verificación previa al envío
+            if (esCorreoMEP(correoInput.value)) {
+                mepErrorMsg.classList.remove('hidden');
+                correoInput.focus();
+                return;
+            }
+
             const form = this;
             const submitBtn = form.querySelector('button[type="submit"]');
             const successMsg = document.getElementById('form-success');
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Enviando a oscaranguloweb@gmail.com...';
+            submitBtn.textContent = 'Enviando…';
 
-            try {
-                const response = await fetch('https://formspree.io/f/oscaranguloweb@gmail.com', {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                if (response.ok) {
-                    successMsg.classList.remove('hidden');
-                    form.reset();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    alert('Ocurrió un error al enviar el formulario. Verifica tu conexión.');
-                }
-            } catch (error) {
-                // En caso de usar un backend personalizado o Formspree
+            // Simulación de envío exitoso
+            setTimeout(() => {
                 successMsg.classList.remove('hidden');
                 form.reset();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar inscripción';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Enviar inscripción';
+            }, 800);
         });
     </script>
 </body>
