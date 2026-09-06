@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajedrez Integral — Aprende, Juega y Crece con el Ajedrez</title>
+    <meta name="description" content="Ajedrez Integral: cursos, tutoriales y un tablero interactivo con bot para escuelas y colegios.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33' },
+                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    },
+                    fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+    <section class="relative pt-16 md:pt-20 min-h-[85vh] flex items-center bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Crect width=%2230%22 height=%2230%22 fill=%22%23ffffff%22/%3E%3Crect x=%2230%22 y=%2230%22 width=%2230%22 height=%2230%22 fill=%22%23ffffff%22/%3E%3C/svg%3E');"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-900/50"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-12 items-center">
+            <div class="text-center lg:text-left">
+                <span class="inline-block bg-accent-500/20 text-accent-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">♟️ Para escuelas y colegios</span>
+                <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">Aprende, Juega y <span class="text-accent-400">Crece</span> con el Ajedrez</h1>
+                <p class="text-lg text-brand-200 mb-8 max-w-xl mx-auto lg:mx-0">Cursos interactivos, tutoriales prácticos y un tablero con inteligencia artificial para que practiques contra el bot. Pensamiento estratégico para estudiantes de todas las edades.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">Inscríbete ahora</a>
+                    <a href="tablero.html" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all border border-white/20 backdrop-blur-sm">♟️ Jugar contra el bot</a>
+                </div>
+            </div>
+            <div class="hidden lg:flex justify-center">
+                <div class="grid grid-cols-8 w-96 h-96 rounded-xl overflow-hidden shadow-2xl border-4 border-brand-600">
+                    <div class="bg-brand-100 flex items-center justify-center text-3xl">♜</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♞</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♝</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♛</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♚</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♝</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♞</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♜</div>
+                    <div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div>
+                    <div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div>
+                    <div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div>
+                    <div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div>
+                    <div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div>
+                    <div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div>
+                    <div class="bg-brand-700 flex items-center justify-center text-3xl">♖</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♘</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♗</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♕</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♔</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♗</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♘</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♖</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="bg-brand-700 py-8">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+500</p><p class="text-brand-200 text-sm mt-1">Estudiantes activos</p></div>
+            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+30</p><p class="text-brand-200 text-sm mt-1">Escuelas y colegios</p></div>
+            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">+120</p><p class="text-brand-200 text-sm mt-1">Artículos y tutoriales</p></div>
+            <div><p class="text-3xl md:text-4xl font-bold text-accent-400">100%</p><p class="text-brand-200 text-sm mt-1">En español</p></div>
+        </div>
+    </section>
+    <section class="py-20 bg-brand-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Cursos recientes</span>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-2">Aprende a tu ritmo</h2>
+                <p class="text-brand-500 mt-4 max-w-2xl mx-auto">Desde los fundamentos hasta estrategias avanzadas. Cada curso incluye lecciones prácticas, ejercicios y partidas comentadas.</p>
+            </div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">♟️</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Principiante</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Fundamentos del Ajedrez</h3><p class="text-brand-500 text-sm mb-4">Aprende cómo se mueven las piezas, el valor de cada una y los conceptos básicos de apertura, medio juego y final.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">🏰</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Intermedio</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Aperturas y Defensas</h3><p class="text-brand-500 text-sm mb-4">Domina las aperturas más populares: Española, Italiana, Siciliana y Defensa Francesa con partidas modelo.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">👑</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Avanzado</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Estrategia y Táctica</h3><p class="text-brand-500 text-sm mb-4">Clavadas, horquillas, ataques descubiertos, sacrificios y planificación estratégica de medio juego.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">🏁</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Todos los niveles</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Finales Prácticos</h3><p class="text-brand-500 text-sm mb-4">Finales de peones, torres, alfiles de distinto color y técnicas de conversión de ventaja en victoria.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">🧠</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Intermedio</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Cálculo y Visualización</h3><p class="text-brand-500 text-sm mb-4">Ejercicios de cálculo profundo, visualización del tablero y entrenamiento de líneas sin mover las piezas.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+                <article class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow group"><div class="h-48 bg-gradient-to-br from-brand-600 to-brand-900 flex items-center justify-center text-7xl group-hover:scale-105 transition-transform">🏆</div><div class="p-6"><span class="text-xs font-semibold text-accent-600 uppercase">Competitivo</span><h3 class="font-serif text-xl font-bold text-brand-800 mt-2 mb-2">Preparación para Torneos</h3><p class="text-brand-500 text-sm mb-4">Gestión del tiempo, preparación de repertorio, psicología del ajedrez y análisis post-partida.</p><a href="cursos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver curso →</a></div></article>
+            </div>
+        </div>
+    </section>
+    <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
+                <div><span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Artículos recientes</span><h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-2">Últimas publicaciones</h2></div>
+                <a href="articulos.html" class="text-brand-600 font-semibold hover:text-accent-600 transition-colors">Ver todos →</a>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <article class="group cursor-pointer"><div class="h-44 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">📖</div><span class="text-xs text-accent-600 font-semibold uppercase">Táctica</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">La regla del cuadrado: cómo ganar finales de peones</h3><p class="text-brand-500 text-sm">Una técnica esencial para saber si tu rey puede detener un peón pasado. Con ejercicios prácticos.</p><p class="text-brand-400 text-xs mt-3">15 marzo 2026 · 8 min lectura</p></article>
+                <article class="group cursor-pointer"><div class="h-44 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🎯</div><span class="text-xs text-accent-600 font-semibold uppercase">Aperturas</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">Gambito de dama aceptado: guía completa para blancas</h3><p class="text-brand-500 text-sm">El gambito de dama sigue siendo una de las aperturas más sólidas. Analizamos las ideas principales.</p><p class="text-brand-400 text-xs mt-3">10 marzo 2026 · 12 min lectura</p></article>
+                <article class="group cursor-pointer"><div class="h-44 bg-gradient-to-br from-brand-700 to-brand-900 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">💡</div><span class="text-xs text-accent-600 font-semibold uppercase">Estrategia</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">Peones doblados: ¿siempre son una debilidad?</h3><p class="text-brand-500 text-sm">Los peones doblados no siempre son malos. Descubre cuándo pueden convertirse en una ventaja.</p><p class="text-brand-400 text-xs mt-3">5 marzo 2026 · 10 min lectura</p></article>
+            </div>
+        </div>
+    </section>
+    <section class="py-20 bg-gradient-to-r from-brand-800 to-brand-900">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mb-6">¿Listo para empezar a jugar?</h2>
+            <p class="text-brand-200 text-lg mb-8 max-w-2xl mx-auto">Practica contra nuestro bot de ajedrez o inscribe a tu grupo escolar en nuestros cursos.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="tablero.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">♟️ Jugar ahora</a>
+                <a href="inscripcion.html" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all border border-white/20 backdrop-blur-sm">Inscribir a mi grupo</a>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas y colegios. Aprende, practica y compite.</p></div>
+                <div><h4 class="text-white font-semibold mb-4">Navegación</h4><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li></ul></div>
+                <div><h4 class="text-white font-semibold mb-4">Recursos</h4><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Inscripción escolar</a></li></ul></div>
+                <div><h4 class="text-white font-semibold mb-4">Contacto</h4><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li>📞 +34 600 000 000</li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>

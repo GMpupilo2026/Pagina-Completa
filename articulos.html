@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artículos — Ajedrez Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}}</script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Tablero</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscripción</a></li>
+                </ul>
+                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+    <section class="pt-16 md:pt-20 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12"><span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Blog</span><h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-2">Artículos y Tutoriales</h1><p class="text-brand-500 mt-4 max-w-2xl mx-auto">Guías, análisis de partidas y consejos prácticos para mejorar tu juego. Contenido nuevo cada semana.</p></div>
+            <div class="flex flex-wrap justify-center gap-3 mb-10">
+                <button class="filter-btn active px-5 py-2 rounded-full text-sm font-semibold bg-brand-700 text-white" data-filter="all">Todos</button>
+                <button class="filter-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-brand-600 border border-brand-200 hover:bg-brand-100" data-filter="tactica">Táctica</button>
+                <button class="filter-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-brand-600 border border-brand-200 hover:bg-brand-100" data-filter="aperturas">Aperturas</button>
+                <button class="filter-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-brand-600 border border-brand-200 hover:bg-brand-100" data-filter="estrategia">Estrategia</button>
+                <button class="filter-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-brand-600 border border-brand-200 hover:bg-brand-100" data-filter="finales">Finales</button>
+            </div>
+            <div id="articles-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <article class="article-card group cursor-pointer" data-category="finales"><div class="h-44 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">📖</div><span class="text-xs text-accent-600 font-semibold uppercase">Finales</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">La regla del cuadrado: cómo ganar finales de peones</h3><p class="text-brand-500 text-sm">Una técnica esencial para saber si tu rey puede detener un peón pasado. Con ejercicios prácticos.</p><p class="text-brand-400 text-xs mt-3">15 marzo 2026 · 8 min lectura</p></article>
+                <article class="article-card group cursor-pointer" data-category="aperturas"><div class="h-44 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🎯</div><span class="text-xs text-accent-600 font-semibold uppercase">Aperturas</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">Gambito de dama aceptado: guía completa para blancas</h3><p class="text-brand-500 text-sm">El gambito de dama sigue siendo una de las aperturas más sólidas. Analizamos las ideas principales.</p><p class="text-brand-400 text-xs mt-3">10 marzo 2026 · 12 min lectura</p></article>
+                <article class="article-card group cursor-pointer" data-category="estrategia"><div class="h-44 bg-gradient-to-br from-brand-700 to-brand-900 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">💡</div><span class="text-xs text-accent-600 font-semibold uppercase">Estrategia</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">Peones doblados: ¿siempre son una debilidad?</h3><p class="text-brand-500 text-sm">Los peones doblados no siempre son malos. Descubre cuándo pueden convertirse en una ventaja.</p><p class="text-brand-400 text-xs mt-3">5 marzo 2026 · 10 min lectura</p></article>
+                <article class="article-card group cursor-pointer" data-category="tactica"><div class="h-44 bg-gradient-to-br from-accent-400 to-accent-600 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">⚔️</div><span class="text-xs text-accent-600 font-semibold uppercase">Táctica</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">La clavada: el arma táctica más poderosa</h3><p class="text-brand-500 text-sm">Aprende a identificar y explotar clavadas en tus partidas. Ejemplos de partidas clásicas.</p><p class="text-brand-400 text-xs mt-3">28 febrero 2026 · 7 min lectura</p></article>
+                <article class="article-card group cursor-pointer" data-category="tactica"><div class="h-44 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🔱</div><span class="text-xs text-accent-600 font-semibold uppercase">Táctica</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">Horquillas de caballo: cómo ganar material</h3><p class="text-brand-500 text-sm">El caballo es la pieza más astuta del tablero. Domina las horquillas y gana partidas.</p><p class="text-brand-400 text-xs mt-3">20 febrero 2026 · 9 min lectura</p></article>
+                <article class="article-card group cursor-pointer" data-category="estrategia"><div class="h-44 bg-gradient-to-br from-brand-600 to-brand-900 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🗺️</div><span class="text-xs text-accent-600 font-semibold uppercase">Estrategia</span><h3 class="font-serif text-lg font-bold text-brand-800 mt-1 mb-2 group-hover:text-accent-600 transition-colors">El centro del tablero: por qué es tan importante</h3><p class="text-brand-500 text-sm">Controlar el centro es la regla de oro del ajedrez. Te explicamos cómo dominarlo desde la apertura.</p><p class="text-brand-400 text-xs mt-3">12 febrero 2026 · 11 min lectura</p></article>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('active','bg-brand-700','text-white'); b.classList.add('bg-white','text-brand-600','border','border-brand-200'); });
+                btn.classList.add('active','bg-brand-700','text-white'); btn.classList.remove('bg-white','text-brand-600','border','border-brand-200');
+                const filter = btn.dataset.filter;
+                document.querySelectorAll('.article-card').forEach(card => { card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none'; });
+            });
+        });
+    </script>
+</body>
+</html>

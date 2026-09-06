@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero — Ajedrez Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}}</script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 text-accent-400">Tablero</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscripción</a></li>
+                </ul>
+                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 text-accent-400">Tablero</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+    <section class="pt-16 md:pt-20 py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800">Juega contra el Bot ♟️</h1>
+                <p class="text-brand-500 mt-3">Mueve las piezas blancas haciendo clic en una pieza y luego en la casilla de destino. El bot responderá automáticamente.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="bg-brand-700 text-white px-4 py-2 rounded-lg font-semibold text-sm" id="turn-indicator">Turno: Blancas</span>
+                    <span class="bg-accent-500 text-brand-900 px-4 py-2 rounded-lg font-semibold text-sm" id="status-msg">¡Tu turno!</span>
+                </div>
+                <div class="flex gap-3">
+                    <select id="difficulty" class="bg-white border border-brand-200 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
+                    <button id="reset-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↻ Reiniciar</button>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <div id="chessboard" class="grid grid-cols-8 w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+            </div>
+            <div class="mt-8 grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    <h3 class="font-serif font-bold text-brand-800 mb-3">Piezas capturadas</h3>
+                    <div class="flex gap-2">
+                        <div class="flex-1"><p class="text-xs text-brand-400 mb-1">Blancas capturaron:</p><div id="captured-by-white" class="text-2xl min-h-[2rem]"></div></div>
+                        <div class="flex-1"><p class="text-xs text-brand-400 mb-1">Negras capturaron:</p><div id="captured-by-black" class="text-2xl min-h-[2rem]"></div></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-5">
+                    <h3 class="font-serif font-bold text-brand-800 mb-3">Historial de jugadas</h3>
+                    <div id="move-history" class="text-sm text-brand-500 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/chess-bot.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
