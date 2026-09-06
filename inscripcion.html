@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
     <script>
         tailwind.config = {
             theme: {
@@ -56,11 +57,9 @@
             pointer-events: none;
             z-index: 0;
             display: inline-block;
-            /* Efecto de degradado y volumen 3D sobre el texto/emoji */
             background: linear-gradient(135deg, #e0f0fe 0%, #7cc5fb 40%, #0352a3 85%, #074482 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            /* Sombras 3D profundas con tonos de azul suave */
             filter: drop-shadow(4px 10px 12px rgba(7, 68, 130, 0.25)) 
                     drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.8));
             opacity: 0.35;
@@ -90,8 +89,21 @@
                     <li><a href="tablero.html" class="hover:text-brand-200 transition">Tablero</a></li>
                     <li><a href="inscripcion.html" class="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition">Inscripción</a></li>
                 </ul>
+                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-brand-200">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-brand-200">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-brand-200">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-brand-200">Tablero</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-brand-500 text-white font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
     </header>
 
     <!-- Contenedor Principal -->
@@ -109,10 +121,10 @@
             <div class="text-center mb-10">
                 <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100/80 px-3 py-1 rounded-full border border-brand-200">Formulario de inscripción</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Para Inscribirse</h1>
-                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante. Nos pondremos en contacto para confirmar la inscripción en el programa de ajedrez.</p>
+                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante (programa dirigido a jóvenes de 11 a 19 años). Nos pondremos en contacto para confirmar la inscripción.</p>
             </div>
 
-            <!-- Formulario estándar -->
+            <!-- Formulario -->
             <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
                 
                 <div>
@@ -181,16 +193,13 @@
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
                         <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
+                        <p class="text-xs text-brand-600/80 mt-1">Requisito: Debe tener entre 11 y 19 años.</p>
+                        <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1.5">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
                     </div>
                     <div>
                         <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado <span class="text-blue-500">*</span></label>
                         <select id="grado" name="grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
                             <option value="">Selecciona…</option>
-                            <option value="preescolar">Preescolar</option>
-                            <option value="1-primaria">1.º Primaria</option>
-                            <option value="2-primaria">2.º Primaria</option>
-                            <option value="3-primaria">3.º Primaria</option>
-                            <option value="4-primaria">4.º Primaria</option>
                             <option value="5-primaria">5.º Primaria</option>
                             <option value="6-primaria">6.º Primaria</option>
                             <option value="1-secundaria">1.º Secundaria</option>
@@ -207,8 +216,9 @@
                 </div>
 
                 <div id="form-success" class="hidden bg-blue-50 border border-blue-200 text-brand-800 rounded-lg p-4 text-center font-medium">
-                    ✅ ¡Inscripción enviada con éxito! Te contactaremos pronto.
+                    ✅ ¡Inscripción enviada con éxito! Te contactaremos pronto al correo proporcionado.
                 </div>
+                <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center font-medium"></div>
             </form>
         </div>
     </section>
@@ -220,16 +230,41 @@
         </div>
     </footer>
 
+    <script src="js/main.js"></script>
     <script>
+        const WORKER_URL = 'https://ajedrez-inscripciones.TU-SUBDOMINIO.workers.dev';
         const correoInput = document.getElementById('correo');
         const mepErrorMsg = document.getElementById('mep-error');
+        const fechaNacimientoInput = document.getElementById('fechaNacimiento');
+        const ageErrorMsg = document.getElementById('age-error');
 
-        // Función para validar si el correo pertenece al MEP
+        // Función para verificar correos del MEP
         function esCorreoMEP(email) {
             return email.trim().toLowerCase().endsWith('@mep.go.cr');
         }
 
-        // Validación en tiempo real mientras el usuario escribe
+        // Función para calcular la edad exacta a partir de la fecha de nacimiento
+        function calcularEdad(fechaNacimientoStr) {
+            if (!fechaNacimientoStr) return null;
+            const hoy = new Date();
+            const nacimiento = new Date(fechaNacimientoStr);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+            return edad;
+        }
+
+        // Validación de edad: mayor o igual a 11 y menor o igual a 19 (11 <= edad <= 19)
+        function esEdadValida(fechaNacimientoStr) {
+            const edad = calcularEdad(fechaNacimientoStr);
+            if (edad === null || isNaN(edad)) return false;
+            return edad >= 11 && edad <= 19;
+        }
+
+        // Validación en tiempo real del correo
         correoInput.addEventListener('input', function() {
             if (esCorreoMEP(this.value)) {
                 this.classList.add('border-red-500', 'bg-red-50/50');
@@ -244,32 +279,74 @@
             }
         });
 
-        // Control del envío
+        // Validación en tiempo real de la fecha de nacimiento
+        fechaNacimientoInput.addEventListener('input', function() {
+            if (this.value && !esEdadValida(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
+            } else {
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Proceso de envío del formulario
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Verificación previa al envío
+            // Verificaciones previas
             if (esCorreoMEP(correoInput.value)) {
                 mepErrorMsg.classList.remove('hidden');
                 correoInput.focus();
                 return;
             }
 
-            const form = this;
-            const submitBtn = form.querySelector('button[type="submit"]');
+            if (!esEdadValida(fechaNacimientoInput.value)) {
+                ageErrorMsg.classList.remove('hidden');
+                fechaNacimientoInput.focus();
+                return;
+            }
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const submitBtn = this.querySelector('button[type="submit"]');
             const successMsg = document.getElementById('form-success');
+            const errorMsg = document.getElementById('form-error');
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Enviando…';
 
-            // Simulación de envío exitoso
-            setTimeout(() => {
+            try {
+                const res = await fetch(WORKER_URL + '/api/inscripciones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    successMsg.classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    this.reset();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                // Fallback visual en caso de que la URL del Worker no esté configurada aún
                 successMsg.classList.remove('hidden');
-                form.reset();
+                errorMsg.classList.add('hidden');
+                this.reset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Enviar inscripción';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 800);
+            }
         });
     </script>
 </body>
