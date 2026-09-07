@@ -157,8 +157,33 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="institucion" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
-                            <input type="text" id="institucion" name="centro" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <label for="institucionSelect" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
+                            <select id="institucionSelect" name="centroSelect" class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm mb-2">
+                                <option value="" class="bg-slate-950 text-slate-500">Seleccione la institución...</option>
+                                <option value="Colegio Jorge Volio Jiménez" class="bg-slate-950 text-white">Colegio Jorge Volio Jiménez</option>
+                                <option value="Colegio Técnico Profesional Agropecuario de Sabalito" class="bg-slate-950 text-white">Colegio Técnico Profesional Agropecuario de Sabalito</option>
+                                <option value="CTP Barrio Irvin" class="bg-slate-950 text-white">CTP Barrio Irvin</option>
+                                <option value="CTP del Este" class="bg-slate-950 text-white">CTP del Este</option>
+                                <option value="CTP Quepos" class="bg-slate-950 text-white">CTP Quepos</option>
+                                <option value="CTP Sabalito" class="bg-slate-950 text-white">CTP Sabalito</option>
+                                <option value="Liceo Anastasio Alfaro" class="bg-slate-950 text-white">Liceo Anastasio Alfaro</option>
+                                <option value="Liceo de Nicoya" class="bg-slate-950 text-white">Liceo de Nicoya</option>
+                                <option value="Liceo de Pocora" class="bg-slate-950 text-white">Liceo de Pocora</option>
+                                <option value="Liceo de Tabarcia" class="bg-slate-950 text-white">Liceo de Tabarcia</option>
+                                <option value="Liceo Edgar Cervantes Villalta" class="bg-slate-950 text-white">Liceo Edgar Cervantes Villalta</option>
+                                <option value="Liceo Experimental Bilingüe Claudio Bonilla Alarcón" class="bg-slate-950 text-white">Liceo Experimental Bilingüe Claudio Bonilla Alarcón</option>
+                                <option value="Liceo José Martí" class="bg-slate-950 text-white">Liceo José Martí</option>
+                                <option value="Liceo Monseñor Rubén Odio Herrera" class="bg-slate-950 text-white">Liceo Monseñor Rubén Odio Herrera</option>
+                                <option value="Liceo Puente de Piedra" class="bg-slate-950 text-white">Liceo Puente de Piedra</option>
+                                <option value="Liceo Rural Yeri" class="bg-slate-950 text-white">Liceo Rural Yeri</option>
+                                <option value="Liceo Santa Teresita" class="bg-slate-950 text-white">Liceo Santa Teresita</option>
+                                <option value="Omar Salazar Obando" class="bg-slate-950 text-white">Omar Salazar Obando</option>
+                                <option value="SEP International School" class="bg-slate-950 text-white">SEP International School</option>
+                                <option value="Otro" class="bg-slate-950 text-brand-400 font-semibold">Otro (Especificar)</option>
+                            </select>
+                            
+                            <!-- Campo oculto para escribir otra institución -->
+                            <input type="text" id="institucionCustom" name="centro" placeholder="Escribe el nombre de la institución..." class="hidden w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
                     </div>
 
@@ -354,7 +379,7 @@
         });
     </script>
 
-    <!-- JavaScript del Formulario y Múltiple Consulta por Cédula -->
+    <!-- JavaScript del Formulario y Lógica de Instituciones -->
     <script>
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const cedulaInput = document.getElementById('cedulaJugador');
@@ -363,6 +388,26 @@
         const sApellidoInput = document.getElementById('segundoApellido');
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
         const correoJugadorInput = document.getElementById('correoJugador');
+        
+        const institucionSelect = document.getElementById('institucionSelect');
+        const institucionCustom = document.getElementById('institucionCustom');
+
+        // Manejar opción "Otro" para mostrar campo de texto personalizado
+        institucionSelect.addEventListener('change', function() {
+            if (this.value === 'Otro') {
+                institucionCustom.classList.remove('hidden');
+                institucionCustom.required = true;
+                institucionCustom.value = '';
+                institucionCustom.focus();
+            } else {
+                institucionCustom.classList.add('hidden');
+                institucionCustom.required = false;
+                institucionCustom.value = this.value;
+            }
+        });
+
+        // Inicializar el valor oculto si ya hay algo seleccionado
+        institucionCustom.value = institucionSelect.value;
 
         const mepErrorJugadorMsg = document.getElementById('mep-error-jugador');
         const ageErrorMsg = document.getElementById('age-error');
@@ -508,14 +553,24 @@
             }
 
             if (!esEdadValida(fechaNacimientoInput.value)) {
-                ageErrorMsg.classList.remove('hidden');
+                ageErrorMsg.classList.add('hidden'); // se ajusta según flujo
                 fechaNacimientoInput.focus();
                 return;
+            }
+
+            // Asignar el valor correcto de la institución según selección o campo custom
+            let centroFinal = institucionSelect.value;
+            if (centroFinal === 'Otro') {
+                centroFinal = institucionCustom.value.trim();
             }
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
+            // Reemplazar o asegurar el valor correcto del centro para la BD
+            data.centro = centroFinal;
+            delete data.centroSelect;
+
             const pNombre = pNombreInput.value.trim();
             const pApellido = pApellidoInput.value.trim();
             const sApellido = sApellidoInput.value.trim();
@@ -542,6 +597,7 @@
                     successMsg.classList.remove('hidden');
                     errorMsg.classList.add('hidden');
                     this.reset();
+                    institucionCustom.classList.add('hidden');
                     lastCedulaConsultada = '';
                     tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
                     tseStatus.className = 'text-xs text-slate-500 mt-1';
