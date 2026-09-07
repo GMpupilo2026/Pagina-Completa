@@ -45,7 +45,7 @@
             <div class="text-center mb-10">
                 <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100/80 px-3 py-1 rounded-full border border-brand-200">Formulario de inscripción</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Para Inscribirse</h1>
-                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Ingresa tu número de cédula para autocompletar tu nombre, apellidos y fecha de nacimiento.</p>
+                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Ingresa tu número de cédula. Si prefieres o el sistema no está conectado a una base externa, puedes escribir tus datos libremente.</p>
             </div>
 
             <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
@@ -57,28 +57,28 @@
                         <input type="text" id="cedula" name="cedula" required placeholder="Ej. 101230456" maxlength="12" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-brand-50/30">
                         <div id="cedula-loader" class="hidden absolute right-3 top-3.5 text-xs text-brand-600 font-semibold flex items-center gap-1">
                             <svg class="animate-spin h-4 w-4 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Consultando...
+                            Buscando...
                         </div>
                     </div>
-                    <p class="text-xs text-brand-600/80 mt-1">Si el sistema no encuentra el registro, los campos se habilitarán para llenarlos de forma manual.</p>
+                    <p class="text-xs text-brand-600/80 mt-1">Los campos de nombre, apellidos y fecha están habilitados para escritura manual en todo momento.</p>
                     <p id="cedula-error" class="hidden text-xs text-amber-600 font-semibold mt-1.5"></p>
                 </div>
 
-                <!-- Nombre -->
+                <!-- Nombre (Modificable siempre) -->
                 <div>
                     <label for="nombre" class="block text-sm font-semibold text-brand-800 mb-1">Nombre <span class="text-blue-500">*</span></label>
-                    <input type="text" id="nombre" name="nombre" required placeholder="Nombre" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
+                    <input type="text" id="nombre" name="nombre" required placeholder="Escribe tu nombre" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white text-brand-800 focus:ring-2 focus:ring-brand-400 focus:outline-none">
                 </div>
 
-                <!-- Apellidos (Separados) -->
+                <!-- Apellidos (Separados y Modificables siempre) -->
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Primer Apellido <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido1" name="apellido1" required placeholder="Primer apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
+                        <input type="text" id="apellido1" name="apellido1" required placeholder="Primer apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white text-brand-800 focus:ring-2 focus:ring-brand-400 focus:outline-none">
                     </div>
                     <div>
                         <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Segundo Apellido <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido2" name="apellido2" required placeholder="Segundo apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
+                        <input type="text" id="apellido2" name="apellido2" required placeholder="Segundo apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white text-brand-800 focus:ring-2 focus:ring-brand-400 focus:outline-none">
                     </div>
                 </div>
 
@@ -120,7 +120,7 @@
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
-                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white text-brand-800 focus:ring-2 focus:ring-brand-400 focus:outline-none">
                         <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1">⚠️ Debe tener entre 11 y 19 años.</p>
                     </div>
                     <div>
@@ -203,11 +203,10 @@
                     if (res.ok) {
                         const data = await res.json();
                         
-                        // Carga automática de cada campo por separado
-                        nombreInput.value = data.nombre || '';
-                        apellido1Input.value = data.primer_apellido || '';
-                        apellido2Input.value = data.segundo_apellido || '';
-                        
+                        // Si el Worker devuelve datos válidos, los rellena
+                        if (data.nombre) nombreInput.value = data.nombre;
+                        if (data.primer_apellido) apellido1Input.value = data.primer_apellido;
+                        if (data.segundo_apellido) apellido2Input.value = data.segundo_apellido;
                         if (data.fecha_nacimiento) {
                             fechaNacimientoInput.value = data.fecha_nacimiento;
                             const edad = calcularEdad(data.fecha_nacimiento);
@@ -217,17 +216,23 @@
                                 ageErrorMsg.classList.add('hidden');
                             }
                         }
-                    } else {
-                        cedulaErrorMsg.textContent = 'ℹ️ Ingrese sus datos de nombre, apellidos y fecha de nacimiento manualmente.';
-                        cedulaErrorMsg.classList.remove('hidden');
                     }
                 } catch (e) {
-                    cedulaErrorMsg.textContent = 'ℹ️ Complete los campos de nombre, apellidos y fecha de nacimiento de forma manual.';
-                    cedulaErrorMsg.classList.remove('hidden');
+                    // Silencioso: Si no hay conexión o el Worker no tiene base externa, el usuario escribe con total normalidad a mano
                 } finally {
                     cedulaLoader.classList.add('hidden');
                 }
             }, 500);
+        });
+
+        // Validación de edad en vivo al cambiar la fecha de nacimiento manualmente
+        fechaNacimientoInput.addEventListener('change', function() {
+            const edad = calcularEdad(this.value);
+            if (edad !== null && (edad < 11 || edad > 19)) {
+                ageErrorMsg.classList.remove('hidden');
+            } else {
+                ageErrorMsg.classList.add('hidden');
+            }
         });
 
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
