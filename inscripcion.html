@@ -110,8 +110,8 @@
                         </div>
 
                         <div>
-                            <label for="segundoApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
-                            <input type="text" id="segundoApellido" name="segundoApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="apellido2" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
+                            <input type="text" id="apellido2" name="apellido2" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
                     </div>
                 </div>
@@ -336,7 +336,7 @@
         const cedulaInput = document.getElementById('cedulaJugador');
         const pNombreInput = document.getElementById('primerNombre');
         const pApellidoInput = document.getElementById('apellido1');
-        const sApellidoInput = document.getElementById('segundoApellido');
+        const sApellidoInput = document.getElementById('apellido2');
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
         const correoInput = document.getElementById('correo');
 
@@ -389,7 +389,7 @@
                         if (data.success && data.persona) {
                             pNombreInput.value = data.persona.nombre || '';
                             pApellidoInput.value = data.persona.apellido1 || '';
-                            sApellidoInput.value = data.persona.segundoApellido || '';
+                            sApellidoInput.value = data.persona.apellido2 || '';
                             if (data.persona.fechaNacimiento) {
                                 fechaNacimientoInput.value = data.persona.fechaNacimiento;
                                 fechaNacimientoInput.dispatchEvent(new Event('input'));
