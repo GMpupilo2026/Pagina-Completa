@@ -3,724 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Inscripción - Ajedrez Integral</title>
-
+    <title>Inscripción Torneo Escolar de Ajedrez 2026</title>
+    <!-- Tailwind CSS desde CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        body {
-            background: #f5f1e8;
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f0fdf4',
+                100: '#dcfce7',
+                200: '#bbf7d0',
+                600: '#16a34a',
+                700: '#15803d',
+                800: '#166534',
+                900: '#14532d',
+              }
+            }
+          }
         }
-
-        input,
-        select,
-        textarea {
-            outline: none;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        input.border-error,
-        select.border-error,
-        textarea.border-error {
-            border-color: #dc2626;
-            background-color: #fef2f2;
-        }
-    </style>
+      }
+    </script>
 </head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
 
-<body class="min-h-screen py-8 px-4">
+    <div class="max-w-3xl mx-auto">
+        <!-- Encabezado -->
+        <div class="bg-brand-900 text-white rounded-t-2xl p-6 sm:p-8 shadow-lg text-center relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl select-none font-bold">♟</div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Inscripción Torneo Escolar de Ajedrez 2026</h1>
+            <p class="text-brand-100 text-sm sm:text-base max-w-xl mx-auto">Completa el formulario para registrar a un jugador/a en el torneo local.</p>
+        </div>
 
-    <main class="max-w-3xl mx-auto">
-
-        <section class="bg-white rounded-2xl shadow-xl overflow-hidden">
-
-            <div class="bg-slate-800 text-white px-6 py-8 text-center">
-                <h1 class="text-3xl font-bold">
-                    Ajedrez Integral
-                </h1>
-
-                <p class="mt-2 text-slate-200">
-                    Formulario de inscripción
-                </p>
+        <!-- Formulario principal -->
+        <div class="bg-white rounded-b-2xl shadow-xl p-6 sm:p-10 border-t border-slate-100">
+            
+            <!-- Mensaje de éxito -->
+            <div id="form-success" class="hidden mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-medium">
+                ✅ ¡Inscripción enviada exitosamente! Nos pondremos en contacto pronto.
             </div>
 
-            <form
-                id="inscription-form"
-                class="p-6 md:p-8 space-y-6"
-                novalidate
-            >
+            <!-- Mensaje de error global -->
+            <div id="form-error" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
+                ⚠️ Ocurrió un error al enviar el formulario.
+            </div>
 
-                <!-- Consulta de cédula -->
+            <form id="inscription-form" class="space-y-6">
+                
+                <!-- Sección: Datos del Jugador/a -->
                 <div>
-                    <label
-                        for="cedula"
-                        class="block text-sm font-semibold text-slate-700 mb-2"
-                    >
-                        Número de cédula
-                        <span class="text-red-600">*</span>
-                    </label>
-
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input
-                            type="text"
-                            id="cedula"
-                            name="cedula"
-                            required
-                            inputmode="numeric"
-                            autocomplete="off"
-                            maxlength="12"
-                            placeholder="Ejemplo: 101230456"
-                            class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                        >
-
-                        <button
-                            type="button"
-                            id="btn-buscar-cedula"
-                            class="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            Buscar
-                        </button>
-                    </div>
-
-                    <p
-                        id="cedula-error"
-                        class="mt-2 hidden text-sm font-semibold text-red-600"
-                    ></p>
-
-                    <p
-                        id="cedula-success"
-                        class="mt-2 hidden text-sm font-semibold text-green-600"
-                    ></p>
-                </div>
-
-                <!-- Datos personales -->
-                <div class="border-t border-slate-200 pt-6">
-                    <h2 class="mb-4 text-xl font-bold text-slate-800">
-                        Datos personales
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>👤</span> Datos del Jugador / Jugadora
                     </h2>
-
-                    <div class="grid gap-5 md:grid-cols-2">
-
-                        <div>
-                            <label
-                                for="nombre"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Nombre
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                id="nombre"
-                                name="nombre"
-                                required
-                                autocomplete="given-name"
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label for="cedulaJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cédula o Identificación *</label>
+                            <input type="text" id="cedulaJugador" name="cedulaJugador" placeholder="Digite los 9 dígitos sin guiones" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <div id="tse-loader" class="hidden text-xs text-sky-600 font-medium mt-1 flex items-center gap-1">
+                                <span class="animate-spin">⏳</span> Buscando datos...
+                            </div>
+                            <div id="tse-status" class="text-xs text-slate-500 mt-1">Ingresa los 9 dígitos sin guiones para autocompletar.</div>
                         </div>
 
                         <div>
-                            <label
-                                for="primer_apellido"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Primer apellido
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                id="primer_apellido"
-                                name="primer_apellido"
-                                required
-                                autocomplete="family-name"
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
+                            <label for="nombreJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre *</label>
+                            <input type="text" id="nombreJugador" name="nombreJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
-                            <label
-                                for="segundo_apellido"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Segundo apellido
-                            </label>
-
-                            <input
-                                type="text"
-                                id="segundo_apellido"
-                                name="segundo_apellido"
-                                autocomplete="family-name"
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
+                            <label for="primerApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
+                            <input type="text" id="primerApellido" name="primerApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
-                            <label
-                                for="fecha_nacimiento"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Fecha de nacimiento
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                type="date"
-                                id="fecha_nacimiento"
-                                name="fecha_nacimiento"
-                                required
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
-
-                            <p
-                                id="age-error"
-                                class="mt-2 hidden text-sm font-semibold text-red-600"
-                            >
-                                La persona debe tener entre 11 y 19 años.
-                            </p>
+                            <label for="segundoApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
+                            <input type="text" id="segundoApellido" name="segundoApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
                         </div>
 
+                        <div>
+                            <label for="fechaNacimiento" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Fecha de Nacimiento *</label>
+                            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="age-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="sexo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Sexo *</label>
+                            <select id="sexo" name="sexo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                                <option value="">Seleccione una opción...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Datos de contacto -->
-                <div class="border-t border-slate-200 pt-6">
-                    <h2 class="mb-4 text-xl font-bold text-slate-800">
-                        Datos de contacto
+                <!-- Sección: Institución Educativa -->
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>🏫</span> Institución Educativa
                     </h2>
-
-                    <div class="grid gap-5 md:grid-cols-2">
-
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label
-                                for="correo"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Correo electrónico
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                type="email"
-                                id="correo"
-                                name="correo"
-                                required
-                                autocomplete="email"
-                                placeholder="ejemplo@correo.com"
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
-
-                            <p
-                                id="mep-error"
-                                class="mt-2 hidden text-sm font-semibold text-red-600"
-                            >
-                                No se permiten correos terminados en @mep.go.cr.
-                            </p>
+                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Colegio / Escuela *</label>
+                            <input type="text" id="institucion" name="institucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
-                            <label
-                                for="telefono"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Teléfono
-                                <span class="text-red-600">*</span>
-                            </label>
-
-                            <input
-                                type="tel"
-                                id="telefono"
-                                name="telefono"
-                                required
-                                autocomplete="tel"
-                                placeholder="8888-8888"
-                                class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                            >
+                            <label for="gradoAcademico" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Grado o Nivel Educativo *</label>
+                            <select id="gradoAcademico" name="gradoAcademico" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                                <option value="">Seleccione el grado o nivel...</option>
+                                <optgroup label="Primaria">
+                                    <option value="Primer Grado">Primer Grado</option>
+                                    <option value="Segundo Grado">Segundo Grado</option>
+                                    <option value="Tercer Grado">Tercer Grado</option>
+                                    <option value="Cuarto Grado">Cuarto Grado</option>
+                                    <option value="Quinto Grado">Quinto Grado</option>
+                                    <option value="Sexto Grado">Sexto Grado</option>
+                                </optgroup>
+                                <optgroup label="Secundaria (Tercer Ciclo)">
+                                    <option value="Séptimo Año">Séptimo Año (1er año)</option>
+                                    <option value="Octavo Año">Octavo Año (2do año)</option>
+                                    <option value="Noveno Año">Noveno Año (3er año)</option>
+                                </optgroup>
+                                <optgroup label="Educación Diversificada (Secundaria)">
+                                    <option value="Décimo Año">Décimo Año (Colegio Académico)</option>
+                                    <option value="Undécimo Año">Undécimo Año (Colegio Académico)</option>
+                                    <option value="Duodécimo Año">Duodécimo Año (Técnico / Vocacional)</option>
+                                </optgroup>
+                            </select>
                         </div>
 
+                        <div class="sm:col-span-2">
+                            <label for="categoria" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Categoría del Torneo (Opcional / Sugerida)</label>
+                            <input type="text" id="categoria" name="categoria" placeholder="Ej. Sub-12 Absoluto, Juvenil Femenino..." class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Información adicional -->
-                <div class="border-t border-slate-200 pt-6">
-                    <label
-                        for="observaciones"
-                        class="mb-2 block text-sm font-semibold text-slate-700"
-                    >
-                        Observaciones
-                    </label>
+                <!-- Sección: Datos del Encargado / Contacto -->
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>📞</span> Contacto / Encargado/a
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreEncargado" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Encargado/a *</label>
+                            <input type="text" id="nombreEncargado" name="nombreEncargado" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <textarea
-                        id="observaciones"
-                        name="observaciones"
-                        rows="4"
-                        placeholder="Información adicional, experiencia previa, necesidades especiales, etc."
-                        class="w-full rounded-lg border border-slate-300 px-4 py-3"
-                    ></textarea>
+                        <div>
+                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Teléfono de Contacto *</label>
+                            <input type="tel" id="telefono" name="telefono" placeholder="88888888" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="correo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Correo Electrónico (No usar @mep.go.cr) *</label>
+                            <input type="email" id="correo" name="correo" required class="w-full px-4 py-2.5 rounded-lg border border-brand-200 bg-brand-50/30 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="mep-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Por favor usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Mensajes -->
-                <div
-                    id="form-success"
-                    class="hidden rounded-lg border border-green-300 bg-green-50 p-4 text-green-800"
-                >
-                    La inscripción fue enviada correctamente.
+                <!-- Botón de Envío -->
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2">
+                        Enviar inscripción
+                    </button>
                 </div>
-
-                <div
-                    id="form-error"
-                    class="hidden rounded-lg border border-red-300 bg-red-50 p-4 text-red-800"
-                ></div>
-
-                <!-- Botón -->
-                <button
-                    type="submit"
-                    id="submit-button"
-                    class="w-full rounded-lg bg-slate-800 px-5 py-4 font-bold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    Enviar inscripción
-                </button>
 
             </form>
-        </section>
-    </main>
+        </div>
+    </div>
 
+    <!-- JavaScript Unificado y Completo -->
     <script>
-        /*
-         * Cambia esta URL por la URL real de tu Cloudflare Worker.
-         */
-        const WORKER_URL =
-            'https://TU-WORKER.workers.dev';
+        const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
+        
+        const cedulaInput = document.getElementById('cedulaJugador');
+        const pNombreInput = document.getElementById('nombreJugador');
+        const pApellidoInput = document.getElementById('primerApellido');
+        const sApellidoInput = document.getElementById('segundoApellido');
+        const fechaNacimientoInput = document.getElementById('fechaNacimiento');
+        
+        const tseLoader = document.getElementById('tse-loader');
+        const tseStatus = document.getElementById('tse-status');
+        
+        const correoInput = document.getElementById('correo');
+        const mepErrorMsg = document.getElementById('mep-error');
+        const ageErrorMsg = document.getElementById('age-error');
 
-        const form =
-            document.getElementById('inscription-form');
-
-        const cedulaInput =
-            document.getElementById('cedula');
-
-        const buscarCedulaButton =
-            document.getElementById('btn-buscar-cedula');
-
-        const cedulaError =
-            document.getElementById('cedula-error');
-
-        const cedulaSuccess =
-            document.getElementById('cedula-success');
-
-        const nombreInput =
-            document.getElementById('nombre');
-
-        const primerApellidoInput =
-            document.getElementById('primer_apellido');
-
-        const segundoApellidoInput =
-            document.getElementById('segundo_apellido');
-
-        const fechaNacimientoInput =
-            document.getElementById('fecha_nacimiento');
-
-        const correoInput =
-            document.getElementById('correo');
-
-        const ageError =
-            document.getElementById('age-error');
-
-        const mepError =
-            document.getElementById('mep-error');
-
-        const formSuccess =
-            document.getElementById('form-success');
-
-        const formError =
-            document.getElementById('form-error');
-
-        const submitButton =
-            document.getElementById('submit-button');
-
-
-        function limpiarCedula(valor) {
-            return valor.replace(/\D/g, '');
+        // Función para verificar si es correo institucional MEP
+        function esCorreoMEP(email) {
+            return email.trim().toLowerCase().endsWith('@mep.go.cr');
         }
 
-
-        function mostrarErrorCedula(mensaje) {
-            cedulaError.textContent = '⚠️ ' + mensaje;
-            cedulaError.classList.remove('hidden');
-            cedulaSuccess.classList.add('hidden');
-        }
-
-
-        function mostrarExitoCedula(mensaje) {
-            cedulaSuccess.textContent = '✅ ' + mensaje;
-            cedulaSuccess.classList.remove('hidden');
-            cedulaError.classList.add('hidden');
-        }
-
-
-        function convertirFecha(fecha) {
-            if (!fecha) {
-                return '';
-            }
-
-            fecha = String(fecha).trim();
-
-            /*
-             * YYYY-MM-DD
-             */
-            if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-                return fecha;
-            }
-
-            /*
-             * DD/MM/YYYY
-             */
-            if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
-                const partes = fecha.split('/');
-
-                const dia = partes[0];
-                const mes = partes[1];
-                const año = partes[2];
-
-                return `${año}-${mes}-${dia}`;
-            }
-
-            /*
-             * DD-MM-YYYY
-             */
-            if (/^\d{2}-\d{2}-\d{4}$/.test(fecha)) {
-                const partes = fecha.split('-');
-
-                const dia = partes[0];
-                const mes = partes[1];
-                const año = partes[2];
-
-                return `${año}-${mes}-${dia}`;
-            }
-
-            /*
-             * Fecha ISO con hora.
-             */
-            if (fecha.includes('T')) {
-                return fecha.substring(0, 10);
-            }
-
-            return '';
-        }
-
-
-        function calcularEdad(fecha) {
-            if (!fecha) {
-                return null;
-            }
-
+        // Función para calcular la edad exacta en años
+        function calcularEdad(fechaNacimientoStr) {
+            if (!fechaNacimientoStr) return null;
             const hoy = new Date();
-            const nacimiento = new Date(fecha + 'T00:00:00');
-
-            if (Number.isNaN(nacimiento.getTime())) {
-                return null;
-            }
-
-            let edad =
-                hoy.getFullYear() -
-                nacimiento.getFullYear();
-
-            const diferenciaMes =
-                hoy.getMonth() -
-                nacimiento.getMonth();
-
-            if (
-                diferenciaMes < 0 ||
-                (
-                    diferenciaMes === 0 &&
-                    hoy.getDate() < nacimiento.getDate()
-                )
-            ) {
+            const nacimiento = new Date(fechaNacimientoStr);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
                 edad--;
             }
-
             return edad;
         }
 
-
-        function validarEdad() {
-            const edad =
-                calcularEdad(fechaNacimientoInput.value);
-
-            const esValida =
-                edad !== null &&
-                edad >= 11 &&
-                edad <= 19;
-
-            if (!esValida) {
-                fechaNacimientoInput.classList.add('border-error');
-                ageError.classList.remove('hidden');
-                fechaNacimientoInput.setCustomValidity(
-                    'La edad debe estar entre 11 y 19 años.'
-                );
-
-                return false;
-            }
-
-            fechaNacimientoInput.classList.remove('border-error');
-            ageError.classList.add('hidden');
-            fechaNacimientoInput.setCustomValidity('');
-
-            return true;
+        // Validación de edad: entre 11 y 19 años
+        function esEdadValida(fechaNacimientoStr) {
+            const edad = calcularEdad(fechaNacimientoStr);
+            if (edad === null || isNaN(edad)) return false;
+            return edad >= 11 && edad <= 19;
         }
 
+        // --- AUTOCONSULTA DE CÉDULA (WORKER -> HACIENDA FALLBACK) ---
+        let lastCedulaConsultada = '';
 
-        async function buscarDatosCedula() {
-            const cedula =
-                limpiarCedula(cedulaInput.value);
+        cedulaInput.addEventListener('input', async function() {
+            const cedula = this.value.trim().replace(/\D/g, '');
+            
+            if (cedula.length === 9 && cedula !== lastCedulaConsultada) {
+                lastCedulaConsultada = cedula;
+                tseLoader.classList.remove('hidden');
+                tseStatus.textContent = 'Buscando datos de identificación y fecha de nacimiento...';
+                tseStatus.className = 'text-xs text-sky-600 font-medium mt-1';
 
-            cedulaInput.value = cedula;
+                let obtenido = false;
 
-            cedulaError.classList.add('hidden');
-            cedulaSuccess.classList.add('hidden');
+                // Intento 1: A través de tu Cloudflare Worker
+                try {
+                    const res = await fetch(`${WORKER_URL}?cedula=${cedula}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success && data.persona) {
+                            pNombreInput.value = data.persona.nombre || '';
+                            pApellidoInput.value = data.persona.primerApellido || '';
+                            sApellidoInput.value = data.persona.segundoApellido || '';
+                            
+                            // Autocompletar fecha de nacimiento si viene del Worker
+                            if (data.persona.fechaNacimiento) {
+                                fechaNacimientoInput.value = data.persona.fechaNacimiento;
+                                fechaNacimientoInput.dispatchEvent(new Event('input'));
+                            }
+                            obtenido = true;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Fallo en Worker, intentando API alternativa...');
+                }
 
-            if (!cedula) {
-                mostrarErrorCedula(
-                    'Ingresa un número de cédula.'
-                );
+                // Intento 2 (Fallback): Consulta directa a la API del Ministerio de Hacienda
+                if (!obtenido) {
+                    try {
+                        const resHacienda = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+                        if (resHacienda.ok) {
+                            const dataH = await resHacienda.json();
+                            if (dataH.nombre) {
+                                const partes = dataH.nombre.split(' ');
+                                if (partes.length >= 3) {
+                                    pNombreInput.value = partes.slice(0, partes.length - 2).join(' ');
+                                    pApellidoInput.value = partes[partes.length - 2];
+                                    sApellidoInput.value = partes[partes.length - 1];
+                                } else if (partes.length === 2) {
+                                    pNombreInput.value = partes[0];
+                                    pApellidoInput.value = partes[1];
+                                    sApellidoInput.value = '';
+                                } else {
+                                    pNombreInput.value = dataH.nombre;
+                                }
+                                obtenido = true;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Fallo en consulta de Hacienda.');
+                    }
+                }
 
-                cedulaInput.focus();
+                tseLoader.classList.add('hidden');
+
+                if (obtenido) {
+                    tseStatus.textContent = '✅ Datos identificados correctamente.';
+                    tseStatus.className = 'text-xs text-emerald-600 font-medium mt-1';
+                } else {
+                    tseStatus.textContent = 'ℹ️ No se encontraron los datos automáticamente. Por favor ingresa los campos manualmente.';
+                    tseStatus.className = 'text-xs text-amber-600 font-medium mt-1';
+                }
+
+            } else if (cedula.length < 9) {
+                tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
+                tseStatus.className = 'text-xs text-slate-500 mt-1';
+            }
+        });
+
+        // Validación en tiempo real del correo
+        correoInput.addEventListener('input', function() {
+            if (esCorreoMEP(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
+            } else {
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Validación en tiempo real de la fecha de nacimiento
+        fechaNacimientoInput.addEventListener('input', function() {
+            if (this.value && !esEdadValida(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
+            } else {
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Envío del formulario
+        document.getElementById('inscription-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (esCorreoMEP(correoInput.value)) {
+                mepErrorMsg.classList.remove('hidden');
+                correoInput.focus();
                 return;
             }
 
-            if (cedula.length < 9) {
-                mostrarErrorCedula(
-                    'La cédula debe contener al menos 9 dígitos.'
-                );
-
-                cedulaInput.focus();
+            if (!esEdadValida(fechaNacimientoInput.value)) {
+                ageErrorMsg.classList.remove('hidden');
+                fechaNacimientoInput.focus();
                 return;
             }
 
-            buscarCedulaButton.disabled = true;
-            buscarCedulaButton.textContent = 'Buscando...';
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Se calcula y agrega automáticamente la edad al objeto enviado al Worker
+            data.edad = calcularEdad(data.fechaNacimiento);
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const successMsg = document.getElementById('form-success');
+            const errorMsg = document.getElementById('form-error');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando…';
 
             try {
-                const url =
-                    `${WORKER_URL}/api/consulta-cedula?cedula=${encodeURIComponent(cedula)}`;
+                const res = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
 
-                const response =
-                    await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                const data =
-                    await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.error ||
-                        'No fue posible consultar la cédula.'
-                    );
-                }
-
-                const hayDatos =
-                    data.nombre ||
-                    data.primer_apellido ||
-                    data.segundo_apellido ||
-                    data.fecha_nacimiento;
-
-                if (!hayDatos) {
-                    mostrarErrorCedula(
-                        'No se encontraron datos. Puedes completar el formulario manualmente.'
-                    );
-
-                    return;
-                }
-
-                nombreInput.value =
-                    data.nombre || '';
-
-                primerApellidoInput.value =
-                    data.primer_apellido || '';
-
-                segundoApellidoInput.value =
-                    data.segundo_apellido || '';
-
-                fechaNacimientoInput.value =
-                    convertirFecha(data.fecha_nacimiento);
-
-                validarEdad();
-
-                mostrarExitoCedula(
-                    'Datos encontrados y completados automáticamente.'
-                );
-
-            } catch (error) {
-                console.error(error);
-
-                mostrarErrorCedula(
-                    error.message ||
-                    'Ocurrió un error consultando la cédula.'
-                );
-
-            } finally {
-                buscarCedulaButton.disabled = false;
-                buscarCedulaButton.textContent = 'Buscar';
-            }
-        }
-
-
-        buscarCedulaButton.addEventListener(
-            'click',
-            buscarDatosCedula
-        );
-
-
-        cedulaInput.addEventListener(
-            'keydown',
-            function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    buscarDatosCedula();
-                }
-            }
-        );
-
-
-        cedulaInput.addEventListener(
-            'input',
-            function() {
-                this.value = limpiarCedula(this.value);
-            }
-        );
-
-
-        fechaNacimientoInput.addEventListener(
-            'input',
-            validarEdad
-        );
-
-
-        correoInput.addEventListener(
-            'input',
-            function() {
-                const correo =
-                    this.value.trim().toLowerCase();
-
-                const esCorreoMEP =
-                    correo.endsWith('@mep.go.cr');
-
-                if (esCorreoMEP) {
-                    this.classList.add('border-error');
-                    mepError.classList.remove('hidden');
-                    this.setCustomValidity(
-                        'No se permiten correos @mep.go.cr.'
-                    );
+                if (res.ok) {
+                    successMsg.classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    this.reset();
+                    lastCedulaConsultada = '';
+                    tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
+                    tseStatus.className = 'text-xs text-slate-500 mt-1';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
-                    this.classList.remove('border-error');
-                    mepError.classList.add('hidden');
-                    this.setCustomValidity('');
+                    const err = await res.json().catch(() => ({}));
+                    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+                    errorMsg.classList.remove('hidden');
+                    successMsg.classList.add('hidden');
                 }
+            } catch (err) {
+                errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+                successMsg.classList.add('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar inscripción';
             }
-        );
-
-
-        form.addEventListener(
-            'submit',
-            async function(event) {
-                event.preventDefault();
-
-                formSuccess.classList.add('hidden');
-                formError.classList.add('hidden');
-
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                if (!validarEdad()) {
-                    fechaNacimientoInput.focus();
-                    return;
-                }
-
-                const correo =
-                    correoInput.value.trim().toLowerCase();
-
-                if (correo.endsWith('@mep.go.cr')) {
-                    mepError.classList.remove('hidden');
-                    correoInput.focus();
-                    return;
-                }
-
-                const datos =
-                    Object.fromEntries(
-                        new FormData(form).entries()
-                    );
-
-                submitButton.disabled = true;
-                submitButton.textContent = 'Enviando...';
-
-                try {
-                    const response =
-                        await fetch(
-                            `${WORKER_URL}/api/inscripciones`,
-                            {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type':
-                                        'application/json',
-
-                                    'Accept':
-                                        'application/json'
-                                },
-                                body: JSON.stringify(datos)
-                            }
-                        );
-
-                    const resultado =
-                        await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(
-                            resultado.error ||
-                            'No se pudo enviar la inscripción.'
-                        );
-                    }
-
-                    formSuccess.classList.remove('hidden');
-                    form.reset();
-
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-
-                } catch (error) {
-                    console.error(error);
-
-                    formError.textContent =
-                        '⚠️ ' +
-                        (
-                            error.message ||
-                            'Ocurrió un error enviando el formulario.'
-                        );
-
-                    formError.classList.remove('hidden');
-
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.textContent =
-                        'Enviar inscripción';
-                }
-            }
-        );
+        });
     </script>
-
 </body>
 </html>
