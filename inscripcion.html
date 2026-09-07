@@ -90,7 +90,7 @@
                         <div>
                             <label for="cedulaJugador" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Cédula o Identificación *</label>
                             <div class="relative">
-                                <input type="text" id="cedulaJugador" name="cedulaJugador" placeholder="Ej. 112340567" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                                <input type="text" id="cedulaJugador" name="id" placeholder="Ej. 112340567" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                                 <div id="tse-loader" class="hidden absolute right-3 top-2.5 text-brand-400 text-xs flex items-center gap-1 bg-slate-900 px-1">
                                     <svg class="animate-spin h-4 w-4 text-brand-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -112,29 +112,29 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="primerNombre" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre *</label>
-                            <input type="text" id="primerNombre" name="primerNombre" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="text" id="primerNombre" name="nombre" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
                             <label for="primerApellido" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Primer Apellido *</label>
-                            <input type="text" id="primerApellido" name="primerApellido" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="text" id="primerApellido" name="apellido1" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
                             <label for="segundoApellido" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Segundo Apellido *</label>
-                            <input type="text" id="segundoApellido" name="segundoApellido" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="text" id="segundoApellido" name="apellido2" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="telefonoJugador" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Teléfono del Jugador/a *</label>
-                            <input type="tel" id="telefonoJugador" name="telefonoJugador" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="tel" id="telefonoJugador" name="contacto" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
 
                         <div>
                             <label for="correoJugador" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico del Jugador/a (No usar @mep.go.cr) *</label>
-                            <input type="email" id="correoJugador" name="correoJugador" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-brand-800/60 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="email" id="correoJugador" name="correo" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-brand-800/60 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                             <p id="mep-error-jugador" class="hidden text-xs text-red-400 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="tipoInstitucion" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tipo de Centro *</label>
-                            <select id="tipoInstitucion" name="tipoInstitucion" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <select id="tipoInstitucion" name="tipoCentro" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                                 <option value="" class="bg-slate-950 text-slate-500">Seleccione...</option>
                                 <option value="Escuela" class="bg-slate-950 text-white">Escuela</option>
                                 <option value="Colegio" class="bg-slate-950 text-white">Colegio</option>
@@ -158,7 +158,7 @@
 
                         <div class="sm:col-span-2">
                             <label for="institucion" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
-                            <input type="text" id="institucion" name="institucion" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="text" id="institucion" name="centro" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
                     </div>
 
@@ -179,7 +179,7 @@
 
                         <div>
                             <label for="gradoEducativo" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Grado Educativo *</label>
-                            <select id="gradoEducativo" name="gradoEducativo" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <select id="gradoEducativo" name="grado" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                                 <option value="" class="bg-slate-950 text-slate-500">Seleccione el grado actual...</option>
                                 <optgroup label="Escuela (Primaria)" class="bg-slate-950 text-brand-400">
                                     <option value="1° Grado" class="bg-slate-950 text-white">1° Grado</option>
@@ -202,25 +202,6 @@
                                     <option value="Educación Abierta / CINDEA / IPEC" class="bg-slate-950 text-white">Educación Abierta / CINDEA / IPEC</option>
                                 </optgroup>
                             </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sección: Contacto / Encargado -->
-                <div>
-                    <h2 class="text-base font-bold text-brand-400 mb-4 pb-2 border-b border-slate-800 flex items-center gap-2 uppercase tracking-wide">
-                        <span>📞</span> Contacto / Encargado/a
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="sm:col-span-2">
-                            <label for="nombreEncargado" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre del Encargado/a *</label>
-                            <input type="text" id="nombreEncargado" name="nombreEncargado" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label for="telefono" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Número de Contacto (Encargado) *</label>
-                            <input type="tel" id="telefono" name="telefono" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
                         </div>
                     </div>
                 </div>
@@ -541,7 +522,6 @@
             const nombreCompleto = `${pNombre} ${pApellido} ${sApellido}`.trim();
 
             data.nombre = nombreCompleto;
-            data.nombreJugador = nombreCompleto;
             data.edad = calcularEdad(data.fechaNacimiento);
 
             const submitBtn = this.querySelector('button[type="submit"]');
