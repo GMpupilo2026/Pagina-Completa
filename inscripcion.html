@@ -1,79 +1,78 @@
 // --- CONSULTA MULTI-ORIGEN (WORKER -> HACIENDA FALLBACK) ---
-        let lastCedulaConsultada = '';
+let lastCedulaConsultada = '';
 
-        cedulaInput.addEventListener('input', async function() {
-            const cedula = this.value.trim().replace(/\D/g, ''); // limpia caracteres no numéricos
-            
-            if (cedula.length === 9 && cedula !== lastCedulaConsultada) {
-                lastCedulaConsultada = cedula;
-                tseLoader.classList.remove('hidden');
-                tseStatus.textContent = 'Buscando datos de identificación y fecha de nacimiento...';
-                tseStatus.className = 'text-xs text-sky-600 font-medium mt-1';
+cedulaInput.addEventListener('input', async function() {
+    const cedula = this.value.trim().replace(/\D/g, ''); // Limpia caracteres no numéricos
+    
+    if (cedula.length === 9 && cedula !== lastCedulaConsultada) {
+        lastCedulaConsultada = cedula;
+        tseLoader.classList.remove('hidden');
+        tseStatus.textContent = 'Buscando datos de identificación y fecha de nacimiento...';
+        tseStatus.className = 'text-xs text-sky-600 font-medium mt-1';
 
-                let obtenido = false;
+        let obtenido = false;
 
-                // Intento 1: A través de tu Cloudflare Worker (que puede consultar bases de datos con fecha de nacimiento)
-                try {
-                    const res = await fetch(`${WORKER_URL}?cedula=${cedula}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.success && data.persona) {
-                            pNombreInput.value = data.persona.nombre || '';
-                            pApellidoInput.value = data.persona.primerApellido || '';
-                            sApellidoInput.value = data.persona.segundoApellido || '';
-                            
-                            // Autocompletar fecha de nacimiento si viene del Worker
-                            if (data.persona.fechaNacimiento) {
-                                fechaNacimientoInput.value = data.persona.fechaNacimiento;
-                                fechaNacimientoInput.dispatchEvent(new Event('input'));
-                            }
-                            obtenido = true;
-                        }
+        // Intento 1: A través de tu Cloudflare Worker
+        try {
+            const res = await fetch(`${WORKER_URL}?cedula=${cedula}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.persona) {
+                    pNombreInput.value = data.persona.nombre || '';
+                    pApellidoInput.value = data.persona.primerApellido || '';
+                    sApellidoInput.value = data.persona.segundoApellido || '';
+                    
+                    // Autocompletar fecha de nacimiento si viene del Worker
+                    if (data.persona.fechaNacimiento) {
+                        fechaNacimientoInput.value = data.persona.fechaNacimiento;
+                        fechaNacimientoInput.dispatchEvent(new Event('input'));
                     }
-                } catch (e) {
-                    console.log('Fallo en Worker, intentando API alternativa...');
+                    obtenido = true;
                 }
-
-                // Intento 2 (Fallback): Consulta directa a la API del Ministerio de Hacienda de Costa Rica
-                // Nota: Hacienda devuelve el nombre completo, pero no la fecha de nacimiento directamente.
-                if (!obtenido) {
-                    try {
-                        const resHacienda = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
-                        if (resHacienda.ok) {
-                            const dataH = await resHacienda.json();
-                            if (dataH.nombre) {
-                                const partes = dataH.nombre.split(' ');
-                                if (partes.length >= 3) {
-                                    pNombreInput.value = partes.slice(0, partes.length - 2).join(' ');
-                                    pApellidoInput.value = partes[partes.length - 2];
-                                    sApellidoInput.value = partes[partes.length - 1];
-                                } else if (partes.length === 2) {
-                                    pNombreInput.value = partes[0];
-                                    pApellidoInput.value = partes[1];
-                                    sApellidoInput.value = '';
-                                } else {
-                                    pNombreInput.value = dataH.nombre;
-                                }
-                                obtenido = true;
-                            }
-                        }
-                    } catch (e) {
-                        console.log('Fallo en consulta de Hacienda.');
-                    }
-                }
-
-                tseLoader.classList.add('hidden');
-
-                if (obtenido) {
-                    tseStatus.textContent = '✅ Datos identificados correctamente.';
-                    tseStatus.className = 'text-xs text-emerald-600 font-medium mt-1';
-                } else {
-                    tseStatus.textContent = 'ℹ️ No se encontraron los datos automáticamente. Por favor ingresa los campos manualmente.';
-                    tseStatus.className = 'text-xs text-amber-600 font-medium mt-1';
-                }
-
-            } else if (cedula.length < 9) {
-                tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
-                tseStatus.className = 'text-xs text-slate-500 mt-1';
             }
-        });
+        } catch (e) {
+            console.log('Fallo en Worker, intentando API alternativa...');
+        }
+
+        // Intento 2 (Fallback): Consulta directa a la API de Hacienda
+        if (!obtenido) {
+            try {
+                const resHacienda = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
+                if (resHacienda.ok) {
+                    const dataH = await resHacienda.json();
+                    if (dataH.nombre) {
+                        const partes = dataH.nombre.split(' ');
+                        if (partes.length >= 3) {
+                            pNombreInput.value = partes.slice(0, partes.length - 2).join(' ');
+                            pApellidoInput.value = partes[partes.length - 2];
+                            sApellidoInput.value = partes[partes.length - 1];
+                        } else if (partes.length === 2) {
+                            pNombreInput.value = partes[0];
+                            pApellidoInput.value = partes[1];
+                            sApellidoInput.value = '';
+                        } else {
+                            pNombreInput.value = dataH.nombre;
+                        }
+                        obtenido = true;
+                    }
+                }
+            } catch (e) {
+                console.log('Fallo en consulta de Hacienda.');
+            }
+        }
+
+        tseLoader.classList.add('hidden');
+
+        if (obtenido) {
+            tseStatus.textContent = '✅ Datos identificados correctamente.';
+            tseStatus.className = 'text-xs text-emerald-600 font-medium mt-1';
+        } else {
+            tseStatus.textContent = 'ℹ️ No se encontraron los datos automáticamente. Por favor ingresa los campos manualmente.';
+            tseStatus.className = 'text-xs text-amber-600 font-medium mt-1';
+        }
+
+    } else if (cedula.length < 9) {
+        tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
+        tseStatus.className = 'text-xs text-slate-500 mt-1';
+    }
+});
