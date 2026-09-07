@@ -27,7 +27,7 @@
         }
     </script>
 </head>
-<body class="font-sans bg-brand-50 text-brand-900 min-h-screen relative">
+<body class="font-sans bg-brand-50 text-brand-900 min-h-screen">
     
     <header class="fixed top-0 left-0 right-0 z-50 bg-brand-800/95 backdrop-blur-md shadow-md">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,19 +45,18 @@
             <div class="text-center mb-10">
                 <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100 px-3 py-1 rounded-full">Formulario oficial</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Inscripción de Estudiantes</h1>
-                <p class="text-brand-700/80 mt-2">Ingrese su número de cédula para autocompletar sus datos desde el padrón.</p>
+                <p class="text-brand-700/80 mt-2">Ingrese su número de cédula para autocompletar sus datos.</p>
             </div>
 
             <form id="inscription-form" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100">
                 
-                <!-- Cédula y botón de consulta -->
                 <div>
                     <label for="cedula" class="block text-sm font-semibold text-brand-800 mb-1">Número de Cédula <span class="text-blue-500">*</span></label>
                     <div class="flex gap-2">
                         <input type="text" id="cedula" name="cedula" required placeholder="Ej. 101230456" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:ring-2 focus:ring-brand-400 bg-brand-50/30">
                         <button type="button" id="btn-consultar" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-5 rounded-lg transition whitespace-nowrap shadow">Consultar</button>
                     </div>
-                    <p id="cedula-msg" class="text-xs text-brand-600 mt-1">Presione consultar para rellenar automáticamente sus nombres y apellidos.</p>
+                    <p class="text-xs text-brand-600 mt-1">Presione consultar para rellenar automáticamente sus datos.</p>
                 </div>
 
                 <div>
@@ -76,7 +75,6 @@
                     </div>
                 </div>
 
-                <!-- Selector de Sexo -->
                 <div>
                     <label class="block text-sm font-semibold text-brand-800 mb-2">Sexo <span class="text-blue-500">*</span></label>
                     <div class="grid grid-cols-2 gap-4">
@@ -91,20 +89,18 @@
                     </div>
                 </div>
 
-                <!-- Correo y Contacto -->
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
-                        <label for="correo" class="block text-sm font-semibold text-brand-800 mb-1">Correo electrónico (Personal) <span class="text-blue-500">*</span></label>
+                        <label for="correo" class="block text-sm font-semibold text-brand-800 mb-1">Correo electrónico <span class="text-blue-500">*</span></label>
                         <input type="email" id="correo" name="correo" required placeholder="correo@gmail.com" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50/30">
                         <p id="mep-error" class="hidden text-xs text-red-600 font-semibold mt-1">⚠️ No se permiten correos @mep.go.cr</p>
                     </div>
                     <div>
-                        <label for="contacto" class="block text-sm font-semibold text-brand-800 mb-1">Teléfono de contacto <span class="text-blue-500">*</span></label>
+                        <label for="contacto" class="block text-sm font-semibold text-brand-800 mb-1">Teléfono <span class="text-blue-500">*</span></label>
                         <input type="tel" id="contacto" name="contacto" required placeholder="8888 8888" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50/30">
                     </div>
                 </div>
 
-                <!-- Provincia y Centro Educativo -->
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="provincia" class="block text-sm font-semibold text-brand-800 mb-1">Provincia <span class="text-blue-500">*</span></label>
@@ -120,38 +116,26 @@
                         </select>
                     </div>
                     <div>
-                        <label for="centro" class="block text-sm font-semibold text-brand-800 mb-1">Nombre del Centro Educativo <span class="text-blue-500">*</span></label>
-                        <input type="text" id="centro" name="centro" required placeholder="Ej. Liceo de Costa Rica" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50/30">
+                        <label for="centro" class="block text-sm font-semibold text-brand-800 mb-1">Centro Educativo <span class="text-blue-500">*</span></label>
+                        <input type="text" id="centro" name="centro" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-brand-50/30">
                     </div>
                 </div>
 
-                <!-- Fecha de Nacimiento y Grado Académico de CR -->
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
                         <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white">
-                        <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1">⚠️ Debe tener entre 11 y 19 años cumplidos.</p>
+                        <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1">⚠️ Debe tener entre 11 y 19 años.</p>
                     </div>
                     <div>
-                        <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado Académico (CR) <span class="text-blue-500">*</span></label>
+                        <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado Académico <span class="text-blue-500">*</span></label>
                         <select id="grado" name="grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-white">
                             <option value="">Selecciona tu nivel…</option>
-                            <optgroup label="Primaria">
-                                <option value="1er Grado">1.er Grado</option>
-                                <option value="2do Grado">2.do Grado</option>
-                                <option value="3er Grado">3.er Grado</option>
-                                <option value="4to Grado">4.to Grado</option>
-                                <option value="5to Grado">5.to Grado</option>
-                                <option value="6to Grado">6.to Grado</option>
-                            </optgroup>
-                            <optgroup label="Secundaria">
-                                <option value="Séptimo Año">Séptimo Año (7.º)</option>
-                                <option value="Octavo Año">Octavo Año (8.º)</option>
-                                <option value="Noveno Año">Noveno Año (9.º)</option>
-                                <option value="Décimo Año">Décimo Año (10.º)</option>
-                                <option value="Undécimo Año">Undécimo Año (11.º)</option>
-                                <option value="Duodécimo Año">Duodécimo Año (12.º - Técnico)</option>
-                            </optgroup>
+                            <option value="7mo Año">Séptimo Año (7.º)</option>
+                            <option value="8vo Año">Octavo Año (8.º)</option>
+                            <option value="9no Año">Noveno Año (9.º)</option>
+                            <option value="10mo Año">Décimo Año (10.º)</option>
+                            <option value="11mo Año">Undécimo Año (11.º)</option>
                         </select>
                     </div>
                 </div>
@@ -161,7 +145,7 @@
                 </div>
 
                 <div id="form-success" class="hidden bg-blue-50 border border-blue-200 text-brand-800 rounded-lg p-4 text-center font-medium">
-                    ✅ ¡Inscripción enviada con éxito! Nos pondremos en contacto pronto.
+                    ✅ ¡Inscripción enviada con éxito!
                 </div>
                 <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center font-medium"></div>
             </form>
@@ -169,7 +153,9 @@
     </section>
 
     <script>
-        const API_BASE_URL = 'https://tu-servidor-backend.com'; // Cambia por tu URL del backend
+        // URL real de tu Cloudflare Worker existente
+        const API_BASE_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
+        
         const cedulaInput = document.getElementById('cedula');
         const btnConsultar = document.getElementById('btn-consultar');
         const nombreInput = document.getElementById('nombre');
@@ -180,7 +166,6 @@
         const mepErrorMsg = document.getElementById('mep-error');
         const ageErrorMsg = document.getElementById('age-error');
 
-        // Función de consulta a la API del Padrón
         async function consultarCedula() {
             const cedula = cedulaInput.value.trim();
             if (cedula.length < 9) {
@@ -200,17 +185,16 @@
                     apellido2Input.value = data.apellido2 || '';
                     fechaNacimientoInput.value = data.fechaNacimiento || '';
                     
-                    // Marcar género automáticamente si el backend lo retorna
                     if (data.sexo) {
-                        const radioSexo = document.querySelector(`input[name="sexo"][value="${data.sexo}"]`);
-                        if (radioSexo) radioSexo.checked = true;
+                        const radio = document.querySelector(`input[name="sexo"][value="${data.sexo}"]`);
+                        if (radio) radio.checked = true;
                     }
                 } else {
-                    alert('Cédula no encontrada en el padrón electoral.');
+                    alert('Cédula no encontrada en los registros.');
                 }
             } catch (error) {
                 console.error("Error de conexión:", error);
-                alert('No se pudo conectar con el servidor de consulta.');
+                alert('No se pudo conectar con el servidor.');
             } finally {
                 btnConsultar.textContent = 'Consultar';
                 btnConsultar.disabled = false;
@@ -218,18 +202,10 @@
         }
 
         btnConsultar.addEventListener('click', consultarCedula);
-        cedulaInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                consultarCedula();
-            }
-        });
+        cedulaInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); consultarCedula(); } });
 
-        // Validaciones de correo y edad
-        function esCorreoMEP(email) {
-            return email.trim().toLowerCase().endsWith('@mep.go.cr');
-        }
-
+        function esCorreoMEP(email) { return email.trim().toLowerCase().endsWith('@mep.go.cr'); }
+        
         function calcularEdad(fechaStr) {
             if (!fechaStr) return null;
             const hoy = new Date();
@@ -250,10 +226,8 @@
             }
         });
 
-        // Envío del formulario completo
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const edad = calcularEdad(fechaNacimientoInput.value);
             if (edad === null || edad < 11 || edad > 19) {
                 ageErrorMsg.classList.remove('hidden');
