@@ -1,120 +1,266 @@
-<script>
-    const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
-    const correoInput = document.getElementById('correo');
-    const mepErrorMsg = document.getElementById('mep-error');
-    const fechaNacimientoInput = document.getElementById('fechaNacimiento');
-    const ageErrorMsg = document.getElementById('age-error');
-
-    // Función para verificar correos del MEP
-    function esCorreoMEP(email) {
-        return email.trim().toLowerCase().endsWith('@mep.go.cr');
-    }
-
-    // Función para calcular la edad exacta a partir de la fecha de nacimiento
-    function calcularEdad(fechaNacimientoStr) {
-        if (!fechaNacimientoStr) return null;
-        const hoy = new Date();
-        const nacimiento = new Date(fechaNacimientoStr);
-        let edad = hoy.getFullYear() - nacimiento.getFullYear();
-        const mes = hoy.getMonth() - nacimiento.getMonth();
-        
-        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-            edad--;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripción Torneo Escolar de Ajedrez 2026</title>
+    <!-- Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f0fdf4',
+                100: '#dcfce7',
+                200: '#bbf7d0',
+                600: '#16a34a',
+                700: '#15803d',
+                800: '#166534',
+                900: '#14532d',
+              }
+            }
+          }
         }
-        return edad;
-    }
+      }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
 
-    // Validación de edad: entre 11 y 19 años
-    function esEdadValida(fechaNacimientoStr) {
-        const edad = calcularEdad(fechaNacimientoStr);
-        if (edad === null || isNaN(edad)) return false;
-        return edad >= 11 && edad <= 19;
-    }
+    <div class="max-w-3xl mx-auto">
+        <!-- Encabezado -->
+        <div class="bg-brand-900 text-white rounded-t-2xl p-6 sm:p-8 shadow-lg text-center relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl select-none font-bold">♟</div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Inscripción Torneo Escolar de Ajedrez 2026</h1>
+            <p class="text-brand-100 text-sm sm:text-base max-w-xl mx-auto">Completa el formulario para registrar a un jugador/a en el torneo local.</p>
+        </div>
 
-    // Validación en tiempo real del correo
-    correoInput.addEventListener('input', function() {
-        if (esCorreoMEP(this.value)) {
-            this.classList.add('border-red-500', 'bg-red-50/50');
-            this.classList.remove('border-brand-200', 'bg-brand-50/30');
-            mepErrorMsg.classList.remove('hidden');
-            this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
-        } else {
-            this.classList.remove('border-red-500', 'bg-red-50/50');
-            this.classList.add('border-brand-200', 'bg-brand-50/30');
-            mepErrorMsg.classList.add('hidden');
-            this.setCustomValidity('');
+        <!-- Formulario principal -->
+        <div class="bg-white rounded-b-2xl shadow-xl p-6 sm:p-10 border-t border-slate-100">
+            
+            <!-- Mensaje de éxito -->
+            <div id="form-success" class="hidden mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-medium">
+                ✅ ¡Inscripción enviada exitosamente! Nos pondremos en contacto pronto.
+            </div>
+
+            <!-- Mensaje de error global -->
+            <div id="form-error" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
+                ⚠️ Ocurrió un error al enviar el formulario.
+            </div>
+
+            <form id="inscription-form" class="space-y-6">
+                
+                <!-- Sección: Datos del Jugador/a -->
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>👤</span> Datos del Jugador / Jugadora
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre Completo *</label>
+                            <input type="text" id="nombreJugador" name="nombreJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label for="cedulaJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cédula o Identificación *</label>
+                            <input type="text" id="cedulaJugador" name="cedulaJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label for="fechaNacimiento" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Fecha de Nacimiento *</label>
+                            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="age-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
+                        </div>
+
+                        <div>
+                            <label for="sexo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Sexo *</label>
+                            <select id="sexo" name="sexo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                                <option value="">Seleccione una opción...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Institución Educativa -->
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>🏫</span> Institución Educativa
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Colegio / Escuela *</label>
+                            <input type="text" id="institucion" name="institucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label for="categoria" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Categoría / Nivel *</label>
+                            <input type="text" id="categoria" name="categoria" placeholder="Ej. B-Masculino, C-Femenino..." required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Datos del Encargado / Contacto -->
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>📞</span> Contacto / Encargado/a
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreEncargado" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Encargado/a *</label>
+                            <input type="text" id="nombreEncargado" name="nombreEncargado" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Teléfono de Contacto *</label>
+                            <input type="tel" id="telefono" name="telefono" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="correo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Correo Electrónico (No usar @mep.go.cr) *</label>
+                            <input type="email" id="correo" name="correo" required class="w-full px-4 py-2.5 rounded-lg border border-brand-200 bg-brand-50/30 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="mep-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Por favor usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Envío -->
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2">
+                        Enviar inscripción
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Unificado y Corregido -->
+    <script>
+        const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
+        const correoInput = document.getElementById('correo');
+        const mepErrorMsg = document.getElementById('mep-error');
+        const fechaNacimientoInput = document.getElementById('fechaNacimiento');
+        const ageErrorMsg = document.getElementById('age-error');
+
+        // Función para verificar si es correo institucional MEP
+        function esCorreoMEP(email) {
+            return email.trim().toLowerCase().endsWith('@mep.go.cr');
         }
-    });
 
-    // Validación en tiempo real de la fecha de nacimiento
-    fechaNacimientoInput.addEventListener('input', function() {
-        if (this.value && !esEdadValida(this.value)) {
-            this.classList.add('border-red-500', 'bg-red-50/50');
-            this.classList.remove('border-brand-200', 'bg-white/90');
-            ageErrorMsg.classList.remove('hidden');
-            this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
-        } else {
-            this.classList.remove('border-red-500', 'bg-red-50/50');
-            this.classList.add('border-brand-200', 'bg-white/90');
-            ageErrorMsg.classList.add('hidden');
-            this.setCustomValidity('');
-        }
-    });
-
-    // Proceso de envío del formulario
-    document.getElementById('inscription-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        if (esCorreoMEP(correoInput.value)) {
-            mepErrorMsg.classList.remove('hidden');
-            correoInput.focus();
-            return;
+        // Función para calcular la edad exacta en años a partir de la fecha de nacimiento
+        function calcularEdad(fechaNacimientoStr) {
+            if (!fechaNacimientoStr) return null;
+            const hoy = new Date();
+            const nacimiento = new Date(fechaNacimientoStr);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+            
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+            return edad;
         }
 
-        if (!esEdadValida(fechaNacimientoInput.value)) {
-            ageErrorMsg.classList.remove('hidden');
-            fechaNacimientoInput.focus();
-            return;
+        // Validación de edad: entre 11 y 19 años
+        function esEdadValida(fechaNacimientoStr) {
+            const edad = calcularEdad(fechaNacimientoStr);
+            if (edad === null || isNaN(edad)) return false;
+            return edad >= 11 && edad <= 19;
         }
 
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData);
-        
-        // CÁLCULO Y ADICIÓN DE EDAD PARA EL WORKER:
-        data.edad = calcularEdad(data.fechaNacimiento);
-
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const successMsg = document.getElementById('form-success');
-        const errorMsg = document.getElementById('form-error');
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Enviando…';
-
-        try {
-            const res = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (res.ok) {
-                successMsg.classList.remove('hidden');
-                errorMsg.classList.add('hidden');
-                this.reset();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Validación en tiempo real del correo
+        correoInput.addEventListener('input', function() {
+            if (esCorreoMEP(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
             } else {
-                const err = await res.json().catch(() => ({}));
-                errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-brand-50/30');
+                mepErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Validación en tiempo real de la fecha de nacimiento
+        fechaNacimientoInput.addEventListener('input', function() {
+            if (this.value && !esEdadValida(this.value)) {
+                this.classList.add('border-red-500', 'bg-red-50/50');
+                this.classList.remove('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.remove('hidden');
+                this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
+            } else {
+                this.classList.remove('border-red-500', 'bg-red-50/50');
+                this.classList.add('border-brand-200', 'bg-white/90');
+                ageErrorMsg.classList.add('hidden');
+                this.setCustomValidity('');
+            }
+        });
+
+        // Envío del formulario
+        document.getElementById('inscription-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (esCorreoMEP(correoInput.value)) {
+                mepErrorMsg.classList.remove('hidden');
+                correoInput.focus();
+                return;
+            }
+
+            if (!esEdadValida(fechaNacimientoInput.value)) {
+                ageErrorMsg.classList.remove('hidden');
+                fechaNacimientoInput.focus();
+                return;
+            }
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Se calcula y agrega automáticamente la edad al objeto enviado al Worker
+            data.edad = calcularEdad(data.fechaNacimiento);
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const successMsg = document.getElementById('form-success');
+            const errorMsg = document.getElementById('form-error');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando…';
+
+            try {
+                // Petición única POST al Worker
+                const res = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    successMsg.classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    this.reset();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+                    errorMsg.classList.remove('hidden');
+                    successMsg.classList.add('hidden');
+                }
+            } catch (err) {
+                errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
                 errorMsg.classList.remove('hidden');
                 successMsg.classList.add('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar inscripción';
             }
-        } catch (err) {
-            errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
-            errorMsg.classList.remove('hidden');
-            successMsg.classList.add('hidden');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Enviar inscripción';
-        }
-    });
-</script>
+        });
+    </script>
+</body>
+</html>
