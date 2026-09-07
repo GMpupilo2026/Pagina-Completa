@@ -119,25 +119,39 @@
             <div class="text-center mb-10">
                 <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100/80 px-3 py-1 rounded-full border border-brand-200">Formulario de inscripción</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Para Inscribirse</h1>
-                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante (programa dirigido para colegios). Nos pondremos en contacto para confirmar la inscripción.</p>
+                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante. Ingresa tu cédula para autocompletar la información oficial desde el TSE.</p>
             </div>
 
             <!-- Formulario -->
             <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
                 
+                <!-- Cédula con autocompletado TSE -->
+                <div>
+                    <label for="cedula" class="block text-sm font-semibold text-brand-800 mb-1">Número de Cédula <span class="text-blue-500">*</span></label>
+                    <div class="relative">
+                        <input type="text" id="cedula" name="cedula" required placeholder="Ej. 101230456" maxlength="12" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <div id="cedula-loader" class="hidden absolute right-3 top-3.5 text-xs text-brand-600 font-semibold flex items-center gap-1">
+                            <svg class="animate-spin h-4 w-4 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Consultando TSE...
+                        </div>
+                    </div>
+                    <p class="text-xs text-brand-600/80 mt-1">Digite su número de cédula sin guiones para cargar sus datos automáticamente.</p>
+                    <p id="cedula-error" class="hidden text-xs text-red-600 font-semibold mt-1.5"></p>
+                </div>
+
                 <div>
                     <label for="nombre" class="block text-sm font-semibold text-brand-800 mb-1">Nombre <span class="text-blue-500">*</span></label>
-                    <input type="text" id="nombre" name="nombre" required placeholder="Ej. Juan " class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                    <input type="text" id="nombre" name="nombre" required readonly placeholder="Se autocompleta con la cédula" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
-                        <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 1 <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido1" name="apellido1" required placeholder="Ej. García" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Primer Apellido <span class="text-blue-500">*</span></label>
+                        <input type="text" id="apellido1" name="apellido1" required readonly placeholder="Se autocompleta" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
                     </div>
                     <div>
-                        <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 2 <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido2" name="apellido2" required placeholder="Ej. López" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Segundo Apellido <span class="text-blue-500">*</span></label>
+                        <input type="text" id="apellido2" name="apellido2" required readonly placeholder="Se autocompleta" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
                     </div>
                 </div>
 
@@ -190,21 +204,34 @@
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
-                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
-                        <p class="text-xs text-brand-600/80 mt-1">Requisito: Debe tener entre 11 y 19 años.</p>
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required readonly class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
+                        <p class="text-xs text-brand-600/80 mt-1">Cargado automáticamente del registro civil.</p>
                         <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1.5">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
                     </div>
                     <div>
-                        <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado <span class="text-blue-500">*</span></label>
+                        <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado / Nivel <span class="text-blue-500">*</span></label>
                         <select id="grado" name="grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
-                            <option value="">Selecciona…</option>
-                            <option value="5-primaria">5.º Primaria</option>
-                            <option value="6-primaria">6.º Primaria</option>
-                            <option value="1-secundaria">1.º Secundaria</option>
-                            <option value="2-secundaria">2.º Secundaria</option>
-                            <option value="3-secundaria">3.º Secundaria</option>
-                            <option value="4-secundaria">4.º Secundaria</option>
-                            <option value="bachillerato">Bachillerato</option>
+                            <option value="">Selecciona tu grado…</option>
+                            <optgroup label="Educación Primaria">
+                                <option value="1-primaria">1.º Primaria</option>
+                                <option value="2-primaria">2.º Primaria</option>
+                                <option value="3-primaria">3.º Primaria</option>
+                                <option value="4-primaria">4.º Primaria</option>
+                                <option value="5-primaria">5.º Primaria</option>
+                                <option value="6-primaria">6.º Primaria</option>
+                            </optgroup>
+                            <optgroup label="Educación Secundaria (Colegio)">
+                                <option value="7-ano">7.º Año (1.º Secundaria)</option>
+                                <option value="8-ano">8.º Año (2.º Secundaria)</option>
+                                <option value="9-ano">9.º Año (3.º Secundaria)</option>
+                                <option value="10-ano">10.º Año (4.º Secundaria)</option>
+                                <option value="11-ano">11.º Año (5.º Secundaria / Diversificado)</option>
+                                <option value="12-ano">12.º Año (Técnico / Colegios Técnicos)</option>
+                            </optgroup>
+                            <optgroup label="Otros / Educación Especial / Adultos">
+                                <option value="universidad-superior">Universitario / Superior</option>
+                                <option value="otro">Otro Nivel</option>
+                            </optgroup>
                         </select>
                     </div>
                 </div>
@@ -231,6 +258,12 @@
     <script src="js/main.js"></script>
     <script>
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
+        const cedulaInput = document.getElementById('cedula');
+        const cedulaLoader = document.getElementById('cedula-loader');
+        const cedulaErrorMsg = document.getElementById('cedula-error');
+        const nombreInput = document.getElementById('nombre');
+        const apellido1Input = document.getElementById('apellido1');
+        const apellido2Input = document.getElementById('apellido2');
         const correoInput = document.getElementById('correo');
         const mepErrorMsg = document.getElementById('mep-error');
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
@@ -262,6 +295,65 @@
             return edad >= 11 && edad <= 19;
         }
 
+        // Consulta automática al backend/TSE al digitar la cédula (cuando tenga 9 dígitos o más)
+        let cedulaTimeout;
+        cedulaInput.addEventListener('input', function() {
+            const cedulaLimpia = this.value.trim().replace(/\D/g, '');
+            
+            // Limpiar errores previos
+            cedulaErrorMsg.classList.add('hidden');
+            this.classList.remove('border-red-500', 'bg-red-50/50');
+
+            clearTimeout(cedulaTimeout);
+
+            if (cedulaLimpia.length < 9) {
+                // Limpiar campos si borra la cédula
+                nombreInput.value = '';
+                apellido1Input.value = '';
+                apellido2Input.value = '';
+                fechaNacimientoInput.value = '';
+                ageErrorMsg.classList.add('hidden');
+                return;
+            }
+
+            // Esperar 500ms tras dejar de escribir para consultar
+            cedulaTimeout = setTimeout(async () => {
+                cedulaLoader.classList.remove('hidden');
+                try {
+                    // Endpoint en tu Cloudflare Worker que maneja la consulta segura al API del TSE
+                    const res = await fetch(`${WORKER_URL}/api/consulta-cedula?cedula=${cedulaLimpia}`);
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        // Se asume que el backend retorna: { nombre, primer_apellido, segundo_apellido, fecha_nacimiento }
+                        nombreInput.value = data.nombre || '';
+                        apellido1Input.value = data.primer_apellido || data.apellido1 || '';
+                        apellido2Input.value = data.segundo_apellido || data.apellido2 || '';
+                        
+                        if (data.fecha_nacimiento) {
+                            fechaNacimientoInput.value = data.fecha_nacimiento; // Formato YYYY-MM-DD
+                            // Validar edad automáticamente
+                            if (!esEdadValida(data.fecha_nacimiento)) {
+                                ageErrorMsg.classList.remove('hidden');
+                            } else {
+                                ageErrorMsg.classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        cedulaErrorMsg.textContent = '⚠️ ' + (err.error || 'No se encontró la cédula en el padrón.');
+                        cedulaErrorMsg.classList.remove('hidden');
+                        cedulaInput.classList.add('border-red-500', 'bg-red-50/50');
+                    }
+                } catch (e) {
+                    cedulaErrorMsg.textContent = '⚠️ Error al conectar con el servicio de verificación.';
+                    cedulaErrorMsg.classList.remove('hidden');
+                } finally {
+                    cedulaLoader.classList.add('hidden');
+                }
+            }, 500);
+        });
+
         // Validación en tiempo real del correo
         correoInput.addEventListener('input', function() {
             if (esCorreoMEP(this.value)) {
@@ -273,21 +365,6 @@
                 this.classList.remove('border-red-500', 'bg-red-50/50');
                 this.classList.add('border-brand-200', 'bg-brand-50/30');
                 mepErrorMsg.classList.add('hidden');
-                this.setCustomValidity('');
-            }
-        });
-
-        // Validación en tiempo real de la fecha de nacimiento
-        fechaNacimientoInput.addEventListener('input', function() {
-            if (this.value && !esEdadValida(this.value)) {
-                this.classList.add('border-red-500', 'bg-red-50/50');
-                this.classList.remove('border-brand-200', 'bg-white/90');
-                ageErrorMsg.classList.remove('hidden');
-                this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
-            } else {
-                this.classList.remove('border-red-500', 'bg-red-50/50');
-                this.classList.add('border-brand-200', 'bg-white/90');
-                ageErrorMsg.classList.add('hidden');
                 this.setCustomValidity('');
             }
         });
