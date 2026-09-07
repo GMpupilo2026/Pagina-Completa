@@ -45,7 +45,7 @@
             <div class="text-center mb-10">
                 <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100/80 px-3 py-1 rounded-full border border-brand-200">Formulario de inscripción</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Para Inscribirse</h1>
-                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Ingresa tu número de cédula para autocompletar tus datos oficiales desde el TSE.</p>
+                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Ingresa tu número de cédula para autocompletar tus datos oficiales.</p>
             </div>
 
             <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
@@ -57,27 +57,28 @@
                         <input type="text" id="cedula" name="cedula" required placeholder="Ej. 101230456" maxlength="12" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 bg-brand-50/30">
                         <div id="cedula-loader" class="hidden absolute right-3 top-3.5 text-xs text-brand-600 font-semibold flex items-center gap-1">
                             <svg class="animate-spin h-4 w-4 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Consultando TSE...
+                            Consultando padrón...
                         </div>
                     </div>
-                    <p id="cedula-error" class="hidden text-xs text-red-600 font-semibold mt-1.5"></p>
+                    <p class="text-xs text-brand-600/80 mt-1">Si el sistema automático no encuentra el registro, los campos se habilitarán para ingreso manual.</p>
+                    <p id="cedula-error" class="hidden text-xs text-amber-600 font-semibold mt-1.5"></p>
                 </div>
 
                 <!-- Nombre -->
                 <div>
                     <label for="nombre" class="block text-sm font-semibold text-brand-800 mb-1">Nombre <span class="text-blue-500">*</span></label>
-                    <input type="text" id="nombre" name="nombre" required readonly placeholder="Se autocompleta con la cédula" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
+                    <input type="text" id="nombre" name="nombre" required placeholder="Se autocompleta o ingresa manualmente" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
                 </div>
 
                 <!-- Apellidos Separados -->
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Primer Apellido <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido1" name="apellido1" required readonly placeholder="Se autocompleta" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
+                        <input type="text" id="apellido1" name="apellido1" required placeholder="Primer apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
                     </div>
                     <div>
                         <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Segundo Apellido <span class="text-blue-500">*</span></label>
-                        <input type="text" id="apellido2" name="apellido2" required readonly placeholder="Se autocompleta" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
+                        <input type="text" id="apellido2" name="apellido2" required placeholder="Segundo apellido" class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
                     </div>
                 </div>
 
@@ -119,7 +120,7 @@
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
-                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required readonly class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-100 text-brand-800 cursor-not-allowed">
+                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 bg-gray-50 text-brand-800">
                         <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1">⚠️ Debe tener entre 11 y 19 años.</p>
                     </div>
                     <div>
@@ -190,43 +191,64 @@
         cedulaInput.addEventListener('input', function() {
             const cedulaLimpia = this.value.trim().replace(/\D/g, '');
             cedulaErrorMsg.classList.add('hidden');
-            this.classList.remove('border-red-500');
             clearTimeout(cedulaTimeout);
 
             if (cedulaLimpia.length < 9) {
-                nombreInput.value = ''; apellido1Input.value = ''; apellido2Input.value = ''; fechaNacimientoInput.value = '';
                 return;
             }
 
             cedulaTimeout = setTimeout(async () => {
                 cedulaLoader.classList.remove('hidden');
-                try {
-                    const res = await fetch(`${WORKER_URL}/api/consulta-cedula?cedula=${cedulaLimpia}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        nombreInput.value = data.nombre || '';
-                        apellido1Input.value = data.primer_apellido || '';
-                        apellido2Input.value = data.segundo_apellido || '';
-                        if (data.fecha_nacimiento) {
-                            fechaNacimientoInput.value = data.fecha_nacimiento;
-                            const edad = calcularEdad(data.fecha_nacimiento);
-                            if (edad < 11 || edad > 19) {
-                                ageErrorMsg.classList.remove('hidden');
-                            } else {
-                                ageErrorMsg.classList.add('hidden');
+                
+                // Múltiples estrategias de respaldos para consultas públicas de datos en Costa Rica
+                const apisAlternativas = [
+                    `${WORKER_URL}/api/consulta-cedula?cedula=${cedulaLimpia}`,
+                    `https://api.hacienda.go.cr/fe/ae?identificacion=${cedulaLimpia}`, // API pública de Hacienda CR (Registro de Contribuyentes / Personas)
+                    `https://tic.cr/api/cedula/${cedulaLimpia}` // Gateway alternativo público de consulta
+                ];
+
+                let datosEncontrados = false;
+
+                for (let endpoint of apisAlternativas) {
+                    try {
+                        const res = await fetch(endpoint);
+                        if (res.ok) {
+                            const data = await res.json();
+                            
+                            // Mapeo flexible según la estructura que devuelva cualquiera de los endpoints
+                            const nombre = data.nombre || data.razonSocial || data.name || '';
+                            const ape1 = data.primer_apellido || data.apellido1 || data.firstLastName || '';
+                            const ape2 = data.segundo_apellido || data.apellido2 || data.secondLastName || '';
+                            const fechaNac = data.fecha_nacimiento || data.birthDate || '';
+
+                            if (nombre) {
+                                nombreInput.value = nombre;
+                                apellido1Input.value = ape1;
+                                apellido2Input.value = ape2;
+                                if (fechaNac) {
+                                    fechaNacimientoInput.value = fechaNac;
+                                    const edad = calcularEdad(fechaNac);
+                                    if (edad < 11 || edad > 19) {
+                                        ageErrorMsg.classList.remove('hidden');
+                                    } else {
+                                        ageErrorMsg.classList.add('hidden');
+                                    }
+                                }
+                                datosEncontrados = true;
+                                break;
                             }
                         }
-                    } else {
-                        const err = await res.json().catch(() => ({}));
-                        cedulaErrorMsg.textContent = '⚠️ ' + (err.error || 'Cédula no encontrada o no autorizada en el registro.');
-                        cedulaErrorMsg.classList.remove('hidden');
-                        cedulaInput.classList.add('border-red-500');
+                    } catch (e) {
+                        // Si falla un endpoint, pasa automáticamente al siguiente de forma silenciosa
+                        continue;
                     }
-                } catch (e) {
-                    cedulaErrorMsg.textContent = '⚠️ Error de conexión con el servicio del TSE.';
+                }
+
+                cedulaLoader.classList.add('hidden');
+
+                if (!datosEncontrados) {
+                    cedulaErrorMsg.textContent = 'ℹ️ No se encontró en los registros automáticos. Por favor complete sus datos manualmente.';
                     cedulaErrorMsg.classList.remove('hidden');
-                } finally {
-                    cedulaLoader.classList.add('hidden');
                 }
             }, 500);
         });
@@ -252,12 +274,11 @@
                     document.getElementById('form-success').classList.remove('hidden');
                     this.reset();
                 } else {
-                    const err = await res.json().catch(() => ({}));
-                    document.getElementById('form-error').textContent = '⚠️ ' + (err.error || 'Error al enviar');
+                    document.getElementById('form-error').textContent = '⚠️ Error al enviar el formulario.';
                     document.getElementById('form-error').classList.remove('hidden');
                 }
             } catch (err) {
-                document.getElementById('form-error').textContent = '⚠️ Error de red.';
+                document.getElementById('form-error').textContent = '⚠️ Error de red al enviar.';
                 document.getElementById('form-error').classList.remove('hidden');
             } finally {
                 submitBtn.disabled = false;
