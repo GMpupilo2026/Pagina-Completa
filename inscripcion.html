@@ -1,760 +1,266 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Inscripción — Ajedrez Integral</title>
-
+    <title>Inscripción Torneo Escolar de Ajedrez 2026</title>
+    <!-- Tailwind CSS desde CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="css/styles.css">
-
     <script>
-
-        tailwind.config = {
-
-            theme: {
-
-                extend: {
-
-                    colors: {
-
-                        brand: {
-
-                            50: '#f0f7ff',   /* Azul ultra suave de fondo */
-
-                            100: '#e0f0fe',  /* Azul pastel suave */
-
-                            200: '#bae0fd',  /* Azul suave */
-
-                            300: '#7cc5fb',
-
-                            400: '#36a3f7',
-
-                            500: '#0c87eb',
-
-                            600: '#0067ca',
-
-                            700: '#0352a3',  /* Azul marino suave */
-
-                            800: '#074482',  /* Encabezados y acentos profundos */
-
-                            900: '#0b396b'
-
-                        },
-
-                        accent: {
-
-                            400: '#38bdf8',  /* Celeste brillante */
-
-                            500: '#0284c7',  /* Azul acento principal */
-
-                            600: '#0369a1'
-
-                        }
-
-                    },
-
-                    fontFamily: {
-
-                        sans: ['Inter', 'sans-serif'],
-
-                        serif: ['Merriweather', 'serif']
-
-                    }
-
-                }
-
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f0fdf4',
+                100: '#dcfce7',
+                200: '#bbf7d0',
+                600: '#16a34a',
+                700: '#15803d',
+                800: '#166534',
+                900: '#14532d',
+              }
             }
-
+          }
         }
-
+      }
     </script>
-
-    <style>
-
-        /* Animaciones para las piezas flotantes */
-
-        @keyframes floatSlow {
-
-            0%, 100% { transform: translateY(0px) rotate3d(1, 1, 0, 0deg); }
-
-            50% { transform: translateY(-22px) rotate3d(1, 1, 0, 15deg); }
-
-        }
-
-        @keyframes floatFast {
-
-            0%, 100% { transform: translateY(0px) rotate3d(0, 1, 1, 0deg); }
-
-            50% { transform: translateY(-16px) rotate3d(0, 1, 1, -12deg); }
-
-        }
-
-
-
-        /* Efecto 3D en las piezas con perspectiva, gradientes y sombras multidireccionales */
-
-        .piece-3d {
-
-            position: absolute;
-
-            user-select: none;
-
-            pointer-events: none;
-
-            z-index: 0;
-
-            display: inline-block;
-
-            background: linear-gradient(135deg, #e0f0fe 0%, #7cc5fb 40%, #0352a3 85%, #074482 100%);
-
-            -webkit-background-clip: text;
-
-            -webkit-text-fill-color: transparent;
-
-            filter: drop-shadow(4px 10px 12px rgba(7, 68, 130, 0.25)) 
-
-                    drop-shadow(-2px -2px 6px rgba(255, 255, 255, 0.8));
-
-            opacity: 0.35;
-
-            perspective: 1000px;
-
-        }
-
-
-
-        .float-1 { animation: floatSlow 8s ease-in-out infinite; }
-
-        .float-2 { animation: floatFast 6s ease-in-out infinite; }
-
-        .float-3 { animation: floatSlow 10s ease-in-out infinite 1s; }
-
-        .float-4 { animation: floatFast 7s ease-in-out infinite 2s; }
-
-    </style>
-
 </head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
 
-<body class="font-sans bg-brand-50 text-brand-900 min-h-screen relative overflow-x-hidden">
-
-    
-
-    <!-- Encabezado -->
-
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800/95 backdrop-blur-md shadow-md border-b border-brand-700/50">
-
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-            <div class="flex items-center justify-between h-16 md:h-20">
-
-                <a href="index.html" class="flex items-center gap-2 text-white">
-
-                    <span class="text-3xl filter drop-shadow">♟️</span>
-
-                    <span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-brand-200">Integral</span></span>
-
-                </a>
-
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-
-                    <li><a href="index.html" class="hover:text-brand-200 transition">Inicio</a></li>
-
-                    <li><a href="cursos.html" class="hover:text-brand-200 transition">Cursos</a></li>
-
-                    <li><a href="articulos.html" class="hover:text-brand-200 transition">Artículos</a></li>
-
-                    <li><a href="tablero.html" class="hover:text-brand-200 transition">Tablero</a></li>
-
-                    <li><a href="inscripcion.html" class="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition">Inscripción</a></li>
-
-                </ul>
-
-                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
-
-                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-
-                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-
-                </button>
-
-            </div>
-
-        </nav>
-
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-
-                <li><a href="index.html" class="block py-2 hover:text-brand-200">Inicio</a></li>
-
-                <li><a href="cursos.html" class="block py-2 hover:text-brand-200">Cursos</a></li>
-
-                <li><a href="articulos.html" class="block py-2 hover:text-brand-200">Artículos</a></li>
-
-                <li><a href="tablero.html" class="block py-2 hover:text-brand-200">Tablero</a></li>
-
-                <li><a href="inscripcion.html" class="block py-2 bg-brand-500 text-white font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
-
-            </ul>
-
+    <div class="max-w-3xl mx-auto">
+        <!-- Encabezado -->
+        <div class="bg-brand-900 text-white rounded-t-2xl p-6 sm:p-8 shadow-lg text-center relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl select-none font-bold">♟</div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Inscripción Torneo Escolar de Ajedrez 2026</h1>
+            <p class="text-brand-100 text-sm sm:text-base max-w-xl mx-auto">Completa el formulario para registrar a un jugador/a en el torneo local.</p>
         </div>
 
-    </header>
-
-
-
-    <!-- Contenedor Principal -->
-
-    <section class="pt-24 md:pt-28 py-16 relative">
-
-        
-
-        <!-- Piezas 3D Flotantes de Fondo -->
-
-        <span class="piece-3d float-1 text-8xl md:text-9xl top-12 left-6 md:left-16">♟</span>
-
-        <span class="piece-3d float-2 text-7xl md:text-8xl top-1/3 right-8 md:right-20">♞</span>
-
-        <span class="piece-3d float-3 text-8xl md:text-9xl bottom-20 left-10 md:left-24">♜</span>
-
-        <span class="piece-3d float-4 text-7xl md:text-8xl bottom-1/3 right-12 md:right-28">♝</span>
-
-        <span class="piece-3d float-1 text-9xl bottom-10 right-1/4 hidden md:block">♛</span>
-
-        <span class="piece-3d float-3 text-8xl top-1/2 left-4 hidden md:block">♚</span>
-
-
-
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-
-            <div class="text-center mb-10">
-
-                <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100/80 px-3 py-1 rounded-full border border-brand-200">Formulario de inscripción</span>
-
-                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Para Inscribirse</h1>
-
-                <p class="text-brand-700/80 mt-3 max-w-xl mx-auto">Completa el siguiente formulario con tus datos de estudiante (programa dirigido para colegios). Nos pondremos en contacto para confirmar la inscripción.</p>
-
+        <!-- Formulario principal -->
+        <div class="bg-white rounded-b-2xl shadow-xl p-6 sm:p-10 border-t border-slate-100">
+            
+            <!-- Mensaje de éxito -->
+            <div id="form-success" class="hidden mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm font-medium">
+                ✅ ¡Inscripción enviada exitosamente! Nos pondremos en contacto pronto.
             </div>
 
+            <!-- Mensaje de error global -->
+            <div id="form-error" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
+                ⚠️ Ocurrió un error al enviar el formulario.
+            </div>
 
-
-            <!-- Formulario -->
-
-            <form id="inscription-form" class="bg-white/85 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100/60">
-
+            <form id="inscription-form" class="space-y-6">
                 
-
+                <!-- Sección: Datos del Jugador/a -->
                 <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>👤</span> Datos del Jugador / Jugadora
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre Completo *</label>
+                            <input type="text" id="nombreJugador" name="nombreJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <label for="nombre" class="block text-sm font-semibold text-brand-800 mb-1">Nombre <span class="text-blue-500">*</span></label>
+                        <div>
+                            <label for="cedulaJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cédula o Identificación *</label>
+                            <input type="text" id="cedulaJugador" name="cedulaJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <input type="text" id="nombre" name="nombre" required placeholder="Ej. Juan " class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
+                        <div>
+                            <label for="fechaNacimiento" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Fecha de Nacimiento *</label>
+                            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="age-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
+                        </div>
 
+                        <div>
+                            <label for="sexo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Sexo *</label>
+                            <select id="sexo" name="sexo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                                <option value="">Seleccione una opción...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-
-
-                <div class="grid sm:grid-cols-2 gap-6">
-
-                    <div>
-
-                        <label for="apellido1" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 1 <span class="text-blue-500">*</span></label>
-
-                        <input type="text" id="apellido1" name="apellido1" required placeholder="Ej. García" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-
-                    </div>
-
-                    <div>
-
-                        <label for="apellido2" class="block text-sm font-semibold text-brand-800 mb-1">Apellido 2 <span class="text-blue-500">*</span></label>
-
-                        <input type="text" id="apellido2" name="apellido2" required placeholder="Ej. López" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-
-                    </div>
-
-                </div>
-
-
-
+                <!-- Sección: Institución Educativa -->
                 <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>🏫</span> Institución Educativa
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Colegio / Escuela *</label>
+                            <input type="text" id="institucion" name="institucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <label for="correo" class="block text-sm font-semibold text-brand-800 mb-1">Correo electrónico (no institucional) <span class="text-blue-500">*</span></label>
-
-                    <input type="email" id="correo" name="correo" required placeholder="ejemplo@gmail.com" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-
-                    <p class="text-xs text-brand-600/80 mt-1">Usa un correo personal (Gmail, Outlook, etc.). No se permiten correos @mep.go.cr.</p>
-
-                    <p id="mep-error" class="hidden text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">⚠️ No se permite el uso de correos institucionales del MEP (@mep.go.cr). Por favor ingresa un correo personal.</p>
-
+                        <div>
+                            <label for="categoria" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Categoría / Nivel *</label>
+                            <input type="text" id="categoria" name="categoria" placeholder="Ej. B-Masculino, C-Femenino..." required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
+                    </div>
                 </div>
 
-                
-
-                <div class="grid sm:grid-cols-2 gap-6">
-
-                    <div>
-
-                        <label for="contacto" class="block text-sm font-semibold text-brand-800 mb-1">Número de contacto <span class="text-blue-500">*</span></label>
-
-                        <input type="tel" id="contacto" name="contacto" required placeholder="8888 8888" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-
-                    </div>
-
-                    <div>
-
-                        <label for="provincia" class="block text-sm font-semibold text-brand-800 mb-1">Provincia <span class="text-blue-500">*</span></label>
-
-                        <select id="provincia" name="provincia" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
-
-                            <option value="">Selecciona…</option>
-
-                            <option value="San José">San José</option>
-
-                            <option value="Alajuela">Alajuela</option>
-
-                            <option value="Cartago">Cartago</option>
-
-                            <option value="Heredia">Heredia</option>
-
-                            <option value="Guanacaste">Guanacaste</option>
-
-                            <option value="Puntarenas">Puntarenas</option>
-
-                            <option value="Limón">Limón</option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-
+                <!-- Sección: Datos del Encargado / Contacto -->
                 <div>
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
+                        <span>📞</span> Contacto / Encargado/a
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreEncargado" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Encargado/a *</label>
+                            <input type="text" id="nombreEncargado" name="nombreEncargado" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <label class="block text-sm font-semibold text-brand-800 mb-2">Elige entre Escuela o Colegio <span class="text-blue-500">*</span></label>
+                        <div>
+                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Teléfono de Contacto *</label>
+                            <input type="tel" id="telefono" name="telefono" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-
-                        <label class="flex items-center gap-3 px-4 py-3 rounded-lg border border-brand-200 cursor-pointer hover:bg-brand-100/50 transition has-[:checked]:bg-brand-100 has-[:checked]:border-brand-500 bg-white/60">
-
-                            <input type="radio" name="tipoCentro" value="escuela" required class="w-4 h-4 text-brand-600 accent-brand-600">
-
-                            <span class="font-medium text-brand-800">🏫 Escuela</span>
-
-                        </label>
-
-                        <label class="flex items-center gap-3 px-4 py-3 rounded-lg border border-brand-200 cursor-pointer hover:bg-brand-100/50 transition has-[:checked]:bg-brand-100 has-[:checked]:border-brand-500 bg-white/60">
-
-                            <input type="radio" name="tipoCentro" value="colegio" class="w-4 h-4 text-brand-600 accent-brand-600">
-
-                            <span class="font-medium text-brand-800">🎓 Colegio</span>
-
-                        </label>
-
+                        <div class="sm:col-span-2">
+                            <label for="correo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Correo Electrónico (No usar @mep.go.cr) *</label>
+                            <input type="email" id="correo" name="correo" required class="w-full px-4 py-2.5 rounded-lg border border-brand-200 bg-brand-50/30 focus:ring-2 focus:ring-brand-600 focus:border-transparent outline-none transition text-sm">
+                            <p id="mep-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Por favor usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
+                        </div>
                     </div>
-
                 </div>
 
-
-
-                <div>
-
-                    <label for="centro" class="block text-sm font-semibold text-brand-800 mb-1">Nombre del Colegio o Escuela <span class="text-blue-500">*</span></label>
-
-                    <input type="text" id="centro" name="centro" required placeholder="Ej. Colegio San Ignacio" class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-brand-50/30">
-
-                </div>
-
-
-
-                <div class="grid sm:grid-cols-2 gap-6">
-
-                    <div>
-
-                        <label for="fechaNacimiento" class="block text-sm font-semibold text-brand-800 mb-1">Fecha de nacimiento <span class="text-blue-500">*</span></label>
-
-                        <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
-
-                        <p class="text-xs text-brand-600/80 mt-1">Requisito: Debe tener entre 11 y 19 años.</p>
-
-                        <p id="age-error" class="hidden text-xs text-red-600 font-semibold mt-1.5">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
-
-                    </div>
-
-                    <div>
-
-                        <label for="grado" class="block text-sm font-semibold text-brand-800 mb-1">Grado <span class="text-blue-500">*</span></label>
-
-                        <select id="grado" name="grado" required class="w-full px-4 py-3 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition bg-white/90 text-brand-800">
-
-                            <option value="">Selecciona…</option>
-
-                            <option value="5-primaria">5.º Primaria</option>
-
-                            <option value="6-primaria">6.º Primaria</option>
-
-                            <option value="1-secundaria">1.º Secundaria</option>
-
-                            <option value="2-secundaria">2.º Secundaria</option>
-
-                            <option value="3-secundaria">3.º Secundaria</option>
-
-                            <option value="4-secundaria">4.º Secundaria</option>
-
-                            <option value="bachillerato">Bachillerato</option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-
+                <!-- Botón de Envío -->
                 <div class="pt-4">
-
-                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl text-lg transition-all hover:scale-[1.01] shadow-lg shadow-brand-500/20">Enviar inscripción</button>
-
+                    <button type="submit" class="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2">
+                        Enviar inscripción
+                    </button>
                 </div>
-
-
-
-                <div id="form-success" class="hidden bg-blue-50 border border-blue-200 text-brand-800 rounded-lg p-4 text-center font-medium">
-
-                    ✅ ¡Inscripción enviada con éxito! Te contactaremos pronto al correo proporcionado.
-
-                </div>
-
-                <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center font-medium"></div>
 
             </form>
-
         </div>
+    </div>
 
-    </section>
-
-
-
-    <!-- Pie de página -->
-
-    <footer class="bg-brand-900 text-brand-200 py-8 relative z-10 border-t border-brand-800">
-
-        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-
-            <p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p>
-
-        </div>
-
-    </footer>
-
-
-
-    <script src="js/main.js"></script>
-
+    <!-- JavaScript Unificado y Corregido -->
     <script>
-
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
-
         const correoInput = document.getElementById('correo');
-
         const mepErrorMsg = document.getElementById('mep-error');
-
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
-
         const ageErrorMsg = document.getElementById('age-error');
 
-
-
-        // Función para verificar correos del MEP
-
+        // Función para verificar si es correo institucional MEP
         function esCorreoMEP(email) {
-
             return email.trim().toLowerCase().endsWith('@mep.go.cr');
-
         }
 
-
-
-        // Función para calcular la edad exacta a partir de la fecha de nacimiento
-
+        // Función para calcular la edad exacta en años a partir de la fecha de nacimiento
         function calcularEdad(fechaNacimientoStr) {
-
             if (!fechaNacimientoStr) return null;
-
             const hoy = new Date();
-
             const nacimiento = new Date(fechaNacimientoStr);
-
             let edad = hoy.getFullYear() - nacimiento.getFullYear();
-
             const mes = hoy.getMonth() - nacimiento.getMonth();
-
             
-
             if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-
                 edad--;
-
             }
-
             return edad;
-
         }
 
-
-
-        // Validación de edad: mayor o igual a 11 y menor o igual a 19 (11 <= edad <= 19)
-
+        // Validación de edad: entre 11 y 19 años
         function esEdadValida(fechaNacimientoStr) {
-
             const edad = calcularEdad(fechaNacimientoStr);
-
             if (edad === null || isNaN(edad)) return false;
-
             return edad >= 11 && edad <= 19;
-
         }
-
-
 
         // Validación en tiempo real del correo
-
         correoInput.addEventListener('input', function() {
-
             if (esCorreoMEP(this.value)) {
-
                 this.classList.add('border-red-500', 'bg-red-50/50');
-
                 this.classList.remove('border-brand-200', 'bg-brand-50/30');
-
                 mepErrorMsg.classList.remove('hidden');
-
                 this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
-
             } else {
-
                 this.classList.remove('border-red-500', 'bg-red-50/50');
-
                 this.classList.add('border-brand-200', 'bg-brand-50/30');
-
                 mepErrorMsg.classList.add('hidden');
-
                 this.setCustomValidity('');
-
             }
-
         });
-
-
 
         // Validación en tiempo real de la fecha de nacimiento
-
         fechaNacimientoInput.addEventListener('input', function() {
-
             if (this.value && !esEdadValida(this.value)) {
-
                 this.classList.add('border-red-500', 'bg-red-50/50');
-
                 this.classList.remove('border-brand-200', 'bg-white/90');
-
                 ageErrorMsg.classList.remove('hidden');
-
                 this.setCustomValidity('La persona inscrita debe tener entre 11 y 19 años cumplidos.');
-
             } else {
-
                 this.classList.remove('border-red-500', 'bg-red-50/50');
-
                 this.classList.add('border-brand-200', 'bg-white/90');
-
                 ageErrorMsg.classList.add('hidden');
-
                 this.setCustomValidity('');
-
             }
-
         });
 
-
-
-        // Proceso de envío del formulario
-
+        // Envío del formulario
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
-
             e.preventDefault();
 
-
-
-            // Verificaciones previas
-
             if (esCorreoMEP(correoInput.value)) {
-
                 mepErrorMsg.classList.remove('hidden');
-
                 correoInput.focus();
-
                 return;
-
             }
-
-
 
             if (!esEdadValida(fechaNacimientoInput.value)) {
-
                 ageErrorMsg.classList.remove('hidden');
-
                 fechaNacimientoInput.focus();
-
                 return;
-
             }
-
-
 
             const formData = new FormData(this);
-
             const data = Object.fromEntries(formData);
+            
+            // Se calcula y agrega automáticamente la edad al objeto enviado al Worker
+            data.edad = calcularEdad(data.fechaNacimiento);
 
             const submitBtn = this.querySelector('button[type="submit"]');
-
             const successMsg = document.getElementById('form-success');
-
             const errorMsg = document.getElementById('form-error');
 
-
-
             submitBtn.disabled = true;
-
             submitBtn.textContent = 'Enviando…';
 
-
-
-            const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
-
-
-
-try {
-
-  const res = await fetch(WORKER_URL, {
-
-    method: 'POST',
-
-    headers: { 'Content-Type': 'application/json' },
-
-    body: JSON.stringify(data)
-
-  });
-
-
-
-  if (res.ok) {
-
-    successMsg.classList.remove('hidden');
-
-    errorMsg.classList.add('hidden');
-
-    this.reset();
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  } else {
-
-    const err = await res.json().catch(() => ({}));
-
-    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
-
-    errorMsg.classList.remove('hidden');
-
-    successMsg.classList.add('hidden');
-
-  }
-
-} catch (err) {
-
-  errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
-
-  errorMsg.classList.remove('hidden');
-
-  successMsg.classList.add('hidden');
-
-} finally {
-
-  submitBtn.disabled = false;
-
-  submitBtn.textContent = 'Enviar Inscripción';
-
-}try {
-
-                const res = await fetch(WORKER_URL + '/api/inscripciones', {
-
+            try {
+                // Petición única POST al Worker
+                const res = await fetch(WORKER_URL, {
                     method: 'POST',
-
                     headers: { 'Content-Type': 'application/json' },
-
                     body: JSON.stringify(data)
-
                 });
 
-
-
                 if (res.ok) {
-
                     successMsg.classList.remove('hidden');
-
                     errorMsg.classList.add('hidden');
-
                     this.reset();
-
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-
                 } else {
-
                     const err = await res.json().catch(() => ({}));
-
                     errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
-
                     errorMsg.classList.remove('hidden');
-
+                    successMsg.classList.add('hidden');
                 }
-
             } catch (err) {
-
-                // Fallback visual en caso de que la URL del Worker no esté configurada aún
-
-                successMsg.classList.remove('hidden');
-
-                errorMsg.classList.add('hidden');
-
-                this.reset();
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
+                errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+                successMsg.classList.add('hidden');
             } finally {
-
                 submitBtn.disabled = false;
-
                 submitBtn.textContent = 'Enviar inscripción';
-
             }
-
         });
-
     </script>
-
 </body>
-
-</html> 
-
+</html>
