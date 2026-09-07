@@ -40,9 +40,9 @@
     <section class="pt-28 py-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center mb-10">
-                <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100 px-3 py-1 rounded-full">Consulta automatizada</span>
+                <span class="text-brand-600 font-semibold uppercase tracking-wide text-sm bg-brand-100 px-3 py-1 rounded-full">Sistema de Matrícula</span>
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 mt-3">Registro de Participantes</h1>
-                <p class="text-brand-700/80 mt-2">Digite su número de cédula sin guiones ni espacios para autocompletar el formulario.</p>
+                <p class="text-brand-700/80 mt-2">Digite su número de cédula para autocompletar el formulario.</p>
             </div>
 
             <form id="inscription-form" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-10 space-y-6 border border-brand-100">
@@ -191,7 +191,7 @@
                 }
             } catch (error) {
                 console.error("Error de conexión:", error);
-                alert('Error de conexión. Verifique que su dispositivo tenga acceso a Internet.');
+                alert('Error de conexión con el servidor.');
             } finally {
                 btnConsultar.textContent = 'Consultar';
                 btnConsultar.disabled = false;
