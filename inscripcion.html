@@ -320,7 +320,34 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Enviando…';
 
-            try {
+            const WORKER_URL = 'https://ajedrez-worker-cr.TU-SUBDOMINIO.workers.dev';
+
+try {
+  const res = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (res.ok) {
+    successMsg.classList.remove('hidden');
+    errorMsg.classList.add('hidden');
+    this.reset();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    const err = await res.json().catch(() => ({}));
+    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+    errorMsg.classList.remove('hidden');
+    successMsg.classList.add('hidden');
+  }
+} catch (err) {
+  errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
+  errorMsg.classList.remove('hidden');
+  successMsg.classList.add('hidden');
+} finally {
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Enviar Inscripción';
+}try {
                 const res = await fetch(WORKER_URL + '/api/inscripciones', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
