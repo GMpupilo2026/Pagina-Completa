@@ -37,10 +37,12 @@
 
     <div class="max-w-3xl mx-auto relative z-10 w-full mb-8">
         
-        <!-- Barra de Identidad / Encabezado Estilo ajedrez-integral.com con Logo e Interruptor de Tema -->
+        <!-- Barra de Identidad / Encabezado Estilo ajedrez-integral.com con Icono original y Selector de Tema -->
         <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 py-4 rounded-t-2xl border-t border-x border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl transition-colors duration-300">
             <div class="flex items-center gap-3">
-                <img src="Ajedrezintegral.png" alt="Oscar Angulo Cubero - Profesional de Ajedrez" class="w-12 h-12 sm:w-14 sm:h-14 object-contain rounded-xl bg-slate-900/5 dark:bg-white/5 p-1 border border-slate-200 dark:border-slate-800">
+                <div class="bg-gradient-to-br from-brand-500 to-brand-700 p-2.5 rounded-xl shadow-lg shadow-brand-500/20 text-white text-xl flex items-center justify-center">
+                    ♟️
+                </div>
                 <div>
                     <span class="font-black text-slate-900 dark:text-white tracking-wider text-base sm:text-lg block">AJEDREZ INTEGRAL</span>
                     <span class="text-xs text-brand-600 dark:text-brand-400 font-medium">Plataforma Oficial de Torneos</span>
@@ -277,7 +279,6 @@
             }
         }
 
-        // Revisar preferencia guardada o estado por defecto (dark)
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             htmlElement.classList.remove('dark');
@@ -435,7 +436,6 @@
         const institucionSelect = document.getElementById('institucionSelect');
         const institucionCustom = document.getElementById('institucionCustom');
 
-        // Manejar opción "Otro" para mostrar campo de texto personalizado
         institucionSelect.addEventListener('change', function() {
             if (this.value === 'Otro') {
                 institucionCustom.classList.remove('hidden');
@@ -449,7 +449,6 @@
             }
         });
 
-        // Inicializar el valor oculto si ya hay algo seleccionado
         institucionCustom.value = institucionSelect.value;
 
         const mepErrorJugadorMsg = document.getElementById('mep-error-jugador');
@@ -479,11 +478,10 @@
             return edad >= 11 && edad <= 19;
         }
 
-        // --- CONSULTA MULTI-ORIGEN (WORKER -> HACIENDA FALLBACK) ---
         let lastCedulaConsultada = '';
 
         cedulaInput.addEventListener('input', async function() {
-            const cedula = this.value.trim().replace(/\D/g, ''); // limpia caracteres no numéricos
+            const cedula = this.value.trim().replace(/\D/g, '');
             
             if (cedula.length === 9 && cedula !== lastCedulaConsultada) {
                 lastCedulaConsultada = cedula;
@@ -493,7 +491,6 @@
 
                 let obtenido = false;
 
-                // Intento 1: A través de tu Cloudflare Worker
                 try {
                     const res = await fetch(`${WORKER_URL}?cedula=${cedula}`);
                     if (res.ok) {
@@ -513,7 +510,6 @@
                     console.log('Fallo en Worker, intentando API alternativa...');
                 }
 
-                // Intento 2 (Fallback): Consulta directa a la API del Ministerio de Hacienda de Costa Rica
                 if (!obtenido) {
                     try {
                         const resHacienda = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${cedula}`);
@@ -556,7 +552,6 @@
             }
         });
 
-        // Validaciones en tiempo real
         correoJugadorInput.addEventListener('input', function() {
             if (esCorreoMEP(this.value)) {
                 this.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-950/30');
@@ -585,7 +580,6 @@
             }
         });
 
-        // Envío del Formulario
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
