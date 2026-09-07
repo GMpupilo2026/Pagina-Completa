@@ -100,18 +100,18 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <label for="primerNombre" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre *</label>
-                            <input type="text" id="primerNombre" name="primerNombre" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="nombre" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre *</label>
+                            <input type="text" id="nombre" name="nombre" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
                         <div>
-                            <label for="primerApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
-                            <input type="text" id="primerApellido" name="primerApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="apellido1" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
+                            <input type="text" id="apellido1" name="apellido1" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
                         <div>
-                            <label for="segundoApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
-                            <input type="text" id="segundoApellido" name="segundoApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="apellido2" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
+                            <input type="text" id="apellido2" name="apellido2" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
                     </div>
                 </div>
@@ -124,8 +124,8 @@
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <label for="tipoInstitucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Tipo de Centro *</label>
-                            <select id="tipoInstitucion" name="tipoInstitucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="tipoCentro" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Tipo de Centro *</label>
+                            <select id="tipoCentro" name="tipoCentro" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                                 <option value="">Seleccione...</option>
                                 <option value="Escuela">Escuela</option>
                                 <option value="Colegio">Colegio</option>
@@ -133,8 +133,8 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
-                            <input type="text" id="institucion" name="institucion" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="centro" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
+                            <input type="text" id="centro" name="centro" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
                     </div>
 
@@ -154,8 +154,8 @@
                         </div>
 
                         <div>
-                            <label for="gradoEducativo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Grado Educativo *</label>
-                            <select id="gradoEducativo" name="gradoEducativo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="grado" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Grado Educativo *</label>
+                            <select id="grado" name="grado" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                                 <option value="">Seleccione el grado actual...</option>
                                 <optgroup label="Escuela (Primaria)">
                                     <option value="1° Grado">1° Grado</option>
@@ -195,8 +195,8 @@
                         </div>
 
                         <div>
-                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Número de Contacto *</label>
-                            <input type="tel" id="telefono" name="telefono" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="contacto" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Número de Contacto *</label>
+                            <input type="tel" id="contacto" name="contacto" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
                         <div class="sm:col-span-2">
@@ -350,9 +350,9 @@
     <script>
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const cedulaInput = document.getElementById('cedulaJugador');
-        const pNombreInput = document.getElementById('primerNombre');
-        const pApellidoInput = document.getElementById('primerApellido');
-        const sApellidoInput = document.getElementById('segundoApellido');
+        const nombreInput = document.getElementById('nombre');
+        const apellido1Input = document.getElementById('apellido1');
+        const apellido2Input = document.getElementById('apellido2');
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
         const correoInput = document.getElementById('correo');
 
@@ -403,9 +403,9 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data.success && data.persona) {
-                            pNombreInput.value = data.persona.nombre || '';
-                            pApellidoInput.value = data.persona.primerApellido || '';
-                            sApellidoInput.value = data.persona.segundoApellido || '';
+                            nombreInput.value = data.persona.nombre || '';
+                            apellido1Input.value = data.persona.primerApellido || '';
+                            apellido2Input.value = data.persona.segundoApellido || '';
                             if (data.persona.fechaNacimiento) {
                                 fechaNacimientoInput.value = data.persona.fechaNacimiento;
                                 fechaNacimientoInput.dispatchEvent(new Event('input'));
@@ -426,15 +426,15 @@
                             if (dataH.nombre) {
                                 const partes = dataH.nombre.split(' ');
                                 if (partes.length >= 3) {
-                                    pNombreInput.value = partes.slice(0, partes.length - 2).join(' ');
-                                    pApellidoInput.value = partes[partes.length - 2];
-                                    sApellidoInput.value = partes[partes.length - 1];
+                                    nombreInput.value = partes.slice(0, partes.length - 2).join(' ');
+                                    apellido1Input.value = partes[partes.length - 2];
+                                    apellido2Input.value = partes[partes.length - 1];
                                 } else if (partes.length === 2) {
-                                    pNombreInput.value = partes[0];
-                                    pApellidoInput.value = partes[1];
-                                    sApellidoInput.value = '';
+                                    nombreInput.value = partes[0];
+                                    apellido1Input.value = partes[1];
+                                    apellido2Input.value = '';
                                 } else {
-                                    pNombreInput.value = dataH.nombre;
+                                    nombreInput.value = dataH.nombre;
                                 }
                                 obtenido = true;
                             }
@@ -508,13 +508,7 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            const pNombre = pNombreInput.value.trim();
-            const pApellido = pApellidoInput.value.trim();
-            const sApellido = sApellidoInput.value.trim();
-            const nombreCompleto = `${pNombre} ${pApellido} ${sApellido}`.trim();
-
-            data.nombre = nombreCompleto;
-            data.nombreJugador = nombreCompleto;
+            // Asignar el cálculo de la edad para que coincida con la columna 'edad'
             data.edad = calcularEdad(data.fechaNacimiento);
 
             const submitBtn = this.querySelector('button[type="submit"]');
