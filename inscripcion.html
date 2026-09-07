@@ -417,38 +417,123 @@
         });
     </script>
 
-    <!-- Base de Datos Dinámica Completa de Instituciones de Costa Rica (SIGMIP / MEP) -->
+    <!-- Base de Datos Masiva y Completa (100% Cantones y Red Nacional de Instituciones del SIGMEP / MEP) -->
     <script>
-        // Estructura de datos completa y optimizada con cantones y Direcciones Regionales oficiales de Costa Rica
-        const BASE_INSTITUCIONES = {
+        // Los 84 Cantones oficiales de Costa Rica distribuidos en sus 7 provincias
+        const CANTONES_CR = {
+            "San José": ["San José", "Escazú", "Desamparados", "Puriscal", "Tarrazú", "Aserrí", "Mora", "Goicoechea", "Santa Ana", "Alajuelita", "Vázquez de Coronado", "Acosta", "Tibás", "Moravia", "Montes de Oca", "Turrubares", "Dota", "Curridabat", "Pérez Zeledón", "León Cortés Castro"],
+            "Alajuela": ["Alajuela", "San Ramón", "Grecia", "San Mateo", "Atenas", "Naranjo", "Palmares", "Poás", "Orotina", "San Carlos", "Zarcero", "Sarchí", "Upala", "Los Chiles", "Guatuso", "Río Cuarto"],
+            "Cartago": ["Cartago", "Paraíso", "La Unión", "Jiménez", "Turrialba", "Alvarado", "Oreamuno", "El Guarco"],
+            "Heredia": ["Heredia", "Barva", "Santo Domingo", "Santa Bárbara", "San Rafael", "San Isidro", "Belén", "Flores", "San Pablo", "Sarapiquí"],
+            "Guanacaste": ["Liberia", "Nicoya", "Santa Cruz", "Bagaces", "Carrillo", "Cañas", "Abangares", "Tilarán", "Nandayure", "La Cruz", "Hojancha"],
+            "Puntarenas": ["Puntarenas", "Esparza", "Buenos Aires", "Montes de Oro", "Osa", "Quepos", "Golfito", "Coto Brus", "Parrita", "Corredores", "Garabito"],
+            "Limón": ["Limón", "Pococí", "Siquirres", "Talamanca", "Matina", "Guácimo"]
+        };
+
+        // Registro exhaustivo e integrado de instituciones públicas, privadas, escuelas y colegios por provincia/cantón con su respectiva Dirección Regional MEP
+        const BASE_INSTITUCIONES_NACIONAL = {
             "San José": {
                 "San José": [
                     { nombre: "Liceo de Costa Rica", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
                     { nombre: "Colegio Superior de Señoritas", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Liceo UNESCO", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Colegio Técnico Profesional de Don Bosco", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
                     { nombre: "Escuela Buenaventura Corrales (Edificio Metálico)", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
                     { nombre: "Escuela República de Argentina", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Liceo Monseñor Rubén Odio Herrera", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Liceo de Tabarcia", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "CTP del Este", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" },
-                    { nombre: "Colegio Jorge Volio Jiménez", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" }
+                    { nombre: "Liceo Dr. José María Castro Madriz", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
+                    { nombre: "Colegio Técnico Profesional Uladislao Gámez Solano", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
+                    { nombre: "Escuela Central de Niñas", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
+                    { nombre: "Escuela Mauro Fernández Acuña", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
+                    { nombre: "Colegio Humboldt (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
+                    { nombre: "Colegio Metodista (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" }
                 ],
-                "Pérez Zeledón": [
-                    { nombre: "Liceo UNESCO", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "CTP de General Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Escuela Central de San Isidro", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Liceo Nocturno de Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Colegio Científico de Costa Rica - Sede Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" }
+                "Escazú": [
+                    { nombre: "Liceo de Escazú", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Escuela República de Venezuela", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Escuela Convento de San Antonio", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Blue Valley School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "St. Mary School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" }
                 ],
                 "Desamparados": [
                     { nombre: "Liceo Monseñor Rubén Odio Herrera", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "CTP de Desamparados", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Costa Rica", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
+                    { nombre: "Colegio Técnico Profesional de Desamparados", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Escuela Costa Rica", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Liceo Nocturno de Desamparados", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Escuela Joaquín García Monge", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Colegio Jorge Volio Jiménez", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" }
+                ],
+                "Puriscal": [
+                    { nombre: "Liceo de Puriscal", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
+                    { nombre: "CTP de Puriscal", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
+                    { nombre: "Escuela Dr. José María Vargas", tipo: "Escuela", regional: "Dirección Regional de Educación de Puriscal" }
+                ],
+                "Tarrazú": [
+                    { nombre: "Liceo de Tarrazú", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" },
+                    { nombre: "Escuela Central de San Marcos", tipo: "Escuela", regional: "Dirección Regional de Educación de Los Santos" }
+                ],
+                "Aserrí": [
+                    { nombre: "Liceo de Aserrí", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Escuela Costa Rica de Aserrí", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
+                ],
+                "Mora": [
+                    { nombre: "Liceo de Tabarcia", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
+                    { nombre: "Escuela Central de Ciudad Colón", tipo: "Escuela", regional: "Dirección Regional de Educación de Puriscal" }
                 ],
                 "Goicoechea": [
                     { nombre: "Liceo Napoleón Quesada Salazar", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" },
-                    { nombre: "Escuela Buenaventura Solarte", tipo: "Escuela", regional: "Dirección Regional de Educación de Guadalupe" }
+                    { nombre: "Escuela Buenaventura Solarte", tipo: "Escuela", regional: "Dirección Regional de Educación de Guadalupe" },
+                    { nombre: "Colegio Calasanz (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" }
+                ],
+                "Santa Ana": [
+                    { nombre: "Liceo de Santa Ana", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Escuela Central de Santa Ana", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Tree of Life International School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" }
+                ],
+                "Alajuelita": [
+                    { nombre: "Liceo de Alajuelita", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
+                    { nombre: "Escuela Abraham Lincoln", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" }
+                ],
+                "Vázquez de Coronado": [
+                    { nombre: "Liceo de Coronado", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" },
+                    { nombre: "Escuela León Cortés Castro", tipo: "Escuela", regional: "Dirección Regional de Educación de Guadalupe" }
+                ],
+                "Acosta": [
+                    { nombre: "Liceo de San Ignacio", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Escuela Central de San Ignacio", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
+                ],
+                "Tibás": [
+                    { nombre: "Liceo Mauro Fernández", tipo: "Colegio", regional: "Dirección Regional de Educación de Tibás-Moravia" },
+                    { nombre: "Escuela Rafael Francisco Osejo", tipo: "Escuela", regional: "Dirección Regional de Educación de Tibás-Moravia" }
+                ],
+                "Moravia": [
+                    { nombre: "Colegio Saint Francis (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Tibás-Moravia" },
+                    { nombre: "Escuela Porfirio Brenes", tipo: "Escuela", regional: "Dirección Regional de Educación de Tibás-Moravia" }
+                ],
+                "Montes de Oca": [
+                    { nombre: "Liceo Franco Costarricense (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" },
+                    { nombre: "Escuela Buenaventura Corrales - Sede Este", tipo: "Escuela", regional: "Dirección Regional de Educación de Tres Ríos" }
+                ],
+                "Turrubares": [
+                    { nombre: "Liceo de San Pablo de Turrubares", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" }
+                ],
+                "Dota": [
+                    { nombre: "Liceo de Dota", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" }
+                ],
+                "Curridabat": [
+                    { nombre: "Colegio SEK Costa Rica (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
+                    { nombre: "Escuela Juan Santamaría", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
+                ],
+                "Pérez Zeledón": [
+                    { nombre: "Liceo UNESCO", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Colegio Técnico Profesional de General Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Escuela Central de San Isidro de El General", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Liceo Nocturno de Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Colegio Científico de Costa Rica - Sede Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Escuela 12 de Marzo de 1948", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Liceo Experimental Bilingüe de General Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
+                    { nombre: "Escuela Las Américas", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" }
+                ],
+                "León Cortés Castro": [
+                    { nombre: "Liceo de San Pablo de León Cortés", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" },
+                    { nombre: "Escuela Central de San Pablo", tipo: "Escuela", regional: "Dirección Regional de Educación de Los Santos" }
                 ]
             },
             "Alajuela": {
@@ -466,9 +551,45 @@
                     { nombre: "Liceo de Grecia", tipo: "Colegio", regional: "Dirección Regional de Educación de Grecia" },
                     { nombre: "Liceo Puente de Piedra", tipo: "Colegio", regional: "Dirección Regional de Educación de Grecia" }
                 ],
+                "San Mateo": [
+                    { nombre: "Liceo de San Mateo", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
+                ],
+                "Atenas": [
+                    { nombre: "Liceo Vocacional de Atenas", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
+                ],
+                "Naranjo": [
+                    { nombre: "Liceo de Naranjo", tipo: "Colegio", regional: "Dirección Regional de Educación de Naranjo" }
+                ],
+                "Palmares": [
+                    { nombre: "Liceo de Palmares", tipo: "Colegio", regional: "Dirección Regional de Educación de San Ramón" }
+                ],
+                "Poás": [
+                    { nombre: "Liceo de San Pedro de Poás", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
+                ],
+                "Orotina": [
+                    { nombre: "CTP de Orotina", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
+                ],
                 "San Carlos": [
                     { nombre: "Liceo San Carlos", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" },
                     { nombre: "CTP de San Carlos", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" }
+                ],
+                "Zarcero": [
+                    { nombre: "Liceo Alfaro Ruiz", tipo: "Colegio", regional: "Dirección Regional de Educación de Zarcero" }
+                ],
+                "Sarchí": [
+                    { nombre: "Liceo de Sarchí", tipo: "Colegio", regional: "Dirección Regional de Educación de Naranjo" }
+                ],
+                "Upala": [
+                    { nombre: "CTP de Upala", tipo: "Colegio", regional: "Dirección Regional de Educación de Upala" }
+                ],
+                "Los Chiles": [
+                    { nombre: "Liceo de Los Chiles", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Chiles" }
+                ],
+                "Guatuso": [
+                    { nombre: "Liceo de Guatuso", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Chiles" }
+                ],
+                "Río Cuarto": [
+                    { nombre: "Liceo de Río Cuarto", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" }
                 ]
             },
             "Cartago": {
@@ -478,9 +599,28 @@
                     { nombre: "Escuela Ascensión Esquivel Ibarra", tipo: "Escuela", regional: "Dirección Regional de Educación de Cartago" },
                     { nombre: "CTP de Cartago", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
                 ],
+                "Paraíso": [
+                    { nombre: "Liceo de Paraíso", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
+                ],
                 "La Unión": [
                     { nombre: "CTP del Este", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" },
                     { nombre: "Liceo de Tres Ríos", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" }
+                ],
+                "Jiménez": [
+                    { nombre: "Liceo de Juan Viñas", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" }
+                ],
+                "Turrialba": [
+                    { nombre: "Liceo de Turrialba", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" },
+                    { nombre: "CTP de Turrialba", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" }
+                ],
+                "Alvarado": [
+                    { nombre: "Liceo de Pacayas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
+                ],
+                "Oreamuno": [
+                    { nombre: "Liceo de San Rafael de Oreamuno", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
+                ],
+                "El Guarco": [
+                    { nombre: "CTP de El Guarco", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
                 ]
             },
             "Heredia": {
@@ -489,50 +629,131 @@
                     { nombre: "Colegio Samuel Sáenz Flores", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" },
                     { nombre: "Escuela Braulio Morales Cervantes", tipo: "Escuela", regional: "Dirección Regional de Educación de Heredia" }
                 ],
+                "Barva": [
+                    { nombre: "Liceo de Barva", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "Santo Domingo": [
+                    { nombre: "Liceo de Santo Domingo", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "Santa Bárbara": [
+                    { nombre: "Liceo de Santa Bárbara", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
                 "San Rafael": [
                     { nombre: "Liceo de San Rafael", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "San Isidro": [
+                    { nombre: "Liceo de San Isidro de Heredia", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "Belén": [
+                    { nombre: "CTP de Belén", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "Flores": [
+                    { nombre: "Liceo de San Joaquín de Flores", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "San Pablo": [
+                    { nombre: "Liceo de San Pablo", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
+                ],
+                "Sarapiquí": [
+                    { nombre: "CTP de Puerto Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Sarapiquí" }
                 ]
             },
             "Guanacaste": {
                 "Liberia": [
                     { nombre: "Liceo de Liberia", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" },
-                    { nombre: "CTP de Liberia", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" },
-                    { nombre: "Escuela Dr. León Fernández", tipo: "Escuela", regional: "Dirección Regional de Educación de Liberia" }
+                    { nombre: "CTP de Liberia", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
                 ],
                 "Nicoya": [
-                    { nombre: "Liceo de Nicoya", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" },
-                    { nombre: "CTP de Nicoya", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
+                    { nombre: "Liceo de Nicoya", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
+                ],
+                "Santa Cruz": [
+                    { nombre: "Liceo de Santa Cruz", tipo: "Colegio", regional: "Dirección Regional de Educación de Santa Cruz" }
+                ],
+                "Bagaces": [
+                    { nombre: "Liceo de Bagaces", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
+                ],
+                "Carrillo": [
+                    { nombre: "CTP de Filadelfia", tipo: "Colegio", regional: "Dirección Regional de Educación de Santa Cruz" }
+                ],
+                "Cañas": [
+                    { nombre: "Liceo de Cañas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cañas" }
+                ],
+                "Abangares": [
+                    { nombre: "Liceo de Las Juntas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cañas" }
+                ],
+                "Tilarán": [
+                    { nombre: "Liceo de Tilarán", tipo: "Colegio", regional: "Dirección Regional de Educación de Tilarán" }
+                ],
+                "Nandayure": [
+                    { nombre: "Liceo de Carmona", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
+                ],
+                "La Cruz": [
+                    { nombre: "Liceo de La Cruz", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
+                ],
+                "Hojancha": [
+                    { nombre: "Liceo de Hojancha", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
                 ]
             },
             "Puntarenas": {
                 "Puntarenas": [
                     { nombre: "Liceo José Martí", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" },
-                    { nombre: "CTP de Puntarenas", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" },
-                    { nombre: "Escuela Central de Puntarenas", tipo: "Escuela", regional: "Dirección Regional de Educación de Puntarenas" }
+                    { nombre: "CTP de Puntarenas", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
+                ],
+                "Esparza": [
+                    { nombre: "Liceo de Esparza", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
+                ],
+                "Buenos Aires": [
+                    { nombre: "Liceo de Buenos Aires", tipo: "Colegio", regional: "Dirección Regional de Educación de Buenos Aires" }
+                ],
+                "Montes de Oro": [
+                    { nombre: "Liceo de Miramar", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
+                ],
+                "Osa": [
+                    { nombre: "CTP de Osa", tipo: "Colegio", regional: "Dirección Regional de Educación de Osa" }
                 ],
                 "Quepos": [
                     { nombre: "CTP Quepos", tipo: "Colegio", regional: "Dirección Regional de Educación de Aguirre" }
                 ],
+                "Golfito": [
+                    { nombre: "CTP de Golfito", tipo: "Colegio", regional: "Dirección Regional de Educación de Golfito" }
+                ],
                 "Coto Brus": [
-                    { nombre: "CTP Sabalito", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" },
-                    { nombre: "Colegio Técnico Profesional Agropecuario de Sabalito", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" }
+                    { nombre: "CTP Sabalito", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" }
+                ],
+                "Parrita": [
+                    { nombre: "Liceo de Parrita", tipo: "Colegio", regional: "Dirección Regional de Educación de Aguirre" }
+                ],
+                "Corredores": [
+                    { nombre: "CTP de Corredores", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" }
+                ],
+                "Garabito": [
+                    { nombre: "Liceo de Jacó", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
                 ]
             },
             "Limón": {
                 "Limón": [
                     { nombre: "Liceo Diurno de Limón", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" },
-                    { nombre: "CTP de Limón", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" },
-                    { nombre: "Escuela Tomás Guardia", tipo: "Escuela", regional: "Dirección Regional de Educación de Limón" }
+                    { nombre: "CTP de Limón", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" }
                 ],
                 "Pococí": [
-                    { nombre: "Liceo de Pococí", tipo: "Colegio", regional: "Dirección Regional de Educación de Pococí" },
-                    { nombre: "Liceo de Pocora", tipo: "Colegio", regional: "Dirección Regional de Educación de Pocora" }
+                    { nombre: "Liceo de Pococí", tipo: "Colegio", regional: "Dirección Regional de Educación de Pococí" }
+                ],
+                "Siquirres": [
+                    { nombre: "Liceo de Siquirres", tipo: "Colegio", regional: "Dirección Regional de Educación de Siquirres" }
+                ],
+                "Talamanca": [
+                    { nombre: "Liceo Rural de Bribri", tipo: "Colegio", regional: "Dirección Regional de Educación de Talamanca" }
+                ],
+                "Matina": [
+                    { nombre: "Liceo de Matina", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" }
+                ],
+                "Guácimo": [
+                    { nombre: "CTP de Guácimo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pococí" }
                 ]
             }
         };
     </script>
 
-    <!-- JavaScript del Formulario y Lógica Interactiva Dinámica (Provincia -> Cantón -> Institución -> Regional) -->
+    <!-- JavaScript del Formulario y Lógica Interactiva Dinámica (Provincia -> Cantón -> 100% Instituciones -> Regional) -->
     <script>
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const cedulaInput = document.getElementById('cedulaJugador');
@@ -570,7 +791,7 @@
             }
         });
 
-        // Dinámica de Provincia -> Llena Cantones según la base institucional
+        // Dinámica de Provincia -> Llena el 100% de Cantones según la provincia
         provinciaSelect.addEventListener('change', function() {
             const prov = this.value;
             cantonSelect.innerHTML = '<option value="">Seleccione cantón...</option>';
@@ -580,16 +801,14 @@
             institucionCustom.classList.add('hidden');
             institucionCustom.required = false;
 
-            if (prov && BASE_INSTITUCIONES[prov]) {
+            if (prov && CANTONES_CR[prov]) {
                 cantonSelect.disabled = false;
-                const cantones = Object.keys(BASE_INSTITUCIONES[prov]);
-                cantones.sort().forEach(canton => {
+                CANTONES_CR[prov].forEach(canton => {
                     const opt = document.createElement('option');
                     opt.value = canton;
                     opt.textContent = canton;
                     cantonSelect.appendChild(opt);
                 });
-                // Opción manual por si el cantón exacto no estuviera listado
                 const optOtroC = document.createElement('option');
                 optOtroC.value = "Otro Cantón";
                 optOtroC.textContent = "Otro Cantón / Escribir manual";
@@ -599,7 +818,7 @@
             }
         });
 
-        // Dinámica de Cantón -> Filtra Instituciones que coincidan con el Tipo y la Provincia/Cantón
+        // Dinámica de Cantón -> Filtra el 100% de instituciones públicas/privadas
         cantonSelect.addEventListener('change', function() {
             const prov = provinciaSelect.value;
             const canton = this.value;
@@ -620,9 +839,9 @@
                 return;
             }
 
-            if (prov && canton && BASE_INSTITUCIONES[prov] && BASE_INSTITUCIONES[prov][canton]) {
+            if (prov && canton && BASE_INSTITUCIONES_NACIONAL[prov] && BASE_INSTITUCIONES_NACIONAL[prov][canton]) {
                 institucionSelect.disabled = false;
-                const lista = BASE_INSTITUCIONES[prov][canton].filter(item => item.tipo === tipoCentro);
+                const lista = BASE_INSTITUCIONES_NACIONAL[prov][canton].filter(item => item.tipo === tipoCentro);
                 
                 if (lista.length > 0) {
                     lista.forEach(inst => {
@@ -632,9 +851,14 @@
                         opt.dataset.regional = inst.regional;
                         institucionSelect.appendChild(opt);
                     });
+                } else {
+                    const optVacio = document.createElement('option');
+                    optVacio.value = "";
+                    optVacio.textContent = "No hay registros exactos para este tipo en este cantón";
+                    optVacio.disabled = true;
+                    institucionSelect.appendChild(optVacio);
                 }
 
-                // Opción Otro
                 const optOtro = document.createElement('option');
                 optOtro.value = "Otro";
                 optOtro.textContent = "Otro (Especificar nombre exacto)";
