@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscripción Evento en Línea Batalla de Instituciones</title>
+    <title>Inscripción Torneo Escolar de Ajedrez 2026</title>
     <!-- Tailwind CSS desde CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -37,7 +37,7 @@
     <div class="max-w-3xl mx-auto relative z-10">
         <!-- Encabezado en azul suave -->
         <div class="bg-gradient-to-r from-slate-800/90 via-sky-900/80 to-slate-800/90 backdrop-blur-md border border-slate-700/50 text-white rounded-t-2xl p-6 sm:p-8 shadow-2xl text-center relative overflow-hidden">
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 text-sky-100">Inscripción Evento en Línea Batalla de Instituciones</h1>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 text-sky-100">Inscripción Torneo Escolar de Ajedrez 2026</h1>
             <p class="text-sky-200/80 text-sm sm:text-base max-w-xl mx-auto">Completa el formulario para registrar a un jugador/a en el torneo local.</p>
         </div>
 
@@ -62,24 +62,12 @@
                         <span class="text-sky-600">👤</span> Datos del Jugador / Jugadora
                     </h2>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <label for="primerNombre" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre *</label>
-                            <input type="text" id="primerNombre" name="primerNombre" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                        </div>
-
-                        <div>
-                            <label for="primerApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
-                            <input type="text" id="primerApellido" name="primerApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                        </div>
-
-                        <div>
-                            <label for="segundoApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Segundo Apellido *</label>
-                            <input type="text" id="segundoApellido" name="segundoApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                        </div>
-                    </div>
-
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nombreJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre Completo *</label>
+                            <input type="text" id="nombreJugador" name="nombreJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                        </div>
+
                         <div>
                             <label for="cedulaJugador" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Cédula o Identificación *</label>
                             <input type="text" id="cedulaJugador" name="cedulaJugador" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
@@ -90,55 +78,33 @@
                             <input type="date" id="fechaNacimiento" name="fechaNacimiento" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                             <p id="age-error" class="hidden text-xs text-red-600 font-medium mt-1">⚠️ La persona inscrita debe tener entre 11 y 19 años cumplidos.</p>
                         </div>
+
+                        <div>
+                            <label for="sexo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Sexo *</label>
+                            <select id="sexo" name="sexo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                                <option value="">Seleccione una opción...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Sección: Institución Educativa y Grado -->
+                <!-- Sección: Institución Educativa -->
                 <div>
                     <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
-                        <span class="text-sky-600">🏫</span> Información Académica
+                        <span class="text-sky-600">🏫</span> Institución Educativa
                     </h2>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="tipoInstitucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Tipo de Centro *</label>
-                            <select id="tipoInstitucion" name="tipoInstitucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                                <option value="">Seleccione...</option>
-                                <option value="Escuela">Escuela</option>
-                                <option value="Colegio">Colegio</option>
-                            </select>
+                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre del Colegio / Escuela *</label>
+                            <input type="text" id="institucion" name="institucion" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
-                        <div class="sm:col-span-2">
-                            <label for="institucion" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Nombre de la Institución *</label>
-                            <input type="text" id="institucion" name="institucion" placeholder="Ej. Liceo Unesco / Escuela Filadelfia" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                        </div>
-
-                        <div class="sm:col-span-3">
-                            <label for="gradoEducativo" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Grado Educativo *</label>
-                            <select id="gradoEducativo" name="gradoEducativo" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
-                                <option value="">Seleccione el grado actual...</option>
-                                <optgroup label="Escuela (Primaria)">
-                                    <option value="1° Grado">1° Grado</option>
-                                    <option value="2° Grado">2° Grado</option>
-                                    <option value="3° Grado">3° Grado</option>
-                                    <option value="4° Grado">4° Grado</option>
-                                    <option value="5° Grado">5° Grado</option>
-                                    <option value="6° Grado">6° Grado</option>
-                                </optgroup>
-                                <optgroup label="Colegio (Secundaria)">
-                                    <option value="7° Año (Sétimo)">7° Año (Sétimo)</option>
-                                    <option value="8° Año (Octavo)">8° Año (Octavo)</option>
-                                    <option value="9° Año (Noveno)">9° Año (Noveno)</option>
-                                    <option value="10° Año (Décimo)">10° Año (Décimo)</option>
-                                    <option value="11° Año (Undécimo)">11° Año (Undécimo)</option>
-                                    <option value="12° Año (Duodécimo - CTP)">12° Año (Duodécimo - CTP)</option>
-                                </optgroup>
-                                <optgroup label="Otros programas MEP">
-                                    <option value="Plan Nacional / Educación Especial">Plan Nacional / Educación Especial</option>
-                                    <option value="Educación Abierta / CINDEA / IPEC">Educación Abierta / CINDEA / IPEC</option>
-                                </optgroup>
-                            </select>
+                        <div>
+                            <label for="categoria" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Categoría / Nivel *</label>
+                            <input type="text" id="categoria" name="categoria" placeholder="Ej. B-Masculino, C-Femenino..." required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
                     </div>
                 </div>
@@ -156,8 +122,8 @@
                         </div>
 
                         <div>
-                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Número de Contacto *</label>
-                            <input type="tel" id="telefono" name="telefono" placeholder="Ej. 8888-8888" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="telefono" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Teléfono de Contacto *</label>
+                            <input type="tel" id="telefono" name="telefono" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
                         <div class="sm:col-span-2">
@@ -201,7 +167,7 @@
         pointLight.position.set(-10, -10, 10);
         scene.add(pointLight);
 
-        // Geometría procedural de piezas de ajedrez
+        // Crear geometría procedural de pieza de ajedrez
         function crearGeometriaPieza(tipo) {
             const points = [];
             if (tipo === 'pawn') {
@@ -223,7 +189,7 @@
                 points.push(new THREE.Vector2(0.7, 2.0));
                 points.push(new THREE.Vector2(0.7, 2.5));
                 points.push(new THREE.Vector2(0, 2.5));
-            } else {
+            } else { // King / Queen
                 points.push(new THREE.Vector2(0, 0));
                 points.push(new THREE.Vector2(1.0, 0));
                 points.push(new THREE.Vector2(0.8, 0.3));
@@ -303,7 +269,7 @@
         });
     </script>
 
-    <!-- JavaScript del Formulario -->
+    <!-- JavaScript del Formulario (Lógica intacta) -->
     <script>
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const correoInput = document.getElementById('correo');
@@ -380,17 +346,7 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // Unificar el nombre completo desde los 3 campos
-            const pNombre = document.getElementById('primerNombre').value.trim();
-            const pApellido = document.getElementById('primerApellido').value.trim();
-            const sApellido = document.getElementById('segundoApellido').value.trim();
-            const nombreCompleto = `${pNombre} ${pApellido} ${sApellido}`.trim();
-
-            // Asignar tanto 'nombre' como 'nombreJugador' para compatibilidad total con el Worker
-            data.nombre = nombreCompleto;
-            data.nombreJugador = nombreCompleto;
-
-            // Asignar edad calculada
+            // Envío del parámetro edad
             data.edad = calcularEdad(data.fechaNacimiento);
 
             const submitBtn = this.querySelector('button[type="submit"]');
