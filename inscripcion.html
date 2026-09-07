@@ -105,8 +105,8 @@
                         </div>
 
                         <div>
-                            <label for="primerApellido" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
-                            <input type="text" id="primerApellido" name="primerApellido" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
+                            <label for="apellido1" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Primer Apellido *</label>
+                            <input type="text" id="apellido1" name="apellido1" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition text-sm bg-slate-50/50">
                         </div>
 
                         <div>
@@ -335,7 +335,7 @@
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const cedulaInput = document.getElementById('cedulaJugador');
         const pNombreInput = document.getElementById('primerNombre');
-        const pApellidoInput = document.getElementById('primerApellido');
+        const pApellidoInput = document.getElementById('apellido1');
         const sApellidoInput = document.getElementById('segundoApellido');
         const fechaNacimientoInput = document.getElementById('fechaNacimiento');
         const correoInput = document.getElementById('correo');
@@ -388,7 +388,7 @@
                         const data = await res.json();
                         if (data.success && data.persona) {
                             pNombreInput.value = data.persona.nombre || '';
-                            pApellidoInput.value = data.persona.primerApellido || '';
+                            pApellidoInput.value = data.persona.apellido1 || '';
                             sApellidoInput.value = data.persona.segundoApellido || '';
                             if (data.persona.fechaNacimiento) {
                                 fechaNacimientoInput.value = data.persona.fechaNacimiento;
