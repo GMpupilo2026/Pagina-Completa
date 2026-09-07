@@ -380,11 +380,15 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // Construcción garantizada de nombreJugador para el Worker
+            // Unificar el nombre completo desde los 3 campos
             const pNombre = document.getElementById('primerNombre').value.trim();
             const pApellido = document.getElementById('primerApellido').value.trim();
             const sApellido = document.getElementById('segundoApellido').value.trim();
-            data.nombreJugador = `${pNombre} ${pApellido} ${sApellido}`.trim();
+            const nombreCompleto = `${pNombre} ${pApellido} ${sApellido}`.trim();
+
+            // Asignar tanto 'nombre' como 'nombreJugador' para compatibilidad total con el Worker
+            data.nombre = nombreCompleto;
+            data.nombreJugador = nombreCompleto;
 
             // Asignar edad calculada
             data.edad = calcularEdad(data.fechaNacimiento);
