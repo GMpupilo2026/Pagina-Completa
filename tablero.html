@@ -9,6 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}</script>
+    <style>
+        @keyframes avatarGlowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(240, 180, 41, 0.45); }
+            50% { box-shadow: 0 0 0 8px rgba(240, 180, 41, 0); }
+        }
+        .avatar-glow { border-radius: 9999px; animation: avatarGlowPulse 2.4s ease-in-out infinite; }
+    </style>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
@@ -41,11 +48,21 @@
     <section class="pt-16 md:pt-20 py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-8">
-                <div class="flex items-center justify-center gap-3 mb-3">
-                    <img src="img/oscar-avatar.jpg" alt="Oscar Angulo" width="64" height="64" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-accent-500 shadow-md">
-                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800">Juega contra Oscar ♟️</h1>
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    <div class="relative shrink-0 avatar-glow">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-[3px] bg-gradient-to-br from-accent-400 via-accent-500 to-accent-600 shadow-lg">
+                            <img src="img/oscar-avatar.jpg" alt="Oscar Angulo" width="80" height="80" class="w-full h-full rounded-full object-cover border-2 border-white">
+                        </div>
+                        <span class="absolute -bottom-1 -right-1 bg-brand-800 text-accent-400 text-base sm:text-lg w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md" title="Oscar Angulo">♞</span>
+                    </div>
+                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 text-left">Juega contra Oscar ♟️</h1>
                 </div>
-                <p class="text-brand-500 mt-3">Elige tu color, haz clic en una pieza y luego en la casilla de destino. Oscar responde con sus propias jugadas, tomadas de más de 30,000 partidas reales.</p>
+                <p class="text-brand-600 max-w-2xl mx-auto"><strong class="text-brand-800">No es un bot cualquiera:</strong> cada jugada que hace "Oscar" salió antes de un tablero real — la tomé de mis propias partidas. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarme?</p>
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">♟️ +30,000 partidas reales</span>
+                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">🎚️ 3 niveles de dificultad</span>
+                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">⚪⚫ Elige tu color</span>
+                </div>
             </div>
             <div class="flex items-center justify-center gap-2 mb-4 text-xs sm:text-sm flex-wrap">
                 <span class="bg-green-600/10 text-green-700 px-3 py-1.5 rounded-lg font-semibold">Ganadas: <span id="stat-wins">0</span></span>

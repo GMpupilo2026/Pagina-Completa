@@ -65,16 +65,32 @@
                     <a href="tablero.html" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all border border-white/20 backdrop-blur-sm">♟️ Jugar contra mí</a>
                 </div>
             </div>
-            <div class="hidden lg:flex justify-center">
-                <div class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-96 h-96 rounded-xl overflow-hidden shadow-2xl border-4 border-brand-600">
-                    <div class="bg-brand-100 flex items-center justify-center text-3xl">♜</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♞</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♝</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♛</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♚</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♝</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♞</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♜</div>
-                    <div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div><div class="bg-brand-700 flex items-center justify-center text-3xl text-white">♟</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♟</div>
-                    <div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div>
-                    <div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div>
-                    <div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div>
-                    <div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div><div class="bg-brand-700"></div><div class="bg-brand-100"></div>
-                    <div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♙</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♙</div>
-                    <div class="bg-brand-700 flex items-center justify-center text-3xl">♖</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♘</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♗</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♕</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♔</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♗</div><div class="bg-brand-700 flex items-center justify-center text-3xl">♘</div><div class="bg-brand-100 flex items-center justify-center text-3xl">♖</div>
+            <div class="flex justify-center">
+                <div class="w-full max-w-[420px] bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-white/10 shadow-2xl">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 shrink-0 rounded-full p-[2px] bg-gradient-to-br from-accent-400 via-accent-500 to-accent-600">
+                            <img src="img/oscar-avatar.jpg" alt="Oscar Angulo" width="40" height="40" class="w-full h-full rounded-full object-cover border-2 border-white">
+                        </div>
+                        <div class="min-w-0 text-left">
+                            <p class="text-white font-serif font-bold text-sm leading-tight">Estás jugando contra Oscar</p>
+                            <p class="text-brand-300 text-xs" id="turn-indicator">Turno: Blancas</p>
+                        </div>
+                    </div>
+                    <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow-xl border-2 border-brand-600 select-none"></div>
+                    <div class="flex items-center justify-between gap-2 mt-3 flex-wrap">
+                        <span id="status-msg" class="text-accent-400 text-xs sm:text-sm font-semibold">¡Tu turno!</span>
+                        <div class="flex gap-2">
+                            <select id="player-color" class="bg-white/10 text-white text-xs rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none"><option value="w" selected>Blancas</option><option value="b">Negras</option></select>
+                            <select id="difficulty" class="bg-white/10 text-white text-xs rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
+                            <button id="reset-btn" class="bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg px-2.5 py-1.5 border border-white/20 transition-colors" title="Reiniciar partida">↻</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 mt-3 text-[11px] sm:text-xs">
+                        <span class="bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full font-semibold">Ganadas: <span id="stat-wins">0</span></span>
+                        <span class="bg-white/10 text-brand-200 px-2.5 py-1 rounded-full font-semibold">Tablas: <span id="stat-draws">0</span></span>
+                        <span class="bg-red-500/10 text-red-400 px-2.5 py-1 rounded-full font-semibold">Perdidas: <span id="stat-losses">0</span></span>
+                    </div>
+                    <a href="tablero.html" class="block text-center text-accent-400 hover:text-accent-300 text-xs font-semibold mt-3">Ver historial completo y más opciones →</a>
                 </div>
             </div>
         </div>
@@ -138,6 +154,10 @@
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/oscar-book.js"></script>
+    <script src="js/chess-bot.js"></script>
+    <script src="js/tablero-board.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

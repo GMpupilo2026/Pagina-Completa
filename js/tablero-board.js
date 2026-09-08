@@ -154,12 +154,15 @@
     return GLYPH[color][type];
   }
 
+  // capturedByWhiteEl/capturedByBlackEl/historyEl son opcionales: algunas páginas
+  // (como el tablero compacto del inicio) sólo traen el tablero, sin estos paneles.
   function updateCapturedDisplay() {
-    capturedByWhiteEl.textContent = capturedByWhite.join(" ");
-    capturedByBlackEl.textContent = capturedByBlack.join(" ");
+    if (capturedByWhiteEl) capturedByWhiteEl.textContent = capturedByWhite.join(" ");
+    if (capturedByBlackEl) capturedByBlackEl.textContent = capturedByBlack.join(" ");
   }
 
   function updateHistoryDisplay() {
+    if (!historyEl) return;
     const hist = game.history();
     if (!hist.length) {
       historyEl.innerHTML = '<p class="text-brand-300">Sin jugadas todavía…</p>';
@@ -224,14 +227,16 @@
     const info = getGameOverInfo();
     if (info.over) {
       recordResultOnce(info);
-      statusEl.textContent = getGameOverMessage(info);
-      turnEl.textContent = "Partida terminada";
+      if (statusEl) statusEl.textContent = getGameOverMessage(info);
+      if (turnEl) turnEl.textContent = "Partida terminada";
       return;
     }
     const turn = game.turn();
     const whoLabel = turn === userColor ? "(tú)" : "(Oscar)";
-    turnEl.textContent = `Turno: ${colorLabel(turn)} ${whoLabel}`;
-    if (isBotThinking) {
+    if (turnEl) turnEl.textContent = `Turno: ${colorLabel(turn)} ${whoLabel}`;
+    if (!statusEl) {
+      // nada más que hacer si esta página no incluye el panel de estado
+    } else if (isBotThinking) {
       statusEl.textContent = "Oscar está pensando…";
     } else if (turn === userColor) {
       statusEl.textContent = game.in_check() ? "¡Jaque! Tu turno" : "¡Tu turno!";
