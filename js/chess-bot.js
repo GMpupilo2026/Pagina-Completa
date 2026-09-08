@@ -22,10 +22,13 @@ const OscarBot = (function () {
   // window.OSCAR_ELO_CALIB llega desde oscar-book.js; si no está disponible, usamos un valor por defecto razonable.
   const REAL_ELO = (window.OSCAR_ELO_CALIB && window.OSCAR_ELO_CALIB.bullet && window.OSCAR_ELO_CALIB.bullet.recent_median_elo) || 2400;
 
+  // bookBias: exponente aplicado al peso de cada jugada del libro antes de sortear
+  // (peso = frecuencia·resultado). >1 hace que las jugadas que Oscar más repitió en esa
+  // posición dominen mucho más la elección; 1 sería proporcional a la frecuencia sin más.
   const DIFFICULTY = {
-    easy: { elo: 1320, movetime: 250, bookMaxPly: 10, blunderChance: 0.18 },
-    medium: { elo: 1700, movetime: 500, bookMaxPly: 24, blunderChance: 0.05 },
-    hard: { elo: Math.max(1320, Math.min(3000, REAL_ELO)), movetime: 900, bookMaxPly: Infinity, blunderChance: 0 },
+    easy: { elo: 1320, movetime: 250, bookMaxPly: 10, blunderChance: 0.18, bookBias: 1.15 },
+    medium: { elo: 1700, movetime: 500, bookMaxPly: 24, blunderChance: 0.05, bookBias: 1.7 },
+    hard: { elo: Math.max(1320, Math.min(3000, REAL_ELO)), movetime: 900, bookMaxPly: Infinity, blunderChance: 0, bookBias: 2.2 },
   };
 
   let engine = null;
@@ -62,17 +65,22 @@ const OscarBot = (function () {
   }
 
   // ---------- Libro de Oscar ----------
-  function getBookMove(fen) {
+  // biasPower > 1 exagera la ventaja de las jugadas más frecuentes en esa posición
+  // (peso_final = peso_guardado ^ biasPower), así el bot se parece más a "lo que Oscar
+  // realmente suele jugar ahí" en vez de tratar todas las alternativas casi por igual.
+  function getBookMove(fen, biasPower) {
     const book = window.OSCAR_BOOK;
     if (!book) return null;
     const hash = fnv1a64Hex(positionKey(fen));
     const entry = book[hash];
     if (!entry || entry.length === 0) return null;
+    const power = typeof biasPower === "number" && biasPower > 0 ? biasPower : 1.7;
     let total = 0;
     const items = [];
     for (let i = 0; i < entry.length; i += 2) {
-      items.push({ uci: entry[i], w: entry[i + 1] });
-      total += entry[i + 1];
+      const w = Math.pow(entry[i + 1], power);
+      items.push({ uci: entry[i], w });
+      total += w;
     }
     let r = Math.random() * total;
     for (const it of items) {
@@ -209,7 +217,7 @@ const OscarBot = (function () {
     const plyCount = game.history().length;
 
     if (plyCount < diff.bookMaxPly) {
-      const uci = getBookMove(game.fen());
+      const uci = getBookMove(game.fen(), diff.bookBias);
       if (uci) {
         const found = findLegalMatch(game, uciToParts(uci));
         if (found) return found;

@@ -42,20 +42,21 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-8">
                 <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800">Juega contra el Bot ♟️</h1>
-                <p class="text-brand-500 mt-3">Mueve las piezas blancas haciendo clic en una pieza y luego en la casilla de destino. El bot responderá automáticamente.</p>
+                <p class="text-brand-500 mt-3">Elige tu color, haz clic en una pieza y luego en la casilla de destino. El bot responderá automáticamente.</p>
             </div>
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-3">
                     <span class="bg-brand-700 text-white px-4 py-2 rounded-lg font-semibold text-sm" id="turn-indicator">Turno: Blancas</span>
                     <span class="bg-accent-500 text-brand-900 px-4 py-2 rounded-lg font-semibold text-sm" id="status-msg">¡Tu turno!</span>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap justify-center gap-3">
+                    <select id="player-color" class="bg-white border border-brand-200 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="w" selected>Jugar con Blancas</option><option value="b">Jugar con Negras</option></select>
                     <select id="difficulty" class="bg-white border border-brand-200 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
                     <button id="reset-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↻ Reiniciar</button>
                 </div>
             </div>
             <div class="flex justify-center">
-                <div id="chessboard" class="grid grid-cols-8 w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+                <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
             <div class="mt-8 grid md:grid-cols-2 gap-6">
                 <div class="bg-white rounded-xl shadow-md p-5">

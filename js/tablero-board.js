@@ -1,7 +1,7 @@
 /**
- * main.js — Tablero e interacción para la página tablero.html de Ajedrez Integral.
+ * tablero-board.js — Tablero e interacción para la página tablero.html de Ajedrez Integral.
  * Requiere: chess.js, oscar-book.js y chess-bot.js cargados antes que este archivo.
- * El visitante siempre juega con blancas; el bot (Oscar) juega con negras.
+ * El visitante elige si juega con blancas o con negras; el bot (Oscar) juega el otro color.
  */
 (function () {
   "use strict";
@@ -10,6 +10,7 @@
   const turnEl = document.getElementById("turn-indicator");
   const statusEl = document.getElementById("status-msg");
   const difficultyEl = document.getElementById("difficulty");
+  const colorEl = document.getElementById("player-color");
   const resetBtn = document.getElementById("reset-btn");
   const capturedByWhiteEl = document.getElementById("captured-by-white");
   const capturedByBlackEl = document.getElementById("captured-by-black");
@@ -21,6 +22,7 @@
   }
 
   const game = new Chess();
+  let userColor = colorEl ? colorEl.value : "w"; // "w" o "b" — color con el que juega el visitante
   let selected = null; // casilla seleccionada, ej. "e2"
   let legalTargets = []; // jugadas legales (verbose) desde la casilla seleccionada
   let lastMove = null; // {from, to} de la última jugada, para resaltarla
@@ -34,6 +36,14 @@
   };
 
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+  function botColor() {
+    return userColor === "w" ? "b" : "w";
+  }
+
+  function colorLabel(c) {
+    return c === "w" ? "Blancas" : "Negras";
+  }
 
   function isLightSquare(square) {
     const file = square.charCodeAt(0) - 97;
@@ -53,35 +63,55 @@
     return cls;
   }
 
+  // Devuelve las casillas en el orden en que deben pintarse (fila por fila, izq. a der.)
+  // según de qué lado esté jugando el visitante.
+  function boardSquaresInOrder() {
+    const squares = [];
+    if (userColor === "b") {
+      // Vista desde negras: fila 1 arriba, columnas de h a a.
+      for (let rank = 1; rank <= 8; rank++) {
+        for (let f = 7; f >= 0; f--) {
+          squares.push(FILES[f] + rank);
+        }
+      }
+    } else {
+      // Vista desde blancas (por defecto): fila 8 arriba, columnas de a a h.
+      for (let rank = 8; rank >= 1; rank--) {
+        for (let f = 0; f < 8; f++) {
+          squares.push(FILES[f] + rank);
+        }
+      }
+    }
+    return squares;
+  }
+
   function renderBoard() {
     boardEl.innerHTML = "";
-    for (let rank = 8; rank >= 1; rank--) {
-      for (let f = 0; f < 8; f++) {
-        const square = FILES[f] + rank;
-        const div = document.createElement("div");
-        div.className = squareClasses(square);
-        div.setAttribute("data-square", square);
+    const squares = boardSquaresInOrder();
+    for (const square of squares) {
+      const div = document.createElement("div");
+      div.className = squareClasses(square);
+      div.setAttribute("data-square", square);
 
-        const piece = game.get(square);
-        if (piece) {
-          const span = document.createElement("span");
-          span.textContent = GLYPH[piece.color][piece.type];
-          span.className = piece.color === "w" ? "drop-shadow-sm" : "drop-shadow-sm";
-          div.appendChild(span);
-        }
-
-        const isTarget = legalTargets.some((t) => t.to === square);
-        if (isTarget) {
-          const dot = document.createElement("span");
-          dot.className = piece
-            ? "absolute inset-0 rounded-full ring-4 ring-accent-500/70 ring-inset pointer-events-none"
-            : "absolute w-1/4 h-1/4 rounded-full bg-accent-500/70 pointer-events-none";
-          div.appendChild(dot);
-        }
-
-        div.addEventListener("click", () => onSquareClick(square));
-        boardEl.appendChild(div);
+      const piece = game.get(square);
+      if (piece) {
+        const span = document.createElement("span");
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.className = piece.color === "w" ? "drop-shadow-sm" : "drop-shadow-sm";
+        div.appendChild(span);
       }
+
+      const isTarget = legalTargets.some((t) => t.to === square);
+      if (isTarget) {
+        const dot = document.createElement("span");
+        dot.className = piece
+          ? "absolute inset-0 rounded-full ring-4 ring-accent-500/70 ring-inset pointer-events-none"
+          : "absolute w-1/4 h-1/4 rounded-full bg-accent-500/70 pointer-events-none";
+        div.appendChild(dot);
+      }
+
+      div.addEventListener("click", () => onSquareClick(square));
+      boardEl.appendChild(div);
     }
   }
 
@@ -113,7 +143,9 @@
 
   function getGameOverMessage() {
     if (game.in_checkmate()) {
-      return game.turn() === "w" ? "Jaque mate — ¡Oscar gana! ♟️" : "Jaque mate — ¡Ganaste! 🎉";
+      // Quien tiene el turno ahora está en jaque mate; el otro color ganó.
+      const winner = game.turn() === "w" ? "b" : "w";
+      return winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : "Jaque mate — ¡Oscar gana! ♟️";
     }
     if (game.in_stalemate()) return "Tablas por ahogado";
     if (game.in_threefold_repetition()) return "Tablas por repetición";
@@ -131,14 +163,14 @@
       turnEl.textContent = "Partida terminada";
       return;
     }
+    const turn = game.turn();
+    const whoLabel = turn === userColor ? "(tú)" : "(Oscar)";
+    turnEl.textContent = `Turno: ${colorLabel(turn)} ${whoLabel}`;
     if (isBotThinking) {
-      turnEl.textContent = "Turno: Negras (Oscar)";
       statusEl.textContent = "Oscar está pensando…";
-    } else if (game.turn() === "w") {
-      turnEl.textContent = "Turno: Blancas";
+    } else if (turn === userColor) {
       statusEl.textContent = game.in_check() ? "¡Jaque! Tu turno" : "¡Tu turno!";
     } else {
-      turnEl.textContent = "Turno: Negras (Oscar)";
       statusEl.textContent = "Oscar está pensando…";
     }
   }
@@ -181,15 +213,21 @@
     updateStatus();
   }
 
+  // Si le toca mover al bot (y la partida sigue), dispara su jugada.
+  function maybeTriggerBot() {
+    if (isGameOver()) return;
+    if (game.turn() === botColor()) {
+      triggerBotMove();
+    }
+  }
+
   function doUserMove(from, to, promotion) {
     const result = game.move({ from, to, promotion });
     if (!result) return;
     applyMoveSideEffects(result);
     renderBoard();
     updateStatus();
-    if (!isGameOver()) {
-      triggerBotMove();
-    }
+    maybeTriggerBot();
   }
 
   // ---------- Selector de promoción ----------
@@ -223,7 +261,7 @@
   }
 
   function onSquareClick(square) {
-    if (isBotThinking || isGameOver() || game.turn() !== "w") return;
+    if (isBotThinking || isGameOver() || game.turn() !== userColor) return;
     const piece = game.get(square);
 
     if (selected) {
@@ -234,7 +272,7 @@
           const from = selected;
           selected = null;
           legalTargets = [];
-          showPromotionPicker("w", (promo) => doUserMove(from, square, promo));
+          showPromotionPicker(userColor, (promo) => doUserMove(from, square, promo));
           renderBoard();
           return;
         }
@@ -244,7 +282,7 @@
         doUserMove(from, square, undefined);
         return;
       }
-      if (piece && piece.color === "w") {
+      if (piece && piece.color === userColor) {
         selected = square;
         legalTargets = game.moves({ square, verbose: true });
         renderBoard();
@@ -256,7 +294,7 @@
       return;
     }
 
-    if (piece && piece.color === "w") {
+    if (piece && piece.color === userColor) {
       selected = square;
       legalTargets = game.moves({ square, verbose: true });
       renderBoard();
@@ -264,6 +302,7 @@
   }
 
   function resetGame() {
+    userColor = colorEl ? colorEl.value : "w";
     game.reset();
     selected = null;
     legalTargets = [];
@@ -275,9 +314,12 @@
     updateHistoryDisplay();
     renderBoard();
     updateStatus();
+    // Si el visitante eligió jugar con negras, el bot (blancas) abre la partida.
+    maybeTriggerBot();
   }
 
   if (resetBtn) resetBtn.addEventListener("click", resetGame);
+  if (colorEl) colorEl.addEventListener("change", resetGame);
 
   function applyDifficultyLabels() {
     if (!difficultyEl || typeof OscarBot === "undefined" || !OscarBot.difficultyLabels) return;
@@ -294,4 +336,5 @@
   updateStatus();
   applyDifficultyLabels();
   if (typeof OscarBot !== "undefined") OscarBot.preload();
+  maybeTriggerBot();
 })();
