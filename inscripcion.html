@@ -922,4 +922,56 @@
                         nombre: data.nombre,
                         apellido1: data.apellido1,
                         apellido2: data.apellido2,
-                        fecha_nacim
+                        fecha_nacimiento: data.fechaNacimiento,
+                        edad: data.edad,
+                        contacto: data.contacto,
+                        correo: data.correo,
+                        tipo_centro: data.tipoCentro,
+                        provincia: data.provincia,
+                        canton: data.canton,
+                        centro: data.centro,
+                        direccion_regional: data.direccionRegional || null,
+                        circuito: data.circuito ? parseInt(data.circuito, 10) : null,
+                        zona: data.zona || null,
+                        modalidad: data.modalidad || null,
+                        grado: data.grado,
+                        acepto_datos: data.aceptoDatos === 'on'
+                    }]);
+
+                if (!error) {
+                    successMsg.classList.remove('hidden');
+                    errorMsg.classList.add('hidden');
+                    this.reset();
+                    resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
+                    resetSelect(cantonSelect, 'Primero provincia...', true);
+                    resetSelect(institucionSelect, 'Seleccione cantón...', true);
+                    limpiarInfoInstitucion();
+                    escuelaAviso.classList.add('hidden');
+                    lastCedulaConsultada = '';
+                    tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
+                    tseStatus.className = 'text-xs text-slate-500 mt-1';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    console.error('Error de Supabase:', error);
+                    // Código 23505 = violación de restricción única (cédula ya inscrita)
+                    if (error.code === '23505') {
+                        errorMsg.textContent = '⚠️ Esta cédula ya está inscrita en este evento. Si crees que es un error, contáctanos directamente.';
+                    } else {
+                        errorMsg.textContent = '⚠️ ' + (error.message || 'No se pudo enviar la inscripción');
+                    }
+                    errorMsg.classList.remove('hidden');
+                    successMsg.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
+                errorMsg.classList.remove('hidden');
+                successMsg.classList.add('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar inscripción';
+            }
+        });
+    </script>
+</body>
+</html>
