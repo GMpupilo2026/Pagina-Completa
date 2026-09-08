@@ -29,6 +29,8 @@
     </script>
     <!-- Three.js para animación 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- SDK de Supabase (nuevo: fuente real de instituciones) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 min-h-screen py-6 px-4 sm:px-6 lg:px-8 font-sans relative overflow-x-hidden flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
@@ -159,19 +161,13 @@
                                 <option value="Escuela" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Escuela</option>
                                 <option value="Colegio" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Colegio</option>
                             </select>
+                            <p id="escuela-aviso" class="hidden text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">ℹ️ Por el momento este evento es únicamente para Colegios. ¡Muy pronto las escuelas también podrán participar!</p>
                         </div>
 
                         <div>
                             <label for="provincia" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Provincia *</label>
                             <select id="provincia" name="provincia" required disabled class="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm disabled:opacity-50">
                                 <option value="" class="bg-white dark:bg-slate-950 text-slate-400">Primero tipo de centro...</option>
-                                <option value="San José" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">San José</option>
-                                <option value="Alajuela" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Alajuela</option>
-                                <option value="Cartago" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Cartago</option>
-                                <option value="Heredia" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Heredia</option>
-                                <option value="Guanacaste" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Guanacaste</option>
-                                <option value="Puntarenas" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Puntarenas</option>
-                                <option value="Limón" class="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">Limón</option>
                             </select>
                         </div>
 
@@ -192,13 +188,17 @@
                             
                             <!-- Campo oculto para escribir otra institución si se requiere -->
                             <input type="text" id="institucionCustom" name="centro" placeholder="Escribe el nombre de la institución..." class="hidden w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+
+                            <!-- Info de Zona/Modalidad tomada de Supabase para la institución elegida -->
+                            <p id="institucion-info" class="hidden text-xs text-brand-600 dark:text-brand-400 font-medium mt-1"></p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="direccionRegional" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Dirección Regional MEP</label>
-                            <input type="text" id="direccionRegional" name="direccionRegional" readonly placeholder="Se autocompletará al elegir institución..." class="w-full px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 outline-none transition text-sm cursor-not-allowed">
+                            <label for="direccionRegional" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Dirección Regional MEP (opcional)</label>
+                            <input type="text" id="direccionRegional" name="direccionRegional" placeholder="Escríbela si la conoces (no está en la base de datos de instituciones)" class="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <input type="hidden" id="circuito" name="circuito">
                         </div>
 
                         <div>
@@ -417,345 +417,111 @@
         });
     </script>
 
-    <!-- Base de Datos Masiva y Completa (100% Cantones y Red Nacional de Instituciones del SIGMEP / MEP) -->
+    <!-- ============================================================ -->
+    <!-- Conexión a Supabase: fuente real de provincias/cantones/instituciones -->
+    <!-- Sustituye la antigua base de datos fija (incompleta) por la  -->
+    <!-- tabla real "Coles" de tu proyecto de Supabase.                -->
+    <!-- ============================================================ -->
     <script>
-        // Los 84 Cantones oficiales de Costa Rica distribuidos en sus 7 provincias
-        const CANTONES_CR = {
-            "San José": ["San José", "Escazú", "Desamparados", "Puriscal", "Tarrazú", "Aserrí", "Mora", "Goicoechea", "Santa Ana", "Alajuelita", "Vázquez de Coronado", "Acosta", "Tibás", "Moravia", "Montes de Oca", "Turrubares", "Dota", "Curridabat", "Pérez Zeledón", "León Cortés Castro"],
-            "Alajuela": ["Alajuela", "San Ramón", "Grecia", "San Mateo", "Atenas", "Naranjo", "Palmares", "Poás", "Orotina", "San Carlos", "Zarcero", "Sarchí", "Upala", "Los Chiles", "Guatuso", "Río Cuarto"],
-            "Cartago": ["Cartago", "Paraíso", "La Unión", "Jiménez", "Turrialba", "Alvarado", "Oreamuno", "El Guarco"],
-            "Heredia": ["Heredia", "Barva", "Santo Domingo", "Santa Bárbara", "San Rafael", "San Isidro", "Belén", "Flores", "San Pablo", "Sarapiquí"],
-            "Guanacaste": ["Liberia", "Nicoya", "Santa Cruz", "Bagaces", "Carrillo", "Cañas", "Abangares", "Tilarán", "Nandayure", "La Cruz", "Hojancha"],
-            "Puntarenas": ["Puntarenas", "Esparza", "Buenos Aires", "Montes de Oro", "Osa", "Quepos", "Golfito", "Coto Brus", "Parrita", "Corredores", "Garabito"],
-            "Limón": ["Limón", "Pococí", "Siquirres", "Talamanca", "Matina", "Guácimo"]
-        };
+        const SUPABASE_URL = 'https://prcfbzvshnusisczlpxl.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Registro exhaustivo e integrado de instituciones públicas, privadas, escuelas y colegios por provincia/cantón con su respectiva Dirección Regional MEP
-        const BASE_INSTITUCIONES_NACIONAL = {
-            "San José": {
-                "San José": [
-                    { nombre: "Liceo de Costa Rica", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Colegio Superior de Señoritas", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Escuela Buenaventura Corrales (Edificio Metálico)", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Escuela República de Argentina", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Liceo Dr. José María Castro Madriz", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Colegio Técnico Profesional Uladislao Gámez Solano", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Escuela Central de Niñas", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Escuela Mauro Fernández Acuña", tipo: "Escuela", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Colegio Humboldt (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" },
-                    { nombre: "Colegio Metodista (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de San José Central" }
-                ],
-                "Escazú": [
-                    { nombre: "Liceo de Escazú", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Escuela República de Venezuela", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Escuela Convento de San Antonio", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Blue Valley School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "St. Mary School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" }
-                ],
-                "Desamparados": [
-                    { nombre: "Liceo Monseñor Rubén Odio Herrera", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Colegio Técnico Profesional de Desamparados", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Costa Rica", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Liceo Nocturno de Desamparados", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Joaquín García Monge", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Colegio Jorge Volio Jiménez", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" }
-                ],
-                "Puriscal": [
-                    { nombre: "Liceo de Puriscal", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
-                    { nombre: "CTP de Puriscal", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
-                    { nombre: "Escuela Dr. José María Vargas", tipo: "Escuela", regional: "Dirección Regional de Educación de Puriscal" }
-                ],
-                "Tarrazú": [
-                    { nombre: "Liceo de Tarrazú", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" },
-                    { nombre: "Escuela Central de San Marcos", tipo: "Escuela", regional: "Dirección Regional de Educación de Los Santos" }
-                ],
-                "Aserrí": [
-                    { nombre: "Liceo de Aserrí", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Costa Rica de Aserrí", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
-                ],
-                "Mora": [
-                    { nombre: "Liceo de Tabarcia", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" },
-                    { nombre: "Escuela Central de Ciudad Colón", tipo: "Escuela", regional: "Dirección Regional de Educación de Puriscal" }
-                ],
-                "Goicoechea": [
-                    { nombre: "Liceo Napoleón Quesada Salazar", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" },
-                    { nombre: "Escuela Buenaventura Solarte", tipo: "Escuela", regional: "Dirección Regional de Educación de Guadalupe" },
-                    { nombre: "Colegio Calasanz (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" }
-                ],
-                "Santa Ana": [
-                    { nombre: "Liceo de Santa Ana", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Escuela Central de Santa Ana", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Tree of Life International School (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" }
-                ],
-                "Alajuelita": [
-                    { nombre: "Liceo de Alajuelita", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuelita" },
-                    { nombre: "Escuela Abraham Lincoln", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuelita" }
-                ],
-                "Vázquez de Coronado": [
-                    { nombre: "Liceo de Coronado", tipo: "Colegio", regional: "Dirección Regional de Educación de Guadalupe" },
-                    { nombre: "Escuela León Cortés Castro", tipo: "Escuela", regional: "Dirección Regional de Educación de Guadalupe" }
-                ],
-                "Acosta": [
-                    { nombre: "Liceo de San Ignacio", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Central de San Ignacio", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
-                ],
-                "Tibás": [
-                    { nombre: "Liceo Mauro Fernández", tipo: "Colegio", regional: "Dirección Regional de Educación de Tibás-Moravia" },
-                    { nombre: "Escuela Rafael Francisco Osejo", tipo: "Escuela", regional: "Dirección Regional de Educación de Tibás-Moravia" }
-                ],
-                "Moravia": [
-                    { nombre: "Colegio Saint Francis (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Tibás-Moravia" },
-                    { nombre: "Escuela Porfirio Brenes", tipo: "Escuela", regional: "Dirección Regional de Educación de Tibás-Moravia" }
-                ],
-                "Montes de Oca": [
-                    { nombre: "Liceo Franco Costarricense (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" },
-                    { nombre: "Escuela Buenaventura Corrales - Sede Este", tipo: "Escuela", regional: "Dirección Regional de Educación de Tres Ríos" }
-                ],
-                "Turrubares": [
-                    { nombre: "Liceo de San Pablo de Turrubares", tipo: "Colegio", regional: "Dirección Regional de Educación de Puriscal" }
-                ],
-                "Dota": [
-                    { nombre: "Liceo de Dota", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" }
-                ],
-                "Curridabat": [
-                    { nombre: "Colegio SEK Costa Rica (Privado)", tipo: "Colegio", regional: "Dirección Regional de Educación de Desamparados" },
-                    { nombre: "Escuela Juan Santamaría", tipo: "Escuela", regional: "Dirección Regional de Educación de Desamparados" }
-                ],
-                "Pérez Zeledón": [
-                    { nombre: "Liceo UNESCO", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Colegio Técnico Profesional de General Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Escuela Central de San Isidro de El General", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Liceo Nocturno de Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Colegio Científico de Costa Rica - Sede Pérez Zeledón", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Escuela 12 de Marzo de 1948", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Liceo Experimental Bilingüe de General Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pérez Zeledón" },
-                    { nombre: "Escuela Las Américas", tipo: "Escuela", regional: "Dirección Regional de Educación de Pérez Zeledón" }
-                ],
-                "León Cortés Castro": [
-                    { nombre: "Liceo de San Pablo de León Cortés", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Santos" },
-                    { nombre: "Escuela Central de San Pablo", tipo: "Escuela", regional: "Dirección Regional de Educación de Los Santos" }
-                ]
-            },
-            "Alajuela": {
-                "Alajuela": [
-                    { nombre: "Instituto de Alajuela", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" },
-                    { nombre: "Liceo Experimental Bilingüe José Figueres Ferrer", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" },
-                    { nombre: "Escuela Juan Rafael Mora Porras", tipo: "Escuela", regional: "Dirección Regional de Educación de Alajuela" },
-                    { nombre: "CTP de Alajuela", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
-                ],
-                "San Ramón": [
-                    { nombre: "Liceo UNESCO de San Ramón", tipo: "Colegio", regional: "Dirección Regional de Educación de San Ramón" },
-                    { nombre: "Escuela Central de San Ramón", tipo: "Escuela", regional: "Dirección Regional de Educación de San Ramón" }
-                ],
-                "Grecia": [
-                    { nombre: "Liceo de Grecia", tipo: "Colegio", regional: "Dirección Regional de Educación de Grecia" },
-                    { nombre: "Liceo Puente de Piedra", tipo: "Colegio", regional: "Dirección Regional de Educación de Grecia" }
-                ],
-                "San Mateo": [
-                    { nombre: "Liceo de San Mateo", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
-                ],
-                "Atenas": [
-                    { nombre: "Liceo Vocacional de Atenas", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
-                ],
-                "Naranjo": [
-                    { nombre: "Liceo de Naranjo", tipo: "Colegio", regional: "Dirección Regional de Educación de Naranjo" }
-                ],
-                "Palmares": [
-                    { nombre: "Liceo de Palmares", tipo: "Colegio", regional: "Dirección Regional de Educación de San Ramón" }
-                ],
-                "Poás": [
-                    { nombre: "Liceo de San Pedro de Poás", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
-                ],
-                "Orotina": [
-                    { nombre: "CTP de Orotina", tipo: "Colegio", regional: "Dirección Regional de Educación de Alajuela" }
-                ],
-                "San Carlos": [
-                    { nombre: "Liceo San Carlos", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" },
-                    { nombre: "CTP de San Carlos", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" }
-                ],
-                "Zarcero": [
-                    { nombre: "Liceo Alfaro Ruiz", tipo: "Colegio", regional: "Dirección Regional de Educación de Zarcero" }
-                ],
-                "Sarchí": [
-                    { nombre: "Liceo de Sarchí", tipo: "Colegio", regional: "Dirección Regional de Educación de Naranjo" }
-                ],
-                "Upala": [
-                    { nombre: "CTP de Upala", tipo: "Colegio", regional: "Dirección Regional de Educación de Upala" }
-                ],
-                "Los Chiles": [
-                    { nombre: "Liceo de Los Chiles", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Chiles" }
-                ],
-                "Guatuso": [
-                    { nombre: "Liceo de Guatuso", tipo: "Colegio", regional: "Dirección Regional de Educación de Los Chiles" }
-                ],
-                "Río Cuarto": [
-                    { nombre: "Liceo de Río Cuarto", tipo: "Colegio", regional: "Dirección Regional de Educación de San Carlos" }
-                ]
-            },
-            "Cartago": {
-                "Cartago": [
-                    { nombre: "Colegio de San Luis Gonzaga", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" },
-                    { nombre: "Liceo Vicente Lachner Sandoval", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" },
-                    { nombre: "Escuela Ascensión Esquivel Ibarra", tipo: "Escuela", regional: "Dirección Regional de Educación de Cartago" },
-                    { nombre: "CTP de Cartago", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
-                ],
-                "Paraíso": [
-                    { nombre: "Liceo de Paraíso", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
-                ],
-                "La Unión": [
-                    { nombre: "CTP del Este", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" },
-                    { nombre: "Liceo de Tres Ríos", tipo: "Colegio", regional: "Dirección Regional de Educación de Tres Ríos" }
-                ],
-                "Jiménez": [
-                    { nombre: "Liceo de Juan Viñas", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" }
-                ],
-                "Turrialba": [
-                    { nombre: "Liceo de Turrialba", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" },
-                    { nombre: "CTP de Turrialba", tipo: "Colegio", regional: "Dirección Regional de Educación de Turrialba" }
-                ],
-                "Alvarado": [
-                    { nombre: "Liceo de Pacayas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
-                ],
-                "Oreamuno": [
-                    { nombre: "Liceo de San Rafael de Oreamuno", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
-                ],
-                "El Guarco": [
-                    { nombre: "CTP de El Guarco", tipo: "Colegio", regional: "Dirección Regional de Educación de Cartago" }
-                ]
-            },
-            "Heredia": {
-                "Heredia": [
-                    { nombre: "Liceo de Heredia", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" },
-                    { nombre: "Colegio Samuel Sáenz Flores", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" },
-                    { nombre: "Escuela Braulio Morales Cervantes", tipo: "Escuela", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Barva": [
-                    { nombre: "Liceo de Barva", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Santo Domingo": [
-                    { nombre: "Liceo de Santo Domingo", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Santa Bárbara": [
-                    { nombre: "Liceo de Santa Bárbara", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "San Rafael": [
-                    { nombre: "Liceo de San Rafael", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "San Isidro": [
-                    { nombre: "Liceo de San Isidro de Heredia", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Belén": [
-                    { nombre: "CTP de Belén", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Flores": [
-                    { nombre: "Liceo de San Joaquín de Flores", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "San Pablo": [
-                    { nombre: "Liceo de San Pablo", tipo: "Colegio", regional: "Dirección Regional de Educación de Heredia" }
-                ],
-                "Sarapiquí": [
-                    { nombre: "CTP de Puerto Viejo", tipo: "Colegio", regional: "Dirección Regional de Educación de Sarapiquí" }
-                ]
-            },
-            "Guanacaste": {
-                "Liberia": [
-                    { nombre: "Liceo de Liberia", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" },
-                    { nombre: "CTP de Liberia", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
-                ],
-                "Nicoya": [
-                    { nombre: "Liceo de Nicoya", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
-                ],
-                "Santa Cruz": [
-                    { nombre: "Liceo de Santa Cruz", tipo: "Colegio", regional: "Dirección Regional de Educación de Santa Cruz" }
-                ],
-                "Bagaces": [
-                    { nombre: "Liceo de Bagaces", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
-                ],
-                "Carrillo": [
-                    { nombre: "CTP de Filadelfia", tipo: "Colegio", regional: "Dirección Regional de Educación de Santa Cruz" }
-                ],
-                "Cañas": [
-                    { nombre: "Liceo de Cañas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cañas" }
-                ],
-                "Abangares": [
-                    { nombre: "Liceo de Las Juntas", tipo: "Colegio", regional: "Dirección Regional de Educación de Cañas" }
-                ],
-                "Tilarán": [
-                    { nombre: "Liceo de Tilarán", tipo: "Colegio", regional: "Dirección Regional de Educación de Tilarán" }
-                ],
-                "Nandayure": [
-                    { nombre: "Liceo de Carmona", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
-                ],
-                "La Cruz": [
-                    { nombre: "Liceo de La Cruz", tipo: "Colegio", regional: "Dirección Regional de Educación de Liberia" }
-                ],
-                "Hojancha": [
-                    { nombre: "Liceo de Hojancha", tipo: "Colegio", regional: "Dirección Regional de Educación de Nicoya" }
-                ]
-            },
-            "Puntarenas": {
-                "Puntarenas": [
-                    { nombre: "Liceo José Martí", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" },
-                    { nombre: "CTP de Puntarenas", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
-                ],
-                "Esparza": [
-                    { nombre: "Liceo de Esparza", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
-                ],
-                "Buenos Aires": [
-                    { nombre: "Liceo de Buenos Aires", tipo: "Colegio", regional: "Dirección Regional de Educación de Buenos Aires" }
-                ],
-                "Montes de Oro": [
-                    { nombre: "Liceo de Miramar", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
-                ],
-                "Osa": [
-                    { nombre: "CTP de Osa", tipo: "Colegio", regional: "Dirección Regional de Educación de Osa" }
-                ],
-                "Quepos": [
-                    { nombre: "CTP Quepos", tipo: "Colegio", regional: "Dirección Regional de Educación de Aguirre" }
-                ],
-                "Golfito": [
-                    { nombre: "CTP de Golfito", tipo: "Colegio", regional: "Dirección Regional de Educación de Golfito" }
-                ],
-                "Coto Brus": [
-                    { nombre: "CTP Sabalito", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" }
-                ],
-                "Parrita": [
-                    { nombre: "Liceo de Parrita", tipo: "Colegio", regional: "Dirección Regional de Educación de Aguirre" }
-                ],
-                "Corredores": [
-                    { nombre: "CTP de Corredores", tipo: "Colegio", regional: "Dirección Regional de Educación de Coto Brus" }
-                ],
-                "Garabito": [
-                    { nombre: "Liceo de Jacó", tipo: "Colegio", regional: "Dirección Regional de Educación de Puntarenas" }
-                ]
-            },
-            "Limón": {
-                "Limón": [
-                    { nombre: "Liceo Diurno de Limón", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" },
-                    { nombre: "CTP de Limón", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" }
-                ],
-                "Pococí": [
-                    { nombre: "Liceo de Pococí", tipo: "Colegio", regional: "Dirección Regional de Educación de Pococí" }
-                ],
-                "Siquirres": [
-                    { nombre: "Liceo de Siquirres", tipo: "Colegio", regional: "Dirección Regional de Educación de Siquirres" }
-                ],
-                "Talamanca": [
-                    { nombre: "Liceo Rural de Bribri", tipo: "Colegio", regional: "Dirección Regional de Educación de Talamanca" }
-                ],
-                "Matina": [
-                    { nombre: "Liceo de Matina", tipo: "Colegio", regional: "Dirección Regional de Educación de Limón" }
-                ],
-                "Guácimo": [
-                    { nombre: "CTP de Guácimo", tipo: "Colegio", regional: "Dirección Regional de Educación de Pococí" }
-                ]
+        const TABLA_INSTITUCIONES = 'Coles';
+        const COL_NOMBRE = 'NOMBRE';
+        const COL_PROVINCIA = 'PROVINCIA';
+        const COL_CANTON = 'CANTON';
+        const COL_ZONA = 'ZONA';
+        const COL_TIPO = 'TIPO DE CENTRO EDUCATIVO';
+        const COL_MODALIDAD = 'MODALIDAD DE CENTRO EDUCATIVO';
+        const COL_DIRECCION_REGIONAL = 'DIRECCIÓN REGIONAL';
+        const COL_CIRCUITO = 'CIRCUITO';
+
+        // Tamaño de página que usa Supabase por defecto para limitar cada respuesta.
+        const TAMANO_PAGINA = 1000;
+
+        // Tope de seguridad total (evita bucles infinitos si algo sale mal).
+        const LIMITE_FILAS = 20000;
+
+        function ordenarTexto(a, b) {
+            return a.localeCompare(b, 'es', { sensitivity: 'base' });
+        }
+
+        function valoresUnicos(filas, columna) {
+            const set = new Set();
+            filas.forEach(f => {
+                const v = (f[columna] || '').toString().trim();
+                if (v) set.add(v);
+            });
+            return Array.from(set).sort(ordenarTexto);
+        }
+
+        // Envuelve un nombre de columna entre comillas dobles, como lo exige
+        // PostgREST para identificadores con espacios (ej. "TIPO DE CENTRO EDUCATIVO").
+        function col(nombreColumna) {
+            return `"${nombreColumna}"`;
+        }
+
+        // Caché en memoria: mientras la persona llena el formulario, los datos de
+        // Coles no cambian, así que evitamos volver a pedir lo mismo por la red
+        // si va y viene entre las opciones (ej. cambia de cantón y regresa).
+        const cacheConsultas = new Map();
+
+        // Consulta genérica a Supabase con filtro flexible por tipo de centro.
+        // Pagina con .range() para traer TODAS las filas que coincidan, sin importar
+        // cuántas sean (Supabase limita cada respuesta individual a ~1000 filas).
+        async function consultarColegios({ tipoCentro, provincia, canton, columnas }) {
+            const claveCache = JSON.stringify({ tipoCentro, provincia, canton, columnas });
+            if (cacheConsultas.has(claveCache)) {
+                return cacheConsultas.get(claveCache);
             }
-        };
+
+            let todasLasFilas = [];
+            let desde = 0;
+            let huboError = false;
+
+            while (true) {
+                let query = supabaseClient
+                    .from(TABLA_INSTITUCIONES)
+                    .select(columnas)
+                    .range(desde, desde + TAMANO_PAGINA - 1);
+
+                if (tipoCentro) {
+                    // ilike es flexible: "Colegio" también encuentra "Colegio Técnico Profesional", etc.
+                    query = query.ilike(COL_TIPO, `%${tipoCentro}%`);
+                }
+                if (provincia) query = query.eq(COL_PROVINCIA, provincia);
+                if (canton) query = query.eq(COL_CANTON, canton);
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error('Error consultando Supabase:', error);
+                    huboError = true;
+                    break;
+                }
+                if (!data || data.length === 0) break;
+
+                todasLasFilas = todasLasFilas.concat(data);
+
+                if (data.length < TAMANO_PAGINA) break; // ya no hay más páginas
+                if (todasLasFilas.length >= LIMITE_FILAS) break; // tope de seguridad
+
+                desde += TAMANO_PAGINA;
+            }
+
+            // Solo guardamos en caché resultados que sí se completaron bien;
+            // un error transitorio de red no debería quedar "pegado".
+            if (!huboError) {
+                cacheConsultas.set(claveCache, todasLasFilas);
+            }
+
+            return todasLasFilas;
+        }
     </script>
 
-    <!-- JavaScript del Formulario y Lógica Interactiva Dinámica (Provincia -> Cantón -> 100% Instituciones -> Regional) -->
+    <!-- JavaScript del Formulario y Lógica Interactiva Dinámica (Provincia -> Cantón -> Institución en vivo desde Supabase) -->
     <script>
-        const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
         const cedulaInput = document.getElementById('cedulaJugador');
         const pNombreInput = document.getElementById('primerNombre');
         const pApellidoInput = document.getElementById('primerApellido');
@@ -769,132 +535,203 @@
         const institucionSelect = document.getElementById('institucionSelect');
         const institucionCustom = document.getElementById('institucionCustom');
         const direccionRegionalInput = document.getElementById('direccionRegional');
+        const circuitoInput = document.getElementById('circuito');
+        const institucionInfo = document.getElementById('institucion-info');
 
-        // Dinámica de Tipo de Centro -> Activa Provincia
-        tipoInstitucionSelect.addEventListener('change', function() {
-            if (this.value) {
-                provinciaSelect.disabled = false;
-                provinciaSelect.value = "";
-                cantonSelect.disabled = true;
-                cantonSelect.innerHTML = '<option value="">Seleccione provincia...</option>';
-                institucionSelect.disabled = true;
-                institucionSelect.innerHTML = '<option value="">Seleccione cantón...</option>';
-                direccionRegionalInput.value = "";
-            } else {
-                provinciaSelect.disabled = true;
-                provinciaSelect.value = "";
-                cantonSelect.disabled = true;
-                cantonSelect.innerHTML = '<option value="">Primero tipo de centro...</option>';
-                institucionSelect.disabled = true;
-                institucionSelect.innerHTML = '<option value="">Seleccione primero el cantón...</option>';
-                direccionRegionalInput.value = "";
-            }
-        });
+        const escuelaAviso = document.getElementById('escuela-aviso');
 
-        // Dinámica de Provincia -> Llena el 100% de Cantones según la provincia
-        provinciaSelect.addEventListener('change', function() {
-            const prov = this.value;
-            cantonSelect.innerHTML = '<option value="">Seleccione cantón...</option>';
-            institucionSelect.innerHTML = '<option value="">Seleccione cantón...</option>';
-            institucionSelect.disabled = true;
-            direccionRegionalInput.value = "";
+        function resetSelect(select, placeholder, disabled) {
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+            select.disabled = disabled;
+        }
+
+        function poblarSelect(select, valores) {
+            valores.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                select.appendChild(opt);
+            });
+        }
+
+        // Oculta y limpia el campo de institución manual ("Otro").
+        function ocultarInstitucionCustom() {
             institucionCustom.classList.add('hidden');
             institucionCustom.required = false;
+            institucionCustom.value = '';
+        }
 
-            if (prov && CANTONES_CR[prov]) {
-                cantonSelect.disabled = false;
-                CANTONES_CR[prov].forEach(canton => {
-                    const opt = document.createElement('option');
-                    opt.value = canton;
-                    opt.textContent = canton;
-                    cantonSelect.appendChild(opt);
-                });
-                const optOtroC = document.createElement('option');
-                optOtroC.value = "Otro Cantón";
-                optOtroC.textContent = "Otro Cantón / Escribir manual";
-                cantonSelect.appendChild(optOtroC);
-            } else {
-                cantonSelect.disabled = true;
-            }
-        });
+        // Limpia la info derivada de la institución (Zona/Modalidad, Dirección Regional, Circuito).
+        // Se usa cada vez que cambia algo "aguas arriba" (tipo, provincia o cantón).
+        function limpiarInfoInstitucion() {
+            institucionInfo.classList.add('hidden');
+            direccionRegionalInput.value = '';
+            direccionRegionalInput.placeholder = 'Escríbela si la conoces (no está en la base de datos de instituciones)';
+            circuitoInput.value = '';
+        }
 
-        // Dinámica de Cantón -> Filtra el 100% de instituciones públicas/privadas
-        cantonSelect.addEventListener('change', function() {
-            const prov = provinciaSelect.value;
-            const canton = this.value;
-            const tipoCentro = tipoInstitucionSelect.value;
+        // Reconsulta Supabase y llena un <select> con los valores únicos de una columna.
+        // Centraliza el patrón "mostrar 'Cargando...' -> pedir datos -> poblar" que
+        // usan Provincia y Cantón.
+        async function cargarValoresUnicosEnSelect(select, columna, filtros, { vacio, listo }) {
+            const filas = await consultarColegios({ ...filtros, columnas: col(columna) });
+            const valores = valoresUnicos(filas, columna);
+            resetSelect(select, valores.length ? listo : vacio, !valores.length);
+            poblarSelect(select, valores);
+            return valores;
+        }
 
-            institucionSelect.innerHTML = '<option value="">Seleccione la institución...</option>';
-            direccionRegionalInput.value = "";
-            institucionCustom.classList.add('hidden');
-            institucionCustom.required = false;
+        // Dinámica de Tipo de Centro -> Carga Provincias reales desde Supabase (solo para Colegio por ahora)
+        tipoInstitucionSelect.addEventListener('change', async function() {
+            resetSelect(cantonSelect, 'Primero provincia...', true);
+            resetSelect(institucionSelect, 'Seleccione cantón...', true);
+            ocultarInstitucionCustom();
+            limpiarInfoInstitucion();
+            escuelaAviso.classList.add('hidden');
 
-            if (canton === "Otro Cantón") {
-                institucionSelect.disabled = true;
-                institucionCustom.classList.remove('hidden');
-                institucionCustom.required = true;
-                institucionCustom.value = "";
-                institucionCustom.placeholder = "Escribe la institución y cantón...";
-                direccionRegionalInput.value = "Dirección Regional Externa / No especificada";
+            if (!this.value) {
+                resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
                 return;
             }
 
-            if (prov && canton && BASE_INSTITUCIONES_NACIONAL[prov] && BASE_INSTITUCIONES_NACIONAL[prov][canton]) {
-                institucionSelect.disabled = false;
-                const lista = BASE_INSTITUCIONES_NACIONAL[prov][canton].filter(item => item.tipo === tipoCentro);
-                
-                if (lista.length > 0) {
-                    lista.forEach(inst => {
-                        const opt = document.createElement('option');
-                        opt.value = inst.nombre;
-                        opt.textContent = inst.nombre;
-                        opt.dataset.regional = inst.regional;
-                        institucionSelect.appendChild(opt);
-                    });
-                } else {
-                    const optVacio = document.createElement('option');
-                    optVacio.value = "";
-                    optVacio.textContent = "No hay registros exactos para este tipo en este cantón";
-                    optVacio.disabled = true;
-                    institucionSelect.appendChild(optVacio);
-                }
-
-                const optOtro = document.createElement('option');
-                optOtro.value = "Otro";
-                optOtro.textContent = "Otro (Especificar nombre exacto)";
-                institucionSelect.appendChild(optOtro);
-            } else if (canton) {
-                institucionSelect.disabled = false;
-                const optOtro = document.createElement('option');
-                optOtro.value = "Otro";
-                optOtro.textContent = "Otro (Especificar nombre exacto)";
-                institucionSelect.appendChild(optOtro);
-            } else {
-                institucionSelect.disabled = true;
+            // Las escuelas todavía no participan: mostramos el aviso y no consultamos Supabase.
+            if (this.value === 'Escuela') {
+                escuelaAviso.classList.remove('hidden');
+                resetSelect(provinciaSelect, 'Disponible solo para Colegio por ahora', true);
+                return;
             }
+
+            resetSelect(provinciaSelect, 'Cargando provincias...', true);
+            await cargarValoresUnicosEnSelect(
+                provinciaSelect,
+                COL_PROVINCIA,
+                { tipoCentro: this.value },
+                { vacio: 'Sin resultados en la base de datos', listo: 'Seleccione provincia...' }
+            );
         });
 
-        // Dinámica de Selección de Institución -> Autocompleta Dirección Regional o despliega campo manual
+        // Dinámica de Provincia -> Carga Cantones reales desde Supabase
+        provinciaSelect.addEventListener('change', async function() {
+            resetSelect(institucionSelect, 'Seleccione cantón...', true);
+            ocultarInstitucionCustom();
+            limpiarInfoInstitucion();
+
+            if (!this.value) {
+                resetSelect(cantonSelect, 'Seleccione provincia...', true);
+                return;
+            }
+
+            resetSelect(cantonSelect, 'Cargando cantones...', true);
+            await cargarValoresUnicosEnSelect(
+                cantonSelect,
+                COL_CANTON,
+                { tipoCentro: tipoInstitucionSelect.value, provincia: this.value },
+                { vacio: 'Sin cantones para esta provincia', listo: 'Seleccione cantón...' }
+            );
+            // "Otro Cantón" siempre disponible como salida manual, incluso si sí hubo resultados.
+            cantonSelect.disabled = false;
+            const optOtroCanton = document.createElement('option');
+            optOtroCanton.value = 'Otro Cantón / Escribir manual';
+            optOtroCanton.textContent = 'Otro Cantón / Escribir manual';
+            cantonSelect.appendChild(optOtroCanton);
+        });
+
+        // Dinámica de Cantón -> Carga Instituciones reales desde Supabase
+        cantonSelect.addEventListener('change', async function() {
+            limpiarInfoInstitucion();
+
+            if (this.value === 'Otro Cantón / Escribir manual') {
+                resetSelect(institucionSelect, 'Escribe el nombre abajo', true);
+                institucionCustom.classList.remove('hidden');
+                institucionCustom.required = true;
+                institucionCustom.value = '';
+                institucionCustom.placeholder = 'Escribe la institución y el cantón...';
+                return;
+            }
+
+            ocultarInstitucionCustom();
+
+            if (!this.value) {
+                resetSelect(institucionSelect, 'Seleccione cantón...', true);
+                return;
+            }
+
+            resetSelect(institucionSelect, 'Cargando instituciones...', true);
+
+            const columnasInstitucion = [COL_NOMBRE, COL_ZONA, COL_MODALIDAD, COL_DIRECCION_REGIONAL, COL_CIRCUITO]
+                .map(col)
+                .join(', ');
+
+            const filas = await consultarColegios({
+                tipoCentro: tipoInstitucionSelect.value,
+                provincia: provinciaSelect.value,
+                canton: this.value,
+                columnas: columnasInstitucion
+            });
+
+            // Quita duplicados por nombre y ordena
+            const vistos = new Set();
+            const instituciones = filas.filter(f => {
+                const nombre = (f[COL_NOMBRE] || '').trim();
+                if (!nombre || vistos.has(nombre)) return false;
+                vistos.add(nombre);
+                return true;
+            }).sort((a, b) => ordenarTexto(a[COL_NOMBRE], b[COL_NOMBRE]));
+
+            resetSelect(institucionSelect, instituciones.length ? 'Seleccione la institución...' : 'Sin registros exactos, use "Otro"', false);
+
+            instituciones.forEach(inst => {
+                const opt = document.createElement('option');
+                opt.value = inst[COL_NOMBRE];
+                opt.textContent = inst[COL_NOMBRE];
+                if (inst[COL_ZONA]) opt.dataset.zona = inst[COL_ZONA];
+                if (inst[COL_MODALIDAD]) opt.dataset.modalidad = inst[COL_MODALIDAD];
+                if (inst[COL_DIRECCION_REGIONAL]) opt.dataset.direccionRegional = inst[COL_DIRECCION_REGIONAL];
+                if (inst[COL_CIRCUITO] !== null && inst[COL_CIRCUITO] !== undefined && inst[COL_CIRCUITO] !== '') {
+                    opt.dataset.circuito = inst[COL_CIRCUITO];
+                }
+                institucionSelect.appendChild(opt);
+            });
+
+            const optOtro = document.createElement('option');
+            optOtro.value = 'Otro';
+            optOtro.textContent = 'Otro (Especificar nombre exacto)';
+            institucionSelect.appendChild(optOtro);
+        });
+
+        // Dinámica de Selección de Institución -> Muestra Zona/Modalidad reales, o campo manual
         institucionSelect.addEventListener('change', function() {
             const val = this.value;
             if (val === 'Otro') {
                 institucionCustom.classList.remove('hidden');
                 institucionCustom.required = true;
                 institucionCustom.value = '';
-                institucionCustom.placeholder = "Escribe el nombre completo de la institución...";
+                institucionCustom.placeholder = 'Escribe el nombre completo de la institución...';
                 institucionCustom.focus();
-                direccionRegionalInput.value = "Dirección Regional correspondiente a la zona";
+                limpiarInfoInstitucion();
             } else {
                 institucionCustom.classList.add('hidden');
                 institucionCustom.required = false;
                 institucionCustom.value = val;
-                
+
                 const selectedOption = this.options[this.selectedIndex];
-                if (selectedOption && selectedOption.dataset.regional) {
-                    direccionRegionalInput.value = selectedOption.dataset.regional;
+                const zona = selectedOption?.dataset.zona;
+                const modalidad = selectedOption?.dataset.modalidad;
+                const regional = selectedOption?.dataset.direccionRegional;
+                const circuito = selectedOption?.dataset.circuito;
+
+                if (zona || modalidad) {
+                    institucionInfo.textContent = `ℹ️ ${zona ? 'Zona: ' + zona : ''}${zona && modalidad ? ' · ' : ''}${modalidad ? 'Modalidad: ' + modalidad : ''}`;
+                    institucionInfo.classList.remove('hidden');
                 } else {
-                    direccionRegionalInput.value = "Dirección Regional Central MEP";
+                    institucionInfo.classList.add('hidden');
                 }
+
+                circuitoInput.value = circuito || '';
+
+                // Se autocompleta con el dato real de Supabase; el campo sigue editable por si hay que corregirla
+                direccionRegionalInput.value = regional || '';
+                direccionRegionalInput.placeholder = regional ? '' : 'No está registrada para esta institución (opcional)';
             }
         });
 
@@ -902,6 +739,9 @@
         const ageErrorMsg = document.getElementById('age-error');
         const tseLoader = document.getElementById('tse-loader');
         const tseStatus = document.getElementById('tse-status');
+        // El Worker ahora solo se usa para el autocompletado por cédula (GET).
+        // El envío final de la inscripción va directo a Supabase (ver el submit handler).
+        const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
 
         function esCorreoMEP(email) {
             return email.trim().toLowerCase().endsWith('@mep.go.cr');
@@ -1072,35 +912,50 @@
             submitBtn.textContent = 'Enviando…';
 
             try {
-                const res = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+                const { error } = await supabaseClient
+                    .from('inscripciones')
+                    .insert([{
+                        cedula: data.id,
+                        nombre: data.nombre,
+                        apellido1: data.apellido1,
+                        apellido2: data.apellido2,
+                        fecha_nacimiento: data.fechaNacimiento,
+                        edad: data.edad,
+                        contacto: data.contacto,
+                        correo: data.correo,
+                        tipo_centro: data.tipoCentro,
+                        provincia: data.provincia,
+                        canton: data.canton,
+                        centro: data.centro,
+                        direccion_regional: data.direccionRegional || null,
+                        circuito: data.circuito ? parseInt(data.circuito, 10) : null,
+                        grado: data.grado
+                    }]);
 
-                if (res.ok) {
+                if (!error) {
                     successMsg.classList.remove('hidden');
                     errorMsg.classList.add('hidden');
                     this.reset();
-                    institucionCustom.classList.add('hidden');
-                    cantonSelect.disabled = true;
-                    cantonSelect.innerHTML = '<option value="">Primero provincia...</option>';
-                    institucionSelect.disabled = true;
-                    institucionSelect.innerHTML = '<option value="">Seleccione cantón...</option>';
-                    direccionRegionalInput.value = '';
+                    resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
+                    resetSelect(cantonSelect, 'Primero provincia...', true);
+                    resetSelect(institucionSelect, 'Seleccione cantón...', true);
+                    ocultarInstitucionCustom();
+                    limpiarInfoInstitucion();
+                    escuelaAviso.classList.add('hidden');
                     lastCedulaConsultada = '';
                     tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
                     tseStatus.className = 'text-xs text-slate-500 mt-1';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
-                    const err = await res.json().catch(() => ({}));
-                    errorMsg.textContent = '⚠️ ' + (err.error || 'No se pudo enviar la inscripción');
+                    console.error('Error de Supabase:', error);
+                    errorMsg.textContent = '⚠️ ' + (error.message || 'No se pudo enviar la inscripción');
                     errorMsg.classList.remove('hidden');
                     successMsg.classList.add('hidden');
                 }
             } catch (err) {
+                console.error(err);
                 errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
-                errorMsg.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
                 successMsg.classList.add('hidden');
             } finally {
                 submitBtn.disabled = false;
