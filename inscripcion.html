@@ -196,9 +196,11 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="direccionRegional" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Dirección Regional MEP (opcional)</label>
-                            <input type="text" id="direccionRegional" name="direccionRegional" placeholder="Escríbela si la conoces (no está en la base de datos de instituciones)" class="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
+                            <label for="direccionRegional" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Dirección Regional MEP</label>
+                            <input type="text" id="direccionRegional" name="direccionRegional" readonly placeholder="Se autocompletará al elegir la institución" class="w-full px-4 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 outline-none transition text-sm cursor-not-allowed">
                             <input type="hidden" id="circuito" name="circuito">
+                            <input type="hidden" id="zona" name="zona">
+                            <input type="hidden" id="modalidad" name="modalidad">
                         </div>
 
                         <div>
@@ -228,6 +230,20 @@
                             </select>
                         </div>
                     </div>
+                </div>
+
+                <!-- Aviso de protección de datos personales -->
+                <div class="flex items-start gap-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                    <input type="checkbox" id="aceptoDatos" name="aceptoDatos" required class="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-600 focus:ring-brand-500 shrink-0">
+                    <label for="aceptoDatos" class="text-xs text-slate-600 dark:text-slate-400">
+                        Acepto que los datos personales del jugador o jugadora indicados en este formulario (cédula, nombre, contacto y datos académicos) sean utilizados únicamente para organizar, comunicar resultados y generar estadísticas de este torneo de Ajedrez Integral. Si la persona inscrita es menor de edad, quien complete el formulario declara contar con la autorización de su persona encargada. *
+                    </label>
+                </div>
+
+                <!-- Campo trampa anti-spam: invisible para personas, atractivo para bots -->
+                <div class="hidden" aria-hidden="true">
+                    <label for="sitioWeb">Sitio web (dejar en blanco)</label>
+                    <input type="text" id="sitioWeb" name="sitioWeb" tabindex="-1" autocomplete="off">
                 </div>
 
                 <!-- Botón de Envío -->
@@ -535,6 +551,8 @@
         const institucionSelect = document.getElementById('institucionSelect');
         const direccionRegionalInput = document.getElementById('direccionRegional');
         const circuitoInput = document.getElementById('circuito');
+        const zonaInput = document.getElementById('zona');
+        const modalidadInput = document.getElementById('modalidad');
         const institucionInfo = document.getElementById('institucion-info');
 
         const escuelaAviso = document.getElementById('escuela-aviso');
@@ -558,8 +576,10 @@
         function limpiarInfoInstitucion() {
             institucionInfo.classList.add('hidden');
             direccionRegionalInput.value = '';
-            direccionRegionalInput.placeholder = 'Escríbela si la conoces (no está en la base de datos de instituciones)';
+            direccionRegionalInput.placeholder = 'Se autocompletará al elegir la institución';
             circuitoInput.value = '';
+            zonaInput.value = '';
+            modalidadInput.value = '';
         }
 
         // Reconsulta Supabase y llena un <select> con los valores únicos de una columna.
@@ -688,10 +708,12 @@
             }
 
             circuitoInput.value = circuito || '';
+            zonaInput.value = zona || '';
+            modalidadInput.value = modalidad || '';
 
-            // Se autocompleta con el dato real de Supabase; el campo sigue editable por si hay que corregirla
+            // Viene directo de Supabase; el campo es de solo lectura (ver atributo readonly)
             direccionRegionalInput.value = regional || '';
-            direccionRegionalInput.placeholder = regional ? '' : 'No está registrada para esta institución (opcional)';
+            direccionRegionalInput.placeholder = regional ? '' : 'No registrada para esta institución';
         });
 
         const correoErrorMsg = document.getElementById('correo-error-jugador');
@@ -844,6 +866,21 @@
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const successMsg = document.getElementById('form-success');
+            const errorMsg = document.getElementById('form-error');
+            const honeypot = document.getElementById('sitioWeb');
+
+            // Anti-spam: si el campo trampa viene lleno, es un bot. Simulamos éxito
+            // y no escribimos nada en la base de datos.
+            if (honeypot && honeypot.value.trim() !== '') {
+                console.warn('Envío bloqueado: campo honeypot lleno (probable bot).');
+                successMsg.classList.remove('hidden');
+                errorMsg.classList.add('hidden');
+                this.reset();
+                return;
+            }
+
             const correoResultado = validarCorreo(correoJugadorInput.value);
             if (!correoResultado.valido) {
                 correoErrorMsg.textContent = correoResultado.mensaje;
@@ -864,6 +901,7 @@
             data.centro = institucionSelect.value;
             data.direccionRegional = direccionRegionalInput.value;
             delete data.centroSelect;
+            delete data.sitioWeb;
 
             const pNombre = pNombreInput.value.trim();
             const pApellido = pApellidoInput.value.trim();
@@ -872,10 +910,6 @@
 
             data.nombre = nombreCompleto;
             data.edad = calcularEdad(data.fechaNacimiento);
-
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const successMsg = document.getElementById('form-success');
-            const errorMsg = document.getElementById('form-error');
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Enviando…';
@@ -888,48 +922,4 @@
                         nombre: data.nombre,
                         apellido1: data.apellido1,
                         apellido2: data.apellido2,
-                        fecha_nacimiento: data.fechaNacimiento,
-                        edad: data.edad,
-                        contacto: data.contacto,
-                        correo: data.correo,
-                        tipo_centro: data.tipoCentro,
-                        provincia: data.provincia,
-                        canton: data.canton,
-                        centro: data.centro,
-                        direccion_regional: data.direccionRegional || null,
-                        circuito: data.circuito ? parseInt(data.circuito, 10) : null,
-                        grado: data.grado
-                    }]);
-
-                if (!error) {
-                    successMsg.classList.remove('hidden');
-                    errorMsg.classList.add('hidden');
-                    this.reset();
-                    resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
-                    resetSelect(cantonSelect, 'Primero provincia...', true);
-                    resetSelect(institucionSelect, 'Seleccione cantón...', true);
-                    limpiarInfoInstitucion();
-                    escuelaAviso.classList.add('hidden');
-                    lastCedulaConsultada = '';
-                    tseStatus.textContent = 'Ingresa los 9 dígitos sin guiones para autocompletar.';
-                    tseStatus.className = 'text-xs text-slate-500 mt-1';
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    console.error('Error de Supabase:', error);
-                    errorMsg.textContent = '⚠️ ' + (error.message || 'No se pudo enviar la inscripción');
-                    errorMsg.classList.remove('hidden');
-                    successMsg.classList.add('hidden');
-                }
-            } catch (err) {
-                console.error(err);
-                errorMsg.textContent = '⚠️ Error de conexión con el servidor.';
-                errorMsg.classList.remove('hidden');
-                successMsg.classList.add('hidden');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Enviar inscripción';
-            }
-        });
-    </script>
-</body>
-</html>
+                        fecha_nacim
