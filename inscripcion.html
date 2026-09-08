@@ -955,7 +955,7 @@
                     console.error('Error de Supabase:', error);
                     // Código 23505 = violación de restricción única (cédula ya inscrita)
                     if (error.code === '23505') {
-                        errorMsg.textContent = '⚠️ Esta cédula ya está inscrita en este evento. Si crees que es un error, contáctanos directamente.';
+                        errorMsg.textContent = '⚠️ Esta cédula ya está inscrita en este evento. Si crees que es un error, escribe por WhatsApp al 8309-2291 con Oscar Angulo, el organizador.';
                     } else {
                         errorMsg.textContent = '⚠️ ' + (error.message || 'No se pudo enviar la inscripción');
                     }
