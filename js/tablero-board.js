@@ -30,6 +30,8 @@
   let legalTargets = []; // jugadas legales (verbose) desde la casilla seleccionada
   let lastMove = null; // {from, to} de la última jugada, para resaltarla
   let isBotThinking = false;
+  let focusSquare = null; // casilla con tabindex="0" (tabulación circular / roving tabindex) para el teclado
+  let forceFocusRestore = false; // fuerza devolver el foco al tablero en el próximo renderBoard() (p.ej. tras promocionar)
   let capturedByWhite = []; // piezas negras capturadas por blancas
   let capturedByBlack = []; // piezas blancas capturadas por negras
   let resultRecorded = false; // evita contar dos veces el resultado de una misma partida
@@ -88,7 +90,8 @@
 
   function squareClasses(square) {
     const light = isLightSquare(square);
-    let cls = "flex items-center justify-center text-3xl sm:text-4xl md:text-5xl cursor-pointer select-none relative transition-colors ";
+    let cls =
+      "flex items-center justify-center text-3xl sm:text-4xl md:text-5xl cursor-pointer select-none relative transition-colors w-full h-full border-0 p-0 m-0 ";
     cls += light ? "bg-brand-100 " : "bg-brand-500 ";
     if (selected === square) {
       cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
@@ -96,6 +99,44 @@
       cls += light ? "bg-accent-400/40 " : "bg-accent-600/50 ";
     }
     return cls;
+  }
+
+  // ---------- Accesibilidad: nombres de piezas en español para lectores de pantalla ----------
+  const PIECE_INFO = {
+    p: { name: "peón", fem: false },
+    n: { name: "caballo", fem: false },
+    b: { name: "alfil", fem: false },
+    r: { name: "torre", fem: true },
+    q: { name: "dama", fem: true },
+    k: { name: "rey", fem: false },
+  };
+
+  function colorAdjective(color, fem) {
+    if (color === "w") return fem ? "blanca" : "blanco";
+    return fem ? "negra" : "negro";
+  }
+
+  function pieceLabel(piece) {
+    const info = PIECE_INFO[piece.type];
+    return info.name + " " + colorAdjective(piece.color, info.fem);
+  }
+
+  // Descripción hablada de una casilla (pieza, si está seleccionada, si es un movimiento
+  // posible o la última jugada), para el aria-label del botón de cada casilla.
+  function squareAriaLabel(square) {
+    const piece = game.get(square);
+    let label = square + ", " + (piece ? pieceLabel(piece) : "casilla vacía");
+    const extras = [];
+    if (selected === square) {
+      extras.push("seleccionada");
+    } else if (legalTargets.some((t) => t.to === square)) {
+      extras.push(piece ? "puedes capturar aquí" : "movimiento posible");
+    }
+    if (lastMove && (lastMove.from === square || lastMove.to === square)) {
+      extras.push("última jugada");
+    }
+    if (extras.length) label += ", " + extras.join(", ");
+    return label;
   }
 
   // Devuelve las casillas en el orden en que deben pintarse (fila por fila, izq. a der.)
@@ -121,34 +162,94 @@
   }
 
   function renderBoard() {
+    // Conserva el foco del teclado en la misma casilla tras volver a pintar el tablero
+    // (se reconstruye por completo en cada jugada), para no interrumpir la navegación.
+    const previouslyFocused = document.activeElement;
+    const hadFocusInBoard = boardEl.contains(previouslyFocused) || forceFocusRestore;
+    forceFocusRestore = false;
+
     boardEl.innerHTML = "";
     const squares = boardSquaresInOrder();
+    if (!focusSquare || squares.indexOf(focusSquare) === -1) {
+      focusSquare = squares[0];
+    }
+
     for (const square of squares) {
-      const div = document.createElement("div");
-      div.className = squareClasses(square);
-      div.setAttribute("data-square", square);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = squareClasses(square);
+      btn.setAttribute("data-square", square);
+      btn.setAttribute("aria-label", squareAriaLabel(square));
+      // Tabulación circular ("roving tabindex"): sólo una casilla es alcanzable con Tab;
+      // dentro del tablero se navega con las flechas (ver el listener de keydown más abajo).
+      btn.tabIndex = square === focusSquare ? 0 : -1;
 
       const piece = game.get(square);
       if (piece) {
         const span = document.createElement("span");
         span.textContent = GLYPH[piece.color][piece.type];
-        span.className = piece.color === "w" ? "drop-shadow-sm" : "drop-shadow-sm";
-        div.appendChild(span);
+        span.className = "drop-shadow-sm";
+        span.setAttribute("aria-hidden", "true");
+        btn.appendChild(span);
       }
 
       const isTarget = legalTargets.some((t) => t.to === square);
       if (isTarget) {
         const dot = document.createElement("span");
+        dot.setAttribute("aria-hidden", "true");
         dot.className = piece
           ? "absolute inset-0 rounded-full ring-4 ring-accent-500/70 ring-inset pointer-events-none"
           : "absolute w-1/4 h-1/4 rounded-full bg-accent-500/70 pointer-events-none";
-        div.appendChild(dot);
+        btn.appendChild(dot);
       }
 
-      div.addEventListener("click", () => onSquareClick(square));
-      boardEl.appendChild(div);
+      btn.addEventListener("click", () => onSquareClick(square));
+      boardEl.appendChild(btn);
+    }
+
+    if (hadFocusInBoard) {
+      const target = boardEl.querySelector('[data-square="' + focusSquare + '"]');
+      if (target) target.focus();
     }
   }
+
+  // Navegación con flechas del teclado entre casillas (respeta el volteo del tablero
+  // cuando el visitante juega con negras, porque usa boardSquaresInOrder()). Enter/espacio
+  // activan la casilla enfocada de forma nativa, al ser <button>.
+  boardEl.addEventListener("keydown", (e) => {
+    const key = e.key;
+    if (key !== "ArrowUp" && key !== "ArrowDown" && key !== "ArrowLeft" && key !== "ArrowRight" && key !== "Home" && key !== "End") {
+      return;
+    }
+    const currentSquare = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
+    if (!currentSquare) return;
+    e.preventDefault();
+
+    const squares = boardSquaresInOrder();
+    const idx = squares.indexOf(currentSquare);
+    if (idx === -1) return;
+    const row = Math.floor(idx / 8);
+    const col = idx % 8;
+    let newRow = row;
+    let newCol = col;
+    if (key === "ArrowUp") newRow = Math.max(0, row - 1);
+    else if (key === "ArrowDown") newRow = Math.min(7, row + 1);
+    else if (key === "ArrowLeft") newCol = Math.max(0, col - 1);
+    else if (key === "ArrowRight") newCol = Math.min(7, col + 1);
+    else if (key === "Home") newCol = 0;
+    else if (key === "End") newCol = 7;
+
+    const newSquare = squares[newRow * 8 + newCol];
+    if (!newSquare || newSquare === currentSquare) return;
+    const oldBtn = boardEl.querySelector('[data-square="' + currentSquare + '"]');
+    const newBtn = boardEl.querySelector('[data-square="' + newSquare + '"]');
+    if (oldBtn) oldBtn.tabIndex = -1;
+    if (newBtn) {
+      newBtn.tabIndex = 0;
+      newBtn.focus();
+    }
+    focusSquare = newSquare;
+  });
 
   function pieceGlyphOf(type, color) {
     return GLYPH[color][type];
@@ -277,7 +378,10 @@
     isBotThinking = false;
     if (move) {
       const result = game.move({ from: move.from, to: move.to, promotion: move.promotion });
-      if (result) applyMoveSideEffects(result);
+      if (result) {
+        applyMoveSideEffects(result);
+        focusSquare = result.to; // si el foco ya estaba en el tablero, sigue la jugada de Oscar
+      }
     }
     renderBoard();
     updateStatus();
@@ -295,39 +399,83 @@
     const result = game.move({ from, to, promotion });
     if (!result) return;
     applyMoveSideEffects(result);
+    focusSquare = to; // lleva el foco del teclado a la casilla donde acaba de mover
     renderBoard();
     updateStatus();
     maybeTriggerBot();
   }
 
-  // ---------- Selector de promoción ----------
+  // ---------- Selector de promoción (accesible: diálogo modal, navegable con teclado) ----------
+  const PROMOTION_NAMES_ES = { q: "Dama", r: "Torre", b: "Alfil", n: "Caballo" };
+
   function showPromotionPicker(color, onPick) {
+    const returnFocusTo = document.activeElement;
+
     const overlay = document.createElement("div");
     overlay.className = "fixed inset-0 bg-brand-900/60 z-[60] flex items-center justify-center";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
     const panel = document.createElement("div");
-    panel.className = "bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center gap-4";
+    panel.className = "bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-6 flex flex-col items-center gap-4";
     const title = document.createElement("p");
-    title.className = "font-serif font-bold text-brand-800";
+    title.className = "font-serif font-bold text-brand-800 dark:text-white";
+    title.id = "promotion-picker-title-" + Date.now();
     title.textContent = "Elige una pieza:";
     panel.appendChild(title);
+    overlay.setAttribute("aria-labelledby", title.id);
 
     const row = document.createElement("div");
     row.className = "flex gap-3";
     const pieces = ["q", "r", "b", "n"];
+    const buttons = [];
+
+    function closeOverlay() {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (overlay.parentNode) document.body.removeChild(overlay);
+      if (returnFocusTo && typeof returnFocusTo.focus === "function") {
+        returnFocusTo.focus();
+      }
+    }
+
+    function onKeyDown(e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        // Cancela la promoción sin mover: onSquareClick ya limpió la selección antes de abrir este diálogo.
+        closeOverlay();
+        renderBoard();
+      } else if (e.key === "Tab") {
+        // Foco atrapado dentro del diálogo mientras esté abierto.
+        e.preventDefault();
+        const idx = buttons.indexOf(document.activeElement);
+        let next;
+        if (e.shiftKey) next = idx <= 0 ? buttons.length - 1 : idx - 1;
+        else next = idx === buttons.length - 1 ? 0 : idx + 1;
+        buttons[next].focus();
+      }
+    }
+
     pieces.forEach((p) => {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.className =
-        "text-4xl bg-brand-50 hover:bg-accent-400 rounded-lg w-16 h-16 flex items-center justify-center border border-brand-200 transition-colors";
+        "text-4xl bg-brand-50 dark:bg-brand-800 hover:bg-accent-400 rounded-lg w-16 h-16 flex items-center justify-center border border-brand-200 dark:border-brand-700 transition-colors";
       btn.textContent = GLYPH[color][p];
+      btn.setAttribute("aria-label", PROMOTION_NAMES_ES[p]);
       btn.addEventListener("click", () => {
-        document.body.removeChild(overlay);
+        document.removeEventListener("keydown", onKeyDown, true);
+        if (overlay.parentNode) document.body.removeChild(overlay);
+        forceFocusRestore = true;
         onPick(p);
       });
       row.appendChild(btn);
+      buttons.push(btn);
     });
     panel.appendChild(row);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
+    document.addEventListener("keydown", onKeyDown, true);
+    buttons[0].focus();
   }
 
   function onSquareClick(square) {
@@ -378,6 +526,7 @@
     legalTargets = [];
     lastMove = null;
     isBotThinking = false;
+    focusSquare = null;
     capturedByWhite = [];
     capturedByBlack = [];
     resultRecorded = false;
@@ -399,6 +548,35 @@
       if (label) opt.textContent = label;
     });
   }
+
+  // ---------- Accesibilidad: roles/etiquetas ARIA para lector de pantalla ----------
+  // Todo esto vive aquí (no en el HTML) para que aplique por igual a tablero.html y al
+  // tablero compacto de index.html, que comparten este mismo script.
+  boardEl.setAttribute("role", "group");
+  boardEl.setAttribute("aria-label", "Tablero de ajedrez");
+  if (boardEl.parentNode) {
+    let instructionsEl = document.getElementById("board-instructions");
+    if (!instructionsEl) {
+      instructionsEl = document.createElement("p");
+      instructionsEl.id = "board-instructions";
+      instructionsEl.className = "sr-only";
+      instructionsEl.textContent =
+        "Tablero de ajedrez interactivo. Usa las flechas del teclado para moverte entre las casillas, e Inicio o Fin para ir al extremo de la fila. Presiona Enter o espacio sobre una pieza propia para seleccionarla, y sobre una casilla resaltada para mover ahí. Al promocionar un peón, usa las flechas o Tab para elegir la pieza y Enter para confirmar, o Escape para cancelar.";
+      boardEl.parentNode.insertBefore(instructionsEl, boardEl.nextSibling);
+    }
+    boardEl.setAttribute("aria-describedby", "board-instructions");
+  }
+  if (turnEl) {
+    turnEl.setAttribute("role", "status");
+    turnEl.setAttribute("aria-live", "polite");
+  }
+  if (statusEl) {
+    statusEl.setAttribute("role", "status");
+    statusEl.setAttribute("aria-live", "polite");
+  }
+  if (colorEl && !colorEl.getAttribute("aria-label")) colorEl.setAttribute("aria-label", "Elegir tu color");
+  if (difficultyEl && !difficultyEl.getAttribute("aria-label")) difficultyEl.setAttribute("aria-label", "Elegir nivel de dificultad");
+  if (resetBtn && !resetBtn.getAttribute("aria-label")) resetBtn.setAttribute("aria-label", "Reiniciar partida");
 
   // Estado inicial
   renderBoard();

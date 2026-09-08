@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <script>tailwind.config={theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}</script>
+    <script>tailwind.config={darkMode:'class',theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}</script>
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
     <style>
         @keyframes avatarGlowPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(240, 180, 41, 0.45); }
@@ -17,7 +18,7 @@
         .avatar-glow { border-radius: 9999px; animation: avatarGlowPulse 2.4s ease-in-out infinite; }
     </style>
 </head>
-<body class="font-sans bg-brand-50 text-brand-800">
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
@@ -29,10 +30,15 @@
                     <li><a href="tablero.html" class="hover:text-accent-400 text-accent-400">Tablero</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscripción</a></li>
                 </ul>
-                <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
                     <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
+                </div>
             </div>
         </nav>
         <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
@@ -55,19 +61,19 @@
                         </div>
                         <span class="absolute -bottom-1 -right-1 bg-brand-800 text-accent-400 text-base sm:text-lg w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md" title="Oscar Angulo">♞</span>
                     </div>
-                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 text-left">Juega contra Oscar ♟️</h1>
+                    <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white text-left">Juega contra Oscar ♟️</h1>
                 </div>
-                <p class="text-brand-600 max-w-2xl mx-auto"><strong class="text-brand-800">No es un bot cualquiera:</strong> cada jugada que hace "Oscar" salió antes de un tablero real — la tomé de mis propias partidas. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarme?</p>
+                <p class="text-brand-600 dark:text-brand-300 max-w-2xl mx-auto"><strong class="text-brand-800 dark:text-white">No es un bot cualquiera:</strong> cada jugada que se hace las hice en un tablero real — la tomé de mis propias partidas. Elige tu color, ajusta el nivel y mueve una pieza para empezar. ¿Te atreves a ganarme?</p>
                 <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
-                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">♟️ +30,000 partidas reales</span>
-                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">🎚️ 3 niveles de dificultad</span>
-                    <span class="bg-brand-100 text-brand-700 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">⚪⚫ Elige tu color</span>
+                    <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">♟️ +30,000 partidas reales</span>
+                    <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">🎚️ 3 niveles de dificultad</span>
+                    <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">⚪⚫ Elige tu color</span>
                 </div>
             </div>
             <div class="flex items-center justify-center gap-2 mb-4 text-xs sm:text-sm flex-wrap">
-                <span class="bg-green-600/10 text-green-700 px-3 py-1.5 rounded-lg font-semibold">Ganadas: <span id="stat-wins">0</span></span>
-                <span class="bg-brand-200 text-brand-700 px-3 py-1.5 rounded-lg font-semibold">Tablas: <span id="stat-draws">0</span></span>
-                <span class="bg-red-600/10 text-red-700 px-3 py-1.5 rounded-lg font-semibold">Perdidas: <span id="stat-losses">0</span></span>
+                <span class="bg-green-600/10 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-lg font-semibold">Ganadas: <span id="stat-wins">0</span></span>
+                <span class="bg-brand-200 dark:bg-brand-700 text-brand-700 dark:text-brand-200 px-3 py-1.5 rounded-lg font-semibold">Tablas: <span id="stat-draws">0</span></span>
+                <span class="bg-red-600/10 text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold">Perdidas: <span id="stat-losses">0</span></span>
             </div>
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-3">
@@ -75,8 +81,8 @@
                     <span class="bg-accent-500 text-brand-900 px-4 py-2 rounded-lg font-semibold text-sm" id="status-msg">¡Tu turno!</span>
                 </div>
                 <div class="flex flex-wrap justify-center gap-3">
-                    <select id="player-color" class="bg-white border border-brand-200 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="w" selected>Jugar con Blancas</option><option value="b">Jugar con Negras</option></select>
-                    <select id="difficulty" class="bg-white border border-brand-200 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
+                    <select id="player-color" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="w" selected>Jugar con Blancas</option><option value="b">Jugar con Negras</option></select>
+                    <select id="difficulty" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
                     <button id="reset-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↻ Reiniciar</button>
                 </div>
             </div>
@@ -84,16 +90,16 @@
                 <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
             <div class="mt-8 grid md:grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl shadow-md p-5">
-                    <h3 class="font-serif font-bold text-brand-800 mb-3">Piezas capturadas</h3>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Piezas capturadas</h3>
                     <div class="flex gap-2">
-                        <div class="flex-1"><p class="text-xs text-brand-400 mb-1">Blancas capturaron:</p><div id="captured-by-white" class="text-2xl min-h-[2rem]"></div></div>
-                        <div class="flex-1"><p class="text-xs text-brand-400 mb-1">Negras capturaron:</p><div id="captured-by-black" class="text-2xl min-h-[2rem]"></div></div>
+                        <div class="flex-1"><p class="text-xs text-brand-400 dark:text-brand-500 mb-1">Blancas capturaron:</p><div id="captured-by-white" class="text-2xl min-h-[2rem]"></div></div>
+                        <div class="flex-1"><p class="text-xs text-brand-400 dark:text-brand-500 mb-1">Negras capturaron:</p><div id="captured-by-black" class="text-2xl min-h-[2rem]"></div></div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-md p-5">
-                    <h3 class="font-serif font-bold text-brand-800 mb-3">Historial de jugadas</h3>
-                    <div id="move-history" class="text-sm text-brand-500 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Historial de jugadas</h3>
+                    <div id="move-history" class="text-sm text-brand-500 dark:text-brand-400 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
                 </div>
             </div>
         </div>

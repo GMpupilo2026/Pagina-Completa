@@ -24,4 +24,24 @@
             else { header.classList.remove('scrolled', 'shadow-xl'); }
         });
     }
+
+    // ---- Modo oscuro / claro (persistido en localStorage, con detección de preferencia del sistema) ----
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const htmlEl = document.documentElement;
+    function updateThemeUI() {
+        const isDark = htmlEl.classList.contains('dark');
+        if (themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
+        if (themeToggle) {
+            themeToggle.setAttribute('aria-label', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+        }
+    }
+    if (themeToggle) {
+        updateThemeUI();
+        themeToggle.addEventListener('click', () => {
+            const isDark = htmlEl.classList.toggle('dark');
+            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+            updateThemeUI();
+        });
+    }
 })();

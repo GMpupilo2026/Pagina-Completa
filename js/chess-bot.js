@@ -251,9 +251,9 @@ const OscarBot = (function () {
     getMove,
     preload,
     difficultyLabels: {
-      easy: "Fácil (~1300 elo)",
-      medium: "Medio (~1700 elo)",
-      hard: "Difícil (~" + Math.round(DIFFICULTY.hard.elo) + " elo, el nivel real de Oscar)",
+      easy: "Fácil",
+      medium: "Medio",
+      hard: "Difícil",
     },
   };
 })();
