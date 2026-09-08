@@ -76,7 +76,10 @@
             
             <!-- Mensaje de éxito -->
             <div id="form-success" class="hidden mb-6 p-4 rounded-xl bg-brand-50 dark:bg-brand-950/80 border border-brand-300 dark:border-brand-700 text-brand-800 dark:text-brand-200 text-sm font-medium">
-                ✅ ¡Inscripción enviada exitosamente! Nos pondremos en contacto pronto.
+                <p>✅ ¡Inscripción enviada exitosamente! Nos pondremos en contacto pronto.</p>
+                <a href="https://chat.whatsapp.com/CT9W5V7yUOBE9u8otHsKFg?s=sh&p=a&mlu=4&ilr=4" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1fb959] text-white font-semibold px-4 py-2 rounded-lg transition text-sm">
+                    <span>💬</span> Abre este enlace para unirte a mi grupo de WhatsApp y recibir más información
+                </a>
             </div>
 
             <!-- Mensaje de error global -->
@@ -142,7 +145,7 @@
                         <div>
                             <label for="correoJugador" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico del Jugador/a (No usar @mep.go.cr) *</label>
                             <input type="email" id="correoJugador" name="correo" required class="w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-brand-300 dark:border-brand-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
-                            <p id="mep-error-jugador" class="hidden text-xs text-red-600 dark:text-red-400 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
+                            <p id="correo-error-jugador" class="hidden text-xs text-red-600 dark:text-red-400 font-medium mt-1">⚠️ No se permiten correos @mep.go.cr. Usa un correo personal (Gmail, Outlook, Yahoo, etc.).</p>
                         </div>
                     </div>
                 </div>
@@ -186,9 +189,6 @@
                                 <option value="" class="bg-white dark:bg-slate-950 text-slate-400">Seleccione primero el cantón...</option>
                             </select>
                             
-                            <!-- Campo oculto para escribir otra institución si se requiere -->
-                            <input type="text" id="institucionCustom" name="centro" placeholder="Escribe el nombre de la institución..." class="hidden w-full px-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition text-sm">
-
                             <!-- Info de Zona/Modalidad tomada de Supabase para la institución elegida -->
                             <p id="institucion-info" class="hidden text-xs text-brand-600 dark:text-brand-400 font-medium mt-1"></p>
                         </div>
@@ -533,7 +533,6 @@
         const provinciaSelect = document.getElementById('provincia');
         const cantonSelect = document.getElementById('canton');
         const institucionSelect = document.getElementById('institucionSelect');
-        const institucionCustom = document.getElementById('institucionCustom');
         const direccionRegionalInput = document.getElementById('direccionRegional');
         const circuitoInput = document.getElementById('circuito');
         const institucionInfo = document.getElementById('institucion-info');
@@ -552,13 +551,6 @@
                 opt.textContent = v;
                 select.appendChild(opt);
             });
-        }
-
-        // Oculta y limpia el campo de institución manual ("Otro").
-        function ocultarInstitucionCustom() {
-            institucionCustom.classList.add('hidden');
-            institucionCustom.required = false;
-            institucionCustom.value = '';
         }
 
         // Limpia la info derivada de la institución (Zona/Modalidad, Dirección Regional, Circuito).
@@ -585,7 +577,6 @@
         tipoInstitucionSelect.addEventListener('change', async function() {
             resetSelect(cantonSelect, 'Primero provincia...', true);
             resetSelect(institucionSelect, 'Seleccione cantón...', true);
-            ocultarInstitucionCustom();
             limpiarInfoInstitucion();
             escuelaAviso.classList.add('hidden');
 
@@ -613,7 +604,6 @@
         // Dinámica de Provincia -> Carga Cantones reales desde Supabase
         provinciaSelect.addEventListener('change', async function() {
             resetSelect(institucionSelect, 'Seleccione cantón...', true);
-            ocultarInstitucionCustom();
             limpiarInfoInstitucion();
 
             if (!this.value) {
@@ -628,28 +618,11 @@
                 { tipoCentro: tipoInstitucionSelect.value, provincia: this.value },
                 { vacio: 'Sin cantones para esta provincia', listo: 'Seleccione cantón...' }
             );
-            // "Otro Cantón" siempre disponible como salida manual, incluso si sí hubo resultados.
-            cantonSelect.disabled = false;
-            const optOtroCanton = document.createElement('option');
-            optOtroCanton.value = 'Otro Cantón / Escribir manual';
-            optOtroCanton.textContent = 'Otro Cantón / Escribir manual';
-            cantonSelect.appendChild(optOtroCanton);
         });
 
         // Dinámica de Cantón -> Carga Instituciones reales desde Supabase
         cantonSelect.addEventListener('change', async function() {
             limpiarInfoInstitucion();
-
-            if (this.value === 'Otro Cantón / Escribir manual') {
-                resetSelect(institucionSelect, 'Escribe el nombre abajo', true);
-                institucionCustom.classList.remove('hidden');
-                institucionCustom.required = true;
-                institucionCustom.value = '';
-                institucionCustom.placeholder = 'Escribe la institución y el cantón...';
-                return;
-            }
-
-            ocultarInstitucionCustom();
 
             if (!this.value) {
                 resetSelect(institucionSelect, 'Seleccione cantón...', true);
@@ -678,7 +651,7 @@
                 return true;
             }).sort((a, b) => ordenarTexto(a[COL_NOMBRE], b[COL_NOMBRE]));
 
-            resetSelect(institucionSelect, instituciones.length ? 'Seleccione la institución...' : 'Sin registros exactos, use "Otro"', false);
+            resetSelect(institucionSelect, instituciones.length ? 'Seleccione la institución...' : 'Sin instituciones registradas para este cantón', !instituciones.length);
 
             instituciones.forEach(inst => {
                 const opt = document.createElement('option');
@@ -692,50 +665,36 @@
                 }
                 institucionSelect.appendChild(opt);
             });
-
-            const optOtro = document.createElement('option');
-            optOtro.value = 'Otro';
-            optOtro.textContent = 'Otro (Especificar nombre exacto)';
-            institucionSelect.appendChild(optOtro);
         });
 
-        // Dinámica de Selección de Institución -> Muestra Zona/Modalidad reales, o campo manual
+        // Dinámica de Selección de Institución -> Muestra Zona/Modalidad/Dirección Regional/Circuito reales
         institucionSelect.addEventListener('change', function() {
-            const val = this.value;
-            if (val === 'Otro') {
-                institucionCustom.classList.remove('hidden');
-                institucionCustom.required = true;
-                institucionCustom.value = '';
-                institucionCustom.placeholder = 'Escribe el nombre completo de la institución...';
-                institucionCustom.focus();
+            if (!this.value) {
                 limpiarInfoInstitucion();
-            } else {
-                institucionCustom.classList.add('hidden');
-                institucionCustom.required = false;
-                institucionCustom.value = val;
-
-                const selectedOption = this.options[this.selectedIndex];
-                const zona = selectedOption?.dataset.zona;
-                const modalidad = selectedOption?.dataset.modalidad;
-                const regional = selectedOption?.dataset.direccionRegional;
-                const circuito = selectedOption?.dataset.circuito;
-
-                if (zona || modalidad) {
-                    institucionInfo.textContent = `ℹ️ ${zona ? 'Zona: ' + zona : ''}${zona && modalidad ? ' · ' : ''}${modalidad ? 'Modalidad: ' + modalidad : ''}`;
-                    institucionInfo.classList.remove('hidden');
-                } else {
-                    institucionInfo.classList.add('hidden');
-                }
-
-                circuitoInput.value = circuito || '';
-
-                // Se autocompleta con el dato real de Supabase; el campo sigue editable por si hay que corregirla
-                direccionRegionalInput.value = regional || '';
-                direccionRegionalInput.placeholder = regional ? '' : 'No está registrada para esta institución (opcional)';
+                return;
             }
+
+            const selectedOption = this.options[this.selectedIndex];
+            const zona = selectedOption?.dataset.zona;
+            const modalidad = selectedOption?.dataset.modalidad;
+            const regional = selectedOption?.dataset.direccionRegional;
+            const circuito = selectedOption?.dataset.circuito;
+
+            if (zona || modalidad) {
+                institucionInfo.textContent = `ℹ️ ${zona ? 'Zona: ' + zona : ''}${zona && modalidad ? ' · ' : ''}${modalidad ? 'Modalidad: ' + modalidad : ''}`;
+                institucionInfo.classList.remove('hidden');
+            } else {
+                institucionInfo.classList.add('hidden');
+            }
+
+            circuitoInput.value = circuito || '';
+
+            // Se autocompleta con el dato real de Supabase; el campo sigue editable por si hay que corregirla
+            direccionRegionalInput.value = regional || '';
+            direccionRegionalInput.placeholder = regional ? '' : 'No está registrada para esta institución (opcional)';
         });
 
-        const mepErrorJugadorMsg = document.getElementById('mep-error-jugador');
+        const correoErrorMsg = document.getElementById('correo-error-jugador');
         const ageErrorMsg = document.getElementById('age-error');
         const tseLoader = document.getElementById('tse-loader');
         const tseStatus = document.getElementById('tse-status');
@@ -743,8 +702,21 @@
         // El envío final de la inscripción va directo a Supabase (ver el submit handler).
         const WORKER_URL = 'https://ajedrez-inscripciones.gmpupilo.workers.dev';
 
-        function esCorreoMEP(email) {
-            return email.trim().toLowerCase().endsWith('@mep.go.cr');
+        const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Valida formato de correo y bloquea dominios @mep.go.cr.
+        // Devuelve { valido, mensaje } — mensaje solo viene lleno cuando valido es false.
+        function validarCorreo(email) {
+            const valor = email.trim();
+            if (!valor) return { valido: true };
+
+            if (!FORMATO_CORREO.test(valor)) {
+                return { valido: false, mensaje: '⚠️ Ingresa un correo electrónico válido (ej. nombre@dominio.com).' };
+            }
+            if (valor.toLowerCase().endsWith('@mep.go.cr')) {
+                return { valido: false, mensaje: '⚠️ No se permiten correos @mep.go.cr. Usa un correo personal (Gmail, Outlook, Yahoo, etc.).' };
+            }
+            return { valido: true };
         }
 
         function calcularEdad(fechaNacimientoStr) {
@@ -840,15 +812,17 @@
         });
 
         correoJugadorInput.addEventListener('input', function() {
-            if (esCorreoMEP(this.value)) {
+            const resultado = validarCorreo(this.value);
+            if (!resultado.valido) {
                 this.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-950/30');
                 this.classList.remove('border-brand-300', 'dark:border-brand-800/60', 'bg-slate-50', 'dark:bg-slate-950');
-                mepErrorJugadorMsg.classList.remove('hidden');
-                this.setCustomValidity('No se permiten correos institucionales del MEP (@mep.go.cr).');
+                correoErrorMsg.textContent = resultado.mensaje;
+                correoErrorMsg.classList.remove('hidden');
+                this.setCustomValidity(resultado.mensaje);
             } else {
                 this.classList.remove('border-red-500', 'bg-red-50', 'dark:bg-red-950/30');
                 this.classList.add('border-brand-300', 'dark:border-brand-800/60', 'bg-slate-50', 'dark:bg-slate-950');
-                mepErrorJugadorMsg.classList.add('hidden');
+                correoErrorMsg.classList.add('hidden');
                 this.setCustomValidity('');
             }
         });
@@ -870,29 +844,24 @@
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            if (esCorreoMEP(correoJugadorInput.value)) {
-                mepErrorJugadorMsg.classList.remove('hidden');
+            const correoResultado = validarCorreo(correoJugadorInput.value);
+            if (!correoResultado.valido) {
+                correoErrorMsg.textContent = correoResultado.mensaje;
+                correoErrorMsg.classList.remove('hidden');
                 correoJugadorInput.focus();
                 return;
             }
 
             if (!esEdadValida(fechaNacimientoInput.value)) {
-                ageErrorMsg.classList.add('hidden');
+                ageErrorMsg.classList.remove('hidden');
                 fechaNacimientoInput.focus();
                 return;
-            }
-
-            let centroFinal = institucionSelect.value;
-            if (centroFinal === 'Otro' || institucionCustom.value.trim() !== '') {
-                if (!institucionCustom.classList.contains('hidden') && institucionCustom.value.trim() !== '') {
-                    centroFinal = institucionCustom.value.trim();
-                }
             }
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            data.centro = centroFinal;
+            data.centro = institucionSelect.value;
             data.direccionRegional = direccionRegionalInput.value;
             delete data.centroSelect;
 
@@ -939,7 +908,6 @@
                     resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
                     resetSelect(cantonSelect, 'Primero provincia...', true);
                     resetSelect(institucionSelect, 'Seleccione cantón...', true);
-                    ocultarInstitucionCustom();
                     limpiarInfoInstitucion();
                     escuelaAviso.classList.add('hidden');
                     lastCedulaConsultada = '';
