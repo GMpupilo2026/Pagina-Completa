@@ -461,8 +461,8 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Función que verifica Turnstile y guarda la inscripción con permisos elevados.
-        // OJO: si renombras la función en Supabase, actualiza esta URL (cambia "registrar-inscripcion").
-        const EDGE_FUNCTION_REGISTRAR_URL = `${SUPABASE_URL}/functions/v1/registrar-inscripcion`;
+        // OJO: si renombras la función en Supabase, actualiza esta URL (ahora mismo apunta a "smart-function").
+        const EDGE_FUNCTION_REGISTRAR_URL = `${SUPABASE_URL}/functions/v1/smart-function`;
 
         const TABLA_INSTITUCIONES = 'Coles';
         const COL_NOMBRE = 'NOMBRE';
