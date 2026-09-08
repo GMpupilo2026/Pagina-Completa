@@ -15,6 +15,9 @@
   const capturedByWhiteEl = document.getElementById("captured-by-white");
   const capturedByBlackEl = document.getElementById("captured-by-black");
   const historyEl = document.getElementById("move-history");
+  const statWinsEl = document.getElementById("stat-wins");
+  const statDrawsEl = document.getElementById("stat-draws");
+  const statLossesEl = document.getElementById("stat-losses");
 
   if (!boardEl || typeof Chess === "undefined") {
     console.error("Falta el tablero o la librería chess.js");
@@ -29,6 +32,38 @@
   let isBotThinking = false;
   let capturedByWhite = []; // piezas negras capturadas por blancas
   let capturedByBlack = []; // piezas blancas capturadas por negras
+  let resultRecorded = false; // evita contar dos veces el resultado de una misma partida
+
+  // ---------- Contador de partidas (ganadas/tablas/perdidas), guardado en este navegador ----------
+  const STATS_KEY = "oscarChessStats_v1";
+
+  function loadStats() {
+    try {
+      const raw = localStorage.getItem(STATS_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return {
+        wins: (parsed && Number(parsed.wins)) || 0,
+        draws: (parsed && Number(parsed.draws)) || 0,
+        losses: (parsed && Number(parsed.losses)) || 0,
+      };
+    } catch (e) {
+      return { wins: 0, draws: 0, losses: 0 };
+    }
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    } catch (e) {}
+  }
+
+  const stats = loadStats();
+
+  function renderStats() {
+    if (statWinsEl) statWinsEl.textContent = String(stats.wins);
+    if (statDrawsEl) statDrawsEl.textContent = String(stats.draws);
+    if (statLossesEl) statLossesEl.textContent = String(stats.losses);
+  }
 
   const GLYPH = {
     w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
@@ -141,25 +176,55 @@
     historyEl.scrollTop = historyEl.scrollHeight;
   }
 
-  function getGameOverMessage() {
+  // Devuelve info estructurada de fin de partida (o { over: false }), para poder
+  // tanto mostrar un mensaje como llevar el contador de ganadas/tablas/perdidas.
+  function getGameOverInfo() {
     if (game.in_checkmate()) {
       // Quien tiene el turno ahora está en jaque mate; el otro color ganó.
       const winner = game.turn() === "w" ? "b" : "w";
-      return winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : "Jaque mate — ¡Oscar gana! ♟️";
+      return { over: true, draw: false, winner };
     }
-    if (game.in_stalemate()) return "Tablas por ahogado";
-    if (game.in_threefold_repetition()) return "Tablas por repetición";
+    if (game.in_stalemate()) return { over: true, draw: true, reason: "ahogado" };
+    if (game.in_threefold_repetition()) return { over: true, draw: true, reason: "repetición" };
     if (typeof game.insufficient_material === "function" && game.insufficient_material()) {
-      return "Tablas por material insuficiente";
+      return { over: true, draw: true, reason: "material insuficiente" };
     }
-    if (game.in_draw()) return "Tablas";
-    return null;
+    if (game.in_draw()) return { over: true, draw: true, reason: null };
+    return { over: false };
+  }
+
+  function getGameOverMessage(info) {
+    if (!info.over) return null;
+    if (!info.draw) {
+      return info.winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : "Jaque mate — ¡Oscar gana! ♟️";
+    }
+    if (info.reason === "ahogado") return "Tablas por ahogado";
+    if (info.reason === "repetición") return "Tablas por repetición";
+    if (info.reason === "material insuficiente") return "Tablas por material insuficiente";
+    return "Tablas";
+  }
+
+  // Suma el resultado a las estadísticas guardadas la primera vez que se detecta
+  // el fin de una partida (resultRecorded evita contarlo de nuevo en renders posteriores).
+  function recordResultOnce(info) {
+    if (resultRecorded || !info.over) return;
+    resultRecorded = true;
+    if (info.draw) {
+      stats.draws++;
+    } else if (info.winner === userColor) {
+      stats.wins++;
+    } else {
+      stats.losses++;
+    }
+    saveStats();
+    renderStats();
   }
 
   function updateStatus() {
-    const overMsg = getGameOverMessage();
-    if (overMsg) {
-      statusEl.textContent = overMsg;
+    const info = getGameOverInfo();
+    if (info.over) {
+      recordResultOnce(info);
+      statusEl.textContent = getGameOverMessage(info);
       turnEl.textContent = "Partida terminada";
       return;
     }
@@ -187,7 +252,7 @@
   }
 
   function isGameOver() {
-    return typeof game.game_over === "function" ? game.game_over() : !!getGameOverMessage();
+    return typeof game.game_over === "function" ? game.game_over() : getGameOverInfo().over;
   }
 
   async function triggerBotMove() {
@@ -310,6 +375,7 @@
     isBotThinking = false;
     capturedByWhite = [];
     capturedByBlack = [];
+    resultRecorded = false;
     updateCapturedDisplay();
     updateHistoryDisplay();
     renderBoard();
@@ -333,6 +399,7 @@
   renderBoard();
   updateCapturedDisplay();
   updateHistoryDisplay();
+  renderStats();
   updateStatus();
   applyDifficultyLabels();
   if (typeof OscarBot !== "undefined") OscarBot.preload();
