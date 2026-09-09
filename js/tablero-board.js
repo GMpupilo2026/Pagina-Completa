@@ -188,7 +188,11 @@
       if (piece) {
         const span = document.createElement("span");
         span.textContent = GLYPH[piece.color][piece.type];
-        span.className = "drop-shadow-sm";
+        // Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son sólo un contorno hueco: si se
+        // pintan con el mismo color que las negras (heredado del texto de la página) quedan
+        // indistinguibles entre sí. piece-white/piece-black (css/styles.css) les dan relleno y
+        // contorno propios para que se vean claramente en cualquier casilla y en cualquier tema.
+        span.className = piece.color === "w" ? "piece-white" : "piece-black";
         span.setAttribute("aria-hidden", "true");
         btn.appendChild(span);
       }
@@ -459,7 +463,8 @@
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className =
-        "text-4xl bg-brand-50 dark:bg-brand-800 hover:bg-accent-400 rounded-lg w-16 h-16 flex items-center justify-center border border-brand-200 dark:border-brand-700 transition-colors";
+        "text-4xl bg-brand-50 dark:bg-brand-800 hover:bg-accent-400 rounded-lg w-16 h-16 flex items-center justify-center border border-brand-200 dark:border-brand-700 transition-colors " +
+        (color === "w" ? "piece-white" : "piece-black");
       btn.textContent = GLYPH[color][p];
       btn.setAttribute("aria-label", PROMOTION_NAMES_ES[p]);
       btn.addEventListener("click", () => {

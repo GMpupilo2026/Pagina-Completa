@@ -5,18 +5,26 @@
  *  1. Libro de posiciones de Oscar (oscar-book.js, generado de ~30,890 partidas propias):
  *     si la posición actual coincide con una que Oscar ya vivió, juega (con azar ponderado
  *     por frecuencia y resultado) una de las jugadas que él realmente hizo ahí.
- *  2. Fuera del libro, un motor Stockfish (WASM, cargado desde cdnjs) calibrado a la fuerza
- *     de Oscar (ELO real, tomado de sus partidas) según la dificultad elegida.
- *  3. Si por algún motivo el motor no carga (red bloqueada, CSP, etc.), un mini heurístico de
- *     respaldo para que el bot nunca se quede "mudo".
+ *  2. Fuera del libro, un motor Stockfish 16 (NNUE, WASM, alojado en este mismo sitio)
+ *     calibrado a la fuerza de Oscar (ELO real, tomado de sus partidas) según la dificultad
+ *     elegida.
+ *  3. Si por algún motivo el motor no carga (navegador muy antiguo, WASM deshabilitado, etc.),
+ *     un mini heurístico de respaldo para que el bot nunca se quede "mudo".
+ *
+ * IMPORTANTE: el motor se aloja en este mismo dominio (js/vendor/stockfish/), NO en un CDN
+ * externo. Los navegadores no permiten crear un Web Worker a partir de un script de otro
+ * origen (https://cdnjs.cloudflare.com/... lanzaba SecurityError al hacer `new Worker(url)`),
+ * así que con un motor externo el "motor" nunca llegaba a cargar y el bot jugaba SIEMPRE con
+ * el heurístico de respaldo (muy débil) fuera del libro, sin importar la dificultad elegida.
+ * Alojar los archivos del motor en el propio sitio corrige esto de raíz.
  *
  * Requiere que chess.js y oscar-book.js ya estén cargados antes que este archivo.
  */
 const OscarBot = (function () {
   "use strict";
 
-  const STOCKFISH_WASM_URL = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.wasm.js";
-  const STOCKFISH_ASMJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
+  // Ruta relativa: funciona tanto desde tablero.html como desde index.html (ambos en la raíz).
+  const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
 
   // ELO real de Oscar tomado de sus partidas (bullet, que es la mayoría de su historial).
   // window.OSCAR_ELO_CALIB llega desde oscar-book.js; si no está disponible, usamos un valor por defecto razonable.
@@ -26,9 +34,9 @@ const OscarBot = (function () {
   // (peso = frecuencia·resultado). >1 hace que las jugadas que Oscar más repitió en esa
   // posición dominen mucho más la elección; 1 sería proporcional a la frecuencia sin más.
   const DIFFICULTY = {
-    easy: { elo: 1320, movetime: 250, bookMaxPly: 10, blunderChance: 0.18, bookBias: 1.15 },
-    medium: { elo: 1700, movetime: 500, bookMaxPly: 24, blunderChance: 0.05, bookBias: 1.7 },
-    hard: { elo: Math.max(1320, Math.min(3000, REAL_ELO)), movetime: 900, bookMaxPly: Infinity, blunderChance: 0, bookBias: 2.2 },
+    easy: { elo: 1320, movetime: 350, bookMaxPly: 10, blunderChance: 0.18, bookBias: 1.15 },
+    medium: { elo: 1700, movetime: 700, bookMaxPly: 24, blunderChance: 0.05, bookBias: 1.7 },
+    hard: { elo: Math.max(1320, Math.min(3000, REAL_ELO)), movetime: 1200, bookMaxPly: Infinity, blunderChance: 0, bookBias: 2.2 },
   };
 
   let engine = null;
@@ -90,55 +98,50 @@ const OscarBot = (function () {
     return items[items.length - 1].uci;
   }
 
-  // ---------- Motor Stockfish (Web Worker, con respaldo asm.js) ----------
+  // ---------- Motor Stockfish (Web Worker, alojado en este mismo sitio) ----------
   function ensureEngine() {
     if (engineInitPromise) return engineInitPromise;
     engineInitPromise = new Promise((resolve) => {
-      function tryLoad(url, isFallback) {
-        let w;
+      let w;
+      try {
+        w = new Worker(STOCKFISH_URL);
+      } catch (e) {
+        resolve(false);
+        return;
+      }
+      let settled = false;
+      // El WASM del motor pesa ~575KB; en una conexión lenta puede tardar un poco la primera vez.
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
         try {
-          w = new Worker(url);
-        } catch (e) {
-          if (!isFallback) return tryLoad(STOCKFISH_ASMJS_URL, true);
-          resolve(false);
-          return;
-        }
-        let settled = false;
-        const timeout = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          try {
-            w.terminate();
-          } catch (e) {}
-          if (!isFallback) tryLoad(STOCKFISH_ASMJS_URL, true);
-          else resolve(false);
-        }, 6000);
+          w.terminate();
+        } catch (e) {}
+        resolve(false);
+      }, 10000);
 
-        w.onerror = function () {
-          if (settled) return;
+      w.onerror = function () {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        try {
+          w.terminate();
+        } catch (e) {}
+        resolve(false);
+      };
+
+      w.onmessage = function (e) {
+        const line = typeof e.data === "string" ? e.data : "";
+        if (!settled && line.indexOf("uciok") !== -1) {
           settled = true;
           clearTimeout(timeout);
-          try {
-            w.terminate();
-          } catch (e) {}
-          if (!isFallback) tryLoad(STOCKFISH_ASMJS_URL, true);
-          else resolve(false);
-        };
+          engine = w;
+          engine.onmessage = onEngineMessage;
+          resolve(true);
+        }
+      };
 
-        w.onmessage = function (e) {
-          const line = typeof e.data === "string" ? e.data : "";
-          if (!settled && line.indexOf("uciok") !== -1) {
-            settled = true;
-            clearTimeout(timeout);
-            engine = w;
-            engine.onmessage = onEngineMessage;
-            resolve(true);
-          }
-        };
-
-        w.postMessage("uci");
-      }
-      tryLoad(STOCKFISH_WASM_URL, false);
+      w.postMessage("uci");
     });
     return engineInitPromise;
   }
