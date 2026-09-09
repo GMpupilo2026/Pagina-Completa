@@ -48,6 +48,7 @@
   const moveFormEl = document.getElementById("move-form");
   const moveInputEl = document.getElementById("move-input");
   const moveInputStatusEl = document.getElementById("move-input-status");
+  const positionReadoutEl = document.getElementById("position-readout");
   // Interruptor "modo normal" / "modo adaptado" (lector de pantalla): controla qué tan
   // visibles están los elementos de accesibilidad y si los atajos de teclado extra del
   // tablero (más allá de las flechas) están activos.
@@ -93,9 +94,11 @@
   } catch (e) {}
 
   const blindOnlyEls = Array.from(document.querySelectorAll(".blind-mode-only"));
+  const normalOnlyEls = Array.from(document.querySelectorAll(".normal-mode-only"));
 
   function applyBlindModeUI() {
     blindOnlyEls.forEach((el) => el.classList.toggle("hidden", !blindMode));
+    normalOnlyEls.forEach((el) => el.classList.toggle("hidden", blindMode));
     if (modeNormalBtn) {
       modeNormalBtn.setAttribute("aria-pressed", blindMode ? "false" : "true");
       modeNormalBtn.classList.toggle("bg-brand-700", !blindMode);
@@ -772,6 +775,13 @@
     updateCapturedDisplay();
     updateHistoryDisplay();
     updateMaterialDisplay();
+    // En modo adaptado, cada jugada se anuncia por voz apenas ocurre — la propia y la
+    // respuesta de Oscar — sin importar si el foco está en el tablero o en el recuadro de
+    // comandos, para no depender de tener que ir a revisar manualmente con "L".
+    if (blindMode) {
+      const moveNum = Math.floor((game.history().length - 1) / 2) + 1;
+      announceMoveInput(describeMove(moveResult, moveNum));
+    }
   }
 
   function isGameOver() {
@@ -923,9 +933,15 @@
     return null;
   }
 
+  // Vacía primero y vuelve a poner el texto con un pequeño retraso: así, si se repite el
+  // mismo comando dos veces seguidas (por ejemplo para repasar algo que no se escuchó bien),
+  // el lector de pantalla lo anuncia de nuevo aunque el texto no haya cambiado.
   function announceMoveInput(text) {
     if (!moveInputStatusEl) return;
-    moveInputStatusEl.textContent = text;
+    moveInputStatusEl.textContent = "";
+    window.setTimeout(() => {
+      moveInputStatusEl.textContent = text;
+    }, 50);
   }
 
   // Describe una jugada del historial (verbose de chess.js) en español hablado, para los
@@ -988,12 +1004,69 @@
     return parts.length ? parts.join(", ") : "sin piezas en el tablero";
   }
 
-  function announcePosition() {
+  // Cada columna (a-h) tiene una palabra propia para poder distinguir las casillas con
+  // claridad al oído (parecido al alfabeto fonético "Alfa, Bravo, Charlie…", pero con la
+  // letra inicial de cada palabra igual a la columna): a=anna, b=bella, c=cesar, d=david,
+  // e=eva, f=felix, g=gustav, h=hector. Sólo se usa al dictar la posición completa (comando "T").
+  const FILE_WORDS = { a: "anna", b: "bella", c: "cesar", d: "david", e: "eva", f: "felix", g: "gustav", h: "hector" };
+
+  function wordSquare(square) {
+    return FILE_WORDS[square[0]] + " " + square[1];
+  }
+
+  // Arma una línea por cada tipo de pieza presente ("torre: eva 1, anna 1") para un color,
+  // usando las palabras por columna en vez de las letras a-h.
+  function pieceLinesForColor(color) {
+    const board = game.board();
+    const byType = { k: [], q: [], r: [], b: [], n: [], p: [] };
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const cell = board[r][f];
+        if (cell && cell.color === color) byType[cell.type].push(FILES[f] + (8 - r));
+      }
+    }
+    const lines = [];
+    for (const type of POSITION_PIECE_ORDER) {
+      const squares = byType[type];
+      if (!squares.length) continue;
+      squares.sort();
+      // La etiqueta va siempre en singular (torre, alfil, peón...), sin importar cuántas
+      // piezas de ese tipo haya: así lo pidió el usuario en su ejemplo ("torre: eva 1, anna 1").
+      const label = PIECE_NAME_FORMS[type].singular;
+      lines.push(`${label}: ${squares.map(wordSquare).join(", ")}`);
+    }
+    return lines;
+  }
+
+  // Comando "T" (dice la posición): en vez de un solo párrafo largo, arma un bloque con
+  // encabezados reales (Piezas > Blancas/Negras) para poder navegarlo con las teclas de
+  // encabezado del lector de pantalla, y para volver a leerlo más tarde si hace falta.
+  function renderPositionReadout() {
+    if (!positionReadoutEl) return;
     const turnTxt = game.turn() === "w" ? "blancas" : "negras";
     const checkTxt = game.in_check() ? ", en jaque" : "";
-    announceMoveInput(
-      `Turno de ${turnTxt}${checkTxt}. Blancas: ${describeSide("w")}. Negras: ${describeSide("b")}.`
-    );
+    const whiteLines = pieceLinesForColor("w");
+    const blackLines = pieceLinesForColor("b");
+    let html = `<p>Turno de ${turnTxt}${checkTxt}.</p>`;
+    html += "<h2>Piezas</h2>";
+    html += "<h3>Blancas</h3>";
+    html += whiteLines.length
+      ? whiteLines.map((l) => `<p>${escapeHtml(l)}</p>`).join("")
+      : "<p>Sin piezas blancas en el tablero.</p>";
+    html += "<h3>Negras</h3>";
+    html += blackLines.length
+      ? blackLines.map((l) => `<p>${escapeHtml(l)}</p>`).join("")
+      : "<p>Sin piezas negras en el tablero.</p>";
+    // Se vacía primero y se repuebla con un pequeño retraso, igual que announceMoveInput, para
+    // que repetir el comando "T" vuelva a anunciarse aunque la posición no haya cambiado.
+    positionReadoutEl.innerHTML = "";
+    window.setTimeout(() => {
+      positionReadoutEl.innerHTML = html;
+    }, 50);
+  }
+
+  function announcePosition() {
+    renderPositionReadout();
   }
 
   function capitalize(s) {
@@ -1389,9 +1462,8 @@
     moveInputEl.value = "";
     selected = null;
     legalTargets = [];
-    const pieceName = (PIECE_INFO[result.piece] && PIECE_INFO[result.piece].name) || "pieza";
-    const captureTxt = result.captured ? ", captura" : "";
-    announceMoveInput(`Jugaste ${pieceName} de ${result.from} a ${result.to}${captureTxt}.`);
+    // La jugada misma se anuncia desde applyMoveSideEffects (igual que la respuesta de Oscar
+    // que viene después), así que aquí no hace falta anunciarla por separado.
     finishUserMove(result);
   }
 
@@ -1859,6 +1931,7 @@
     if (moveInputEl) moveInputEl.value = "";
     if (moveInputStatusEl) moveInputStatusEl.textContent = "";
     if (repeatMovesStatusEl) repeatMovesStatusEl.textContent = "";
+    if (positionReadoutEl) positionReadoutEl.innerHTML = "";
     renderBoard();
     updateStatus();
     // Si el visitante eligió jugar con negras, el bot (blancas) abre la partida.
