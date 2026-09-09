@@ -431,6 +431,8 @@
   if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeGame);
 
   // ---------- Origen real de las jugadas del bot (de qué partida de Oscar salieron) ----------
+  // Muestra sólo la ÚLTIMA jugada del bot reconocida como salida del libro (no el historial
+  // completo), con la referencia de la partida real de la que vino.
   function renderOrigins() {
     if (!originsPanelEl) return;
     if (!botBookMoves.length) {
@@ -438,17 +440,18 @@
         '<p class="text-brand-400 dark:text-brand-500">Cuando Oscar (el bot) juegue una jugada tomada de una de sus partidas reales, aparecerá aquí.</p>';
       return;
     }
-    let html = "";
-    for (const bm of botBookMoves) {
-      const origin =
-        typeof OscarBot !== "undefined" && OscarBot.getMoveOrigin ? OscarBot.getMoveOrigin(bm.hash, bm.uci) : null;
-      if (!origin) {
-        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): tomada del libro de partidas reales de Oscar.</p>`;
-      } else {
-        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): de una partida real de Oscar contra <strong>${escapeHtml(
-          origin.opponent
-        )}</strong> el ${escapeHtml(origin.date.replace(/\./g, "-"))} — ${escapeHtml(origin.resultLabel)}.</p>`;
-      }
+    const bm = botBookMoves[botBookMoves.length - 1];
+    const origin =
+      typeof OscarBot !== "undefined" && OscarBot.getMoveOrigin ? OscarBot.getMoveOrigin(bm.hash, bm.uci) : null;
+    let html;
+    if (!origin) {
+      html = `<p>Última jugada de Oscar tomada del libro: ${bm.moveNum}. ${escapeHtml(bm.san)} — buscando la partida de origen…</p>`;
+    } else {
+      html = `<p>Última jugada de Oscar tomada de una partida real: ${bm.moveNum}. ${escapeHtml(
+        bm.san
+      )}, de su partida contra <strong>${escapeHtml(origin.opponent)}</strong> el ${escapeHtml(
+        origin.date.replace(/\./g, "-")
+      )} — ${escapeHtml(origin.resultLabel)}.</p>`;
     }
     originsPanelEl.innerHTML = html;
   }
