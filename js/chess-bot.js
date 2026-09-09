@@ -18,13 +18,23 @@
  * el heurístico de respaldo (muy débil) fuera del libro, sin importar la dificultad elegida.
  * Alojar los archivos del motor en el propio sitio corrige esto de raíz.
  *
+ * Además del movimiento, este archivo expone dos utilidades pedagógicas que usa
+ * tablero-board.js:
+ *  - evaluatePosition(fen): evalúa una posición con el motor a máxima fuerza (para la barra
+ *    de evaluación en vivo y el análisis posterior de la partida).
+ *  - getMoveOrigin(hash, uci): si una jugada del bot salió del libro, busca de qué partida
+ *    real de Oscar vino (oscar-book-provenance.json, cargado en segundo plano bajo demanda).
+ * Todo el acceso al motor (elegir jugada o evaluar) pasa por una única cola (runEngineTask)
+ * para que nunca haya dos "go" simultáneos compitiendo por la misma respuesta del Worker.
+ *
  * Requiere que chess.js y oscar-book.js ya estén cargados antes que este archivo.
  */
 const OscarBot = (function () {
   "use strict";
 
-  // Ruta relativa: funciona tanto desde tablero.html como desde index.html (ambos en la raíz).
+  // Rutas relativas: funcionan tanto desde tablero.html como desde index.html (ambos en la raíz).
   const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
+  const PROVENANCE_URL = "data/oscar-book-provenance.json";
 
   // ELO real de Oscar tomado de sus partidas (bullet, que es la mayoría de su historial).
   // window.OSCAR_ELO_CALIB llega desde oscar-book.js; si no está disponible, usamos un valor por defecto razonable.
@@ -39,9 +49,13 @@ const OscarBot = (function () {
     hard: { elo: Math.max(1320, Math.min(3000, REAL_ELO)), movetime: 1200, bookMaxPly: Infinity, blunderChance: 0, bookBias: 2.2 },
   };
 
+  // Movetime usado para evaluar una posición (barra de evaluación en vivo / "Analizar partida").
+  // No es la jugada del bot: siempre a máxima fuerza (sin límite de ELO) para que la evaluación
+  // sea honesta e independiente de la dificultad elegida por el visitante.
+  const EVAL_MOVETIME = 450;
+
   let engine = null;
   let engineInitPromise = null;
-  let pendingResolve = null;
 
   // ---------- FNV-1a 64-bit hash (debe coincidir EXACTO con el script Python que generó el libro) ----------
   function fnv1a64Hex(str) {
@@ -64,6 +78,10 @@ const OscarBot = (function () {
     return parts.slice(0, 4).join(" ");
   }
 
+  function positionHash(fen) {
+    return fnv1a64Hex(positionKey(fen));
+  }
+
   function uciToParts(uci) {
     return {
       from: uci.slice(0, 2),
@@ -76,10 +94,9 @@ const OscarBot = (function () {
   // biasPower > 1 exagera la ventaja de las jugadas más frecuentes en esa posición
   // (peso_final = peso_guardado ^ biasPower), así el bot se parece más a "lo que Oscar
   // realmente suele jugar ahí" en vez de tratar todas las alternativas casi por igual.
-  function getBookMove(fen, biasPower) {
+  function getBookMoveForHash(hash, biasPower) {
     const book = window.OSCAR_BOOK;
     if (!book) return null;
-    const hash = fnv1a64Hex(positionKey(fen));
     const entry = book[hash];
     if (!entry || entry.length === 0) return null;
     const power = typeof biasPower === "number" && biasPower > 0 ? biasPower : 1.7;
@@ -96,6 +113,60 @@ const OscarBot = (function () {
       r -= it.w;
     }
     return items[items.length - 1].uci;
+  }
+
+  // ---------- Origen real de una jugada del libro (partida de Oscar de la que salió) ----------
+  let provenanceData = null;
+  let provenancePromise = null;
+
+  function preloadProvenance() {
+    if (provenancePromise) return provenancePromise;
+    provenancePromise = fetch(PROVENANCE_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        provenanceData = data;
+        return data;
+      })
+      .catch(() => null);
+    return provenancePromise;
+  }
+
+  const RESULT_LABEL_ES = { W: "Oscar ganó", L: "Oscar perdió", D: "Tablas", "?": "resultado no registrado" };
+  const BUCKET_LABEL_ES = {
+    bullet: "bullet",
+    blitz: "blitz",
+    rapid: "rápida",
+    hyperbullet: "hiperbullet",
+    other: "otra modalidad",
+  };
+
+  // Sincrónica: sólo puede responder si preloadProvenance() ya terminó de cargar los datos.
+  // Si aún no cargaron (o la jugada no vino del libro), devuelve null sin lanzar error.
+  function getMoveOrigin(hash, uci) {
+    if (!provenanceData || !hash || !uci) return null;
+    const flatMoves = window.OSCAR_BOOK && window.OSCAR_BOOK[hash];
+    const provArr = provenanceData.moves && provenanceData.moves[hash];
+    if (!flatMoves || !provArr) return null;
+    for (let i = 0; i < flatMoves.length; i += 2) {
+      if (flatMoves[i] === uci) {
+        const gidx = provArr[i / 2];
+        if (gidx === undefined || gidx === null || gidx < 0) return null;
+        const g = provenanceData.games && provenanceData.games[gidx];
+        if (!g) return null;
+        return {
+          oscarColor: g[0],
+          opponent: g[1],
+          resultCode: g[2],
+          resultLabel: RESULT_LABEL_ES[g[2]] || RESULT_LABEL_ES["?"],
+          date: g[3],
+          oscarElo: g[4],
+          opponentElo: g[5],
+          bucket: g[6],
+          bucketLabel: BUCKET_LABEL_ES[g[6]] || g[6],
+        };
+      }
+    }
+    return null;
   }
 
   // ---------- Motor Stockfish (Web Worker, alojado en este mismo sitio) ----------
@@ -146,34 +217,72 @@ const OscarBot = (function () {
     return engineInitPromise;
   }
 
+  // pendingResolve/lastScoreSeen sólo se tocan dentro de una tarea encolada (runEngineTask),
+  // así que nunca hay dos búsquedas del motor en vuelo a la vez pisándose los resultados.
+  let pendingResolve = null;
+  let lastScoreSeen = null;
+
   function onEngineMessage(e) {
     const line = typeof e.data === "string" ? e.data : "";
+    if (line.indexOf("info") === 0 && line.indexOf("score") !== -1) {
+      const m = line.match(/score (cp|mate) (-?\d+)/);
+      if (m) lastScoreSeen = { type: m[1], value: parseInt(m[2], 10) };
+    }
     if (line.indexOf("bestmove") !== -1) {
       const m = line.match(/bestmove\s+(\S+)/);
       if (pendingResolve) {
         const resolveFn = pendingResolve;
         pendingResolve = null;
-        resolveFn(m && m[1] && m[1] !== "(none)" ? m[1] : null);
+        resolveFn({ uci: m && m[1] && m[1] !== "(none)" ? m[1] : null, score: lastScoreSeen });
       }
     }
   }
 
-  async function getEngineMove(fen, diff) {
-    const ok = await ensureEngine();
-    if (!ok || !engine) return null;
-    return new Promise((resolve) => {
-      pendingResolve = resolve;
-      engine.postMessage("setoption name UCI_LimitStrength value true");
-      engine.postMessage("setoption name UCI_Elo value " + Math.round(diff.elo));
-      engine.postMessage("position fen " + fen);
-      engine.postMessage("go movetime " + diff.movetime);
-      setTimeout(() => {
-        if (pendingResolve === resolve) {
-          pendingResolve = null;
-          resolve(null);
+  // Cola simple: todo acceso al motor (jugar o evaluar) pasa por aquí, uno a la vez.
+  let engineBusy = Promise.resolve();
+  function runEngineTask(task) {
+    const run = engineBusy.then(task, task);
+    engineBusy = run.catch(() => {});
+    return run;
+  }
+
+  function engineSearch(fen, movetimeMs, limitStrength, elo) {
+    return runEngineTask(async () => {
+      const ok = await ensureEngine();
+      if (!ok || !engine) return { uci: null, score: null };
+      return new Promise((resolve) => {
+        lastScoreSeen = null;
+        pendingResolve = resolve;
+        if (limitStrength) {
+          engine.postMessage("setoption name UCI_LimitStrength value true");
+          engine.postMessage("setoption name UCI_Elo value " + Math.round(elo));
+        } else {
+          engine.postMessage("setoption name UCI_LimitStrength value false");
         }
-      }, diff.movetime + 4000);
+        engine.postMessage("position fen " + fen);
+        engine.postMessage("go movetime " + movetimeMs);
+        setTimeout(() => {
+          if (pendingResolve === resolve) {
+            pendingResolve = null;
+            resolve({ uci: null, score: null });
+          }
+        }, movetimeMs + 4000);
+      });
     });
+  }
+
+  async function getEngineMove(fen, diff) {
+    const result = await engineSearch(fen, diff.movetime, true, diff.elo);
+    return result.uci;
+  }
+
+  /**
+   * Evalúa una posición a máxima fuerza (sin límite de ELO). Devuelve { type: "cp"|"mate", value }
+   * desde el punto de vista de quien tiene el turno en ese FEN, o null si el motor no está disponible.
+   */
+  async function evaluatePosition(fen, movetimeMs) {
+    const result = await engineSearch(fen, movetimeMs || EVAL_MOVETIME, false, 0);
+    return result.score;
   }
 
   // ---------- Respaldo sin motor (heurístico simple) ----------
@@ -212,6 +321,8 @@ const OscarBot = (function () {
 
   /**
    * Devuelve un objeto de jugada compatible con chess.js (el mismo formato que .moves({verbose:true})).
+   * Si la jugada salió del libro, además trae _bookHash/_bookUci (para poder consultar luego
+   * getMoveOrigin y mostrar de qué partida real de Oscar vino).
    * @param {Chess} game instancia de chess.js
    * @param {"easy"|"medium"|"hard"} difficultyKey
    */
@@ -220,10 +331,16 @@ const OscarBot = (function () {
     const plyCount = game.history().length;
 
     if (plyCount < diff.bookMaxPly) {
-      const uci = getBookMove(game.fen(), diff.bookBias);
+      const fen = game.fen();
+      const hash = positionHash(fen);
+      const uci = getBookMoveForHash(hash, diff.bookBias);
       if (uci) {
         const found = findLegalMatch(game, uciToParts(uci));
-        if (found) return found;
+        if (found) {
+          found._bookHash = hash;
+          found._bookUci = uci;
+          return found;
+        }
       }
     }
 
@@ -253,6 +370,10 @@ const OscarBot = (function () {
   return {
     getMove,
     preload,
+    evaluatePosition,
+    getMoveOrigin,
+    preloadProvenance,
+    positionHash,
     difficultyLabels: {
       easy: "Fácil",
       medium: "Medio",

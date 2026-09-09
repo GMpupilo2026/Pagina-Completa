@@ -86,6 +86,15 @@
                     <button id="reset-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↻ Reiniciar</button>
                 </div>
             </div>
+            <div class="max-w-[560px] mx-auto mb-3">
+                <div class="flex items-center justify-between text-xs text-brand-500 dark:text-brand-400 mb-1">
+                    <span id="eval-label">Evaluación: —</span>
+                    <span id="material-label">Material: igual</span>
+                </div>
+                <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex" role="img" aria-label="Barra de evaluación de la posición: más blanco favorece a las blancas, más oscuro favorece a las negras">
+                    <div id="eval-bar-white" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
+                </div>
+            </div>
             <div class="flex justify-center">
                 <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
@@ -101,6 +110,21 @@
                     <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Historial de jugadas</h3>
                     <div id="move-history" class="text-sm text-brand-500 dark:text-brand-400 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
                 </div>
+            </div>
+            <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between flex-wrap gap-3 mb-3">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white">Analizar partida</h3>
+                    <button id="analyze-btn" type="button" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Analizar mis jugadas</button>
+                </div>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">Cuando termine la partida, revisa tus jugadas con el motor y señala imprecisiones o errores tácticos.</p>
+                <div id="analyze-status" class="text-sm text-brand-500 dark:text-brand-400" role="status" aria-live="polite"></div>
+                <div id="analyze-results" class="text-sm mt-2 space-y-1"></div>
+            </div>
+            <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <button id="origins-toggle" type="button" class="flex items-center justify-between w-full font-serif font-bold text-brand-800 dark:text-white" aria-expanded="false" aria-controls="origins-panel">
+                    <span>¿De dónde salen las jugadas de Oscar? <span aria-hidden="true" class="text-accent-500">▾</span></span>
+                </button>
+                <div id="origins-panel" class="hidden mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-1.5"></div>
             </div>
         </div>
     </section>

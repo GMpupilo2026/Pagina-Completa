@@ -18,6 +18,17 @@
   const statWinsEl = document.getElementById("stat-wins");
   const statDrawsEl = document.getElementById("stat-draws");
   const statLossesEl = document.getElementById("stat-losses");
+  // Elementos opcionales de "Valor pedagógico" (sólo existen en tablero.html, no en el
+  // tablero compacto del inicio): barra de evaluación/material, análisis post-partida y
+  // origen real de las jugadas de Oscar.
+  const evalBarWhiteEl = document.getElementById("eval-bar-white");
+  const evalLabelEl = document.getElementById("eval-label");
+  const materialLabelEl = document.getElementById("material-label");
+  const analyzeBtn = document.getElementById("analyze-btn");
+  const analyzeStatusEl = document.getElementById("analyze-status");
+  const analyzeResultsEl = document.getElementById("analyze-results");
+  const originsToggleEl = document.getElementById("origins-toggle");
+  const originsPanelEl = document.getElementById("origins-panel");
 
   if (!boardEl || typeof Chess === "undefined") {
     console.error("Falta el tablero o la librería chess.js");
@@ -35,6 +46,8 @@
   let capturedByWhite = []; // piezas negras capturadas por blancas
   let capturedByBlack = []; // piezas blancas capturadas por negras
   let resultRecorded = false; // evita contar dos veces el resultado de una misma partida
+  let botBookMoves = []; // jugadas del bot que salieron del libro de Oscar: {moveNum, san, hash, uci}
+  let evalRequestId = 0; // descarta respuestas de evaluación que ya quedaron obsoletas (posición cambió)
 
   // ---------- Contador de partidas (ganadas/tablas/perdidas), guardado en este navegador ----------
   const STATS_KEY = "oscarChessStats_v1";
@@ -259,6 +272,197 @@
     return GLYPH[color][type];
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // ---------- Material y barra de evaluación en vivo ----------
+  const MATERIAL_VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+  function computeMaterialDiff() {
+    const board = game.board();
+    let white = 0;
+    let black = 0;
+    for (const row of board) {
+      for (const cell of row) {
+        if (!cell) continue;
+        const v = MATERIAL_VALUE[cell.type] || 0;
+        if (cell.color === "w") white += v;
+        else black += v;
+      }
+    }
+    return white - black;
+  }
+
+  function updateMaterialDisplay() {
+    if (!materialLabelEl) return;
+    const diff = computeMaterialDiff();
+    if (diff === 0) materialLabelEl.textContent = "Material: igual";
+    else if (diff > 0) materialLabelEl.textContent = "Material: +" + diff + " (blancas)";
+    else materialLabelEl.textContent = "Material: +" + -diff + " (negras)";
+  }
+
+  // Convierte { type: "cp"|"mate", value } (desde el punto de vista de quien mueve en esa
+  // posición) a centipawns desde el punto de vista de las BLANCAS, para la barra de evaluación.
+  function scoreToWhiteCp(score, turnAtEval) {
+    if (!score) return null;
+    let value;
+    if (score.type === "mate") {
+      value = score.value > 0 ? 100000 - score.value : -100000 - score.value;
+    } else {
+      value = score.value;
+    }
+    return turnAtEval === "w" ? value : -value;
+  }
+
+  // Aplasta centipawns a un porcentaje 2-98 para el ancho de la barra (parecido a lichess).
+  function evalToBarPercent(whiteCp) {
+    if (whiteCp === null) return 50;
+    const k = 0.0035;
+    const pct = 50 + 50 * (2 / (1 + Math.exp(-k * whiteCp)) - 1);
+    return Math.max(2, Math.min(98, pct));
+  }
+
+  async function updateEvalBar() {
+    if (!evalBarWhiteEl && !evalLabelEl) return;
+    if (typeof OscarBot === "undefined" || !OscarBot.evaluatePosition) return;
+    const myRequestId = ++evalRequestId;
+    const fen = game.fen();
+    const turnAtEval = game.turn();
+    if (evalLabelEl) evalLabelEl.textContent = "Evaluación: calculando…";
+    let score = null;
+    try {
+      score = await OscarBot.evaluatePosition(fen);
+    } catch (e) {}
+    if (myRequestId !== evalRequestId) return; // la posición ya cambió mientras esperábamos
+    const whiteCp = scoreToWhiteCp(score, turnAtEval);
+    if (evalBarWhiteEl) evalBarWhiteEl.style.width = evalToBarPercent(whiteCp) + "%";
+    if (evalLabelEl) {
+      if (whiteCp === null) evalLabelEl.textContent = "Evaluación: no disponible";
+      else if (score.type === "mate") evalLabelEl.textContent = "Evaluación: mate en " + Math.abs(score.value);
+      else evalLabelEl.textContent = "Evaluación: " + (whiteCp >= 0 ? "+" : "") + (whiteCp / 100).toFixed(1);
+    }
+  }
+
+  // ---------- Analizar partida (imprecisiones/errores del visitante) ----------
+  function scoreToMoverCp(score) {
+    if (!score) return null;
+    if (score.type === "mate") {
+      return score.value > 0 ? 100000 - score.value * 100 : -100000 - score.value * 100;
+    }
+    return score.value;
+  }
+
+  function renderAnalysis(flagged, truncated) {
+    if (!analyzeResultsEl) return;
+    if (!flagged.length) {
+      analyzeResultsEl.innerHTML =
+        '<p class="text-green-700 dark:text-green-400">No se detectaron errores importantes en tus jugadas. ¡Buena partida! 👏</p>';
+      return;
+    }
+    let html = '<ul class="space-y-1">';
+    for (const f of flagged) {
+      const color =
+        f.severity === "error grave"
+          ? "text-red-600 dark:text-red-400"
+          : f.severity === "error"
+          ? "text-orange-600 dark:text-orange-400"
+          : "text-yellow-700 dark:text-yellow-400";
+      html += `<li class="${color}">Jugada ${f.moveNum} (${escapeHtml(f.san)}): ${f.severity} — perdiste unos ${(f.loss / 100).toFixed(1)} peones de ventaja</li>`;
+    }
+    html += "</ul>";
+    if (truncated) html += '<p class="text-xs text-brand-400 mt-2">(Sólo se analizaron las primeras 40 jugadas de cada lado.)</p>';
+    analyzeResultsEl.innerHTML = html;
+  }
+
+  async function analyzeGame() {
+    if (!analyzeBtn) return;
+    if (typeof OscarBot === "undefined" || !OscarBot.evaluatePosition || typeof Chess === "undefined") return;
+    const moves = game.history({ verbose: true });
+    if (!moves.length) return;
+
+    analyzeBtn.disabled = true;
+    if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
+    const MAX_PLIES_ANALYZED = 80; // ~40 jugadas por lado, para acotar el tiempo de análisis
+    const limited = moves.slice(0, MAX_PLIES_ANALYZED);
+
+    const replay = new Chess();
+    const fens = [replay.fen()];
+    const sans = [];
+    const movers = [];
+    for (const m of limited) {
+      const applied = replay.move({ from: m.from, to: m.to, promotion: m.promotion });
+      sans.push(applied ? applied.san : m.san);
+      movers.push(m.color);
+      fens.push(replay.fen());
+    }
+
+    const scores = [];
+    for (let i = 0; i < fens.length; i++) {
+      if (analyzeStatusEl) analyzeStatusEl.textContent = `Analizando… posición ${i + 1} de ${fens.length}`;
+      let s = null;
+      try {
+        s = await OscarBot.evaluatePosition(fens[i], 400);
+      } catch (e) {}
+      scores.push(scoreToMoverCp(s));
+    }
+    if (analyzeStatusEl) analyzeStatusEl.textContent = "";
+
+    const flagged = [];
+    for (let i = 0; i < limited.length; i++) {
+      if (movers[i] !== userColor) continue; // sólo señalamos las jugadas del visitante
+      const before = scores[i];
+      const afterRaw = scores[i + 1];
+      if (before === null || afterRaw === null) continue;
+      const afterFromMoverView = -afterRaw;
+      const loss = before - afterFromMoverView;
+      let severity = null;
+      if (loss >= 250) severity = "error grave";
+      else if (loss >= 120) severity = "error";
+      else if (loss >= 55) severity = "imprecisión";
+      if (severity) {
+        flagged.push({ moveNum: Math.floor(i / 2) + 1, san: sans[i], severity, loss: Math.round(loss) });
+      }
+    }
+    renderAnalysis(flagged, limited.length < moves.length);
+    analyzeBtn.disabled = false;
+  }
+
+  if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeGame);
+
+  // ---------- Origen real de las jugadas del bot (de qué partida de Oscar salieron) ----------
+  function renderOrigins() {
+    if (!originsPanelEl) return;
+    if (!botBookMoves.length) {
+      originsPanelEl.innerHTML =
+        '<p class="text-brand-400 dark:text-brand-500">Cuando Oscar (el bot) juegue una jugada tomada de una de sus partidas reales, aparecerá aquí.</p>';
+      return;
+    }
+    let html = "";
+    for (const bm of botBookMoves) {
+      const origin =
+        typeof OscarBot !== "undefined" && OscarBot.getMoveOrigin ? OscarBot.getMoveOrigin(bm.hash, bm.uci) : null;
+      if (!origin) {
+        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): tomada del libro de partidas reales de Oscar.</p>`;
+      } else {
+        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): de una partida real (${escapeHtml(
+          origin.bucketLabel
+        )}) de Oscar contra <strong>${escapeHtml(origin.opponent)}</strong> el ${escapeHtml(
+          origin.date.replace(/\./g, "-")
+        )} — ${escapeHtml(origin.resultLabel)}.</p>`;
+      }
+    }
+    originsPanelEl.innerHTML = html;
+  }
+
+  if (originsToggleEl && originsPanelEl) {
+    originsToggleEl.addEventListener("click", () => {
+      const isHidden = originsPanelEl.classList.contains("hidden");
+      originsPanelEl.classList.toggle("hidden");
+      originsToggleEl.setAttribute("aria-expanded", isHidden ? "true" : "false");
+    });
+  }
+
   // capturedByWhiteEl/capturedByBlackEl/historyEl son opcionales: algunas páginas
   // (como el tablero compacto del inicio) sólo traen el tablero, sin estos paneles.
   function updateCapturedDisplay() {
@@ -334,6 +538,7 @@
       recordResultOnce(info);
       if (statusEl) statusEl.textContent = getGameOverMessage(info);
       if (turnEl) turnEl.textContent = "Partida terminada";
+      if (analyzeBtn && game.history().length > 0) analyzeBtn.disabled = false;
       return;
     }
     const turn = game.turn();
@@ -359,6 +564,7 @@
     lastMove = { from: moveResult.from, to: moveResult.to };
     updateCapturedDisplay();
     updateHistoryDisplay();
+    updateMaterialDisplay();
   }
 
   function isGameOver() {
@@ -385,18 +591,32 @@
       if (result) {
         applyMoveSideEffects(result);
         focusSquare = result.to; // si el foco ya estaba en el tablero, sigue la jugada de Oscar
+        // Si la jugada salió del libro de aperturas de Oscar, guardamos de qué posición/jugada
+        // exacta se trata para poder mostrar luego de qué partida real vino (ver renderOrigins).
+        if (move._bookHash && move._bookUci) {
+          botBookMoves.push({
+            moveNum: Math.ceil(game.history().length / 2),
+            san: result.san,
+            hash: move._bookHash,
+            uci: move._bookUci,
+          });
+          renderOrigins();
+        }
       }
     }
     renderBoard();
     updateStatus();
   }
 
-  // Si le toca mover al bot (y la partida sigue), dispara su jugada.
+  // Si le toca mover al bot (y la partida sigue), dispara su jugada. Devuelve una promesa
+  // (se resuelve enseguida si no le toca al bot) para poder encadenar la actualización de la
+  // barra de evaluación DESPUÉS de que el bot termine de pensar, y no competir por el motor.
   function maybeTriggerBot() {
-    if (isGameOver()) return;
+    if (isGameOver()) return Promise.resolve();
     if (game.turn() === botColor()) {
-      triggerBotMove();
+      return triggerBotMove();
     }
+    return Promise.resolve();
   }
 
   function doUserMove(from, to, promotion) {
@@ -406,7 +626,7 @@
     focusSquare = to; // lleva el foco del teclado a la casilla donde acaba de mover
     renderBoard();
     updateStatus();
-    maybeTriggerBot();
+    maybeTriggerBot().then(updateEvalBar);
   }
 
   // ---------- Selector de promoción (accesible: diálogo modal, navegable con teclado) ----------
@@ -535,12 +755,18 @@
     capturedByWhite = [];
     capturedByBlack = [];
     resultRecorded = false;
+    botBookMoves = [];
     updateCapturedDisplay();
     updateHistoryDisplay();
+    updateMaterialDisplay();
+    renderOrigins();
+    if (analyzeBtn) analyzeBtn.disabled = true;
+    if (analyzeStatusEl) analyzeStatusEl.textContent = "";
+    if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
     renderBoard();
     updateStatus();
     // Si el visitante eligió jugar con negras, el bot (blancas) abre la partida.
-    maybeTriggerBot();
+    maybeTriggerBot().then(updateEvalBar);
   }
 
   if (resetBtn) resetBtn.addEventListener("click", resetGame);
@@ -587,9 +813,14 @@
   renderBoard();
   updateCapturedDisplay();
   updateHistoryDisplay();
+  updateMaterialDisplay();
+  renderOrigins();
   renderStats();
   updateStatus();
   applyDifficultyLabels();
-  if (typeof OscarBot !== "undefined") OscarBot.preload();
-  maybeTriggerBot();
+  if (typeof OscarBot !== "undefined") {
+    OscarBot.preload();
+    if (OscarBot.preloadProvenance) OscarBot.preloadProvenance().then(renderOrigins);
+  }
+  maybeTriggerBot().then(updateEvalBar);
 })();
