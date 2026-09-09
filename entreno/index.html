@@ -244,6 +244,11 @@
     grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
     gap:12px;
   }
+  /* Sin esto, el atributo "hidden" no alcanza a ocultar la grilla: una regla de
+     autor (esta misma) siempre le gana a la regla por defecto del navegador
+     para [hidden], sin importar el orden. Por eso al cambiar de categoría se
+     seguían viendo los ejercicios de la categoría anterior debajo. */
+  .grid[hidden]{display:none;}
   .card{
     position:relative;
     aspect-ratio:1/1;
