@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ajedrezintegral.com/sitemap.xml
+Sitemap: https://ajedrez-integral.com/sitemap.xml

@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ajedrezintegral.com/</loc>
+    <loc>https://ajedrez-integral.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ajedrezintegral.com/cursos.html</loc>
+    <loc>https://ajedrez-integral.com/cursos.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ajedrezintegral.com/articulos.html</loc>
+    <loc>https://ajedrez-integral.com/articulos.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ajedrezintegral.com/tablero.html</loc>
+    <loc>https://ajedrez-integral.com/tablero.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ajedrezintegral.com/entreno/</loc>
+    <loc>https://ajedrez-integral.com/entreno/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ajedrezintegral.com/inscripcion.html</loc>
+    <loc>https://ajedrez-integral.com/inscripcion.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
