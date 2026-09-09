@@ -258,6 +258,151 @@
     .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
     header.top h1{font-size:1.4rem;}
   }
+
+  /* ---------- LOCK BADGE ---------- */
+  .card.locked{cursor:not-allowed;}
+  .card.locked img{filter:grayscale(1) brightness(0.4);}
+  .card .solved-badge{
+    position:absolute; top:0; right:0;
+    background:rgba(117,147,90,0.92);
+    color:#1b140f;
+    font-size:0.85rem;
+    font-weight:700;
+    padding:3px 7px;
+    border-left:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .card .lock-icon{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem;
+    color:var(--text-muted);
+    background:rgba(10,7,5,0.35);
+  }
+
+  /* ---------- BOARD MODAL (Solo Chess jugable) ---------- */
+  #board-modal{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(10,7,5,0.94);
+    z-index:60;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  #board-modal.open{display:flex;}
+  .board-wrap{
+    width:100%;
+    max-width:420px;
+    text-align:center;
+  }
+  .board-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:12px;
+    color:var(--text-muted);
+    font-size:0.85rem;
+  }
+  .board-head strong{color:var(--text); font-family:'Fraunces',serif; font-size:1.15rem; font-weight:600;}
+  #board-close{
+    position:absolute; top:20px; right:24px;
+    background:none; border:none;
+    color:var(--text-muted); font-size:1.6rem;
+    cursor:pointer; line-height:1;
+  }
+  #board-close:hover{color:var(--text);}
+
+  .board-pos-wrap{position:relative;}
+  .board4{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    grid-template-rows:repeat(4,1fr);
+    width:100%;
+    aspect-ratio:1/1;
+    border:2px solid var(--brass);
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .sq{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    font-size:min(9vw,42px);
+    cursor:pointer;
+    user-select:none;
+    color:var(--brass-bright);
+    transition:background .12s;
+  }
+  .sq.light{background:#c9b190;}
+  .sq.dark{background:#5a4531;}
+  .sq .piece{
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    pointer-events:none;
+    transition:transform .12s;
+  }
+  .sq.selected{box-shadow:inset 0 0 0 3px var(--brass-bright);}
+  .sq.selected .piece{transform:scale(1.12);}
+  .sq.target::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle, rgba(220,182,121,0.55) 0 22%, transparent 24%);
+  }
+  .sq.target-capture::after{
+    content:"";
+    position:absolute; inset:6%;
+    border:3px solid rgba(220,182,121,0.85);
+    border-radius:50%;
+  }
+
+  .board-status{
+    margin-top:14px;
+    color:var(--text-muted);
+    font-size:0.9rem;
+    min-height:1.3em;
+  }
+  .board-controls{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .bctrl{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Work Sans',sans-serif;
+    font-size:0.85rem;
+    padding:9px 16px;
+    cursor:pointer;
+    transition:border-color .2s;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+
+  #win-overlay{
+    display:none;
+    position:absolute; inset:0;
+    background:rgba(27,20,15,0.94);
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+  }
+  #win-overlay.open{display:flex;}
+  #win-overlay .win-title{
+    color:var(--facil);
+    font-size:1.4rem;
+    font-weight:700;
+    letter-spacing:0.03em;
+    margin-bottom:6px;
+  }
+  #win-overlay .win-sub{
+    font-family:'Fraunces',serif;
+    font-size:1.1rem;
+    color:var(--text);
+    margin-bottom:22px;
+  }
 </style>
 </head>
 <body>
@@ -305,6 +450,35 @@
   </div>
 </div>
 
+<!-- ===== TABLERO JUGABLE (Solo Chess) ===== -->
+<div id="board-modal">
+  <button id="board-close" aria-label="Cerrar">&times;</button>
+  <div class="board-wrap">
+    <div class="board-head">
+      <span id="board-cat"></span>
+      <strong id="board-title"></strong>
+      <span id="board-piece-count"></span>
+    </div>
+    <div class="board-pos-wrap">
+      <div class="board4" id="board4"></div>
+      <div id="win-overlay">
+        <div class="win-title">¡MUY BIEN!</div>
+        <div class="win-sub">Nivel completado</div>
+        <div class="board-controls">
+          <button class="bctrl" id="win-retry">Reintentar</button>
+          <button class="bctrl" id="win-next">Siguiente &#8250;</button>
+        </div>
+      </div>
+    </div>
+    <div class="board-status" id="board-status">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
+    <div class="board-controls">
+      <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+      <button class="bctrl" id="board-reset">Reiniciar</button>
+      <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ---------------- PASSWORD GATE ----------------
    Nota: esto es una barrera del lado del cliente, pensada para
@@ -346,6 +520,7 @@ pwForm.addEventListener('submit', async (e) => {
 
 /* ---------------- APP ---------------- */
 let EXERCISES = [];
+let PUZZLES = {facil:[], intermedio:[], avanzado:[], especialista:[]};
 let currentCategory = 'FACIL';
 let currentList = [];
 let currentIndex = 0;
@@ -353,16 +528,56 @@ let currentIndex = 0;
 const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA'];
 const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista'};
 const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista'};
+const CATEGORY_KEY = {FACIL:'facil', INTERMEDIO:'intermedio', AVANZADO:'avanzado', ESPECIALISTA:'especialista'};
 
 let appInitialized = false;
 
 async function initApp(){
   if(appInitialized) return;
   appInitialized = true;
-  const res = await fetch('data/exercises.json');
+  const [res, res2] = await Promise.all([
+    fetch('data/exercises.json'),
+    fetch('data/puzzles.json').catch(() => null)
+  ]);
   EXERCISES = await res.json();
+  if(res2 && res2.ok){
+    try{ PUZZLES = await res2.json(); }catch(e){}
+  }
   buildTabs();
   showCategory('FACIL');
+}
+
+/* ---------------- PROGRESO (localStorage) ----------------
+   Un ejercicio #N de una categoría con tablero jugable solo se puede
+   abrir si el #N-1 de esa misma categoría ya fue resuelto (el #1
+   siempre está disponible). El progreso se guarda en localStorage
+   para que persista entre visitas. */
+function getSolvedSet(){
+  try{
+    return JSON.parse(localStorage.getItem('entreno_solved') || '{}');
+  }catch(e){ return {}; }
+}
+function markSolved(puzzleId){
+  const solved = getSolvedSet();
+  solved[puzzleId] = true;
+  localStorage.setItem('entreno_solved', JSON.stringify(solved));
+}
+function isSolved(puzzleId){
+  return !!getSolvedSet()[puzzleId];
+}
+function puzzleForExercise(ex){
+  const list = PUZZLES[CATEGORY_KEY[ex.category]] || [];
+  return list.find(p => p.number === ex.number) || null;
+}
+function isUnlocked(ex, list){
+  const puz = puzzleForExercise(ex);
+  if(!puz) return true; /* sin datos jugables: no aplica bloqueo, se ve como imagen */
+  if(ex.number <= 1) return true;
+  const prevEx = list.find(e => e.number === ex.number - 1);
+  if(!prevEx) return true;
+  const prevPuz = puzzleForExercise(prevEx);
+  if(!prevPuz) return true;
+  return isSolved(prevPuz.id);
 }
 
 function buildTabs(){
@@ -389,12 +604,42 @@ function showCategory(cat){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   currentList.forEach((ex, idx) => {
+    const puz = puzzleForExercise(ex);
+    const solved = puz ? isSolved(puz.id) : false;
+    const unlocked = isUnlocked(ex, currentList);
     const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `<span class="badge">#${ex.number}</span><img src="${ex.image}" loading="lazy" alt="${ex.categoryLabel} ${ex.number}">`;
-    card.addEventListener('click', () => openLightbox(idx));
+    card.className = 'card' + (puz && !unlocked ? ' locked' : '');
+    let extra = '';
+    if(puz && solved) extra = '<span class="solved-badge">&#10003;</span>';
+    else if(puz && !unlocked) extra = '<span class="lock-icon">&#128274;</span>';
+    card.innerHTML = `<span class="badge">#${ex.number}</span>${extra}<img src="${ex.image}" loading="lazy" alt="${ex.categoryLabel} ${ex.number}">`;
+    card.addEventListener('click', () => {
+      if(puz){
+        if(!unlocked){
+          flashLockedMessage(ex);
+          return;
+        }
+        openBoard(idx);
+      } else {
+        openLightbox(idx);
+      }
+    });
     grid.appendChild(card);
   });
+}
+
+function flashLockedMessage(ex){
+  const grid = document.getElementById('grid');
+  let msg = document.getElementById('lock-msg');
+  if(!msg){
+    msg = document.createElement('div');
+    msg.id = 'lock-msg';
+    msg.style.cssText = 'color:var(--text-muted);font-size:0.85rem;margin-top:10px;';
+    grid.parentNode.insertBefore(msg, grid.nextSibling);
+  }
+  msg.textContent = `Resuelve el ejercicio #${ex.number - 1} para desbloquear el #${ex.number}.`;
+  clearTimeout(flashLockedMessage._t);
+  flashLockedMessage._t = setTimeout(() => { if(msg) msg.textContent = ''; }, 3200);
 }
 
 /* ---------------- LIGHTBOX ---------------- */
@@ -429,6 +674,198 @@ document.addEventListener('keydown', (e) => {
   if(e.key === 'ArrowLeft') document.getElementById('lb-prev').click();
   if(e.key === 'ArrowRight') document.getElementById('lb-next').click();
   if(e.key === 'Escape') closeLightbox();
+});
+
+/* ---------------- SOLO CHESS: motor de juego ----------------
+   Reglas (confirmadas en el video de referencia "Solo Chess"):
+   - Las piezas se mueven como en ajedrez normal.
+   - Todo movimiento DEBE ser una captura (no hay movimientos "libres").
+   - No existe la regla de jaque.
+   - Se gana al quedar con una sola pieza sobre el tablero (la última atacante). */
+const PIECE_GLYPH = {P:'&#9823;', N:'&#9822;', B:'&#9821;', R:'&#9820;', Q:'&#9819;', K:'&#9818;'};
+const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
+const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
+const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+
+function boardKey(r,c){ return r + ',' + c; }
+
+function slideTargets(r,c,dirs,board){
+  const out = [];
+  dirs.forEach(([dr,dc]) => {
+    let nr=r+dr, nc=c+dc;
+    while(nr>=0 && nr<4 && nc>=0 && nc<4){
+      if(board[boardKey(nr,nc)]){ out.push([nr,nc]); break; }
+      nr+=dr; nc+=dc;
+    }
+  });
+  return out;
+}
+
+function captureTargets(piece, r, c, board){
+  switch(piece){
+    case 'N':
+      return KNIGHT_DELTAS.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'B': return slideTargets(r,c,DIRS_BISHOP,board);
+    case 'R': return slideTargets(r,c,DIRS_ROOK,board);
+    case 'Q': return slideTargets(r,c,DIRS_QUEEN,board);
+    case 'K':
+      return DIRS_QUEEN.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'P':
+      return DIRS_BISHOP.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    default: return [];
+  }
+}
+
+let boardState = {};       // {"r,c": pieceType}
+let selectedCell = null;   // [r,c] | null
+let boardCategory = null;  // 'FACIL' etc.
+let boardExList = [];      // lista de ejercicios de la categoría actual
+let boardExIndex = 0;      // índice dentro de boardExList
+let moveHistory = [];
+
+function loadPuzzleAt(exIndex){
+  selectedCell = null;
+  moveHistory = [];
+  document.getElementById('win-overlay').classList.remove('open');
+  boardExIndex = exIndex;
+  const ex = boardExList[exIndex];
+  const puz = puzzleForExercise(ex);
+  boardState = {};
+  puz.pieces.forEach(p => { boardState[boardKey(p.row,p.col)] = p.type; });
+  document.getElementById('board-cat').textContent = ex.categoryLabel;
+  document.getElementById('board-title').textContent = `#${ex.number}`;
+  updatePieceCount();
+  setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
+  renderBoard();
+  updatePuzzleNavButtons();
+}
+
+function updatePieceCount(){
+  const n = Object.keys(boardState).length;
+  document.getElementById('board-piece-count').textContent = `${n} piezas`;
+}
+
+function setStatus(text){ document.getElementById('board-status').textContent = text; }
+
+function renderBoard(){
+  const el = document.getElementById('board4');
+  el.innerHTML = '';
+  let legalTargets = [];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    legalTargets = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+  }
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      const sq = document.createElement('div');
+      const light = (r+c) % 2 === 0;
+      sq.className = 'sq ' + (light ? 'light' : 'dark');
+      const piece = boardState[boardKey(r,c)];
+      if(piece){
+        sq.innerHTML = `<span class="piece">${PIECE_GLYPH[piece]}</span>`;
+      }
+      if(selectedCell && selectedCell[0]===r && selectedCell[1]===c){
+        sq.classList.add('selected');
+      }
+      if(legalTargets.some(([tr,tc]) => tr===r && tc===c)){
+        sq.classList.add('target-capture');
+      }
+      sq.addEventListener('click', () => onSquareClick(r,c));
+      el.appendChild(sq);
+    }
+  }
+}
+
+function onSquareClick(r,c){
+  const key = boardKey(r,c);
+  const piece = boardState[key];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    if(sr===r && sc===c){ selectedCell = null; renderBoard(); return; }
+    const legal = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+    if(legal.some(([tr,tc]) => tr===r && tc===c)){
+      moveHistory.push(JSON.parse(JSON.stringify(boardState)));
+      const movingPiece = boardState[boardKey(sr,sc)];
+      delete boardState[boardKey(sr,sc)];
+      boardState[key] = movingPiece;
+      selectedCell = null;
+      updatePieceCount();
+      renderBoard();
+      checkWin();
+      return;
+    }
+    if(piece){ selectedCell = [r,c]; renderBoard(); return; }
+    selectedCell = null; renderBoard();
+    return;
+  }
+  if(piece){ selectedCell = [r,c]; renderBoard(); }
+}
+
+function checkWin(){
+  const remaining = Object.keys(boardState).length;
+  if(remaining <= 1){
+    const ex = boardExList[boardExIndex];
+    const puz = puzzleForExercise(ex);
+    markSolved(puz.id);
+    setStatus('¡Resuelto!');
+    document.getElementById('win-overlay').classList.add('open');
+    updatePuzzleNavButtons();
+    return;
+  }
+  const anyMove = Object.keys(boardState).some(k => {
+    const [r,c] = k.split(',').map(Number);
+    return captureTargets(boardState[k], r, c, boardState).length > 0;
+  });
+  if(!anyMove){
+    setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
+  }
+}
+
+function updatePuzzleNavButtons(){
+  const prevBtn = document.getElementById('board-prev-puzzle');
+  const nextBtn = document.getElementById('board-next-puzzle');
+  const winNextBtn = document.getElementById('win-next');
+  prevBtn.disabled = boardExIndex <= 0;
+  const ex = boardExList[boardExIndex];
+  const puz = puzzleForExercise(ex);
+  const solvedNow = puz && isSolved(puz.id);
+  const hasNext = boardExIndex < boardExList.length - 1;
+  nextBtn.disabled = !hasNext || !solvedNow;
+  winNextBtn.disabled = !hasNext;
+}
+
+function openBoard(idx){
+  boardCategory = currentCategory;
+  boardExList = currentList;
+  loadPuzzleAt(idx);
+  document.getElementById('board-modal').classList.add('open');
+}
+function closeBoard(){
+  document.getElementById('board-modal').classList.remove('open');
+  showCategory(currentCategory); /* refresca badges de bloqueo/resuelto en la grilla */
+}
+document.getElementById('board-close').addEventListener('click', closeBoard);
+document.getElementById('board-modal').addEventListener('click', (e) => {
+  if(e.target.id === 'board-modal') closeBoard();
+});
+document.getElementById('board-reset').addEventListener('click', () => loadPuzzleAt(boardExIndex));
+document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
+document.getElementById('board-prev-puzzle').addEventListener('click', () => {
+  if(boardExIndex > 0) loadPuzzleAt(boardExIndex - 1);
+});
+document.getElementById('board-next-puzzle').addEventListener('click', () => {
+  if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
+});
+document.getElementById('win-next').addEventListener('click', () => {
+  if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
+});
+document.addEventListener('keydown', (e) => {
+  if(!document.getElementById('board-modal').classList.contains('open')) return;
+  if(e.key === 'Escape') closeBoard();
 });
 
 /* Se comprueba el desbloqueo previo (sessionStorage) hasta el final del script,
