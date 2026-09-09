@@ -48,6 +48,11 @@
   const moveFormEl = document.getElementById("move-form");
   const moveInputEl = document.getElementById("move-input");
   const moveInputStatusEl = document.getElementById("move-input-status");
+  // Interruptor "modo normal" / "modo adaptado" (lector de pantalla): controla qué tan
+  // visibles están los elementos de accesibilidad y si los atajos de teclado extra del
+  // tablero (más allá de las flechas) están activos.
+  const modeNormalBtn = document.getElementById("mode-normal-btn");
+  const modeBlindBtn = document.getElementById("mode-blind-btn");
 
   if (!boardEl || typeof Chess === "undefined") {
     console.error("Falta el tablero o la librería chess.js");
@@ -73,6 +78,46 @@
   let gameStartTime = Date.now(); // marca de tiempo del inicio de la partida actual, para calcular la duración
   let lastAnalysis = null; // {accuracy, flaggedCount, plies} tras "Analizar mis jugadas" (para el modal/correo)
   let closeEndGameModal = null; // cierra el modal de fin de partida abierto, si lo hay (ver showEndGameModal)
+  let lastCapturedInfo = null; // {type, color} de la pieza capturada en la última jugada, o null si no hubo captura
+  let historyReviewIndex = null; // índice de "repaso" del historial para shift+A / shift+D (sólo narra, no cambia el tablero)
+
+  // ---------- Modo normal / modo adaptado (lector de pantalla) ----------
+  // Todo lo agregado para accesibilidad (recuadro de jugada, botón de repetir jugadas,
+  // atajos de teclado extra en el tablero) queda oculto e inactivo por defecto, para que
+  // quien entra normalmente no lo vea ni lo note. Se activa con este interruptor y queda
+  // recordado en este navegador.
+  const BLIND_MODE_KEY = "oscarBlindMode_v1";
+  let blindMode = false;
+  try {
+    blindMode = localStorage.getItem(BLIND_MODE_KEY) === "1";
+  } catch (e) {}
+
+  const blindOnlyEls = Array.from(document.querySelectorAll(".blind-mode-only"));
+
+  function applyBlindModeUI() {
+    blindOnlyEls.forEach((el) => el.classList.toggle("hidden", !blindMode));
+    if (modeNormalBtn) {
+      modeNormalBtn.setAttribute("aria-pressed", blindMode ? "false" : "true");
+      modeNormalBtn.classList.toggle("bg-brand-700", !blindMode);
+      modeNormalBtn.classList.toggle("text-white", !blindMode);
+    }
+    if (modeBlindBtn) {
+      modeBlindBtn.setAttribute("aria-pressed", blindMode ? "true" : "false");
+      modeBlindBtn.classList.toggle("bg-brand-700", blindMode);
+      modeBlindBtn.classList.toggle("text-white", blindMode);
+    }
+  }
+
+  function setBlindMode(value) {
+    blindMode = !!value;
+    try {
+      localStorage.setItem(BLIND_MODE_KEY, blindMode ? "1" : "0");
+    } catch (e) {}
+    applyBlindModeUI();
+  }
+
+  if (modeNormalBtn) modeNormalBtn.addEventListener("click", () => setBlindMode(false));
+  if (modeBlindBtn) modeBlindBtn.addEventListener("click", () => setBlindMode(true));
 
   // ---------- Contador de partidas (ganadas/tablas/perdidas), guardado en este navegador ----------
   // Desde el punto de vista de OSCAR (el bot), no del visitante: "Ganadas" = Oscar ganó,
@@ -339,37 +384,43 @@
   // activan la casilla enfocada de forma nativa, al ser <button>.
   boardEl.addEventListener("keydown", (e) => {
     const key = e.key;
-    if (key !== "ArrowUp" && key !== "ArrowDown" && key !== "ArrowLeft" && key !== "ArrowRight" && key !== "Home" && key !== "End") {
-      return;
-    }
     const currentSquare = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
     if (!currentSquare) return;
-    e.preventDefault();
 
-    const squares = boardSquaresInOrder();
-    const idx = squares.indexOf(currentSquare);
-    if (idx === -1) return;
-    const row = Math.floor(idx / 8);
-    const col = idx % 8;
-    let newRow = row;
-    let newCol = col;
-    if (key === "ArrowUp") newRow = Math.max(0, row - 1);
-    else if (key === "ArrowDown") newRow = Math.min(7, row + 1);
-    else if (key === "ArrowLeft") newCol = Math.max(0, col - 1);
-    else if (key === "ArrowRight") newCol = Math.min(7, col + 1);
-    else if (key === "Home") newCol = 0;
-    else if (key === "End") newCol = 7;
+    if (key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight" || key === "Home" || key === "End") {
+      e.preventDefault();
+      const squares = boardSquaresInOrder();
+      const idx = squares.indexOf(currentSquare);
+      if (idx === -1) return;
+      const row = Math.floor(idx / 8);
+      const col = idx % 8;
+      let newRow = row;
+      let newCol = col;
+      if (key === "ArrowUp") newRow = Math.max(0, row - 1);
+      else if (key === "ArrowDown") newRow = Math.min(7, row + 1);
+      else if (key === "ArrowLeft") newCol = Math.max(0, col - 1);
+      else if (key === "ArrowRight") newCol = Math.min(7, col + 1);
+      else if (key === "Home") newCol = 0;
+      else if (key === "End") newCol = 7;
 
-    const newSquare = squares[newRow * 8 + newCol];
-    if (!newSquare || newSquare === currentSquare) return;
-    const oldBtn = boardEl.querySelector('[data-square="' + currentSquare + '"]');
-    const newBtn = boardEl.querySelector('[data-square="' + newSquare + '"]');
-    if (oldBtn) oldBtn.tabIndex = -1;
-    if (newBtn) {
-      newBtn.tabIndex = 0;
-      newBtn.focus();
+      const newSquare = squares[newRow * 8 + newCol];
+      if (!newSquare || newSquare === currentSquare) return;
+      const oldBtn = boardEl.querySelector('[data-square="' + currentSquare + '"]');
+      const newBtn = boardEl.querySelector('[data-square="' + newSquare + '"]');
+      if (oldBtn) oldBtn.tabIndex = -1;
+      if (newBtn) {
+        newBtn.tabIndex = 0;
+        newBtn.focus();
+      }
+      focusSquare = newSquare;
+      return;
     }
-    focusSquare = newSquare;
+
+    // Todo lo que sigue son atajos exclusivos del "modo adaptado" (lector de pantalla):
+    // en modo normal las flechas/Inicio/Fin ya alcanzan para navegar el tablero, y estos
+    // atajos de una sola letra podrían chocar con lo que alguien más espera del teclado.
+    if (!blindMode) return;
+    handleBoardShortcutKey(e, currentSquare);
   });
 
   function pieceGlyphOf(type, color) {
@@ -712,7 +763,11 @@
       const glyph = pieceGlyphOf(moveResult.captured, moveResult.color === "w" ? "b" : "w");
       if (moveResult.color === "w") capturedByWhite.push(glyph);
       else capturedByBlack.push(glyph);
+      lastCapturedInfo = { type: moveResult.captured, color: moveResult.color === "w" ? "b" : "w" };
+    } else {
+      lastCapturedInfo = null;
     }
+    historyReviewIndex = null; // una jugada nueva reinicia el repaso de shift+A/shift+D
     lastMove = { from: moveResult.from, to: moveResult.to };
     updateCapturedDisplay();
     updateHistoryDisplay();
@@ -941,6 +996,320 @@
     );
   }
 
+  function capitalize(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  }
+
+  // Adjetivo de color con concordancia de género y número: "blanco"/"blanca"/"blancos"/"blancas".
+  function colorAdjectiveForCount(color, fem, count) {
+    const plural = count !== 1;
+    if (color === "w") return fem ? (plural ? "blancas" : "blanca") : plural ? "blancos" : "blanco";
+    return fem ? (plural ? "negras" : "negra") : plural ? "negros" : "negro";
+  }
+
+  function describeSquareContents(square) {
+    const piece = game.get(square);
+    return square + ": " + (piece ? pieceLabel(piece) : "vacía");
+  }
+
+  // Lleva el foco del teclado a una casilla concreta del tablero sin volver a pintarlo entero
+  // (para no perder la posición al usar comandos como "board a1" o los atajos del tablero).
+  function focusBoardSquare(square) {
+    const squares = boardSquaresInOrder();
+    if (squares.indexOf(square) === -1) return false;
+    const oldBtn = focusSquare ? boardEl.querySelector('[data-square="' + focusSquare + '"]') : null;
+    if (oldBtn) oldBtn.tabIndex = -1;
+    focusSquare = square;
+    const newBtn = boardEl.querySelector('[data-square="' + square + '"]');
+    if (newBtn) {
+      newBtn.tabIndex = 0;
+      newBtn.focus();
+    }
+    return true;
+  }
+
+  // ---------- Comando "p <letra>": anunciar dónde están las piezas de un tipo/color ----------
+  // Letras en inglés (K,Q,R,B,N,P): mayúscula = piezas blancas, minúscula = piezas negras.
+  function squaresForPieceType(type, color) {
+    const board = game.board();
+    const found = [];
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const cell = board[r][f];
+        if (cell && cell.type === type && cell.color === color) found.push(FILES[f] + (8 - r));
+      }
+    }
+    found.sort();
+    return found;
+  }
+
+  function announcePieceType(letter) {
+    const type = letter.toLowerCase();
+    const forms = PIECE_NAME_FORMS[type];
+    if (!forms) {
+      announceMoveInput(`No entendí "${letter}" como tipo de pieza. Usa K, Q, R, B, N o P: mayúscula para blancas, minúscula para negras.`);
+      return;
+    }
+    const color = letter === letter.toUpperCase() ? "w" : "b";
+    const squares = squaresForPieceType(type, color);
+    const fem = PIECE_INFO[type].fem;
+    if (!squares.length) {
+      announceMoveInput(`No quedan ${forms.plural} ${colorAdjectiveForCount(color, fem, 2)} en el tablero.`);
+      return;
+    }
+    const label = squares.length === 1 ? forms.singular : forms.plural;
+    const colorTxt = colorAdjectiveForCount(color, fem, squares.length);
+    announceMoveInput(`${capitalize(label)} ${colorTxt}: ${joinSpanishList(squares)}.`);
+  }
+
+  // ---------- Comando "s <columna|fila>": anunciar las piezas de una fila o columna ----------
+  function announceLine(token) {
+    const t = token.toLowerCase();
+    const squares = [];
+    let label;
+    if (/^[a-h]$/.test(t)) {
+      label = "Columna " + t;
+      for (let r = 1; r <= 8; r++) squares.push(t + r);
+    } else if (/^[1-8]$/.test(t)) {
+      label = "Fila " + t;
+      for (const f of FILES) squares.push(f + t);
+    } else {
+      announceMoveInput(`No entendí "${token}". Usa una letra de columna (a-h) o un número de fila (1-8).`);
+      return;
+    }
+    const found = squares.filter((sq) => game.get(sq)).map((sq) => `${pieceLabel(game.get(sq))} en ${sq}`);
+    announceMoveInput(found.length ? `${label}: ${found.join(", ")}.` : `${label}: sin piezas.`);
+  }
+
+  // ---------- Atajos del tablero enfocado (modo adaptado): "o", "c", "m", "shift+m", "x"… ----------
+  function announceCurrentSquare(square) {
+    announceMoveInput("Casilla " + describeSquareContents(square) + ".");
+  }
+
+  function announceLastCapture() {
+    const hist = game.history({ verbose: true });
+    if (!hist.length) {
+      announceMoveInput("Todavía no se ha jugado ninguna jugada en esta partida.");
+      return;
+    }
+    if (!lastCapturedInfo) {
+      announceMoveInput("La última jugada no capturó ninguna pieza.");
+      return;
+    }
+    announceMoveInput("Última captura: " + pieceLabel(lastCapturedInfo) + ".");
+  }
+
+  function announcePossibleMoves(square) {
+    const piece = game.get(square);
+    if (!piece) {
+      announceMoveInput(`La casilla ${square} está vacía.`);
+      return;
+    }
+    const moves = game.moves({ square, verbose: true });
+    if (!moves.length) {
+      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} no tiene jugadas legales ahora mismo.`);
+      return;
+    }
+    const list = moves.map((m) => (m.captured ? `${m.to} (captura)` : m.to));
+    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} puede ir a: ${joinSpanishList(list)}.`);
+  }
+
+  function announcePossibleCaptures(square) {
+    const piece = game.get(square);
+    if (!piece) {
+      announceMoveInput(`La casilla ${square} está vacía.`);
+      return;
+    }
+    const moves = game.moves({ square, verbose: true }).filter((m) => m.captured || m.flags.indexOf("e") !== -1);
+    if (!moves.length) {
+      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} no tiene capturas posibles ahora mismo.`);
+      return;
+    }
+    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} puede capturar en: ${joinSpanishList(moves.map((m) => m.to))}.`);
+  }
+
+  // Devuelve la casilla vecina desplazada (df columnas, dr filas), o null si sale del tablero.
+  function squareOffset(square, df, dr) {
+    const file = FILES.indexOf(square[0]);
+    const rank = parseInt(square[1], 10);
+    const nf = file + df;
+    const nr = rank + dr;
+    if (nf < 0 || nf > 7 || nr < 1 || nr > 8) return null;
+    return FILES[nf] + nr;
+  }
+
+  const RAY_DIRS = [
+    [0, 1, "arriba"],
+    [0, -1, "abajo"],
+    [-1, 0, "izquierda"],
+    [1, 0, "derecha"],
+    [-1, 1, "arriba-izquierda"],
+    [1, 1, "arriba-derecha"],
+    [-1, -1, "abajo-izquierda"],
+    [1, -1, "abajo-derecha"],
+  ];
+
+  // "x" (adyacentes), "shift+x" (anillo de 8) o "alt+x" (pieza más cercana en cada dirección,
+  // como el alcance de una dama) — describe lo que hay alrededor de la casilla enfocada.
+  function announceSurroundings(square, mode) {
+    if (mode === "rays") {
+      const parts = [];
+      for (const [df, dr, name] of RAY_DIRS) {
+        let sq = squareOffset(square, df, dr);
+        let found = null;
+        while (sq) {
+          const piece = game.get(sq);
+          if (piece) {
+            found = { sq, piece };
+            break;
+          }
+          sq = squareOffset(sq, df, dr);
+        }
+        if (found) parts.push(`${name}: ${pieceLabel(found.piece)} en ${found.sq}`);
+      }
+      announceMoveInput(
+        parts.length ? `Piezas más cercanas desde ${square} — ${parts.join("; ")}.` : `No hay piezas en ninguna dirección desde ${square}.`
+      );
+      return;
+    }
+    const dirs = mode === "ring" ? RAY_DIRS : RAY_DIRS.slice(0, 4);
+    const parts = [];
+    for (const [df, dr] of dirs) {
+      const sq = squareOffset(square, df, dr);
+      if (sq) parts.push(describeSquareContents(sq));
+    }
+    announceMoveInput(parts.length ? `Alrededor de ${square} — ${parts.join("; ")}.` : `${square} no tiene casillas vecinas en el tablero.`);
+  }
+
+  // "k/q/r/b/n/p": mueve el foco a la siguiente pieza de ese tipo (cualquier color); mayúscula
+  // invierte el orden (busca hacia atrás en vez de hacia adelante).
+  function findNextPieceSquare(type, fromSquare, forward) {
+    const squares = boardSquaresInOrder();
+    const idx = squares.indexOf(fromSquare);
+    const n = squares.length;
+    if (idx === -1) return null;
+    for (let step = 1; step <= n; step++) {
+      const i = forward ? (idx + step) % n : (idx - step + n) % n;
+      const sq = squares[i];
+      const piece = game.get(sq);
+      if (piece && piece.type === type) return sq;
+    }
+    return null;
+  }
+
+  // "shift+a"/"shift+d": repasa el historial de jugadas hacia atrás/adelante narrándolo en voz
+  // alta, sin cambiar la posición real del tablero (sólo lectura, para repasar la partida).
+  function stepMoveHistoryReview(direction) {
+    const hist = game.history({ verbose: true });
+    if (!hist.length) {
+      announceMoveInput("Todavía no se ha jugado ninguna jugada en esta partida.");
+      return;
+    }
+    if (historyReviewIndex === null) historyReviewIndex = hist.length - 1;
+    historyReviewIndex = Math.max(0, Math.min(hist.length - 1, historyReviewIndex + direction));
+    announceMoveInput(describeMove(hist[historyReviewIndex], Math.floor(historyReviewIndex / 2) + 1) + ` (jugada ${historyReviewIndex + 1} de ${hist.length})`);
+  }
+
+  // Despacha los atajos de una sola tecla del tablero enfocado (sólo en modo adaptado; ver el
+  // listener de keydown de boardEl). Ignora combinaciones con Ctrl/Meta para no chocar con
+  // atajos del navegador (Ctrl+R, Cmd+…).
+  function handleBoardShortcutKey(e, currentSquare) {
+    if (e.ctrlKey || e.metaKey) return;
+    const k = e.key;
+    if (k.length !== 1) return;
+    const lower = k.toLowerCase();
+
+    if (!e.shiftKey && !e.altKey && lower === "i") {
+      e.preventDefault();
+      if (moveInputEl) moveInputEl.focus();
+      return;
+    }
+    if (!e.shiftKey && !e.altKey && lower === "o") {
+      e.preventDefault();
+      announceCurrentSquare(currentSquare);
+      return;
+    }
+    if (!e.shiftKey && !e.altKey && lower === "c") {
+      e.preventDefault();
+      announceLastCapture();
+      return;
+    }
+    if (!e.shiftKey && !e.altKey && lower === "l") {
+      e.preventDefault();
+      announceLastMove();
+      return;
+    }
+    if (!e.altKey && lower === "m") {
+      e.preventDefault();
+      if (k === "M") announcePossibleCaptures(currentSquare);
+      else announcePossibleMoves(currentSquare);
+      return;
+    }
+    if (!e.altKey && lower === "x") {
+      e.preventDefault();
+      announceSurroundings(currentSquare, k === "X" ? "ring" : "adjacent");
+      return;
+    }
+    if (e.altKey && !e.shiftKey && lower === "x") {
+      e.preventDefault();
+      announceSurroundings(currentSquare, "rays");
+      return;
+    }
+    if (e.shiftKey && !e.altKey && (lower === "a" || lower === "d")) {
+      e.preventDefault();
+      stepMoveHistoryReview(lower === "a" ? -1 : 1);
+      return;
+    }
+    if (!e.altKey && "kqrbnp".indexOf(lower) !== -1) {
+      e.preventDefault();
+      const forward = k === lower; // minúscula = hacia adelante, mayúscula = invierte el orden
+      const next = findNextPieceSquare(lower, currentSquare, forward);
+      if (next) {
+        focusBoardSquare(next);
+        announceMoveInput(pieceLabel(game.get(next)) + " en " + next + ".");
+      } else {
+        announceMoveInput(`No hay ${PIECE_NAME_FORMS[lower].plural} en el tablero.`);
+      }
+      return;
+    }
+    if (!e.shiftKey && !e.altKey && e.code && e.code.indexOf("Digit") === 0) {
+      const digit = e.code.slice(5);
+      if (digit >= "1" && digit <= "8") {
+        e.preventDefault();
+        const target = currentSquare[0] + digit;
+        if (target !== currentSquare) {
+          focusBoardSquare(target);
+          announceCurrentSquare(target);
+        }
+      }
+      return;
+    }
+    if (e.shiftKey && !e.altKey && e.code && e.code.indexOf("Digit") === 0) {
+      const digit = e.code.slice(5);
+      if (digit >= "1" && digit <= "8") {
+        e.preventDefault();
+        const target = FILES[Number(digit) - 1] + currentSquare[1];
+        if (target !== currentSquare) {
+          focusBoardSquare(target);
+          announceCurrentSquare(target);
+        }
+      }
+      return;
+    }
+  }
+
+  // ---------- Comando "ayuda" (recuadro de jugada): recuerda los comandos disponibles ----------
+  function announceHelp() {
+    announceMoveInput(
+      "Comandos: L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
+        "resign (rendirse), p seguido de una letra (dónde están las piezas de ese tipo; mayúscula blancas, minúscula negras), " +
+        "s seguido de una columna o fila (piezas en esa línea). Con el tablero enfocado: i (ir al recuadro), o (casilla actual), " +
+        "c (última captura), l (última jugada), m (jugadas posibles), shift+m (capturas posibles), flechas (moverse), " +
+        "k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-8 (ir a esa fila), " +
+        "shift+1-8 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar jugadas anteriores/siguientes)."
+    );
+  }
+
   function handleMoveFormSubmit(e) {
     e.preventDefault();
     if (!moveInputEl) return;
@@ -951,7 +1320,7 @@
     // Comandos de accesibilidad: funcionan siempre, aunque no sea el turno del visitante,
     // el bot esté pensando, o la partida ya haya terminado (son sólo lectura, no mueven nada).
     const upper = trimmed.toUpperCase();
-    if (upper === "L") {
+    if (upper === "L" || upper === "LAST") {
       moveInputEl.value = "";
       announceLastMove();
       return;
@@ -959,6 +1328,44 @@
     if (upper === "T") {
       moveInputEl.value = "";
       announcePosition();
+      return;
+    }
+    if (upper === "AYUDA" || upper === "HELP" || upper === "?") {
+      moveInputEl.value = "";
+      announceHelp();
+      return;
+    }
+    if (upper === "RESIGN") {
+      moveInputEl.value = "";
+      if (isGameOver()) {
+        announceMoveInput("La partida ya terminó.");
+        return;
+      }
+      resign();
+      announceMoveInput("Te rendiste — Oscar gana.");
+      return;
+    }
+    const tokens = trimmed.split(/\s+/);
+    const cmd0 = tokens[0].toUpperCase();
+    if (cmd0 === "BOARD" || cmd0 === "B") {
+      moveInputEl.value = "";
+      const targetRaw = tokens[1];
+      const target = targetRaw && /^[a-h][1-8]$/i.test(targetRaw) ? targetRaw.toLowerCase() : "e4";
+      if (!focusBoardSquare(target)) {
+        announceMoveInput(`Casilla inválida: "${targetRaw}".`);
+        return;
+      }
+      announceCurrentSquare(target);
+      return;
+    }
+    if (cmd0 === "P" && tokens.length >= 2 && /^[a-zA-Z]$/.test(tokens[1])) {
+      moveInputEl.value = "";
+      announcePieceType(tokens[1]);
+      return;
+    }
+    if (cmd0 === "S" && tokens.length >= 2 && /^[a-h1-8]$/i.test(tokens[1])) {
+      moveInputEl.value = "";
+      announceLine(tokens[1]);
       return;
     }
 
@@ -1439,6 +1846,8 @@
     botBookMoves = [];
     gameStartTime = Date.now();
     lastAnalysis = null;
+    lastCapturedInfo = null;
+    historyReviewIndex = null;
     updateCapturedDisplay();
     updateHistoryDisplay();
     updateMaterialDisplay();
@@ -1479,7 +1888,7 @@
       instructionsEl.id = "board-instructions";
       instructionsEl.className = "sr-only";
       instructionsEl.textContent =
-        "Tablero de ajedrez interactivo. Usa las flechas del teclado para moverte entre las casillas, e Inicio o Fin para ir al extremo de la fila. Presiona Enter o espacio sobre una pieza propia para seleccionarla, y sobre una casilla resaltada para mover ahí. Al promocionar un peón, usa las flechas o Tab para elegir la pieza y Enter para confirmar, o Escape para cancelar.";
+        "Tablero de ajedrez interactivo. Usa las flechas del teclado para moverte entre las casillas, e Inicio o Fin para ir al extremo de la fila. Presiona Enter o espacio sobre una pieza propia para seleccionarla, y sobre una casilla resaltada para mover ahí. Al promocionar un peón, usa las flechas o Tab para elegir la pieza y Enter para confirmar, o Escape para cancelar. Activa el modo adaptado para más comandos por teclado y por texto; escribe ayuda en el recuadro de jugada para conocerlos.";
       boardEl.parentNode.insertBefore(instructionsEl, boardEl.nextSibling);
     }
     boardEl.setAttribute("aria-describedby", "board-instructions");
@@ -1502,8 +1911,13 @@
   if (moveInputEl && !moveInputEl.getAttribute("aria-label")) {
     moveInputEl.setAttribute("aria-label", "Escribe tu jugada en notación algebraica");
   }
+  if (modeNormalBtn && !modeNormalBtn.getAttribute("aria-label")) modeNormalBtn.setAttribute("aria-label", "Usar modo normal");
+  if (modeBlindBtn && !modeBlindBtn.getAttribute("aria-label")) {
+    modeBlindBtn.setAttribute("aria-label", "Usar modo adaptado para lector de pantalla");
+  }
 
   // Estado inicial
+  applyBlindModeUI();
   renderBoard();
   updateCapturedDisplay();
   updateHistoryDisplay();

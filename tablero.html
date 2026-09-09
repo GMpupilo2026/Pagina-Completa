@@ -70,10 +70,12 @@
                     <span class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs sm:text-sm px-3 py-1.5 rounded-full font-semibold">⚪⚫ Elige tu color</span>
                 </div>
             </div>
-            <div class="flex items-center justify-center gap-2 mb-4 text-xs sm:text-sm flex-wrap">
-                <span class="bg-green-600/10 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-lg font-semibold">Oscar ganó: <span id="stat-wins">0</span></span>
-                <span class="bg-brand-200 dark:bg-brand-700 text-brand-700 dark:text-brand-200 px-3 py-1.5 rounded-lg font-semibold">Tablas: <span id="stat-draws">0</span></span>
-                <span class="bg-red-600/10 text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold">Oscar perdió: <span id="stat-losses">0</span></span>
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <span class="text-xs text-brand-500 dark:text-brand-400">Modo:</span>
+                <div class="inline-flex rounded-lg border border-brand-200 dark:border-brand-700 overflow-hidden text-xs font-semibold" role="group" aria-label="Elegir modo de interacción">
+                    <button type="button" id="mode-normal-btn" aria-pressed="true" class="px-3 py-1.5 transition-colors bg-brand-700 text-white">Modo normal</button>
+                    <button type="button" id="mode-blind-btn" aria-pressed="false" class="px-3 py-1.5 transition-colors text-brand-700 dark:text-brand-200">🔊 Modo adaptado (lector de pantalla)</button>
+                </div>
             </div>
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                 <div class="flex items-center gap-3">
@@ -96,7 +98,7 @@
                     <div id="eval-bar-white" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
                 </div>
             </div>
-            <div class="max-w-[560px] mx-auto mb-4">
+            <div class="max-w-[560px] mx-auto mb-4 blind-mode-only hidden">
                 <form id="move-form" class="flex flex-col sm:flex-row gap-2 sm:items-end">
                     <div class="flex-1">
                         <label for="move-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Escribe tu jugada (útil con lector de pantalla)</label>
@@ -104,12 +106,13 @@
                     </div>
                     <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
                 </form>
-                <p id="move-input-help" class="text-xs text-brand-400 dark:text-brand-500 mt-1">Notación algebraica en español o inglés: peón sin letra (e4), C/N=caballo, A/B=alfil, T/R=torre, D/Q=dama, R/K=rey. Enroque: O-O (corto) u O-O-O (largo). Comandos: escribe L para escuchar la última jugada, o T para que se lea la posición actual.</p>
+                <p id="move-input-help" class="text-xs text-brand-400 dark:text-brand-500 mt-1">Notación algebraica en español o inglés: peón sin letra (e4), C/N=caballo, A/B=alfil, T/R=torre, D/Q=dama, R/K=rey. Enroque: O-O (corto) u O-O-O (largo). Comandos: L/last (última jugada), T (posición), board/b [casilla], resign, p &lt;letra&gt; (piezas de ese tipo), s &lt;columna o fila&gt;, ayuda (lista completa).</p>
                 <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
             </div>
             <div class="flex justify-center">
                 <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
+            <p class="blind-mode-only hidden max-w-[560px] mx-auto text-xs text-brand-400 dark:text-brand-500 mt-2">Con una casilla enfocada: i (recuadro de jugada), o (casilla actual), c (última captura), l (última jugada), m (jugadas posibles), shift+m (capturas posibles), k/q/r/b/n/p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), 1-8 (ir a esa fila), shift+1-8 (ir a esa columna), x/shift+x/alt+x (piezas alrededor), shift+a/shift+d (repasar jugadas).</p>
             <div class="mt-8 grid md:grid-cols-2 gap-6">
                 <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                     <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Piezas capturadas</h3>
@@ -121,7 +124,7 @@
                 <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                     <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
                         <h3 class="font-serif font-bold text-brand-800 dark:text-white">Historial de jugadas</h3>
-                        <button id="repeat-moves-btn" type="button" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">🔊 Repetir jugadas</button>
+                        <button id="repeat-moves-btn" type="button" class="blind-mode-only hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">🔊 Repetir jugadas</button>
                     </div>
                     <div id="move-history" class="text-sm text-brand-500 dark:text-brand-400 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
                     <div id="repeat-moves-status" role="status" aria-live="polite" class="sr-only"></div>
