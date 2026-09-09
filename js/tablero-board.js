@@ -445,11 +445,9 @@
       if (!origin) {
         html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): tomada del libro de partidas reales de Oscar.</p>`;
       } else {
-        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): de una partida real (${escapeHtml(
-          origin.bucketLabel
-        )}) de Oscar contra <strong>${escapeHtml(origin.opponent)}</strong> el ${escapeHtml(
-          origin.date.replace(/\./g, "-")
-        )} — ${escapeHtml(origin.resultLabel)}.</p>`;
+        html += `<p>Jugada ${bm.moveNum} (${escapeHtml(bm.san)}): de una partida real de Oscar contra <strong>${escapeHtml(
+          origin.opponent
+        )}</strong> el ${escapeHtml(origin.date.replace(/\./g, "-"))} — ${escapeHtml(origin.resultLabel)}.</p>`;
       }
     }
     originsPanelEl.innerHTML = html;
