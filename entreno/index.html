@@ -34,6 +34,19 @@
   }
   h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
   ::selection{background:var(--brass); color:#1b140f;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  /* Texto solo para lectores de pantalla (accesibilidad) */
+  .sr-only{
+    position:absolute;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
 
   /* ---------- GATE ---------- */
   #gate{
@@ -164,6 +177,8 @@
     margin:0 auto;
     padding:22px 24px 60px;
   }
+
+  /* ---------- GRID (categorías todavía sin tablero jugable) ---------- */
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
@@ -254,64 +269,29 @@
   }
   #lb-close:hover{color:var(--text);}
 
-  @media (max-width:520px){
-    .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
-    header.top h1{font-size:1.4rem;}
-  }
-
-  /* ---------- LOCK BADGE ---------- */
-  .card.locked{cursor:not-allowed;}
-  .card.locked img{filter:grayscale(1) brightness(0.4);}
-  .card .solved-badge{
-    position:absolute; top:0; right:0;
-    background:rgba(117,147,90,0.92);
-    color:#1b140f;
-    font-size:0.85rem;
-    font-weight:700;
-    padding:3px 7px;
-    border-left:1px solid var(--line);
-    border-bottom:1px solid var(--line);
-  }
-  .card .lock-icon{
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    font-size:1.6rem;
-    color:var(--text-muted);
-    background:rgba(10,7,5,0.35);
-  }
-
-  /* ---------- BOARD MODAL (Solo Chess jugable) ---------- */
-  #board-modal{
-    display:none;
-    position:fixed; inset:0;
-    background:rgba(10,7,5,0.94);
-    z-index:60;
-    align-items:center;
-    justify-content:center;
-    padding:16px;
-  }
-  #board-modal.open{display:flex;}
-  .board-wrap{
-    width:100%;
-    max-width:420px;
-    text-align:center;
-  }
-  .board-head{
+  /* ---------- SOLO CHESS: panel de un solo ejercicio ---------- */
+  #solo-panel{max-width:520px; margin:0 auto;}
+  .solo-progress{
     display:flex;
     justify-content:space-between;
     align-items:baseline;
-    margin-bottom:12px;
     color:var(--text-muted);
-    font-size:0.85rem;
+    font-size:0.88rem;
+    margin-bottom:6px;
   }
-  .board-head strong{color:var(--text); font-family:'Fraunces',serif; font-size:1.15rem; font-weight:600;}
-  #board-close{
-    position:absolute; top:20px; right:24px;
-    background:none; border:none;
-    color:var(--text-muted); font-size:1.6rem;
-    cursor:pointer; line-height:1;
+  .solo-progress strong{color:var(--text); font-family:'Fraunces',serif; font-size:1.3rem; font-weight:600;}
+  .progress-bar{
+    height:4px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    margin-bottom:20px;
+    overflow:hidden;
   }
-  #board-close:hover{color:var(--text);}
+  .progress-bar > div{
+    height:100%;
+    background:var(--facil);
+    transition:width .3s;
+  }
 
   .board-pos-wrap{position:relative;}
   .board4{
@@ -323,14 +303,19 @@
     border:2px solid var(--brass);
     box-shadow:0 8px 30px rgba(0,0,0,0.5);
   }
+  .board-row{
+    display:contents;
+  }
   .sq{
     position:relative;
     display:flex; align-items:center; justify-content:center;
-    font-size:min(9vw,42px);
+    font-size:min(14vw,64px);
     cursor:pointer;
     user-select:none;
     color:var(--brass-bright);
     transition:background .12s;
+    border:none;
+    padding:0;
   }
   .sq.light{background:#c9b190;}
   .sq.dark{background:#5a4531;}
@@ -339,31 +324,27 @@
     pointer-events:none;
     transition:transform .12s;
   }
-  .sq.selected{box-shadow:inset 0 0 0 3px var(--brass-bright);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
   .sq.selected .piece{transform:scale(1.12);}
-  .sq.target::after{
-    content:"";
-    position:absolute; inset:0;
-    background:radial-gradient(circle, rgba(220,182,121,0.55) 0 22%, transparent 24%);
-  }
   .sq.target-capture::after{
     content:"";
-    position:absolute; inset:6%;
-    border:3px solid rgba(220,182,121,0.85);
+    position:absolute; inset:8%;
+    border:4px solid rgba(220,182,121,0.9);
     border-radius:50%;
   }
 
   .board-status{
-    margin-top:14px;
+    margin-top:16px;
     color:var(--text-muted);
-    font-size:0.9rem;
+    font-size:0.95rem;
     min-height:1.3em;
+    text-align:center;
   }
   .board-controls{
     display:flex;
     gap:10px;
     justify-content:center;
-    margin-top:14px;
+    margin-top:16px;
     flex-wrap:wrap;
   }
   .bctrl{
@@ -371,10 +352,11 @@
     border:1px solid var(--line);
     color:var(--text);
     font-family:'Work Sans',sans-serif;
-    font-size:0.85rem;
-    padding:9px 16px;
+    font-size:0.9rem;
+    padding:11px 18px;
     cursor:pointer;
     transition:border-color .2s;
+    min-height:44px;
   }
   .bctrl:hover{border-color:var(--brass);}
   .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
@@ -382,7 +364,7 @@
   #win-overlay{
     display:none;
     position:absolute; inset:0;
-    background:rgba(27,20,15,0.94);
+    background:rgba(27,20,15,0.96);
     flex-direction:column;
     align-items:center;
     justify-content:center;
@@ -392,16 +374,28 @@
   #win-overlay.open{display:flex;}
   #win-overlay .win-title{
     color:var(--facil);
-    font-size:1.4rem;
+    font-size:1.6rem;
     font-weight:700;
     letter-spacing:0.03em;
     margin-bottom:6px;
   }
   #win-overlay .win-sub{
     font-family:'Fraunces',serif;
-    font-size:1.1rem;
+    font-size:1.2rem;
     color:var(--text);
     margin-bottom:22px;
+  }
+
+  #solo-complete{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+  }
+  #solo-complete h2{color:var(--text); font-size:1.4rem; margin-bottom:10px;}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
+    header.top h1{font-size:1.4rem;}
   }
 </style>
 </head>
@@ -414,8 +408,9 @@
     <h1>Entreno</h1>
     <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
     <form id="pw-form">
+      <label for="pw-input" class="sr-only">Contraseña</label>
       <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
-      <div id="pw-error"></div>
+      <div id="pw-error" role="alert"></div>
       <button type="submit" id="pw-submit">Entrar</button>
     </form>
   </div>
@@ -430,16 +425,62 @@
     </div>
   </header>
 
-  <nav class="tabs" id="tabs"></nav>
+  <nav class="tabs" id="tabs" aria-label="Categorías de ejercicios"></nav>
 
-  <main>
+  <main id="main-content">
+    <!-- Panel de un solo ejercicio jugable (Fácil, y luego el resto de categorías) -->
+    <section id="solo-panel" hidden aria-labelledby="solo-heading">
+      <h2 id="solo-heading" class="sr-only">Ejercicio jugable</h2>
+      <div class="solo-progress">
+        <span id="solo-progress-text">Ejercicio 1 de 133</span>
+        <span id="solo-solved-text">0 resueltos</span>
+      </div>
+      <div class="progress-bar"><div id="solo-progress-fill" style="width:0%"></div></div>
+
+      <p id="board-instructions" class="sr-only">
+        Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Usa las flechas del teclado para
+        moverte entre casillas. Pulsa Intro o espacio sobre una casilla con pieza para seleccionarla;
+        las casillas donde esa pieza puede capturar se anuncian y se marcan. Vuelve a pulsar Intro o
+        espacio sobre una de esas casillas para mover y capturar. Cada movimiento debe ser una captura;
+        no existe la regla de jaque. Ganas el ejercicio al dejar una sola pieza sobre el tablero.
+      </p>
+
+      <div class="board-pos-wrap">
+        <div class="board4" id="board4" role="grid" aria-label="Tablero de ajedrez 4 por 4" aria-describedby="board-instructions"></div>
+        <div id="win-overlay">
+          <div class="win-title">¡MUY BIEN!</div>
+          <div class="win-sub">Nivel completado</div>
+          <div class="board-controls">
+            <button class="bctrl" id="win-retry">Reintentar</button>
+            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+      <div class="board-status" id="board-status" aria-hidden="true">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
+
+      <div class="board-controls">
+        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+        <button class="bctrl" id="board-reset">Reiniciar</button>
+        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+      </div>
+    </section>
+
+    <!-- Estado: toda la categoría resuelta -->
+    <section id="solo-complete" hidden>
+      <h2>¡Completaste todos los ejercicios!</h2>
+      <p id="solo-complete-text"></p>
+    </section>
+
+    <!-- Grilla de imágenes (categorías sin tablero jugable todavía) -->
     <div class="grid" id="grid"></div>
   </main>
 
   <footer>Ajedrez Integral — archivo de ejercicios de ajedrez en solitario</footer>
 </div>
 
-<!-- ===== LIGHTBOX ===== -->
+<!-- ===== LIGHTBOX (para categorías aún no jugables) ===== -->
 <div id="lightbox">
   <button id="lb-close" aria-label="Cerrar">&times;</button>
   <img id="lb-img" src="" alt="">
@@ -447,35 +488,6 @@
   <div class="lb-nav">
     <button class="lb-btn" id="lb-prev" aria-label="Anterior">&#8249;</button>
     <button class="lb-btn" id="lb-next" aria-label="Siguiente">&#8250;</button>
-  </div>
-</div>
-
-<!-- ===== TABLERO JUGABLE (Solo Chess) ===== -->
-<div id="board-modal">
-  <button id="board-close" aria-label="Cerrar">&times;</button>
-  <div class="board-wrap">
-    <div class="board-head">
-      <span id="board-cat"></span>
-      <strong id="board-title"></strong>
-      <span id="board-piece-count"></span>
-    </div>
-    <div class="board-pos-wrap">
-      <div class="board4" id="board4"></div>
-      <div id="win-overlay">
-        <div class="win-title">¡MUY BIEN!</div>
-        <div class="win-sub">Nivel completado</div>
-        <div class="board-controls">
-          <button class="bctrl" id="win-retry">Reintentar</button>
-          <button class="bctrl" id="win-next">Siguiente &#8250;</button>
-        </div>
-      </div>
-    </div>
-    <div class="board-status" id="board-status">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
-    <div class="board-controls">
-      <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
-      <button class="bctrl" id="board-reset">Reiniciar</button>
-      <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
-    </div>
   </div>
 </div>
 
@@ -551,7 +563,10 @@ async function initApp(){
    Un ejercicio #N de una categoría con tablero jugable solo se puede
    abrir si el #N-1 de esa misma categoría ya fue resuelto (el #1
    siempre está disponible). El progreso se guarda en localStorage
-   para que persista entre visitas. */
+   para que persista entre visitas. Además, mientras no se resuelve
+   el ejercicio actual, los siguientes ni siquiera se muestran: solo
+   se ve un ejercicio a la vez, cada vez más grande y sin distraerse
+   con el resto. */
 function getSolvedSet(){
   try{
     return JSON.parse(localStorage.getItem('entreno_solved') || '{}');
@@ -579,6 +594,23 @@ function isUnlocked(ex, list){
   if(!prevPuz) return true;
   return isSolved(prevPuz.id);
 }
+function countSolved(list){
+  let n = 0;
+  list.forEach(ex => {
+    const puz = puzzleForExercise(ex);
+    if(puz && isSolved(puz.id)) n++;
+  });
+  return n;
+}
+/* Índice (en `list`) del primer ejercicio jugable todavía sin resolver.
+   Si ya están todos resueltos, devuelve list.length. */
+function firstUnsolvedIndex(list){
+  for(let i=0;i<list.length;i++){
+    const puz = puzzleForExercise(list[i]);
+    if(puz && !isSolved(puz.id)) return i;
+  }
+  return list.length;
+}
 
 function buildTabs(){
   const tabs = document.getElementById('tabs');
@@ -587,6 +619,7 @@ function buildTabs(){
     const count = EXERCISES.filter(e => e.category === cat).length;
     const btn = document.createElement('button');
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${count}</span>`;
     btn.addEventListener('click', () => showCategory(cat));
@@ -597,49 +630,58 @@ function buildTabs(){
 function showCategory(cat){
   currentCategory = cat;
   document.querySelectorAll('.tab').forEach((btn,i) => {
-    btn.classList.toggle('active', CATEGORY_ORDER[i] === cat);
+    const active = CATEGORY_ORDER[i] === cat;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
   document.getElementById('visible-count').textContent = currentList.length;
+
+  const hasPuzzles = currentList.length > 0 && !!puzzleForExercise(currentList[0]);
+  const soloPanel = document.getElementById('solo-panel');
+  const soloComplete = document.getElementById('solo-complete');
+  const grid = document.getElementById('grid');
+
+  if(hasPuzzles){
+    grid.hidden = true;
+    const idx = firstUnsolvedIndex(currentList);
+    if(idx >= currentList.length){
+      soloPanel.hidden = true;
+      soloComplete.hidden = false;
+      document.getElementById('solo-complete-text').textContent =
+        `Resolviste los ${currentList.length} ejercicios de ${CATEGORY_LABEL[cat]}. ¡Muy bien!`;
+    } else {
+      soloComplete.hidden = true;
+      soloPanel.hidden = false;
+      boardCategory = cat;
+      boardExList = currentList;
+      loadPuzzleAt(idx);
+    }
+  } else {
+    soloPanel.hidden = true;
+    soloComplete.hidden = true;
+    grid.hidden = false;
+    renderGrid();
+  }
+}
+
+function renderGrid(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   currentList.forEach((ex, idx) => {
-    const puz = puzzleForExercise(ex);
-    const solved = puz ? isSolved(puz.id) : false;
-    const unlocked = isUnlocked(ex, currentList);
     const card = document.createElement('div');
-    card.className = 'card' + (puz && !unlocked ? ' locked' : '');
-    let extra = '';
-    if(puz && solved) extra = '<span class="solved-badge">&#10003;</span>';
-    else if(puz && !unlocked) extra = '<span class="lock-icon">&#128274;</span>';
-    card.innerHTML = `<span class="badge">#${ex.number}</span>${extra}<img src="${ex.image}" loading="lazy" alt="${ex.categoryLabel} ${ex.number}">`;
-    card.addEventListener('click', () => {
-      if(puz){
-        if(!unlocked){
-          flashLockedMessage(ex);
-          return;
-        }
-        openBoard(idx);
-      } else {
-        openLightbox(idx);
-      }
+    card.className = 'card';
+    card.setAttribute('role','button');
+    card.setAttribute('tabindex','0');
+    card.setAttribute('aria-label', `${ex.categoryLabel}, ejercicio ${ex.number}`);
+    card.innerHTML = `<span class="badge">#${ex.number}</span><img src="${ex.image}" loading="lazy" alt="">`;
+    const open = () => openLightbox(idx);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); }
     });
     grid.appendChild(card);
   });
-}
-
-function flashLockedMessage(ex){
-  const grid = document.getElementById('grid');
-  let msg = document.getElementById('lock-msg');
-  if(!msg){
-    msg = document.createElement('div');
-    msg.id = 'lock-msg';
-    msg.style.cssText = 'color:var(--text-muted);font-size:0.85rem;margin-top:10px;';
-    grid.parentNode.insertBefore(msg, grid.nextSibling);
-  }
-  msg.textContent = `Resuelve el ejercicio #${ex.number - 1} para desbloquear el #${ex.number}.`;
-  clearTimeout(flashLockedMessage._t);
-  flashLockedMessage._t = setTimeout(() => { if(msg) msg.textContent = ''; }, 3200);
 }
 
 /* ---------------- LIGHTBOX ---------------- */
@@ -683,6 +725,7 @@ document.addEventListener('keydown', (e) => {
    - No existe la regla de jaque.
    - Se gana al quedar con una sola pieza sobre el tablero (la última atacante). */
 const PIECE_GLYPH = {P:'&#9823;', N:'&#9822;', B:'&#9821;', R:'&#9820;', Q:'&#9819;', K:'&#9818;'};
+const PIECE_NAME = {P:'Peón', N:'Caballo', B:'Alfil', R:'Torre', Q:'Dama', K:'Rey'};
 const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
 const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
 const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
@@ -722,34 +765,48 @@ function captureTargets(piece, r, c, board){
 
 let boardState = {};       // {"r,c": pieceType}
 let selectedCell = null;   // [r,c] | null
+let focusedCell = [0,0];   // celda con el foco de teclado (roving tabindex)
 let boardCategory = null;  // 'FACIL' etc.
 let boardExList = [];      // lista de ejercicios de la categoría actual
 let boardExIndex = 0;      // índice dentro de boardExList
-let moveHistory = [];
+
+function announce(text){
+  const el = document.getElementById('board-announcer');
+  el.textContent = '';
+  /* pequeño retardo para que los lectores de pantalla noten el cambio
+     incluso si el texto es idéntico al anterior */
+  window.setTimeout(() => { el.textContent = text; }, 30);
+}
 
 function loadPuzzleAt(exIndex){
   selectedCell = null;
-  moveHistory = [];
+  focusedCell = [0,0];
   document.getElementById('win-overlay').classList.remove('open');
   boardExIndex = exIndex;
   const ex = boardExList[exIndex];
   const puz = puzzleForExercise(ex);
   boardState = {};
   puz.pieces.forEach(p => { boardState[boardKey(p.row,p.col)] = p.type; });
-  document.getElementById('board-cat').textContent = ex.categoryLabel;
-  document.getElementById('board-title').textContent = `#${ex.number}`;
-  updatePieceCount();
+
+  const solvedCount = countSolved(boardExList);
+  document.getElementById('solo-progress-text').textContent =
+    `${ex.categoryLabel} — Ejercicio ${ex.number} de ${boardExList.length}`;
+  document.getElementById('solo-solved-text').textContent = `${solvedCount} resueltos`;
+  document.getElementById('solo-progress-fill').style.width = `${Math.round(100*solvedCount/boardExList.length)}%`;
+
   setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
   renderBoard();
   updatePuzzleNavButtons();
-}
-
-function updatePieceCount(){
-  const n = Object.keys(boardState).length;
-  document.getElementById('board-piece-count').textContent = `${n} piezas`;
+  announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${Object.keys(boardState).length} piezas en el tablero.`);
 }
 
 function setStatus(text){ document.getElementById('board-status').textContent = text; }
+
+function pieceDescription(r,c){
+  const piece = boardState[boardKey(r,c)];
+  const base = `Fila ${r+1}, columna ${c+1}`;
+  return piece ? `${base}, ${PIECE_NAME[piece]}` : `${base}, vacío`;
+}
 
 function renderBoard(){
   const el = document.getElementById('board4');
@@ -760,49 +817,121 @@ function renderBoard(){
     legalTargets = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
   }
   for(let r=0;r<4;r++){
+    const rowEl = document.createElement('div');
+    rowEl.className = 'board-row';
+    rowEl.setAttribute('role','row');
     for(let c=0;c<4;c++){
-      const sq = document.createElement('div');
+      const sq = document.createElement('button');
       const light = (r+c) % 2 === 0;
+      sq.type = 'button';
       sq.className = 'sq ' + (light ? 'light' : 'dark');
+      sq.setAttribute('role','gridcell');
       const piece = boardState[boardKey(r,c)];
+      const isSelected = !!(selectedCell && selectedCell[0]===r && selectedCell[1]===c);
+      const isTarget = legalTargets.some(([tr,tc]) => tr===r && tc===c);
       if(piece){
-        sq.innerHTML = `<span class="piece">${PIECE_GLYPH[piece]}</span>`;
+        sq.innerHTML = `<span class="piece" aria-hidden="true">${PIECE_GLYPH[piece]}</span>`;
       }
-      if(selectedCell && selectedCell[0]===r && selectedCell[1]===c){
-        sq.classList.add('selected');
-      }
-      if(legalTargets.some(([tr,tc]) => tr===r && tc===c)){
-        sq.classList.add('target-capture');
-      }
-      sq.addEventListener('click', () => onSquareClick(r,c));
-      el.appendChild(sq);
+      if(isSelected) sq.classList.add('selected');
+      if(isTarget) sq.classList.add('target-capture');
+
+      let label = pieceDescription(r,c);
+      if(isSelected) label += ', seleccionada';
+      if(isTarget) label += ', captura posible, pulsa Intro para mover aquí';
+      sq.setAttribute('aria-label', label);
+      sq.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+
+      const isFocusCell = focusedCell[0]===r && focusedCell[1]===c;
+      sq.tabIndex = isFocusCell ? 0 : -1;
+
+      sq.addEventListener('click', () => { focusedCell=[r,c]; onSquareClick(r,c); });
+      sq.addEventListener('focus', () => { focusedCell = [r,c]; });
+      rowEl.appendChild(sq);
     }
+    el.appendChild(rowEl);
   }
 }
+
+function focusSquare(r,c){
+  focusedCell = [r,c];
+  const el = document.getElementById('board4');
+  const rows = el.querySelectorAll('.board-row');
+  const cell = rows[r] && rows[r].children[c];
+  if(cell){
+    el.querySelectorAll('.sq').forEach(s => s.tabIndex = -1);
+    cell.tabIndex = 0;
+    cell.focus();
+  }
+}
+
+document.getElementById('board4').addEventListener('keydown', (e) => {
+  const [r,c] = focusedCell;
+  let nr=r, nc=c;
+  if(e.key === 'ArrowUp') nr = Math.max(0, r-1);
+  else if(e.key === 'ArrowDown') nr = Math.min(3, r+1);
+  else if(e.key === 'ArrowLeft') nc = Math.max(0, c-1);
+  else if(e.key === 'ArrowRight') nc = Math.min(3, c+1);
+  else if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    onSquareClick(r,c);
+    return;
+  } else {
+    return;
+  }
+  e.preventDefault();
+  if(nr!==r || nc!==c){
+    focusSquare(nr,nc);
+    announce(pieceDescription(nr,nc));
+  }
+});
 
 function onSquareClick(r,c){
   const key = boardKey(r,c);
   const piece = boardState[key];
   if(selectedCell){
     const [sr,sc] = selectedCell;
-    if(sr===r && sc===c){ selectedCell = null; renderBoard(); return; }
+    if(sr===r && sc===c){
+      selectedCell = null;
+      renderBoard();
+      focusSquare(r,c);
+      announce('Selección cancelada.');
+      return;
+    }
     const legal = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
     if(legal.some(([tr,tc]) => tr===r && tc===c)){
-      moveHistory.push(JSON.parse(JSON.stringify(boardState)));
       const movingPiece = boardState[boardKey(sr,sc)];
+      const capturedPiece = boardState[key];
       delete boardState[boardKey(sr,sc)];
       boardState[key] = movingPiece;
       selectedCell = null;
-      updatePieceCount();
       renderBoard();
+      focusSquare(r,c);
+      const remaining = Object.keys(boardState).length;
+      announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en fila ${r+1}, columna ${c+1}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
       checkWin();
       return;
     }
-    if(piece){ selectedCell = [r,c]; renderBoard(); return; }
-    selectedCell = null; renderBoard();
+    if(piece){
+      selectedCell = [r,c];
+      renderBoard();
+      focusSquare(r,c);
+      const targets = captureTargets(piece, r, c, boardState);
+      announce(`${PIECE_NAME[piece]} seleccionado en fila ${r+1}, columna ${c+1}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+      return;
+    }
+    selectedCell = null;
+    renderBoard();
+    focusSquare(r,c);
+    announce('Esa casilla está vacía y no es una captura válida. Selección cancelada.');
     return;
   }
-  if(piece){ selectedCell = [r,c]; renderBoard(); }
+  if(piece){
+    selectedCell = [r,c];
+    renderBoard();
+    focusSquare(r,c);
+    const targets = captureTargets(piece, r, c, boardState);
+    announce(`${PIECE_NAME[piece]} seleccionado en fila ${r+1}, columna ${c+1}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+  }
 }
 
 function checkWin(){
@@ -813,6 +942,8 @@ function checkWin(){
     markSolved(puz.id);
     setStatus('¡Resuelto!');
     document.getElementById('win-overlay').classList.add('open');
+    document.getElementById('win-retry').focus();
+    announce('¡Muy bien! Nivel completado.');
     updatePuzzleNavButtons();
     return;
   }
@@ -822,6 +953,7 @@ function checkWin(){
   });
   if(!anyMove){
     setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
+    announce('No quedan capturas posibles. Pulsa Reiniciar para intentarlo de nuevo.');
   }
 }
 
@@ -838,21 +970,10 @@ function updatePuzzleNavButtons(){
   winNextBtn.disabled = !hasNext;
 }
 
-function openBoard(idx){
-  boardCategory = currentCategory;
-  boardExList = currentList;
-  loadPuzzleAt(idx);
-  document.getElementById('board-modal').classList.add('open');
-}
-function closeBoard(){
-  document.getElementById('board-modal').classList.remove('open');
-  showCategory(currentCategory); /* refresca badges de bloqueo/resuelto en la grilla */
-}
-document.getElementById('board-close').addEventListener('click', closeBoard);
-document.getElementById('board-modal').addEventListener('click', (e) => {
-  if(e.target.id === 'board-modal') closeBoard();
+document.getElementById('board-reset').addEventListener('click', () => {
+  loadPuzzleAt(boardExIndex);
+  announce('Ejercicio reiniciado.');
 });
-document.getElementById('board-reset').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('board-prev-puzzle').addEventListener('click', () => {
   if(boardExIndex > 0) loadPuzzleAt(boardExIndex - 1);
@@ -861,11 +982,10 @@ document.getElementById('board-next-puzzle').addEventListener('click', () => {
   if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
 });
 document.getElementById('win-next').addEventListener('click', () => {
-  if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
-});
-document.addEventListener('keydown', (e) => {
-  if(!document.getElementById('board-modal').classList.contains('open')) return;
-  if(e.key === 'Escape') closeBoard();
+  /* Al resolver, el ejercicio siguiente recién queda desbloqueado: se
+     vuelve a montar la categoría para que, si era el último, aparezca
+     la pantalla de "completado". */
+  showCategory(currentCategory);
 });
 
 /* Se comprueba el desbloqueo previo (sessionStorage) hasta el final del script,
