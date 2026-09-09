@@ -873,11 +873,95 @@
     moveInputStatusEl.textContent = text;
   }
 
+  // Describe una jugada del historial (verbose de chess.js) en español hablado, para los
+  // anuncios de "repetir jugadas" y del comando "L" (escuchar la jugada anterior).
+  function describeMove(m, moveNum) {
+    const colorTxt = m.color === "w" ? "blancas" : "negras";
+    const pieceName = (PIECE_INFO[m.piece] && PIECE_INFO[m.piece].name) || "pieza";
+    const captureTxt = m.captured ? ", captura" : "";
+    const checkTxt = /#/.test(m.san) ? ", jaque mate" : /\+/.test(m.san) ? ", jaque" : "";
+    return `Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${m.from} a ${m.to}${captureTxt}${checkTxt}.`;
+  }
+
+  // Comando "L" (escuchar la jugada anterior): anuncia sólo la última jugada realizada,
+  // sin tener que repetir toda la partida ni esperar a que sea el turno del visitante.
+  function announceLastMove() {
+    const hist = game.history({ verbose: true });
+    if (!hist.length) {
+      announceMoveInput("Todavía no se ha jugado ninguna jugada en esta partida.");
+      return;
+    }
+    announceMoveInput(describeMove(hist[hist.length - 1], Math.floor((hist.length - 1) / 2) + 1));
+  }
+
+  // ---------- Comando "T" (dice la posición): describe dónde está cada pieza ----------
+  const PIECE_NAME_FORMS = {
+    k: { singular: "rey", plural: "reyes" },
+    q: { singular: "dama", plural: "damas" },
+    r: { singular: "torre", plural: "torres" },
+    b: { singular: "alfil", plural: "alfiles" },
+    n: { singular: "caballo", plural: "caballos" },
+    p: { singular: "peón", plural: "peones" },
+  };
+  const POSITION_PIECE_ORDER = ["k", "q", "r", "b", "n", "p"];
+
+  // Une una lista de casillas en español: "a1", "a1 y b2", "a1, b2 y c3".
+  function joinSpanishList(items) {
+    if (!items.length) return "";
+    if (items.length === 1) return items[0];
+    return items.slice(0, -1).join(", ") + " y " + items[items.length - 1];
+  }
+
+  function describeSide(color) {
+    const board = game.board();
+    const byType = { k: [], q: [], r: [], b: [], n: [], p: [] };
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const cell = board[r][f];
+        if (cell && cell.color === color) byType[cell.type].push(FILES[f] + (8 - r));
+      }
+    }
+    const parts = [];
+    for (const type of POSITION_PIECE_ORDER) {
+      const squares = byType[type];
+      if (!squares.length) continue;
+      squares.sort();
+      const forms = PIECE_NAME_FORMS[type];
+      const label = squares.length === 1 ? forms.singular : forms.plural;
+      parts.push(`${label} ${joinSpanishList(squares)}`);
+    }
+    return parts.length ? parts.join(", ") : "sin piezas en el tablero";
+  }
+
+  function announcePosition() {
+    const turnTxt = game.turn() === "w" ? "blancas" : "negras";
+    const checkTxt = game.in_check() ? ", en jaque" : "";
+    announceMoveInput(
+      `Turno de ${turnTxt}${checkTxt}. Blancas: ${describeSide("w")}. Negras: ${describeSide("b")}.`
+    );
+  }
+
   function handleMoveFormSubmit(e) {
     e.preventDefault();
     if (!moveInputEl) return;
     const raw = moveInputEl.value;
-    if (!raw.trim()) return;
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+
+    // Comandos de accesibilidad: funcionan siempre, aunque no sea el turno del visitante,
+    // el bot esté pensando, o la partida ya haya terminado (son sólo lectura, no mueven nada).
+    const upper = trimmed.toUpperCase();
+    if (upper === "L") {
+      moveInputEl.value = "";
+      announceLastMove();
+      return;
+    }
+    if (upper === "T") {
+      moveInputEl.value = "";
+      announcePosition();
+      return;
+    }
+
     if (isBotThinking) {
       announceMoveInput("Espera a que Oscar termine de pensar.");
       return;
@@ -914,13 +998,7 @@
     if (!hist.length) return "Todavía no se ha jugado ninguna jugada en esta partida.";
     const parts = [];
     for (let i = 0; i < hist.length; i++) {
-      const m = hist[i];
-      const moveNum = Math.floor(i / 2) + 1;
-      const colorTxt = m.color === "w" ? "blancas" : "negras";
-      const pieceName = (PIECE_INFO[m.piece] && PIECE_INFO[m.piece].name) || "pieza";
-      const captureTxt = m.captured ? ", captura" : "";
-      const checkTxt = /#/.test(m.san) ? ", jaque mate" : /\+/.test(m.san) ? ", jaque" : "";
-      parts.push(`Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${m.from} a ${m.to}${captureTxt}${checkTxt}.`);
+      parts.push(describeMove(hist[i], Math.floor(i / 2) + 1));
     }
     return parts.join(" ");
   }
