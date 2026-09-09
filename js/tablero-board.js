@@ -50,7 +50,11 @@
   let evalRequestId = 0; // descarta respuestas de evaluación que ya quedaron obsoletas (posición cambió)
 
   // ---------- Contador de partidas (ganadas/tablas/perdidas), guardado en este navegador ----------
-  const STATS_KEY = "oscarChessStats_v1";
+  // Desde el punto de vista de OSCAR (el bot), no del visitante: "Ganadas" = Oscar ganó,
+  // "Perdidas" = Oscar perdió. Se acumula partida a partida, en cada dispositivo/navegador.
+  // v2 porque hasta ahora el contador era al revés (desde el punto de vista del visitante);
+  // cambiar la clave evita reinterpretar con el significado nuevo un contador guardado con el viejo.
+  const STATS_KEY = "oscarChessStats_v2";
 
   function loadStats() {
     try {
@@ -519,12 +523,14 @@
 
   // Suma el resultado a las estadísticas guardadas la primera vez que se detecta
   // el fin de una partida (resultRecorded evita contarlo de nuevo en renders posteriores).
+  // El contador es desde el punto de vista de Oscar (el bot): "Ganadas" suma cuando gana
+  // Oscar (botColor()), "Perdidas" cuando gana el visitante — no al revés.
   function recordResultOnce(info) {
     if (resultRecorded || !info.over) return;
     resultRecorded = true;
     if (info.draw) {
       stats.draws++;
-    } else if (info.winner === userColor) {
+    } else if (info.winner === botColor()) {
       stats.wins++;
     } else {
       stats.losses++;
