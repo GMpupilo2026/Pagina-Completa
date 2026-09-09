@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entreno — Ajedrez Integral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1b140f;
+    --bg-panel:#251c15;
+    --bg-panel-2:#2f251b;
+    --line:#3c3024;
+    --text:#efe3d1;
+    --text-muted:#a4907a;
+    --brass:#b8935a;
+    --brass-bright:#dcb679;
+    --facil:#75935a;
+    --intermedio:#c9a23e;
+    --avanzado:#9c4148;
+    --especialista:#436a86;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-deep);
+    background-image:
+      radial-gradient(ellipse at top, rgba(184,147,90,0.07), transparent 60%);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
+  ::selection{background:var(--brass); color:#1b140f;}
+
+  /* ---------- GATE ---------- */
+  #gate{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .gate-box{
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+  .gate-mark{
+    width:44px;height:44px;margin:0 auto 22px;
+    border:1.5px solid var(--brass);
+    transform:rotate(45deg);
+    position:relative;
+  }
+  .gate-mark::after{
+    content:"";
+    position:absolute; inset:6px;
+    border:1px solid var(--line);
+  }
+  .gate-box h1{
+    font-size:2.1rem;
+    letter-spacing:0.01em;
+    color:var(--text);
+  }
+  .gate-box p{
+    color:var(--text-muted);
+    font-size:0.95rem;
+    margin:10px 0 32px;
+    line-height:1.5;
+  }
+  #pw-form{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  #pw-input{
+    background:transparent;
+    border:none;
+    border-bottom:1.5px solid var(--line);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    font-size:1.05rem;
+    padding:10px 4px;
+    text-align:center;
+    letter-spacing:0.04em;
+    outline:none;
+    transition:border-color .2s;
+  }
+  #pw-input:focus{border-bottom-color:var(--brass);}
+  #pw-submit{
+    background:var(--brass);
+    color:#1b140f;
+    border:none;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:0.95rem;
+    padding:12px 20px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    transition:background .2s;
+  }
+  #pw-submit:hover{background:var(--brass-bright);}
+  #pw-error{
+    color:var(--avanzado);
+    font-size:0.85rem;
+    min-height:1.2em;
+    margin-top:-4px;
+  }
+
+  /* ---------- APP ---------- */
+  #app{display:none;}
+  header.top{
+    padding:28px 24px 0;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px 20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+  }
+  header.top h1{font-size:1.7rem;}
+  .count{
+    color:var(--text-muted);
+    font-size:0.9rem;
+  }
+  .count strong{color:var(--text); font-weight:600;}
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    max-width:1180px;
+    margin:0 auto;
+    padding:18px 24px 0;
+    flex-wrap:wrap;
+  }
+  .tab{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted);
+    font-family:'Work Sans', sans-serif;
+    font-size:0.88rem;
+    font-weight:500;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:background .2s, color .2s;
+  }
+  .tab:hover{color:var(--text);}
+  .tab.active{
+    background:var(--bg-panel-2);
+    color:var(--text);
+  }
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:22px 24px 60px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+    gap:12px;
+  }
+  .card{
+    position:relative;
+    aspect-ratio:1/1;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    cursor:pointer;
+    overflow:hidden;
+    transition:border-color .15s;
+  }
+  .card:hover{border-color:var(--brass);}
+  .card img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .card .badge{
+    position:absolute;
+    top:0; left:0;
+    background:rgba(27,20,15,0.82);
+    color:var(--text);
+    font-size:0.72rem;
+    font-weight:600;
+    padding:3px 7px;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:0.8rem;
+    padding:20px 24px 40px;
+  }
+
+  /* ---------- LIGHTBOX ---------- */
+  #lightbox{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(10,7,5,0.92);
+    z-index:50;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    padding:20px;
+  }
+  #lightbox.open{display:flex;}
+  #lb-img{
+    max-width:min(86vw, 520px);
+    max-height:60vh;
+    border:1px solid var(--line);
+  }
+  #lb-caption{
+    margin-top:16px;
+    font-family:'Fraunces', serif;
+    font-size:1.2rem;
+    color:var(--text);
+  }
+  .lb-nav{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    margin-top:18px;
+  }
+  .lb-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    width:40px; height:40px;
+    font-size:1.1rem;
+    cursor:pointer;
+    transition:border-color .2s;
+  }
+  .lb-btn:hover{border-color:var(--brass);}
+  #lb-close{
+    position:absolute;
+    top:20px; right:24px;
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    font-size:1.6rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  #lb-close:hover{color:var(--text);}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
+    header.top h1{font-size:1.4rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PASSWORD GATE ===== -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-mark"></div>
+    <h1>Entreno</h1>
+    <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
+    <form id="pw-form">
+      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
+      <div id="pw-error"></div>
+      <button type="submit" id="pw-submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <header class="top">
+    <div class="top-row">
+      <h1>Entreno</h1>
+      <div class="count"><strong id="visible-count">0</strong> ejercicios</div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <main>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer>Ajedrez Integral — archivo de ejercicios de ajedrez en solitario</footer>
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div id="lightbox">
+  <button id="lb-close" aria-label="Cerrar">&times;</button>
+  <img id="lb-img" src="" alt="">
+  <div id="lb-caption"></div>
+  <div class="lb-nav">
+    <button class="lb-btn" id="lb-prev" aria-label="Anterior">&#8249;</button>
+    <button class="lb-btn" id="lb-next" aria-label="Siguiente">&#8250;</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- PASSWORD GATE ----------------
+   Nota: esto es una barrera del lado del cliente, pensada para
+   evitar el acceso casual, no una autenticación segura real.
+   Cualquiera con acceso al código fuente podría eludirla.
+*/
+const PW_HASH = "03ece971d7c332feeb7171ea3f30c16e96fc7e0f2610b334c64b16f99407cab0";
+
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const pwForm = document.getElementById('pw-form');
+const pwInput = document.getElementById('pw-input');
+const pwError = document.getElementById('pw-error');
+
+function unlock(){
+  gate.style.display = 'none';
+  app.style.display = 'block';
+  sessionStorage.setItem('entreno_unlocked','1');
+  initApp();
+}
+
+pwForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const hash = await sha256(pwInput.value.trim());
+  if(hash === PW_HASH){
+    unlock();
+  } else {
+    pwError.textContent = 'Contraseña incorrecta.';
+    pwInput.value = '';
+    pwInput.focus();
+  }
+});
+
+/* ---------------- APP ---------------- */
+let EXERCISES = [];
+let currentCategory = 'FACIL';
+let currentList = [];
+let currentIndex = 0;
+
+const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA'];
+const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista'};
+const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista'};
+
+let appInitialized = false;
+
+async function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  const res = await fetch('data/exercises.json');
+  EXERCISES = await res.json();
+  buildTabs();
+  showCategory('FACIL');
+}
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach(cat => {
+    const count = EXERCISES.filter(e => e.category === cat).length;
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${count}</span>`;
+    btn.addEventListener('click', () => showCategory(cat));
+    tabs.appendChild(btn);
+  });
+}
+
+function showCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll('.tab').forEach((btn,i) => {
+    btn.classList.toggle('active', CATEGORY_ORDER[i] === cat);
+  });
+  currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
+  document.getElementById('visible-count').textContent = currentList.length;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  currentList.forEach((ex, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<span class="badge">#${ex.number}</span><img src="${ex.image}" loading="lazy" alt="${ex.categoryLabel} ${ex.number}">`;
+    card.addEventListener('click', () => openLightbox(idx));
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- LIGHTBOX ---------------- */
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lb-img');
+const lbCaption = document.getElementById('lb-caption');
+
+function openLightbox(idx){
+  currentIndex = idx;
+  renderLightbox();
+  lightbox.classList.add('open');
+}
+function renderLightbox(){
+  const ex = currentList[currentIndex];
+  lbImg.src = ex.image;
+  lbImg.alt = `${ex.categoryLabel} ${ex.number}`;
+  lbCaption.textContent = `${ex.categoryLabel} · #${ex.number}`;
+}
+function closeLightbox(){ lightbox.classList.remove('open'); }
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.getElementById('lb-prev').addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+  renderLightbox();
+});
+document.getElementById('lb-next').addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % currentList.length;
+  renderLightbox();
+});
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') document.getElementById('lb-prev').click();
+  if(e.key === 'ArrowRight') document.getElementById('lb-next').click();
+  if(e.key === 'Escape') closeLightbox();
+});
+
+/* Se comprueba el desbloqueo previo (sessionStorage) hasta el final del script,
+   ya que unlock()/initApp() dependen de variables (como appInitialized) que
+   solo existen una vez que el resto del script ya se ejecutó. */
+if(sessionStorage.getItem('entreno_unlocked') === '1'){
+  unlock();
+}
+</script>
+</body>
+</html>
