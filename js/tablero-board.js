@@ -559,70 +559,80 @@
 
     analyzingNow = true;
     analyzeBtn.disabled = true;
-    if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
-    const MAX_PLIES_ANALYZED = 80; // ~40 jugadas por lado, para acotar el tiempo de análisis
-    const limited = moves.slice(0, MAX_PLIES_ANALYZED);
+    // Todo el cuerpo va en try/finally: así, aunque algo falle de forma inesperada (por
+    // ejemplo un error al evaluar una posición fuera del try interno de más abajo), el botón
+    // y el flag de "análisis en curso" siempre se liberan al final y no quedan bloqueados
+    // para siempre (ni para el resto de la partida ni, al no reiniciarse en resetGame(),
+    // para partidas futuras).
+    try {
+      if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
+      const MAX_PLIES_ANALYZED = 80; // ~40 jugadas por lado, para acotar el tiempo de análisis
+      const limited = moves.slice(0, MAX_PLIES_ANALYZED);
 
-    const replay = new Chess();
-    const fens = [replay.fen()];
-    const sans = [];
-    const movers = [];
-    for (const m of limited) {
-      const applied = replay.move({ from: m.from, to: m.to, promotion: m.promotion });
-      sans.push(applied ? applied.san : m.san);
-      movers.push(m.color);
-      fens.push(replay.fen());
-    }
-
-    const scores = [];
-    for (let i = 0; i < fens.length; i++) {
-      if (analyzeStatusEl) analyzeStatusEl.textContent = `Analizando… posición ${i + 1} de ${fens.length}`;
-      let s = null;
-      try {
-        s = await OscarBot.evaluatePosition(fens[i], 400);
-      } catch (e) {}
-      scores.push(scoreToMoverCp(s));
-    }
-    if (analyzeStatusEl) analyzeStatusEl.textContent = "";
-
-    const flagged = [];
-    const userLosses = [];
-    for (let i = 0; i < limited.length; i++) {
-      if (movers[i] !== userColor) continue; // sólo señalamos las jugadas del visitante
-      const before = scores[i];
-      const afterRaw = scores[i + 1];
-      if (before === null || afterRaw === null) continue;
-      const afterFromMoverView = -afterRaw;
-      const loss = before - afterFromMoverView;
-      const winPercentLoss = Math.max(0, cpToWinPercent(before) - cpToWinPercent(afterFromMoverView));
-      userLosses.push(winPercentLoss);
-      let severity = null;
-      if (loss >= 250) severity = "error grave";
-      else if (loss >= 120) severity = "error";
-      else if (loss >= 55) severity = "imprecisión";
-      if (severity) {
-        flagged.push({ moveNum: Math.floor(i / 2) + 1, san: sans[i], severity, loss: Math.round(loss) });
+      const replay = new Chess();
+      const fens = [replay.fen()];
+      const sans = [];
+      const movers = [];
+      for (const m of limited) {
+        const applied = replay.move({ from: m.from, to: m.to, promotion: m.promotion });
+        sans.push(applied ? applied.san : m.san);
+        movers.push(m.color);
+        fens.push(replay.fen());
       }
-    }
-    // Precisión estimada al estilo lichess, a partir de la pérdida media de % de
-    // probabilidad de ganar en las jugadas del visitante (no de centipawns crudos).
-    const accuracy = userLosses.length
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round(
-              (103.1668 * Math.exp(-0.04354 * (userLosses.reduce((a, b) => a + b, 0) / userLosses.length)) - 3.1669) * 10
-            ) / 10
+
+      const scores = [];
+      for (let i = 0; i < fens.length; i++) {
+        if (analyzeStatusEl) analyzeStatusEl.textContent = `Analizando… posición ${i + 1} de ${fens.length}`;
+        let s = null;
+        try {
+          s = await OscarBot.evaluatePosition(fens[i], 400);
+        } catch (e) {}
+        scores.push(scoreToMoverCp(s));
+      }
+      if (analyzeStatusEl) analyzeStatusEl.textContent = "";
+
+      const flagged = [];
+      const userLosses = [];
+      for (let i = 0; i < limited.length; i++) {
+        if (movers[i] !== userColor) continue; // sólo señalamos las jugadas del visitante
+        const before = scores[i];
+        const afterRaw = scores[i + 1];
+        if (before === null || afterRaw === null) continue;
+        const afterFromMoverView = -afterRaw;
+        const loss = before - afterFromMoverView;
+        const winPercentLoss = Math.max(0, cpToWinPercent(before) - cpToWinPercent(afterFromMoverView));
+        userLosses.push(winPercentLoss);
+        let severity = null;
+        if (loss >= 250) severity = "error grave";
+        else if (loss >= 120) severity = "error";
+        else if (loss >= 55) severity = "imprecisión";
+        if (severity) {
+          flagged.push({ moveNum: Math.floor(i / 2) + 1, san: sans[i], severity, loss: Math.round(loss) });
+        }
+      }
+      // Precisión estimada al estilo lichess, a partir de la pérdida media de % de
+      // probabilidad de ganar en las jugadas del visitante (no de centipawns crudos).
+      const accuracy = userLosses.length
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round(
+                (103.1668 * Math.exp(-0.04354 * (userLosses.reduce((a, b) => a + b, 0) / userLosses.length)) - 3.1669) * 10
+              ) / 10
+            )
           )
-        )
-      : null;
-    lastAnalysis = { accuracy, flaggedCount: flagged.length, plies: limited.length };
-    if (flagged.length === 0 && limited.length >= 20) unlockAchievement("perfect_defense");
-    renderAnalysis(flagged, limited.length < moves.length, accuracy);
-    if (leadSectionEl) leadSectionEl.classList.remove("hidden");
-    analyzingNow = false;
-    analyzeBtn.disabled = false;
+        : null;
+      lastAnalysis = { accuracy, flaggedCount: flagged.length, plies: limited.length };
+      if (flagged.length === 0 && limited.length >= 20) unlockAchievement("perfect_defense");
+      renderAnalysis(flagged, limited.length < moves.length, accuracy);
+      if (leadSectionEl) leadSectionEl.classList.remove("hidden");
+    } catch (err) {
+      if (analyzeStatusEl) analyzeStatusEl.textContent = "No se pudo completar el análisis. Intenta de nuevo.";
+    } finally {
+      analyzingNow = false;
+      analyzeBtn.disabled = false;
+    }
   }
 
   if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeGame);
