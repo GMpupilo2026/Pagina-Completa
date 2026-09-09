@@ -81,6 +81,7 @@
   let closeEndGameModal = null; // cierra el modal de fin de partida abierto, si lo hay (ver showEndGameModal)
   let lastCapturedInfo = null; // {type, color} de la pieza capturada en la última jugada, o null si no hubo captura
   let historyReviewIndex = null; // índice de "repaso" del historial para shift+A / shift+D (sólo narra, no cambia el tablero)
+  let analyzingNow = false; // true mientras analyzeGame() está corriendo (evita que updateStatus() reactive el botón a mitad del análisis)
 
   // ---------- Modo normal / modo adaptado (lector de pantalla) ----------
   // Todo lo agregado para accesibilidad (recuadro de jugada, botón de repetir jugadas,
@@ -521,7 +522,11 @@
 
   function renderAnalysis(flagged, truncated, accuracy) {
     if (!analyzeResultsEl) return;
-    let html = "";
+    // Encabezado oculto sólo para lectores de pantalla: permite ubicar y navegar directo al
+    // resultado del análisis (igual que el resto de la estructura en modo adaptado), y como
+    // analyze-results es una región aria-live, el análisis se anuncia solo apenas termina,
+    // sin depender de dónde esté el foco.
+    let html = '<h4 class="sr-only">Resultado del análisis</h4>';
     if (accuracy !== null && accuracy !== undefined) {
       html += `<p class="font-semibold text-brand-700 dark:text-brand-200 mb-2">Precisión estimada: ${accuracy}%</p>`;
     }
@@ -550,7 +555,9 @@
     if (typeof OscarBot === "undefined" || !OscarBot.evaluatePosition || typeof Chess === "undefined") return;
     const moves = game.history({ verbose: true });
     if (!moves.length) return;
+    if (analyzingNow) return; // ya hay un análisis en curso (por ejemplo, el automático al terminar la partida)
 
+    analyzingNow = true;
     analyzeBtn.disabled = true;
     if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
     const MAX_PLIES_ANALYZED = 80; // ~40 jugadas por lado, para acotar el tiempo de análisis
@@ -614,6 +621,7 @@
     if (flagged.length === 0 && limited.length >= 20) unlockAchievement("perfect_defense");
     renderAnalysis(flagged, limited.length < moves.length, accuracy);
     if (leadSectionEl) leadSectionEl.classList.remove("hidden");
+    analyzingNow = false;
     analyzeBtn.disabled = false;
   }
 
@@ -735,6 +743,13 @@
     }
     if (difficultyEl && difficultyEl.value === "hard") unlockAchievement("hard_level");
 
+    // Apenas termina la partida (en cualquiera de los dos modos), dejamos activada de una vez
+    // la opción de enviarla al correo — sin esperar a que el usuario haga clic en "Analizar
+    // mis jugadas" primero — y arrancamos el análisis en segundo plano para que, cuando la
+    // envíe, vaya con la precisión ya calculada ("pgn y analizada").
+    if (leadSectionEl) leadSectionEl.classList.remove("hidden");
+    if (analyzeBtn && !lastAnalysis) analyzeGame();
+
     showEndGameModal(info);
   }
 
@@ -744,7 +759,7 @@
       recordResultOnce(info);
       if (statusEl) statusEl.textContent = getGameOverMessage(info);
       if (turnEl) turnEl.textContent = "Partida terminada";
-      if (analyzeBtn && game.history().length > 0) analyzeBtn.disabled = false;
+      if (analyzeBtn && game.history().length > 0 && !analyzingNow) analyzeBtn.disabled = false;
       return;
     }
     const turn = game.turn();
@@ -1714,11 +1729,68 @@
       analyzeLinkBtn.addEventListener("click", () => {
         closeModal();
         analyzeBtn.scrollIntoView({ behavior: "smooth", block: "center" });
-        analyzeGame();
+        if (!lastAnalysis) analyzeGame(); // ya se disparó solo al terminar la partida; no repetirlo si ya está listo
       });
       btnRow.appendChild(analyzeLinkBtn);
     }
     panel.appendChild(btnRow);
+
+    // Opción directa para enviarse esta partida (PGN + análisis) al correo, sin tener que
+    // cerrar el modal y buscar la sección de análisis más abajo — queda disponible de una
+    // vez apenas termina la partida, en los dos modos.
+    if (leadFormEl) {
+      const emailSection = document.createElement("div");
+      emailSection.className = "mt-4 pt-4 border-t border-brand-100 dark:border-brand-700 text-left";
+
+      const emailHeading = document.createElement("p");
+      emailHeading.className = "text-sm font-semibold text-brand-800 dark:text-white mb-2 text-center";
+      emailHeading.textContent = "📧 Envía esta partida a tu correo";
+      emailSection.appendChild(emailHeading);
+
+      const emailForm = document.createElement("form");
+      emailForm.className = "flex flex-col gap-2";
+
+      const modalNameInput = document.createElement("input");
+      modalNameInput.type = "text";
+      modalNameInput.required = true;
+      modalNameInput.placeholder = "Tu nombre";
+      modalNameInput.setAttribute("aria-label", "Tu nombre");
+      modalNameInput.className =
+        "bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500";
+      emailForm.appendChild(modalNameInput);
+
+      const modalEmailInput = document.createElement("input");
+      modalEmailInput.type = "email";
+      modalEmailInput.required = true;
+      modalEmailInput.placeholder = "Tu correo";
+      modalEmailInput.setAttribute("aria-label", "Tu correo electrónico");
+      modalEmailInput.className = modalNameInput.className;
+      emailForm.appendChild(modalEmailInput);
+
+      const modalSendBtn = document.createElement("button");
+      modalSendBtn.type = "submit";
+      modalSendBtn.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm";
+      modalSendBtn.textContent = "Enviarme esta partida";
+      emailForm.appendChild(modalSendBtn);
+
+      const modalLeadStatus = document.createElement("div");
+      modalLeadStatus.setAttribute("role", "status");
+      modalLeadStatus.setAttribute("aria-live", "polite");
+      modalLeadStatus.className = "text-xs text-brand-500 dark:text-brand-400 mt-2 text-center";
+
+      emailForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nombre = modalNameInput.value.trim();
+        const correo = modalEmailInput.value.trim();
+        if (!nombre || !correo) return;
+        const ok = await sendLeadEmail(nombre, correo, modalLeadStatus, modalSendBtn);
+        if (ok) emailForm.reset();
+      });
+
+      emailSection.appendChild(emailForm);
+      emailSection.appendChild(modalLeadStatus);
+      panel.appendChild(emailSection);
+    }
 
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
@@ -1756,6 +1828,62 @@
     return text.trim();
   }
 
+  // Envía la partida (PGN + resumen + análisis, si ya está calculado) al correo indicado.
+  // Se usa tanto desde el formulario de la sección "Analizar partida" como desde la opción
+  // directa que aparece en el modal de fin de partida (misma lógica, dos puntos de entrada).
+  // Devuelve true si el envío fue exitoso, para que quien llama pueda limpiar su formulario.
+  async function sendLeadEmail(nombre, correo, statusEl, submitBtn) {
+    if (submitBtn) submitBtn.disabled = true;
+    if (statusEl) statusEl.textContent = "Enviando…";
+
+    const info = getGameOverInfo();
+    const resultado = info.over ? (info.draw ? "draw" : info.winner === userColor ? "win" : "loss") : null;
+    const duracionSeg = Math.max(0, Math.round((Date.now() - gameStartTime) / 1000));
+
+    const payload = {
+      nombre,
+      correo,
+      resumenPartida: buildGameSummaryText(),
+      pgn: game.pgn(),
+      resultado,
+      jugadas: Math.ceil(game.history().length / 2),
+      duracionSeg,
+      precisionEstimada: lastAnalysis ? lastAnalysis.accuracy : null,
+      dificultad: difficultyEl ? difficultyEl.value : null,
+      colorJugador: userColor,
+    };
+
+    let ok = false;
+    try {
+      const res = await fetch("https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/chess-lead-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
+          apikey: "sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        ok = true;
+        if (statusEl) {
+          statusEl.textContent =
+            data.emailSent === false
+              ? "Guardamos tus datos, pero hubo un problema enviando el correo. Intenta de nuevo más tarde."
+              : "¡Listo! Revisa tu correo — te enviamos el resumen de la partida.";
+        }
+      } else if (statusEl) {
+        statusEl.textContent = data.error || "No se pudo enviar. Intenta de nuevo.";
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = "No se pudo conectar. Revisa tu conexión e intenta de nuevo.";
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+    return ok;
+  }
+
   if (leadFormEl) {
     leadFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -1763,53 +1891,8 @@
       const correo = leadEmailEl ? leadEmailEl.value.trim() : "";
       if (!nombre || !correo) return;
       const submitBtn = leadFormEl.querySelector('button[type="submit"]');
-      if (submitBtn) submitBtn.disabled = true;
-      if (leadStatusEl) leadStatusEl.textContent = "Enviando…";
-
-      const info = getGameOverInfo();
-      const resultado = info.over ? (info.draw ? "draw" : info.winner === userColor ? "win" : "loss") : null;
-      const duracionSeg = Math.max(0, Math.round((Date.now() - gameStartTime) / 1000));
-
-      const payload = {
-        nombre,
-        correo,
-        resumenPartida: buildGameSummaryText(),
-        pgn: game.pgn(),
-        resultado,
-        jugadas: Math.ceil(game.history().length / 2),
-        duracionSeg,
-        precisionEstimada: lastAnalysis ? lastAnalysis.accuracy : null,
-        dificultad: difficultyEl ? difficultyEl.value : null,
-        colorJugador: userColor,
-      };
-
-      try {
-        const res = await fetch("https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/chess-lead-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
-            apikey: "sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
-          },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && data.success) {
-          if (leadStatusEl) {
-            leadStatusEl.textContent =
-              data.emailSent === false
-                ? "Guardamos tus datos, pero hubo un problema enviando el correo. Intenta de nuevo más tarde."
-                : "¡Listo! Revisa tu correo — te enviamos el resumen de la partida.";
-          }
-          leadFormEl.reset();
-        } else if (leadStatusEl) {
-          leadStatusEl.textContent = data.error || "No se pudo enviar. Intenta de nuevo.";
-        }
-      } catch (err) {
-        if (leadStatusEl) leadStatusEl.textContent = "No se pudo conectar. Revisa tu conexión e intenta de nuevo.";
-      } finally {
-        if (submitBtn) submitBtn.disabled = false;
-      }
+      const ok = await sendLeadEmail(nombre, correo, leadStatusEl, submitBtn);
+      if (ok) leadFormEl.reset();
     });
   }
 
