@@ -84,6 +84,7 @@
                     <select id="player-color" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="w" selected>Jugar con Blancas</option><option value="b">Jugar con Negras</option></select>
                     <select id="difficulty" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"><option value="easy">Fácil</option><option value="medium" selected>Medio</option><option value="hard">Difícil</option></select>
                     <button id="reset-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↻ Reiniciar</button>
+                    <button id="resign-btn" type="button" class="bg-red-600/10 hover:bg-red-600/20 text-red-700 dark:text-red-400 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">🏳️ Rendirse</button>
                 </div>
             </div>
             <div class="max-w-[560px] mx-auto mb-3">
@@ -119,6 +120,26 @@
                 <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">Cuando termine la partida, revisa tus jugadas con el motor y señala imprecisiones o errores tácticos.</p>
                 <div id="analyze-status" class="text-sm text-brand-500 dark:text-brand-400" role="status" aria-live="polite"></div>
                 <div id="analyze-results" class="text-sm mt-2 space-y-1"></div>
+                <div id="lead-capture" class="hidden mt-4 pt-4 border-t border-brand-100 dark:border-brand-700">
+                    <p class="text-sm font-semibold text-brand-800 dark:text-white mb-2">📧 Recibe esta partida analizada en tu correo</p>
+                    <form id="lead-form" class="flex flex-col sm:flex-row gap-2">
+                        <input id="lead-name" type="text" required placeholder="Tu nombre" aria-label="Tu nombre" class="flex-1 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <input id="lead-email" type="email" required placeholder="Tu correo" aria-label="Tu correo electrónico" class="flex-1 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors">Enviarme la partida</button>
+                    </form>
+                    <div id="lead-status" class="text-xs text-brand-500 dark:text-brand-400 mt-2" role="status" aria-live="polite"></div>
+                </div>
+            </div>
+            <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between flex-wrap gap-3 mb-2">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white">🎯 Modo Desafío: Posición del Día</h3>
+                </div>
+                <p id="challenge-info" class="text-sm text-brand-500 dark:text-brand-400 mb-3">Cargando…</p>
+                <div class="flex flex-wrap gap-3">
+                    <button id="challenge-play-btn" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar esta posición</button>
+                    <button id="challenge-shuffle-btn" type="button" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">🎲 Otra posición</button>
+                    <button id="challenge-exit-btn" type="button" class="hidden bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Volver a partida normal</button>
+                </div>
             </div>
             <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                 <button id="origins-toggle" type="button" class="flex items-center justify-between w-full font-serif font-bold text-brand-800 dark:text-white" aria-expanded="false" aria-controls="origins-panel">
@@ -131,6 +152,7 @@
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/oscar-book.js"></script>
+    <script src="data/oscar-positions.js"></script>
     <script src="js/chess-bot.js"></script>
     <script src="js/tablero-board.js"></script>
     <script src="js/main.js"></script>

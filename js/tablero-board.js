@@ -29,6 +29,18 @@
   const analyzeResultsEl = document.getElementById("analyze-results");
   const originsToggleEl = document.getElementById("origins-toggle");
   const originsPanelEl = document.getElementById("origins-panel");
+  // Elementos opcionales de las funciones nuevas: rendirse, captura de leads por correo,
+  // y Modo Desafío / Posición del Día (sólo existen en tablero.html).
+  const resignBtn = document.getElementById("resign-btn");
+  const leadSectionEl = document.getElementById("lead-capture");
+  const leadFormEl = document.getElementById("lead-form");
+  const leadNameEl = document.getElementById("lead-name");
+  const leadEmailEl = document.getElementById("lead-email");
+  const leadStatusEl = document.getElementById("lead-status");
+  const challengeInfoEl = document.getElementById("challenge-info");
+  const challengePlayBtn = document.getElementById("challenge-play-btn");
+  const challengeShuffleBtn = document.getElementById("challenge-shuffle-btn");
+  const challengeExitBtn = document.getElementById("challenge-exit-btn");
 
   if (!boardEl || typeof Chess === "undefined") {
     console.error("Falta el tablero o la librería chess.js");
@@ -48,6 +60,12 @@
   let resultRecorded = false; // evita contar dos veces el resultado de una misma partida
   let botBookMoves = []; // jugadas del bot que salieron del libro de Oscar: {moveNum, san, hash, uci}
   let evalRequestId = 0; // descarta respuestas de evaluación que ya quedaron obsoletas (posición cambió)
+  let resigned = false; // true si el visitante se rindió (termina la partida como derrota suya)
+  let startFen = null; // FEN inicial de la partida actual si viene de "Modo Desafío"; null = partida estándar desde el inicio
+  let challengeEntry = null; // {fen, opponent, date, oscarColor, result, moveNum} si estamos jugando el Modo Desafío
+  let gameStartTime = Date.now(); // marca de tiempo del inicio de la partida actual, para calcular la duración
+  let lastAnalysis = null; // {accuracy, flaggedCount, plies} tras "Analizar mis jugadas" (para el modal/correo)
+  let closeEndGameModal = null; // cierra el modal de fin de partida abierto, si lo hay (ver showEndGameModal)
 
   // ---------- Contador de partidas (ganadas/tablas/perdidas), guardado en este navegador ----------
   // Desde el punto de vista de OSCAR (el bot), no del visitante: "Ganadas" = Oscar ganó,
@@ -64,9 +82,10 @@
         wins: (parsed && Number(parsed.wins)) || 0,
         draws: (parsed && Number(parsed.draws)) || 0,
         losses: (parsed && Number(parsed.losses)) || 0,
+        winStreak: (parsed && Number(parsed.winStreak)) || 0,
       };
     } catch (e) {
-      return { wins: 0, draws: 0, losses: 0 };
+      return { wins: 0, draws: 0, losses: 0, winStreak: 0 };
     }
   }
 
@@ -82,6 +101,80 @@
     if (statWinsEl) statWinsEl.textContent = String(stats.wins);
     if (statDrawsEl) statDrawsEl.textContent = String(stats.draws);
     if (statLossesEl) statLossesEl.textContent = String(stats.losses);
+  }
+
+  // ---------- Sistema de logros e insignias ----------
+  const ACHIEVEMENTS_KEY = "oscarChessAchievements_v1";
+  const ACHIEVEMENTS = {
+    first_game: { title: "¡Primera partida completa!", desc: "Jugaste tu primera partida completa contra Oscar." },
+    first_win: { title: "Ganaste tu primera partida", desc: "Le ganaste a Oscar por primera vez." },
+    perfect_defense: {
+      title: "Defensa perfecta",
+      desc: "Terminaste una partida sin imprecisiones ni errores, según el análisis.",
+    },
+    hard_level: { title: "Jugaste contra el nivel Difícil", desc: "Te atreviste a enfrentar a Oscar en modo Difícil." },
+    win_streak_3: { title: "Racha de 3 victorias", desc: "Le ganaste a Oscar tres veces seguidas." },
+  };
+
+  function loadUnlockedAchievements() {
+    try {
+      const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  const unlockedAchievements = loadUnlockedAchievements();
+
+  function saveUnlockedAchievements() {
+    try {
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(Array.from(unlockedAchievements)));
+    } catch (e) {}
+  }
+
+  let toastContainerEl = null;
+  function ensureToastContainer() {
+    if (toastContainerEl && document.body.contains(toastContainerEl)) return toastContainerEl;
+    toastContainerEl = document.createElement("div");
+    toastContainerEl.id = "achievement-toasts";
+    toastContainerEl.className = "fixed bottom-4 right-4 z-[70] flex flex-col gap-2 items-end max-w-[calc(100vw-2rem)]";
+    toastContainerEl.setAttribute("aria-live", "polite");
+    document.body.appendChild(toastContainerEl);
+    return toastContainerEl;
+  }
+
+  function showAchievementToast(id) {
+    const info = ACHIEVEMENTS[id];
+    if (!info) return;
+    const container = ensureToastContainer();
+    const toast = document.createElement("div");
+    toast.className =
+      "bg-brand-800 text-white rounded-lg shadow-2xl px-4 py-3 max-w-xs border-l-4 border-accent-500 opacity-0 translate-y-2 transition-all duration-300";
+    toast.innerHTML =
+      '<p class="text-xs uppercase tracking-wide text-accent-400 font-semibold mb-0.5">🏆 Logro desbloqueado</p>' +
+      '<p class="font-semibold text-sm">' +
+      escapeHtml(info.title) +
+      "</p>" +
+      '<p class="text-xs text-brand-200 mt-0.5">' +
+      escapeHtml(info.desc) +
+      "</p>";
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.classList.remove("opacity-0", "translate-y-2");
+    });
+    setTimeout(() => {
+      toast.classList.add("opacity-0");
+      setTimeout(() => toast.remove(), 400);
+    }, 5000);
+  }
+
+  function unlockAchievement(id) {
+    if (unlockedAchievements.has(id)) return;
+    unlockedAchievements.add(id);
+    saveUnlockedAchievements();
+    showAchievementToast(id);
   }
 
   const GLYPH = {
@@ -349,6 +442,14 @@
   }
 
   // ---------- Analizar partida (imprecisiones/errores del visitante) ----------
+  // Convierte centipawns (desde la perspectiva de quien mueve) a "% de probabilidad de
+  // ganar" con la misma curva sigmoide que usa lichess, para poder calcular la precisión
+  // estimada sobre pérdida de % de victoria (no sobre centipawns crudos, que exagera el
+  // castigo en posiciones ya muy decididas).
+  function cpToWinPercent(cp) {
+    return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
+  }
+
   function scoreToMoverCp(score) {
     if (!score) return null;
     if (score.type === "mate") {
@@ -357,14 +458,18 @@
     return score.value;
   }
 
-  function renderAnalysis(flagged, truncated) {
+  function renderAnalysis(flagged, truncated, accuracy) {
     if (!analyzeResultsEl) return;
+    let html = "";
+    if (accuracy !== null && accuracy !== undefined) {
+      html += `<p class="font-semibold text-brand-700 dark:text-brand-200 mb-2">Precisión estimada: ${accuracy}%</p>`;
+    }
     if (!flagged.length) {
-      analyzeResultsEl.innerHTML =
-        '<p class="text-green-700 dark:text-green-400">No se detectaron errores importantes en tus jugadas. ¡Buena partida! 👏</p>';
+      html += '<p class="text-green-700 dark:text-green-400">No se detectaron errores importantes en tus jugadas. ¡Buena partida! 👏</p>';
+      analyzeResultsEl.innerHTML = html;
       return;
     }
-    let html = '<ul class="space-y-1">';
+    html += '<ul class="space-y-1">';
     for (const f of flagged) {
       const color =
         f.severity === "error grave"
@@ -413,6 +518,7 @@
     if (analyzeStatusEl) analyzeStatusEl.textContent = "";
 
     const flagged = [];
+    const userLosses = [];
     for (let i = 0; i < limited.length; i++) {
       if (movers[i] !== userColor) continue; // sólo señalamos las jugadas del visitante
       const before = scores[i];
@@ -420,6 +526,8 @@
       if (before === null || afterRaw === null) continue;
       const afterFromMoverView = -afterRaw;
       const loss = before - afterFromMoverView;
+      const winPercentLoss = Math.max(0, cpToWinPercent(before) - cpToWinPercent(afterFromMoverView));
+      userLosses.push(winPercentLoss);
       let severity = null;
       if (loss >= 250) severity = "error grave";
       else if (loss >= 120) severity = "error";
@@ -428,7 +536,23 @@
         flagged.push({ moveNum: Math.floor(i / 2) + 1, san: sans[i], severity, loss: Math.round(loss) });
       }
     }
-    renderAnalysis(flagged, limited.length < moves.length);
+    // Precisión estimada al estilo lichess, a partir de la pérdida media de % de
+    // probabilidad de ganar en las jugadas del visitante (no de centipawns crudos).
+    const accuracy = userLosses.length
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              (103.1668 * Math.exp(-0.04354 * (userLosses.reduce((a, b) => a + b, 0) / userLosses.length)) - 3.1669) * 10
+            ) / 10
+          )
+        )
+      : null;
+    lastAnalysis = { accuracy, flaggedCount: flagged.length, plies: limited.length };
+    if (flagged.length === 0 && limited.length >= 20) unlockAchievement("perfect_defense");
+    renderAnalysis(flagged, limited.length < moves.length, accuracy);
+    if (leadSectionEl) leadSectionEl.classList.remove("hidden");
     analyzeBtn.disabled = false;
   }
 
@@ -496,6 +620,7 @@
   // Devuelve info estructurada de fin de partida (o { over: false }), para poder
   // tanto mostrar un mensaje como llevar el contador de ganadas/tablas/perdidas.
   function getGameOverInfo() {
+    if (resigned) return { over: true, draw: false, winner: botColor(), resigned: true };
     if (game.in_checkmate()) {
       // Quien tiene el turno ahora está en jaque mate; el otro color ganó.
       const winner = game.turn() === "w" ? "b" : "w";
@@ -512,6 +637,7 @@
 
   function getGameOverMessage(info) {
     if (!info.over) return null;
+    if (info.resigned) return "Te rendiste — ¡Oscar gana! ♟️";
     if (!info.draw) {
       return info.winner === userColor ? "Jaque mate — ¡Ganaste! 🎉" : "Jaque mate — ¡Oscar gana! ♟️";
     }
@@ -530,13 +656,25 @@
     resultRecorded = true;
     if (info.draw) {
       stats.draws++;
+      stats.winStreak = 0;
     } else if (info.winner === botColor()) {
       stats.wins++;
+      stats.winStreak = 0;
     } else {
       stats.losses++;
+      stats.winStreak = (stats.winStreak || 0) + 1;
     }
     saveStats();
     renderStats();
+
+    unlockAchievement("first_game");
+    if (!info.draw && info.winner === userColor) {
+      unlockAchievement("first_win");
+      if (stats.winStreak >= 3) unlockAchievement("win_streak_3");
+    }
+    if (difficultyEl && difficultyEl.value === "hard") unlockAchievement("hard_level");
+
+    showEndGameModal(info);
   }
 
   function updateStatus() {
@@ -575,8 +713,17 @@
   }
 
   function isGameOver() {
+    if (resigned) return true;
     return typeof game.game_over === "function" ? game.game_over() : getGameOverInfo().over;
   }
+
+  function resign() {
+    if (isGameOver() || isBotThinking) return;
+    resigned = true;
+    updateStatus();
+    renderBoard();
+  }
+  if (resignBtn) resignBtn.addEventListener("click", resign);
 
   async function triggerBotMove() {
     if (isGameOver()) {
@@ -751,9 +898,302 @@
     }
   }
 
-  function resetGame() {
-    userColor = colorEl ? colorEl.value : "w";
-    game.reset();
+  // ---------- Modal de fin de partida (con confetti si ganaste) ----------
+  function launchConfetti(container) {
+    const canvas = document.createElement("canvas");
+    canvas.className = "absolute inset-0 w-full h-full pointer-events-none";
+    container.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    const COLORS = ["#f0b429", "#de911d", "#334e68", "#9fb3c8", "#ffffff"];
+    const pieces = Array.from({ length: 90 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height * 0.5,
+      r: 3 + Math.random() * 4,
+      c: COLORS[Math.floor(Math.random() * COLORS.length)],
+      vy: 2 + Math.random() * 3,
+      vx: -1.5 + Math.random() * 3,
+      rot: Math.random() * Math.PI,
+      vrot: -0.2 + Math.random() * 0.4,
+    }));
+    let frame = 0;
+    let rafId;
+    function tick() {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of pieces) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.r, -p.r * 0.6, p.r * 2, p.r * 1.2);
+        ctx.restore();
+      }
+      if (frame < 150 && canvas.isConnected) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        cancelAnimationFrame(rafId);
+        canvas.remove();
+      }
+    }
+    tick();
+  }
+
+  function formatDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m} min ${s}s` : `${s}s`;
+  }
+
+  function showEndGameModal(info) {
+    if (closeEndGameModal) closeEndGameModal();
+    const isWin = !info.draw && info.winner === userColor;
+    const title = info.draw ? "Tablas 🤝" : isWin ? "¡Ganaste! 🎉" : info.resigned ? "Te rendiste" : "Oscar gana ♟️";
+
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 bg-brand-900/60 z-[65] flex items-center justify-center p-4";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    const panel = document.createElement("div");
+    panel.className = "relative bg-white dark:bg-brand-900 rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center overflow-hidden";
+
+    const titleEl = document.createElement("h3");
+    titleEl.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3";
+    titleEl.textContent = title;
+    panel.appendChild(titleEl);
+
+    const durationSeg = Math.max(0, Math.round((Date.now() - gameStartTime) / 1000));
+    const jugadas = Math.ceil(game.history().length / 2);
+    const precisionTxt = lastAnalysis && lastAnalysis.accuracy !== null ? `${lastAnalysis.accuracy}%` : "—";
+
+    const summary = document.createElement("div");
+    summary.className = "text-sm text-brand-600 dark:text-brand-300 space-y-1 mb-5";
+    summary.innerHTML =
+      `<p>Jugadas: <strong>${jugadas}</strong></p>` +
+      `<p>Duración: <strong>${formatDuration(durationSeg)}</strong></p>` +
+      `<p>Precisión estimada: <strong>${precisionTxt}</strong>${
+        lastAnalysis ? "" : ' <span class="text-xs">(analiza la partida para verla)</span>'
+      }</p>`;
+    panel.appendChild(summary);
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "flex flex-col sm:flex-row gap-2 justify-center";
+
+    const playAgainBtn = document.createElement("button");
+    playAgainBtn.type = "button";
+    playAgainBtn.className = "bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm";
+    playAgainBtn.textContent = "Jugar de nuevo";
+    playAgainBtn.addEventListener("click", () => {
+      closeModal();
+      resetGame();
+    });
+    btnRow.appendChild(playAgainBtn);
+
+    if (analyzeBtn) {
+      const analyzeLinkBtn = document.createElement("button");
+      analyzeLinkBtn.type = "button";
+      analyzeLinkBtn.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm";
+      analyzeLinkBtn.textContent = "Analizar mi partida";
+      analyzeLinkBtn.addEventListener("click", () => {
+        closeModal();
+        analyzeBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+        analyzeGame();
+      });
+      btnRow.appendChild(analyzeLinkBtn);
+    }
+    panel.appendChild(btnRow);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "text-brand-400 hover:text-brand-600 text-sm underline mt-3";
+    closeBtn.textContent = "Cerrar";
+    panel.appendChild(closeBtn);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    const returnFocusTo = document.activeElement;
+    function closeModal() {
+      document.removeEventListener("keydown", onKeyDown, true);
+      if (overlay.parentNode) document.body.removeChild(overlay);
+      if (returnFocusTo && typeof returnFocusTo.focus === "function") returnFocusTo.focus();
+      closeEndGameModal = null;
+    }
+    function onKeyDown(e) {
+      if (e.key === "Escape") closeModal();
+    }
+    document.addEventListener("keydown", onKeyDown, true);
+    closeBtn.addEventListener("click", closeModal);
+    closeEndGameModal = closeModal;
+
+    if (isWin) launchConfetti(panel);
+  }
+
+  // ---------- Captura de leads: enviar la partida analizada por correo ----------
+  function buildGameSummaryText() {
+    const hist = game.history();
+    let text = "";
+    for (let i = 0; i < hist.length; i += 2) {
+      text += `${i / 2 + 1}. ${hist[i] || ""} ${hist[i + 1] || ""}\n`;
+    }
+    return text.trim();
+  }
+
+  if (leadFormEl) {
+    leadFormEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nombre = leadNameEl ? leadNameEl.value.trim() : "";
+      const correo = leadEmailEl ? leadEmailEl.value.trim() : "";
+      if (!nombre || !correo) return;
+      const submitBtn = leadFormEl.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      if (leadStatusEl) leadStatusEl.textContent = "Enviando…";
+
+      const info = getGameOverInfo();
+      const resultado = info.over ? (info.draw ? "draw" : info.winner === userColor ? "win" : "loss") : null;
+      const duracionSeg = Math.max(0, Math.round((Date.now() - gameStartTime) / 1000));
+
+      const payload = {
+        nombre,
+        correo,
+        resumenPartida: buildGameSummaryText(),
+        pgn: game.pgn(),
+        resultado,
+        jugadas: Math.ceil(game.history().length / 2),
+        duracionSeg,
+        precisionEstimada: lastAnalysis ? lastAnalysis.accuracy : null,
+        dificultad: difficultyEl ? difficultyEl.value : null,
+        colorJugador: userColor,
+      };
+
+      try {
+        const res = await fetch("https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/chess-lead-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
+            apikey: "sb_publishable_jZ-HV-E6d8zUfeA5ruTLvg_tHsYYllZ",
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          if (leadStatusEl) {
+            leadStatusEl.textContent =
+              data.emailSent === false
+                ? "Guardamos tus datos, pero hubo un problema enviando el correo. Intenta de nuevo más tarde."
+                : "¡Listo! Revisa tu correo — te enviamos el resumen de la partida.";
+          }
+          leadFormEl.reset();
+        } else if (leadStatusEl) {
+          leadStatusEl.textContent = data.error || "No se pudo enviar. Intenta de nuevo.";
+        }
+      } catch (err) {
+        if (leadStatusEl) leadStatusEl.textContent = "No se pudo conectar. Revisa tu conexión e intenta de nuevo.";
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  }
+
+  // ---------- Modo Desafío / Posición del Día ----------
+  const CHALLENGE_RESULT_LABEL = { W: "Oscar ganó esa partida", L: "Oscar perdió esa partida", D: "esa partida fue tablas" };
+  let currentPositionIndex = 0;
+  let colorBeforeChallenge = null; // color que tenía elegido el visitante antes de entrar al Modo Desafío
+
+  function hasChallengePositions() {
+    return typeof window.OSCAR_POSITIONS !== "undefined" && window.OSCAR_POSITIONS.length > 0;
+  }
+
+  function positionEntryFromRow(row) {
+    const [fen, opponent, date, oscarColor, result, moveNum] = row;
+    return { fen, opponent, date, oscarColor, result, moveNum };
+  }
+
+  function dailyPositionIndex() {
+    const list = window.OSCAR_POSITIONS;
+    const dayNum = Math.floor(Date.now() / 86400000); // días desde 1970: cambia una vez al día
+    return dayNum % list.length;
+  }
+
+  function renderChallengeCard() {
+    if (!challengeInfoEl) return;
+    if (!hasChallengePositions()) {
+      challengeInfoEl.textContent = "No disponible por el momento.";
+      if (challengePlayBtn) challengePlayBtn.disabled = true;
+      if (challengeShuffleBtn) challengeShuffleBtn.disabled = true;
+      return;
+    }
+    const entry = positionEntryFromRow(window.OSCAR_POSITIONS[currentPositionIndex]);
+    const resultTxt = CHALLENGE_RESULT_LABEL[entry.result] || "";
+    challengeInfoEl.innerHTML =
+      `Posición real tomada de la jugada ${escapeHtml(String(entry.moveNum))} de una partida de Oscar contra ` +
+      `<strong>${escapeHtml(entry.opponent)}</strong> (${escapeHtml(entry.date.replace(/\./g, "-"))}, ${escapeHtml(
+        resultTxt
+      )}). Retoma la partida desde ahí y trata de ganarle a Oscar.`;
+  }
+
+  function startChallenge(index) {
+    if (!hasChallengePositions()) return;
+    if (!startFen) colorBeforeChallenge = colorEl ? colorEl.value : "w"; // sólo la 1a vez que se entra (no al cambiar de posición estando ya en modo desafío)
+    currentPositionIndex = index;
+    const entry = positionEntryFromRow(window.OSCAR_POSITIONS[index]);
+    challengeEntry = entry;
+    startFen = entry.fen;
+    const turnField = entry.fen.split(" ")[1]; // "w" o "b": a quién le toca mover en esa posición real
+    userColor = turnField === "b" ? "b" : "w";
+    if (colorEl) {
+      colorEl.value = userColor;
+      colorEl.disabled = true;
+    }
+    resetGame({ skipColorRead: true });
+    if (challengeExitBtn) challengeExitBtn.classList.remove("hidden");
+    renderChallengeCard();
+  }
+
+  if (challengePlayBtn) {
+    challengePlayBtn.addEventListener("click", () => startChallenge(currentPositionIndex));
+  }
+  if (challengeShuffleBtn) {
+    challengeShuffleBtn.addEventListener("click", () => {
+      if (!hasChallengePositions()) return;
+      let next = currentPositionIndex;
+      if (window.OSCAR_POSITIONS.length > 1) {
+        while (next === currentPositionIndex) {
+          next = Math.floor(Math.random() * window.OSCAR_POSITIONS.length);
+        }
+      }
+      currentPositionIndex = next;
+      renderChallengeCard();
+    });
+  }
+  if (challengeExitBtn) {
+    challengeExitBtn.addEventListener("click", () => {
+      startFen = null;
+      challengeEntry = null;
+      if (colorEl) {
+        colorEl.disabled = false;
+        colorEl.value = colorBeforeChallenge || "w";
+      }
+      challengeExitBtn.classList.add("hidden");
+      resetGame();
+    });
+  }
+
+  function resetGame(opts) {
+    const options = opts && typeof opts === "object" ? opts : {};
+    if (!options.skipColorRead) userColor = colorEl ? colorEl.value : "w";
+    if (closeEndGameModal) closeEndGameModal();
+    if (startFen) {
+      game.load(startFen);
+    } else {
+      game.reset();
+    }
     selected = null;
     legalTargets = [];
     lastMove = null;
@@ -762,7 +1202,10 @@
     capturedByWhite = [];
     capturedByBlack = [];
     resultRecorded = false;
+    resigned = false;
     botBookMoves = [];
+    gameStartTime = Date.now();
+    lastAnalysis = null;
     updateCapturedDisplay();
     updateHistoryDisplay();
     updateMaterialDisplay();
@@ -770,6 +1213,7 @@
     if (analyzeBtn) analyzeBtn.disabled = true;
     if (analyzeStatusEl) analyzeStatusEl.textContent = "";
     if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
+    if (leadSectionEl) leadSectionEl.classList.add("hidden");
     renderBoard();
     updateStatus();
     // Si el visitante eligió jugar con negras, el bot (blancas) abre la partida.
@@ -815,6 +1259,7 @@
   if (colorEl && !colorEl.getAttribute("aria-label")) colorEl.setAttribute("aria-label", "Elegir tu color");
   if (difficultyEl && !difficultyEl.getAttribute("aria-label")) difficultyEl.setAttribute("aria-label", "Elegir nivel de dificultad");
   if (resetBtn && !resetBtn.getAttribute("aria-label")) resetBtn.setAttribute("aria-label", "Reiniciar partida");
+  if (resignBtn && !resignBtn.getAttribute("aria-label")) resignBtn.setAttribute("aria-label", "Rendirse y terminar la partida");
 
   // Estado inicial
   renderBoard();
@@ -825,6 +1270,10 @@
   renderStats();
   updateStatus();
   applyDifficultyLabels();
+  if (hasChallengePositions()) {
+    currentPositionIndex = dailyPositionIndex();
+    renderChallengeCard();
+  }
   if (typeof OscarBot !== "undefined") {
     OscarBot.preload();
     if (OscarBot.preloadProvenance) OscarBot.preloadProvenance().then(renderOrigins);
