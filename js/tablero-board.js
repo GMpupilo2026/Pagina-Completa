@@ -41,6 +41,13 @@
   const challengePlayBtn = document.getElementById("challenge-play-btn");
   const challengeShuffleBtn = document.getElementById("challenge-shuffle-btn");
   const challengeExitBtn = document.getElementById("challenge-exit-btn");
+  // Elementos opcionales de accesibilidad para lectores de pantalla: repetir jugadas
+  // habladas, y escribir la jugada en un recuadro de texto en vez de navegar el tablero.
+  const repeatMovesBtn = document.getElementById("repeat-moves-btn");
+  const repeatMovesStatusEl = document.getElementById("repeat-moves-status");
+  const moveFormEl = document.getElementById("move-form");
+  const moveInputEl = document.getElementById("move-input");
+  const moveInputStatusEl = document.getElementById("move-input-status");
 
   if (!boardEl || typeof Chess === "undefined") {
     console.error("Falta el tablero o la librería chess.js");
@@ -773,15 +780,163 @@
     return Promise.resolve();
   }
 
-  function doUserMove(from, to, promotion) {
-    const result = game.move({ from, to, promotion });
-    if (!result) return;
+  // Efectos comunes tras aplicar una jugada del visitante, venga del tablero (clic/teclado)
+  // o del recuadro de texto (ver handleMoveFormSubmit): actualiza capturas/historial/material,
+  // vuelve a pintar, y deja que el bot responda si le toca.
+  function finishUserMove(result) {
     applyMoveSideEffects(result);
-    focusSquare = to; // lleva el foco del teclado a la casilla donde acaba de mover
+    focusSquare = result.to; // lleva el foco del teclado a la casilla donde acaba de mover
     renderBoard();
     updateStatus();
     maybeTriggerBot().then(updateEvalBar);
   }
+
+  function doUserMove(from, to, promotion) {
+    const result = game.move({ from, to, promotion });
+    if (!result) return;
+    finishUserMove(result);
+  }
+
+  // ---------- Accesibilidad: escribir la jugada en un recuadro de texto ----------
+  // Para quienes usan lector de pantalla, navegar las 64 casillas del tablero jugada a
+  // jugada puede ser lento; este recuadro permite escribir la jugada directamente en
+  // notación algebraica (en español o en inglés, con tolerancia a errores comunes de
+  // tipeo) y aplicarla igual que si se hubiera hecho clic en el tablero.
+  const ES_TO_EN_PIECE = { T: "R", C: "N", A: "B", D: "Q", R: "K" };
+  const SAN_PIECE_LETTERS = "NBRQKTCAD"; // letras de pieza válidas en inglés o español (mayúsculas)
+
+  function mapSpanishPieceLetter(letter) {
+    return ES_TO_EN_PIECE[letter.toUpperCase()] || letter.toUpperCase();
+  }
+
+  // A partir de lo que escribió la persona, genera una lista de variantes razonables a
+  // intentar (siempre probando primero el texto tal cual lo escribió): letras de pieza en
+  // español traducidas al inglés que usa chess.js, mayúscula inicial si se escribió en
+  // minúscula, "x" de captura insertada si se omitió, sufijo de promoción "=Q" si falta, y
+  // "0-0"/"0-0-0" con ceros interpretados como enroque.
+  function generateMoveCandidates(raw) {
+    let s = String(raw || "").trim();
+    s = s.replace(/^\d+\.(\.\.)?\s*/, ""); // por si copian "14. Cf3" o "14...Cf3"
+    s = s.replace(/\s+/g, "");
+    if (!s) return [];
+
+    const candidates = new Set();
+    candidates.add(s);
+
+    if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));
+
+    const first = s[0];
+    if (first && SAN_PIECE_LETTERS.indexOf(first.toUpperCase()) !== -1 && s.length >= 3) {
+      candidates.add(first.toUpperCase() + s.slice(1));
+      candidates.add(mapSpanishPieceLetter(first) + s.slice(1));
+    }
+
+    const promoMatch = s.match(/=([a-zA-Z])([+#]?)$/);
+    if (promoMatch) {
+      candidates.add(s.replace(/=([a-zA-Z])([+#]?)$/, "=" + mapSpanishPieceLetter(promoMatch[1]) + promoMatch[2]));
+    }
+
+    const expanded = new Set(candidates);
+    for (const c of candidates) {
+      const pawnCaptureNoX = c.match(/^([a-h])([a-h])([1-8])([+#]?)$/);
+      if (pawnCaptureNoX) expanded.add(`${pawnCaptureNoX[1]}x${pawnCaptureNoX[2]}${pawnCaptureNoX[3]}${pawnCaptureNoX[4]}`);
+
+      const pieceNoX = c.match(/^([NBRQK])([a-h])([1-8])([+#]?)$/);
+      if (pieceNoX) expanded.add(`${pieceNoX[1]}x${pieceNoX[2]}${pieceNoX[3]}${pieceNoX[4]}`);
+
+      const pieceDisambigNoX = c.match(/^([NBRQK])([a-h1-8])([a-h])([1-8])([+#]?)$/);
+      if (pieceDisambigNoX) {
+        expanded.add(`${pieceDisambigNoX[1]}${pieceDisambigNoX[2]}x${pieceDisambigNoX[3]}${pieceDisambigNoX[4]}${pieceDisambigNoX[5]}`);
+      }
+
+      const pawnPromoNoSuffix = c.match(/^([a-h](x[a-h])?[18])([+#]?)$/);
+      if (pawnPromoNoSuffix && !/=/.test(c)) expanded.add(`${pawnPromoNoSuffix[1]}=Q${pawnPromoNoSuffix[3]}`);
+    }
+
+    return Array.from(expanded);
+  }
+
+  function tryParseMove(raw) {
+    const candidates = generateMoveCandidates(raw);
+    for (const candidate of candidates) {
+      let result = null;
+      try {
+        result = game.move(candidate, { sloppy: true });
+      } catch (e) {}
+      if (result) return result;
+    }
+    return null;
+  }
+
+  function announceMoveInput(text) {
+    if (!moveInputStatusEl) return;
+    moveInputStatusEl.textContent = text;
+  }
+
+  function handleMoveFormSubmit(e) {
+    e.preventDefault();
+    if (!moveInputEl) return;
+    const raw = moveInputEl.value;
+    if (!raw.trim()) return;
+    if (isBotThinking) {
+      announceMoveInput("Espera a que Oscar termine de pensar.");
+      return;
+    }
+    if (isGameOver()) {
+      announceMoveInput("La partida ya terminó.");
+      return;
+    }
+    if (game.turn() !== userColor) {
+      announceMoveInput("No es tu turno todavía.");
+      return;
+    }
+    const result = tryParseMove(raw);
+    if (!result) {
+      announceMoveInput(`No se entendió la jugada "${raw.trim()}". Revisa la notación e intenta de nuevo.`);
+      return;
+    }
+    moveInputEl.value = "";
+    selected = null;
+    legalTargets = [];
+    const pieceName = (PIECE_INFO[result.piece] && PIECE_INFO[result.piece].name) || "pieza";
+    const captureTxt = result.captured ? ", captura" : "";
+    announceMoveInput(`Jugaste ${pieceName} de ${result.from} a ${result.to}${captureTxt}.`);
+    finishUserMove(result);
+  }
+
+  if (moveFormEl) moveFormEl.addEventListener("submit", handleMoveFormSubmit);
+
+  // ---------- Accesibilidad: repetir en voz alta las jugadas realizadas ----------
+  // Útil para quien usa lector de pantalla y se le pasó por alto una jugada, o simplemente
+  // quiere repasar cómo va la partida sin tener que navegar el historial visual.
+  function speakableMoveList() {
+    const hist = game.history({ verbose: true });
+    if (!hist.length) return "Todavía no se ha jugado ninguna jugada en esta partida.";
+    const parts = [];
+    for (let i = 0; i < hist.length; i++) {
+      const m = hist[i];
+      const moveNum = Math.floor(i / 2) + 1;
+      const colorTxt = m.color === "w" ? "blancas" : "negras";
+      const pieceName = (PIECE_INFO[m.piece] && PIECE_INFO[m.piece].name) || "pieza";
+      const captureTxt = m.captured ? ", captura" : "";
+      const checkTxt = /#/.test(m.san) ? ", jaque mate" : /\+/.test(m.san) ? ", jaque" : "";
+      parts.push(`Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${m.from} a ${m.to}${captureTxt}${checkTxt}.`);
+    }
+    return parts.join(" ");
+  }
+
+  function announceMoveHistory() {
+    if (!repeatMovesStatusEl) return;
+    const text = speakableMoveList();
+    // Se vacía primero y se vuelve a poner con un pequeño retraso para que el lector de
+    // pantalla anuncie el texto de nuevo aunque no haya cambiado desde la última vez.
+    repeatMovesStatusEl.textContent = "";
+    window.setTimeout(() => {
+      repeatMovesStatusEl.textContent = text;
+    }, 50);
+  }
+
+  if (repeatMovesBtn) repeatMovesBtn.addEventListener("click", announceMoveHistory);
 
   // ---------- Selector de promoción (accesible: diálogo modal, navegable con teclado) ----------
   const PROMOTION_NAMES_ES = { q: "Dama", r: "Torre", b: "Alfil", n: "Caballo" };
@@ -1214,6 +1369,9 @@
     if (analyzeStatusEl) analyzeStatusEl.textContent = "";
     if (analyzeResultsEl) analyzeResultsEl.innerHTML = "";
     if (leadSectionEl) leadSectionEl.classList.add("hidden");
+    if (moveInputEl) moveInputEl.value = "";
+    if (moveInputStatusEl) moveInputStatusEl.textContent = "";
+    if (repeatMovesStatusEl) repeatMovesStatusEl.textContent = "";
     renderBoard();
     updateStatus();
     // Si el visitante eligió jugar con negras, el bot (blancas) abre la partida.
@@ -1260,6 +1418,12 @@
   if (difficultyEl && !difficultyEl.getAttribute("aria-label")) difficultyEl.setAttribute("aria-label", "Elegir nivel de dificultad");
   if (resetBtn && !resetBtn.getAttribute("aria-label")) resetBtn.setAttribute("aria-label", "Reiniciar partida");
   if (resignBtn && !resignBtn.getAttribute("aria-label")) resignBtn.setAttribute("aria-label", "Rendirse y terminar la partida");
+  if (repeatMovesBtn && !repeatMovesBtn.getAttribute("aria-label")) {
+    repeatMovesBtn.setAttribute("aria-label", "Repetir en voz alta las jugadas realizadas hasta ahora");
+  }
+  if (moveInputEl && !moveInputEl.getAttribute("aria-label")) {
+    moveInputEl.setAttribute("aria-label", "Escribe tu jugada en notación algebraica");
+  }
 
   // Estado inicial
   renderBoard();

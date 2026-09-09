@@ -96,6 +96,17 @@
                     <div id="eval-bar-white" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
                 </div>
             </div>
+            <div class="max-w-[560px] mx-auto mb-4">
+                <form id="move-form" class="flex flex-col sm:flex-row gap-2 sm:items-end">
+                    <div class="flex-1">
+                        <label for="move-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Escribe tu jugada (útil con lector de pantalla)</label>
+                        <input id="move-input" type="text" autocomplete="off" placeholder="Ej: e4, Cf3, Dxe5, O-O" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" aria-describedby="move-input-help">
+                    </div>
+                    <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
+                </form>
+                <p id="move-input-help" class="text-xs text-brand-400 dark:text-brand-500 mt-1">Notación algebraica en español o inglés: peón sin letra (e4), C/N=caballo, A/B=alfil, T/R=torre, D/Q=dama, R/K=rey. Enroque: O-O (corto) u O-O-O (largo).</p>
+                <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
+            </div>
             <div class="flex justify-center">
                 <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
@@ -108,8 +119,12 @@
                     </div>
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Historial de jugadas</h3>
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                        <h3 class="font-serif font-bold text-brand-800 dark:text-white">Historial de jugadas</h3>
+                        <button id="repeat-moves-btn" type="button" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">🔊 Repetir jugadas</button>
+                    </div>
                     <div id="move-history" class="text-sm text-brand-500 dark:text-brand-400 max-h-32 overflow-y-auto font-mono space-y-1"><p class="text-brand-300">Sin jugadas todavía…</p></div>
+                    <div id="repeat-moves-status" role="status" aria-live="polite" class="sr-only"></div>
                 </div>
             </div>
             <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
