@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Entreno — Ajedrez Integral</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b140f'/%3E%3Crect x='18' y='18' width='28' height='28' fill='none' stroke='%23b8935a' stroke-width='3' transform='rotate(45 32 32)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -31,11 +32,36 @@
     color:var(--text);
     font-family:'Work Sans', sans-serif;
     min-height:100vh;
+    min-height:100dvh;
   }
   h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
   ::selection{background:var(--brass); color:#1b140f;}
   a{color:var(--brass-bright);}
   *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  /* Respeta la preferencia de "menos movimiento" del sistema operativo: se
+     conservan las transiciones de color/fondo (ayudan a leer el estado) pero
+     se apagan los pequeños "empujones" de escala al presionar/seleccionar. */
+  @media (prefers-reduced-motion: reduce){
+    #pw-submit, .tab, .card, .bctrl, .lb-btn{ transition-property: background-color, border-color, color; }
+    .sq .piece{ transition-property: none; }
+  }
+
+  /* Enlace "saltar al contenido": invisible hasta recibir foco por teclado */
+  .skip-link{
+    position:absolute;
+    top:12px; left:12px;
+    background:var(--brass);
+    color:#1b140f;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    padding:10px 16px;
+    z-index:100;
+    transform:translateY(-150%);
+    transition:transform .15s ease-out;
+  }
+  .skip-link:focus{transform:translateY(0);}
 
   /* Texto solo para lectores de pantalla (accesibilidad) */
   .sr-only{
@@ -51,6 +77,7 @@
   /* ---------- GATE ---------- */
   #gate{
     min-height:100vh;
+    min-height:100dvh;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -112,9 +139,10 @@
     padding:12px 20px;
     cursor:pointer;
     letter-spacing:0.02em;
-    transition:background .2s;
+    transition:background .2s, transform .12s ease-out;
   }
   #pw-submit:hover{background:var(--brass-bright);}
+  #pw-submit:active{transform:scale(0.97);}
   #pw-error{
     color:var(--avanzado);
     font-size:0.85rem;
@@ -194,9 +222,10 @@
     font-weight:500;
     padding:10px 16px;
     cursor:pointer;
-    transition:background .2s, color .2s;
+    transition:background .2s, color .2s, transform .12s ease-out;
   }
   .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
   .tab.active{
     background:var(--bg-panel-2);
     color:var(--text);
@@ -222,9 +251,10 @@
     border:1px solid var(--line);
     cursor:pointer;
     overflow:hidden;
-    transition:border-color .15s;
+    transition:border-color .15s, transform .12s ease-out;
   }
   .card:hover{border-color:var(--brass);}
+  .card:active{transform:scale(0.97);}
   .card img{
     width:100%; height:100%;
     object-fit:cover;
@@ -285,9 +315,10 @@
     width:40px; height:40px;
     font-size:1.1rem;
     cursor:pointer;
-    transition:border-color .2s;
+    transition:border-color .2s, transform .12s ease-out;
   }
   .lb-btn:hover{border-color:var(--brass);}
+  .lb-btn:active{transform:scale(0.92);}
   #lb-close{
     position:absolute;
     top:20px; right:24px;
@@ -380,7 +411,7 @@
   .sq .piece{
     filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     pointer-events:none;
-    transition:transform .12s;
+    transition:transform .12s ease-out;
   }
   .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
   .sq.selected .piece{transform:scale(1.12);}
@@ -413,10 +444,11 @@
     font-size:0.9rem;
     padding:11px 18px;
     cursor:pointer;
-    transition:border-color .2s;
+    transition:border-color .2s, transform .12s ease-out;
     min-height:44px;
   }
   .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
   .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
 
   #win-overlay{
@@ -451,6 +483,17 @@
   }
   #solo-complete h2{color:var(--text); font-size:1.4rem; margin-bottom:10px;}
 
+  /* ---------- ERROR DE CARGA (si fallan los datos) ---------- */
+  #load-error{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    max-width:440px;
+    margin:0 auto;
+  }
+  #load-error h2{color:var(--avanzado); font-size:1.3rem; margin-bottom:10px;}
+  #load-error .bctrl{margin-top:18px;}
+
   @media (max-width:520px){
     .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
     header.top h1{font-size:1.4rem;}
@@ -458,6 +501,8 @@
 </style>
 </head>
 <body>
+
+<a href="#main-content" class="skip-link">Saltar al contenido</a>
 
 <!-- ===== PASSWORD GATE ===== -->
 <div id="gate">
@@ -494,7 +539,14 @@
 
   <nav class="tabs" id="tabs" aria-label="Categorías de ejercicios"></nav>
 
-  <main id="main-content">
+  <main id="main-content" tabindex="-1">
+    <!-- Estado: fallo al cargar los datos de ejercicios -->
+    <section id="load-error" hidden>
+      <h2>No se pudo cargar</h2>
+      <p>Hubo un problema al cargar los ejercicios. Revisa tu conexión e intenta de nuevo.</p>
+      <button type="button" class="bctrl" id="load-error-retry">Reintentar</button>
+    </section>
+
     <!-- Panel de un solo ejercicio jugable (Fácil, y luego el resto de categorías) -->
     <section id="solo-panel" hidden aria-labelledby="solo-heading">
       <h2 id="solo-heading" class="sr-only">Ejercicio jugable</h2>
@@ -634,17 +686,30 @@ let appInitialized = false;
 async function initApp(){
   if(appInitialized) return;
   appInitialized = true;
-  const [res, res2] = await Promise.all([
-    fetch('data/exercises.json'),
-    fetch('data/puzzles.json').catch(() => null)
-  ]);
-  EXERCISES = await res.json();
-  if(res2 && res2.ok){
-    try{ PUZZLES = await res2.json(); }catch(e){}
+  const loadError = document.getElementById('load-error');
+  try{
+    const [res, res2] = await Promise.all([
+      fetch('data/exercises.json'),
+      fetch('data/puzzles.json').catch(() => null)
+    ]);
+    if(!res.ok) throw new Error('exercises.json: ' + res.status);
+    EXERCISES = await res.json();
+    if(res2 && res2.ok){
+      try{ PUZZLES = await res2.json(); }catch(e){}
+    }
+    if(loadError) loadError.hidden = true;
+    buildTabs();
+    showCategory('FACIL');
+  }catch(err){
+    appInitialized = false;
+    if(loadError) loadError.hidden = false;
+    document.getElementById('solo-panel').hidden = true;
+    document.getElementById('solo-complete').hidden = true;
+    document.getElementById('grid').hidden = true;
   }
-  buildTabs();
-  showCategory('FACIL');
 }
+const loadErrorRetryBtn = document.getElementById('load-error-retry');
+if(loadErrorRetryBtn) loadErrorRetryBtn.addEventListener('click', initApp);
 
 /* ---------------- PROGRESO (localStorage) ----------------
    Un ejercicio #N de una categoría con tablero jugable solo se puede
