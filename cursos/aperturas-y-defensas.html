@@ -82,7 +82,10 @@
                     <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">16 lecciones</strong> · Intermedio</p>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Video, ejercicios interactivos y partidas comentadas por nuestros entrenadores.</p>
                 </div>
-                <a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Inscribirme →</a>
+                <div class="flex items-center gap-2">
+                    <a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Inscribirme →</a>
+                    <button id="unlock-course-btn-top" type="button" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap">🔒 Llevar curso</button>
+                </div>
             </div>
 
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
@@ -92,8 +95,8 @@
                     <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
                         <li class="text-brand-600 dark:text-brand-300">Apertura Española<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Ideas y plan de blancas en la apertura más estudiada de la historia.</span></li>
                         <li class="text-brand-600 dark:text-brand-300">Defensa Siciliana: variante Najdorf<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">La respuesta más popular y combativa contra 1.e4.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Defensa Francesa<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Estructura de peones y plan típico para las negras.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Defensa Caro-Kann<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Solidez estructural para negras sin ceder espacio innecesario.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Defensa Francesa: estructura de peones y plan típico<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Estructura de peones y plan típico para las negras.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Defensa Caro-Kann: solidez para negras<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Solidez para negras sin ceder espacio innecesario.</span></li>
                     </ol>
                 </div>
                 <div>
@@ -125,6 +128,54 @@
                 </div>
             </div>
 
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada lección desarrollada por completo, lista para llevarse en línea a tu ritmo.</p>
+
+            <div id="course-locked-panel" class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-8 text-center">
+                <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+                <p class="text-brand-600 dark:text-brand-300 mb-4">Este contenido está bloqueado por contraseña.</p>
+                <button id="unlock-course-btn-panel" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">🔓 Llevar curso</button>
+            </div>
+
+            <div id="course-content-body" class="hidden space-y-8">
+                    <div>
+                        <h4 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Bloque 1 · Aperturas de peón rey</h4>
+                        <div class="space-y-2">
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">1. Apertura Española</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 e5 2.Nf3 Nc6 3.Bb5 clava (indirectamente) al caballo c6 contra el rey y prepara enrocar rápido. El plan típico de blancas es c3 y d4 para construir un centro amplio, mientras negras suele responder con 3...a6 (variante abierta o cerrada según cómo sigan blancas).</p><p>Es la apertura más jugada en la historia de los campeonatos mundiales porque ofrece a las blancas una ventaja de espacio duradera sin comprometer la seguridad del rey.</p><p><strong>Practica:</strong> juega 5 partidas con blancas usando solo esta apertura contra Oscar en el Tablero.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">2. Defensa Siciliana: variante Najdorf</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 es la Najdorf: negras retrasan el desarrollo de piezas menores para jugar ...a6 (evita Bb5+ o Nb5) y luego busca contrajuego en el flanco de dama con ...b5 mientras blancas ataca en el flanco de rey.</p><p>Es una apertura de doble filo: ambos bandos atacan en flancos opuestos, y quien sea más rápido suele ganar. No se recomienda para quien prefiera partidas tranquilas.</p><p><strong>Practica:</strong> analiza 3 partidas magistrales con esta variante y anota en qué jugada empieza la carrera de ataques.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">3. Defensa Francesa: estructura de peones y plan típico</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 e6 2.d4 d5 genera una cadena de peones blanca en e5-d4 tras 3.e5 (variante de avance). Negras ataca la base de esa cadena con ...c5, mientras blancas ataca el flanco de rey aprovechando el espacio ganado.</p><p>El alfil de casillas claras de negras suele quedar encerrado detrás de su propia cadena de peones: aprender a activarlo (con ...b6 y ...Ba6, o cambiándolo a tiempo) es la clave estratégica de toda la apertura.</p><p><strong>Practica:</strong> identifica en 2 partidas de la base de datos cómo cada bando activó (o no) su alfil de casillas claras.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">4. Defensa Caro-Kann: solidez para negras</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 c6 prepara 2...d5 sin encerrar el alfil de casillas claras (a diferencia de la Francesa). Tras 2.d4 d5 3.Nc3 (o Nd2) dxe4 4.Nxe4, negras suele desarrollar con ...Bf5 antes de jugar ...e6, logrando una estructura sólida y equilibrada.</p><p>Es la apertura preferida de jugadores que priorizan la seguridad estructural sobre el contragolpe agresivo, y ha sido usada por varios campeones mundiales como arma principal con negras.</p><p><strong>Practica:</strong> juega 5 partidas con negras usando esta apertura y anota en qué jugada sueles desviarte de la teoría.</p></div></details>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Bloque 2 · Aperturas de peón dama</h4>
+                        <div class="space-y-2">
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">5. Gambito de Dama: aceptado vs. rehusado</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.d4 d5 2.c4: si negras captura (2...dxc4, Gambito de Dama Aceptado) cede el centro a cambio de desarrollo cómodo; blancas recupera el peón casi siempre. Si negras rehúsa (2...e6, Gambito de Dama Rehusado) sostiene el centro con una estructura sólida pero algo pasiva.</p><p>Ambas son consideradas completamente sanas al día de hoy; la elección depende del estilo: aceptar favorece el contragolpe, rehusar favorece la solidez.</p><p><strong>Practica:</strong> juega 3 partidas aceptando el gambito y 3 rehusándolo, y compara qué posiciones te resultan más cómodas.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">6. Defensa Nimzoindia</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 clava al caballo c3 y amenaza doblarle los peones a blancas si captura. Blancas suele responder con 4.e3, 4.Qc2 o 4.Nf3, y a menudo termina aceptando peones doblados en c3 a cambio de la pareja de alfiles y un centro amplio.</p><p>Es una de las defensas más respetadas en ajedrez de élite: enseña el principio de que una estructura de peones imperfecta puede compensarse con actividad de piezas.</p><p><strong>Practica:</strong> repasa el artículo "Peones doblados: ¿siempre son una debilidad?" en la sección de Artículos del sitio.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">7. Defensa India de Rey</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6: negras cede el centro completo a cambio de atacarlo más adelante con ...e5 o ...c5, y prepara un ataque directo al rey blanco con ...f5 en muchas líneas.</p><p>Es una apertura de gran riesgo y gran recompensa: si el ataque de negras no llega a tiempo, el centro de blancas puede decidir la partida sin necesidad de atacar.</p><p><strong>Practica:</strong> juega esta defensa contra Oscar y observa en qué momento el motor decide romper el centro.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">8. Defensa Eslava</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.d4 d5 2.c4 c6 sostiene el centro sin encerrar el alfil de casillas claras (que puede salir por f5 o g4 antes de jugar ...e6). Es una de las defensas más sólidas contra 1.d4, usada en el más alto nivel para neutralizar la iniciativa de blancas.</p><p><strong>Practica:</strong> compara esta apertura con el Gambito de Dama Rehusado: ¿en qué difiere el destino del alfil de casillas claras?</p></div></details>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Bloque 3 · Aperturas semiabiertas y de flanco</h4>
+                        <div class="space-y-2">
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">9. Apertura Italiana y variantes modernas</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 e5 2.Nf3 Nc6 3.Bc4 apunta directamente a f7. La línea moderna "Giuoco Pianissimo" (3...Bc5 4.c3 Nf6 5.d3) prioriza una lucha posicional lenta, mientras variantes como el Ataque Fried Liver buscan un asalto táctico inmediato sobre f7.</p><p><strong>Practica:</strong> juega la misma posición inicial 3 veces, probando un enfoque táctico y dos posicionales, y compara resultados.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">10. Apertura Inglesa</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.c4 controla d5 sin ocupar el centro con un peón central. Es una apertura muy flexible que puede transponer a estructuras de Gambito de Dama, India de Rey o incluso Siciliana con colores invertidos, según cómo respondan las negras.</p><p><strong>Practica:</strong> identifica a qué otra apertura del temario transpone 1.c4 e5 2.Nc3 Nf6.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">11. Sistema Réti</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.Nf3 seguido de g3, Bg2 y c4 desarrolla las piezas antes de decidir la estructura de peones central, dejando que el rival revele sus intenciones primero. Es la base histórica de la escuela "hipermoderna", que desafió la idea clásica de ocupar el centro directamente desde la apertura.</p><p><strong>Practica:</strong> relee el artículo "El centro del tablero" y relaciona sus ideas con este sistema.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">12. Gambito Evans</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4 ofrece un peón para ganar un tiempo de desarrollo (4...Bxb4 5.c3 Ba5 6.d4) y lanzar un ataque rápido contra el rey negro antes de que pueda consolidarse.</p><p><strong>Practica:</strong> juega este gambito con blancas contra Oscar y evalúa si prefieres recuperar el peón pronto o mantener el ataque.</p></div></details>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Bloque 4 · Cómo construir tu repertorio</h4>
+                        <div class="space-y-2">
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">13. Cómo elegir un repertorio según tu estilo</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>No existe una "mejor" apertura universal. Si disfrutas el cálculo y las posiciones abiertas, un repertorio basado en 1.e4 con líneas afiladas (Italiana, Gambito Evans) te sentará mejor. Si prefieres la planificación a largo plazo, 1.d4 o 1.Nf3 con estructuras sólidas encajan más con tu estilo.</p><p><strong>Practica:</strong> elige 2 aperturas de este curso que se ajusten a tu estilo y júgalas exclusivamente durante 10 partidas.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">14. Transposiciones</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>Muchas aperturas diferentes en el nombre llegan exactamente a la misma posición por otro orden de jugadas: por ejemplo, la Inglesa y la India de Rey pueden transponer entre sí. Reconocer esto evita sorpresas y te permite usar el conocimiento de una apertura para jugar otra.</p><p><strong>Practica:</strong> busca dos aperturas de este temario que puedan transponer entre sí y anota la secuencia de jugadas.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">15. Preparación contra rivales específicos</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>Antes de un torneo, revisa las últimas partidas de tu rival (si están disponibles) para identificar qué aperturas juega con frecuencia. Prepara una respuesta concreta contra su línea más jugada, en vez de intentar cubrir todas las posibilidades por igual.</p><p><strong>Practica:</strong> elige un rival ficticio y prepara 5 jugadas de respuesta contra su apertura favorita de este curso.</p></div></details>
+                            <details class="bg-brand-50 dark:bg-brand-800 rounded-lg px-4 py-3"><summary class="cursor-pointer font-semibold text-brand-800 dark:text-white marker:text-accent-600">16. Partida comentada: aperturas en la práctica</summary><div class="mt-3 text-sm text-brand-600 dark:text-brand-300 space-y-2 leading-relaxed"><p>Cierre del curso: una partida completa donde ambos bandos aplican los principios de repertorio, transposición y preparación vistos en este bloque, comentada jugada a jugada desde la apertura hasta el desenlace.</p><p><strong>Siguiente paso:</strong> continúa con <a href="estrategia-y-tactica.html">Estrategia y Táctica</a> para aprender a explotar las ventajas que obtengas en la apertura.</p></div></details>
+                        </div>
+                    </div>
+            </div>
+
             <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
                 <p class="text-white font-serif text-lg font-bold mb-2">¿Listo para empezar?</p>
                 <p class="text-brand-200 text-sm mb-4">Inscríbete y accede a las 16 lecciones de este curso, con seguimiento de tus entrenadores.</p>
@@ -139,7 +190,83 @@
     </article>
     </main>
 
+    <!-- Contraseña para desbloquear el contenido completo del curso -->
+    <div id="password-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+        <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h2 id="password-modal-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Contenido bloqueado</h2>
+            <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Este curso está bloqueado por contraseña. Ingresa la contraseña para acceder al contenido completo.</p>
+            <label for="course-password-input" class="sr-only">Contraseña</label>
+            <input id="course-password-input" type="password" placeholder="Contraseña" autocomplete="off" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
+            <p id="course-password-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-3 min-h-[1em]"></p>
+            <div class="flex justify-end gap-2">
+                <button id="password-cancel-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-brand-500 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors">Cancelar</button>
+                <button id="password-submit-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Desbloquear</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script>
+        (function () {
+            // Bloqueo simple por contraseña para el contenido completo del curso. No es una
+            // medida de seguridad real (la contraseña queda en el código de la página): sirve
+            // para no publicar el contenido completo mientras el curso no está listo para
+            // todo el público, no para proteger información sensible.
+            var COURSE_PASSWORD = "esperanza29";
+            var STORAGE_KEY = "cursoDesbloqueado_v1";
+
+            var modal = document.getElementById("password-modal");
+            var lockedPanel = document.getElementById("course-locked-panel");
+            var contentBody = document.getElementById("course-content-body");
+            var input = document.getElementById("course-password-input");
+            var msg = document.getElementById("course-password-msg");
+
+            function isUnlocked() {
+                try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch (e) { return false; }
+            }
+            function unlock() {
+                lockedPanel.classList.add("hidden");
+                contentBody.classList.remove("hidden");
+            }
+            function openModal() {
+                msg.textContent = "";
+                input.value = "";
+                modal.classList.remove("hidden");
+                input.focus();
+            }
+            function closeModal() {
+                modal.classList.add("hidden");
+            }
+            function attemptUnlock() {
+                if (input.value === COURSE_PASSWORD) {
+                    try { localStorage.setItem(STORAGE_KEY, "1"); } catch (e) {}
+                    closeModal();
+                    unlock();
+                    contentBody.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                    msg.textContent = "Contraseña incorrecta: este curso está bloqueado por contraseña.";
+                    input.focus();
+                    input.select();
+                }
+            }
+            function handleUnlockClick() {
+                if (isUnlocked()) {
+                    unlock();
+                    contentBody.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                    openModal();
+                }
+            }
+
+            if (isUnlocked()) unlock();
+            document.getElementById("unlock-course-btn-top").addEventListener("click", handleUnlockClick);
+            document.getElementById("unlock-course-btn-panel").addEventListener("click", handleUnlockClick);
+            document.getElementById("password-cancel-btn").addEventListener("click", closeModal);
+            document.getElementById("password-submit-btn").addEventListener("click", attemptUnlock);
+            input.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
+            modal.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+        })();
+</script>
 </body>
 </html>
