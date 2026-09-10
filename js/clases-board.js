@@ -66,6 +66,12 @@
      * @param {object} opts
      * @param {boolean} opts.interactive - true si este usuario puede mover piezas ahora
      * @param {boolean} opts.allowArrows - true solo para el profesor (dibuja flechas/círculos)
+     * @param {boolean} opts.compact - true para miniaturas mucho más chicas que el tablero
+     *   principal (p. ej. la grilla "Tableros de los alumnos" en Practicar contra el motor):
+     *   fija el tamaño de las piezas con estilo inline en vez de las clases text-3xl/4xl/5xl
+     *   pensadas para tableros grandes. Un estilo inline no depende de que ninguna hoja de
+     *   estilos externa (o el compilador de Tailwind, que corre de forma asíncrona) termine
+     *   de cargar antes o después: por eso es más confiable aquí que una regla CSS aparte.
      * @param {(fen: string, san: string, moves: string[]) => void} opts.onMove
      * @param {(marks: {arrows: Array<{from:string,to:string}>, circles: string[]}) => void} opts.onMarksChange
      * @param {(san: string, fullPath: string[], context: {parentNodeId: string|null, rootPly: number}) => void} opts.onVariantMove
@@ -74,6 +80,7 @@
       this.el = el;
       this.interactive = !!opts.interactive;
       this.allowArrows = !!opts.allowArrows;
+      this.compact = !!opts.compact;
       this.onMove = opts.onMove || (() => {});
       this.onMarksChange = opts.onMarksChange || (() => {});
       this.onVariantMove = opts.onVariantMove || (() => {});
@@ -302,8 +309,10 @@
 
     _squareClasses(square, canInteract) {
       const light = isLightSquare(square);
-      let cls =
-        "flex items-center justify-center text-3xl sm:text-4xl md:text-5xl select-none relative transition-colors w-full h-full border-0 p-0 m-0 ";
+      let cls = "flex items-center justify-center select-none relative transition-colors w-full h-full border-0 p-0 m-0 ";
+      // En modo compacto el tamaño de fuente se fija con estilo inline (ver render()), no
+      // con estas clases responsivas pensadas para un tablero de 300-560px de ancho.
+      if (!this.compact) cls += "text-3xl sm:text-4xl md:text-5xl ";
       cls += canInteract ? "cursor-pointer " : "cursor-default ";
       cls += light ? "bg-brand-100 " : "bg-brand-500 ";
       if (this.selected === square) {
@@ -393,10 +402,32 @@
       // botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
       this._drawMarksOverlay();
 
+      if (this.compact) this._sizeCompactPieces();
+
       if (hadFocusInBoard && canInteract) {
         const target = this.el.querySelector('[data-square="' + this.focusSquare + '"]');
         if (target) target.focus();
       }
+    }
+
+    // Tamaño de pieza para tableros "compact" (opts.compact): en vez de una clase de Tailwind
+    // o una regla CSS con vw/clamp (que solo aproximan el ancho real de la casilla, y además
+    // dependen de que la hoja de estilos ya esté cargada), se mide el ancho real ya renderizado
+    // de una casilla y se fija el font-size como fracción de ese ancho — así funciona igual de
+    // bien con 2, 4 o 5 miniaturas por fila, y en cualquier tamaño de pantalla. rAF: hace falta
+    // esperar a que el navegador aplique el layout del grid recién insertado en el DOM (si se
+    // mide en el mismo tick, el ancho todavía puede ser 0).
+    _sizeCompactPieces() {
+      requestAnimationFrame(() => {
+        const square = this.el.querySelector("[data-square]");
+        if (!square) return;
+        const cellWidth = square.getBoundingClientRect().width;
+        if (!cellWidth) return;
+        const fontPx = Math.max(8, Math.min(cellWidth * 0.62, 40));
+        this.el.querySelectorAll("[data-square]").forEach((sq) => {
+          sq.style.fontSize = fontPx + "px";
+        });
+      });
     }
 
     _drawMarksOverlay() {
