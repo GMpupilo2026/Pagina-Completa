@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia y Táctica — Ajedrez Integral</title>
+    <meta name="description" content="Temario completo del curso de Estrategia y Táctica: clavadas, horquillas, sacrificios, debilidades posicionales y planificación de medio juego.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+    <article class="pt-28 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Avanzado</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Estrategia y Táctica</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-6">El curso más completo del catálogo: los motivos tácticos que deciden partidas y la estrategia posicional que te permite crear esas oportunidades.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-6">👑</div>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">20 lecciones</strong> · Avanzado</p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Video, ejercicios interactivos y partidas comentadas por nuestros entrenadores.</p>
+                </div>
+                <a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Inscribirme →</a>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · Motivos tácticos fundamentales</h3>
+                    <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Clavadas: absolutas y relativas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cómo inmovilizar piezas rivales y explotarlo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Horquillas de caballo y de peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">El ataque doble más frecuente en la práctica.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Ataques a la descubierta y jaques dobles<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cuando mover una pieza revela el ataque de otra.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Rayos X y desviaciones<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cómo alejar a un defensor clave de su casilla.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Sacrificios de despeje y de destrucción<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Entregar material para abrir líneas o eliminar defensores.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Cálculo y combinaciones</h3>
+                    <ol start="6" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Cómo calcular variantes sin mover las piezas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">El método para visualizar varias jugadas por adelantado.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones de dos y tres jugadas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Los patrones combinativos más comunes en torneo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Sacrificios en h7/h2<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">El clásico ataque contra el enroque corto.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Combinaciones con promoción de peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cuando el objetivo final es coronar, no capturar.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Cálculo bajo presión de tiempo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Ejercicios cronometrados para entrenar precisión rápida.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · Estrategia posicional</h3>
+                    <ol start="11" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Peones débiles<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Aislados, doblados y retrasados: cómo atacarlos y defenderlos.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Casillas débiles y piezas dominantes<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Ocupar casillas que el rival no puede disputar con peones.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La pareja de alfiles<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cuándo es una ventaja real y cómo explotarla.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Columnas y diagonales abiertas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Tomar el control de las líneas clave del tablero.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Planificación de medio juego<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cómo crear un plan a partir de las debilidades del rival.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 4 · Ataque y defensa del rey</h3>
+                    <ol start="16" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Ataque al rey que no enrocó<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Explotar la falta de seguridad del rey en el centro.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Ataque al enroque contrario<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Apertura de columnas y sacrificios típicos contra el enroque.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">El sacrificio posicional a largo plazo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Entregar material por compensación duradera, no inmediata.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Defensa activa<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">El contraataque como el mejor recurso defensivo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Partida magistral comentada<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Estrategia y táctica combinadas en una partida de alto nivel.</span></li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
+                <p class="text-white font-serif text-lg font-bold mb-2">¿Listo para empezar?</p>
+                <p class="text-brand-200 text-sm mb-4">Inscríbete y accede a las 20 lecciones de este curso, con seguimiento de tus entrenadores.</p>
+                <a href="../inscripcion.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Inscribirme al curso →</a>
+            </div>
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="aperturas-y-defensas.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Aperturas y Defensas"><span aria-hidden="true">←</span> Aperturas y Defensas</a>
+                <a href="finales-practicos.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Finales Prácticos">Finales Prácticos <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>
