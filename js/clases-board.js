@@ -64,6 +64,7 @@
      * @param {boolean} opts.allowArrows - true solo para el profesor (dibuja flechas/círculos)
      * @param {(fen: string, san: string, moves: string[]) => void} opts.onMove
      * @param {(marks: {arrows: Array<{from:string,to:string}>, circles: string[]}) => void} opts.onMarksChange
+     * @param {(san: string, fullPath: string[], context: {parentNodeId: string|null, rootPly: number}) => void} opts.onVariantMove
      */
     constructor(el, opts = {}) {
       this.el = el;
@@ -71,17 +72,21 @@
       this.allowArrows = !!opts.allowArrows;
       this.onMove = opts.onMove || (() => {});
       this.onMarksChange = opts.onMarksChange || (() => {});
+      this.onVariantMove = opts.onVariantMove || (() => {});
       this.game = new Chess();
       this.selected = null;
       this.focusSquare = "e1";
       this.arrows = [];
       this.circles = [];
       this._drawingFrom = null;
-      // Modo revisión: viewGame/viewPly != null mientras se navega hacia atrás en el
-      // historial sin tocar this.game (que sigue siendo la partida real, para poder
-      // seguir jugando/deshaciendo normalmente al volver a "en vivo").
+      // Modo revisión/exploración: viewGame/viewPath != null mientras se navega por el
+      // historial (línea principal o una variante) sin tocar this.game (que sigue siendo
+      // la partida real en vivo). Jugar una pieza estando aquí no mueve la partida real:
+      // crea o extiende una variante (ver onVariantMove) — así se navegan y crean
+      // variantes y sub-variantes sin afectar el tablero de nadie más.
       this.viewGame = null;
-      this.viewPly = null;
+      this.viewPath = null;
+      this._variantContext = null; // {parentNodeId, rootPly} de la posición que se ve ahora
 
       this.el.style.position = "relative";
       this.el.setAttribute("role", "group");
@@ -153,42 +158,64 @@
       return this.viewGame !== null;
     }
 
-    // Muestra la posición después de `ply` jugadas (0 = posición inicial) sin tocar la
-    // partida real: this.game sigue con el historial completo intacto para undo()/onMove().
-    viewAt(ply) {
+    getVariantContext() {
+      return this._variantContext;
+    }
+
+    _setViewPath(path, context) {
+      const temp = new Chess();
+      for (const san of path) {
+        if (!temp.move(san)) break; // datos corruptos: no seguir reproduciendo
+      }
+      this.viewGame = temp;
+      this.viewPath = path.slice();
+      this._variantContext = context;
+      this.selected = null;
+      this.render();
+    }
+
+    // Muestra la posición después de `ply` jugadas de la línea EN VIVO (0 = posición
+    // inicial), sin tocar la partida real: this.game sigue con el historial completo
+    // intacto para undo()/onMove(). Jugar una pieza desde aquí crea una variante nueva
+    // (parentNodeId null) con raíz en `ply`.
+    viewMainAt(ply) {
       const total = this.game.history();
       const clamped = Math.max(0, Math.min(ply, total.length));
       if (clamped === total.length) {
         this.viewLive();
         return;
       }
-      const temp = new Chess();
-      for (let i = 0; i < clamped; i++) temp.move(total[i]);
-      this.viewGame = temp;
-      this.viewPly = clamped;
-      this.selected = null;
-      this.render();
+      this._setViewPath(total.slice(0, clamped), { parentNodeId: null, rootPly: clamped });
+    }
+
+    // Muestra la posición de un nodo del árbol de variantes (fullPath = todas las
+    // jugadas desde el inicio hasta ese nodo). Jugar una pieza desde aquí extiende esa
+    // variante como hijo de `node.id` (una sub-variante).
+    viewVariantNode(node, fullPath) {
+      this._setViewPath(fullPath, { parentNodeId: node.id, rootPly: node.root_ply });
     }
 
     // Vuelve a mostrar la posición actual en vivo.
     viewLive() {
       this.viewGame = null;
-      this.viewPly = null;
+      this.viewPath = null;
+      this._variantContext = null;
       this.selected = null;
       this.render();
     }
 
-    // Descarta la continuación después de `keepPly` jugadas (para "jugar desde aquí" y
-    // crear una variante). Devuelve las jugadas descartadas (SAN) para poder archivarlas
-    // antes de perderlas. No hace nada si no se está en modo revisión.
-    forkAt(keepPly) {
-      const total = this.game.history();
-      const discarded = total.slice(keepPly);
+    // Promueve la posición que se está viendo (línea principal o cualquier variante/
+    // sub-variante) a ser la nueva línea en vivo. Devuelve la línea en vivo ANTERIOR
+    // completa (para archivarla antes de reemplazarla: "sin borrarla"). No hace nada si
+    // no se está en modo revisión.
+    forkToView() {
+      if (!this.isViewingHistory()) return null;
+      const discardedMain = this.game.history();
       const rebuilt = new Chess();
-      for (let i = 0; i < keepPly; i++) rebuilt.move(total[i]);
+      for (const san of this.viewPath) rebuilt.move(san);
       this.game = rebuilt;
       this.viewLive();
-      return discarded;
+      return discardedMain;
     }
 
     // Reemplaza flechas/círculos mostrados (llega vía Realtime) sin reconstruir el tablero.
@@ -221,7 +248,9 @@
       const previouslyFocused = document.activeElement;
       const hadFocusInBoard = this.el.contains(previouslyFocused);
       const g = this.viewGame || this.game;
-      const canInteract = this.interactive && !this.isViewingHistory();
+      // A diferencia de antes, se puede interactuar también mientras se explora una
+      // variante: eso es justamente cómo se crean variantes y sub-variantes.
+      const canInteract = this.interactive;
 
       this.el.innerHTML = "";
       const squares = squaresInOrder();
@@ -357,6 +386,7 @@
 
     _onSquareClick(square) {
       this.focusSquare = square;
+      const g = this.viewGame || this.game;
 
       if (this.selected === square) {
         this.selected = null;
@@ -365,23 +395,40 @@
       }
 
       if (this.selected) {
-        const move = this.game.moves({ square: this.selected, verbose: true }).find((m) => m.to === square);
+        const move = g.moves({ square: this.selected, verbose: true }).find((m) => m.to === square);
         if (move) {
-          const result = this.game.move({ from: this.selected, to: square, promotion: "q" });
+          const wasLive = !this.isViewingHistory();
+          const result = g.move({ from: this.selected, to: square, promotion: "q" });
           this.selected = null;
           this.render();
-          if (result) this.onMove(this.game.fen(), result.san, this.game.history());
+          if (!result) return;
+          if (wasLive) {
+            // Seguíamos en la línea real: esto sí es la jugada en vivo de la clase.
+            this.onMove(this.game.fen(), result.san, this.game.history());
+          } else {
+            // Estábamos explorando: esto crea o extiende una variante/sub-variante,
+            // sin tocar la partida real de nadie más.
+            this.viewPath = this.viewPath.concat([result.san]);
+            this.onVariantMove(result.san, this.viewPath.slice(), this._variantContext);
+          }
           return;
         }
       }
 
-      const piece = this.game.get(square);
-      this.selected = piece && piece.color === this.game.turn() ? square : null;
+      const piece = g.get(square);
+      this.selected = piece && piece.color === g.turn() ? square : null;
       this.render();
     }
 
+    // Tras insertar en la base de datos la jugada de variante creada en _onSquareClick,
+    // el llamador debe indicar el id del nodo recién creado para que la SIGUIENTE jugada
+    // (si la hay) se encadene como su hijo — así se forman las sub-variantes.
+    setVariantParent(nodeId) {
+      if (this._variantContext) this._variantContext = { ...this._variantContext, parentNodeId: nodeId };
+    }
+
     _onKeydown(e) {
-      if (!this.interactive || this.isViewingHistory()) return;
+      if (!this.interactive) return;
       const current = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
       if (!current) return;
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
