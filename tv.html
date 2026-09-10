@@ -158,6 +158,9 @@
     </main>
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <!-- Para dibujar nosotros mismos el tablero de cada partida en vivo del torneo (ver
+         más abajo por qué: el iframe embed/game de Lichess no se estaba actualizando). -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/main.js"></script>
     <script>
         (function () {
@@ -247,8 +250,8 @@
                     if (!duel || typeof duel.id !== "string" || seen.has(duel.id)) continue;
                     seen.add(duel.id);
                     const players = (Array.isArray(duel.p) ? duel.p : [])
-                        .map((p) => p && (p.n || p.name))
-                        .filter((n) => typeof n === "string" && n);
+                        .filter((p) => p && typeof (p.n || p.name) === "string")
+                        .map((p) => ({ name: p.n || p.name, rating: p.r || p.rating || null }));
                     games.push({ id: duel.id, players });
                     if (games.length >= maxCount) break;
                 }
@@ -282,8 +285,8 @@
             }
 
             function matchStreamer(game) {
-                for (const name of game.players) {
-                    const hit = liveStreamers.get(String(name).toLowerCase());
+                for (const player of game.players) {
+                    const hit = liveStreamers.get(String(player.name).toLowerCase());
                     if (hit) return hit;
                 }
                 return null;
@@ -306,6 +309,87 @@
                         slot.classList.add("hidden");
                     }
                 }
+            }
+
+            // El widget de Lichess (lichess.org/embed/game/{id}) resultó no actualizarse
+            // en vivo dentro de este iframe por más que se ajustara cuándo se recrea — así
+            // que en vez de depender de esa caja negra, el tablero se dibuja aquí mismo a
+            // partir de la posición real que se consulta directamente a la API de Lichess
+            // (pollLiveBoards más abajo). Mismos glifos/colores que el tablero normal del
+            // sitio (ver js/tablero-board.js) para que se vea igual en todas partes.
+            const MINI_GLYPH = {
+                w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
+                b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
+            };
+            const MINI_FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+            function isLightMiniSquare(square) {
+                const file = square.charCodeAt(0) - 97;
+                const rank = parseInt(square[1], 10) - 1;
+                return (file + rank) % 2 === 1;
+            }
+
+            function renderMiniBoard(container, fen) {
+                if (typeof Chess === "undefined" || !container) return;
+                let game;
+                try { game = new Chess(fen); } catch (e) { return; }
+                container.innerHTML = "";
+                for (let rank = 8; rank >= 1; rank--) {
+                    for (let f = 0; f < 8; f++) {
+                        const square = MINI_FILES[f] + rank;
+                        const cell = document.createElement("div");
+                        cell.className = "flex items-center justify-center text-lg sm:text-2xl " +
+                            (isLightMiniSquare(square) ? "bg-brand-100" : "bg-brand-500");
+                        const piece = game.get(square);
+                        if (piece) {
+                            const span = document.createElement("span");
+                            span.textContent = MINI_GLYPH[piece.color][piece.type];
+                            span.className = piece.color === "w" ? "piece-white" : "piece-black";
+                            span.setAttribute("aria-hidden", "true");
+                            cell.appendChild(span);
+                        }
+                        container.appendChild(cell);
+                    }
+                }
+            }
+
+            // Consulta a Lichess la lista de jugadas de una partida y reconstruye la
+            // posición actual reproduciéndolas con chess.js — más lento que recibir un
+            // empuje en vivo por WebSocket, pero es un dato plano que si llega, refleja
+            // la posición real (a diferencia del iframe, que podía quedarse pegado sin
+            // avisar de ningún error).
+            async function fetchGameFen(gameId) {
+                try {
+                    const res = await fetch(
+                        "https://lichess.org/game/export/" + encodeURIComponent(gameId) + "?evals=0&clocks=0&opening=0",
+                        { headers: { Accept: "application/json" } }
+                    );
+                    if (!res.ok || typeof Chess === "undefined") return null;
+                    const data = await res.json();
+                    const game = new Chess();
+                    const moves = typeof data.moves === "string" ? data.moves.trim().split(/\s+/).filter(Boolean) : [];
+                    for (const san of moves) {
+                        if (!game.move(san, { sloppy: true })) break; // notación no reconocida: se queda en la última jugada válida
+                    }
+                    return game.fen();
+                } catch (e) {
+                    console.error("No se pudo cargar la posición de la partida " + gameId + ":", e);
+                    return null;
+                }
+            }
+
+            async function pollLiveBoards(games) {
+                await Promise.all(games.map(async (g) => {
+                    const container = document.getElementById("tv-games-grid").querySelector('[data-board-id="' + CSS.escape(g.id) + '"]');
+                    if (!container) return;
+                    const fen = await fetchGameFen(g.id);
+                    if (fen) renderMiniBoard(container, fen);
+                }));
+            }
+
+            function playerLabel(player) {
+                if (!player) return "";
+                return escapeHtml(player.name) + (player.rating ? ' <span class="opacity-60">(' + escapeHtml(String(player.rating)) + ")</span>" : "");
             }
 
             // Muestra hasta 10 partidas del torneo lado a lado, cada una ocupando 1/N del
@@ -335,33 +419,25 @@
                 grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
 
                 const key = games.map((g) => g.id).join(",");
-                if (key === lastRenderedGamesKey) {
-                    // Mismo conjunto de partidas que ya se está mostrando: no se toca el DOM.
-                    // Antes esta función recreaba los iframes en cada refresco del panel —
-                    // eso reiniciaba la conexión en vivo de cada tablero con Lichess justo
-                    // antes de que llegara a mostrar ninguna jugada nueva, dejándolos siempre
-                    // congelados en la posición inicial por más seguido que se refrescara.
-                    // Ahora solo se reconstruye la grilla cuando cambia qué partidas se están
-                    // mostrando (una terminó, empezó otra); mientras tanto cada tablero queda
-                    // intacto y es el propio Lichess quien lo mantiene al día.
-                    renderStreamerBadges(games);
-                    grid.classList.remove("hidden");
-                    return;
+                if (key !== lastRenderedGamesKey) {
+                    lastRenderedGamesKey = key;
+                    // Solo el tablero, sin margen extra: un tablero de ajedrez es cuadrado,
+                    // así que la tarjeta usa aspect-square en vez de dejar una franja vacía
+                    // a los lados como pasaba forzándolo a 16:9.
+                    grid.innerHTML = games.map((g) =>
+                        '<div class="rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
+                            '<div class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900">' +
+                                '<span class="truncate">' + playerLabel(g.players[0]) + "</span>" +
+                                '<span class="truncate text-right">' + playerLabel(g.players[1]) + "</span>" +
+                            "</div>" +
+                            '<div class="aspect-square w-full grid grid-cols-8 grid-rows-8" data-board-id="' + escapeHtml(g.id) + '"></div>' +
+                            '<div class="hidden px-2 py-1.5 text-center text-xs font-semibold text-red-400 bg-brand-900" data-stream-slot="' + escapeHtml(g.id) + '"></div>' +
+                        "</div>"
+                    ).join("");
                 }
-                lastRenderedGamesKey = key;
-
-                // Solo el tablero, sin margen extra: embed/game es el widget responsivo de
-                // Lichess (a diferencia del recuadro ambiente de más abajo, que usa el
-                // widget rígido tv/frame), y un tablero de ajedrez es cuadrado — forzarlo a
-                // 16:9 dejaba una franja de espacio vacío a los lados.
-                grid.innerHTML = games.map((g) =>
-                    '<div class="rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
-                        '<div class="aspect-square w-full"><iframe src="https://lichess.org/embed/game/' + encodeURIComponent(g.id) + '?theme=brown&bg=dark" title="Partida en vivo del torneo" class="w-full h-full" frameborder="0"></iframe></div>' +
-                        '<div class="hidden px-2 py-1.5 text-center text-xs font-semibold text-red-400 bg-brand-900" data-stream-slot="' + escapeHtml(g.id) + '"></div>' +
-                    "</div>"
-                ).join("");
                 grid.classList.remove("hidden");
                 renderStreamerBadges(games);
+                pollLiveBoards(games);
             }
 
             function statusBadge(data) {
