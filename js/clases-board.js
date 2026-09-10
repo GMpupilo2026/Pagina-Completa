@@ -8,8 +8,14 @@
  * directamente porque ese archivo trae lógica específica del bot (Stockfish,
  * barra de evaluación, modo ciego, etc.) que no aplica aquí.
  *
- * Además de mover piezas, dibuja flechas de pizarra (botón derecho + arrastre,
- * solo si `allowArrows`) que se sincronizan por separado de la posición.
+ * Además de mover piezas, dibuja flechas y círculos de pizarra (botón
+ * derecho, solo si `allowArrows`): arrastrar dibuja una flecha alineada a
+ * fila/columna/diagonal (las de forma de caballo se doblan en ángulo recto,
+ * como en lichess); soltar sobre la misma casilla marca/desmarca un círculo.
+ *
+ * El historial de jugadas se reconstruye siempre reproduciendo la lista de
+ * SAN (loadMoves) en vez de cargar solo el FEN, para que el historial interno
+ * de chess.js quede poblado y `undo()` funcione de verdad.
  *
  * Requiere que chess.js ya esté cargado antes que este archivo.
  */
@@ -22,7 +28,7 @@
   };
   const PIECE_NAME = { p: "peón", n: "caballo", b: "alfil", r: "torre", q: "dama", k: "rey" };
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-  const ARROW_COLOR = "#de911d"; // accent-500
+  const MARK_COLOR = "#de911d"; // accent-500
 
   function squaresInOrder() {
     const squares = [];
@@ -38,14 +44,16 @@
     return (file + rank) % 2 === 1;
   }
 
-  // Centro de una casilla en porcentaje (0-100) del tablero, para dibujar flechas en un
-  // <svg viewBox="0 0 100 100"> que se estira exactamente igual que la grilla de 8x8.
-  function squareCenterPercent(square) {
+  // Fila/columna (0-7) de una casilla, con fila 0 = arriba (rank 8), igual que squaresInOrder().
+  function squareRowCol(square) {
     const idx = squaresInOrder().indexOf(square);
     if (idx === -1) return null;
-    const row = Math.floor(idx / 8);
-    const col = idx % 8;
-    return { x: (col + 0.5) * 12.5, y: (row + 0.5) * 12.5 };
+    return { row: Math.floor(idx / 8), col: idx % 8 };
+  }
+
+  // Centro de una casilla en porcentaje (0-100) del tablero, para el <svg viewBox="0 0 100 100">.
+  function centerPercent(rowCol) {
+    return { x: (rowCol.col + 0.5) * 12.5, y: (rowCol.row + 0.5) * 12.5 };
   }
 
   class ClasesBoard {
@@ -53,20 +61,21 @@
      * @param {HTMLElement} el - contenedor #chessboard (grid de 8x8)
      * @param {object} opts
      * @param {boolean} opts.interactive - true si este usuario puede mover piezas ahora
-     * @param {boolean} opts.allowArrows - true solo para el profesor (dibuja flechas)
-     * @param {(fen: string, san: string|null) => void} opts.onMove
-     * @param {(arrows: Array<{from:string,to:string}>) => void} opts.onArrowsChange
+     * @param {boolean} opts.allowArrows - true solo para el profesor (dibuja flechas/círculos)
+     * @param {(fen: string, san: string, moves: string[]) => void} opts.onMove
+     * @param {(marks: {arrows: Array<{from:string,to:string}>, circles: string[]}) => void} opts.onMarksChange
      */
     constructor(el, opts = {}) {
       this.el = el;
       this.interactive = !!opts.interactive;
       this.allowArrows = !!opts.allowArrows;
       this.onMove = opts.onMove || (() => {});
-      this.onArrowsChange = opts.onArrowsChange || (() => {});
+      this.onMarksChange = opts.onMarksChange || (() => {});
       this.game = new Chess();
       this.selected = null;
       this.focusSquare = "e1";
       this.arrows = [];
+      this.circles = [];
       this._drawingFrom = null;
 
       this.el.style.position = "relative";
@@ -83,6 +92,19 @@
       this.el.addEventListener("mouseup", this._onMouseUp);
     }
 
+    // Carga la posición reproduciendo la lista de jugadas (SAN) desde el inicio, para que
+    // el historial interno de chess.js quede poblado y undo() funcione.
+    loadMoves(moves) {
+      this.game = new Chess();
+      for (const san of moves || []) {
+        if (!this.game.move(san)) break; // datos corruptos: no seguir reproduciendo
+      }
+      this.selected = null;
+      this.render();
+    }
+
+    // Solo para el arranque/casos límite; no deja historial reproducible (undo no tendría nada
+    // que deshacer hasta la próxima jugada).
     loadFen(fen) {
       if (!fen || fen === "start") {
         this.game = new Chess();
@@ -103,15 +125,30 @@
       return this.game.fen();
     }
 
+    moves() {
+      return this.game.history();
+    }
+
+    // Deshace la última jugada. Devuelve el movimiento deshecho (o null si no hay nada).
+    undo() {
+      const undone = this.game.undo();
+      if (undone) {
+        this.selected = null;
+        this.render();
+      }
+      return undone;
+    }
+
     setInteractive(interactive) {
       this.interactive = !!interactive;
       this.render();
     }
 
-    // Reemplaza las flechas mostradas (llega vía Realtime) sin reconstruir el tablero.
-    setArrows(arrows) {
+    // Reemplaza flechas/círculos mostrados (llega vía Realtime) sin reconstruir el tablero.
+    setMarks(arrows, circles) {
       this.arrows = Array.isArray(arrows) ? arrows : [];
-      this._drawArrowsOverlay();
+      this.circles = Array.isArray(circles) ? circles : [];
+      this._drawMarksOverlay();
     }
 
     _squareAriaLabel(square) {
@@ -178,10 +215,10 @@
         this.el.appendChild(btn);
       }
 
-      // El overlay de flechas se recrea al final: al ser position:absolute dentro del grid
-      // no participa del layout de la grilla (igual que los "dot" de jugada legal dentro de
-      // los botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
-      this._drawArrowsOverlay();
+      // El overlay de flechas/círculos se recrea al final: al ser position:absolute dentro del
+      // grid no participa del layout (igual que los "dot" de jugada legal dentro de los
+      // botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
+      this._drawMarksOverlay();
 
       if (hadFocusInBoard && this.interactive) {
         const target = this.el.querySelector('[data-square="' + this.focusSquare + '"]');
@@ -189,11 +226,11 @@
       }
     }
 
-    _drawArrowsOverlay() {
-      let svg = this.el.querySelector("svg.arrows-overlay");
+    _drawMarksOverlay() {
+      let svg = this.el.querySelector("svg.marks-overlay");
       if (!svg) {
         svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("class", "arrows-overlay");
+        svg.setAttribute("class", "marks-overlay");
         svg.setAttribute("viewBox", "0 0 100 100");
         svg.setAttribute("preserveAspectRatio", "none");
         svg.style.position = "absolute";
@@ -204,24 +241,63 @@
         this.el.appendChild(svg);
       }
       svg.innerHTML =
-        '<defs><marker id="clases-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" ' +
-        'markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">' +
-        '<path d="M0,0 L10,5 L0,10 z" fill="' + ARROW_COLOR + '"></path></marker></defs>';
+        '<defs><marker id="clases-arrowhead" viewBox="0 0 10 10" refX="7" refY="5" ' +
+        'markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse">' +
+        '<path d="M0,0 L10,5 L0,10 z" fill="' + MARK_COLOR + '"></path></marker></defs>';
+
+      for (const square of this.circles) {
+        const rc = squareRowCol(square);
+        if (!rc) continue;
+        const c = centerPercent(rc);
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", c.x);
+        circle.setAttribute("cy", c.y);
+        circle.setAttribute("r", "4.3");
+        circle.setAttribute("fill", "none");
+        circle.setAttribute("stroke", MARK_COLOR);
+        circle.setAttribute("stroke-width", "1.4");
+        circle.setAttribute("opacity", "0.85");
+        svg.appendChild(circle);
+      }
 
       for (const arrow of this.arrows) {
-        const from = squareCenterPercent(arrow.from);
-        const to = squareCenterPercent(arrow.to);
-        if (!from || !to) continue;
+        this._drawArrow(svg, arrow.from, arrow.to);
+      }
+    }
+
+    // Dibuja una flecha alineada a fila/columna/diagonal. Si el movimiento tiene forma de "L"
+    // (caballo), la dobla en ángulo recto en vez de cortar en diagonal, como en lichess.
+    _drawArrow(svg, fromSquare, toSquare) {
+      const from = squareRowCol(fromSquare);
+      const to = squareRowCol(toSquare);
+      if (!from || !to) return;
+      const dx = to.col - from.col;
+      const dy = to.row - from.row;
+      const isStraight = dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy);
+
+      const p1 = centerPercent(from);
+      const p3 = centerPercent(to);
+      let points;
+      if (isStraight) {
+        points = [p1, p3];
+      } else {
+        // Forma de caballo: dobla en el punto que comparte la coordenada del eje "largo".
+        const corner =
+          Math.abs(dx) > Math.abs(dy) ? { row: from.row, col: to.col } : { row: to.row, col: from.col };
+        points = [p1, centerPercent(corner), p3];
+      }
+
+      for (let i = 0; i < points.length - 1; i++) {
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", from.x);
-        line.setAttribute("y1", from.y);
-        line.setAttribute("x2", to.x);
-        line.setAttribute("y2", to.y);
-        line.setAttribute("stroke", ARROW_COLOR);
-        line.setAttribute("stroke-width", "2.5");
+        line.setAttribute("x1", points[i].x);
+        line.setAttribute("y1", points[i].y);
+        line.setAttribute("x2", points[i + 1].x);
+        line.setAttribute("y2", points[i + 1].y);
+        line.setAttribute("stroke", MARK_COLOR);
+        line.setAttribute("stroke-width", "1.5");
         line.setAttribute("stroke-linecap", "round");
         line.setAttribute("opacity", "0.85");
-        line.setAttribute("marker-end", "url(#clases-arrowhead)");
+        if (i === points.length - 2) line.setAttribute("marker-end", "url(#clases-arrowhead)");
         svg.appendChild(line);
       }
     }
@@ -241,7 +317,7 @@
           const result = this.game.move({ from: this.selected, to: square, promotion: "q" });
           this.selected = null;
           this.render();
-          if (result) this.onMove(this.game.fen(), result.san);
+          if (result) this.onMove(this.game.fen(), result.san, this.game.history());
           return;
         }
       }
@@ -276,7 +352,7 @@
       if (target) target.focus();
     }
 
-    // ---------- Flechas de pizarra (botón derecho + arrastre) ----------
+    // ---------- Flechas y círculos de pizarra (botón derecho) ----------
     _squareFromPoint(clientX, clientY) {
       const target = document.elementFromPoint(clientX, clientY);
       const btn = target && target.closest ? target.closest("[data-square]") : null;
@@ -298,23 +374,27 @@
       const from = this._drawingFrom;
       this._drawingFrom = null;
       const to = this._squareFromPoint(e.clientX, e.clientY);
-      if (!to || to === from) return;
+      if (!to) return;
 
-      const existingIndex = this.arrows.findIndex((a) => a.from === from && a.to === to);
-      if (existingIndex !== -1) {
-        this.arrows = this.arrows.filter((_, i) => i !== existingIndex);
+      if (to === from) {
+        // Clic derecho sin arrastrar: marca/desmarca un círculo en la casilla.
+        const idx = this.circles.indexOf(from);
+        this.circles = idx !== -1 ? this.circles.filter((_, i) => i !== idx) : this.circles.concat([from]);
       } else {
-        this.arrows = this.arrows.concat([{ from, to }]);
+        const existingIndex = this.arrows.findIndex((a) => a.from === from && a.to === to);
+        this.arrows =
+          existingIndex !== -1 ? this.arrows.filter((_, i) => i !== existingIndex) : this.arrows.concat([{ from, to }]);
       }
-      this._drawArrowsOverlay();
-      this.onArrowsChange(this.arrows);
+      this._drawMarksOverlay();
+      this.onMarksChange({ arrows: this.arrows, circles: this.circles });
     }
 
-    clearArrows() {
-      if (this.arrows.length === 0) return;
+    clearMarks() {
+      if (this.arrows.length === 0 && this.circles.length === 0) return;
       this.arrows = [];
-      this._drawArrowsOverlay();
-      this.onArrowsChange(this.arrows);
+      this.circles = [];
+      this._drawMarksOverlay();
+      this.onMarksChange({ arrows: this.arrows, circles: this.circles });
     }
   }
 

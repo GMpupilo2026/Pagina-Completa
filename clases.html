@@ -39,7 +39,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/clases-board.js"></script>
-    <script src="js/chess-bot.js"></script>
+    <script src="js/clases-engine.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -96,24 +96,38 @@
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-400 text-sm mt-4"></p>
-                    <p id="arrows-hint" class="hidden text-center text-brand-400 dark:text-brand-500 text-xs mt-1">Clic derecho + arrastrar para dibujar una flecha · clic derecho sobre la misma flecha para borrarla</p>
+                    <p id="arrows-hint" class="hidden text-center text-brand-400 dark:text-brand-500 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
+
+                    <!-- Deshacer: visible para el profesor siempre, y para el alumno solo mientras tiene el control -->
+                    <div class="flex justify-center mt-3">
+                        <button id="undo-move-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↶ Deshacer jugada</button>
+                    </div>
+
+                    <!-- Partidas guardadas: visible para todos -->
+                    <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Partidas guardadas</h2>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Descarga el PGN de cualquier partida guardada por el profesor.</p>
+                        <ul id="saved-games-list" class="space-y-2 text-sm">
+                            <li class="text-brand-300 dark:text-brand-600">Todavía no hay partidas guardadas.</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <aside class="space-y-6">
                     <div id="teacher-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
                         <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real.</p>
-                        <div class="flex gap-2 mb-6">
-                            <button id="reset-board-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Reiniciar tablero</button>
-                            <button id="clear-arrows-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Borrar flechas</button>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button id="reset-board-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Reiniciar tablero</button>
+                            <button id="clear-marks-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Borrar flechas</button>
                         </div>
+                        <button id="save-game-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-6">💾 Guardar partida actual</button>
 
-                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Crear cuenta de alumno</h2>
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
                         <form id="create-student-form" class="space-y-3">
                             <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                             <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <input id="student-password" type="text" required placeholder="Contraseña temporal" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Crear alumno</button>
+                            <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
                             <p id="create-student-msg" class="text-xs"></p>
                         </form>
                     </div>
@@ -129,17 +143,26 @@
 
                     <!-- Motor de análisis (solo profesor) -->
                     <div id="engine-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-2 gap-2">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white">Motor de análisis</h2>
-                            <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Activar</button>
+                            <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0">Activar</button>
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <label for="engine-multipv" class="text-xs text-brand-500 dark:text-brand-400">Variantes:</label>
+                            <select id="engine-multipv" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
                         </div>
                         <p id="engine-status" class="text-xs text-brand-400 dark:text-brand-500">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
                         <div id="engine-output" class="hidden mt-3">
-                            <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-2" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
+                            <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-3" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
                                 <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
                             </div>
-                            <p id="engine-eval-label" class="text-sm font-semibold text-brand-700 dark:text-brand-200">Evaluación: —</p>
-                            <p id="engine-best-move" class="text-xs text-brand-400 dark:text-brand-500 mt-1"></p>
+                            <ol id="engine-lines" class="space-y-1.5 text-xs text-brand-600 dark:text-brand-300"></ol>
                         </div>
                     </div>
 
@@ -196,13 +219,23 @@
             document.getElementById("turn-indicator").textContent = text;
         }
 
+        function canMoveNow() {
+            return isTeacher || activePlayerId === profile.id;
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById("undo-move-btn");
+            btn.classList.toggle("hidden", !canMoveNow());
+        }
+
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
         function applyGameStateRow(row) {
-            board.loadFen(row.fen);
-            board.setArrows(row.arrows || []);
+            board.loadMoves(row.moves || []);
+            board.setMarks(row.arrows || [], row.circles || []);
             activePlayerId = row.active_player_id || null;
             updateTurnIndicator();
             updateAccessForRole();
+            updateUndoButton();
             renderStudentsList();
             if (isTeacher) updateEngineEval();
         }
@@ -216,18 +249,25 @@
                 : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
         }
 
-        async function pushMoveToServer(fen, san) {
-            const { error } = await sb.from("game_state").update({
-                fen, last_move: san, arrows: [], updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", 1);
+        async function pushBoardState(extraFields) {
+            const moves = board.moves();
+            const { error } = await sb.from("game_state").update(Object.assign({
+                fen: board.fen(),
+                moves,
+                last_move: moves.length ? moves[moves.length - 1] : null,
+                arrows: [],
+                circles: [],
+                updated_by: session.user.id,
+                updated_at: new Date().toISOString(),
+            }, extraFields || {})).eq("id", 1);
             if (error) {
                 console.error(error);
-                setStatus("No se pudo guardar la jugada: " + error.message);
+                setStatus("No se pudo guardar el cambio: " + error.message);
             }
         }
 
-        async function pushArrowsToServer(arrows) {
-            const { error } = await sb.from("game_state").update({ arrows }).eq("id", 1);
+        async function pushMarksToServer(marks) {
+            const { error } = await sb.from("game_state").update({ arrows: marks.arrows, circles: marks.circles }).eq("id", 1);
             if (error) console.error(error);
         }
 
@@ -250,16 +290,26 @@
             board = new ClasesBoard(container, {
                 interactive: isTeacher,
                 allowArrows: isTeacher,
-                onMove: (fen, san) => {
-                    board.setArrows([]); // una jugada nueva invalida las flechas de la posición anterior
-                    pushMoveToServer(fen, san);
+                onMove: () => {
+                    pushBoardState();
                     updateTurnIndicator();
+                    updateUndoButton();
                     if (isTeacher) updateEngineEval();
                 },
-                onArrowsChange: (arrows) => pushArrowsToServer(arrows),
+                onMarksChange: (marks) => pushMarksToServer(marks),
             });
             if (isTeacher) document.getElementById("arrows-hint").classList.remove("hidden");
         }
+
+        document.getElementById("undo-move-btn").addEventListener("click", async () => {
+            if (!canMoveNow()) return;
+            const undone = board.undo();
+            if (!undone) return;
+            await pushBoardState();
+            updateTurnIndicator();
+            updateUndoButton();
+            if (isTeacher) updateEngineEval();
+        });
 
         // ---------- Presencia: quién está conectado ahora mismo ----------
         const onlineStudents = new Map(); // id -> {email, full_name}
@@ -327,7 +377,7 @@
             });
         }
 
-        // ---------- Motor de análisis (solo profesor, usa OscarBot / Stockfish ya incluido en el sitio) ----------
+        // ---------- Motor de análisis (solo profesor) ----------
         function scoreToWhiteCp(score, turnAtEval) {
             if (!score) return null;
             const value = score.type === "mate"
@@ -342,27 +392,45 @@
             return Math.max(2, Math.min(98, pct));
         }
 
+        function formatScore(score, turnAtEval) {
+            if (score.type === "mate") {
+                const mateIn = Math.abs(score.value);
+                const favorsMover = score.value > 0;
+                return "Mate en " + mateIn + (favorsMover ? "" : " (en contra)");
+            }
+            const whiteCp = scoreToWhiteCp(score, turnAtEval);
+            return (whiteCp >= 0 ? "+" : "") + (whiteCp / 100).toFixed(1);
+        }
+
         async function updateEngineEval() {
-            if (!engineEnabled || typeof OscarBot === "undefined" || !OscarBot.evaluatePosition) return;
+            if (!engineEnabled || typeof ClasesEngine === "undefined") return;
             const myRequestId = ++engineRequestId;
             const fen = board.fen();
             const turnAtEval = board.game.turn();
-            document.getElementById("engine-eval-label").textContent = "Evaluación: calculando…";
-            let score = null;
-            try {
-                score = await OscarBot.evaluatePosition(fen);
-            } catch (e) {}
+            const multiPv = parseInt(document.getElementById("engine-multipv").value, 10) || 1;
+            const linesEl = document.getElementById("engine-lines");
+            linesEl.innerHTML = '<li class="text-brand-400">Calculando…</li>';
+
+            const results = await ClasesEngine.analyze(fen, multiPv, 700 + multiPv * 150);
             if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
-            const whiteCp = scoreToWhiteCp(score, turnAtEval);
-            const barEl = document.getElementById("engine-eval-bar");
-            const labelEl = document.getElementById("engine-eval-label");
-            if (whiteCp === null) {
-                labelEl.textContent = "Evaluación: no disponible";
-            } else {
-                barEl.style.width = evalToBarPercent(whiteCp) + "%";
-                labelEl.textContent = score.type === "mate"
-                    ? "Evaluación: mate en " + Math.abs(score.value)
-                    : "Evaluación: " + (whiteCp >= 0 ? "+" : "") + (whiteCp / 100).toFixed(1);
+
+            if (!results.length) {
+                linesEl.innerHTML = '<li class="text-brand-400">No disponible</li>';
+                document.getElementById("engine-eval-bar").style.width = "50%";
+                return;
+            }
+
+            const best = results[0];
+            const whiteCp = scoreToWhiteCp(best, turnAtEval);
+            if (whiteCp !== null) document.getElementById("engine-eval-bar").style.width = evalToBarPercent(whiteCp) + "%";
+
+            linesEl.innerHTML = "";
+            for (const line of results) {
+                const sans = ClasesEngine.pvToSan(fen, line.pvUci, 6);
+                const li = document.createElement("li");
+                li.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + line.multipv + ') ' +
+                    formatScore(line, turnAtEval) + '</span> — ' + (sans.join(" ") || "—");
+                linesEl.appendChild(li);
             }
         }
 
@@ -382,6 +450,90 @@
                 output.classList.add("hidden");
                 status.textContent = "Solo lo ves tú — los alumnos nunca ven la evaluación.";
             }
+        });
+
+        document.getElementById("engine-multipv").addEventListener("change", () => { if (engineEnabled) updateEngineEval(); });
+
+        // ---------- Partidas guardadas (PGN) ----------
+        function pgnFromMoves(moves) {
+            const g = new Chess();
+            const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
+            if (g.header) g.header("Event", "Clase de Ajedrez Integral", "Date", today, "White", "Profesor", "Black", "Alumnos", "Result", "*");
+            for (const san of moves) g.move(san);
+            return g.pgn();
+        }
+
+        function downloadText(filename, text) {
+            const blob = new Blob([text], { type: "application/x-chess-pgn" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function renderSavedGames(games) {
+            const listEl = document.getElementById("saved-games-list");
+            if (!games.length) {
+                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Todavía no hay partidas guardadas.</li>';
+                return;
+            }
+            listEl.innerHTML = "";
+            for (const g of games) {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2";
+                const label = document.createElement("span");
+                label.className = "text-brand-700 dark:text-brand-200 truncate";
+                label.textContent = (g.title || new Date(g.created_at).toLocaleString("es")) + " · " + g.move_count + " jugadas";
+                const actions = document.createElement("span");
+                actions.className = "flex items-center gap-2 shrink-0";
+                const dlBtn = document.createElement("button");
+                dlBtn.type = "button";
+                dlBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                dlBtn.textContent = "Descargar PGN";
+                dlBtn.addEventListener("click", () => downloadText("clase-" + g.id.slice(0, 8) + ".pgn", g.pgn));
+                actions.appendChild(dlBtn);
+                if (isTeacher) {
+                    const delBtn = document.createElement("button");
+                    delBtn.type = "button";
+                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+                    delBtn.textContent = "Eliminar";
+                    delBtn.addEventListener("click", async () => {
+                        await sb.from("saved_games").delete().eq("id", g.id);
+                        loadSavedGames();
+                    });
+                    actions.appendChild(delBtn);
+                }
+                li.appendChild(label);
+                li.appendChild(actions);
+                listEl.appendChild(li);
+            }
+        }
+
+        async function loadSavedGames() {
+            const { data, error } = await sb.from("saved_games").select("*").order("created_at", { ascending: false }).limit(50);
+            if (error) { console.error(error); return; }
+            renderSavedGames(data || []);
+        }
+
+        function subscribeSavedGames() {
+            sb.channel("saved-games-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "saved_games" }, () => loadSavedGames())
+                .subscribe();
+        }
+
+        document.getElementById("save-game-btn").addEventListener("click", async () => {
+            const moves = board.moves();
+            if (!moves.length) { setStatus("No hay jugadas todavía para guardar."); return; }
+            const pgn = pgnFromMoves(moves);
+            const { error } = await sb.from("saved_games").insert({
+                pgn, fen_final: board.fen(), move_count: moves.length, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo guardar la partida: " + error.message); return; }
+            setStatus("Partida guardada. Ya aparece en \"Partidas guardadas\" para descargar.");
         });
 
         // ---------- Arranque ----------
@@ -412,6 +564,8 @@
             await loadGameState();
             subscribeRealtime();
             subscribePresence();
+            await loadSavedGames();
+            subscribeSavedGames();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
@@ -425,26 +579,23 @@
 
         document.getElementById("reset-board-btn").addEventListener("click", async () => {
             board.reset();
-            board.setArrows([]);
-            const { error } = await sb.from("game_state").update({
-                fen: board.fen(), last_move: null, arrows: [], updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", 1);
-            if (error) console.error(error);
+            board.setMarks([], []);
+            await pushBoardState();
             updateTurnIndicator();
+            updateUndoButton();
             if (isTeacher) updateEngineEval();
         });
 
-        document.getElementById("clear-arrows-btn").addEventListener("click", () => board.clearArrows());
+        document.getElementById("clear-marks-btn").addEventListener("click", () => board.clearMarks());
 
         document.getElementById("create-student-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const msg = document.getElementById("create-student-msg");
             const btn = document.getElementById("create-student-btn");
             msg.textContent = "";
-            btn.disabled = true; btn.textContent = "Creando...";
+            btn.disabled = true; btn.textContent = "Enviando...";
 
             const email = document.getElementById("student-email").value.trim();
-            const password = document.getElementById("student-password").value;
             const full_name = document.getElementById("student-name").value.trim();
 
             try {
@@ -455,18 +606,18 @@
                         "Authorization": `Bearer ${session.access_token}`,
                         "apikey": window.SUPABASE_ANON_KEY,
                     },
-                    body: JSON.stringify({ email, password, full_name }),
+                    body: JSON.stringify({ email, full_name }),
                 });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error || "Error desconocido");
-                msg.textContent = `Cuenta creada para ${result.email}. Comparte el correo y la contraseña con el alumno.`;
+                msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo con un enlace para entrar.`;
                 msg.className = "text-xs text-green-600 dark:text-green-400";
                 document.getElementById("create-student-form").reset();
             } catch (err) {
                 msg.textContent = err.message;
                 msg.className = "text-xs text-red-600 dark:text-red-400";
             } finally {
-                btn.disabled = false; btn.textContent = "Crear alumno";
+                btn.disabled = false; btn.textContent = "Enviar invitación";
             }
         });
 
