@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peones doblados: ¿siempre son una debilidad? — Ajedrez Integral</title>
+    <meta name="description" content="Los peones doblados tienen fama de debilidad, pero en muchas posiciones son una ventaja. Aprende a evaluar cuándo aceptarlos y cuándo evitarlos.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <article class="pt-28 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4">← Volver a Artículos</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Estrategia</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Peones doblados: ¿siempre son una debilidad?</h1>
+            <p class="text-brand-400 dark:text-brand-500 text-sm mb-8">5 marzo 2026 · 10 min lectura</p>
+            <div class="h-56 bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-10">💡</div>
+
+            <div class="prose-chess space-y-6 text-brand-700 dark:text-brand-200 leading-relaxed">
+<p>"Nunca dobles tus peones" es uno de esos consejos que se repite sin explicar el porqué, y como todo dogma a medias, lleva a decisiones equivocadas. Los peones doblados —dos peones propios en la misma columna— tienen desventajas reales, pero también ventajas que un jugador con criterio sabe aprovechar.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">La desventaja clásica</h2>
+<ul class="list-disc pl-6 space-y-1"><li>No pueden defenderse entre sí, a diferencia de una cadena de peones normal.</li><li>Suelen inmovilizar la columna, dejando una casilla débil delante de ellos.</li><li>En el final, cuentan como "menos" material efectivo: dos peones doblados valen menos que dos peones separados para crear un peón pasado.</li></ul>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cuándo son una ventaja</h2>
+<p>Aceptar peones doblados suele venir acompañado de algo a cambio, y ese "algo" con frecuencia vale más que el defecto estructural:</p>
+<ul class="list-disc pl-6 space-y-1"><li><strong>Columnas abiertas.</strong> Doblar peones casi siempre abre una columna semiabierta para una torre, ideal para presionar piezas o el rey rival.</li><li><strong>Control del centro.</strong> En estructuras como la Defensa Nimzoindia (1.d4 Nf6 2.c4 e6 3.Nc3 Bb4), las blancas aceptan peones doblados en c3/c4 tras un canje a cambio de la pareja de alfiles y un centro de peones ampliado.</li><li><strong>Más control de casillas.</strong> Dos peones doblados en columnas centrales pueden controlar más casillas juntas que separados, reforzando un puesto avanzado para una pieza.</li></ul>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Ejemplo típico: Nimzoindia</h2>
+<blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.e3 O-O 5.Bd3 c5 6.Nf3 Nc6 7.O-O Bxc3 8.bxc3 — las blancas quedan con peones doblados en c3, pero ganan la pareja de alfiles y una base de peones flexible en el centro. Esta estructura se juega en todos los niveles, del club al Campeonato Mundial.</blockquote>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo evaluarlos en tu propia partida</h2>
+<p>Antes de temerle a un doblaje de peones, pregúntate: ¿qué recibo a cambio? Si es la pareja de alfiles, una columna abierta o más control central, puede ser un buen trato. Si no recibes nada y solo debilitas tu estructura, evítalo. La estrategia no se trata de reglas absolutas, sino de sopesar ventajas contra desventajas en cada posición concreta.</p>
+            </div>
+
+            <div class="mt-12 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
+                <p class="text-white font-serif text-lg font-bold mb-2">¿Quieres practicar esto?</p>
+                <p class="text-brand-200 text-sm mb-4">Busca ejercicios de estructura de peones en la Base de Problemas para afinar tu ojo posicional.</p>
+                <a href="../entreno/index.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Ir a la Base de Problemas →</a>
+            </div>
+
+            <div class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="gambito-dama-aceptado.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors">← Gambito de dama aceptado: guía completa para blancas</a>
+                <a href="la-clavada.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right">La clavada: el arma táctica más poderosa →</a>
+            </div>
+        </div>
+    </article>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>

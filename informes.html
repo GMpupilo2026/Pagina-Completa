@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes — Ajedrez Integral</title>
+    <meta name="description" content="Estadísticas de progreso: participación, precisión y actividad de la clase.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
+        <p class="text-brand-400 dark:text-brand-500">Cargando…</p>
+    </div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Panel de Clases</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes 📊</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-8" id="subtitle">Tu actividad y progreso en las clases.</p>
+
+            <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
+            <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
+                <ul id="student-history" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <div id="teacher-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Precisión por alumno</h2>
+                <div id="leaderboard" class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null, profile = null, isTeacher = false;
+
+        function statCard(emoji, value, label) {
+            const div = document.createElement("div");
+            div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
+            div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-400 dark:text-brand-500 mt-1">${label}</div>`;
+            return div;
+        }
+
+        function barRow(name, correct, total) {
+            const pct = total ? Math.round((correct / total) * 100) : 0;
+            const wrap = document.createElement("div");
+            const head = document.createElement("div");
+            head.className = "flex items-center justify-between text-sm mb-1";
+            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${name}</span><span class="text-brand-400 dark:text-brand-500">${correct}/${total} · ${pct}%</span>`;
+            const track = document.createElement("div");
+            track.className = "h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
+            const fill = document.createElement("div");
+            fill.className = "h-full bg-accent-500 rounded-full";
+            fill.style.width = pct + "%";
+            track.appendChild(fill);
+            wrap.append(head, track);
+            return wrap;
+        }
+
+        async function loadStudentReport() {
+            const { data: answers } = await sb.from("question_answers").select("*").eq("student_id", profile.id).order("created_at", { ascending: false });
+            const list = answers || [];
+            const graded = list.filter((a) => a.is_correct !== null);
+            const correct = graded.filter((a) => a.is_correct === true).length;
+            const accuracy = graded.length ? Math.round((correct / graded.length) * 100) : 0;
+
+            const cards = document.getElementById("stat-cards");
+            cards.append(
+                statCard("🚩", list.length, "Asignaciones respondidas"),
+                statCard("✅", correct, "Correctas"),
+                statCard("🎯", accuracy + "%", "Precisión"),
+                statCard("⏳", graded.length < list.length ? list.length - graded.length : 0, "Pendientes de revisar")
+            );
+
+            const historyEl = document.getElementById("student-history");
+            if (!list.length) {
+                historyEl.innerHTML = '<li class="text-brand-400 dark:text-brand-500">Todavía no has respondido ninguna asignación.</li>';
+            } else {
+                list.slice(0, 15).forEach((a) => {
+                    const li = document.createElement("li");
+                    li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                    const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+                    let badge = "Pendiente";
+                    if (a.is_correct === true) badge = "✅ Correcta";
+                    else if (a.is_correct === false) badge = "❌ Incorrecta";
+                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-400">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
+                    historyEl.appendChild(li);
+                });
+            }
+            document.getElementById("student-report").classList.remove("hidden");
+        }
+
+        async function loadTeacherReport() {
+            const { data: sessions } = await sb.from("class_sessions").select("id, ended_at");
+            const closedSessions = (sessions || []).filter((s) => s.ended_at).length;
+            const { data: questions } = await sb.from("questions").select("id");
+            const { data: games } = await sb.from("saved_games").select("id");
+            const { data: students } = await sb.from("profiles").select("*").eq("role", "alumno");
+            const { data: answers } = await sb.from("question_answers").select("*");
+
+            const cards = document.getElementById("stat-cards");
+            cards.append(
+                statCard("🏫", closedSessions, "Clases cerradas"),
+                statCard("🚩", (questions || []).length, "Preguntas planteadas"),
+                statCard("📥", (games || []).length, "Partidas guardadas"),
+                statCard("🧑‍🎓", (students || []).length, "Alumnos")
+            );
+
+            const leaderboard = document.getElementById("leaderboard");
+            const byStudent = {};
+            (answers || []).forEach((a) => {
+                byStudent[a.student_id] = byStudent[a.student_id] || { total: 0, correct: 0 };
+                byStudent[a.student_id].total += 1;
+                if (a.is_correct === true) byStudent[a.student_id].correct += 1;
+            });
+            const rows = (students || [])
+                .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
+                .sort((a, b) => b.total - a.total);
+            if (!rows.length) {
+                leaderboard.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
+            } else {
+                rows.forEach((r) => leaderboard.appendChild(barRow(r.name, r.correct, r.total)));
+            }
+            document.getElementById("teacher-report").classList.remove("hidden");
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
+            profile = profileData;
+            isTeacher = profile.role === "profesor";
+            document.getElementById("subtitle").textContent = isTeacher
+                ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
+                : "Tu actividad y progreso en las asignaciones de clase.";
+            if (isTeacher) await loadTeacherReport();
+            else await loadStudentReport();
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+</body>
+</html>
