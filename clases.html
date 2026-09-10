@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clases en vivo — Ajedrez Integral</title>
+    <meta name="description" content="Sigue en vivo el tablero que mueve tu profesor de ajedrez.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    },
+                    fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/clases-board.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Clases en vivo ♟️</h1>
+                <div class="flex items-center gap-3">
+                    <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
+                    <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors">Contraseña</button>
+                    <button id="logout-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Salir</button>
+                </div>
+            </div>
+
+            <div id="status-banner" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+
+            <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+                <div>
+                    <div class="flex justify-center">
+                        <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+                    </div>
+                    <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-400 text-sm mt-4"></p>
+                </div>
+
+                <aside class="space-y-6">
+                    <div id="teacher-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
+                        <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real.</p>
+                        <button id="reset-board-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-6">Reiniciar tablero</button>
+
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Crear cuenta de alumno</h2>
+                        <form id="create-student-form" class="space-y-3">
+                            <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <input id="student-password" type="text" required placeholder="Contraseña temporal" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Crear alumno</button>
+                            <p id="create-student-msg" class="text-xs"></p>
+                        </form>
+                    </div>
+
+                    <div id="student-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5 text-center">
+                        <span class="text-4xl block mb-2">👀</span>
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Estás viendo en vivo</h2>
+                        <p class="text-sm text-brand-500 dark:text-brand-400">El profesor está moviendo las piezas. El tablero se actualiza automáticamente con cada jugada.</p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </div>
+
+    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+
+    <!-- Modal cambiar contraseña -->
+    <div id="pw-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div class="bg-white dark:bg-brand-900 rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Cambiar contraseña</h2>
+            <input id="new-password" type="password" placeholder="Nueva contraseña (mín. 8 caracteres)" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500 mb-3">
+            <p id="pw-msg" class="text-xs mb-3"></p>
+            <div class="flex gap-2">
+                <button id="pw-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Cancelar</button>
+                <button id="pw-save-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
+        let profile = null;
+        let session = null;
+        let board = null;
+
+        function setStatus(text) {
+            document.getElementById("status-banner").textContent = text;
+        }
+
+        function updateTurnIndicator() {
+            const turn = board.game.turn() === "w" ? "Blancas" : "Negras";
+            let text = `Turno: ${turn}`;
+            if (board.game.in_checkmate && board.game.in_checkmate()) text = `Jaque mate — ganan ${turn === "Blancas" ? "Negras" : "Blancas"}`;
+            else if (board.game.in_check && board.game.in_check()) text += " · ¡Jaque!";
+            else if (board.game.in_draw && board.game.in_draw()) text = "Tablas";
+            document.getElementById("turn-indicator").textContent = text;
+        }
+
+        async function pushMoveToServer(fen, san) {
+            const { error } = await sb.from("game_state").update({
+                fen, last_move: san, updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", 1);
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo guardar la jugada: " + error.message);
+            }
+        }
+
+        async function loadGameState() {
+            const { data, error } = await sb.from("game_state").select("fen").eq("id", 1).single();
+            if (error) { setStatus("No se pudo cargar el tablero: " + error.message); return; }
+            board.loadFen(data.fen);
+            updateTurnIndicator();
+        }
+
+        function subscribeRealtime() {
+            sb.channel("game_state-changes")
+                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "id=eq.1" }, (payload) => {
+                    board.loadFen(payload.new.fen);
+                    updateTurnIndicator();
+                })
+                .subscribe();
+        }
+
+        function initBoardForRole(isTeacher) {
+            const container = document.getElementById("chessboard");
+            board = new ClasesBoard(container, {
+                interactive: isTeacher,
+                onMove: (fen, san) => { pushMoveToServer(fen, san); updateTurnIndicator(); },
+            });
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
+            profile = profileData;
+
+            const isTeacher = profile.role === "profesor";
+            const badge = document.getElementById("role-badge");
+            badge.textContent = isTeacher ? "Profesor" : "Alumno";
+            badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
+
+            document.getElementById(isTeacher ? "teacher-panel" : "student-panel").classList.remove("hidden");
+            setStatus(isTeacher
+                ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
+                : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
+
+            initBoardForRole(isTeacher);
+            await loadGameState();
+            subscribeRealtime();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            await sb.auth.signOut();
+            window.location.href = "index.html";
+        });
+
+        document.getElementById("reset-board-btn").addEventListener("click", async () => {
+            board.reset();
+            await pushMoveToServer(board.fen(), null);
+            updateTurnIndicator();
+        });
+
+        document.getElementById("create-student-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("create-student-msg");
+            const btn = document.getElementById("create-student-btn");
+            msg.textContent = "";
+            btn.disabled = true; btn.textContent = "Creando...";
+
+            const email = document.getElementById("student-email").value.trim();
+            const password = document.getElementById("student-password").value;
+            const full_name = document.getElementById("student-name").value.trim();
+
+            try {
+                const res = await fetch(EDGE_FUNCTION_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`,
+                        "apikey": window.SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({ email, password, full_name }),
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || "Error desconocido");
+                msg.textContent = `Cuenta creada para ${result.email}. Comparte el correo y la contraseña con el alumno.`;
+                msg.className = "text-xs text-green-600 dark:text-green-400";
+                document.getElementById("create-student-form").reset();
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+            } finally {
+                btn.disabled = false; btn.textContent = "Crear alumno";
+            }
+        });
+
+        // Modal de cambio de contraseña
+        const pwModal = document.getElementById("pw-modal");
+        document.getElementById("change-pw-btn").addEventListener("click", () => pwModal.classList.remove("hidden"));
+        document.getElementById("pw-cancel-btn").addEventListener("click", () => pwModal.classList.add("hidden"));
+        document.getElementById("pw-save-btn").addEventListener("click", async () => {
+            const pwMsg = document.getElementById("pw-msg");
+            const newPassword = document.getElementById("new-password").value;
+            if (newPassword.length < 8) {
+                pwMsg.textContent = "La contraseña debe tener al menos 8 caracteres.";
+                pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";
+                return;
+            }
+            const { error } = await sb.auth.updateUser({ password: newPassword });
+            if (error) {
+                pwMsg.textContent = error.message;
+                pwMsg.className = "text-xs text-red-600 dark:text-red-400 mb-3";
+                return;
+            }
+            pwMsg.textContent = "Contraseña actualizada.";
+            pwMsg.className = "text-xs text-green-600 dark:text-green-400 mb-3";
+            setTimeout(() => { pwModal.classList.add("hidden"); document.getElementById("new-password").value = ""; }, 1200);
+        });
+
+        init();
+    </script>
+</body>
+</html>
