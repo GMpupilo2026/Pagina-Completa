@@ -84,7 +84,6 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Inscribirme →</a>
-                    <button id="unlock-course-btn-top" type="button" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap">🔒 Llevar curso</button>
                 </div>
             </div>
 
@@ -120,13 +119,9 @@
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
             <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada lección desarrollada por completo, con su video explicativo, presentación y PDF de ejercicios, lista para llevarse en línea a tu ritmo. Los videos son contenido de terceros alojado en YouTube (no en este sitio): pueden cambiar o dejar de estar disponibles con el tiempo.</p>
 
-            <div id="course-locked-panel" class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-8 text-center">
-                <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
-                <p class="text-brand-600 dark:text-brand-300 mb-4">Este contenido está bloqueado por contraseña.</p>
-                <button id="unlock-course-btn-panel" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">🔓 Llevar curso</button>
+            <div id="course-content-body" data-course="calculo-y-visualizacion" class="space-y-8">
+                <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
             </div>
-
-            <div id="course-content-body" data-course="calculo-y-visualizacion" class="hidden space-y-8"></div>
 
             <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
                 <p class="text-white font-serif text-lg font-bold mb-2">¿Listo para empezar?</p>
@@ -142,100 +137,22 @@
     </article>
     </main>
 
-    <!-- Contraseña para desbloquear el contenido completo del curso -->
-    <div id="password-modal" class="hidden fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
-        <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <h2 id="password-modal-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Contenido bloqueado</h2>
-            <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Este curso está bloqueado por contraseña. Ingresa la contraseña para acceder al contenido completo.</p>
-            <label for="course-password-input" class="sr-only">Contraseña</label>
-            <input id="course-password-input" type="password" placeholder="Contraseña" autocomplete="off" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
-            <p id="course-password-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-3 min-h-[1em]"></p>
-            <div class="flex justify-end gap-2">
-                <button id="password-cancel-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-brand-500 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors">Cancelar</button>
-                <button id="password-submit-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Desbloquear</button>
-            </div>
-        </div>
-    </div>
-
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
     <script>
         (function () {
-            var modal = document.getElementById("password-modal");
-            var lockedPanel = document.getElementById("course-locked-panel");
             var contentBody = document.getElementById("course-content-body");
-            var input = document.getElementById("course-password-input");
-            var msg = document.getElementById("course-password-msg");
             var contentUrl = "protegido/" + contentBody.dataset.course + ".html";
 
-            function showUnlocked(html) {
-                contentBody.innerHTML = html;
-                lockedPanel.classList.add("hidden");
-                contentBody.classList.remove("hidden");
-            }
-
-            // Pide el fragmento protegido. Si el navegador ya tiene la cookie de una
-            // sesión anterior, el servidor lo entrega sin pedir contraseña de nuevo;
-            // si no, responde 403 y seguimos mostrando el panel bloqueado.
-            function tryLoadContent(scrollTo) {
-                return fetch(contentUrl, { credentials: "same-origin" })
-                    .then(function (r) {
-                        if (!r.ok) return false;
-                        return r.text().then(function (html) {
-                            showUnlocked(html);
-                            if (scrollTo) contentBody.scrollIntoView({ behavior: "smooth", block: "start" });
-                            return true;
-                        });
-                    })
-                    .catch(function () { return false; });
-            }
-
-            function openModal() {
-                msg.textContent = "";
-                input.value = "";
-                modal.classList.remove("hidden");
-                input.focus();
-            }
-            function closeModal() {
-                modal.classList.add("hidden");
-            }
-            function attemptUnlock() {
-                fetch("/api/curso-auth", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ password: input.value }),
-                }).then(function (r) {
-                    if (!r.ok) throw new Error("wrong_password");
-                    return tryLoadContent(true);
-                }).then(function (loaded) {
-                    if (loaded) {
-                        closeModal();
-                    } else {
-                        msg.textContent = "No se pudo cargar el contenido. Intenta de nuevo.";
-                    }
-                }).catch(function () {
-                    msg.textContent = "Contraseña incorrecta: este curso está bloqueado por contraseña.";
-                    input.focus();
-                    input.select();
+            fetch(contentUrl, { credentials: "same-origin" })
+                .then(function (r) {
+                    if (!r.ok) throw new Error("no_content");
+                    return r.text();
+                })
+                .then(function (html) { contentBody.innerHTML = html; })
+                .catch(function () {
+                    contentBody.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
                 });
-            }
-            function handleUnlockClick() {
-                tryLoadContent(true).then(function (loaded) {
-                    if (!loaded) openModal();
-                });
-            }
-
-            // Al cargar la página, si ya hay una cookie válida de una visita anterior,
-            // el contenido se desbloquea solo (sin volver a pedir la contraseña).
-            tryLoadContent(false);
-
-            document.getElementById("unlock-course-btn-top").addEventListener("click", handleUnlockClick);
-            document.getElementById("unlock-course-btn-panel").addEventListener("click", handleUnlockClick);
-            document.getElementById("password-cancel-btn").addEventListener("click", closeModal);
-            document.getElementById("password-submit-btn").addEventListener("click", attemptUnlock);
-            input.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
-            modal.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
         })();
 </script>
 </body>
