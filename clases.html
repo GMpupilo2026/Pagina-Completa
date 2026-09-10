@@ -383,8 +383,14 @@
             document.getElementById("welcome-name").textContent = displayName;
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
             const badge = document.getElementById("role-badge");
-            badge.textContent = isTeacher ? "Profesor" : "Alumno";
+            badge.textContent = profile.is_admin ? "👑 Administrador" : (isTeacher ? "Profesor" : "Alumno");
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
+
+            // Solo la persona administradora ve este acceso — el panel en sí vuelve a
+            // comprobarlo (no basta con no mostrar el botón aquí).
+            if (profile.is_admin) {
+                TILES.splice(1, 0, { emoji: "👑", label: "Administración", desc: "Cuentas, roles y accesos", href: "admin.html" });
+            }
 
             renderTiles();
             await refreshSessionStatus();
