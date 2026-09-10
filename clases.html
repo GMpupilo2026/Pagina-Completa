@@ -39,6 +39,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/clases-board.js"></script>
+    <script src="js/chess-bot.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -95,13 +96,17 @@
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-400 text-sm mt-4"></p>
+                    <p id="arrows-hint" class="hidden text-center text-brand-400 dark:text-brand-500 text-xs mt-1">Clic derecho + arrastrar para dibujar una flecha · clic derecho sobre la misma flecha para borrarla</p>
                 </div>
 
                 <aside class="space-y-6">
                     <div id="teacher-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
                         <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real.</p>
-                        <button id="reset-board-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-6">Reiniciar tablero</button>
+                        <div class="flex gap-2 mb-6">
+                            <button id="reset-board-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Reiniciar tablero</button>
+                            <button id="clear-arrows-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Borrar flechas</button>
+                        </div>
 
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Crear cuenta de alumno</h2>
                         <form id="create-student-form" class="space-y-3">
@@ -111,6 +116,31 @@
                             <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Crear alumno</button>
                             <p id="create-student-msg" class="text-xs"></p>
                         </form>
+                    </div>
+
+                    <!-- Alumnos conectados (solo profesor) -->
+                    <div id="students-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                        <ul id="students-list" class="space-y-2 text-sm">
+                            <li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>
+                        </ul>
+                    </div>
+
+                    <!-- Motor de análisis (solo profesor) -->
+                    <div id="engine-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white">Motor de análisis</h2>
+                            <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Activar</button>
+                        </div>
+                        <p id="engine-status" class="text-xs text-brand-400 dark:text-brand-500">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
+                        <div id="engine-output" class="hidden mt-3">
+                            <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-2" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
+                                <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
+                            </div>
+                            <p id="engine-eval-label" class="text-sm font-semibold text-brand-700 dark:text-brand-200">Evaluación: —</p>
+                            <p id="engine-best-move" class="text-xs text-brand-400 dark:text-brand-500 mt-1"></p>
+                        </div>
                     </div>
 
                     <div id="student-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5 text-center">
@@ -143,9 +173,15 @@
     <script src="js/main.js"></script>
     <script>
         const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
+        const PRESENCE_CHANNEL = "clases-presence";
         let profile = null;
         let session = null;
         let board = null;
+        let isTeacher = false;
+        let activePlayerId = null;
+        let presenceChannel = null;
+        let engineEnabled = false;
+        let engineRequestId = 0;
 
         function setStatus(text) {
             document.getElementById("status-banner").textContent = text;
@@ -160,9 +196,29 @@
             document.getElementById("turn-indicator").textContent = text;
         }
 
+        // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
+        function applyGameStateRow(row) {
+            board.loadFen(row.fen);
+            board.setArrows(row.arrows || []);
+            activePlayerId = row.active_player_id || null;
+            updateTurnIndicator();
+            updateAccessForRole();
+            renderStudentsList();
+            if (isTeacher) updateEngineEval();
+        }
+
+        function updateAccessForRole() {
+            if (isTeacher) return;
+            const hasControl = activePlayerId === profile.id;
+            board.setInteractive(hasControl);
+            setStatus(hasControl
+                ? "¡El profesor te dio el control del tablero! Ya puedes mover piezas."
+                : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
+        }
+
         async function pushMoveToServer(fen, san) {
             const { error } = await sb.from("game_state").update({
-                fen, last_move: san, updated_by: session.user.id, updated_at: new Date().toISOString(),
+                fen, last_move: san, arrows: [], updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", 1);
             if (error) {
                 console.error(error);
@@ -170,30 +226,165 @@
             }
         }
 
+        async function pushArrowsToServer(arrows) {
+            const { error } = await sb.from("game_state").update({ arrows }).eq("id", 1);
+            if (error) console.error(error);
+        }
+
         async function loadGameState() {
-            const { data, error } = await sb.from("game_state").select("fen").eq("id", 1).single();
+            const { data, error } = await sb.from("game_state").select("*").eq("id", 1).single();
             if (error) { setStatus("No se pudo cargar el tablero: " + error.message); return; }
-            board.loadFen(data.fen);
-            updateTurnIndicator();
+            applyGameStateRow(data);
         }
 
         function subscribeRealtime() {
             sb.channel("game_state-changes")
                 .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "id=eq.1" }, (payload) => {
-                    board.loadFen(payload.new.fen);
-                    updateTurnIndicator();
+                    applyGameStateRow(payload.new);
                 })
                 .subscribe();
         }
 
-        function initBoardForRole(isTeacher) {
+        function initBoardForRole() {
             const container = document.getElementById("chessboard");
             board = new ClasesBoard(container, {
                 interactive: isTeacher,
-                onMove: (fen, san) => { pushMoveToServer(fen, san); updateTurnIndicator(); },
+                allowArrows: isTeacher,
+                onMove: (fen, san) => {
+                    board.setArrows([]); // una jugada nueva invalida las flechas de la posición anterior
+                    pushMoveToServer(fen, san);
+                    updateTurnIndicator();
+                    if (isTeacher) updateEngineEval();
+                },
+                onArrowsChange: (arrows) => pushArrowsToServer(arrows),
+            });
+            if (isTeacher) document.getElementById("arrows-hint").classList.remove("hidden");
+        }
+
+        // ---------- Presencia: quién está conectado ahora mismo ----------
+        const onlineStudents = new Map(); // id -> {email, full_name}
+
+        function renderStudentsList() {
+            if (!isTeacher) return;
+            const listEl = document.getElementById("students-list");
+            const entries = Array.from(onlineStudents.entries());
+            if (entries.length === 0) {
+                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>';
+                return;
+            }
+            listEl.innerHTML = "";
+            for (const [studentId, info] of entries) {
+                const hasControl = activePlayerId === studentId;
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2";
+                const label = document.createElement("span");
+                label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 truncate";
+                label.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 shrink-0" title="En vivo"></span><span class="truncate">' +
+                    (info.full_name || info.email) + "</span>";
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = hasControl
+                    ? "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
+                    : "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                btn.textContent = hasControl ? "Quitar control" : "Dar control";
+                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId));
+                li.appendChild(label);
+                li.appendChild(btn);
+                listEl.appendChild(li);
+            }
+        }
+
+        async function setActivePlayer(studentId) {
+            const { error } = await sb.from("game_state").update({ active_player_id: studentId }).eq("id", 1);
+            if (error) {
+                console.error(error);
+                setStatus("No se pudo actualizar el control del tablero: " + error.message);
+            }
+        }
+
+        function subscribePresence() {
+            presenceChannel = sb.channel(PRESENCE_CHANNEL, { config: { presence: { key: profile.id } } });
+            presenceChannel.on("presence", { event: "sync" }, () => {
+                const state = presenceChannel.presenceState();
+                onlineStudents.clear();
+                for (const key of Object.keys(state)) {
+                    const meta = state[key][0];
+                    if (meta && meta.role === "alumno") {
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name });
+                    }
+                }
+                renderStudentsList();
+            });
+            presenceChannel.subscribe(async (status) => {
+                if (status === "SUBSCRIBED") {
+                    await presenceChannel.track({
+                        email: profile.email,
+                        full_name: profile.full_name || "",
+                        role: profile.role,
+                        online_at: new Date().toISOString(),
+                    });
+                }
             });
         }
 
+        // ---------- Motor de análisis (solo profesor, usa OscarBot / Stockfish ya incluido en el sitio) ----------
+        function scoreToWhiteCp(score, turnAtEval) {
+            if (!score) return null;
+            const value = score.type === "mate"
+                ? (score.value > 0 ? 100000 - score.value : -100000 - score.value)
+                : score.value;
+            return turnAtEval === "w" ? value : -value;
+        }
+
+        function evalToBarPercent(whiteCp) {
+            const k = 0.0035;
+            const pct = 50 + 50 * (2 / (1 + Math.exp(-k * whiteCp)) - 1);
+            return Math.max(2, Math.min(98, pct));
+        }
+
+        async function updateEngineEval() {
+            if (!engineEnabled || typeof OscarBot === "undefined" || !OscarBot.evaluatePosition) return;
+            const myRequestId = ++engineRequestId;
+            const fen = board.fen();
+            const turnAtEval = board.game.turn();
+            document.getElementById("engine-eval-label").textContent = "Evaluación: calculando…";
+            let score = null;
+            try {
+                score = await OscarBot.evaluatePosition(fen);
+            } catch (e) {}
+            if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
+            const whiteCp = scoreToWhiteCp(score, turnAtEval);
+            const barEl = document.getElementById("engine-eval-bar");
+            const labelEl = document.getElementById("engine-eval-label");
+            if (whiteCp === null) {
+                labelEl.textContent = "Evaluación: no disponible";
+            } else {
+                barEl.style.width = evalToBarPercent(whiteCp) + "%";
+                labelEl.textContent = score.type === "mate"
+                    ? "Evaluación: mate en " + Math.abs(score.value)
+                    : "Evaluación: " + (whiteCp >= 0 ? "+" : "") + (whiteCp / 100).toFixed(1);
+            }
+        }
+
+        document.getElementById("engine-toggle-btn").addEventListener("click", async (e) => {
+            engineEnabled = !engineEnabled;
+            const btn = e.currentTarget;
+            const output = document.getElementById("engine-output");
+            const status = document.getElementById("engine-status");
+            if (engineEnabled) {
+                btn.textContent = "Desactivar";
+                output.classList.remove("hidden");
+                status.textContent = "Cargando el motor (puede tardar unos segundos la primera vez)…";
+                await updateEngineEval();
+                status.textContent = "Solo lo ves tú — los alumnos nunca ven la evaluación.";
+            } else {
+                btn.textContent = "Activar";
+                output.classList.add("hidden");
+                status.textContent = "Solo lo ves tú — los alumnos nunca ven la evaluación.";
+            }
+        });
+
+        // ---------- Arranque ----------
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -202,35 +393,48 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
+            isTeacher = profile.role === "profesor";
 
-            const isTeacher = profile.role === "profesor";
             const badge = document.getElementById("role-badge");
             badge.textContent = isTeacher ? "Profesor" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             document.getElementById(isTeacher ? "teacher-panel" : "student-panel").classList.remove("hidden");
+            if (isTeacher) {
+                document.getElementById("students-panel").classList.remove("hidden");
+                document.getElementById("engine-panel").classList.remove("hidden");
+            }
             setStatus(isTeacher
                 ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
                 : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
 
-            initBoardForRole(isTeacher);
+            initBoardForRole();
             await loadGameState();
             subscribeRealtime();
+            subscribePresence();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
         }
 
         document.getElementById("logout-btn").addEventListener("click", async () => {
+            if (presenceChannel) await presenceChannel.untrack();
             await sb.auth.signOut();
             window.location.href = "index.html";
         });
 
         document.getElementById("reset-board-btn").addEventListener("click", async () => {
             board.reset();
-            await pushMoveToServer(board.fen(), null);
+            board.setArrows([]);
+            const { error } = await sb.from("game_state").update({
+                fen: board.fen(), last_move: null, arrows: [], updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", 1);
+            if (error) console.error(error);
             updateTurnIndicator();
+            if (isTeacher) updateEngineEval();
         });
+
+        document.getElementById("clear-arrows-btn").addEventListener("click", () => board.clearArrows());
 
         document.getElementById("create-student-form").addEventListener("submit", async (e) => {
             e.preventDefault();
