@@ -93,6 +93,13 @@
   try {
     blindMode = localStorage.getItem(BLIND_MODE_KEY) === "1";
   } catch (e) {}
+  // El panel de Clases enlaza aquí con "?modo=ciego" para el icono "Robot Ciego":
+  // preselecciona el modo adaptado sin tener que tocar el interruptor a mano.
+  try {
+    if (new URLSearchParams(window.location.search).get("modo") === "ciego") {
+      blindMode = true;
+    }
+  } catch (e) {}
 
   const blindOnlyEls = Array.from(document.querySelectorAll(".blind-mode-only"));
   const normalOnlyEls = Array.from(document.querySelectorAll(".normal-mode-only"));
