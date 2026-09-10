@@ -123,11 +123,15 @@
             return h > 0 ? `${h} h ${mm} min` : `${mm} min`;
         }
 
-        // Minutos que un alumno pasó en una clase: desde que quedó registrada su asistencia
-        // hasta que el profesor la cerró (o hasta ahora, si sigue en curso).
-        function minutesInSession(joinedAt, sessionRow) {
-            const end = sessionRow && sessionRow.ended_at ? new Date(sessionRow.ended_at) : new Date();
-            return Math.max(0, (end - new Date(joinedAt)) / 60000);
+        // Minutos realmente conectado: cada fila de class_presence_log es una ventana de
+        // conexión (joined_at -> left_at, "tocada" cada pocos segundos mientras la pestaña
+        // sigue abierta). Sumar estas ventanas da el tiempo exacto en línea, no una
+        // estimación desde que entró hasta que el profesor cerró la clase.
+        function minutesFromPresenceRows(rows) {
+            return (rows || []).reduce((sum, r) => {
+                const end = r.left_at ? new Date(r.left_at) : new Date();
+                return sum + Math.max(0, (end - new Date(r.joined_at)) / 60000);
+            }, 0);
         }
 
         function statCard(emoji, value, label) {
@@ -169,7 +173,9 @@
             const attended = attendance || [];
             const attendedClosed = attended.filter((a) => sessionById[a.session_id] && sessionById[a.session_id].ended_at).length;
             const attendanceRate = closedCount ? Math.round((attendedClosed / closedCount) * 100) : 0;
-            const totalMinutes = attended.reduce((sum, a) => sum + minutesInSession(a.joined_at, sessionById[a.session_id]), 0);
+
+            const { data: presenceRows } = await sb.from("class_presence_log").select("*").eq("student_id", profile.id);
+            const totalMinutes = minutesFromPresenceRows(presenceRows);
 
             const cards = document.getElementById("stat-cards");
             cards.append(
@@ -209,6 +215,7 @@
             const { data: students } = await sb.from("profiles").select("*").eq("role", "alumno");
             const { data: answers } = await sb.from("question_answers").select("*");
             const { data: attendance } = await sb.from("class_attendance").select("*");
+            const { data: presenceRows } = await sb.from("class_presence_log").select("*");
 
             const cards = document.getElementById("stat-cards");
             cards.append(
@@ -239,7 +246,14 @@
                 const s = sessionById[a.session_id];
                 attByStudent[a.student_id] = attByStudent[a.student_id] || { count: 0, minutes: 0 };
                 if (s && s.ended_at) attByStudent[a.student_id].count += 1;
-                attByStudent[a.student_id].minutes += minutesInSession(a.joined_at, s);
+            });
+            const presenceByStudent = {};
+            (presenceRows || []).forEach((r) => {
+                (presenceByStudent[r.student_id] = presenceByStudent[r.student_id] || []).push(r);
+            });
+            Object.keys(presenceByStudent).forEach((studentId) => {
+                attByStudent[studentId] = attByStudent[studentId] || { count: 0, minutes: 0 };
+                attByStudent[studentId].minutes = minutesFromPresenceRows(presenceByStudent[studentId]);
             });
             const attBody = document.getElementById("attendance-table-body");
             attBody.innerHTML = "";

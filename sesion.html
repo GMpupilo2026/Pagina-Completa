@@ -79,7 +79,7 @@
 
     <div id="app" class="hidden pt-20 pb-16">
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Panel de Clases</a>
+            <a id="back-to-panel-link" href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Panel de Clases</a>
             <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo ♟️</h1>
                 <div class="flex items-center gap-3">
@@ -96,6 +96,19 @@
                     <div class="flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
+
+                    <!-- Barra del tablero: girar y coordenadas (para todos); navegar jugadas (solo profesor) -->
+                    <div class="flex items-center justify-center flex-wrap gap-2 mt-3">
+                        <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Girar el tablero (negras abajo)">⇅ Girar</button>
+                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Mostrar coordenadas">🔢 Coordenadas</button>
+                        <span id="move-nav" class="hidden items-center gap-1 ml-1">
+                            <button id="move-nav-first" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
+                            <button id="move-nav-prev" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada anterior">◀</button>
+                            <button id="move-nav-next" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Jugada siguiente">▶</button>
+                            <button id="move-nav-last" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Última jugada">⏭</button>
+                        </span>
+                    </div>
+
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-400 text-sm mt-4"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-400 dark:text-brand-500 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
 
@@ -153,7 +166,18 @@
                             <button id="reset-board-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Reiniciar tablero</button>
                             <button id="clear-marks-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Borrar flechas</button>
                         </div>
-                        <button id="save-game-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-6">💾 Guardar partida actual</button>
+                        <button id="save-game-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-3">💾 Guardar partida actual</button>
+
+                        <button id="toggle-hide-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-3">🙈 Ocultar piezas a los alumnos</button>
+
+                        <div class="border border-brand-200 dark:border-brand-700 rounded-lg p-3 mb-6">
+                            <button id="toggle-free-mode-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">🔓 Modo edición libre</button>
+                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Mueve piezas ignorando las reglas del ajedrez, para armar una posición. No se ve en vivo mientras editas: al aplicarla, se transmite a todos.</p>
+                            <div id="free-mode-actions" class="hidden flex gap-2 mt-2">
+                                <button id="free-mode-apply-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Aplicar posición</button>
+                                <button id="free-mode-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cancelar</button>
+                            </div>
+                        </div>
 
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
                         <form id="create-student-form" class="space-y-3">
@@ -433,13 +457,18 @@
 
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
         function applyGameStateRow(row) {
-            board.loadMoves(row.moves || []);
+            board.loadMoves(row.moves || [], row.start_fen);
             board.setMarks(row.arrows || [], row.circles || []);
+            // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
+            // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
+            board.setPiecesHidden(!isTeacher && !!row.pieces_hidden);
+            lastPiecesHidden = !!row.pieces_hidden;
             activePlayerId = row.active_player_id || null;
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
             renderStudentsList();
+            updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
         }
 
@@ -457,6 +486,7 @@
             const { error } = await sb.from("game_state").update(Object.assign({
                 fen: board.fen(),
                 moves,
+                start_fen: board.startFen,
                 last_move: moves.length ? moves[moves.length - 1] : null,
                 arrows: [],
                 circles: [],
@@ -488,9 +518,7 @@
                 .subscribe();
         }
 
-        // ---------- Registro de clases: asistencia y cierre en vivo ----------
-        // No llevamos "salida" de la clase: la duración se calcula en Informes como
-        // started_at/joined_at hasta ended_at, así que basta con un registro al entrar.
+        // ---------- Registro de clases: asistencia, tiempo real conectado y cierre en vivo ----------
         let currentOpenSessionId = null;
 
         async function markAttendance(sessionId) {
@@ -502,11 +530,46 @@
             if (error) console.error(error);
         }
 
+        // Tiempo en clase EXACTO: no se estima desde que entró hasta que cerró la clase, sino
+        // que se abre una fila al conectarse y se va "tocando" (left_at) cada pocos segundos
+        // mientras la pestaña sigue abierta — así left_at siempre refleja, con unos segundos de
+        // margen, el último momento realmente conectado, sin depender de que el navegador
+        // avise al cerrarse.
+        let presenceLogId = null;
+        let presenceHeartbeatTimer = null;
+
+        async function startPresenceLog(sessionId) {
+            if (isTeacher || !sessionId || presenceLogId) return;
+            const { data, error } = await sb.from("class_presence_log")
+                .insert({ session_id: sessionId, student_id: profile.id })
+                .select().single();
+            if (error) { console.error(error); return; }
+            presenceLogId = data.id;
+            if (presenceHeartbeatTimer) clearInterval(presenceHeartbeatTimer);
+            presenceHeartbeatTimer = setInterval(touchPresenceLog, 20000);
+        }
+
+        async function touchPresenceLog() {
+            if (!presenceLogId) return;
+            await sb.from("class_presence_log").update({ left_at: new Date().toISOString() }).eq("id", presenceLogId);
+        }
+
+        async function stopPresenceLog() {
+            if (presenceHeartbeatTimer) { clearInterval(presenceHeartbeatTimer); presenceHeartbeatTimer = null; }
+            if (presenceLogId) {
+                await touchPresenceLog();
+                presenceLogId = null;
+            }
+        }
+
         async function checkOpenClassSession() {
             const { data } = await sb.from("class_sessions").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
-            if (openSession) await markAttendance(openSession.id);
+            if (openSession) {
+                await markAttendance(openSession.id);
+                await startPresenceLog(openSession.id);
+            }
         }
 
         function subscribeClassSessions() {
@@ -515,9 +578,13 @@
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
                         currentOpenSessionId = payload.new.id;
                         markAttendance(payload.new.id);
+                        startPresenceLog(payload.new.id);
                     } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
-                        // El profesor cerró la clase: a los alumnos los devolvemos al panel.
-                        if (!isTeacher) window.location.href = "clases.html";
+                        // El profesor cerró la clase: registramos el último instante conectado
+                        // y devolvemos al alumno al panel.
+                        if (!isTeacher) {
+                            stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
+                        }
                     }
                 })
                 .subscribe();
@@ -547,7 +614,109 @@
                 },
             });
             if (isTeacher) document.getElementById("arrows-hint").classList.remove("hidden");
+            const moveNav = document.getElementById("move-nav");
+            moveNav.classList.toggle("hidden", !isTeacher);
+            moveNav.classList.toggle("flex", isTeacher);
+            applyBoardViewPrefs();
         }
+
+        // ---------- Preferencias de vista del tablero: girar y coordenadas ----------
+        // Son personales del navegador (no se sincronizan): cada quien elige cómo mirar SU pantalla.
+        const FLIP_KEY = "clasesBoardFlipped_v1";
+        const COORDS_KEY = "clasesBoardCoords_v1";
+
+        function applyBoardViewPrefs() {
+            let flipped = false, coords = false;
+            try { flipped = localStorage.getItem(FLIP_KEY) === "1"; } catch (e) {}
+            try { coords = localStorage.getItem(COORDS_KEY) === "1"; } catch (e) {}
+            board.setFlipped(flipped);
+            board.setShowCoords(coords);
+            document.getElementById("show-coords-btn").setAttribute("aria-pressed", coords ? "true" : "false");
+            document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
+            document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
+        }
+
+        document.getElementById("flip-board-btn").addEventListener("click", () => {
+            const flipped = !board.flipped;
+            try { localStorage.setItem(FLIP_KEY, flipped ? "1" : "0"); } catch (e) {}
+            board.setFlipped(flipped);
+        });
+
+        document.getElementById("show-coords-btn").addEventListener("click", () => {
+            const coords = !board.showCoords;
+            try { localStorage.setItem(COORDS_KEY, coords ? "1" : "0"); } catch (e) {}
+            board.setShowCoords(coords);
+            document.getElementById("show-coords-btn").setAttribute("aria-pressed", coords ? "true" : "false");
+            document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
+            document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
+        });
+
+        // ---------- Navegar entre jugadas (solo profesor) ----------
+        function currentViewedPly() {
+            return board.isViewingHistory() ? board.viewPath.length : board.moves().length;
+        }
+
+        function stepToPly(ply) {
+            const total = board.moves().length;
+            board.viewMainAt(Math.max(0, Math.min(ply, total)));
+            renderMoveList();
+        }
+
+        document.getElementById("move-nav-first").addEventListener("click", () => stepToPly(0));
+        document.getElementById("move-nav-prev").addEventListener("click", () => stepToPly(currentViewedPly() - 1));
+        document.getElementById("move-nav-next").addEventListener("click", () => stepToPly(currentViewedPly() + 1));
+        document.getElementById("move-nav-last").addEventListener("click", () => stepToPly(board.moves().length));
+
+        // ---------- Ocultar piezas a los alumnos (solo profesor) ----------
+        function updateHideBoardBtn() {
+            if (!isTeacher) return;
+            const btn = document.getElementById("toggle-hide-btn");
+            const hidden = !!lastPiecesHidden;
+            btn.textContent = hidden ? "👁️ Mostrar piezas a los alumnos" : "🙈 Ocultar piezas a los alumnos";
+        }
+        let lastPiecesHidden = false;
+
+        document.getElementById("toggle-hide-btn").addEventListener("click", async () => {
+            lastPiecesHidden = !lastPiecesHidden;
+            updateHideBoardBtn();
+            const { error } = await sb.from("game_state").update({ pieces_hidden: lastPiecesHidden }).eq("id", 1);
+            if (error) { console.error(error); setStatus("No se pudo cambiar la visibilidad de las piezas: " + error.message); }
+        });
+
+        // ---------- Modo edición libre / jugadas ilegales (solo profesor) ----------
+        document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
+            const active = !board.freeMode;
+            board.setFreeMode(active);
+            document.getElementById("free-mode-actions").classList.toggle("hidden", !active);
+            document.getElementById("toggle-free-mode-btn").textContent = active
+                ? "🔒 Editando posición… (moviendo piezas libremente)"
+                : "🔓 Modo edición libre";
+            setStatus(active
+                ? "Modo edición libre: mueve las piezas como quieras. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
+                : "");
+        });
+
+        document.getElementById("free-mode-apply-btn").addEventListener("click", async () => {
+            const finalFen = board.fen();
+            board.setFreeMode(false);
+            document.getElementById("free-mode-actions").classList.add("hidden");
+            document.getElementById("toggle-free-mode-btn").textContent = "🔓 Modo edición libre";
+            await sb.from("game_state").update({
+                fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
+                arrows: [], circles: [], active_player_id: null,
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", 1);
+            await clearVariantTree();
+            setStatus("Posición aplicada: ya se transmitió a todos los alumnos.");
+        });
+
+        document.getElementById("free-mode-cancel-btn").addEventListener("click", async () => {
+            board.setFreeMode(false);
+            document.getElementById("free-mode-actions").classList.add("hidden");
+            document.getElementById("toggle-free-mode-btn").textContent = "🔓 Modo edición libre";
+            await loadGameState();
+            setStatus("Edición descartada: se restauró la posición real de la clase.");
+        });
 
         document.getElementById("undo-move-btn").addEventListener("click", async () => {
             if (!canMoveNow() || board.isViewingHistory()) return;
@@ -1065,8 +1234,16 @@
 
         document.getElementById("logout-btn").addEventListener("click", async () => {
             if (presenceChannel) await presenceChannel.untrack();
+            await stopPresenceLog();
             await sb.auth.signOut();
             window.location.href = "index.html";
+        });
+
+        document.getElementById("back-to-panel-link").addEventListener("click", async (e) => {
+            if (!presenceLogId) return; // nada que cerrar (profesor, o todavía sin clase abierta)
+            e.preventDefault();
+            await stopPresenceLog();
+            window.location.href = "clases.html";
         });
 
         document.getElementById("reset-board-btn").addEventListener("click", async () => {
