@@ -488,6 +488,41 @@
                 .subscribe();
         }
 
+        // ---------- Registro de clases: asistencia y cierre en vivo ----------
+        // No llevamos "salida" de la clase: la duración se calcula en Informes como
+        // started_at/joined_at hasta ended_at, así que basta con un registro al entrar.
+        let currentOpenSessionId = null;
+
+        async function markAttendance(sessionId) {
+            if (isTeacher) return;
+            const { error } = await sb.from("class_attendance").upsert(
+                { session_id: sessionId, student_id: profile.id },
+                { onConflict: "session_id,student_id", ignoreDuplicates: true }
+            );
+            if (error) console.error(error);
+        }
+
+        async function checkOpenClassSession() {
+            const { data } = await sb.from("class_sessions").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+            const openSession = (data && data[0]) || null;
+            currentOpenSessionId = openSession ? openSession.id : null;
+            if (openSession) await markAttendance(openSession.id);
+        }
+
+        function subscribeClassSessions() {
+            sb.channel("class_sessions-sesion")
+                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions" }, (payload) => {
+                    if (payload.eventType === "INSERT" && !payload.new.ended_at) {
+                        currentOpenSessionId = payload.new.id;
+                        markAttendance(payload.new.id);
+                    } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
+                        // El profesor cerró la clase: a los alumnos los devolvemos al panel.
+                        if (!isTeacher) window.location.href = "clases.html";
+                    }
+                })
+                .subscribe();
+        }
+
         function initBoardForRole() {
             const container = document.getElementById("chessboard");
             board = new ClasesBoard(container, {
@@ -1015,6 +1050,8 @@
             await loadGameState();
             subscribeRealtime();
             subscribePresence();
+            await checkOpenClassSession();
+            subscribeClassSessions();
             await loadSavedGames();
             subscribeSavedGames();
             await loadVariantTree();

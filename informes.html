@@ -87,9 +87,27 @@
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
-            <div id="teacher-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Precisión por alumno</h2>
-                <div id="leaderboard" class="space-y-3"></div>
+            <div id="teacher-report" class="hidden space-y-6">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Precisión por alumno</h2>
+                    <div id="leaderboard" class="space-y-3"></div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asistencia y tiempo en clase</h2>
+                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Se cuenta a partir de las clases cerradas por el profesor en el panel.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-brand-400 dark:text-brand-500 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                    <th class="py-2 pr-4 font-semibold">Alumno</th>
+                                    <th class="py-2 pr-4 font-semibold">Asistencia</th>
+                                    <th class="py-2 font-semibold">Tiempo en clase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -98,6 +116,19 @@
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false;
+
+        function fmtDuration(totalMinutes) {
+            const m = Math.round(totalMinutes);
+            const h = Math.floor(m / 60), mm = m % 60;
+            return h > 0 ? `${h} h ${mm} min` : `${mm} min`;
+        }
+
+        // Minutos que un alumno pasó en una clase: desde que quedó registrada su asistencia
+        // hasta que el profesor la cerró (o hasta ahora, si sigue en curso).
+        function minutesInSession(joinedAt, sessionRow) {
+            const end = sessionRow && sessionRow.ended_at ? new Date(sessionRow.ended_at) : new Date();
+            return Math.max(0, (end - new Date(joinedAt)) / 60000);
+        }
 
         function statCard(emoji, value, label) {
             const div = document.createElement("div");
@@ -129,12 +160,25 @@
             const correct = graded.filter((a) => a.is_correct === true).length;
             const accuracy = graded.length ? Math.round((correct / graded.length) * 100) : 0;
 
+            const { data: sessions } = await sb.from("class_sessions").select("id, ended_at");
+            const sessionById = {};
+            (sessions || []).forEach((s) => { sessionById[s.id] = s; });
+            const closedCount = (sessions || []).filter((s) => s.ended_at).length;
+
+            const { data: attendance } = await sb.from("class_attendance").select("*").eq("student_id", profile.id);
+            const attended = attendance || [];
+            const attendedClosed = attended.filter((a) => sessionById[a.session_id] && sessionById[a.session_id].ended_at).length;
+            const attendanceRate = closedCount ? Math.round((attendedClosed / closedCount) * 100) : 0;
+            const totalMinutes = attended.reduce((sum, a) => sum + minutesInSession(a.joined_at, sessionById[a.session_id]), 0);
+
             const cards = document.getElementById("stat-cards");
             cards.append(
                 statCard("🚩", list.length, "Asignaciones respondidas"),
                 statCard("✅", correct, "Correctas"),
                 statCard("🎯", accuracy + "%", "Precisión"),
-                statCard("⏳", graded.length < list.length ? list.length - graded.length : 0, "Pendientes de revisar")
+                statCard("⏳", graded.length < list.length ? list.length - graded.length : 0, "Pendientes de revisar"),
+                statCard("🏫", `${attendedClosed}/${closedCount}`, `Asistencia (${attendanceRate}%)`),
+                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase")
             );
 
             const historyEl = document.getElementById("student-history");
@@ -158,10 +202,13 @@
         async function loadTeacherReport() {
             const { data: sessions } = await sb.from("class_sessions").select("id, ended_at");
             const closedSessions = (sessions || []).filter((s) => s.ended_at).length;
+            const sessionById = {};
+            (sessions || []).forEach((s) => { sessionById[s.id] = s; });
             const { data: questions } = await sb.from("questions").select("id");
             const { data: games } = await sb.from("saved_games").select("id");
             const { data: students } = await sb.from("profiles").select("*").eq("role", "alumno");
             const { data: answers } = await sb.from("question_answers").select("*");
+            const { data: attendance } = await sb.from("class_attendance").select("*");
 
             const cards = document.getElementById("stat-cards");
             cards.append(
@@ -186,6 +233,31 @@
             } else {
                 rows.forEach((r) => leaderboard.appendChild(barRow(r.name, r.correct, r.total)));
             }
+
+            const attByStudent = {};
+            (attendance || []).forEach((a) => {
+                const s = sessionById[a.session_id];
+                attByStudent[a.student_id] = attByStudent[a.student_id] || { count: 0, minutes: 0 };
+                if (s && s.ended_at) attByStudent[a.student_id].count += 1;
+                attByStudent[a.student_id].minutes += minutesInSession(a.joined_at, s);
+            });
+            const attBody = document.getElementById("attendance-table-body");
+            attBody.innerHTML = "";
+            if (!students || !students.length) {
+                attBody.innerHTML = '<tr><td colspan="3" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+            } else {
+                students.forEach((s) => {
+                    const att = attByStudent[s.id] || { count: 0, minutes: 0 };
+                    const tr = document.createElement("tr");
+                    tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+                    const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
+                    const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdAtt.textContent = `${att.count}/${closedSessions}`;
+                    const tdTime = document.createElement("td"); tdTime.className = "py-2 text-brand-500 dark:text-brand-400"; tdTime.textContent = fmtDuration(att.minutes);
+                    tr.append(tdName, tdAtt, tdTime);
+                    attBody.appendChild(tr);
+                });
+            }
+
             document.getElementById("teacher-report").classList.remove("hidden");
         }
 
