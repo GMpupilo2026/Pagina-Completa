@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión — Ajedrez Integral</title>
+    <meta name="description" content="Inicia sesión para acceder a las clases en vivo de Ajedrez Integral.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    },
+                    fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+    <header class="bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <span id="theme-icon" aria-hidden="true">☀️</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-sm">
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8">
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 text-center">Acceso a Clases</h1>
+                <p class="text-brand-500 dark:text-brand-400 text-sm text-center mb-6">Inicia sesión con la cuenta que te dio tu profesor.</p>
+
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Correo electrónico</label>
+                        <input id="email" type="email" required autocomplete="username"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Contraseña</label>
+                        <input id="password" type="password" required autocomplete="current-password"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="••••••••">
+                    </div>
+
+                    <p id="error-msg" class="text-sm text-red-600 dark:text-red-400 hidden"></p>
+
+                    <button type="submit" id="submit-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Iniciar sesión</button>
+                </form>
+
+                <p class="text-xs text-brand-400 dark:text-brand-500 text-center mt-6">
+                    ¿No tienes cuenta? Pídesela a tu profesor — las cuentas de alumno se crean manualmente.
+                </p>
+            </div>
+
+            <p class="text-center mt-6">
+                <a href="index.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors">← Volver al inicio</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        (async () => {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) window.location.href = "clases.html";
+        })();
+
+        const form = document.getElementById("login-form");
+        const errorMsg = document.getElementById("error-msg");
+        const submitBtn = document.getElementById("submit-btn");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            errorMsg.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Ingresando...";
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errorMsg.textContent = "Correo o contraseña incorrectos.";
+                errorMsg.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Iniciar sesión";
+                return;
+            }
+
+            window.location.href = "clases.html";
+        });
+    </script>
+</body>
+</html>
