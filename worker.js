@@ -20,6 +20,13 @@
 // el Worker (Cloudflare dashboard → orange-water-b162 → Settings →
 // Variables and Secrets, o `wrangler secret put COURSE_PASSWORD`). Sin ese
 // secreto configurado, /api/curso-auth rechaza cualquier contraseña.
+//
+// IMPORTANTE: por defecto, Cloudflare sirve un archivo estático que ya
+// existe (como cursos/<curso>.html) directamente desde su CDN de assets,
+// SIN pasar por este Worker — este fetch() nunca se ejecuta para esas rutas
+// salvo que wrangler.jsonc declare "run_worker_first" para ellas. Ver ahí
+// el arreglo (bug real detectado: el bloqueo no se aplicaba en producción
+// porque faltaba esa opción).
 
 const COOKIE_NAME = "curso_ok";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 60; // 60 días
