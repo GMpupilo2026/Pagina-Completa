@@ -63,26 +63,18 @@
 
             <p id="tv-note-banner" class="hidden mb-6 bg-accent-500/15 border border-accent-500/40 text-accent-700 dark:text-accent-400 rounded-xl px-4 py-3 text-center font-semibold"></p>
 
-            <!-- Video (comentaristas del profesor, o de respaldo la partida en vivo de Lichess TV) +
-                 torneo destacado (nombre, estado, tabla de equipos): el "estudio" de la transmisión. -->
-            <div class="grid lg:grid-cols-3 gap-6 items-start mb-8">
-                <div class="lg:col-span-2 bg-brand-950 rounded-2xl overflow-hidden shadow-lg">
-                    <div id="tv-video-wrap" class="hidden">
-                        <div id="tv-video-embed" class="aspect-video w-full bg-black"></div>
-                        <div class="px-4 py-3 bg-brand-900 text-brand-200 text-sm flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true"></span>
-                            <span>Comentaristas en vivo</span>
-                        </div>
-                    </div>
-                    <div id="tv-ambient-wrap" class="hidden">
-                        <div class="aspect-video w-full">
-                            <iframe id="tv-ambient-iframe" title="Partida en vivo de Lichess TV" class="w-full h-full" frameborder="0" loading="lazy"></iframe>
-                        </div>
-                        <div class="px-4 py-3 bg-brand-900 text-brand-300 text-sm text-center">♟️ Mientras tanto, una partida en vivo de Lichess TV</div>
+            <!-- Video de comentaristas (solo si el profesor puso uno reconocible) + torneo
+                 destacado (nombre, estado, tabla de equipos): el "estudio" de la transmisión. -->
+            <div id="tv-top-grid" class="grid lg:grid-cols-3 gap-6 items-start mb-8">
+                <div id="tv-video-wrap" class="hidden lg:col-span-2 bg-brand-950 rounded-2xl overflow-hidden shadow-lg">
+                    <div id="tv-video-embed" class="aspect-video w-full bg-black"></div>
+                    <div class="px-4 py-3 bg-brand-900 text-brand-200 text-sm flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden="true"></span>
+                        <span>Comentaristas en vivo</span>
                     </div>
                 </div>
 
-                <section aria-labelledby="tv-tournament-heading" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6">
+                <section id="tv-tournament-section" aria-labelledby="tv-tournament-heading" class="lg:col-span-1 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6">
                     <h2 id="tv-tournament-heading" class="sr-only">Torneo destacado</h2>
                     <div id="tv-loading" class="text-center text-brand-400 dark:text-brand-500 py-8">Cargando…</div>
 
@@ -117,6 +109,23 @@
                 </section>
             </div>
 
+            <!-- Partidas en vivo del torneo: hasta 10 tableros a la vez (el profesor elige
+                 cuántos), cada uno actualizándose solo. Si el torneo no tiene partidas activas
+                 (o no hay torneo configurado), se cae a una sola partida de Lichess TV como
+                 ambiente en vez de dejar el espacio vacío. -->
+            <section aria-labelledby="tv-games-heading" class="mb-8">
+                <h2 id="tv-games-heading" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 text-center">🎮 Partidas en vivo del torneo</h2>
+                <div id="tv-games-grid" class="hidden grid gap-4"></div>
+                <div id="tv-games-ambient" class="hidden">
+                    <div class="w-full max-w-[400px] mx-auto rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">
+                        <div class="aspect-[400/444] w-full">
+                            <iframe id="tv-ambient-iframe" title="Partida en vivo de Lichess TV" class="w-full h-full" frameborder="0" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                    <p class="text-center text-brand-400 dark:text-brand-500 text-sm mt-3">♟️ Todavía no hay partidas del torneo en curso — mientras tanto, una partida en vivo de Lichess TV</p>
+                </div>
+            </section>
+
             <!-- Panel del profesor: solo se muestra si la sesión activa tiene rol "profesor" -->
             <section id="tv-admin-panel" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Configurar la transmisión</h2>
@@ -130,7 +139,11 @@
                         <label for="tv-admin-video" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Video de comentaristas (YouTube o Twitch, opcional)</label>
                         <input id="tv-admin-video" type="text" placeholder="https://www.youtube.com/watch?v=… o https://twitch.tv/…" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 text-sm">
                     </div>
-                    <div class="sm:col-span-2">
+                    <div>
+                        <label for="tv-admin-games-count" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Partidas del torneo a mostrar (1 a 10)</label>
+                        <input id="tv-admin-games-count" type="number" min="1" max="10" value="1" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 text-sm">
+                    </div>
+                    <div>
                         <label for="tv-admin-note" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Anuncio opcional (aparece arriba de todo)</label>
                         <input id="tv-admin-note" type="text" placeholder="Ej. «Este sábado a las 3pm»" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 text-sm">
                     </div>
@@ -195,26 +208,72 @@
                 return { kind: "unknown", embedUrl: null, url: trimmed };
             }
 
-            // El "video slot" siempre muestra algo: el video de comentaristas si el profesor
-            // puso uno reconocible, o si no, la partida en vivo de Lichess TV como ambiente.
+            // El video de comentaristas solo se muestra si el profesor puso un enlace
+            // reconocible (YouTube o Twitch); si no, esa columna desaparece del todo y la
+            // tarjeta del torneo pasa a ocupar todo el ancho — la partida "de ambiente" ya no
+            // vive aquí, sino en la sección de Partidas en vivo de más abajo.
             function updateVideoSlot(videoUrl) {
                 const videoWrap = document.getElementById("tv-video-wrap");
-                const ambientWrap = document.getElementById("tv-ambient-wrap");
                 const embedHost = document.getElementById("tv-video-embed");
-                const ambientIframe = document.getElementById("tv-ambient-iframe");
+                const tournamentSection = document.getElementById("tv-tournament-section");
                 const parsed = videoUrl ? parseVideoEmbed(videoUrl) : null;
 
                 if (parsed && parsed.embedUrl) {
                     embedHost.innerHTML = '<iframe src="' + parsed.embedUrl + '" title="Comentaristas en vivo" class="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
                     videoWrap.classList.remove("hidden");
-                    ambientWrap.classList.add("hidden");
-                    ambientIframe.removeAttribute("src"); // no lo dejes cargando en segundo plano
+                    tournamentSection.classList.remove("lg:col-span-3");
+                    tournamentSection.classList.add("lg:col-span-1");
                 } else {
                     embedHost.innerHTML = "";
                     videoWrap.classList.add("hidden");
-                    ambientWrap.classList.remove("hidden");
-                    if (!ambientIframe.src) ambientIframe.src = "https://lichess.org/tv/frame?theme=brown&bg=dark";
+                    tournamentSection.classList.remove("lg:col-span-1");
+                    tournamentSection.classList.add("lg:col-span-3");
                 }
+            }
+
+            // Extrae hasta `maxCount` IDs de partidas realmente en curso en el torneo, a partir
+            // del campo "duels" que trae la API de Lichess (los enfrentamientos destacados del
+            // momento). Si el torneo no trae ese campo, o está vacío (recién armado, sin
+            // partidas activas todavía), se devuelve una lista vacía y el llamador cae al
+            // tablero de ambiente en vez de dejar la sección vacía.
+            function extractLiveGameIds(tournamentData, maxCount) {
+                const duels = tournamentData && Array.isArray(tournamentData.duels) ? tournamentData.duels : [];
+                const ids = [];
+                for (const duel of duels) {
+                    if (duel && typeof duel.id === "string" && !ids.includes(duel.id)) ids.push(duel.id);
+                    if (ids.length >= maxCount) break;
+                }
+                return ids;
+            }
+
+            // Muestra hasta 10 partidas del torneo lado a lado, cada una ocupando 1/N del
+            // ancho (1 partida = 100%, 2 = 50% cada una, 3 = 33%...). Con más de 5 a la vez se
+            // envuelve en varias filas de a 5 en vez de seguir angostando cada tablero — igual
+            // que la grilla de "Tableros de los alumnos" en Practicar contra el motor.
+            function renderGamesGrid(gameIds) {
+                const grid = document.getElementById("tv-games-grid");
+                const ambient = document.getElementById("tv-games-ambient");
+                const ambientIframe = document.getElementById("tv-ambient-iframe");
+
+                if (!gameIds.length) {
+                    grid.classList.add("hidden");
+                    grid.innerHTML = "";
+                    ambient.classList.remove("hidden");
+                    if (!ambientIframe.src) ambientIframe.src = "https://lichess.org/tv/frame?theme=brown&bg=dark";
+                    return;
+                }
+
+                ambient.classList.add("hidden");
+                ambientIframe.removeAttribute("src"); // no lo dejes cargando en segundo plano
+
+                const columnas = Math.min(gameIds.length, 5);
+                grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
+                grid.innerHTML = gameIds.map((id) =>
+                    '<div class="aspect-[400/444] rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
+                        '<iframe src="https://lichess.org/embed/game/' + encodeURIComponent(id) + '?theme=brown&bg=dark" title="Partida en vivo del torneo" class="w-full h-full" frameborder="0" loading="lazy"></iframe>' +
+                    "</div>"
+                ).join("");
+                grid.classList.remove("hidden");
             }
 
             function statusBadge(data) {
@@ -273,7 +332,7 @@
 
             async function refreshTournamentCard() {
                 const id = currentSettings && currentSettings.lichess_tournament_id;
-                if (!id) { showState("empty"); return; }
+                if (!id) { showState("empty"); renderGamesGrid([]); return; }
 
                 document.getElementById("tv-join-link").href = "https://lichess.org/tournament/" + encodeURIComponent(id);
 
@@ -290,6 +349,7 @@
                 document.getElementById("tv-format").textContent = formatLine(data);
                 document.getElementById("tv-fetch-error").classList.toggle("hidden", !!data);
                 renderTeamsTable(data);
+                renderGamesGrid(extractLiveGameIds(data, currentSettings.games_count || 1));
                 showState("card");
             }
 
@@ -315,6 +375,7 @@
             function fillAdminForm(row) {
                 document.getElementById("tv-admin-input").value = (row && row.lichess_tournament_id) || "";
                 document.getElementById("tv-admin-video").value = (row && row.video_url) || "";
+                document.getElementById("tv-admin-games-count").value = (row && row.games_count) || 1;
                 document.getElementById("tv-admin-note").value = (row && row.note) || "";
             }
 
@@ -345,10 +406,12 @@
                 const statusEl = document.getElementById("tv-admin-status");
                 const id = parseLichessTournamentId(document.getElementById("tv-admin-input").value);
                 const videoUrl = document.getElementById("tv-admin-video").value.trim() || null;
+                const gamesCountRaw = parseInt(document.getElementById("tv-admin-games-count").value, 10);
+                const gamesCount = Math.min(10, Math.max(1, isNaN(gamesCountRaw) ? 1 : gamesCountRaw));
                 const note = document.getElementById("tv-admin-note").value.trim() || null;
                 statusEl.textContent = "Guardando…";
                 const { error } = await sb.from("tv_settings").update({
-                    lichess_tournament_id: id, video_url: videoUrl, note, updated_at: new Date().toISOString(), updated_by: currentUserId,
+                    lichess_tournament_id: id, video_url: videoUrl, games_count: gamesCount, note, updated_at: new Date().toISOString(), updated_by: currentUserId,
                 }).eq("id", true);
                 statusEl.textContent = error ? ("Error: " + error.message) : "Guardado ✓";
             });
@@ -357,10 +420,11 @@
                 const statusEl = document.getElementById("tv-admin-status");
                 document.getElementById("tv-admin-input").value = "";
                 document.getElementById("tv-admin-video").value = "";
+                document.getElementById("tv-admin-games-count").value = 1;
                 document.getElementById("tv-admin-note").value = "";
                 statusEl.textContent = "Guardando…";
                 const { error } = await sb.from("tv_settings").update({
-                    lichess_tournament_id: null, video_url: null, note: null, updated_at: new Date().toISOString(), updated_by: currentUserId,
+                    lichess_tournament_id: null, video_url: null, games_count: 1, note: null, updated_at: new Date().toISOString(), updated_by: currentUserId,
                 }).eq("id", true);
                 statusEl.textContent = error ? ("Error: " + error.message) : "Quitado ✓";
             });
