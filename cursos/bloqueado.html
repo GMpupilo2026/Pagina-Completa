@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso bloqueado — Ajedrez Integral</title>
+    <meta name="description" content="Este curso está bloqueado por contraseña.">
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+    <div class="pt-28 pb-20 min-h-[70vh] flex items-center">
+        <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-6"><span aria-hidden="true">←</span> Volver a Cursos</a>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-5xl mb-4" aria-hidden="true">🔒</p>
+                <h1 id="locked-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">Este curso está bloqueado por contraseña</h1>
+                <p class="text-sm text-brand-500 dark:text-brand-400 mb-6">Ingresa la contraseña para ver el temario y el contenido completo del curso.</p>
+
+                <label for="course-password-input" class="sr-only">Contraseña</label>
+                <input id="course-password-input" type="password" placeholder="Contraseña" autocomplete="off" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                <p id="course-password-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-3 min-h-[1em]"></p>
+                <button id="password-submit-btn" type="button" class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">🔓 Desbloquear</button>
+            </div>
+
+            <p class="text-xs text-brand-400 dark:text-brand-500 text-center mt-6">¿No tienes la contraseña? <a href="../inscripcion.html" class="text-accent-600 hover:underline">Inscríbete al curso</a> para acceder.</p>
+        </div>
+    </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+    <script>
+        (function () {
+            // Esta página se sirve (sin redirección) cuando alguien pide cursos/<curso>.html
+            // sin la cookie válida del Worker — el navegador sigue mostrando esa URL, así que
+            // location.pathname nos da el curso real que se intentó abrir.
+            var TITLES = {
+                "fundamentos-del-ajedrez": "Fundamentos del Ajedrez",
+                "aperturas-y-defensas": "Aperturas y Defensas",
+                "estrategia-y-tactica": "Estrategia y Táctica",
+                "finales-practicos": "Finales Prácticos",
+                "calculo-y-visualizacion": "Cálculo y Visualización",
+                "preparacion-para-torneos": "Preparación para Torneos",
+            };
+            var slug = (location.pathname.split("/").pop() || "").replace(/\.html$/, "");
+            var titleEl = document.getElementById("locked-title");
+            if (TITLES[slug] && titleEl) {
+                titleEl.textContent = TITLES[slug] + " está bloqueado por contraseña";
+            }
+
+            var input = document.getElementById("course-password-input");
+            var msg = document.getElementById("course-password-msg");
+            var btn = document.getElementById("password-submit-btn");
+
+            function attemptUnlock() {
+                msg.textContent = "";
+                fetch("/api/curso-auth", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: input.value }),
+                }).then(function (r) {
+                    if (!r.ok) throw new Error("wrong_password");
+                    // Recarga la misma URL: con la cookie ya puesta, el Worker esta vez
+                    // deja pasar la página real del curso en vez de esta pantalla bloqueada.
+                    location.reload();
+                }).catch(function () {
+                    msg.textContent = "Contraseña incorrecta: este curso está bloqueado por contraseña.";
+                    input.focus();
+                    input.select();
+                });
+            }
+
+            btn.addEventListener("click", attemptUnlock);
+            input.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
+            input.focus();
+        })();
+    </script>
+</body>
+</html>

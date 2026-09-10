@@ -1,16 +1,20 @@
-// Worker que protege de verdad el contenido completo de los cursos.
+// Worker que protege de verdad el contenido de los cursos.
 //
 // El sitio sigue siendo estático (Cloudflare Workers Assets), pero este script
-// se ejecuta antes de servir los archivos y bloquea, en el servidor, dos
-// cosas que antes solo se ocultaban con CSS/JS en el navegador:
-//   1. Los fragmentos de contenido completo de cada lección
+// se ejecuta antes de servir los archivos y bloquea, en el servidor, lo que
+// antes solo se ocultaba con CSS/JS en el navegador:
+//   1. Las páginas de curso completas — temario incluido —
+//      (cursos/<curso>.html): sin cookie válida, se sirve en su lugar
+//      cursos/bloqueado.html (misma URL, sin redirección) con solo el
+//      formulario de contraseña.
+//   2. Los fragmentos de contenido completo de cada lección
 //      (cursos/protegido/<curso>.html).
-//   2. Las presentaciones y PDF de ejercicios (cursos/recursos/**).
+//   3. Las presentaciones y PDF de ejercicios (cursos/recursos/**).
 //
 // Sin la cookie firmada que solo se entrega tras enviar la contraseña
-// correcta a /api/curso-auth, esas rutas responden 403 y el archivo real
-// nunca sale del servidor (a diferencia del esquema anterior, donde el
-// HTML completo ya viajaba al navegador y solo se ocultaba visualmente).
+// correcta a /api/curso-auth, esas rutas nunca llegan a mostrar el archivo
+// real (a diferencia del esquema anterior, donde el HTML completo ya
+// viajaba al navegador y solo se ocultaba visualmente).
 //
 // Requiere una variable de entorno secreta COURSE_PASSWORD configurada en
 // el Worker (Cloudflare dashboard → orange-water-b162 → Settings →
@@ -60,8 +64,18 @@ async function hasValidCookie(request, env) {
   return timingSafeEqual(cookie, expected);
 }
 
+// cursos/protegido/** (contenido completo) y cursos/recursos/** (pptx/pdf):
+// sin cookie válida, responden 403 directamente.
 function isProtectedPath(pathname) {
   return pathname.startsWith("/cursos/protegido/") || pathname.startsWith("/cursos/recursos/");
+}
+
+// Página de curso completa: cursos/<algo>.html, salvo la propia pantalla de
+// bloqueo. Sin cookie válida, no se le da 403: se le sirve cursos/bloqueado.html
+// en su lugar (misma URL) para que pueda ver el formulario de contraseña.
+const COURSE_PAGE_RE = /^\/cursos\/(?!bloqueado\.html$)[^/]+\.html$/;
+function isCoursePage(pathname) {
+  return COURSE_PAGE_RE.test(pathname);
 }
 
 async function handleAuth(request, env) {
@@ -111,6 +125,22 @@ export default {
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         });
       }
+      return env.ASSETS.fetch(request);
+    }
+
+    if (isCoursePage(url.pathname) && !(await hasValidCookie(request, env))) {
+      // No hay cookie válida: en vez de la página real del curso, se sirve
+      // cursos/bloqueado.html manteniendo la URL original en la barra de
+      // direcciones (sin redirección) para que su JS sepa qué curso mostrar
+      // y, tras la contraseña correcta, recargar esta misma URL.
+      const lockedUrl = new URL("/cursos/bloqueado.html", url);
+      const lockedRequest = new Request(lockedUrl, request);
+      const lockedResponse = await env.ASSETS.fetch(lockedRequest);
+      return new Response(lockedResponse.body, {
+        status: 403,
+        statusText: "Forbidden",
+        headers: lockedResponse.headers,
+      });
     }
 
     return env.ASSETS.fetch(request);
