@@ -40,6 +40,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/clases-board.js"></script>
     <script src="js/clases-engine.js"></script>
+    <script src="js/practice-engine.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -148,6 +149,19 @@
                         </div>
                     </div>
 
+                    <!-- Práctica contra el motor: overlay del alumno, mientras dure la ronda que lanzó el profesor -->
+                    <div id="practice-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-5 w-full max-w-sm text-center">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🎯 Práctica contra el motor</h2>
+                            <p class="text-xs text-brand-500 dark:text-brand-400 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
+                            <p id="practice-card-status" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Es tu turno.</p>
+                            <div class="flex justify-center">
+                                <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[320px] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                            </div>
+                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
+                        </div>
+                    </div>
+
                     <!-- Partidas guardadas: visible para todos -->
                     <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Partidas guardadas</h2>
@@ -208,6 +222,28 @@
                         </div>
                     </div>
 
+                    <!-- Practicar contra el motor (solo profesor) -->
+                    <div id="practice-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Practicar contra el motor</h2>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Cada alumno juega la posición actual del tablero contra Stockfish, con el color que le toque mover en ella.</p>
+
+                        <div id="practice-start-controls">
+                            <p class="text-xs text-brand-500 dark:text-brand-400 mb-1.5">Nivel del motor:</p>
+                            <div class="grid grid-cols-3 gap-1.5 mb-3" role="radiogroup" aria-label="Nivel del motor para la práctica">
+                                <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900" data-level="1500" aria-pressed="true">1500</button>
+                                <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-level="1800" aria-pressed="false">1800</button>
+                                <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-level="max" aria-pressed="false">Máxima</button>
+                            </div>
+                            <button id="start-practice-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">🎯 Practicar: posición actual</button>
+                        </div>
+
+                        <div id="practice-active-controls" class="hidden">
+                            <p class="text-sm text-brand-600 dark:text-brand-300 mb-1">Práctica en curso — nivel <span id="practice-active-level" class="font-semibold"></span>.</p>
+                            <p id="practice-active-count" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Esperando a que los alumnos empiecen a jugar…</p>
+                            <button id="end-practice-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Terminar práctica</button>
+                        </div>
+                    </div>
+
                     <!-- Alumnos conectados (solo profesor) -->
                     <div id="students-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
@@ -248,6 +284,15 @@
                         <p class="text-sm text-brand-500 dark:text-brand-400">El profesor está moviendo las piezas. El tablero se actualiza automáticamente con cada jugada.</p>
                     </div>
                 </aside>
+            </div>
+
+            <!-- Tableros de los alumnos durante la práctica (solo profesor) -->
+            <div id="practice-boards-section" class="hidden mt-8">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
+                    <p id="practice-boards-hint" class="text-xs text-brand-400 dark:text-brand-500"></p>
+                </div>
+                <div id="practice-boards-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
             </div>
         </section>
     </div>
@@ -1190,6 +1235,278 @@
             document.getElementById("question-status-text").textContent = "Mueve las piezas que jugarías.";
         });
 
+        // ---------- Practicar contra el motor ----------
+        // El profesor lanza una ronda desde la posición ACTUAL del tablero (una foto fija,
+        // no sigue los cambios posteriores del tablero en vivo). Cada alumno juega su propia
+        // partida real contra Stockfish (js/practice-engine.js, corriendo en SU navegador,
+        // no en el del profesor), con el color que le toque mover en esa posición. El
+        // profesor ve todas las partidas de los alumnos abajo, con una barra de evaluación
+        // por cada una (calculada también por el navegador de cada alumno, para no tener que
+        // correr un motor por alumno del lado del profesor).
+        let selectedPracticeLevel = "1500";
+        let latestPracticeSession = null; // última fila de practice_sessions (activa o ya cerrada)
+        let myPracticeGame = null; // fila propia en practice_games (solo alumno)
+        let practiceBoard = null; // tablero del alumno (overlay)
+        let practiceEngineBusy = false; // el motor está calculando su respuesta
+        const practiceStudentBoards = {}; // profesor: student_id -> {el, nameEl, barEl, statusEl, board}
+
+        const PRACTICE_LEVEL_ACTIVE = "practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
+        const PRACTICE_LEVEL_INACTIVE = "practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+
+        document.querySelectorAll(".practice-level-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                selectedPracticeLevel = btn.dataset.level;
+                document.querySelectorAll(".practice-level-btn").forEach((b) => {
+                    const active = b === btn;
+                    b.className = active ? PRACTICE_LEVEL_ACTIVE : PRACTICE_LEVEL_INACTIVE;
+                    b.setAttribute("aria-pressed", active ? "true" : "false");
+                });
+            });
+        });
+
+        function practiceLevelLabel(level) {
+            return (typeof PracticeEngine !== "undefined" && PracticeEngine.LEVELS[level] && PracticeEngine.LEVELS[level].label) || level;
+        }
+
+        function practiceStatusLabel(status) {
+            if (status === "checkmate_win") return "🏆 Ganó por jaque mate";
+            if (status === "checkmate_loss") return "💀 Perdió por jaque mate";
+            if (status === "draw") return "🤝 Tablas";
+            return "Jugando…";
+        }
+
+        // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
+        // (suya o del motor) sobre `g`. Se llama con el turno YA pasado al otro lado.
+        function practiceResultForStudent(g, studentColor) {
+            if (g.in_checkmate && g.in_checkmate()) {
+                const matedColor = g.turn(); // a quien le toca mover es quien está mate
+                return matedColor === studentColor ? "checkmate_loss" : "checkmate_win";
+            }
+            if (g.in_draw && g.in_draw()) return "draw"; // in_draw() ya cubre ahogado, material insuficiente, etc.
+            return "playing";
+        }
+
+        function subscribePractice() {
+            sb.channel("practice-sessions-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions" }, () => loadCurrentPractice())
+                .subscribe();
+            if (isTeacher) {
+                sb.channel("practice-games-changes")
+                    .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, (payload) => {
+                        const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
+                        if (!latestPracticeSession || !row || row.session_id !== latestPracticeSession.id) return;
+                        loadPracticeGamesForSession(latestPracticeSession.id);
+                    })
+                    .subscribe();
+            }
+        }
+
+        async function loadCurrentPractice() {
+            const { data, error } = await sb.from("practice_sessions").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (error) { console.error(error); return; }
+            latestPracticeSession = data || null;
+            if (isTeacher) renderTeacherPracticePanel();
+            else await renderStudentPracticeCard();
+        }
+
+        // ---------- Panel del profesor ----------
+        function renderTeacherPracticePanel() {
+            const active = !!(latestPracticeSession && !latestPracticeSession.ended_at);
+            document.getElementById("practice-start-controls").classList.toggle("hidden", active);
+            document.getElementById("practice-active-controls").classList.toggle("hidden", !active);
+            document.getElementById("practice-boards-section").classList.toggle("hidden", !active);
+            if (active) {
+                document.getElementById("practice-active-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+                loadPracticeGamesForSession(latestPracticeSession.id);
+            } else {
+                document.getElementById("practice-boards-grid").innerHTML = "";
+                Object.keys(practiceStudentBoards).forEach((k) => delete practiceStudentBoards[k]);
+            }
+        }
+
+        function upsertPracticeStudentBoard(row) {
+            const grid = document.getElementById("practice-boards-grid");
+            let entry = practiceStudentBoards[row.student_id];
+            if (!entry) {
+                const wrap = document.createElement("div");
+                wrap.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-3";
+                wrap.innerHTML =
+                    '<p class="practice-mini-name text-xs font-semibold text-brand-700 dark:text-brand-200 truncate mb-1"></p>' +
+                    '<div class="practice-mini-board grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none mb-2"></div>' +
+                    '<div class="h-1.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-1.5" role="img" aria-label="Barra de evaluación">' +
+                        '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
+                    "</div>" +
+                    '<p class="practice-mini-status text-[11px] text-brand-400 dark:text-brand-500"></p>';
+                grid.appendChild(wrap);
+                entry = {
+                    el: wrap,
+                    nameEl: wrap.querySelector(".practice-mini-name"),
+                    barEl: wrap.querySelector(".practice-mini-bar"),
+                    statusEl: wrap.querySelector(".practice-mini-status"),
+                    board: new ClasesBoard(wrap.querySelector(".practice-mini-board"), { interactive: false, allowArrows: false }),
+                };
+                practiceStudentBoards[row.student_id] = entry;
+            }
+            const displayName = (row.profiles && (row.profiles.full_name || row.profiles.email)) || "Alumno";
+            entry.nameEl.textContent = displayName + " · " + (row.student_color === "w" ? "blancas" : "negras");
+            entry.board.setFlipped(row.student_color === "b");
+            entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
+            if (row.eval_cp !== null && row.eval_cp !== undefined) {
+                entry.barEl.style.width = evalToBarPercent(row.eval_cp) + "%";
+            }
+            entry.statusEl.textContent = practiceStatusLabel(row.status);
+        }
+
+        async function loadPracticeGamesForSession(sessionId) {
+            const { data, error } = await sb.from("practice_games").select("*, profiles(full_name, email)").eq("session_id", sessionId).order("created_at");
+            if (error) { console.error(error); return; }
+            // La ronda pudo cerrarse (o cambiar) mientras esta consulta estaba en vuelo.
+            if (!latestPracticeSession || latestPracticeSession.id !== sessionId) return;
+            const rows = data || [];
+            const seen = new Set();
+            for (const row of rows) {
+                seen.add(row.student_id);
+                upsertPracticeStudentBoard(row);
+            }
+            // Por si alguna fila se borró manualmente: quita su tarjeta de la grilla.
+            Object.keys(practiceStudentBoards).forEach((studentId) => {
+                if (!seen.has(studentId)) {
+                    practiceStudentBoards[studentId].el.remove();
+                    delete practiceStudentBoards[studentId];
+                }
+            });
+            document.getElementById("practice-boards-hint").textContent = rows.length
+                ? rows.length + (rows.length === 1 ? " alumno jugando" : " alumnos jugando")
+                : "Esperando a que los alumnos empiecen a jugar…";
+        }
+
+        document.getElementById("start-practice-btn").addEventListener("click", async () => {
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            // Solo puede haber una ronda activa a la vez: cierra cualquier anterior sin cerrar.
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).is("ended_at", null);
+            const { error } = await sb.from("practice_sessions").insert({
+                fen: board.fen(), level: selectedPracticeLevel, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
+            setStatus("Práctica iniciada: los alumnos ya pueden jugar contra el motor.");
+        });
+
+        document.getElementById("end-practice-btn").addEventListener("click", async () => {
+            if (!latestPracticeSession || latestPracticeSession.ended_at) return;
+            const { error } = await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("id", latestPracticeSession.id);
+            if (error) { console.error(error); return; }
+            setStatus("Práctica terminada.");
+        });
+
+        // ---------- Tarjeta del alumno: partida real contra el motor (overlay sobre el tablero) ----------
+        async function renderStudentPracticeCard() {
+            const card = document.getElementById("practice-card");
+            if (!latestPracticeSession || latestPracticeSession.ended_at) {
+                card.classList.add("hidden");
+                myPracticeGame = null;
+                return;
+            }
+            card.classList.remove("hidden");
+            document.getElementById("practice-card-level").textContent = practiceLevelLabel(latestPracticeSession.level);
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+
+            // ¿Ya tengo una partida en esta ronda? (por ejemplo, si recargué la página a mitad).
+            const { data: existing, error } = await sb.from("practice_games").select("*")
+                .eq("session_id", latestPracticeSession.id).eq("student_id", profile.id).maybeSingle();
+            if (error) { console.error(error); return; }
+
+            if (existing) {
+                myPracticeGame = existing;
+            } else {
+                const studentColor = latestPracticeSession.fen.split(" ")[1] === "b" ? "b" : "w";
+                const { data: created, error: insertError } = await sb.from("practice_games").insert({
+                    session_id: latestPracticeSession.id, student_id: profile.id, student_color: studentColor,
+                    fen: latestPracticeSession.fen, moves: [],
+                }).select().single();
+                if (insertError) { console.error(insertError); return; }
+                myPracticeGame = created;
+            }
+
+            document.getElementById("practice-card-color").textContent = myPracticeGame.student_color === "w" ? "blancas" : "negras";
+
+            if (!practiceBoard) {
+                practiceBoard = new ClasesBoard(document.getElementById("practice-board"), {
+                    interactive: false,
+                    allowArrows: false,
+                    onMove: (fen, san, moves) => onPracticeStudentMove(fen, moves),
+                });
+            }
+            practiceBoard.setFlipped(myPracticeGame.student_color === "b");
+            practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
+            updatePracticeCardInteractivity();
+        }
+
+        function updatePracticeCardInteractivity() {
+            const statusEl = document.getElementById("practice-card-status");
+            if (!myPracticeGame || myPracticeGame.status !== "playing") {
+                if (practiceBoard) practiceBoard.setInteractive(false);
+                statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                return;
+            }
+            const myTurn = practiceBoard.game.turn() === myPracticeGame.student_color;
+            practiceBoard.setInteractive(myTurn && !practiceEngineBusy);
+            statusEl.textContent = practiceEngineBusy
+                ? "El motor está pensando…"
+                : (myTurn ? "Es tu turno." : "Esperando la jugada del motor…");
+        }
+
+        async function savePracticeGameRow(patch) {
+            if (!myPracticeGame) return;
+            const { error } = await sb.from("practice_games").update(patch).eq("id", myPracticeGame.id);
+            if (error) { console.error(error); return; }
+            myPracticeGame = Object.assign({}, myPracticeGame, patch);
+        }
+
+        async function updatePracticeGameEval(fen) {
+            if (typeof PracticeEngine === "undefined" || !myPracticeGame) return;
+            const turnAtEval = fen.split(" ")[1];
+            const score = await PracticeEngine.evaluate(fen);
+            if (!score || !myPracticeGame) return;
+            await savePracticeGameRow({ eval_cp: scoreToWhiteCp(score, turnAtEval) });
+        }
+
+        async function onPracticeStudentMove(fen, moves) {
+            if (!myPracticeGame) return;
+            const gameIdAtMove = myPracticeGame.id; // por si empieza una ronda nueva mientras el motor piensa
+            practiceBoard.setInteractive(false);
+            const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+            await savePracticeGameRow({ fen, moves, status });
+            updatePracticeGameEval(fen); // en segundo plano, no bloquea la jugada del motor
+            if (status !== "playing") { updatePracticeCardInteractivity(); return; }
+
+            practiceEngineBusy = true;
+            updatePracticeCardInteractivity();
+            const levelAtRequest = latestPracticeSession ? latestPracticeSession.level : "1500";
+            const uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
+            practiceEngineBusy = false;
+
+            // Mientras el motor pensaba pudo cerrarse esta ronda, o el profesor pudo lanzar
+            // una nueva (con otra fila en practice_games): no toques esta partida si ya no es
+            // la que sigue activa para este alumno.
+            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.status !== "playing") return;
+
+            if (uci) {
+                const move = practiceBoard.game.move({
+                    from: uci.slice(0, 2), to: uci.slice(2, 4),
+                    promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
+                });
+                if (move) {
+                    practiceBoard.render();
+                    const newFen = practiceBoard.game.fen();
+                    const newMoves = practiceBoard.game.history();
+                    const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+                    await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
+                    updatePracticeGameEval(newFen);
+                }
+            }
+            updatePracticeCardInteractivity();
+        }
+
         // ---------- Arranque ----------
         async function init() {
             const { data } = await sb.auth.getSession();
@@ -1210,6 +1527,7 @@
                 document.getElementById("students-panel").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("question-panel").classList.remove("hidden");
+                document.getElementById("practice-panel").classList.remove("hidden");
             }
             setStatus(isTeacher
                 ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
@@ -1227,6 +1545,8 @@
             subscribeVariants();
             await loadCurrentQuestion();
             subscribeQuestions();
+            await loadCurrentPractice();
+            subscribePractice();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
