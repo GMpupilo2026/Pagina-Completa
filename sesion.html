@@ -132,14 +132,16 @@
                         <ol id="move-list" class="hidden flex-wrap gap-x-1 gap-y-1.5 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
                     </div>
 
-                    <!-- Pregunta del profesor: aparece flotando por encima del tablero, solo la ven los alumnos -->
+                    <!-- Pregunta del profesor: aparece flotando por encima del tablero, solo la ven los alumnos.
+                         Overlay de pantalla completa (fixed inset-0): igual que en Práctica contra el motor,
+                         el tablero puede ser tan grande como el principal en vez de quedar en tamaño de tarjeta. -->
                     <div id="question-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-5 w-full max-w-sm">
+                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">❓ <span id="question-prompt-text"></span></h2>
                             <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-400 mb-1"></p>
                             <p id="question-status-text" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Mueve las piezas que jugarías.</p>
                             <div class="flex justify-center">
-                                <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[300px] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                                <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="question-undo-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">↶ Deshacer</button>
@@ -160,6 +162,10 @@
                             <p id="practice-card-status" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Es tu turno.</p>
                             <div class="flex justify-center">
                                 <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                            </div>
+                            <div class="flex justify-center gap-2 mt-3">
+                                <button id="practice-resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
+                                <button id="practice-retry-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">↻ Reintentar</button>
                             </div>
                             <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
                         </div>
@@ -295,7 +301,7 @@
                     <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
                     <p id="practice-boards-hint" class="text-xs text-brand-400 dark:text-brand-500"></p>
                 </div>
-                <div id="practice-boards-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+                <div id="practice-boards-grid" class="grid gap-4"></div>
             </div>
         </section>
     </div>
@@ -1275,7 +1281,15 @@
             if (status === "checkmate_win") return "🏆 Ganó por jaque mate";
             if (status === "checkmate_loss") return "💀 Perdió por jaque mate";
             if (status === "draw") return "🤝 Tablas";
+            if (status === "resigned") return "🏳️ Se rindió";
             return "Jugando…";
+        }
+
+        // "Jugando…" / "Ganó por jaque mate" + cuántos intentos lleva en esta ronda (solo le
+        // interesa al profesor, que es quien puede estar viendo muchos tableros a la vez).
+        function practiceStatusLabelWithAttempts(row) {
+            const attempts = row.attempts || 1;
+            return practiceStatusLabel(row.status) + " · intento " + attempts;
         }
 
         // Resultado desde el punto de vista del alumno, justo después de aplicar una jugada
@@ -1380,10 +1394,21 @@
             entry.nameEl.textContent = displayName + " · " + (row.student_color === "w" ? "blancas" : "negras");
             entry.board.setFlipped(row.student_color === "b");
             entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
-            if (row.eval_cp !== null && row.eval_cp !== undefined) {
-                entry.barEl.style.width = evalToBarPercent(row.eval_cp) + "%";
-            }
-            entry.statusEl.textContent = practiceStatusLabel(row.status);
+            // eval_cp queda en null justo al reintentar (partida recién reiniciada): la barra
+            // vuelve al centro en vez de quedarse con el valor de la partida anterior.
+            entry.barEl.style.width = (row.eval_cp !== null && row.eval_cp !== undefined ? evalToBarPercent(row.eval_cp) : 50) + "%";
+            entry.statusEl.textContent = practiceStatusLabelWithAttempts(row);
+        }
+
+        // Cada tablero ocupa 1/N del ancho de la fila (1 alumno = 100%, 2 = 50% cada uno, 3 =
+        // 33% cada uno...), para aprovechar el espacio en vez de dejarlos siempre chicos como
+        // si hubiera muchos alumnos. Con más de 4 a la vez se deja de repartir el 100% entre
+        // cada vez más columnas (los volvería ilegibles) y se pasa a envolver en varias filas
+        // de a 4, todas igual de anchas.
+        function updatePracticeBoardsGridColumns(count) {
+            const grid = document.getElementById("practice-boards-grid");
+            const columns = Math.max(1, Math.min(count, 4));
+            grid.style.gridTemplateColumns = "repeat(" + columns + ", minmax(0, 1fr))";
         }
 
         async function loadPracticeGamesForSession(sessionId) {
@@ -1404,6 +1429,7 @@
                     delete practiceStudentBoards[studentId];
                 }
             });
+            updatePracticeBoardsGridColumns(rows.length);
             document.getElementById("practice-boards-hint").textContent = rows.length
                 ? rows.length + (rows.length === 1 ? " alumno jugando" : " alumnos jugando")
                 : "Esperando a que los alumnos empiecen a jugar…";
@@ -1494,11 +1520,17 @@
 
         function updatePracticeCardInteractivity() {
             const statusEl = document.getElementById("practice-card-status");
+            const resignBtn = document.getElementById("practice-resign-btn");
+            const retryBtn = document.getElementById("practice-retry-btn");
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
                 statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
+                resignBtn.classList.add("hidden");
+                retryBtn.classList.toggle("hidden", !myPracticeGame);
                 return;
             }
+            resignBtn.classList.remove("hidden");
+            retryBtn.classList.add("hidden");
             const myTurn = practiceBoard.game.turn() === myPracticeGame.student_color;
             practiceBoard.setInteractive(myTurn && !practiceEngineBusy);
             statusEl.textContent = practiceEngineBusy
@@ -1513,21 +1545,27 @@
             myPracticeGame = Object.assign({}, myPracticeGame, patch);
         }
 
-        async function updatePracticeGameEval(fen) {
+        // gameIdAtMove/attemptsAtMove: por si mientras el motor pensaba el alumno se rindió o
+        // reintentó la ronda (misma fila de practice_games, mismo id — el reintento no crea
+        // una fila nueva, solo la resetea — así que comparar solo el id no alcanza para
+        // detectar un reintento de por medio; attempts sí cambia con cada reintento).
+        async function updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove) {
             if (typeof PracticeEngine === "undefined" || !myPracticeGame) return;
             const turnAtEval = fen.split(" ")[1];
             const score = await PracticeEngine.evaluate(fen);
             if (!score || !myPracticeGame) return;
+            if (myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove) return;
             await savePracticeGameRow({ eval_cp: scoreToWhiteCp(score, turnAtEval) });
         }
 
         async function onPracticeStudentMove(fen, moves) {
             if (!myPracticeGame) return;
-            const gameIdAtMove = myPracticeGame.id; // por si empieza una ronda nueva mientras el motor piensa
+            const gameIdAtMove = myPracticeGame.id;
+            const attemptsAtMove = myPracticeGame.attempts || 1;
             practiceBoard.setInteractive(false);
             const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
             await savePracticeGameRow({ fen, moves, status });
-            updatePracticeGameEval(fen); // en segundo plano, no bloquea la jugada del motor
+            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
             if (status !== "playing") { updatePracticeCardInteractivity(); return; }
 
             practiceEngineBusy = true;
@@ -1536,10 +1574,11 @@
             const uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
             practiceEngineBusy = false;
 
-            // Mientras el motor pensaba pudo cerrarse esta ronda, o el profesor pudo lanzar
-            // una nueva (con otra fila en practice_games): no toques esta partida si ya no es
-            // la que sigue activa para este alumno.
-            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.status !== "playing") return;
+            // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar una
+            // nueva (otra fila en practice_games), o el propio alumno pudo rendirse o
+            // reintentar esta misma partida (mismo id, pero con status/attempts distintos):
+            // en cualquiera de esos casos, no toques la partida con la jugada vieja del motor.
+            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") return;
 
             if (uci) {
                 const move = practiceBoard.game.move({
@@ -1552,11 +1591,38 @@
                     const newMoves = practiceBoard.game.history();
                     const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
                     await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
-                    updatePracticeGameEval(newFen);
+                    updatePracticeGameEval(newFen, gameIdAtMove, attemptsAtMove);
                 }
             }
             updatePracticeCardInteractivity();
         }
+
+        // El alumno se rinde a mitad de partida (incluso mientras el motor está "pensando" su
+        // respuesta: el guard de arriba en onPracticeStudentMove evita que esa jugada, ya
+        // obsoleta, se aplique después). No cuenta como un intento nuevo — solo termina el
+        // actual, para eso está "Reintentar".
+        async function resignPracticeGame() {
+            if (!myPracticeGame || myPracticeGame.status !== "playing") return;
+            if (practiceBoard) practiceBoard.setInteractive(false);
+            await savePracticeGameRow({ status: "resigned" });
+            updatePracticeCardInteractivity();
+        }
+
+        // Reinicia la MISMA ronda desde la posición con la que arrancó (no crea una fila
+        // nueva: reutiliza la fila de practice_games, así el profesor sigue viendo un solo
+        // tablero por alumno) y suma un intento — el profesor ve ese número en su grilla.
+        async function retryPracticeGame() {
+            if (!myPracticeGame || !latestPracticeSession || latestPracticeSession.ended_at) return;
+            await savePracticeGameRow({
+                fen: latestPracticeSession.fen, moves: [], status: "playing",
+                eval_cp: null, attempts: (myPracticeGame.attempts || 1) + 1,
+            });
+            practiceBoard.loadMoves([], latestPracticeSession.fen);
+            updatePracticeCardInteractivity();
+        }
+
+        document.getElementById("practice-resign-btn").addEventListener("click", resignPracticeGame);
+        document.getElementById("practice-retry-btn").addEventListener("click", retryPracticeGame);
 
         // ---------- Arranque ----------
         async function init() {
