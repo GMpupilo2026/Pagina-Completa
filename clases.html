@@ -152,11 +152,12 @@
                                 <th class="py-2 pr-4 font-semibold">Inicio</th>
                                 <th class="py-2 pr-4 font-semibold">Cierre</th>
                                 <th class="py-2 pr-4 font-semibold">Duración</th>
-                                <th class="py-2 font-semibold">Notas</th>
+                                <th class="py-2 pr-4 font-semibold">Notas</th>
+                                <th class="py-2 font-semibold"></th>
                             </tr>
                         </thead>
                         <tbody id="sessions-log-body">
-                            <tr><td colspan="5" class="py-4 text-brand-400 dark:text-brand-500">Cargando…</td></tr>
+                            <tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Cargando…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -275,7 +276,7 @@
             const body = document.getElementById("sessions-log-body");
             body.innerHTML = "";
             if (error || !data || !data.length) {
-                body.innerHTML = '<tr><td colspan="5" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay clases registradas.</td></tr>';
+                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay clases registradas.</td></tr>';
                 return;
             }
             data.forEach((s) => {
@@ -287,9 +288,24 @@
                 tdEnd.textContent = s.ended_at ? fmtTime(s.ended_at) : "En curso";
                 const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4";
                 tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
-                const tdNotes = document.createElement("td"); tdNotes.className = "py-2 text-brand-500 dark:text-brand-400";
+                const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-400";
                 tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
-                tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes);
+                const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
+                if (isTeacher) {
+                    const delBtn = document.createElement("button");
+                    delBtn.type = "button";
+                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+                    delBtn.textContent = "Eliminar";
+                    delBtn.addEventListener("click", async () => {
+                        if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
+                        const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
+                        if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
+                        refreshSessionStatus();
+                        refreshSessionsLog();
+                    });
+                    tdActions.appendChild(delBtn);
+                }
+                tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes, tdActions);
                 body.appendChild(tr);
             });
         }
