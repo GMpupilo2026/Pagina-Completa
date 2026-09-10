@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV — Ajedrez Integral</title>
+    <meta name="description" content="Sigue en vivo nuestras batallas por equipos en Lichess: tabla de posiciones, formato y acceso directo al torneo.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>tailwind.config={darkMode:'class',theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}</script>
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Tablero</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400">Clases</a></li>
+                    <li><a href="tv.html" class="hover:text-accent-400 text-accent-400">TV</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
+                <li><a href="tv.html" class="block py-2 text-accent-400">TV</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-16 md:pt-20 py-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">En vivo</span>
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2">📺 TV</h1>
+                <p class="text-brand-500 dark:text-brand-400 mt-4 max-w-2xl mx-auto">Sigue en vivo nuestras batallas por equipos en Lichess. Cuando el profesor programe un torneo, aparece aquí con la tabla de posiciones y un acceso directo para jugar o mirar.</p>
+            </div>
+
+            <!-- Torneo destacado: se llena por JS a partir de tv_settings + la API pública de Lichess -->
+            <section aria-labelledby="tv-tournament-heading" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8 mb-8">
+                <h2 id="tv-tournament-heading" class="sr-only">Torneo destacado</h2>
+                <div id="tv-loading" class="text-center text-brand-400 dark:text-brand-500 py-8">Cargando…</div>
+
+                <div id="tv-empty" class="hidden text-center py-8">
+                    <p class="text-5xl mb-3" aria-hidden="true">♟️</p>
+                    <p class="text-brand-500 dark:text-brand-400">Todavía no hay ningún torneo programado.</p>
+                    <p class="text-brand-400 dark:text-brand-500 text-sm mt-1">Vuelve pronto, o mira ajedrez en vivo mientras tanto ⬇️</p>
+                </div>
+
+                <div id="tv-card" class="hidden">
+                    <p id="tv-note" class="hidden text-sm text-accent-600 dark:text-accent-400 font-semibold mb-3"></p>
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                        <div>
+                            <span id="tv-status-badge" class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2"></span>
+                            <h3 id="tv-name" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h3>
+                            <p id="tv-format" class="text-sm text-brand-500 dark:text-brand-400 mt-1"></p>
+                        </div>
+                        <a id="tv-join-link" href="#" target="_blank" rel="noopener" class="shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Entrar en Lichess →</a>
+                    </div>
+
+                    <p id="tv-fetch-error" class="hidden text-sm text-brand-400 dark:text-brand-500 italic mb-4">No pudimos cargar los datos en vivo desde Lichess ahora mismo, pero puedes seguir el torneo directamente allá.</p>
+
+                    <div id="tv-teams-wrap" class="hidden overflow-x-auto">
+                        <p class="text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-2">Tabla de equipos</p>
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-brand-400 dark:text-brand-500 border-b border-brand-100 dark:border-brand-800">
+                                    <th class="py-1.5 pr-3 font-semibold">#</th>
+                                    <th class="py-1.5 pr-3 font-semibold">Equipo</th>
+                                    <th class="py-1.5 font-semibold text-right">Puntos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tv-teams-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ajedrez en vivo de Lichess TV: contenido ambiente, siempre visible (torneo configurado o no) -->
+            <section aria-labelledby="tv-lichess-heading" class="text-center mb-8">
+                <h2 id="tv-lichess-heading" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Ajedrez en vivo (Lichess TV)</h2>
+                <div class="w-full max-w-[400px] mx-auto rounded-xl overflow-hidden shadow-md border-2 border-brand-700">
+                    <iframe src="https://lichess.org/tv/frame?theme=brown&bg=dark" title="Partida en vivo de Lichess TV" width="100%" height="444" frameborder="0" loading="lazy"></iframe>
+                </div>
+            </section>
+
+            <!-- Panel del profesor: solo se muestra si la sesión activa tiene rol "profesor" -->
+            <section id="tv-admin-panel" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8">
+                <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Configurar torneo destacado</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Pega la URL o el ID del torneo de Lichess (batalla por equipos). Se actualiza para todos los que tengan esta página abierta.</p>
+                <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                    <input id="tv-admin-input" type="text" placeholder="https://lichess.org/tournament/AbCd1234" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 text-sm">
+                    <input id="tv-admin-note" type="text" placeholder="Anuncio opcional (ej. «Este sábado a las 3pm»)" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 text-sm">
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="tv-admin-save-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar</button>
+                    <button id="tv-admin-clear-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Quitar torneo</button>
+                    <span id="tv-admin-status" class="text-xs text-brand-400 dark:text-brand-500"></span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        (function () {
+            "use strict";
+            const sb = window.sb;
+            let currentSettings = null;
+            let refreshTimer = null;
+
+            function parseLichessTournamentId(raw) {
+                const trimmed = (raw || "").trim();
+                if (!trimmed) return null;
+                // Acepta tanto una URL completa (con o sin barra final) como el ID solo.
+                const withoutQuery = trimmed.split(/[?#]/)[0].replace(/\/+$/, "");
+                const parts = withoutQuery.split("/");
+                return parts[parts.length - 1] || null;
+            }
+
+            function statusBadge(data) {
+                if (!data) return { label: "Torneo", cls: "bg-brand-100 dark:bg-brand-800 text-brand-600 dark:text-brand-300" };
+                if (data.isFinished || data.status === 30) return { label: "🏁 Finalizado", cls: "bg-brand-100 dark:bg-brand-800 text-brand-600 dark:text-brand-300" };
+                if (data.status === 20 || data.secondsToFinish !== undefined) return { label: "🔴 En vivo", cls: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" };
+                return { label: "🕒 Programado", cls: "bg-accent-500/20 text-accent-600 dark:text-accent-400" };
+            }
+
+            function formatLine(data) {
+                if (!data) return "";
+                const parts = [];
+                if (data.clock) parts.push(Math.round(data.clock.limit / 60) + "+" + data.clock.increment);
+                if (data.variant && data.variant.key && data.variant.key !== "standard") parts.push(data.variant.name || data.variant.key);
+                if (typeof data.nbPlayers === "number") parts.push(data.nbPlayers + (data.nbPlayers === 1 ? " jugador" : " jugadores"));
+                return parts.join(" · ");
+            }
+
+            function renderTeamsTable(data) {
+                const wrap = document.getElementById("tv-teams-wrap");
+                const body = document.getElementById("tv-teams-body");
+                const standing = data && Array.isArray(data.teamStanding) ? data.teamStanding : null;
+                if (!standing || !standing.length) { wrap.classList.add("hidden"); body.innerHTML = ""; return; }
+                const teamNames = (data.teamBattle && data.teamBattle.teams) || {};
+                body.innerHTML = standing.map((team) => {
+                    const name = teamNames[team.id] || team.id;
+                    return '<tr class="border-b border-brand-50 dark:border-brand-800/60">' +
+                        '<td class="py-1.5 pr-3 text-brand-400 dark:text-brand-500">' + (team.rank || "") + '</td>' +
+                        '<td class="py-1.5 pr-3 font-medium">' + escapeHtml(name) + '</td>' +
+                        '<td class="py-1.5 text-right font-semibold">' + (team.score != null ? team.score : "") + '</td>' +
+                        '</tr>';
+                }).join("");
+                wrap.classList.remove("hidden");
+            }
+
+            function escapeHtml(s) {
+                return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+            }
+
+            function showState(state) {
+                document.getElementById("tv-loading").classList.toggle("hidden", state !== "loading");
+                document.getElementById("tv-empty").classList.toggle("hidden", state !== "empty");
+                document.getElementById("tv-card").classList.toggle("hidden", state !== "card");
+            }
+
+            async function fetchLichessTournament(id) {
+                try {
+                    const res = await fetch("https://lichess.org/api/tournament/" + encodeURIComponent(id), { headers: { Accept: "application/json" } });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return await res.json();
+                } catch (e) {
+                    console.error("No se pudo cargar el torneo de Lichess:", e);
+                    return null;
+                }
+            }
+
+            async function refreshTournamentCard() {
+                const id = currentSettings && currentSettings.lichess_tournament_id;
+                if (!id) { showState("empty"); return; }
+
+                document.getElementById("tv-join-link").href = "https://lichess.org/tournament/" + encodeURIComponent(id);
+                const noteEl = document.getElementById("tv-note");
+                if (currentSettings.note) { noteEl.textContent = "📣 " + currentSettings.note; noteEl.classList.remove("hidden"); }
+                else { noteEl.classList.add("hidden"); }
+
+                const data = await fetchLichessTournament(id);
+                // El torneo pudo cambiar (u ocultarse) mientras esta consulta estaba en vuelo.
+                if (!currentSettings || currentSettings.lichess_tournament_id !== id) return;
+
+                const badge = statusBadge(data);
+                const badgeEl = document.getElementById("tv-status-badge");
+                badgeEl.textContent = badge.label;
+                badgeEl.className = "inline-block text-xs font-semibold px-2.5 py-1 rounded-full mb-2 " + badge.cls;
+
+                document.getElementById("tv-name").textContent = (data && data.fullName) || "Torneo de Lichess";
+                document.getElementById("tv-format").textContent = formatLine(data);
+                document.getElementById("tv-fetch-error").classList.toggle("hidden", !!data);
+                renderTeamsTable(data);
+                showState("card");
+            }
+
+            function applySettings(row) {
+                currentSettings = row;
+                if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+                refreshTournamentCard();
+                if (row && row.lichess_tournament_id) {
+                    // Refresca la posición del torneo cada 20s mientras esté configurado, para que
+                    // se vea "en vivo" sin que cada visitante tenga que recargar la página.
+                    refreshTimer = setInterval(refreshTournamentCard, 20000);
+                }
+                if (isProfesor) {
+                    document.getElementById("tv-admin-input").value = (row && row.lichess_tournament_id) || "";
+                    document.getElementById("tv-admin-note").value = (row && row.note) || "";
+                }
+            }
+
+            async function loadSettings() {
+                showState("loading");
+                const { data, error } = await sb.from("tv_settings").select("*").eq("id", true).maybeSingle();
+                if (error) { console.error(error); showState("empty"); return; }
+                applySettings(data || null);
+            }
+
+            let isProfesor = false;
+            let currentUserId = null;
+
+            async function initAdmin() {
+                const { data: sessionData } = await sb.auth.getSession();
+                const session = sessionData && sessionData.session;
+                if (!session) return;
+                currentUserId = session.user.id;
+                const { data: profileData } = await sb.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+                if (profileData && profileData.role === "profesor") {
+                    isProfesor = true;
+                    document.getElementById("tv-admin-panel").classList.remove("hidden");
+                    if (currentSettings) {
+                        document.getElementById("tv-admin-input").value = currentSettings.lichess_tournament_id || "";
+                        document.getElementById("tv-admin-note").value = currentSettings.note || "";
+                    }
+                }
+            }
+
+            document.getElementById("tv-admin-save-btn").addEventListener("click", async () => {
+                const statusEl = document.getElementById("tv-admin-status");
+                const id = parseLichessTournamentId(document.getElementById("tv-admin-input").value);
+                const note = document.getElementById("tv-admin-note").value.trim() || null;
+                statusEl.textContent = "Guardando…";
+                const { error } = await sb.from("tv_settings").update({
+                    lichess_tournament_id: id, note, updated_at: new Date().toISOString(), updated_by: currentUserId,
+                }).eq("id", true);
+                statusEl.textContent = error ? ("Error: " + error.message) : "Guardado ✓";
+            });
+
+            document.getElementById("tv-admin-clear-btn").addEventListener("click", async () => {
+                const statusEl = document.getElementById("tv-admin-status");
+                document.getElementById("tv-admin-input").value = "";
+                statusEl.textContent = "Guardando…";
+                const { error } = await sb.from("tv_settings").update({
+                    lichess_tournament_id: null, note: null, updated_at: new Date().toISOString(), updated_by: currentUserId,
+                }).eq("id", true);
+                statusEl.textContent = error ? ("Error: " + error.message) : "Quitado ✓";
+            });
+
+            // Cualquier visitante con esta página abierta ve el cambio en vivo cuando el
+            // profesor guarda un torneo nuevo (o lo quita), sin tener que recargar.
+            sb.channel("tv-settings-changes")
+                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tv_settings" }, (payload) => {
+                    applySettings(payload.new);
+                })
+                .subscribe();
+
+            loadSettings().then(initAdmin);
+        })();
+    </script>
+</body>
+</html>
