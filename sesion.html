@@ -41,16 +41,6 @@
     <script src="js/clases-board.js"></script>
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
-    <style>
-        /* Las piezas de ClasesBoard usan text-3xl/4xl/5xl, pensado para el tablero
-           principal (hasta 560px) o el de preguntas (hasta 320px). Las miniaturas de
-           "Tableros de los alumnos" son mucho más chicas (varias por fila): con ese
-           mismo tamaño de fuente las piezas se ven enormes y se salen de su casilla.
-           Se recorta aquí en vez de tocar clases-board.js, que comparten los tableros
-           grandes.
-        */
-        .practice-mini-board [data-square] { font-size: clamp(0.6rem, 2.4vw, 1.1rem) !important; }
-    </style>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -1298,7 +1288,9 @@
 
         function subscribePractice() {
             sb.channel("practice-sessions-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions" }, () => loadCurrentPractice())
+                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions" }, (payload) => {
+                    applyPracticeSessionUpdate(payload.new || payload.old);
+                })
                 .subscribe();
             if (isTeacher) {
                 sb.channel("practice-games-changes")
@@ -1311,12 +1303,36 @@
             }
         }
 
+        // Carga inicial al entrar a la página: sí hace falta preguntarle a la base de datos
+        // cuál es la ronda más reciente (no hay ningún evento de Realtime del que partir).
+        // Para los cambios en vivo mientras la página ya está abierta, ver
+        // applyPracticeSessionUpdate() más abajo: usa la fila que trae el propio evento en
+        // vez de volver a consultar "la más reciente", que si dos consultas se cruzan en la
+        // red puede resolver desordenado.
         async function loadCurrentPractice() {
             const { data, error } = await sb.from("practice_sessions").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             latestPracticeSession = data || null;
             if (isTeacher) renderTeacherPracticePanel();
             else await renderStudentPracticeCard();
+        }
+
+        // Al arrancar una ronda nueva, el profesor primero cierra la anterior (UPDATE en
+        // practice_sessions, ended_at) y luego crea la siguiente (INSERT): dos cambios
+        // separados, que Realtime siempre entrega en ese mismo orden (el orden real en que
+        // ocurrieron los cambios en la base). Por eso esta función toma la fila directo del
+        // evento en vez de volver a preguntar "cuál es la más reciente" — esa segunda
+        // consulta, al viajar por la red por separado de la otra, sí podía resolver
+        // desordenada (la del cierre llegando después que la del inicio) y dejar a un alumno
+        // viendo la posición de la ronda ya terminada en vez de la nueva. Tomando la fila del
+        // evento no hay ninguna consulta aparte que pueda cruzarse por la red: cada alumno
+        // procesa primero el cierre (oculta su tablero) y después, ya sí, el inicio de la
+        // ronda nueva — siempre en ese orden.
+        function applyPracticeSessionUpdate(row) {
+            if (!row) return;
+            latestPracticeSession = row;
+            if (isTeacher) renderTeacherPracticePanel();
+            else renderStudentPracticeCard();
         }
 
         // ---------- Panel del profesor ----------
@@ -1353,7 +1369,7 @@
                     nameEl: wrap.querySelector(".practice-mini-name"),
                     barEl: wrap.querySelector(".practice-mini-bar"),
                     statusEl: wrap.querySelector(".practice-mini-status"),
-                    board: new ClasesBoard(wrap.querySelector(".practice-mini-board"), { interactive: false, allowArrows: false }),
+                    board: new ClasesBoard(wrap.querySelector(".practice-mini-board"), { interactive: false, allowArrows: false, compact: true }),
                 };
                 practiceStudentBoards[row.student_id] = entry;
             }
