@@ -268,9 +268,17 @@
 
                 const columnas = Math.min(gameIds.length, 5);
                 grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
+                // 16:9 (a diferencia del recuadro ambiente de más abajo, que usa el
+                // widget rígido tv/frame): embed/game es el widget responsivo de
+                // Lichess pensado justamente para adaptarse a cualquier proporción.
+                // Sin loading="lazy": estos iframes se recrean por completo en cada
+                // recarga del panel (ver refreshTimer), y "lazy" puede retrasar su
+                // arranque hasta que el navegador decida que ya son visibles —
+                // dejando el tablero congelado en la posición inicial más tiempo del
+                // necesario mientras la partida ya sigue en curso.
                 grid.innerHTML = gameIds.map((id) =>
-                    '<div class="aspect-[400/444] rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
-                        '<iframe src="https://lichess.org/embed/game/' + encodeURIComponent(id) + '?theme=brown&bg=dark" title="Partida en vivo del torneo" class="w-full h-full" frameborder="0" loading="lazy"></iframe>' +
+                    '<div class="aspect-video rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
+                        '<iframe src="https://lichess.org/embed/game/' + encodeURIComponent(id) + '?theme=brown&bg=dark" title="Partida en vivo del torneo" class="w-full h-full" frameborder="0"></iframe>' +
                     "</div>"
                 ).join("");
                 grid.classList.remove("hidden");
@@ -358,9 +366,12 @@
                 if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
                 refreshTournamentCard();
                 if (row && row.lichess_tournament_id) {
-                    // Refresca la posición del torneo cada 20s mientras esté configurado, para que
-                    // se vea "en vivo" sin que cada visitante tenga que recargar la página.
-                    refreshTimer = setInterval(refreshTournamentCard, 20000);
+                    // Refresca cada 8s mientras esté configurado. Esto también reconstruye
+                    // por completo la grilla de partidas en vivo (renderGamesGrid crea
+                    // iframes nuevos en cada llamada) — un tablero embebido de Lichess que
+                    // se quede "congelado" sin actualizar su posición por su cuenta queda
+                    // igual al día con la partida real en, como mucho, unos segundos.
+                    refreshTimer = setInterval(refreshTournamentCard, 8000);
                 }
 
                 updateVideoSlot(row && row.video_url);
