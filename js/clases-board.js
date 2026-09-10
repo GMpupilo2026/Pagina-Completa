@@ -77,6 +77,11 @@
       this.arrows = [];
       this.circles = [];
       this._drawingFrom = null;
+      // Modo revisión: viewGame/viewPly != null mientras se navega hacia atrás en el
+      // historial sin tocar this.game (que sigue siendo la partida real, para poder
+      // seguir jugando/deshaciendo normalmente al volver a "en vivo").
+      this.viewGame = null;
+      this.viewPly = null;
 
       this.el.style.position = "relative";
       this.el.setAttribute("role", "group");
@@ -144,6 +149,48 @@
       this.render();
     }
 
+    isViewingHistory() {
+      return this.viewGame !== null;
+    }
+
+    // Muestra la posición después de `ply` jugadas (0 = posición inicial) sin tocar la
+    // partida real: this.game sigue con el historial completo intacto para undo()/onMove().
+    viewAt(ply) {
+      const total = this.game.history();
+      const clamped = Math.max(0, Math.min(ply, total.length));
+      if (clamped === total.length) {
+        this.viewLive();
+        return;
+      }
+      const temp = new Chess();
+      for (let i = 0; i < clamped; i++) temp.move(total[i]);
+      this.viewGame = temp;
+      this.viewPly = clamped;
+      this.selected = null;
+      this.render();
+    }
+
+    // Vuelve a mostrar la posición actual en vivo.
+    viewLive() {
+      this.viewGame = null;
+      this.viewPly = null;
+      this.selected = null;
+      this.render();
+    }
+
+    // Descarta la continuación después de `keepPly` jugadas (para "jugar desde aquí" y
+    // crear una variante). Devuelve las jugadas descartadas (SAN) para poder archivarlas
+    // antes de perderlas. No hace nada si no se está en modo revisión.
+    forkAt(keepPly) {
+      const total = this.game.history();
+      const discarded = total.slice(keepPly);
+      const rebuilt = new Chess();
+      for (let i = 0; i < keepPly; i++) rebuilt.move(total[i]);
+      this.game = rebuilt;
+      this.viewLive();
+      return discarded;
+    }
+
     // Reemplaza flechas/círculos mostrados (llega vía Realtime) sin reconstruir el tablero.
     setMarks(arrows, circles) {
       this.arrows = Array.isArray(arrows) ? arrows : [];
@@ -151,18 +198,18 @@
       this._drawMarksOverlay();
     }
 
-    _squareAriaLabel(square) {
-      const piece = this.game.get(square);
+    _squareAriaLabel(square, g) {
+      const piece = g.get(square);
       if (!piece) return square + ", casilla vacía";
       const color = piece.color === "w" ? "blanco" : "negra";
       return square + ", " + PIECE_NAME[piece.type] + " " + color;
     }
 
-    _squareClasses(square) {
+    _squareClasses(square, canInteract) {
       const light = isLightSquare(square);
       let cls =
         "flex items-center justify-center text-3xl sm:text-4xl md:text-5xl select-none relative transition-colors w-full h-full border-0 p-0 m-0 ";
-      cls += this.interactive ? "cursor-pointer " : "cursor-default ";
+      cls += canInteract ? "cursor-pointer " : "cursor-default ";
       cls += light ? "bg-brand-100 " : "bg-brand-500 ";
       if (this.selected === square) {
         cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
@@ -173,24 +220,26 @@
     render() {
       const previouslyFocused = document.activeElement;
       const hadFocusInBoard = this.el.contains(previouslyFocused);
+      const g = this.viewGame || this.game;
+      const canInteract = this.interactive && !this.isViewingHistory();
 
       this.el.innerHTML = "";
       const squares = squaresInOrder();
       if (!this.focusSquare || squares.indexOf(this.focusSquare) === -1) {
         this.focusSquare = squares[0];
       }
-      const legalTargets = this.selected ? this.game.moves({ square: this.selected, verbose: true }) : [];
+      const legalTargets = canInteract && this.selected ? g.moves({ square: this.selected, verbose: true }) : [];
 
       for (const square of squares) {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = this._squareClasses(square);
+        btn.className = this._squareClasses(square, canInteract);
         btn.setAttribute("data-square", square);
-        btn.setAttribute("aria-label", this._squareAriaLabel(square));
+        btn.setAttribute("aria-label", this._squareAriaLabel(square, g));
         btn.tabIndex = square === this.focusSquare ? 0 : -1;
-        if (!this.interactive) btn.tabIndex = -1;
+        if (!canInteract) btn.tabIndex = -1;
 
-        const piece = this.game.get(square);
+        const piece = g.get(square);
         if (piece) {
           const span = document.createElement("span");
           span.textContent = GLYPH[piece.color][piece.type];
@@ -209,7 +258,7 @@
           btn.appendChild(dot);
         }
 
-        if (this.interactive) {
+        if (canInteract) {
           btn.addEventListener("click", () => this._onSquareClick(square));
         }
         this.el.appendChild(btn);
@@ -220,7 +269,7 @@
       // botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
       this._drawMarksOverlay();
 
-      if (hadFocusInBoard && this.interactive) {
+      if (hadFocusInBoard && canInteract) {
         const target = this.el.querySelector('[data-square="' + this.focusSquare + '"]');
         if (target) target.focus();
       }
@@ -228,6 +277,10 @@
 
     _drawMarksOverlay() {
       let svg = this.el.querySelector("svg.marks-overlay");
+      if (this.isViewingHistory()) {
+        if (svg) svg.innerHTML = "";
+        return;
+      }
       if (!svg) {
         svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("class", "marks-overlay");
@@ -328,7 +381,7 @@
     }
 
     _onKeydown(e) {
-      if (!this.interactive) return;
+      if (!this.interactive || this.isViewingHistory()) return;
       const current = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
       if (!current) return;
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
