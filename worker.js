@@ -140,14 +140,19 @@ export default {
       // cursos/bloqueado.html manteniendo la URL original en la barra de
       // direcciones (sin redirección) para que su JS sepa qué curso mostrar
       // y, tras la contraseña correcta, recargar esta misma URL.
+      //
+      // Responde 200, no 403: esto es una navegación normal de página completa
+      // (el usuario hizo clic en "Ver temario" o entró por URL), y algunos
+      // navegadores reemplazan el cuerpo de una respuesta 4xx a una navegación
+      // con su propia pantalla genérica de "acceso denegado" en vez de mostrar
+      // el HTML real que mandamos — dejando al usuario sin ver ni el mensaje ni
+      // el formulario de contraseña, y con la sensación de haber salido del
+      // sitio. Con 200 el navegador siempre renderiza cursos/bloqueado.html tal
+      // cual, con su propio header de navegación intacto.
       const lockedUrl = new URL("/cursos/bloqueado.html", url);
       const lockedRequest = new Request(lockedUrl, request);
       const lockedResponse = await env.ASSETS.fetch(lockedRequest);
-      return new Response(lockedResponse.body, {
-        status: 403,
-        statusText: "Forbidden",
-        headers: lockedResponse.headers,
-      });
+      return new Response(lockedResponse.body, { headers: lockedResponse.headers });
     }
 
     return env.ASSETS.fetch(request);
