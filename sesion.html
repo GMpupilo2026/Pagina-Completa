@@ -149,14 +149,17 @@
                         </div>
                     </div>
 
-                    <!-- Práctica contra el motor: overlay del alumno, mientras dure la ronda que lanzó el profesor -->
+                    <!-- Práctica contra el motor: overlay del alumno, mientras dure la ronda que lanzó el profesor.
+                         Al ser un overlay de pantalla completa (fixed inset-0) sobre el resto de la clase, el
+                         tablero puede ocupar bastante más que una tarjeta normal — de hecho, tanto como el
+                         tablero principal (max-w-[560px]) — sin competir por espacio con nada más. -->
                     <div id="practice-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-5 w-full max-w-sm text-center">
+                        <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto text-center">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🎯 Práctica contra el motor</h2>
                             <p class="text-xs text-brand-500 dark:text-brand-400 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
                             <p id="practice-card-status" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Es tu turno.</p>
                             <div class="flex justify-center">
-                                <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[320px] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                                <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
                             <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
                         </div>
