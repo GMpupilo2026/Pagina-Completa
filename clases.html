@@ -103,6 +103,32 @@
                         <button id="undo-move-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↶ Deshacer jugada</button>
                     </div>
 
+                    <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más -->
+                    <div class="mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">Jugadas</h2>
+                            <div id="history-controls" class="hidden items-center gap-2">
+                                <span class="text-xs text-brand-400 dark:text-brand-500">Viendo una jugada anterior</span>
+                                <button id="history-fork-btn" class="hidden text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Jugar desde aquí</button>
+                                <button id="history-live-btn" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Volver al final</button>
+                            </div>
+                        </div>
+                        <p id="move-list-empty" class="text-xs text-brand-300 dark:text-brand-600">Sin jugadas todavía…</p>
+                        <ol id="move-list" class="hidden flex-wrap gap-x-1 gap-y-1.5 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
+                    </div>
+
+                    <!-- Pregunta del profesor: solo la ven los alumnos -->
+                    <div id="question-card" class="hidden mt-6 bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">❓ <span id="question-prompt-text"></span></h2>
+                        <p id="question-status-text" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Mueve la pieza que jugarías.</p>
+                        <div class="flex justify-center">
+                            <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[320px] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                        </div>
+                        <div class="flex justify-center mt-3">
+                            <button id="question-retry-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Cambiar respuesta</button>
+                        </div>
+                    </div>
+
                     <!-- Partidas guardadas: visible para todos -->
                     <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Partidas guardadas</h2>
@@ -130,6 +156,21 @@
                             <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
                             <p id="create-student-msg" class="text-xs"></p>
                         </form>
+                    </div>
+
+                    <!-- Preguntar a la clase (solo profesor) -->
+                    <div id="question-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Preguntar a la clase</h2>
+                        <button id="ask-question-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors mb-3">❓ Preguntar: ¿qué jugarías?</button>
+                        <div id="active-question" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-xs text-brand-500 dark:text-brand-400">Pregunta activa</p>
+                                <button id="close-question-btn" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">Cerrar pregunta</button>
+                            </div>
+                            <ul id="answers-list" class="space-y-1.5 text-sm">
+                                <li class="text-brand-300 dark:text-brand-600">Todavía nadie respondió…</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <!-- Alumnos conectados (solo profesor) -->
@@ -225,8 +266,93 @@
 
         function updateUndoButton() {
             const btn = document.getElementById("undo-move-btn");
-            btn.classList.toggle("hidden", !canMoveNow());
+            btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
         }
+
+        // ---------- Historial de jugadas: navegar hacia atrás sin tocar el tablero en vivo ----------
+        function makeMoveButton(san, ply) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            const isCurrent = board.viewPly === ply;
+            btn.className = "px-1 rounded hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" +
+                (isCurrent ? " bg-accent-500/30 font-bold text-brand-800 dark:text-white" : "");
+            btn.textContent = san;
+            btn.addEventListener("click", () => { board.viewAt(ply); renderMoveList(); });
+            return btn;
+        }
+
+        function renderMoveList() {
+            const moves = board.moves();
+            const listEl = document.getElementById("move-list");
+            const emptyEl = document.getElementById("move-list-empty");
+            if (!moves.length) {
+                listEl.classList.add("hidden");
+                listEl.classList.remove("flex");
+                emptyEl.classList.remove("hidden");
+                listEl.innerHTML = "";
+            } else {
+                emptyEl.classList.add("hidden");
+                listEl.classList.remove("hidden");
+                listEl.classList.add("flex");
+                listEl.innerHTML = "";
+                for (let i = 0; i < moves.length; i += 2) {
+                    const group = document.createElement("li");
+                    group.className = "flex items-center gap-1";
+                    const numSpan = document.createElement("span");
+                    numSpan.className = "text-brand-300 dark:text-brand-600";
+                    numSpan.textContent = (i / 2 + 1) + ".";
+                    group.appendChild(numSpan);
+                    group.appendChild(makeMoveButton(moves[i], i + 1));
+                    if (moves[i + 1]) group.appendChild(makeMoveButton(moves[i + 1], i + 2));
+                    listEl.appendChild(group);
+                }
+            }
+            updateHistoryControls();
+        }
+
+        function updateHistoryControls() {
+            const viewing = board.isViewingHistory();
+            const controls = document.getElementById("history-controls");
+            controls.classList.toggle("hidden", !viewing);
+            controls.classList.toggle("flex", viewing);
+            document.getElementById("history-fork-btn").classList.toggle("hidden", !(viewing && canMoveNow()));
+            updateUndoButton();
+        }
+
+        document.getElementById("history-live-btn").addEventListener("click", () => {
+            board.viewLive();
+            renderMoveList();
+        });
+
+        document.getElementById("history-fork-btn").addEventListener("click", async () => {
+            if (!canMoveNow() || !board.isViewingHistory()) return;
+            const keepPly = board.viewPly;
+            const fullMoves = board.moves();
+            const discarded = fullMoves.slice(keepPly);
+            if (discarded.length) {
+                // Archiva la continuación original en "Partidas guardadas" para no perderla:
+                // "devolver la jugada sin borrarla, para crear variantes".
+                const tempGame = new Chess();
+                fullMoves.forEach((m) => tempGame.move(m));
+                const label = Math.ceil(keepPly / 2) + (keepPly % 2 === 1 ? " (blancas)" : " (negras)");
+                await sb.from("saved_games").insert({
+                    pgn: pgnFromMoves(fullMoves),
+                    fen_final: tempGame.fen(),
+                    move_count: fullMoves.length,
+                    title: "Variante descartada en la jugada " + label,
+                    created_by: session.user.id,
+                });
+            }
+            board.forkAt(keepPly);
+            board.setMarks([], []);
+            await pushBoardState();
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+            setStatus(discarded.length
+                ? "Se guardó la continuación original en \"Partidas guardadas\" — ya puedes jugar una variante distinta desde aquí."
+                : "Ya puedes jugar desde aquí.");
+        });
 
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
         function applyGameStateRow(row) {
@@ -235,7 +361,7 @@
             activePlayerId = row.active_player_id || null;
             updateTurnIndicator();
             updateAccessForRole();
-            updateUndoButton();
+            renderMoveList();
             renderStudentsList();
             if (isTeacher) updateEngineEval();
         }
@@ -293,7 +419,7 @@
                 onMove: () => {
                     pushBoardState();
                     updateTurnIndicator();
-                    updateUndoButton();
+                    renderMoveList();
                     if (isTeacher) updateEngineEval();
                 },
                 onMarksChange: (marks) => pushMarksToServer(marks),
@@ -302,12 +428,12 @@
         }
 
         document.getElementById("undo-move-btn").addEventListener("click", async () => {
-            if (!canMoveNow()) return;
+            if (!canMoveNow() || board.isViewingHistory()) return;
             const undone = board.undo();
             if (!undone) return;
             await pushBoardState();
             updateTurnIndicator();
-            updateUndoButton();
+            renderMoveList();
             if (isTeacher) updateEngineEval();
         });
 
@@ -329,8 +455,16 @@
                 li.className = "flex items-center justify-between gap-2";
                 const label = document.createElement("span");
                 label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 truncate";
-                label.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500 shrink-0" title="En vivo"></span><span class="truncate">' +
-                    (info.full_name || info.email) + "</span>";
+                const dot = document.createElement("span");
+                dot.className = "w-2 h-2 rounded-full bg-green-500 shrink-0";
+                dot.title = "En vivo";
+                const name = document.createElement("span");
+                name.className = "truncate";
+                // Nunca innerHTML aquí: full_name/email vienen de datos que el propio usuario
+                // controla (presence.track), textContent los trata siempre como texto plano.
+                name.textContent = info.full_name || info.email;
+                label.appendChild(dot);
+                label.appendChild(name);
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = hasControl
@@ -536,6 +670,162 @@
             setStatus("Partida guardada. Ya aparece en \"Partidas guardadas\" para descargar.");
         });
 
+        // ---------- Preguntar a la clase: "¿qué jugarías?" ----------
+        let questionBoard = null;
+        let currentQuestion = null;
+        let myAnswer = null;
+
+        function subscribeQuestions() {
+            sb.channel("questions-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => loadCurrentQuestion())
+                .subscribe();
+            if (isTeacher) {
+                sb.channel("question-answers-changes")
+                    .on("postgres_changes", { event: "*", schema: "public", table: "question_answers" }, () => {
+                        if (currentQuestion) loadAnswersFor(currentQuestion.id);
+                    })
+                    .subscribe();
+            }
+        }
+
+        async function loadCurrentQuestion() {
+            const { data, error } = await sb.from("questions").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (error) { console.error(error); return; }
+            currentQuestion = data || null;
+            if (isTeacher) renderTeacherQuestionPanel();
+            else await renderStudentQuestionCard();
+        }
+
+        function renderTeacherQuestionPanel() {
+            const activeEl = document.getElementById("active-question");
+            if (!currentQuestion || currentQuestion.closed_at) {
+                activeEl.classList.add("hidden");
+                return;
+            }
+            activeEl.classList.remove("hidden");
+            loadAnswersFor(currentQuestion.id);
+        }
+
+        async function loadAnswersFor(questionId) {
+            const { data, error } = await sb.from("question_answers")
+                .select("*, profiles(full_name, email)")
+                .eq("question_id", questionId)
+                .order("created_at");
+            if (error) { console.error(error); return; }
+            renderAnswersList(data || []);
+        }
+
+        function renderAnswersList(answers) {
+            const listEl = document.getElementById("answers-list");
+            if (!answers.length) {
+                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Todavía nadie respondió…</li>';
+                return;
+            }
+            listEl.innerHTML = "";
+            for (const a of answers) {
+                const li = document.createElement("li");
+                li.className = "flex items-center justify-between gap-2";
+                const label = document.createElement("span");
+                label.className = "text-brand-700 dark:text-brand-200 truncate";
+                const displayName = (a.profiles && (a.profiles.full_name || a.profiles.email)) || "Alumno";
+                label.textContent = displayName + ": " + a.move_san; // textContent: nunca innerHTML con datos de otros usuarios
+                const actions = document.createElement("span");
+                actions.className = "flex items-center gap-1 shrink-0";
+                const correctBtn = document.createElement("button");
+                correctBtn.type = "button";
+                correctBtn.textContent = "✅";
+                correctBtn.title = "Marcar correcta";
+                correctBtn.className = "px-1.5 py-0.5 rounded transition-colors " + (a.is_correct === true ? "bg-green-500/30" : "hover:bg-brand-100 dark:hover:bg-brand-800");
+                correctBtn.addEventListener("click", () => setAnswerCorrect(a.id, true));
+                const wrongBtn = document.createElement("button");
+                wrongBtn.type = "button";
+                wrongBtn.textContent = "❌";
+                wrongBtn.title = "Marcar a revisar";
+                wrongBtn.className = "px-1.5 py-0.5 rounded transition-colors " + (a.is_correct === false ? "bg-red-500/30" : "hover:bg-brand-100 dark:hover:bg-brand-800");
+                wrongBtn.addEventListener("click", () => setAnswerCorrect(a.id, false));
+                actions.appendChild(correctBtn);
+                actions.appendChild(wrongBtn);
+                li.appendChild(label);
+                li.appendChild(actions);
+                listEl.appendChild(li);
+            }
+        }
+
+        async function setAnswerCorrect(answerId, value) {
+            const { error } = await sb.from("question_answers").update({ is_correct: value }).eq("id", answerId);
+            if (error) console.error(error);
+        }
+
+        document.getElementById("ask-question-btn").addEventListener("click", async () => {
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).is("closed_at", null);
+            const { error } = await sb.from("questions").insert({ fen: board.fen(), created_by: session.user.id });
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            setStatus("Pregunta enviada a la clase.");
+        });
+
+        document.getElementById("close-question-btn").addEventListener("click", async () => {
+            if (!currentQuestion) return;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", currentQuestion.id);
+        });
+
+        async function renderStudentQuestionCard() {
+            const card = document.getElementById("question-card");
+            if (!currentQuestion) { card.classList.add("hidden"); return; }
+            card.classList.remove("hidden");
+            document.getElementById("question-prompt-text").textContent = currentQuestion.prompt;
+
+            const { data: existing } = await sb.from("question_answers").select("*")
+                .eq("question_id", currentQuestion.id).eq("student_id", profile.id).maybeSingle();
+            myAnswer = existing || null;
+
+            if (!questionBoard) {
+                questionBoard = new ClasesBoard(document.getElementById("question-board"), {
+                    interactive: false,
+                    allowArrows: false,
+                    onMove: (fen, san) => submitAnswer(san, fen),
+                });
+            }
+            questionBoard.loadFen(currentQuestion.fen);
+
+            const closed = !!currentQuestion.closed_at;
+            const retryBtn = document.getElementById("question-retry-btn");
+            const statusText = document.getElementById("question-status-text");
+
+            if (closed) {
+                questionBoard.setInteractive(false);
+                retryBtn.classList.add("hidden");
+                statusText.textContent = myAnswer ? ("Pregunta cerrada. Tu respuesta fue: " + myAnswer.move_san) : "Pregunta cerrada. No alcanzaste a responder.";
+            } else if (myAnswer) {
+                questionBoard.setInteractive(false);
+                retryBtn.classList.remove("hidden");
+                statusText.textContent = "Tu respuesta: " + myAnswer.move_san + " ✓ enviada";
+            } else {
+                questionBoard.setInteractive(true);
+                retryBtn.classList.add("hidden");
+                statusText.textContent = "Mueve la pieza que jugarías.";
+            }
+        }
+
+        async function submitAnswer(san, fen) {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            const { error } = await sb.from("question_answers").upsert({
+                question_id: currentQuestion.id, student_id: profile.id, move_san: san, resulting_fen: fen,
+            }, { onConflict: "question_id,student_id" });
+            if (error) { console.error(error); setStatus("No se pudo enviar tu respuesta: " + error.message); return; }
+            myAnswer = { move_san: san, resulting_fen: fen };
+            questionBoard.setInteractive(false);
+            document.getElementById("question-retry-btn").classList.remove("hidden");
+            document.getElementById("question-status-text").textContent = "Tu respuesta: " + san + " ✓ enviada";
+        }
+
+        document.getElementById("question-retry-btn").addEventListener("click", () => {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            questionBoard.loadFen(currentQuestion.fen);
+            questionBoard.setInteractive(true);
+            document.getElementById("question-retry-btn").classList.add("hidden");
+            document.getElementById("question-status-text").textContent = "Mueve la pieza que jugarías.";
+        });
+
         // ---------- Arranque ----------
         async function init() {
             const { data } = await sb.auth.getSession();
@@ -555,6 +845,7 @@
             if (isTeacher) {
                 document.getElementById("students-panel").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
+                document.getElementById("question-panel").classList.remove("hidden");
             }
             setStatus(isTeacher
                 ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
@@ -566,6 +857,8 @@
             subscribePresence();
             await loadSavedGames();
             subscribeSavedGames();
+            await loadCurrentQuestion();
+            subscribeQuestions();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
@@ -582,7 +875,7 @@
             board.setMarks([], []);
             await pushBoardState();
             updateTurnIndicator();
-            updateUndoButton();
+            renderMoveList();
             if (isTeacher) updateEngineEval();
         });
 
