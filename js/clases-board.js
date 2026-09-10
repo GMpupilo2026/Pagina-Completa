@@ -30,23 +30,27 @@
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const MARK_COLOR = "#de911d"; // accent-500
 
-  function squaresInOrder() {
+  // Orden visual de las 64 casillas, fila por fila de arriba hacia abajo. Con `flipped`
+  // se invierte el orden completo, lo que equivale exactamente a girar el tablero
+  // (rank 1 arriba, columnas de h a a) sin necesidad de una segunda lista de coordenadas.
+  function squaresInOrder(flipped) {
     const squares = [];
     for (let rank = 8; rank >= 1; rank--) {
       for (const file of FILES) squares.push(file + rank);
     }
-    return squares;
+    return flipped ? squares.reverse() : squares;
   }
 
   function isLightSquare(square) {
     const file = FILES.indexOf(square[0]);
-    const rank = parseInt(square[1], 10);
+    const rank = parseInt(square[1], 10) - 1;
     return (file + rank) % 2 === 1;
   }
 
-  // Fila/columna (0-7) de una casilla, con fila 0 = arriba (rank 8), igual que squaresInOrder().
-  function squareRowCol(square) {
-    const idx = squaresInOrder().indexOf(square);
+  // Fila/columna (0-7) de una casilla, con fila 0 = arriba. Con `flipped` la fila 0 pasa a
+  // ser la fila 1 (negras abajo), igual que gira squaresInOrder().
+  function squareRowCol(square, flipped) {
+    const idx = squaresInOrder(flipped).indexOf(square);
     if (idx === -1) return null;
     return { row: Math.floor(idx / 8), col: idx % 8 };
   }
@@ -74,11 +78,16 @@
       this.onMarksChange = opts.onMarksChange || (() => {});
       this.onVariantMove = opts.onVariantMove || (() => {});
       this.game = new Chess();
+      this.startFen = null; // FEN inicial de la partida (null = posición estándar); ver loadMoves()
       this.selected = null;
       this.focusSquare = "e1";
       this.arrows = [];
       this.circles = [];
       this._drawingFrom = null;
+      this.flipped = false; // vista del tablero: negras abajo (preferencia personal, no se sincroniza)
+      this.showCoords = false; // vista del tablero: coordenadas a-h/1-8 (preferencia personal)
+      this.piecesHidden = false; // el profesor puede ocultar las piezas en el tablero de los alumnos
+      this.freeMode = false; // modo edición libre del profesor: mueve piezas ignorando las reglas
       // Modo revisión/exploración: viewGame/viewPath != null mientras se navega por el
       // historial (línea principal o una variante) sin tocar this.game (que sigue siendo
       // la partida real en vivo). Jugar una pieza estando aquí no mueve la partida real:
@@ -103,9 +112,12 @@
     }
 
     // Carga la posición reproduciendo la lista de jugadas (SAN) desde el inicio, para que
-    // el historial interno de chess.js quede poblado y undo() funcione.
-    loadMoves(moves) {
-      this.game = new Chess();
+    // el historial interno de chess.js quede poblado y undo() funcione. `startFen` es la
+    // posición inicial de esa partida (null = la estándar): la deja el profesor al aplicar
+    // una posición armada en modo edición libre (ver setFreeMode/applyFreeModeFen).
+    loadMoves(moves, startFen) {
+      this.startFen = startFen || null;
+      this.game = this.startFen ? new Chess(this.startFen) : new Chess();
       for (const san of moves || []) {
         if (!this.game.move(san)) break; // datos corruptos: no seguir reproduciendo
       }
@@ -126,6 +138,7 @@
     }
 
     reset() {
+      this.startFen = null;
       this.game = new Chess();
       this.selected = null;
       this.render();
@@ -154,6 +167,61 @@
       this.render();
     }
 
+    // ---------- Preferencias de vista: girar tablero y coordenadas ----------
+    // No se sincronizan por Realtime a propósito: cada quien elige cómo mirar SU pantalla.
+    setFlipped(flipped) {
+      this.flipped = !!flipped;
+      this.render();
+    }
+
+    setShowCoords(show) {
+      this.showCoords = !!show;
+      this.render();
+    }
+
+    // El profesor puede ocultar las piezas en el tablero de los alumnos (por ejemplo, para
+    // preguntar "¿qué hay en e4?" antes de revelar la posición). No afecta su propio tablero:
+    // quien llama a esto decide con qué valor (ver sesion.html, se ignora si isTeacher).
+    setPiecesHidden(hidden) {
+      this.piecesHidden = !!hidden;
+      this.render();
+    }
+
+    // ---------- Modo edición libre (jugadas ilegales) ----------
+    // Solo lo activa el profesor sobre su propio tablero. Mientras está activo, un clic en
+    // una pieza y luego en cualquier casilla la reubica ahí sin validar las reglas del
+    // ajedrez (captura o pisa lo que haya). No se sincroniza jugada a jugada: el profesor
+    // arma la posición y luego decide aplicarla (ver aplicación en sesion.html) o
+    // descartarla y volver a la posición real.
+    setFreeMode(active) {
+      this.freeMode = !!active;
+      this.selected = null;
+      this.render();
+    }
+
+    _onFreeModeClick(square) {
+      const g = this.game;
+      if (this.selected === square) {
+        this.selected = null;
+        this.render();
+        return;
+      }
+      if (this.selected) {
+        const piece = g.get(this.selected);
+        if (piece) {
+          g.remove(square);
+          const placed = g.put(piece, square);
+          if (placed) g.remove(this.selected);
+        }
+        this.selected = null;
+        this.render();
+        return;
+      }
+      const piece = g.get(square);
+      if (piece) this.selected = square;
+      this.render();
+    }
+
     isViewingHistory() {
       return this.viewGame !== null;
     }
@@ -163,7 +231,7 @@
     }
 
     _setViewPath(path, context) {
-      const temp = new Chess();
+      const temp = this.startFen ? new Chess(this.startFen) : new Chess();
       for (const san of path) {
         if (!temp.move(san)) break; // datos corruptos: no seguir reproduciendo
       }
@@ -211,7 +279,7 @@
     forkToView() {
       if (!this.isViewingHistory()) return null;
       const discardedMain = this.game.history();
-      const rebuilt = new Chess();
+      const rebuilt = this.startFen ? new Chess(this.startFen) : new Chess();
       for (const san of this.viewPath) rebuilt.move(san);
       this.game = rebuilt;
       this.viewLive();
@@ -253,13 +321,19 @@
       const canInteract = this.interactive;
 
       this.el.innerHTML = "";
-      const squares = squaresInOrder();
+      const squares = squaresInOrder(this.flipped);
       if (!this.focusSquare || squares.indexOf(this.focusSquare) === -1) {
         this.focusSquare = squares[0];
       }
-      const legalTargets = canInteract && this.selected ? g.moves({ square: this.selected, verbose: true }) : [];
+      // En modo edición libre cualquier casilla es un destino válido (no hay "jugadas
+      // legales" que resaltar); con las piezas ocultas tampoco se muestran los puntos,
+      // para no delatar con ellos qué casillas tienen pieza.
+      const legalTargets =
+        canInteract && this.selected && !this.freeMode && !this.piecesHidden
+          ? g.moves({ square: this.selected, verbose: true })
+          : [];
 
-      for (const square of squares) {
+      squares.forEach((square, i) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = this._squareClasses(square, canInteract);
@@ -269,7 +343,7 @@
         if (!canInteract) btn.tabIndex = -1;
 
         const piece = g.get(square);
-        if (piece) {
+        if (piece && !this.piecesHidden) {
           const span = document.createElement("span");
           span.textContent = GLYPH[piece.color][piece.type];
           span.className = piece.color === "w" ? "piece-white" : "piece-black";
@@ -287,11 +361,32 @@
           btn.appendChild(dot);
         }
 
+        if (this.showCoords) {
+          const row = Math.floor(i / 8), col = i % 8;
+          const light = isLightSquare(square);
+          const labelCls = "absolute text-[9px] sm:text-[10px] leading-none font-semibold pointer-events-none " +
+            (light ? "text-brand-500 " : "text-brand-100 ");
+          if (col === 0) {
+            const rankLabel = document.createElement("span");
+            rankLabel.setAttribute("aria-hidden", "true");
+            rankLabel.className = labelCls + "top-0.5 left-1";
+            rankLabel.textContent = square[1];
+            btn.appendChild(rankLabel);
+          }
+          if (row === 7) {
+            const fileLabel = document.createElement("span");
+            fileLabel.setAttribute("aria-hidden", "true");
+            fileLabel.className = labelCls + "bottom-0.5 right-1";
+            fileLabel.textContent = square[0];
+            btn.appendChild(fileLabel);
+          }
+        }
+
         if (canInteract) {
           btn.addEventListener("click", () => this._onSquareClick(square));
         }
         this.el.appendChild(btn);
-      }
+      });
 
       // El overlay de flechas/círculos se recrea al final: al ser position:absolute dentro del
       // grid no participa del layout (igual que los "dot" de jugada legal dentro de los
@@ -328,7 +423,7 @@
         '<path d="M0,0 L10,5 L0,10 z" fill="' + MARK_COLOR + '"></path></marker></defs>';
 
       for (const square of this.circles) {
-        const rc = squareRowCol(square);
+        const rc = squareRowCol(square, this.flipped);
         if (!rc) continue;
         const c = centerPercent(rc);
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -350,8 +445,8 @@
     // Dibuja una flecha alineada a fila/columna/diagonal. Si el movimiento tiene forma de "L"
     // (caballo), la dobla en ángulo recto en vez de cortar en diagonal, como en lichess.
     _drawArrow(svg, fromSquare, toSquare) {
-      const from = squareRowCol(fromSquare);
-      const to = squareRowCol(toSquare);
+      const from = squareRowCol(fromSquare, this.flipped);
+      const to = squareRowCol(toSquare, this.flipped);
       if (!from || !to) return;
       const dx = to.col - from.col;
       const dy = to.row - from.row;
@@ -386,6 +481,10 @@
 
     _onSquareClick(square) {
       this.focusSquare = square;
+      if (this.freeMode) {
+        this._onFreeModeClick(square);
+        return;
+      }
       const g = this.viewGame || this.game;
 
       if (this.selected === square) {
@@ -435,7 +534,7 @@
       if (arrows.indexOf(e.key) === -1) return;
       e.preventDefault();
 
-      const squares = squaresInOrder();
+      const squares = squaresInOrder(this.flipped);
       const idx = squares.indexOf(current);
       const row = Math.floor(idx / 8);
       const col = idx % 8;
