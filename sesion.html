@@ -41,6 +41,16 @@
     <script src="js/clases-board.js"></script>
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
+    <style>
+        /* Las piezas de ClasesBoard usan text-3xl/4xl/5xl, pensado para el tablero
+           principal (hasta 560px) o el de preguntas (hasta 320px). Las miniaturas de
+           "Tableros de los alumnos" son mucho más chicas (varias por fila): con ese
+           mismo tamaño de fuente las piezas se ven enormes y se salen de su casilla.
+           Se recorta aquí en vez de tocar clases-board.js, que comparten los tableros
+           grandes.
+        */
+        .practice-mini-board [data-square] { font-size: clamp(0.6rem, 2.4vw, 1.1rem) !important; }
+    </style>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
@@ -1399,7 +1409,19 @@
         });
 
         // ---------- Tarjeta del alumno: partida real contra el motor (overlay sobre el tablero) ----------
-        async function renderStudentPracticeCard() {
+        // Al arrancar una ronda, el profesor primero cierra la anterior (UPDATE) y luego crea
+        // la nueva (INSERT): son dos cambios en practice_sessions, así que a veces le llegan al
+        // alumno casi juntos y renderStudentPracticeCard() se dispara dos veces casi a la vez.
+        // Esta cola evita que ambas corran en paralelo (la segunda espera a que la primera
+        // termine, y para entonces ya encuentra la fila creada por la primera).
+        let practiceCardRenderBusy = Promise.resolve();
+        function renderStudentPracticeCard() {
+            const run = practiceCardRenderBusy.then(renderStudentPracticeCardNow, renderStudentPracticeCardNow);
+            practiceCardRenderBusy = run.catch(() => {});
+            return run;
+        }
+
+        async function renderStudentPracticeCardNow() {
             const card = document.getElementById("practice-card");
             if (!latestPracticeSession || latestPracticeSession.ended_at) {
                 card.classList.add("hidden");
@@ -1410,7 +1432,8 @@
             document.getElementById("practice-card-level").textContent = practiceLevelLabel(latestPracticeSession.level);
             if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
 
-            // ¿Ya tengo una partida en esta ronda? (por ejemplo, si recargué la página a mitad).
+            // ¿Ya tengo una partida en esta ronda? (por ejemplo, si recargué la página a mitad,
+            // o si ya la creó una llamada anterior a esta misma función).
             const { data: existing, error } = await sb.from("practice_games").select("*")
                 .eq("session_id", latestPracticeSession.id).eq("student_id", profile.id).maybeSingle();
             if (error) { console.error(error); return; }
@@ -1423,8 +1446,17 @@
                     session_id: latestPracticeSession.id, student_id: profile.id, student_color: studentColor,
                     fen: latestPracticeSession.fen, moves: [],
                 }).select().single();
-                if (insertError) { console.error(insertError); return; }
-                myPracticeGame = created;
+                if (insertError) {
+                    // La cola de arriba ya cubre el caso normal, pero por si acaso llegó otro
+                    // evento fuera de esa cola (o de otra pestaña): en vez de fallar, se
+                    // vuelve a pedir la fila — si el error fue justamente "ya existe", ahí está.
+                    const { data: retryExisting } = await sb.from("practice_games").select("*")
+                        .eq("session_id", latestPracticeSession.id).eq("student_id", profile.id).maybeSingle();
+                    if (!retryExisting) { console.error(insertError); return; }
+                    myPracticeGame = retryExisting;
+                } else {
+                    myPracticeGame = created;
+                }
             }
 
             document.getElementById("practice-card-color").textContent = myPracticeGame.student_color === "w" ? "blancas" : "negras";
