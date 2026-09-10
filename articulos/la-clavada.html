@@ -32,6 +32,7 @@
     </script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
@@ -67,13 +68,14 @@
         </div>
     </header>
 
+    <main id="main-content">
     <article class="pt-28 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4">← Volver a Artículos</a>
+            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Artículos</a>
             <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Táctica</span>
             <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">La clavada: el arma táctica más poderosa</h1>
             <p class="text-brand-400 dark:text-brand-500 text-sm mb-8">28 febrero 2026 · 7 min lectura</p>
-            <div class="h-56 bg-gradient-to-br from-accent-400 to-accent-600 rounded-2xl flex items-center justify-center text-7xl mb-10">⚔️</div>
+            <div aria-hidden="true" class="h-56 bg-gradient-to-br from-accent-400 to-accent-600 rounded-2xl flex items-center justify-center text-7xl mb-10">⚔️</div>
 
             <div class="prose-chess space-y-6 text-brand-700 dark:text-brand-200 leading-relaxed">
 <p>Una <strong>clavada</strong> ocurre cuando una pieza no puede (o no conviene que) se mueva porque detrás de ella hay una pieza de más valor —o el propio rey— en la misma línea de ataque de un alfil, torre o dama. Es, junto con la horquilla, el recurso táctico más frecuente en la práctica, y aparece en todos los niveles de juego.</p>
@@ -102,12 +104,13 @@
                 <a href="../entreno/index.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Ir a la Base de Problemas →</a>
             </div>
 
-            <div class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
-                <a href="peones-doblados.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors">← Peones doblados: ¿siempre son una debilidad?</a>
-                <a href="horquillas-de-caballo.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right">Horquillas de caballo: cómo ganar material →</a>
-            </div>
+            <nav aria-label="Navegación entre artículos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="peones-doblados.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Artículo anterior: Peones doblados: ¿siempre son una debilidad?"><span aria-hidden="true">←</span> Peones doblados: ¿siempre son una debilidad?</a>
+                <a href="horquillas-de-caballo.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente artículo: Horquillas de caballo: cómo ganar material">Horquillas de caballo: cómo ganar material <span aria-hidden="true">→</span></a>
+            </nav>
         </div>
     </article>
+    </main>
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
