@@ -152,6 +152,30 @@
         // ---------- Tema de piezas del tablero (preferencia local, ver js/board-themes.js) ----------
         const THEME_ACTIVE = "text-center px-2 py-3 rounded-xl border-2 border-accent-500 bg-accent-500/10 transition-colors";
         const THEME_INACTIVE = "text-center px-2 py-3 rounded-xl border-2 border-brand-200 dark:border-brand-700 hover:border-accent-400 bg-white dark:bg-brand-800 transition-colors";
+        // Mismos glifos Unicode que usa js/clases-board.js para el tema "Clásico" (rey y
+        // dama, blanco y negro), para que la vista previa se vea igual que en el tablero real.
+        const CLASSIC_GLYPH = { w: { k: "♔", q: "♕", n: "♘" }, b: { k: "♚", q: "♛", n: "♞" } };
+        // Tres piezas de muestra por tarjeta (rey, dama, caballo) sobre casillas
+        // clara/oscura/clara alternadas, igual que en un tablero real.
+        const PREVIEW_TYPES = ["k", "q", "n"];
+        const PREVIEW_SQUARES = ["light", "dark", "light"];
+
+        function buildThemePreviewHTML(theme) {
+            let html = '<span class="theme-preview-row" aria-hidden="true">';
+            PREVIEW_TYPES.forEach((type, i) => {
+                const square = PREVIEW_SQUARES[i];
+                const isDark = square === "dark";
+                html += '<span class="theme-preview-sq theme-preview-sq-' + square + '">';
+                if (theme.pieces) {
+                    html += '<span class="theme-token ' + (isDark ? "theme-token-black" : "theme-token-white") + '">' + theme.pieces[type] + "</span>";
+                } else {
+                    html += '<span class="' + (isDark ? "piece-black" : "piece-white") + '">' + (isDark ? CLASSIC_GLYPH.b[type] : CLASSIC_GLYPH.w[type]) + "</span>";
+                }
+                html += "</span>";
+            });
+            html += "</span>";
+            return html;
+        }
 
         function renderBoardThemeGrid() {
             const grid = document.getElementById("board-theme-grid");
@@ -166,7 +190,8 @@
                 btn.setAttribute("role", "radio");
                 btn.setAttribute("aria-checked", id === current ? "true" : "false");
                 btn.innerHTML =
-                    '<span class="block text-2xl mb-1" aria-hidden="true">' + theme.icon + "</span>" +
+                    buildThemePreviewHTML(theme) +
+                    '<span class="block text-lg mb-0.5" aria-hidden="true">' + theme.icon + "</span>" +
                     '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
                 btn.addEventListener("click", () => {
                     window.BoardThemes.setPreference(id);

@@ -53,6 +53,23 @@ body { -webkit-font-smoothing: antialiased; }
 }
 .theme-token-white { background: #f0f4f8; box-shadow: inset 0 0 0 2px #1e293b, 0 2px 3px rgba(0, 0, 0, 0.3); }
 .theme-token-black { background: #1e293b; box-shadow: inset 0 0 0 2px #f0f4f8, 0 1px 2px rgba(0, 0, 0, 0.25); }
+
+/* Vista previa de cada tema en Configuración (configuracion.html): 3 mini-casillas con
+   una pieza de muestra (rey blanco, dama negra, caballo blanco) para ver el estilo real
+   antes de elegirlo, en vez de solo un ícono representativo suelto. */
+.theme-preview-row { display: flex; justify-content: center; gap: 4px; margin-bottom: 0.5rem; }
+.theme-preview-sq {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.theme-preview-sq-light { background: #f0f4f8; }
+.theme-preview-sq-dark { background: #486581; }
 #move-history::-webkit-scrollbar { width: 6px; }
 #move-history::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 3px; }
 #move-history::-webkit-scrollbar-thumb { background: #9fb3c8; border-radius: 3px; }

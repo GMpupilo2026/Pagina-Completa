@@ -25,7 +25,13 @@
     pokemon: {
       label: "Pokémon",
       icon: "⚡",
-      pieces: { k: "👑", q: "⭐", r: "🏰", b: "🔥", n: "🐉", p: "🥚" },
+      // Cada tipo de pieza como una "criatura" reconocible por su rol en el tablero
+      // en vez de íconos genéricos de fantasía: rey = dragón (el más fuerte), dama =
+      // eléctrico (el más veloz y peligroso), torre = tortuga (fortaleza con caparazón),
+      // alfil = zorro (astuto, se mueve en diagonal), caballo = rana (avanza a saltos,
+      // como el salto en L del caballo), peón = huevo (la forma básica, antes de
+      // "evolucionar" al coronar).
+      pieces: { k: "🐉", q: "⚡", r: "🐢", b: "🦊", n: "🐸", p: "🥚" },
     },
     minerales: {
       label: "Minerales",
