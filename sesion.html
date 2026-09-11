@@ -51,7 +51,7 @@
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -71,7 +71,7 @@
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
                 <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -118,8 +118,10 @@
                         <button id="undo-move-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↶ Deshacer jugada</button>
                     </div>
 
-                    <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más -->
-                    <div class="mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
+                    <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más.
+                         Solo para el profesor — al alumno este apartado le distrae y no lo puede usar de
+                         todos modos (navegar el historial es una herramienta del profesor). -->
+                    <div id="moves-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">Jugadas</h2>
                             <div id="history-controls" class="hidden items-center gap-2">
@@ -194,11 +196,28 @@
                         <button id="toggle-hide-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-3">🙈 Ocultar piezas a los alumnos</button>
 
                         <div class="border border-brand-200 dark:border-brand-700 rounded-lg p-3 mb-6">
-                            <button id="toggle-free-mode-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">🔓 Modo edición libre</button>
-                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Mueve piezas ignorando las reglas del ajedrez, para armar una posición. No se ve en vivo mientras editas: al aplicarla, se transmite a todos.</p>
-                            <div id="free-mode-actions" class="hidden flex gap-2 mt-2">
-                                <button id="free-mode-apply-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Aplicar posición</button>
-                                <button id="free-mode-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cancelar</button>
+                            <button id="toggle-free-mode-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">✏️ Editar tablero</button>
+                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Mueve piezas ignorando las reglas del ajedrez, o carga una posición por FEN o PGN, para armar la posición que quieras. No se ve en vivo mientras editas: al aplicarla, se transmite a todos.</p>
+                            <div id="free-mode-actions" class="hidden mt-2">
+                                <div class="mb-2">
+                                    <label for="free-mode-fen-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Cargar posición por FEN</label>
+                                    <div class="flex gap-2">
+                                        <input id="free-mode-fen-input" type="text" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                        <button id="free-mode-fen-load-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="free-mode-pgn-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">O pega una partida en PGN (se carga la posición final)</label>
+                                    <div class="flex gap-2">
+                                        <textarea id="free-mode-pgn-input" rows="2" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 ..." class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></textarea>
+                                        <button id="free-mode-pgn-load-btn" type="button" class="shrink-0 self-start bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
+                                    </div>
+                                </div>
+                                <p id="free-mode-load-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                                <div class="flex gap-2">
+                                    <button id="free-mode-apply-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Aplicar posición</button>
+                                    <button id="free-mode-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cancelar</button>
+                                </div>
                             </div>
                         </div>
 
@@ -671,6 +690,7 @@
             const moveNav = document.getElementById("move-nav");
             moveNav.classList.toggle("hidden", !isTeacher);
             moveNav.classList.toggle("flex", isTeacher);
+            document.getElementById("moves-panel").classList.toggle("hidden", !isTeacher);
             applyBoardViewPrefs();
         }
 
@@ -737,24 +757,42 @@
             if (error) { console.error(error); setStatus("No se pudo cambiar la visibilidad de las piezas: " + error.message); }
         });
 
-        // ---------- Modo edición libre / jugadas ilegales (solo profesor) ----------
+        // ---------- Editar tablero: a mano, por FEN o por PGN (solo profesor) ----------
         document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
             const active = !board.freeMode;
             board.setFreeMode(active);
             document.getElementById("free-mode-actions").classList.toggle("hidden", !active);
+            document.getElementById("free-mode-load-msg").textContent = "";
             document.getElementById("toggle-free-mode-btn").textContent = active
                 ? "🔒 Editando posición… (moviendo piezas libremente)"
-                : "🔓 Modo edición libre";
+                : "✏️ Editar tablero";
             setStatus(active
-                ? "Modo edición libre: mueve las piezas como quieras. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
+                ? "Editando el tablero: mueve las piezas, o carga una posición por FEN o PGN. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
                 : "");
+        });
+
+        document.getElementById("free-mode-fen-load-btn").addEventListener("click", () => {
+            const input = document.getElementById("free-mode-fen-input");
+            const msg = document.getElementById("free-mode-load-msg");
+            const ok = board.loadFreeModeFen(input.value);
+            msg.textContent = ok ? "" : "Ese FEN no es válido — revísalo e intenta de nuevo.";
+            if (ok) input.value = "";
+        });
+
+        document.getElementById("free-mode-pgn-load-btn").addEventListener("click", () => {
+            const input = document.getElementById("free-mode-pgn-input");
+            const msg = document.getElementById("free-mode-load-msg");
+            const ok = board.loadFreeModePgn(input.value);
+            msg.textContent = ok ? "" : "Ese PGN no se pudo interpretar — revísalo e intenta de nuevo.";
+            if (ok) input.value = "";
         });
 
         document.getElementById("free-mode-apply-btn").addEventListener("click", async () => {
             const finalFen = board.fen();
             board.setFreeMode(false);
             document.getElementById("free-mode-actions").classList.add("hidden");
-            document.getElementById("toggle-free-mode-btn").textContent = "🔓 Modo edición libre";
+            document.getElementById("free-mode-load-msg").textContent = "";
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar tablero";
             await sb.from("game_state").update({
                 fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
                 arrows: [], circles: [], active_player_id: null,
@@ -767,7 +805,8 @@
         document.getElementById("free-mode-cancel-btn").addEventListener("click", async () => {
             board.setFreeMode(false);
             document.getElementById("free-mode-actions").classList.add("hidden");
-            document.getElementById("toggle-free-mode-btn").textContent = "🔓 Modo edición libre";
+            document.getElementById("free-mode-load-msg").textContent = "";
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar tablero";
             await loadGameState();
             setStatus("Edición descartada: se restauró la posición real de la clase.");
         });

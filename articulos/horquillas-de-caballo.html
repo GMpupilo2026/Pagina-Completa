@@ -41,7 +41,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -61,7 +61,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -83,6 +83,21 @@
 <p>A diferencia de la torre, el alfil o la dama, el caballo no ataca en líneas rectas: sus objetivos pueden estar en direcciones completamente distintas. Esto hace que una horquilla de caballo sea más difícil de ver venir que una clavada o un ataque de torre, sobre todo cuando el caballo llega a una casilla avanzada y protegida.</p>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">La horquilla real más famosa: el jaque a la descubierta</h2>
 <blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">Un caballo en f7 (o f2 para las negras) puede dar jaque al rey en g8/g1 mientras ataca simultáneamente la torre en h8/h1 y a veces la dama, si está mal colocada. Este patrón, conocido como el "tenedor familiar", ha decidido miles de partidas de aficionados.</blockquote>
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="6k1/8/2q5/3N4/8/8/8/K7 w - - 0 1" role="group" aria-labelledby="ejemplo-heading-horquillas-de-caballo">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-horquillas-de-caballo" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">El caballo blanco en d5 puede saltar a e7: da jaque al rey en g8 y al mismo tiempo ataca la dama en c6 — una horquilla real que gana la dama.</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo crear horquillas en tu propia partida</h2>
 <ul class="list-disc pl-6 space-y-1"><li>Busca casillas <em>fuertes</em> para tu caballo: avanzadas, protegidas por un peón propio, e inatacables por peones rivales.</li><li>Antes de mover el caballo, comprueba a qué casillas saltaría después y qué piezas rivales quedarían en esas casillas en las próximas jugadas.</li><li>Aprovecha piezas rivales alineadas en casillas del mismo color: el caballo solo controla casillas de un color en cada salto, así que busca patrones donde rey, dama o torre compartan color de casilla a una distancia de salto.</li></ul>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo evitar que te hagan una</h2>
@@ -115,5 +130,8 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
 </body>
 </html>

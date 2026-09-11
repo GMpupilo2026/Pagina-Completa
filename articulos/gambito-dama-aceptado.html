@@ -41,7 +41,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -61,7 +61,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -83,6 +83,21 @@
 <p>Las negras aceptan el gambito porque el peón c4 es difícil de sostener a largo plazo: no tienen forma sencilla de protegerlo con otro peón sin debilitar su posición. A cambio, se desprenden temporalmente del centro para desarrollar piezas con comodidad.</p>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Plan principal de las blancas: e3 y Axc4</h2>
 <blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">1.d4 d5 2.c4 dxc4 3.e3 (o 3.Nf3) — las blancas preparan Axc4 para recuperar el peón sin perder tiempo, y se quedan con un centro amplio de peones en d4 (y más adelante e4).</blockquote>
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="rnbqkbnr/ppp1pppp/8/8/2pP4/4P3/PP3PPP/RNBQKBNR b KQkq - 0 3" role="group" aria-labelledby="ejemplo-heading-gambito-dama-aceptado">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-gambito-dama-aceptado" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Posición después de 1.d4 d5 2.c4 dxc4 3.e3 — las blancas ya preparan Axc4 para recuperar el peón capturado.</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+
 <p>La jugada 3.e3 es flexible: abre la diagonal del alfil de casillas claras y prepara Axc4 en la siguiente jugada. Otra opción popular es 3.Nf3, desarrollando primero y dejando la recuperación del peón para después.</p>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Plan típico para las blancas</h2>
 <ul class="list-disc pl-6 space-y-1"><li>Recuperar el peón c4 con el alfil (Axc4), colocándolo en una diagonal activa.</li><li>Construir un centro de peones en d4-e4 cuando sea posible.</li><li>Desarrollar los caballos a f3 y c3, enrocar corto y presionar el flanco de dama.</li><li>Vigilar la jugada …b5 de las negras, que defiende el alfil c4 con tempo si no se está atento.</li></ul>
@@ -117,5 +132,8 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
 </body>
 </html>

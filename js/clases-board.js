@@ -151,6 +151,31 @@
       this.render();
     }
 
+    // ---------- Cargar una posición mientras se edita el tablero (ver setFreeMode) ----------
+    // A diferencia de loadFen(), estas SÍ avisan si lo que se pegó no es válido en vez de
+    // sustituirlo en silencio por la posición inicial — el profesor necesita saber si su
+    // FEN o PGN tenía un error, no terminar armando otra posición sin darse cuenta.
+    loadFreeModeFen(fen) {
+      const temp = new Chess();
+      if (!temp.load((fen || "").trim())) return false;
+      this.game = temp;
+      this.selected = null;
+      this.render();
+      return true;
+    }
+
+    // Carga la posición FINAL de una partida en PGN (no la reproduce jugada a jugada
+    // para el historial de deshacer — solo arma el tablero en esa posición; si el
+    // profesor la aplica, queda como si la hubiera armado a mano).
+    loadFreeModePgn(pgn) {
+      const temp = new Chess();
+      if (!temp.load_pgn((pgn || "").trim())) return false;
+      this.game = temp;
+      this.selected = null;
+      this.render();
+      return true;
+    }
+
     fen() {
       return this.game.fen();
     }
