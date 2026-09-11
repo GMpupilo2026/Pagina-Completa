@@ -983,7 +983,7 @@
     const pieceName = (PIECE_INFO[m.piece] && PIECE_INFO[m.piece].name) || "pieza";
     const captureTxt = m.captured ? ", captura" : "";
     const checkTxt = /#/.test(m.san) ? ", jaque mate" : /\+/.test(m.san) ? ", jaque" : "";
-    return `Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${m.from} a ${m.to}${captureTxt}${checkTxt}.`;
+    return `Jugada ${moveNum}, ${colorTxt}: ${pieceName} de ${spokenSquare(m.from)} a ${spokenSquare(m.to)}${captureTxt}${checkTxt}.`;
   }
 
   // Comando "L" (escuchar la jugada anterior): anuncia sólo la última jugada realizada,
@@ -1039,11 +1039,19 @@
   // Cada columna (a-h) tiene una palabra propia para poder distinguir las casillas con
   // claridad al oído (parecido al alfabeto fonético "Alfa, Bravo, Charlie…", pero con la
   // letra inicial de cada palabra igual a la columna): a=anna, b=bella, c=cesar, d=david,
-  // e=eva, f=felix, g=gustav, h=hector. Sólo se usa al dictar la posición completa (comando "T").
+  // e=eva, f=felix, g=gustav, h=hector.
   const FILE_WORDS = { a: "anna", b: "bella", c: "cesar", d: "david", e: "eva", f: "felix", g: "gustav", h: "hector" };
 
   function wordSquare(square) {
     return FILE_WORDS[square[0]] + " " + square[1];
+  }
+
+  // Versión de wordSquare() que respeta el modo: en Modo Adaptado dice la
+  // casilla con la palabra de columna ("eva 4"); en modo normal, el nombre
+  // real ("e4"). Se usa en todo lo que se anuncia en voz — jugadas, capturas,
+  // casillas — para que la notación adaptada no se limite solo al comando "T".
+  function spokenSquare(square) {
+    return blindMode ? wordSquare(square) : square;
   }
 
   // Arma una línea por cada tipo de pieza presente ("torre: eva 1, anna 1") para un color,
@@ -1114,7 +1122,7 @@
 
   function describeSquareContents(square) {
     const piece = game.get(square);
-    return square + ": " + (piece ? pieceLabel(piece) : "vacía");
+    return spokenSquare(square) + ": " + (piece ? pieceLabel(piece) : "vacía");
   }
 
   // Lleva el foco del teclado a una casilla concreta del tablero sin volver a pintarlo entero
@@ -1164,7 +1172,7 @@
     }
     const label = squares.length === 1 ? forms.singular : forms.plural;
     const colorTxt = colorAdjectiveForCount(color, fem, squares.length);
-    announceMoveInput(`${capitalize(label)} ${colorTxt}: ${joinSpanishList(squares)}.`);
+    announceMoveInput(`${capitalize(label)} ${colorTxt}: ${joinSpanishList(squares.map(spokenSquare))}.`);
   }
 
   // ---------- Comando "s <columna|fila>": anunciar las piezas de una fila o columna ----------
@@ -1182,7 +1190,7 @@
       announceMoveInput(`No entendí "${token}". Usa una letra de columna (a-h) o un número de fila (1-8).`);
       return;
     }
-    const found = squares.filter((sq) => game.get(sq)).map((sq) => `${pieceLabel(game.get(sq))} en ${sq}`);
+    const found = squares.filter((sq) => game.get(sq)).map((sq) => `${pieceLabel(game.get(sq))} en ${spokenSquare(sq)}`);
     announceMoveInput(found.length ? `${label}: ${found.join(", ")}.` : `${label}: sin piezas.`);
   }
 
@@ -1207,30 +1215,30 @@
   function announcePossibleMoves(square) {
     const piece = game.get(square);
     if (!piece) {
-      announceMoveInput(`La casilla ${square} está vacía.`);
+      announceMoveInput(`La casilla ${spokenSquare(square)} está vacía.`);
       return;
     }
     const moves = game.moves({ square, verbose: true });
     if (!moves.length) {
-      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} no tiene jugadas legales ahora mismo.`);
+      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${spokenSquare(square)} no tiene jugadas legales ahora mismo.`);
       return;
     }
-    const list = moves.map((m) => (m.captured ? `${m.to} (captura)` : m.to));
-    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} puede ir a: ${joinSpanishList(list)}.`);
+    const list = moves.map((m) => (m.captured ? `${spokenSquare(m.to)} (captura)` : spokenSquare(m.to)));
+    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${spokenSquare(square)} puede ir a: ${joinSpanishList(list)}.`);
   }
 
   function announcePossibleCaptures(square) {
     const piece = game.get(square);
     if (!piece) {
-      announceMoveInput(`La casilla ${square} está vacía.`);
+      announceMoveInput(`La casilla ${spokenSquare(square)} está vacía.`);
       return;
     }
     const moves = game.moves({ square, verbose: true }).filter((m) => m.captured || m.flags.indexOf("e") !== -1);
     if (!moves.length) {
-      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} no tiene capturas posibles ahora mismo.`);
+      announceMoveInput(`${capitalize(pieceLabel(piece))} en ${spokenSquare(square)} no tiene capturas posibles ahora mismo.`);
       return;
     }
-    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${square} puede capturar en: ${joinSpanishList(moves.map((m) => m.to))}.`);
+    announceMoveInput(`${capitalize(pieceLabel(piece))} en ${spokenSquare(square)} puede capturar en: ${joinSpanishList(moves.map((m) => spokenSquare(m.to)))}.`);
   }
 
   // Devuelve la casilla vecina desplazada (df columnas, dr filas), o null si sale del tablero.
@@ -1270,10 +1278,10 @@
           }
           sq = squareOffset(sq, df, dr);
         }
-        if (found) parts.push(`${name}: ${pieceLabel(found.piece)} en ${found.sq}`);
+        if (found) parts.push(`${name}: ${pieceLabel(found.piece)} en ${spokenSquare(found.sq)}`);
       }
       announceMoveInput(
-        parts.length ? `Piezas más cercanas desde ${square} — ${parts.join("; ")}.` : `No hay piezas en ninguna dirección desde ${square}.`
+        parts.length ? `Piezas más cercanas desde ${spokenSquare(square)} — ${parts.join("; ")}.` : `No hay piezas en ninguna dirección desde ${spokenSquare(square)}.`
       );
       return;
     }
@@ -1283,7 +1291,7 @@
       const sq = squareOffset(square, df, dr);
       if (sq) parts.push(describeSquareContents(sq));
     }
-    announceMoveInput(parts.length ? `Alrededor de ${square} — ${parts.join("; ")}.` : `${square} no tiene casillas vecinas en el tablero.`);
+    announceMoveInput(parts.length ? `Alrededor de ${spokenSquare(square)} — ${parts.join("; ")}.` : `${spokenSquare(square)} no tiene casillas vecinas en el tablero.`);
   }
 
   // "k/q/r/b/n/p": mueve el foco a la siguiente pieza de ese tipo (cualquier color); mayúscula
@@ -1371,7 +1379,7 @@
       const next = findNextPieceSquare(lower, currentSquare, forward);
       if (next) {
         focusBoardSquare(next);
-        announceMoveInput(pieceLabel(game.get(next)) + " en " + next + ".");
+        announceMoveInput(pieceLabel(game.get(next)) + " en " + spokenSquare(next) + ".");
       } else {
         announceMoveInput(`No hay ${PIECE_NAME_FORMS[lower].plural} en el tablero.`);
       }

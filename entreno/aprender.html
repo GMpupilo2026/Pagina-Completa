@@ -141,6 +141,9 @@
     background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
     font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:520px; margin-left:auto; margin-right:auto;
   }
+  .position-readout p{margin:2px 0;}
+  .position-readout h2, .position-readout h3{font-family:'Merriweather', serif; font-size:0.9rem; font-weight:700; color:var(--text); margin:8px 0 2px;}
+  .position-readout h2:first-child, .position-readout h3:first-child{margin-top:0;}
   #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
   #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
   #blind-panel input{
@@ -257,7 +260,7 @@
       <div class="board-wrap" id="board-wrap">
         <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
       </div>
-      <p id="position-readout" class="position-readout" style="display:none;"></p>
+      <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
 
       <form id="blind-panel" style="display:none;">
         <div id="blind-squares-group" style="display:none;">
@@ -268,6 +271,12 @@
           <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
           <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
         </div>
+        <!-- Botón "submit" real pero invisible: con dos campos de texto en un
+             mismo <form> el navegador no envía el formulario al presionar
+             Enter si no hay ningún botón de tipo submit (aunque solo uno de
+             los dos campos esté visible a la vez). Con este botón, Enter
+             vuelve a funcionar en ambos campos. -->
+        <button type="submit" class="sr-only">Enviar</button>
       </form>
 
       <p class="lesson-status" id="lesson-status" role="status" aria-live="polite"></p>
@@ -286,6 +295,7 @@
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 <script src="../js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script>
 /* ---------------- PASSWORD GATE ----------------
@@ -445,22 +455,15 @@ if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
   try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
 }
 
-const PIECE_NAME_ES = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
-
+// La descripción de la posición para lectores de pantalla usa la misma
+// notación de columnas adaptada que tablero.html (BlindNotation, en
+// js/blind-notation.js): cada casilla se dice como "eva 4" en vez de "e4",
+// agrupada por color y tipo de pieza — ver js/blind-notation.js para el
+// porqué y el formato exacto.
 function renderPositionReadout(){
   const readout = document.getElementById('position-readout');
   if(!blindMode || !game){ readout.style.display = 'none'; return; }
-  const parts = [];
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const piece = game.get(square);
-      if(piece) parts.push(`${PIECE_NAME_ES[piece.type]} ${piece.color === 'w' ? 'blanco' : 'negro'} en ${square}`);
-    }
-  }
-  const turn = game.turn() === 'w' ? 'blancas' : 'negras';
-  const check = game.in_check() ? ' El rey en turno está en jaque.' : '';
-  readout.textContent = `Posición: ${parts.join(', ')}. Juegan ${turn}.${check}`;
+  readout.innerHTML = window.BlindNotation.groupedReadoutHTML(game);
   readout.style.display = 'block';
 }
 
@@ -530,13 +533,13 @@ function blindHandleMoveGuess(raw){
   const from = clean.slice(0, 2), to = clean.slice(2, 4);
   const piece = game.get(from);
   if(!piece || piece.color !== game.turn()){
-    setStatus(`No hay una pieza tuya en ${from}.`, 'bad');
+    setStatus(`No hay una pieza tuya en ${window.BlindNotation.squareSpoken(from)}.`, 'bad');
     return;
   }
   const legal = game.moves({ square: from, verbose: true });
   const target = legal.find((m) => m.to === to);
   if(!target){
-    setStatus(`${from} a ${to} no es una jugada legal.`, 'bad');
+    setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad');
     return;
   }
   const moveResult = game.move({ from, to, promotion: 'q' });
@@ -544,11 +547,12 @@ function blindHandleMoveGuess(raw){
   renderPositionReadout();
   const correct = currentLesson.anyLegalMove ||
     (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+  const sanText = window.BlindNotation.sanSpoken(moveResult.san);
   if(correct){
-    setStatus(`✅ ${moveResult.san}. ¡Correcto!`, 'ok');
+    setStatus(`✅ ${sanText}. ¡Correcto!`, 'ok');
     finishLesson();
   } else {
-    setStatus(`${moveResult.san} es legal, pero no es la jugada buscada. Se reinicia la posición.`, 'bad');
+    setStatus(`${sanText} es legal, pero no es la jugada buscada. Se reinicia la posición.`, 'bad');
     setTimeout(() => { resetLesson(); }, 1200);
   }
 }

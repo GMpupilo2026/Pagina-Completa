@@ -155,6 +155,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
+<script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -524,7 +525,12 @@ function newTarget(){
   let next = currentTarget;
   while(next === currentTarget) next = randomSquare(); // nunca repite la misma casilla dos veces seguidas
   currentTarget = next;
-  document.getElementById('target-square').textContent = currentTarget;
+  // En modo normal se ve el nombre real de la casilla ("e4"). En modo
+  // adaptado, lo que se anuncia (y lee el lector de pantalla vía aria-live)
+  // usa la notación de columnas — "Eva 4" — para no confundir letras al oído.
+  document.getElementById('target-square').textContent = blindMode
+    ? window.BlindNotation.squareSpoken(currentTarget)
+    : currentTarget;
   lastPromptAt = performance.now();
   armPerSquareTimer();
 }
