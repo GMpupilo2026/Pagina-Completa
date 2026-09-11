@@ -437,6 +437,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
+<script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -933,6 +934,11 @@ function setBlindMode(value){
   blindMode = !!value;
   try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
   applyBlindModeUI();
+  // Los aria-label de las casillas (pieceDescription) dependen de blindMode
+  // para decidir si usan la notación de columnas adaptada o el nombre real —
+  // hay que volver a dibujar el tablero para que el cambio de modo se note
+  // también ahí, no solo en la posición leída y los anuncios nuevos.
+  renderBoard();
   if(blindMode) renderPositionReadout();
 }
 if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
@@ -950,6 +956,14 @@ function squareToRC(sq){
   if(!m) return null;
   return [4 - parseInt(m[2],10), COLS4.indexOf(m[1].toLowerCase())];
 }
+// squareName() sigue devolviendo el nombre real ("a1"): lo usan data-square
+// y las búsquedas por selector, y no debe cambiar. Para todo lo que SE DICE en
+// voz (aria-label, announce, cmdAnnounce) se usa esta versión, que en Modo
+// Adaptado convierte la columna a su nombre fonético (js/blind-notation.js).
+function squareSpokenStr(name){
+  return (blindMode && window.BlindNotation) ? window.BlindNotation.squareSpoken(name) : name;
+}
+function squareSpokenRC(r,c){ return squareSpokenStr(squareName(r,c)); }
 
 let boardState = {};       // {"r,c": pieceType}
 let selectedCell = null;   // [r,c] | null
@@ -997,7 +1011,7 @@ function setStatus(text){ document.getElementById('board-status').textContent = 
 
 function pieceDescription(r,c){
   const piece = boardState[boardKey(r,c)];
-  return squareName(r,c) + ', ' + (piece ? PIECE_NAME[piece] : 'vacío');
+  return squareSpokenRC(r,c) + ', ' + (piece ? PIECE_NAME[piece] : 'vacío');
 }
 
 function renderBoard(){
@@ -1087,7 +1101,7 @@ function performCapture(r,c){
   renderBoard();
   focusSquare(r,c);
   const remaining = Object.keys(boardState).length;
-  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareName(r,c)}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
+  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
   renderPositionReadout();
   checkWin();
 }
@@ -1114,7 +1128,7 @@ function onSquareClick(r,c){
       renderBoard();
       focusSquare(r,c);
       const targets = captureTargets(piece, r, c, boardState);
-      announce(`${PIECE_NAME[piece]} seleccionado en ${squareName(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+      announce(`${PIECE_NAME[piece]} seleccionado en ${squareSpokenRC(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
       return;
     }
     selectedCell = null;
@@ -1128,7 +1142,7 @@ function onSquareClick(r,c){
     renderBoard();
     focusSquare(r,c);
     const targets = captureTargets(piece, r, c, boardState);
-    announce(`${PIECE_NAME[piece]} seleccionado en ${squareName(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+    announce(`${PIECE_NAME[piece]} seleccionado en ${squareSpokenRC(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
   }
 }
 
@@ -1192,7 +1206,7 @@ function piecesByType(){
   const byType = {K:[], Q:[], R:[], B:[], N:[], P:[]};
   Object.keys(boardState).forEach(key => {
     const [r,c] = key.split(',').map(Number);
-    byType[boardState[key]].push(squareName(r,c));
+    byType[boardState[key]].push(squareSpokenRC(r,c));
   });
   Object.keys(byType).forEach(t => byType[t].sort());
   return byType;
@@ -1251,20 +1265,20 @@ function announceLine(token){
     return;
   }
   const found = cells.filter(([r,c]) => boardState[boardKey(r,c)])
-    .map(([r,c]) => `${PIECE_NAME[boardState[boardKey(r,c)]]} en ${squareName(r,c)}`);
+    .map(([r,c]) => `${PIECE_NAME[boardState[boardKey(r,c)]]} en ${squareSpokenRC(r,c)}`);
   cmdAnnounce(found.length ? `${label}: ${found.join(', ')}.` : `${label}: sin piezas.`);
 }
 
 // ---------- Atajos del tablero enfocado: "o", "c"/"l", "m", "x"… ----------
 function describeCellContents(r,c){
-  return squareName(r,c) + ': ' + (boardState[boardKey(r,c)] ? PIECE_NAME[boardState[boardKey(r,c)]] : 'vacía');
+  return squareSpokenRC(r,c) + ': ' + (boardState[boardKey(r,c)] ? PIECE_NAME[boardState[boardKey(r,c)]] : 'vacía');
 }
 function announceCurrentSquare(r,c){
   cmdAnnounce('Casilla ' + describeCellContents(r,c) + '.');
 }
 
 function describeCapture(entry, idx){
-  return `Captura ${idx+1}: ${PIECE_NAME[entry.movedType]} de ${entry.fromSq} a ${entry.toSq}, captura ${PIECE_NAME[entry.capturedType]}.`;
+  return `Captura ${idx+1}: ${PIECE_NAME[entry.movedType]} de ${squareSpokenStr(entry.fromSq)} a ${squareSpokenStr(entry.toSq)}, captura ${PIECE_NAME[entry.capturedType]}.`;
 }
 function announceLastCapture(){
   if(!captureLog.length){ cmdAnnounce('Todavía no hiciste ninguna captura en este ejercicio.'); return; }
@@ -1290,9 +1304,9 @@ function announceSurroundings(r,c,mode){
         if(boardState[boardKey(cell[0],cell[1])]){ found = cell; break; }
         cell = cellOffset(cell[0],cell[1],dc,dr);
       }
-      if(found) parts.push(`${name}: ${PIECE_NAME[boardState[boardKey(found[0],found[1])]]} en ${squareName(found[0],found[1])}`);
+      if(found) parts.push(`${name}: ${PIECE_NAME[boardState[boardKey(found[0],found[1])]]} en ${squareSpokenRC(found[0],found[1])}`);
     });
-    cmdAnnounce(parts.length ? `Piezas más cercanas desde ${squareName(r,c)} — ${parts.join('; ')}.` : `No hay piezas en ninguna dirección desde ${squareName(r,c)}.`);
+    cmdAnnounce(parts.length ? `Piezas más cercanas desde ${squareSpokenRC(r,c)} — ${parts.join('; ')}.` : `No hay piezas en ninguna dirección desde ${squareSpokenRC(r,c)}.`);
     return;
   }
   const dirs = mode === 'ring' ? RAY_DIRS : RAY_DIRS.slice(0,4);
@@ -1301,7 +1315,7 @@ function announceSurroundings(r,c,mode){
     const cell = cellOffset(r,c,dc,dr);
     if(cell) parts.push(describeCellContents(cell[0],cell[1]));
   });
-  cmdAnnounce(parts.length ? `Alrededor de ${squareName(r,c)} — ${parts.join('; ')}.` : `${squareName(r,c)} no tiene casillas vecinas en el tablero.`);
+  cmdAnnounce(parts.length ? `Alrededor de ${squareSpokenRC(r,c)} — ${parts.join('; ')}.` : `${squareSpokenRC(r,c)} no tiene casillas vecinas en el tablero.`);
 }
 
 // "k q r b n p": mueve el foco a la siguiente pieza de ese tipo; mayúscula invierte el orden.
@@ -1355,10 +1369,10 @@ function handleBoardShortcutKey(e, r, c){
   if(!e.altKey && lower === 'm'){
     e.preventDefault();
     const piece = boardState[boardKey(r,c)];
-    if(!piece){ cmdAnnounce(`La casilla ${squareName(r,c)} está vacía.`); return; }
+    if(!piece){ cmdAnnounce(`La casilla ${squareSpokenRC(r,c)} está vacía.`); return; }
     const targets = captureTargets(piece, r, c, boardState);
-    if(!targets.length){ cmdAnnounce(`${PIECE_NAME[piece]} en ${squareName(r,c)} no tiene capturas posibles ahora mismo.`); return; }
-    cmdAnnounce(`${PIECE_NAME[piece]} en ${squareName(r,c)} puede capturar en: ${joinSpanishList(targets.map(([tr,tc]) => squareName(tr,tc)))}.`);
+    if(!targets.length){ cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenRC(r,c)} no tiene capturas posibles ahora mismo.`); return; }
+    cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenRC(r,c)} puede capturar en: ${joinSpanishList(targets.map(([tr,tc]) => squareSpokenRC(tr,tc)))}.`);
     return;
   }
   if(!e.altKey && lower === 'x'){
@@ -1382,7 +1396,7 @@ function handleBoardShortcutKey(e, r, c){
     const next = findNextPieceSquare(lower.toUpperCase(), [r,c], forward);
     if(next){
       focusSquare(next[0], next[1]);
-      cmdAnnounce(PIECE_NAME[boardState[boardKey(next[0],next[1])]] + ' en ' + squareName(next[0],next[1]) + '.');
+      cmdAnnounce(PIECE_NAME[boardState[boardKey(next[0],next[1])]] + ' en ' + squareSpokenRC(next[0],next[1]) + '.');
     } else {
       cmdAnnounce(`No hay ${PIECE_NAME_PLURAL[lower.toUpperCase()].toLowerCase()} en el tablero.`);
     }
@@ -1470,10 +1484,10 @@ function handleCmdFormSubmit(e){
     const fromRC = squareToRC(moveMatch[1]);
     const toRC = squareToRC(moveMatch[2]);
     const piece = boardState[boardKey(fromRC[0],fromRC[1])];
-    if(!piece){ cmdAnnounce(`La casilla ${moveMatch[1].toLowerCase()} está vacía.`); return; }
+    if(!piece){ cmdAnnounce(`La casilla ${squareSpokenStr(moveMatch[1].toLowerCase())} está vacía.`); return; }
     const legal = captureTargets(piece, fromRC[0], fromRC[1], boardState);
     if(!legal.some(([tr,tc]) => tr===toRC[0] && tc===toRC[1])){
-      cmdAnnounce(`${PIECE_NAME[piece]} en ${moveMatch[1].toLowerCase()} no puede capturar en ${moveMatch[2].toLowerCase()}.`);
+      cmdAnnounce(`${PIECE_NAME[piece]} en ${squareSpokenStr(moveMatch[1].toLowerCase())} no puede capturar en ${squareSpokenStr(moveMatch[2].toLowerCase())}.`);
       return;
     }
     selectedCell = fromRC;
