@@ -22,7 +22,11 @@
     for (let rank = 8; rank >= 1; rank--) {
       for (let f = 0; f < 8; f++) {
         const square = FILES[f] + rank;
-        const light = (f + rank) % 2 === 1;
+        // OJO: la paridad se calcula con (rank - 1), no con rank tal cual — h1 debe ser
+        // una casilla clara (como en el tablero real y en ClasesBoard, ver isLightSquare()
+        // en clases-board.js) y "rank" aquí ya viene en base 1 (8..1), no en base 0. Usarlo
+        // sin el -1 invierte el color de las 64 casillas del diagrama.
+        const light = (f + (rank - 1)) % 2 === 1;
         const sq = document.createElement("div");
         sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
         const piece = game.get(square);
