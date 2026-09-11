@@ -58,6 +58,34 @@
   .top-row a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:6px;}
   header.top h1{font-size:1.7rem;}
 
+  /* ---------- Modo normal / modo adaptado (lector de pantalla) ---------- */
+  .mode-bar{
+    max-width:520px;
+    margin:10px auto 0;
+    padding:0 24px;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+    font-size:0.78rem;
+    color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Work Sans', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#1b140f;}
+
+  .blind-panel{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
+  .blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
+  .blind-panel input{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Work Sans', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
+  }
+  .blind-panel input:focus{border-color:var(--brass);}
+
   main{max-width:520px; margin:0 auto; padding:22px 24px 60px;}
 
   /* ---------- Pantalla de inicio ---------- */
@@ -130,13 +158,16 @@
   <div class="gate-box">
     <div class="gate-mark"></div>
     <h1>Coordenadas</h1>
-    <p>Entrenamiento de ajedrez.<br>Introduce la contraseña para entrar.</p>
-    <form id="pw-form">
-      <label for="pw-input" class="sr-only">Contraseña</label>
-      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
-      <div id="pw-error" role="alert"></div>
-      <button type="submit" id="pw-submit">Entrar</button>
-    </form>
+    <p id="gate-checking">Comprobando tu sesión…</p>
+    <div id="gate-form" style="display:none;">
+      <p>Entrenamiento de ajedrez.<br>Introduce la contraseña para entrar.</p>
+      <form id="pw-form">
+        <label for="pw-input" class="sr-only">Contraseña</label>
+        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
+        <div id="pw-error" role="alert"></div>
+        <button type="submit" id="pw-submit">Entrar</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -149,10 +180,23 @@
     </div>
   </header>
 
-  <main>
+  <div class="mode-bar">
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <!-- Fuera de las tres pantallas (inicio/juego/resultado) a propósito: así el
+         mensaje sigue "visible" para el lector de pantalla sin importar cuál de
+         las tres esté oculta con display:none en cada momento. -->
+    <div id="blind-announcer" class="sr-only" role="status" aria-live="assertive" aria-atomic="true"></div>
+
     <!-- ---------- Inicio ---------- -->
     <div id="start-screen">
-      <p class="lead">Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.</p>
+      <p class="lead" id="lead-text">Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.</p>
 
       <div class="option-group">
         <span class="label">Tablero</span>
@@ -185,14 +229,19 @@
         <span class="timer" id="hud-timer">30</span>
       </div>
       <div class="target-banner">
-        <div class="label">Haz clic en</div>
-        <div class="square" id="target-square">—</div>
+        <div class="label" id="target-label">Haz clic en</div>
+        <div class="square" id="target-square" role="status" aria-live="polite" aria-atomic="true">—</div>
       </div>
       <div class="per-square-bar-wrap" id="per-square-bar-wrap" style="display:none;">
         <div class="per-square-bar" id="per-square-bar"></div>
       </div>
       <p class="streak-line" id="streak-line"></p>
       <div class="board8" id="board" role="group" aria-label="Tablero de coordenadas"></div>
+
+      <form id="blind-panel" class="blind-panel" style="display:none;">
+        <label for="blind-input">Escribe la casilla objetivo y presiona Enter</label>
+        <input type="text" id="blind-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="2" inputmode="text">
+      </form>
     </div>
 
     <!-- ---------- Resultado ---------- -->
@@ -223,9 +272,13 @@ async function sha256(text){
 
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const gateForm = document.getElementById('gate-form');
 const pwForm = document.getElementById('pw-form');
 const pwInput = document.getElementById('pw-input');
 const pwError = document.getElementById('pw-error');
+
+const NEXT_PATH = 'entreno/coordenadas.html';
 
 function unlock(){
   gate.style.display = 'none';
@@ -250,6 +303,67 @@ pwForm.addEventListener('submit', async (e) => {
 /* ---------------- Juego de coordenadas ---------------- */
 const ROUND_SECONDS = 30;
 const FILES = ['a','b','c','d','e','f','g','h'];
+
+/* ---------------- Modo normal / modo adaptado (lector de pantalla) ----------------
+   Mismo interruptor y misma clave de localStorage que Tablero y 4x4
+   (oscarBlindMode_v1): activarlo una vez vale para todo el sitio. En modo
+   adaptado, en vez de hacer clic en una de las 64 casillas del tablero, se
+   escribe la casilla objetivo en un campo de texto — la casilla objetivo y
+   el resultado de cada intento se anuncian por voz. */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+// El hub de Ciegos enlaza aquí con "?modo=ciego": preselecciona el modo
+// adaptado sin que haya que tocar el interruptor a mano.
+if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
+  blindMode = true;
+  try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
+}
+
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+const blindPanel = document.getElementById('blind-panel');
+const blindInput = document.getElementById('blind-input');
+const blindAnnouncer = document.getElementById('blind-announcer');
+
+function applyBlindModeUI(){
+  document.getElementById('board').style.display = blindMode ? 'none' : 'grid';
+  blindPanel.style.display = blindMode ? 'block' : 'none';
+  document.getElementById('target-label').textContent = blindMode ? 'Escribe la casilla:' : 'Haz clic en';
+  document.getElementById('lead-text').textContent = blindMode
+    ? 'Se anuncia el nombre de una casilla (por ejemplo, "e4"). Escríbela en el campo de texto y presiona Enter antes de que se acabe el tiempo.'
+    : 'Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.';
+  if(modeNormalBtn){
+    modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
+    modeNormalBtn.classList.toggle('active', !blindMode);
+  }
+  if(modeBlindBtn){
+    modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
+    modeBlindBtn.classList.toggle('active', blindMode);
+  }
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+}
+if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+if(modeBlindBtn) modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+applyBlindModeUI();
+
+blindPanel.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const square = blindInput.value.trim().toLowerCase();
+  blindInput.value = '';
+  blindInput.focus();
+  if(!/^[a-h][1-8]$/.test(square)){
+    blindAnnouncer.textContent = 'Esa no es una casilla válida — usa una letra de a a h y un número de 1 a 8, por ejemplo e4.';
+    return;
+  }
+  const correct = handleGuess(square);
+  if(correct === null) return; // la ronda no está en curso
+  blindAnnouncer.textContent = correct ? '✅ Correcto.' : `❌ Incorrecto, la casilla era ${currentTarget}.`;
+});
 
 // Modos: además del clásico (sin apuro por casilla, solo el reloj general de
 // 30s), dos modos con límite de tiempo POR casilla — si no la encuentras a
@@ -355,10 +469,12 @@ function armPerSquareTimer(){
 
 function onSquareTimeout(){
   if(!playing) return;
+  const missedSquare = currentTarget;
   misses++;
   streak = 0;
   updateHud();
   newTarget();
+  if(blindMode) blindAnnouncer.textContent = `⏱️ Se acabó el tiempo, era ${missedSquare}.`;
 }
 
 function newTarget(){
@@ -381,21 +497,31 @@ function updateHud(){
   streakLine.textContent = streak >= 3 ? `🔥 Racha de ${streak}` : '';
 }
 
-function onSquareClick(square, btn){
-  if(!playing) return;
-  if(square === currentTarget){
+// Lógica compartida entre el clic en el tablero (modo normal) y el campo de
+// texto (modo adaptado): decide si la casilla adivinada es la correcta y
+// actualiza puntuación/racha. Devuelve true si acertó, para que cada modo
+// dé su propio tipo de aviso (visual o por voz).
+function handleGuess(square){
+  if(!playing) return null;
+  const correct = square === currentTarget;
+  if(correct){
     score++;
     streak++;
     bestStreak = Math.max(bestStreak, streak);
     reactionTimes.push(performance.now() - lastPromptAt);
-    flash(btn, 'flash-ok');
     newTarget();
   } else {
     misses++;
     streak = 0;
-    flash(btn, 'flash-bad');
   }
   updateHud();
+  return correct;
+}
+
+function onSquareClick(square, btn){
+  const correct = handleGuess(square);
+  if(correct === null) return;
+  flash(btn, correct ? 'flash-ok' : 'flash-bad');
 }
 
 function tick(){
@@ -429,6 +555,7 @@ function startRound(){
   newTarget();
   updateHud();
   timerId = setInterval(tick, 1000);
+  if(blindMode) blindInput.focus();
 }
 
 function endRound(){
@@ -462,6 +589,12 @@ function endRound(){
   });
 
   renderBestLine();
+
+  const againBtn = document.getElementById('again-btn');
+  againBtn.focus();
+  if(blindMode){
+    blindAnnouncer.textContent = `Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`;
+  }
 }
 
 function renderBestLine(){
@@ -479,9 +612,33 @@ function initApp(){
   renderBestLine();
 }
 
-if(sessionStorage.getItem('entreno_unlocked') === '1'){
-  unlock();
+// Entrenamiento ahora exige sesión iniciada en el sitio (no solo la
+// contraseña compartida) — así el progreso de cada quien queda guardado y
+// visible para el profesor en Informes. Se comprueba ANTES de mostrar el
+// formulario de contraseña, no después.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.style.display = 'none';
+  if(sessionStorage.getItem('entreno_unlocked') === '1'){
+    unlock();
+  } else {
+    gateForm.style.display = 'block';
+    pwInput.focus();
+  }
 }
+
+requireLoginThenGate();
 </script>
 </body>
 </html>

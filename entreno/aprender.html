@@ -124,6 +124,31 @@
   .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(220,182,121,0.55);}
   .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(220,182,121,0.85); border-radius:50%; background:none;}
 
+  /* ---------- Modo normal / modo adaptado (lector de pantalla) ---------- */
+  .mode-bar{
+    max-width:520px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Work Sans', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#1b140f;}
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:520px; margin-left:auto; margin-right:auto;
+  }
+  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
+  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
+  #blind-panel input{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Work Sans', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
+  }
+  #blind-panel input:focus{border-color:var(--brass);}
+
   .lesson-status{margin-top:16px; text-align:center; font-size:0.95rem; min-height:1.4em;}
   .lesson-status.ok{color:var(--ok); font-weight:600;}
   .lesson-status.bad{color:var(--bad);}
@@ -151,13 +176,16 @@
   <div class="gate-box">
     <div class="gate-mark"></div>
     <h1>Aprende</h1>
-    <p>Lecciones interactivas de ajedrez.<br>Introduce la contraseña para entrar.</p>
-    <form id="pw-form">
-      <label for="pw-input" class="sr-only">Contraseña</label>
-      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
-      <div id="pw-error" role="alert"></div>
-      <button type="submit" id="pw-submit">Entrar</button>
-    </form>
+    <p id="gate-checking">Comprobando tu sesión…</p>
+    <div id="gate-form" style="display:none;">
+      <p>Lecciones interactivas de ajedrez.<br>Introduce la contraseña para entrar.</p>
+      <form id="pw-form">
+        <label for="pw-input" class="sr-only">Contraseña</label>
+        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
+        <div id="pw-error" role="alert"></div>
+        <button type="submit" id="pw-submit">Entrar</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -175,6 +203,14 @@
     </div>
   </header>
 
+  <div class="mode-bar">
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+  </div>
+
   <nav class="tabs" id="tabs" aria-label="Categorías de lecciones"></nav>
 
   <main id="main-content">
@@ -188,9 +224,22 @@
         <h2 id="lesson-title"></h2>
       </div>
       <p class="lesson-text" id="lesson-text"></p>
-      <div class="board-wrap">
+      <div class="board-wrap" id="board-wrap">
         <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
       </div>
+      <p id="position-readout" class="position-readout" style="display:none;"></p>
+
+      <form id="blind-panel" style="display:none;">
+        <div id="blind-squares-group" style="display:none;">
+          <label for="blind-square-input">Escribe una casilla y presiona Enter</label>
+          <input type="text" id="blind-square-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="2">
+        </div>
+        <div id="blind-move-group" style="display:none;">
+          <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
+          <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
+        </div>
+      </form>
+
       <p class="lesson-status" id="lesson-status" role="status" aria-live="polite"></p>
       <div class="lesson-controls" id="quiz-controls" style="display:none;">
         <button type="button" class="bctrl" id="quiz-mate-btn">Es jaque mate</button>
@@ -223,9 +272,13 @@ async function sha256(text){
 
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const gateForm = document.getElementById('gate-form');
 const pwForm = document.getElementById('pw-form');
 const pwInput = document.getElementById('pw-input');
 const pwError = document.getElementById('pw-error');
+
+const NEXT_PATH = 'entreno/aprender.html';
 
 function unlock(){
   gate.style.display = 'none';
@@ -348,6 +401,149 @@ const CATEGORY_ORDER = ['movimientos','reglas','tacticas'];
 const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas'};
 const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas'};
 
+/* ---------------- Modo normal / modo adaptado (lector de pantalla) ----------------
+   Mismo interruptor y misma clave de localStorage que Tablero, 4x4 y
+   Coordenadas (oscarBlindMode_v1). En modo adaptado el tablero se oculta (no
+   aporta nada a quien no lo puede ver) y se reemplaza por una descripción de
+   la posición en texto — actualizada en vivo — más un campo para escribir la
+   casilla o la jugada en vez de hacer clic. */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
+  blindMode = true;
+  try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
+}
+
+const PIECE_NAME_ES = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
+
+function renderPositionReadout(){
+  const readout = document.getElementById('position-readout');
+  if(!blindMode || !game){ readout.style.display = 'none'; return; }
+  const parts = [];
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const piece = game.get(square);
+      if(piece) parts.push(`${PIECE_NAME_ES[piece.type]} ${piece.color === 'w' ? 'blanco' : 'negro'} en ${square}`);
+    }
+  }
+  const turn = game.turn() === 'w' ? 'blancas' : 'negras';
+  const check = game.in_check() ? ' El rey en turno está en jaque.' : '';
+  readout.textContent = `Posición: ${parts.join(', ')}. Juegan ${turn}.${check}`;
+  readout.style.display = 'block';
+}
+
+function updateBlindInputVisibility(){
+  const squaresGroup = document.getElementById('blind-squares-group');
+  const moveGroup = document.getElementById('blind-move-group');
+  const showSquares = blindMode && currentLesson && currentLesson.type === 'squares';
+  const showMove = blindMode && currentLesson && currentLesson.type === 'move';
+  squaresGroup.style.display = showSquares ? 'block' : 'none';
+  moveGroup.style.display = showMove ? 'block' : 'none';
+  document.getElementById('blind-panel').style.display = (showSquares || showMove) ? 'block' : 'none';
+  if(showSquares) document.getElementById('blind-square-input').focus();
+  else if(showMove) document.getElementById('blind-move-input').focus();
+}
+
+function applyBlindModeUI(){
+  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
+  if(modeNormalBtn){
+    modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
+    modeNormalBtn.classList.toggle('active', !blindMode);
+  }
+  if(modeBlindBtn){
+    modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
+    modeBlindBtn.classList.toggle('active', blindMode);
+  }
+  renderPositionReadout();
+  if(currentLesson) updateBlindInputVisibility();
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+}
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+if(modeBlindBtn) modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+
+// Casillas: se acepta cualquier casilla de a1 a h8 escrita en el campo.
+function blindHandleSquareGuess(square){
+  if(lessonLocked) return;
+  if(foundSet.has(square)){
+    setStatus('Ya habías encontrado esa casilla.');
+    return;
+  }
+  if((currentLesson.targets || []).includes(square)){
+    foundSet.add(square);
+    const remaining = currentLesson.targets.length - foundSet.size;
+    setStatus(remaining > 0
+      ? `✅ Correcto. Te faltan ${remaining} casilla${remaining === 1 ? '' : 's'}.`
+      : '', 'ok');
+    if(remaining <= 0) finishLesson();
+  } else {
+    setStatus('❌ Esa casilla no es correcta. Sigue intentando.', 'bad');
+  }
+}
+
+// Jugadas: se escribe origen y destino separados por espacio (o pegados,
+// ej. "e1g1"); acepta ambas formas.
+function blindHandleMoveGuess(raw){
+  if(lessonLocked) return;
+  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
+  if(clean.length !== 4){
+    setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad');
+    return;
+  }
+  const from = clean.slice(0, 2), to = clean.slice(2, 4);
+  const piece = game.get(from);
+  if(!piece || piece.color !== game.turn()){
+    setStatus(`No hay una pieza tuya en ${from}.`, 'bad');
+    return;
+  }
+  const legal = game.moves({ square: from, verbose: true });
+  const target = legal.find((m) => m.to === to);
+  if(!target){
+    setStatus(`${from} a ${to} no es una jugada legal.`, 'bad');
+    return;
+  }
+  const moveResult = game.move({ from, to, promotion: 'q' });
+  if(!moveResult) return;
+  renderPositionReadout();
+  const correct = currentLesson.anyLegalMove ||
+    (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+  if(correct){
+    setStatus(`✅ ${moveResult.san}. ¡Correcto!`, 'ok');
+    finishLesson();
+  } else {
+    setStatus(`${moveResult.san} es legal, pero no es la jugada buscada. Se reinicia la posición.`, 'bad');
+    setTimeout(() => { resetLesson(); }, 1200);
+  }
+}
+
+document.getElementById('blind-panel').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const squareInput = document.getElementById('blind-square-input');
+  const moveInput = document.getElementById('blind-move-input');
+  if(currentLesson.type === 'squares'){
+    const square = squareInput.value.trim().toLowerCase();
+    squareInput.value = '';
+    squareInput.focus();
+    if(!/^[a-h][1-8]$/.test(square)){
+      setStatus('Esa no es una casilla válida — usa una letra de a a h y un número de 1 a 8.', 'bad');
+      return;
+    }
+    blindHandleSquareGuess(square);
+  } else if(currentLesson.type === 'move'){
+    const value = moveInput.value;
+    moveInput.value = '';
+    moveInput.focus();
+    blindHandleMoveGuess(value);
+  }
+});
+
 /* ---------------- Progreso (localStorage, mismo patrón que entreno/index.html) ---------------- */
 function getSolvedSet(){
   try{ return JSON.parse(localStorage.getItem('entreno_aprende_solved') || '{}'); }catch(e){ return {}; }
@@ -449,6 +645,7 @@ function drawBoard(){
       board.appendChild(btn);
     }
   }
+  renderPositionReadout();
 }
 
 function flashWrong(btn){
@@ -566,10 +763,13 @@ function resetLesson(){
     game = new Chess(currentLesson.fen);
     document.getElementById('quiz-controls').style.display = 'none';
     drawBoard();
-    setStatus(currentLesson.type === 'squares'
-      ? `Encuentra ${currentLesson.targets.length} casillas.`
-      : 'Haz clic en la pieza que quieres mover.');
+    if(currentLesson.type === 'squares'){
+      setStatus(`Encuentra ${currentLesson.targets.length} casillas.`);
+    } else {
+      setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Haz clic en la pieza que quieres mover.');
+    }
   }
+  updateBlindInputVisibility();
 }
 
 function openLesson(lesson){
@@ -620,12 +820,37 @@ let appInitialized = false;
 function initApp(){
   if(appInitialized) return;
   appInitialized = true;
+  applyBlindModeUI();
   showList();
 }
 
-if(sessionStorage.getItem('entreno_unlocked') === '1'){
-  unlock();
+// Entrenamiento ahora exige sesión iniciada en el sitio (no solo la
+// contraseña compartida) — así el progreso de cada quien queda guardado y
+// visible para el profesor en Informes. Se comprueba ANTES de mostrar el
+// formulario de contraseña, no después.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.style.display = 'none';
+  if(sessionStorage.getItem('entreno_unlocked') === '1'){
+    unlock();
+  } else {
+    gateForm.style.display = 'block';
+    pwInput.focus();
+  }
 }
+
+requireLoginThenGate();
 </script>
 </body>
 </html>
