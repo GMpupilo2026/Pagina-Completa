@@ -22,35 +22,45 @@
   let currentMultiPv = 1;
   let lines = {};
   let pendingResolve = null;
+  // Motivo del último fallo al cargar el motor, para poder mostrarle algo útil al
+  // profesor en vez de un "no disponible" sin explicación (ver ClasesEngine.lastError).
+  let lastError = null;
 
   function ensureEngine() {
     if (engineInitPromise) return engineInitPromise;
+    lastError = null;
     engineInitPromise = new Promise((resolve) => {
       let w;
       try {
         w = new Worker(STOCKFISH_URL);
       } catch (e) {
+        lastError = "No se pudo crear el motor (" + (e && e.message ? e.message : "error desconocido") + ").";
+        console.error("ClasesEngine: fallo al crear el Worker", e);
         resolve(false);
         return;
       }
       let settled = false;
-      // El WASM del motor pesa ~575KB; en una conexión lenta puede tardar un poco la primera vez.
+      // El WASM del motor pesa ~575KB; en una conexión lenta o un equipo viejo puede
+      // tardar un poco la primera vez (20s da más margen que los 10s originales).
       const timeout = setTimeout(() => {
         if (settled) return;
         settled = true;
+        lastError = "El motor tardó demasiado en responder (revisa tu conexión e inténtalo de nuevo).";
         try {
           w.terminate();
         } catch (e) {}
         resolve(false);
-      }, 10000);
+      }, 20000);
 
-      w.onerror = function () {
+      w.onerror = function (e) {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
+        lastError = "El motor no pudo cargar" + (e && e.message ? ": " + e.message : ".");
+        console.error("ClasesEngine: Worker onerror", e);
         try {
           w.terminate();
-        } catch (e) {}
+        } catch (e2) {}
         resolve(false);
       };
 
@@ -154,5 +164,5 @@
     return sans;
   }
 
-  window.ClasesEngine = { analyze, pvToSan };
+  window.ClasesEngine = { analyze, pvToSan, getLastError: () => lastError };
 })();

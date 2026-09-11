@@ -155,6 +155,10 @@
         // Mismos glifos Unicode que usa js/clases-board.js para el tema "Clásico" (rey y
         // dama, blanco y negro), para que la vista previa se vea igual que en el tablero real.
         const CLASSIC_GLYPH = { w: { k: "♔", q: "♕", n: "♘" }, b: { k: "♚", q: "♛", n: "♞" } };
+        // Iniciales en español (mismo criterio que TYPE_LABEL en js/clases-board.js): un
+        // emoji "divertido" no siempre deja claro qué pieza es, así que la vista previa
+        // también lleva la marca chiquita para que se vea igual que en el tablero real.
+        const TYPE_LABEL = { k: "R", q: "D", n: "C" };
         // Tres piezas de muestra por tarjeta (rey, dama, caballo) sobre casillas
         // clara/oscura/clara alternadas, igual que en un tablero real.
         const PREVIEW_TYPES = ["k", "q", "n"];
@@ -167,7 +171,8 @@
                 const isDark = square === "dark";
                 html += '<span class="theme-preview-sq theme-preview-sq-' + square + '">';
                 if (theme.pieces) {
-                    html += '<span class="theme-token ' + (isDark ? "theme-token-black" : "theme-token-white") + '">' + theme.pieces[type] + "</span>";
+                    html += '<span class="theme-token ' + (isDark ? "theme-token-black" : "theme-token-white") + '">' + theme.pieces[type] +
+                        '<span class="theme-token-label">' + TYPE_LABEL[type] + "</span></span>";
                 } else {
                     html += '<span class="' + (isDark ? "piece-black" : "piece-white") + '">' + (isDark ? CLASSIC_GLYPH.b[type] : CLASSIC_GLYPH.w[type]) + "</span>";
                 }
