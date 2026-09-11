@@ -142,6 +142,28 @@
             <!-- ===== Grilla de accesos ===== -->
             <div id="tile-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-10"></div>
 
+            <!-- ===== Progreso en Entrenamiento ===== -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso en Entrenamiento</h2>
+                    <a href="informes.html" class="text-sm text-accent-600 dark:text-accent-400 hover:underline">Ver informes completos →</a>
+                </div>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">0</div>
+                        <div class="text-xs text-brand-400 dark:text-brand-500 mt-1">🧩 Ejercicios 4×4</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">0</div>
+                        <div class="text-xs text-brand-400 dark:text-brand-500 mt-1">🎓 Lecciones</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
+                        <div class="text-xs text-brand-400 dark:text-brand-500 mt-1">⚡ Mejor Coordenadas</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ===== Registro de clases ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
@@ -273,6 +295,24 @@
             }
         }
 
+        // ---------- Progreso en Entrenamiento (4x4, Aprender, Coordenadas) ----------
+        async function loadEntrenoProgress() {
+            const { data, error } = await sb.from("training_progress").select("*").eq("student_id", profile.id);
+            if (error) return; // deja los ceros por defecto en vez de romper el resto del panel
+            const rows = data || [];
+            const puzzles = new Set(), lessons = new Set();
+            let bestCoord = 0;
+            rows.forEach((r) => {
+                const d = r.detail || {};
+                if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
+                else if (r.activity === "aprender" && d.lesson_id) lessons.add(d.lesson_id);
+                else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
+            });
+            document.getElementById("entreno-puzzles").textContent = String(puzzles.size);
+            document.getElementById("entreno-lessons").textContent = String(lessons.size);
+            document.getElementById("entreno-coord").textContent = bestCoord || "—";
+        }
+
         async function refreshSessionsLog() {
             const { data, error } = await sb.from("class_sessions").select("*").order("started_at", { ascending: false }).limit(10);
             const body = document.getElementById("sessions-log-body");
@@ -395,6 +435,7 @@
             renderTiles();
             await refreshSessionStatus();
             await refreshSessionsLog();
+            await loadEntrenoProgress();
             subscribeSessions();
 
             document.getElementById("loading").classList.add("hidden");

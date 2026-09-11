@@ -205,6 +205,9 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/entreno-progress.js"></script>
 <script>
 /* ---------------- PASSWORD GATE ----------------
    Misma contraseña y misma clave de sessionStorage que entreno/index.html:
@@ -228,6 +231,7 @@ function unlock(){
   gate.style.display = 'none';
   app.style.display = 'block';
   sessionStorage.setItem('entreno_unlocked','1');
+  EntrenoProgress.init();
   initApp();
 }
 
@@ -461,6 +465,7 @@ function setStatus(text, cls){
 function finishLesson(){
   lessonLocked = true;
   markSolved(currentLesson.id);
+  EntrenoProgress.log('aprender', { lesson_id: currentLesson.id, category: currentLesson.cat, title: currentLesson.title });
   setStatus('✅ ¡Muy bien! Lección completada.', 'ok');
   document.getElementById('next-btn').style.display = '';
 }
