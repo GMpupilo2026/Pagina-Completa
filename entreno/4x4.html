@@ -4,38 +4,63 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>4×4 — Entrenamiento — Ajedrez Integral</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b140f'/%3E%3Crect x='18' y='18' width='28' height='28' fill='none' stroke='%23b8935a' stroke-width='3' transform='rotate(45 32 32)'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: {
+            colors: {
+                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+            },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+        } }
+    }
+</script>
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
 <style>
   :root{
-    --bg-deep:#1b140f;
-    --bg-panel:#251c15;
-    --bg-panel-2:#2f251b;
-    --line:#3c3024;
-    --text:#efe3d1;
-    --text-muted:#a4907a;
-    --brass:#b8935a;
-    --brass-bright:#dcb679;
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
     --facil:#75935a;
     --intermedio:#c9a23e;
     --avanzado:#9c4148;
     --especialista:#436a86;
   }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--bg-deep);
-    background-image:
-      radial-gradient(ellipse at top, rgba(184,147,90,0.07), transparent 60%);
-    color:var(--text);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     min-height:100vh;
     min-height:100dvh;
   }
-  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
-  ::selection{background:var(--brass); color:#1b140f;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  ::selection{background:var(--brass); color:#102a43;}
   a{color:var(--brass-bright);}
   *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
 
@@ -52,8 +77,8 @@
     position:absolute;
     top:12px; left:12px;
     background:var(--brass);
-    color:#1b140f;
-    font-family:'Work Sans', sans-serif;
+    color:#102a43;
+    font-family:'Inter', sans-serif;
     font-weight:600;
     font-size:0.9rem;
     padding:10px 16px;
@@ -74,99 +99,13 @@
     border:0;
   }
 
-  /* ---------- GATE ---------- */
-  #gate{
-    min-height:100vh;
-    min-height:100dvh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-  }
-  .gate-box{
-    width:100%;
-    max-width:360px;
-    text-align:center;
-  }
-  .gate-mark{
-    width:44px;height:44px;margin:0 auto 22px;
-    border:1.5px solid var(--brass);
-    transform:rotate(45deg);
-    position:relative;
-  }
-  .gate-mark::after{
-    content:"";
-    position:absolute; inset:6px;
-    border:1px solid var(--line);
-  }
-  .gate-box h1{
-    font-size:2.1rem;
-    letter-spacing:0.01em;
-    color:var(--text);
-  }
-  .gate-box p{
-    color:var(--text-muted);
-    font-size:0.95rem;
-    margin:10px 0 32px;
-    line-height:1.5;
-  }
-  #pw-form{
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-  }
-  #pw-input{
-    background:transparent;
-    border:none;
-    border-bottom:1.5px solid var(--line);
-    color:var(--text);
-    font-family:'Work Sans', sans-serif;
-    font-size:1.05rem;
-    padding:10px 4px;
-    text-align:center;
-    letter-spacing:0.04em;
-    outline:none;
-    transition:border-color .2s;
-  }
-  #pw-input:focus{border-bottom-color:var(--brass);}
-  #pw-submit{
-    background:var(--brass);
-    color:#1b140f;
-    border:none;
-    font-family:'Work Sans', sans-serif;
-    font-weight:600;
-    font-size:0.95rem;
-    padding:12px 20px;
-    cursor:pointer;
-    letter-spacing:0.02em;
-    transition:background .2s, transform .12s ease-out;
-  }
-  #pw-submit:hover{background:var(--brass-bright);}
-  #pw-submit:active{transform:scale(0.97);}
   #pw-error{
     color:var(--avanzado);
     font-size:0.85rem;
     min-height:1.2em;
-    margin-top:-4px;
   }
 
   /* ---------- APP ---------- */
-  #app{display:none;}
-  header.top{
-    padding:28px 24px 0;
-    max-width:1180px;
-    margin:0 auto;
-  }
-  .top-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    flex-wrap:wrap;
-    gap:8px 20px;
-    border-bottom:1px solid var(--line);
-    padding-bottom:20px;
-  }
-  header.top h1{font-size:1.7rem;}
   .count{
     color:var(--text-muted);
     font-size:0.9rem;
@@ -195,14 +134,14 @@
     background:var(--bg-panel);
     border:none;
     color:var(--text-muted);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-size:0.78rem;
     padding:5px 10px;
     cursor:pointer;
     transition:background .15s, color .15s;
   }
   .mode-btn + .mode-btn{border-left:1px solid var(--line);}
-  .mode-btn.active{background:var(--brass); color:#1b140f;}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
 
   nav.tabs{
     display:flex;
@@ -217,7 +156,7 @@
     border:1px solid var(--line);
     border-bottom:3px solid var(--tab-color, var(--line));
     color:var(--text-muted);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-size:0.88rem;
     font-weight:500;
     padding:10px 16px;
@@ -268,7 +207,7 @@
   .card .badge{
     position:absolute;
     top:0; left:0;
-    background:rgba(27,20,15,0.82);
+    background:rgba(16,42,67,0.82);
     color:var(--text);
     font-size:0.72rem;
     font-weight:600;
@@ -277,18 +216,11 @@
     border-bottom:1px solid var(--line);
   }
 
-  footer{
-    text-align:center;
-    color:var(--text-muted);
-    font-size:0.8rem;
-    padding:20px 24px 40px;
-  }
-
   /* ---------- LIGHTBOX ---------- */
   #lightbox{
     display:none;
     position:fixed; inset:0;
-    background:rgba(10,7,5,0.92);
+    background:rgba(16,42,67,0.85);
     z-index:50;
     align-items:center;
     justify-content:center;
@@ -303,7 +235,7 @@
   }
   #lb-caption{
     margin-top:16px;
-    font-family:'Fraunces', serif;
+    font-family:'Merriweather', serif;
     font-size:1.2rem;
     color:var(--text);
   }
@@ -346,7 +278,7 @@
     font-size:0.88rem;
     margin-bottom:6px;
   }
-  .solo-progress strong{color:var(--text); font-family:'Fraunces',serif; font-size:1.3rem; font-weight:600;}
+  .solo-progress strong{color:var(--text); font-family:'Merriweather',serif; font-size:1.3rem; font-weight:600;}
   .progress-bar{
     height:4px;
     background:var(--bg-panel);
@@ -379,7 +311,7 @@
     background:var(--bg-panel-2);
     border:1px solid var(--line);
     color:var(--text);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Inter', sans-serif;
     font-size:0.95rem;
     padding:9px 10px;
   }
@@ -398,7 +330,7 @@
     width:100%;
     aspect-ratio:1/1;
     border:2px solid var(--brass);
-    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    box-shadow:0 8px 30px rgba(16,42,67,0.18);
   }
   .sq{
     position:relative;
@@ -411,8 +343,8 @@
     border:none;
     padding:0;
   }
-  .sq.light{background:#c9b190;}
-  .sq.dark{background:#5a4531;}
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
   .sq .piece{
     filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     pointer-events:none;
@@ -445,7 +377,7 @@
     background:transparent;
     border:1px solid var(--line);
     color:var(--text);
-    font-family:'Work Sans',sans-serif;
+    font-family:'Inter',sans-serif;
     font-size:0.9rem;
     padding:11px 18px;
     cursor:pointer;
@@ -459,7 +391,7 @@
   #win-overlay{
     display:none;
     position:absolute; inset:0;
-    background:rgba(27,20,15,0.96);
+    background:rgba(16,42,67,0.92);
     flex-direction:column;
     align-items:center;
     justify-content:center;
@@ -475,7 +407,7 @@
     margin-bottom:6px;
   }
   #win-overlay .win-sub{
-    font-family:'Fraunces',serif;
+    font-family:'Merriweather',serif;
     font-size:1.2rem;
     color:var(--text);
     margin-bottom:22px;
@@ -501,46 +433,77 @@
 
   @media (max-width:520px){
     .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
-    header.top h1{font-size:1.4rem;}
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/entreno-progress.js"></script>
 </head>
-<body>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
 
 <a href="#main-content" class="skip-link">Saltar al contenido</a>
 
 <!-- ===== PASSWORD GATE ===== -->
-<div id="gate">
-  <div class="gate-box">
-    <div class="gate-mark"></div>
-    <h1>Entreno</h1>
-    <p id="gate-checking">Comprobando tu sesión…</p>
-    <div id="gate-form" style="display:none;">
-      <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
-      <form id="pw-form">
-        <label for="pw-input" class="sr-only">Contraseña</label>
-        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
-        <div id="pw-error" role="alert"></div>
-        <button type="submit" id="pw-submit">Entrar</button>
-      </form>
+<div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🧩</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Entreno</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+        <div id="gate-form" class="hidden">
+            <p class="text-brand-500 dark:text-brand-400 mb-4">Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
+            <form id="pw-form" class="space-y-3">
+                <label for="pw-input" class="sr-only">Contraseña</label>
+                <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" class="w-full text-center px-4 py-2.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-900 dark:text-white focus:ring-2 focus:ring-accent-500 outline-none">
+                <div id="pw-error" role="alert" class="text-sm text-red-600 dark:text-red-400 min-h-[1.2em]"></div>
+                <button type="submit" id="pw-submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors">Entrar</button>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- ===== MAIN APP ===== -->
-<div id="app">
-  <header class="top">
-    <div class="top-row">
-      <div>
-        <a href="index.html" style="font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:6px;">← Entrenamiento</a>
-        <h1>4×4</h1>
-      </div>
-      <div class="count"><strong id="visible-count">0</strong> ejercicios</div>
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-[1180px] mx-auto px-6 flex justify-between items-baseline flex-wrap gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
+    <div>
+      <a href="index.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 dark:hover:text-accent-400 transition-colors inline-block mb-1.5">← Entrenamiento</a>
+      <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">4×4</h1>
     </div>
-  </header>
+    <div class="count"><strong id="visible-count">0</strong> ejercicios</div>
+  </div>
 
   <div class="mode-bar">
     <h2 class="sr-only">Modo de interacción</h2>
@@ -629,9 +592,9 @@
     <!-- Grilla de imágenes (categorías sin tablero jugable todavía) -->
     <div class="grid" id="grid"></div>
   </main>
-
-  <footer>Ajedrez Integral — archivo de ejercicios de ajedrez en solitario</footer>
 </div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 
 <!-- ===== LIGHTBOX (para categorías aún no jugables) ===== -->
 <div id="lightbox">
@@ -644,6 +607,7 @@
   </div>
 </div>
 
+<script src="../js/main.js"></script>
 <script>
 /* ---------------- PASSWORD GATE ----------------
    Nota: esto es una barrera del lado del cliente, pensada para
@@ -669,8 +633,8 @@ const pwError = document.getElementById('pw-error');
 const NEXT_PATH = 'entreno/4x4.html';
 
 function unlock(){
-  gate.style.display = 'none';
-  app.style.display = 'block';
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
   sessionStorage.setItem('entreno_unlocked','1');
   EntrenoProgress.init();
   initApp();
@@ -1578,11 +1542,11 @@ async function requireLoginThenGate(){
     window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
     return;
   }
-  gateChecking.style.display = 'none';
+  gateChecking.classList.add('hidden');
   if(sessionStorage.getItem('entreno_unlocked') === '1'){
     unlock();
   } else {
-    gateForm.style.display = 'block';
+    gateForm.classList.remove('hidden');
     pwInput.focus();
   }
 }

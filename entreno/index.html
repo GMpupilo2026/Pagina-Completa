@@ -1,134 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Entrenamiento — Ajedrez Integral</title>
-<meta name="description" content="Entrenamiento: ejercicios tácticos 4×4 y lecciones interactivas para aprender a jugar.">
-<meta name="robots" content="noindex">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b140f'/%3E%3Crect x='18' y='18' width='28' height='28' fill='none' stroke='%23b8935a' stroke-width='3' transform='rotate(45 32 32)'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-deep:#1b140f;
-    --bg-panel:#251c15;
-    --bg-panel-2:#2f251b;
-    --line:#3c3024;
-    --text:#efe3d1;
-    --text-muted:#a4907a;
-    --brass:#b8935a;
-    --brass-bright:#dcb679;
-    --bad:#c15a52;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg-deep);
-    background-image:radial-gradient(ellipse at top, rgba(184,147,90,0.07), transparent 60%);
-    color:var(--text);
-    font-family:'Work Sans', sans-serif;
-    min-height:100vh;
-    min-height:100dvh;
-  }
-  h1,h2{font-family:'Fraunces', serif; font-weight:600; margin:0;}
-  a{color:var(--brass-bright);}
-  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-
-  /* ---------- GATE (misma contraseña y sessionStorage que 4x4.html / aprender.html) ---------- */
-  #gate{min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px;}
-  .gate-box{width:100%; max-width:360px; text-align:center;}
-  .gate-mark{width:52px; height:52px; margin:0 auto 18px; border:3px solid var(--brass); transform:rotate(45deg);}
-  .gate-box h1{font-size:1.8rem; margin-bottom:10px;}
-  .gate-box p{color:var(--text-muted); line-height:1.5; margin-bottom:22px;}
-  #pw-form{display:flex; flex-direction:column; gap:10px;}
-  #pw-input{background:var(--bg-panel); border:1px solid var(--line); color:var(--text); font-family:'Work Sans', sans-serif; font-size:1rem; padding:12px 14px; text-align:center;}
-  #pw-input:focus{border-color:var(--brass);}
-  #pw-error{color:var(--bad); font-size:0.85rem; min-height:1.2em;}
-  #pw-submit{background:var(--brass); color:#1b140f; border:none; font-family:'Work Sans', sans-serif; font-weight:600; font-size:1rem; padding:12px; cursor:pointer; transition:background .2s;}
-  #pw-submit:hover{background:var(--brass-bright);}
-
-  /* ---------- APP (hub) ---------- */
-  #app{display:none;}
-  main{max-width:780px; margin:0 auto; padding:60px 24px;}
-  .hub-intro{text-align:center; margin-bottom:36px;}
-  .hub-intro h1{font-size:2rem; margin-bottom:10px;}
-  .hub-intro p{color:var(--text-muted); line-height:1.5;}
-  .hub-intro a{font-size:0.85rem; display:inline-block; margin-top:10px;}
-
-  .hub-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:16px;}
-  .hub-card{
-    display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;
-    background:var(--bg-panel); border:1px solid var(--line); color:var(--text); text-decoration:none;
-    padding:32px 20px; cursor:pointer; transition:border-color .15s, transform .12s ease-out, background .15s;
-  }
-  .hub-card:hover{border-color:var(--brass); background:var(--bg-panel-2);}
-  .hub-card:active{transform:scale(0.98);}
-  .hub-card .icon{font-size:2.6rem; line-height:1;}
-  .hub-card .name{font-family:'Fraunces', serif; font-weight:600; font-size:1.15rem;}
-  .hub-card .desc{font-size:0.82rem; color:var(--text-muted);}
-
-  /* Espacio reservado con el mismo look para futuras secciones (aparece cuando se agreguen). */
-  .hub-card.coming-soon{opacity:0.45; cursor:not-allowed;}
-
-  @media (prefers-reduced-motion: reduce){
-    #pw-submit, .hub-card{transition-property: background-color, border-color, color;}
-  }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="../js/supabase-client.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenamiento — Ajedrez Integral</title>
+    <meta name="description" content="Entrenamiento: ejercicios tácticos 4×4 y lecciones interactivas para aprender a jugar.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
 </head>
-<body>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
 
-<!-- ===== PASSWORD GATE ===== -->
-<div id="gate">
-  <div class="gate-box">
-    <div class="gate-mark"></div>
-    <h1>Entrenamiento</h1>
-    <p id="gate-checking">Comprobando tu sesión…</p>
-    <div id="gate-form" style="display:none;">
-      <p>Ejercicios y lecciones de ajedrez.<br>Introduce la contraseña para entrar.</p>
-      <form id="pw-form">
-        <label for="pw-input" class="sr-only">Contraseña</label>
-        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
-        <div id="pw-error" role="alert"></div>
-        <button type="submit" id="pw-submit">Entrar</button>
-      </form>
+    <!-- ===== PASSWORD GATE ===== -->
+    <div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+        <div class="w-full max-w-sm text-center">
+            <p class="text-5xl mb-4" aria-hidden="true">♟️</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Entrenamiento</h1>
+            <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+            <div id="gate-form" class="hidden">
+                <p class="text-brand-500 dark:text-brand-400 mb-4">Ejercicios y lecciones de ajedrez.<br>Introduce la contraseña para entrar.</p>
+                <form id="pw-form" class="space-y-3">
+                    <label for="pw-input" class="sr-only">Contraseña</label>
+                    <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" class="w-full text-center px-4 py-2.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-900 dark:text-white focus:ring-2 focus:ring-accent-500 outline-none">
+                    <div id="pw-error" role="alert" class="text-sm text-red-600 dark:text-red-400 min-h-[1.2em]"></div>
+                    <button type="submit" id="pw-submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors">Entrar</button>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- ===== MAIN APP (hub) ===== -->
-<div id="app">
-  <main>
-    <div class="hub-intro">
-      <h1>Entrenamiento 🏋️</h1>
-      <p>Elige qué quieres practicar hoy.</p>
-      <a href="../clases.html">← Panel de Clases</a>
-    </div>
-    <div class="hub-grid">
-      <a href="4x4.html" class="hub-card">
-        <span class="icon" aria-hidden="true">🧩</span>
-        <span class="name">4×4</span>
-        <span class="desc">Ejercicios tácticos por nivel</span>
-      </a>
-      <a href="aprender.html" class="hub-card">
-        <span class="icon" aria-hidden="true">🎓</span>
-        <span class="name">Aprender</span>
-        <span class="desc">Lecciones interactivas paso a paso</span>
-      </a>
-      <a href="coordenadas.html" class="hub-card">
-        <span class="icon" aria-hidden="true">🎯</span>
-        <span class="name">Coordenadas</span>
-        <span class="desc">Reconoce las casillas a toda velocidad</span>
-      </a>
-    </div>
-  </main>
-</div>
+    <!-- ===== MAIN APP (hub) ===== -->
+    <main id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-10">
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2">Entrenamiento 🏋️</h1>
+                <p class="text-brand-500 dark:text-brand-400">Elige qué quieres practicar hoy.</p>
+                <a href="../clases.html" class="inline-block mt-3 text-sm text-accent-600 dark:text-accent-400 hover:underline">← Panel de Clases</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5">
+                <a href="4x4.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🧩</div>
+                    <span class="font-semibold text-brand-800 dark:text-white text-sm">4×4</span>
+                    <span class="text-xs text-brand-400 dark:text-brand-500">Ejercicios tácticos por nivel</span>
+                </a>
+                <a href="aprender.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🎓</div>
+                    <span class="font-semibold text-brand-800 dark:text-white text-sm">Aprender</span>
+                    <span class="text-xs text-brand-400 dark:text-brand-500">Lecciones interactivas paso a paso</span>
+                </a>
+                <a href="coordenadas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🎯</div>
+                    <span class="font-semibold text-brand-800 dark:text-white text-sm">Coordenadas</span>
+                    <span class="text-xs text-brand-400 dark:text-brand-500">Reconoce las casillas a toda velocidad</span>
+                </a>
+            </div>
+        </div>
+    </main>
 
-<script>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+    <script>
 /* ---------------- PASSWORD GATE ----------------
    Misma contraseña y misma clave de sessionStorage que entreno/4x4.html y
    entreno/aprender.html: desbloquear una desbloquea las tres en esta pestaña.
@@ -152,8 +142,8 @@ const pwError = document.getElementById('pw-error');
 const NEXT_PATH = 'entreno/index.html';
 
 function unlock(){
-  gate.style.display = 'none';
-  app.style.display = 'block';
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
   sessionStorage.setItem('entreno_unlocked','1');
 }
 
@@ -187,16 +177,16 @@ async function requireLoginThenGate(){
     window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
     return;
   }
-  gateChecking.style.display = 'none';
+  gateChecking.classList.add('hidden');
   if(sessionStorage.getItem('entreno_unlocked') === '1'){
     unlock();
   } else {
-    gateForm.style.display = 'block';
+    gateForm.classList.remove('hidden');
     pwInput.focus();
   }
 }
 
 requireLoginThenGate();
-</script>
+    </script>
 </body>
 </html>
