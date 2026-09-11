@@ -72,22 +72,6 @@
     .sq .piece{ transition-property: none; }
   }
 
-  /* Enlace "saltar al contenido": invisible hasta recibir foco por teclado */
-  .skip-link{
-    position:absolute;
-    top:12px; left:12px;
-    background:var(--brass);
-    color:#102a43;
-    font-family:'Inter', sans-serif;
-    font-weight:600;
-    font-size:0.9rem;
-    padding:10px 16px;
-    z-index:100;
-    transform:translateY(-150%);
-    transition:transform .15s ease-out;
-  }
-  .skip-link:focus{transform:translateY(0);}
-
   /* Texto solo para lectores de pantalla (accesibilidad) */
   .sr-only{
     position:absolute;
@@ -433,8 +417,10 @@
 <script src="../js/supabase-client.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
@@ -469,8 +455,6 @@
             </ul>
         </div>
     </header>
-
-<a href="#main-content" class="skip-link">Saltar al contenido</a>
 
 <!-- ===== PASSWORD GATE ===== -->
 <div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
