@@ -239,8 +239,8 @@
       <div class="board8" id="board" role="group" aria-label="Tablero de coordenadas"></div>
 
       <form id="blind-panel" class="blind-panel" style="display:none;">
-        <label for="blind-input">Escribe la casilla objetivo y presiona Enter</label>
-        <input type="text" id="blind-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="2" inputmode="text">
+        <label for="blind-input">¿Es blanca o negra? Escribe "b" o "n" y presiona Enter</label>
+        <input type="text" id="blind-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="1" inputmode="text">
       </form>
     </div>
 
@@ -307,9 +307,10 @@ const FILES = ['a','b','c','d','e','f','g','h'];
 /* ---------------- Modo normal / modo adaptado (lector de pantalla) ----------------
    Mismo interruptor y misma clave de localStorage que Tablero y 4x4
    (oscarBlindMode_v1): activarlo una vez vale para todo el sitio. En modo
-   adaptado, en vez de hacer clic en una de las 64 casillas del tablero, se
-   escribe la casilla objetivo en un campo de texto — la casilla objetivo y
-   el resultado de cada intento se anuncian por voz. */
+   adaptado, en vez de hacer clic en la casilla anunciada, se dice de qué
+   color es: se escribe "b" (blanca) o "n" (negra) en un campo de texto —
+   repetir el nombre de la casilla no entrenaría nada, sería solo un eco. La
+   casilla anunciada y el resultado de cada intento se dicen por voz. */
 const BLIND_MODE_KEY = 'oscarBlindMode_v1';
 let blindMode = false;
 try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
@@ -329,9 +330,9 @@ const blindAnnouncer = document.getElementById('blind-announcer');
 function applyBlindModeUI(){
   document.getElementById('board').style.display = blindMode ? 'none' : 'grid';
   blindPanel.style.display = blindMode ? 'block' : 'none';
-  document.getElementById('target-label').textContent = blindMode ? 'Escribe la casilla:' : 'Haz clic en';
+  document.getElementById('target-label').textContent = blindMode ? 'Se anuncia:' : 'Haz clic en';
   document.getElementById('lead-text').textContent = blindMode
-    ? 'Se anuncia el nombre de una casilla (por ejemplo, "e4"). Escríbela en el campo de texto y presiona Enter antes de que se acabe el tiempo.'
+    ? 'Se anuncia el nombre de una casilla (por ejemplo, "e4"). En vez de encontrarla en un tablero, di de qué color es: escribe "b" si es blanca o "n" si es negra, y presiona Enter, antes de que se acabe el tiempo.'
     : 'Se muestra el nombre de una casilla (por ejemplo, "e4"). Haz clic en esa casilla en el tablero antes de que se acabe el tiempo. Cuanto más rápido reconozcas las casillas, mejor puntuación.';
   if(modeNormalBtn){
     modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
@@ -353,16 +354,18 @@ applyBlindModeUI();
 
 blindPanel.addEventListener('submit', (e) => {
   e.preventDefault();
-  const square = blindInput.value.trim().toLowerCase();
+  const answer = blindInput.value.trim().toLowerCase();
   blindInput.value = '';
   blindInput.focus();
-  if(!/^[a-h][1-8]$/.test(square)){
-    blindAnnouncer.textContent = 'Esa no es una casilla válida — usa una letra de a a h y un número de 1 a 8, por ejemplo e4.';
+  if(answer !== 'b' && answer !== 'n'){
+    blindAnnouncer.textContent = 'Escribe "b" si la casilla es blanca, o "n" si es negra.';
     return;
   }
-  const correct = handleGuess(square);
+  const correct = handleColorGuess(answer);
   if(correct === null) return; // la ronda no está en curso
-  blindAnnouncer.textContent = correct ? '✅ Correcto.' : `❌ Incorrecto, la casilla era ${currentTarget}.`;
+  blindAnnouncer.textContent = correct
+    ? '✅ Correcto.'
+    : `❌ Incorrecto, era ${isLightSquare(currentTarget) ? 'blanca' : 'negra'}.`;
 });
 
 // Modos: además del clásico (sin apuro por casilla, solo el reloj general de
@@ -469,12 +472,12 @@ function armPerSquareTimer(){
 
 function onSquareTimeout(){
   if(!playing) return;
-  const missedSquare = currentTarget;
+  const missedSquareColor = isLightSquare(currentTarget) ? 'blanca' : 'negra';
   misses++;
   streak = 0;
   updateHud();
   newTarget();
-  if(blindMode) blindAnnouncer.textContent = `⏱️ Se acabó el tiempo, era ${missedSquare}.`;
+  if(blindMode) blindAnnouncer.textContent = `⏱️ Se acabó el tiempo, era ${missedSquareColor}.`;
 }
 
 function newTarget(){
@@ -504,6 +507,28 @@ function updateHud(){
 function handleGuess(square){
   if(!playing) return null;
   const correct = square === currentTarget;
+  if(correct){
+    score++;
+    streak++;
+    bestStreak = Math.max(bestStreak, streak);
+    reactionTimes.push(performance.now() - lastPromptAt);
+    newTarget();
+  } else {
+    misses++;
+    streak = 0;
+  }
+  updateHud();
+  return correct;
+}
+
+// Versión del modo adaptado: en vez de repetir el nombre de la casilla
+// anunciada (que no entrena nada — solo sería un eco), la respuesta es de
+// qué color es esa casilla ("b" blanca / "n" negra). Misma puntuación y
+// misma racha que el modo normal, solo cambia qué cuenta como acierto.
+function handleColorGuess(answer){
+  if(!playing) return null;
+  const correctAnswer = isLightSquare(currentTarget) ? 'b' : 'n';
+  const correct = answer === correctAnswer;
   if(correct){
     score++;
     streak++;
