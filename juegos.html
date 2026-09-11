@@ -195,7 +195,7 @@
                     card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
                     card.innerHTML =
                         '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(r.variant) + ' · en curso</p>' +
-                        '<p class="font-semibold text-brand-800 dark:text-white">Contra ' + escapeHtml(playerNames[rivalId] || "tu rival") + '</p>' +
+                        '<h2 class="font-semibold text-brand-800 dark:text-white">Contra ' + escapeHtml(playerNames[rivalId] || "tu rival") + '</h2>' +
                         '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Juegas con ' + (myColor === "w" ? "blancas ⚪" : "negras ⚫") + ' — toca para continuar →</p>';
                     activeEl.appendChild(card);
                 });
@@ -256,7 +256,7 @@
             const info = document.createElement("div");
             info.innerHTML =
                 '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(row.variant) + '</p>' +
-                '<p class="font-semibold text-brand-800 dark:text-white text-sm">' + escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?") + '</p>' +
+                '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?") + '</h3>' +
                 '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
