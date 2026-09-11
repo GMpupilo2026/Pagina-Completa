@@ -47,7 +47,7 @@
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
@@ -68,7 +68,7 @@
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
                 <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV</a></li>
                 <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
@@ -76,8 +76,15 @@
         </div>
     </header>
 
-    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
-        <p class="text-brand-400 dark:text-brand-500">Cargando tu panel…</p>
+    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center px-4">
+        <div id="loading-spinner">
+            <p class="text-brand-400 dark:text-brand-500">Cargando tu panel…</p>
+        </div>
+        <div id="loading-error" class="hidden w-full max-w-sm text-center">
+            <p class="text-5xl mb-4" aria-hidden="true">⚠️</p>
+            <p class="text-brand-600 dark:text-brand-300 mb-4">No se pudo cargar tu perfil. Puede que tu sesión haya caducado.</p>
+            <button type="button" id="reingresar-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors">Volver a iniciar sesión</button>
+        </div>
     </div>
 
     <div id="app" class="hidden pt-20 pb-16">
@@ -415,7 +422,19 @@
             if (!session) { window.location.href = "login.html"; return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
-            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
+            if (profileError || !profileData) {
+                // No basta con avisar y dejar la rueda de carga dando vueltas: si el
+                // perfil no carga (sesión caducada, fila borrada, error de red), se le
+                // pide directamente volver a iniciar sesión en vez de quedarse
+                // atascado sin explicación ni forma de salir de ahí.
+                document.getElementById("loading-spinner").classList.add("hidden");
+                document.getElementById("loading-error").classList.remove("hidden");
+                document.getElementById("reingresar-btn").addEventListener("click", async () => {
+                    try { await sb.auth.signOut(); } catch (e) {}
+                    window.location.href = "login.html?next=clases.html";
+                });
+                return;
+            }
             profile = profileData;
             isTeacher = profile.role === "profesor";
 

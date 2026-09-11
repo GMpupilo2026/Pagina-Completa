@@ -42,7 +42,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -62,7 +62,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -75,22 +75,20 @@
             <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-6"><span aria-hidden="true">←</span> Volver a Cursos</a>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
-                <p class="text-5xl mb-4" aria-hidden="true">🔒</p>
-                <h1 id="locked-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">Este curso está bloqueado por contraseña</h1>
-                <p class="text-sm text-brand-500 dark:text-brand-400 mb-6">Ingresa la contraseña para ver el temario y el contenido completo del curso.</p>
-
-                <label for="course-password-input" class="sr-only">Contraseña</label>
-                <input id="course-password-input" type="password" placeholder="Contraseña" autocomplete="off" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                <p id="course-password-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-3 min-h-[1em]"></p>
-                <button id="password-submit-btn" type="button" class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">🔓 Desbloquear</button>
+                <p class="text-5xl mb-4" aria-hidden="true">🏛️</p>
+                <h1 id="locked-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-2">Este curso es parte de Academia</h1>
+                <p id="locked-msg" class="text-sm text-brand-500 dark:text-brand-400 mb-6">Comprobando tu sesión…</p>
+                <a id="login-btn" href="../login.html" class="hidden w-full inline-block px-4 py-2.5 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Iniciar sesión</a>
             </div>
 
-            <p class="text-xs text-brand-400 dark:text-brand-500 text-center mt-6">¿No tienes la contraseña? <a href="../inscripcion.html" class="text-accent-600 hover:underline">Inscríbete al curso</a> para acceder.</p>
+            <p class="text-xs text-brand-400 dark:text-brand-500 text-center mt-6">¿No tienes cuenta? <a href="../inscripcion.html" class="text-accent-600 hover:underline">Inscríbete</a> para acceder a Academia.</p>
         </div>
     </div>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
     <script src="../js/main.js"></script>
     <script>
         (function () {
@@ -108,35 +106,49 @@
             var slug = (location.pathname.split("/").pop() || "").replace(/\.html$/, "");
             var titleEl = document.getElementById("locked-title");
             if (TITLES[slug] && titleEl) {
-                titleEl.textContent = TITLES[slug] + " está bloqueado por contraseña";
+                titleEl.textContent = TITLES[slug] + " es parte de Academia";
             }
 
-            var input = document.getElementById("course-password-input");
-            var msg = document.getElementById("course-password-msg");
-            var btn = document.getElementById("password-submit-btn");
+            var msgEl = document.getElementById("locked-msg");
+            var loginBtn = document.getElementById("login-btn");
 
-            function attemptUnlock() {
-                msg.textContent = "";
-                fetch("/api/curso-auth", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ password: input.value }),
-                }).then(function (r) {
-                    if (!r.ok) throw new Error("wrong_password");
+            function goToLogin() {
+                var next = "cursos/" + slug + ".html";
+                loginBtn.href = "../login.html?next=" + encodeURIComponent(next);
+                msgEl.textContent = "Necesitas iniciar sesión en Academia para ver este curso.";
+                loginBtn.classList.remove("hidden");
+            }
+
+            // Comprueba si el navegador ya tiene una sesión de Academia (Supabase) y, si la
+            // tiene, la canjea automáticamente por la cookie que el Worker necesita — sin
+            // pedirle nada al alumno. Si no hay sesión, se lo manda a iniciar sesión.
+            (async function () {
+                let session = null;
+                try {
+                    const { data } = await sb.auth.getSession();
+                    session = data && data.session;
+                } catch (e) {
+                    session = null;
+                }
+                if (!session || !session.access_token) {
+                    goToLogin();
+                    return;
+                }
+                try {
+                    const res = await fetch("/api/curso-auth-session", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ access_token: session.access_token }),
+                    });
+                    if (!res.ok) throw new Error("no_session");
                     // Recarga la misma URL: con la cookie ya puesta, el Worker esta vez
-                    // deja pasar la página real del curso en vez de esta pantalla bloqueada.
+                    // deja pasar la página real del curso en vez de esta pantalla.
                     location.reload();
-                }).catch(function () {
-                    msg.textContent = "Contraseña incorrecta: este curso está bloqueado por contraseña.";
-                    input.focus();
-                    input.select();
-                });
-            }
-
-            btn.addEventListener("click", attemptUnlock);
-            input.addEventListener("keydown", function (e) { if (e.key === "Enter") attemptUnlock(); });
-            input.focus();
+                } catch (e) {
+                    goToLogin();
+                }
+            })();
         })();
     </script>
 </body>

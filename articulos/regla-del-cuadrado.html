@@ -41,7 +41,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -61,7 +61,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -82,6 +82,21 @@
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">¿Qué es el cuadrado?</h2>
 <p>Traza un cuadrado imaginario que tenga como un lado la distancia entre el peón y su casilla de coronación, y como esquina opuesta la casilla actual del peón. Si el rey defensor puede entrar en ese cuadrado en su próximo movimiento, atrapa al peón. Si no puede entrar, el peón corona sin importar lo que haga el rey.</p>
 <blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">Ejemplo: peón blanco en e5, quiere coronar en e8. El cuadrado va de e5 a e8 (4 filas) y de e5 a h5 (4 columnas), formando un cuadrado de 4×4. Si el rey negro está fuera de ese cuadrado y no es su turno de entrar ya, el peón corona solo.</blockquote>
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="4k3/8/8/8/P7/8/8/4K3 b - - 0 1" role="group" aria-labelledby="ejemplo-heading-regla-del-cuadrado">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-regla-del-cuadrado" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Peón blanco en a4, quiere coronar en a8. Traza el cuadrado: a4-a8 (4 filas) y a4-e4 (4 columnas). Con el rey negro en e8 y turno de las negras, ¿puede entrar al cuadrado a tiempo?</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">El detalle que decide todo: el turno</h2>
 <p>La regla del cuadrado depende de a quién le toca mover. Traza el cuadrado <em>antes</em> de la jugada que se va a hacer. Si le toca mover al bando que defiende y su rey puede pisar el cuadrado en esa jugada, atrapa el peón. Un solo tiempo de diferencia cambia el resultado del final por completo.</p>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Peón que aún no ha avanzado</h2>
@@ -117,5 +132,8 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
 </body>
 </html>

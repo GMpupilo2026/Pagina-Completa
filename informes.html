@@ -43,7 +43,7 @@
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -63,7 +63,7 @@
                 <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
                 <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -141,14 +141,42 @@
         }
 
         // Minutos realmente conectado: cada fila de class_presence_log es una ventana de
-        // conexión (joined_at -> left_at, "tocada" cada pocos segundos mientras la pestaña
-        // sigue abierta). Sumar estas ventanas da el tiempo exacto en línea, no una
-        // estimación desde que entró hasta que el profesor cerró la clase.
+        // conexión (joined_at -> left_at, "tocada" cada 20s mientras la pestaña sigue
+        // abierta — ver sesion.html). Sumar estas ventanas da el tiempo exacto en línea,
+        // no una estimación desde que entró hasta que el profesor cerró la clase.
+        //
+        // Dos ajustes sobre la suma ingenua de cada fila por separado:
+        //   1. Una fila sin left_at (la pestaña se cerró antes del primer "toque" a los
+        //      20s, o sin que corriera stopPresenceLog) no debe contar como "conectado
+        //      hasta ahora mismo" indefinidamente — cada vez que se abre el informe,
+        //      esa ventana seguiría creciendo sola. Se acota a como mucho un intervalo
+        //      de heartbeat (20s) desde que empezó, igual de preciso que el resto del
+        //      mecanismo ("con unos segundos de margen").
+        //   2. Si el mismo alumno tuvo dos pestañas abiertas a la vez (o se reconectó
+        //      justo antes de que la anterior se cerrara), sus ventanas se solapan —
+        //      sumarlas por separado contaría el mismo tiempo dos veces. Se combinan
+        //      los intervalos que se solapan o se tocan antes de sumar.
+        const PRESENCE_HEARTBEAT_MS = 20000;
         function minutesFromPresenceRows(rows) {
-            return (rows || []).reduce((sum, r) => {
-                const end = r.left_at ? new Date(r.left_at) : new Date();
-                return sum + Math.max(0, (end - new Date(r.joined_at)) / 60000);
-            }, 0);
+            const now = Date.now();
+            const intervals = (rows || [])
+                .map((r) => {
+                    const start = new Date(r.joined_at).getTime();
+                    const end = r.left_at ? new Date(r.left_at).getTime() : Math.min(now, start + PRESENCE_HEARTBEAT_MS);
+                    return [start, Math.max(start, end)];
+                })
+                .sort((a, b) => a[0] - b[0]);
+
+            let totalMs = 0;
+            let curStart = null, curEnd = null;
+            intervals.forEach(([start, end]) => {
+                if (curStart === null) { curStart = start; curEnd = end; return; }
+                if (start <= curEnd) { curEnd = Math.max(curEnd, end); return; }
+                totalMs += curEnd - curStart;
+                curStart = start; curEnd = end;
+            });
+            if (curStart !== null) totalMs += curEnd - curStart;
+            return totalMs / 60000;
         }
 
         function statCard(emoji, value, label) {

@@ -41,3 +41,21 @@ body { -webkit-font-smoothing: antialiased; }
 #move-history::-webkit-scrollbar-thumb { background: #9fb3c8; border-radius: 3px; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+
+/* Diagramas de ejemplo de los artículos (js/article-example-board.js): mismo
+   tablero de 8x8 y mismos colores de casilla que el resto del sitio. */
+.example-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 2px solid #486581;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(16, 42, 67, 0.18);
+}
+.example-sq { display: flex; align-items: center; justify-content: center; font-size: min(6vw, 28px); }
+.example-sq-light { background: #f0f4f8; }
+.example-sq-dark { background: #486581; }
+.example-readout p { margin: 2px 0; }

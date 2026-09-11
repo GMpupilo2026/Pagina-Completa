@@ -41,7 +41,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -61,7 +61,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -85,6 +85,21 @@
 <p>Hay dos escuelas complementarias, no opuestas:</p>
 <ul class="list-disc pl-6 space-y-1"><li><strong>Ocupación directa:</strong> colocar peones propios en las casillas centrales (como en 1.e4 o 1.d4), reclamando el espacio físicamente.</li><li><strong>Control a distancia:</strong> presionar las casillas centrales con piezas sin ocuparlas todavía con peones, como en el Sistema Réti (1.Nf3 seguido de g3, Bg2) o la Defensa India de Rey.</li></ul>
 <blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">Ejemplo de ocupación directa: 1.e4 e5 2.Nf3 Nc6 3.Bc4 — las blancas ya controlan e4 y presionan d5/f7 desde el primer momento.
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3" role="group" aria-labelledby="ejemplo-heading-el-centro-del-tablero">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-el-centro-del-tablero" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Posición después de 1.e4 e5 2.Nf3 Nc6 3.Bc4 — las blancas ocupan e4 y presionan las casillas centrales d5 y f7 desde el primer momento.</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+
 Ejemplo de control a distancia: 1.Nf3 Nf6 2.g3 g6 3.Bg2 Bg7 — ambos bandos vigilan el centro con piezas antes de decidir dónde fijar los peones.</blockquote>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Qué ocurre si abandonas el centro</h2>
 <p>Ignorar el centro casi siempre se paga caro: el rival gana espacio, sus piezas encuentran mejores diagonales y columnas, y tu propio rey y piezas quedan con menos movilidad. Muchas aperturas dudosas para el bando negro fallan precisamente porque ceden el centro sin compensación suficiente a cambio.</p>
@@ -116,5 +131,8 @@ Ejemplo de control a distancia: 1.Nf3 Nf6 2.g3 g6 3.Bg2 Bg7 — ambos bandos vig
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
 </body>
 </html>

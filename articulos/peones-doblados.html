@@ -41,7 +41,7 @@
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
                     <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Tablero</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Clases</a></li>
                     <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -61,7 +61,7 @@
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
                 <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Tablero</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Clases</a></li>
                 <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -86,6 +86,21 @@
 <ul class="list-disc pl-6 space-y-1"><li><strong>Columnas abiertas.</strong> Doblar peones casi siempre abre una columna semiabierta para una torre, ideal para presionar piezas o el rey rival.</li><li><strong>Control del centro.</strong> En estructuras como la Defensa Nimzoindia (1.d4 Nf6 2.c4 e6 3.Nc3 Bb4), las blancas aceptan peones doblados en c3/c4 tras un canje a cambio de la pareja de alfiles y un centro de peones ampliado.</li><li><strong>Más control de casillas.</strong> Dos peones doblados en columnas centrales pueden controlar más casillas juntas que separados, reforzando un puesto avanzado para una pieza.</li></ul>
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Ejemplo típico: Nimzoindia</h2>
 <blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.e3 O-O 5.Bd3 c5 6.Nf3 Nc6 7.O-O Bxc3 8.bxc3 — las blancas quedan con peones doblados en c3, pero ganan la pareja de alfiles y una base de peones flexible en el centro. Esta estructura se juega en todos los niveles, del club al Campeonato Mundial.</blockquote>
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="r1bq1rk1/pp1p1ppp/2n1pn2/2p5/2PP4/2PBPN2/P4PPP/R1BQ1RK1 b - - 0 8" role="group" aria-labelledby="ejemplo-heading-peones-doblados">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-peones-doblados" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Posición después de 1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.e3 O-O 5.Bd3 c5 6.Nf3 Nc6 7.O-O Bxc3 8.bxc3 — fíjate en los peones blancos doblados en la columna c.</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+
 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo evaluarlos en tu propia partida</h2>
 <p>Antes de temerle a un doblaje de peones, pregúntate: ¿qué recibo a cambio? Si es la pareja de alfiles, una columna abierta o más control central, puede ser un buen trato. Si no recibes nada y solo debilitas tu estructura, evítalo. La estrategia no se trata de reglas absolutas, sino de sopesar ventajas contra desventajas en cada posición concreta.</p>
             </div>
@@ -114,5 +129,8 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
 </body>
 </html>
