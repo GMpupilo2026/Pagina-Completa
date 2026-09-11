@@ -517,13 +517,16 @@
   <div class="gate-box">
     <div class="gate-mark"></div>
     <h1>Entreno</h1>
-    <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
-    <form id="pw-form">
-      <label for="pw-input" class="sr-only">Contraseña</label>
-      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
-      <div id="pw-error" role="alert"></div>
-      <button type="submit" id="pw-submit">Entrar</button>
-    </form>
+    <p id="gate-checking">Comprobando tu sesión…</p>
+    <div id="gate-form" style="display:none;">
+      <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
+      <form id="pw-form">
+        <label for="pw-input" class="sr-only">Contraseña</label>
+        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
+        <div id="pw-error" role="alert"></div>
+        <button type="submit" id="pw-submit">Entrar</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -657,9 +660,13 @@ async function sha256(text){
 
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const gateForm = document.getElementById('gate-form');
 const pwForm = document.getElementById('pw-form');
 const pwInput = document.getElementById('pw-input');
 const pwError = document.getElementById('pw-error');
+
+const NEXT_PATH = 'entreno/4x4.html';
 
 function unlock(){
   gate.style.display = 'none';
@@ -936,6 +943,12 @@ function captureTargets(piece, r, c, board){
 const BLIND_MODE_KEY = 'oscarBlindMode_v1';
 let blindMode = false;
 try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+// El hub de Ciegos enlaza aquí con "?modo=ciego" (igual que Tablero): preselecciona
+// el modo adaptado sin que haya que tocar el interruptor a mano.
+if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
+  blindMode = true;
+  try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
+}
 
 const modeNormalBtn = document.getElementById('mode-normal-btn');
 const modeBlindBtn = document.getElementById('mode-blind-btn');
@@ -1543,12 +1556,38 @@ document.getElementById('win-next').addEventListener('click', () => {
   showCategory(currentCategory);
 });
 
-/* Se comprueba el desbloqueo previo (sessionStorage) hasta el final del script,
-   ya que unlock()/initApp() dependen de variables (como appInitialized) que
-   solo existen una vez que el resto del script ya se ejecutó. */
-if(sessionStorage.getItem('entreno_unlocked') === '1'){
-  unlock();
+// Entrenamiento ahora exige sesión iniciada en el sitio (no solo la
+// contraseña compartida) — así el progreso de cada quien queda guardado y
+// visible para el profesor en Informes. Se comprueba ANTES de mostrar el
+// formulario de contraseña, no después.
+//
+// Se llama hasta el final del script (como ya hacía la comprobación de
+// sessionStorage antes de este cambio), ya que unlock()/initApp() dependen
+// de variables (como appInitialized) que solo existen una vez que el resto
+// del script ya se ejecutó.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.style.display = 'none';
+  if(sessionStorage.getItem('entreno_unlocked') === '1'){
+    unlock();
+  } else {
+    gateForm.style.display = 'block';
+    pwInput.focus();
+  }
 }
+
+requireLoginThenGate();
 </script>
 </body>
 </html>

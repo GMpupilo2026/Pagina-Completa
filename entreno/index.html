@@ -77,6 +77,8 @@
     #pw-submit, .hub-card{transition-property: background-color, border-color, color;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
 </head>
 <body>
 
@@ -85,13 +87,16 @@
   <div class="gate-box">
     <div class="gate-mark"></div>
     <h1>Entrenamiento</h1>
-    <p>Ejercicios y lecciones de ajedrez.<br>Introduce la contraseña para entrar.</p>
-    <form id="pw-form">
-      <label for="pw-input" class="sr-only">Contraseña</label>
-      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
-      <div id="pw-error" role="alert"></div>
-      <button type="submit" id="pw-submit">Entrar</button>
-    </form>
+    <p id="gate-checking">Comprobando tu sesión…</p>
+    <div id="gate-form" style="display:none;">
+      <p>Ejercicios y lecciones de ajedrez.<br>Introduce la contraseña para entrar.</p>
+      <form id="pw-form">
+        <label for="pw-input" class="sr-only">Contraseña</label>
+        <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password">
+        <div id="pw-error" role="alert"></div>
+        <button type="submit" id="pw-submit">Entrar</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -138,9 +143,13 @@ async function sha256(text){
 
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const gateForm = document.getElementById('gate-form');
 const pwForm = document.getElementById('pw-form');
 const pwInput = document.getElementById('pw-input');
 const pwError = document.getElementById('pw-error');
+
+const NEXT_PATH = 'entreno/index.html';
 
 function unlock(){
   gate.style.display = 'none';
@@ -160,9 +169,34 @@ pwForm.addEventListener('submit', async (e) => {
   }
 });
 
-if(sessionStorage.getItem('entreno_unlocked') === '1'){
-  unlock();
+// Entrenamiento ahora exige sesión iniciada en el sitio (no solo la
+// contraseña compartida) — así el progreso de cada quien queda guardado y
+// visible para el profesor en Informes. Se comprueba ANTES de mostrar el
+// formulario de contraseña, no después, para no dejar que alguien sin
+// cuenta llegue a entrar y luego se encuentre con esto a medio camino.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.style.display = 'none';
+  if(sessionStorage.getItem('entreno_unlocked') === '1'){
+    unlock();
+  } else {
+    gateForm.style.display = 'block';
+    pwInput.focus();
+  }
 }
+
+requireLoginThenGate();
 </script>
 </body>
 </html>

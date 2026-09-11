@@ -89,9 +89,23 @@
 
     <script src="js/main.js"></script>
     <script>
+        // "next" permite volver a la página de la que venías (por ejemplo, una de
+        // Entrenamiento que exige sesión iniciada) en vez de siempre ir a
+        // clases.html. Solo se acepta una ruta relativa propia del sitio — nunca
+        // una URL completa — para que este parámetro no se pueda usar como
+        // redirección abierta hacia otro sitio.
+        function safeNextPath() {
+            const raw = new URLSearchParams(window.location.search).get("next");
+            if (raw && /^[a-zA-Z0-9_\-./]+\.html$/.test(raw) && !raw.startsWith("//") && !raw.includes("..")) {
+                return raw;
+            }
+            return "clases.html";
+        }
+        const destination = safeNextPath();
+
         (async () => {
             const { data: { session } } = await sb.auth.getSession();
-            if (session) window.location.href = "clases.html";
+            if (session) window.location.href = destination;
         })();
 
         const form = document.getElementById("login-form");
@@ -117,7 +131,7 @@
                 return;
             }
 
-            window.location.href = "clases.html";
+            window.location.href = destination;
         });
     </script>
 </body>
