@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4×4 — Entrenamiento — Ajedrez Integral</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b140f'/%3E%3Crect x='18' y='18' width='28' height='28' fill='none' stroke='%23b8935a' stroke-width='3' transform='rotate(45 32 32)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1b140f;
+    --bg-panel:#251c15;
+    --bg-panel-2:#2f251b;
+    --line:#3c3024;
+    --text:#efe3d1;
+    --text-muted:#a4907a;
+    --brass:#b8935a;
+    --brass-bright:#dcb679;
+    --facil:#75935a;
+    --intermedio:#c9a23e;
+    --avanzado:#9c4148;
+    --especialista:#436a86;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-deep);
+    background-image:
+      radial-gradient(ellipse at top, rgba(184,147,90,0.07), transparent 60%);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
+  ::selection{background:var(--brass); color:#1b140f;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  /* Respeta la preferencia de "menos movimiento" del sistema operativo: se
+     conservan las transiciones de color/fondo (ayudan a leer el estado) pero
+     se apagan los pequeños "empujones" de escala al presionar/seleccionar. */
+  @media (prefers-reduced-motion: reduce){
+    #pw-submit, .tab, .card, .bctrl, .lb-btn{ transition-property: background-color, border-color, color; }
+    .sq .piece{ transition-property: none; }
+  }
+
+  /* Enlace "saltar al contenido": invisible hasta recibir foco por teclado */
+  .skip-link{
+    position:absolute;
+    top:12px; left:12px;
+    background:var(--brass);
+    color:#1b140f;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:0.9rem;
+    padding:10px 16px;
+    z-index:100;
+    transform:translateY(-150%);
+    transition:transform .15s ease-out;
+  }
+  .skip-link:focus{transform:translateY(0);}
+
+  /* Texto solo para lectores de pantalla (accesibilidad) */
+  .sr-only{
+    position:absolute;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  /* ---------- GATE ---------- */
+  #gate{
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .gate-box{
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  }
+  .gate-mark{
+    width:44px;height:44px;margin:0 auto 22px;
+    border:1.5px solid var(--brass);
+    transform:rotate(45deg);
+    position:relative;
+  }
+  .gate-mark::after{
+    content:"";
+    position:absolute; inset:6px;
+    border:1px solid var(--line);
+  }
+  .gate-box h1{
+    font-size:2.1rem;
+    letter-spacing:0.01em;
+    color:var(--text);
+  }
+  .gate-box p{
+    color:var(--text-muted);
+    font-size:0.95rem;
+    margin:10px 0 32px;
+    line-height:1.5;
+  }
+  #pw-form{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  #pw-input{
+    background:transparent;
+    border:none;
+    border-bottom:1.5px solid var(--line);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    font-size:1.05rem;
+    padding:10px 4px;
+    text-align:center;
+    letter-spacing:0.04em;
+    outline:none;
+    transition:border-color .2s;
+  }
+  #pw-input:focus{border-bottom-color:var(--brass);}
+  #pw-submit{
+    background:var(--brass);
+    color:#1b140f;
+    border:none;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:0.95rem;
+    padding:12px 20px;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    transition:background .2s, transform .12s ease-out;
+  }
+  #pw-submit:hover{background:var(--brass-bright);}
+  #pw-submit:active{transform:scale(0.97);}
+  #pw-error{
+    color:var(--avanzado);
+    font-size:0.85rem;
+    min-height:1.2em;
+    margin-top:-4px;
+  }
+
+  /* ---------- APP ---------- */
+  #app{display:none;}
+  header.top{
+    padding:28px 24px 0;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px 20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+  }
+  header.top h1{font-size:1.7rem;}
+  .count{
+    color:var(--text-muted);
+    font-size:0.9rem;
+  }
+  .count strong{color:var(--text); font-weight:600;}
+
+  /* ---------- Modo normal / Modo adaptado (mismo interruptor que la página Tablero,
+     comparte la preferencia en este navegador vía localStorage) ---------- */
+  .mode-bar{
+    max-width:1180px;
+    margin:10px auto 0;
+    padding:0 24px;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+    font-size:0.78rem;
+    color:var(--text-muted);
+  }
+  .mode-switch{
+    display:inline-flex;
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .mode-btn{
+    background:var(--bg-panel);
+    border:none;
+    color:var(--text-muted);
+    font-family:'Work Sans', sans-serif;
+    font-size:0.78rem;
+    padding:5px 10px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#1b140f;}
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    max-width:1180px;
+    margin:0 auto;
+    padding:18px 24px 0;
+    flex-wrap:wrap;
+  }
+  .tab{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted);
+    font-family:'Work Sans', sans-serif;
+    font-size:0.88rem;
+    font-weight:500;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{
+    background:var(--bg-panel-2);
+    color:var(--text);
+  }
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:22px 24px 60px;
+  }
+
+  /* ---------- GRID (categorías todavía sin tablero jugable) ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+    gap:12px;
+  }
+  /* Sin esto, el atributo "hidden" no alcanza a ocultar la grilla: una regla de
+     autor (esta misma) siempre le gana a la regla por defecto del navegador
+     para [hidden], sin importar el orden. Por eso al cambiar de categoría se
+     seguían viendo los ejercicios de la categoría anterior debajo. */
+  .grid[hidden]{display:none;}
+  .card{
+    position:relative;
+    aspect-ratio:1/1;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    cursor:pointer;
+    overflow:hidden;
+    transition:border-color .15s, transform .12s ease-out;
+  }
+  .card:hover{border-color:var(--brass);}
+  .card:active{transform:scale(0.97);}
+  .card img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .card .badge{
+    position:absolute;
+    top:0; left:0;
+    background:rgba(27,20,15,0.82);
+    color:var(--text);
+    font-size:0.72rem;
+    font-weight:600;
+    padding:3px 7px;
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:0.8rem;
+    padding:20px 24px 40px;
+  }
+
+  /* ---------- LIGHTBOX ---------- */
+  #lightbox{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(10,7,5,0.92);
+    z-index:50;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    padding:20px;
+  }
+  #lightbox.open{display:flex;}
+  #lb-img{
+    max-width:min(86vw, 520px);
+    max-height:60vh;
+    border:1px solid var(--line);
+  }
+  #lb-caption{
+    margin-top:16px;
+    font-family:'Fraunces', serif;
+    font-size:1.2rem;
+    color:var(--text);
+  }
+  .lb-nav{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    margin-top:18px;
+  }
+  .lb-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    width:40px; height:40px;
+    font-size:1.1rem;
+    cursor:pointer;
+    transition:border-color .2s, transform .12s ease-out;
+  }
+  .lb-btn:hover{border-color:var(--brass);}
+  .lb-btn:active{transform:scale(0.92);}
+  #lb-close{
+    position:absolute;
+    top:20px; right:24px;
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    font-size:1.6rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  #lb-close:hover{color:var(--text);}
+
+  /* ---------- SOLO CHESS: panel de un solo ejercicio ---------- */
+  #solo-panel{max-width:520px; margin:0 auto;}
+  .solo-progress{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    color:var(--text-muted);
+    font-size:0.88rem;
+    margin-bottom:6px;
+  }
+  .solo-progress strong{color:var(--text); font-family:'Fraunces',serif; font-size:1.3rem; font-weight:600;}
+  .progress-bar{
+    height:4px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    margin-bottom:20px;
+    overflow:hidden;
+  }
+  .progress-bar > div{
+    height:100%;
+    background:var(--facil);
+    transition:width .3s;
+  }
+
+  /* ---------- Panel de accesibilidad (solo visible en Modo Adaptado): jugar por
+     comandos de texto, dictado de la posición y atajos de teclado extra, igual que
+     en la página Tablero ---------- */
+  .a11y-panel{
+    max-width:520px;
+    margin:0 auto 20px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    padding:16px;
+  }
+  .a11y-panel-title{font-size:1rem; margin-bottom:10px;}
+  .cmd-form{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:8px;}
+  .cmd-field{flex:1; min-width:180px;}
+  .cmd-label{display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:4px;}
+  .cmd-input{
+    width:100%;
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    font-size:0.95rem;
+    padding:9px 10px;
+  }
+  .cmd-input:focus{border-color:var(--brass);}
+  .cmd-help{font-size:0.76rem; color:var(--text-muted); line-height:1.5; margin:0 0 8px;}
+  .cmd-status{font-size:0.85rem; color:var(--brass-bright); min-height:1.2em; margin-bottom:10px;}
+  .position-readout{font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px;}
+  .position-readout p{margin:2px 0;}
+  .shortcuts-help{font-size:0.74rem; color:var(--text-muted); line-height:1.6; margin:10px 0 0;}
+
+  .board-pos-wrap{position:relative;}
+  .board4{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    grid-template-rows:repeat(4,1fr);
+    width:100%;
+    aspect-ratio:1/1;
+    border:2px solid var(--brass);
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .sq{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    font-size:min(14vw,64px);
+    cursor:pointer;
+    user-select:none;
+    color:var(--brass-bright);
+    transition:background .12s;
+    border:none;
+    padding:0;
+  }
+  .sq.light{background:#c9b190;}
+  .sq.dark{background:#5a4531;}
+  .sq .piece{
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    pointer-events:none;
+    transition:transform .12s ease-out;
+  }
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.selected .piece{transform:scale(1.12);}
+  .sq.target-capture::after{
+    content:"";
+    position:absolute; inset:8%;
+    border:4px solid rgba(220,182,121,0.9);
+    border-radius:50%;
+  }
+
+  .board-status{
+    margin-top:16px;
+    color:var(--text-muted);
+    font-size:0.95rem;
+    min-height:1.3em;
+    text-align:center;
+  }
+  .board-controls{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .bctrl{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Work Sans',sans-serif;
+    font-size:0.9rem;
+    padding:11px 18px;
+    cursor:pointer;
+    transition:border-color .2s, transform .12s ease-out;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+
+  #win-overlay{
+    display:none;
+    position:absolute; inset:0;
+    background:rgba(27,20,15,0.96);
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+  }
+  #win-overlay.open{display:flex;}
+  #win-overlay .win-title{
+    color:var(--facil);
+    font-size:1.6rem;
+    font-weight:700;
+    letter-spacing:0.03em;
+    margin-bottom:6px;
+  }
+  #win-overlay .win-sub{
+    font-family:'Fraunces',serif;
+    font-size:1.2rem;
+    color:var(--text);
+    margin-bottom:22px;
+  }
+
+  #solo-complete{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+  }
+  #solo-complete h2{color:var(--text); font-size:1.4rem; margin-bottom:10px;}
+
+  /* ---------- ERROR DE CARGA (si fallan los datos) ---------- */
+  #load-error{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    max-width:440px;
+    margin:0 auto;
+  }
+  #load-error h2{color:var(--avanzado); font-size:1.3rem; margin-bottom:10px;}
+  #load-error .bctrl{margin-top:18px;}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
+    header.top h1{font-size:1.4rem;}
+  }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Saltar al contenido</a>
+
+<!-- ===== PASSWORD GATE ===== -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-mark"></div>
+    <h1>Entreno</h1>
+    <p>Ejercicios de ajedrez en solitario.<br>Introduce la contraseña para entrar.</p>
+    <form id="pw-form">
+      <label for="pw-input" class="sr-only">Contraseña</label>
+      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
+      <div id="pw-error" role="alert"></div>
+      <button type="submit" id="pw-submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <a href="index.html" style="font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:6px;">← Entrenamiento</a>
+        <h1>4×4</h1>
+      </div>
+      <div class="count"><strong id="visible-count">0</strong> ejercicios</div>
+    </div>
+  </header>
+
+  <div class="mode-bar">
+    <h2 class="sr-only">Modo de interacción</h2>
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs" aria-label="Categorías de ejercicios"></nav>
+
+  <main id="main-content" tabindex="-1">
+    <!-- Estado: fallo al cargar los datos de ejercicios -->
+    <section id="load-error" hidden>
+      <h2>No se pudo cargar</h2>
+      <p>Hubo un problema al cargar los ejercicios. Revisa tu conexión e intenta de nuevo.</p>
+      <button type="button" class="bctrl" id="load-error-retry">Reintentar</button>
+    </section>
+
+    <!-- Panel de un solo ejercicio jugable (Fácil, y luego el resto de categorías) -->
+    <section id="solo-panel" hidden aria-labelledby="solo-heading">
+      <h2 id="solo-heading" class="sr-only">Ejercicio jugable</h2>
+      <div class="solo-progress">
+        <span id="solo-progress-text">Ejercicio 1 de 133</span>
+        <span id="solo-solved-text">0 resueltos</span>
+      </div>
+      <div class="progress-bar"><div id="solo-progress-fill" style="width:0%"></div></div>
+
+      <p id="board-instructions" class="sr-only">
+        Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d
+        y las filas 1 a 4 (por ejemplo, a1). Usa las flechas del teclado para moverte entre casillas.
+        Pulsa Intro o espacio sobre una casilla con pieza para seleccionarla; las casillas donde esa
+        pieza puede capturar se anuncian y se marcan. Vuelve a pulsar Intro o espacio sobre una de esas
+        casillas para mover y capturar. Cada movimiento debe ser una captura; no existe la regla de
+        jaque. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
+        arriba de la página para escribir jugadas y comandos, y para atajos de teclado adicionales
+        pensados para lectores de pantalla.
+      </p>
+
+      <div id="a11y-panel" class="a11y-panel" hidden>
+        <h2 class="a11y-panel-title">Escribir jugada o comando</h2>
+        <form id="cmd-form" class="cmd-form">
+          <div class="cmd-field">
+            <label for="cmd-input" class="cmd-label">Escribe una jugada o comando (útil con lector de pantalla)</label>
+            <input id="cmd-input" type="text" autocomplete="off" placeholder="Ej: a1 b2, a1xb2" class="cmd-input" aria-describedby="cmd-help">
+          </div>
+          <button type="submit" class="bctrl">Jugar</button>
+        </form>
+        <p id="cmd-help" class="cmd-help">Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). Comandos: L o last (última captura), T (posición), b o board seguido de una casilla (ir ahí), p seguido de una letra K/Q/R/B/N/P (dónde está esa pieza), s seguido de una columna o fila (piezas en esa línea), reiniciar, ayuda (lista completa).</p>
+        <div id="cmd-status" role="status" aria-live="assertive" class="cmd-status"></div>
+        <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="position-readout"></div>
+        <button type="button" id="repeat-captures-btn" class="bctrl">🔊 Repetir capturas</button>
+        <div id="repeat-captures-status" role="status" aria-live="polite" class="sr-only"></div>
+        <p class="shortcuts-help">Con una casilla del tablero enfocada: i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas anteriores/siguientes).</p>
+      </div>
+
+      <div class="board-pos-wrap">
+        <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
+        <div id="win-overlay">
+          <div class="win-title">¡MUY BIEN!</div>
+          <div class="win-sub">Nivel completado</div>
+          <div class="board-controls">
+            <button class="bctrl" id="win-retry">Reintentar</button>
+            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+      <div class="board-status" id="board-status" aria-hidden="true">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
+
+      <div class="board-controls">
+        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+        <button class="bctrl" id="board-reset">Reiniciar</button>
+        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+      </div>
+    </section>
+
+    <!-- Estado: toda la categoría resuelta -->
+    <section id="solo-complete" hidden>
+      <h2>¡Completaste todos los ejercicios!</h2>
+      <p id="solo-complete-text"></p>
+    </section>
+
+    <!-- Grilla de imágenes (categorías sin tablero jugable todavía) -->
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer>Ajedrez Integral — archivo de ejercicios de ajedrez en solitario</footer>
+</div>
+
+<!-- ===== LIGHTBOX (para categorías aún no jugables) ===== -->
+<div id="lightbox">
+  <button id="lb-close" aria-label="Cerrar">&times;</button>
+  <img id="lb-img" src="" alt="">
+  <div id="lb-caption"></div>
+  <div class="lb-nav">
+    <button class="lb-btn" id="lb-prev" aria-label="Anterior">&#8249;</button>
+    <button class="lb-btn" id="lb-next" aria-label="Siguiente">&#8250;</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- PASSWORD GATE ----------------
+   Nota: esto es una barrera del lado del cliente, pensada para
+   evitar el acceso casual, no una autenticación segura real.
+   Cualquiera con acceso al código fuente podría eludirla.
+*/
+const PW_HASH = "03ece971d7c332feeb7171ea3f30c16e96fc7e0f2610b334c64b16f99407cab0";
+
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const pwForm = document.getElementById('pw-form');
+const pwInput = document.getElementById('pw-input');
+const pwError = document.getElementById('pw-error');
+
+function unlock(){
+  gate.style.display = 'none';
+  app.style.display = 'block';
+  sessionStorage.setItem('entreno_unlocked','1');
+  initApp();
+}
+
+pwForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const hash = await sha256(pwInput.value.trim());
+  if(hash === PW_HASH){
+    unlock();
+  } else {
+    pwError.textContent = 'Contraseña incorrecta.';
+    pwInput.value = '';
+    pwInput.focus();
+  }
+});
+
+/* ---------------- APP ---------------- */
+let EXERCISES = [];
+let PUZZLES = {facil:[], intermedio:[], avanzado:[], especialista:[]};
+let currentCategory = 'FACIL';
+let currentList = [];
+let currentIndex = 0;
+
+const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA'];
+const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista'};
+const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista'};
+const CATEGORY_KEY = {FACIL:'facil', INTERMEDIO:'intermedio', AVANZADO:'avanzado', ESPECIALISTA:'especialista'};
+
+let appInitialized = false;
+
+async function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  const loadError = document.getElementById('load-error');
+  try{
+    const [res, res2] = await Promise.all([
+      fetch('data/exercises.json'),
+      fetch('data/puzzles.json').catch(() => null)
+    ]);
+    if(!res.ok) throw new Error('exercises.json: ' + res.status);
+    EXERCISES = await res.json();
+    if(res2 && res2.ok){
+      try{ PUZZLES = await res2.json(); }catch(e){}
+    }
+    if(loadError) loadError.hidden = true;
+    buildTabs();
+    showCategory('FACIL');
+  }catch(err){
+    appInitialized = false;
+    if(loadError) loadError.hidden = false;
+    document.getElementById('solo-panel').hidden = true;
+    document.getElementById('solo-complete').hidden = true;
+    document.getElementById('grid').hidden = true;
+  }
+}
+const loadErrorRetryBtn = document.getElementById('load-error-retry');
+if(loadErrorRetryBtn) loadErrorRetryBtn.addEventListener('click', initApp);
+
+/* ---------------- PROGRESO (localStorage) ----------------
+   Un ejercicio #N de una categoría con tablero jugable solo se puede
+   abrir si el #N-1 de esa misma categoría ya fue resuelto (el #1
+   siempre está disponible). El progreso se guarda en localStorage
+   para que persista entre visitas. Además, mientras no se resuelve
+   el ejercicio actual, los siguientes ni siquiera se muestran: solo
+   se ve un ejercicio a la vez, cada vez más grande y sin distraerse
+   con el resto. */
+function getSolvedSet(){
+  try{
+    return JSON.parse(localStorage.getItem('entreno_solved') || '{}');
+  }catch(e){ return {}; }
+}
+function markSolved(puzzleId){
+  const solved = getSolvedSet();
+  solved[puzzleId] = true;
+  localStorage.setItem('entreno_solved', JSON.stringify(solved));
+}
+function isSolved(puzzleId){
+  return !!getSolvedSet()[puzzleId];
+}
+function puzzleForExercise(ex){
+  const list = PUZZLES[CATEGORY_KEY[ex.category]] || [];
+  return list.find(p => p.number === ex.number) || null;
+}
+function isUnlocked(ex, list){
+  const puz = puzzleForExercise(ex);
+  if(!puz) return true; /* sin datos jugables: no aplica bloqueo, se ve como imagen */
+  if(ex.number <= 1) return true;
+  const prevEx = list.find(e => e.number === ex.number - 1);
+  if(!prevEx) return true;
+  const prevPuz = puzzleForExercise(prevEx);
+  if(!prevPuz) return true;
+  return isSolved(prevPuz.id);
+}
+function countSolved(list){
+  let n = 0;
+  list.forEach(ex => {
+    const puz = puzzleForExercise(ex);
+    if(puz && isSolved(puz.id)) n++;
+  });
+  return n;
+}
+/* Índice (en `list`) del primer ejercicio jugable todavía sin resolver.
+   Si ya están todos resueltos, devuelve list.length. */
+function firstUnsolvedIndex(list){
+  for(let i=0;i<list.length;i++){
+    const puz = puzzleForExercise(list[i]);
+    if(puz && !isSolved(puz.id)) return i;
+  }
+  return list.length;
+}
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach(cat => {
+    const count = EXERCISES.filter(e => e.category === cat).length;
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.setAttribute('aria-selected', cat === currentCategory ? 'true' : 'false');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${count}</span>`;
+    btn.addEventListener('click', () => showCategory(cat));
+    tabs.appendChild(btn);
+  });
+}
+
+function showCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll('.tab').forEach((btn,i) => {
+    const active = CATEGORY_ORDER[i] === cat;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
+  document.getElementById('visible-count').textContent = currentList.length;
+
+  const hasPuzzles = currentList.length > 0 && !!puzzleForExercise(currentList[0]);
+  const soloPanel = document.getElementById('solo-panel');
+  const soloComplete = document.getElementById('solo-complete');
+  const grid = document.getElementById('grid');
+
+  if(hasPuzzles){
+    grid.hidden = true;
+    const idx = firstUnsolvedIndex(currentList);
+    if(idx >= currentList.length){
+      soloPanel.hidden = true;
+      soloComplete.hidden = false;
+      document.getElementById('solo-complete-text').textContent =
+        `Resolviste los ${currentList.length} ejercicios de ${CATEGORY_LABEL[cat]}. ¡Muy bien!`;
+    } else {
+      soloComplete.hidden = true;
+      soloPanel.hidden = false;
+      boardCategory = cat;
+      boardExList = currentList;
+      loadPuzzleAt(idx);
+    }
+  } else {
+    soloPanel.hidden = true;
+    soloComplete.hidden = true;
+    grid.hidden = false;
+    renderGrid();
+  }
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  currentList.forEach((ex, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.setAttribute('role','button');
+    card.setAttribute('tabindex','0');
+    card.setAttribute('aria-label', `${ex.categoryLabel}, ejercicio ${ex.number}`);
+    card.innerHTML = `<span class="badge">#${ex.number}</span><img src="${ex.image}" loading="lazy" alt="">`;
+    const open = () => openLightbox(idx);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); }
+    });
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- LIGHTBOX ---------------- */
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lb-img');
+const lbCaption = document.getElementById('lb-caption');
+
+function openLightbox(idx){
+  currentIndex = idx;
+  renderLightbox();
+  lightbox.classList.add('open');
+}
+function renderLightbox(){
+  const ex = currentList[currentIndex];
+  lbImg.src = ex.image;
+  lbImg.alt = `${ex.categoryLabel} ${ex.number}`;
+  lbCaption.textContent = `${ex.categoryLabel} · #${ex.number}`;
+}
+function closeLightbox(){ lightbox.classList.remove('open'); }
+document.getElementById('lb-close').addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.getElementById('lb-prev').addEventListener('click', () => {
+  currentIndex = (currentIndex - 1 + currentList.length) % currentList.length;
+  renderLightbox();
+});
+document.getElementById('lb-next').addEventListener('click', () => {
+  currentIndex = (currentIndex + 1) % currentList.length;
+  renderLightbox();
+});
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') document.getElementById('lb-prev').click();
+  if(e.key === 'ArrowRight') document.getElementById('lb-next').click();
+  if(e.key === 'Escape') closeLightbox();
+});
+
+/* ---------------- SOLO CHESS: motor de juego ----------------
+   Reglas (confirmadas en el video de referencia "Solo Chess"):
+   - Las piezas se mueven como en ajedrez normal.
+   - Todo movimiento DEBE ser una captura (no hay movimientos "libres").
+   - No existe la regla de jaque.
+   - Se gana al quedar con una sola pieza sobre el tablero (la última atacante). */
+const PIECE_GLYPH = {P:'&#9823;', N:'&#9822;', B:'&#9821;', R:'&#9820;', Q:'&#9819;', K:'&#9818;'};
+const PIECE_NAME = {P:'Peón', N:'Caballo', B:'Alfil', R:'Torre', Q:'Dama', K:'Rey'};
+const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
+const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
+const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+
+function boardKey(r,c){ return r + ',' + c; }
+
+function slideTargets(r,c,dirs,board){
+  const out = [];
+  dirs.forEach(([dr,dc]) => {
+    let nr=r+dr, nc=c+dc;
+    while(nr>=0 && nr<4 && nc>=0 && nc<4){
+      if(board[boardKey(nr,nc)]){ out.push([nr,nc]); break; }
+      nr+=dr; nc+=dc;
+    }
+  });
+  return out;
+}
+
+function captureTargets(piece, r, c, board){
+  switch(piece){
+    case 'N':
+      return KNIGHT_DELTAS.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'B': return slideTargets(r,c,DIRS_BISHOP,board);
+    case 'R': return slideTargets(r,c,DIRS_ROOK,board);
+    case 'Q': return slideTargets(r,c,DIRS_QUEEN,board);
+    case 'K':
+      return DIRS_QUEEN.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    case 'P':
+      return DIRS_BISHOP.map(([dr,dc]) => [r+dr,c+dc])
+        .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
+    default: return [];
+  }
+}
+
+/* ---------------- Modo normal / Modo adaptado (lector de pantalla) ----------------
+   Mismo interruptor y misma clave de localStorage que la página Tablero
+   (oscarBlindMode_v1): activarlo una vez vale para todo el sitio. En modo normal el
+   tablero se navega igual (flechas + Intro/espacio) pero el panel de comandos de
+   texto y los atajos de una sola letra quedan ocultos/inactivos, para no chocar con
+   lo que alguien más espera del teclado ni ensuciar la pantalla de quien no los usa. */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+const a11yPanel = document.getElementById('a11y-panel');
+
+function applyBlindModeUI(){
+  if(a11yPanel) a11yPanel.hidden = !blindMode;
+  if(modeNormalBtn){
+    modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
+    modeNormalBtn.classList.toggle('active', !blindMode);
+  }
+  if(modeBlindBtn){
+    modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
+    modeBlindBtn.classList.toggle('active', blindMode);
+  }
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+  if(blindMode) renderPositionReadout();
+}
+if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+if(modeBlindBtn) modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+applyBlindModeUI();
+
+/* ---------------- Nombres de casilla estilo ajedrez (a1-d4) ----------------
+   Igual que en la página Tablero (a-h, 1-8) pero para un tablero de 4x4: columnas
+   a-d de izquierda a derecha, filas 1-4 de abajo hacia arriba (fila visual de
+   arriba = "4"). Se usan en los aria-label, los anuncios y los comandos de texto. */
+const COLS4 = ['a','b','c','d'];
+function squareName(r,c){ return COLS4[c] + (4 - r); }
+function squareToRC(sq){
+  const m = /^([a-dA-D])([1-4])$/.exec((sq || '').trim());
+  if(!m) return null;
+  return [4 - parseInt(m[2],10), COLS4.indexOf(m[1].toLowerCase())];
+}
+
+let boardState = {};       // {"r,c": pieceType}
+let selectedCell = null;   // [r,c] | null
+let focusedCell = [0,0];   // celda con el foco de teclado (roving tabindex)
+let boardCategory = null;  // 'FACIL' etc.
+let boardExList = [];      // lista de ejercicios de la categoría actual
+let boardExIndex = 0;      // índice dentro de boardExList
+let captureLog = [];       // capturas hechas en el intento actual: {fromSq,toSq,movedType,capturedType}
+let captureReviewIndex = null; // índice de "repaso" de capturas (shift+A/shift+D), solo narra
+
+function announce(text){
+  const el = document.getElementById('board-announcer');
+  el.textContent = '';
+  /* pequeño retardo para que los lectores de pantalla noten el cambio
+     incluso si el texto es idéntico al anterior */
+  window.setTimeout(() => { el.textContent = text; }, 30);
+}
+
+function loadPuzzleAt(exIndex){
+  selectedCell = null;
+  focusedCell = [0,0];
+  captureLog = [];
+  captureReviewIndex = null;
+  document.getElementById('win-overlay').classList.remove('open');
+  boardExIndex = exIndex;
+  const ex = boardExList[exIndex];
+  const puz = puzzleForExercise(ex);
+  boardState = {};
+  puz.pieces.forEach(p => { boardState[boardKey(p.row,p.col)] = p.type; });
+
+  const solvedCount = countSolved(boardExList);
+  document.getElementById('solo-progress-text').textContent =
+    `${ex.categoryLabel} — Ejercicio ${ex.number} de ${boardExList.length}`;
+  document.getElementById('solo-solved-text').textContent = `${solvedCount} resueltos`;
+  document.getElementById('solo-progress-fill').style.width = `${Math.round(100*solvedCount/boardExList.length)}%`;
+
+  setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
+  renderBoard();
+  updatePuzzleNavButtons();
+  renderPositionReadout();
+  announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${Object.keys(boardState).length} piezas en el tablero.`);
+}
+
+function setStatus(text){ document.getElementById('board-status').textContent = text; }
+
+function pieceDescription(r,c){
+  const piece = boardState[boardKey(r,c)];
+  return squareName(r,c) + ', ' + (piece ? PIECE_NAME[piece] : 'vacío');
+}
+
+function renderBoard(){
+  const el = document.getElementById('board4');
+  el.innerHTML = '';
+  let legalTargets = [];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    legalTargets = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+  }
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      const sq = document.createElement('button');
+      const light = (r+c) % 2 === 0;
+      sq.type = 'button';
+      sq.className = 'sq ' + (light ? 'light' : 'dark');
+      sq.setAttribute('data-square', squareName(r,c));
+      const piece = boardState[boardKey(r,c)];
+      const isSelected = !!(selectedCell && selectedCell[0]===r && selectedCell[1]===c);
+      const isTarget = legalTargets.some(([tr,tc]) => tr===r && tc===c);
+      if(piece){
+        sq.innerHTML = `<span class="piece" aria-hidden="true">${PIECE_GLYPH[piece]}</span>`;
+      }
+      if(isSelected) sq.classList.add('selected');
+      if(isTarget) sq.classList.add('target-capture');
+
+      let label = pieceDescription(r,c);
+      if(isSelected) label += ', seleccionada';
+      else if(isTarget) label += ', puedes capturar aquí';
+      sq.setAttribute('aria-label', label);
+
+      const isFocusCell = focusedCell[0]===r && focusedCell[1]===c;
+      sq.tabIndex = isFocusCell ? 0 : -1;
+
+      sq.addEventListener('click', () => { focusedCell=[r,c]; onSquareClick(r,c); });
+      sq.addEventListener('focus', () => { focusedCell = [r,c]; });
+      el.appendChild(sq);
+    }
+  }
+}
+
+function focusSquare(r,c){
+  focusedCell = [r,c];
+  const el = document.getElementById('board4');
+  const cell = el.querySelector('[data-square="' + squareName(r,c) + '"]');
+  if(cell){
+    el.querySelectorAll('.sq').forEach(s => s.tabIndex = -1);
+    cell.tabIndex = 0;
+    cell.focus();
+  }
+}
+
+document.getElementById('board4').addEventListener('keydown', (e) => {
+  const [r,c] = focusedCell;
+  let nr=r, nc=c;
+  if(e.key === 'ArrowUp') nr = Math.max(0, r-1);
+  else if(e.key === 'ArrowDown') nr = Math.min(3, r+1);
+  else if(e.key === 'ArrowLeft') nc = Math.max(0, c-1);
+  else if(e.key === 'ArrowRight') nc = Math.min(3, c+1);
+  else if(e.key === 'Home') nc = 0;
+  else if(e.key === 'End') nc = 3;
+  else if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    onSquareClick(r,c);
+    return;
+  } else {
+    if(blindMode) handleBoardShortcutKey(e,r,c);
+    return;
+  }
+  e.preventDefault();
+  if(nr!==r || nc!==c){
+    focusSquare(nr,nc);
+    announce(pieceDescription(nr,nc));
+  }
+});
+
+function performCapture(r,c){
+  const [sr,sc] = selectedCell;
+  const key = boardKey(r,c);
+  const movingPiece = boardState[boardKey(sr,sc)];
+  const capturedPiece = boardState[key];
+  delete boardState[boardKey(sr,sc)];
+  boardState[key] = movingPiece;
+  selectedCell = null;
+  captureLog.push({fromSq: squareName(sr,sc), toSq: squareName(r,c), movedType: movingPiece, capturedType: capturedPiece});
+  captureReviewIndex = null;
+  renderBoard();
+  focusSquare(r,c);
+  const remaining = Object.keys(boardState).length;
+  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareName(r,c)}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
+  renderPositionReadout();
+  checkWin();
+}
+
+function onSquareClick(r,c){
+  const key = boardKey(r,c);
+  const piece = boardState[key];
+  if(selectedCell){
+    const [sr,sc] = selectedCell;
+    if(sr===r && sc===c){
+      selectedCell = null;
+      renderBoard();
+      focusSquare(r,c);
+      announce('Selección cancelada.');
+      return;
+    }
+    const legal = captureTargets(boardState[boardKey(sr,sc)], sr, sc, boardState);
+    if(legal.some(([tr,tc]) => tr===r && tc===c)){
+      performCapture(r,c);
+      return;
+    }
+    if(piece){
+      selectedCell = [r,c];
+      renderBoard();
+      focusSquare(r,c);
+      const targets = captureTargets(piece, r, c, boardState);
+      announce(`${PIECE_NAME[piece]} seleccionado en ${squareName(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+      return;
+    }
+    selectedCell = null;
+    renderBoard();
+    focusSquare(r,c);
+    announce('Esa casilla está vacía y no es una captura válida. Selección cancelada.');
+    return;
+  }
+  if(piece){
+    selectedCell = [r,c];
+    renderBoard();
+    focusSquare(r,c);
+    const targets = captureTargets(piece, r, c, boardState);
+    announce(`${PIECE_NAME[piece]} seleccionado en ${squareName(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
+  }
+}
+
+function checkWin(){
+  const remaining = Object.keys(boardState).length;
+  if(remaining <= 1){
+    const ex = boardExList[boardExIndex];
+    const puz = puzzleForExercise(ex);
+    markSolved(puz.id);
+    setStatus('¡Resuelto!');
+    document.getElementById('win-overlay').classList.add('open');
+    document.getElementById('win-retry').focus();
+    announce('¡Muy bien! Nivel completado.');
+    updatePuzzleNavButtons();
+    return;
+  }
+  const anyMove = Object.keys(boardState).some(k => {
+    const [r,c] = k.split(',').map(Number);
+    return captureTargets(boardState[k], r, c, boardState).length > 0;
+  });
+  if(!anyMove){
+    setStatus('No quedan capturas posibles. Pulsa "Reiniciar" para intentarlo de nuevo.');
+    announce('No quedan capturas posibles. Pulsa Reiniciar para intentarlo de nuevo.');
+  }
+}
+
+function updatePuzzleNavButtons(){
+  const prevBtn = document.getElementById('board-prev-puzzle');
+  const nextBtn = document.getElementById('board-next-puzzle');
+  const winNextBtn = document.getElementById('win-next');
+  prevBtn.disabled = boardExIndex <= 0;
+  const ex = boardExList[boardExIndex];
+  const puz = puzzleForExercise(ex);
+  const solvedNow = puz && isSolved(puz.id);
+  const hasNext = boardExIndex < boardExList.length - 1;
+  nextBtn.disabled = !hasNext || !solvedNow;
+  winNextBtn.disabled = !hasNext;
+}
+
+/* ---------------- Modo Adaptado: comandos de texto, dictado de posición y atajos
+   de teclado extra en el tablero enfocado — igual que en la página Tablero, adaptado
+   a un tablero de 4x4 de un solo "bando" donde toda jugada es una captura. ---------- */
+function cmdAnnounce(text){
+  const el = document.getElementById('cmd-status');
+  if(!el) return;
+  el.textContent = '';
+  window.setTimeout(() => { el.textContent = text; }, 50);
+}
+
+function joinSpanishList(items){
+  if(!items.length) return '';
+  if(items.length === 1) return items[0];
+  return items.slice(0,-1).join(', ') + ' y ' + items[items.length-1];
+}
+
+const PIECE_NAME_PLURAL = {P:'Peones', N:'Caballos', B:'Alfiles', R:'Torres', Q:'Damas', K:'Reyes'};
+const POSITION_ORDER = ['K','Q','R','B','N','P'];
+
+function piecesByType(){
+  const byType = {K:[], Q:[], R:[], B:[], N:[], P:[]};
+  Object.keys(boardState).forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    byType[boardState[key]].push(squareName(r,c));
+  });
+  Object.keys(byType).forEach(t => byType[t].sort());
+  return byType;
+}
+
+// ---------- Comando "T" (dice la posición): dónde está cada pieza que queda ----------
+function renderPositionReadout(){
+  const el = document.getElementById('position-readout');
+  if(!el) return;
+  const byType = piecesByType();
+  const remaining = Object.keys(boardState).length;
+  let html = `<p>${remaining} pieza${remaining===1?'':'s'} en el tablero.</p>`;
+  const lines = [];
+  POSITION_ORDER.forEach(t => {
+    if(byType[t].length) lines.push(`${byType[t].length===1 ? PIECE_NAME[t] : PIECE_NAME_PLURAL[t]}: ${joinSpanishList(byType[t])}`);
+  });
+  html += lines.length ? lines.map(l => `<p>${l}</p>`).join('') : '<p>Sin piezas.</p>';
+  // Se vacía primero y se repuebla con un pequeño retraso, igual que cmdAnnounce, para
+  // que repetir el comando "T" vuelva a anunciarse aunque la posición no haya cambiado.
+  el.innerHTML = '';
+  window.setTimeout(() => { el.innerHTML = html; }, 50);
+}
+function announcePosition(){ renderPositionReadout(); }
+
+// ---------- Comando "p <letra>": dónde están las piezas de un tipo ----------
+function announcePieceType(letter){
+  const type = letter.toUpperCase();
+  if(!PIECE_NAME[type]){
+    cmdAnnounce(`No entendí "${letter}" como tipo de pieza. Usa K, Q, R, B, N o P.`);
+    return;
+  }
+  const squares = piecesByType()[type];
+  if(!squares.length){
+    cmdAnnounce(`No quedan ${PIECE_NAME_PLURAL[type].toLowerCase()} en el tablero.`);
+    return;
+  }
+  const label = squares.length === 1 ? PIECE_NAME[type] : PIECE_NAME_PLURAL[type];
+  cmdAnnounce(`${label}: ${joinSpanishList(squares)}.`);
+}
+
+// ---------- Comando "s <columna|fila>": piezas de una fila o columna ----------
+function announceLine(token){
+  const t = token.toLowerCase();
+  const cells = [];
+  let label;
+  if(/^[a-d]$/.test(t)){
+    label = 'Columna ' + t;
+    const c = COLS4.indexOf(t);
+    for(let r=0;r<4;r++) cells.push([r,c]);
+  } else if(/^[1-4]$/.test(t)){
+    label = 'Fila ' + t;
+    const r = 4 - parseInt(t,10);
+    for(let c=0;c<4;c++) cells.push([r,c]);
+  } else {
+    cmdAnnounce(`No entendí "${token}". Usa una letra de columna (a-d) o un número de fila (1-4).`);
+    return;
+  }
+  const found = cells.filter(([r,c]) => boardState[boardKey(r,c)])
+    .map(([r,c]) => `${PIECE_NAME[boardState[boardKey(r,c)]]} en ${squareName(r,c)}`);
+  cmdAnnounce(found.length ? `${label}: ${found.join(', ')}.` : `${label}: sin piezas.`);
+}
+
+// ---------- Atajos del tablero enfocado: "o", "c"/"l", "m", "x"… ----------
+function describeCellContents(r,c){
+  return squareName(r,c) + ': ' + (boardState[boardKey(r,c)] ? PIECE_NAME[boardState[boardKey(r,c)]] : 'vacía');
+}
+function announceCurrentSquare(r,c){
+  cmdAnnounce('Casilla ' + describeCellContents(r,c) + '.');
+}
+
+function describeCapture(entry, idx){
+  return `Captura ${idx+1}: ${PIECE_NAME[entry.movedType]} de ${entry.fromSq} a ${entry.toSq}, captura ${PIECE_NAME[entry.capturedType]}.`;
+}
+function announceLastCapture(){
+  if(!captureLog.length){ cmdAnnounce('Todavía no hiciste ninguna captura en este ejercicio.'); return; }
+  cmdAnnounce(describeCapture(captureLog[captureLog.length-1], captureLog.length-1));
+}
+
+function cellOffset(r,c,dc,dr){
+  const nr = r+dr, nc = c+dc;
+  if(nr<0 || nr>3 || nc<0 || nc>3) return null;
+  return [nr,nc];
+}
+const RAY_DIRS = [
+  [0,-1,'arriba'], [0,1,'abajo'], [-1,0,'izquierda'], [1,0,'derecha'],
+  [-1,-1,'arriba-izquierda'], [1,-1,'arriba-derecha'], [-1,1,'abajo-izquierda'], [1,1,'abajo-derecha'],
+];
+function announceSurroundings(r,c,mode){
+  if(mode === 'rays'){
+    const parts = [];
+    RAY_DIRS.forEach(([dc,dr,name]) => {
+      let cell = cellOffset(r,c,dc,dr);
+      let found = null;
+      while(cell){
+        if(boardState[boardKey(cell[0],cell[1])]){ found = cell; break; }
+        cell = cellOffset(cell[0],cell[1],dc,dr);
+      }
+      if(found) parts.push(`${name}: ${PIECE_NAME[boardState[boardKey(found[0],found[1])]]} en ${squareName(found[0],found[1])}`);
+    });
+    cmdAnnounce(parts.length ? `Piezas más cercanas desde ${squareName(r,c)} — ${parts.join('; ')}.` : `No hay piezas en ninguna dirección desde ${squareName(r,c)}.`);
+    return;
+  }
+  const dirs = mode === 'ring' ? RAY_DIRS : RAY_DIRS.slice(0,4);
+  const parts = [];
+  dirs.forEach(([dc,dr]) => {
+    const cell = cellOffset(r,c,dc,dr);
+    if(cell) parts.push(describeCellContents(cell[0],cell[1]));
+  });
+  cmdAnnounce(parts.length ? `Alrededor de ${squareName(r,c)} — ${parts.join('; ')}.` : `${squareName(r,c)} no tiene casillas vecinas en el tablero.`);
+}
+
+// "k q r b n p": mueve el foco a la siguiente pieza de ese tipo; mayúscula invierte el orden.
+function findNextPieceSquare(type, fromRC, forward){
+  const squares = [];
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++) squares.push([r,c]);
+  const idx = squares.findIndex(([r,c]) => r===fromRC[0] && c===fromRC[1]);
+  const n = squares.length;
+  if(idx === -1) return null;
+  for(let step=1; step<=n; step++){
+    const i = forward ? (idx+step)%n : (idx-step+n)%n;
+    const [r,c] = squares[i];
+    if(boardState[boardKey(r,c)] === type) return [r,c];
+  }
+  return null;
+}
+
+// "shift+a"/"shift+d": repasa las capturas hechas hacia atrás/adelante narrándolas,
+// sin cambiar el tablero (solo lectura, para repasar el intento).
+function stepCaptureReview(direction){
+  if(!captureLog.length){ cmdAnnounce('Todavía no hiciste ninguna captura en este ejercicio.'); return; }
+  if(captureReviewIndex === null) captureReviewIndex = captureLog.length - 1;
+  captureReviewIndex = Math.max(0, Math.min(captureLog.length-1, captureReviewIndex + direction));
+  cmdAnnounce(describeCapture(captureLog[captureReviewIndex], captureReviewIndex) + ` (captura ${captureReviewIndex+1} de ${captureLog.length})`);
+}
+
+// Despacha los atajos de una sola tecla del tablero enfocado (solo en Modo Adaptado).
+// Ignora combinaciones con Ctrl/Meta para no chocar con atajos del navegador.
+function handleBoardShortcutKey(e, r, c){
+  if(e.ctrlKey || e.metaKey) return;
+  const k = e.key;
+  if(k.length !== 1) return;
+  const lower = k.toLowerCase();
+
+  if(!e.shiftKey && !e.altKey && lower === 'i'){
+    e.preventDefault();
+    const inp = document.getElementById('cmd-input');
+    if(inp) inp.focus();
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && lower === 'o'){
+    e.preventDefault();
+    announceCurrentSquare(r,c);
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && (lower === 'c' || lower === 'l')){
+    e.preventDefault();
+    announceLastCapture();
+    return;
+  }
+  if(!e.altKey && lower === 'm'){
+    e.preventDefault();
+    const piece = boardState[boardKey(r,c)];
+    if(!piece){ cmdAnnounce(`La casilla ${squareName(r,c)} está vacía.`); return; }
+    const targets = captureTargets(piece, r, c, boardState);
+    if(!targets.length){ cmdAnnounce(`${PIECE_NAME[piece]} en ${squareName(r,c)} no tiene capturas posibles ahora mismo.`); return; }
+    cmdAnnounce(`${PIECE_NAME[piece]} en ${squareName(r,c)} puede capturar en: ${joinSpanishList(targets.map(([tr,tc]) => squareName(tr,tc)))}.`);
+    return;
+  }
+  if(!e.altKey && lower === 'x'){
+    e.preventDefault();
+    announceSurroundings(r,c, k === 'X' ? 'ring' : 'adjacent');
+    return;
+  }
+  if(e.altKey && !e.shiftKey && lower === 'x'){
+    e.preventDefault();
+    announceSurroundings(r,c,'rays');
+    return;
+  }
+  if(e.shiftKey && !e.altKey && (lower === 'a' || lower === 'd')){
+    e.preventDefault();
+    stepCaptureReview(lower === 'a' ? -1 : 1);
+    return;
+  }
+  if(!e.altKey && 'kqrbnp'.indexOf(lower) !== -1){
+    e.preventDefault();
+    const forward = k === lower; // minúscula = adelante, mayúscula = invierte el orden
+    const next = findNextPieceSquare(lower.toUpperCase(), [r,c], forward);
+    if(next){
+      focusSquare(next[0], next[1]);
+      cmdAnnounce(PIECE_NAME[boardState[boardKey(next[0],next[1])]] + ' en ' + squareName(next[0],next[1]) + '.');
+    } else {
+      cmdAnnounce(`No hay ${PIECE_NAME_PLURAL[lower.toUpperCase()].toLowerCase()} en el tablero.`);
+    }
+    return;
+  }
+  if(!e.shiftKey && !e.altKey && e.code && e.code.indexOf('Digit') === 0){
+    const digit = e.code.slice(5);
+    if(digit >= '1' && digit <= '4'){
+      e.preventDefault();
+      const nr = 4 - Number(digit);
+      if(nr !== r){ focusSquare(nr,c); announceCurrentSquare(nr,c); }
+    }
+    return;
+  }
+  if(e.shiftKey && !e.altKey && e.code && e.code.indexOf('Digit') === 0){
+    const digit = e.code.slice(5);
+    if(digit >= '1' && digit <= '4'){
+      e.preventDefault();
+      const nc = Number(digit) - 1;
+      if(nc !== c){ focusSquare(r,nc); announceCurrentSquare(r,nc); }
+    }
+    return;
+  }
+}
+
+// ---------- Comando "ayuda" (recuadro de jugada): recuerda los comandos disponibles ----------
+function announceHelp(){
+  cmdAnnounce(
+    'Comandos: L o last (última captura), T (posición completa), b o board seguido de una casilla ' +
+    '(ir ahí, por ejemplo a1), p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), ' +
+    's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ' +
+    'ejercicio), ayuda (esta lista). Con el tablero enfocado: i (ir al recuadro de jugada), o (casilla ' +
+    'actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la ' +
+    'siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 ' +
+    '(ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas ' +
+    'anteriores/siguientes).'
+  );
+}
+
+function handleCmdFormSubmit(e){
+  e.preventDefault();
+  const input = document.getElementById('cmd-input');
+  if(!input) return;
+  const raw = input.value;
+  const trimmed = raw.trim();
+  if(!trimmed) return;
+  const upper = trimmed.toUpperCase();
+
+  if(upper === 'L' || upper === 'LAST'){ input.value=''; announceLastCapture(); return; }
+  if(upper === 'T'){ input.value=''; announcePosition(); return; }
+  if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
+  if(upper === 'REINICIAR' || upper === 'RESET'){
+    input.value = '';
+    loadPuzzleAt(boardExIndex);
+    cmdAnnounce('Ejercicio reiniciado.');
+    return;
+  }
+
+  const tokens = trimmed.split(/\s+/);
+  const cmd0 = tokens[0].toUpperCase();
+  if(cmd0 === 'B' || cmd0 === 'BOARD'){
+    input.value = '';
+    const targetRaw = tokens[1];
+    const rc = targetRaw ? squareToRC(targetRaw) : null;
+    if(!rc){ cmdAnnounce(`Casilla inválida: "${targetRaw || ''}".`); return; }
+    focusSquare(rc[0], rc[1]);
+    announceCurrentSquare(rc[0], rc[1]);
+    return;
+  }
+  if(cmd0 === 'P' && tokens.length >= 2 && /^[a-zA-Z]$/.test(tokens[1])){
+    input.value = '';
+    announcePieceType(tokens[1]);
+    return;
+  }
+  if(cmd0 === 'S' && tokens.length >= 2 && /^[a-d1-4]$/i.test(tokens[1])){
+    input.value = '';
+    announceLine(tokens[1]);
+    return;
+  }
+
+  // Jugada escrita: casilla de origen y de destino ("a1 b2", "a1xb2", "a1-b2").
+  const moveMatch = /^([a-dA-D][1-4])\s*[x\-,]?\s*([a-dA-D][1-4])$/.exec(trimmed);
+  if(moveMatch){
+    input.value = '';
+    const fromRC = squareToRC(moveMatch[1]);
+    const toRC = squareToRC(moveMatch[2]);
+    const piece = boardState[boardKey(fromRC[0],fromRC[1])];
+    if(!piece){ cmdAnnounce(`La casilla ${moveMatch[1].toLowerCase()} está vacía.`); return; }
+    const legal = captureTargets(piece, fromRC[0], fromRC[1], boardState);
+    if(!legal.some(([tr,tc]) => tr===toRC[0] && tc===toRC[1])){
+      cmdAnnounce(`${PIECE_NAME[piece]} en ${moveMatch[1].toLowerCase()} no puede capturar en ${moveMatch[2].toLowerCase()}.`);
+      return;
+    }
+    selectedCell = fromRC;
+    focusedCell = fromRC;
+    performCapture(toRC[0], toRC[1]);
+    return;
+  }
+
+  cmdAnnounce(`No se entendió "${trimmed}". Escribe "ayuda" para ver los comandos.`);
+}
+
+function speakableCaptureList(){
+  if(!captureLog.length) return 'Todavía no hiciste ninguna captura en este ejercicio.';
+  return captureLog.map((entry,i) => describeCapture(entry,i)).join(' ');
+}
+function announceCaptureHistory(){
+  const el = document.getElementById('repeat-captures-status');
+  if(!el) return;
+  const text = speakableCaptureList();
+  el.textContent = '';
+  window.setTimeout(() => { el.textContent = text; }, 50);
+}
+
+const cmdFormEl = document.getElementById('cmd-form');
+if(cmdFormEl) cmdFormEl.addEventListener('submit', handleCmdFormSubmit);
+const repeatCapturesBtn = document.getElementById('repeat-captures-btn');
+if(repeatCapturesBtn) repeatCapturesBtn.addEventListener('click', announceCaptureHistory);
+
+document.getElementById('board-reset').addEventListener('click', () => {
+  loadPuzzleAt(boardExIndex);
+  announce('Ejercicio reiniciado.');
+});
+document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
+document.getElementById('board-prev-puzzle').addEventListener('click', () => {
+  if(boardExIndex > 0) loadPuzzleAt(boardExIndex - 1);
+});
+document.getElementById('board-next-puzzle').addEventListener('click', () => {
+  if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
+});
+document.getElementById('win-next').addEventListener('click', () => {
+  /* Al resolver, el ejercicio siguiente recién queda desbloqueado: se
+     vuelve a montar la categoría para que, si era el último, aparezca
+     la pantalla de "completado". */
+  showCategory(currentCategory);
+});
+
+/* Se comprueba el desbloqueo previo (sessionStorage) hasta el final del script,
+   ya que unlock()/initApp() dependen de variables (como appInitialized) que
+   solo existen una vez que el resto del script ya se ejecutó. */
+if(sessionStorage.getItem('entreno_unlocked') === '1'){
+  unlock();
+}
+</script>
+</body>
+</html>
