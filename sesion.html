@@ -183,55 +183,72 @@
                     </div>
                 </div>
 
-                <aside class="space-y-6">
-                    <div id="teacher-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
-                        <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real.</p>
-                        <div class="grid grid-cols-2 gap-2 mb-3">
-                            <button id="reset-board-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Reiniciar tablero</button>
-                            <button id="clear-marks-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Borrar flechas</button>
+                <aside class="space-y-4">
+                    <!-- Acciones rápidas del profesor: fila compacta, siempre visible sin
+                         importar qué pestaña esté abierta abajo (evita tener que cambiar de
+                         pestaña para lo que se usa todo el tiempo durante la clase). -->
+                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
+                        <div class="flex flex-wrap gap-1.5">
+                            <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
+                            <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
+                            <button id="save-game-btn" type="button" title="Guardar la partida actual en Partidas guardadas" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar</button>
+                            <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
+                            <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
                         </div>
-                        <button id="save-game-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-3">💾 Guardar partida actual</button>
-
-                        <button id="toggle-hide-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors mb-3">🙈 Ocultar piezas a los alumnos</button>
-
-                        <div class="border border-brand-200 dark:border-brand-700 rounded-lg p-3 mb-6">
-                            <button id="toggle-free-mode-btn" class="w-full bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">✏️ Editar tablero</button>
-                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Mueve piezas ignorando las reglas del ajedrez, o carga una posición por FEN o PGN, para armar la posición que quieras. No se ve en vivo mientras editas: al aplicarla, se transmite a todos.</p>
-                            <div id="free-mode-actions" class="hidden mt-2">
-                                <div class="mb-2">
-                                    <label for="free-mode-fen-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Cargar posición por FEN</label>
-                                    <div class="flex gap-2">
-                                        <input id="free-mode-fen-input" type="text" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                        <button id="free-mode-fen-load-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <label for="free-mode-pgn-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">O pega una partida en PGN (se carga la posición final)</label>
-                                    <div class="flex gap-2">
-                                        <textarea id="free-mode-pgn-input" rows="2" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 ..." class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></textarea>
-                                        <button id="free-mode-pgn-load-btn" type="button" class="shrink-0 self-start bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
-                                    </div>
-                                </div>
-                                <p id="free-mode-load-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
-                                <div class="flex gap-2">
-                                    <button id="free-mode-apply-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Aplicar posición</button>
-                                    <button id="free-mode-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cancelar</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
-                        <form id="create-student-form" class="space-y-3">
-                            <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                            <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
-                            <p id="create-student-msg" class="text-xs"></p>
-                        </form>
                     </div>
 
-                    <!-- Preguntar a la clase (solo profesor) -->
-                    <div id="question-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                    <!-- Pestañas del profesor: un solo panel visible a la vez, sin scroll para
+                         cambiar de herramienta. Se recuerda la última pestaña abierta. -->
+                    <div id="teacher-tabs-wrap" class="hidden">
+                        <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
+                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">🎛️ Controles</button>
+                            <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
+                            <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
+                            <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos</button>
+                            <button type="button" id="teacher-tab-motor" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="motor" role="tab" aria-selected="false" aria-controls="engine-panel">♞ Motor</button>
+                        </div>
+
+                        <div id="teacher-panel" data-tab-panel="controles" role="tabpanel" aria-labelledby="teacher-tab-controles" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
+                            <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar, editar) están arriba de las pestañas.</p>
+
+                            <div class="border border-brand-200 dark:border-brand-700 rounded-lg p-3 mb-6">
+                                <h3 class="font-semibold text-brand-700 dark:text-brand-200 text-sm mb-1">✏️ Editar tablero</h3>
+                                <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">Mueve piezas ignorando las reglas del ajedrez, o carga una posición por FEN o PGN, para armar la posición que quieras. No se ve en vivo mientras editas: al aplicarla, se transmite a todos. Actívalo con el botón "✏️ Editar" de arriba.</p>
+                                <div id="free-mode-actions" class="hidden mt-2">
+                                    <div class="mb-2">
+                                        <label for="free-mode-fen-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Cargar posición por FEN</label>
+                                        <div class="flex gap-2">
+                                            <input id="free-mode-fen-input" type="text" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <button id="free-mode-fen-load-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="free-mode-pgn-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">O pega una partida en PGN (se carga la posición final)</label>
+                                        <div class="flex gap-2">
+                                            <textarea id="free-mode-pgn-input" rows="2" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 ..." class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></textarea>
+                                            <button id="free-mode-pgn-load-btn" type="button" class="shrink-0 self-start bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
+                                        </div>
+                                    </div>
+                                    <p id="free-mode-load-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                                    <div class="flex gap-2">
+                                        <button id="free-mode-apply-btn" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Aplicar posición</button>
+                                        <button id="free-mode-cancel-btn" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cancelar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
+                            <form id="create-student-form" class="space-y-3">
+                                <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
+                                <p id="create-student-msg" class="text-xs"></p>
+                            </form>
+                        </div>
+
+                        <!-- Preguntar a la clase (solo profesor) -->
+                        <div id="question-panel" data-tab-panel="preguntar" role="tabpanel" aria-labelledby="teacher-tab-preguntar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Preguntar a la clase</h2>
                         <div class="flex items-center gap-2 mb-3">
                             <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-400">Jugadas a responder:</label>
@@ -250,8 +267,8 @@
                         </div>
                     </div>
 
-                    <!-- Practicar contra el motor (solo profesor) -->
-                    <div id="practice-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                        <!-- Practicar contra el motor (solo profesor) -->
+                        <div id="practice-panel" data-tab-panel="practicar" role="tabpanel" aria-labelledby="teacher-tab-practicar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Practicar contra el motor</h2>
                         <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Cada alumno juega la posición actual del tablero contra Stockfish, con el color que le toque mover en ella.</p>
 
@@ -272,37 +289,38 @@
                         </div>
                     </div>
 
-                    <!-- Alumnos conectados (solo profesor) -->
-                    <div id="students-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
-                        <ul id="students-list" class="space-y-2 text-sm">
-                            <li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>
-                        </ul>
-                    </div>
+                        <!-- Alumnos conectados (solo profesor) -->
+                        <div id="students-panel" data-tab-panel="alumnos" role="tabpanel" aria-labelledby="teacher-tab-alumnos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
+                            <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                            <ul id="students-list" class="space-y-2 text-sm">
+                                <li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>
+                            </ul>
+                        </div>
 
-                    <!-- Motor de análisis (solo profesor) -->
-                    <div id="engine-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <div class="flex items-center justify-between mb-2 gap-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white">Motor de análisis</h2>
-                            <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0">Activar</button>
-                        </div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <label for="engine-multipv" class="text-xs text-brand-500 dark:text-brand-400">Variantes:</label>
-                            <select id="engine-multipv" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <p id="engine-status" class="text-xs text-brand-400 dark:text-brand-500">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
-                        <div id="engine-output" class="hidden mt-3">
-                            <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-3" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
-                                <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
+                        <!-- Motor de análisis (solo profesor) -->
+                        <div id="engine-panel" data-tab-panel="motor" role="tabpanel" aria-labelledby="teacher-tab-motor" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <div class="flex items-center justify-between mb-2 gap-2">
+                                <h2 class="font-serif font-bold text-brand-800 dark:text-white">Motor de análisis</h2>
+                                <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0">Activar</button>
                             </div>
-                            <ol id="engine-lines" class="space-y-1.5 text-xs text-brand-600 dark:text-brand-300"></ol>
+                            <div class="flex items-center gap-2 mb-2">
+                                <label for="engine-multipv" class="text-xs text-brand-500 dark:text-brand-400">Variantes:</label>
+                                <select id="engine-multipv" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3" selected>3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </div>
+                            <p id="engine-status" class="text-xs text-brand-400 dark:text-brand-500">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
+                            <div id="engine-output" class="hidden mt-3">
+                                <div class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-3" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
+                                    <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
+                                </div>
+                                <ol id="engine-lines" class="space-y-1.5 text-xs text-brand-600 dark:text-brand-300"></ol>
+                            </div>
                         </div>
                     </div>
 
@@ -376,6 +394,31 @@
             const btn = document.getElementById("undo-move-btn");
             btn.classList.toggle("hidden", !canMoveNow() || board.isViewingHistory());
         }
+
+        // ---------- Pestañas del profesor (Controles/Preguntar/Practicar/Alumnos/Motor) ----------
+        // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
+        // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
+        const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
+        const TEACHER_TABS = ["controles", "preguntar", "practicar", "alumnos", "motor"];
+        const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
+        const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
+
+        function activateTeacherTab(tab) {
+            if (!TEACHER_TABS.includes(tab)) tab = TEACHER_TABS[0];
+            document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
+                const active = btn.dataset.tab === tab;
+                btn.className = active ? TEACHER_TAB_ACTIVE : TEACHER_TAB_INACTIVE;
+                btn.setAttribute("aria-selected", active ? "true" : "false");
+            });
+            document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+                panel.classList.toggle("hidden", panel.dataset.tabPanel !== tab);
+            });
+            try { localStorage.setItem(TEACHER_TAB_KEY, tab); } catch (e) {}
+        }
+
+        document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
+            btn.addEventListener("click", () => activateTeacherTab(btn.dataset.tab));
+        });
 
         // ---------- Historial, variantes y sub-variantes ----------
         // navegar hacia atrás, explorar líneas alternativas y encadenarlas en sub-variantes,
@@ -746,7 +789,8 @@
             if (!isTeacher) return;
             const btn = document.getElementById("toggle-hide-btn");
             const hidden = !!lastPiecesHidden;
-            btn.textContent = hidden ? "👁️ Mostrar piezas a los alumnos" : "🙈 Ocultar piezas a los alumnos";
+            btn.textContent = hidden ? "👁️ Mostrar" : "🙈 Ocultar";
+            btn.title = hidden ? "Mostrar piezas a los alumnos" : "Ocultar piezas a los alumnos";
         }
         let lastPiecesHidden = false;
 
@@ -761,11 +805,12 @@
         document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
             const active = !board.freeMode;
             board.setFreeMode(active);
+            activateTeacherTab("controles"); // ahí viven los campos de FEN/PGN
             document.getElementById("free-mode-actions").classList.toggle("hidden", !active);
             document.getElementById("free-mode-load-msg").textContent = "";
-            document.getElementById("toggle-free-mode-btn").textContent = active
-                ? "🔒 Editando posición… (moviendo piezas libremente)"
-                : "✏️ Editar tablero";
+            const freeModeBtn = document.getElementById("toggle-free-mode-btn");
+            freeModeBtn.textContent = active ? "🔒 Editando…" : "✏️ Editar";
+            freeModeBtn.title = active ? "Editando posición…" : "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
             setStatus(active
                 ? "Editando el tablero: mueve las piezas, o carga una posición por FEN o PGN. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
                 : "");
@@ -792,7 +837,8 @@
             board.setFreeMode(false);
             document.getElementById("free-mode-actions").classList.add("hidden");
             document.getElementById("free-mode-load-msg").textContent = "";
-            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar tablero";
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
+            document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
             await sb.from("game_state").update({
                 fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
                 arrows: [], circles: [], active_player_id: null,
@@ -806,7 +852,8 @@
             board.setFreeMode(false);
             document.getElementById("free-mode-actions").classList.add("hidden");
             document.getElementById("free-mode-load-msg").textContent = "";
-            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar tablero";
+            document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
+            document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
             await loadGameState();
             setStatus("Edición descartada: se restauró la posición real de la clase.");
         });
@@ -1678,12 +1725,14 @@
             badge.textContent = isTeacher ? "Profesor" : "Alumno";
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
-            document.getElementById(isTeacher ? "teacher-panel" : "student-panel").classList.remove("hidden");
             if (isTeacher) {
-                document.getElementById("students-panel").classList.remove("hidden");
-                document.getElementById("engine-panel").classList.remove("hidden");
-                document.getElementById("question-panel").classList.remove("hidden");
-                document.getElementById("practice-panel").classList.remove("hidden");
+                document.getElementById("teacher-toolbar").classList.remove("hidden");
+                document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
+                let savedTab = TEACHER_TABS[0];
+                try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
+                activateTeacherTab(savedTab);
+            } else {
+                document.getElementById("student-panel").classList.remove("hidden");
             }
             setStatus(isTeacher
                 ? "Mueve el tablero: cada jugada se transmite en vivo a todos los alumnos conectados."
