@@ -13,6 +13,9 @@ tablero) sobre cada ejercicio, y se combina:
     reiniciar porque no queda ninguna captura posible y sobra más de
     una pieza).
 
+  - y, desde sep 2026, la probabilidad de acertar jugando al azar (una
+    posición con miles de soluciones es fácil aunque su árbol sea enorme).
+
 Los ejercicios de una categoría se reordenan de menor a mayor puntaje.
 Solo se toca el campo "number" de exercises.json y puzzles.json — el
 id, las piezas y la imagen de cada ejercicio no cambian, así que el
@@ -21,10 +24,8 @@ no por number) se mantiene íntegro. El cálculo es determinista, así
 que volver a correr este script sobre una categoría ya reordenada no
 produce ningún cambio (es seguro ejecutarlo varias veces).
 
-Ya se aplicó una vez a "Fácil" (ver PR #45). Este script sirve para
-aplicar lo mismo a Intermedio, Avanzado y Especialista el día que se
-les cargue la posición de piezas en puzzles.json — hoy esas tres
-categorías siguen vacías ahí (solo son imágenes estáticas todavía).
+Se aplica a las cuatro categorías (todas tienen posición de piezas en
+puzzles.json desde sep 2026).
 
 Uso:
     python3 reorder_por_dificultad.py                       # revisa y reordena las que ya tengan datos completos
@@ -129,9 +130,37 @@ def solve_stats(pieces):
     return len(pieces), total_states, dead_ends, max_branch, solved_states
 
 
+def random_success(pieces):
+    """Probabilidad de resolver el ejercicio eligiendo cada captura al azar
+    (sin deshacer). Complementa a solve_stats: un árbol grande con muchas
+    soluciones es fácil para una persona aunque tenga muchas ramas."""
+    from functools import lru_cache
+    start = frozenset(((p['row'], p['col']), p['type']) for p in pieces)
+
+    @lru_cache(maxsize=None)
+    def rec(state):
+        board = dict(state)
+        if len(board) <= 1:
+            return 1.0
+        moves = all_moves(board)
+        if not moves:
+            return 0.0
+        total = 0.0
+        for fr, to in moves:
+            nb = dict(board)
+            nb[to] = nb.pop(fr)
+            total += rec(frozenset(nb.items()))
+        return total / len(moves)
+    return rec(start)
+
+
 def score(pieces):
+    """Dificultad = tamaño/ramificación del árbol (medida original) + qué tan
+    improbable es acertar al azar (4 puntos por cada orden de magnitud)."""
     n, total_states, dead_ends, max_branch, _ = solve_stats(pieces)
-    return n + math.log2(total_states + 1) + 0.5 * max_branch + 3 * (dead_ends / total_states)
+    base = n + math.log2(total_states + 1) + 0.5 * max_branch + 3 * (dead_ends / total_states)
+    p = max(random_success(pieces), 1e-6)
+    return base + 4 * (-math.log10(p))
 
 
 def category_ready(cat_key, exercises, puzzles):
@@ -154,7 +183,7 @@ def reorder_category(cat_key, exercises, puzzles):
         n, total_states, dead_ends, max_branch, solved_states = solve_stats(p['pieces'])
         if solved_states == 0:
             unsolvable.append(p['id'])
-        s = n + math.log2(total_states + 1) + 0.5 * max_branch + 3 * (dead_ends / total_states)
+        s = score(p['pieces'])
         scored.append((s, p['number'], p))
 
     if unsolvable:
@@ -205,7 +234,7 @@ def main():
     args = sys.argv[1:]
     check_only = '--check' in args
     args = [a for a in args if a != '--check']
-    wanted = args or ['intermedio', 'avanzado', 'especialista']
+    wanted = args or ['facil', 'intermedio', 'avanzado', 'especialista']
 
     exercises = json.loads(EX_PATH.read_text(encoding='utf-8'))
     puzzles = json.loads(PZ_PATH.read_text(encoding='utf-8'))
