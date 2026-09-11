@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Táctica — Entreno — Ajedrez Integral</title>
+<meta name="description" content="148 posiciones tácticas organizadas por tema: última línea, enroque corto, enroque largo, columnas y diagonales, y ataque doble.">
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: {
+            colors: {
+                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+            },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+        } }
+    }
+</script>
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  .streak-bar{
+    max-width:900px; margin:0 auto; padding:10px 24px 0; display:flex; align-items:center;
+    justify-content:center; gap:8px; font-size:0.95rem; color:var(--text-muted);
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:14px 24px 0; flex-wrap:wrap; justify-content:center;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px #f0b429; animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+
+  .round-status{margin-top:12px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* ---------- Selector de coronación ---------- */
+  #promo-modal{display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:16px;}
+  #promo-modal .box{background:var(--bg-panel); border-radius:14px; padding:20px; text-align:center;}
+  #promo-modal p{color:var(--text-muted); font-size:0.85rem; margin:0 0 12px;}
+  #promo-modal .opts{display:flex; gap:8px;}
+  .promo-btn{width:52px; height:52px; font-size:1.8rem; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; border-radius:10px;}
+  .promo-btn:hover{border-color:var(--brass);}
+
+  /* ---------- Celebración al terminar una categoría ---------- */
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .tab, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+</style>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">⚔️</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Táctica</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Táctica ⚔️</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-400">
+      <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
+    </div>
+  </div>
+  <p class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">148 posiciones organizadas por tema táctico. Elige una categoría y sigue resolviendo: tu progreso queda guardado.</p>
+
+  <div class="streak-bar" id="streak-bar">
+    <span class="flame" aria-hidden="true">🔥</span>
+    <span>Racha: <span class="streak-count" id="streak-count">0</span></span>
+    <span aria-hidden="true">·</span>
+    <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
+  </div>
+
+  <nav class="tabs" id="tabs" aria-label="Temas tácticos"></nav>
+
+  <main id="main-content">
+    <div id="progress-label" class="progress-label"></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <div id="play-area">
+      <p class="turn-banner" id="turn-banner"></p>
+      <div class="board-wrap" id="board-wrap">
+        <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
+      </div>
+
+      <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+      <div class="round-controls">
+        <button type="button" class="bctrl" id="hint-btn">💡 Pista</button>
+        <button type="button" class="bctrl" id="retry-btn">Reiniciar</button>
+        <button type="button" class="bctrl" id="skip-btn">Saltar →</button>
+      </div>
+    </div>
+
+    <div id="celebration">
+      <span class="big-emoji" aria-hidden="true">🎉</span>
+      <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Tema completo!</h3>
+      <p class="stats" id="celebration-stats"></p>
+      <div class="round-controls">
+        <button type="button" class="bctrl primary" id="celebration-replay-btn">Volver a empezar el tema</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Selector de coronación, por si alguna solución futura exige subpromoción. -->
+<div id="promo-modal">
+  <div class="box">
+    <p>¿A qué pieza coronas?</p>
+    <div class="opts" id="promo-opts"></div>
+  </div>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/entreno-progress.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/tactica.html';
+
+function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  EntrenoProgress.init();
+  loadPuzzlesThenStart();
+}
+
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+
+const CATEGORY_ORDER = ['ultima-linea', 'enroque-corto', 'enroque-largo', 'columnas-diagonales', 'ataque-doble'];
+const CATEGORY_LABEL = {
+  'ultima-linea': '🚪 Última línea',
+  'enroque-corto': '🛡️ Enroque corto',
+  'enroque-largo': '🏰 Enroque largo',
+  'columnas-diagonales': '📐 Columnas y diagonales',
+  'ataque-doble': '🔱 Ataque doble',
+};
+const CATEGORY_COLOR = {
+  'ultima-linea': '#3b6ea5',
+  'enroque-corto': '#9c4148',
+  'enroque-largo': '#6b3fa0',
+  'columnas-diagonales': '#1f7a5c',
+  'ataque-doble': '#b5651d',
+};
+
+let PUZZLES = {};
+CATEGORY_ORDER.forEach((c) => { PUZZLES[c] = []; });
+
+async function loadPuzzlesThenStart(){
+  try {
+    const res = await fetch('data/tactica.json');
+    if(!res.ok) throw new Error('tactica.json: ' + res.status);
+    const all = await res.json();
+    all.forEach((p) => { if(PUZZLES[p.category]) PUZZLES[p.category].push(p); });
+  } catch (e) {
+    document.getElementById('main-content').innerHTML =
+      '<p class="text-center text-brand-400 dark:text-brand-500 py-10">No se pudo cargar la base de táctica. Intenta recargar la página.</p>';
+    console.error(e);
+    return;
+  }
+  initApp();
+}
+
+/* ---------------- Progreso y racha (localStorage) ---------------- */
+function getSolved(){
+  try{ return JSON.parse(localStorage.getItem('entreno_tactica_solved') || '{}'); }catch(e){ return {}; }
+}
+function markSolved(id){
+  const s = getSolved();
+  s[id] = true;
+  localStorage.setItem('entreno_tactica_solved', JSON.stringify(s));
+}
+function isSolved(id){ return !!getSolved()[id]; }
+function solvedCountFor(cat){
+  const s = getSolved();
+  return PUZZLES[cat].filter((p) => s[p.id]).length;
+}
+function firstUnsolvedIndex(cat){
+  const s = getSolved();
+  const idx = PUZZLES[cat].findIndex((p) => !s[p.id]);
+  return idx === -1 ? 0 : idx;
+}
+
+function getStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_tactica_streak') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function getBestStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_tactica_best') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function setStreak(n){
+  localStorage.setItem('entreno_tactica_streak', String(n));
+  const best = Math.max(getBestStreak(), n);
+  localStorage.setItem('entreno_tactica_best', String(best));
+  document.getElementById('streak-count').textContent = n;
+  document.getElementById('streak-best').textContent = best;
+}
+function bumpStreak(){
+  setStreak(getStreak() + 1);
+  const bar = document.getElementById('streak-bar');
+  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
+}
+function resetStreak(){ setStreak(0); }
+
+/* ---------------- Estado del ejercicio actual ---------------- */
+let currentCategory = CATEGORY_ORDER[0];
+let currentIndex = 0;
+let game = null;
+let solutionStep = 0;   // cuántas jugadas de puzzle.solution ya se jugaron (propias + del rival)
+let selectedSquare = null;
+let missedThisPuzzle = false;
+let usedHintThisPuzzle = false;
+let locked = false;
+
+function currentPuzzle(){ return PUZZLES[currentCategory][currentIndex]; }
+
+// Punto de entrada único para "entrar" a una categoría, ya sea al arrancar la página o
+// al cambiar de pestaña: si ya está 100% resuelta muestra la celebración en vez de
+// reiniciar silenciosamente desde la posición 0.
+function openCategory(cat){
+  currentCategory = cat;
+  if(solvedCountFor(cat) >= PUZZLES[cat].length){
+    currentIndex = 0;
+    finishCategory();
+  } else {
+    currentIndex = firstUnsolvedIndex(cat);
+    loadPuzzle();
+  }
+}
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach((cat) => {
+    const done = solvedCountFor(cat);
+    const total = PUZZLES[cat].length;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.style.setProperty('--tab-color', CATEGORY_COLOR[cat]);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${done}/${total}</span>`;
+    btn.addEventListener('click', () => openCategory(cat));
+    tabs.appendChild(btn);
+  });
+}
+
+function updateProgressBar(){
+  const total = PUZZLES[currentCategory].length;
+  const done = solvedCountFor(currentCategory);
+  document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
+  document.getElementById('progress-label').textContent = `${done}/${total} resueltos en ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')} · posición ${currentIndex + 1} de ${total}`;
+}
+
+/* ---------------- Tablero ---------------- */
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+
+function drawBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      btn.dataset.square = square;
+      const piece = game.get(square);
+      if(piece){
+        const span = document.createElement('span');
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span);
+      }
+      if(square === selectedSquare) btn.classList.add('selected');
+      btn.addEventListener('click', () => onSquareClick(square, btn));
+      board.appendChild(btn);
+    }
+  }
+}
+
+function flashWrong(btn){
+  if(!btn) return;
+  btn.classList.add('wrong-flash');
+  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
+}
+function setStatus(text, cls){
+  const el = document.getElementById('round-status');
+  el.textContent = text;
+  el.className = 'round-status' + (cls ? ' ' + cls : '');
+}
+function highlightTargets(square){
+  const legal = game.moves({ square, verbose: true });
+  const board = document.getElementById('board');
+  legal.forEach((m) => {
+    const cell = board.querySelector('[data-square="' + m.to + '"]');
+    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
+  });
+}
+
+function loadPuzzle(){
+  const puzzle = currentPuzzle();
+  document.getElementById('play-area').style.display = 'block';
+  document.getElementById('celebration').style.display = 'none';
+  if(!puzzle){
+    finishCategory();
+    return;
+  }
+  game = new Chess(puzzle.fen);
+  solutionStep = 0;
+  selectedSquare = null;
+  missedThisPuzzle = false;
+  usedHintThisPuzzle = false;
+  hintStage = 0;
+  locked = false;
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('hint-btn').textContent = '💡 Pista';
+  drawBoard();
+  buildTabs();
+  updateProgressBar();
+  const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
+  document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — encuentra la mejor jugada`;
+  setStatus('Haz clic en la pieza que quieres mover.');
+}
+
+function onSquareClick(square, btn){
+  if(locked) return;
+  const piece = game.get(square);
+  if(selectedSquare === null){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square;
+      drawBoard();
+      highlightTargets(square);
+    }
+    return;
+  }
+  if(square === selectedSquare){ selectedSquare = null; drawBoard(); return; }
+  const legalFromSelected = game.moves({ square: selectedSquare, verbose: true });
+  const candidates = legalFromSelected.filter((m) => m.to === square);
+  if(!candidates.length){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square; drawBoard(); highlightTargets(square);
+    } else {
+      selectedSquare = null; drawBoard();
+      flashWrong(document.querySelector('[data-square="' + square + '"]'));
+    }
+    return;
+  }
+  const from = selectedSquare;
+  selectedSquare = null;
+  if(candidates.length > 1 && candidates[0].flags.includes('p')){
+    // Ninguna solución de este set exige subpromoción hoy, pero se deja el selector
+    // por si se agregan más posiciones más adelante que sí la necesiten.
+    askPromotion((choice) => playMove(from, square, choice));
+  } else {
+    playMove(from, square, candidates[0].promotion || undefined);
+  }
+}
+
+function askPromotion(callback){
+  const modal = document.getElementById('promo-modal');
+  const opts = document.getElementById('promo-opts');
+  opts.innerHTML = '';
+  const turn = game.turn();
+  ['q','r','b','n'].forEach((type) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'promo-btn';
+    btn.innerHTML = `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}">${GLYPH[turn][type]}</span>`;
+    btn.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
+    opts.appendChild(btn);
+  });
+  modal.style.display = 'flex';
+}
+
+function playMove(from, to, promotion){
+  const puzzle = currentPuzzle();
+  const moveResult = game.move({ from, to, promotion: promotion || 'q' });
+  drawBoard();
+  if(!moveResult) return;
+
+  const expected = puzzle.solution[solutionStep];
+  if(moveResult.san !== expected){
+    game.undo();
+    drawBoard();
+    missedThisPuzzle = true;
+    resetStreak();
+    flashWrong(document.querySelector('[data-square="' + to + '"]'));
+    setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
+    return;
+  }
+
+  solutionStep++;
+  if(solutionStep >= puzzle.solution.length){
+    finishPuzzle();
+    return;
+  }
+
+  // Jugada del rival: se reproduce automáticamente la línea de la solución.
+  locked = true;
+  setStatus('✓ Correcto — el rival responde…', 'ok');
+  setTimeout(() => {
+    const replySan = puzzle.solution[solutionStep];
+    game.move(replySan);
+    solutionStep++;
+    drawBoard();
+    locked = false;
+    if(solutionStep >= puzzle.solution.length){
+      finishPuzzle();
+    } else {
+      hintStage = 0;
+      document.getElementById('hint-btn').textContent = '💡 Pista';
+      setStatus('Sigue buscando la continuación.');
+    }
+  }, 650);
+}
+
+function finishPuzzle(){
+  locked = true;
+  document.getElementById('hint-btn').disabled = true;
+  const puzzle = currentPuzzle();
+  const alreadySolved = isSolved(puzzle.id);
+  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
+  setStatus(puzzle.mate ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
+  if(!alreadySolved){
+    markSolved(puzzle.id);
+    EntrenoProgress.log('tactica', { puzzle_id: puzzle.id, category: puzzle.category });
+  }
+  updateProgressBar();
+  buildTabs();
+  setTimeout(() => {
+    if(currentIndex < PUZZLES[currentCategory].length - 1){
+      currentIndex++;
+      loadPuzzle();
+    } else {
+      finishCategory();
+    }
+  }, 1000);
+}
+
+function finishCategory(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  buildTabs();
+  const total = PUZZLES[currentCategory].length;
+  document.getElementById('celebration-stats').textContent =
+    `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
+}
+
+let hintStage = 0; // 0 = sin pista todavía, 1 = pieza resaltada, 2 = ya se jugó sola
+function giveHint(){
+  if(locked) return;
+  usedHintThisPuzzle = true;
+  const puzzle = currentPuzzle();
+  const expected = puzzle.solution[solutionStep];
+  const legal = game.moves({ verbose: true });
+  const target = legal.find((m) => m.san === expected);
+  const board = document.getElementById('board');
+
+  if(hintStage === 0){
+    hintStage = 1;
+    board.querySelectorAll('.hint-from').forEach((el) => el.classList.remove('hint-from'));
+    if(target){
+      const cell = board.querySelector('[data-square="' + target.from + '"]');
+      if(cell) cell.classList.add('hint-from');
+    }
+    setStatus('Pista: fíjate en la pieza resaltada.');
+    document.getElementById('hint-btn').textContent = '💡 Ver solución';
+  } else {
+    hintStage = 0;
+    document.getElementById('hint-btn').textContent = '💡 Pista';
+    if(!target) return;
+    selectedSquare = null;
+    playMove(target.from, target.to, target.promotion || undefined);
+  }
+}
+document.getElementById('hint-btn').addEventListener('click', giveHint);
+document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
+document.getElementById('skip-btn').addEventListener('click', () => {
+  resetStreak();
+  if(currentIndex < PUZZLES[currentCategory].length - 1){
+    currentIndex++;
+  } else {
+    currentIndex = 0;
+  }
+  loadPuzzle();
+});
+document.getElementById('celebration-replay-btn').addEventListener('click', () => {
+  currentIndex = 0;
+  loadPuzzle();
+});
+
+/* ---------------- Arranque ---------------- */
+let appInitialized = false;
+function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  setStreak(getStreak());
+  const startCategory = CATEGORY_ORDER.find((c) => solvedCountFor(c) < PUZZLES[c].length) || CATEGORY_ORDER[0];
+  openCategory(startCategory);
+}
+
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Táctica. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  unlock();
+}
+
+requireLoginThenGate();
+</script>
+</body>
+</html>
