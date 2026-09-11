@@ -504,6 +504,9 @@
     header.top h1{font-size:1.4rem;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/entreno-progress.js"></script>
 </head>
 <body>
 
@@ -662,6 +665,7 @@ function unlock(){
   gate.style.display = 'none';
   app.style.display = 'block';
   sessionStorage.setItem('entreno_unlocked','1');
+  EntrenoProgress.init();
   initApp();
 }
 
@@ -1157,6 +1161,7 @@ function checkWin(){
     const ex = boardExList[boardExIndex];
     const puz = puzzleForExercise(ex);
     markSolved(puz.id);
+    EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number });
     setStatus('¡Resuelto!');
     document.getElementById('win-overlay').classList.add('open');
     document.getElementById('win-retry').focus();

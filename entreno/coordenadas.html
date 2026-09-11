@@ -68,6 +68,7 @@
   .option-btn{background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Work Sans', sans-serif; font-size:0.85rem; padding:9px 14px; cursor:pointer; transition:background .15s, color .15s;}
   .option-btn + .option-btn{border-left:1px solid var(--line);}
   .option-btn.active{background:var(--brass); color:#1b140f;}
+  .mode-hint{color:var(--text-muted); font-size:0.8rem; margin-top:8px; line-height:1.4;}
   .best-line{color:var(--text-muted); font-size:0.85rem; margin-bottom:22px;}
   .best-line strong{color:var(--brass-bright);}
 
@@ -91,6 +92,8 @@
   .target-banner .label{font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;}
   .target-banner .square{font-family:'Fraunces', serif; font-weight:600; font-size:2.6rem; color:var(--brass-bright); line-height:1.1;}
   .streak-line{text-align:center; font-size:0.8rem; color:var(--text-muted); min-height:1.2em; margin-bottom:14px;}
+  .per-square-bar-wrap{height:6px; max-width:220px; margin:0 auto 14px; background:var(--bg-panel); border:1px solid var(--line); overflow:hidden;}
+  .per-square-bar{height:100%; width:100%; background:var(--brass-bright);}
 
   .board8{
     display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
@@ -116,6 +119,9 @@
     #pw-submit, .bctrl, .option-btn{transition-property: background-color, border-color, color;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/entreno-progress.js"></script>
 </head>
 <body>
 
@@ -157,6 +163,16 @@
         </div>
       </div>
 
+      <div class="option-group">
+        <span class="label">Modo</span>
+        <div class="option-switch" role="group" aria-label="Modo de juego" id="mode-switch">
+          <button type="button" class="option-btn active" data-value="classic">Clásico</button>
+          <button type="button" class="option-btn" data-value="mode10">10s por casilla</button>
+          <button type="button" class="option-btn" data-value="mode3">3s por casilla</button>
+        </div>
+        <p class="mode-hint" id="mode-hint">Ronda de 30 segundos, sin apuro por casilla — busca todas las que alcances.</p>
+      </div>
+
       <p class="best-line" id="best-line"></p>
 
       <button type="button" class="bctrl primary" id="start-btn">Empezar (30 s) →</button>
@@ -171,6 +187,9 @@
       <div class="target-banner">
         <div class="label">Haz clic en</div>
         <div class="square" id="target-square">—</div>
+      </div>
+      <div class="per-square-bar-wrap" id="per-square-bar-wrap" style="display:none;">
+        <div class="per-square-bar" id="per-square-bar"></div>
       </div>
       <p class="streak-line" id="streak-line"></p>
       <div class="board8" id="board" role="group" aria-label="Tablero de coordenadas"></div>
@@ -212,6 +231,7 @@ function unlock(){
   gate.style.display = 'none';
   app.style.display = 'block';
   sessionStorage.setItem('entreno_unlocked','1');
+  EntrenoProgress.init();
   initApp();
 }
 
@@ -231,15 +251,28 @@ pwForm.addEventListener('submit', async (e) => {
 const ROUND_SECONDS = 30;
 const FILES = ['a','b','c','d','e','f','g','h'];
 
-function getBest(){
-  try{ return parseInt(localStorage.getItem('entreno_coord_best') || '0', 10) || 0; }catch(e){ return 0; }
+// Modos: además del clásico (sin apuro por casilla, solo el reloj general de
+// 30s), dos modos con límite de tiempo POR casilla — si no la encuentras a
+// tiempo, cuenta como error y salta sola a la siguiente. La mejor puntuación
+// se guarda aparte para cada modo, porque no son comparables entre sí.
+const MODES = {
+  classic: { label: 'Clásico', perSquareLimit: null, hint: 'Ronda de 30 segundos, sin apuro por casilla — busca todas las que alcances.' },
+  mode10: { label: '10s por casilla', perSquareLimit: 10, hint: 'Tienes 10 segundos para encontrar cada casilla. Si se acaban, cuenta como error y aparece otra.' },
+  mode3: { label: '3s por casilla', perSquareLimit: 3, hint: 'Solo 3 segundos por casilla — el modo más exigente. Si se acaban, cuenta como error y aparece otra.' },
+};
+
+function getBest(mode){
+  try{ return parseInt(localStorage.getItem('entreno_coord_best_' + mode) || '0', 10) || 0; }catch(e){ return 0; }
 }
-function setBest(score){
-  try{ localStorage.setItem('entreno_coord_best', String(score)); }catch(e){}
+function setBest(mode, score){
+  try{ localStorage.setItem('entreno_coord_best_' + mode, String(score)); }catch(e){}
 }
 
 let orientationSetting = 'white'; // 'white' | 'black' | 'random'
 let roundOrientation = 'white';  // la que realmente se usa esta ronda
+let modeSetting = 'classic';     // clave de MODES
+let perSquareLimit = null;       // segundos, o null en modo clásico
+let perSquareTimeoutId = null;
 let timeLeft = ROUND_SECONDS;
 let timerId = null;
 let score = 0, misses = 0, streak = 0, bestStreak = 0;
@@ -253,6 +286,16 @@ document.querySelectorAll('#orientation-switch .option-btn').forEach((btn) => {
     document.querySelectorAll('#orientation-switch .option-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     orientationSetting = btn.dataset.value;
+  });
+});
+
+document.querySelectorAll('#mode-switch .option-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#mode-switch .option-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    modeSetting = btn.dataset.value;
+    document.getElementById('mode-hint').textContent = MODES[modeSetting].hint;
+    renderBestLine();
   });
 });
 
@@ -293,12 +336,38 @@ function randomSquare(){
   return FILES[Math.floor(Math.random() * 8)] + (1 + Math.floor(Math.random() * 8));
 }
 
+function armPerSquareTimer(){
+  clearTimeout(perSquareTimeoutId);
+  const barWrap = document.getElementById('per-square-bar-wrap');
+  const bar = document.getElementById('per-square-bar');
+  if(!perSquareLimit){
+    barWrap.style.display = 'none';
+    return;
+  }
+  barWrap.style.display = 'block';
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  void bar.offsetWidth; // fuerza el reflow para que la siguiente transición sí anime desde 100%
+  bar.style.transition = `width ${perSquareLimit}s linear`;
+  bar.style.width = '0%';
+  perSquareTimeoutId = setTimeout(onSquareTimeout, perSquareLimit * 1000);
+}
+
+function onSquareTimeout(){
+  if(!playing) return;
+  misses++;
+  streak = 0;
+  updateHud();
+  newTarget();
+}
+
 function newTarget(){
   let next = currentTarget;
   while(next === currentTarget) next = randomSquare(); // nunca repite la misma casilla dos veces seguidas
   currentTarget = next;
   document.getElementById('target-square').textContent = currentTarget;
   lastPromptAt = performance.now();
+  armPerSquareTimer();
 }
 
 function flash(btn, cls){
@@ -345,6 +414,7 @@ function startRound(){
   timeLeft = ROUND_SECONDS;
   currentTarget = null;
   playing = true;
+  perSquareLimit = MODES[modeSetting].perSquareLimit;
   roundOrientation = orientationSetting === 'random'
     ? (Math.random() < 0.5 ? 'white' : 'black')
     : orientationSetting;
@@ -363,11 +433,12 @@ function startRound(){
 
 function endRound(){
   clearInterval(timerId);
+  clearTimeout(perSquareTimeoutId);
   playing = false;
 
-  const best = getBest();
+  const best = getBest(modeSetting);
   const isNewBest = score > best;
-  if(isNewBest) setBest(score);
+  if(isNewBest) setBest(modeSetting, score);
 
   document.getElementById('play-screen').style.display = 'none';
   document.getElementById('end-screen').style.display = 'block';
@@ -376,18 +447,28 @@ function endRound(){
   document.getElementById('stat-hits').textContent = String(score);
   document.getElementById('stat-misses').textContent = String(misses);
   document.getElementById('stat-streak').textContent = String(bestStreak);
-  document.getElementById('stat-avg').textContent = reactionTimes.length
-    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length) + ' ms'
-    : '—';
+  const avgReaction = reactionTimes.length
+    ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+    : null;
+  document.getElementById('stat-avg').textContent = avgReaction !== null ? avgReaction + ' ms' : '—';
+
+  EntrenoProgress.log('coordenadas', {
+    mode: modeSetting,
+    orientation: roundOrientation,
+    score,
+    misses,
+    best_streak: bestStreak,
+    avg_reaction_ms: avgReaction,
+  });
 
   renderBestLine();
 }
 
 function renderBestLine(){
-  const best = getBest();
+  const best = getBest(modeSetting);
   document.getElementById('best-line').innerHTML = best > 0
-    ? `Tu mejor puntuación: <strong>${best}</strong>`
-    : 'Todavía no tienes una puntuación registrada — ¡esta puede ser la primera!';
+    ? `Tu mejor puntuación en "${MODES[modeSetting].label}": <strong>${best}</strong>`
+    : `Todavía no tienes una puntuación registrada en "${MODES[modeSetting].label}" — ¡esta puede ser la primera!`;
 }
 
 document.getElementById('start-btn').addEventListener('click', startRound);
