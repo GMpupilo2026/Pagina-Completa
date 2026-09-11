@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practicar — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Practica patrones de mate y motivos tácticos en series cortas, con racha, pistas y estrellas — inspirado en lichess.org/practice.">
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: {
+            colors: {
+                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+            },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+        } }
+    }
+</script>
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --mates:#9c4148;
+    --tacticas:#75935a;
+    --finales:#3b6ea5;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+    --star:#f0b429;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  /* ---------- Barra de racha ---------- */
+  .streak-bar{
+    max-width:900px; margin:0 auto; padding:10px 24px 0; display:flex; align-items:center;
+    justify-content:center; gap:8px; font-size:0.95rem; color:var(--text-muted);
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:14px 24px 0; flex-wrap:wrap; justify-content:center;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  /* ---------- Lista de series ---------- */
+  .set-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:14px;}
+  .set-card{
+    display:flex; flex-direction:column; gap:6px; text-align:left;
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; padding:16px; cursor:pointer; border-radius:10px;
+    transition:border-color .15s, transform .12s ease-out, box-shadow .15s;
+  }
+  .set-card:hover{border-color:var(--brass); box-shadow:0 6px 18px rgba(16,42,67,0.12);}
+  .set-card:active{transform:scale(0.99);}
+  .set-card .top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .set-card .name{font-weight:700; font-size:1.02rem;}
+  .set-card .desc{font-size:0.85rem; color:var(--text-muted); line-height:1.4;}
+  .set-card .stars{font-size:0.95rem; letter-spacing:1px;}
+  .set-card .stars .empty{opacity:0.25;}
+  .set-card .progress-track{height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-top:2px;}
+  .set-card .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+
+  /* ---------- Vista de la serie (rondas) ---------- */
+  #set-view{display:none;}
+  .set-header{margin-bottom:10px;}
+  .set-header a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
+  .set-header h2{font-size:1.4rem; margin-bottom:4px;}
+  .round-progress{display:flex; gap:5px; justify-content:center; margin:10px 0 14px;}
+  .round-dot{width:10px; height:10px; border-radius:50%; background:var(--line); transition:background .2s, transform .2s;}
+  .round-dot.done{background:var(--ok);}
+  .round-dot.current{background:var(--brass); transform:scale(1.3);}
+  .round-dot.fail{background:var(--bad);}
+
+  .set-text{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:520px; margin:0 auto 14px; text-align:center;}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px var(--star); animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.hint-to::after{content:""; position:absolute; inset:20%; border-radius:50%; border:4px solid var(--star); animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .mode-bar{
+    max-width:520px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:520px; margin-left:auto; margin-right:auto;
+  }
+  .position-readout p{margin:2px 0;}
+  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
+  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
+  #blind-panel input{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
+  }
+  #blind-panel input:focus{border-color:var(--brass);}
+
+  .round-status{margin-top:14px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* ---------- Celebración al completar una serie ---------- */
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stars-big{font-size:2rem; letter-spacing:4px; margin:10px 0;}
+  #celebration .confetti-row{font-size:1.6rem; letter-spacing:10px; margin-bottom:14px;}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .tab, .set-card, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .sq.hint-to::after, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+</style>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Clases</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🎯</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Practicar</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Practicar 🎯</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-400">
+      <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Panel de Clases</a>
+    </div>
+  </div>
+  <p class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">Series cortas para dominar un patrón a la vez — como en lichess.org/practice, pero con racha, pistas progresivas y estrellas.</p>
+
+  <div class="streak-bar" id="streak-bar">
+    <span class="flame" aria-hidden="true">🔥</span>
+    <span>Racha: <span class="streak-count" id="streak-count">0</span></span>
+    <span aria-hidden="true">·</span>
+    <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
+  </div>
+
+  <div class="mode-bar">
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+  </div>
+
+  <nav class="tabs" id="tabs" aria-label="Categorías de prácticas"></nav>
+
+  <main id="main-content">
+    <div id="list-view">
+      <div class="set-grid" id="set-list"></div>
+    </div>
+
+    <div id="set-view">
+      <div class="set-header">
+        <a href="#" id="back-to-list">← Todas las series</a>
+        <h2 id="set-title"></h2>
+      </div>
+      <p class="set-text" id="set-text"></p>
+      <div class="round-progress" id="round-progress"></div>
+
+      <div id="play-area">
+        <div class="board-wrap" id="board-wrap">
+          <div class="board8" id="board" role="group" aria-label="Tablero de la práctica"></div>
+        </div>
+        <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
+
+        <form id="blind-panel" style="display:none;">
+          <div>
+            <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
+            <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
+          </div>
+          <button type="submit" class="sr-only">Enviar</button>
+        </form>
+
+        <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="hint-btn">💡 Pista</button>
+          <button type="button" class="bctrl" id="retry-round-btn">Reiniciar ronda</button>
+        </div>
+      </div>
+
+      <div id="celebration">
+        <span class="big-emoji" aria-hidden="true">🎉</span>
+        <h3 id="celebration-title" class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Serie completada!</h3>
+        <div class="confetti-row" aria-hidden="true">🎊✨🎊✨🎊</div>
+        <div class="stars-big" id="celebration-stars"></div>
+        <p class="stats" id="celebration-stats"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="celebration-back-btn">← Todas las series</button>
+          <button type="button" class="bctrl primary" id="celebration-next-btn">Siguiente serie →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="../js/entreno-progress.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/practicas.html';
+
+function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  EntrenoProgress.init();
+  initApp();
+}
+
+/* ---------------- CONTENIDO DE LAS PRÁCTICAS ----------------
+   Cada FEN y cada jugada solución de esta lista se generó y se verificó
+   programáticamente con chess.js (node), incluyendo, según el tipo de
+   práctica: que la jugada da jaque mate (mates de escuela y finales con
+   torre), que la pieza que se mueve ataca de verdad a las dos piezas
+   objetivo (horquillas y ataques dobles), que la pieza capturada está
+   realmente clavada — quitarla del tablero expone al rey — (clavadas), o
+   que el jaque tras la jugada lo da una pieza DISTINTA a la que se movió
+   (ataques descubiertos). Ninguna posición se escribió "a ojo".
+*/
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+
+const SETS = [
+  { id:'pasillo', cat:'mates', emoji:'🚪', title:'Mate del pasillo', desc:'El rey enemigo está atrapado en la última fila por sus propios peones.',
+    rounds:[
+      { fen:'6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1', from:'e1', to:'e8' },
+      { fen:'2k5/1ppp4/8/8/8/8/8/6RK w - - 0 1', from:'g1', to:'g8' },
+      { fen:'5k2/4ppp1/8/8/8/8/8/Q6K w - - 0 1', from:'a1', to:'a8' },
+      { fen:'6k1/5ppp/8/8/8/8/7K/R4R2 w - - 0 1', from:'a1', to:'a8' },
+      { fen:'1k6/ppp5/8/8/8/8/6K1/7Q w - - 0 1', from:'h1', to:'h8' },
+    ] },
+  { id:'coz', cat:'mates', emoji:'🐴', title:'Mate de la coz', desc:'El caballo da el jaque mate final cuando el rey está completamente rodeado por sus propias piezas.',
+    rounds:[
+      { fen:'6rk/6pp/3N4/8/8/8/8/4K3 w - - 0 1', from:'d6', to:'f7' },
+      { fen:'6nk/6pp/8/4N3/8/8/8/4K3 w - - 0 1', from:'e5', to:'f7' },
+      { fen:'5rkb/5ppp/8/3N4/8/8/8/4K3 w - - 0 1', from:'d5', to:'e7' },
+      { fen:'kr6/pp6/4N3/8/8/8/8/4K3 w - - 0 1', from:'e6', to:'c7' },
+      { fen:'k7/8/8/8/4n3/8/6PP/6RK b - - 0 1', from:'e4', to:'f2' },
+    ] },
+  { id:'beso', cat:'mates', emoji:'👑', title:'Mate con dama o torre apoyada', desc:'Tu rey protege a la pieza que da el jaque mate justo al lado del rey rival.',
+    rounds:[
+      { fen:'7k/8/6K1/8/8/8/8/7Q w - - 0 1', from:'h1', to:'h7' },
+      { fen:'k7/8/1K6/8/8/8/8/Q7 w - - 0 1', from:'a1', to:'a7' },
+      { fen:'7Q/8/8/8/8/6K1/8/7k w - - 0 1', from:'h8', to:'h2' },
+      { fen:'Q7/8/8/8/8/1K6/8/k7 w - - 0 1', from:'a8', to:'a2' },
+      { fen:'6k1/8/6K1/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
+    ] },
+  { id:'horquilla', cat:'tacticas', emoji:'🍴', title:'Horquillas de caballo', desc:'Un solo salto de caballo ataca dos piezas rivales a la vez.',
+    rounds:[
+      { fen:'2q3k1/8/6N1/8/8/8/8/4K3 w - - 0 1', from:'g6', to:'e7' },
+      { fen:'r3k3/8/4N3/8/8/8/8/7K w - - 0 1', from:'e6', to:'c7' },
+      { fen:'3q3k/8/8/r3N3/8/8/8/7K w - - 0 1', from:'e5', to:'c6' },
+      { fen:'7k/8/8/4N3/1r1r4/8/8/7K w - - 0 1', from:'e5', to:'c6' },
+      { fen:'7k/8/8/6N1/3b1r2/8/8/7K w - - 0 1', from:'g5', to:'e6' },
+    ] },
+  { id:'clavada', cat:'tacticas', emoji:'📌', title:'Clavadas', desc:'La pieza rival no se puede mover sin dejar a su rey en jaque — captúrala gratis.',
+    rounds:[
+      { fen:'4k3/8/4n3/8/8/8/4R3/4K3 w - - 0 1', from:'e2', to:'e6' },
+      { fen:'7k/8/5n2/8/8/2B5/8/4K3 w - - 0 1', from:'c3', to:'f6' },
+      { fen:'8/8/8/8/1Q3r1k/8/8/K7 w - - 0 1', from:'b4', to:'f4' },
+      { fen:'8/8/k1b4R/8/8/8/8/K7 w - - 0 1', from:'h6', to:'c6' },
+      { fen:'k7/8/2n5/8/8/8/8/K6B w - - 0 1', from:'h1', to:'c6' },
+    ] },
+  { id:'descubierto', cat:'tacticas', emoji:'🎭', title:'Ataques descubiertos', desc:'Mueve una pieza para que otra, detrás de ella, descubra un jaque.',
+    rounds:[
+      { fen:'7k/8/8/8/8/2N5/8/B3K3 w - - 0 1', from:'c3', to:'b5' },
+      { fen:'4k3/8/8/8/4N3/8/8/K3R3 w - - 0 1', from:'e4', to:'c5' },
+      { fen:'k7/8/8/3B4/8/8/8/K6Q w - - 0 1', from:'d5', to:'e6' },
+      { fen:'8/8/8/8/R1N4k/8/8/K7 w - - 0 1', from:'c4', to:'b6' },
+      { fen:'7k/8/8/8/8/8/1P6/B3K3 w - - 0 1', from:'b2', to:'b3' },
+    ] },
+  { id:'doble', cat:'tacticas', emoji:'⚔️', title:'Ataques dobles', desc:'Una sola jugada de una pieza de largo alcance amenaza dos piezas rivales a la vez.',
+    rounds:[
+      { fen:'7k/8/8/r6R/8/8/4r3/7K w - - 0 1', from:'h5', to:'e5' },
+      { fen:'k7/8/2r3n1/8/8/8/8/K6B w - - 0 1', from:'h1', to:'e4' },
+      { fen:'4r1k1/8/8/8/b6Q/8/8/K7 w - - 0 1', from:'h4', to:'e4' },
+      { fen:'7k/8/q7/4K3/8/8/3R3r/8 w - - 0 1', from:'d2', to:'a2' },
+      { fen:'k7/6n1/1r6/8/8/8/8/B6K w - - 0 1', from:'a1', to:'d4' },
+    ] },
+  { id:'torre', cat:'finales', emoji:'🏰', title:'Mate con rey y torre', desc:'El rey corta el paso y la torre da el jaque mate en el borde del tablero.',
+    rounds:[
+      { fen:'2k5/8/2K5/8/8/8/8/7R w - - 0 1', from:'h1', to:'h8' },
+      { fen:'5k2/8/5K2/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
+      { fen:'R7/8/8/8/8/3K4/8/3k4 w - - 0 1', from:'a8', to:'a1' },
+      { fen:'3k4/8/3K4/8/8/8/8/R7 w - - 0 1', from:'a1', to:'a8' },
+      { fen:'1k6/8/1K6/8/8/8/8/7R w - - 0 1', from:'h1', to:'h8' },
+    ] },
+  { id:'escalera', cat:'finales', emoji:'🪜', title:'Mate de la escalera', desc:'Dos torres suben la escalera y dan mate solas, sin ayuda del rey.',
+    rounds:[
+      { fen:'6k1/R7/8/8/8/8/8/1K1R4 w - - 0 1', from:'d1', to:'d8' },
+      { fen:'1k6/7R/8/8/8/8/8/4R1K1 w - - 0 1', from:'e1', to:'e8' },
+      { fen:'6K1/8/8/k7/8/1R6/8/7R w - - 0 1', from:'h1', to:'a1' },
+      { fen:'R7/8/8/8/7k/8/8/1K4R1 w - - 0 1', from:'a8', to:'h8' },
+      { fen:'3K3R/8/8/8/8/8/6R1/1k6 w - - 0 1', from:'h8', to:'h1' },
+    ] },
+];
+
+const CATEGORY_ORDER = ['mates','tacticas','finales'];
+const CATEGORY_LABEL = {mates:'🏆 Mates de escuela', tacticas:'🎯 Motivos tácticos', finales:'🏰 Finales con torre'};
+const CATEGORY_VAR = {mates:'--mates', tacticas:'--tacticas', finales:'--finales'};
+
+/* ---------------- Modo normal / modo adaptado (lector de pantalla) ---------------- */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+
+function renderPositionReadout(){
+  const readout = document.getElementById('position-readout');
+  if(!blindMode || !game){ readout.style.display = 'none'; return; }
+  readout.innerHTML = window.BlindNotation.groupedReadoutHTML(game);
+  readout.style.display = 'block';
+}
+function applyBlindModeUI(){
+  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
+  document.getElementById('blind-panel').style.display = blindMode ? 'block' : 'none';
+  if(modeNormalBtn){ modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true'); modeNormalBtn.classList.toggle('active', !blindMode); }
+  if(modeBlindBtn){ modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false'); modeBlindBtn.classList.toggle('active', blindMode); }
+  renderPositionReadout();
+  if(blindMode) document.getElementById('blind-move-input').focus();
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+}
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+
+function blindHandleMoveGuess(raw){
+  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
+  if(clean.length !== 4){ setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad'); return; }
+  const from = clean.slice(0, 2), to = clean.slice(2, 4);
+  const piece = game.get(from);
+  if(!piece || piece.color !== game.turn()){ setStatus(`No hay una pieza tuya en ${window.BlindNotation.squareSpoken(from)}.`, 'bad'); return; }
+  const legal = game.moves({ square: from, verbose: true });
+  const target = legal.find((m) => m.to === to);
+  if(!target){ setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad'); return; }
+  const moveResult = game.move({ from, to, promotion: 'q' });
+  if(!moveResult) return;
+  renderPositionReadout();
+  handleMoveResult(moveResult);
+}
+document.getElementById('blind-panel').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('blind-move-input');
+  const value = input.value;
+  input.value = '';
+  input.focus();
+  blindHandleMoveGuess(value);
+});
+
+/* ---------------- Progreso, racha y estrellas (localStorage) ---------------- */
+function getProgress(){
+  try{ return JSON.parse(localStorage.getItem('entreno_practicas_v1') || '{}'); }catch(e){ return {}; }
+}
+function saveProgress(p){ localStorage.setItem('entreno_practicas_v1', JSON.stringify(p)); }
+function getSetStars(id){ return getProgress()[id] || 0; }
+function setSetStars(id, stars){
+  const p = getProgress();
+  if(!p[id] || stars > p[id]) p[id] = stars;
+  saveProgress(p);
+}
+
+function getStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_practicas_streak') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function getBestStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_practicas_best') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function setStreak(n){
+  localStorage.setItem('entreno_practicas_streak', String(n));
+  const best = Math.max(getBestStreak(), n);
+  localStorage.setItem('entreno_practicas_best', String(best));
+  document.getElementById('streak-count').textContent = n;
+  document.getElementById('streak-best').textContent = best;
+}
+function bumpStreak(){
+  setStreak(getStreak() + 1);
+  const bar = document.getElementById('streak-bar');
+  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
+}
+function resetStreak(){ setStreak(0); }
+
+let currentCategory = 'mates';
+let currentSet = null;
+let currentRoundIndex = 0;
+let game = null;
+let selectedSquare = null;
+let roundLocked = false;
+let hintsUsedThisRound = 0;
+let roundStartTime = 0;
+let setStarsEarned = [];
+let setStartTime = 0;
+
+function setsFor(cat){ return SETS.filter(s => s.cat === cat); }
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach((cat) => {
+    const list = setsFor(cat);
+    const done = list.filter(s => getSetStars(s.id) > 0).length;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${done}/${list.length}</span>`;
+    btn.addEventListener('click', () => { currentCategory = cat; showList(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function starString(n){
+  const full = '⭐'.repeat(n);
+  const empty = '<span class="empty">⭐</span>'.repeat(3 - n);
+  return full + empty;
+}
+
+function showList(){
+  document.getElementById('set-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  buildTabs();
+  const list = setsFor(currentCategory);
+  const box = document.getElementById('set-list');
+  box.innerHTML = '';
+  list.forEach((set) => {
+    const stars = getSetStars(set.id);
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'set-card';
+    card.innerHTML = `
+      <div class="top"><span class="name">${set.emoji} ${set.title}</span></div>
+      <span class="desc">${set.desc}</span>
+      <span class="stars">${starString(stars)}</span>
+      <div class="progress-track"><div class="progress-fill" style="width:${stars > 0 ? 100 : 0}%"></div></div>`;
+    card.addEventListener('click', () => openSet(set));
+    box.appendChild(card);
+  });
+}
+
+/* ---------------- Tablero ---------------- */
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+
+function drawBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      btn.dataset.square = square;
+      const piece = game.get(square);
+      if(piece){
+        const span = document.createElement('span');
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span);
+      }
+      if(square === selectedSquare) btn.classList.add('selected');
+      btn.addEventListener('click', () => onSquareClick(square, btn));
+      board.appendChild(btn);
+    }
+  }
+  renderPositionReadout();
+}
+
+function flashWrong(btn){
+  btn.classList.add('wrong-flash');
+  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
+}
+function setStatus(text, cls){
+  const el = document.getElementById('round-status');
+  el.textContent = text;
+  el.className = 'round-status' + (cls ? ' ' + cls : '');
+}
+function highlightTargets(square){
+  const legal = game.moves({ square, verbose: true });
+  const board = document.getElementById('board');
+  legal.forEach((m) => {
+    const cell = board.querySelector('[data-square="' + m.to + '"]');
+    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
+  });
+}
+
+function buildRoundDots(){
+  const wrap = document.getElementById('round-progress');
+  wrap.innerHTML = '';
+  currentSet.rounds.forEach((r, i) => {
+    const dot = document.createElement('span');
+    dot.className = 'round-dot';
+    if(i < currentRoundIndex) dot.classList.add('done');
+    if(i === currentRoundIndex) dot.classList.add('current');
+    wrap.appendChild(dot);
+  });
+}
+
+function loadRound(){
+  const round = currentSet.rounds[currentRoundIndex];
+  game = new Chess(round.fen);
+  selectedSquare = null;
+  roundLocked = false;
+  hintsUsedThisRound = 0;
+  roundStartTime = Date.now();
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('hint-btn').textContent = '💡 Pista';
+  drawBoard();
+  buildRoundDots();
+  setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Encuentra la jugada. Haz clic en la pieza que quieres mover.');
+  if(blindMode) document.getElementById('blind-move-input').focus();
+}
+
+function onSquareClick(square, btn){
+  if(roundLocked) return;
+  const piece = game.get(square);
+  if(selectedSquare === null){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square;
+      drawBoard();
+      highlightTargets(square);
+    }
+    return;
+  }
+  if(square === selectedSquare){ selectedSquare = null; drawBoard(); return; }
+  const legal = game.moves({ square: selectedSquare, verbose: true });
+  const target = legal.find(m => m.to === square);
+  if(!target){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square; drawBoard(); highlightTargets(square);
+    } else { selectedSquare = null; drawBoard(); }
+    return;
+  }
+  const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+  selectedSquare = null;
+  drawBoard();
+  if(!moveResult) return;
+  handleMoveResult(moveResult);
+}
+
+function handleMoveResult(moveResult){
+  const round = currentSet.rounds[currentRoundIndex];
+  const correct = moveResult.from === round.from && moveResult.to === round.to;
+  if(correct){
+    finishRound();
+  } else {
+    resetStreak();
+    setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
+    setTimeout(() => { game = new Chess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
+  }
+}
+
+function finishRound(){
+  roundLocked = true;
+  document.getElementById('hint-btn').disabled = true;
+  const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
+  const stars = hintsUsedThisRound >= 2 ? 1 : (hintsUsedThisRound === 1 ? 2 : 3);
+  setStarsEarned.push(stars);
+  bumpStreak();
+  const fast = seconds < 4 && hintsUsedThisRound === 0;
+  setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
+  setTimeout(() => {
+    if(currentRoundIndex < currentSet.rounds.length - 1){
+      currentRoundIndex++;
+      loadRound();
+    } else {
+      finishSet();
+    }
+  }, fast ? 900 : 1100);
+}
+
+function finishSet(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  const avg = setStarsEarned.reduce((a,b) => a+b, 0) / setStarsEarned.length;
+  const stars = avg >= 2.6 ? 3 : (avg >= 1.6 ? 2 : 1);
+  setSetStars(currentSet.id, stars);
+  document.getElementById('celebration-stars').innerHTML = starString(stars);
+  const totalSeconds = ((Date.now() - setStartTime) / 1000).toFixed(0);
+  const noHints = setStarsEarned.every(s => s === 3);
+  document.getElementById('celebration-stats').textContent =
+    `${currentSet.rounds.length} de ${currentSet.rounds.length} posiciones en ${totalSeconds}s` +
+    (noHints ? ' — ¡sin usar ninguna pista!' : '');
+  document.getElementById('celebration-title').textContent =
+    stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
+  EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
+}
+
+function giveHint(){
+  if(roundLocked) return;
+  hintsUsedThisRound++;
+  const round = currentSet.rounds[currentRoundIndex];
+  const board = document.getElementById('board');
+  if(hintsUsedThisRound === 1){
+    board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
+    const cell = board.querySelector('[data-square="' + round.from + '"]');
+    if(cell) cell.classList.add('hint-from');
+    setStatus(blindMode ? `Pista: mueve la pieza en ${window.BlindNotation.squareSpoken(round.from)}.` : 'Pista: fíjate en la pieza resaltada.');
+    document.getElementById('hint-btn').textContent = '💡 Otra pista';
+  } else if(hintsUsedThisRound === 2){
+    const cell = board.querySelector('[data-square="' + round.to + '"]');
+    if(cell) cell.classList.add('hint-to');
+    setStatus(blindMode ? `Pista: la casilla de destino es ${window.BlindNotation.squareSpoken(round.to)}.` : 'Pista: la casilla marcada con el círculo es el destino.');
+    document.getElementById('hint-btn').textContent = '💡 Ver solución';
+  } else {
+    resetStreak();
+    const moveResult = game.move({ from: round.from, to: round.to, promotion: 'q' });
+    drawBoard();
+    renderPositionReadout();
+    setStatus(`Solución: ${moveResult ? moveResult.san : round.from + '-' + round.to}.`);
+    finishRound();
+  }
+}
+document.getElementById('hint-btn').addEventListener('click', giveHint);
+document.getElementById('retry-round-btn').addEventListener('click', loadRound);
+
+function openSet(set){
+  currentSet = set;
+  currentRoundIndex = 0;
+  setStarsEarned = [];
+  setStartTime = Date.now();
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('set-view').style.display = 'block';
+  document.getElementById('play-area').style.display = 'block';
+  document.getElementById('celebration').style.display = 'none';
+  document.getElementById('set-title').textContent = set.emoji + ' ' + set.title;
+  document.getElementById('set-text').textContent = set.desc;
+  loadRound();
+}
+
+document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });
+document.getElementById('celebration-back-btn').addEventListener('click', showList);
+document.getElementById('celebration-next-btn').addEventListener('click', () => {
+  const list = setsFor(currentCategory);
+  const idx = list.findIndex(s => s.id === currentSet.id);
+  if(idx >= 0 && idx < list.length - 1) openSet(list[idx + 1]);
+  else showList();
+});
+
+/* ---------------- Arranque ---------------- */
+let appInitialized = false;
+function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  setStreak(getStreak());
+  applyBlindModeUI();
+  showList();
+}
+
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Practicar. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  unlock();
+}
+
+requireLoginThenGate();
+</script>
+</body>
+</html>
