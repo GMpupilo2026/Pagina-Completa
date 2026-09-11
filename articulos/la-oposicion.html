@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La oposición en finales de ajedrez: quién manda en el duelo de reyes — Ajedrez Integral</title>
+    <meta name="description" content="Domina la oposición: la técnica que decide quién gana un final de reyes y peones. Oposición directa, diagonal, lejana, la regla de contar casillas y casillas clave, explicadas paso a paso.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="../inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="../inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+    <article class="pt-28 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Artículos</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Finales</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">La oposición en finales de ajedrez: quién manda en el duelo de reyes</h1>
+            <p class="text-brand-400 dark:text-brand-500 text-sm mb-8">22 marzo 2026 · 10 min lectura</p>
+            <div aria-hidden="true" class="h-56 bg-gradient-to-br from-accent-600 to-brand-800 rounded-2xl flex items-center justify-center text-7xl mb-10">👑</div>
+
+            <div class="prose-chess space-y-6 text-brand-700 dark:text-brand-200 leading-relaxed">
+<p>Cuando ya no quedan piezas mayores en el tablero, la partida se reduce a algo casi filosófico: dos reyes que se miran de frente, y ninguno quiere ser el que tenga que apartarse primero. Dos posiciones que se ven idénticas —mismas piezas, mismas casillas— pueden tener resultados opuestos según de quién sea el turno de mover. La <strong>oposición</strong> es la técnica que te dice, sin calcular una sola variante, quién gana ese pulso.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">¿Qué es la oposición?</h2>
+<p>Se dice que un rey <strong>tiene la oposición</strong> cuando los dos reyes quedan enfrentados en la misma columna, fila o diagonal, separados por exactamente una casilla, y le toca mover al rival. Como los reyes nunca pueden quedar en casillas adyacentes —sería jaque ilegal—, el que tiene el turno no puede avanzar ni sostener su posición: tiene que apartarse a un lado, y ese único paso al costado suele ser todo lo que el otro rey necesita para colarse hacia adelante.</p>
+<blockquote class="border-l-4 border-accent-500 bg-brand-100 dark:bg-brand-900 rounded-r-lg px-4 py-3 font-mono text-sm text-brand-800 dark:text-brand-100">Dos reyes en la misma columna, separados por una casilla, con el turno en contra: eso es tener la oposición. Da igual quién esté "mejor" en apariencia — el que tiene que mover, cede terreno.</blockquote>
+<div class="example-card my-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" data-fen="4k3/8/4K3/4P3/8/8/8/8 b - - 0 1" role="group" aria-labelledby="ejemplo-heading-la-oposicion">
+    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <h2 id="ejemplo-heading-la-oposicion" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
+        <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+        </div>
+    </div>
+    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Rey blanco en e6, peón blanco en e5, rey negro en e8. Le toca mover a las negras: su rey solo puede ir a d8 o f8, nunca a e7 (quedaría junto al rey blanco). Blancas siguen al rey negro hacia el lado que eligió y terminan colándose por el flanco contrario para escoltar al peón hasta coronar.</p>
+    <div class="example-board-wrap max-w-[280px] mx-auto">
+        <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
+    </div>
+    <div class="example-readout hidden text-sm text-brand-600 dark:text-brand-300 leading-relaxed max-w-[420px] mx-auto"></div>
+</div>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Por qué un solo tempo cambia todo el final</h2>
+<p>Toma la misma posición del ejemplo, pero ahora imagina que le toca mover a las <em>blancas</em> en vez de a las negras. De pronto todo cambia: 1.Kd6 se responde con 1...Kd8, 1.Kf6 con 1...Kf8, y el rey negro siempre reaparece justo enfrente, sin ceder ni una casilla. Blancas ya no tienen forma de progresar y el final es tablas. Exactamente la misma posición de piezas — solo cambió de quién era el turno — y el resultado pasó de ganado a empate. Ese es el peso real de la oposición: no es un truco vistoso, es el reloj que decide el final entero.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo tomar la oposición cuando no la tienes</h2>
+<p>Si no tienes la oposición y te toca mover, buscas una <strong>jugada de espera</strong>: mover un peón que todavía te queda de reserva (sin gastarlo si aún no hace falta) para pasarle el problema al rival sin tocar el rey. Cuando ya no quedan peones de espera y te ves obligado a mover el rey, entras en <em>zugzwang</em>: cualquier jugada empeora tu posición. Contra un jugador que sabe contar casillas, no hay manera de fingir que no te toca mover — por eso conviene planificar con varias jugadas de antelación quién va a quedarse sin jugadas de espera primero.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Oposición directa, diagonal y lejana</h2>
+<ul class="list-disc pl-6 space-y-1"><li><strong>Directa (o frontal):</strong> los reyes están en la misma columna o fila, separados por una casilla — el caso clásico del ejemplo de arriba.</li><li><strong>Diagonal:</strong> el mismo principio, pero con los reyes alineados en diagonal en vez de columna o fila.</li><li><strong>Lejana:</strong> los reyes están en la misma columna o fila, pero separados por un número <em>impar</em> de casillas vacías (3, 5, 7…). A medida que ambos reyes se acercan, quien tenía la oposición lejana la conserva al llegar al contacto directo — siempre que responda copiando la distancia del rival.</li></ul>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">La regla para no perderte contando casillas</h2>
+<p>Cuenta las casillas vacías entre los dos reyes en la misma columna, fila o diagonal. Si el número es <strong>impar</strong>, la oposición es de quien <em>no</em> tiene que mover ahora mismo. Mientras los reyes se acercan, la forma más simple de conservarla es <strong>copiar</strong> el movimiento del rival: si avanza una columna, tú avanzas la misma columna en tu fila; si dobla hacia un lado, tú doblas hacia el mismo lado. Esa simetría es lo que preserva la paridad impar hasta que los reyes quedan en oposición directa, ya en el momento decisivo.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Casillas clave: la otra mitad de la técnica</h2>
+<p>La oposición casi nunca se usa sola: se combina con las <strong>casillas clave</strong> (en inglés, <em>key squares</em>), las casillas donde, si tu rey logra pisarlas con el peón todavía detrás, el peón corona sin importar lo que haga el rey rival. La oposición es, muchas veces, exactamente la herramienta que te permite llegar primero a esa casilla clave en vez de que llegue el rey defensor. Y una vez que el peón ya está corriendo solo, la pregunta de si el rey rival lo alcanza a tiempo se resuelve con <a href="regla-del-cuadrado.html" class="text-accent-600 dark:text-accent-400 hover:underline">la regla del cuadrado</a> — las dos técnicas se complementan en casi todos los finales de rey y peón.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Cómo usarla en la partida</h2>
+<ul class="list-disc pl-6 space-y-1"><li>Antes de cambiar la última pareja de piezas mayores, cuenta si el final de reyes que queda te conviene a ti o al rival.</li><li>Guarda un peón de espera "de repuesto" cuando puedas: es tu forma de pasarle el turno incómodo al rival sin ceder terreno con el rey.</li><li>Para conservar la oposición lejana mientras los reyes se acercan, copia el movimiento del rival columna por columna.</li><li>Combina la oposición con la regla del cuadrado: una decide quién manda con los reyes, la otra decide si el peón corona solo.</li><li>Si te quedas sin jugadas de espera y te toca mover primero, ya perdiste la oposición — replantea el plan antes de llegar a esa posición, no cuando ya estás ahí.</li></ul>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Un paso más: la triangulación</h2>
+<p>Cuando ya no te queda ningún peón de espera y necesitas perder un tempo exacto con el propio rey, existe un recurso más avanzado: la <strong>triangulación</strong>. Consiste en mover el rey en tres pasos para volver a la misma casilla, pero cediéndole el turno al rival en el camino — como si dibujaras un triángulo con tu rey mientras el rival solo puede ir y venir en línea recta. Es una técnica de nivel más alto, pero nace de la misma idea de fondo: contar quién se queda sin jugadas de espera primero.</p>
+<h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-8 mb-3">Errores comunes</h2>
+<p>El error más común es mover el rey "por instinto", acercándolo al peón sin fijarse en la paridad de casillas, y descubrir demasiado tarde que se regaló la oposición. El segundo es confundir oposición directa con lejana: copiar el movimiento del rival funciona para conservar la oposición lejana mientras se acercan, pero una vez en contacto directo la regla cambia a "el que mueve, cede" — no hace falta seguir copiando nada. El tercero es gastar el último peón de espera demasiado pronto, quedándose sin nada que jugar en el momento exacto en que más se necesitaba esa jugada de espera.</p>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-brand-100 dark:border-brand-800">
+                <h2 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-3">Fuentes</h2>
+                <ul class="list-disc pl-6 space-y-1 text-sm text-brand-500 dark:text-brand-400">
+                    <li>José Raúl Capablanca, <em>Fundamentos del Ajedrez</em></li>
+                    <li>Reuben Fine, <em>Basic Chess Endings</em></li>
+                    <li>Mark Dvoretsky, <em>Dvoretsky's Endgame Manual</em></li>
+                </ul>
+            </div>
+
+            <div class="mt-8 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
+                <p class="text-white font-serif text-lg font-bold mb-2">¿Quieres practicar esto?</p>
+                <p class="text-brand-200 text-sm mb-4">Inscríbete en Academia: acceso a cursos completos, clases en vivo con Oscar y seguimiento real de tu progreso — pídenos más información por WhatsApp.</p>
+                <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscríbete a Academia →</a>
+            </div>
+
+            <nav aria-label="Navegación entre artículos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="el-centro-del-tablero.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Artículo anterior: El centro del tablero: por qué es tan importante"><span aria-hidden="true">←</span> El centro del tablero: por qué es tan importante</a>
+                <a href="regla-del-cuadrado.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente artículo: La regla del cuadrado: cómo ganar finales de peones">La regla del cuadrado: cómo ganar finales de peones <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/article-example-board.js"></script>
+</body>
+</html>
