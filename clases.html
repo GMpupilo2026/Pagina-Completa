@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Clases — Ajedrez Integral</title>
+    <title>Academia — Ajedrez Integral</title>
     <meta name="description" content="Tu panel de Clases: entra a la sesión en vivo, revisa asignaciones, practica y consulta tus informes.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -48,7 +48,7 @@
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
                     <li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
@@ -69,7 +69,7 @@
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
                 <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV</a></li>
                 <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
@@ -221,7 +221,7 @@
             { emoji: "🏛️", label: "Cursos", desc: "Cursos estructurados por nivel", href: "cursos.html" },
             { emoji: "🚩", label: "Asignaciones", desc: "Preguntas de clase y tu progreso", href: "asignaciones.html" },
             { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
-            { emoji: "♞", label: "Tablero", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+            { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
             { emoji: "🎧", label: "Ciegos", desc: "Tablero y Entrenamiento adaptados para lector de pantalla", href: "ciegos.html" },
             { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
             { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
@@ -250,8 +250,19 @@
                     el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5" + (t.primary ? " ring-2 ring-accent-500" : "");
                 }
                 const iconWrap = document.createElement("div");
-                iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
-                iconWrap.textContent = t.emoji;
+                iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
+                if (t.photo) {
+                    // Foto real de Oscar en vez de un emoji genérico, igual que en tablero.html
+                    // ("Juega contra Oscar"): la etiqueta de al lado ya dice de qué se trata,
+                    // así que la imagen es puramente decorativa.
+                    const img = document.createElement("img");
+                    img.src = t.photo;
+                    img.alt = "";
+                    img.className = "w-full h-full object-cover";
+                    iconWrap.appendChild(img);
+                } else {
+                    iconWrap.textContent = t.emoji;
+                }
                 const label = document.createElement("span");
                 label.className = "font-semibold text-brand-800 dark:text-white text-sm";
                 label.textContent = t.label;
