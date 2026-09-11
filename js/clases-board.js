@@ -416,8 +416,17 @@
         const piece = g.get(square);
         if (piece && !this.piecesHidden) {
           const span = document.createElement("span");
-          span.textContent = GLYPH[piece.color][piece.type];
-          span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          // Tema de piezas "divertido" elegido en Configuración (js/board-themes.js):
+          // preferencia de este navegador, no de la partida — cada quien ve sus propios
+          // tableros con el tema que eligió, sin afectar lo que ven los demás.
+          const themedEmoji = window.BoardThemes ? window.BoardThemes.getEmoji(piece.type) : null;
+          if (themedEmoji) {
+            span.textContent = themedEmoji;
+            span.className = "theme-token " + (piece.color === "w" ? "theme-token-white" : "theme-token-black");
+          } else {
+            span.textContent = GLYPH[piece.color][piece.type];
+            span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          }
           span.setAttribute("aria-hidden", "true");
           btn.appendChild(span);
         }
