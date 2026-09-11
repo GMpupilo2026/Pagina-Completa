@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juegos — Ajedrez Integral</title>
+    <meta name="description" content="Modalidades de ajedrez además de la partida clásica. El profesor asigna los rivales.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Juegos 🎲</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-8" id="subtitle">Otras formas de jugar ajedrez, además de la partida clásica.</p>
+
+            <div id="status-banner" class="hidden mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+
+            <!-- Vista del alumno: sus partidas asignadas -->
+            <div id="student-view" class="hidden">
+                <div id="my-active-games" class="space-y-3 mb-8"></div>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Modalidades</h2>
+                <div id="variant-grid" class="grid sm:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Vista del profesor: armar partidas y ver el estado de todas -->
+            <div id="teacher-view" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asignar rivales</h2>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige dos alumnos distintos y la modalidad — se crea la partida y a ambos les aparece de inmediato en su panel de Juegos.</p>
+                    <form id="create-room-form" class="space-y-3">
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="white-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⚪ Juega con blancas</label>
+                                <select id="white-select" required class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            </div>
+                            <div>
+                                <label for="black-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⚫ Juega con negras</label>
+                                <select id="black-select" required class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
+                            <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <option value="crazyhouse">♞ Crazyhouse</option>
+                            </select>
+                        </div>
+                        <p id="create-room-msg" class="text-xs min-h-[1em]"></p>
+                        <button type="submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">🎲 Crear partida</button>
+                    </form>
+                </div>
+
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Partidas en curso</h2>
+                <div id="ongoing-list" class="space-y-3 mb-8">
+                    <p class="text-brand-300 dark:text-brand-600 text-sm">Todavía no hay partidas en curso.</p>
+                </div>
+
+                <details>
+                    <summary class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer mb-3">Partidas terminadas</summary>
+                    <div id="finished-list" class="space-y-2">
+                        <p class="text-brand-300 dark:text-brand-600 text-sm">Todavía no hay partidas terminadas.</p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null, profile = null, isTeacher = false;
+        const playerNames = {};
+
+        // Modalidades disponibles: solo Crazyhouse por ahora, el resto se ve
+        // "Próximamente" — un mismo lugar para agregar la siguiente cuando
+        // exista, igual que las tarjetas del panel de Clases.
+        const VARIANTS = [
+            { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
+            { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
+            { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
+        ];
+
+        function setStatus(text) {
+            const el = document.getElementById("status-banner");
+            el.textContent = text;
+            el.classList.toggle("hidden", !text);
+        }
+
+        function fmtDateTime(iso) {
+            return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+        }
+
+        function resultLabel(row) {
+            if (row.status !== "finished") return "";
+            if (row.result === "draw") return "🤝 Tablas";
+            if (row.result === "white") return "🏆 Ganó " + (playerNames[row.white_id] || "blancas");
+            if (row.result === "black") return "🏆 Ganó " + (playerNames[row.black_id] || "negras");
+            return "Terminada";
+        }
+
+        // ---------- Vista del alumno ----------
+        async function renderStudentView() {
+            document.getElementById("student-view").classList.remove("hidden");
+
+            const { data: myRooms } = await sb.from("game_rooms")
+                .select("*")
+                .or("white_id.eq." + profile.id + ",black_id.eq." + profile.id)
+                .order("created_at", { ascending: false })
+                .limit(10);
+
+            const activeEl = document.getElementById("my-active-games");
+            activeEl.innerHTML = "";
+            const active = (myRooms || []).filter((r) => r.status === "playing");
+            if (active.length) {
+                const ids = new Set();
+                active.forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+                const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
+                (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+
+                active.forEach((r) => {
+                    const myColor = r.white_id === profile.id ? "w" : "b";
+                    const rivalId = myColor === "w" ? r.black_id : r.white_id;
+                    const card = document.createElement("a");
+                    card.href = "crazyhouse.html?room=" + r.id;
+                    card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                    card.innerHTML =
+                        '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(r.variant) + ' · en curso</p>' +
+                        '<p class="font-semibold text-brand-800 dark:text-white">Contra ' + escapeHtml(playerNames[rivalId] || "tu rival") + '</p>' +
+                        '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Juegas con ' + (myColor === "w" ? "blancas ⚪" : "negras ⚫") + ' — toca para continuar →</p>';
+                    activeEl.appendChild(card);
+                });
+            } else {
+                const p = document.createElement("p");
+                p.className = "text-sm text-brand-400 dark:text-brand-500 bg-white dark:bg-brand-900 rounded-xl p-4";
+                p.textContent = "Todavía no tienes ninguna partida asignada. Espera a que tu profesor te asigne un rival.";
+                activeEl.appendChild(p);
+            }
+
+            const grid = document.getElementById("variant-grid");
+            grid.innerHTML = "";
+            VARIANTS.forEach((v) => {
+                const card = document.createElement("div");
+                card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 " + (v.disabled ? "opacity-60" : "");
+                card.innerHTML =
+                    '<span class="text-3xl block mb-2" aria-hidden="true">' + v.emoji + '</span>' +
+                    '<h3 class="font-semibold text-brand-800 dark:text-white mb-1">' + v.label + '</h3>' +
+                    '<p class="text-xs text-brand-400 dark:text-brand-500">' + v.desc + '</p>';
+                grid.appendChild(card);
+            });
+        }
+
+        function variantLabel(id) {
+            const v = VARIANTS.find((x) => x.id === id);
+            return v ? v.emoji + " " + v.label : id;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ---------- Vista del profesor ----------
+        let allStudents = [];
+
+        async function loadStudentsIntoSelects() {
+            const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+            allStudents = data || [];
+            const whiteSelect = document.getElementById("white-select");
+            const blackSelect = document.getElementById("black-select");
+            [whiteSelect, blackSelect].forEach((sel) => {
+                sel.innerHTML = "";
+                allStudents.forEach((s) => {
+                    const opt = document.createElement("option");
+                    opt.value = s.id;
+                    opt.textContent = s.full_name || s.email;
+                    sel.appendChild(opt);
+                });
+            });
+            if (allStudents.length > 1) blackSelect.selectedIndex = 1;
+        }
+
+        function renderRoomCard(row, container) {
+            const card = document.createElement("div");
+            card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
+            const info = document.createElement("div");
+            info.innerHTML =
+                '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(row.variant) + '</p>' +
+                '<p class="font-semibold text-brand-800 dark:text-white text-sm">' + escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?") + '</p>' +
+                '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
+            const actions = document.createElement("div");
+            actions.className = "flex items-center gap-2 shrink-0";
+            const viewBtn = document.createElement("a");
+            viewBtn.href = "crazyhouse.html?room=" + row.id;
+            viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            viewBtn.textContent = "👀 Ver";
+            actions.appendChild(viewBtn);
+            if (row.status === "playing") {
+                const endBtn = document.createElement("button");
+                endBtn.type = "button";
+                endBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors";
+                endBtn.textContent = "Terminar";
+                endBtn.addEventListener("click", async () => {
+                    if (!window.confirm("¿Terminar esta partida sin declarar ganador?")) return;
+                    await sb.from("game_rooms").update({ status: "finished", updated_at: new Date().toISOString() }).eq("id", row.id);
+                    await loadRooms();
+                });
+                actions.appendChild(endBtn);
+            }
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+            delBtn.textContent = "Eliminar";
+            delBtn.addEventListener("click", async () => {
+                if (!window.confirm("¿Eliminar esta partida por completo? No se puede deshacer.")) return;
+                await sb.from("game_rooms").delete().eq("id", row.id);
+                await loadRooms();
+            });
+            actions.appendChild(delBtn);
+            card.append(info, actions);
+            container.appendChild(card);
+        }
+
+        async function loadRooms() {
+            const { data: rooms, error } = await sb.from("game_rooms").select("*").order("created_at", { ascending: false }).limit(100);
+            if (error) { console.error(error); return; }
+            const ids = new Set();
+            (rooms || []).forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+            if (ids.size) {
+                const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
+                (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+            }
+
+            const ongoing = (rooms || []).filter((r) => r.status === "playing");
+            const finished = (rooms || []).filter((r) => r.status === "finished");
+
+            const ongoingEl = document.getElementById("ongoing-list");
+            ongoingEl.innerHTML = "";
+            if (!ongoing.length) ongoingEl.innerHTML = '<p class="text-brand-300 dark:text-brand-600 text-sm">Todavía no hay partidas en curso.</p>';
+            else ongoing.forEach((r) => renderRoomCard(r, ongoingEl));
+
+            const finishedEl = document.getElementById("finished-list");
+            finishedEl.innerHTML = "";
+            if (!finished.length) finishedEl.innerHTML = '<p class="text-brand-300 dark:text-brand-600 text-sm">Todavía no hay partidas terminadas.</p>';
+            else finished.forEach((r) => renderRoomCard(r, finishedEl));
+        }
+
+        function subscribeRoomsList() {
+            sb.channel("game-rooms-list-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, () => loadRooms())
+                .subscribe();
+        }
+
+        document.getElementById("create-room-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("create-room-msg");
+            const whiteId = document.getElementById("white-select").value;
+            const blackId = document.getElementById("black-select").value;
+            const variant = document.getElementById("variant-select").value;
+            if (!whiteId || !blackId) { msg.textContent = "Elige un alumno para cada color."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            if (whiteId === blackId) { msg.textContent = "Elige dos alumnos distintos."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            const { error } = await sb.from("game_rooms").insert({
+                variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
+            });
+            if (error) { console.error(error); msg.textContent = "No se pudo crear la partida: " + error.message; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            msg.textContent = "¡Partida creada!";
+            msg.className = "text-xs text-green-600 dark:text-green-400 min-h-[1em]";
+            await loadRooms();
+        });
+
+        async function renderTeacherView() {
+            document.getElementById("teacher-view").classList.remove("hidden");
+            await loadStudentsIntoSelects();
+            if (allStudents.length < 2) {
+                setStatus("Necesitas al menos 2 alumnos registrados para armar una partida entre ellos.");
+            }
+            await loadRooms();
+            subscribeRoomsList();
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
+            profile = profileData;
+            isTeacher = profile.role === "profesor";
+            document.getElementById("subtitle").textContent = isTeacher
+                ? "Arma partidas entre tus alumnos en distintas modalidades y sigue su avance."
+                : "Otras formas de jugar ajedrez, además de la partida clásica. Tu profesor te asigna el rival.";
+
+            if (isTeacher) await renderTeacherView();
+            else await renderStudentView();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+</body>
+</html>
