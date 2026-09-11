@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprende — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Lecciones interactivas: cómo mueve cada pieza, las reglas especiales y las primeras tácticas — en el mismo tablero, jugando.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b140f'/%3E%3Crect x='18' y='18' width='28' height='28' fill='none' stroke='%23b8935a' stroke-width='3' transform='rotate(45 32 32)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#1b140f;
+    --bg-panel:#251c15;
+    --bg-panel-2:#2f251b;
+    --line:#3c3024;
+    --text:#efe3d1;
+    --text-muted:#a4907a;
+    --brass:#b8935a;
+    --brass-bright:#dcb679;
+    --movimientos:#75935a;
+    --reglas:#c9a23e;
+    --tacticas:#9c4148;
+    --ok:#7fae5f;
+    --bad:#c15a52;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-deep);
+    background-image:radial-gradient(ellipse at top, rgba(184,147,90,0.07), transparent 60%);
+    color:var(--text);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  /* ---------- GATE (idéntica a entreno/index.html: misma contraseña) ---------- */
+  #gate{min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .gate-box{width:100%; max-width:360px; text-align:center;}
+  .gate-mark{width:52px; height:52px; margin:0 auto 18px; border:3px solid var(--brass); transform:rotate(45deg);}
+  .gate-box h1{font-size:1.8rem; margin-bottom:10px;}
+  .gate-box p{color:var(--text-muted); line-height:1.5; margin-bottom:22px;}
+  #pw-form{display:flex; flex-direction:column; gap:10px;}
+  #pw-input{
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Work Sans', sans-serif; font-size:1rem; padding:12px 14px; text-align:center;
+  }
+  #pw-input:focus{border-color:var(--brass);}
+  #pw-error{color:var(--bad); font-size:0.85rem; min-height:1.2em;}
+  #pw-submit{
+    background:var(--brass); color:#1b140f; border:none; font-family:'Work Sans', sans-serif;
+    font-weight:600; font-size:1rem; padding:12px; cursor:pointer; transition:background .2s;
+  }
+  #pw-submit:hover{background:var(--brass-bright);}
+
+  /* ---------- APP ---------- */
+  #app{display:none;}
+  header.top{padding:28px 24px 0; max-width:900px; margin:0 auto;}
+  .top-row{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px 20px; border-bottom:1px solid var(--line); padding-bottom:20px;}
+  header.top h1{font-size:1.7rem;}
+  .back-links{display:flex; gap:14px; font-size:0.85rem; color:var(--text-muted); flex-wrap:wrap;}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:18px 24px 0; flex-wrap:wrap;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Work Sans', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  /* ---------- Lista de lecciones ---------- */
+  .lesson-list{display:flex; flex-direction:column; gap:8px;}
+  .lesson-item{
+    display:flex; align-items:center; gap:12px; text-align:left;
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Work Sans', sans-serif; padding:14px 16px; cursor:pointer;
+    transition:border-color .15s, transform .12s ease-out;
+  }
+  .lesson-item:hover:not(:disabled){border-color:var(--brass);}
+  .lesson-item:active:not(:disabled){transform:scale(0.99);}
+  .lesson-item:disabled{opacity:0.4; cursor:not-allowed;}
+  .lesson-item .mark{font-size:1.2rem; width:1.4em; text-align:center; flex-shrink:0;}
+  .lesson-item .info{flex:1;}
+  .lesson-item .info .name{font-weight:600;}
+  .lesson-item .info .desc{font-size:0.82rem; color:var(--text-muted); margin-top:2px;}
+
+  /* ---------- Vista de lección ---------- */
+  #lesson-view{display:none;}
+  .lesson-header{margin-bottom:14px;}
+  .lesson-header a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
+  .lesson-header h2{font-size:1.4rem; margin-bottom:8px;}
+  .lesson-text{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:520px; margin:0 auto 18px;}
+
+  .board-wrap{max-width:440px; margin:0 auto;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,34px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:#c9b190;}
+  .sq.dark{background:#5a4531;}
+  .sq:disabled{cursor:default;}
+  .piece-white{color:#f5f0e6; text-shadow:-1px -1px 0 #1b140f,1px -1px 0 #1b140f,-1px 1px 0 #1b140f,1px 1px 0 #1b140f,0 2px 3px rgba(0,0,0,.4);}
+  .piece-black{color:#1b140f; text-shadow:-1px -1px 0 #dcb679,1px -1px 0 #dcb679,-1px 1px 0 #dcb679,1px 1px 0 #dcb679,0 1px 2px rgba(0,0,0,.25);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.found{box-shadow:inset 0 0 0 4px var(--ok); background:color-mix(in srgb, var(--ok) 35%, transparent);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(220,182,121,0.55);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(220,182,121,0.85); border-radius:50%; background:none;}
+
+  .lesson-status{margin-top:16px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .lesson-status.ok{color:var(--ok); font-weight:600;}
+  .lesson-status.bad{color:var(--bad);}
+  .lesson-controls{display:flex; gap:10px; justify-content:center; margin-top:18px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Work Sans',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#1b140f; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  @media (prefers-reduced-motion: reduce){
+    #pw-submit, .tab, .lesson-item, .bctrl{transition-property: background-color, border-color, color;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PASSWORD GATE (misma contraseña y almacenamiento que Entreno) ===== -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-mark"></div>
+    <h1>Aprende</h1>
+    <p>Lecciones interactivas de ajedrez.<br>Introduce la contraseña para entrar.</p>
+    <form id="pw-form">
+      <label for="pw-input" class="sr-only">Contraseña</label>
+      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" autofocus>
+      <div id="pw-error" role="alert"></div>
+      <button type="submit" id="pw-submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <h1>Aprende ♟️</h1>
+        <div class="back-links">
+          <a href="index.html">← Base de Problemas</a>
+          <a href="../clases.html">Panel de Clases</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Categorías de lecciones"></nav>
+
+  <main id="main-content">
+    <div id="list-view">
+      <div class="lesson-list" id="lesson-list"></div>
+    </div>
+
+    <div id="lesson-view">
+      <div class="lesson-header">
+        <a href="#" id="back-to-list">← Todas las lecciones</a>
+        <h2 id="lesson-title"></h2>
+      </div>
+      <p class="lesson-text" id="lesson-text"></p>
+      <div class="board-wrap">
+        <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
+      </div>
+      <p class="lesson-status" id="lesson-status" role="status" aria-live="polite"></p>
+      <div class="lesson-controls" id="quiz-controls" style="display:none;">
+        <button type="button" class="bctrl" id="quiz-mate-btn">Es jaque mate</button>
+        <button type="button" class="bctrl" id="quiz-ahogado-btn">Es ahogado</button>
+      </div>
+      <div class="lesson-controls">
+        <button type="button" class="bctrl" id="retry-btn">Reiniciar</button>
+        <button type="button" class="bctrl primary" id="next-btn" style="display:none;">Siguiente lección →</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+/* ---------------- PASSWORD GATE ----------------
+   Misma contraseña y misma clave de sessionStorage que entreno/index.html:
+   si ya se desbloqueó una, la otra no vuelve a pedirla en esta pestaña.
+*/
+const PW_HASH = "03ece971d7c332feeb7171ea3f30c16e96fc7e0f2610b334c64b16f99407cab0";
+
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const pwForm = document.getElementById('pw-form');
+const pwInput = document.getElementById('pw-input');
+const pwError = document.getElementById('pw-error');
+
+function unlock(){
+  gate.style.display = 'none';
+  app.style.display = 'block';
+  sessionStorage.setItem('entreno_unlocked','1');
+  initApp();
+}
+
+pwForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const hash = await sha256(pwInput.value.trim());
+  if(hash === PW_HASH){
+    unlock();
+  } else {
+    pwError.textContent = 'Contraseña incorrecta.';
+    pwInput.value = '';
+    pwInput.focus();
+  }
+});
+
+/* ---------------- CONTENIDO DE LAS LECCIONES ----------------
+   Cada FEN y cada solución de esta lista se generó y se verificó con chess.js
+   (node) antes de escribirla aquí — no son posiciones "a ojo": se comprobó
+   con el motor que las casillas objetivo (o la jugada solución) son
+   exactamente las que chess.js calcula como legales para esa posición.
+*/
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+
+const LESSONS = [
+  // ---------- Movimientos: cómo mueve cada pieza ----------
+  { id:'mov_rey_1', cat:'movimientos', title:'El Rey', type:'squares',
+    text:'El rey se mueve una sola casilla en cualquier dirección: al frente, atrás, a los lados o en diagonal. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/3K4/8/8/8/8 w - - 0 1', square:'d5',
+    targets:["c6","d6","e6","e5","e4","d4","c4","c5"] },
+  { id:'mov_rey_2', cat:'movimientos', title:'El Rey — cerca de otra pieza', type:'squares',
+    text:'El rey nunca puede moverse a una casilla ocupada por una pieza propia. Marca todas las casillas a las que puede llegar.',
+    fen:'6k1/8/8/3K4/2p5/8/8/8 w - - 0 1', square:'d5',
+    targets:["c6","d6","e6","e5","e4","d4","c4","c5"] },
+  { id:'mov_torre_1', cat:'movimientos', title:'La Torre', type:'squares',
+    text:'La torre se mueve en línea recta: por toda su fila o toda su columna, tan lejos como quiera. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/3R4/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["d6","d7","d8","e5","f5","g5","h5","d4","d3","d2","d1","c5","b5","a5"] },
+  { id:'mov_torre_2', cat:'movimientos', title:'La Torre — con piezas para capturar', type:'squares',
+    text:'La torre no puede saltar piezas. Si hay una pieza rival en su camino, puede capturarla — pero ahí se detiene. Marca todas las casillas a las que puede llegar (incluye la captura).',
+    fen:'7k/3p4/8/3R1p2/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["d6","d7","e5","f5","d4","d3","d2","d1","c5","b5","a5"] },
+  { id:'mov_alfil_1', cat:'movimientos', title:'El Alfil', type:'squares',
+    text:'El alfil se mueve en diagonal, tan lejos como quiera, y siempre se queda en casillas del mismo color. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/3B4/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["c6","b7","a8","e6","f7","g8","e4","f3","g2","h1","c4","b3","a2"] },
+  { id:'mov_alfil_2', cat:'movimientos', title:'El Alfil — con piezas para capturar', type:'squares',
+    text:'Igual que la torre, el alfil se detiene al capturar una pieza rival en su camino. Marca todas las casillas a las que puede llegar.',
+    fen:'7k/1p6/8/3B4/5p2/8/8/K7 w - - 0 1', square:'d5',
+    targets:["c6","b7","e6","f7","g8","e4","f3","g2","h1","c4","b3","a2"] },
+  { id:'mov_dama_1', cat:'movimientos', title:'La Dama', type:'squares',
+    text:'La dama es la pieza más poderosa: combina el movimiento de la torre y el alfil. Se mueve en línea recta o en diagonal, tan lejos como quiera. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/3Q4/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["c6","b7","a8","d6","d7","d8","e6","f7","g8","e5","f5","g5","h5","e4","f3","g2","h1","d4","d3","d2","d1","c4","b3","a2","c5","b5","a5"] },
+  { id:'mov_dama_2', cat:'movimientos', title:'La Dama — con piezas para capturar', type:'squares',
+    text:'Marca todas las casillas a las que la dama puede llegar en esta posición, incluidas las capturas.',
+    fen:'7k/3p4/8/1p1Q1p2/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["c6","b7","a8","d6","d7","e6","f7","g8","e5","f5","e4","f3","g2","h1","d4","d3","d2","d1","c4","b3","a2","c5","b5"] },
+  { id:'mov_caballo_1', cat:'movimientos', title:'El Caballo', type:'squares',
+    text:'El caballo se mueve "en L": dos casillas en una dirección y una hacia el lado. Es la única pieza que puede saltar por encima de otras. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/3N4/8/8/8/K7 w - - 0 1', square:'d5',
+    targets:["b6","c7","e7","f6","f4","e3","c3","b4"] },
+  { id:'mov_caballo_2', cat:'movimientos', title:'El Caballo — salta por encima', type:'squares',
+    text:'Aunque esté rodeado de piezas, el caballo salta por encima de ellas sin problema. Marca todas las casillas a las que puede llegar.',
+    fen:'7k/8/2p1p3/3N4/2p1p3/8/8/K7 w - - 0 1', square:'d5',
+    targets:["b6","c7","e7","f6","f4","e3","c3","b4"] },
+  { id:'mov_peon_1', cat:'movimientos', title:'El Peón', type:'squares',
+    text:'El peón avanza una casilla (o dos, si es su primera jugada) en línea recta, y solo puede capturar en diagonal. Haz clic en todas las casillas a las que puede llegar.',
+    fen:'7k/8/8/8/8/8/4P3/K7 w - - 0 1', square:'e2',
+    targets:["e3","e4"] },
+  { id:'mov_peon_2', cat:'movimientos', title:'El Peón — capturas', type:'squares',
+    text:'El peón nunca captura hacia adelante, solo en diagonal. Marca todas las casillas a las que puede llegar desde aquí (avance y capturas).',
+    fen:'7k/8/8/8/3p1p2/4P3/8/K7 w - - 0 1', square:'e3',
+    targets:["e4","d4","f4"] },
+
+  // ---------- Reglas especiales ----------
+  { id:'reg_jaque', cat:'reglas', title:'Jaque — sal del jaque', type:'move',
+    text:'Tu rey está en jaque: lo ataca la torre negra. Cuando estás en jaque, es obligatorio resolverlo en tu jugada. Encuentra una jugada legal que saque a tu rey del jaque.',
+    fen:'4k3/8/8/8/8/8/4r3/4K3 w - - 0 1', anyLegalMove:true },
+  { id:'reg_enroque', cat:'reglas', title:'Enroque corto', type:'move',
+    text:'Si el rey y la torre de ese lado no se han movido todavía, y no hay piezas entre ellos, puedes enrocar: el rey se mueve dos casillas hacia la torre, y la torre salta al otro lado del rey. Haz clic en el rey y luego dos casillas a la derecha.',
+    fen:'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1', solution:{from:'e1',to:'g1'} },
+  { id:'reg_paso', cat:'reglas', title:'Captura al paso', type:'move',
+    text:'Si un peón rival avanza dos casillas de golpe y queda justo al lado de uno de tus peones, puedes capturarlo "al paso" — como si solo hubiera avanzado una. Pero ojo: solo puedes hacerlo en la jugada inmediatamente siguiente. Captura el peón blanco al paso.',
+    fen:'4k3/8/8/8/3pP3/8/8/4K3 b - e3 0 1', solution:{from:'d4',to:'e3'} },
+  { id:'reg_coronacion', cat:'reglas', title:'Coronación', type:'move',
+    text:'Cuando un peón llega hasta el final del tablero, se convierte en otra pieza — lo normal es elegir dama, la más fuerte. Lleva el peón hasta la última fila para coronarlo.',
+    fen:'8/4P3/8/8/8/8/8/4K2k w - - 0 1', solution:{from:'e7',to:'e8'} },
+  { id:'reg_quiz', cat:'reglas', title:'¿Jaque mate o ahogado?', type:'quiz',
+    text:'Si el rey en turno está en jaque y no tiene ninguna jugada legal, es JAQUE MATE: la partida termina. Si NO está en jaque pero tampoco tiene ninguna jugada legal, es AHOGADO: la partida es tablas. Mira cada posición y decide cuál es.',
+    rounds:[
+      { fen:'rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3', answer:'mate' },
+      { fen:'7k/5Q2/6K1/8/8/8/8/8 b - - 0 1', answer:'ahogado' },
+    ] },
+
+  // ---------- Tácticas básicas ----------
+  { id:'tac_horquilla', cat:'tacticas', title:'Horquilla', type:'move',
+    text:'Una horquilla ataca dos piezas rivales a la vez con una sola pieza, obligando al rival a perder una de ellas. Encuentra el salto de caballo que ataca al rey Y a la dama negra al mismo tiempo.',
+    fen:'6k1/8/2q5/3N4/8/8/8/K7 w - - 0 1', solution:{from:'d5',to:'e7'} },
+  { id:'tac_clavada', cat:'tacticas', title:'Clavada', type:'move',
+    text:'Una pieza está "clavada" cuando no puede moverse sin dejar expuesta a una pieza más valiosa detrás de ella — aquí, su propio rey. El caballo negro está clavado por tu torre y no se puede mover: captúralo gratis.',
+    fen:'4k3/8/4n3/8/2B1R3/8/8/4K3 w - - 0 1', solution:{from:'c4',to:'e6'} },
+  { id:'tac_descubierta', cat:'tacticas', title:'Ataque descubierto', type:'move',
+    text:'Un ataque descubierto pasa cuando mueves una pieza y, al apartarse, deja a otra pieza tuya atacando algo que antes tapaba. Mueve el caballo y descubre el jaque de tu alfil.',
+    fen:'4k3/8/8/8/B7/2N5/8/6K1 w - - 0 1', solution:{from:'c3',to:'d5'} },
+  { id:'tac_doble', cat:'tacticas', title:'Ataque doble', type:'move',
+    text:'Un ataque doble amenaza dos piezas rivales a la vez con una sola pieza de largo alcance (a diferencia de la horquilla, que siempre es de un caballo). Mueve la dama a la casilla que ataca la torre Y el caballo negros al mismo tiempo.',
+    fen:'r6n/8/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'} },
+];
+
+const CATEGORY_ORDER = ['movimientos','reglas','tacticas'];
+const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas'};
+const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas'};
+
+/* ---------------- Progreso (localStorage, mismo patrón que entreno/index.html) ---------------- */
+function getSolvedSet(){
+  try{ return JSON.parse(localStorage.getItem('entreno_aprende_solved') || '{}'); }catch(e){ return {}; }
+}
+function markSolved(id){
+  const solved = getSolvedSet();
+  solved[id] = true;
+  localStorage.setItem('entreno_aprende_solved', JSON.stringify(solved));
+}
+function isSolved(id){ return !!getSolvedSet()[id]; }
+
+function lessonsFor(cat){ return LESSONS.filter(l => l.cat === cat); }
+function isUnlocked(lesson, list){
+  const idx = list.findIndex(l => l.id === lesson.id);
+  if(idx <= 0) return true;
+  return isSolved(list[idx - 1].id);
+}
+function countSolved(list){ return list.filter(l => isSolved(l.id)).length; }
+
+let currentCategory = 'movimientos';
+let currentLesson = null;
+
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORY_ORDER.forEach((cat) => {
+    const list = lessonsFor(cat);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${countSolved(list)}/${list.length}</span>`;
+    btn.addEventListener('click', () => { currentCategory = cat; showList(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function showList(){
+  document.getElementById('lesson-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+  buildTabs();
+  const list = lessonsFor(currentCategory);
+  const box = document.getElementById('lesson-list');
+  box.innerHTML = '';
+  list.forEach((lesson) => {
+    const unlocked = isUnlocked(lesson, list);
+    const solved = isSolved(lesson.id);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'lesson-item';
+    btn.disabled = !unlocked;
+    btn.innerHTML = `
+      <span class="mark">${solved ? '✅' : (unlocked ? '♟️' : '🔒')}</span>
+      <span class="info">
+        <span class="name">${lesson.title}</span>
+        <span class="desc">${lesson.type === 'squares' ? 'Encuentra todas las casillas' : (lesson.type === 'quiz' ? 'Identifica la posición' : 'Encuentra la jugada')}</span>
+      </span>`;
+    if(unlocked) btn.addEventListener('click', () => openLesson(lesson));
+    box.appendChild(btn);
+  });
+}
+
+/* ---------------- Tablero ---------------- */
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+
+let game = null;
+let selectedSquare = null;
+let foundSet = new Set();
+let quizRoundIndex = 0;
+let lessonLocked = false;
+
+function drawBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  FILES.slice().reverse(); // no-op, mantiene FILES intacto
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      btn.dataset.square = square;
+      const piece = game.get(square);
+      if(piece){
+        const span = document.createElement('span');
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span);
+      }
+      if(currentLesson.type === 'squares' && foundSet.has(square)) btn.classList.add('found');
+      if(square === selectedSquare) btn.classList.add('selected');
+      btn.addEventListener('click', () => onSquareClick(square, btn));
+      board.appendChild(btn);
+    }
+  }
+}
+
+function flashWrong(btn){
+  btn.classList.add('wrong-flash');
+  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
+}
+
+function setStatus(text, cls){
+  const el = document.getElementById('lesson-status');
+  el.textContent = text;
+  el.className = 'lesson-status' + (cls ? ' ' + cls : '');
+}
+
+function finishLesson(){
+  lessonLocked = true;
+  markSolved(currentLesson.id);
+  setStatus('✅ ¡Muy bien! Lección completada.', 'ok');
+  document.getElementById('next-btn').style.display = '';
+}
+
+function onSquareClick(square, btn){
+  if(lessonLocked) return;
+
+  if(currentLesson.type === 'squares'){
+    if(foundSet.has(square)) return;
+    if((currentLesson.targets || []).includes(square)){
+      foundSet.add(square);
+      btn.classList.add('found');
+      const remaining = currentLesson.targets.length - foundSet.size;
+      if(remaining > 0){
+        setStatus(`Bien — te faltan ${remaining} casilla${remaining === 1 ? '' : 's'}.`);
+      } else {
+        finishLesson();
+      }
+    } else {
+      flashWrong(btn);
+      setStatus('Esa casilla no es correcta. Sigue intentando.', 'bad');
+    }
+    return;
+  }
+
+  if(currentLesson.type === 'move'){
+    const piece = game.get(square);
+    if(selectedSquare === null){
+      if(piece && piece.color === game.turn()){
+        selectedSquare = square;
+        drawBoard();
+        highlightTargets(square);
+      }
+      return;
+    }
+    if(square === selectedSquare){
+      selectedSquare = null;
+      drawBoard();
+      return;
+    }
+    const legal = game.moves({ square: selectedSquare, verbose: true });
+    const target = legal.find(m => m.to === square);
+    if(!target){
+      if(piece && piece.color === game.turn()){
+        selectedSquare = square;
+        drawBoard();
+        highlightTargets(square);
+      } else {
+        selectedSquare = null;
+        drawBoard();
+      }
+      return;
+    }
+    const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+    selectedSquare = null;
+    drawBoard();
+    if(!moveResult) return; // no debería pasar: ya se validó con .moves()
+
+    const correct = currentLesson.anyLegalMove ||
+      (currentLesson.solution && moveResult.from === currentLesson.solution.from && moveResult.to === currentLesson.solution.to);
+
+    if(correct){
+      finishLesson();
+    } else {
+      setStatus('Esa jugada es legal, pero no es la que buscamos. Intenta de nuevo.', 'bad');
+      setTimeout(() => { resetLesson(); }, 900);
+    }
+  }
+}
+
+function highlightTargets(square){
+  const legal = game.moves({ square, verbose: true });
+  const board = document.getElementById('board');
+  legal.forEach((m) => {
+    const cell = board.querySelector('[data-square="' + m.to + '"]');
+    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
+  });
+}
+
+function loadQuizRound(){
+  const round = currentLesson.rounds[quizRoundIndex];
+  game = new Chess(round.fen);
+  drawBoard();
+  setStatus(`Posición ${quizRoundIndex + 1} de ${currentLesson.rounds.length}.`);
+}
+
+function resetLesson(){
+  lessonLocked = false;
+  selectedSquare = null;
+  foundSet = new Set();
+  quizRoundIndex = 0;
+  document.getElementById('next-btn').style.display = 'none';
+
+  if(currentLesson.type === 'quiz'){
+    loadQuizRound();
+    document.getElementById('quiz-controls').style.display = 'flex';
+  } else {
+    game = new Chess(currentLesson.fen);
+    document.getElementById('quiz-controls').style.display = 'none';
+    drawBoard();
+    setStatus(currentLesson.type === 'squares'
+      ? `Encuentra ${currentLesson.targets.length} casillas.`
+      : 'Haz clic en la pieza que quieres mover.');
+  }
+}
+
+function openLesson(lesson){
+  currentLesson = lesson;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('lesson-view').style.display = 'block';
+  document.getElementById('lesson-title').textContent = lesson.title;
+  document.getElementById('lesson-text').textContent = lesson.text;
+  resetLesson();
+}
+
+document.getElementById('back-to-list').addEventListener('click', (e) => {
+  e.preventDefault();
+  showList();
+});
+document.getElementById('retry-btn').addEventListener('click', resetLesson);
+document.getElementById('next-btn').addEventListener('click', () => {
+  const list = lessonsFor(currentCategory);
+  const idx = list.findIndex(l => l.id === currentLesson.id);
+  if(idx >= 0 && idx < list.length - 1){
+    openLesson(list[idx + 1]);
+  } else {
+    showList();
+  }
+});
+document.getElementById('quiz-mate-btn').addEventListener('click', () => answerQuiz('mate'));
+document.getElementById('quiz-ahogado-btn').addEventListener('click', () => answerQuiz('ahogado'));
+
+function answerQuiz(answer){
+  if(lessonLocked) return;
+  const round = currentLesson.rounds[quizRoundIndex];
+  if(answer === round.answer){
+    quizRoundIndex++;
+    if(quizRoundIndex >= currentLesson.rounds.length){
+      document.getElementById('quiz-controls').style.display = 'none';
+      finishLesson();
+    } else {
+      setStatus('✅ ¡Correcto! Siguiente posición…', 'ok');
+      setTimeout(loadQuizRound, 700);
+    }
+  } else {
+    setStatus('❌ No es esa — fíjate: ¿el rey está en jaque o no?', 'bad');
+  }
+}
+
+/* ---------------- Arranque ---------------- */
+let appInitialized = false;
+function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  showList();
+}
+
+if(sessionStorage.getItem('entreno_unlocked') === '1'){
+  unlock();
+}
+</script>
+</body>
+</html>
