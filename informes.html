@@ -110,7 +110,7 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas y series de Practicar, por alumno.</p>
+                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar y Mates, por alumno.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
@@ -119,7 +119,8 @@
                                     <th class="py-2 pr-4 font-semibold">🧩 4×4</th>
                                     <th class="py-2 pr-4 font-semibold">🎓 Lecciones</th>
                                     <th class="py-2 pr-4 font-semibold">⚡ Mejor Coordenadas</th>
-                                    <th class="py-2 font-semibold">🏆 Practicar</th>
+                                    <th class="py-2 pr-4 font-semibold">🏆 Practicar</th>
+                                    <th class="py-2 font-semibold">♚ Mates</th>
                                 </tr>
                             </thead>
                             <tbody id="entreno-table-body"></tbody>
@@ -188,15 +189,18 @@
         }
 
         // Resume las filas de training_progress (4x4, aprender, coordenadas,
-        // practicar) de un alumno: ejercicios 4x4 y lecciones de Aprender
-        // distintos completados (una misma actividad puede repetirse; solo
-        // cuenta una vez), la mejor puntuación de Coordenadas entre todos sus
-        // modos, y las series de Practicar completadas con su mejor
-        // puntuación en estrellas (1-3) cada una.
+        // practicar, mates) de un alumno: ejercicios 4x4 y lecciones de
+        // Aprender distintos completados (una misma actividad puede
+        // repetirse; solo cuenta una vez), la mejor puntuación de
+        // Coordenadas entre todos sus modos, las series de Practicar
+        // completadas con su mejor puntuación en estrellas (1-3) cada una,
+        // y las posiciones de Mates resueltas (distintas), por categoría
+        // (mate en 1/2/3).
         function summarizeTrainingProgress(rows) {
             const puzzles = new Set(), lessons = new Set();
             let bestCoord = 0;
             const practiceSets = {}; // set_id -> mejores estrellas (1-3) logradas
+            const matesSolved = { mate1: new Set(), mate2: new Set(), mate3: new Set() };
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
@@ -204,11 +208,18 @@
                 else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
                 else if (r.activity === "practicar" && d.set_id && typeof d.stars === "number") {
                     practiceSets[d.set_id] = Math.max(practiceSets[d.set_id] || 0, d.stars);
+                } else if (r.activity === "mates" && d.puzzle_id && matesSolved[d.category]) {
+                    matesSolved[d.category].add(d.puzzle_id);
                 }
             });
             const practiceValues = Object.values(practiceSets);
             const practiceStars = practiceValues.reduce((a, b) => a + b, 0);
-            return { puzzles: puzzles.size, lessons: lessons.size, bestCoord, practiceCompleted: practiceValues.length, practiceStars };
+            const matesTotal = matesSolved.mate1.size + matesSolved.mate2.size + matesSolved.mate3.size;
+            return {
+                puzzles: puzzles.size, lessons: lessons.size, bestCoord,
+                practiceCompleted: practiceValues.length, practiceStars,
+                matesTotal, mate1: matesSolved.mate1.size, mate2: matesSolved.mate2.size, mate3: matesSolved.mate3.size,
+            };
         }
 
         function barRow(name, correct, total) {
@@ -261,7 +272,8 @@
                 statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
-                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas")
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
+                statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`)
             );
 
             const historyEl = document.getElementById("student-history");
@@ -357,7 +369,7 @@
             const entrenoBody = document.getElementById("entreno-table-body");
             entrenoBody.innerHTML = "";
             if (!students || !students.length) {
-                entrenoBody.innerHTML = '<tr><td colspan="4" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+                entrenoBody.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
                     const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
@@ -367,8 +379,9 @@
                     const tdPuzzles = document.createElement("td"); tdPuzzles.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPuzzles.textContent = String(entreno.puzzles);
                     const tdLessons = document.createElement("td"); tdLessons.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdLessons.textContent = String(entreno.lessons);
                     const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdCoord.textContent = entreno.bestCoord || "—";
-                    const tdPractice = document.createElement("td"); tdPractice.className = "py-2 text-brand-500 dark:text-brand-400"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
-                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice);
+                    const tdPractice = document.createElement("td"); tdPractice.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
+                    const tdMates = document.createElement("td"); tdMates.className = "py-2 text-brand-500 dark:text-brand-400"; tdMates.textContent = entreno.matesTotal ? `${entreno.matesTotal} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3})` : "—";
+                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates);
                     entrenoBody.appendChild(tr);
                 });
             }
