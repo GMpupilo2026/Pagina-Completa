@@ -81,7 +81,7 @@
 
     <div id="app" class="hidden pt-20 pb-16">
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a id="back-to-panel-link" href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Panel de Clases</a>
+            <a id="back-to-panel-link" href="clases.html" class="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors mb-3">← 🏛️ Academia</a>
             <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo ♟️</h1>
                 <div class="flex items-center gap-3">
@@ -96,13 +96,15 @@
             <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div>
                     <!-- Editor visual del tablero (solo profesor): se abre con "✏️ Editar" de la
-                         barra de abajo, ARRIBA del tablero para no tener que bajar a buscarlo cada
-                         vez que se activa. -->
-                    <div id="board-edit-panel" class="hidden mb-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
-                        <div class="flex items-center justify-between gap-2 mb-2">
+                         barra de abajo. Flotante (position: fixed, arrastrable desde el título) en
+                         vez de empujar el tablero hacia abajo — es una herramienta temporal, se usa
+                         un momento y se cierra, no debería ocupar espacio fijo en la página. -->
+                    <div id="board-edit-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div id="board-edit-header" class="flex items-center justify-between gap-2 mb-1 cursor-move select-none" title="Arrastra para mover este panel">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">✏️ Editando el tablero</h2>
-                            <span class="text-xs text-brand-400 dark:text-brand-500">No se ve en vivo hasta que apliques</span>
+                            <button type="button" id="board-edit-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar editor (descarta los cambios)" aria-label="Cerrar editor">✖</button>
                         </div>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">No se ve en vivo hasta que apliques.</p>
                         <p class="text-xs text-brand-500 dark:text-brand-400 mb-2">Toca una pieza de aquí abajo y luego una o varias casillas del tablero para colocarla; toca 🗑️ y luego una casilla para quitar esa pieza. Vuelve a tocar la herramienta activa para soltarla. Sin ninguna herramienta activa, tocar una pieza ya puesta y luego otra casilla la mueve ahí.</p>
 
                         <div class="flex flex-wrap gap-1 mb-1.5" role="group" aria-label="Piezas blancas para colocar">
@@ -182,7 +184,7 @@
                          navegar jugadas (solo profesor) -->
                     <div class="flex items-center justify-center flex-wrap gap-2 mt-3">
                         <button id="flip-board-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Girar el tablero (negras abajo)">⇅ Girar</button>
-                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Mostrar coordenadas">🔢 Coordenadas</button>
+                        <button id="show-coords-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Mostrar el nombre de cada casilla (las coordenadas de afuera siempre se ven)">🔢 Coordenadas</button>
                         <button id="raise-hand-btn" type="button" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" aria-pressed="false" title="Pedirle la palabra al profesor">🖐️ Levantar la mano</button>
                         <span id="move-nav" class="hidden items-center gap-1 ml-1">
                             <button id="move-nav-first" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Primera jugada">⏮</button>
@@ -255,8 +257,9 @@
                         </div>
                     </div>
 
-                    <!-- Partidas guardadas: visible para todos -->
-                    <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                    <!-- Partidas guardadas: solo el profesor (las guarda y las descarga); a los
+                         alumnos no les aporta nada y quitarla les despeja la pantalla. -->
+                    <div id="saved-games-card" class="hidden mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Partidas guardadas</h2>
                         <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Descarga el PGN de cualquier partida guardada por el profesor.</p>
                         <ul id="saved-games-list" class="space-y-2 text-sm">
@@ -791,6 +794,7 @@
             board = new ClasesBoard(container, {
                 interactive: isTeacher,
                 allowArrows: isTeacher,
+                externalCoords: true,
                 onMove: () => {
                     pushBoardState();
                     updateTurnIndicator();
@@ -945,10 +949,56 @@
             document.getElementById("edit-castle-bq").checked = castling.includes("q");
         }
 
+        // ---------- Panel flotante del editor de tablero: arrastrable desde el título ----------
+        // Es una herramienta temporal (se abre, se usa un momento, se cierra), así que flota por
+        // encima de la página en vez de empujar el tablero hacia abajo, y se puede arrastrar a un
+        // lado si tapa algo que el profesor necesita ver.
+        function resetBoardEditPanelPosition() {
+            const panel = document.getElementById("board-edit-panel");
+            panel.style.top = "88px";
+            panel.style.right = "16px";
+            panel.style.left = "auto";
+        }
+        (function setupBoardEditDrag() {
+            const panel = document.getElementById("board-edit-panel");
+            const handle = document.getElementById("board-edit-header");
+            let dragging = false, offsetX = 0, offsetY = 0;
+            function clamp(x, y) {
+                const maxX = Math.max(8, window.innerWidth - panel.offsetWidth - 8);
+                const maxY = Math.max(8, window.innerHeight - panel.offsetHeight - 8);
+                return { x: Math.min(Math.max(8, x), maxX), y: Math.min(Math.max(8, y), maxY) };
+            }
+            function start(e) {
+                dragging = true;
+                const rect = panel.getBoundingClientRect();
+                const p = e.touches ? e.touches[0] : e;
+                offsetX = p.clientX - rect.left;
+                offsetY = p.clientY - rect.top;
+                e.preventDefault();
+            }
+            function move(e) {
+                if (!dragging) return;
+                const p = e.touches ? e.touches[0] : e;
+                const { x, y } = clamp(p.clientX - offsetX, p.clientY - offsetY);
+                panel.style.left = x + "px";
+                panel.style.top = y + "px";
+                panel.style.right = "auto";
+                e.preventDefault();
+            }
+            function stop() { dragging = false; }
+            handle.addEventListener("mousedown", start);
+            handle.addEventListener("touchstart", start, { passive: false });
+            window.addEventListener("mousemove", move);
+            window.addEventListener("touchmove", move, { passive: false });
+            window.addEventListener("mouseup", stop);
+            window.addEventListener("touchend", stop);
+        })();
+
         document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
             const active = !board.freeMode;
             board.setFreeMode(active);
             setEditTool(null);
+            if (active) resetBoardEditPanelPosition();
             document.getElementById("board-edit-panel").classList.toggle("hidden", !active);
             document.getElementById("free-mode-load-msg").textContent = "";
             const freeModeBtn = document.getElementById("toggle-free-mode-btn");
@@ -958,6 +1008,10 @@
             setStatus(active
                 ? "Editando el tablero: toca una pieza de la paleta y luego el tablero para colocarla, o carga una posición por FEN o PGN. Los alumnos siguen viendo la posición anterior hasta que apliques los cambios."
                 : "");
+        });
+
+        document.getElementById("board-edit-close-btn").addEventListener("click", () => {
+            document.getElementById("free-mode-cancel-btn").click();
         });
 
         document.getElementById("free-mode-fen-load-btn").addEventListener("click", () => {
@@ -1224,7 +1278,11 @@
             if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
 
             if (!results.length) {
-                linesEl.innerHTML = '<li class="text-brand-400">No disponible</li>';
+                // getLastError() distingue "no llegó a cargar" (worker/wasm falló o tardó
+                // demasiado) de "cargó pero no encontró nada" — antes ambos casos se veían
+                // igual ("No disponible") y no había forma de saber si valía la pena reintentar.
+                const reason = ClasesEngine.getLastError && ClasesEngine.getLastError();
+                linesEl.innerHTML = '<li class="text-red-500 dark:text-red-400">' + (reason || "No disponible") + "</li>";
                 document.getElementById("engine-eval-bar").style.width = "50%";
                 return;
             }
@@ -1404,8 +1462,11 @@
         async function loadChatMessages() {
             const threadId = currentChatThreadId();
             if (!threadId) { renderChatMessages([]); return; }
+            // "profiles!class_chat_messages_sender_id_fkey": la tabla tiene DOS relaciones
+            // con profiles (sender_id y student_id), así que hay que decirle a PostgREST
+            // cuál usar — sin esto la consulta fallaba (ambigua) y el chat nunca cargaba.
             const { data, error } = await sb.from("class_chat_messages")
-                .select("*, profiles(full_name, email, role)")
+                .select("*, profiles!class_chat_messages_sender_id_fkey(full_name, email, role)")
                 .eq("student_id", threadId)
                 .order("created_at", { ascending: false })
                 .limit(150);
@@ -2128,6 +2189,7 @@
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
                 document.getElementById("chat-student-picker").classList.remove("hidden");
+                document.getElementById("saved-games-card").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
@@ -2145,8 +2207,10 @@
             subscribePresence();
             await checkOpenClassSession();
             subscribeClassSessions();
-            await loadSavedGames();
-            subscribeSavedGames();
+            if (isTeacher) {
+                await loadSavedGames();
+                subscribeSavedGames();
+            }
             await loadVariantTree();
             subscribeVariants();
             await loadCurrentQuestion();

@@ -42,6 +42,7 @@ body { -webkit-font-smoothing: antialiased; }
    color como con las piezas de ajedrez clásicas. Tamaño relativo (em) al font-size ya
    fijado para la casilla, así escala igual de bien en cualquier tablero del sitio. */
 .theme-token {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -53,6 +54,26 @@ body { -webkit-font-smoothing: antialiased; }
 }
 .theme-token-white { background: #f0f4f8; box-shadow: inset 0 0 0 2px #1e293b, 0 2px 3px rgba(0, 0, 0, 0.3); }
 .theme-token-black { background: #1e293b; box-shadow: inset 0 0 0 2px #f0f4f8, 0 1px 2px rgba(0, 0, 0, 0.25); }
+/* Marca chiquita con la inicial de la pieza (R/D/T/A/C/P) sobre cada ficha de tema
+   "divertido": un emoji de dragón o de tortuga no deja claro por sí solo si es el rey
+   o la torre, así que no hay que adivinar. Tamaño fijo en px (no relativo al emoji, que
+   ya de por sí achica en casillas chicas) para que siga siendo legible en cualquier
+   tamaño de tablero. */
+.theme-token-label {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #102a43;
+  box-shadow: 0 0 0 1.5px rgba(16, 42, 67, 0.35);
+  pointer-events: none;
+}
+.dark .theme-token-label { background: #0a1f33; color: #f0f4f8; box-shadow: 0 0 0 1.5px rgba(240, 244, 248, 0.35); }
 
 /* Vista previa de cada tema en Configuración (configuracion.html): 3 mini-casillas con
    una pieza de muestra (rey blanco, dama negra, caballo blanco) para ver el estilo real
@@ -95,3 +116,32 @@ body { -webkit-font-smoothing: antialiased; }
 .example-sq-light { background: #f0f4f8; }
 .example-sq-dark { background: #486581; }
 .example-readout p { margin: 2px 0; }
+
+/* Coordenadas a-h/1-8 FUERA del tablero principal, como un tablero físico — siempre
+   visibles (js/clases-board.js, opts.externalCoords). Grid de 2x2: números a la
+   izquierda (alineados fila por fila con las 8 filas del tablero), letras abajo
+   (alineadas columna por columna). El botón "🔢 Coordenadas" es un tema aparte: repite
+   el nombre de cada una de las 64 casillas ADENTRO del tablero (ver .square en render()). */
+.board-coords-outer {
+  display: grid;
+  grid-template-columns: 1.15em 1fr;
+  grid-template-rows: 1fr 1.15em;
+  gap: 3px;
+  width: 100%;
+}
+.board-coords-ranks { grid-column: 1; grid-row: 1; display: grid; grid-template-rows: repeat(8, 1fr); }
+.board-coords-files { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: repeat(8, 1fr); }
+.board-coords-board { grid-column: 2; grid-row: 1; min-width: 0; }
+.board-coords-ranks span,
+.board-coords-files span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #627d98; /* brand-400 */
+}
+.dark .board-coords-ranks span,
+.dark .board-coords-files span {
+  color: #9fb3c8; /* brand-300 */
+}

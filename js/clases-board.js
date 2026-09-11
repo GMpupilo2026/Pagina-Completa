@@ -27,6 +27,11 @@
     b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
   };
   const PIECE_NAME = { p: "peón", n: "caballo", b: "alfil", r: "torre", q: "dama", k: "rey" };
+  // Iniciales en español (notación de ajedrez en español: R/D/T/A/C, peón sin letra en
+  // notación real, pero aquí sí se marca para no dejar dudas): un emoji "divertido" de
+  // los temas de Configuración no siempre deja claro qué pieza es, así que se le pega
+  // esta marca chiquita encima (ver .theme-token-label en css/styles.css).
+  const TYPE_LABEL = { k: "R", q: "D", r: "T", b: "A", n: "C", p: "P" };
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const MARK_COLOR = "#de911d"; // accent-500
 
@@ -117,6 +122,66 @@
       this.el.addEventListener("contextmenu", this._onContextMenu);
       this.el.addEventListener("mousedown", this._onMouseDown);
       this.el.addEventListener("mouseup", this._onMouseUp);
+
+      // Coordenadas a-h/1-8 FUERA del tablero (como uno físico), siempre visibles —
+      // independientes de this.showCoords, que ahora en cambio repite el nombre de cada
+      // casilla ADENTRO (ver render()). Solo se pide en el tablero principal: los overlays
+      // de pregunta/práctica y las miniaturas no lo necesitan.
+      if (opts.externalCoords) this._setupExternalCoords();
+    }
+
+    _setupExternalCoords() {
+      const parent = this.el.parentElement;
+      const outer = document.createElement("div");
+      outer.className = "board-coords-outer";
+      // Mismo ancho máximo que traía #chessboard directamente, para que el tablero se
+      // vea igual de grande que antes con las coordenadas ahora afuera.
+      const maxWidthMatch = this.el.className.match(/max-w-\[(\d+)px\]/);
+      if (maxWidthMatch) {
+        outer.style.maxWidth = maxWidthMatch[1] + "px";
+        this.el.classList.remove(maxWidthMatch[0]);
+      }
+      parent.insertBefore(outer, this.el);
+
+      const ranks = document.createElement("div");
+      ranks.className = "board-coords-ranks";
+      ranks.setAttribute("aria-hidden", "true");
+
+      const boardWrap = document.createElement("div");
+      boardWrap.className = "board-coords-board";
+
+      const files = document.createElement("div");
+      files.className = "board-coords-files";
+      files.setAttribute("aria-hidden", "true");
+
+      outer.appendChild(ranks);
+      outer.appendChild(boardWrap);
+      outer.appendChild(files);
+      boardWrap.appendChild(this.el);
+
+      this._coordRanksEl = ranks;
+      this._coordFilesEl = files;
+      this._renderExternalCoords();
+    }
+
+    // Reconstruye las etiquetas de afuera según la orientación actual (girar el tablero
+    // invierte el orden, igual que squaresInOrder()).
+    _renderExternalCoords() {
+      if (!this._coordRanksEl) return;
+      const rankOrder = this.flipped ? ["1", "2", "3", "4", "5", "6", "7", "8"] : ["8", "7", "6", "5", "4", "3", "2", "1"];
+      const fileOrder = this.flipped ? FILES.slice().reverse() : FILES;
+      this._coordRanksEl.innerHTML = "";
+      for (const r of rankOrder) {
+        const span = document.createElement("span");
+        span.textContent = r;
+        this._coordRanksEl.appendChild(span);
+      }
+      this._coordFilesEl.innerHTML = "";
+      for (const f of fileOrder) {
+        const span = document.createElement("span");
+        span.textContent = f;
+        this._coordFilesEl.appendChild(span);
+      }
     }
 
     // Carga la posición reproduciendo la lista de jugadas (SAN) desde el inicio, para que
@@ -423,6 +488,11 @@
           if (themedEmoji) {
             span.textContent = themedEmoji;
             span.className = "theme-token " + (piece.color === "w" ? "theme-token-white" : "theme-token-black");
+            const label = document.createElement("span");
+            label.className = "theme-token-label";
+            label.textContent = TYPE_LABEL[piece.type];
+            label.setAttribute("aria-hidden", "true");
+            span.appendChild(label);
           } else {
             span.textContent = GLYPH[piece.color][piece.type];
             span.className = piece.color === "w" ? "piece-white" : "piece-black";
@@ -441,25 +511,17 @@
           btn.appendChild(dot);
         }
 
+        // El botón "🔢 Coordenadas" ya no solo marca el borde (eso ahora vive siempre
+        // afuera del tablero, ver _setupExternalCoords): repite el nombre de la casilla
+        // (ej. "e4") en las 64, para practicar a reconocerlas rápido de un vistazo.
         if (this.showCoords) {
-          const row = Math.floor(i / 8), col = i % 8;
           const light = isLightSquare(square);
-          const labelCls = "absolute text-[9px] sm:text-[10px] leading-none font-semibold pointer-events-none " +
-            (light ? "text-brand-500 " : "text-brand-100 ");
-          if (col === 0) {
-            const rankLabel = document.createElement("span");
-            rankLabel.setAttribute("aria-hidden", "true");
-            rankLabel.className = labelCls + "top-0.5 left-1";
-            rankLabel.textContent = square[1];
-            btn.appendChild(rankLabel);
-          }
-          if (row === 7) {
-            const fileLabel = document.createElement("span");
-            fileLabel.setAttribute("aria-hidden", "true");
-            fileLabel.className = labelCls + "bottom-0.5 right-1";
-            fileLabel.textContent = square[0];
-            btn.appendChild(fileLabel);
-          }
+          const label = document.createElement("span");
+          label.setAttribute("aria-hidden", "true");
+          label.className = "absolute top-0.5 left-1 text-[9px] sm:text-[10px] leading-none font-semibold pointer-events-none " +
+            (light ? "text-brand-500" : "text-brand-100");
+          label.textContent = square;
+          btn.appendChild(label);
         }
 
         if (canInteract) {
@@ -472,6 +534,7 @@
       // grid no participa del layout (igual que los "dot" de jugada legal dentro de los
       // botones), así que flota encima de las 64 casillas sin romper el grid-cols-8.
       this._drawMarksOverlay();
+      this._renderExternalCoords();
 
       if (this.compact) this._sizeCompactPieces();
 
