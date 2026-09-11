@@ -36,6 +36,25 @@
         el.appendChild(sq);
       }
     }
+    sizePieces(el);
+  }
+
+  // El tamaño de pieza NO se fija en CSS con vw (min(6vw,28px) queda atado al ancho de
+  // la VENTANA, no al del propio tablero — que cada artículo puede envolver en un
+  // .example-board-wrap más angosto o más ancho con max-w-[Npx]): con eso la pieza queda
+  // desproporcionada al tamaño real de la casilla y "se ve mal". En su lugar se mide el
+  // ancho ya renderizado de una casilla y se fija el font-size como fracción de ese
+  // ancho, igual que hace ClasesBoard con sus miniaturas (ver _sizeCompactPieces en
+  // clases-board.js) — así queda bien en cualquier ancho de tablero.
+  function sizePieces(el) {
+    requestAnimationFrame(() => {
+      const square = el.querySelector(".example-sq");
+      if (!square) return;
+      const cellWidth = square.getBoundingClientRect().width;
+      if (!cellWidth) return;
+      const fontPx = Math.max(14, Math.min(cellWidth * 0.62, 32));
+      el.querySelectorAll(".example-sq").forEach((sq) => { sq.style.fontSize = fontPx + "px"; });
+    });
   }
 
   function setActive(btn, active) {
