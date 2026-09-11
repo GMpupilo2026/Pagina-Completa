@@ -53,7 +53,7 @@
                     <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Clases</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
                     <li><a href="inscripcion.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscripción</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -73,7 +73,7 @@
                 <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Clases</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
                 <li><a href="inscripcion.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscripción</a></li>
             </ul>
         </div>
@@ -202,6 +202,16 @@
                         <button id="undo-move-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">↶ Deshacer jugada</button>
                     </div>
 
+                    <!-- Tableros de los alumnos durante la práctica (solo profesor): justo debajo de su
+                         propio tablero, no al final de la página después de toda la barra lateral. -->
+                    <div id="practice-boards-section" class="hidden mt-6">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
+                            <p id="practice-boards-hint" class="text-xs text-brand-400 dark:text-brand-500"></p>
+                        </div>
+                        <div id="practice-boards-grid" class="grid gap-3"></div>
+                    </div>
+
                     <!-- Jugadas: se pueden recorrer hacia atrás sin afectar el tablero en vivo de nadie más.
                          Solo para el profesor — al alumno este apartado le distrae y no lo puede usar de
                          todos modos (navegar el historial es una herramienta del profesor). -->
@@ -231,7 +241,7 @@
                             </div>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="question-undo-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">↶ Deshacer</button>
-                                <button id="question-submit-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Enviar respuesta</button>
+                                <button id="question-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
                                 <button id="question-retry-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Cambiar respuesta</button>
                             </div>
                         </div>
@@ -250,21 +260,12 @@
                                 <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
                             <div class="flex justify-center gap-2 mt-3">
+                                <button id="practice-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
                                 <button id="practice-resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
                                 <button id="practice-retry-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">↻ Reintentar</button>
                             </div>
                             <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
                         </div>
-                    </div>
-
-                    <!-- Partidas guardadas: solo el profesor (las guarda y las descarga); a los
-                         alumnos no les aporta nada y quitarla les despeja la pantalla. -->
-                    <div id="saved-games-card" class="hidden mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                        <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Partidas guardadas</h2>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Descarga el PGN de cualquier partida guardada por el profesor.</p>
-                        <ul id="saved-games-list" class="space-y-2 text-sm">
-                            <li class="text-brand-300 dark:text-brand-600">Todavía no hay partidas guardadas.</li>
-                        </ul>
                     </div>
 
                     <!-- Chat privado con el profesor: cada alumno solo ve su propia conversación;
@@ -299,7 +300,7 @@
                         <div class="flex flex-wrap gap-1.5">
                             <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
                             <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
-                            <button id="save-game-btn" type="button" title="Guardar la partida actual en Partidas guardadas" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar</button>
+                            <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
                             <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
                             <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
                         </div>
@@ -358,10 +359,11 @@
                         <!-- Preguntar a la clase (solo profesor) -->
                         <div id="question-panel" data-tab-panel="preguntar" role="tabpanel" aria-labelledby="teacher-tab-preguntar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Preguntar a la clase</h2>
-                        <div class="flex items-center gap-2 mb-3">
-                            <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-400">Jugadas a responder:</label>
+                        <div class="flex items-center gap-2 mb-1">
+                            <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-400">Jugadas del estudiante:</label>
                             <input id="question-plies-input" type="number" min="1" max="6" value="1" class="w-16 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         </div>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Ej.: con 2, el alumno mueve, el motor responde, y el alumno mueve una vez más — así hasta completar sus jugadas.</p>
                         <button id="ask-question-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors mb-3">❓ Preguntar: ¿qué jugarías?</button>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
@@ -414,15 +416,6 @@
                     </div>
                 </aside>
             </div>
-
-            <!-- Tableros de los alumnos durante la práctica (solo profesor) -->
-            <div id="practice-boards-section" class="hidden mt-8">
-                <div class="flex items-center justify-between gap-2 mb-3">
-                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
-                    <p id="practice-boards-hint" class="text-xs text-brand-400 dark:text-brand-500"></p>
-                </div>
-                <div id="practice-boards-grid" class="grid gap-3"></div>
-            </div>
         </section>
     </div>
 
@@ -452,6 +445,11 @@
         let board = null;
         let isTeacher = false;
         let activePlayerId = null;
+        // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
+        // importa mientras activePlayerId no sea null — el profesor siempre puede mover
+        // cualquier color. Permite, por ejemplo, que un alumno juegue con blancas contra
+        // el profesor en vivo delante de toda la clase, sin poder tocar las piezas negras.
+        let activePlayerColor = "both";
         let presenceChannel = null;
         let engineEnabled = false;
         let engineRequestId = 0;
@@ -470,7 +468,9 @@
         }
 
         function canMoveNow() {
-            return isTeacher || activePlayerId === profile.id;
+            if (isTeacher) return true;
+            if (activePlayerId !== profile.id) return false;
+            return activePlayerColor === "both" || activePlayerColor === board.game.turn();
         }
 
         function updateUndoButton() {
@@ -663,6 +663,7 @@
             board.setPiecesHidden(!isTeacher && !!row.pieces_hidden);
             lastPiecesHidden = !!row.pieces_hidden;
             activePlayerId = row.active_player_id || null;
+            activePlayerColor = row.active_player_color || "both";
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -674,10 +675,16 @@
         function updateAccessForRole() {
             if (isTeacher) return;
             const hasControl = activePlayerId === profile.id;
-            board.setInteractive(hasControl);
-            setStatus(hasControl
-                ? "¡El profesor te dio el control del tablero! Ya puedes mover piezas."
-                : "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.");
+            const colorLabel = activePlayerColor === "w" ? "blancas" : activePlayerColor === "b" ? "negras" : null;
+            const myColorTurn = !hasControl || activePlayerColor === "both" || activePlayerColor === board.game.turn();
+            board.setInteractive(hasControl && myColorTurn);
+            let text = "Bienvenido a la clase. Verás el tablero moverse en vivo mientras el profesor juega.";
+            if (hasControl) {
+                text = colorLabel
+                    ? ("¡El profesor te dio el control con " + colorLabel + "! " + (myColorTurn ? "Ya puedes mover." : "Espera a que le toque a tu color."))
+                    : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
+            }
+            setStatus(text);
         }
 
         async function pushBoardState(extraFields) {
@@ -1064,12 +1071,21 @@
             document.getElementById("board-edit-panel").classList.add("hidden");
             document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
             document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
-            await sb.from("game_state").update({
+            const { error: applyError } = await sb.from("game_state").update({
                 fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
-                arrows: [], circles: [], active_player_id: null,
+                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", 1);
+            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir la posición: " + applyError.message); return; }
             await clearVariantTree();
+            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
+            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
+            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página,
+            // en una red de aula puede tardar o perderse) y mientras tanto el panel se
+            // quedaba mostrando la evaluación de la posición anterior. El tablero del
+            // profesor ya tiene la posición nueva aplicada localmente, así que se le pide
+            // la evaluación directamente aquí.
+            if (isTeacher) updateEngineEval();
             setStatus("Posición aplicada: ya se transmitió a todos los alumnos.");
         });
 
@@ -1113,7 +1129,7 @@
             for (const [studentId, info] of entries) {
                 const hasControl = activePlayerId === studentId;
                 const li = document.createElement("li");
-                li.className = "flex items-center justify-between gap-2" + (info.hand_raised ? " bg-accent-500/10 rounded-lg px-2 py-1 -mx-2" : "");
+                li.className = "flex items-center justify-between gap-2 flex-wrap" + (info.hand_raised ? " bg-accent-500/10 rounded-lg px-2 py-1 -mx-2" : "");
                 const label = document.createElement("span");
                 label.className = "flex items-center gap-2 text-brand-700 dark:text-brand-200 truncate";
                 const dot = document.createElement("span");
@@ -1144,13 +1160,30 @@
                     lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
                     actions.appendChild(lowerBtn);
                 }
+                // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
+                // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
+                // (por ejemplo, para pasar de "solo blancas" a "ambos colores" a mitad de la
+                // demostración), sin tener que quitarle y volver a darle el control.
+                const colorSelect = document.createElement("select");
+                colorSelect.className = "shrink-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-1 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                colorSelect.title = "Con qué color puede mover este alumno";
+                colorSelect.innerHTML =
+                    '<option value="both">♟️ Ambos colores</option>' +
+                    '<option value="w">⚪ Solo blancas</option>' +
+                    '<option value="b">⚫ Solo negras</option>';
+                colorSelect.value = hasControl ? activePlayerColor : "both";
+                colorSelect.addEventListener("change", () => {
+                    if (hasControl) setActivePlayer(studentId, colorSelect.value);
+                });
+                actions.appendChild(colorSelect);
+
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = hasControl
                     ? "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
                     : "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
                 btn.textContent = hasControl ? "Quitar control" : "Dar control";
-                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId));
+                btn.addEventListener("click", () => setActivePlayer(hasControl ? null : studentId, colorSelect.value));
                 actions.appendChild(btn);
                 li.appendChild(label);
                 li.appendChild(actions);
@@ -1158,8 +1191,11 @@
             }
         }
 
-        async function setActivePlayer(studentId) {
-            const { error } = await sb.from("game_state").update({ active_player_id: studentId }).eq("id", 1);
+        async function setActivePlayer(studentId, color) {
+            const { error } = await sb.from("game_state").update({
+                active_player_id: studentId,
+                active_player_color: studentId ? (color || "both") : "both",
+            }).eq("id", 1);
             if (error) {
                 console.error(error);
                 setStatus("No se pudo actualizar el control del tablero: " + error.message);
@@ -1342,55 +1378,10 @@
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
-        function renderSavedGames(games) {
-            const listEl = document.getElementById("saved-games-list");
-            if (!games.length) {
-                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Todavía no hay partidas guardadas.</li>';
-                return;
-            }
-            listEl.innerHTML = "";
-            for (const g of games) {
-                const li = document.createElement("li");
-                li.className = "flex items-center justify-between gap-2";
-                const label = document.createElement("span");
-                label.className = "text-brand-700 dark:text-brand-200 truncate";
-                label.textContent = (g.title || new Date(g.created_at).toLocaleString("es")) + " · " + g.move_count + " jugadas";
-                const actions = document.createElement("span");
-                actions.className = "flex items-center gap-2 shrink-0";
-                const dlBtn = document.createElement("button");
-                dlBtn.type = "button";
-                dlBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-                dlBtn.textContent = "Descargar PGN";
-                dlBtn.addEventListener("click", () => downloadText("clase-" + g.id.slice(0, 8) + ".pgn", g.pgn));
-                actions.appendChild(dlBtn);
-                if (isTeacher) {
-                    const delBtn = document.createElement("button");
-                    delBtn.type = "button";
-                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
-                    delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", async () => {
-                        await sb.from("saved_games").delete().eq("id", g.id);
-                        loadSavedGames();
-                    });
-                    actions.appendChild(delBtn);
-                }
-                li.appendChild(label);
-                li.appendChild(actions);
-                listEl.appendChild(li);
-            }
-        }
-
-        async function loadSavedGames() {
-            const { data, error } = await sb.from("saved_games").select("*").order("created_at", { ascending: false }).limit(50);
-            if (error) { console.error(error); return; }
-            renderSavedGames(data || []);
-        }
-
-        function subscribeSavedGames() {
-            sb.channel("saved-games-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "saved_games" }, () => loadSavedGames())
-                .subscribe();
-        }
+        // La lista completa de partidas guardadas (con descargar/eliminar) vive en
+        // partidas.html — aquí ya no hace falta duplicarla: "💾 Guardar PGN" en la barra
+        // del profesor guarda la fila (para que siga apareciendo ahí) y descarga el PGN
+        // al toque, en un solo clic.
 
         // ---------- Chat privado con el profesor ----------
         // Cada fila pertenece a la conversación de un alumno (student_id), la haya escrito
@@ -1548,6 +1539,10 @@
             if (error) { console.error(error); setStatus("No se pudo vaciar la conversación: " + error.message); }
         });
 
+        // Un solo botón hace las dos cosas: guarda la partida (queda también en la página
+        // Partidas guardadas, por si se necesita después) y descarga el PGN de una vez —
+        // antes había que guardarla aquí y después ir a buscarla en otra lista aparte
+        // solo para descargarla.
         document.getElementById("save-game-btn").addEventListener("click", async () => {
             const moves = board.moves();
             if (!moves.length) { setStatus("No hay jugadas todavía para guardar."); return; }
@@ -1556,13 +1551,22 @@
                 pgn, fen_final: board.fen(), move_count: moves.length, created_by: session.user.id,
             });
             if (error) { console.error(error); setStatus("No se pudo guardar la partida: " + error.message); return; }
-            setStatus("Partida guardada. Ya aparece en \"Partidas guardadas\" para descargar.");
+            downloadText("clase-" + new Date().toISOString().slice(0, 10) + ".pgn", pgn);
+            setStatus("Partida guardada y PGN descargado.");
         });
 
         // ---------- Preguntar a la clase: "¿qué jugarías?" ----------
         let questionBoard = null;
         let currentQuestion = null;
         let myAnswer = null;
+        // El motor responde entre jugada y jugada del alumno (ver expected_plies arriba):
+        // questionMovesDone cuenta cuántas veces YA movió el alumno en este intento;
+        // questionStudentColor es el bando con el que juega (el que le toca mover en el
+        // FEN de la pregunta); questionEngineBusy evita pedirle dos jugadas a la vez.
+        let questionMovesDone = 0;
+        let questionStudentColor = "w";
+        let questionEngineBusy = false;
+        let questionEngineLastFailed = false;
 
         function subscribeQuestions() {
             sb.channel("questions-changes")
@@ -1679,9 +1683,15 @@
             try {
                 // "Su mejor nivel": una sola línea, con más tiempo de cálculo que el panel de
                 // análisis normal, ya que aquí se hace una sola vez por pregunta.
+                // expectedPlies es cuántas veces mueve EL ALUMNO (el motor responde entre cada
+                // una, menos después de la última): la línea de referencia tiene entonces
+                // 2*expectedPlies-1 medias-jugadas en total (alumno, motor, alumno, motor…,
+                // alumno), no expectedPlies — así la comparación es contra la MISMA cantidad de
+                // jugadas que el alumno en verdad hace.
+                const totalPlies = expectedPlies * 2 - 1;
                 const results = await ClasesEngine.analyze(fen, 1, 4000);
                 if (!results.length) return;
-                const sans = ClasesEngine.pvToSan(fen, results[0].pvUci, expectedPlies);
+                const sans = ClasesEngine.pvToSan(fen, results[0].pvUci, totalPlies);
                 const answer = { moves: sans, score: { type: results[0].type, value: results[0].value } };
                 await sb.from("question_engine_answers").insert({ question_id: questionId, answer });
                 if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(answer);
@@ -1704,12 +1714,6 @@
         });
 
         // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
-        function updateQuestionBoardButtons() {
-            const hasMoves = questionBoard.moves().length > 0;
-            document.getElementById("question-submit-btn").classList.toggle("hidden", !hasMoves);
-            document.getElementById("question-undo-btn").classList.toggle("hidden", !hasMoves);
-        }
-
         function updateAnswerFeedbackUI() {
             if (!myAnswer) return;
             const movesText = (myAnswer.moves || []).join(" ");
@@ -1717,6 +1721,87 @@
             if (myAnswer.is_correct === true) text = "Tu respuesta: " + movesText + " — ✅ ¡Correcto!";
             else if (myAnswer.is_correct === false) text = "Tu respuesta: " + movesText + " — ❌ Revisa de nuevo";
             document.getElementById("question-status-text").textContent = text;
+        }
+
+        // Refleja en pantalla de quién es el turno: mientras responde una pregunta ya
+        // enviada (myAnswer truthy) esta función no toca nada, el feedback final manda.
+        function updateQuestionCardStatus() {
+            if (!currentQuestion || myAnswer) return;
+            const remaining = currentQuestion.expected_plies - questionMovesDone;
+            const myTurn = questionBoard.game.turn() === questionStudentColor;
+            questionBoard.setInteractive(myTurn && !questionEngineBusy);
+            document.getElementById("question-undo-btn").classList.toggle("hidden", !(myTurn && questionMovesDone > 0 && !questionEngineBusy));
+            const stuck = questionEngineLastFailed && !myTurn && !questionEngineBusy;
+            document.getElementById("question-retry-engine-btn").classList.toggle("hidden", !stuck);
+            if (questionEngineBusy) {
+                document.getElementById("question-status-text").textContent = "El motor está pensando…";
+            } else if (stuck) {
+                document.getElementById("question-status-text").textContent = "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo.";
+            } else if (myTurn) {
+                document.getElementById("question-status-text").textContent = remaining > 1
+                    ? ("Tu turno — te quedan " + remaining + " jugadas.")
+                    : "Tu turno — esta es tu última jugada.";
+            }
+        }
+
+        // Le pide al motor su respuesta a la jugada del alumno y la aplica (con reintentos,
+        // igual que requestEngineReply() en Practicar contra el motor — un solo hiccup
+        // transitorio no debería dejar al alumno esperando para siempre). Usa PracticeEngine
+        // a máxima fuerza (corre en el navegador de CADA alumno, no en el del profesor) en
+        // vez de ClasesEngine, que es solo para el panel de análisis del profesor.
+        async function requestQuestionEngineReply() {
+            if (questionEngineBusy) return;
+            if (!currentQuestion || currentQuestion.closed_at || myAnswer) return;
+            if (questionBoard.game.turn() === questionStudentColor) return; // ya le toca al alumno
+
+            questionEngineBusy = true;
+            questionEngineLastFailed = false;
+            updateQuestionCardStatus();
+            let uci = null;
+            for (let attempt = 0; attempt < 3 && !uci; attempt++) {
+                const fen = questionBoard.fen();
+                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, "max") : null;
+                if (!currentQuestion || currentQuestion.closed_at || myAnswer) { questionEngineBusy = false; return; }
+            }
+            questionEngineBusy = false;
+
+            if (uci) {
+                const move = questionBoard.game.move({
+                    from: uci.slice(0, 2), to: uci.slice(2, 4),
+                    promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
+                });
+                if (move) questionBoard.render();
+            } else {
+                questionEngineLastFailed = true;
+            }
+            updateQuestionCardStatus();
+        }
+
+        async function submitQuestionAnswer() {
+            const moves = questionBoard.moves();
+            const { error } = await sb.from("question_answers").upsert({
+                question_id: currentQuestion.id, student_id: profile.id, moves, resulting_fen: questionBoard.fen(),
+            }, { onConflict: "question_id,student_id" });
+            if (error) { console.error(error); setStatus("No se pudo enviar tu respuesta: " + error.message); return; }
+            myAnswer = { moves, resulting_fen: questionBoard.fen(), is_correct: null };
+            questionBoard.setInteractive(false);
+            document.getElementById("question-undo-btn").classList.add("hidden");
+            document.getElementById("question-retry-engine-btn").classList.add("hidden");
+            document.getElementById("question-retry-btn").classList.remove("hidden");
+            updateAnswerFeedbackUI();
+        }
+
+        // Se llama cada vez que el alumno mueve en el tablero de la pregunta. Si esa era su
+        // última jugada permitida, se envía la respuesta de una vez (ya no hace falta un
+        // botón "Enviar respuesta" aparte); si no, le toca responder al motor.
+        async function onQuestionStudentMove() {
+            questionMovesDone++;
+            if (questionMovesDone >= currentQuestion.expected_plies) {
+                await submitQuestionAnswer();
+                return;
+            }
+            updateQuestionCardStatus();
+            await requestQuestionEngineReply();
         }
 
         async function renderStudentQuestionCard() {
@@ -1727,7 +1812,7 @@
             card.classList.remove("hidden");
             document.getElementById("question-prompt-text").textContent = currentQuestion.prompt;
             document.getElementById("question-plies-hint").textContent = currentQuestion.expected_plies > 1
-                ? ("Indica tu mejor secuencia de " + currentQuestion.expected_plies + " jugadas.")
+                ? ("Mueve " + currentQuestion.expected_plies + " veces — el motor responde entre cada una de tus jugadas.")
                 : "Indica tu mejor jugada.";
 
             const { data: existing } = await sb.from("question_answers").select("*")
@@ -1738,54 +1823,54 @@
                 questionBoard = new ClasesBoard(document.getElementById("question-board"), {
                     interactive: false,
                     allowArrows: false,
-                    onMove: () => updateQuestionBoardButtons(),
+                    onMove: () => onQuestionStudentMove(),
                 });
             }
+            // El bando del alumno es el que le toca mover en la posición de la pregunta —
+            // el motor siempre juega el otro bando, respondiendo entre jugada y jugada.
+            questionStudentColor = currentQuestion.fen.split(" ")[1] === "b" ? "b" : "w";
+            questionMovesDone = 0;
+            questionEngineLastFailed = false;
             questionBoard.loadFen(currentQuestion.fen);
 
             const retryBtn = document.getElementById("question-retry-btn");
             if (myAnswer) {
                 questionBoard.setInteractive(false);
                 retryBtn.classList.remove("hidden");
-                document.getElementById("question-submit-btn").classList.add("hidden");
                 document.getElementById("question-undo-btn").classList.add("hidden");
+                document.getElementById("question-retry-engine-btn").classList.add("hidden");
                 updateAnswerFeedbackUI();
             } else {
-                questionBoard.setInteractive(true);
                 retryBtn.classList.add("hidden");
-                updateQuestionBoardButtons();
-                document.getElementById("question-status-text").textContent = "Mueve las piezas que jugarías.";
+                questionBoard.setInteractive(true);
+                updateQuestionCardStatus();
             }
         }
 
+        // Deshace la última jugada del alumno: como el motor ya respondió entre medio, hay
+        // que deshacer también esa respuesta del motor para volver al turno del alumno.
         document.getElementById("question-undo-btn").addEventListener("click", () => {
-            questionBoard.undo();
-            updateQuestionBoardButtons();
+            if (!questionBoard || questionEngineBusy) return;
+            questionBoard.undo(); // la respuesta del motor
+            const undoneStudentMove = questionBoard.undo(); // la jugada propia anterior
+            if (undoneStudentMove) questionMovesDone = Math.max(0, questionMovesDone - 1);
+            questionEngineLastFailed = false;
+            updateQuestionCardStatus();
         });
 
-        document.getElementById("question-submit-btn").addEventListener("click", async () => {
-            if (!currentQuestion || currentQuestion.closed_at) return;
-            const moves = questionBoard.moves();
-            if (!moves.length) return;
-            const { error } = await sb.from("question_answers").upsert({
-                question_id: currentQuestion.id, student_id: profile.id, moves, resulting_fen: questionBoard.fen(),
-            }, { onConflict: "question_id,student_id" });
-            if (error) { console.error(error); setStatus("No se pudo enviar tu respuesta: " + error.message); return; }
-            myAnswer = { moves, resulting_fen: questionBoard.fen(), is_correct: null };
-            questionBoard.setInteractive(false);
-            document.getElementById("question-submit-btn").classList.add("hidden");
-            document.getElementById("question-undo-btn").classList.add("hidden");
-            document.getElementById("question-retry-btn").classList.remove("hidden");
-            updateAnswerFeedbackUI();
+        document.getElementById("question-retry-engine-btn").addEventListener("click", () => {
+            requestQuestionEngineReply();
         });
 
         document.getElementById("question-retry-btn").addEventListener("click", () => {
             if (!currentQuestion || currentQuestion.closed_at) return;
             questionBoard.loadFen(currentQuestion.fen);
+            questionMovesDone = 0;
+            questionEngineLastFailed = false;
+            myAnswer = null;
             questionBoard.setInteractive(true);
             document.getElementById("question-retry-btn").classList.add("hidden");
-            updateQuestionBoardButtons();
-            document.getElementById("question-status-text").textContent = "Mueve las piezas que jugarías.";
+            updateQuestionCardStatus();
         });
 
         // ---------- Practicar contra el motor ----------
@@ -2060,16 +2145,23 @@
             practiceBoard.setFlipped(myPracticeGame.student_color === "b");
             practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
             updatePracticeCardInteractivity();
+            // Recuperación automática: si al entrar (o recargar la página a mitad de una
+            // partida) resulta que le toca mover al motor y no al alumno, es que se había
+            // quedado esperando una respuesta que nunca llegó — se la vuelve a pedir sin
+            // que el alumno tenga que hacer nada.
+            requestEngineReply(myPracticeGame.id, myPracticeGame.attempts || 1);
         }
 
         function updatePracticeCardInteractivity() {
             const statusEl = document.getElementById("practice-card-status");
             const resignBtn = document.getElementById("practice-resign-btn");
             const retryBtn = document.getElementById("practice-retry-btn");
+            const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
                 statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
                 resignBtn.classList.add("hidden");
+                retryEngineBtn.classList.add("hidden");
                 retryBtn.classList.toggle("hidden", !myPracticeGame);
                 return;
             }
@@ -2077,9 +2169,13 @@
             retryBtn.classList.add("hidden");
             const myTurn = practiceBoard.game.turn() === myPracticeGame.student_color;
             practiceBoard.setInteractive(myTurn && !practiceEngineBusy);
+            // Si la última consulta al motor no devolvió jugada (ver requestEngineReply), se
+            // ofrece un botón para pedirla de nuevo sin tener que reiniciar toda la partida.
+            const stuck = practiceEngineLastFailed && !myTurn && !practiceEngineBusy;
+            retryEngineBtn.classList.toggle("hidden", !stuck);
             statusEl.textContent = practiceEngineBusy
                 ? "El motor está pensando…"
-                : (myTurn ? "Es tu turno." : "Esperando la jugada del motor…");
+                : (myTurn ? "Es tu turno." : (stuck ? "El motor no respondió — toca \"Pedir jugada del motor\" para intentarlo de nuevo." : "Esperando la jugada del motor…"));
         }
 
         async function savePracticeGameRow(patch) {
@@ -2102,27 +2198,43 @@
             await savePracticeGameRow({ eval_cp: scoreToWhiteCp(score, turnAtEval) });
         }
 
-        async function onPracticeStudentMove(fen, moves) {
-            if (!myPracticeGame) return;
-            const gameIdAtMove = myPracticeGame.id;
-            const attemptsAtMove = myPracticeGame.attempts || 1;
-            practiceBoard.setInteractive(false);
-            const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
-            await savePracticeGameRow({ fen, moves, status });
-            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
-            if (status !== "playing") { updatePracticeCardInteractivity(); return; }
+        // true si la última consulta al motor se quedó sin jugada (timeout interno de
+        // practice-engine.js, worker que no contestó, etc.) — ver requestEngineReply().
+        // Antes, si esto pasaba una sola vez, el alumno se quedaba viendo "Esperando la
+        // jugada del motor…" para siempre, sin ninguna forma de salir de ahí más que
+        // rendirse o reiniciar toda la partida.
+        let practiceEngineLastFailed = false;
+
+        // Le pide al motor la respuesta a la posición actual y la aplica. Reintenta un par
+        // de veces antes de rendirse (el motor corre en un Worker de este mismo navegador:
+        // un solo hiccup transitorio no debería dejar al alumno esperando para siempre) y,
+        // si de plano no contesta, lo deja en claro en pantalla con un botón para reintentar
+        // (ver updatePracticeCardInteractivity). Se llama tanto justo después de la jugada
+        // del alumno como al recargar la página a mitad de una espera (ver
+        // renderStudentPracticeCardNow) — por eso vuelve a leer el turno actual en vez de
+        // asumir que ya le toca al motor.
+        async function requestEngineReply(gameIdAtMove, attemptsAtMove) {
+            if (practiceEngineBusy) return; // ya hay una consulta en curso, no duplicarla
+            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") return;
+            if (practiceBoard.game.turn() === myPracticeGame.student_color) return; // ya le toca al alumno
 
             practiceEngineBusy = true;
+            practiceEngineLastFailed = false;
             updatePracticeCardInteractivity();
             const levelAtRequest = latestPracticeSession ? latestPracticeSession.level : "1500";
-            const uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
+            let uci = null;
+            for (let attempt = 0; attempt < 3 && !uci; attempt++) {
+                const fen = practiceBoard.game.fen();
+                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, levelAtRequest) : null;
+                // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar
+                // una nueva, o el propio alumno pudo rendirse o reintentar esta misma partida:
+                // en cualquiera de esos casos, no seguir insistiendo con datos ya viejos.
+                if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") {
+                    practiceEngineBusy = false;
+                    return;
+                }
+            }
             practiceEngineBusy = false;
-
-            // Mientras el motor pensaba pudo cerrarse esta ronda, el profesor pudo lanzar una
-            // nueva (otra fila en practice_games), o el propio alumno pudo rendirse o
-            // reintentar esta misma partida (mismo id, pero con status/attempts distintos):
-            // en cualquiera de esos casos, no toques la partida con la jugada vieja del motor.
-            if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") return;
 
             if (uci) {
                 const move = practiceBoard.game.move({
@@ -2137,8 +2249,22 @@
                     await savePracticeGameRow({ fen: newFen, moves: newMoves, status: newStatus });
                     updatePracticeGameEval(newFen, gameIdAtMove, attemptsAtMove);
                 }
+            } else {
+                practiceEngineLastFailed = true;
             }
             updatePracticeCardInteractivity();
+        }
+
+        async function onPracticeStudentMove(fen, moves) {
+            if (!myPracticeGame) return;
+            const gameIdAtMove = myPracticeGame.id;
+            const attemptsAtMove = myPracticeGame.attempts || 1;
+            practiceBoard.setInteractive(false);
+            const status = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
+            await savePracticeGameRow({ fen, moves, status });
+            updatePracticeGameEval(fen, gameIdAtMove, attemptsAtMove); // en segundo plano, no bloquea la jugada del motor
+            if (status !== "playing") { updatePracticeCardInteractivity(); return; }
+            await requestEngineReply(gameIdAtMove, attemptsAtMove);
         }
 
         // El alumno se rinde a mitad de partida (incluso mientras el motor está "pensando" su
@@ -2167,6 +2293,10 @@
 
         document.getElementById("practice-resign-btn").addEventListener("click", resignPracticeGame);
         document.getElementById("practice-retry-btn").addEventListener("click", retryPracticeGame);
+        document.getElementById("practice-retry-engine-btn").addEventListener("click", () => {
+            if (!myPracticeGame) return;
+            requestEngineReply(myPracticeGame.id, myPracticeGame.attempts || 1);
+        });
 
         // ---------- Arranque ----------
         async function init() {
@@ -2189,7 +2319,6 @@
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
                 document.getElementById("chat-student-picker").classList.remove("hidden");
-                document.getElementById("saved-games-card").classList.remove("hidden");
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
@@ -2207,10 +2336,6 @@
             subscribePresence();
             await checkOpenClassSession();
             subscribeClassSessions();
-            if (isTeacher) {
-                await loadSavedGames();
-                subscribeSavedGames();
-            }
             await loadVariantTree();
             subscribeVariants();
             await loadCurrentQuestion();
