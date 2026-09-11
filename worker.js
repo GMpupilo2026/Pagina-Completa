@@ -1,19 +1,19 @@
-// Worker que protege de verdad el contenido de los cursos.
+// Worker que protege de verdad el contenido de pago de los cursos.
 //
 // El sitio sigue siendo estático (Cloudflare Workers Assets), pero este script
 // se ejecuta antes de servir los archivos y bloquea, en el servidor, lo que
 // antes solo se ocultaba con CSS/JS en el navegador:
-//   1. Las páginas de curso completas — temario incluido —
-//      (cursos/<curso>.html): sin cookie válida, se sirve en su lugar
-//      cursos/bloqueado.html (misma URL, sin redirección), que comprueba la
-//      sesión de Academia (Supabase) y, si existe, la canjea por la cookie
-//      automáticamente — sin pedir nada al alumno.
-//   2. Los fragmentos de contenido completo de cada lección
+//   1. Los fragmentos de contenido completo de cada lección
 //      (cursos/protegido/<curso>.html).
-//   3. Las presentaciones y PDF de ejercicios (cursos/recursos/**).
+//   2. Las presentaciones y PDF de ejercicios (cursos/recursos/**).
 //
-// El acceso a los cursos ya no usa una contraseña compartida aparte: ahora
-// basta con tener una sesión válida de Academia (la misma cuenta de Clases).
+// Las páginas de curso en sí (cursos/<curso>.html) — con su temario, título y
+// descripción — son públicas: cualquier visitante puede verlas sin iniciar
+// sesión, para que sirvan también de material de difusión de la Academia.
+// Solo el contenido real de las lecciones (arriba) exige sesión.
+//
+// El acceso a ese contenido ya no usa una contraseña compartida aparte: basta
+// con tener una sesión válida de Academia (la misma cuenta de Clases).
 // /api/curso-auth-session recibe el access_token de esa sesión, lo verifica
 // contra la API de Supabase (GET /auth/v1/user) y, si es válido, entrega la
 // misma cookie firmada que antes daba la contraseña — el resto del
@@ -24,11 +24,11 @@
 // Cloudflare para este cambio).
 //
 // IMPORTANTE: por defecto, Cloudflare sirve un archivo estático que ya
-// existe (como cursos/<curso>.html) directamente desde su CDN de assets,
-// SIN pasar por este Worker — este fetch() nunca se ejecuta para esas rutas
-// salvo que wrangler.jsonc declare "run_worker_first" para ellas. Ver ahí
-// el arreglo (bug real detectado: el bloqueo no se aplicaba en producción
-// porque faltaba esa opción).
+// existe (como cursos/protegido/<curso>.html) directamente desde su CDN de
+// assets, SIN pasar por este Worker — este fetch() nunca se ejecuta para esas
+// rutas salvo que wrangler.jsonc declare "run_worker_first" para ellas. Ver
+// ahí el arreglo (bug real detectado: el bloqueo no se aplicaba en
+// producción porque faltaba esa opción).
 
 const COOKIE_NAME = "curso_ok";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 60; // 60 días
@@ -110,14 +110,6 @@ function isProtectedPath(pathname) {
   return pathname.startsWith("/cursos/protegido/") || pathname.startsWith("/cursos/recursos/");
 }
 
-// Página de curso completa: cursos/<algo>.html, salvo la propia pantalla de
-// bloqueo. Sin cookie válida, no se le da 403: se le sirve cursos/bloqueado.html
-// en su lugar (misma URL) para que pueda ver el formulario de contraseña.
-const COURSE_PAGE_RE = /^\/cursos\/(?!bloqueado\.html$)[^/]+\.html$/;
-function isCoursePage(pathname) {
-  return COURSE_PAGE_RE.test(pathname);
-}
-
 function unlockCookieHeader() {
   return [
     // NOTA: el token se calcula donde se usa (necesita await), esta función
@@ -192,26 +184,6 @@ export default {
         return response;
       }
       return env.ASSETS.fetch(request);
-    }
-
-    if (isCoursePage(url.pathname) && !(await hasValidCookie(request, env))) {
-      // No hay cookie válida: en vez de la página real del curso, se sirve
-      // cursos/bloqueado.html manteniendo la URL original en la barra de
-      // direcciones (sin redirección) para que su JS sepa qué curso mostrar
-      // y, tras comprobar la sesión de Academia, recargar esta misma URL.
-      //
-      // Responde 200, no 403: esto es una navegación normal de página completa
-      // (el usuario hizo clic en "Ver temario" o entró por URL), y algunos
-      // navegadores reemplazan el cuerpo de una respuesta 4xx a una navegación
-      // con su propia pantalla genérica de "acceso denegado" en vez de mostrar
-      // el HTML real que mandamos — dejando al usuario sin ver ni el mensaje ni
-      // la comprobación de sesión, y con la sensación de haber salido del
-      // sitio. Con 200 el navegador siempre renderiza cursos/bloqueado.html tal
-      // cual, con su propio header de navegación intacto.
-      const lockedUrl = new URL("/cursos/bloqueado.html", url);
-      const lockedRequest = new Request(lockedUrl, request);
-      const lockedResponse = await env.ASSETS.fetch(lockedRequest);
-      return withSecurityHeaders(new Response(lockedResponse.body, { headers: lockedResponse.headers }));
     }
 
     return env.ASSETS.fetch(request);

@@ -4,10 +4,11 @@
  * Informes y en el panel de Clases.
  *
  * Requiere que window.sb ya exista (js/supabase-client.js cargado antes que
- * este archivo). Si quien juega entró solo con la contraseña de Entrenamiento
- * y no tiene una sesión del sitio iniciada, log() simplemente no escribe nada
- * — la actividad sigue funcionando igual, apoyada en su progreso local
- * (localStorage), solo que no queda visible para el profesor.
+ * este archivo). Las páginas de Entrenamiento ya exigen sesión iniciada
+ * (Academia) antes de mostrar el contenido, pero por si acaso log() se queda
+ * sin usuario (sesión vencida a medio uso, por ejemplo) simplemente no
+ * escribe nada — la actividad sigue funcionando igual, apoyada en su
+ * progreso local (localStorage), solo que no queda visible para el profesor.
  */
 window.EntrenoProgress = (function () {
   let userId = null;
