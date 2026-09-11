@@ -95,6 +95,7 @@
       this.showCoords = false; // vista del tablero: coordenadas a-h/1-8 (preferencia personal)
       this.piecesHidden = false; // el profesor puede ocultar las piezas en el tablero de los alumnos
       this.freeMode = false; // modo edición libre del profesor: mueve piezas ignorando las reglas
+      this._freeModeTool = null; // paleta del editor: null (mover), {color,type} (colocar) o "trash" (quitar)
       // Modo revisión/exploración: viewGame/viewPath != null mientras se navega por el
       // historial (línea principal o una variante) sin tocar this.game (que sigue siendo
       // la partida real en vivo). Jugar una pieza estando aquí no mueve la partida real:
@@ -228,11 +229,47 @@
     setFreeMode(active) {
       this.freeMode = !!active;
       this.selected = null;
+      this._freeModeTool = null;
+      this.render();
+    }
+
+    // ---------- Paleta de piezas del editor (colocar/quitar directo, sin arrastrar) ----------
+    // `tool` es null (modo "mover piezas ya puestas", el de siempre), {color,type} para
+    // colocar esa pieza en cada casilla que se toque, o "trash" para quitar la pieza que
+    // haya en cada casilla que se toque. El tool queda activo entre clics (para poner/quitar
+    // varias veces seguidas), hasta que se elige otro o se vuelve a tocar el mismo botón.
+    setFreeModeTool(tool) {
+      this._freeModeTool = tool || null;
+      this.selected = null;
+      this.render();
+    }
+
+    // Vacía el tablero por completo (para armar una posición desde cero).
+    clearBoard() {
+      this.game.clear();
+      this.selected = null;
+      this.render();
+    }
+
+    // Posición inicial estándar, con todos los derechos de enroque.
+    setInitialPosition() {
+      this.game.reset();
+      this.selected = null;
       this.render();
     }
 
     _onFreeModeClick(square) {
       const g = this.game;
+      if (this._freeModeTool) {
+        if (this._freeModeTool === "trash") {
+          g.remove(square);
+        } else {
+          g.remove(square);
+          g.put({ type: this._freeModeTool.type, color: this._freeModeTool.color }, square);
+        }
+        this.render();
+        return;
+      }
       if (this.selected === square) {
         this.selected = null;
         this.render();
