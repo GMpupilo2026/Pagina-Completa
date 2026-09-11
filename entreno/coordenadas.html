@@ -150,7 +150,7 @@
   .new-best{color:var(--ok); font-weight:600; margin-bottom:6px;}
 
   @media (prefers-reduced-motion: reduce){
-    #pw-submit, .bctrl, .option-btn{transition-property: background-color, border-color, color;}
+    .bctrl, .option-btn{transition-property: background-color, border-color, color;}
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -200,15 +200,6 @@
         <p class="text-5xl mb-4" aria-hidden="true">🎯</p>
         <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Coordenadas</h1>
         <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
-        <div id="gate-form" class="hidden">
-            <p class="text-brand-500 dark:text-brand-400 mb-4">Entrenamiento de ajedrez.<br>Introduce la contraseña para entrar.</p>
-            <form id="pw-form" class="space-y-3">
-                <label for="pw-input" class="sr-only">Contraseña</label>
-                <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="current-password" class="w-full text-center px-4 py-2.5 rounded-lg bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-900 dark:text-white focus:ring-2 focus:ring-accent-500 outline-none">
-                <div id="pw-error" role="alert" class="text-sm text-red-600 dark:text-red-400 min-h-[1.2em]"></div>
-                <button type="submit" id="pw-submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors">Entrar</button>
-            </form>
-        </div>
     </div>
 </div>
 
@@ -302,44 +293,18 @@
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 <script src="../js/main.js"></script>
 <script>
-/* ---------------- PASSWORD GATE ---------------- */
-const PW_HASH = "03ece971d7c332feeb7171ea3f30c16e96fc7e0f2610b334c64b16f99407cab0";
-
-async function sha256(text){
-  const enc = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
-const gateForm = document.getElementById('gate-form');
-const pwForm = document.getElementById('pw-form');
-const pwInput = document.getElementById('pw-input');
-const pwError = document.getElementById('pw-error');
 
 const NEXT_PATH = 'entreno/coordenadas.html';
 
 function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
-  sessionStorage.setItem('entreno_unlocked','1');
   EntrenoProgress.init();
   initApp();
 }
-
-pwForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const hash = await sha256(pwInput.value.trim());
-  if(hash === PW_HASH){
-    unlock();
-  } else {
-    pwError.textContent = 'Contraseña incorrecta.';
-    pwInput.value = '';
-    pwInput.focus();
-  }
-});
 
 /* ---------------- Juego de coordenadas ---------------- */
 const ROUND_SECONDS = 30;
@@ -683,10 +648,9 @@ function initApp(){
   renderBestLine();
 }
 
-// Entrenamiento ahora exige sesión iniciada en el sitio (no solo la
-// contraseña compartida) — así el progreso de cada quien queda guardado y
-// visible para el profesor en Informes. Se comprueba ANTES de mostrar el
-// formulario de contraseña, no después.
+// Entrenamiento exige sesión iniciada en el sitio (Academia) — así el
+// progreso de cada quien queda guardado y visible para el profesor en
+// Informes.
 async function requireLoginThenGate(){
   let hasSession = false;
   try {
@@ -701,12 +665,7 @@ async function requireLoginThenGate(){
     return;
   }
   gateChecking.classList.add('hidden');
-  if(sessionStorage.getItem('entreno_unlocked') === '1'){
-    unlock();
-  } else {
-    gateForm.classList.remove('hidden');
-    pwInput.focus();
-  }
+  unlock();
 }
 
 requireLoginThenGate();
