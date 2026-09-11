@@ -427,10 +427,10 @@
                     // a los lados como pasaba forzándolo a 16:9.
                     grid.innerHTML = games.map((g) =>
                         '<div class="rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950">' +
-                            '<div class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900">' +
+                            '<h3 class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900">' +
                                 '<span class="truncate">' + playerLabel(g.players[0]) + "</span>" +
                                 '<span class="truncate text-right">' + playerLabel(g.players[1]) + "</span>" +
-                            "</div>" +
+                            "</h3>" +
                             '<div class="aspect-square w-full grid grid-cols-8 grid-rows-8" data-board-id="' + escapeHtml(g.id) + '"></div>' +
                             '<div class="hidden px-2 py-1.5 text-center text-xs font-semibold text-red-400 bg-brand-900" data-stream-slot="' + escapeHtml(g.id) + '"></div>' +
                         "</div>"
