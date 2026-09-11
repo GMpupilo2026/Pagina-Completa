@@ -332,13 +332,21 @@
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
+        // En celular esta animación de fondo es puro decorado (el formulario tapa casi
+        // todo el canvas) pero un WebGLRenderer a pantalla completa con antialiasing y
+        // devicePixelRatio alto es justo lo que más batería/GPU gasta en un teléfono —
+        // se reduce la calidad ahí en vez de sacrificarla también en escritorio.
+        const esPantallaChica = window.innerWidth < 768;
+        const prefiereMenosMovimiento = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         const canvas = document.getElementById('bg-3d');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: !esPantallaChica });
 
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, esPantallaChica ? 1.5 : 2));
 
         const ambientLight = new THREE.AmbientLight(0x22c55e, 0.7);
         scene.add(ambientLight);
@@ -397,7 +405,7 @@
 
         const tipos = ['pawn', 'rook', 'king'];
         const piezas = [];
-        const numPiezas = 14;
+        const numPiezas = esPantallaChica ? 7 : 14;
 
         for (let i = 0; i < numPiezas; i++) {
             const tipo = tipos[i % tipos.length];
@@ -441,7 +449,13 @@
             renderer.render(scene, camera);
         }
 
-        animate();
+        if (prefiereMenosMovimiento) {
+            // "Reduce motion" del sistema operativo: se respeta de verdad, no solo se hace
+            // más lento — un solo frame estático en vez del loop continuo de animate().
+            renderer.render(scene, camera);
+        } else {
+            animate();
+        }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;

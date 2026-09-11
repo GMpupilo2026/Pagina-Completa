@@ -96,6 +96,13 @@
       this.arrows = [];
       this.circles = [];
       this._drawingFrom = null;
+      // Dibujar con el dedo (touch): sin clic derecho no hay forma de distinguir "mover
+      // pieza" de "dibujar flecha", así que se usa el mismo gesto de lichess/chess.com en
+      // celular: mantener presionado sin moverse activa el modo dibujo (ver _onTouchStart).
+      this._touchDrawTimer = null;
+      this._touchStartPoint = null;
+      this._touchDrawingActive = false;
+      this._suppressNextClick = false; // evita el "click" fantasma que sigue a un touchend de dibujo
       this.flipped = false; // vista del tablero: negras abajo (preferencia personal, no se sincroniza)
       this.showCoords = false; // vista del tablero: coordenadas a-h/1-8 (preferencia personal)
       this.piecesHidden = false; // el profesor puede ocultar las piezas en el tablero de los alumnos
@@ -118,10 +125,27 @@
       this._onContextMenu = this._onContextMenu.bind(this);
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseUp = this._onMouseUp.bind(this);
+      this._onTouchStart = this._onTouchStart.bind(this);
+      this._onTouchMove = this._onTouchMove.bind(this);
+      this._onTouchEnd = this._onTouchEnd.bind(this);
+      this._onTouchCancel = this._onTouchCancel.bind(this);
       this.el.addEventListener("keydown", this._onKeydown);
       this.el.addEventListener("contextmenu", this._onContextMenu);
       this.el.addEventListener("mousedown", this._onMouseDown);
       this.el.addEventListener("mouseup", this._onMouseUp);
+      // { passive: false } porque _onTouchMove necesita poder cancelar el scroll de la
+      // página una vez que el toque largo activó el modo dibujo (ver _onTouchMove).
+      this.el.addEventListener("touchstart", this._onTouchStart, { passive: false });
+      this.el.addEventListener("touchmove", this._onTouchMove, { passive: false });
+      this.el.addEventListener("touchend", this._onTouchEnd);
+      this.el.addEventListener("touchcancel", this._onTouchCancel);
+
+      if (this.allowArrows) {
+        // Evita el globo de "copiar/definir" que iOS muestra al mantener presionado
+        // sobre texto (los glifos de las piezas) — select-none ya evita seleccionar texto,
+        // pero no siempre alcanza para suprimir ese menú nativo en Safari.
+        this.el.style.webkitTouchCallout = "none";
+      }
 
       // Coordenadas a-h/1-8 FUERA del tablero (como uno físico), siempre visibles —
       // independientes de this.showCoords, que ahora en cambio repite el nombre de cada
@@ -645,6 +669,13 @@
     }
 
     _onSquareClick(square) {
+      if (this._suppressNextClick) {
+        // El toque largo que se acaba de soltar terminó de dibujar una flecha/círculo;
+        // el navegador igual sintetiza un "click" después del touchend y sin este freno
+        // ese click movería o seleccionaría una pieza sin que el profesor lo haya tocado.
+        this._suppressNextClick = false;
+        return;
+      }
       this.focusSquare = square;
       if (this.freeMode) {
         this._onFreeModeClick(square);
@@ -716,7 +747,7 @@
       if (target) target.focus();
     }
 
-    // ---------- Flechas y círculos de pizarra (botón derecho) ----------
+    // ---------- Flechas y círculos de pizarra (botón derecho en mouse, toque largo en touch) ----------
     _squareFromPoint(clientX, clientY) {
       const target = document.elementFromPoint(clientX, clientY);
       const btn = target && target.closest ? target.closest("[data-square]") : null;
@@ -739,9 +770,13 @@
       this._drawingFrom = null;
       const to = this._squareFromPoint(e.clientX, e.clientY);
       if (!to) return;
+      this._toggleMark(from, to);
+    }
 
+    // Agrega/quita la flecha from→to, o el círculo si from === to (soltar en la misma
+    // casilla) — comparte esta lógica el clic derecho (mouse) y el toque largo (touch).
+    _toggleMark(from, to) {
       if (to === from) {
-        // Clic derecho sin arrastrar: marca/desmarca un círculo en la casilla.
         const idx = this.circles.indexOf(from);
         this.circles = idx !== -1 ? this.circles.filter((_, i) => i !== idx) : this.circles.concat([from]);
       } else {
@@ -751,6 +786,75 @@
       }
       this._drawMarksOverlay();
       this.onMarksChange({ arrows: this.arrows, circles: this.circles });
+    }
+
+    // Mantener presionado sin soltar ~350ms activa el modo dibujo (equivalente táctil del
+    // clic derecho): soltar en la misma casilla marca un círculo, arrastrar y soltar en
+    // otra dibuja una flecha. Si el dedo se mueve antes de cumplirse el tiempo, se asume
+    // que es un toque normal (o que el usuario quiere hacer scroll) y se cancela.
+    _onTouchStart(e) {
+      if (!this.allowArrows || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      this._touchStartPoint = { x: touch.clientX, y: touch.clientY };
+      this._touchDrawingActive = false;
+      clearTimeout(this._touchDrawTimer);
+      this._touchDrawTimer = setTimeout(() => {
+        this._touchDrawingActive = true;
+        this._drawingFrom = this._squareFromPoint(touch.clientX, touch.clientY);
+        if (navigator.vibrate) navigator.vibrate(15); // aviso táctil de que empezó el modo dibujo
+      }, 350);
+    }
+
+    _onTouchMove(e) {
+      if (!this.allowArrows || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      if (!this._touchDrawingActive) {
+        if (this._touchStartPoint) {
+          const dx = touch.clientX - this._touchStartPoint.x;
+          const dy = touch.clientY - this._touchStartPoint.y;
+          if (Math.sqrt(dx * dx + dy * dy) > 12) {
+            clearTimeout(this._touchDrawTimer);
+            this._touchDrawTimer = null;
+          }
+        }
+        return;
+      }
+      // Ya se activó el modo dibujo: evita que la página haga scroll mientras se arrastra.
+      e.preventDefault();
+    }
+
+    _onTouchEnd(e) {
+      clearTimeout(this._touchDrawTimer);
+      this._touchDrawTimer = null;
+      this._touchStartPoint = null;
+      if (!this._touchDrawingActive || !this._drawingFrom) {
+        this._touchDrawingActive = false;
+        return;
+      }
+      this._touchDrawingActive = false;
+      const from = this._drawingFrom;
+      this._drawingFrom = null;
+      // El navegador sintetiza un "click" después de este touchend aunque se haya
+      // dibujado algo: bloquearlo evita que ese click mueva/seleccione una pieza sola.
+      // Si ese click nunca llega (algunos navegadores ya lo suprimen solos porque
+      // touchmove llamó a preventDefault), este mismo temporizador limpia la bandera
+      // para no dejar el tablero sordo al siguiente toque real.
+      this._suppressNextClick = true;
+      setTimeout(() => {
+        this._suppressNextClick = false;
+      }, 400);
+      const touch = e.changedTouches[0];
+      const to = touch ? this._squareFromPoint(touch.clientX, touch.clientY) : null;
+      if (!to) return;
+      this._toggleMark(from, to);
+    }
+
+    _onTouchCancel() {
+      clearTimeout(this._touchDrawTimer);
+      this._touchDrawTimer = null;
+      this._touchStartPoint = null;
+      this._touchDrawingActive = false;
+      this._drawingFrom = null;
     }
 
     clearMarks() {
