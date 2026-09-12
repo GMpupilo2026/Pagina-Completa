@@ -152,6 +152,18 @@
             <!-- ===== Grilla de accesos ===== -->
             <div id="tile-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 mb-10"></div>
 
+            <!-- ===== Logro: racha más larga de "Racha táctica" (Juegos), visible para toda la clase ===== -->
+            <a href="racha-tactica.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10 hover:shadow-lg transition-shadow">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <span class="text-4xl" aria-hidden="true">🏆</span>
+                    <div class="flex-1 min-w-[200px]">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Racha táctica — récord de la clase</h2>
+                        <p class="text-sm text-brand-500 dark:text-brand-400" id="tactics-record-text">Cargando…</p>
+                    </div>
+                    <span class="text-sm font-semibold text-accent-600 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
+                </div>
+            </a>
+
             <!-- ===== Progreso en Entrenamiento ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
@@ -229,6 +241,7 @@
             { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
             { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
             { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
+            { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 3 segundos y suma tu racha", href: "racha-tactica.html" },
             { emoji: "🦯", label: "Ciegos", desc: "Tablero y Entrenamiento adaptados para lector de pantalla", href: "ciegos.html" },
             { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
             { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
@@ -317,6 +330,20 @@
                     : "No hay ninguna clase en curso ahora mismo.";
                 document.getElementById("start-session-controls").classList.toggle("hidden", !isTeacher);
             }
+        }
+
+        // ---------- Logro público: récord de "Racha táctica" (puzzle_rush_scores) ----------
+        async function loadTacticsRecord() {
+            const el = document.getElementById("tactics-record-text");
+            const { data, error } = await sb.from("puzzle_rush_scores")
+                .select("best_streak, profiles(full_name, email)")
+                .order("best_streak", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (error) { el.textContent = "Encuentra la jugada correcta en 3 segundos y suma tu racha."; return; }
+            if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
+            const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
+            el.textContent = name + " tiene la racha más larga: " + data.best_streak + " aciertos seguidos.";
         }
 
         // ---------- Progreso en Entrenamiento (4x4, Aprender, Coordenadas) ----------
@@ -472,6 +499,7 @@
             await refreshSessionStatus();
             await refreshSessionsLog();
             await loadEntrenoProgress();
+            await loadTacticsRecord();
             subscribeSessions();
 
             document.getElementById("loading").classList.add("hidden");

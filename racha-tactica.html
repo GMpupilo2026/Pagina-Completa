@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Racha táctica — Ajedrez Integral</title>
+    <meta name="description" content="Encuentra la jugada correcta en 3 segundos. Cada acierto suma tu racha; un fallo la reinicia a cero.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/board-drag.js"></script>
+    <script src="data/puzzle-rush-data.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+
+    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
+            <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🔥 Racha táctica</h1>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Encuentra la única jugada correcta en 3 segundos. Cada acierto te da un ejercicio nuevo al instante; un fallo o quedarte sin tiempo reinicia tu racha a cero.</p>
+
+            <!-- Marcadores -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <div class="text-2xl font-bold text-accent-600 dark:text-accent-400" id="current-streak">0</div>
+                    <div class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">Racha actual</div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <div class="text-2xl font-bold text-brand-800 dark:text-white" id="personal-best">0</div>
+                    <div class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">Tu mejor racha</div>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <div class="text-lg font-bold text-brand-800 dark:text-white truncate" id="class-record-name">—</div>
+                    <div class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">🏆 Récord de la clase (<span id="class-record-streak">0</span>)</div>
+                </div>
+            </div>
+
+            <!-- Barra de tiempo -->
+            <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-4">
+                <div id="timer-bar" class="h-full bg-accent-500" style="width:0%"></div>
+            </div>
+
+            <div class="flex justify-center">
+                <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[420px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none transition-shadow"></div>
+            </div>
+
+            <p id="result-text" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
+
+            <div class="text-center mt-4">
+                <button id="start-btn" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">▶️ Empezar</button>
+            </div>
+
+            <p class="text-xs text-brand-300 dark:text-brand-600 text-center mt-6">Ejercicios curados de la base de datos pública de puzzles de Lichess (licencia CC0).</p>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null, profile = null;
+        let game = new Chess();
+        let selected = null;
+        let currentSolution = "";
+        let currentSan = "";
+        let lastIndex = -1;
+        let streak = 0;
+        let personalBest = 0;
+        let running = false;
+        let resultLocked = true;
+        let failTimeoutId = null;
+
+        const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+        const GLYPH = {
+            p: { w: "♙", b: "♟" }, n: { w: "♘", b: "♞" }, b: { w: "♗", b: "♝" },
+            r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" },
+        };
+
+        function squareIsLight(square) {
+            const file = FILES.indexOf(square[0]);
+            const rank = parseInt(square[1], 10) - 1;
+            return (file + rank) % 2 === 1;
+        }
+
+        function setResultText(text, cls) {
+            const el = document.getElementById("result-text");
+            el.textContent = text;
+            el.className = "text-center text-sm mt-4 min-h-[1.5em] " + (cls || "text-brand-600 dark:text-brand-300");
+        }
+
+        function updateStreakDisplay() {
+            document.getElementById("current-streak").textContent = String(streak);
+        }
+        function updatePersonalBestDisplay() {
+            document.getElementById("personal-best").textContent = String(personalBest);
+        }
+
+        // ---------- Tablero ----------
+        function renderBoard() {
+            const boardEl = document.getElementById("board");
+            boardEl.innerHTML = "";
+            // Mostrar el tablero desde la perspectiva de quien tiene que mover — el
+            // alumno siempre juega "hacia arriba", sea cual sea el color del puzzle.
+            const flipped = game.turn() === "b";
+            const squares = [];
+            for (let rank = 8; rank >= 1; rank--) for (const f of FILES) squares.push(f + rank);
+            const ordered = flipped ? squares.slice().reverse() : squares;
+
+            let legalTargets = [];
+            if (selected) legalTargets = game.moves({ square: selected, verbose: true }).map((m) => m.to);
+
+            ordered.forEach((square) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                const light = squareIsLight(square);
+                let cls = "flex items-center justify-center select-none relative w-full h-full border-0 p-0 m-0 text-3xl sm:text-4xl md:text-5xl ";
+                cls += (running && !resultLocked) ? "cursor-pointer " : "cursor-default ";
+                cls += light ? "bg-brand-100 " : "bg-brand-500 ";
+                if (selected === square) cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
+                btn.className = cls;
+                btn.setAttribute("data-square", square);
+                const piece = game.get(square);
+                const pieceName = piece ? ((piece.color === "w" ? "Blanco" : "Negro") + " " + (piece.type)) : "vacía";
+                btn.setAttribute("aria-label", "Casilla " + square + ": " + pieceName);
+                if (piece) {
+                    const span = document.createElement("span");
+                    span.textContent = GLYPH[piece.type][piece.color];
+                    span.className = piece.color === "w" ? "piece-white" : "piece-black";
+                    span.setAttribute("aria-hidden", "true");
+                    btn.appendChild(span);
+                }
+                if (legalTargets.indexOf(square) !== -1) {
+                    const dot = document.createElement("span");
+                    dot.className = piece
+                        ? "absolute inset-1 rounded-full ring-4 ring-accent-600/70"
+                        : "absolute w-1/3 h-1/3 rounded-full bg-accent-500/60";
+                    dot.setAttribute("aria-hidden", "true");
+                    btn.appendChild(dot);
+                }
+                btn.addEventListener("click", () => onSquareClick(square));
+                boardEl.appendChild(btn);
+            });
+        }
+
+        function onSquareClick(square) {
+            if (!running || resultLocked) return;
+            if (selected === square) { selected = null; renderBoard(); return; }
+            if (selected) {
+                const moves = game.moves({ square: selected, verbose: true });
+                if (moves.some((m) => m.to === square)) {
+                    attemptMove(selected, square);
+                    return;
+                }
+            }
+            const piece = game.get(square);
+            if (piece && piece.color === game.turn()) { selected = square; renderBoard(); }
+            else { selected = null; renderBoard(); }
+        }
+
+        enableBoardDrag(document.getElementById("board"), {
+            isDraggable: (square) => {
+                if (!running || resultLocked) return false;
+                const piece = game.get(square);
+                return !!(piece && piece.color === game.turn());
+            },
+            isSelected: (square) => selected === square,
+            onSquareClick: (square) => onSquareClick(square),
+        });
+
+        function attemptMove(from, to) {
+            // Se compara ANTES de aplicar la jugada: el UCI de la solución es siempre
+            // "origen+destino" (+ promoción, en los 2 puzzles que coronan) — alcanza con
+            // los primeros 4 caracteres porque el tablero solo permite mover una pieza
+            // legal de esa casilla a esa otra, así que no hay ambigüedad posible.
+            const isCorrect = (from + to) === currentSolution.slice(0, 4);
+            const move = game.move({ from, to, promotion: "q" });
+            selected = null;
+            if (!move) { renderBoard(); return; } // no debería pasar: ya se validó como legal
+            if (isCorrect) onCorrect(); else onFail("wrong");
+        }
+
+        function flashBoard(kind) {
+            const boardEl = document.getElementById("board");
+            boardEl.classList.remove("ring-8", "ring-green-500", "ring-red-500");
+            void boardEl.offsetWidth; // fuerza a reiniciar la transición si se repite rápido
+            boardEl.classList.add("ring-8", kind === "correct" ? "ring-green-500" : "ring-red-500");
+            setTimeout(() => boardEl.classList.remove("ring-8", "ring-green-500", "ring-red-500"), 400);
+        }
+
+        function onCorrect() {
+            if (resultLocked) return;
+            resultLocked = true;
+            clearTimeout(failTimeoutId);
+            streak++;
+            updateStreakDisplay();
+            flashBoard("correct");
+            renderBoard();
+            setResultText("✅ ¡Correcto!", "text-green-600 dark:text-green-400");
+            setTimeout(() => { if (running) loadPuzzle(); }, 350);
+        }
+
+        async function onFail(reason) {
+            if (resultLocked) return;
+            resultLocked = true;
+            clearTimeout(failTimeoutId);
+            stopTimerBar();
+            flashBoard("wrong");
+            renderBoard();
+            const finalStreak = streak;
+            const reasonText = reason === "timeout" ? "⏱️ ¡Se acabó el tiempo!" : "❌ Esa no era la jugada.";
+            setResultText(reasonText + " La respuesta correcta era " + currentSan + ". Racha final: " + finalStreak + ".", "text-red-600 dark:text-red-400");
+            running = false;
+            streak = 0;
+            updateStreakDisplay();
+            document.getElementById("start-btn").textContent = "🔄 Jugar de nuevo";
+            document.getElementById("start-btn").classList.remove("hidden");
+            if (finalStreak > personalBest) {
+                personalBest = finalStreak;
+                updatePersonalBestDisplay();
+                await saveBestStreak(finalStreak);
+                await loadLeaderboard();
+            }
+        }
+
+        // ---------- Cronómetro (3 segundos, visual con una barra que se achica) ----------
+        function startTimerBar() {
+            const bar = document.getElementById("timer-bar");
+            bar.style.transition = "none";
+            bar.style.width = "100%";
+            void bar.offsetWidth; // fuerza el reflow para que el siguiente cambio sí anime
+            bar.style.transition = "width 3000ms linear";
+            bar.style.width = "0%";
+        }
+        function stopTimerBar() {
+            const bar = document.getElementById("timer-bar");
+            const current = getComputedStyle(bar).width;
+            bar.style.transition = "none";
+            bar.style.width = current;
+        }
+
+        function startTimer() {
+            clearTimeout(failTimeoutId);
+            startTimerBar();
+            failTimeoutId = setTimeout(() => onFail("timeout"), 3000);
+        }
+
+        // ---------- Elegir y cargar un ejercicio al azar ----------
+        function pickRandomPuzzle() {
+            const pool = window.PUZZLE_RUSH_DATA || [];
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * pool.length);
+            } while (pool.length > 1 && idx === lastIndex);
+            lastIndex = idx;
+            return pool[idx];
+        }
+
+        function loadPuzzle() {
+            const [fen, uci, san] = pickRandomPuzzle();
+            currentSolution = uci;
+            currentSan = san;
+            game = new Chess(fen);
+            selected = null;
+            resultLocked = false;
+            setResultText("");
+            renderBoard();
+            startTimer();
+        }
+
+        document.getElementById("start-btn").addEventListener("click", () => {
+            if (!window.PUZZLE_RUSH_DATA || !window.PUZZLE_RUSH_DATA.length) {
+                setResultText("No se pudieron cargar los ejercicios. Recarga la página.", "text-red-600 dark:text-red-400");
+                return;
+            }
+            streak = 0;
+            updateStreakDisplay();
+            setResultText("");
+            document.getElementById("start-btn").classList.add("hidden");
+            running = true;
+            loadPuzzle();
+        });
+
+        // ---------- Guardar mejor racha (logro visible para toda la clase) ----------
+        async function saveBestStreak(value) {
+            const nowIso = new Date().toISOString();
+            const { error } = await sb.from("puzzle_rush_scores").upsert({
+                student_id: profile.id, best_streak: value, achieved_at: nowIso, updated_at: nowIso,
+            });
+            if (error) console.error(error);
+        }
+
+        async function loadPersonalBest() {
+            const { data, error } = await sb.from("puzzle_rush_scores").select("best_streak").eq("student_id", profile.id).maybeSingle();
+            if (error) { console.error(error); return; }
+            personalBest = (data && data.best_streak) || 0;
+            updatePersonalBestDisplay();
+        }
+
+        async function loadLeaderboard() {
+            const { data, error } = await sb.from("puzzle_rush_scores")
+                .select("best_streak, profiles(full_name, email)")
+                .order("best_streak", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (error) { console.error(error); return; }
+            const nameEl = document.getElementById("class-record-name");
+            const streakEl = document.getElementById("class-record-streak");
+            if (!data || !data.best_streak) { nameEl.textContent = "—"; streakEl.textContent = "0"; return; }
+            nameEl.textContent = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
+            streakEl.textContent = String(data.best_streak);
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."; return; }
+            profile = profileData;
+
+            renderBoard();
+            await loadPersonalBest();
+            await loadLeaderboard();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+</body>
+</html>
