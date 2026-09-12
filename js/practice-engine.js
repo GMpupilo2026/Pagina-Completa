@@ -1,11 +1,18 @@
 /**
- * Motor de la "Práctica contra el motor" de la página Clases (sesion.html).
+ * Motor de la "Práctica contra el motor" y de "¿Qué jugarías?" en Clases
+ * (sesion.html).
  *
  * A diferencia de OscarBot (js/chess-bot.js), este motor no tiene libro de
  * partidas ni azar de "blunder": es Stockfish puro, calibrado por ELO con
  * UCI_LimitStrength/UCI_Elo (la misma técnica que ya usa chess-bot.js), para
  * que jugar contra "1500" o "1800" tenga el nivel que dice tener. El nivel
  * "max" no limita la fuerza del motor en absoluto.
+ *
+ * Comparte el mismo Worker de Stockfish que clases-engine.js (ver
+ * js/shared-engine.js) — así una práctica de alumno o una pregunta nunca
+ * compiten por CPU con el panel de análisis del profesor si está activado
+ * al mismo tiempo, algo que en equipos modestos hacía que una de las dos
+ * consultas se quedara sin responder a tiempo.
  *
  * Corre en el navegador de CADA ALUMNO (no en el del profesor ni en un
  * servidor): así el profesor puede ver muchas partidas a la vez sin tener que
@@ -27,7 +34,6 @@
 (function () {
   "use strict";
 
-  const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
   const EVAL_MOVETIME = 450;
 
   const LEVELS = {
@@ -35,51 +41,6 @@
     "1800": { label: "1800 de fuerza", elo: 1800, movetime: 900 },
     max: { label: "Máxima fuerza posible", elo: null, movetime: 1500 },
   };
-
-  let engine = null;
-  let engineInitPromise = null;
-
-  function ensureEngine() {
-    if (engineInitPromise) return engineInitPromise;
-    engineInitPromise = new Promise((resolve) => {
-      let w;
-      try {
-        w = new Worker(STOCKFISH_URL);
-      } catch (e) {
-        resolve(false);
-        return;
-      }
-      let settled = false;
-      const timeout = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        try { w.terminate(); } catch (e) {}
-        resolve(false);
-      }, 10000);
-
-      w.onerror = function () {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
-        try { w.terminate(); } catch (e) {}
-        resolve(false);
-      };
-
-      w.onmessage = function (e) {
-        const line = typeof e.data === "string" ? e.data : "";
-        if (!settled && line.indexOf("uciok") !== -1) {
-          settled = true;
-          clearTimeout(timeout);
-          engine = w;
-          engine.onmessage = onEngineMessage;
-          resolve(true);
-        }
-      };
-
-      w.postMessage("uci");
-    });
-    return engineInitPromise;
-  }
 
   let pendingResolve = null;
   let lastScoreSeen = null;
@@ -100,21 +61,18 @@
     }
   }
 
-  // Cola simple: nunca dos búsquedas del motor en vuelo a la vez.
-  let engineBusy = Promise.resolve();
-  function runEngineTask(task) {
-    const run = engineBusy.then(task, task);
-    engineBusy = run.catch(() => {});
-    return run;
-  }
-
   function engineSearch(fen, movetimeMs, limitStrength, elo) {
-    return runEngineTask(async () => {
-      const ok = await ensureEngine();
-      if (!ok || !engine) return { uci: null, score: null };
+    return SharedEngine.runTask(async () => {
+      const engine = await SharedEngine.ensureEngine();
+      if (!engine) return { uci: null, score: null };
+      SharedEngine.setMessageHandler(onEngineMessage);
       return new Promise((resolve) => {
         lastScoreSeen = null;
         pendingResolve = resolve;
+        // clases-engine.js puede haber dejado MultiPV en más de 1 de un análisis
+        // anterior — aquí siempre hace falta una sola línea (la mejor), así que
+        // se restablece antes de cada búsqueda.
+        engine.postMessage("setoption name MultiPV value 1");
         if (limitStrength) {
           engine.postMessage("setoption name UCI_LimitStrength value true");
           engine.postMessage("setoption name UCI_Elo value " + Math.round(elo));
@@ -148,7 +106,7 @@
   // no tarde (se llama cuando arranca una práctica, no en cada carga de la página).
   function preload() {
     try {
-      setTimeout(() => { ensureEngine(); }, 200);
+      setTimeout(() => { SharedEngine.ensureEngine(); }, 200);
     } catch (e) {}
   }
 

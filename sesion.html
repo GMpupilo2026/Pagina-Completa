@@ -40,6 +40,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
     <script src="js/clases-board.js"></script>
+    <script src="js/shared-engine.js"></script>
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -1064,6 +1065,21 @@
             const blackKings = (parts[0].match(/k/g) || []).length;
             if (whiteKings !== 1 || blackKings !== 1) {
                 msg.textContent = "Debe haber exactamente un rey blanco y un rey negro en el tablero.";
+                return;
+            }
+            // chess.js tampoco avisa si el rey del bando QUE NO LE TOCA MOVER queda en
+            // jaque — algo imposible en una partida real (ese bando ya habría tenido que
+            // responder antes), pero muy fácil de armar sin querer con la paleta (por
+            // ejemplo, dejando una pieza atacando al rey contrario y eligiendo el turno
+            // equivocado). El motor no está preparado para una posición así: analizarla da
+            // evaluaciones y jugadas sin sentido, porque para Stockfish esa "jugada
+            // pendiente de responder" ya se considera imposible. En vez de dejar que eso
+            // pase en silencio, se valida acá.
+            const oppositeTurn = editTurn === "w" ? "b" : "w";
+            const oppositeCheckFen = parts[0] + " " + oppositeTurn + " " + parts[2] + " " + parts[3] + " 0 1";
+            const oppositeCheckGame = new Chess(oppositeCheckFen);
+            if (oppositeCheckGame.in_check && oppositeCheckGame.in_check()) {
+                msg.textContent = "Posición inválida: el rey que NO le toca mover está en jaque (revisa el turno o quita la pieza que lo ataca).";
                 return;
             }
             if (!board.loadFreeModeFen(candidateFen)) {
