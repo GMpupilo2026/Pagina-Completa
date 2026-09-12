@@ -183,6 +183,46 @@ html.adaptive-mode *:focus-visible {
   outline-offset: 3px !important;
 }
 
+/* ===== Compatibilidad con "contraste alto" del sistema operativo =====
+ * Dos señales DISTINTAS del navegador, para dos casos distintos:
+ *
+ * 1. forced-colors: active — Windows con un tema de contraste alto activado
+ *    (antes "Alto contraste", ahora "Temas de contraste"). El sistema
+ *    operativo IMPONE una paleta muy reducida (texto/fondo/enlaces) sobre
+ *    casi todo, sin importar el CSS del sitio — y por defecto esa
+ *    imposición alcanza a los <button>, que es justo lo que usan los
+ *    tableros de este sitio para cada casilla (ver data-square en
+ *    clases-board.js/tablero-board.js/crazyhouse-board.js). Sin esta
+ *    regla, TODAS las casillas (claras y oscuras) se verían del mismo
+ *    color impuesto por Windows — imposible leer una posición si no se
+ *    distingue casilla clara de oscura. forced-color-adjust: none le dice
+ *    al navegador "acá confía en mis colores, no los reemplaces": se
+ *    aplica solo donde el color es la única forma de transmitir un dato
+ *    real (casillas, reserva de Crazyhouse, barra de evaluación, fichas
+ *    de tema) — el resto del sitio (botones normales, enlaces, formularios)
+ *    se deja tal cual, para que SÍ se beneficie del contraste que impone
+ *    Windows, que es justamente lo que esa persona pidió activando el modo.
+ * 2. prefers-contrast: more — una preferencia más suave (macOS "Aumentar
+ *    contraste", algunos navegadores/temas), que no impone una paleta:
+ *    solo indica que la persona quiere más contraste. Se resuelve
+ *    activando Modo Adaptado sola (ver la detección automática en
+ *    js/adaptive-mode.js) en vez de duplicar aquí sus mismas reglas.
+ */
+@media (forced-colors: active) {
+  [data-square],
+  #top-pocket button,
+  #bottom-pocket button,
+  .theme-token,
+  .example-sq,
+  .theme-preview-sq,
+  #engine-eval-track,
+  #engine-eval-bar,
+  .piece-white,
+  .piece-black {
+    forced-color-adjust: none;
+  }
+}
+
 /* ===== Arrastrar y soltar piezas (js/board-drag.js) =====
  * La pieza que se está arrastrando se dibuja aparte (un "fantasma" que sigue
  * al puntero, con estilos puestos por JS) — esta regla solo atenúa la pieza

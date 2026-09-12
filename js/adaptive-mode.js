@@ -25,12 +25,21 @@
  *
  * Detección automática — límite honesto: no existe ninguna API del
  * navegador para saber con certeza si hay un lector de pantalla activo
- * (es así a propósito, por privacidad). La señal disponible más confiable
- * es de comportamiento: si la persona empieza a navegar con la tecla Tab
- * antes de tocar el mouse o la pantalla, es un indicio fuerte de que usa
- * tecnología de asistencia o depende del teclado — y en ese caso, si
- * todavía no había elegido ningún modo antes, se activa Adaptado solo.
- * Sigue siendo una aproximación, no una certeza.
+ * (es así a propósito, por privacidad). Se usan dos señales, ninguna
+ * certera del todo, pero suficientes para no obligar a nadie a buscar el
+ * interruptor a mano:
+ *   1. Preferencia del sistema operativo (prefers-contrast: more) — si la
+ *      persona ya tiene activado "Aumentar contraste" (macOS) o un
+ *      equivalente, el navegador lo informa desde el primer instante.
+ *   2. Comportamiento: si la persona empieza a navegar con la tecla Tab
+ *      antes de tocar el mouse o la pantalla, es un indicio fuerte de que
+ *      usa tecnología de asistencia o depende del teclado.
+ * En cualquiera de los dos casos, si todavía no había elegido ningún modo
+ * antes, se activa Adaptado solo. Sigue siendo una aproximación, no una
+ * certeza — y es independiente de "forced-colors" (Windows con un tema de
+ * contraste alto activado), que se resuelve aparte en css/styles.css
+ * porque ahí el problema es distinto: no falta contraste, sino que Windows
+ * podría aplanar los colores del propio tablero de ajedrez.
  */
 (function () {
   "use strict";
@@ -80,17 +89,21 @@
     applyMode(on);
   }
 
-  function announceAutoSwitch() {
+  function announceAutoSwitch(reason) {
     var note = document.createElement("div");
     note.setAttribute("role", "status");
     note.setAttribute("aria-live", "polite");
     note.className = "sr-only";
     note.textContent =
-      "Detectamos que navegás con el teclado: se activó el modo adaptado. Podés volver al modo visual cuando quieras desde el botón en la parte superior de la página.";
+      reason + " Podés volver al modo visual cuando quieras desde el botón en la parte superior de la página.";
     document.body.appendChild(note);
     setTimeout(function () {
       note.remove();
     }, 4000);
+  }
+  function announceAutoSwitchWhenReady(reason) {
+    if (document.body) announceAutoSwitch(reason);
+    else document.addEventListener("DOMContentLoaded", function () { announceAutoSwitch(reason); }, { once: true });
   }
 
   // ---- Detección por comportamiento (ver nota arriba) ----
@@ -98,8 +111,7 @@
     if (e.key === "Tab" && getStored() === null) {
       setStored(true);
       applyMode(true);
-      if (document.body) announceAutoSwitch();
-      else document.addEventListener("DOMContentLoaded", announceAutoSwitch, { once: true });
+      announceAutoSwitchWhenReady("Detectamos que navegás con el teclado: se activó el modo adaptado.");
     }
     cleanupDetection();
   }
@@ -111,6 +123,30 @@
     document.removeEventListener("mousedown", onPointer, true);
     document.removeEventListener("touchstart", onPointer, true);
   }
+  // ---- Detección por preferencia del sistema operativo: contraste alto ----
+  // A diferencia de la detección por teclado (que espera a la primera
+  // interacción), esta preferencia ya se sabe desde el primer instante —
+  // "Aumentar contraste" en macOS, o equivalentes en Windows/navegador que
+  // se traducen en "prefers-contrast: more" sin imponer una paleta fija
+  // (eso es "forced-colors", una señal distinta, resuelta aparte en
+  // css/styles.css para que el propio tablero de ajedrez no pierda la
+  // distinción entre casillas claras y oscuras). Como Modo Adaptado ya trae
+  // texto más grande, más contraste y foco bien marcado, activarlo solo es
+  // justo lo que esa preferencia pide — se aplica de una vez, antes de
+  // pintar la página, igual que el modo oscuro (prefers-color-scheme).
+  function prefersHighContrast() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(prefers-contrast: more)").matches);
+    } catch (e) {
+      return false;
+    }
+  }
+  if (getStored() === null && prefersHighContrast()) {
+    setStored(true);
+    cleanupDetection(); // ya se sabe que conviene Adaptado: no hace falta esperar el primer Tab
+    announceAutoSwitchWhenReady("Detectamos que tu computadora tiene activado el contraste alto: se activó el modo adaptado.");
+  }
+
   // Solo tiene sentido escuchar si la preferencia todavía no está definida.
   if (getStored() === null) {
     document.addEventListener("keydown", onFirstTab, true);
