@@ -1,10 +1,12 @@
 /**
  * Tablero de Crazyhouse: el tablero de 8x8 de siempre + dos "bandejas" de
  * reserva (una por color) con las piezas capturadas disponibles para
- * soltar. Interacción por toques, igual que el resto del sitio (nunca
- * arrastrar y soltar): tocar una pieza propia (en el tablero o en tu
- * bandeja) selecciona; tocar después una casilla resaltada mueve o suelta
- * ahí; tocar la misma pieza otra vez la deselecciona.
+ * soltar. Interacción por toques: tocar una pieza propia (en el tablero o
+ * en tu bandeja) selecciona; tocar después una casilla resaltada mueve o
+ * suelta ahí; tocar la misma pieza otra vez la deselecciona. Además, una
+ * pieza que ya está en el tablero también se puede arrastrar de una casilla
+ * a otra (ver js/board-drag.js) — soltar una pieza de la bandeja sigue
+ * siendo por toques, no por arrastre.
  *
  * Requiere chess.js y js/crazyhouse-engine.js cargados antes que este archivo.
  */
@@ -57,6 +59,22 @@
       this.boardEl.style.position = "relative";
       this.boardEl.setAttribute("role", "group");
       this.boardEl.setAttribute("aria-label", "Tablero de Crazyhouse");
+
+      // Arrastrar y soltar piezas del tablero (además del toque-toque de siempre): ver
+      // js/board-drag.js. Soltar una pieza de la bandeja de reserva sigue siendo solo
+      // por toques (arrastrarla implicaría un segundo contenedor fuera del tablero, que
+      // este ayudante genérico no cubre).
+      if (typeof enableBoardDrag !== "undefined") {
+        enableBoardDrag(this.boardEl, {
+          isDraggable: (square) => {
+            if (!this._canActNow()) return false;
+            const piece = this.game.get(square);
+            return !!(piece && piece.color === this.myColor);
+          },
+          isSelected: (square) => !!(this.selected && this.selected.kind === "square" && this.selected.square === square),
+          onSquareClick: (square) => this._onSquareClick(square),
+        });
+      }
     }
 
     loadFen(fen) {

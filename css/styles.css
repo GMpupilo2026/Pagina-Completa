@@ -182,3 +182,13 @@ html.adaptive-mode *:focus-visible {
   outline: 3px solid #de911d !important;
   outline-offset: 3px !important;
 }
+
+/* ===== Arrastrar y soltar piezas (js/board-drag.js) =====
+ * La pieza que se está arrastrando se dibuja aparte (un "fantasma" que sigue
+ * al puntero, con estilos puestos por JS) — esta regla solo atenúa la pieza
+ * original en su casilla de origen mientras dura el arrastre, para que no
+ * parezca que hay dos piezas iguales en pantalla a la vez.
+ */
+.dragging-from {
+  opacity: 0.35;
+}
