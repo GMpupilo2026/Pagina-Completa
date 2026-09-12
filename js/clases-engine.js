@@ -80,6 +80,11 @@
           if (pendingResolve === resolve) {
             pendingResolve = null;
             if (!lastError) lastError = "El motor tardó demasiado en responder (revisa tu conexión e inténtalo de nuevo).";
+            // Tardar tantísimo más de lo normal es señal de que el motor se
+            // colgó o se cayó (ver la nota en js/shared-engine.js) — se descarta
+            // para que la próxima consulta, de este módulo o de practice-engine.js,
+            // levante un Worker nuevo en vez de seguir esperando uno muerto.
+            SharedEngine.discardEngine();
             resolve(
               Object.keys(lines)
                 .map((k) => parseInt(k, 10))

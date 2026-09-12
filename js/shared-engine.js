@@ -19,6 +19,24 @@
  *   SharedEngine.runTask(fn) -> Promise<T>   (serializa: nunca dos fn a la vez)
  *   SharedEngine.setMessageHandler(fn)       (quien tenga la tarea en curso decide
  *                                             quién procesa los mensajes del Worker)
+ *   SharedEngine.discardEngine()             (ver nota "Motor que se cae" abajo)
+ *
+ * ---- Motor que se cae con una posición imposible ----
+ * Una posición armada a mano en el editor de Clases (piezas sueltas, sin las
+ * restricciones de una partida real) puede describir algo que nunca podría pasar
+ * jugando de verdad — por ejemplo un peón en la primera o la última fila. chess.js
+ * la carga sin quejarse, pero Stockfish (el binario WASM, no este archivo) puede
+ * fallar feo con eso: se confirmó en la práctica que "position fen <esa posición>"
+ * hace que el Worker termine con un error interno de memoria y deje de responder
+ * para siempre — no solo a esa consulta, a CUALQUIER consulta futura, porque antes
+ * este archivo se quedaba con la referencia al mismo Worker ya muerto sin
+ * enterarse. Por eso el Worker.onerror de abajo actúa aunque el motor ya estuviera
+ * funcionando hace rato (no solo durante el arranque), y por eso existe
+ * discardEngine(): tanto clases-engine.js como practice-engine.js la llaman en su
+ * propio timeout (cuando un "bestmove" tarda muchísimo más de lo normal, señal de
+ * que el motor puede haberse colgado o caído de un modo que no disparó
+ * Worker.onerror) para que la PRÓXIMA tarea, sea cual sea, levante un Worker
+ * nuevo en vez de seguir mandándole mensajes a uno que ya no contesta.
  */
 (function () {
   "use strict";
@@ -37,6 +55,7 @@
         w = new Worker(STOCKFISH_URL);
       } catch (e) {
         console.error("SharedEngine: fallo al crear el Worker", e);
+        engineInitPromise = null;
         resolve(null);
         return;
       }
@@ -46,20 +65,21 @@
       const timeout = setTimeout(() => {
         if (settled) return;
         settled = true;
-        try {
-          w.terminate();
-        } catch (e) {}
+        discardEngine();
         resolve(null);
       }, 20000);
 
       w.onerror = function (e) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeout);
+        // A propósito SIN el guard "if (settled) return" que había antes: un
+        // Worker que ya estaba funcionando puede caerse a mitad de una consulta
+        // (ver la nota de arriba) — cuando eso pasa hace falta descartarlo igual,
+        // no solo durante el arranque. resolve(null) de acá abajo no hace nada
+        // si esta promesa ya se había resuelto con el Worker (resolver una
+        // promesa dos veces no tiene efecto), así que es seguro llamarlo siempre.
         console.error("SharedEngine: Worker onerror", e);
-        try {
-          w.terminate();
-        } catch (e2) {}
+        clearTimeout(timeout);
+        settled = true;
+        discardEngine();
         resolve(null);
       };
 
@@ -88,6 +108,18 @@
     messageHandler = fn;
   }
 
+  // Tira el Worker actual (si lo hay) y deja todo listo para que la próxima
+  // llamada a ensureEngine() levante uno nuevo desde cero. Ver la nota de arriba.
+  function discardEngine() {
+    if (engine) {
+      try {
+        engine.terminate();
+      } catch (e) {}
+    }
+    engine = null;
+    engineInitPromise = null;
+  }
+
   // Cola global: cualquier módulo que use este Worker espera su turno. Stockfish
   // habla un solo hilo de UCI — mandarle un "go" mientras otro sigue en curso
   // mezclaría las líneas de respuesta de ambas búsquedas.
@@ -98,5 +130,5 @@
     return run;
   }
 
-  window.SharedEngine = { ensureEngine, runTask, setMessageHandler };
+  window.SharedEngine = { ensureEngine, runTask, setMessageHandler, discardEngine };
 })();
