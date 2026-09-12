@@ -75,7 +75,7 @@
   }
   .theme:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,42,67,0.12);}
   .theme.done{border-left-color:var(--ok);}
-  .theme.remote{border-left-color:var(--line);}
+  .theme .left{font-size:0.78rem; color:var(--text-muted);}
   .theme h3{font-family:'Inter',sans-serif; font-size:0.98rem; font-weight:600; color:var(--text); display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
   .theme h3 .n{font-size:0.75rem; font-weight:500; color:var(--text-muted); white-space:nowrap;}
   .theme p{margin:0; font-size:0.8rem; line-height:1.4; color:var(--text-muted); flex:1;
@@ -93,7 +93,15 @@
   .tbtn:active{transform:scale(0.97);}
   .tbtn.ghost{background:transparent; color:var(--text); border-color:var(--line);}
   .tbtn.ghost:hover{border-color:var(--brass); background:transparent;}
-  .toolbar{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; justify-content:space-between; margin-top:6px; font-size:0.88rem; color:var(--text-muted);}
+  .overall{background:var(--bg-panel); border:1px solid var(--line); padding:14px 16px 12px; margin-top:8px;}
+  .overall-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px;}
+  .overall-head h2{font-size:1rem; color:var(--text);}
+  .overall-pct{font-family:'Merriweather',serif; font-weight:700; font-size:1.3rem; color:var(--brass);}
+  .overall-track{height:12px; background:var(--line); border-radius:6px; overflow:hidden; margin:10px 0 8px;}
+  .overall-track i{display:block; height:100%; background:linear-gradient(90deg, var(--brass), var(--brass-bright)); border-radius:6px; transition:width .4s;}
+  .overall-nums{display:flex; flex-wrap:wrap; gap:6px 22px; font-size:0.85rem; color:var(--text-muted);}
+  .overall-nums b{color:var(--text);}
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; justify-content:flex-end; margin-top:14px; font-size:0.88rem; color:var(--text-muted);}
   .toolbar b{color:var(--text);}
   .search{
     font-family:'Inter',sans-serif; font-size:0.9rem; padding:9px 12px; min-width:220px; border:1px solid var(--line);
@@ -234,16 +242,26 @@
     </div>
   </div>
   <p class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">
-    Los mismos temas tácticos que usa Lichess, con una base de respaldo propia para resolver aquí mismo. Cada tema tiene
-    dos caminos: <b>Resolver aquí</b> (ejercicios guardados en el sitio, ordenados de más fácil a más difícil, con tu progreso) o
-    <b>En Lichess</b>, que abre <a href="https://lichess.org/training/themes" target="_blank" rel="noopener" class="underline">lichess.org/training/themes</a> con ejercicios ilimitados de ese tema.
+    Ejercicios tácticos organizados por tema: fases de la partida, motivos, mates, movimientos especiales y más.
+    Dentro de cada tema van de más fácil a más difícil y tu progreso queda guardado.
   </p>
 
   <main id="main-content">
     <!-- ---------- Vista de temas ---------- -->
     <section id="themes-view" aria-label="Temas">
+      <section class="overall" aria-labelledby="overall-title">
+        <div class="overall-head">
+          <h2 id="overall-title">Tu progreso en la plataforma</h2>
+          <span class="overall-pct" id="overall-pct">0 %</span>
+        </div>
+        <div class="overall-track" role="progressbar" aria-labelledby="overall-title" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" id="overall-bar"><i id="overall-fill" style="width:0%"></i></div>
+        <div class="overall-nums">
+          <span><b id="total-solved">0</b> resueltos</span>
+          <span><b id="total-left">0</b> por resolver</span>
+          <span><b id="total-count">0</b> ejercicios en <b id="total-themes">0</b> temas</span>
+        </div>
+      </section>
       <div class="toolbar">
-        <span><b id="total-solved">0</b> resueltos de <b id="total-count">0</b> ejercicios en <b id="total-themes">0</b> temas</span>
         <label class="sr-only" for="search">Buscar tema</label>
         <input id="search" class="search" type="search" placeholder="Buscar tema (clavada, mate, final…)" autocomplete="off">
       </div>
@@ -256,7 +274,6 @@
         <h2 id="play-title"></h2>
         <div class="links">
           <a href="#" id="back-themes">← Todos los temas</a>
-          <a href="#" id="lichess-theme" target="_blank" rel="noopener">Este tema en Lichess ↗</a>
         </div>
       </div>
       <p class="theme-desc" id="play-desc"></p>
@@ -305,7 +322,7 @@
   </div>
 </div>
 
-<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Ejercicios de la base abierta de <a href="https://lichess.org" target="_blank" rel="noopener" class="underline">Lichess</a> (CC0).</p></div></footer>
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Ejercicios tomados de la base abierta de Lichess (licencia CC0).</p></div></footer>
 <script src="../js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/board-drag.js"></script>
@@ -401,7 +418,7 @@ function buildThemes(){
   const seen = new Set();
   const allIds = new Set();
   DATA.groups.forEach((g) => {
-    const themes = g.themes.filter((t) => !q || normalize(t.name + ' ' + t.desc + ' ' + t.key).includes(q));
+    const themes = g.themes.filter((t) => idsOf(t.key).length && (!q || normalize(t.name + ' ' + t.desc + ' ' + t.key).includes(q)));
     if(!themes.length) return;
     const sec = document.createElement('section');
     sec.className = 'group';
@@ -414,21 +431,18 @@ function buildThemes(){
       const ids = idsOf(t.key);
       const done = ids.filter((id) => solved[id]).length;
       if(!seen.has(t.key)){ seen.add(t.key); totalThemes++; ids.forEach((id) => allIds.add(id)); }
+      if(!ids.length) return;
       const card = document.createElement('article');
-      card.className = 'theme' + (ids.length && done >= ids.length ? ' done' : '') + (ids.length ? '' : ' remote');
-      const localBtn = ids.length
-        ? `<button type="button" class="tbtn" data-theme="${t.key}">${done === 0 ? 'Resolver aquí' : (done >= ids.length ? 'Repasar' : 'Continuar')}</button>`
-        : '';
+      card.className = 'theme' + (done >= ids.length ? ' done' : '');
       card.innerHTML = `
-        <h3><span>${t.name}</span><span class="n">${ids.length ? `${done}/${ids.length}` : 'solo en Lichess'}</span></h3>
+        <h3><span>${t.name}</span><span class="n">${done}/${ids.length}</span></h3>
         <p>${t.desc}</p>
-        <div class="bar" role="progressbar" aria-label="Progreso en ${t.name}" aria-valuemin="0" aria-valuemax="${ids.length}" aria-valuenow="${done}"><i style="width:${ids.length ? Math.round(100 * done / ids.length) : 0}%"></i></div>
+        <div class="bar" role="progressbar" aria-label="Progreso en ${t.name}" aria-valuemin="0" aria-valuemax="${ids.length}" aria-valuenow="${done}"><i style="width:${Math.round(100 * done / ids.length)}%"></i></div>
         <div class="acts">
-          ${localBtn}
-          <a class="tbtn ${ids.length ? 'ghost' : ''}" href="https://lichess.org/training/${t.key === 'mix' ? '' : t.key}" target="_blank" rel="noopener" aria-label="${t.name} en Lichess (se abre en otra pestaña)">En Lichess ↗</a>
+          <button type="button" class="tbtn" data-theme="${t.key}">${done === 0 ? 'Resolver' : (done >= ids.length ? 'Repasar' : 'Continuar')}</button>
+          <span class="left">${done >= ids.length ? 'completo ✓' : `faltan ${ids.length - done}`}</span>
         </div>`;
-      const b = card.querySelector('button');
-      if(b) b.addEventListener('click', () => openTheme(t.key));
+      card.querySelector('button').addEventListener('click', () => openTheme(t.key));
       grid.appendChild(card);
     });
     sec.appendChild(grid);
@@ -437,11 +451,31 @@ function buildThemes(){
   if(!wrap.children.length){
     wrap.innerHTML = '<p class="text-center text-brand-400 dark:text-brand-500 py-10">Ningún tema coincide con la búsqueda.</p>';
   }
-  document.getElementById('total-solved').textContent = [...allIds].filter((id) => solved[id]).length;
-  document.getElementById('total-count').textContent = allIds.size;
-  document.getElementById('total-themes').textContent = totalThemes;
+  updateOverall();
 }
 document.getElementById('search').addEventListener('input', buildThemes);
+
+function updateOverall(){
+  const solved = getSolved();
+  const allIds = new Set();
+  let nThemes = 0;
+  Object.keys(DATA.themes).forEach((k) => { if(DATA.themes[k].length){ nThemes++; DATA.themes[k].forEach((id) => allIds.add(id)); } });
+  const total = allIds.size;
+  const done = [...allIds].filter((id) => solved[id]).length;
+  const pct = total ? Math.round(100 * done / total) : 0;
+  document.getElementById('total-solved').textContent = done;
+  document.getElementById('total-left').textContent = total - done;
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('total-themes').textContent = nThemes;
+  document.getElementById('overall-pct').textContent = pct + ' %';
+  document.getElementById('overall-fill').style.width = pct + '%';
+  const bar = document.getElementById('overall-bar');
+  bar.setAttribute('aria-valuemax', total);
+  bar.setAttribute('aria-valuenow', done);
+  bar.setAttribute('aria-valuetext', `${done} de ${total} ejercicios resueltos, faltan ${total - done}`);
+  // la ficha del hub de Entrenamiento lee estos dos valores para mostrar la misma línea de progreso
+  try{ localStorage.setItem('entreno_temas_total', String(total)); localStorage.setItem('entreno_temas_done', String(done)); }catch(e){}
+}
 
 function showThemes(){
   document.getElementById('play-view').style.display = 'none';
@@ -471,7 +505,6 @@ function openTheme(key){
   const info = THEME_INFO[key] || { name: key, desc: '' };
   document.getElementById('play-title').textContent = info.name;
   document.getElementById('play-desc').textContent = info.desc;
-  document.getElementById('lichess-theme').href = 'https://lichess.org/training/' + (key === 'mix' ? '' : key);
   document.getElementById('themes-view').style.display = 'none';
   document.getElementById('play-view').style.display = 'block';
   try{ localStorage.setItem('entreno_temas_last', key); }catch(e){}
@@ -574,9 +607,7 @@ function loadPuzzle(){
   updateProgressBar();
   const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
   document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — ${puzzle.mate ? 'encuentra el mate' : 'encuentra la mejor jugada'}`;
-  const id = currentId();
-  document.getElementById('puzzle-meta').innerHTML =
-    `Dificultad ${puzzle.rating} · <a href="https://lichess.org/training/${id}" target="_blank" rel="noopener">ver este ejercicio en Lichess ↗</a>`;
+  document.getElementById('puzzle-meta').textContent = `Dificultad ${puzzle.rating}` + (puzzle.players ? ` · de la partida ${puzzle.players}` : '');
   setStatus('Haz clic en la pieza que quieres mover.');
 }
 
@@ -648,7 +679,7 @@ function playMove(from, to, promotion){
 
   const expected = puzzle.solution[solutionStep];
   if(moveResult.san !== expected){
-    // En Lichess, cualquier jugada que dé mate también cuenta como correcta.
+    // Cualquier jugada que dé mate también cuenta como correcta.
     if(!game.in_checkmate()){
       game.undo();
       drawBoard();
@@ -700,6 +731,7 @@ function finishPuzzle(){
     EntrenoProgress.log('temas', { puzzle_id: id, theme: currentTheme, rating: puzzle.rating });
   }
   updateProgressBar();
+  updateOverall();
   setTimeout(() => {
     if(currentIndex < idsOf(currentTheme).length - 1){
       currentIndex++;
@@ -716,7 +748,7 @@ function finishTheme(){
   const total = idsOf(currentTheme).length;
   const info = THEME_INFO[currentTheme] || { name: currentTheme };
   document.getElementById('celebration-stats').textContent =
-    `Resolviste los ${total} ejercicios de ${info.name}. Si quieres más, este tema en Lichess no se acaba nunca.`;
+    `Resolviste los ${total} ejercicios de ${info.name}.`;
   updateProgressBar();
 }
 
