@@ -345,6 +345,18 @@
     pointer-events:none;
     transition:transform .12s ease-out;
   }
+  /* En modo adaptado, un contorno negro sólido además de la sombra de siempre — la
+     pieza es del mismo color dorado (--brass-bright) sin importar el bando, y sobre la
+     casilla clara-adaptiva (blanco puro, ver arriba) esa sombra difusa sola no basta
+     para distinguirla bien en baja visión. */
+  .sq.light-adaptive .piece,
+  .sq.dark-adaptive .piece{
+    text-shadow:
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
+  }
   .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
   .sq.selected .piece{transform:scale(1.12);}
   .sq.target-capture::after{
@@ -414,6 +426,13 @@
     color:var(--text-muted);
   }
   #solo-complete h2{color:var(--text); font-size:1.4rem; margin-bottom:10px;}
+  /* "Piezas": encabezado justo antes del tablero, pensado como punto de entrada rápido
+     en modo adaptado (ver loadPuzzleAt) — el foco cae ahí solo al cargar cada ejercicio,
+     así una persona ciega llega directo sin tener que ir a buscar el tablero con Tab
+     desde el botón "Siguiente" (que en el HTML queda DESPUÉS del tablero). tabindex="-1"
+     lo hace enfocable por script sin meterlo en el orden normal de Tab. */
+  .piezas-heading{color:var(--text); font-size:1rem; font-weight:700; margin:0 0 8px;}
+  .piezas-heading:focus{outline:3px solid #de911d; outline-offset:3px;}
 
   /* ---------- ERROR DE CARGA (si fallan los datos) ---------- */
   #load-error{
@@ -556,6 +575,7 @@
       </div>
 
       <div class="board-pos-wrap">
+        <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
         <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
         <div id="win-overlay">
           <div class="win-title">¡MUY BIEN!</div>
@@ -987,6 +1007,11 @@ function loadPuzzleAt(exIndex){
   // Al empezar el ejercicio se dice la posición completa (no solo cuántas piezas hay):
   // hace falta saber dónde está cada una para poder resolverlo.
   announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${spokenPositionText()}`);
+  // En modo adaptado, el foco cae en "Piezas" (justo antes del tablero) en vez de
+  // quedarse en el botón que se acaba de tocar (Siguiente/Anterior/Reiniciar, que en
+  // el HTML quedan DESPUÉS del tablero) — así se llega directo, sin tener que ir a
+  // buscarlo con Tab, y ya desde ahí las flechas funcionan (ver el keydown de abajo).
+  if(blindMode) document.getElementById('piezas-heading').focus();
 }
 
 function setStatus(text){ document.getElementById('board-status').textContent = text; }
@@ -1048,6 +1073,16 @@ function focusSquare(r,c){
     cell.focus();
   }
 }
+
+// Con el foco en "Piezas" (ver loadPuzzleAt), cualquier flecha entra de una al
+// tablero en la casilla que estaba enfocada — sin esto, tocar una flecha ahí no
+// hace nada y haría falta un Tab más para llegar al tablero.
+document.getElementById('piezas-heading').addEventListener('keydown', (e) => {
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();
+    focusSquare(focusedCell[0], focusedCell[1]);
+  }
+});
 
 document.getElementById('board4').addEventListener('keydown', (e) => {
   const [r,c] = focusedCell;
