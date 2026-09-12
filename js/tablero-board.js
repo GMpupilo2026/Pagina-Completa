@@ -114,6 +114,23 @@
     ? BlindNotation.setupSpeechToggle("speech-toggle-btn", () => blindMode)
     : null;
 
+  // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+  // isDraggable() repite exactamente las mismas condiciones que ya usa onSquareClick()
+  // para decidir si esta casilla se puede levantar (turno del visitante, partida en
+  // curso, pieza propia) — así el arrastre nunca puede permitir algo que el clic no
+  // permitiría.
+  if (typeof enableBoardDrag !== "undefined") {
+    enableBoardDrag(boardEl, {
+      isDraggable: (square) => {
+        if (isBotThinking || isGameOver() || game.turn() !== userColor) return false;
+        const piece = game.get(square);
+        return !!(piece && piece.color === userColor);
+      },
+      isSelected: (square) => selected === square,
+      onSquareClick: (square) => onSquareClick(square),
+    });
+  }
+
   function applyBlindModeUI() {
     blindOnlyEls.forEach((el) => el.classList.toggle("hidden", !blindMode));
     normalOnlyEls.forEach((el) => el.classList.toggle("hidden", blindMode));

@@ -298,6 +298,7 @@
 <script src="../js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/blind-notation.js"></script>
+<script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script>
 const gate = document.getElementById('gate');
@@ -606,6 +607,21 @@ function onSquareClick(square, btn){
   } else {
     playMove(from, square, candidates[0].promotion || undefined);
   }
+}
+
+// Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+// isDraggable() repite las mismas condiciones que ya usa onSquareClick() para decidir
+// si esta casilla se puede levantar, así el arrastre nunca permite algo que el clic no.
+if(typeof enableBoardDrag !== 'undefined'){
+  enableBoardDrag(document.getElementById('board'), {
+    isDraggable: (square) => {
+      if(locked) return false;
+      const piece = game.get(square);
+      return !!(piece && piece.color === game.turn());
+    },
+    isSelected: (square) => selectedSquare === square,
+    onSquareClick: (square) => onSquareClick(square),
+  });
 }
 
 function askPromotion(callback){

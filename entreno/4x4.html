@@ -431,6 +431,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/blind-notation.js"></script>
+<script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
@@ -1126,6 +1127,28 @@ function onSquareClick(r,c){
     const targets = captureTargets(piece, r, c, boardState);
     announce(`${PIECE_NAME[piece]} seleccionado en ${squareSpokenRC(r,c)}. ${targets.length} captura${targets.length===1?'':'s'} posible${targets.length===1?'':'s'}.`);
   }
+}
+
+// Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+// Este tablero no usa casillas algebraicas como estado interno (usa [fila,columna]),
+// pero sí las expone en data-square (squareName) — así que el puente es solo convertir
+// esa casilla de vuelta a [r,c] con squareToRC() antes de llamar a lo de siempre.
+if(typeof enableBoardDrag !== 'undefined'){
+  enableBoardDrag(document.getElementById('board4'), {
+    isDraggable: (square) => {
+      const rc = squareToRC(square);
+      return !!(rc && boardState[boardKey(rc[0], rc[1])]);
+    },
+    isSelected: (square) => {
+      if(!selectedCell) return false;
+      const rc = squareToRC(square);
+      return !!(rc && selectedCell[0] === rc[0] && selectedCell[1] === rc[1]);
+    },
+    onSquareClick: (square) => {
+      const rc = squareToRC(square);
+      if(rc) onSquareClick(rc[0], rc[1]);
+    },
+  });
 }
 
 function checkWin(){

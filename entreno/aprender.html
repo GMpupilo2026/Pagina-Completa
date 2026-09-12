@@ -294,6 +294,7 @@
 <script src="../js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/blind-notation.js"></script>
+<script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script>
 const gate = document.getElementById('gate');
@@ -748,6 +749,22 @@ function onSquareClick(square, btn){
       setTimeout(() => { resetLesson(); }, 900);
     }
   }
+}
+
+// Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+// Solo se puede arrastrar en las lecciones de tipo "move" (mover una pieza) — las de
+// tipo "squares" (tocar la casilla correcta) no tienen nada que levantar, así que ahí
+// isDraggable() siempre da false y se deja el toque normal.
+if(typeof enableBoardDrag !== 'undefined'){
+  enableBoardDrag(document.getElementById('board'), {
+    isDraggable: (square) => {
+      if(lessonLocked || currentLesson.type !== 'move') return false;
+      const piece = game.get(square);
+      return !!(piece && piece.color === game.turn());
+    },
+    isSelected: (square) => selectedSquare === square,
+    onSquareClick: (square) => onSquareClick(square),
+  });
 }
 
 function highlightTargets(square){

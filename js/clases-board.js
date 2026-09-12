@@ -152,6 +152,26 @@
       // casilla ADENTRO (ver render()). Solo se pide en el tablero principal: los overlays
       // de pregunta/práctica y las miniaturas no lo necesitan.
       if (opts.externalCoords) this._setupExternalCoords();
+
+      // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
+      // shouldStartDrag descarta el toque (no el mouse) cuando este tablero puede dibujar
+      // flechas, para no pisarle el gesto de "mantener presionado" a esa función (ver la
+      // documentación de shouldStartDrag en board-drag.js).
+      if (typeof enableBoardDrag !== "undefined") {
+        enableBoardDrag(this.el, {
+          shouldStartDrag: (e) => !(this.allowArrows && e.pointerType === "touch"),
+          isDraggable: (square) => {
+            if (!this.interactive || this.piecesHidden) return false;
+            const g = this.viewGame || this.game;
+            const piece = g.get(square);
+            if (!piece) return false;
+            if (this.freeMode) return !this._freeModeTool;
+            return piece.color === g.turn();
+          },
+          isSelected: (square) => this.selected === square,
+          onSquareClick: (square) => this._onSquareClick(square),
+        });
+      }
     }
 
     _setupExternalCoords() {
