@@ -1,0 +1,523 @@
+[
+ {
+  "id": "puzzle:recommended",
+  "title": "Recomendado",
+  "themes": [
+   {
+    "key": "mix",
+    "name": "Mezcla equilibrada",
+    "count": "6.404.540",
+    "desc": "Un poco de todo. No sabes lo que te espera, así que estate listo para cualquier cosa, como en las partidas reales."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:phases",
+  "title": "Fases",
+  "themes": [
+   {
+    "key": "opening",
+    "name": "Apertura",
+    "count": "321.447",
+    "desc": "Una táctica durante la primera fase de la partida."
+   },
+   {
+    "key": "middlegame",
+    "name": "Medio juego",
+    "count": "2.917.156",
+    "desc": "Una táctica durante la segunda fase de la partida."
+   },
+   {
+    "key": "endgame",
+    "name": "Final",
+    "count": "3.165.937",
+    "desc": "Una táctica durante la última fase de la partida."
+   },
+   {
+    "key": "rookEndgame",
+    "name": "Final de torres",
+    "count": "335.939",
+    "desc": "Un final solo con torres y peones."
+   },
+   {
+    "key": "bishopEndgame",
+    "name": "Final de alfiles",
+    "count": "85.204",
+    "desc": "Un final con sólo alfiles y peones."
+   },
+   {
+    "key": "pawnEndgame",
+    "name": "Final de peones",
+    "count": "228.003",
+    "desc": "Un final solo con peones."
+   },
+   {
+    "key": "knightEndgame",
+    "name": "Final de caballos",
+    "count": "51.706",
+    "desc": "Un final solo con caballos y peones."
+   },
+   {
+    "key": "queenEndgame",
+    "name": "Final de damas",
+    "count": "72.918",
+    "desc": "Un final solo con damas y peones."
+   },
+   {
+    "key": "queenRookEndgame",
+    "name": "Final de dama y torre",
+    "count": "47.181",
+    "desc": "Un final solo con damas, torres y peones."
+   }
+  ]
+ },
+ {
+  "id": "openings",
+  "title": "Por aperturasMás »",
+  "themes": []
+ },
+ {
+  "id": "puzzle:motifs",
+  "title": "Temas",
+  "themes": [
+   {
+    "key": "advancedPawn",
+    "name": "Peón avanzado",
+    "count": "388.355",
+    "desc": "Uno de tus peones está bien avanzado en territorio enemigo, quizás amenazando promocionar."
+   },
+   {
+    "key": "attackingF2F7",
+    "name": "Atacando f2 o f7",
+    "count": "46.391",
+    "desc": "Un ataque centrado en el peón f2 o f7, como en el ataque Fegatello."
+   },
+   {
+    "key": "capturingDefender",
+    "name": "Capturar al defensor",
+    "count": "43.176",
+    "desc": "Eliminar una pieza fundamental para la defensa de otra, permitiendo capturar la pieza, ahora indefensa, en el futuro."
+   },
+   {
+    "key": "discoveredAttack",
+    "name": "Ataque a la descubierta",
+    "count": "329.114",
+    "desc": "Mover una pieza que bloqueaba el ataque de otra pieza de largo alcance, como por ejemplo, quitar un caballo del camino de una torre."
+   },
+   {
+    "key": "doubleCheck",
+    "name": "Jaque doble",
+    "count": "33.284",
+    "desc": "Dar jaque con dos piezas a la vez, como consecuencia de una ataque a la descubierta, donde tanto la pieza movida como la revelada atacan al rey del oponente."
+   },
+   {
+    "key": "exposedKing",
+    "name": "Rey expuesto",
+    "count": "189.384",
+    "desc": "Una táctica que involucra a un rey con poca defensa a su alrededor, a menudo conduce a jaque mate."
+   },
+   {
+    "key": "fork",
+    "name": "Ataque doble",
+    "count": "836.012",
+    "desc": "Un movimiento donde la pieza movida ataca dos piezas del oponente a la vez."
+   },
+   {
+    "key": "hangingPiece",
+    "name": "Pieza colgada",
+    "count": "252.603",
+    "desc": "Una táctica que implica que una pieza del adversario no esté defendida o insuficientemente defendida y quede para ser capturada."
+   },
+   {
+    "key": "kingsideAttack",
+    "name": "Ataque en el flanco de rey",
+    "count": "549.228",
+    "desc": "Un ataque contra el enroque corto."
+   },
+   {
+    "key": "pin",
+    "name": "Clavada",
+    "count": "385.905",
+    "desc": "Una táctica donde una pieza no puede moverse sin revelar un ataque a una pieza de mayor valor."
+   },
+   {
+    "key": "queensideAttack",
+    "name": "Ataque en el flanco de dama",
+    "count": "94.952",
+    "desc": "Un ataque al rey del oponente, luego de haber realizado el enroque largo."
+   },
+   {
+    "key": "sacrifice",
+    "name": "Sacrificio",
+    "count": "469.980",
+    "desc": "Una táctica que implica ceder material a corto plazo, para obtener una ventaja luego de una secuencia forzada de movimientos."
+   },
+   {
+    "key": "skewer",
+    "name": "Pincho",
+    "count": "142.862",
+    "desc": "Un motivo que implica el ataque de una pieza de alto valor, que se aparta del camino y permite capturar o atacar una pieza de menor valor detrás de ella, lo contrario de una clavada."
+   },
+   {
+    "key": "trappedPiece",
+    "name": "Pieza atrapada",
+    "count": "73.693",
+    "desc": "Una pieza no puede escapar de la captura porque tiene movimientos limitados."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:advanced",
+  "title": "Avanzado",
+  "themes": [
+   {
+    "key": "attraction",
+    "name": "Atracción",
+    "count": "227.254",
+    "desc": "Un cambio o sacrificio que invita o fuerza al oponente a colocar una pieza en una casilla que propicia una oportunidad táctica."
+   },
+   {
+    "key": "clearance",
+    "name": "Despeje",
+    "count": "82.468",
+    "desc": "Un movimiento, a menudo con ganancia de tiempo, que limpia una casilla, una fila o una diagonal para una idea táctica de seguimiento."
+   },
+   {
+    "key": "collinearMove",
+    "name": "Movimiento colinear",
+    "count": "7.736",
+    "desc": "Dos piezas opuestas se enfrentan entre sí, y una se desliza a lo largo de la línea de ataque sin capturar la pieza enemiga."
+   },
+   {
+    "key": "discoveredCheck",
+    "name": "Jaque a la descubierta",
+    "count": "108.803",
+    "desc": "Mueve una pieza para dar jaque con otra que se encuentra detrás, lo que a menudo conduce a una ventaja decisiva."
+   },
+   {
+    "key": "defensiveMove",
+    "name": "Movimiento defensivo",
+    "count": "380.771",
+    "desc": "Un movimiento o una secuencia de movimientos necesarios para evitar la pérdida de material u otra ventaja."
+   },
+   {
+    "key": "deflection",
+    "name": "Desviación",
+    "count": "274.991",
+    "desc": "Un movimiento que distrae una pieza del oponente de alguna de las tareas que desempeña, como la protección de una casilla clave. También conocido como \"sobrecarga\"."
+   },
+   {
+    "key": "interference",
+    "name": "Interferencia",
+    "count": "23.459",
+    "desc": "Mover una pieza entre dos piezas del oponente para dejar una o ambas piezas del oponente sin defensa, por ejemplo un caballo en una casilla entre dos torres."
+   },
+   {
+    "key": "intermezzo",
+    "name": "Jugada intermedia",
+    "count": "78.907",
+    "desc": "En lugar de jugar el movimiento esperado, se realiza antes otro movimiento que plantea una amenaza inmediata a la que el oponente debe responder. También conocido como \"Zwischenzug\" o \"Intermezzo\"."
+   },
+   {
+    "key": "quietMove",
+    "name": "Jugada tranquila",
+    "count": "261.064",
+    "desc": "Un movimiento que no da jaque o captura pieza, ni amenza inmediatamente capturar una pieza, pero que prepara una amenaza inevitable más oculta para una jugada posterior."
+   },
+   {
+    "key": "xRayAttack",
+    "name": "Ataque por rayos X",
+    "count": "22.430",
+    "desc": "Una pieza ataca o defiende una casilla, a través de una pieza del oponente."
+   },
+   {
+    "key": "zugzwang",
+    "name": "Zugzwang",
+    "count": "64.599",
+    "desc": "El oponente está limitado en los movimientos que puede realizar, y todos los movimientos empeoran su posición."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:mates",
+  "title": "Mates",
+  "themes": [
+   {
+    "key": "mate",
+    "name": "Jaque mate",
+    "count": "1.974.121",
+    "desc": "Gana la partida con estilo."
+   },
+   {
+    "key": "mateIn1",
+    "name": "Mate en 1",
+    "count": "912.293",
+    "desc": "Dar mate en un movimiento."
+   },
+   {
+    "key": "mateIn2",
+    "name": "Mate en 2",
+    "count": "825.000",
+    "desc": "Dar mate en dos movimientos."
+   },
+   {
+    "key": "mateIn3",
+    "name": "Mate en 3",
+    "count": "200.956",
+    "desc": "Dar mate en tres movimientos."
+   },
+   {
+    "key": "mateIn4",
+    "name": "Mate en 4",
+    "count": "29.487",
+    "desc": "Dar mate en cuatro movimientos."
+   },
+   {
+    "key": "mateIn5",
+    "name": "Mate en 5 o más",
+    "count": "6.387",
+    "desc": "Calcular una secuencia de mate larga."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:mateThemes",
+  "title": "Temas de mate",
+  "themes": [
+   {
+    "key": "anastasiaMate",
+    "name": "Mate de Anastasia",
+    "count": "7.573",
+    "desc": "Un caballo y una torre o dama se unen para atrapar al rey contrario entre un extremo del tablero y una pieza de su bando."
+   },
+   {
+    "key": "arabianMate",
+    "name": "Mate árabe",
+    "count": "7.586",
+    "desc": "Un caballo y una torre se unen para atrapar al rey contrario en una esquina del tablero."
+   },
+   {
+    "key": "backRankMate",
+    "name": "Mate del pasillo",
+    "count": "209.848",
+    "desc": "Jaque mate en la última fila, cuando el rey se encuentra atrapado por sus propias piezas."
+   },
+   {
+    "key": "balestraMate",
+    "name": "Mate de alfil y dama",
+    "count": "1.368",
+    "desc": "El alfil da jaque mate mientras la dama bloquea las casillas de escape"
+   },
+   {
+    "key": "blindSwineMate",
+    "name": "Mate del cerdo ciego",
+    "count": "6.361",
+    "desc": "Dos torres se unen para dar mate al rey en un área de 2 por 2 casillas."
+   },
+   {
+    "key": "bodenMate",
+    "name": "Mate de Boden",
+    "count": "3.778",
+    "desc": "Dos alfiles atacantes en diagonales cruzadas dan mate al rey, obstruido por piezas de su bando."
+   },
+   {
+    "key": "cornerMate",
+    "name": "Mate de la esquina",
+    "count": "10.783",
+    "desc": "Encierra al rey en una esquina usando una torre o dama y un caballo para dar mate."
+   },
+   {
+    "key": "doubleBishopMate",
+    "name": "Mate de los dos alfiles",
+    "count": "3.744",
+    "desc": "Dos alfiles atacantes en diagonales adyacentes dan mate al rey obstruido por piezas de su bando."
+   },
+   {
+    "key": "dovetailMate",
+    "name": "Mate de Cozio",
+    "count": "4.111",
+    "desc": "Una dama da mate al rey adyacente, cuyas únicas dos casillas de escape están obstruidas por piezas de su bando."
+   },
+   {
+    "key": "epauletteMate",
+    "name": "Mate de las hombreras",
+    "count": "22.648",
+    "desc": "Las dos casillas de escape adyacentes al rey en jaque están ocupadas por otras piezas."
+   },
+   {
+    "key": "hookMate",
+    "name": "Mate del gancho",
+    "count": "10.859",
+    "desc": "Jaque mate con una torre, un caballo y un peón junto con un peón enemigo para limitar el escape del rey adversario."
+   },
+   {
+    "key": "killBoxMate",
+    "name": "Mate del recuadro mortal",
+    "count": "5.519",
+    "desc": "Una torre está cerca del rey enemigo apoyada por una dama que también bloquea las casillas de escape del rey. La torre y la dama capturan al rey enemigo en un recuadro mortal de 3 por 3."
+   },
+   {
+    "key": "pillsburysMate",
+    "name": "Mate de Pillsbury",
+    "count": "67.644",
+    "desc": "La torre da jaque mate, al tiempo que el alfil ayuda a confinar al rey enemigo."
+   },
+   {
+    "key": "morphysMate",
+    "name": "Mate de Morphy",
+    "count": "7.133",
+    "desc": "Utiliza el alfil para dar jaque al rey, mientras que tu torre ayuda a mantenerlo confinado."
+   },
+   {
+    "key": "operaMate",
+    "name": "Mate de la Ópera",
+    "count": "63.940",
+    "desc": "Da jaque al rey con una torre defendida por un alfil."
+   },
+   {
+    "key": "swallowstailMate",
+    "name": "Mate cola de golondrina",
+    "count": "8.398",
+    "desc": "Un patrón de mate que se asemeja visualmente a la cola de una golondrina, en forma de V."
+   },
+   {
+    "key": "triangleMate",
+    "name": "Mate del triángulo",
+    "count": "7.854",
+    "desc": "La dama y la torre, a una casilla de distancia del rey rival, están en la misma fila o columna, separadas por una casilla, formando un triángulo."
+   },
+   {
+    "key": "vukovicMate",
+    "name": "Mate de Vukovic",
+    "count": "2.487",
+    "desc": "Una torre y un caballo se unen para dar mate al rey. La torre da mate apoyada por una tercera pieza y el caballo se utiliza para bloquear las casillas de escape del rey."
+   },
+   {
+    "key": "smotheredMate",
+    "name": "Mate de la coz",
+    "count": "24.608",
+    "desc": "Un jaque mate con caballo, en el cual el rey enemigo no se puede mover al encontrarse rodeado (o ahogado) por sus propias piezas."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:specialMoves",
+  "title": "Movimientos especiales",
+  "themes": [
+   {
+    "key": "castling",
+    "name": "Enroque",
+    "count": "2.652",
+    "desc": "Lleva al rey a un lugar seguro y despliega la torre para atacar."
+   },
+   {
+    "key": "enPassant",
+    "name": "Al paso",
+    "count": "8.902",
+    "desc": "Una táctica que involucra la captura al paso, donde un peón puede capturar a un peón oponente que lo ha pasado por alto usando su movimiento inicial de dos casillas."
+   },
+   {
+    "key": "promotion",
+    "name": "Promoción",
+    "count": "151.178",
+    "desc": "Promover uno de sus peones a una dama o una pieza menor."
+   },
+   {
+    "key": "underPromotion",
+    "name": "Subpromoción",
+    "count": "1.173",
+    "desc": "Promoción a caballo, alfil o torre."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:goals",
+  "title": "Objetivos",
+  "themes": [
+   {
+    "key": "equality",
+    "name": "Igualdad",
+    "count": "43.030",
+    "desc": "Recupérate de una posición perdedora y asegura las tablas o una posición de igualdad. (eval ≤ 200cp)"
+   },
+   {
+    "key": "advantage",
+    "name": "Ventaja",
+    "count": "1.893.248",
+    "desc": "Aprovecha la oportunidad de obtener una ventaja decisiva. (200cp ≤ eval ≤ 600cp)"
+   },
+   {
+    "key": "crushing",
+    "name": "Aplastante",
+    "count": "2.440.262",
+    "desc": "Detecta el error del oponente para obtener una ventaja ganadora. (eval ≥ 600cp)"
+   },
+   {
+    "key": "mate",
+    "name": "Jaque mate",
+    "count": "1.974.121",
+    "desc": "Gana la partida con estilo."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:lengths",
+  "title": "Duración",
+  "themes": [
+   {
+    "key": "oneMove",
+    "name": "Ejercicio de un solo movimiento",
+    "count": "959.551",
+    "desc": "Un movimiento para ganar."
+   },
+   {
+    "key": "short",
+    "name": "Ejercicio corto",
+    "count": "3.250.093",
+    "desc": "Dos movimientos para ganar."
+   },
+   {
+    "key": "long",
+    "name": "Ejercicio largo",
+    "count": "1.628.767",
+    "desc": "Tres movimientos para ganar."
+   },
+   {
+    "key": "veryLong",
+    "name": "Ejercicio muy largo",
+    "count": "512.250",
+    "desc": "Cuatro movimientos o más para ganar."
+   }
+  ]
+ },
+ {
+  "id": "puzzle:origin",
+  "title": "Origen",
+  "themes": [
+   {
+    "key": "master",
+    "name": "Partidas de maestros",
+    "count": "839.959",
+    "desc": "Ejercicios de partidas de jugadores titulados."
+   },
+   {
+    "key": "masterVsMaster",
+    "name": "Partidas entre maestros",
+    "count": "77.314",
+    "desc": "Ejercicios de partidas entre jugadores titulados."
+   },
+   {
+    "key": "superGM",
+    "name": "Partidas de súper grandes maestros",
+    "count": "3.283",
+    "desc": "Ejercicios de partidas de los mejores jugadores del mundo."
+   },
+   {
+    "key": "of-player",
+    "name": "Partidas de jugadores",
+    "count": "",
+    "desc": "Busca ejercicios generados a partir de tus partidas o de las de otros jugadores."
+   }
+  ]
+ }
+]

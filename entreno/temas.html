@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ejercicios por tema — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Ejercicios tácticos organizados por tema, con los mismos temas que Lichess: clavadas, ataques dobles, mates, finales y más. Base de respaldo propia para resolver en el sitio.">
+<meta name="robots" content="noindex">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: {
+            colors: {
+                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+            },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+        } }
+    }
+</script>
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  main{max-width:960px; margin:0 auto; padding:18px 24px 60px;}
+
+  /* ---------- Cuadrícula de temas ---------- */
+  .group{margin-top:26px;}
+  .group h2{font-size:1.15rem; color:var(--text); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .group h2 small{font-family:'Inter',sans-serif; font-weight:400; font-size:0.8rem; color:var(--text-muted);}
+  .themes{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin-top:12px;}
+  .theme{
+    background:var(--bg-panel); border:1px solid var(--line); border-left:4px solid var(--brass);
+    padding:12px 14px 10px; display:flex; flex-direction:column; gap:6px; min-height:132px;
+    transition:border-color .2s, transform .15s ease-out, box-shadow .2s;
+  }
+  .theme:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,42,67,0.12);}
+  .theme.done{border-left-color:var(--ok);}
+  .theme.remote{border-left-color:var(--line);}
+  .theme h3{font-family:'Inter',sans-serif; font-size:0.98rem; font-weight:600; color:var(--text); display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .theme h3 .n{font-size:0.75rem; font-weight:500; color:var(--text-muted); white-space:nowrap;}
+  .theme p{margin:0; font-size:0.8rem; line-height:1.4; color:var(--text-muted); flex:1;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .theme .bar{height:4px; background:var(--line); border-radius:2px; overflow:hidden;}
+  .theme .bar i{display:block; height:100%; background:var(--brass);}
+  .theme.done .bar i{background:var(--ok);}
+  .theme .acts{display:flex; gap:8px; align-items:center; margin-top:2px;}
+  .tbtn{
+    font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:600; padding:8px 12px; min-height:38px;
+    border:1px solid var(--brass); background:var(--brass); color:#102a43; cursor:pointer; text-decoration:none;
+    transition:background .2s, transform .12s ease-out;
+  }
+  .tbtn:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+  .tbtn:active{transform:scale(0.97);}
+  .tbtn.ghost{background:transparent; color:var(--text); border-color:var(--line);}
+  .tbtn.ghost:hover{border-color:var(--brass); background:transparent;}
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; justify-content:space-between; margin-top:6px; font-size:0.88rem; color:var(--text-muted);}
+  .toolbar b{color:var(--text);}
+  .search{
+    font-family:'Inter',sans-serif; font-size:0.9rem; padding:9px 12px; min-width:220px; border:1px solid var(--line);
+    background:var(--bg-panel); color:var(--text);
+  }
+
+  /* ---------- Reproductor ---------- */
+  .play-head{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .play-head h2{font-size:1.2rem; color:var(--text);}
+  .play-head .links{display:flex; gap:14px; font-size:0.85rem;}
+  .play-head .links a{color:var(--text-muted); text-decoration:none;}
+  .play-head .links a:hover{color:var(--brass);}
+  .theme-desc{font-size:0.85rem; color:var(--text-muted); margin:0 0 12px; line-height:1.45;}
+
+  .streak-bar{
+    display:flex; align-items:center; justify-content:center; gap:8px; font-size:0.9rem; color:var(--text-muted); padding-bottom:6px;
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.last{background:rgba(240,180,41,0.35);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px #f0b429; animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  .coords{display:flex; justify-content:space-between; max-width:420px; margin:4px auto 0; font-size:0.7rem; color:var(--text-muted); padding:0 2px;}
+
+  .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+  .puzzle-meta{max-width:420px; margin:6px auto 0; text-align:center; font-size:0.8rem; color:var(--text-muted);}
+  .puzzle-meta a{color:var(--text-muted);}
+
+  .round-status{margin-top:12px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  #promo-modal{display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:16px;}
+  #promo-modal .box{background:var(--bg-panel); border-radius:14px; padding:20px; text-align:center;}
+  #promo-modal p{color:var(--text-muted); font-size:0.85rem; margin:0 0 12px;}
+  #promo-modal .opts{display:flex; gap:8px;}
+  .promo-btn{width:52px; height:52px; font-size:1.8rem; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; border-radius:10px;}
+  .promo-btn:hover{border-color:var(--brass);}
+
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .theme, .tbtn, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+</style>
+    <script src="../js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🗂️</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Ejercicios por tema</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Ejercicios por tema 🗂️</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-400">
+      <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
+    </div>
+  </div>
+  <p class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">
+    Los mismos temas tácticos que usa Lichess, con una base de respaldo propia para resolver aquí mismo. Cada tema tiene
+    dos caminos: <b>Resolver aquí</b> (ejercicios guardados en el sitio, ordenados de más fácil a más difícil, con tu progreso) o
+    <b>En Lichess</b>, que abre <a href="https://lichess.org/training/themes" target="_blank" rel="noopener" class="underline">lichess.org/training/themes</a> con ejercicios ilimitados de ese tema.
+  </p>
+
+  <main id="main-content">
+    <!-- ---------- Vista de temas ---------- -->
+    <section id="themes-view" aria-label="Temas">
+      <div class="toolbar">
+        <span><b id="total-solved">0</b> resueltos de <b id="total-count">0</b> ejercicios en <b id="total-themes">0</b> temas</span>
+        <label class="sr-only" for="search">Buscar tema</label>
+        <input id="search" class="search" type="search" placeholder="Buscar tema (clavada, mate, final…)" autocomplete="off">
+      </div>
+      <div id="groups"></div>
+    </section>
+
+    <!-- ---------- Reproductor ---------- -->
+    <section id="play-view" style="display:none" aria-label="Ejercicio">
+      <div class="play-head">
+        <h2 id="play-title"></h2>
+        <div class="links">
+          <a href="#" id="back-themes">← Todos los temas</a>
+          <a href="#" id="lichess-theme" target="_blank" rel="noopener">Este tema en Lichess ↗</a>
+        </div>
+      </div>
+      <p class="theme-desc" id="play-desc"></p>
+
+      <div class="streak-bar" id="streak-bar">
+        <span class="flame" aria-hidden="true">🔥</span>
+        <span>Racha: <span class="streak-count" id="streak-count">0</span></span>
+        <span aria-hidden="true">·</span>
+        <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
+      </div>
+      <div id="progress-label" class="progress-label"></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+      <div id="play-area">
+        <p class="turn-banner" id="turn-banner"></p>
+        <div class="board-wrap" id="board-wrap">
+          <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
+        </div>
+        <p class="puzzle-meta" id="puzzle-meta"></p>
+
+        <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="hint-btn">💡 Pista</button>
+          <button type="button" class="bctrl" id="retry-btn">Reiniciar</button>
+          <button type="button" class="bctrl" id="skip-btn">Saltar →</button>
+        </div>
+      </div>
+
+      <div id="celebration">
+        <span class="big-emoji" aria-hidden="true">🎉</span>
+        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Tema completo!</h2>
+        <p class="stats" id="celebration-stats"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl primary" id="celebration-replay-btn">Volver a empezar el tema</button>
+          <button type="button" class="bctrl" id="celebration-back-btn">Elegir otro tema</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="promo-modal">
+  <div class="box">
+    <p>¿A qué pieza coronas?</p>
+    <div class="opts" id="promo-opts"></div>
+  </div>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Ejercicios de la base abierta de <a href="https://lichess.org" target="_blank" rel="noopener" class="underline">Lichess</a> (CC0).</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/board-drag.js"></script>
+<script src="../js/entreno-progress.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/temas.html';
+
+function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  EntrenoProgress.init();
+  loadDataThenStart();
+}
+
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
+const GROUP_ICON = { recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
+
+let DATA = null;           // {groups, themes:{key:[ids]}, puzzles:{id:{fen,solution,rating,themes,mate}}}
+let THEME_INFO = {};       // key -> {name, desc, lichess}
+
+async function loadDataThenStart(){
+  try {
+    const res = await fetch('data/temas.json');
+    if(!res.ok) throw new Error('temas.json: ' + res.status);
+    DATA = await res.json();
+    DATA.groups.forEach((g) => g.themes.forEach((t) => { THEME_INFO[t.key] = t; }));
+  } catch (e) {
+    document.getElementById('main-content').innerHTML =
+      '<p class="text-center text-brand-400 dark:text-brand-500 py-10">No se pudo cargar la base de ejercicios por tema. Intenta recargar la página.</p>';
+    console.error(e);
+    return;
+  }
+  initApp();
+}
+
+/* ---------------- Progreso y racha (localStorage) ---------------- */
+function getSolved(){
+  try{ return JSON.parse(localStorage.getItem('entreno_temas_solved') || '{}'); }catch(e){ return {}; }
+}
+function markSolved(id){
+  const s = getSolved();
+  s[id] = true;
+  localStorage.setItem('entreno_temas_solved', JSON.stringify(s));
+}
+function isSolved(id){ return !!getSolved()[id]; }
+function idsOf(theme){ return DATA.themes[theme] || []; }
+function solvedCountFor(theme){
+  const s = getSolved();
+  return idsOf(theme).filter((id) => s[id]).length;
+}
+function firstUnsolvedIndex(theme){
+  const s = getSolved();
+  const idx = idsOf(theme).findIndex((id) => !s[id]);
+  return idx === -1 ? 0 : idx;
+}
+
+function getStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_temas_streak') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function getBestStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_temas_best') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function setStreak(n){
+  localStorage.setItem('entreno_temas_streak', String(n));
+  const best = Math.max(getBestStreak(), n);
+  localStorage.setItem('entreno_temas_best', String(best));
+  document.getElementById('streak-count').textContent = n;
+  document.getElementById('streak-best').textContent = best;
+}
+function bumpStreak(){
+  setStreak(getStreak() + 1);
+  const bar = document.getElementById('streak-bar');
+  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
+}
+function resetStreak(){ setStreak(0); }
+
+/* ---------------- Vista de temas ---------------- */
+function normalize(s){ return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+function buildThemes(){
+  const q = normalize(document.getElementById('search').value.trim());
+  const wrap = document.getElementById('groups');
+  wrap.innerHTML = '';
+  const solved = getSolved();
+  let totalThemes = 0;
+  const seen = new Set();
+  const allIds = new Set();
+  DATA.groups.forEach((g) => {
+    const themes = g.themes.filter((t) => !q || normalize(t.name + ' ' + t.desc + ' ' + t.key).includes(q));
+    if(!themes.length) return;
+    const sec = document.createElement('section');
+    sec.className = 'group';
+    const h2 = document.createElement('h2');
+    h2.innerHTML = `<span aria-hidden="true">${GROUP_ICON[g.id] || '•'}</span> ${g.title} <small>${themes.length} ${themes.length === 1 ? 'tema' : 'temas'}</small>`;
+    sec.appendChild(h2);
+    const grid = document.createElement('div');
+    grid.className = 'themes';
+    themes.forEach((t) => {
+      const ids = idsOf(t.key);
+      const done = ids.filter((id) => solved[id]).length;
+      if(!seen.has(t.key)){ seen.add(t.key); totalThemes++; ids.forEach((id) => allIds.add(id)); }
+      const card = document.createElement('article');
+      card.className = 'theme' + (ids.length && done >= ids.length ? ' done' : '') + (ids.length ? '' : ' remote');
+      const localBtn = ids.length
+        ? `<button type="button" class="tbtn" data-theme="${t.key}">${done === 0 ? 'Resolver aquí' : (done >= ids.length ? 'Repasar' : 'Continuar')}</button>`
+        : '';
+      card.innerHTML = `
+        <h3><span>${t.name}</span><span class="n">${ids.length ? `${done}/${ids.length}` : 'solo en Lichess'}</span></h3>
+        <p>${t.desc}</p>
+        <div class="bar" role="progressbar" aria-label="Progreso en ${t.name}" aria-valuemin="0" aria-valuemax="${ids.length}" aria-valuenow="${done}"><i style="width:${ids.length ? Math.round(100 * done / ids.length) : 0}%"></i></div>
+        <div class="acts">
+          ${localBtn}
+          <a class="tbtn ${ids.length ? 'ghost' : ''}" href="https://lichess.org/training/${t.key === 'mix' ? '' : t.key}" target="_blank" rel="noopener" aria-label="${t.name} en Lichess (se abre en otra pestaña)">En Lichess ↗</a>
+        </div>`;
+      const b = card.querySelector('button');
+      if(b) b.addEventListener('click', () => openTheme(t.key));
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid);
+    wrap.appendChild(sec);
+  });
+  if(!wrap.children.length){
+    wrap.innerHTML = '<p class="text-center text-brand-400 dark:text-brand-500 py-10">Ningún tema coincide con la búsqueda.</p>';
+  }
+  document.getElementById('total-solved').textContent = [...allIds].filter((id) => solved[id]).length;
+  document.getElementById('total-count').textContent = allIds.size;
+  document.getElementById('total-themes').textContent = totalThemes;
+}
+document.getElementById('search').addEventListener('input', buildThemes);
+
+function showThemes(){
+  document.getElementById('play-view').style.display = 'none';
+  document.getElementById('themes-view').style.display = 'block';
+  buildThemes();
+  try{ localStorage.removeItem('entreno_temas_last'); }catch(e){}
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------------- Estado del ejercicio actual ---------------- */
+let currentTheme = null;
+let currentIndex = 0;
+let game = null;
+let orientation = 'w';
+let solutionStep = 0;
+let selectedSquare = null;
+let missedThisPuzzle = false;
+let usedHintThisPuzzle = false;
+let locked = false;
+let lastMove = null;
+
+function currentId(){ return idsOf(currentTheme)[currentIndex]; }
+function currentPuzzle(){ return DATA.puzzles[currentId()]; }
+
+function openTheme(key){
+  currentTheme = key;
+  const info = THEME_INFO[key] || { name: key, desc: '' };
+  document.getElementById('play-title').textContent = info.name;
+  document.getElementById('play-desc').textContent = info.desc;
+  document.getElementById('lichess-theme').href = 'https://lichess.org/training/' + (key === 'mix' ? '' : key);
+  document.getElementById('themes-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  try{ localStorage.setItem('entreno_temas_last', key); }catch(e){}
+  if(solvedCountFor(key) >= idsOf(key).length){
+    currentIndex = 0;
+    finishTheme();
+  } else {
+    currentIndex = firstUnsolvedIndex(key);
+    loadPuzzle();
+  }
+  window.scrollTo({ top: 0 });
+}
+
+function updateProgressBar(){
+  const total = idsOf(currentTheme).length;
+  const done = solvedCountFor(currentTheme);
+  document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
+  document.getElementById('progress-label').textContent = `${done}/${total} resueltos · ejercicio ${currentIndex + 1} de ${total}`;
+}
+
+/* ---------------- Tablero ---------------- */
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+
+function drawBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
+  ranks.forEach((rank) => {
+    files.forEach((f) => {
+      const square = FILES[f] + rank;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      btn.dataset.square = square;
+      const piece = game.get(square);
+      let label = square;
+      if(piece){
+        const span = document.createElement('span');
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span);
+        label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro');
+        if(piece.type === 'q' || piece.type === 'r') label = label.replace('blanco', 'blanca').replace('negro', 'negra');
+      }
+      btn.setAttribute('aria-label', label);
+      if(square === selectedSquare) btn.classList.add('selected');
+      if(lastMove && (square === lastMove.from || square === lastMove.to)) btn.classList.add('last');
+      btn.addEventListener('click', () => onSquareClick(square, btn));
+      board.appendChild(btn);
+    });
+  });
+}
+
+function flashWrong(btn){
+  if(!btn) return;
+  btn.classList.add('wrong-flash');
+  setTimeout(() => btn.classList.remove('wrong-flash'), 350);
+}
+function setStatus(text, cls){
+  const el = document.getElementById('round-status');
+  el.textContent = text;
+  el.className = 'round-status' + (cls ? ' ' + cls : '');
+}
+function highlightTargets(square){
+  const legal = game.moves({ square, verbose: true });
+  const board = document.getElementById('board');
+  legal.forEach((m) => {
+    const cell = board.querySelector('[data-square="' + m.to + '"]');
+    if(cell) cell.classList.add(m.flags.includes('c') || m.flags.includes('e') ? 'target-capture' : 'target');
+  });
+}
+
+function loadPuzzle(){
+  const puzzle = currentPuzzle();
+  document.getElementById('play-area').style.display = 'block';
+  document.getElementById('celebration').style.display = 'none';
+  if(!puzzle){
+    finishTheme();
+    return;
+  }
+  game = new Chess(puzzle.fen);
+  orientation = game.turn();
+  solutionStep = 0;
+  selectedSquare = null;
+  lastMove = null;
+  missedThisPuzzle = false;
+  usedHintThisPuzzle = false;
+  hintStage = 0;
+  locked = false;
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('hint-btn').textContent = '💡 Pista';
+  drawBoard();
+  updateProgressBar();
+  const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
+  document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — ${puzzle.mate ? 'encuentra el mate' : 'encuentra la mejor jugada'}`;
+  const id = currentId();
+  document.getElementById('puzzle-meta').innerHTML =
+    `Dificultad ${puzzle.rating} · <a href="https://lichess.org/training/${id}" target="_blank" rel="noopener">ver este ejercicio en Lichess ↗</a>`;
+  setStatus('Haz clic en la pieza que quieres mover.');
+}
+
+function onSquareClick(square, btn){
+  if(locked) return;
+  const piece = game.get(square);
+  if(selectedSquare === null){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square;
+      drawBoard();
+      highlightTargets(square);
+    }
+    return;
+  }
+  if(square === selectedSquare){ selectedSquare = null; drawBoard(); return; }
+  const legalFromSelected = game.moves({ square: selectedSquare, verbose: true });
+  const candidates = legalFromSelected.filter((m) => m.to === square);
+  if(!candidates.length){
+    if(piece && piece.color === game.turn()){
+      selectedSquare = square; drawBoard(); highlightTargets(square);
+    } else {
+      selectedSquare = null; drawBoard();
+      flashWrong(document.querySelector('[data-square="' + square + '"]'));
+    }
+    return;
+  }
+  const from = selectedSquare;
+  selectedSquare = null;
+  if(candidates.length > 1 && candidates[0].flags.includes('p')){
+    askPromotion((choice) => playMove(from, square, choice));
+  } else {
+    playMove(from, square, candidates[0].promotion || undefined);
+  }
+}
+
+if(typeof enableBoardDrag !== 'undefined'){
+  enableBoardDrag(document.getElementById('board'), {
+    isDraggable: (square) => {
+      if(locked) return false;
+      const piece = game.get(square);
+      return !!(piece && piece.color === game.turn());
+    },
+    isSelected: (square) => selectedSquare === square,
+    onSquareClick: (square) => onSquareClick(square),
+  });
+}
+
+function askPromotion(callback){
+  const modal = document.getElementById('promo-modal');
+  const opts = document.getElementById('promo-opts');
+  opts.innerHTML = '';
+  const turn = game.turn();
+  ['q','r','b','n'].forEach((type) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'promo-btn';
+    btn.setAttribute('aria-label', PIECE_NAME[type]);
+    btn.innerHTML = `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[turn][type]}</span>`;
+    btn.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
+    opts.appendChild(btn);
+  });
+  modal.style.display = 'flex';
+}
+
+function playMove(from, to, promotion){
+  const puzzle = currentPuzzle();
+  const moveResult = game.move({ from, to, promotion: promotion || 'q' });
+  if(!moveResult){ drawBoard(); return; }
+
+  const expected = puzzle.solution[solutionStep];
+  if(moveResult.san !== expected){
+    // En Lichess, cualquier jugada que dé mate también cuenta como correcta.
+    if(!game.in_checkmate()){
+      game.undo();
+      drawBoard();
+      missedThisPuzzle = true;
+      resetStreak();
+      flashWrong(document.querySelector('[data-square="' + to + '"]'));
+      setStatus(`${moveResult.san} es legal, pero no es la jugada de la solución.`, 'bad');
+      return;
+    }
+  }
+  lastMove = { from, to };
+  drawBoard();
+
+  solutionStep++;
+  if(solutionStep >= puzzle.solution.length || game.in_checkmate()){
+    finishPuzzle();
+    return;
+  }
+
+  locked = true;
+  setStatus('✓ Correcto — el rival responde…', 'ok');
+  setTimeout(() => {
+    const replySan = puzzle.solution[solutionStep];
+    const reply = game.move(replySan);
+    if(reply) lastMove = { from: reply.from, to: reply.to };
+    solutionStep++;
+    drawBoard();
+    locked = false;
+    if(solutionStep >= puzzle.solution.length){
+      finishPuzzle();
+    } else {
+      hintStage = 0;
+      document.getElementById('hint-btn').textContent = '💡 Pista';
+      setStatus('Sigue buscando la continuación.');
+    }
+  }, 650);
+}
+
+function finishPuzzle(){
+  locked = true;
+  document.getElementById('hint-btn').disabled = true;
+  const puzzle = currentPuzzle();
+  const id = currentId();
+  const alreadySolved = isSolved(id);
+  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
+  setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
+  if(!alreadySolved){
+    markSolved(id);
+    EntrenoProgress.log('temas', { puzzle_id: id, theme: currentTheme, rating: puzzle.rating });
+  }
+  updateProgressBar();
+  setTimeout(() => {
+    if(currentIndex < idsOf(currentTheme).length - 1){
+      currentIndex++;
+      loadPuzzle();
+    } else {
+      finishTheme();
+    }
+  }, 1000);
+}
+
+function finishTheme(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  const total = idsOf(currentTheme).length;
+  const info = THEME_INFO[currentTheme] || { name: currentTheme };
+  document.getElementById('celebration-stats').textContent =
+    `Resolviste los ${total} ejercicios de ${info.name}. Si quieres más, este tema en Lichess no se acaba nunca.`;
+  updateProgressBar();
+}
+
+let hintStage = 0;
+function giveHint(){
+  if(locked) return;
+  usedHintThisPuzzle = true;
+  const puzzle = currentPuzzle();
+  const expected = puzzle.solution[solutionStep];
+  const legal = game.moves({ verbose: true });
+  const target = legal.find((m) => m.san === expected);
+  const board = document.getElementById('board');
+
+  if(hintStage === 0){
+    hintStage = 1;
+    board.querySelectorAll('.hint-from').forEach((el) => el.classList.remove('hint-from'));
+    if(target){
+      const cell = board.querySelector('[data-square="' + target.from + '"]');
+      if(cell) cell.classList.add('hint-from');
+    }
+    setStatus('Pista: fíjate en la pieza resaltada.');
+    document.getElementById('hint-btn').textContent = '💡 Ver solución';
+  } else {
+    hintStage = 0;
+    document.getElementById('hint-btn').textContent = '💡 Pista';
+    if(!target) return;
+    selectedSquare = null;
+    playMove(target.from, target.to, target.promotion || undefined);
+  }
+}
+document.getElementById('hint-btn').addEventListener('click', giveHint);
+document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
+document.getElementById('skip-btn').addEventListener('click', () => {
+  resetStreak();
+  if(currentIndex < idsOf(currentTheme).length - 1){
+    currentIndex++;
+  } else {
+    currentIndex = 0;
+  }
+  loadPuzzle();
+});
+document.getElementById('celebration-replay-btn').addEventListener('click', () => {
+  currentIndex = 0;
+  loadPuzzle();
+});
+document.getElementById('celebration-back-btn').addEventListener('click', showThemes);
+document.getElementById('back-themes').addEventListener('click', (e) => { e.preventDefault(); showThemes(); });
+
+/* ---------------- Arranque ---------------- */
+let appInitialized = false;
+function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  setStreak(getStreak());
+  let last = null;
+  try{ last = localStorage.getItem('entreno_temas_last'); }catch(e){}
+  const fromHash = (location.hash || '').replace('#', '');
+  const wanted = fromHash && DATA.themes[fromHash] ? fromHash : (last && DATA.themes[last] ? last : null);
+  if(wanted) openTheme(wanted); else showThemes();
+}
+
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Ejercicios por tema. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  unlock();
+}
+
+requireLoginThenGate();
+</script>
+</body>
+</html>
