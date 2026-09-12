@@ -106,11 +106,17 @@
                                 <select id="black-select" required class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                             </div>
                         </div>
-                        <div>
-                            <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
-                            <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                <option value="crazyhouse">♞ Crazyhouse</option>
-                            </select>
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
+                                <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    <option value="crazyhouse">♞ Crazyhouse</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="time-control-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⏱️ Tiempo</label>
+                                <select id="time-control-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                            </div>
                         </div>
                         <p id="create-room-msg" class="text-xs min-h-[1em]"></p>
                         <button type="submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">🎲 Crear partida</button>
@@ -149,6 +155,36 @@
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
             { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
         ];
+
+        // Tiempo asignado a cada jugador (reloj tipo Fischer: minutos + segundos que se
+        // suman después de cada jugada). "Sin límite" (initial: null) es como se jugó
+        // siempre hasta ahora — el reloj es opcional, no obligatorio.
+        const TIME_CONTROLS = [
+            { id: "none", label: "Sin límite", initial: null, increment: 0 },
+            { id: "3+0", label: "3 minutos", initial: 180, increment: 0 },
+            { id: "5+0", label: "5 minutos", initial: 300, increment: 0 },
+            { id: "5+3", label: "5 min + 3 seg", initial: 300, increment: 3 },
+            { id: "10+0", label: "10 minutos", initial: 600, increment: 0 },
+            { id: "10+5", label: "10 min + 5 seg", initial: 600, increment: 5 },
+            { id: "15+10", label: "15 min + 10 seg", initial: 900, increment: 10 },
+        ];
+
+        function timeControlLabel(initialSeconds, incrementSeconds) {
+            if (initialSeconds === null || initialSeconds === undefined) return "Sin límite";
+            const minutes = Math.round(initialSeconds / 60);
+            return incrementSeconds ? minutes + " min + " + incrementSeconds + " seg" : minutes + " minutos";
+        }
+
+        function populateTimeControlSelect() {
+            const select = document.getElementById("time-control-select");
+            select.innerHTML = "";
+            TIME_CONTROLS.forEach((tc) => {
+                const opt = document.createElement("option");
+                opt.value = tc.id;
+                opt.textContent = tc.label;
+                select.appendChild(opt);
+            });
+        }
 
         function setStatus(text) {
             const el = document.getElementById("status-banner");
@@ -255,7 +291,7 @@
             card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
             const info = document.createElement("div");
             info.innerHTML =
-                '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(row.variant) + '</p>' +
+                '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(row.variant) + ' · ⏱️ ' + timeControlLabel(row.initial_seconds, row.increment_seconds) + '</p>' +
                 '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?") + '</h3>' +
                 '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
             const actions = document.createElement("div");
@@ -329,8 +365,15 @@
             const variant = document.getElementById("variant-select").value;
             if (!whiteId || !blackId) { msg.textContent = "Elige un alumno para cada color."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             if (whiteId === blackId) { msg.textContent = "Elige dos alumnos distintos."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            const timeControlId = document.getElementById("time-control-select").value;
+            const timeControl = TIME_CONTROLS.find((tc) => tc.id === timeControlId) || TIME_CONTROLS[0];
             const { error } = await sb.from("game_rooms").insert({
                 variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
+                initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
+                // El reloj de ambos arranca completo desde ya — el de blancas empieza a
+                // correr de una vez porque son quienes mueven primero.
+                white_time_left: timeControl.initial, black_time_left: timeControl.initial,
+                clock_updated_at: timeControl.initial === null ? null : new Date().toISOString(),
             });
             if (error) { console.error(error); msg.textContent = "No se pudo crear la partida: " + error.message; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             msg.textContent = "¡Partida creada!";
@@ -340,6 +383,7 @@
 
         async function renderTeacherView() {
             document.getElementById("teacher-view").classList.remove("hidden");
+            populateTimeControlSelect();
             await loadStudentsIntoSelects();
             if (allStudents.length < 2) {
                 setStatus("Necesitas al menos 2 alumnos registrados para armar una partida entre ellos.");
