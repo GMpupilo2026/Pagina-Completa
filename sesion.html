@@ -1735,8 +1735,17 @@
             const retryBtn = document.getElementById("engine-reference-retry-btn");
             if (!el) return;
             if (!answer) {
-                el.textContent = "Calculando la mejor respuesta del motor…";
-                if (retryBtn) retryBtn.classList.toggle("hidden", !!(opts && opts.computing));
+                // "Calculando…" y "no se pudo calcular" mostraban el MISMO texto — la única
+                // diferencia era un botón chico que aparecía debajo, fácil de no notar en medio
+                // de una clase. Para el profesor eso se veía exactamente igual de trabado antes
+                // y después de que el cálculo fallara, aunque el botón de reintentar sí
+                // funcionara por detrás. Ahora el texto también cambia, para que quede claro
+                // que ya falló y que el botón de abajo es la salida, no un adorno.
+                const computing = !!(opts && opts.computing);
+                el.textContent = computing
+                    ? "Calculando la mejor respuesta del motor…"
+                    : "El motor no pudo calcular la respuesta — toca \"Reintentar\" para volver a intentarlo.";
+                if (retryBtn) retryBtn.classList.toggle("hidden", computing);
                 return;
             }
             const scoreText = answer.score.type === "mate"
