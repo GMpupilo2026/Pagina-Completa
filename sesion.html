@@ -1293,6 +1293,10 @@
                     }
                 }
                 renderStudentsList();
+                // La lista de "con quién chatear" solo muestra alumnos conectados ahora
+                // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
+                // quién está conectado, se refresca también esa lista.
+                if (isTeacher) renderChatStudentOptions();
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -1505,13 +1509,27 @@
             const select = document.getElementById("chat-student-select");
             const prevValue = select.value;
             select.innerHTML = "";
-            for (const s of chatStudents) {
+            // Solo alumnos conectados ahora mismo a la clase (ver onlineStudents, la misma
+            // lista de presencia de "Alumnos conectados") — con muchos alumnos registrados
+            // en la Academia, no tiene sentido buscar entre todos para hablar con quien SÍ
+            // está en esta clase ahora. Excepción: si ya se estaba viendo la conversación
+            // con alguien que justo se desconectó, se lo deja igual (marcado aparte) para
+            // no perder de golpe esa conversación abierta.
+            const visible = chatStudents.filter((s) => onlineStudents.has(s.id) || s.id === chatStudentId);
+            for (const s of visible) {
                 const opt = document.createElement("option");
                 opt.value = s.id;
-                opt.textContent = (chatUnseen.has(s.id) ? "🔴 " : "") + (s.full_name || s.email);
+                const online = onlineStudents.has(s.id);
+                opt.textContent = (chatUnseen.has(s.id) ? "🔴 " : "") + (s.full_name || s.email) + (online ? "" : " (desconectado)");
                 select.appendChild(opt);
             }
-            if (prevValue && chatStudents.some((s) => s.id === prevValue)) select.value = prevValue;
+            if (prevValue && visible.some((s) => s.id === prevValue)) select.value = prevValue;
+            const anyToShow = visible.length > 0;
+            document.getElementById("chat-no-students").classList.toggle("hidden", anyToShow);
+            document.getElementById("chat-no-students").textContent = chatStudents.length
+                ? "Ningún alumno está conectado a la clase ahora mismo."
+                : "Todavía no hay alumnos registrados.";
+            document.getElementById("chat-form").classList.toggle("hidden", !anyToShow);
         }
 
         async function loadChatStudents() {
@@ -1519,13 +1537,15 @@
             if (error) { console.error(error); return; }
             chatStudents.length = 0;
             chatStudents.push(...(data || []));
-            document.getElementById("chat-no-students").classList.toggle("hidden", chatStudents.length > 0);
-            document.getElementById("chat-form").classList.toggle("hidden", chatStudents.length === 0);
-            renderChatStudentOptions();
             if (!chatStudentId || !chatStudents.some((s) => s.id === chatStudentId)) {
-                chatStudentId = chatStudents.length ? chatStudents[0].id : null;
-                document.getElementById("chat-student-select").value = chatStudentId || "";
+                // Por defecto, empezar la conversación con el primer alumno CONECTADO — no
+                // tiene sentido abrir de entrada el chat de alguien que ni siquiera está en
+                // la clase ahora mismo.
+                const firstOnline = chatStudents.find((s) => onlineStudents.has(s.id));
+                chatStudentId = firstOnline ? firstOnline.id : null;
             }
+            renderChatStudentOptions();
+            document.getElementById("chat-student-select").value = chatStudentId || "";
             await loadChatMessages();
         }
 
