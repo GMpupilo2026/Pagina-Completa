@@ -182,6 +182,18 @@ html.adaptive-mode *:focus-visible {
   outline: 3px solid #de911d !important;
   outline-offset: 3px !important;
 }
+/* Piezas blancas: .piece-white (más arriba) ya las bordea en #1e293b (azul muy oscuro,
+   no negro puro) para que se lean sobre cualquier casilla — en Modo Adaptado se refuerza
+   ese contorno con negro puro y un poco más grueso, para que se distingan con la mayor
+   claridad posible en baja visión. */
+html.adaptive-mode .piece-white {
+  text-shadow:
+    -1.5px -1.5px 0 #000,
+     1.5px -1.5px 0 #000,
+    -1.5px  1.5px 0 #000,
+     1.5px  1.5px 0 #000,
+     0 2px 3px rgba(0, 0, 0, 0.5);
+}
 
 /* ===== Compatibilidad con "contraste alto" del sistema operativo =====
  * Dos señales DISTINTAS del navegador, para dos casos distintos:
