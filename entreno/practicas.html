@@ -151,6 +151,10 @@
   }
   .mode-btn + .mode-btn{border-left:1px solid var(--line);}
   .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
 
   .position-readout{
     background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
@@ -261,6 +265,7 @@
       <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
       <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
     </div>
+    <button type="button" id="speech-toggle-btn" style="display:none" class="speech-btn"></button>
   </div>
 
   <nav class="tabs" id="tabs" aria-label="Categorías de prácticas"></nav>
@@ -437,11 +442,19 @@ function renderPositionReadout(){
   readout.innerHTML = window.BlindNotation.groupedReadoutHTML(game);
   readout.style.display = 'block';
 }
+// Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+// lee un lector de pantalla real), para quien no tiene uno activado. Ver
+// js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  : null;
+
 function applyBlindModeUI(){
   document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
   document.getElementById('blind-panel').style.display = blindMode ? 'block' : 'none';
   if(modeNormalBtn){ modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true'); modeNormalBtn.classList.toggle('active', !blindMode); }
   if(modeBlindBtn){ modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false'); modeBlindBtn.classList.toggle('active', blindMode); }
+  if(refreshSpeechToggle) refreshSpeechToggle();
   renderPositionReadout();
   if(blindMode) document.getElementById('blind-move-input').focus();
 }
@@ -609,6 +622,7 @@ function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
