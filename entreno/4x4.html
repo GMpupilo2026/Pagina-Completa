@@ -982,7 +982,9 @@ function loadPuzzleAt(exIndex){
   renderBoard();
   updatePuzzleNavButtons();
   renderPositionReadout();
-  announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${Object.keys(boardState).length} piezas en el tablero.`);
+  // Al empezar el ejercicio se dice la posición completa (no solo cuántas piezas hay):
+  // hace falta saber dónde está cada una para poder resolverlo.
+  announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${spokenPositionText()}`);
 }
 
 function setStatus(text){ document.getElementById('board-status').textContent = text; }
@@ -1090,8 +1092,9 @@ function performCapture(r,c){
   renderBoard();
   if(cameFromInput) cmdInputEl.focus();
   else focusSquare(r,c);
-  const remaining = Object.keys(boardState).length;
-  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
+  // Después de cada captura se dice la posición completa, no solo cuántas piezas
+  // quedan: así no hace falta pulsar aparte "Z" para saber dónde quedó cada una.
+  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}. ${spokenPositionText()}`);
   renderPositionReadout();
   checkWin();
 }
@@ -1231,7 +1234,19 @@ function piecesByType(){
   return byType;
 }
 
-// ---------- Comando "T" (dice la posición): dónde está cada pieza que queda ----------
+// ---------- Comando "T" / tecla "Z" (dice la posición): dónde está cada pieza que queda ----------
+// Versión en texto plano de la posición, para hablarla con Modo Speech (BlindNotation)
+// donde haga falta — el propio #position-readout (aria-live) ya se lo anuncia solo a
+// quien usa un lector de pantalla real, pero eso no habla nada por sí mismo.
+function spokenPositionText(){
+  const byType = piecesByType();
+  const remaining = Object.keys(boardState).length;
+  const parts = [`${remaining} pieza${remaining===1?'':'s'} en el tablero.`];
+  POSITION_ORDER.forEach(t => {
+    if(byType[t].length) parts.push(`${byType[t].length===1 ? PIECE_NAME[t] : PIECE_NAME_PLURAL[t]}: ${joinSpanishList(byType[t])}.`);
+  });
+  return parts.join(' ');
+}
 function renderPositionReadout(){
   const el = document.getElementById('position-readout');
   if(!el) return;
@@ -1248,7 +1263,12 @@ function renderPositionReadout(){
   el.innerHTML = '';
   window.setTimeout(() => { el.innerHTML = html; }, 50);
 }
-function announcePosition(){ renderPositionReadout(); }
+// Comando "T" del recuadro de jugada y tecla "Z" con el tablero enfocado: ambos hacen
+// exactamente lo mismo, solo cambia cómo se llega — ver handleBoardShortcutKey().
+function announcePosition(){
+  renderPositionReadout();
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(spokenPositionText());
+}
 
 // ---------- Comando "p <letra>": dónde están las piezas de un tipo ----------
 function announcePieceType(letter){
@@ -1380,6 +1400,11 @@ function handleBoardShortcutKey(e, r, c){
     announceCurrentSquare(r,c);
     return;
   }
+  if(!e.shiftKey && !e.altKey && lower === 'z'){
+    e.preventDefault();
+    announcePosition();
+    return;
+  }
   if(!e.shiftKey && !e.altKey && (lower === 'c' || lower === 'l')){
     e.preventDefault();
     announceLastCapture();
@@ -1472,7 +1497,8 @@ const HELP_SECTIONS = [
   {
     title: 'Atajos con el tablero enfocado',
     text:
-      'i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), ' +
+      'i (ir al recuadro de jugada), o (casilla actual), z (posición completa, en voz — igual que el comando T), ' +
+      'c o l (última captura), m (capturas posibles), ' +
       'flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), ' +
       'números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), ' +
       'shift+a y shift+d (repasar capturas anteriores/siguientes).',
