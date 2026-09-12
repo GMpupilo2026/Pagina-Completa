@@ -48,6 +48,7 @@
   const moveFormEl = document.getElementById("move-form");
   const moveInputEl = document.getElementById("move-input");
   const moveInputStatusEl = document.getElementById("move-input-status");
+  const moveInputHelpEl = document.getElementById("move-input-help");
   const positionReadoutEl = document.getElementById("position-readout");
   // Interruptor "modo normal" / "modo adaptado" (lector de pantalla): controla qué tan
   // visibles están los elementos de accesibilidad y si los atajos de teclado extra del
@@ -1446,25 +1447,62 @@
   // comandos. Es la única fuente de estas instrucciones — el párrafo visible que había
   // antes junto al recuadro (#move-input-help) se anunciaba completo cada vez que el
   // foco volvía ahí (con aria-describedby), es decir, después de CADA jugada. Ahora se
-  // anuncia una sola vez sola (ver announceHelpFirstTimeIfNeeded) y queda disponible
-  // bajo demanda con este comando, sin repetirse solo. ----------
-  function announceHelp() {
-    announceMoveInput(
-      "Notación algebraica en español o inglés: peón sin letra (e4), C o N para caballo, A o B para alfil, " +
-        "T o R para torre, D o Q para dama, R o K para rey. Enroque: O-O (corto) u O-O-O (largo). " +
-        "Comandos: L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
+  // anuncia una sola vez (ver announceHelpFirstTimeIfNeeded) y queda disponible bajo
+  // demanda con este comando, sin repetirse sola.
+  //
+  // Además, en vez de un solo bloque de texto corrido, se arma con encabezados reales
+  // (h2 > h3, uno por sección) — igual que renderPositionReadout() ya hace con "Piezas
+  // > Blancas/Negras" — para poder saltar directo con las teclas de encabezado del
+  // lector de pantalla a la sección que hace falta (por ejemplo, los atajos del
+  // tablero) sin tener que escuchar de nuevo lo que ya no hace falta repetir.
+  const HELP_SECTIONS = [
+    {
+      title: "Cómo escribir una jugada",
+      text:
+        "Notación algebraica en español o inglés: peón sin letra (e4), C o N para caballo, A o B para alfil, " +
+        "T o R para torre, D o Q para dama, R o K para rey. Enroque: O-O (corto) u O-O-O (largo).",
+    },
+    {
+      title: "Comandos",
+      text:
+        "L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
         "resign (rendirse), p seguido de una letra (dónde están las piezas de ese tipo; mayúscula blancas, minúscula negras), " +
-        "s seguido de una columna o fila (piezas en esa línea). Con el tablero enfocado: i (ir al recuadro), o (casilla actual), " +
-        "c (última captura), l (última jugada), m (jugadas posibles), shift+m (capturas posibles), flechas (moverse), " +
-        "k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-8 (ir a esa fila), " +
-        "shift+1-8 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar jugadas anteriores/siguientes)."
-    );
+        "s seguido de una columna o fila (piezas en esa línea), ayuda (esta lista).",
+    },
+    {
+      title: "Atajos con el tablero enfocado",
+      text:
+        "i (ir al recuadro), o (casilla actual), c (última captura), l (última jugada), m (jugadas posibles), " +
+        "shift+m (capturas posibles), flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; " +
+        "mayúscula invierte el orden), números 1-8 (ir a esa fila), shift+1-8 (ir a esa columna), x, shift+x o alt+x " +
+        "(piezas alrededor), shift+a y shift+d (repasar jugadas anteriores/siguientes).",
+    },
+  ];
+
+  function renderHelpReadout() {
+    if (!moveInputHelpEl) return;
+    let html = "<h2>Ayuda</h2>";
+    for (const section of HELP_SECTIONS) {
+      html += `<h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.text)}</p>`;
+    }
+    moveInputHelpEl.innerHTML = html;
+    moveInputHelpEl.classList.remove("hidden");
   }
 
-  // La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se anuncian
-  // las instrucciones completas una sola vez (después, "ayuda" las repite bajo demanda,
-  // pero nunca se vuelven a anunciar solas). Un pequeño margen para que no choque con el
-  // "Cargando..."/anuncio de activación del propio interruptor.
+  function announceHelp() {
+    renderHelpReadout();
+    // Para quien tiene el Modo Speech activado (ver js/blind-notation.js), se lee todo
+    // seguido en voz — la navegación sección por sección es cosa del lector de pantalla
+    // real, que sí puede saltar entre los encabezados de arriba.
+    if (typeof BlindNotation !== "undefined") {
+      BlindNotation.speak("Ayuda. " + HELP_SECTIONS.map((s) => s.title + ". " + s.text).join(" "));
+    }
+  }
+
+  // La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se muestran y
+  // anuncian las instrucciones completas una sola vez (después, "ayuda" las repite bajo
+  // demanda, pero nunca se vuelven a anunciar solas). Un pequeño margen para que no
+  // choque con el "Cargando..."/anuncio de activación del propio interruptor.
   const HELP_SHOWN_KEY = "oscarMoveHelpShown_v1";
   function announceHelpFirstTimeIfNeeded() {
     let shown = false;

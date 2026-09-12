@@ -114,12 +114,15 @@
                     </div>
                     <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
                 </form>
-                <!-- Oculto a propósito (ver js/tablero-board.js): con aria-describedby, este texto se
-                     leía completo cada vez que el foco volvía al recuadro — es decir, después de
-                     CADA jugada o comando. Ahora se anuncia una sola vez, la primera vez que se activa
-                     el modo adaptado en este navegador, y se puede volver a escuchar cuando se quiera
-                     escribiendo "ayuda". -->
-                <p id="move-input-help" class="hidden text-xs text-brand-400 dark:text-brand-500 mt-1">Notación algebraica en español o inglés: peón sin letra (e4), C/N=caballo, A/B=alfil, T/R=torre, D/Q=dama, R/K=rey. Enroque: O-O (corto) u O-O-O (largo). Comandos: L/last (última jugada), T (posición), board/b [casilla], resign, p &lt;letra&gt; (piezas de ese tipo), s &lt;columna o fila&gt;, ayuda (lista completa).</p>
+                <!-- Oculto a propósito (ver renderHelpReadout en js/tablero-board.js): con
+                     aria-describedby, este texto se leía completo cada vez que el foco volvía al
+                     recuadro — es decir, después de CADA jugada o comando. Ahora se arma con
+                     encabezados reales (h2/h3, ver más abajo) y se muestra una sola vez, la
+                     primera vez que se activa el modo adaptado en este navegador — así, cuando se
+                     quiera repasar con el comando "ayuda", se puede saltar directo a la sección
+                     que hace falta (por ejemplo, los atajos del tablero) en vez de escuchar todo
+                     de nuevo desde el principio. -->
+                <div id="move-input-help" role="region" aria-live="polite" aria-label="Ayuda" class="hidden text-xs text-brand-400 dark:text-brand-500 mt-1 space-y-2"></div>
                 <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
                 <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></div>
             </div>

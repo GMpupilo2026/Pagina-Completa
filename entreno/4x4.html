@@ -299,6 +299,12 @@
   }
   .cmd-input:focus{border-color:var(--brass);}
   .cmd-help{font-size:0.76rem; color:var(--text-muted); line-height:1.5; margin:0 0 8px;}
+  /* Encabezados reales dentro de #cmd-help (ver renderHelpReadout): mismo tamaño que el
+     texto de alrededor — la regla global h1,h2,h3 de arriba solo pone negrita, no toca el
+     tamaño, y por defecto un h2/h3 se vería mucho más grande que el resto del panel sin
+     necesidad ninguna; lo que importa aquí es el nivel semántico, no el tamaño visual. */
+  .cmd-help h2, .cmd-help h3{font-size:inherit; margin:6px 0 2px;}
+  .cmd-help p{margin:0 0 4px;}
   .cmd-status{font-size:0.85rem; color:var(--brass-bright); min-height:1.2em; margin-bottom:10px;}
   .position-readout{font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px;}
   .position-readout p{margin:2px 0;}
@@ -532,12 +538,13 @@
           </div>
           <button type="submit" class="bctrl">Jugar</button>
         </form>
-        <!-- Oculto a propósito (ver announceHelp/announceHelpFirstTimeIfNeeded más abajo): con
-             aria-describedby, este texto se leía completo cada vez que el foco volvía al
-             recuadro, es decir, después de CADA jugada o comando. Ahora se anuncia una sola
-             vez, la primera vez que se activa el modo adaptado en este navegador, y se puede
-             volver a escuchar cuando se quiera escribiendo "ayuda". -->
-        <p id="cmd-help" class="cmd-help" hidden>Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). Comandos: L o last (última captura), T (posición), b o board seguido de una casilla (ir ahí), p seguido de una letra K/Q/R/B/N/P (dónde está esa pieza), s seguido de una columna o fila (piezas en esa línea), reiniciar, ayuda (lista completa).</p>
+        <!-- Oculto a propósito (ver renderHelpReadout/announceHelpFirstTimeIfNeeded más abajo):
+             con aria-describedby, este texto se leía completo cada vez que el foco volvía al
+             recuadro, es decir, después de CADA jugada o comando. Ahora se arma con encabezados
+             reales (h2/h3) y se muestra una sola vez, la primera vez que se activa el modo
+             adaptado en este navegador — así se puede saltar directo a la sección que hace
+             falta con el comando "ayuda", en vez de escuchar todo de nuevo desde el principio. -->
+        <div id="cmd-help" class="cmd-help" role="region" aria-live="polite" aria-label="Ayuda" hidden></div>
         <div id="cmd-status" role="status" aria-live="assertive" class="cmd-status"></div>
         <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="position-readout"></div>
         <button type="button" id="repeat-captures-btn" class="bctrl">🔊 Repetir capturas</button>
@@ -1409,24 +1416,59 @@ function handleBoardShortcutKey(e, r, c){
 // antes junto al recuadro (#cmd-help) se anunciaba completo cada vez que el foco volvía
 // ahí (con aria-describedby), es decir, después de CADA jugada. Ahora se anuncia una
 // sola vez (ver announceHelpFirstTimeIfNeeded) y queda disponible bajo demanda con este
-// comando, sin repetirse solo. ----------
-function announceHelp(){
-  cmdAnnounce(
-    'Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
-    'Comandos: L o last (última captura), T (posición completa), b o board seguido de una casilla ' +
-    '(ir ahí, por ejemplo a1), p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), ' +
-    's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ' +
-    'ejercicio), ayuda (esta lista). Con el tablero enfocado: i (ir al recuadro de jugada), o (casilla ' +
-    'actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la ' +
-    'siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 ' +
-    '(ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas ' +
-    'anteriores/siguientes).'
-  );
+// comando, sin repetirse sola.
+//
+// Además, en vez de un solo bloque de texto corrido, se arma con encabezados reales
+// (h2 > h3, uno por sección) — igual que renderPositionReadout() ya hace con "Piezas >
+// Blancas/Negras" — para poder saltar directo con las teclas de encabezado del lector
+// de pantalla a la sección que hace falta, sin tener que escuchar de nuevo lo que ya no
+// hace falta repetir. ----------
+const HELP_SECTIONS = [
+  {
+    title: 'Cómo escribir una jugada',
+    text: 'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4).',
+  },
+  {
+    title: 'Comandos',
+    text:
+      'L o last (última captura), T (posición completa), b o board seguido de una casilla (ir ahí, por ejemplo a1), ' +
+      'p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), s seguido de una columna a-d o fila 1-4 ' +
+      '(piezas en esa línea), reiniciar (empezar de nuevo este ejercicio), ayuda (esta lista).',
+  },
+  {
+    title: 'Atajos con el tablero enfocado',
+    text:
+      'i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), ' +
+      'flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), ' +
+      'números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), ' +
+      'shift+a y shift+d (repasar capturas anteriores/siguientes).',
+  },
+];
+
+function renderHelpReadout(){
+  const el = document.getElementById('cmd-help');
+  if(!el) return;
+  let html = '<h2>Ayuda</h2>';
+  HELP_SECTIONS.forEach((section) => {
+    html += `<h3>${section.title}</h3><p>${section.text}</p>`;
+  });
+  el.innerHTML = html;
+  el.hidden = false;
 }
 
-// La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se anuncian las
-// instrucciones completas una sola vez (después, "ayuda" las repite bajo demanda, pero
-// nunca se vuelven a anunciar solas).
+function announceHelp(){
+  renderHelpReadout();
+  // Para quien tiene el Modo Speech activado (ver js/blind-notation.js), se lee todo
+  // seguido en voz — la navegación sección por sección es cosa del lector de pantalla
+  // real, que sí puede saltar entre los encabezados de arriba.
+  if(window.BlindNotation){
+    window.BlindNotation.speak('Ayuda. ' + HELP_SECTIONS.map((s) => s.title + '. ' + s.text).join(' '));
+  }
+}
+
+// La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se muestran y
+// anuncian las instrucciones completas una sola vez (después, "ayuda" las repite bajo
+// demanda, pero nunca se vuelven a anunciar solas).
 const HELP_SHOWN_KEY = 'oscarMoveHelpShown4x4_v1';
 function announceHelpFirstTimeIfNeeded(){
   let shown = false;
