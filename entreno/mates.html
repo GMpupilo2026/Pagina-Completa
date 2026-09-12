@@ -109,6 +109,35 @@
   .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
   @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
 
+  .mode-bar{
+    max-width:420px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .position-readout p{margin:2px 0;}
+  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
+  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
+  #blind-panel input{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
+  }
+  #blind-panel input:focus{border-color:var(--brass);}
+
   .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
   .turn-banner b{color:var(--text);}
 
@@ -208,6 +237,15 @@
     <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
   </div>
 
+  <div class="mode-bar">
+    <span>Modo:</span>
+    <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
+      <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
+      <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
+    </div>
+    <button type="button" id="speech-toggle-btn" style="display:none" class="speech-btn"></button>
+  </div>
+
   <nav class="tabs" id="tabs" aria-label="Categorías de mates"></nav>
 
   <main id="main-content">
@@ -219,6 +257,15 @@
       <div class="board-wrap" id="board-wrap">
         <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
       </div>
+      <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
+
+      <form id="blind-panel" style="display:none;">
+        <div>
+          <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
+          <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
+        </div>
+        <button type="submit" class="sr-only">Enviar</button>
+      </form>
 
       <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
       <div class="round-controls">
@@ -250,6 +297,7 @@
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 <script src="../js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script>
 const gate = document.getElementById('gate');
@@ -275,6 +323,68 @@ const CATEGORY_VAR = { mate1: '--mate1', mate2: '--mate2', mate3: '--mate3' };
 const CATEGORY_PLIES = { mate1: 1, mate2: 3, mate3: 5 }; // jugadas totales (blancas+negras) hasta el mate
 
 let PUZZLES = { mate1: [], mate2: [], mate3: [] };
+
+/* ---------------- Modo normal / modo adaptado (lector de pantalla) ---------------- */
+const BLIND_MODE_KEY = 'oscarBlindMode_v1';
+let blindMode = false;
+try{ blindMode = localStorage.getItem(BLIND_MODE_KEY) === '1'; }catch(e){}
+
+function renderPositionReadout(){
+  const readout = document.getElementById('position-readout');
+  if(!blindMode || !game){ readout.style.display = 'none'; return; }
+  readout.innerHTML = window.BlindNotation.groupedReadoutHTML(game);
+  readout.style.display = 'block';
+}
+// Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+// lee un lector de pantalla real), para quien no tiene uno activado. Ver
+// js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  : null;
+
+function applyBlindModeUI(){
+  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
+  document.getElementById('blind-panel').style.display = blindMode ? 'block' : 'none';
+  if(modeNormalBtn){ modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true'); modeNormalBtn.classList.toggle('active', !blindMode); }
+  if(modeBlindBtn){ modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false'); modeBlindBtn.classList.toggle('active', blindMode); }
+  if(refreshSpeechToggle) refreshSpeechToggle();
+  renderPositionReadout();
+  if(blindMode) document.getElementById('blind-move-input').focus();
+}
+function setBlindMode(value){
+  blindMode = !!value;
+  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  applyBlindModeUI();
+}
+const modeNormalBtn = document.getElementById('mode-normal-btn');
+const modeBlindBtn = document.getElementById('mode-blind-btn');
+modeNormalBtn.addEventListener('click', () => setBlindMode(false));
+modeBlindBtn.addEventListener('click', () => setBlindMode(true));
+
+function blindHandleMoveGuess(raw){
+  if(locked) return;
+  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
+  if(clean.length !== 4){ setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad'); return; }
+  const from = clean.slice(0, 2), to = clean.slice(2, 4);
+  const piece = game.get(from);
+  if(!piece || piece.color !== game.turn()){ setStatus(`No hay una pieza tuya en ${window.BlindNotation.squareSpoken(from)}.`, 'bad'); return; }
+  const legal = game.moves({ square: from, verbose: true });
+  const candidates = legal.filter((m) => m.to === to);
+  if(!candidates.length){ setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad'); return; }
+  if(candidates.length > 1 && candidates[0].flags.includes('p')){
+    askPromotion((choice) => playMove(from, to, choice));
+  } else {
+    playMove(from, to, candidates[0].promotion || undefined);
+  }
+}
+document.getElementById('blind-panel').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('blind-move-input');
+  const value = input.value;
+  input.value = '';
+  input.focus();
+  blindHandleMoveGuess(value);
+});
 
 async function loadPuzzlesThenStart(){
   try {
@@ -411,6 +521,7 @@ function drawBoard(){
       board.appendChild(btn);
     }
   }
+  renderPositionReadout();
 }
 
 function flashWrong(btn){
@@ -422,6 +533,7 @@ function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
@@ -454,8 +566,11 @@ function loadPuzzle(){
   updateProgressBar();
   const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
   const n = CATEGORY_PLIES[currentCategory] === 1 ? 1 : (CATEGORY_PLIES[currentCategory] === 3 ? 2 : 3);
-  document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — mate en <b>${n}</b>${n > 1 ? ' jugada' + (n > 1 ? 's' : '') : ' jugada'}`;
-  setStatus('Encuentra la jugada. Haz clic en la pieza que quieres mover.');
+  const plies = n > 1 ? ' jugadas' : ' jugada';
+  document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — mate en <b>${n}</b>${plies}`;
+  const instruction = blindMode ? 'Escribe la jugada que quieres hacer.' : 'Encuentra la jugada. Haz clic en la pieza que quieres mover.';
+  setStatus(blindMode ? `Juegan ${turnColor}, mate en ${n}${plies}. ${instruction}` : instruction);
+  if(blindMode) document.getElementById('blind-move-input').focus();
 }
 
 function onSquareClick(square, btn){
@@ -546,7 +661,8 @@ function playMove(from, to, promotion){
     } else {
       hintStage = 0;
       document.getElementById('hint-btn').textContent = '💡 Pista';
-      setStatus('Sigue buscando el mate.');
+      const replySpoken = blindMode && window.BlindNotation ? window.BlindNotation.sanSpoken(replySan) : replySan;
+      setStatus(blindMode ? `El rival juega ${replySpoken}. Sigue buscando el mate.` : 'Sigue buscando el mate.');
     }
   }, 650);
 }
@@ -579,8 +695,14 @@ function finishCategory(){
   document.getElementById('celebration').style.display = 'block';
   buildTabs();
   const total = PUZZLES[currentCategory].length;
-  document.getElementById('celebration-stats').textContent =
-    `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
+  const statsText = `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
+  document.getElementById('celebration-stats').textContent = statsText;
+  if(blindMode && window.BlindNotation){
+    window.BlindNotation.speak('¡Categoría completa! ' + statsText);
+    // El foco cae directo en el botón de reinicio — así, en modo adaptado, basta con
+    // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
+    document.getElementById('celebration-replay-btn').focus();
+  }
 }
 
 let hintStage = 0; // 0 = sin pista todavía, 1 = pieza resaltada, 2 = ya se jugó sola
@@ -600,7 +722,7 @@ function giveHint(){
       const cell = board.querySelector('[data-square="' + target.from + '"]');
       if(cell) cell.classList.add('hint-from');
     }
-    setStatus('Pista: fíjate en la pieza resaltada.');
+    setStatus(blindMode && target ? `Pista: mueve la pieza en ${window.BlindNotation.squareSpoken(target.from)}.` : 'Pista: fíjate en la pieza resaltada.');
     document.getElementById('hint-btn').textContent = '💡 Ver solución';
   } else {
     hintStage = 0;
@@ -632,6 +754,7 @@ function initApp(){
   if(appInitialized) return;
   appInitialized = true;
   setStreak(getStreak());
+  applyBlindModeUI();
   const startCategory = CATEGORY_ORDER.find((c) => solvedCountFor(c) < PUZZLES[c].length) || 'mate1';
   openCategory(startCategory);
 }
