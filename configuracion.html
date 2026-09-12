@@ -34,6 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
+    <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -117,10 +118,24 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tablero</h2>
                 <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige con qué piezas quieres ver los tableros de Clases (Sesión en vivo). Es solo para tu pantalla — nadie más lo nota, y no cambia la partida.</p>
                 <div id="board-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Tema de piezas del tablero"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Voz (Modo Speech)</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">En Modo Adaptado, con Modo Speech activado (botón "🗣️ Voz" junto al tablero), tu navegador lee en voz alta las jugadas y anuncios. Elige aquí con cuál de las voces instaladas en tu navegador o dispositivo se lee — es una preferencia de este navegador, no de tu cuenta.</p>
+                <div id="speech-voice-unsupported" class="hidden text-sm text-brand-500 dark:text-brand-400">Tu navegador no admite lectura en voz alta (Web Speech API), así que Modo Speech no está disponible aquí.</div>
+                <div id="speech-voice-controls">
+                    <label for="speech-voice-select" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">Voz</label>
+                    <select id="speech-voice-select" class="w-full sm:w-72 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    <div class="mt-3 flex items-center gap-3">
+                        <button type="button" id="speech-voice-test-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">🔊 Probar esta voz</button>
+                        <p id="speech-voice-status" class="text-xs text-brand-400 dark:text-brand-500"></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -212,6 +227,71 @@
             });
         }
         renderBoardThemeGrid();
+
+        // ---------- Voz de Modo Speech (preferencia local, ver js/blind-notation.js) ----------
+        function populateVoiceSelect() {
+            const select = document.getElementById("speech-voice-select");
+            const status = document.getElementById("speech-voice-status");
+            if (!select || !window.BlindNotation) return;
+            const voices = window.BlindNotation.getAvailableVoices();
+            if (!voices.length) {
+                // La lista suele llegar vacía al principio en la mayoría de los navegadores
+                // hasta que disparan "voiceschanged" — más abajo se vuelve a llamar cuando
+                // eso pasa. Si de verdad no hay ninguna voz instalada, se queda así.
+                if (status) status.textContent = "Buscando las voces instaladas en tu navegador…";
+                return;
+            }
+            const current = window.BlindNotation.getSpeechVoiceURI();
+            select.innerHTML = "";
+            const defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.textContent = "Predeterminada del navegador (español)";
+            select.appendChild(defaultOpt);
+            // Las voces en español primero, para encontrar rápido la más útil en este sitio
+            // — el resto queda disponible igual, por si alguien prefiere otro idioma o acento.
+            voices
+                .slice()
+                .sort((a, b) => {
+                    const aEs = a.lang.toLowerCase().startsWith("es") ? 0 : 1;
+                    const bEs = b.lang.toLowerCase().startsWith("es") ? 0 : 1;
+                    if (aEs !== bEs) return aEs - bEs;
+                    return a.name.localeCompare(b.name);
+                })
+                .forEach((voice) => {
+                    const opt = document.createElement("option");
+                    opt.value = voice.voiceURI;
+                    opt.textContent = voice.name + " (" + voice.lang + ")";
+                    if (voice.voiceURI === current) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            if (status) status.textContent = "";
+        }
+
+        function initSpeechVoicePicker() {
+            const supported = "speechSynthesis" in window;
+            document.getElementById("speech-voice-unsupported").classList.toggle("hidden", supported);
+            document.getElementById("speech-voice-controls").classList.toggle("hidden", !supported);
+            if (!supported) return;
+            populateVoiceSelect();
+            // En Chrome/Edge la lista de voces se carga de forma asíncrona: al principio
+            // getVoices() da un array vacío y este evento avisa cuando ya están listas.
+            window.speechSynthesis.onvoiceschanged = populateVoiceSelect;
+            document.getElementById("speech-voice-select").addEventListener("change", (e) => {
+                window.BlindNotation.setSpeechVoiceURI(e.target.value);
+            });
+            document.getElementById("speech-voice-test-btn").addEventListener("click", () => {
+                // Habla directo con la Web Speech API, sin pasar por BlindNotation.speak():
+                // esa función solo habla si Modo Speech ya está activado, y "probar" debe
+                // funcionar igual aunque todavía esté apagado (o encendido en otra pestaña).
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance("Así vas a escuchar Modo Speech en el sitio.");
+                const uri = document.getElementById("speech-voice-select").value;
+                const voice = uri ? window.BlindNotation.getAvailableVoices().find((v) => v.voiceURI === uri) : null;
+                if (voice) { utterance.voice = voice; utterance.lang = voice.lang; } else { utterance.lang = "es-ES"; }
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+        initSpeechVoicePicker();
 
         async function init() {
             const { data } = await sb.auth.getSession();

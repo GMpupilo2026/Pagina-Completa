@@ -146,6 +146,41 @@ window.BlindNotation = (function () {
     if (!on && hasSpeechApi) window.speechSynthesis.cancel();
   }
 
+  // ===== Elegir qué voz usa Modo Speech =====
+  // El navegador (o el sistema operativo) suele traer varias voces instaladas —
+  // distintos idiomas, distintos acentos, a veces varias voces en español. Por
+  // defecto se usa la que el navegador elija solo para "es-ES"; esto guarda cuál
+  // eligió la persona (por su voiceURI, el identificador estable que da la propia
+  // Web Speech API) para usar siempre esa en vez de la del navegador. Es una
+  // preferencia de ESTE navegador — como el tema de piezas en Configuración — no
+  // algo que se guarde en la cuenta ni que otros vean.
+  const SPEECH_VOICE_KEY = 'oscarSpeechVoiceURI_v1';
+
+  function getSpeechVoiceURI() {
+    try { return localStorage.getItem(SPEECH_VOICE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function setSpeechVoiceURI(voiceURI) {
+    try {
+      if (voiceURI) localStorage.setItem(SPEECH_VOICE_KEY, voiceURI);
+      else localStorage.removeItem(SPEECH_VOICE_KEY);
+    } catch (e) {}
+  }
+
+  // La lista de voces instaladas se carga de forma asíncrona en la mayoría de los
+  // navegadores (queda vacía hasta que el navegador dispara "voiceschanged") — quien
+  // llame a esto para armar un selector debe escuchar ese evento y volver a pedirla.
+  function getAvailableVoices() {
+    if (!hasSpeechApi) return [];
+    try { return window.speechSynthesis.getVoices() || []; } catch (e) { return []; }
+  }
+
+  function findChosenVoice() {
+    const voiceURI = getSpeechVoiceURI();
+    if (!voiceURI) return null;
+    return getAvailableVoices().find(function (v) { return v.voiceURI === voiceURI; }) || null;
+  }
+
   // Habla el texto si el modo Speech está activo. Cancela cualquier frase anterior
   // todavía en curso — si no, jugadas seguidas (la propia y la respuesta del motor)
   // se irían acumulando en cola y se escucharían con retraso.
@@ -154,7 +189,15 @@ window.BlindNotation = (function () {
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(String(text));
-      utterance.lang = 'es-ES';
+      const chosen = findChosenVoice();
+      if (chosen) {
+        // El idioma de la propia voz, no "es-ES" a la fuerza: una voz elegida a
+        // mano puede ser, por ejemplo, español de México o incluso otro idioma.
+        utterance.voice = chosen;
+        utterance.lang = chosen.lang;
+      } else {
+        utterance.lang = 'es-ES';
+      }
       window.speechSynthesis.speak(utterance);
     } catch (e) {}
   }
@@ -191,5 +234,6 @@ window.BlindNotation = (function () {
   return {
     fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, FILE_NAMES, PIECE_LABEL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
+    getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,
   };
 })();
