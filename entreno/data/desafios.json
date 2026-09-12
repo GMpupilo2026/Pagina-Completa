@@ -1,0 +1,1581 @@
+{
+ "source": "Posiciones del cuaderno \"Desafíos\" (90 ejercicios pedagógicos; puede no haber reyes). Enunciados y explicaciones redactados para el sitio. Editar este archivo para corregir o agregar desafíos.",
+ "format": {
+  "fen": "posición (puede no tener reyes)",
+  "solution.moves": "jugadas aceptadas en formato origen-destino (e2e4, con letra de coronación)",
+  "cat": "id de categories"
+ },
+ "categories": [
+  {
+   "id": "promocion",
+   "emoji": "🏁",
+   "title": "Carrera a la coronación",
+   "desc": "Peones pasados contra alfiles, caballos y torres: quién llega primero."
+  },
+  {
+   "id": "material",
+   "emoji": "🎯",
+   "title": "Ganar material",
+   "desc": "Ataques dobles, clavadas y piezas atrapadas para ganar un peón o una pieza."
+  },
+  {
+   "id": "defensa",
+   "emoji": "🛡️",
+   "title": "Salir del apuro",
+   "desc": "La única forma de escapar de un jaque o de salvar las tablas."
+  },
+  {
+   "id": "mate",
+   "emoji": "♚",
+   "title": "Jaque mate",
+   "desc": "Remata la partida: mates en una jugada (y alguno en dos)."
+  }
+ ],
+ "challenges": [
+  {
+   "n": 1,
+   "cat": "promocion",
+   "fen": "8/8/P7/8/1b6/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "El peón blanco está a dos pasos de coronar. ¿A qué casilla llevas el alfil para poder capturarlo antes de que corone?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "b4c5"
+    ],
+    "san": [
+     "Bc5"
+    ],
+    "explain": "Desde c5 el alfil vigila a7 y b6: el peón cae en cuanto avance."
+   }
+  },
+  {
+   "n": 2,
+   "cat": "promocion",
+   "fen": "8/5P2/8/8/8/4b3/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "El peón blanco está a un paso de coronar. ¿Dónde pones el alfil para capturar la pieza nueva apenas nazca?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e3h6",
+     "e3c5"
+    ],
+    "san": [
+     "Bh6",
+     "Bc5"
+    ],
+    "explain": "Desde c5 o h6 el alfil apunta a f8, la casilla de coronación."
+   }
+  },
+  {
+   "n": 3,
+   "cat": "promocion",
+   "fen": "8/8/1Pp5/8/8/5b2/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "El peón blanco quiere avanzar y coronar. ¿Qué jugada permite que el alfil negro lo capture antes de que llegue?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c6c5"
+    ],
+    "san": [
+     "c5"
+    ],
+    "explain": "c5 abre la diagonal del alfil hacia b7 y a8: el peón blanco será capturado cuando avance."
+   }
+  },
+  {
+   "n": 4,
+   "cat": "promocion",
+   "fen": "6b1/8/8/1P1p4/3P4/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Peón blanco pasado. Busca la casilla desde donde el alfil controla el camino del peón (en dos jugadas).",
+   "hint": "Controla la casilla clara que está justo delante del peón.",
+   "solution": {
+    "moves": [
+     "g8e6"
+    ],
+    "san": [
+     "Be6"
+    ],
+    "explain": "Primero Be6 y en la siguiente jugada el alfil va a c8, la casilla de coronación."
+   }
+  },
+  {
+   "n": 5,
+   "cat": "promocion",
+   "fen": "8/8/8/P1p5/2Pb4/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Peón blanco pasado. Busca la casilla desde donde el alfil llegará a tiempo a frenar la coronación (en dos jugadas).",
+   "hint": "Controla la casilla oscura que está justo delante del peón.",
+   "solution": {
+    "moves": [
+     "d4e5"
+    ],
+    "san": [
+     "Be5"
+    ],
+    "explain": "Primero Be5 y después el alfil sigue a b8."
+   }
+  },
+  {
+   "n": 6,
+   "cat": "promocion",
+   "fen": "8/P1p1p3/8/1PP5/4b3/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. El alfil negro vigila la casilla de coronación. ¿Qué jugada asegura que el peón corone de todos modos?",
+   "hint": "Tapa la diagonal por la que el alfil mira a la casilla de coronación.",
+   "solution": {
+    "moves": [
+     "c5c6"
+    ],
+    "san": [
+     "c6"
+    ],
+    "explain": "Tras c6, si el alfil captura el peón, el otro peón lo recaptura y sigue adelante."
+   }
+  },
+  {
+   "n": 7,
+   "cat": "promocion",
+   "fen": "8/8/P3P3/2b5/8/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. El alfil negro estorba a los dos peones. Aun así las blancas coronan sin problema. ¿Cómo?",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "a6a7",
+     "e6e7"
+    ],
+    "san": [
+     "a7",
+     "e7"
+    ],
+    "explain": "Sirve avanzar cualquiera de los dos peones: si el alfil captura uno, el otro corona."
+   }
+  },
+  {
+   "n": 8,
+   "cat": "promocion",
+   "fen": "8/8/PP6/8/3b4/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Los dos peones están a dos casillas de coronar. Consigue que uno corone sin que el alfil lo capture.",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "a6a7"
+    ],
+    "san": [
+     "a7"
+    ],
+    "explain": "a7 desvía al alfil: si lo captura, el peón b corona."
+   }
+  },
+  {
+   "n": 9,
+   "cat": "promocion",
+   "fen": "8/1Pn5/8/8/8/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El peón blanco está a un paso de coronar. ¿A dónde salta el caballo para capturar la pieza que corone?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c7a6"
+    ],
+    "san": [
+     "Na6"
+    ],
+    "explain": "Desde a6 el caballo vigila b8."
+   }
+  },
+  {
+   "n": 10,
+   "cat": "promocion",
+   "fen": "8/2P5/6n1/8/8/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El peón blanco está a un paso de coronar. ¿A dónde salta el caballo para capturar la pieza nueva?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g6e7"
+    ],
+    "san": [
+     "Ne7"
+    ],
+    "explain": "Desde e7 el caballo controla g8."
+   }
+  },
+  {
+   "n": 11,
+   "cat": "promocion",
+   "fen": "8/2P5/1n2P3/8/8/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El peón blanco corona en su próxima jugada. Encuentra el salto de caballo que lo castiga.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "b6c8"
+    ],
+    "san": [
+     "Nc8"
+    ],
+    "explain": "Desde c8 el caballo vigila la casilla de coronación."
+   }
+  },
+  {
+   "n": 12,
+   "cat": "promocion",
+   "fen": "8/6n1/2pp1P2/8/4P3/3P4/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Peón blanco pasado en f6. ¿A qué casilla va el caballo para frenarlo?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g7e6"
+    ],
+    "san": [
+     "Ne6"
+    ],
+    "explain": "Ne6: desde ahí el caballo vigila f8, la casilla de coronación."
+   }
+  },
+  {
+   "n": 13,
+   "cat": "promocion",
+   "fen": "8/2P1n3/8/6P1/8/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Dos peones contra un caballo. ¿Cómo consigues que uno corone?",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "g5g6"
+    ],
+    "san": [
+     "g6"
+    ],
+    "explain": "g6: si el caballo lo captura, el otro peón corona; si no, sigue avanzando."
+   }
+  },
+  {
+   "n": 14,
+   "cat": "promocion",
+   "fen": "8/3p1n1p/2P5/2P5/8/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Peón pasado contra caballo. ¿Qué jugada asegura la coronación?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c6c7"
+    ],
+    "san": [
+     "c7"
+    ],
+    "explain": "El peón avanza a c7 y el caballo ya no llega a tiempo."
+   }
+  },
+  {
+   "n": 15,
+   "cat": "promocion",
+   "fen": "8/8/3P4/3n1P2/8/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Peón pasado contra caballo. Encuentra la jugada que corona sin remedio.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d6d7"
+    ],
+    "san": [
+     "d7"
+    ],
+    "explain": "d7 y el caballo no alcanza la casilla de coronación."
+   }
+  },
+  {
+   "n": 16,
+   "cat": "promocion",
+   "fen": "8/8/4pP2/8/3n4/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Un peón propio estorba al caballo. ¿Qué jugada permite que el caballo llegue a frenar al peón blanco?",
+   "hint": "¿Qué harías si tu peón no estuviera ahí?",
+   "solution": {
+    "moves": [
+     "e6e5"
+    ],
+    "san": [
+     "e5"
+    ],
+    "explain": "Tras e5 el caballo puede ocupar e6, desde donde vigila la coronación."
+   }
+  },
+  {
+   "n": 17,
+   "cat": "promocion",
+   "fen": "8/3p4/1n3P2/3P4/8/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Un peón propio le quita al caballo la casilla que necesita. ¿Cómo lo arreglas?",
+   "hint": "¿Qué harías si tu peón no estuviera ahí?",
+   "solution": {
+    "moves": [
+     "d7d6"
+    ],
+    "san": [
+     "d6"
+    ],
+    "explain": "Tras d6 el caballo puede ir a d7."
+   }
+  },
+  {
+   "n": 18,
+   "cat": "promocion",
+   "fen": "8/8/1P6/8/8/8/4n3/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El peón blanco está a dos casillas de coronar. Encuentra la ruta del caballo (dos saltos) para capturar la pieza nueva.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e2d4"
+    ],
+    "san": [
+     "Nd4"
+    ],
+    "explain": "Nd4 y luego Nc6, desde donde el caballo controla b8."
+   }
+  },
+  {
+   "n": 19,
+   "cat": "promocion",
+   "fen": "8/4p3/P7/8/4Pn2/8/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Encuentra la ruta del caballo (dos saltos) para llegar a tiempo a la casilla de coronación.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "f4e6"
+    ],
+    "san": [
+     "Ne6"
+    ],
+    "explain": "Ne6 y después Nc7, vigilando a8."
+   }
+  },
+  {
+   "n": 20,
+   "cat": "promocion",
+   "fen": "8/4p3/P7/8/2P5/4n3/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El caballo tiene que retroceder para frenar al peón blanco. ¿Cuál es el primer salto?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e3c4"
+    ],
+    "san": [
+     "Nxc4"
+    ],
+    "explain": "Nxc4 gana un peón y desde c4 el caballo salta a b6 para vigilar a8."
+   }
+  },
+  {
+   "n": 21,
+   "cat": "material",
+   "fen": "6n1/3p4/3P2p1/8/6P1/8/3P4/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Deja al caballo negro sin ninguna casilla segura.",
+   "hint": "Usa los peones para controlar todas las casillas a las que puede saltar el caballo.",
+   "solution": {
+    "moves": [
+     "g4g5"
+    ],
+    "san": [
+     "g5"
+    ],
+    "explain": "Tras g5, vaya donde vaya el caballo, un peón blanco lo captura."
+   }
+  },
+  {
+   "n": 22,
+   "cat": "promocion",
+   "fen": "8/2p3n1/8/7P/3p4/3P2P1/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Demuestra que el caballo negro no puede frenar al peón h.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "h5h6"
+    ],
+    "san": [
+     "h6"
+    ],
+    "explain": "h6 y el caballo no llega a h8 a tiempo."
+   }
+  },
+  {
+   "n": 23,
+   "cat": "promocion",
+   "fen": "5r2/1PP5/8/8/3p4/8/4P3/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Corona un peón sin que la torre negra pueda capturar la pieza nueva.",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "b7b8q",
+     "b7b8r",
+     "b7b8b",
+     "b7b8n",
+     "c7c8q",
+     "c7c8r",
+     "c7c8b",
+     "c7c8n"
+    ],
+    "san": [
+     "b8=Q",
+     "c8=Q"
+    ],
+    "explain": "Corona cualquiera de los dos peones: si la torre captura, el otro peón la recaptura y corona."
+   }
+  },
+  {
+   "n": 24,
+   "cat": "promocion",
+   "fen": "8/3p1P2/1P6/8/8/8/8/5r2 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Dos peones pasados contra una torre. Encuentra la jugada que asegura una coronación.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "b6b7"
+    ],
+    "san": [
+     "b7"
+    ],
+    "explain": "b7: la torre solo puede frenar un peón."
+   }
+  },
+  {
+   "n": 25,
+   "cat": "promocion",
+   "fen": "8/2P5/1P6/8/2r5/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Muchos peones para una sola torre. ¿Cuál avanzas?",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "b6b7"
+    ],
+    "san": [
+     "b7"
+    ],
+    "explain": "b7 y la torre no puede con todo."
+   }
+  },
+  {
+   "n": 26,
+   "cat": "promocion",
+   "fen": "8/2P3p1/8/3P4/2r5/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Dos peones pasados contra la torre. ¿Cuál avanzas para asegurar la coronación?",
+   "hint": "Recuerda el desafío anterior.",
+   "solution": {
+    "moves": [
+     "d5d6"
+    ],
+    "san": [
+     "d6"
+    ],
+    "explain": "d6 y la torre no puede parar a los dos."
+   }
+  },
+  {
+   "n": 27,
+   "cat": "promocion",
+   "fen": "8/5Pp1/3P2P1/8/8/8/5r2/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Tres peones frente a una torre. Asegura la coronación.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d6d7"
+    ],
+    "san": [
+     "d7"
+    ],
+    "explain": "d7 y algún peón corona."
+   }
+  },
+  {
+   "n": 28,
+   "cat": "material",
+   "fen": "8/5Pp1/6P1/8/5r2/3P4/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Encuentra la jugada que garantiza una coronación pese a la torre negra.",
+   "hint": "Piensa en entregar un peón.",
+   "solution": {
+    "moves": [
+     "d3d4"
+    ],
+    "san": [
+     "d4"
+    ],
+    "explain": "d4: si la torre captura, el peón pasado corona; si no, el peón sigue."
+   }
+  },
+  {
+   "n": 29,
+   "cat": "promocion",
+   "fen": "8/3P4/5Pp1/6P1/8/8/7r/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Dos peones blancos pasados. ¿Dónde debe ponerse la torre para vigilar las dos casillas de coronación?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "h2h8"
+    ],
+    "san": [
+     "Rh8"
+    ],
+    "explain": "Rh8: desde la octava fila la torre controla ambas coronaciones."
+   }
+  },
+  {
+   "n": 30,
+   "cat": "promocion",
+   "fen": "8/P2p4/6p1/1p6/6r1/3P2P1/1P6/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Peón blanco a dos pasos de coronar. Coloca la torre detrás del peón.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g4a4"
+    ],
+    "san": [
+     "Ra4"
+    ],
+    "explain": "Ra4 y la torre queda detrás del peón: capturará la pieza nueva."
+   }
+  },
+  {
+   "n": 31,
+   "cat": "promocion",
+   "fen": "8/2p1p1p1/P1P4p/1p1P1P2/4r3/1P6/4P3/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Peón blanco a dos pasos de coronar. La torre necesita dos jugadas para colocarse detrás de él. ¿Cuál es la primera?",
+   "hint": "Piensa cómo poner la torre detrás del peón.",
+   "solution": {
+    "moves": [
+     "e4e2"
+    ],
+    "san": [
+     "Rxe2"
+    ],
+    "explain": "Rxe2 gana un peón y en la siguiente jugada Ra2 deja la torre detrás del peón a."
+   }
+  },
+  {
+   "n": 32,
+   "cat": "promocion",
+   "fen": "8/8/2P2p2/4pr1p/7P/4PP2/5P2/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Peón blanco a dos jugadas de coronar. Encuentra la manera de que la torre lo vigile desde atrás.",
+   "hint": "Hay que abrirle paso a la torre.",
+   "solution": {
+    "moves": [
+     "e5e4"
+    ],
+    "san": [
+     "e4"
+    ],
+    "explain": "e4 despeja la fila: la torre irá a c5, detrás del peón."
+   }
+  },
+  {
+   "n": 33,
+   "cat": "promocion",
+   "fen": "4r3/P5p1/8/8/8/6B1/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. La torre negra vigila la casilla de coronación. ¿Cómo se la bloqueas?",
+   "hint": "Interpón el alfil.",
+   "solution": {
+    "moves": [
+     "g3b8"
+    ],
+    "san": [
+     "Bb8"
+    ],
+    "explain": "Bb8 corta la fila y el peón corona."
+   }
+  },
+  {
+   "n": 34,
+   "cat": "promocion",
+   "fen": "8/5p2/2P5/4B3/8/7r/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Asegura la coronación del peón pese a la torre negra.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c6c7"
+    ],
+    "san": [
+     "c7"
+    ],
+    "explain": "c7: si la torre va a c3 o a h8 para frenarlo, el alfil la captura."
+   }
+  },
+  {
+   "n": 35,
+   "cat": "promocion",
+   "fen": "8/P2B2p1/1p6/8/8/1P6/8/r7 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Evita que la torre negra capture la pieza que va a coronar.",
+   "hint": "Bloquea la columna de la torre.",
+   "solution": {
+    "moves": [
+     "d7a4"
+    ],
+    "san": [
+     "Ba4"
+    ],
+    "explain": "Ba4 tapa la columna: si Rxa4, bxa4 y el peón corona."
+   }
+  },
+  {
+   "n": 36,
+   "cat": "promocion",
+   "fen": "5r2/p1P5/7p/6p1/8/P7/7P/1B6 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. ¿Dónde pones el alfil para que el peón corone sin peligro?",
+   "hint": "Controla la casilla de coronación con el alfil.",
+   "solution": {
+    "moves": [
+     "b1f5"
+    ],
+    "san": [
+     "Bf5"
+    ],
+    "explain": "Bf5 vigila la coronación; si la torre captura el alfil, el peón corona."
+   }
+  },
+  {
+   "n": 37,
+   "cat": "promocion",
+   "fen": "8/7p/p3p1PP/P7/1B6/3b4/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Asegura la coronación del peón g.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g6g7"
+    ],
+    "san": [
+     "g7"
+    ],
+    "explain": "g7 y ya nadie lo detiene."
+   }
+  },
+  {
+   "n": 38,
+   "cat": "material",
+   "fen": "8/4b1Bp/8/8/6pP/8/6P1/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Captura un peón blanco sin arriesgar el alfil.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e7h4"
+    ],
+    "san": [
+     "Bxh4"
+    ],
+    "explain": "Bxh4: ese peón no está defendido."
+   }
+  },
+  {
+   "n": 39,
+   "cat": "material",
+   "fen": "8/4b1Bp/8/8/6pP/6P1/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Encuentra la jugada que gana un peón.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e7d6"
+    ],
+    "san": [
+     "Bd6"
+    ],
+    "explain": "Bd6 ataca al peón de g3, que no tiene defensa, sin dejar peones negros colgando."
+   }
+  },
+  {
+   "n": 40,
+   "cat": "material",
+   "fen": "8/8/8/2b2p2/5Pp1/6P1/1B6/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Gana un peón con el alfil.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c5f2"
+    ],
+    "san": [
+     "Bf2"
+    ],
+    "explain": "Bf2 ataca al peón de g3, que no tiene defensa."
+   }
+  },
+  {
+   "n": 41,
+   "cat": "material",
+   "fen": "8/8/8/5p2/5PpB/6P1/5b2/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Encuentra la jugada que gana un peón pase lo que pase.",
+   "hint": "Sigue atacando el peón.",
+   "solution": {
+    "moves": [
+     "f2e1"
+    ],
+    "san": [
+     "Be1"
+    ],
+    "explain": "Be1: el alfil blanco debe moverse y entonces el negro captura el peón."
+   }
+  },
+  {
+   "n": 42,
+   "cat": "promocion",
+   "fen": "8/8/1p6/1B1Pp3/1P2Pp1p/7P/7b/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Peón blanco a tres casillas de coronar. Prepara el camino del alfil para frenarlo.",
+   "hint": "Mueve un peón para abrirle paso al alfil.",
+   "solution": {
+    "moves": [
+     "f4f3"
+    ],
+    "san": [
+     "f3"
+    ],
+    "explain": "f3, luego el alfil va a f4 y de ahí a g5, desde donde vigila la coronación."
+   }
+  },
+  {
+   "n": 43,
+   "cat": "material",
+   "fen": "8/6p1/1b6/5N2/7p/7P/6P1/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El caballo blanco ataca a los dos peones negros. Solo una jugada evita perder un peón gratis. ¿Cuál?",
+   "hint": "Busca la jugada que defiende un peón y saca al otro del ataque.",
+   "solution": {
+    "moves": [
+     "g7g5"
+    ],
+    "san": [
+     "g5"
+    ],
+    "explain": "g5: el peón de h4 queda defendido y el de g7 sale del ataque del caballo."
+   }
+  },
+  {
+   "n": 44,
+   "cat": "material",
+   "fen": "8/6p1/3p4/3P4/8/4N3/3b2P1/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Encuentra la jugada que gana un peón sin remedio.",
+   "hint": "Ataca dos peones a la vez.",
+   "solution": {
+    "moves": [
+     "e3f5"
+    ],
+    "san": [
+     "Nf5"
+    ],
+    "explain": "Nf5 ataca dos peones; uno de ellos cae."
+   }
+  },
+  {
+   "n": 45,
+   "cat": "material",
+   "fen": "8/2p3p1/2b3P1/8/6N1/8/2P5/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las blancas. Gana un peón pase lo que pase.",
+   "hint": "Ataca dos peones a la vez.",
+   "solution": {
+    "moves": [
+     "c6e4"
+    ],
+    "san": [
+     "Be4"
+    ],
+    "explain": "Be4 ataca dos peones a la vez."
+   }
+  },
+  {
+   "n": 46,
+   "cat": "material",
+   "fen": "8/3N4/2p1p1p1/2P3P1/3Pb3/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana un peón pase lo que pase.",
+   "hint": "El alfil negro defiende dos peones: si se mueve, uno queda solo.",
+   "solution": {
+    "moves": [
+     "d7e5"
+    ],
+    "san": [
+     "Ne5"
+    ],
+    "explain": "Ne5 ataca a la vez los peones de c6 y g6, que dependen del alfil; en cuanto el alfil se mueva, el caballo captura un peón gratis."
+   }
+  },
+  {
+   "n": 47,
+   "cat": "material",
+   "fen": "8/1p2ppr1/8/8/8/1P4P1/3R1P2/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana un peón pase lo que pase.",
+   "hint": "Ataca dos peones negros con la torre.",
+   "solution": {
+    "moves": [
+     "d2d7"
+    ],
+    "san": [
+     "Rd7"
+    ],
+    "explain": "Rd7 ataca dos peones a la vez."
+   }
+  },
+  {
+   "n": 48,
+   "cat": "material",
+   "fen": "3r4/P7/6p1/3p3p/5P2/6P1/8/3R4 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Encuentra la jugada que gana material o corona.",
+   "hint": "La torre negra tiene que seguir vigilando la casilla de coronación.",
+   "solution": {
+    "moves": [
+     "d1d5"
+    ],
+    "san": [
+     "Rxd5"
+    ],
+    "explain": "Rxd5: si Rxd5, el peón corona. Entregar la torre por una dama es un gran negocio."
+   }
+  },
+  {
+   "n": 49,
+   "cat": "material",
+   "fen": "2B5/1p2P1p1/2b4p/8/7P/6P1/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana al menos un peón pase lo que pase.",
+   "hint": "El alfil negro tiene que seguir vigilando la casilla de coronación.",
+   "solution": {
+    "moves": [
+     "c8b7"
+    ],
+    "san": [
+     "Bxb7"
+    ],
+    "explain": "Bxb7: si Bxb7, el peón e corona."
+   }
+  },
+  {
+   "n": 50,
+   "cat": "material",
+   "fen": "8/p6p/6p1/2n5/2P5/6P1/3B3P/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana un peón pase lo que pase.",
+   "hint": "El caballo negro está alineado con uno de sus peones.",
+   "solution": {
+    "moves": [
+     "d2e3"
+    ],
+    "san": [
+     "Be3"
+    ],
+    "explain": "Be3: el caballo tiene que moverse y el alfil captura el peón que estaba detrás."
+   }
+  },
+  {
+   "n": 51,
+   "cat": "material",
+   "fen": "6b1/2pN4/8/6p1/4p3/2P5/5P1P/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana al menos un peón pase lo que pase.",
+   "hint": "Ataca dos piezas negras a la vez.",
+   "solution": {
+    "moves": [
+     "d7f6"
+    ],
+    "san": [
+     "Nf6"
+    ],
+    "explain": "Nf6 ataca al alfil y a un peón; si el alfil huye a d5 o h7, el caballo lo captura."
+   }
+  },
+  {
+   "n": 52,
+   "cat": "material",
+   "fen": "8/3np2p/6pP/8/8/6P1/2B2P2/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana al menos un peón.",
+   "hint": "El peón blanco avanzado coronaría si el peón negro no lo estorbara.",
+   "solution": {
+    "moves": [
+     "c2g6"
+    ],
+    "san": [
+     "Bxg6"
+    ],
+    "explain": "Bxg6: si hxg6, el peón h queda pasado y corona en h8 en dos jugadas."
+   }
+  },
+  {
+   "n": 53,
+   "cat": "material",
+   "fen": "1b6/4N2p/1P2p3/4P3/8/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana un peón pase lo que pase.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e7c6"
+    ],
+    "san": [
+     "Nc6"
+    ],
+    "explain": "Nc6 ataca al alfil, que no tiene casilla segura: a7 y c7 están controladas por el peón de b6."
+   }
+  },
+  {
+   "n": 54,
+   "cat": "material",
+   "fen": "8/pb6/1p6/8/1N2p3/4P3/P1P5/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Gana un peón pase lo que pase.",
+   "hint": "Vaya donde vaya el caballo blanco, algo cae.",
+   "solution": {
+    "moves": [
+     "a7a5"
+    ],
+    "san": [
+     "a5"
+    ],
+    "explain": "a5 ataca al caballo, que no tiene casilla segura."
+   }
+  },
+  {
+   "n": 55,
+   "cat": "defensa",
+   "fen": "1R4k1/5pp1/7p/8/8/6P1/r4PKP/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El rey está en jaque y solo hay una salida. ¿Cuál?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g8h7"
+    ],
+    "san": [
+     "Kh7"
+    ],
+    "explain": "Kh7 es la única casilla que no está atacada."
+   }
+  },
+  {
+   "n": 56,
+   "cat": "defensa",
+   "fen": "4Rk2/5ppp/8/8/8/2r3P1/5PKP/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Tu rey está en jaque y hay una sola forma de salir. Encuéntrala.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "f8e8"
+    ],
+    "san": [
+     "Kxe8"
+    ],
+    "explain": "Kxe8: la torre no estaba defendida."
+   }
+  },
+  {
+   "n": 57,
+   "cat": "defensa",
+   "fen": "1R2k3/3ppn2/5p2/6p1/8/4P3/5P2/5K2 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El rey está en jaque y solo hay una forma de defenderlo.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "f7d8"
+    ],
+    "san": [
+     "Nd8"
+    ],
+    "explain": "Nd8 se interpone entre la torre y el rey."
+   }
+  },
+  {
+   "n": 58,
+   "cat": "mate",
+   "fen": "k1K5/b7/p6p/1p5P/6P1/3B4/P7/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d3e4"
+    ],
+    "san": [
+     "Be4#"
+    ],
+    "explain": "Be4#: la diagonal larga remata al rey en la esquina."
+   }
+  },
+  {
+   "n": 59,
+   "cat": "mate",
+   "fen": "6nk/2p2p1p/7P/4N3/8/1P6/5P2/6K1 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e5f7"
+    ],
+    "san": [
+     "Nxf7#"
+    ],
+    "explain": "Nxf7#: el rey no tiene ninguna casilla libre."
+   }
+  },
+  {
+   "n": 60,
+   "cat": "mate",
+   "fen": "1R4rk/5p1p/5KP1/2pp4/8/7P/3P4/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g6g7"
+    ],
+    "san": [
+     "g7#"
+    ],
+    "explain": "g7#: la torre negra está clavada y no puede capturar."
+   }
+  },
+  {
+   "n": 61,
+   "cat": "mate",
+   "fen": "k7/b7/p1K4p/1p6/8/5BP1/1P5P/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c6c7"
+    ],
+    "san": [
+     "Kc7#"
+    ],
+    "explain": "Kc7#: el rey blanco cierra la salida y el alfil negro no ayuda."
+   }
+  },
+  {
+   "n": 62,
+   "cat": "mate",
+   "fen": "2k5/3p4/3B3p/2P5/8/8/7P/KRq5 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c1a3"
+    ],
+    "san": [
+     "Qa3#"
+    ],
+    "explain": "Qa3#: la torre en b1 le quita al rey su única salida."
+   }
+  },
+  {
+   "n": 63,
+   "cat": "mate",
+   "fen": "8/4qN1k/6p1/7n/3Q4/8/7P/6K1 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d4h8"
+    ],
+    "san": [
+     "Qh8#"
+    ],
+    "explain": "Qh8#: el caballo protege a la dama."
+   }
+  },
+  {
+   "n": 64,
+   "cat": "mate",
+   "fen": "5k2/5p2/8/8/5N1P/3np1P1/1r6/R2K4 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "b2d2"
+    ],
+    "san": [
+     "Rd2#"
+    ],
+    "explain": "Rd2#: el rey blanco queda sin escape."
+   }
+  },
+  {
+   "n": 65,
+   "cat": "material",
+   "fen": "8/1k4p1/2p4p/1N3b2/8/4P3/1P3PK1/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "Ataca dos piezas a la vez.",
+   "solution": {
+    "moves": [
+     "b5d6"
+    ],
+    "san": [
+     "Nd6+"
+    ],
+    "explain": "Nd6+ da jaque y ataca al alfil de f5: tras mover el rey, el caballo lo captura."
+   }
+  },
+  {
+   "n": 66,
+   "cat": "material",
+   "fen": "8/r2k2p1/2p5/3p4/3P4/2P3P1/5RK1/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "El rey y la torre negros están en la misma columna.",
+   "solution": {
+    "moves": [
+     "f2f7"
+    ],
+    "san": [
+     "Rf7+"
+    ],
+    "explain": "Rf7+: el rey tiene que apartarse y la torre de a7 queda a merced de la torre blanca."
+   }
+  },
+  {
+   "n": 67,
+   "cat": "material",
+   "fen": "4q3/6p1/2k4p/3p4/8/2P3P1/2Q2K1P/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "El rey y la dama negros están en la misma diagonal.",
+   "solution": {
+    "moves": [
+     "c2a4"
+    ],
+    "san": [
+     "Qa4+"
+    ],
+    "explain": "Qa4+ y la dama negra cae."
+   }
+  },
+  {
+   "n": 68,
+   "cat": "material",
+   "fen": "8/1pp2kp1/7p/8/2n5/2P3P1/5KBP/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "El rey y el caballo negros están en la misma diagonal.",
+   "solution": {
+    "moves": [
+     "g2d5"
+    ],
+    "san": [
+     "Bd5+"
+    ],
+    "explain": "Bd5+ y después el caballo cae."
+   }
+  },
+  {
+   "n": 69,
+   "cat": "material",
+   "fen": "5B1k/1p3p1p/5npP/2P5/8/5PP1/8/6K1 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "El rey y el caballo negros están alineados.",
+   "solution": {
+    "moves": [
+     "f8g7"
+    ],
+    "san": [
+     "Bg7+"
+    ],
+    "explain": "Bg7+ y el caballo cae."
+   }
+  },
+  {
+   "n": 70,
+   "cat": "material",
+   "fen": "8/3k2p1/2n5/p2p4/8/2B5/1PPK2P1/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Gana el alfil blanco a cambio de un peón, pase lo que pase.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d5d4"
+    ],
+    "san": [
+     "d4"
+    ],
+    "explain": "d4 ataca al alfil: si captura, el caballo lo recaptura; si huye, el peón captura en c3."
+   }
+  },
+  {
+   "n": 71,
+   "cat": "material",
+   "fen": "8/6pp/2pk1n2/8/4P1P1/8/1B1P1K2/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material con un jaque.",
+   "hint": "Ataca dos piezas al mismo tiempo.",
+   "solution": {
+    "moves": [
+     "e4e5"
+    ],
+    "san": [
+     "e5+"
+    ],
+    "explain": "e5+ da jaque y ataca al caballo; el rey no puede capturar porque el alfil defiende al peón."
+   }
+  },
+  {
+   "n": 72,
+   "cat": "material",
+   "fen": "8/5ppp/3k4/4nK2/4P3/4P3/6P1/2B5 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana el caballo negro.",
+   "hint": "El caballo negro solo está defendido por su rey.",
+   "solution": {
+    "moves": [
+     "c1a3"
+    ],
+    "san": [
+     "Ba3+"
+    ],
+    "explain": "Ba3+ obliga al rey a moverse y luego el rey blanco captura el caballo."
+   }
+  },
+  {
+   "n": 73,
+   "cat": "promocion",
+   "fen": "8/p3k1p1/2P1P2p/8/8/6P1/6K1/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Asegura la coronación del peón.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c6c7"
+    ],
+    "san": [
+     "c7"
+    ],
+    "explain": "c7 y en la siguiente jugada el peón corona."
+   }
+  },
+  {
+   "n": 74,
+   "cat": "promocion",
+   "fen": "1k6/2bP1pp1/1p6/8/5B2/6P1/P7/6K1 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. El alfil negro vigila la casilla de coronación, pero hay una forma segura de coronar. ¿Cuál?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "d7d8q",
+     "d7d8r",
+     "d7d8b",
+     "d7d8n"
+    ],
+    "san": [
+     "d8=Q+"
+    ],
+    "explain": "d8=Q: el alfil negro está clavado por el alfil blanco y no puede capturar."
+   }
+  },
+  {
+   "n": 75,
+   "cat": "mate",
+   "fen": "2k5/2P5/1P6/1K6/8/8/6pp/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Prepara un jaque mate en dos jugadas.",
+   "hint": "Piensa en avanzar el peón al final.",
+   "solution": {
+    "moves": [
+     "b5c6"
+    ],
+    "san": [
+     "Kc6"
+    ],
+    "explain": "Kc6 y a continuación b7 es mate."
+   }
+  },
+  {
+   "n": 76,
+   "cat": "material",
+   "fen": "6nk/1p5p/6p1/5p2/8/8/2PB1PPP/6K1 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana el caballo negro pase lo que pase.",
+   "hint": "Fuerza al caballo a sacrificarse para salvar a su rey.",
+   "solution": {
+    "moves": [
+     "d2c3"
+    ],
+    "san": [
+     "Bc3+"
+    ],
+    "explain": "Bc3+ y el caballo tiene que interponerse en f6, donde el alfil lo captura."
+   }
+  },
+  {
+   "n": 77,
+   "cat": "material",
+   "fen": "8/3kp1p1/1pr4p/8/B2P1P2/6P1/5K1P/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material pase lo que pase.",
+   "hint": "La torre negra no se puede mover: dejaría a su rey en jaque.",
+   "solution": {
+    "moves": [
+     "d4d5"
+    ],
+    "san": [
+     "d5"
+    ],
+    "explain": "d5 ataca a la torre clavada, que cae."
+   }
+  },
+  {
+   "n": 78,
+   "cat": "material",
+   "fen": "3Qqk2/1p2n2p/5pp1/8/1BP5/6P1/5PKP/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Gana material pase lo que pase.",
+   "hint": "¿La dama negra defiende de verdad al caballo?",
+   "solution": {
+    "moves": [
+     "b4e7"
+    ],
+    "san": [
+     "Bxe7+"
+    ],
+    "explain": "Bxe7+: la dama negra no puede capturar porque debe seguir tapando el jaque de la dama blanca."
+   }
+  },
+  {
+   "n": 79,
+   "cat": "promocion",
+   "fen": "8/1pR1rk1p/5pp1/3P4/8/6P1/5PKP/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Encuentra la jugada que gana material o corona.",
+   "hint": "Ataca la torre negra y defiende la tuya.",
+   "solution": {
+    "moves": [
+     "d5d6"
+    ],
+    "san": [
+     "d6"
+    ],
+    "explain": "d6: la torre negra no tiene buena salida; si Rxd6, exd6 y el peón corona."
+   }
+  },
+  {
+   "n": 80,
+   "cat": "promocion",
+   "fen": "6k1/1p1P2p1/6np/8/8/8/P1N2PK1/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El peón blanco está a un paso de coronar. Busca un plan de dos jugadas para que el caballo controle la casilla de coronación.",
+   "hint": "La primera jugada es un jaque.",
+   "solution": {
+    "moves": [
+     "g6f4"
+    ],
+    "san": [
+     "Nf4+"
+    ],
+    "explain": "Nf4+ y, cuando el rey se mueva, Ne6 vigila d8."
+   }
+  },
+  {
+   "n": 81,
+   "cat": "material",
+   "fen": "8/1p6/2p1p3/2P3N1/2nP4/8/P7/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Las blancas amenazan capturar un peón con el caballo. Evítalo.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e6e5"
+    ],
+    "san": [
+     "e5"
+    ],
+    "explain": "e5 quita el peón del ataque y ataca al peón d4."
+   }
+  },
+  {
+   "n": 82,
+   "cat": "promocion",
+   "fen": "8/3p4/P5p1/1p6/6r1/3P2P1/1P6/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Asegura la coronación del peón a.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "b2b3"
+    ],
+    "san": [
+     "b3"
+    ],
+    "explain": "b3 le quita a la torre la casilla a4, así que ya no puede ponerse delante del peón a."
+   }
+  },
+  {
+   "n": 83,
+   "cat": "promocion",
+   "fen": "8/p7/3P4/8/3P1n2/8/8/8 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Corona en pocas jugadas sin que el caballo negro pueda capturar la pieza nueva.",
+   "hint": "¿A dónde tiene que ir el caballo para frenar al peón? Busca cómo capturarlo si va allí.",
+   "solution": {
+    "moves": [
+     "d4d5"
+    ],
+    "san": [
+     "d5"
+    ],
+    "explain": "d5: si el caballo va a e6 para vigilar d8, el peón d5 lo captura."
+   }
+  },
+  {
+   "n": 84,
+   "cat": "material",
+   "fen": "8/2p2B2/5p2/2n3p1/8/2P3P1/1P6/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Gana al menos un peón pase lo que pase.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "c5a4"
+    ],
+    "san": [
+     "Na4"
+    ],
+    "explain": "Na4 ataca dos peones: si uno se mueve, el caballo captura el otro."
+   }
+  },
+  {
+   "n": 85,
+   "cat": "material",
+   "fen": "8/1p4p1/2p5/8/2PB3P/1P6/8/4b3 w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Si capturas el peón con el alfil, el alfil negro capturará otro. Encuentra la jugada que gana un peón sin contrapartida.",
+   "hint": "Evita que las negras puedan jugar alfil por peón.",
+   "solution": {
+    "moves": [
+     "h4h5"
+    ],
+    "san": [
+     "h5"
+    ],
+    "explain": "h5: si g5, el peón blanco captura al paso; si no, Bxg7 gana un peón limpio."
+   }
+  },
+  {
+   "n": 86,
+   "cat": "defensa",
+   "fen": "k2K4/8/1Q6/8/8/6b1/8/8 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. El rey negro está acorralado, pero puede salvarse con tablas por ahogado. ¿Cómo?",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "g3c7"
+    ],
+    "san": [
+     "Bc7+"
+    ],
+    "explain": "Bc7+ da jaque y ataca a la dama: si la capturan, el rey negro queda ahogado; si no, el alfil captura la dama."
+   }
+  },
+  {
+   "n": 87,
+   "cat": "mate",
+   "fen": "6rk/5p2/3p4/8/4b2B/6P1/5P2/4K2R w - - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "h4f6"
+    ],
+    "san": [
+     "Bf6#"
+    ],
+    "explain": "Bf6#: el alfil remata en la diagonal larga."
+   }
+  },
+  {
+   "n": 88,
+   "cat": "mate",
+   "fen": "8/8/3p4/7p/6b1/3B1k2/r2P3P/4K2R w K - 0 1",
+   "turn": "w",
+   "text": "Mueven las blancas. Jaque mate en una jugada. (Pista escondida: piensa en una jugada especial.)",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e1g1"
+    ],
+    "san": [
+     "O-O#"
+    ],
+    "explain": "¡Enroque corto! La torre llega a f1 con jaque y el rey negro no tiene ninguna casilla libre."
+   }
+  },
+  {
+   "n": 89,
+   "cat": "mate",
+   "fen": "r3k2K/7R/4p1p1/5n2/5B2/6P1/5P2/8 b q - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Jaque mate en una jugada. (Pista escondida: piensa en una jugada especial.)",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e8c8"
+    ],
+    "san": [
+     "O-O-O#"
+    ],
+    "explain": "¡Enroque largo! La torre llega a d8 con jaque y el rey blanco no tiene salida."
+   }
+  },
+  {
+   "n": 90,
+   "cat": "mate",
+   "fen": "5k2/1R3p2/4p3/8/8/6P1/5PB1/1r2n1K1 b - - 0 1",
+   "turn": "b",
+   "text": "Mueven las negras. Jaque mate en una jugada.",
+   "hint": null,
+   "solution": {
+    "moves": [
+     "e1f3"
+    ],
+    "san": [
+     "Nf3#"
+    ],
+    "explain": "Nf3#: el caballo remata."
+   }
+  }
+ ]
+}

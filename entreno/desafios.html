@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Desafíos — Entreno — Ajedrez Integral</title>
-<meta name="description" content="Desafíos de finales de peones: intercepta, corona y captura — con racha, pistas y estrellas.">
+<meta name="description" content="90 desafíos pedagógicos: carrera a la coronación, ganar material, salir del apuro y jaque mate — con racha, pistas y estrellas.">
 <meta name="robots" content="noindex">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -188,6 +188,8 @@
     .tab, .set-card, .bctrl{transition-property: background-color, border-color, color;}
     .sq.hint-from, .sq.hint-to::after, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
   }
+  .promo-btn{width:52px; height:52px; font-size:1.8rem; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; border-radius:10px;}
+  .promo-btn:hover{border-color:var(--brass);}
 </style>
     <script src="../js/adaptive-mode.js"></script>
 </head>
@@ -242,7 +244,7 @@
       <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
     </div>
   </div>
-  <p class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">Desafíos de finales de peones: interceptar, coronar y capturar la pieza recién nacida — con racha, pistas y estrellas, igual que en Practicar.</p>
+  <p class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-400 mt-3">90 desafíos pedagógicos en cuatro categorías: carrera a la coronación, ganar material, salir del apuro y jaque mate. Son ejemplos para aprender, así que a veces no hay reyes en el tablero. Con racha, pistas y estrellas, igual que en Practicar.</p>
 
   <div class="streak-bar" id="streak-bar">
     <span class="flame" aria-hidden="true">🔥</span>
@@ -312,9 +314,15 @@
   </main>
 </div>
 
+<!-- Selector de coronación -->
+<div id="promo-modal" style="display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:16px;">
+  <div style="background:var(--bg-panel); border-radius:14px; padding:20px; text-align:center;">
+    <p style="color:var(--text-muted); font-size:0.85rem; margin:0 0 12px;">¿A qué pieza coronas?</p>
+    <div id="promo-opts" style="display:flex; gap:8px;"></div>
+  </div>
+</div>
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 <script src="../js/main.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
@@ -328,73 +336,264 @@ function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   EntrenoProgress.init();
-  initApp();
+  loadDataThenStart();
 }
 
-/* ---------------- CONTENIDO DE LOS DESAFÍOS ----------------
-   Los desafíos 1, 2 y 3 de "Interceptar el peón" son los desafíos reales
-   del mismo número en el libro "Ajedrez Desafíos para Niños" del usuario
-   (posición y enunciado transcritos de sus propias páginas). El resto —
-   los otros dos de "Interceptar el peón" y las categorías "Corona
-   imposible de evitar" y "Captura la pieza coronada" — son desafíos
-   originales, del mismo estilo, escritos para completar la sección.
-   Cada posición (las tres reales y todas las nuevas) se generó y se
-   verificó con chess.js (node) antes de escribirse aquí: que la jugada
-   pedida es legal y, según el caso, que el alfil defensor tiene el color
-   de casilla "equivocado" para la casilla de coronación (no puede
-   detener el peón por más tiempo que le des), o que el caballo negro
-   realmente captura a la dama recién coronada.
-*/
+/* ---------------- CONTENIDO ----------------
+   Los 90 desafíos viven en data/desafios.json (posición, enunciado, pista,
+   jugadas aceptadas y explicación). Son ejemplos pedagógicos: muchas
+   posiciones no tienen reyes, así que el tablero usa un motor propio
+   (MiniChess, abajo) en vez de chess.js, que exige reyes. Para corregir o
+   agregar desafíos basta editar el JSON. */
 const GLYPH = {
   w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
   b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
 };
+const CAT_COLOR = { promocion:'#75935a', material:'#3b6ea5', defensa:'#9c4148', mate:'#6b3fa0' };
+const SET_SIZE = 5;
 
-const SETS = [
-  { id:'interceptar', cat:'interceptar', emoji:'🎯', title:'Interceptar el peón', desc:'Coloca el alfil a tiempo para capturar el peón antes de que corone.',
-    rounds:[
-      { fen:'k7/8/P7/8/1b6/8/8/7K b - - 0 1', from:'b4', to:'c5',
-        text:'Mueven las negras. El peón blanco está a sólo dos casillas de promover. ¿Dónde deben colocar el alfil las negras para que capturen al peón antes de que se promueva?', source:'Desafío #1' },
-      { fen:'k7/5P2/8/8/8/4b3/8/K7 b - - 0 1', from:'e3', to:'c5',
-        text:'Mueven las negras. El peón blanco está a punto de promover. ¿Dónde deben colocar su alfil las negras para que capturen al peón antes de que se promueva?', source:'Desafío #2' },
-      { fen:'k7/8/1Pp5/8/7K/5b2/8/8 b - - 0 1', from:'c6', to:'c5',
-        text:'Mueven las negras. El peón blanco está listo para avanzar y promoverse. ¿Qué movimiento permitirá al alfil negro capturar al peón antes de que se promueva?', source:'Desafío #3' },
-      { fen:'k7/8/3P4/8/8/7b/8/K7 b - - 0 1', from:'h3', to:'d7',
-        text:'Mueven las negras. El peón blanco está a dos casillas de coronar. ¿A dónde deben mover el alfil las negras para interceptarlo antes de que se corone?', source:'Desafío original' },
-      { fen:'7k/8/6P1/8/8/8/b7/K7 b - - 0 1', from:'a2', to:'f7',
-        text:'Mueven las negras. El peón blanco está a dos casillas de coronar. ¿A dónde deben mover el alfil las negras para interceptarlo antes de que se corone?', source:'Desafío original' },
-    ] },
-  { id:'corona', cat:'corona', emoji:'🚫', title:'Corona imposible de evitar', desc:'El alfil rival tiene el color de casilla equivocado: no puede detener a este peón. Coróналo.',
-    rounds:[
-      { fen:'4k3/2P5/8/8/8/8/8/b6K w - - 0 1', from:'c7', to:'c8',
-        text:'Mueven las blancas. El peón está a una casilla de coronar. El alfil negro nunca podrá pisar la casilla de coronación: sus casillas son de otro color. Corona sin miedo.', source:'Desafío original' },
-      { fen:'4k3/5P2/8/8/8/8/6b1/K7 w - - 0 1', from:'f7', to:'f8',
-        text:'Mueven las blancas. Fíjate en el color de la casilla de coronación y compáralo con el color del alfil negro. ¿Puede detenerte? Corona el peón.', source:'Desafío original' },
-      { fen:'4k3/1P6/8/8/8/8/8/3b3K w - - 0 1', from:'b7', to:'b8',
-        text:'Mueven las blancas. El alfil negro jamás podrá llegar a la casilla de coronación de este peón. Corónalo ahora mismo.', source:'Desafío original' },
-      { fen:'4k3/6P1/8/8/8/8/1b6/7K w - - 0 1', from:'g7', to:'g8',
-        text:'Mueven las blancas. Aunque el alfil negro ande cerca, nunca podrá pisar la casilla donde va a coronar este peón. Corónalo.', source:'Desafío original' },
-      { fen:'4k3/P7/8/8/8/8/1b6/7K w - - 0 1', from:'a7', to:'a8',
-        text:'Mueven las blancas. Un alfil solo controla un color de casillas para siempre. Compara el color del alfil negro con la casilla de coronación y corona el peón.', source:'Desafío original' },
-    ] },
-  { id:'captura', cat:'captura', emoji:'♞', title:'Captura la pieza coronada', desc:'Las blancas acaban de coronar, pero el caballo negro tenía la casilla vigilada. Encuentra la captura.',
-    rounds:[
-      { fen:'4Qk2/2n5/8/8/8/8/8/7K b - - 0 1', from:'c7', to:'e8',
-        text:'Mueven las negras. Las blancas acaban de coronar una dama en e8. Pero el caballo negro tenía esa casilla vigilada desde antes. Encuentra la captura.', source:'Desafío original' },
-      { fen:'1Q4k1/3n4/8/8/8/8/8/7K b - - 0 1', from:'d7', to:'b8',
-        text:'Mueven las negras. La nueva dama blanca en b8 no se dio cuenta de que el caballo negro ya la tenía vigilada. Captúrala.', source:'Desafío original' },
-      { fen:'6Qk/4n3/8/8/8/8/8/7K b - - 0 1', from:'e7', to:'g8',
-        text:'Mueven las negras. Las blancas coronaron en g8 sin fijarse en el caballo negro. Encuentra la jugada que gana la dama recién nacida.', source:'Desafío original' },
-      { fen:'Q5k1/2n5/8/8/8/8/8/7K b - - 0 1', from:'c7', to:'a8',
-        text:'Mueven las negras. Hay una dama blanca nueva en a8 — y un caballo negro que ya la estaba esperando. ¿Cuál es la jugada?', source:'Desafío original' },
-      { fen:'6kQ/5n2/8/8/8/8/8/7K b - - 0 1', from:'f7', to:'h8',
-        text:'Mueven las negras. La dama blanca acaba de coronar en la esquina h8. El caballo negro puede acabar con la fiesta ahora mismo. ¿Cómo?', source:'Desafío original' },
-    ] },
-];
+let DATA = null;
+let SETS = [];
+let CATEGORY_ORDER = [];
+let CATEGORY_LABEL = {};
 
-const CATEGORY_ORDER = ['interceptar','corona','captura'];
-const CATEGORY_LABEL = {interceptar:'🎯 Interceptar el peón', corona:'🚫 Corona imposible de evitar', captura:'♞ Captura la pieza coronada'};
-const CATEGORY_VAR = {interceptar:'--interceptar', corona:'--corona', captura:'--captura'};
+async function loadDataThenStart(){
+  try {
+    const res = await fetch('data/desafios.json');
+    if(!res.ok) throw new Error('desafios.json: ' + res.status);
+    DATA = await res.json();
+  } catch (e) {
+    document.getElementById('main-content').innerHTML =
+      '<p class="text-center text-brand-400 dark:text-brand-500 py-10">No se pudo cargar la base de desafíos. Intenta recargar la página.</p>';
+    console.error(e);
+    return;
+  }
+  CATEGORY_ORDER = DATA.categories.map((c) => c.id);
+  DATA.categories.forEach((c) => { CATEGORY_LABEL[c.id] = c.emoji + ' ' + c.title; });
+  SETS = [];
+  DATA.categories.forEach((c) => {
+    const list = DATA.challenges.filter((ch) => ch.cat === c.id);
+    for(let i = 0; i < list.length; i += SET_SIZE){
+      const rounds = list.slice(i, i + SET_SIZE);
+      const k = i / SET_SIZE + 1;
+      SETS.push({
+        id: c.id + '-' + k, cat: c.id, emoji: c.emoji,
+        title: c.title + ' ' + k,
+        desc: 'Desafíos ' + rounds.map((r) => '#' + r.n).join(', ') + '. ' + c.desc,
+        rounds: rounds.map((r) => ({ n: r.n, fen: r.fen, text: r.text, hint: r.hint, moves: r.solution.moves, san: r.solution.san, explain: r.solution.explain, source: 'Desafío #' + r.n })),
+      });
+    }
+  });
+  initApp();
+}
+
+/* ---------------- MiniChess: movimientos legales sin exigir reyes ----------------
+   Misma interfaz que usan el tablero, el arrastre y el modo adaptado:
+   get(sq) -> {type,color} | null, turn(), moves({square, verbose}), move({from,to,promotion}),
+   in_check(), fen(). Reglas: movimientos normales de todas las piezas, capturas,
+   coronación, enroque (según los derechos del FEN) y captura al paso. Si hay rey,
+   no se permite dejarlo en jaque. */
+class MiniChess {
+  constructor(fen){ this.load(fen); }
+  load(fen){
+    const parts = fen.split(' ');
+    this.board = {};
+    let rank = 8, file = 0;
+    for(const ch of parts[0]){
+      if(ch === '/'){ rank--; file = 0; }
+      else if(/\d/.test(ch)){ file += parseInt(ch, 10); }
+      else {
+        const color = ch === ch.toUpperCase() ? 'w' : 'b';
+        this.board['abcdefgh'[file] + rank] = { type: ch.toLowerCase(), color };
+        file++;
+      }
+    }
+    this.side = parts[1] || 'w';
+    this.castling = parts[2] && parts[2] !== '-' ? parts[2] : '';
+    this.ep = parts[3] && parts[3] !== '-' ? parts[3] : null;
+    this.history = [];
+  }
+  fen(){
+    let rows = [];
+    for(let r = 8; r >= 1; r--){
+      let s = '', e = 0;
+      for(let f = 0; f < 8; f++){
+        const p = this.board['abcdefgh'[f] + r];
+        if(p){ if(e){ s += e; e = 0; } s += p.color === 'w' ? p.type.toUpperCase() : p.type; }
+        else e++;
+      }
+      if(e) s += e;
+      rows.push(s);
+    }
+    return rows.join('/') + ' ' + this.side + ' ' + (this.castling || '-') + ' ' + (this.ep || '-') + ' 0 1';
+  }
+  get(sq){ return this.board[sq] || null; }
+  turn(){ return this.side; }
+  static sq(f, r){ return (f < 0 || f > 7 || r < 1 || r > 8) ? null : 'abcdefgh'[f] + r; }
+  static fr(sq){ return [sq.charCodeAt(0) - 97, parseInt(sq[1], 10)]; }
+  attacked(sq, byColor){
+    const [tf, tr] = MiniChess.fr(sq);
+    for(const from in this.board){
+      const p = this.board[from];
+      if(p.color !== byColor) continue;
+      const [f, r] = MiniChess.fr(from);
+      const df = tf - f, dr = tr - r;
+      if(p.type === 'p'){
+        const dir = p.color === 'w' ? 1 : -1;
+        if(dr === dir && Math.abs(df) === 1) return true;
+      } else if(p.type === 'n'){
+        if((Math.abs(df) === 1 && Math.abs(dr) === 2) || (Math.abs(df) === 2 && Math.abs(dr) === 1)) return true;
+      } else if(p.type === 'k'){
+        if(Math.abs(df) <= 1 && Math.abs(dr) <= 1 && (df || dr)) return true;
+      } else {
+        const straight = df === 0 || dr === 0, diag = Math.abs(df) === Math.abs(dr);
+        if(!(df || dr)) continue;
+        if((p.type === 'r' && !straight) || (p.type === 'b' && !diag) || (p.type === 'q' && !straight && !diag)) continue;
+        if(!straight && !diag) continue;
+        const sf = Math.sign(df), sr = Math.sign(dr);
+        let cf = f + sf, cr = r + sr, clear = true;
+        while(cf !== tf || cr !== tr){
+          if(this.board[MiniChess.sq(cf, cr)]){ clear = false; break; }
+          cf += sf; cr += sr;
+        }
+        if(clear) return true;
+      }
+    }
+    return false;
+  }
+  kingSquare(color){
+    for(const sq in this.board){ const p = this.board[sq]; if(p.type === 'k' && p.color === color) return sq; }
+    return null;
+  }
+  in_check(){ const k = this.kingSquare(this.side); return !!k && this.attacked(k, this.side === 'w' ? 'b' : 'w'); }
+  pseudoMoves(from){
+    const p = this.board[from];
+    if(!p || p.color !== this.side) return [];
+    const [f, r] = MiniChess.fr(from);
+    const out = [];
+    const add = (to, flags, extra) => { if(to) out.push(Object.assign({ from, to, flags, piece: p.type, color: p.color }, extra || {})); };
+    const enemy = p.color === 'w' ? 'b' : 'w';
+    if(p.type === 'p'){
+      const dir = p.color === 'w' ? 1 : -1, start = p.color === 'w' ? 2 : 7, last = p.color === 'w' ? 8 : 1;
+      const one = MiniChess.sq(f, r + dir);
+      if(one && !this.board[one]){
+        add(one, r + dir === last ? 'np' : 'n');
+        const two = MiniChess.sq(f, r + 2 * dir);
+        if(r === start && two && !this.board[two]) add(two, 'b');
+      }
+      for(const df of [-1, 1]){
+        const to = MiniChess.sq(f + df, r + dir);
+        if(!to) continue;
+        if(this.board[to] && this.board[to].color === enemy) add(to, r + dir === last ? 'cp' : 'c', { captured: this.board[to].type });
+        else if(to === this.ep) add(to, 'e', { captured: 'p' });
+      }
+    } else if(p.type === 'n' || p.type === 'k'){
+      const deltas = p.type === 'n' ? [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]] : [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+      for(const [df, dr] of deltas){
+        const to = MiniChess.sq(f + df, r + dr);
+        if(!to) continue;
+        if(!this.board[to]) add(to, 'n');
+        else if(this.board[to].color === enemy) add(to, 'c', { captured: this.board[to].type });
+      }
+      if(p.type === 'k'){
+        const home = p.color === 'w' ? 1 : 8;
+        const rights = p.color === 'w' ? this.castling.replace(/[a-z]/g, '') : this.castling.replace(/[A-Z]/g, '');
+        if(from === 'e' + home && !this.attacked(from, enemy)){
+          if(rights.toLowerCase().includes('k') && !this.board['f' + home] && !this.board['g' + home] && this.board['h' + home] && this.board['h' + home].type === 'r' &&
+             !this.attacked('f' + home, enemy) && !this.attacked('g' + home, enemy)) add('g' + home, 'k');
+          if(rights.toLowerCase().includes('q') && !this.board['d' + home] && !this.board['c' + home] && !this.board['b' + home] && this.board['a' + home] && this.board['a' + home].type === 'r' &&
+             !this.attacked('d' + home, enemy) && !this.attacked('c' + home, enemy)) add('c' + home, 'q');
+        }
+      }
+    } else {
+      const dirs = p.type === 'r' ? [[1,0],[-1,0],[0,1],[0,-1]] : p.type === 'b' ? [[1,1],[1,-1],[-1,1],[-1,-1]] : [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+      for(const [df, dr] of dirs){
+        let cf = f + df, cr = r + dr;
+        while(true){
+          const to = MiniChess.sq(cf, cr);
+          if(!to) break;
+          if(!this.board[to]) add(to, 'n');
+          else { if(this.board[to].color === enemy) add(to, 'c', { captured: this.board[to].type }); break; }
+          cf += df; cr += dr;
+        }
+      }
+    }
+    return out;
+  }
+  apply(m){
+    const p = this.board[m.from];
+    delete this.board[m.from];
+    if(m.flags === 'e'){ const [tf, tr] = MiniChess.fr(m.to); delete this.board[MiniChess.sq(tf, tr - (p.color === 'w' ? 1 : -1))]; }
+    this.board[m.to] = m.promotion ? { type: m.promotion, color: p.color } : p;
+    if(m.flags === 'k' || m.flags === 'q'){
+      const home = m.to[1];
+      if(m.flags === 'k'){ this.board['f' + home] = this.board['h' + home]; delete this.board['h' + home]; }
+      else { this.board['d' + home] = this.board['a' + home]; delete this.board['a' + home]; }
+    }
+    if(p.type === 'k') this.castling = p.color === 'w' ? this.castling.replace(/[KQ]/g, '') : this.castling.replace(/[kq]/g, '');
+    if(p.type === 'r'){ const map = { h1:'K', a1:'Q', h8:'k', a8:'q' }; if(map[m.from]) this.castling = this.castling.replace(map[m.from], ''); }
+    this.ep = (m.flags === 'b') ? MiniChess.sq(MiniChess.fr(m.to)[0], (MiniChess.fr(m.from)[1] + MiniChess.fr(m.to)[1]) / 2) : null;
+    this.side = this.side === 'w' ? 'b' : 'w';
+  }
+  legalMoves(from){
+    const out = [];
+    for(const m of this.pseudoMoves(from)){
+      const promos = m.flags.includes('p') ? ['q','r','b','n'] : [null];
+      for(const promotion of promos){
+        const mm = Object.assign({}, m, promotion ? { promotion } : {});
+        const snap = { board: Object.assign({}, this.board), side: this.side, castling: this.castling, ep: this.ep };
+        this.apply(mm);
+        const k = this.kingSquare(snap.side);
+        const ok = !k || !this.attacked(k, this.side);
+        this.board = snap.board; this.side = snap.side; this.castling = snap.castling; this.ep = snap.ep;
+        if(ok) out.push(mm);
+      }
+    }
+    return out;
+  }
+  moves(opts){
+    const sqs = opts && opts.square ? [opts.square] : Object.keys(this.board);
+    let out = [];
+    sqs.forEach((sq) => { out = out.concat(this.legalMoves(sq)); });
+    out.forEach((m) => { m.san = this.san(m); });
+    return out;
+  }
+  san(m){
+    if(m.flags === 'k') return 'O-O';
+    if(m.flags === 'q') return 'O-O-O';
+    const cap = m.flags.includes('c') || m.flags === 'e';
+    let s = '';
+    if(m.piece === 'p'){ s = cap ? m.from[0] + 'x' + m.to : m.to; if(m.promotion) s += '=' + m.promotion.toUpperCase(); }
+    else {
+      s = m.piece.toUpperCase();
+      // desambiguación sencilla
+      const others = Object.keys(this.board).filter((sq) => sq !== m.from && this.board[sq].type === m.piece && this.board[sq].color === m.color)
+        .filter((sq) => this.legalMoves(sq).some((x) => x.to === m.to));
+      if(others.length){
+        if(!others.some((sq) => sq[0] === m.from[0])) s += m.from[0];
+        else if(!others.some((sq) => sq[1] === m.from[1])) s += m.from[1];
+        else s += m.from;
+      }
+      s += (cap ? 'x' : '') + m.to;
+    }
+    return s;
+  }
+  move(arg){
+    const cands = this.legalMoves(arg.from).filter((m) => m.to === arg.to && (!m.promotion || m.promotion === (arg.promotion || 'q')));
+    if(!cands.length) return null;
+    const m = cands[0];
+    m.san = this.san(m);
+    this.apply(m);
+    const opp = this.kingSquare(this.side);
+    if(opp && this.attacked(opp, this.side === 'w' ? 'b' : 'w')){
+      const any = Object.keys(this.board).some((sq) => this.board[sq].color === this.side && this.legalMoves(sq).length);
+      m.san += any ? '+' : '#';
+    }
+    this.history.push(m);
+    return m;
+  }
+  uci(m){ return m.from + m.to + (m.promotion || ''); }
+}
 
 /* ---------------- Modo normal / modo adaptado (lector de pantalla) ---------------- */
 const BLIND_MODE_KEY = 'oscarBlindMode_v1';
@@ -408,15 +607,15 @@ function renderPositionReadout(){
   readout.style.display = 'block';
 }
 function applyBlindModeUI(){
-  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
+  document.getElementById('mode-normal-btn').classList.toggle('active', !blindMode);
+  document.getElementById('mode-normal-btn').setAttribute('aria-pressed', String(!blindMode));
+  document.getElementById('mode-blind-btn').classList.toggle('active', blindMode);
+  document.getElementById('mode-blind-btn').setAttribute('aria-pressed', String(blindMode));
   document.getElementById('blind-panel').style.display = blindMode ? 'block' : 'none';
-  if(modeNormalBtn){ modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true'); modeNormalBtn.classList.toggle('active', !blindMode); }
-  if(modeBlindBtn){ modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false'); modeBlindBtn.classList.toggle('active', blindMode); }
   renderPositionReadout();
-  if(blindMode) document.getElementById('blind-move-input').focus();
 }
 function setBlindMode(value){
-  blindMode = !!value;
+  blindMode = value;
   try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
   applyBlindModeUI();
 }
@@ -426,37 +625,35 @@ modeNormalBtn.addEventListener('click', () => setBlindMode(false));
 modeBlindBtn.addEventListener('click', () => setBlindMode(true));
 
 function blindHandleMoveGuess(raw){
-  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
-  if(clean.length !== 4){ setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad'); return; }
-  const from = clean.slice(0, 2), to = clean.slice(2, 4);
+  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8qrbn]/g, '');
+  if(clean.length < 4){ setStatus('Escribe la jugada como origen y destino, por ejemplo e2e4.', 'bad'); return; }
+  const from = clean.slice(0, 2), to = clean.slice(2, 4), promo = clean[4];
   const piece = game.get(from);
-  if(!piece || piece.color !== game.turn()){ setStatus(`No hay una pieza tuya en ${window.BlindNotation.squareSpoken(from)}.`, 'bad'); return; }
+  if(!piece || piece.color !== game.turn()){ setStatus(`En ${window.BlindNotation.squareSpoken(from)} no hay una pieza tuya.`, 'bad'); return; }
   const legal = game.moves({ square: from, verbose: true });
   const target = legal.find((m) => m.to === to);
-  if(!target){ setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad'); return; }
-  const moveResult = game.move({ from, to, promotion: 'q' });
-  if(!moveResult) return;
-  renderPositionReadout();
-  handleMoveResult(moveResult);
+  if(!target){ setStatus(`Esa pieza no puede ir a ${window.BlindNotation.squareSpoken(to)}.`, 'bad'); return; }
+  const moveResult = game.move({ from, to, promotion: promo || 'q' });
+  drawBoard();
+  if(moveResult) handleMoveResult(moveResult);
 }
 document.getElementById('blind-panel').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = document.getElementById('blind-move-input');
   const value = input.value;
   input.value = '';
-  input.focus();
-  blindHandleMoveGuess(value);
+  if(!roundLocked) blindHandleMoveGuess(value);
 });
 
 /* ---------------- Progreso, racha y estrellas (localStorage) ---------------- */
 function getProgress(){
-  try{ return JSON.parse(localStorage.getItem('entreno_desafios_v1') || '{}'); }catch(e){ return {}; }
+  try{ return JSON.parse(localStorage.getItem('entreno_desafios_v2') || '{}'); }catch(e){ return {}; }
 }
-function saveProgress(p){ localStorage.setItem('entreno_desafios_v1', JSON.stringify(p)); }
+function saveProgress(p){ localStorage.setItem('entreno_desafios_v2', JSON.stringify(p)); }
 function getSetStars(id){ return getProgress()[id] || 0; }
 function setSetStars(id, stars){
   const p = getProgress();
-  if(!p[id] || stars > p[id]) p[id] = stars;
+  p[id] = Math.max(p[id] || 0, stars);
   saveProgress(p);
 }
 
@@ -480,7 +677,8 @@ function bumpStreak(){
 }
 function resetStreak(){ setStreak(0); }
 
-let currentCategory = 'interceptar';
+/* ---------------- Estado ---------------- */
+let currentCategory = 'promocion';
 let currentSet = null;
 let currentRoundIndex = 0;
 let game = null;
@@ -502,7 +700,7 @@ function buildTabs(){
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
-    btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
+    btn.style.setProperty('--tab-color', CAT_COLOR[cat] || 'var(--brass)');
     btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${done}/${list.length}</span>`;
     btn.addEventListener('click', () => { currentCategory = cat; showList(); });
     tabs.appendChild(btn);
@@ -539,6 +737,7 @@ function showList(){
 
 /* ---------------- Tablero ---------------- */
 const FILES = ['a','b','c','d','e','f','g','h'];
+const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
 function isLightSquare(square){
   const file = square.charCodeAt(0) - 97;
   const rank = parseInt(square[1], 10) - 1;
@@ -556,13 +755,16 @@ function drawBoard(){
       btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
       btn.dataset.square = square;
       const piece = game.get(square);
+      let label = square;
       if(piece){
         const span = document.createElement('span');
         span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
         span.textContent = GLYPH[piece.color][piece.type];
         span.setAttribute('aria-hidden', 'true');
         btn.appendChild(span);
+        label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanc' : ' negr') + (piece.type === 'q' || piece.type === 'r' ? 'a' : 'o');
       }
+      btn.setAttribute('aria-label', label);
       if(square === selectedSquare) btn.classList.add('selected');
       btn.addEventListener('click', () => onSquareClick(square, btn));
       board.appendChild(btn);
@@ -572,6 +774,7 @@ function drawBoard(){
 }
 
 function flashWrong(btn){
+  if(!btn) return;
   btn.classList.add('wrong-flash');
   setTimeout(() => btn.classList.remove('wrong-flash'), 350);
 }
@@ -601,9 +804,11 @@ function buildRoundDots(){
   });
 }
 
+function currentRound(){ return currentSet.rounds[currentRoundIndex]; }
+
 function loadRound(){
-  const round = currentSet.rounds[currentRoundIndex];
-  game = new Chess(round.fen);
+  const round = currentRound();
+  game = new MiniChess(round.fen);
   selectedSquare = null;
   roundLocked = false;
   hintsUsedThisRound = 0;
@@ -611,10 +816,10 @@ function loadRound(){
   document.getElementById('hint-btn').disabled = false;
   document.getElementById('hint-btn').textContent = '💡 Pista';
   document.getElementById('round-text').textContent = round.text;
-  document.getElementById('round-source').textContent = round.source || '';
+  document.getElementById('round-source').textContent = round.source;
   drawBoard();
   buildRoundDots();
-  setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Haz clic en la pieza que quieres mover.');
+  setStatus(blindMode ? 'Escribe la jugada que quieres hacer (por ejemplo e2e4).' : 'Haz clic en la pieza que quieres mover.');
   if(blindMode) document.getElementById('blind-move-input').focus();
 }
 
@@ -635,23 +840,43 @@ function onSquareClick(square, btn){
   if(!target){
     if(piece && piece.color === game.turn()){
       selectedSquare = square; drawBoard(); highlightTargets(square);
-    } else { selectedSquare = null; drawBoard(); }
+    } else { selectedSquare = null; drawBoard(); flashWrong(btn); }
     return;
   }
-  const moveResult = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+  const from = selectedSquare;
   selectedSquare = null;
+  if(target.flags.includes('p')){
+    askPromotion((choice) => { const r = game.move({ from, to: square, promotion: choice }); drawBoard(); if(r) handleMoveResult(r); });
+    return;
+  }
+  const moveResult = game.move({ from, to: square });
   drawBoard();
   if(!moveResult) return;
   handleMoveResult(moveResult);
 }
 
+function askPromotion(callback){
+  const modal = document.getElementById('promo-modal');
+  const opts = document.getElementById('promo-opts');
+  opts.innerHTML = '';
+  const turn = game.turn();
+  ['q','r','b','n'].forEach((type) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'promo-btn';
+    b.setAttribute('aria-label', PIECE_NAME[type]);
+    b.innerHTML = `<span class="${turn === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[turn][type]}</span>`;
+    b.addEventListener('click', () => { modal.style.display = 'none'; callback(type); });
+    opts.appendChild(b);
+  });
+  modal.style.display = 'flex';
+}
+
 // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
-// isDraggable() repite las mismas condiciones que ya usa onSquareClick() para decidir
-// si esta casilla se puede levantar, así el arrastre nunca permite algo que el clic no.
 if(typeof enableBoardDrag !== 'undefined'){
   enableBoardDrag(document.getElementById('board'), {
     isDraggable: (square) => {
-      if(roundLocked) return false;
+      if(roundLocked || !game) return false;
       const piece = game.get(square);
       return !!(piece && piece.color === game.turn());
     },
@@ -661,26 +886,32 @@ if(typeof enableBoardDrag !== 'undefined'){
 }
 
 function handleMoveResult(moveResult){
-  const round = currentSet.rounds[currentRoundIndex];
-  const correct = moveResult.from === round.from && moveResult.to === round.to;
+  const round = currentRound();
+  const uci = game.uci(moveResult);
+  const correct = round.moves.includes(uci);
   if(correct){
-    finishRound();
+    finishRound(moveResult);
   } else {
     resetStreak();
     setStatus(`${moveResult.san} es legal, pero no es la jugada que buscamos.`, 'bad');
-    setTimeout(() => { game = new Chess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
+    setTimeout(() => { game = new MiniChess(round.fen); drawBoard(); setStatus('Inténtalo de nuevo.'); }, 900);
   }
 }
 
-function finishRound(){
+function finishRound(moveResult){
   roundLocked = true;
   document.getElementById('hint-btn').disabled = true;
+  const round = currentRound();
   const seconds = ((Date.now() - roundStartTime) / 1000).toFixed(1);
   const stars = hintsUsedThisRound >= 2 ? 1 : (hintsUsedThisRound === 1 ? 2 : 3);
   setStarsEarned.push(stars);
-  bumpStreak();
+  if(hintsUsedThisRound < 3) bumpStreak();
   const fast = seconds < 4 && hintsUsedThisRound === 0;
-  setStatus(`✅ ¡Correcto!${fast ? ' ⚡ ¡Relámpago!' : ''} (${seconds}s)`, 'ok');
+  const san = moveResult ? moveResult.san : round.san[0];
+  setStatus(`✅ ¡Correcto! ${san}${round.explain ? ' — ' + round.explain : ''}${fast ? ' ⚡' : ''}`, 'ok');
+  if(blindMode && window.BlindNotation && window.BlindNotation.speak){
+    try{ window.BlindNotation.speak('Correcto. ' + (round.explain || '')); }catch(e){}
+  }
   setTimeout(() => {
     if(currentRoundIndex < currentSet.rounds.length - 1){
       currentRoundIndex++;
@@ -688,7 +919,7 @@ function finishRound(){
     } else {
       finishSet();
     }
-  }, fast ? 900 : 1100);
+  }, round.explain ? 3200 : 1200);
 }
 
 function finishSet(){
@@ -711,26 +942,31 @@ function finishSet(){
 function giveHint(){
   if(roundLocked) return;
   hintsUsedThisRound++;
-  const round = currentSet.rounds[currentRoundIndex];
+  const round = currentRound();
   const board = document.getElementById('board');
+  const first = round.moves[0];
+  const from = first.slice(0, 2), to = first.slice(2, 4);
   if(hintsUsedThisRound === 1){
-    board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
-    const cell = board.querySelector('[data-square="' + round.from + '"]');
-    if(cell) cell.classList.add('hint-from');
-    setStatus(blindMode ? `Pista: mueve la pieza en ${window.BlindNotation.squareSpoken(round.from)}.` : 'Pista: fíjate en la pieza resaltada.');
+    if(round.hint){
+      setStatus('Pista: ' + round.hint);
+    } else {
+      board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
+      const cell = board.querySelector('[data-square="' + from + '"]');
+      if(cell) cell.classList.add('hint-from');
+      setStatus(blindMode ? `Pista: mueve la pieza de ${window.BlindNotation.squareSpoken(from)}.` : 'Pista: fíjate en la pieza resaltada.');
+    }
     document.getElementById('hint-btn').textContent = '💡 Otra pista';
   } else if(hintsUsedThisRound === 2){
-    const cell = board.querySelector('[data-square="' + round.to + '"]');
-    if(cell) cell.classList.add('hint-to');
-    setStatus(blindMode ? `Pista: la casilla de destino es ${window.BlindNotation.squareSpoken(round.to)}.` : 'Pista: la casilla marcada con el círculo es el destino.');
+    board.querySelectorAll('.hint-from').forEach(el => el.classList.remove('hint-from'));
+    const cell = board.querySelector('[data-square="' + from + '"]');
+    if(cell) cell.classList.add('hint-from');
+    setStatus(blindMode ? `Pista: mueve la pieza de ${window.BlindNotation.squareSpoken(from)}.` : 'Pista: fíjate en la pieza resaltada.');
     document.getElementById('hint-btn').textContent = '💡 Ver solución';
   } else {
     resetStreak();
-    const moveResult = game.move({ from: round.from, to: round.to, promotion: 'q' });
+    const moveResult = game.move({ from, to, promotion: first[4] || 'q' });
     drawBoard();
-    renderPositionReadout();
-    setStatus(`Solución: ${moveResult ? moveResult.san : round.from + '-' + round.to}.`);
-    finishRound();
+    finishRound(moveResult);
   }
 }
 document.getElementById('hint-btn').addEventListener('click', giveHint);

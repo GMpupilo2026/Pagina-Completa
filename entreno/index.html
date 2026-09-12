@@ -123,12 +123,16 @@
                 <a href="temas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
                     <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🗂️</div>
                     <span class="font-semibold text-brand-800 dark:text-white text-sm">Ejercicios por tema</span>
-                    <span class="text-xs text-brand-400 dark:text-brand-500">Los temas de Lichess (clavadas, mates, finales…) con base de respaldo propia</span>
+                    <span class="text-xs text-brand-400 dark:text-brand-500">Clavadas, ataques dobles, mates, finales… 100 ejercicios por tema</span>
+                    <span id="temas-progress" class="hidden w-full mt-1" aria-live="polite">
+                        <span class="block h-1.5 w-full rounded bg-brand-100 dark:bg-brand-800 overflow-hidden"><span id="temas-progress-fill" class="block h-full bg-accent-500 rounded" style="width:0%"></span></span>
+                        <span id="temas-progress-text" class="block text-[11px] text-brand-400 dark:text-brand-500 mt-1"></span>
+                    </span>
                 </a>
                 <a href="desafios.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
                     <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🧠</div>
                     <span class="font-semibold text-brand-800 dark:text-white text-sm">Desafíos</span>
-                    <span class="text-xs text-brand-400 dark:text-brand-500">Interceptar, coronar y capturar la pieza recién nacida</span>
+                    <span class="text-xs text-brand-400 dark:text-brand-500">90 desafíos: coronación, ganar material, salir del apuro y jaque mate</span>
                 </a>
             </div>
         </div>
@@ -146,6 +150,21 @@ const NEXT_PATH = 'entreno/index.html';
 function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
+  showTemasProgress();
+}
+
+// Línea de progreso de "Ejercicios por tema": temas.html guarda el total y los
+// resueltos en localStorage cada vez que se abre o se resuelve algo.
+function showTemasProgress(){
+  try {
+    const total = parseInt(localStorage.getItem('entreno_temas_total') || '0', 10);
+    const done = parseInt(localStorage.getItem('entreno_temas_done') || '0', 10);
+    if(!total) return;
+    const pct = Math.round(100 * done / total);
+    document.getElementById('temas-progress-fill').style.width = pct + '%';
+    document.getElementById('temas-progress-text').textContent = `${done} resueltos · faltan ${total - done} (${pct} %)`;
+    document.getElementById('temas-progress').classList.remove('hidden');
+  } catch (e) {}
 }
 
 // Entrenamiento exige sesión iniciada en el sitio (Academia) — así el
