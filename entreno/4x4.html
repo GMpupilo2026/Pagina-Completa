@@ -120,6 +120,10 @@
   }
   .mode-btn + .mode-btn{border-left:1px solid var(--line);}
   .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
 
   nav.tabs{
     display:flex;
@@ -476,12 +480,12 @@
   </div>
 
   <div class="mode-bar">
-    <h2 class="sr-only">Modo de interacción</h2>
     <span>Modo:</span>
     <div class="mode-switch" role="group" aria-label="Elegir modo de interacción">
       <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
       <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
     </div>
+    <button type="button" id="speech-toggle-btn" style="display:none" class="speech-btn"></button>
   </div>
 
   <nav class="tabs" id="tabs" aria-label="Categorías de ejercicios"></nav>
@@ -858,8 +862,16 @@ const modeNormalBtn = document.getElementById('mode-normal-btn');
 const modeBlindBtn = document.getElementById('mode-blind-btn');
 const a11yPanel = document.getElementById('a11y-panel');
 
+// Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+// lee un lector de pantalla real), para quien no tiene uno activado. Ver
+// js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  : null;
+
 function applyBlindModeUI(){
   if(a11yPanel) a11yPanel.hidden = !blindMode;
+  if(refreshSpeechToggle) refreshSpeechToggle();
   if(modeNormalBtn){
     modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
     modeNormalBtn.classList.toggle('active', !blindMode);
@@ -914,6 +926,7 @@ let captureLog = [];       // capturas hechas en el intento actual: {fromSq,toSq
 let captureReviewIndex = null; // índice de "repaso" de capturas (shift+A/shift+D), solo narra
 
 function announce(text){
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
   const el = document.getElementById('board-announcer');
   el.textContent = '';
   /* pequeño retardo para que los lectores de pantalla noten el cambio
@@ -1028,6 +1041,14 @@ document.getElementById('board4').addEventListener('keydown', (e) => {
 });
 
 function performCapture(r,c){
+  // Si la captura vino del recuadro de comandos (modo adaptado), el foco debe
+  // quedarse ahí — focusSquare() más abajo, en cambio, es lo correcto cuando la
+  // captura vino de un clic/tecla en el propio tablero (sigue la pieza que se
+  // movió). renderBoard() reconstruye todas las casillas: ese cambio tan grande
+  // del DOM es justo lo que hace que algunos lectores de pantalla salgan solos
+  // del "modo formulario" del recuadro si no se restaura el foco después.
+  const cmdInputEl = document.getElementById('cmd-input');
+  const cameFromInput = cmdInputEl && document.activeElement === cmdInputEl;
   const [sr,sc] = selectedCell;
   const key = boardKey(r,c);
   const movingPiece = boardState[boardKey(sr,sc)];
@@ -1038,7 +1059,8 @@ function performCapture(r,c){
   captureLog.push({fromSq: squareName(sr,sc), toSq: squareName(r,c), movedType: movingPiece, capturedType: capturedPiece});
   captureReviewIndex = null;
   renderBoard();
-  focusSquare(r,c);
+  if(cameFromInput) cmdInputEl.focus();
+  else focusSquare(r,c);
   const remaining = Object.keys(boardState).length;
   announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}. Quedan ${remaining} pieza${remaining===1?'':'s'}.`);
   renderPositionReadout();
@@ -1126,6 +1148,7 @@ function updatePuzzleNavButtons(){
    de teclado extra en el tablero enfocado — igual que en la página Tablero, adaptado
    a un tablero de 4x4 de un solo "bando" donde toda jugada es una captura. ---------- */
 function cmdAnnounce(text){
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
   const el = document.getElementById('cmd-status');
   if(!el) return;
   el.textContent = '';

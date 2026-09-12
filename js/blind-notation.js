@@ -124,5 +124,72 @@ window.BlindNotation = (function () {
     return html;
   }
 
-  return { fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, FILE_NAMES, PIECE_LABEL, PIECE_ORDER };
+  // ===== Modo Speech: leer los anuncios en voz alta con el propio navegador =====
+  // Todo lo de arriba ya queda escrito en regiones aria-live — un lector de pantalla
+  // real (NVDA, JAWS, VoiceOver, TalkBack) lo lee solo. Pero no todo el mundo tiene
+  // uno activado (un alumno en una compu compartida, un celular sin TalkBack
+  // encendido, o Oscar mismo probando sin lector de pantalla) — para esos casos, el
+  // navegador puede hablar directamente con la Web Speech API, sin depender de nada
+  // instalado aparte. Es un complemento, no un reemplazo: se activa aparte (apagado
+  // por defecto) para no duplicar la voz de quien ya tiene su propio lector de
+  // pantalla activo, que hablaría al mismo tiempo que esto.
+  const SPEECH_KEY = 'oscarSpeechMode_v1';
+  const hasSpeechApi = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  function isSpeechEnabled() {
+    if (!hasSpeechApi) return false;
+    try { return localStorage.getItem(SPEECH_KEY) === '1'; } catch (e) { return false; }
+  }
+
+  function setSpeechEnabled(on) {
+    try { localStorage.setItem(SPEECH_KEY, on ? '1' : '0'); } catch (e) {}
+    if (!on && hasSpeechApi) window.speechSynthesis.cancel();
+  }
+
+  // Habla el texto si el modo Speech está activo. Cancela cualquier frase anterior
+  // todavía en curso — si no, jugadas seguidas (la propia y la respuesta del motor)
+  // se irían acumulando en cola y se escucharían con retraso.
+  function speak(text) {
+    if (!hasSpeechApi || !isSpeechEnabled() || !text) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(String(text));
+      utterance.lang = 'es-ES';
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {}
+  }
+
+  // Botón "🗣️ Voz" reutilizable: se coloca junto al interruptor normal/adaptado de
+  // cada página y solo aparece cuando el modo adaptado está activo (sin lector de
+  // pantalla real ni modo adaptado, no tiene nada que leer). `getVisible()` decide
+  // si el botón debe mostrarse en este momento (normalmente, si blindMode es true).
+  function setupSpeechToggle(buttonId, getVisible) {
+    const btn = document.getElementById(buttonId);
+    if (!btn || !hasSpeechApi) return null;
+    function render() {
+      const visible = getVisible();
+      // style.display en vez de una clase "hidden": las páginas que usan este botón no
+      // comparten todas la misma hoja de estilos (unas usan Tailwind, otras CSS propio),
+      // así que esto funciona igual sin depender de que exista esa clase en cada una.
+      btn.style.display = visible ? '' : 'none';
+      if (!visible) return;
+      const on = isSpeechEnabled();
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '🗣️ Voz activada' : '🔇 Activar voz';
+      btn.title = on
+        ? 'El navegador lee en voz alta cada anuncio — clic para apagarlo'
+        : 'Además del lector de pantalla, el navegador puede leer en voz alta cada anuncio — clic para activarlo';
+    }
+    btn.addEventListener('click', function () {
+      setSpeechEnabled(!isSpeechEnabled());
+      render();
+    });
+    render();
+    return render; // por si la página necesita refrescarlo al cambiar de modo
+  }
+
+  return {
+    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, FILE_NAMES, PIECE_LABEL, PIECE_ORDER,
+    isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
+  };
 })();

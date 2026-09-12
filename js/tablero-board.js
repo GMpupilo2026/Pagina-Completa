@@ -104,6 +104,15 @@
   const blindOnlyEls = Array.from(document.querySelectorAll(".blind-mode-only"));
   const normalOnlyEls = Array.from(document.querySelectorAll(".normal-mode-only"));
 
+  // Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+  // lee un lector de pantalla real), para quien no tiene uno activado. Ver
+  // js/blind-notation.js para el porqué es un complemento aparte, apagado por
+  // defecto. Sólo tiene sentido mostrarlo en modo adaptado (refreshSpeechToggle se
+  // vuelve a llamar cada vez que cambia blindMode, ver applyBlindModeUI).
+  const refreshSpeechToggle = typeof BlindNotation !== "undefined"
+    ? BlindNotation.setupSpeechToggle("speech-toggle-btn", () => blindMode)
+    : null;
+
   function applyBlindModeUI() {
     blindOnlyEls.forEach((el) => el.classList.toggle("hidden", !blindMode));
     normalOnlyEls.forEach((el) => el.classList.toggle("hidden", blindMode));
@@ -117,6 +126,7 @@
       modeBlindBtn.classList.toggle("bg-brand-700", blindMode);
       modeBlindBtn.classList.toggle("text-white", blindMode);
     }
+    if (refreshSpeechToggle) refreshSpeechToggle();
   }
 
   function setBlindMode(value) {
@@ -881,11 +891,23 @@
   // o del recuadro de texto (ver handleMoveFormSubmit): actualiza capturas/historial/material,
   // vuelve a pintar, y deja que el bot responda si le toca.
   function finishUserMove(result) {
+    // Si la jugada vino del recuadro de texto ("modo adaptado"), hay que devolverle el foco
+    // ahí después de repintar — cada renderBoard() reconstruye las 64 casillas del tablero
+    // desde cero, y ese mutar tan grande del DOM hace que varios lectores de pantalla salgan
+    // solos del "modo formulario" (deja de poder seguir escribiendo sin ir a buscar el
+    // recuadro de nuevo). Si la jugada vino de un clic/tecla en el propio tablero, en cambio,
+    // el foco debe seguir ahí (comportamiento de siempre, ver focusSquare más abajo).
+    const cameFromInput = document.activeElement === moveInputEl;
     applyMoveSideEffects(result);
     focusSquare = result.to; // lleva el foco del teclado a la casilla donde acaba de mover
     renderBoard();
     updateStatus();
-    maybeTriggerBot().then(updateEvalBar);
+    if (cameFromInput && moveInputEl) moveInputEl.focus();
+    // La jugada del bot llega en un segundo repintado, más tarde y por separado (tras pensar):
+    // el mismo problema de foco puede repetirse ahí, así que se restaura otra vez al terminar.
+    maybeTriggerBot().then(updateEvalBar).then(() => {
+      if (cameFromInput && moveInputEl) moveInputEl.focus();
+    });
   }
 
   function doUserMove(from, to, promotion) {
@@ -969,6 +991,7 @@
   // mismo comando dos veces seguidas (por ejemplo para repasar algo que no se escuchó bien),
   // el lector de pantalla lo anuncia de nuevo aunque el texto no haya cambiado.
   function announceMoveInput(text) {
+    if (typeof BlindNotation !== "undefined") BlindNotation.speak(text);
     if (!moveInputStatusEl) return;
     moveInputStatusEl.textContent = "";
     window.setTimeout(() => {
@@ -1423,40 +1446,37 @@
     );
   }
 
-  function handleMoveFormSubmit(e) {
-    e.preventDefault();
-    if (!moveInputEl) return;
-    const raw = moveInputEl.value;
-    const trimmed = raw.trim();
-    if (!trimmed) return;
-
+  // Procesa lo que se escribió en el recuadro; devuelve true si el foco debe quedarse ahí
+  // (el caso normal) o false si la propia acción ya movió el foco a propósito (comando
+  // "board"/"b", que existe justamente para saltar al tablero).
+  function processMoveFormInput(raw, trimmed) {
     // Comandos de accesibilidad: funcionan siempre, aunque no sea el turno del visitante,
     // el bot esté pensando, o la partida ya haya terminado (son sólo lectura, no mueven nada).
     const upper = trimmed.toUpperCase();
     if (upper === "L" || upper === "LAST") {
       moveInputEl.value = "";
       announceLastMove();
-      return;
+      return true;
     }
     if (upper === "T") {
       moveInputEl.value = "";
       announcePosition();
-      return;
+      return true;
     }
     if (upper === "AYUDA" || upper === "HELP" || upper === "?") {
       moveInputEl.value = "";
       announceHelp();
-      return;
+      return true;
     }
     if (upper === "RESIGN") {
       moveInputEl.value = "";
       if (isGameOver()) {
         announceMoveInput("La partida ya terminó.");
-        return;
+        return true;
       }
       resign();
       announceMoveInput("Te rendiste — Oscar gana.");
-      return;
+      return true;
     }
     const tokens = trimmed.split(/\s+/);
     const cmd0 = tokens[0].toUpperCase();
@@ -1466,45 +1486,62 @@
       const target = targetRaw && /^[a-h][1-8]$/i.test(targetRaw) ? targetRaw.toLowerCase() : "e4";
       if (!focusBoardSquare(target)) {
         announceMoveInput(`Casilla inválida: "${targetRaw}".`);
-        return;
+        return true; // el salto falló, así que el foco nunca se movió: se queda en el recuadro
       }
       announceCurrentSquare(target);
-      return;
+      return false; // "board"/"b" existe justamente para saltar al tablero — no hay que revertirlo
     }
     if (cmd0 === "P" && tokens.length >= 2 && /^[a-zA-Z]$/.test(tokens[1])) {
       moveInputEl.value = "";
       announcePieceType(tokens[1]);
-      return;
+      return true;
     }
     if (cmd0 === "S" && tokens.length >= 2 && /^[a-h1-8]$/i.test(tokens[1])) {
       moveInputEl.value = "";
       announceLine(tokens[1]);
-      return;
+      return true;
     }
 
     if (isBotThinking) {
       announceMoveInput("Espera a que Oscar termine de pensar.");
-      return;
+      return true;
     }
     if (isGameOver()) {
       announceMoveInput("La partida ya terminó.");
-      return;
+      return true;
     }
     if (game.turn() !== userColor) {
       announceMoveInput("No es tu turno todavía.");
-      return;
+      return true;
     }
     const result = tryParseMove(raw);
     if (!result) {
       announceMoveInput(`No se entendió la jugada "${raw.trim()}". Revisa la notación e intenta de nuevo.`);
-      return;
+      return true;
     }
     moveInputEl.value = "";
     selected = null;
     legalTargets = [];
     // La jugada misma se anuncia desde applyMoveSideEffects (igual que la respuesta de Oscar
-    // que viene después), así que aquí no hace falta anunciarla por separado.
+    // que viene después), así que aquí no hace falta anunciarla por separado. finishUserMove
+    // ya se encarga de devolver el foco al recuadro por su cuenta (ver ahí el porqué).
     finishUserMove(result);
+    return false;
+  }
+
+  function handleMoveFormSubmit(e) {
+    e.preventDefault();
+    if (!moveInputEl) return;
+    const raw = moveInputEl.value;
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    // Cualquier comando o jugada puede terminar redibujando el tablero (una pieza que se
+    // mueve, capturas, jaque…), y ese redibujado — 64 casillas creadas de nuevo — es
+    // justo lo que hace que algunos lectores de pantalla salgan solos del "modo
+    // formulario" del recuadro. Se restaura el foco después de procesar, salvo que la
+    // propia acción haya movido el foco a propósito (comando "board"/"b").
+    const keepFocusHere = processMoveFormInput(raw, trimmed);
+    if (keepFocusHere && moveInputEl) moveInputEl.focus();
   }
 
   if (moveFormEl) moveFormEl.addEventListener("submit", handleMoveFormSubmit);

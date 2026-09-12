@@ -83,6 +83,10 @@
   }
   .mode-btn + .mode-btn{border-left:1px solid var(--line);}
   .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
 
   .blind-panel{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
   .blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
@@ -218,6 +222,7 @@
       <button type="button" id="mode-normal-btn" aria-pressed="true" class="mode-btn active">Modo normal</button>
       <button type="button" id="mode-blind-btn" aria-pressed="false" class="mode-btn">🔊 Adaptado</button>
     </div>
+    <button type="button" id="speech-toggle-btn" style="display:none" class="speech-btn"></button>
   </div>
 
   <main id="main-content">
@@ -335,6 +340,21 @@ const blindPanel = document.getElementById('blind-panel');
 const blindInput = document.getElementById('blind-input');
 const blindAnnouncer = document.getElementById('blind-announcer');
 
+// Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
+// lee un lector de pantalla real), para quien no tiene uno activado. Ver
+// js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
+const refreshSpeechToggle = window.BlindNotation
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  : null;
+
+// Único punto de anuncio (además de "Se anuncia: <casilla>", que va aparte en
+// newTarget()): actualiza el texto para el lector de pantalla y, si el modo Speech
+// está activo, lo lee en voz alta con el navegador.
+function announceBlind(text){
+  blindAnnouncer.textContent = text;
+  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+}
+
 function applyBlindModeUI(){
   document.getElementById('board').style.display = blindMode ? 'none' : 'grid';
   blindPanel.style.display = blindMode ? 'block' : 'none';
@@ -350,6 +370,7 @@ function applyBlindModeUI(){
     modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
     modeBlindBtn.classList.toggle('active', blindMode);
   }
+  if(refreshSpeechToggle) refreshSpeechToggle();
 }
 function setBlindMode(value){
   blindMode = !!value;
@@ -366,14 +387,14 @@ blindPanel.addEventListener('submit', (e) => {
   blindInput.value = '';
   blindInput.focus();
   if(answer !== 'b' && answer !== 'n'){
-    blindAnnouncer.textContent = 'Escribe "b" si la casilla es blanca, o "n" si es negra.';
+    announceBlind('Escribe "b" si la casilla es blanca, o "n" si es negra.');
     return;
   }
   const correct = handleColorGuess(answer);
   if(correct === null) return; // la ronda no está en curso
-  blindAnnouncer.textContent = correct
+  announceBlind(correct
     ? '✅ Correcto.'
-    : `❌ Incorrecto, era ${isLightSquare(currentTarget) ? 'blanca' : 'negra'}.`;
+    : `❌ Incorrecto, era ${isLightSquare(currentTarget) ? 'blanca' : 'negra'}.`);
 });
 
 // Modos: además del clásico (sin apuro por casilla, solo el reloj general de
@@ -484,8 +505,11 @@ function onSquareTimeout(){
   misses++;
   streak = 0;
   updateHud();
+  // Primero el aviso del fallo y después newTarget() (que anuncia la casilla nueva):
+  // speak() cancela cualquier frase anterior, así que lo último en anunciarse debe
+  // ser la casilla que el alumno tiene que resolver ahora, no el aviso del error.
+  if(blindMode) announceBlind(`⏱️ Se acabó el tiempo, era ${missedSquareColor}.`);
   newTarget();
-  if(blindMode) blindAnnouncer.textContent = `⏱️ Se acabó el tiempo, era ${missedSquareColor}.`;
 }
 
 function newTarget(){
@@ -495,9 +519,9 @@ function newTarget(){
   // En modo normal se ve el nombre real de la casilla ("e4"). En modo
   // adaptado, lo que se anuncia (y lee el lector de pantalla vía aria-live)
   // usa la notación de columnas — "Eva 4" — para no confundir letras al oído.
-  document.getElementById('target-square').textContent = blindMode
-    ? window.BlindNotation.squareSpoken(currentTarget)
-    : currentTarget;
+  const spokenSquare = blindMode ? window.BlindNotation.squareSpoken(currentTarget) : currentTarget;
+  document.getElementById('target-square').textContent = spokenSquare;
+  if(blindMode) window.BlindNotation.speak(spokenSquare);
   lastPromptAt = performance.now();
   armPerSquareTimer();
 }
@@ -631,7 +655,7 @@ function endRound(){
   const againBtn = document.getElementById('again-btn');
   againBtn.focus();
   if(blindMode){
-    blindAnnouncer.textContent = `Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`;
+    announceBlind(`Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`);
   }
 }
 
