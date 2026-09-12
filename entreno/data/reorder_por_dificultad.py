@@ -46,6 +46,8 @@ CATEGORY_LABEL = {
     'intermedio': ('INTERMEDIO', 'Intermedio'),
     'avanzado': ('AVANZADO', 'Avanzado'),
     'especialista': ('ESPECIALISTA', 'Especialista'),
+    'maestro': ('MAESTRO', 'Maestro'),
+    'granmaestro': ('GRANMAESTRO', 'Gran Maestro'),
 }
 
 DIRS_ROOK = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -234,7 +236,7 @@ def main():
     args = sys.argv[1:]
     check_only = '--check' in args
     args = [a for a in args if a != '--check']
-    wanted = args or ['facil', 'intermedio', 'avanzado', 'especialista']
+    wanted = args or ['facil', 'intermedio', 'avanzado', 'especialista', 'maestro', 'granmaestro']
 
     exercises = json.loads(EX_PATH.read_text(encoding='utf-8'))
     puzzles = json.loads(PZ_PATH.read_text(encoding='utf-8'))

@@ -43,6 +43,8 @@
     --intermedio:#c9a23e;
     --avanzado:#9c4148;
     --especialista:#436a86;
+    --maestro:#7a4a9c;
+    --granmaestro:#b0242c;
   }
   html.dark{
     --bg-deep:#0a1f33;
@@ -616,15 +618,15 @@ function unlock(){
 
 /* ---------------- APP ---------------- */
 let EXERCISES = [];
-let PUZZLES = {facil:[], intermedio:[], avanzado:[], especialista:[]};
+let PUZZLES = {facil:[], intermedio:[], avanzado:[], especialista:[], maestro:[], granmaestro:[]};
 let currentCategory = 'FACIL';
 let currentList = [];
 let currentIndex = 0;
 
-const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA'];
-const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista'};
-const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista'};
-const CATEGORY_KEY = {FACIL:'facil', INTERMEDIO:'intermedio', AVANZADO:'avanzado', ESPECIALISTA:'especialista'};
+const CATEGORY_ORDER = ['FACIL','INTERMEDIO','AVANZADO','ESPECIALISTA','MAESTRO','GRANMAESTRO'];
+const CATEGORY_LABEL = {FACIL:'Fácil', INTERMEDIO:'Intermedio', AVANZADO:'Avanzado', ESPECIALISTA:'Especialista', MAESTRO:'Maestro', GRANMAESTRO:'Gran Maestro'};
+const CATEGORY_VAR = {FACIL:'--facil', INTERMEDIO:'--intermedio', AVANZADO:'--avanzado', ESPECIALISTA:'--especialista', MAESTRO:'--maestro', GRANMAESTRO:'--granmaestro'};
+const CATEGORY_KEY = {FACIL:'facil', INTERMEDIO:'intermedio', AVANZADO:'avanzado', ESPECIALISTA:'especialista', MAESTRO:'maestro', GRANMAESTRO:'granmaestro'};
 
 let appInitialized = false;
 

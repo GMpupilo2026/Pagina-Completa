@@ -39,8 +39,8 @@ from reorder_por_dificultad import score, solve_stats, random_success
 DATA_DIR = Path(__file__).resolve().parent
 EX_PATH = DATA_DIR / 'exercises.json'
 PZ_PATH = DATA_DIR / 'puzzles.json'
-CATS = ['facil', 'intermedio', 'avanzado', 'especialista']
-LABEL = {'facil': 'Fácil', 'intermedio': 'Intermedio', 'avanzado': 'Avanzado', 'especialista': 'Especialista'}
+CATS = ['facil', 'intermedio', 'avanzado', 'especialista', 'maestro', 'granmaestro']
+LABEL = {'facil': 'Fácil', 'intermedio': 'Intermedio', 'avanzado': 'Avanzado', 'especialista': 'Especialista', 'maestro': 'Maestro', 'granmaestro': 'Gran Maestro'}
 
 
 def canon_sym(pieces):
