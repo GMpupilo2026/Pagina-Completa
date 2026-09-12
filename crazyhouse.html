@@ -94,6 +94,10 @@
             </div>
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
+            <!-- Antes de que ambos confirmen que están listos, el reloj no debe correr —
+                 así que el tablero se muestra pero solo con este botón activo, sin poder
+                 mover todavía (ver bothReady() y la condición de interactividad). -->
+            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex items-center justify-center gap-2 mb-1">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
@@ -151,6 +155,14 @@
             return playerNames[id] || "Alumno";
         }
 
+        // El reloj (si la partida tiene uno) no debe arrancar hasta que blancas Y negras
+        // hayan entrado y confirmado que están listas — antes arrancaba desde el momento
+        // en que el profesor creaba la partida, corriendo en vacío mientras los alumnos
+        // ni siquiera habían abierto la página.
+        function bothReady(row) {
+            return !!(row.white_ready && row.black_ready);
+        }
+
         function updateStatusText() {
             document.getElementById("top-player").textContent = nameFor(myColor === "b" ? room.white_id : room.black_id) + (myColor === "b" ? " (blancas)" : " (negras)");
             document.getElementById("bottom-player").textContent = myColor
@@ -161,9 +173,22 @@
             }
             document.getElementById("resign-btn").classList.toggle("hidden", !myColor || room.status !== "playing");
 
+            const readyBtn = document.getElementById("ready-btn");
+            const myReady = myColor === "w" ? room.white_ready : myColor === "b" ? room.black_ready : true;
+            const waitingToStart = room.status === "playing" && !bothReady(room);
+            readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
+
             if (room.status === "finished") {
                 const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
+            } else if (waitingToStart) {
+                if (!myColor) {
+                    setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
+                } else if (myReady) {
+                    setStatus("Ya confirmaste que estás listo — esperando a " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                } else {
+                    setStatus("Toca \"Estoy listo\" cuando puedas empezar a jugar" + (room.initial_seconds != null ? " — el reloj arranca cuando ambos estén listos." : "."));
+                }
             } else if (!myColor) {
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
@@ -171,6 +196,26 @@
                 setStatus(myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
             }
         }
+
+        document.getElementById("ready-btn").addEventListener("click", async () => {
+            if (!myColor || room.status !== "playing") return;
+            const myKey = myColor === "w" ? "white_ready" : "black_ready";
+            const otherAlreadyReady = myColor === "w" ? room.black_ready : room.white_ready;
+            const patch = { [myKey]: true };
+            // Si el rival ya estaba listo, esta confirmación es la que hace falta para
+            // arrancar de una vez — se incluye en la misma actualización para no depender
+            // de una segunda ida y vuelta (y de paso evita que ambos intenten arrancar el
+            // reloj a la vez si llegan a confirmar casi al mismo tiempo).
+            if (otherAlreadyReady && room.initial_seconds != null && !room.clock_updated_at) {
+                patch.clock_updated_at = new Date().toISOString();
+            }
+            const { error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID);
+            if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
+            room = Object.assign({}, room, patch);
+            board.setInteractive(!!myColor && room.status === "playing" && bothReady(room));
+            updateStatusText();
+            renderClocks();
+        });
 
         // ---- Reloj (tiempo asignado a cada jugador) ----
         // El servidor no recibe un "tick" cada segundo: solo guarda cuántos segundos
@@ -319,7 +364,7 @@
             const positionChanged = row.fen !== room.fen;
             room = row;
             if (positionChanged) board.loadFen(row.fen);
-            board.setInteractive(!!myColor && row.status === "playing");
+            board.setInteractive(!!myColor && row.status === "playing" && bothReady(row));
             renderMoveHistory(row.moves);
             updateStatusText();
             renderClocks();
@@ -364,7 +409,7 @@
                 document.getElementById("top-pocket"),
                 document.getElementById("bottom-pocket"),
                 {
-                    interactive: !!myColor && room.status === "playing",
+                    interactive: !!myColor && room.status === "playing" && bothReady(room),
                     myColor: myColor || "w",
                     onMove: handleLocalMove,
                     onPromotionNeeded: showPromotionPicker,

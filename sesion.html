@@ -233,12 +233,26 @@
                         <ol id="move-list" class="hidden flex-wrap gap-x-1 gap-y-1.5 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
                     </div>
 
+                    <!-- Resultado de la calificación del profesor (solo alumno): un aviso aparte,
+                         NO dentro de question-card, porque el profesor suele calificar DESPUÉS de
+                         cerrar la pregunta — si el aviso viviera solo dentro del overlay de la
+                         pregunta, se quedaría calificado en silencio sin que el alumno lo viera
+                         nunca (el overlay ya está oculto para entonces). -->
+                    <div id="answer-feedback-toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center">
+                        <p id="answer-feedback-text" class="font-semibold text-sm mb-2"></p>
+                        <div class="flex justify-center gap-2">
+                            <button id="answer-feedback-retry-btn" class="hidden text-xs font-bold px-3 py-1.5 rounded-lg bg-white/90 hover:bg-white text-brand-900 transition-colors">🔁 Intentar de nuevo</button>
+                            <button id="answer-feedback-dismiss-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-black/10 hover:bg-black/20 text-inherit transition-colors">Entendido</button>
+                        </div>
+                    </div>
+
                     <!-- Pregunta del profesor: aparece flotando por encima del tablero, solo la ven los alumnos.
                          Overlay de pantalla completa (fixed inset-0): igual que en Práctica contra el motor,
                          el tablero puede ser tan grande como el principal en vez de quedar en tamaño de tarjeta. -->
                     <div id="question-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">❓ <span id="question-prompt-text"></span></h2>
+                            <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
                             <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-400 mb-1"></p>
                             <p id="question-status-text" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Mueve las piezas que jugarías.</p>
                             <div class="flex justify-center">
@@ -1676,6 +1690,7 @@
                         if (currentQuestion && payload.new.question_id === currentQuestion.id) {
                             myAnswer = payload.new;
                             updateAnswerFeedbackUI();
+                            maybeShowGradingToast(payload.new);
                         }
                     })
                     .subscribe();
@@ -1719,12 +1734,21 @@
             }
             listEl.innerHTML = "";
             for (const a of answers) {
+                // Nombre en su propia línea (a todo el ancho, sin truncar) y la jugada con los
+                // botones de calificar en la línea de abajo: antes iba todo en una sola línea
+                // con "truncate", y un nombre largo ("Daniel Campos Morales") se comía la
+                // jugada entera o quedaba cortado a la mitad — ver captura del profesor.
                 const li = document.createElement("li");
-                li.className = "flex items-center justify-between gap-2";
-                const label = document.createElement("span");
-                label.className = "text-brand-700 dark:text-brand-200 truncate";
+                li.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                const nameEl = document.createElement("p");
+                nameEl.className = "text-brand-700 dark:text-brand-200 font-medium break-words";
                 const displayName = (a.profiles && (a.profiles.full_name || a.profiles.email)) || "Alumno";
-                label.textContent = displayName + ": " + (a.moves || []).join(" "); // textContent: nunca innerHTML con datos de otros usuarios
+                nameEl.textContent = displayName; // textContent: nunca innerHTML con datos de otros usuarios
+                const row = document.createElement("div");
+                row.className = "flex items-center justify-between gap-2 mt-0.5";
+                const movesEl = document.createElement("span");
+                movesEl.className = "text-brand-500 dark:text-brand-400 font-mono text-xs break-words";
+                movesEl.textContent = (a.moves || []).join(" ") || "—";
                 const actions = document.createElement("span");
                 actions.className = "flex items-center gap-1 shrink-0";
                 const correctBtn = document.createElement("button");
@@ -1741,8 +1765,10 @@
                 wrongBtn.addEventListener("click", () => setAnswerCorrect(a.id, false));
                 actions.appendChild(correctBtn);
                 actions.appendChild(wrongBtn);
-                li.appendChild(label);
-                li.appendChild(actions);
+                row.appendChild(movesEl);
+                row.appendChild(actions);
+                li.appendChild(nameEl);
+                li.appendChild(row);
                 listEl.appendChild(li);
             }
         }
@@ -2075,6 +2101,46 @@
             computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
         }
 
+        // ---------- Aviso de calificación (sobrevive a que la pregunta ya esté cerrada) ----------
+        // El profesor casi siempre califica DESPUÉS de cerrar la pregunta (revisa la lista con
+        // calma, con la clase ya siguiendo adelante) — si el aviso solo viviera dentro de
+        // question-card, quedaría calificado en silencio: ese overlay ya está oculto para
+        // entonces. lastToastKey evita repetir el mismo aviso si llega el mismo evento dos veces.
+        let lastToastKey = null;
+        function maybeShowGradingToast(answer) {
+            if (!answer || answer.is_correct === null || answer.is_correct === undefined) return;
+            const key = answer.id + ":" + answer.is_correct;
+            if (key === lastToastKey) return;
+            lastToastKey = key;
+            showAnswerFeedbackToast(answer);
+        }
+
+        function showAnswerFeedbackToast(answer) {
+            const toast = document.getElementById("answer-feedback-toast");
+            const text = document.getElementById("answer-feedback-text");
+            const retryBtn = document.getElementById("answer-feedback-retry-btn");
+            const stillOpen = !!(currentQuestion && currentQuestion.id === answer.question_id && !currentQuestion.closed_at);
+            if (answer.is_correct === true) {
+                toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-green-500 text-white";
+                text.textContent = "✅ ¡Muy bien! Tu respuesta fue correcta.";
+                retryBtn.classList.add("hidden");
+            } else {
+                toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center bg-red-500 text-white";
+                text.textContent = stillOpen ? "❌ Esa no era la jugada correcta — vuelve a intentarlo." : "❌ Esa no era la jugada correcta.";
+                retryBtn.classList.toggle("hidden", !stillOpen);
+            }
+            toast.classList.remove("hidden");
+        }
+
+        document.getElementById("answer-feedback-dismiss-btn").addEventListener("click", () => {
+            document.getElementById("answer-feedback-toast").classList.add("hidden");
+        });
+
+        document.getElementById("answer-feedback-retry-btn").addEventListener("click", () => {
+            document.getElementById("answer-feedback-toast").classList.add("hidden");
+            document.getElementById("question-retry-btn").click(); // mismo flujo que "Cambiar respuesta"
+        });
+
         // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
         function updateAnswerFeedbackUI() {
             if (!myAnswer) return;
@@ -2172,6 +2238,7 @@
             // "pregunta cerrada").
             if (!currentQuestion || currentQuestion.closed_at) { card.classList.add("hidden"); return; }
             card.classList.remove("hidden");
+            document.getElementById("answer-feedback-toast").classList.add("hidden"); // aviso de una pregunta anterior, si quedó abierto
             document.getElementById("question-prompt-text").textContent = currentQuestion.prompt;
             document.getElementById("question-plies-hint").textContent = currentQuestion.expected_plies > 1
                 ? ("Mueve " + currentQuestion.expected_plies + " veces — el motor responde entre cada una de tus jugadas.")
@@ -2189,10 +2256,16 @@
                 });
             }
             // El bando del alumno es el que le toca mover en la posición de la pregunta —
-            // el motor siempre juega el otro bando, respondiendo entre jugada y jugada.
+            // el motor siempre juega el otro bando, respondiendo entre jugada y jugada. El
+            // tablero se orienta con las piezas del alumno abajo (como en cualquier tablero
+            // real) y se avisa con qué color juega, en vez de dejarlo adivinar mirando el FEN.
             questionStudentColor = currentQuestion.fen.split(" ")[1] === "b" ? "b" : "w";
             questionMovesDone = 0;
             questionEngineLastFailed = false;
+            questionBoard.setFlipped(questionStudentColor === "b");
+            document.getElementById("question-color-hint").textContent = questionStudentColor === "b"
+                ? "Te toca jugar con ⚫ Negras"
+                : "Te toca jugar con ⚪ Blancas";
             questionBoard.loadFen(currentQuestion.fen);
 
             const retryBtn = document.getElementById("question-retry-btn");
