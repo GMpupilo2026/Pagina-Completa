@@ -535,7 +535,7 @@
         <form id="cmd-form" class="cmd-form">
           <div class="cmd-field">
             <label for="cmd-input" class="cmd-label">Escribe una jugada o comando (útil con lector de pantalla)</label>
-            <input id="cmd-input" type="text" autocomplete="off" placeholder="Ej: a1 b2, a1xb2" class="cmd-input">
+            <input id="cmd-input" type="text" autocomplete="off" placeholder="Ej: a1 b2, a1xb2, Ta3, Txa3" class="cmd-input">
           </div>
           <button type="submit" class="bctrl">Jugar</button>
         </form>
@@ -823,6 +823,13 @@ document.addEventListener('keydown', (e) => {
    - Se gana al quedar con una sola pieza sobre el tablero (la última atacante). */
 const PIECE_GLYPH = {P:'&#9823;', N:'&#9822;', B:'&#9821;', R:'&#9820;', Q:'&#9819;', K:'&#9818;'};
 const PIECE_NAME = {P:'Peón', N:'Caballo', B:'Alfil', R:'Torre', Q:'Dama', K:'Rey'};
+// Letra de pieza en notación algebraica EN ESPAÑOL (T/A/C/D/R), para el cuadro de
+// comandos — no confundir con las letras de PIECE_NAME arriba, que son en inglés
+// (las mismas que usa chess.js) y que el comando "p" ya usaba para "dónde está esa
+// pieza" antes de esto (p K, p Q, p R...). Ambos conviven porque nunca se escriben
+// juntos: "p" siempre pide una letra sola después de un espacio, una jugada
+// algebraica nunca lleva espacio.
+const SPANISH_PIECE_LETTER = {T:'R', A:'B', C:'N', D:'Q', R:'K'};
 const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
 const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
 const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
@@ -1449,7 +1456,11 @@ function handleBoardShortcutKey(e, r, c){
 const HELP_SECTIONS = [
   {
     title: 'Cómo escribir una jugada',
-    text: 'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4).',
+    text:
+      'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
+      'También en notación algebraica, solo con la casilla de destino: T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey ' +
+      '(sin letra es Peón) — por ejemplo "Ta3" o "Txa3" (la "x" es opcional: toda jugada aquí es una captura). ' +
+      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar.',
   },
   {
     title: 'Comandos',
@@ -1557,6 +1568,42 @@ function handleCmdFormSubmit(e){
     }
     selectedCell = fromRC;
     focusedCell = fromRC;
+    performCapture(toRC[0], toRC[1]);
+    return;
+  }
+
+  // Jugada en notación algebraica (más fluida: sin escribir la casilla de origen).
+  // Pieza en español (T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey; sin letra = Peón)
+  // + casilla de destino, con una "x" opcional antes — por ejemplo "Ta3" o "Txa3".
+  // Como en este tablero TODA jugada es una captura, la "x" es solo decorativa: no
+  // hace falta escribirla para que la jugada se reconozca.
+  const algMatch = /^([TADCRtadcr])?[xX]?([a-dA-D][1-4])$/.exec(trimmed);
+  if(algMatch){
+    input.value = '';
+    const letter = algMatch[1] ? algMatch[1].toUpperCase() : null;
+    const type = letter ? SPANISH_PIECE_LETTER[letter] : 'P';
+    const toRC = squareToRC(algMatch[2]);
+    const destSpoken = squareSpokenStr(algMatch[2].toLowerCase());
+    const candidates = Object.keys(boardState)
+      .filter((key) => boardState[key] === type)
+      .map((key) => key.split(',').map(Number))
+      .filter(([r,c]) => captureTargets(boardState[boardKey(r,c)], r, c, boardState).some(([tr,tc]) => tr===toRC[0] && tc===toRC[1]));
+    if(!candidates.length){
+      cmdAnnounce(`No hay ninguna pieza de tipo ${PIECE_NAME[type]} que pueda capturar en ${destSpoken}.`);
+      return;
+    }
+    if(candidates.length > 1){
+      const spokenFroms = candidates.map(([r,c]) => squareSpokenRC(r,c)).join(', ');
+      const exampleFrom = squareName(candidates[0][0], candidates[0][1]);
+      cmdAnnounce(
+        `Hay más de una pieza de tipo ${PIECE_NAME[type]} que puede capturar en ${destSpoken} (${spokenFroms}). ` +
+        `Escribe la casilla de origen y destino, por ejemplo "${exampleFrom} ${algMatch[2].toLowerCase()}".`
+      );
+      return;
+    }
+    const [fromR, fromC] = candidates[0];
+    selectedCell = [fromR, fromC];
+    focusedCell = [fromR, fromC];
     performCapture(toRC[0], toRC[1]);
     return;
   }
