@@ -335,6 +335,7 @@
                                 <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
                             </div>
                             <ol id="engine-lines" class="space-y-1.5 text-xs text-brand-600 dark:text-brand-300"></ol>
+                            <button id="engine-retry-btn" type="button" class="hidden mt-2 text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline">🔁 Reintentar</button>
                         </div>
                     </div>
 
@@ -345,6 +346,7 @@
                             <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">🎛️ Controles</button>
                             <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
                             <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
+                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
                             <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
                         </div>
 
@@ -404,6 +406,16 @@
                             <button id="end-practice-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Terminar práctica</button>
                         </div>
                     </div>
+
+                        <!-- Táctica por tema (solo profesor): cascada grupo → tema → dificultad →
+                             ejercicio, sobre la misma base de Entrenamiento (entreno/data/temas.json,
+                             74 temas de lichess.org/training/themes). "Preguntar" reutiliza el mismo
+                             mecanismo de la pestaña Preguntar: transmite la posición y crea la pregunta. -->
+                        <div id="tactics-panel" data-tab-panel="tactica" role="tabpanel" aria-labelledby="teacher-tab-tactica" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
+                            <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Elige un tema y una dificultad para preguntarle un ejercicio a la clase — la posición se transmite a todos como una pregunta nueva.</p>
+                            <div id="tactics-body"><p class="text-sm text-brand-400 dark:text-brand-500">Cargando temas…</p></div>
+                        </div>
 
                         <!-- Alumnos conectados (solo profesor) -->
                         <div id="students-panel" data-tab-panel="alumnos" role="tabpanel" aria-labelledby="teacher-tab-alumnos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
@@ -491,7 +503,7 @@
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
-        const TEACHER_TABS = ["controles", "preguntar", "practicar", "alumnos"];
+        const TEACHER_TABS = ["controles", "preguntar", "practicar", "tactica", "alumnos"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 
@@ -509,7 +521,10 @@
         }
 
         document.querySelectorAll(".teacher-tab-btn").forEach((btn) => {
-            btn.addEventListener("click", () => activateTeacherTab(btn.dataset.tab));
+            btn.addEventListener("click", () => {
+                activateTeacherTab(btn.dataset.tab);
+                if (btn.dataset.tab === "tactica") ensureTacticsLoaded();
+            });
         });
 
         // ---------- Historial, variantes y sub-variantes ----------
@@ -1348,10 +1363,23 @@
             const turnAtEval = board.game.turn();
             const multiPv = parseInt(document.getElementById("engine-multipv").value, 10) || 1;
             const linesEl = document.getElementById("engine-lines");
+            const retryBtn = document.getElementById("engine-retry-btn");
+            retryBtn.classList.add("hidden");
             linesEl.innerHTML = '<li class="text-brand-400">Calculando…</li>';
 
-            const results = await ClasesEngine.analyze(fen, multiPv, 700 + multiPv * 150);
-            if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
+            // Una posición armada a mano puede hacer que Stockfish falle una vez (ver la nota
+            // en js/shared-engine.js): el mismo Worker recién levantado por ese fallo suele
+            // responder bien de inmediato a la siguiente consulta, así que — igual que ya
+            // hacían requestEngineReply() (Practicar) y computeEngineAnswer() (Preguntar) —
+            // se reintenta un par de veces antes de mostrarle un error al profesor. Antes,
+            // Analizar era el único de los tres que se rendía a la primera.
+            let results = [];
+            for (let attempt = 0; attempt < 3; attempt++) {
+                results = await ClasesEngine.analyze(fen, multiPv, 700 + multiPv * 150);
+                if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
+                if (results.length) break;
+                if (attempt < 2) linesEl.innerHTML = '<li class="text-brand-400">Calculando… (reintentando)</li>';
+            }
 
             if (!results.length) {
                 // getLastError() distingue "no llegó a cargar" (worker/wasm falló o tardó
@@ -1360,6 +1388,7 @@
                 const reason = ClasesEngine.getLastError && ClasesEngine.getLastError();
                 linesEl.innerHTML = '<li class="text-red-500 dark:text-red-400">' + (reason || "No disponible") + "</li>";
                 document.getElementById("engine-eval-bar").style.width = "50%";
+                retryBtn.classList.remove("hidden");
                 return;
             }
 
@@ -1396,6 +1425,7 @@
         });
 
         document.getElementById("engine-multipv").addEventListener("change", () => { if (engineEnabled) updateEngineEval(); });
+        document.getElementById("engine-retry-btn").addEventListener("click", () => { if (engineEnabled) updateEngineEval(); });
 
         // ---------- Partidas guardadas (PGN) ----------
         function pgnFromMoves(moves) {
@@ -1818,6 +1848,232 @@
             if (!currentQuestion) return;
             await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("id", currentQuestion.id);
         });
+
+        // ---------- Táctica por tema (cascada grupo → tema → dificultad → ejercicio) ----------
+        // Reutiliza la misma base de datos de Entrenamiento (entreno/data/temas.json: 74 temas
+        // de lichess.org/training/themes, ~3600 ejercicios verificados con python-chess) para
+        // que el profesor pueda elegir un ejercicio concreto y preguntárselo a la clase con un
+        // clic, sin salir de la sesión en vivo — "Preguntar" hace exactamente lo mismo que el
+        // botón de la pestaña Preguntar (transmite la posición y crea la pregunta), solo que
+        // la posición viene de esta base en vez del tablero armado a mano.
+        let tacticsData = null; // { groups, themes: {key: [puzzleId,...]}, puzzles: {id: {fen,solution,rating,mate,...}} }
+        let tacticsLoadPromise = null;
+        let tacticsView = { level: "groups" }; // groups | themes | difficulty | exercises
+
+        function ensureTacticsLoaded() {
+            if (tacticsData || tacticsLoadPromise) return tacticsLoadPromise;
+            tacticsLoadPromise = fetch("entreno/data/temas.json")
+                .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+                .then((data) => { tacticsData = data; renderTacticsView(); })
+                .catch((e) => {
+                    console.error(e);
+                    tacticsLoadPromise = null;
+                    document.getElementById("tactics-body").innerHTML =
+                        '<p class="text-sm text-red-500 dark:text-red-400">No se pudo cargar la base de ejercicios. Recarga la página e inténtalo de nuevo.</p>';
+                });
+            return tacticsLoadPromise;
+        }
+
+        const TACTICS_DIFF_LABELS = ["🟢 Fácil", "🟡 Media", "🔴 Difícil"];
+
+        // Cada tema ya viene ordenado de fácil a difícil por rating (ver
+        // entreno/data/construir_temas.py) — repartirlo en tercios da tres tandas de
+        // dificultad creciente sin tener que volver a ordenar nada aquí.
+        function tacticsThemeBuckets(themeKey) {
+            const ids = tacticsData.themes[themeKey] || [];
+            const third = Math.ceil(ids.length / 3) || 1;
+            return [ids.slice(0, third), ids.slice(third, third * 2), ids.slice(third * 2)].filter((b) => b.length);
+        }
+
+        function tacticsBackBtn(label, onClick) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline";
+            btn.textContent = label;
+            btn.addEventListener("click", onClick);
+            return btn;
+        }
+
+        function renderTacticsView() {
+            const body = document.getElementById("tactics-body");
+            if (!tacticsData) { body.innerHTML = '<p class="text-sm text-brand-400 dark:text-brand-500">Cargando temas…</p>'; return; }
+            body.innerHTML = "";
+
+            if (tacticsView.level === "themes" || tacticsView.level === "difficulty" || tacticsView.level === "exercises") {
+                const group = tacticsData.groups.find((g) => g.id === tacticsView.groupId);
+                if (tacticsView.level === "themes") {
+                    body.appendChild(tacticsBackBtn("‹ Grupos", () => { tacticsView = { level: "groups" }; renderTacticsView(); }));
+                } else if (tacticsView.level === "difficulty") {
+                    body.appendChild(tacticsBackBtn("‹ " + (group ? group.title : "Temas"), () => { tacticsView = { level: "themes", groupId: tacticsView.groupId }; renderTacticsView(); }));
+                } else {
+                    body.appendChild(tacticsBackBtn("‹ " + tacticsView.themeName, () => { tacticsView = Object.assign({}, tacticsView, { level: "difficulty" }); renderTacticsView(); }));
+                }
+            }
+
+            if (tacticsView.level === "groups") {
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                tacticsData.groups.forEach((group) => {
+                    const n = group.themes.filter((t) => (tacticsData.themes[t.key] || []).length).length;
+                    if (!n) return; // grupo sin ningún tema con ejercicios en la base local
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
+                    btn.innerHTML = "<span>" + group.title + "</span><span class=\"text-brand-400 dark:text-brand-500 font-normal shrink-0\">" + n + (n === 1 ? " tema ›" : " temas ›") + "</span>";
+                    btn.addEventListener("click", () => { tacticsView = { level: "themes", groupId: group.id }; renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "themes") {
+                const group = tacticsData.groups.find((g) => g.id === tacticsView.groupId);
+                const title = document.createElement("p");
+                title.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2 mb-2";
+                title.textContent = group ? group.title : "";
+                body.appendChild(title);
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                (group ? group.themes : []).forEach((theme) => {
+                    const available = (tacticsData.themes[theme.key] || []).length;
+                    if (!available) return;
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 transition-colors";
+                    btn.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + theme.name + "</span>" +
+                        '<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">' + theme.desc + "</span>" +
+                        '<span class="block text-xs text-accent-600 dark:text-accent-400 mt-1">' + available + " ejercicios ›</span>";
+                    btn.addEventListener("click", () => { tacticsView = { level: "difficulty", groupId: group.id, themeKey: theme.key, themeName: theme.name }; renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "difficulty") {
+                const title = document.createElement("p");
+                title.className = "font-semibold text-brand-800 dark:text-white text-sm mt-2 mb-2";
+                title.textContent = tacticsView.themeName;
+                body.appendChild(title);
+                const list = document.createElement("div");
+                list.className = "space-y-1.5";
+                tacticsThemeBuckets(tacticsView.themeKey).forEach((ids, i) => {
+                    const ratings = ids.map((id) => tacticsData.puzzles[id].rating);
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
+                    btn.innerHTML = "<span>" + TACTICS_DIFF_LABELS[i] + "</span><span class=\"text-brand-400 dark:text-brand-500 font-normal shrink-0\">ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) + " · " + ids.length + " ›</span>";
+                    btn.addEventListener("click", () => { tacticsView = Object.assign({}, tacticsView, { level: "exercises", diffIndex: i }); renderTacticsView(); });
+                    list.appendChild(btn);
+                });
+                body.appendChild(list);
+                return;
+            }
+
+            if (tacticsView.level === "exercises") {
+                const ids = tacticsThemeBuckets(tacticsView.themeKey)[tacticsView.diffIndex] || [];
+                const list = document.createElement("ul");
+                list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
+                ids.forEach((id, i) => {
+                    const ex = tacticsData.puzzles[id];
+                    const li = document.createElement("li");
+                    li.className = "bg-brand-50 dark:bg-brand-800 rounded-lg p-2.5";
+                    const row = document.createElement("div");
+                    row.className = "flex items-center justify-between gap-2";
+                    const label = document.createElement("span");
+                    label.className = "text-sm text-brand-700 dark:text-brand-200";
+                    label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
+                    const actions = document.createElement("div");
+                    actions.className = "flex items-center gap-1.5 shrink-0";
+                    const previewBtn = document.createElement("button");
+                    previewBtn.type = "button";
+                    previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+                    previewBtn.textContent = "👁 Vista previa";
+                    const askBtn = document.createElement("button");
+                    askBtn.type = "button";
+                    askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+                    askBtn.textContent = "❓ Preguntar";
+                    actions.append(previewBtn, askBtn);
+                    row.append(label, actions);
+                    li.appendChild(row);
+                    const previewWrap = document.createElement("div");
+                    previewWrap.className = "hidden mt-2 max-w-[180px]";
+                    li.appendChild(previewWrap);
+                    previewBtn.addEventListener("click", () => {
+                        const opening = previewWrap.classList.contains("hidden");
+                        previewWrap.classList.toggle("hidden");
+                        previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
+                        if (opening && !previewWrap.dataset.rendered) {
+                            previewWrap.dataset.rendered = "1";
+                            renderTacticsPreviewBoard(previewWrap, ex.fen);
+                        }
+                    });
+                    askBtn.addEventListener("click", () => askTacticsExercise(ex));
+                    list.appendChild(li);
+                });
+                body.appendChild(list);
+                return;
+            }
+        }
+
+        // Mini-tablero estático de solo lectura para la vista previa (mismas clases .example-*
+        // que ya usan los diagramas de ejemplo de los artículos, para que se vea igual en todo
+        // el sitio — ver js/article-example-board.js).
+        const TACTICS_GLYPH = { p: { w: "♙", b: "♟" }, n: { w: "♘", b: "♞" }, b: { w: "♗", b: "♝" }, r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" } };
+        function renderTacticsPreviewBoard(container, fen) {
+            let previewGame;
+            try { previewGame = new Chess(fen); } catch (e) { container.textContent = "No se pudo mostrar la posición."; return; }
+            const boardEl = document.createElement("div");
+            boardEl.className = "example-board";
+            const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+            for (let rank = 8; rank >= 1; rank--) {
+                for (let f = 0; f < 8; f++) {
+                    const square = FILES[f] + rank;
+                    const light = (f + (rank - 1)) % 2 === 1; // h1 debe quedar clara, ver article-example-board.js
+                    const sq = document.createElement("div");
+                    sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
+                    const piece = previewGame.get(square);
+                    if (piece) {
+                        const span = document.createElement("span");
+                        span.className = piece.color === "w" ? "piece-white" : "piece-black";
+                        span.setAttribute("aria-hidden", "true");
+                        span.textContent = TACTICS_GLYPH[piece.type][piece.color];
+                        sq.appendChild(span);
+                    }
+                    boardEl.appendChild(sq);
+                }
+            }
+            container.innerHTML = "";
+            container.appendChild(boardEl);
+        }
+
+        // Transmite la posición del ejercicio elegido a toda la clase y la pregunta de
+        // inmediato — mismo mecanismo que ask-question-btn de más arriba (misma tabla
+        // game_state, misma tabla questions), solo que la posición viene de la base de
+        // Táctica en vez del tablero armado a mano. El número de jugadas esperadas del
+        // alumno se calcula de la propia solución del ejercicio (cuenta solo las jugadas
+        // que le tocan a quien mueve, no las respuestas intercaladas del rival).
+        async function askTacticsExercise(ex) {
+            const fen = ex.fen;
+            const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
+            board.loadMoves([], fen);
+            const { error: applyError } = await sb.from("game_state").update({
+                fen, moves: [], start_fen: fen, last_move: null,
+                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", 1);
+            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir el ejercicio: " + applyError.message); return; }
+            await clearVariantTree();
+            document.getElementById("question-plies-input").value = expectedPlies;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            if (isTeacher) updateEngineEval();
+            activateTeacherTab("preguntar");
+            setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
+            computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        }
 
         // ---------- Tarjeta de pregunta del alumno (overlay sobre el tablero) ----------
         function updateAnswerFeedbackUI() {
