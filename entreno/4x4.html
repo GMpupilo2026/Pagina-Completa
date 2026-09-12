@@ -327,6 +327,11 @@
   }
   .sq.light{background:#f0f4f8;}
   .sq.dark{background:#486581;}
+  /* Modo adaptado: blanco puro / magenta bien saturado en vez de los tonos de marca
+     habituales — mucho más contraste entre casillas para baja visión, parecido al tema
+     "Pink" de Lichess (ver captura que envió el profesor). */
+  .sq.light-adaptive{background:#ffffff;}
+  .sq.dark-adaptive{background:#d946ef;}
   .sq .piece{
     filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     pointer-events:none;
@@ -979,7 +984,10 @@ function renderBoard(){
       const sq = document.createElement('button');
       const light = (r+c) % 2 === 0;
       sq.type = 'button';
-      sq.className = 'sq ' + (light ? 'light' : 'dark');
+      // En modo adaptado, blanco puro / magenta bien saturado en vez de los tonos de
+      // marca habituales — mucho más contraste entre casillas para baja visión, parecido
+      // al tema "Pink" de Lichess.
+      sq.className = 'sq ' + (blindMode ? (light ? 'light-adaptive' : 'dark-adaptive') : (light ? 'light' : 'dark'));
       sq.setAttribute('data-square', squareName(r,c));
       const piece = boardState[boardKey(r,c)];
       const isSelected = !!(selectedCell && selectedCell[0]===r && selectedCell[1]===c);
