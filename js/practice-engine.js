@@ -84,6 +84,11 @@
         setTimeout(() => {
           if (pendingResolve === resolve) {
             pendingResolve = null;
+            // Tardar tantísimo más de lo normal es señal de que el motor se
+            // colgó o se cayó (ver la nota en js/shared-engine.js) — se descarta
+            // para que la próxima consulta, de este módulo o de clases-engine.js,
+            // levante un Worker nuevo en vez de seguir esperando uno muerto.
+            SharedEngine.discardEngine();
             resolve({ uci: null, score: null });
           }
         }, movetimeMs + 4000);
