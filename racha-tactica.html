@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Racha táctica — Ajedrez Integral</title>
-    <meta name="description" content="Encuentra la jugada correcta en 3 segundos. Cada acierto suma tu racha; un fallo la reinicia a cero.">
+    <meta name="description" content="Encuentra la jugada correcta en 10 segundos. Cada acierto suma tu racha; un fallo la reinicia a cero.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +81,7 @@
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
             <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🔥 Racha táctica</h1>
-            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Encuentra la única jugada correcta en 3 segundos. Cada acierto te da un ejercicio nuevo al instante; un fallo o quedarte sin tiempo reinicia tu racha a cero.</p>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Encuentra la única jugada correcta en 10 segundos. Cada acierto te da un ejercicio nuevo al instante; un fallo o quedarte sin tiempo reinicia tu racha a cero.</p>
 
             <!-- Marcadores -->
             <div class="grid grid-cols-3 gap-3 mb-4">
@@ -287,13 +287,14 @@
             }
         }
 
-        // ---------- Cronómetro (3 segundos, visual con una barra que se achica) ----------
+        // ---------- Cronómetro (10 segundos, visual con una barra que se achica) ----------
+        const TIME_LIMIT_MS = 10000;
         function startTimerBar() {
             const bar = document.getElementById("timer-bar");
             bar.style.transition = "none";
             bar.style.width = "100%";
             void bar.offsetWidth; // fuerza el reflow para que el siguiente cambio sí anime
-            bar.style.transition = "width 3000ms linear";
+            bar.style.transition = "width " + TIME_LIMIT_MS + "ms linear";
             bar.style.width = "0%";
         }
         function stopTimerBar() {
@@ -306,7 +307,7 @@
         function startTimer() {
             clearTimeout(failTimeoutId);
             startTimerBar();
-            failTimeoutId = setTimeout(() => onFail("timeout"), 3000);
+            failTimeoutId = setTimeout(() => onFail("timeout"), TIME_LIMIT_MS);
         }
 
         // ---------- Elegir y cargar un ejercicio al azar ----------

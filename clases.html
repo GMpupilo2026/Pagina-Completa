@@ -241,7 +241,7 @@
             { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
             { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
             { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
-            { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 3 segundos y suma tu racha", href: "racha-tactica.html" },
+            { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
             { emoji: "🦯", label: "Ciegos", desc: "Tablero y Entrenamiento adaptados para lector de pantalla", href: "ciegos.html" },
             { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
             { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
@@ -340,7 +340,7 @@
                 .order("best_streak", { ascending: false })
                 .limit(1)
                 .maybeSingle();
-            if (error) { el.textContent = "Encuentra la jugada correcta en 3 segundos y suma tu racha."; return; }
+            if (error) { el.textContent = "Encuentra la jugada correcta en 10 segundos y suma tu racha."; return; }
             if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
             const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
             el.textContent = name + " tiene la racha más larga: " + data.best_streak + " aciertos seguidos.";
