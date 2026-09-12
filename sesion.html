@@ -375,7 +375,8 @@
                                 <p class="text-xs text-brand-500 dark:text-brand-400">Pregunta activa</p>
                                 <button id="close-question-btn" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">Cerrar pregunta</button>
                             </div>
-                            <p id="engine-reference-answer" class="text-xs text-brand-400 dark:text-brand-500 mb-2 italic">Calculando la mejor respuesta del motor…</p>
+                            <p id="engine-reference-answer" class="text-xs text-brand-400 dark:text-brand-500 mb-1 italic">Calculando la mejor respuesta del motor…</p>
+                            <button id="engine-reference-retry-btn" type="button" class="hidden text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline mb-2">🔁 Reintentar cálculo del motor</button>
                             <ul id="answers-list" class="space-y-1.5 text-sm">
                                 <li class="text-brand-300 dark:text-brand-600">Todavía nadie respondió…</li>
                             </ul>
@@ -1614,6 +1615,10 @@
         let questionBoard = null;
         let currentQuestion = null;
         let myAnswer = null;
+        // id de la pregunta para la que hay un cálculo de computeEngineAnswer() en curso
+        // ahora mismo (o null si ninguno) — evita que "Reintentar" dispare una segunda
+        // consulta al motor mientras la primera todavía está pensando.
+        let computingAnswerFor = null;
         // El motor responde entre jugada y jugada del alumno (ver expected_plies arriba):
         // questionMovesDone cuenta cuántas veces YA movió el alumno en este intento;
         // questionStudentColor es el bando con el que juega (el que le toca mover en el
@@ -1718,14 +1723,27 @@
         }
 
         // ---------- Respuesta de referencia del motor (privada, solo el profesor) ----------
-        function renderEngineReferenceAnswer(answer) {
+        // opts.computing = true cuando se acaba de lanzar un cálculo (le da unos segundos de
+        // margen antes de ofrecer "Reintentar", para no mostrar ese botón como si ya hubiera
+        // fallado cuando en realidad Stockfish sigue pensando). Sin ese flag (por ejemplo al
+        // abrir el panel de una pregunta que ya estaba activa, o cuando el cálculo realmente
+        // falló) el botón aparece de una — antes esto se quedaba mostrando "Calculando…" para
+        // siempre sin ninguna forma de reintentar, que es justo el "el bot no contesta" que
+        // reportó el profesor al asignar una posición editada.
+        function renderEngineReferenceAnswer(answer, opts) {
             const el = document.getElementById("engine-reference-answer");
+            const retryBtn = document.getElementById("engine-reference-retry-btn");
             if (!el) return;
-            if (!answer) { el.textContent = "Calculando la mejor respuesta del motor…"; return; }
+            if (!answer) {
+                el.textContent = "Calculando la mejor respuesta del motor…";
+                if (retryBtn) retryBtn.classList.toggle("hidden", !!(opts && opts.computing));
+                return;
+            }
             const scoreText = answer.score.type === "mate"
                 ? "mate en " + Math.abs(answer.score.value)
                 : (answer.score.value >= 0 ? "+" : "") + (answer.score.value / 100).toFixed(1);
             el.textContent = "Mejor respuesta del motor: " + answer.moves.join(" ") + " (" + scoreText + ")";
+            if (retryBtn) retryBtn.classList.add("hidden");
         }
 
         async function loadEngineAnswerFor(questionId) {
@@ -1735,6 +1753,8 @@
 
         async function computeEngineAnswer(questionId, fen, expectedPlies) {
             if (typeof ClasesEngine === "undefined") return;
+            computingAnswerFor = questionId;
+            if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null, { computing: true });
             try {
                 // "Su mejor nivel": una sola línea, con más tiempo de cálculo que el panel de
                 // análisis normal, ya que aquí se hace una sola vez por pregunta.
@@ -1745,13 +1765,35 @@
                 // jugadas que el alumno en verdad hace.
                 const totalPlies = expectedPlies * 2 - 1;
                 const results = await ClasesEngine.analyze(fen, 1, 4000);
-                if (!results.length) return;
+                if (computingAnswerFor === questionId) computingAnswerFor = null;
+                if (!results.length) {
+                    // El motor no encontró nada (posición editada rara, o el Worker se cayó y
+                    // se está recuperando — ver js/shared-engine.js): antes esto se quedaba en
+                    // "Calculando…" sin salida; ahora se muestra el botón de reintentar.
+                    if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null);
+                    return;
+                }
                 const sans = ClasesEngine.pvToSan(fen, results[0].pvUci, totalPlies);
                 const answer = { moves: sans, score: { type: results[0].type, value: results[0].value } };
-                await sb.from("question_engine_answers").insert({ question_id: questionId, answer });
+                // Sigue siendo insert (no upsert): la política RLS de esta tabla solo permite
+                // INSERT al profesor, no UPDATE (ver auditoría de RLS), y el botón de
+                // reintentar ya evita pedir un segundo cálculo mientras el primero sigue en
+                // curso — así que en el uso normal nunca hay una fila previa con la que chocar.
+                const { error: saveError } = await sb.from("question_engine_answers").insert({ question_id: questionId, answer });
+                if (saveError) { console.error(saveError); if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null); return; }
                 if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(answer);
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                if (computingAnswerFor === questionId) computingAnswerFor = null;
+                if (currentQuestion && currentQuestion.id === questionId) renderEngineReferenceAnswer(null);
+            }
         }
+
+        document.getElementById("engine-reference-retry-btn").addEventListener("click", () => {
+            if (!currentQuestion || currentQuestion.closed_at) return;
+            if (computingAnswerFor === currentQuestion.id) return; // ya hay un cálculo en curso para esta pregunta
+            computeEngineAnswer(currentQuestion.id, currentQuestion.fen, currentQuestion.expected_plies);
+        });
 
         document.getElementById("ask-question-btn").addEventListener("click", async () => {
             const expectedPlies = Math.max(1, Math.min(6, parseInt(document.getElementById("question-plies-input").value, 10) || 1));
