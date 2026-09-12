@@ -381,10 +381,11 @@
             const { error } = await sb.from("game_rooms").insert({
                 variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
                 initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
-                // El reloj de ambos arranca completo desde ya — el de blancas empieza a
-                // correr de una vez porque son quienes mueven primero.
+                // El reloj de ambos arranca completo, pero SIN empezar a correr todavía
+                // (clock_updated_at se deja sin poner) — recién arranca cuando los dos
+                // jugadores entran y se marcan listos (ver crazyhouse.html), no desde que
+                // el profesor crea la partida.
                 white_time_left: timeControl.initial, black_time_left: timeControl.initial,
-                clock_updated_at: timeControl.initial === null ? null : new Date().toISOString(),
             });
             if (error) { console.error(error); msg.textContent = "No se pudo crear la partida: " + error.message; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             msg.textContent = "¡Partida creada!";
