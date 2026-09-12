@@ -81,13 +81,45 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes 📊</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-8" id="subtitle">Tu actividad y progreso en las clases.</p>
+            <p class="text-brand-500 dark:text-brand-400 mb-6" id="subtitle">Tu actividad y progreso en las clases.</p>
+
+            <!-- Filtros del profesor: elegir un alumno puntual (ver todo su detalle) o un
+                 tema/actividad puntual (ver cuánto ha hecho cada alumno en ese apartado), en
+                 vez del resumen agregado de siempre. Se combinan datos ya cargados una sola
+                 vez (ver fetchTeacherData) — cambiar de filtro no vuelve a consultar la base. -->
+            <div id="teacher-filters" class="hidden flex flex-col sm:flex-row gap-3 mb-6">
+                <div class="flex-1">
+                    <label for="student-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Alumno</label>
+                    <select id="student-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <option value="">Todos los alumnos</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="topic-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Tema o actividad</label>
+                    <select id="topic-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <option value="">Todo (resumen general)</option>
+                        <option value="asignaciones">🚩 Asignaciones (Preguntar a la clase)</option>
+                        <option value="asistencia">🏫 Asistencia y tiempo en clase</option>
+                        <option value="4x4">🧩 4×4</option>
+                        <option value="aprender">🎓 Lecciones (Aprender)</option>
+                        <option value="coordenadas">⚡ Coordenadas</option>
+                        <option value="practicar">🏆 Practicar</option>
+                        <option value="mates">♚ Mates</option>
+                        <option value="tactica">⚔️ Táctica</option>
+                    </select>
+                </div>
+            </div>
 
             <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
 
-            <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
+            <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <div id="topic-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="topic-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"></h2>
+                <div id="topic-report-body" class="space-y-2.5"></div>
             </div>
 
             <div id="teacher-report" class="hidden space-y-6">
@@ -308,9 +340,14 @@
             document.getElementById("student-report").classList.remove("hidden");
         }
 
-        async function loadTeacherReport() {
+        // Todo lo que ve el profesor sale de esta única consulta a la base (ver
+        // fetchTeacherData): los dos filtros de arriba (alumno puntual, tema/actividad
+        // puntual) solo cambian qué parte de estos mismos datos ya cargados se muestra,
+        // sin volver a consultar Supabase cada vez que el profesor cambia de selección.
+        let teacherData = null; // { sessions, sessionById, closedSessions, questions, games, students, answers, attendance, presenceRows, progress }
+
+        async function fetchTeacherData() {
             const { data: sessions } = await sb.from("class_sessions").select("id, ended_at");
-            const closedSessions = (sessions || []).filter((s) => s.ended_at).length;
             const sessionById = {};
             (sessions || []).forEach((s) => { sessionById[s.id] = s; });
             const { data: questions } = await sb.from("questions").select("id");
@@ -320,23 +357,54 @@
             const { data: attendance } = await sb.from("class_attendance").select("*");
             const { data: presenceRows } = await sb.from("class_presence_log").select("*");
             const { data: progress } = await sb.from("training_progress").select("*");
+            teacherData = {
+                sessions: sessions || [], sessionById, closedSessions: (sessions || []).filter((s) => s.ended_at).length,
+                questions: questions || [], games: games || [], students: students || [],
+                answers: answers || [], attendance: attendance || [], presenceRows: presenceRows || [], progress: progress || [],
+            };
+        }
 
+        function populateStudentFilter() {
+            const select = document.getElementById("student-filter");
+            teacherData.students
+                .slice()
+                .sort((a, b) => (a.full_name || a.email).localeCompare(b.full_name || b.email, "es"))
+                .forEach((s) => {
+                    const opt = document.createElement("option");
+                    opt.value = s.id;
+                    opt.textContent = s.full_name || s.email;
+                    select.appendChild(opt);
+                });
+        }
+
+        function hideAllReportPanels() {
+            document.getElementById("stat-cards").innerHTML = "";
+            document.getElementById("stat-cards").classList.add("hidden");
+            document.getElementById("student-report").classList.add("hidden");
+            document.getElementById("topic-report").classList.add("hidden");
+            document.getElementById("teacher-report").classList.add("hidden");
+        }
+
+        function renderAggregateReport() {
+            const { sessionById, closedSessions, questions, games, students, answers, attendance, presenceRows, progress } = teacherData;
+            document.getElementById("stat-cards").classList.remove("hidden");
             const cards = document.getElementById("stat-cards");
             cards.append(
                 statCard("🏫", closedSessions, "Clases cerradas"),
-                statCard("🚩", (questions || []).length, "Preguntas planteadas"),
-                statCard("📥", (games || []).length, "Partidas guardadas"),
-                statCard("🧑‍🎓", (students || []).length, "Alumnos")
+                statCard("🚩", questions.length, "Preguntas planteadas"),
+                statCard("📥", games.length, "Partidas guardadas"),
+                statCard("🧑‍🎓", students.length, "Alumnos")
             );
 
             const leaderboard = document.getElementById("leaderboard");
+            leaderboard.innerHTML = "";
             const byStudent = {};
-            (answers || []).forEach((a) => {
+            answers.forEach((a) => {
                 byStudent[a.student_id] = byStudent[a.student_id] || { total: 0, correct: 0 };
                 byStudent[a.student_id].total += 1;
                 if (a.is_correct === true) byStudent[a.student_id].correct += 1;
             });
-            const rows = (students || [])
+            const rows = students
                 .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
                 .sort((a, b) => b.total - a.total);
             if (!rows.length) {
@@ -346,13 +414,13 @@
             }
 
             const attByStudent = {};
-            (attendance || []).forEach((a) => {
+            attendance.forEach((a) => {
                 const s = sessionById[a.session_id];
                 attByStudent[a.student_id] = attByStudent[a.student_id] || { count: 0, minutes: 0 };
                 if (s && s.ended_at) attByStudent[a.student_id].count += 1;
             });
             const presenceByStudent = {};
-            (presenceRows || []).forEach((r) => {
+            presenceRows.forEach((r) => {
                 (presenceByStudent[r.student_id] = presenceByStudent[r.student_id] || []).push(r);
             });
             Object.keys(presenceByStudent).forEach((studentId) => {
@@ -361,7 +429,7 @@
             });
             const attBody = document.getElementById("attendance-table-body");
             attBody.innerHTML = "";
-            if (!students || !students.length) {
+            if (!students.length) {
                 attBody.innerHTML = '<tr><td colspan="3" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
@@ -377,12 +445,12 @@
             }
 
             const progressByStudent = {};
-            (progress || []).forEach((r) => {
+            progress.forEach((r) => {
                 (progressByStudent[r.student_id] = progressByStudent[r.student_id] || []).push(r);
             });
             const entrenoBody = document.getElementById("entreno-table-body");
             entrenoBody.innerHTML = "";
-            if (!students || !students.length) {
+            if (!students.length) {
                 entrenoBody.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
@@ -404,6 +472,169 @@
             document.getElementById("teacher-report").classList.remove("hidden");
         }
 
+        // Detalle completo de UN alumno puntual, elegido en el filtro "Alumno" — mismas
+        // tarjetas y el mismo historial que ve el propio alumno en su vista (loadStudentReport
+        // más arriba), pero calculado a partir de los datos ya cargados en teacherData en vez
+        // de volver a consultar la base (cambiar de alumno en el filtro es instantáneo).
+        function renderStudentDetail(studentId) {
+            const student = teacherData.students.find((s) => s.id === studentId);
+            const name = student ? (student.full_name || student.email) : "el alumno";
+            document.getElementById("student-report-title").textContent = "Informe de " + name;
+
+            const list = teacherData.answers
+                .filter((a) => a.student_id === studentId)
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            const graded = list.filter((a) => a.is_correct !== null);
+            const correct = graded.filter((a) => a.is_correct === true).length;
+            const accuracy = graded.length ? Math.round((correct / graded.length) * 100) : 0;
+
+            const attended = teacherData.attendance.filter((a) => a.student_id === studentId);
+            const attendedClosed = attended.filter((a) => teacherData.sessionById[a.session_id] && teacherData.sessionById[a.session_id].ended_at).length;
+            const attendanceRate = teacherData.closedSessions ? Math.round((attendedClosed / teacherData.closedSessions) * 100) : 0;
+
+            const presenceRows = teacherData.presenceRows.filter((r) => r.student_id === studentId);
+            const totalMinutes = minutesFromPresenceRows(presenceRows);
+
+            const progressRows = teacherData.progress.filter((r) => r.student_id === studentId);
+            const entreno = summarizeTrainingProgress(progressRows);
+
+            const cards = document.getElementById("stat-cards");
+            cards.classList.remove("hidden");
+            cards.append(
+                statCard("🚩", list.length, "Asignaciones respondidas"),
+                statCard("✅", correct, "Correctas"),
+                statCard("🎯", accuracy + "%", "Precisión"),
+                statCard("⏳", graded.length < list.length ? list.length - graded.length : 0, "Pendientes de revisar"),
+                statCard("🏫", `${attendedClosed}/${teacherData.closedSessions}`, `Asistencia (${attendanceRate}%)`),
+                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase"),
+                statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
+                statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
+                statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
+                statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
+                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas")
+            );
+
+            const historyEl = document.getElementById("student-history");
+            historyEl.innerHTML = "";
+            if (!list.length) {
+                historyEl.innerHTML = '<li class="text-brand-400 dark:text-brand-500">Todavía no ha respondido ninguna asignación.</li>';
+            } else {
+                list.slice(0, 15).forEach((a) => {
+                    const li = document.createElement("li");
+                    li.className = "flex items-center justify-between border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                    const date = new Date(a.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+                    let badge = "Pendiente";
+                    if (a.is_correct === true) badge = "✅ Correcta";
+                    else if (a.is_correct === false) badge = "❌ Incorrecta";
+                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-400">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
+                    historyEl.appendChild(li);
+                });
+            }
+            document.getElementById("student-report").classList.remove("hidden");
+        }
+
+        const TOPIC_LABELS = {
+            asignaciones: "🚩 Asignaciones — precisión por alumno",
+            asistencia: "🏫 Asistencia y tiempo en clase",
+            "4x4": "🧩 4×4 — ejercicios resueltos",
+            aprender: "🎓 Lecciones de Aprender completadas",
+            coordenadas: "⚡ Coordenadas — mejor puntuación",
+            practicar: "🏆 Practicar — series completadas",
+            mates: "♚ Mates resueltos",
+            tactica: "⚔️ Táctica — posiciones resueltas",
+        };
+
+        // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
+        // en ese apartado puntual, ordenado de mayor a menor — en vez de las tres tablas
+        // completas del resumen general.
+        function renderTopicReport(topic) {
+            document.getElementById("topic-report-title").textContent = TOPIC_LABELS[topic] || "Detalle";
+            const body = document.getElementById("topic-report-body");
+            body.innerHTML = "";
+            const students = teacherData.students;
+            if (!students.length) {
+                body.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+
+            if (topic === "asignaciones") {
+                const byStudent = {};
+                teacherData.answers.forEach((a) => {
+                    byStudent[a.student_id] = byStudent[a.student_id] || { total: 0, correct: 0 };
+                    byStudent[a.student_id].total += 1;
+                    if (a.is_correct === true) byStudent[a.student_id].correct += 1;
+                });
+                students
+                    .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
+                    .sort((a, b) => b.total - a.total)
+                    .forEach((r) => body.appendChild(barRow(r.name, r.correct, r.total)));
+            } else if (topic === "asistencia") {
+                const attByStudent = {};
+                teacherData.attendance.forEach((a) => {
+                    const s = teacherData.sessionById[a.session_id];
+                    attByStudent[a.student_id] = attByStudent[a.student_id] || { count: 0 };
+                    if (s && s.ended_at) attByStudent[a.student_id].count += 1;
+                });
+                const presenceByStudent = {};
+                teacherData.presenceRows.forEach((r) => { (presenceByStudent[r.student_id] = presenceByStudent[r.student_id] || []).push(r); });
+                students
+                    .map((s) => {
+                        const count = (attByStudent[s.id] || { count: 0 }).count;
+                        const minutes = minutesFromPresenceRows(presenceByStudent[s.id]);
+                        return { name: s.full_name || s.email, count, minutes };
+                    })
+                    .sort((a, b) => b.minutes - a.minutes)
+                    .forEach((r) => {
+                        const row = document.createElement("div");
+                        row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-400">${r.count}/${teacherData.closedSessions} clases · ${fmtDuration(r.minutes)}</span>`;
+                        body.appendChild(row);
+                    });
+            } else {
+                const progressByStudent = {};
+                teacherData.progress.forEach((r) => { (progressByStudent[r.student_id] = progressByStudent[r.student_id] || []).push(r); });
+                students
+                    .map((s) => {
+                        const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
+                        let value = 0, label = "—";
+                        if (topic === "4x4") { value = entreno.puzzles; label = value ? value + " ejercicios" : "—"; }
+                        else if (topic === "aprender") { value = entreno.lessons; label = value ? value + " lecciones" : "—"; }
+                        else if (topic === "coordenadas") { value = entreno.bestCoord; label = value ? value + " puntos" : "—"; }
+                        else if (topic === "practicar") { value = entreno.practiceCompleted; label = value ? `${value} series (${entreno.practiceStars}⭐)` : "—"; }
+                        else if (topic === "mates") { value = entreno.matesTotal; label = value ? `${value} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)` : "—"; }
+                        else if (topic === "tactica") { value = entreno.tacticaTotal; label = value ? String(value) : "—"; }
+                        return { name: s.full_name || s.email, value, label };
+                    })
+                    .sort((a, b) => b.value - a.value)
+                    .forEach((r) => {
+                        const row = document.createElement("div");
+                        row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-400">${r.label}</span>`;
+                        body.appendChild(row);
+                    });
+            }
+            document.getElementById("topic-report").classList.remove("hidden");
+        }
+
+        // Los dos filtros combinados: un alumno puntual manda (su informe completo, sin
+        // importar el tema elegido — por eso se deshabilita el segundo filtro mientras haya
+        // uno elegido); sin alumno, el tema puntual manda; sin ninguno de los dos, el
+        // resumen general de siempre.
+        function applyTeacherFilters() {
+            const studentId = document.getElementById("student-filter").value;
+            const topic = document.getElementById("topic-filter").value;
+            document.getElementById("topic-filter").disabled = !!studentId;
+            hideAllReportPanels();
+            if (studentId) renderStudentDetail(studentId);
+            else if (topic) renderTopicReport(topic);
+            else renderAggregateReport();
+        }
+
+        document.getElementById("student-filter").addEventListener("change", applyTeacherFilters);
+        document.getElementById("topic-filter").addEventListener("change", applyTeacherFilters);
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -415,8 +646,14 @@
             document.getElementById("subtitle").textContent = isTeacher
                 ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
                 : "Tu actividad y progreso en las asignaciones de clase.";
-            if (isTeacher) await loadTeacherReport();
-            else await loadStudentReport();
+            if (isTeacher) {
+                await fetchTeacherData();
+                populateStudentFilter();
+                document.getElementById("teacher-filters").classList.remove("hidden");
+                applyTeacherFilters();
+            } else {
+                await loadStudentReport();
+            }
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
         }
