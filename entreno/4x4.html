@@ -528,11 +528,16 @@
         <form id="cmd-form" class="cmd-form">
           <div class="cmd-field">
             <label for="cmd-input" class="cmd-label">Escribe una jugada o comando (útil con lector de pantalla)</label>
-            <input id="cmd-input" type="text" autocomplete="off" placeholder="Ej: a1 b2, a1xb2" class="cmd-input" aria-describedby="cmd-help">
+            <input id="cmd-input" type="text" autocomplete="off" placeholder="Ej: a1 b2, a1xb2" class="cmd-input">
           </div>
           <button type="submit" class="bctrl">Jugar</button>
         </form>
-        <p id="cmd-help" class="cmd-help">Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). Comandos: L o last (última captura), T (posición), b o board seguido de una casilla (ir ahí), p seguido de una letra K/Q/R/B/N/P (dónde está esa pieza), s seguido de una columna o fila (piezas en esa línea), reiniciar, ayuda (lista completa).</p>
+        <!-- Oculto a propósito (ver announceHelp/announceHelpFirstTimeIfNeeded más abajo): con
+             aria-describedby, este texto se leía completo cada vez que el foco volvía al
+             recuadro, es decir, después de CADA jugada o comando. Ahora se anuncia una sola
+             vez, la primera vez que se activa el modo adaptado en este navegador, y se puede
+             volver a escuchar cuando se quiera escribiendo "ayuda". -->
+        <p id="cmd-help" class="cmd-help" hidden>Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). Comandos: L o last (última captura), T (posición), b o board seguido de una casilla (ir ahí), p seguido de una letra K/Q/R/B/N/P (dónde está esa pieza), s seguido de una columna o fila (piezas en esa línea), reiniciar, ayuda (lista completa).</p>
         <div id="cmd-status" role="status" aria-live="assertive" class="cmd-status"></div>
         <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="position-readout"></div>
         <button type="button" id="repeat-captures-btn" class="bctrl">🔊 Repetir capturas</button>
@@ -885,6 +890,7 @@ function applyBlindModeUI(){
     modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false');
     modeBlindBtn.classList.toggle('active', blindMode);
   }
+  if(blindMode) announceHelpFirstTimeIfNeeded();
 }
 function setBlindMode(value){
   blindMode = !!value;
@@ -1124,9 +1130,15 @@ function checkWin(){
     EntrenoProgress.log('4x4', { puzzle_id: puz.id, category: ex.category, number: ex.number });
     setStatus('¡Resuelto!');
     document.getElementById('win-overlay').classList.add('open');
-    document.getElementById('win-retry').focus();
+    updatePuzzleNavButtons(); // antes de decidir el foco: hace falta saber si "Siguiente" tiene a dónde ir
+    const winNextBtn = document.getElementById('win-next');
+    // En modo adaptado, el foco cae directo en "Siguiente" para poder pasar de ejercicio
+    // con solo presionar Enter, en vez de tener que ir a buscar el botón a mano. Si no
+    // hay otro ejercicio después (winNextBtn.disabled), se queda en "Reintentar" — un
+    // botón deshabilitado nunca debería quedarse con el foco.
+    if(blindMode && !winNextBtn.disabled) winNextBtn.focus();
+    else document.getElementById('win-retry').focus();
     announce('¡Muy bien! Nivel completado.');
-    updatePuzzleNavButtons();
     return;
   }
   const anyMove = Object.keys(boardState).some(k => {
@@ -1392,9 +1404,15 @@ function handleBoardShortcutKey(e, r, c){
   }
 }
 
-// ---------- Comando "ayuda" (recuadro de jugada): recuerda los comandos disponibles ----------
+// ---------- Comando "ayuda" (recuadro de jugada): recuerda cómo escribir jugadas y
+// comandos. Es la única fuente de estas instrucciones — el párrafo visible que había
+// antes junto al recuadro (#cmd-help) se anunciaba completo cada vez que el foco volvía
+// ahí (con aria-describedby), es decir, después de CADA jugada. Ahora se anuncia una
+// sola vez (ver announceHelpFirstTimeIfNeeded) y queda disponible bajo demanda con este
+// comando, sin repetirse solo. ----------
 function announceHelp(){
   cmdAnnounce(
+    'Jugada: casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
     'Comandos: L o last (última captura), T (posición completa), b o board seguido de una casilla ' +
     '(ir ahí, por ejemplo a1), p seguido de una letra K, Q, R, B, N o P (dónde está esa pieza), ' +
     's seguido de una columna a-d o fila 1-4 (piezas en esa línea), reiniciar (empezar de nuevo este ' +
@@ -1404,6 +1422,18 @@ function announceHelp(){
     '(ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas ' +
     'anteriores/siguientes).'
   );
+}
+
+// La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se anuncian las
+// instrucciones completas una sola vez (después, "ayuda" las repite bajo demanda, pero
+// nunca se vuelven a anunciar solas).
+const HELP_SHOWN_KEY = 'oscarMoveHelpShown4x4_v1';
+function announceHelpFirstTimeIfNeeded(){
+  let shown = false;
+  try{ shown = localStorage.getItem(HELP_SHOWN_KEY) === '1'; }catch(e){}
+  if(shown) return;
+  try{ localStorage.setItem(HELP_SHOWN_KEY, '1'); }catch(e){}
+  window.setTimeout(announceHelp, 400);
 }
 
 function handleCmdFormSubmit(e){

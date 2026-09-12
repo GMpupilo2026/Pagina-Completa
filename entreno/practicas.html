@@ -730,9 +730,15 @@ function finishSet(){
   document.getElementById('celebration-stats').textContent =
     `${currentSet.rounds.length} de ${currentSet.rounds.length} posiciones en ${totalSeconds}s` +
     (noHints ? ' — ¡sin usar ninguna pista!' : '');
-  document.getElementById('celebration-title').textContent =
-    stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
+  const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
+  document.getElementById('celebration-title').textContent = titleText;
   EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
+  if(blindMode && window.BlindNotation){
+    window.BlindNotation.speak(titleText);
+    // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
+    // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
+    document.getElementById('celebration-next-btn').focus();
+  }
 }
 
 function giveHint(){
