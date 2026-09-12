@@ -676,7 +676,12 @@ function finishLesson(){
   markSolved(currentLesson.id);
   EntrenoProgress.log('aprender', { lesson_id: currentLesson.id, category: currentLesson.cat, title: currentLesson.title });
   setStatus('✅ ¡Muy bien! Lección completada.', 'ok');
-  document.getElementById('next-btn').style.display = '';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = '';
+  // En modo adaptado, el foco cae directo en "Siguiente lección" — sin esto, quien usa
+  // el campo de texto (o un lector de pantalla) tendría que ir a buscar el botón a mano
+  // cada vez que termina una lección, en vez de solo presionar Enter para seguir.
+  if(blindMode) nextBtn.focus();
 }
 
 function onSquareClick(square, btn){

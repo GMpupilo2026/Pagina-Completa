@@ -128,6 +128,7 @@
     }
     if (refreshSpeechToggle) refreshSpeechToggle();
     renderBoard(); // los colores de las casillas dependen de blindMode (ver squareClasses)
+    if (blindMode) announceHelpFirstTimeIfNeeded();
   }
 
   function setBlindMode(value) {
@@ -1441,16 +1442,40 @@
     }
   }
 
-  // ---------- Comando "ayuda" (recuadro de jugada): recuerda los comandos disponibles ----------
+  // ---------- Comando "ayuda" (recuadro de jugada): recuerda cómo escribir jugadas y
+  // comandos. Es la única fuente de estas instrucciones — el párrafo visible que había
+  // antes junto al recuadro (#move-input-help) se anunciaba completo cada vez que el
+  // foco volvía ahí (con aria-describedby), es decir, después de CADA jugada. Ahora se
+  // anuncia una sola vez sola (ver announceHelpFirstTimeIfNeeded) y queda disponible
+  // bajo demanda con este comando, sin repetirse solo. ----------
   function announceHelp() {
     announceMoveInput(
-      "Comandos: L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
+      "Notación algebraica en español o inglés: peón sin letra (e4), C o N para caballo, A o B para alfil, " +
+        "T o R para torre, D o Q para dama, R o K para rey. Enroque: O-O (corto) u O-O-O (largo). " +
+        "Comandos: L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
         "resign (rendirse), p seguido de una letra (dónde están las piezas de ese tipo; mayúscula blancas, minúscula negras), " +
         "s seguido de una columna o fila (piezas en esa línea). Con el tablero enfocado: i (ir al recuadro), o (casilla actual), " +
         "c (última captura), l (última jugada), m (jugadas posibles), shift+m (capturas posibles), flechas (moverse), " +
         "k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-8 (ir a esa fila), " +
         "shift+1-8 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar jugadas anteriores/siguientes)."
     );
+  }
+
+  // La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se anuncian
+  // las instrucciones completas una sola vez (después, "ayuda" las repite bajo demanda,
+  // pero nunca se vuelven a anunciar solas). Un pequeño margen para que no choque con el
+  // "Cargando..."/anuncio de activación del propio interruptor.
+  const HELP_SHOWN_KEY = "oscarMoveHelpShown_v1";
+  function announceHelpFirstTimeIfNeeded() {
+    let shown = false;
+    try {
+      shown = localStorage.getItem(HELP_SHOWN_KEY) === "1";
+    } catch (e) {}
+    if (shown) return;
+    try {
+      localStorage.setItem(HELP_SHOWN_KEY, "1");
+    } catch (e) {}
+    window.setTimeout(announceHelp, 400);
   }
 
   // Procesa lo que se escribió en el recuadro; devuelve true si el foco debe quedarse ahí
