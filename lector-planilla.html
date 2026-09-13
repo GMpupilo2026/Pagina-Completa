@@ -93,10 +93,20 @@
             <div id="upload-section" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">1. Elegí la foto o el escaneo</h2>
                 <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Cuanto más derecha y bien iluminada esté la foto, mejor sale la lectura. Funciona mejor con planillas escritas con letra clara — la letra manuscrita es más difícil de leer para este lector automático, así que es normal tener que aclarar algunas jugadas a mano.</p>
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
+                    <!-- "capture" en este input hace que, en el celular, se abra la cámara
+                         directamente — perfecto para sacar la foto en el momento, pero en la
+                         mayoría de navegadores de celular impide elegir una que ya se tenía
+                         guardada. Por eso va un segundo input SIN capture: ese abre el
+                         selector normal de archivos/galería, para adjuntar una foto que ya se
+                         sacó antes (o cualquier imagen guardada en la computadora). -->
                     <label class="inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors cursor-pointer">
-                        <span aria-hidden="true">📷</span> Elegir imagen
-                        <input type="file" id="sheet-input" accept="image/*" capture="environment" class="sr-only">
+                        <span aria-hidden="true">📷</span> Tomar foto
+                        <input type="file" id="sheet-input-camera" accept="image/*" capture="environment" class="sr-only">
+                    </label>
+                    <label class="inline-flex items-center gap-2 bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2.5 rounded-lg transition-colors cursor-pointer">
+                        <span aria-hidden="true">🖼️</span> Elegir de mis archivos
+                        <input type="file" id="sheet-input-file" accept="image/*" class="sr-only">
                     </label>
                     <button type="button" id="read-btn" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Leer planilla →</button>
                 </div>
@@ -420,8 +430,8 @@
            ============================================================ */
         let selectedFile = null;
 
-        document.getElementById("sheet-input").addEventListener("change", (e) => {
-            selectedFile = e.target.files[0] || null;
+        function handleFileSelected(file) {
+            selectedFile = file || null;
             document.getElementById("read-btn").disabled = !selectedFile;
             const preview = document.getElementById("sheet-preview");
             const wrap = document.getElementById("preview-wrap");
@@ -431,7 +441,11 @@
             } else {
                 wrap.classList.add("hidden");
             }
-        });
+        }
+        // Los dos inputs (cámara y archivos) comparten el mismo manejo: no importa de
+        // dónde vino la imagen, una vez elegida el resto del flujo es idéntico.
+        document.getElementById("sheet-input-camera").addEventListener("change", (e) => handleFileSelected(e.target.files[0]));
+        document.getElementById("sheet-input-file").addEventListener("change", (e) => handleFileSelected(e.target.files[0]));
 
         document.getElementById("read-btn").addEventListener("click", async () => {
             if (!selectedFile) return;
@@ -516,7 +530,8 @@
 
         document.getElementById("restart-btn").addEventListener("click", () => {
             selectedFile = null;
-            document.getElementById("sheet-input").value = "";
+            document.getElementById("sheet-input-camera").value = "";
+            document.getElementById("sheet-input-file").value = "";
             document.getElementById("read-btn").disabled = true;
             document.getElementById("preview-wrap").classList.add("hidden");
             document.getElementById("process-section").classList.add("hidden");
