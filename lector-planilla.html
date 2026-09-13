@@ -32,10 +32,10 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <!-- Tesseract.js: OCR gratis, corre en el navegador (sin clave ni costo). Descarga en el
-         momento el motor (wasm) y los datos de idioma desde su propia CDN — ver los orígenes
-         agregados a connect-src/worker-src en _headers, imprescindibles para que esto funcione. -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <!-- El OCR ya no corre en el navegador (Tesseract.js): está entrenado para texto
+         impreso y no pudo leer ni una celda aislada de letra manuscrita en pruebas con una
+         planilla real. Ahora la foto se manda a la función de servidor ocr-scoresheet, que
+         llama a Google Cloud Vision (sí reconoce escritura a mano) — ver runOcr() más abajo. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/clases-board.js"></script>
@@ -284,10 +284,10 @@
 
         /* ============================================================
            Reconstrucción del orden real de las jugadas a partir de las
-           palabras que devuelve Tesseract (cada una con su posición en la
+           palabras que devuelve el OCR (cada una con su posición en la
            imagen). Una planilla típica tiene una fila por número de jugada,
            con la jugada de blancas y la de negras una al lado de la otra —
-           pero el orden en el que Tesseract "lee" el texto no siempre
+           pero el orden en el que el OCR "lee" el texto no siempre
            respeta ese orden real (sobre todo si hay más de una columna de
            filas, o si la foto no salió perfectamente derecha). Agrupar por
            posición vertical (fila) y ordenar cada fila de izquierda a
@@ -324,43 +324,58 @@
         }
 
         /* ============================================================
-           Lectura del OCR: se ajusta Tesseract para que le cueste menos
-           confundirse, en vez de dejarlo con la configuración genérica
-           (pensada para leer cualquier texto en cualquier idioma):
-           - tessedit_char_whitelist: una planilla de ajedrez solo usa un
-             puñado de caracteres (columnas a-h, filas 1-8, letras de pieza
-             en inglés o español, x/+/#/=/-/.). Decirle a Tesseract que NO
-             existen las demás letras del alfabeto evita buena parte de las
-             confusiones típicas (una "N" leída como "M", una "l" como "1").
-           - tessedit_pageseg_mode "11" (texto disperso): por defecto
-             Tesseract asume un documento con párrafos y trata de armar
-             líneas de lectura — en una planilla con casillas/columnas
-             separadas eso rompe el texto de formas raras. "Disperso" busca
-             palabras sueltas sin asumir esa estructura, que es justo lo que
-             hace falta acá (el orden real ya se reconstruye aparte, en
-             reconstructMoveTokens, a partir de la posición de cada palabra).
-           Si por lo que sea esta configuración más fina falla (versión de
-           Tesseract distinta a la esperada, etc.), se cae de vuelta a la
-           forma simple — que sí o sí funciona, aunque sin el afinado — en
-           vez de dejar a la persona sin poder leer nada. */
-        async function runOcr(file, logger) {
-            const CHAR_WHITELIST = "abcdefghKQRBNOTCADx+#=-.0123456789";
-            try {
-                const worker = await Tesseract.createWorker({ logger });
-                await worker.loadLanguage("spa");
-                await worker.initialize("spa");
-                await worker.setParameters({
-                    tessedit_char_whitelist: CHAR_WHITELIST,
-                    tessedit_pageseg_mode: "11",
-                });
-                const { data } = await worker.recognize(file);
-                await worker.terminate();
-                return data;
-            } catch (err) {
-                console.warn("Lectura afinada de Tesseract falló, usando la lectura simple:", err);
-                const { data } = await Tesseract.recognize(file, "spa", { logger });
-                return data;
-            }
+           Lectura del OCR: Google Cloud Vision (DOCUMENT_TEXT_DETECTION), a
+           través de la función de servidor ocr-scoresheet — la clave de
+           Vision se queda ahí, nunca llega al navegador.
+           Antes esto corría con Tesseract.js directo en el navegador (gratis,
+           sin backend), pero probado contra una planilla real de torneo no
+           sirvió: Tesseract está entrenado para texto IMPRESO, y ni una celda
+           aislada y nítida con "e4" escrito a mano se leyó bien (salió
+           "+6R565"). Vision sí reconoce letra manuscrita.
+           Antes de subir la foto se la redimensiona en un <canvas> (lado más
+           largo a 1600px): de sobra para que las casillas se sigan leyendo
+           bien, y así la subida es rápida incluso con fotos de varios MB. */
+        function fileToResizedBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error("No se pudo leer el archivo."));
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error("No se pudo leer la imagen."));
+                    img.onload = () => {
+                        const MAX_SIDE = 1600;
+                        let { width, height } = img;
+                        if (width > MAX_SIDE || height > MAX_SIDE) {
+                            const scale = MAX_SIDE / Math.max(width, height);
+                            width = Math.round(width * scale);
+                            height = Math.round(height * scale);
+                        }
+                        const canvas = document.createElement("canvas");
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function runOcr(file) {
+            const image_base64 = await fileToResizedBase64(file);
+            const res = await fetch(`${window.SUPABASE_URL}/functions/v1/ocr-scoresheet`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "apikey": window.SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify({ image_base64 }),
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(result.error || "No se pudo leer la imagen.");
+            return { words: result.words || [] };
         }
 
         /* ============================================================
@@ -496,24 +511,14 @@
             const progressBar = document.getElementById("ocr-progress-bar");
             const progressText = document.getElementById("ocr-progress-text");
             progressWrap.classList.remove("hidden");
-            progressBar.style.width = "0%";
-            progressText.textContent = "Preparando el lector…";
-
-            const STEP_LABEL = {
-                "loading tesseract core": "Cargando el lector…",
-                "initializing tesseract": "Iniciando…",
-                "loading language traineddata": "Descargando el idioma…",
-                "initializing api": "Preparando…",
-                "recognizing text": "Leyendo la planilla…",
-            };
-            const logger = (m) => {
-                const pct = Math.round((m.progress || 0) * 100);
-                progressBar.style.width = pct + "%";
-                progressText.textContent = (STEP_LABEL[m.status] || m.status || "Procesando…") + ` (${pct}%)`;
-            };
+            progressBar.style.width = "30%";
+            progressText.textContent = "Preparando la imagen…";
 
             try {
-                const data = await runOcr(selectedFile, logger);
+                progressBar.style.width = "60%";
+                progressText.textContent = "Leyendo la planilla…";
+                const data = await runOcr(selectedFile);
+                progressBar.style.width = "100%";
                 const moveTokens = reconstructMoveTokens(data.words);
                 progressWrap.classList.add("hidden");
                 if (!moveTokens.length) {
