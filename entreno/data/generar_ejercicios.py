@@ -77,6 +77,11 @@ KNIGHT = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)
 DIRS_ROOK = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 DIRS_BISHOP = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
 DIRS_QUEEN = DIRS_ROOK + DIRS_BISHOP
+# El peón captura solo hacia "arriba" (fila menor, como si fuera blanco: ver
+# DIRS_PAWN en entreno/4x4.html y reorder_por_dificultad.py) — nunca hacia
+# abajo. origins() reconstruye hacia ATRÁS en el tiempo, así que la casilla
+# de origen de un peón está en sentido contrario a su captura (fila mayor).
+DIRS_PAWN_ORIGIN = [(1, -1), (1, 1)]
 
 
 def origins(piece, r, c, board):
@@ -87,7 +92,7 @@ def origins(piece, r, c, board):
         cand = [(r + dr, c + dc) for dr, dc in KNIGHT]
         return [(a, b) for a, b in cand if 0 <= a < 4 and 0 <= b < 4 and (a, b) not in board]
     if piece in ('K', 'P'):
-        dirs = DIRS_QUEEN if piece == 'K' else DIRS_BISHOP
+        dirs = DIRS_QUEEN if piece == 'K' else DIRS_PAWN_ORIGIN
         cand = [(r + dr, c + dc) for dr, dc in dirs]
         return [(a, b) for a, b in cand if 0 <= a < 4 and 0 <= b < 4 and (a, b) not in board]
     dirs = {'R': DIRS_ROOK, 'B': DIRS_BISHOP, 'Q': DIRS_QUEEN}[piece]
