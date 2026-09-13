@@ -333,13 +333,14 @@
     border:none;
     padding:0;
   }
-  .sq.light{background:#f0f4f8;}
-  .sq.dark{background:#486581;}
-  /* Modo adaptado: blanco puro / magenta bien saturado en vez de los tonos de marca
-     habituales — mucho más contraste entre casillas para baja visión, parecido al tema
-     "Pink" de Lichess (ver captura que envió el profesor). */
-  .sq.light-adaptive{background:#ffffff;}
-  .sq.dark-adaptive{background:#d946ef;}
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  /* Modo adaptado: colores propios (ver js/board-color-themes.js), elegibles en
+     Configuración — "Alto contraste" (blanco/casi negro) es el que de verdad ayuda a
+     baja visión; el tema "Clásico adaptado" (blanco/magenta) queda como recuerdo del
+     diseño original, para quien ya se acostumbró a esos colores. */
+  .sq.light-adaptive{background:var(--sq-light-adaptive);}
+  .sq.dark-adaptive{background:var(--sq-dark-adaptive);}
   .sq .piece{
     filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     pointer-events:none;
@@ -454,6 +455,7 @@
 <script src="../js/blind-notation.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
+    <script src="../js/board-color-themes.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -1073,9 +1075,9 @@ function renderBoard(){
       const sq = document.createElement('button');
       const light = (r+c) % 2 === 0;
       sq.type = 'button';
-      // En modo adaptado, blanco puro / magenta bien saturado en vez de los tonos de
-      // marca habituales — mucho más contraste entre casillas para baja visión, parecido
-      // al tema "Pink" de Lichess.
+      // En modo adaptado usa el par de colores de alto contraste elegido en
+      // Configuración (ver js/board-color-themes.js), en vez de los tonos de marca
+      // habituales del modo normal.
       sq.className = 'sq ' + (blindMode ? (light ? 'light-adaptive' : 'dark-adaptive') : (light ? 'light' : 'dark'));
       sq.setAttribute('data-square', squareName(r,c));
       const piece = boardState[boardKey(r,c)];
