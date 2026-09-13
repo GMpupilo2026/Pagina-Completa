@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Los 100 finales que hay que conocer — Ajedrez Integral</title>
+    <meta name="description" content="Los cien finales teóricos que decide una partida de torneo, organizados en un recorrido de aprendizaje: de rey y peón contra rey a las fortalezas de dama contra torre. Cada final con sus posiciones clave, reglas para recordar, líneas verificadas con motor y práctica contra el ordenador.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="../js/adaptive-mode.js"></script>
+    <link rel="stylesheet" href="../css/finales-100.css">
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+    <article class="pt-28 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Intermedio · Avanzado</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Los 100 finales que hay que conocer</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-6">Los cien finales teóricos que decide una partida de torneo, organizados en un recorrido de aprendizaje: de rey y peón contra rey a las fortalezas de dama contra torre. Cada final con sus posiciones clave, reglas para recordar, líneas verificadas con motor y práctica contra el ordenador.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-6">🏁</div>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">24 lecciones</strong> · Intermedio · Avanzado · 2 exámenes</p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">100 finales, 240 posiciones interactivas con línea principal y práctica contra el motor, presentación y hoja de ejercicios por lección.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">💬 Inscribirme →</a>
+                </div>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
+            <div class="space-y-8"><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Antes de empezar</h3><ol start="0" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Examen de diagnóstico<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">24 posiciones básicas para saber de dónde partís. Cada respuesta indica el final que conviene repasar.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · Fundamentos</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">Lo que hay que saber antes de empezar: rey y peón contra rey, y las piezas solas contra la torre.</p><ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Rey y peón contra rey<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 1–3: Decidir de un vistazo si un peón corona: la regla del cuadrado, la oposición con el peón en sexta y las casillas críticas.</span></li><li class="text-brand-600 dark:text-brand-300">El peón de torre y los rincones del alfil<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 4–7: Reconocer las excepciones del peón de torre (rey defensor delante, el encierro del rey fuerte) y los dos rincones del final de torre contra alfil.</span></li><li class="text-brand-600 dark:text-brand-300">Torre contra caballo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 8–9: Saber cuándo el caballo se salva contra la torre y cuándo cae: el caballo pegado al rey, la banda y el rincón.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Finales de peones</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">La base de todos los finales: casillas críticas, oposición, peones pasados y rupturas.</p><ol start="4" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Dos peones contra rey y peones bloqueados<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 77–80: Manejar dos peones (doblados, aislados o bloqueados) contra el rey solo y aplicar las casillas críticas a los peones bloqueados.</span></li><li class="text-brand-600 dark:text-brand-300">Peones pasados y las maniobras del rey con doble objetivo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 81–84: Usar el rey con dos objetivos a la vez (apoyar el propio peón y atacar el ajeno) y valorar el peón pasado alejado y el peón pasado central.</span></li><li class="text-brand-600 dark:text-brand-300">Triangulación, peón de alfil y la lucha contra dos peones pasados<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 85–88: Ganar un tiempo con la triangulación y conocer la teoría de caballo y torre contra peón de torre, con la regla de los colores.</span></li><li class="text-brand-600 dark:text-brand-300">Peón pasado defendido, alejado, doblado y rupturas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 89–92: Valorar los distintos peones pasados y detectar las rupturas de peones que crean uno lejos del rey.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · Pieza contra peón</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">Caballo, dama y torre luchando contra uno o dos peones: contar, cortar y empujar.</p><ol start="8" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Caballo contra peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 10–15: Detener un peón con el caballo: los circuitos del caballo, el peón de torre en sexta y en séptima y la casilla tonta.</span></li><li class="text-brand-600 dark:text-brand-300">Dama contra peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 16–20: Ganar con la dama contra un peón en séptima y reconocer las excepciones del peón de torre y de alfil, además del truco frecuente y de dama contra dama.</span></li><li class="text-brand-600 dark:text-brand-300">Torre contra peón (I): contar, cortar y rodear<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 21–24: Resolver el final de torre contra peón contando tiempos, con el corte horizontal, el rodeo del rey y el jaque que gana un tiempo.</span></li><li class="text-brand-600 dark:text-brand-300">Torre contra peón (II): peones de caballo y torre<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 25–29: Conocer las excepciones con la torre delante del peón, el peón de caballo y el peón de torre (empuje desde atrás y lateral, ahogado en el rincón) y cuándo el peón gana a la torre.</span></li><li class="text-brand-600 dark:text-brand-300">Torre contra dos peones<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 30–32: Evaluar la lucha de la torre contra dos peones ligados según la participación de los reyes: posición límite, zugzwang, gancho de cola y serie de jaques.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 4 · Piezas menores con peones</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">Alfil contra alfil, alfil contra caballo y los alfiles de distinto color.</p><ol start="13" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Alfil y peón contra alfil del mismo color<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 33–36: Ganar expulsando al alfil de las diagonales y defender con la oposición por detrás, las diagonales cortas y la defensa frontal.</span></li><li class="text-brand-600 dark:text-brand-300">Alfil contra caballo con un peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 37–40: Saber cuándo caballo y peón ganan al alfil, cuándo alfil y peón ganan al caballo y cómo controlar al caballo desde una posición precaria.</span></li><li class="text-brand-600 dark:text-brand-300">Alfiles de distinto color (I): peones ligados<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 41–46: Valorar los peones ligados contra alfil de distinto color: la sexta fila, la quinta, el cajón, los peones separados por una columna y el método ganador.</span></li><li class="text-brand-600 dark:text-brand-300">Alfiles de distinto color (II): peones separados<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 47–51: Decidir con peones separados según su distancia y sus columnas: caballo y central, central y torre, alfil y caballo, y la regla de las tres columnas.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 5 · Finales de torre</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">El final más frecuente: Philidor, Lucena, los cortes y la defensa de Vancura.</p><ol start="17" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Philidor, Lucena y el lado largo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 52–55: Dominar las dos posiciones madre del final de torre: la defensa Philidor y el puente de Lucena, más el lado largo y la defensa de primera fila.</span></li><li class="text-brand-600 dark:text-brand-300">Kling y Horwitz y el peón central en sexta<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 56–58: Defender cuando ya no es posible Philidor: la torre por detrás y la efectividad lejana con el peón en sexta.</span></li><li class="text-brand-600 dark:text-brand-300">Los cortes: vertical y horizontal<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 59–64: Aplicar los cortes del rey por columnas y por filas, el método combinado de Grigoriev y distinguir el corte horizontal perfecto, imperfecto y aparente.</span></li><li class="text-brand-600 dark:text-brand-300">El peón de torre y la defensa de Vancura<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 65–68: Manejar el peón de torre en séptima con la torre delante, la defensa de Vancura con el peón en sexta y los casos con el rey delante o apoyando.</span></li><li class="text-brand-600 dark:text-brand-300">Torre y dos peones contra torre (I)<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 69–72: Conocer los peones doblados, los peones de torre y alfil con el rey cortado en octava y el peón de alfil en quinta.</span></li><li class="text-brand-600 dark:text-brand-300">Torre y dos peones contra torre (II)<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 73–76: Aplicar el sistema defensivo Gligoric-Smyslov, defender contra peones ligados bloqueados, la torre atascada en séptima y Vancura contra dos peones.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 6 · Otras relaciones de material</h3><p class="text-sm text-brand-500 dark:text-brand-400 mb-2">El mate de alfil y caballo, torre y alfil contra torre y dama contra torre y peón.</p><ol start="23" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">El mate de alfil y caballo y torre y alfil contra torre<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 93–96: Dar el mate de alfil y caballo con el método clásico y defender torre y alfil contra torre con Cochrane y la segunda fila, conociendo la maniobra de Philidor.</span></li><li class="text-brand-600 dark:text-brand-300">Torre y peón contra alfil y dama contra torre y peón<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Finales 97–100: Reconocer las fortalezas de alfil contra torre y peón y las de torre y peón contra dama, y el método de la dama para romperlas.</span></li></ol></div><div><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Para terminar</h3><ol start="25" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold"><li class="text-brand-600 dark:text-brand-300">Examen final<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">32 posiciones de partidas y estudios que combinan varios finales del curso. La prueba de que los 100 finales están aprendidos.</span></li><li class="text-brand-600 dark:text-brand-300">Apéndice: fortalezas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Diecinueve fortalezas que conviene conocer y la lista de resultados con relaciones de material poco frecuentes.</span></li></ol></div></div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada lección desarrollada por completo: resumen y reglas de cada final, sus posiciones con la línea principal jugada a jugada, práctica contra el motor (Stockfish, en tu propio navegador), presentación y PDF de ejercicios para imprimir.</p>
+
+            <div id="course-content-body" data-course="los-100-finales" class="space-y-8">
+                <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
+            </div>
+
+            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
+                <p class="text-white font-serif text-lg font-bold mb-2">¿Listo para empezar?</p>
+                <p class="text-brand-200 text-sm mb-4">Inscríbete y accede a las 24 lecciones de este curso, con seguimiento de tus entrenadores.</p>
+                <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme por WhatsApp →</a>
+            </div>
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="finales-practicos.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Finales Prácticos"><span aria-hidden="true">←</span> Finales Prácticos</a>
+                <a href="calculo-y-visualizacion.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Cálculo y Visualización">Cálculo y Visualización <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/entreno-progress.js"></script>
+    <script src="../js/shared-engine.js"></script>
+    <script src="../js/practice-engine.js"></script>
+    <script src="../js/finales-100.js"></script>
+    <script>
+        (function () {
+            var contentBody = document.getElementById("course-content-body");
+            var courseSlug = contentBody.dataset.course;
+            var contentUrl = "protegido/" + courseSlug + ".html";
+
+            fetch(contentUrl, { credentials: "same-origin" })
+                .then(function (r) {
+                    if (r.status === 403) throw new Error("no_session");
+                    if (!r.ok) throw new Error("no_content");
+                    return r.text();
+                })
+                .then(function (html) {
+                    contentBody.innerHTML = html;
+                    if (window.Finales100) window.Finales100.init(contentBody);
+                    // Enlace directo a una lección (#lec-...): se abre sola.
+                    if (location.hash && location.hash.indexOf("#lec-") === 0) {
+                        var d = document.getElementById(location.hash.slice(1));
+                        if (d && d.tagName === "DETAILS") { d.open = true; d.scrollIntoView(); }
+                    }
+                })
+                .catch(function (err) {
+                    if (err && err.message === "no_session") {
+                        var next = encodeURIComponent("cursos/" + courseSlug + ".html");
+                        contentBody.innerHTML =
+                            '<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-5">' +
+                            '<p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Inicia sesión en Academia para ver el contenido completo de este curso: las 100 posiciones con su línea principal, la práctica contra el motor, la presentación y el PDF de ejercicios de cada lección.</p>' +
+                            '<a href="../login.html?next=' + next + '" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg transition-colors">Iniciar sesión →</a>' +
+                            '</div>';
+                    } else {
+                        contentBody.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
+                    }
+                });
+        })();
+</script>
+</body>
+</html>

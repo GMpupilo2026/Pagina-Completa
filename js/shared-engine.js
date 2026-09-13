@@ -41,7 +41,15 @@
 (function () {
   "use strict";
 
-  const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
+  // Ruta relativa a ESTE archivo (no a la página): así el motor también funciona desde
+  // páginas en subcarpetas (cursos/los-100-finales.html) y no sólo desde la raíz.
+  const STOCKFISH_URL = (function () {
+    try {
+      const me = document.currentScript && document.currentScript.src;
+      if (me) return new URL("vendor/stockfish/stockfish-nnue-16-single.js", me).href;
+    } catch (e) {}
+    return "js/vendor/stockfish/stockfish-nnue-16-single.js";
+  })();
 
   let engine = null;
   let engineInitPromise = null;
