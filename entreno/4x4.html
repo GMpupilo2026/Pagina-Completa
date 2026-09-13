@@ -540,6 +540,26 @@
       </div>
       <div class="progress-bar"><div id="solo-progress-fill" style="width:0%"></div></div>
 
+      <!-- El encabezado "Piezas" + el tablero van ANTES de las indicaciones y del
+           panel de comandos (más abajo): la idea es que un ciego, apenas entra a un
+           ejercicio, llegue directo acá y con las flechas ya pueda consultar la
+           posición, en vez de tener que escuchar toda la instrucción y el recuadro
+           de jugada primero (ver loadPuzzleAt, que enfoca #piezas-heading en modo
+           adaptado). Las instrucciones siguen disponibles justo después, un
+           encabezado más allá, para quien las necesite. -->
+      <div class="board-pos-wrap">
+        <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
+        <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
+        <div id="win-overlay">
+          <div class="win-title">¡MUY BIEN!</div>
+          <div class="win-sub">Nivel completado</div>
+          <div class="board-controls">
+            <button class="bctrl" id="win-retry">Reintentar</button>
+            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
+          </div>
+        </div>
+      </div>
+
       <p id="board-instructions" class="sr-only">
         Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d
         y las filas 1 a 4 (por ejemplo, a1). Usa las flechas del teclado para moverte entre casillas.
@@ -573,19 +593,6 @@
         <button type="button" id="repeat-captures-btn" class="bctrl">🔊 Repetir capturas</button>
         <div id="repeat-captures-status" role="status" aria-live="polite" class="sr-only"></div>
         <p class="shortcuts-help">Con una casilla del tablero enfocada: i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas anteriores/siguientes).</p>
-      </div>
-
-      <div class="board-pos-wrap">
-        <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
-        <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
-        <div id="win-overlay">
-          <div class="win-title">¡MUY BIEN!</div>
-          <div class="win-sub">Nivel completado</div>
-          <div class="board-controls">
-            <button class="bctrl" id="win-retry">Reintentar</button>
-            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
-          </div>
-        </div>
       </div>
 
       <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
@@ -704,6 +711,20 @@ function puzzleForExercise(ex){
   const list = PUZZLES[CATEGORY_KEY[ex.category]] || [];
   return list.find(p => p.number === ex.number) || null;
 }
+/* La categoría jugable anterior a `cat` en CATEGORY_ORDER (o null si `cat` es la
+   primera, o si ninguna de las anteriores tiene ejercicios jugables todavía —
+   ver `hasPuzzles` en showCategory). Se usa para que "Anterior" pueda cruzar de
+   categoría: es solo para VER un ejercicio ya visto, no importa si esa
+   categoría anterior está resuelta del todo o no. */
+function previousPlayableCategory(cat){
+  const idx = CATEGORY_ORDER.indexOf(cat);
+  for(let i = idx - 1; i >= 0; i--){
+    const prevCat = CATEGORY_ORDER[i];
+    const list = EXERCISES.filter(e => e.category === prevCat).sort((a,b) => a.number - b.number);
+    if(list.length && puzzleForExercise(list[0])) return { cat: prevCat, list };
+  }
+  return null;
+}
 function isUnlocked(ex, list){
   const puz = puzzleForExercise(ex);
   if(!puz) return true; /* sin datos jugables: no aplica bloqueo, se ve como imagen */
@@ -747,13 +768,17 @@ function buildTabs(){
   });
 }
 
-function showCategory(cat){
-  currentCategory = cat;
+function setActiveTab(cat){
   document.querySelectorAll('.tab').forEach((btn,i) => {
     const active = CATEGORY_ORDER[i] === cat;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
+}
+
+function showCategory(cat){
+  currentCategory = cat;
+  setActiveTab(cat);
   currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
   document.getElementById('visible-count').textContent = currentList.length;
 
@@ -1242,7 +1267,10 @@ function updatePuzzleNavButtons(){
   const prevBtn = document.getElementById('board-prev-puzzle');
   const nextBtn = document.getElementById('board-next-puzzle');
   const winNextBtn = document.getElementById('win-next');
-  prevBtn.disabled = boardExIndex <= 0;
+  // "Anterior" no se limita a la categoría actual: si ya es el primer ejercicio
+  // de la categoría, sigue habilitado mientras haya una categoría anterior para
+  // cruzar a su último ejercicio (ver el click de board-prev-puzzle más abajo).
+  prevBtn.disabled = boardExIndex <= 0 && !previousPlayableCategory(currentCategory);
   const ex = boardExList[boardExIndex];
   const puz = puzzleForExercise(ex);
   const solvedNow = puz && isSolved(puz.id);
@@ -1708,7 +1736,18 @@ document.getElementById('board-reset').addEventListener('click', () => {
 });
 document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('board-prev-puzzle').addEventListener('click', () => {
-  if(boardExIndex > 0) loadPuzzleAt(boardExIndex - 1);
+  if(boardExIndex > 0){
+    loadPuzzleAt(boardExIndex - 1);
+    return;
+  }
+  // Primer ejercicio de la categoría: cruzar a la categoría anterior y mostrar
+  // su último ejercicio (solo para ver — no hace falta tenerla resuelta).
+  const prev = previousPlayableCategory(currentCategory);
+  if(!prev) return;
+  currentCategory = prev.cat;
+  setActiveTab(prev.cat);
+  boardExList = prev.list;
+  loadPuzzleAt(prev.list.length - 1);
 });
 document.getElementById('board-next-puzzle').addEventListener('click', () => {
   if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);
