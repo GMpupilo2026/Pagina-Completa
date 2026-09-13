@@ -256,6 +256,58 @@
         }
 
         /* ============================================================
+           Segundo intento antes de rendirse y preguntar: comparar el texto
+           crudo del OCR contra las jugadas LEGALES de la posición actual
+           (game.moves(), normalmente 20-40 en una posición típica) por
+           distancia de edición. En una planilla real, casi toda jugada que
+           tryParseMove() no entendió es en realidad una jugada legal con
+           una letra mal leída (ej. "Nf3" leído como "Nf8", "Rxd5" como
+           "Bxd5") — y como el universo de jugadas posibles en cada momento
+           es chico, alcanza con quedarse con la más parecida, SIN
+           preguntar, cuando es claramente la única candidata cercana.
+           Si dos jugadas legales quedan empatadas o casi empatadas en
+           parecido, no hay forma honesta de adivinar cuál es — ahí sí hace
+           falta preguntar (que es exactamente lo que se busca: solo
+           consultar cuando hay una duda real, no cada vez que el texto no
+           calzó perfecto). */
+        function levenshtein(a, b) {
+            const m = a.length, n = b.length;
+            const dp = new Array(n + 1);
+            for (let j = 0; j <= n; j++) dp[j] = j;
+            for (let i = 1; i <= m; i++) {
+                let prev = dp[0];
+                dp[0] = i;
+                for (let j = 1; j <= n; j++) {
+                    const tmp = dp[j];
+                    dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j], dp[j - 1]);
+                    prev = tmp;
+                }
+            }
+            return dp[n];
+        }
+
+        function fuzzyMatchLegalMove(game, raw) {
+            const cleaned = String(raw || "").replace(/^\d+\.(\.\.)?\s*/, "").replace(/\s+/g, "").toLowerCase();
+            if (!cleaned) return null;
+            const legal = game.moves();
+            if (!legal.length) return null;
+
+            let best = null, bestDist = Infinity, secondDist = Infinity;
+            legal.forEach((san) => {
+                const d = levenshtein(cleaned, san.toLowerCase());
+                if (d < bestDist) { secondDist = bestDist; bestDist = d; best = san; }
+                else if (d < secondDist) { secondDist = d; }
+            });
+
+            // Umbral relativo al largo del texto (una jugada corta como "e4" tolera menos
+            // errores que una larga como "Rxd5+"), y exige que la mejor candidata destaque
+            // claramente de la segunda mejor — si no, es genuinamente ambiguo.
+            const threshold = Math.max(1, Math.round(cleaned.length * 0.4));
+            if (bestDist <= threshold && bestDist < secondDist) return best;
+            return null;
+        }
+
+        /* ============================================================
            Reconstrucción del orden real de las jugadas a partir de las
            palabras que devuelve Tesseract (cada una con su posición en la
            imagen). Una planilla típica tiene una fila por número de jugada,
@@ -297,6 +349,46 @@
         }
 
         /* ============================================================
+           Lectura del OCR: se ajusta Tesseract para que le cueste menos
+           confundirse, en vez de dejarlo con la configuración genérica
+           (pensada para leer cualquier texto en cualquier idioma):
+           - tessedit_char_whitelist: una planilla de ajedrez solo usa un
+             puñado de caracteres (columnas a-h, filas 1-8, letras de pieza
+             en inglés o español, x/+/#/=/-/.). Decirle a Tesseract que NO
+             existen las demás letras del alfabeto evita buena parte de las
+             confusiones típicas (una "N" leída como "M", una "l" como "1").
+           - tessedit_pageseg_mode "11" (texto disperso): por defecto
+             Tesseract asume un documento con párrafos y trata de armar
+             líneas de lectura — en una planilla con casillas/columnas
+             separadas eso rompe el texto de formas raras. "Disperso" busca
+             palabras sueltas sin asumir esa estructura, que es justo lo que
+             hace falta acá (el orden real ya se reconstruye aparte, en
+             reconstructMoveTokens, a partir de la posición de cada palabra).
+           Si por lo que sea esta configuración más fina falla (versión de
+           Tesseract distinta a la esperada, etc.), se cae de vuelta a la
+           forma simple — que sí o sí funciona, aunque sin el afinado — en
+           vez de dejar a la persona sin poder leer nada. */
+        async function runOcr(file, logger) {
+            const CHAR_WHITELIST = "abcdefghKQRBNOTCADx+#=-.0123456789";
+            try {
+                const worker = await Tesseract.createWorker({ logger });
+                await worker.loadLanguage("spa");
+                await worker.initialize("spa");
+                await worker.setParameters({
+                    tessedit_char_whitelist: CHAR_WHITELIST,
+                    tessedit_pageseg_mode: "11",
+                });
+                const { data } = await worker.recognize(file);
+                await worker.terminate();
+                return data;
+            } catch (err) {
+                console.warn("Lectura afinada de Tesseract falló, usando la lectura simple:", err);
+                const { data } = await Tesseract.recognize(file, "spa", { logger });
+                return data;
+            }
+        }
+
+        /* ============================================================
            Estado del procesamiento jugada por jugada
            ============================================================ */
         let game = null;
@@ -316,6 +408,11 @@
             processBoard.loadMoves(game.history());
         }
 
+        // Jugadas que se aceptaron por parecido con una jugada legal (fuzzyMatchLegalMove),
+        // no porque el texto del OCR haya calzado tal cual — se marcan con "≈" en la lista
+        // para poder repasarlas de un vistazo sin haber tenido que confirmarlas una por una.
+        let guessedPlies = new Set();
+
         function updateMoveList() {
             const list = document.getElementById("move-list");
             list.innerHTML = "";
@@ -323,7 +420,10 @@
             for (let i = 0; i < history.length; i += 2) {
                 const li = document.createElement("li");
                 const num = i / 2 + 1;
-                li.textContent = `${num}. ${history[i]}` + (history[i + 1] ? `  ${history[i + 1]}` : "");
+                const whiteMove = (guessedPlies.has(i) ? "≈" : "") + history[i];
+                const blackMove = history[i + 1] ? "  " + (guessedPlies.has(i + 1) ? "≈" : "") + history[i + 1] : "";
+                li.textContent = `${num}. ${whiteMove}${blackMove}`;
+                if (guessedPlies.has(i) || guessedPlies.has(i + 1)) li.title = "≈ = adivinada por parecido con una jugada legal, revisala si querés";
                 list.appendChild(li);
             }
             list.scrollTop = list.scrollHeight;
@@ -340,6 +440,7 @@
             game = new Chess();
             tokens = rawTokens;
             tokenIndex = 0;
+            guessedPlies = new Set();
             document.getElementById("process-section").classList.remove("hidden");
             document.getElementById("result-section").classList.add("hidden");
             document.getElementById("move-list").innerHTML = "";
@@ -354,6 +455,20 @@
             updateProcessStatus(`Leyendo jugada ${moveNumber} de las ${side}: "${raw}"…`);
             const move = tryParseMove(game, raw);
             if (move) {
+                tokenIndex++;
+                updateBoardPreview();
+                updateMoveList();
+                processNext();
+                return;
+            }
+            // El texto no calzó con ninguna variante de notación tal cual — antes de
+            // interrumpir para preguntar, probar si hay una única jugada legal claramente
+            // parecida (letra mal leída por el OCR, típico caso). Si la hay, se usa sola,
+            // sin preguntar — la idea es molestar solo cuando de verdad hay duda.
+            const guess = fuzzyMatchLegalMove(game, raw);
+            if (guess) {
+                guessedPlies.add(game.history().length);
+                game.move(guess);
                 tokenIndex++;
                 updateBoardPreview();
                 updateMoveList();
@@ -418,7 +533,10 @@
 
         function finishProcessing() {
             const pgn = game.pgn();
-            updateProcessStatus(`Listo — ${game.history().length} jugadas leídas.`);
+            const guessNote = guessedPlies.size
+                ? ` (${guessedPlies.size} adivinada${guessedPlies.size === 1 ? "" : "s"} por parecido — están marcadas con "≈" en la lista, conviene repasarlas)`
+                : "";
+            updateProcessStatus(`Listo — ${game.history().length} jugadas leídas${guessNote}.`);
             document.getElementById("pgn-output").value = pgn;
             document.getElementById("result-section").classList.remove("hidden");
             document.getElementById("save-status").textContent = "";
@@ -465,15 +583,14 @@
                 "initializing api": "Preparando…",
                 "recognizing text": "Leyendo la planilla…",
             };
+            const logger = (m) => {
+                const pct = Math.round((m.progress || 0) * 100);
+                progressBar.style.width = pct + "%";
+                progressText.textContent = (STEP_LABEL[m.status] || m.status || "Procesando…") + ` (${pct}%)`;
+            };
 
             try {
-                const { data } = await Tesseract.recognize(selectedFile, "spa", {
-                    logger: (m) => {
-                        const pct = Math.round((m.progress || 0) * 100);
-                        progressBar.style.width = pct + "%";
-                        progressText.textContent = (STEP_LABEL[m.status] || m.status || "Procesando…") + ` (${pct}%)`;
-                    },
-                });
+                const data = await runOcr(selectedFile, logger);
                 const moveTokens = reconstructMoveTokens(data.words);
                 progressWrap.classList.add("hidden");
                 if (!moveTokens.length) {
