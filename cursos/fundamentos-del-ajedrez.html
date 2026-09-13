@@ -83,8 +83,8 @@
                     <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">12 lecciones</strong> · Principiante</p>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Video, ejercicios interactivos y partidas comentadas por nuestros entrenadores.</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">💬 Inscribirme →</a>
+                <div class="hidden items-center gap-2" id="course-access-cta" hidden>
+                    <a href="../login.html?next=cursos/fundamentos-del-ajedrez.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Iniciar sesión →</a>
                 </div>
             </div>
 
@@ -126,10 +126,10 @@
                 <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
             </div>
 
-            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center">
-                <p class="text-white font-serif text-lg font-bold mb-2">¿Listo para empezar?</p>
-                <p class="text-brand-200 text-sm mb-4">Inscríbete y accede a las 12 lecciones de este curso, con seguimiento de tus entrenadores.</p>
-                <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme por WhatsApp →</a>
+            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
+                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
+                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las 12 lecciones completas de este curso, con sus recursos descargables.</p>
+                <a href="../login.html?next=cursos/fundamentos-del-ajedrez.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
             </div>
 
             <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
@@ -142,32 +142,8 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
-    <script>
-        (function () {
-            var contentBody = document.getElementById("course-content-body");
-            var courseSlug = contentBody.dataset.course;
-            var contentUrl = "protegido/" + courseSlug + ".html";
-
-            fetch(contentUrl, { credentials: "same-origin" })
-                .then(function (r) {
-                    if (r.status === 403) throw new Error("no_session");
-                    if (!r.ok) throw new Error("no_content");
-                    return r.text();
-                })
-                .then(function (html) { contentBody.innerHTML = html; })
-                .catch(function (err) {
-                    if (err && err.message === "no_session") {
-                        var next = encodeURIComponent("cursos/" + courseSlug + ".html");
-                        contentBody.innerHTML =
-                            '<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-5">' +
-                            '<p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Inicia sesión en Academia para ver el contenido completo de este curso: video, presentación y PDF de ejercicios de cada lección.</p>' +
-                            '<a href="../login.html?next=' + next + '" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg transition-colors">Iniciar sesión →</a>' +
-                            '</div>';
-                    } else {
-                        contentBody.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
-                    }
-                });
-        })();
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/curso-acceso.js"></script>
 </body>
 </html>
