@@ -54,6 +54,10 @@ DIRS_ROOK = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 DIRS_BISHOP = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
 DIRS_QUEEN = DIRS_ROOK + DIRS_BISHOP
 KNIGHT = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
+# El peón no tiene bando, pero sí un sentido fijo: captura solo hacia "arriba"
+# (fila menor, como si fuera blanco), nunca hacia abajo — igual que en
+# entreno/4x4.html (DIRS_PAWN) y en generar_ejercicios.py (origins).
+DIRS_PAWN = [(-1, -1), (-1, 1)]
 
 
 def slide_targets(r, c, dirs, board):
@@ -83,7 +87,7 @@ def capture_targets(piece, r, c, board):
         return [(r + dr, c + dc) for dr, dc in DIRS_QUEEN
                 if 0 <= r + dr < 4 and 0 <= c + dc < 4 and (r + dr, c + dc) in board]
     if piece == 'P':
-        return [(r + dr, c + dc) for dr, dc in DIRS_BISHOP
+        return [(r + dr, c + dc) for dr, dc in DIRS_PAWN
                 if 0 <= r + dr < 4 and 0 <= c + dc < 4 and (r + dr, c + dc) in board]
     return []
 

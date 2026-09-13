@@ -546,7 +546,8 @@
         Pulsa Intro o espacio sobre una casilla con pieza para seleccionarla; las casillas donde esa
         pieza puede capturar se anuncian y se marcan. Vuelve a pulsar Intro o espacio sobre una de esas
         casillas para mover y capturar. Cada movimiento debe ser una captura; no existe la regla de
-        jaque. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
+        jaque. El peón siempre captura hacia arriba (como si fuera blanco), nunca hacia abajo ni al
+        costado. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
         arriba de la página para escribir jugadas y comandos, y para atajos de teclado adicionales
         pensados para lectores de pantalla.
       </p>
@@ -856,6 +857,15 @@ const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
 const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
 const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
 const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+// El peón no tiene bando en este modo, pero SÍ tiene un sentido fijo: captura
+// solo hacia "arriba" (fila menor, como si fuera blanco), nunca hacia abajo
+// ni al costado — igual que un peón real, que tampoco puede retroceder.
+// Antes capturaba en las 4 diagonales (DIRS_BISHOP completo), lo que producía
+// posiciones que, jugadas como un peón de ajedrez de verdad, no tenían
+// solución real (ver entreno/data/reorder_por_dificultad.py y
+// generar_ejercicios.py, que aplican la misma regla al generar y validar
+// los ejercicios).
+const DIRS_PAWN = [[-1,-1],[-1,1]];
 
 function boardKey(r,c){ return r + ',' + c; }
 
@@ -883,7 +893,7 @@ function captureTargets(piece, r, c, board){
       return DIRS_QUEEN.map(([dr,dc]) => [r+dr,c+dc])
         .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
     case 'P':
-      return DIRS_BISHOP.map(([dr,dc]) => [r+dr,c+dc])
+      return DIRS_PAWN.map(([dr,dc]) => [r+dr,c+dc])
         .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
     default: return [];
   }
@@ -1522,7 +1532,8 @@ const HELP_SECTIONS = [
       'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
       'También en notación algebraica, solo con la casilla de destino: T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey ' +
       '(sin letra es Peón) — por ejemplo "Ta3" o "Txa3" (la "x" es opcional: toda jugada aquí es una captura). ' +
-      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar.',
+      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar. ' +
+      'El peón siempre captura hacia arriba (como si fuera blanco): nunca hacia abajo ni al costado.',
   },
   {
     title: 'Comandos',
