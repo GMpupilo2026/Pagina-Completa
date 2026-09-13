@@ -34,6 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
+    <script src="js/board-color-themes.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
@@ -122,6 +123,18 @@
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tablero</h2>
                 <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige con qué piezas quieres ver los tableros de Clases (Sesión en vivo). Es solo para tu pantalla — nadie más lo nota, y no cambia la partida.</p>
                 <div id="board-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Tema de piezas del tablero"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Colores del tablero</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige de qué color son las casillas claras y oscuras en todos los tableros del sitio (Clases, Tablero, Crazyhouse, Entreno). Es solo para tu pantalla.</p>
+                <div id="board-color-theme-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Colores del tablero"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Colores del tablero en Modo Adaptado</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Con Modo Adaptado activado, el tablero usa este segundo par de colores en vez de los de arriba — pensados para más contraste. "Alto contraste" (blanco y negro) es el que más ayuda a baja visión.</p>
+                <div id="board-color-theme-adaptive-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Colores del tablero en Modo Adaptado"></div>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
@@ -227,6 +240,59 @@
             });
         }
         renderBoardThemeGrid();
+
+        // ---------- Colores del tablero, normal y Modo Adaptado (preferencia local,
+        // ver js/board-color-themes.js) — mismo patrón visual que el tema de piezas de
+        // arriba, pero la "vista previa" acá son las 2 casillas del propio tema (no hace
+        // falta un tablero real: el color completo ya se ve con solo 2 cuadraditos). ----
+        function buildColorPreviewHTML(theme) {
+            return (
+                '<span class="theme-preview-row" aria-hidden="true">' +
+                '<span class="theme-preview-sq" style="background:' + theme.light + '"></span>' +
+                '<span class="theme-preview-sq" style="background:' + theme.dark + '"></span>' +
+                "</span>"
+            );
+        }
+
+        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent) {
+            const grid = document.getElementById(gridId);
+            if (!grid || !window.BoardColorThemes) return;
+            const current = getCurrent();
+            grid.innerHTML = "";
+            Object.keys(themes).forEach((id) => {
+                const theme = themes[id];
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = id === current ? THEME_ACTIVE : THEME_INACTIVE;
+                btn.setAttribute("role", "radio");
+                btn.setAttribute("aria-checked", id === current ? "true" : "false");
+                btn.innerHTML =
+                    buildColorPreviewHTML(theme) +
+                    '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
+                btn.addEventListener("click", () => {
+                    setCurrent(id);
+                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent);
+                });
+                grid.appendChild(btn);
+            });
+        }
+
+        function renderBoardColorThemeGrids() {
+            if (!window.BoardColorThemes) return;
+            renderColorThemeGrid(
+                "board-color-theme-grid",
+                window.BoardColorThemes.THEMES,
+                window.BoardColorThemes.getPreference,
+                window.BoardColorThemes.setPreference
+            );
+            renderColorThemeGrid(
+                "board-color-theme-adaptive-grid",
+                window.BoardColorThemes.ADAPTIVE_THEMES,
+                window.BoardColorThemes.getAdaptivePreference,
+                window.BoardColorThemes.setAdaptivePreference
+            );
+        }
+        renderBoardColorThemeGrids();
 
         // ---------- Voz de Modo Speech (preferencia local, ver js/blind-notation.js) ----------
         function populateVoiceSelect() {

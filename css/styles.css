@@ -1,4 +1,19 @@
 /* ===== Ajedrez Integral — Custom Styles ===== */
+/* Colores de las casillas del tablero, elegibles en Configuración (ver
+   js/board-color-themes.js). Los valores de acá son el tema "Clásico" — el
+   mismo azul grisáceo de siempre — y sirven de resguardo (fallback) si por
+   lo que sea ese script no llegó a correr todavía: ningún tablero del sitio
+   debería quedar con casillas transparentes por depender de una variable sin
+   definir. board-color-themes.js sobrescribe estos valores en <html> según
+   la preferencia guardada, así que todo tablero que use var(--sq-light) /
+   var(--sq-dark) (o las variantes -adaptive de Modo Adaptado) cambia de
+   color sin que haga falta tocar su propio CSS o JS. */
+:root {
+  --sq-light: #f0f4f8;
+  --sq-dark: #486581;
+  --sq-light-adaptive: #ffffff;
+  --sq-dark-adaptive: #d946ef;
+}
 html { scroll-behavior: smooth; }
 body { -webkit-font-smoothing: antialiased; }
 #header.scrolled { height: auto; }
@@ -89,8 +104,8 @@ body { -webkit-font-smoothing: antialiased; }
   font-size: 22px;
   flex-shrink: 0;
 }
-.theme-preview-sq-light { background: #f0f4f8; }
-.theme-preview-sq-dark { background: #486581; }
+.theme-preview-sq-light { background: var(--sq-light); }
+.theme-preview-sq-dark { background: var(--sq-dark); }
 #move-history::-webkit-scrollbar { width: 6px; }
 #move-history::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 3px; }
 #move-history::-webkit-scrollbar-thumb { background: #9fb3c8; border-radius: 3px; }

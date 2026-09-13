@@ -139,8 +139,8 @@
     max-width:440px; margin:0 auto;
   }
   .sq{position:relative; border:none; padding:0; cursor:pointer; transition:background .1s;}
-  .sq.light{background:#f0f4f8;}
-  .sq.dark{background:#486581;}
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
   .sq.flash-ok{background:color-mix(in srgb, var(--ok) 65%, transparent) !important;}
   .sq.flash-bad{background:color-mix(in srgb, var(--bad) 65%, transparent) !important;}
 
@@ -161,6 +161,7 @@
 <script src="../js/supabase-client.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
+    <script src="../js/board-color-themes.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">

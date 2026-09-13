@@ -213,7 +213,8 @@
         const light = isLightSquare(square);
         let cls = "flex items-center justify-center select-none relative transition-colors w-full h-full border-0 p-0 m-0 text-3xl sm:text-4xl md:text-5xl ";
         cls += canAct ? "cursor-pointer " : "cursor-default ";
-        cls += light ? "bg-brand-100 " : "bg-brand-500 ";
+        // Color de casilla elegible en Configuración (ver js/board-color-themes.js).
+        cls += light ? "bg-[var(--sq-light)] " : "bg-[var(--sq-dark)] ";
         if (this.selected && this.selected.kind === "square" && this.selected.square === square) {
           cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
         }
