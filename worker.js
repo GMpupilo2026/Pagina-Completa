@@ -1,34 +1,20 @@
-// Worker que protege de verdad el contenido de pago de los cursos.
+// Worker del sitio (Cloudflare Workers Assets).
 //
-// El sitio sigue siendo estático (Cloudflare Workers Assets), pero este script
-// se ejecuta antes de servir los archivos y bloquea, en el servidor, lo que
-// antes solo se ocultaba con CSS/JS en el navegador:
-//   1. Los fragmentos de contenido completo de cada lección
-//      (cursos/protegido/<curso>.html).
-//   2. Las presentaciones y PDF de ejercicios (cursos/recursos/**).
+// Desde septiembre de 2026 los cursos son ABIERTOS: cualquier visitante ve el
+// temario, el contenido completo de las lecciones (cursos/protegido/<curso>.html,
+// la carpeta conserva el nombre por historia), las presentaciones y los PDF
+// (cursos/recursos/**) sin iniciar sesión ni clave. Este Worker ya no bloquea
+// ninguna ruta de cursos: sólo agrega las cabeceras de seguridad a las
+// respuestas que arma a mano.
 //
-// Las páginas de curso en sí (cursos/<curso>.html) — con su temario, título y
-// descripción — son públicas: cualquier visitante puede verlas sin iniciar
-// sesión, para que sirvan también de material de difusión de la Academia.
-// Solo el contenido real de las lecciones (arriba) exige sesión.
+// Se conserva /api/curso-auth-session (canjea una sesión de Academia por la
+// cookie firmada `curso_ok`) por compatibilidad con navegadores que aún tengan
+// la cookie o con enlaces viejos; ya no condiciona nada. COURSE_PASSWORD sigue
+// existiendo sólo como llave interna para firmar esa cookie.
 //
-// El acceso a ese contenido ya no usa una contraseña compartida aparte: basta
-// con tener una sesión válida de Academia (la misma cuenta de Clases).
-// /api/curso-auth-session recibe el access_token de esa sesión, lo verifica
-// contra la API de Supabase (GET /auth/v1/user) y, si es válido, entrega la
-// misma cookie firmada que antes daba la contraseña — el resto del
-// mecanismo (cookie HMAC, cursos/protegido/**, cursos/recursos/**) no
-// cambió. La variable de entorno COURSE_PASSWORD ya no se compara con nada
-// que escriba un visitante: sigue existiendo solo como llave interna para
-// firmar la cookie (así no hace falta dar de alta un secreto nuevo en
-// Cloudflare para este cambio).
-//
-// IMPORTANTE: por defecto, Cloudflare sirve un archivo estático que ya
-// existe (como cursos/protegido/<curso>.html) directamente desde su CDN de
-// assets, SIN pasar por este Worker — este fetch() nunca se ejecuta para esas
-// rutas salvo que wrangler.jsonc declare "run_worker_first" para ellas. Ver
-// ahí el arreglo (bug real detectado: el bloqueo no se aplicaba en
-// producción porque faltaba esa opción).
+// wrangler.jsonc mantiene "run_worker_first" para /cursos/* y /api/*: así las
+// respuestas de esas rutas siguen pasando por aquí (cabeceras) y, si algún día
+// vuelve a hacer falta restringir algo, el punto de entrada ya existe.
 
 const COOKIE_NAME = "curso_ok";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 60; // 60 días
@@ -65,17 +51,6 @@ function withSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
-function timingSafeEqual(a, b) {
-  const enc = new TextEncoder();
-  const bufA = enc.encode(String(a ?? ""));
-  const bufB = enc.encode(String(b ?? ""));
-  const len = Math.max(bufA.length, bufB.length, 1);
-  let mismatch = bufA.length === bufB.length ? 0 : 1;
-  for (let i = 0; i < len; i++) {
-    mismatch |= (bufA[i] || 0) ^ (bufB[i] || 0);
-  }
-  return mismatch === 0;
-}
 
 async function hmacHex(secret, message) {
   const enc = new TextEncoder();
@@ -86,29 +61,6 @@ async function hmacHex(secret, message) {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function getCookie(request, name) {
-  const header = request.headers.get("Cookie") || "";
-  for (const part of header.split(";")) {
-    const idx = part.indexOf("=");
-    if (idx === -1) continue;
-    if (part.slice(0, idx).trim() === name) return part.slice(idx + 1).trim();
-  }
-  return null;
-}
-
-async function hasValidCookie(request, env) {
-  if (!env.COURSE_PASSWORD) return false;
-  const cookie = getCookie(request, COOKIE_NAME);
-  if (!cookie) return false;
-  const expected = await hmacHex(env.COURSE_PASSWORD, SIGN_PAYLOAD);
-  return timingSafeEqual(cookie, expected);
-}
-
-// cursos/protegido/** (contenido completo) y cursos/recursos/** (pptx/pdf):
-// sin cookie válida, responden 403 directamente.
-function isProtectedPath(pathname) {
-  return pathname.startsWith("/cursos/protegido/") || pathname.startsWith("/cursos/recursos/");
-}
 
 function unlockCookieHeader() {
   return [
@@ -177,15 +129,7 @@ export default {
       return handleSessionAuth(request, env);
     }
 
-    if (isProtectedPath(url.pathname)) {
-      if (!(await hasValidCookie(request, env))) {
-        const response = withSecurityHeaders(new Response("Necesitas iniciar sesión en Academia para ver este contenido.", { status: 403 }));
-        response.headers.set("Content-Type", "text/plain; charset=utf-8");
-        return response;
-      }
-      return env.ASSETS.fetch(request);
-    }
-
+    // Cursos abiertos: cursos/protegido/** y cursos/recursos/** se sirven a todos.
     return env.ASSETS.fetch(request);
   },
 };
