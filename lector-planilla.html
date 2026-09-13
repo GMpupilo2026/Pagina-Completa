@@ -87,7 +87,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Lector de planilla 📝</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. Si alguna jugada no se lee bien, te la pregunto para que la escribas vos misma/o — así el PGN queda completo y listo para analizar.</p>
+            <p class="text-brand-500 dark:text-brand-400 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. El lector no se detiene a preguntar: cuando una jugada no se lee bien, elige sola la jugada legal más parecida y sigue de largo — al final revisás el PGN completo y corregís a mano lo que haga falta.</p>
 
             <!-- ---------- Paso 1: elegir imagen ---------- -->
             <div id="upload-section" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -133,28 +133,13 @@
                         <ol id="move-list" class="text-sm text-brand-600 dark:text-brand-300 space-y-0.5 max-h-56 overflow-y-auto pr-1"></ol>
                     </div>
                 </div>
-
-                <!-- Panel de aclaración: aparece cuando una jugada no se pudo leer/entender. -->
-                <div id="clarify-panel" class="hidden mt-5 bg-accent-500/10 border-2 border-accent-500 rounded-xl p-4">
-                    <p id="clarify-text" class="text-sm font-semibold text-brand-800 dark:text-white mb-2"></p>
-                    <div id="clarify-legal-moves" class="flex flex-wrap gap-1.5 mb-3"></div>
-                    <form id="clarify-form" class="flex flex-col sm:flex-row gap-2">
-                        <label for="clarify-input" class="sr-only">Escribí la jugada correcta</label>
-                        <input type="text" id="clarify-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder='Ej: Cf3, Txd5, O-O' class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
-                        <div class="flex gap-2">
-                            <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Confirmar</button>
-                            <button type="button" id="clarify-discard-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap" title="Usar cuando el texto encontrado no era en realidad una jugada (ruido, mancha, etc.)">No era una jugada</button>
-                        </div>
-                    </form>
-                    <p id="clarify-error" class="text-xs text-red-600 dark:text-red-400 mt-2"></p>
-                </div>
             </div>
 
             <!-- ---------- Paso 3: PGN final ---------- -->
             <div id="result-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">3. Tu PGN</h2>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Ya podés copiarlo, descargarlo, o guardarlo en la Caja de Compartir para revisarlo después junto con las partidas de clase.</p>
-                <textarea id="pgn-output" readonly rows="6" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500 mb-3"></textarea>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">El lector nunca se detiene a preguntar: cuando una jugada no calza con lo que dice la planilla, elige sola la jugada legal más parecida y sigue — esas quedan marcadas con "≈" en la lista de arriba. Por eso conviene repasar el PGN antes de guardarlo: el cuadro de abajo se puede editar a mano si hace falta corregir algo.</p>
+                <textarea id="pgn-output" rows="6" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500 mb-3"></textarea>
                 <div class="flex flex-wrap gap-2">
                     <button type="button" id="copy-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">📋 Copiar</button>
                     <button type="button" id="download-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">⬇️ Descargar .pgn</button>
@@ -256,20 +241,17 @@
         }
 
         /* ============================================================
-           Segundo intento antes de rendirse y preguntar: comparar el texto
-           crudo del OCR contra las jugadas LEGALES de la posición actual
-           (game.moves(), normalmente 20-40 en una posición típica) por
-           distancia de edición. En una planilla real, casi toda jugada que
-           tryParseMove() no entendió es en realidad una jugada legal con
-           una letra mal leída (ej. "Nf3" leído como "Nf8", "Rxd5" como
-           "Bxd5") — y como el universo de jugadas posibles en cada momento
-           es chico, alcanza con quedarse con la más parecida, SIN
-           preguntar, cuando es claramente la única candidata cercana.
-           Si dos jugadas legales quedan empatadas o casi empatadas en
-           parecido, no hay forma honesta de adivinar cuál es — ahí sí hace
-           falta preguntar (que es exactamente lo que se busca: solo
-           consultar cuando hay una duda real, no cada vez que el texto no
-           calzó perfecto). */
+           Segundo intento cuando tryParseMove() no entendió el texto tal
+           cual: en vez de detenerse a preguntar, se fuerza una lectura
+           comparando el texto crudo del OCR contra las jugadas LEGALES de
+           la posición actual (game.moves(), normalmente 20-40 en una
+           posición típica) por distancia de edición, y quedándose SIEMPRE
+           con la más parecida, sin excepción por forma o largo del texto
+           — la idea es que el lector tenga que "entender sí o sí" la
+           posición, nunca quedarse esperando una respuesta. La única vez
+           que no se fuerza nada es cuando ya no queda ninguna jugada legal
+           (partida terminada) o no hay ningún texto que comparar (palabra
+           vacía) — ahí no hay nada que forzar, literalmente. */
         function levenshtein(a, b) {
             const m = a.length, n = b.length;
             const dp = new Array(n + 1);
@@ -286,25 +268,18 @@
             return dp[n];
         }
 
-        function fuzzyMatchLegalMove(game, raw) {
+        function forceMatchLegalMove(game, raw) {
             const cleaned = String(raw || "").replace(/^\d+\.(\.\.)?\s*/, "").replace(/\s+/g, "").toLowerCase();
-            if (!cleaned) return null;
+            if (!cleaned) return null; // no había ningún texto que comparar
             const legal = game.moves();
-            if (!legal.length) return null;
+            if (!legal.length) return null; // no quedan jugadas legales: la partida ya terminó
 
-            let best = null, bestDist = Infinity, secondDist = Infinity;
+            let best = null, bestDist = Infinity;
             legal.forEach((san) => {
                 const d = levenshtein(cleaned, san.toLowerCase());
-                if (d < bestDist) { secondDist = bestDist; bestDist = d; best = san; }
-                else if (d < secondDist) { secondDist = d; }
+                if (d < bestDist) { bestDist = d; best = san; }
             });
-
-            // Umbral relativo al largo del texto (una jugada corta como "e4" tolera menos
-            // errores que una larga como "Rxd5+"), y exige que la mejor candidata destaque
-            // claramente de la segunda mejor — si no, es genuinamente ambiguo.
-            const threshold = Math.max(1, Math.round(cleaned.length * 0.4));
-            if (bestDist <= threshold && bestDist < secondDist) return best;
-            return null;
+            return best;
         }
 
         /* ============================================================
@@ -395,7 +370,6 @@
         let tokens = [];
         let tokenIndex = 0;
         let processBoard = null;
-        let pendingToken = null; // el texto original del OCR que no se pudo leer, mientras se espera la aclaración
 
         function updateProcessStatus(text) {
             document.getElementById("process-status").textContent = text;
@@ -408,9 +382,9 @@
             processBoard.loadMoves(game.history());
         }
 
-        // Jugadas que se aceptaron por parecido con una jugada legal (fuzzyMatchLegalMove),
+        // Jugadas que se forzaron por parecido con una jugada legal (forceMatchLegalMove),
         // no porque el texto del OCR haya calzado tal cual — se marcan con "≈" en la lista
-        // para poder repasarlas de un vistazo sin haber tenido que confirmarlas una por una.
+        // para poder repasarlas de un vistazo, ya que nunca se detiene a confirmarlas.
         let guessedPlies = new Set();
 
         function updateMoveList() {
@@ -461,11 +435,12 @@
                 processNext();
                 return;
             }
-            // El texto no calzó con ninguna variante de notación tal cual — antes de
-            // interrumpir para preguntar, probar si hay una única jugada legal claramente
-            // parecida (letra mal leída por el OCR, típico caso). Si la hay, se usa sola,
-            // sin preguntar — la idea es molestar solo cuando de verdad hay duda.
-            const guess = fuzzyMatchLegalMove(game, raw);
+            // El texto no calzó con ninguna variante de notación tal cual: en vez de
+            // detenerse a preguntar, se fuerza la jugada legal más parecida (ver
+            // forceMatchLegalMove) y se sigue de largo. Solo si eso tampoco devuelve nada
+            // (texto sin forma de jugada, o ya no quedan jugadas legales) se descarta el
+            // texto sin tocar la partida y se sigue con el siguiente.
+            const guess = forceMatchLegalMove(game, raw);
             if (guess) {
                 guessedPlies.add(game.history().length);
                 game.move(guess);
@@ -475,61 +450,9 @@
                 processNext();
                 return;
             }
-            askForClarification(raw);
-        }
-
-        function askForClarification(raw) {
-            pendingToken = raw;
-            const { moveNumber, side } = currentMoveLabel();
-            updateProcessStatus(`Jugada ${moveNumber} de las ${side}: no pude leerla bien. Escribí cuál es.`);
-            document.getElementById("clarify-text").textContent =
-                `No entendí la jugada ${moveNumber} de las ${side}. El lector encontró: "${raw}". ¿Cuál es la jugada correcta?`;
-            document.getElementById("clarify-error").textContent = "";
-            document.getElementById("clarify-input").value = "";
-            const legalWrap = document.getElementById("clarify-legal-moves");
-            legalWrap.innerHTML = "";
-            game.moves().forEach((san) => {
-                const chip = document.createElement("button");
-                chip.type = "button";
-                chip.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-500 transition-colors";
-                chip.textContent = san;
-                chip.addEventListener("click", () => applyClarifiedMove(san));
-                legalWrap.appendChild(chip);
-            });
-            document.getElementById("clarify-panel").classList.remove("hidden");
-            document.getElementById("clarify-input").focus();
-        }
-
-        function hideClarifyPanel() {
-            document.getElementById("clarify-panel").classList.add("hidden");
-            pendingToken = null;
-        }
-
-        function applyClarifiedMove(text) {
-            const move = tryParseMove(game, text);
-            if (!move) {
-                document.getElementById("clarify-error").textContent = 'Esa jugada no es válida en esta posición — probá de nuevo, o elegí una de la lista.';
-                return;
-            }
             tokenIndex++;
-            hideClarifyPanel();
-            updateBoardPreview();
-            updateMoveList();
             processNext();
         }
-
-        document.getElementById("clarify-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            applyClarifiedMove(document.getElementById("clarify-input").value);
-        });
-        document.getElementById("clarify-discard-btn").addEventListener("click", () => {
-            // El texto encontrado no era en realidad una jugada (ruido de la imagen, una
-            // mancha, un número mal separado, etc.): se descarta sin aplicar nada y se sigue
-            // con el siguiente texto encontrado, sin avanzar la partida.
-            tokenIndex++;
-            hideClarifyPanel();
-            processNext();
-        });
 
         function finishProcessing() {
             const pgn = game.pgn();
