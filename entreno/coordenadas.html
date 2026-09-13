@@ -524,18 +524,12 @@ function newTarget(){
   // En modo normal se ve el nombre real de la casilla ("e4"). En modo
   // adaptado, lo que se anuncia (y lee el lector de pantalla vía aria-live)
   // usa la notación de columnas — "Eva 4" — para no confundir letras al oído.
+  // Se anuncia solo el nombre, sin envolverlo en una pregunta completa: el
+  // contexto ya está dado (el label "Se anuncia:" y las instrucciones), y
+  // en una ronda de 30 segundos cada palabra de más cuesta tiempo real.
   const spokenSquare = blindMode ? window.BlindNotation.squareSpoken(currentTarget) : currentTarget;
-  if(blindMode){
-    // La pregunta completa, no solo el nombre de la casilla: así se entiende de
-    // una sola vez lo que hay que contestar, sin tener que ir a buscar el label
-    // "Se anuncia:" de arriba (que no es aria-live, así que un lector de
-    // pantalla no lo lee solo al cambiar de casilla).
-    const question = `¿Qué color es la casilla ${spokenSquare}?`;
-    document.getElementById('target-square').textContent = question;
-    window.BlindNotation.speak(question);
-  } else {
-    document.getElementById('target-square').textContent = spokenSquare;
-  }
+  document.getElementById('target-square').textContent = spokenSquare;
+  if(blindMode) window.BlindNotation.speak(spokenSquare);
   lastPromptAt = performance.now();
   armPerSquareTimer();
 }
