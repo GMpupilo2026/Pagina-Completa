@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de planilla — Ajedrez Integral</title>
+    <meta name="description" content="Fotografía o escanea tu planilla de partida y convertila directamente en PGN, jugada por jugada.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <!-- Tesseract.js: OCR gratis, corre en el navegador (sin clave ni costo). Descarga en el
+         momento el motor (wasm) y los datos de idioma desde su propia CDN — ver los orígenes
+         agregados a connect-src/worker-src en _headers, imprescindibles para que esto funcione. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/clases-board.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+
+    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
+        <p class="text-brand-400 dark:text-brand-500">Cargando…</p>
+    </div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Lector de planilla 📝</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. Si alguna jugada no se lee bien, te la pregunto para que la escribas vos misma/o — así el PGN queda completo y listo para analizar.</p>
+
+            <!-- ---------- Paso 1: elegir imagen ---------- -->
+            <div id="upload-section" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">1. Elegí la foto o el escaneo</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Cuanto más derecha y bien iluminada esté la foto, mejor sale la lectura. Funciona mejor con planillas escritas con letra clara — la letra manuscrita es más difícil de leer para este lector automático, así que es normal tener que aclarar algunas jugadas a mano.</p>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <label class="inline-flex items-center gap-2 bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors cursor-pointer">
+                        <span aria-hidden="true">📷</span> Elegir imagen
+                        <input type="file" id="sheet-input" accept="image/*" capture="environment" class="sr-only">
+                    </label>
+                    <button type="button" id="read-btn" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Leer planilla →</button>
+                </div>
+                <div id="preview-wrap" class="hidden mt-4">
+                    <img id="sheet-preview" alt="Vista previa de la planilla elegida" class="max-h-72 rounded-xl border border-brand-200 dark:border-brand-700 mx-auto">
+                </div>
+                <div id="ocr-progress-wrap" class="hidden mt-4">
+                    <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
+                        <div id="ocr-progress-bar" class="h-full bg-accent-500 transition-all" style="width:0%"></div>
+                    </div>
+                    <p id="ocr-progress-text" class="text-xs text-brand-400 dark:text-brand-500 mt-1" role="status" aria-live="polite">Preparando…</p>
+                </div>
+            </div>
+
+            <!-- ---------- Paso 2: procesar jugadas ---------- -->
+            <div id="process-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">2. Revisá las jugadas</h2>
+                <p id="process-status" class="text-sm text-brand-500 dark:text-brand-400 mb-4" role="status" aria-live="polite"></p>
+
+                <div class="grid sm:grid-cols-2 gap-6">
+                    <div id="process-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-xl overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2">Jugadas leídas</h3>
+                        <ol id="move-list" class="text-sm text-brand-600 dark:text-brand-300 space-y-0.5 max-h-56 overflow-y-auto pr-1"></ol>
+                    </div>
+                </div>
+
+                <!-- Panel de aclaración: aparece cuando una jugada no se pudo leer/entender. -->
+                <div id="clarify-panel" class="hidden mt-5 bg-accent-500/10 border-2 border-accent-500 rounded-xl p-4">
+                    <p id="clarify-text" class="text-sm font-semibold text-brand-800 dark:text-white mb-2"></p>
+                    <div id="clarify-legal-moves" class="flex flex-wrap gap-1.5 mb-3"></div>
+                    <form id="clarify-form" class="flex flex-col sm:flex-row gap-2">
+                        <label for="clarify-input" class="sr-only">Escribí la jugada correcta</label>
+                        <input type="text" id="clarify-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder='Ej: Cf3, Txd5, O-O' class="flex-1 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <div class="flex gap-2">
+                            <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Confirmar</button>
+                            <button type="button" id="clarify-discard-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap" title="Usar cuando el texto encontrado no era en realidad una jugada (ruido, mancha, etc.)">No era una jugada</button>
+                        </div>
+                    </form>
+                    <p id="clarify-error" class="text-xs text-red-600 dark:text-red-400 mt-2"></p>
+                </div>
+            </div>
+
+            <!-- ---------- Paso 3: PGN final ---------- -->
+            <div id="result-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">3. Tu PGN</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Ya podés copiarlo, descargarlo, o guardarlo en la Caja de Compartir para revisarlo después junto con las partidas de clase.</p>
+                <textarea id="pgn-output" readonly rows="6" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500 mb-3"></textarea>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="copy-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">📋 Copiar</button>
+                    <button type="button" id="download-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">⬇️ Descargar .pgn</button>
+                    <button type="button" id="save-shared-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">💾 Guardar en Caja de Compartir</button>
+                    <button type="button" id="restart-btn" class="text-sm text-brand-400 dark:text-brand-500 hover:text-accent-500 transition-colors px-2 py-2">Leer otra planilla</button>
+                </div>
+                <p id="save-status" class="text-xs mt-2" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+    </div>
+
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null, profile = null;
+
+        function downloadText(filename, text) {
+            const blob = new Blob([text], { type: "application/x-chess-pgn" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        /* ============================================================
+           Tolerancia de notación: misma lógica que usa js/tablero-board.js
+           para el cuadro de comandos del modo adaptado (letras de pieza en
+           español, "x" de captura omitida, enroque con ceros, sufijo de
+           promoción faltante) — acá hace falta lo mismo porque el texto que
+           sale del lector automático (OCR) rara vez es notación SAN perfecta.
+           ============================================================ */
+        const ES_TO_EN_PIECE = { T: "R", C: "N", A: "B", D: "Q", R: "K" };
+        const SAN_PIECE_LETTERS = "NBRQKTCAD";
+
+        function mapSpanishPieceLetter(letter) {
+            return ES_TO_EN_PIECE[letter.toUpperCase()] || letter.toUpperCase();
+        }
+
+        function generateMoveCandidates(raw) {
+            let s = String(raw || "").trim();
+            s = s.replace(/^\d+\.(\.\.)?\s*/, ""); // por si el OCR incluyó el número de jugada ("14.Cf3")
+            s = s.replace(/\s+/g, "");
+            if (!s) return [];
+
+            const candidates = new Set();
+            candidates.add(s);
+
+            if (/^0-0-0[+#]?$/.test(s) || /^0-0[+#]?$/.test(s)) candidates.add(s.replace(/0/g, "O"));
+            // El OCR confunde fácilmente O (letra) con 0 (cero) en el enroque, y también con
+            // D (que en notación española es la Dama) — probar las 3 lecturas más comunes.
+            if (/^[0OD]-[0OD]([+#]?|-[0OD][+#]?)$/.test(s.toUpperCase())) candidates.add(s.toUpperCase().replace(/[0D]/g, "O"));
+
+            const first = s[0];
+            if (first && SAN_PIECE_LETTERS.indexOf(first.toUpperCase()) !== -1 && s.length >= 3) {
+                candidates.add(first.toUpperCase() + s.slice(1));
+                candidates.add(mapSpanishPieceLetter(first) + s.slice(1));
+            }
+
+            const promoMatch = s.match(/=([a-zA-Z])([+#]?)$/);
+            if (promoMatch) {
+                candidates.add(s.replace(/=([a-zA-Z])([+#]?)$/, "=" + mapSpanishPieceLetter(promoMatch[1]) + promoMatch[2]));
+            }
+
+            const expanded = new Set(candidates);
+            for (const c of candidates) {
+                const pawnCaptureNoX = c.match(/^([a-h])([a-h])([1-8])([+#]?)$/);
+                if (pawnCaptureNoX) expanded.add(`${pawnCaptureNoX[1]}x${pawnCaptureNoX[2]}${pawnCaptureNoX[3]}${pawnCaptureNoX[4]}`);
+
+                const pieceNoX = c.match(/^([NBRQK])([a-h])([1-8])([+#]?)$/);
+                if (pieceNoX) expanded.add(`${pieceNoX[1]}x${pieceNoX[2]}${pieceNoX[3]}${pieceNoX[4]}`);
+
+                const pieceDisambigNoX = c.match(/^([NBRQK])([a-h1-8])([a-h])([1-8])([+#]?)$/);
+                if (pieceDisambigNoX) {
+                    expanded.add(`${pieceDisambigNoX[1]}${pieceDisambigNoX[2]}x${pieceDisambigNoX[3]}${pieceDisambigNoX[4]}${pieceDisambigNoX[5]}`);
+                }
+
+                const pawnPromoNoSuffix = c.match(/^([a-h](x[a-h])?[18])([+#]?)$/);
+                if (pawnPromoNoSuffix && !/=/.test(c)) expanded.add(`${pawnPromoNoSuffix[1]}=Q${pawnPromoNoSuffix[3]}`);
+            }
+
+            return Array.from(expanded);
+        }
+
+        function tryParseMove(game, raw) {
+            const candidates = generateMoveCandidates(raw);
+            for (const candidate of candidates) {
+                let result = null;
+                try { result = game.move(candidate, { sloppy: true }); } catch (e) {}
+                if (result) return result;
+            }
+            return null;
+        }
+
+        /* ============================================================
+           Reconstrucción del orden real de las jugadas a partir de las
+           palabras que devuelve Tesseract (cada una con su posición en la
+           imagen). Una planilla típica tiene una fila por número de jugada,
+           con la jugada de blancas y la de negras una al lado de la otra —
+           pero el orden en el que Tesseract "lee" el texto no siempre
+           respeta ese orden real (sobre todo si hay más de una columna de
+           filas, o si la foto no salió perfectamente derecha). Agrupar por
+           posición vertical (fila) y ordenar cada fila de izquierda a
+           derecha reconstruye el orden real sin depender de eso.
+           ============================================================ */
+        function reconstructMoveTokens(words) {
+            const valid = (words || []).filter((w) => w.text && w.text.trim());
+            if (!valid.length) return [];
+
+            const avgHeight = valid.reduce((s, w) => s + Math.max(1, w.bbox.y1 - w.bbox.y0), 0) / valid.length;
+            const rowTolerance = avgHeight * 0.6;
+
+            const rows = [];
+            valid.forEach((w) => {
+                const yCenter = (w.bbox.y0 + w.bbox.y1) / 2;
+                let row = rows.find((r) => Math.abs(r.yCenter - yCenter) < rowTolerance);
+                if (!row) { row = { yCenter, words: [] }; rows.push(row); }
+                row.words.push(w);
+                row.yCenter = (row.yCenter * (row.words.length - 1) + yCenter) / row.words.length;
+            });
+            rows.sort((a, b) => a.yCenter - b.yCenter);
+            rows.forEach((r) => r.words.sort((a, b) => a.bbox.x0 - b.bbox.x0));
+
+            const tokens = [];
+            rows.forEach((row) => {
+                row.words.forEach((w) => {
+                    const t = w.text.trim();
+                    if (/^\d+[.):-]{0,2}$/.test(t)) return; // número de jugada suelto ("12.", "12)")
+                    if (/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t)) return; // marcador de resultado
+                    tokens.push(t);
+                });
+            });
+            return tokens;
+        }
+
+        /* ============================================================
+           Estado del procesamiento jugada por jugada
+           ============================================================ */
+        let game = null;
+        let tokens = [];
+        let tokenIndex = 0;
+        let processBoard = null;
+        let pendingToken = null; // el texto original del OCR que no se pudo leer, mientras se espera la aclaración
+
+        function updateProcessStatus(text) {
+            document.getElementById("process-status").textContent = text;
+        }
+
+        function updateBoardPreview() {
+            if (!processBoard) {
+                processBoard = new ClasesBoard(document.getElementById("process-board"), { interactive: false });
+            }
+            processBoard.loadMoves(game.history());
+        }
+
+        function updateMoveList() {
+            const list = document.getElementById("move-list");
+            list.innerHTML = "";
+            const history = game.history();
+            for (let i = 0; i < history.length; i += 2) {
+                const li = document.createElement("li");
+                const num = i / 2 + 1;
+                li.textContent = `${num}. ${history[i]}` + (history[i + 1] ? `  ${history[i + 1]}` : "");
+                list.appendChild(li);
+            }
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function currentMoveLabel() {
+            const ply = game.history().length;
+            const moveNumber = Math.floor(ply / 2) + 1;
+            const side = ply % 2 === 0 ? "blancas" : "negras";
+            return { moveNumber, side };
+        }
+
+        function startProcessing(rawTokens) {
+            game = new Chess();
+            tokens = rawTokens;
+            tokenIndex = 0;
+            document.getElementById("process-section").classList.remove("hidden");
+            document.getElementById("result-section").classList.add("hidden");
+            document.getElementById("move-list").innerHTML = "";
+            updateBoardPreview();
+            processNext();
+        }
+
+        function processNext() {
+            if (tokenIndex >= tokens.length) { finishProcessing(); return; }
+            const raw = tokens[tokenIndex];
+            const { moveNumber, side } = currentMoveLabel();
+            updateProcessStatus(`Leyendo jugada ${moveNumber} de las ${side}: "${raw}"…`);
+            const move = tryParseMove(game, raw);
+            if (move) {
+                tokenIndex++;
+                updateBoardPreview();
+                updateMoveList();
+                processNext();
+                return;
+            }
+            askForClarification(raw);
+        }
+
+        function askForClarification(raw) {
+            pendingToken = raw;
+            const { moveNumber, side } = currentMoveLabel();
+            updateProcessStatus(`Jugada ${moveNumber} de las ${side}: no pude leerla bien. Escribí cuál es.`);
+            document.getElementById("clarify-text").textContent =
+                `No entendí la jugada ${moveNumber} de las ${side}. El lector encontró: "${raw}". ¿Cuál es la jugada correcta?`;
+            document.getElementById("clarify-error").textContent = "";
+            document.getElementById("clarify-input").value = "";
+            const legalWrap = document.getElementById("clarify-legal-moves");
+            legalWrap.innerHTML = "";
+            game.moves().forEach((san) => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-500 transition-colors";
+                chip.textContent = san;
+                chip.addEventListener("click", () => applyClarifiedMove(san));
+                legalWrap.appendChild(chip);
+            });
+            document.getElementById("clarify-panel").classList.remove("hidden");
+            document.getElementById("clarify-input").focus();
+        }
+
+        function hideClarifyPanel() {
+            document.getElementById("clarify-panel").classList.add("hidden");
+            pendingToken = null;
+        }
+
+        function applyClarifiedMove(text) {
+            const move = tryParseMove(game, text);
+            if (!move) {
+                document.getElementById("clarify-error").textContent = 'Esa jugada no es válida en esta posición — probá de nuevo, o elegí una de la lista.';
+                return;
+            }
+            tokenIndex++;
+            hideClarifyPanel();
+            updateBoardPreview();
+            updateMoveList();
+            processNext();
+        }
+
+        document.getElementById("clarify-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            applyClarifiedMove(document.getElementById("clarify-input").value);
+        });
+        document.getElementById("clarify-discard-btn").addEventListener("click", () => {
+            // El texto encontrado no era en realidad una jugada (ruido de la imagen, una
+            // mancha, un número mal separado, etc.): se descarta sin aplicar nada y se sigue
+            // con el siguiente texto encontrado, sin avanzar la partida.
+            tokenIndex++;
+            hideClarifyPanel();
+            processNext();
+        });
+
+        function finishProcessing() {
+            const pgn = game.pgn();
+            updateProcessStatus(`Listo — ${game.history().length} jugadas leídas.`);
+            document.getElementById("pgn-output").value = pgn;
+            document.getElementById("result-section").classList.remove("hidden");
+            document.getElementById("save-status").textContent = "";
+            document.getElementById("result-section").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        /* ============================================================
+           Paso 1: elegir imagen + lanzar el OCR
+           ============================================================ */
+        let selectedFile = null;
+
+        document.getElementById("sheet-input").addEventListener("change", (e) => {
+            selectedFile = e.target.files[0] || null;
+            document.getElementById("read-btn").disabled = !selectedFile;
+            const preview = document.getElementById("sheet-preview");
+            const wrap = document.getElementById("preview-wrap");
+            if (selectedFile) {
+                preview.src = URL.createObjectURL(selectedFile);
+                wrap.classList.remove("hidden");
+            } else {
+                wrap.classList.add("hidden");
+            }
+        });
+
+        document.getElementById("read-btn").addEventListener("click", async () => {
+            if (!selectedFile) return;
+            const readBtn = document.getElementById("read-btn");
+            readBtn.disabled = true;
+            const progressWrap = document.getElementById("ocr-progress-wrap");
+            const progressBar = document.getElementById("ocr-progress-bar");
+            const progressText = document.getElementById("ocr-progress-text");
+            progressWrap.classList.remove("hidden");
+            progressBar.style.width = "0%";
+            progressText.textContent = "Preparando el lector…";
+
+            const STEP_LABEL = {
+                "loading tesseract core": "Cargando el lector…",
+                "initializing tesseract": "Iniciando…",
+                "loading language traineddata": "Descargando el idioma…",
+                "initializing api": "Preparando…",
+                "recognizing text": "Leyendo la planilla…",
+            };
+
+            try {
+                const { data } = await Tesseract.recognize(selectedFile, "spa", {
+                    logger: (m) => {
+                        const pct = Math.round((m.progress || 0) * 100);
+                        progressBar.style.width = pct + "%";
+                        progressText.textContent = (STEP_LABEL[m.status] || m.status || "Procesando…") + ` (${pct}%)`;
+                    },
+                });
+                const moveTokens = reconstructMoveTokens(data.words);
+                progressWrap.classList.add("hidden");
+                if (!moveTokens.length) {
+                    progressText.textContent = "";
+                    alert("No encontré texto legible en la imagen. Probá con una foto más nítida y bien iluminada.");
+                    readBtn.disabled = false;
+                    return;
+                }
+                startProcessing(moveTokens);
+            } catch (err) {
+                console.error(err);
+                progressWrap.classList.add("hidden");
+                alert("No se pudo leer la imagen: " + (err && err.message ? err.message : "error desconocido") + ". Probá de nuevo.");
+                readBtn.disabled = false;
+            }
+        });
+
+        /* ============================================================
+           Paso 3: acciones sobre el PGN final
+           ============================================================ */
+        document.getElementById("copy-pgn-btn").addEventListener("click", async () => {
+            const text = document.getElementById("pgn-output").value;
+            try {
+                await navigator.clipboard.writeText(text);
+                document.getElementById("save-status").textContent = "PGN copiado.";
+            } catch (e) {
+                document.getElementById("pgn-output").select();
+                document.execCommand("copy");
+            }
+        });
+
+        document.getElementById("download-pgn-btn").addEventListener("click", () => {
+            downloadText("planilla-" + new Date().toISOString().slice(0, 10) + ".pgn", document.getElementById("pgn-output").value);
+        });
+
+        document.getElementById("save-shared-btn").addEventListener("click", async () => {
+            const statusEl = document.getElementById("save-status");
+            const pgn = document.getElementById("pgn-output").value;
+            const moveCount = game.history().length;
+            statusEl.className = "text-xs mt-2 text-brand-400 dark:text-brand-500";
+            statusEl.textContent = "Guardando…";
+            const { error } = await sb.from("saved_games").insert({
+                pgn, fen_final: game.fen(), move_count: moveCount, created_by: session.user.id,
+            });
+            if (error) {
+                console.error(error);
+                statusEl.className = "text-xs mt-2 text-red-600 dark:text-red-400";
+                statusEl.textContent = "No se pudo guardar: " + error.message;
+                return;
+            }
+            statusEl.className = "text-xs mt-2 text-green-600 dark:text-green-400";
+            statusEl.textContent = "Guardado en la Caja de Compartir.";
+        });
+
+        document.getElementById("restart-btn").addEventListener("click", () => {
+            selectedFile = null;
+            document.getElementById("sheet-input").value = "";
+            document.getElementById("read-btn").disabled = true;
+            document.getElementById("preview-wrap").classList.add("hidden");
+            document.getElementById("process-section").classList.add("hidden");
+            document.getElementById("result-section").classList.add("hidden");
+            document.getElementById("upload-section").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html?next=" + encodeURIComponent("lector-planilla.html"); return; }
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
+            profile = profileData;
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+</body>
+</html>
