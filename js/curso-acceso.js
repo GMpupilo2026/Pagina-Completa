@@ -8,7 +8,7 @@
  * Worker ya no la bloquea.
  *
  * Requiere <div id="course-content-body" data-course="slug">. Tras inyectar el
- * fragmento avisa a los visores que lo necesiten (window.Finales100) y abre la
+ * fragmento avisa a los visores que lo necesiten (window.Finales100, window.CursoPartidas) y abre la
  * lección indicada en el #hash (#lec-...).
  */
 (function () {
@@ -26,6 +26,7 @@
     .then(function (html) {
       contentBody.innerHTML = html;
       if (window.Finales100) window.Finales100.init(contentBody);
+      if (window.CursoPartidas) window.CursoPartidas.init(contentBody);
       document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: contentBody, curso: courseSlug } }));
       if (location.hash && location.hash.indexOf("#lec-") === 0) {
         var d = document.getElementById(location.hash.slice(1));
