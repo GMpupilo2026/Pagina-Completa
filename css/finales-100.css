@@ -1,0 +1,44 @@
+/* Visor de "Los 100 finales que hay que conocer" (js/finales-100.js) */
+.f100-item{margin-top:.5rem}
+.f100-viewer{display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:.75rem 1rem;align-items:start;background:#fff;border:1px solid #d9e2ec;border-radius:.75rem;padding:.75rem;margin:.5rem 0}
+.dark .f100-viewer{background:#0a1f33;border-color:#243b53}
+@media (max-width:560px){.f100-viewer{grid-template-columns:1fr}}
+.f100-head{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;font-size:.75rem;color:#627d98}
+.f100-num{font-weight:600;color:#334e68}.dark .f100-num{color:#bcccdc}
+.f100-res{margin-left:auto;border-radius:9999px;padding:.1rem .6rem;font-weight:600;background:#f0f4f8;color:#334e68}
+.f100-res[data-res="1-0"]{background:#fff;color:#102a43;border:1px solid #102a43}
+.f100-res[data-res="0-1"]{background:#102a43;color:#fff}
+.f100-res[data-res="½"]{background:#e2e8f0;color:#334e68}
+.f100-done{font-size:.7rem;color:#cb6e17;font-weight:600}
+.f100-board{width:100%;max-width:300px;outline:none;border-radius:.5rem}
+.f100-board:focus-visible{box-shadow:0 0 0 3px #f0b429}
+.f100-svg{width:100%;height:auto;display:block;border-radius:.4rem}
+.f100-svg rect[data-sq]{cursor:pointer}
+.f100-controls{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap}
+.f100-controls button{min-width:2.2rem;height:2rem;border-radius:.4rem;border:1px solid #bcccdc;background:#f0f4f8;color:#102a43;font-size:.9rem;cursor:pointer}
+.f100-controls button:hover{background:#d9e2ec}.f100-controls button:disabled{opacity:.4;cursor:default}
+.dark .f100-controls button{background:#243b53;border-color:#334e68;color:#f0f4f8}
+.f100-ply{font-size:.75rem;color:#627d98;min-width:2.5rem;text-align:center}
+.f100-moves{font-size:.85rem;line-height:1.9;color:#334e68}.dark .f100-moves{color:#d9e2ec}
+.f100-moves button{border:0;background:transparent;padding:0 .2rem;border-radius:.25rem;cursor:pointer;font:inherit;color:inherit}
+.f100-moves button:hover{background:#d9e2ec}.dark .f100-moves button:hover{background:#334e68}
+.f100-moves button.on{background:#f0b429;color:#102a43;font-weight:600}
+.f100-h{white-space:nowrap}
+.f100-practice{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;font-size:.8rem;color:#627d98}
+.f100-btn{background:#de911d;color:#102a43;font-weight:600;border:0;border-radius:.5rem;padding:.4rem .8rem;cursor:pointer;font-size:.8rem}
+.f100-btn:hover{background:#cb6e17}
+.f100-level select{border:1px solid #bcccdc;border-radius:.4rem;padding:.2rem .4rem;background:#fff;color:#102a43;font-size:.8rem}
+.dark .f100-level select{background:#243b53;color:#f0f4f8;border-color:#334e68}
+.f100-promo{display:flex;gap:.4rem;align-items:center;font-size:.8rem;grid-column:1/-1}
+.f100-promo button{border:1px solid #bcccdc;border-radius:.4rem;background:#fff;padding:.2rem .5rem;cursor:pointer}
+.f100-msg{grid-column:1/-1;font-size:.85rem;color:#243b53;font-weight:500;min-height:0}.dark .f100-msg{color:#f0f4f8}
+.f100-msg:empty{display:none}
+.f100-reglas{list-style:disc;padding-left:1.25rem;font-size:.85rem;color:#486581;line-height:1.5;margin:.4rem 0}
+.dark .f100-reglas{color:#bcccdc}
+.f100-tag{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:#cb6e17;font-weight:700;margin-left:.4rem}
+.f100-linea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem!important}
+.f100-sol{margin:.25rem 0 .75rem;font-size:.85rem}
+.f100-sol summary{cursor:pointer;color:#cb6e17;font-weight:600;font-size:.8rem}
+.f100-intro{margin-bottom:1rem}
+.f100-promo[hidden]{display:none}
+.f100-desc{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
