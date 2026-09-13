@@ -560,6 +560,16 @@
         </div>
       </div>
 
+      <!-- "Anterior/Reiniciar/Siguiente" van justo debajo del tablero, antes de las
+           indicaciones y del panel de comandos, para que "Reiniciar" quede a mano de
+           inmediato si alguien llega a un callejón sin salida (sin capturas posibles)
+           y no quiere tener que bajar por todo ese bloque para reiniciar. -->
+      <div class="board-controls">
+        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+        <button class="bctrl" id="board-reset">Reiniciar</button>
+        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+      </div>
+
       <p id="board-instructions" class="sr-only">
         Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d
         y las filas 1 a 4 (por ejemplo, a1). Usa las flechas del teclado para moverte entre casillas.
@@ -597,12 +607,6 @@
 
       <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
       <div class="board-status" id="board-status" aria-hidden="true">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
-
-      <div class="board-controls">
-        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
-        <button class="bctrl" id="board-reset">Reiniciar</button>
-        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
-      </div>
     </section>
 
     <!-- Estado: toda la categoría resuelta -->
