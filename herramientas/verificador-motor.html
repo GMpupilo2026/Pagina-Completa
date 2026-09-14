@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Verificador de posiciones — Ajedrez Integral</title>
+<!--
+  Página de trabajo, no del sitio: sirve para comprobar con el propio Stockfish
+  de Ajedrez Integral que una posición de curso o de diagnóstico promete lo que
+  de verdad pasa en el tablero (gana, tablas) antes de publicarla.
+
+  Se abre desde un script de Playwright, que llama a window.analizar(fen, profundidad)
+  y lee el resultado. Ejemplo de uso en herramientas/README-verificacion.md.
+-->
+<p style="font:14px system-ui;color:#334e68;max-width:32rem;margin:2rem auto">
+  Herramienta interna: analiza posiciones con el motor del sitio.
+  Se usa desde un script, con <code>window.analizar(fen, profundidad)</code>.
+</p>
+<script src="/js/shared-engine.js"></script>
+<script>
+window.analizar = function (fen, profundidad) {
+  return SharedEngine.runTask(function () {
+    return SharedEngine.ensureEngine().then(function (w) {
+      return new Promise(function (resolve) {
+        var ultima = null;
+        SharedEngine.setMessageHandler(function (e) {
+          var t = typeof e === "string" ? e : e.data;
+          if (/^info .*score/.test(t)) ultima = t;
+          if (/^bestmove/.test(t)) resolve({ info: ultima, best: t.split(" ")[1] });
+        });
+        w.postMessage("ucinewgame");
+        w.postMessage("position fen " + fen);
+        w.postMessage("go depth " + (profundidad || 22));
+      });
+    });
+  });
+};
+</script>

@@ -115,7 +115,7 @@ def portada(curso):
             </div>
 
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
-            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada lección desarrollada por completo: la idea explicada, la tarea concreta para practicarla, la presentación y el PDF de ejercicios para imprimir.</p>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">{intro_contenido}</p>
 
             <div id="course-content-body" data-course="{slug}" class="space-y-8">
                 <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
@@ -137,6 +137,12 @@ def portada(curso):
         gradiente=curso["gradiente"], emoji=curso["emoji"],
         descripcion_larga=escapar(curso["descripcion_larga"]),
         total=total, slug=slug, bloques="\n".join(bloques_html),
+        intro_contenido=("Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea "
+                         "jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea "
+                         "para practicarla, la presentación y el PDF de ejercicios para imprimir."
+                         if con_diagramas(curso) else
+                         "Cada lección desarrollada por completo: la idea explicada, la tarea concreta para "
+                         "practicarla, la presentación y el PDF de ejercicios para imprimir."),
         anterior_href=curso["anterior"]["href"], anterior_titulo=escapar(curso["anterior"]["titulo"]),
         siguiente_href=curso["siguiente"]["href"], siguiente_titulo=escapar(curso["siguiente"]["titulo"]))
 
@@ -146,7 +152,51 @@ def portada(curso):
     salida = re.sub(r'<meta name="description" content="[^"]*">',
                     '<meta name="description" content="Temario completo del curso %s: %s">'
                     % (escapar(titulo), escapar(curso["resumen"])), salida, count=1)
+
+    # Si el curso trae posiciones, la página carga el visor de tableros (el
+    # mismo de "Los 100 finales"): chess.js para las reglas, el motor para la
+    # práctica y finales-100.js para dibujar. Siempre antes de curso-acceso.js,
+    # que es quien inyecta el contenido y después llama a Finales100.init().
+    if con_diagramas(curso):
+        salida = salida.replace(
+            '    <script src="../js/adaptive-mode.js"></script>',
+            '    <script src="../js/adaptive-mode.js"></script>\n'
+            '    <link rel="stylesheet" href="../css/finales-100.css">', 1)
+        salida = salida.replace(
+            '    <script src="../js/curso-acceso.js"></script>',
+            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>\n'
+            '    <script src="../js/entreno-progress.js"></script>\n'
+            '    <script src="../js/progreso-usuario.js"></script>\n'
+            '    <script src="../js/shared-engine.js"></script>\n'
+            '    <script src="../js/practice-engine.js"></script>\n'
+            '    <script src="../js/finales-100.js"></script>\n'
+            '    <script src="../js/curso-acceso.js"></script>', 1)
     return salida
+
+
+def con_diagramas(curso):
+    return any(l.get("diagramas") for b in curso["bloques"] for l in b["lecciones"])
+
+
+def diagramas_html(leccion):
+    """Las posiciones interactivas de la lección, si las tiene.
+
+    El tablero, la línea jugada a jugada y la práctica contra el motor las pone
+    js/finales-100.js a partir de cursos/protegido/data/<slug>.json, que genera
+    herramientas/curso-posiciones.js. Acá solo va el hueco con su id.
+    """
+    salida = []
+    for d in leccion.get("diagramas", []):
+        salida.append(
+            '<div class="f100-item">'
+            '<p class="text-sm text-brand-600 dark:text-brand-300 leading-relaxed mt-3">%s</p>'
+            '<div class="f100-diag" data-id="%s" data-fen="%s">'
+            '<p class="text-xs text-brand-400">Activa JavaScript para recorrer la línea y practicar contra el motor.</p>'
+            "</div></div>"
+            '<details class="f100-sol"><summary>Solución</summary>'
+            '<p class="text-sm text-brand-600 dark:text-brand-300 leading-relaxed">%s</p></details>'
+            % (escapar(d["pregunta"]), escapar(d["id"]), escapar(d["fen"]), escapar(d["comentario"])))
+    return "".join(salida)
 
 
 # ---------------------------------------------------- fragmento con lecciones
@@ -161,6 +211,7 @@ def protegido(curso):
         for l in bloque["lecciones"]:
             arch = archivo_base(l)
             cuerpo = "".join("<p>%s</p>" % escapar(p) for p in l["parrafos"])
+            cuerpo += diagramas_html(l)
             cuerpo += "<p><strong>Practica:</strong> %s</p>" % escapar(l["practica"])
             botones = (boton.format(slug=slug, arch=arch, suf=".pptx", texto="📊 Descargar presentación") +
                        boton.format(slug=slug, arch=arch, suf="-ejercicios.pdf", texto="📄 Descargar ejercicios (PDF)"))

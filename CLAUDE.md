@@ -52,10 +52,28 @@ siendo los mismos en todos. Necesita `pip install python-pptx reportlab`. Lo
 anterior / siguiente" de los dos cursos vecinos, porque el orden es una
 decisión editorial.
 
-Los cursos con tablero interactivo (`los-100-finales`, `partidas-modelo`,
-`desequilibrios-de-material`) no salen de ahí: tienen su JSON de posiciones en
-`cursos/protegido/data/` y su propio módulo (`js/finales-100.js`,
-`js/curso-partidas.js`).
+Los cursos con tablero interactivo tienen además su JSON de posiciones en
+`cursos/protegido/data/<slug>.json` y cargan el visor correspondiente
+(`js/finales-100.js` para posiciones sueltas, `js/curso-partidas.js` para
+partidas comentadas).
+
+`js/finales-100.js` **ya no es solo de "Los 100 finales"**: elige su archivo de
+datos según el `data-course` de `#course-content-body`, así que el mismo visor
+—tablero, línea jugada a jugada y práctica contra Stockfish— sirve para
+cualquier curso. Para sumarle posiciones a un curso generado: se escriben en el
+campo `diagramas` de la lección (FEN, turno, resultado, pregunta, comentario y
+la línea en notación inglesa) y `herramientas/curso-posiciones.js` las expande
+al archivo de datos, verificando de paso que la FEN cargue, que la posición sea
+legal y que cada jugada exista. La portada suma sola el CSS y los scripts del
+visor cuando el curso trae posiciones.
+
+**El resultado que promete cada posición se verifica con motor, no a ojo**:
+`herramientas/verificador-motor.html` expone el Stockfish del sitio para
+analizar desde un script (ver `herramientas/README-verificacion.md`). Hay que
+evaluar la posición inicial **y la final de la línea**: así se descubrió que una
+posición de Lucena del curso "Estrategia en el final" tenía el rey negro
+demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
+fueran legales.
 
 ## Multi-profesor: cada profesor con sus propios alumnos y su propia clase en vivo
 

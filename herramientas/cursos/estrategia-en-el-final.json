@@ -6,8 +6,14 @@
   "gradiente": "from-brand-600 to-brand-900",
   "resumen": "El final no se juega calculando más: se juega sabiendo qué hacer. Rey activo, peones que mandan, piezas con trabajo y el cambio que decide la partida.",
   "descripcion_larga": "Casi todo lo que se estudia de finales son posiciones teóricas: Lucena, Philidor, la regla del cuadrado. Pero en la partida real casi nunca aparecen esas posiciones exactas — aparece un final con seis peones y dos piezas donde hay que decidir qué hacer. Este curso es sobre eso: los principios que convierten un final cualquiera en un plan claro.",
-  "anterior": { "href": "los-100-finales.html", "titulo": "Los 100 finales que hay que conocer" },
-  "siguiente": { "href": "partidas-modelo.html", "titulo": "Partidas modelo del ajedrez moderno" },
+  "anterior": {
+    "href": "los-100-finales.html",
+    "titulo": "Los 100 finales que hay que conocer"
+  },
+  "siguiente": {
+    "href": "partidas-modelo.html",
+    "titulo": "Partidas modelo del ajedrez moderno"
+  },
   "bloques": [
     {
       "n": 1,
@@ -31,7 +37,27 @@
             "La oposición no es un fin en sí mismo: sirve para llegar a las casillas críticas. Con un peón en d4, por ejemplo, las casillas críticas son c6, d6 y e6: si el rey blanco llega a una de ellas, el peón corona pase lo que pase. Saber cuáles son convierte el final en una carrera con meta conocida.",
             "Cuando los reyes están lejos entra la oposición distante: el mismo duelo pero con tres o cinco casillas de por medio, siempre un número impar. Se cuenta igual, y el que la tiene la conserva hasta el contacto si no se equivoca de casilla."
           ],
-          "practica": "Juega diez finales de rey y peón contra rey contra el motor del sitio, cambiando quién empieza con la oposición. Anota en cuáles ganaste y en cuáles no: la diferencia siempre está en una sola jugada."
+          "practica": "Juega diez finales de rey y peón contra rey contra el motor del sitio, cambiando quién empieza con la oposición. Anota en cuáles ganaste y en cuáles no: la diferencia siempre está en una sola jugada.",
+          "diagramas": [
+            {
+              "id": "EEF-2",
+              "fen": "8/8/3k4/8/3K4/3P4/8/8 b - - 0 1",
+              "turno": "b",
+              "resultado": "1-0",
+              "pregunta": "Juegan las negras y están perdidas, con el peón todavía en d3. ¿Por qué?",
+              "comentario": "Porque tienen la oposición en contra: al rey negro le toca moverse y cualquier casilla que elija le abre camino al blanco. Tras 1...Rc6 2.Rc4 el blanco manda y va ganando terreno hasta d5 o e5, las casillas críticas del peón de d3. Fíjate en que el peón no se movió ni una vez: primero el rey.",
+              "linea": [
+                "Kc6",
+                "Kc4",
+                "Kd6",
+                "Kd4",
+                "Kc6",
+                "Ke5",
+                "Kd7",
+                "Kd5"
+              ]
+            }
+          ]
         },
         {
           "titulo": "La ruta del rey",
@@ -41,7 +67,30 @@
             "En la partida se traduce en una pregunta concreta: de todos los caminos que tardan lo mismo, ¿cuál pasa cerca de algo que también me interesa? Un rey que va a frenar un peón puede elegir la ruta que de paso ataca otro peón, o la que le quita una casilla al rey rival.",
             "Al revés vale igual: cuando calcules la ruta del rival, no cuentes solo las jugadas. Fíjate si su camino le sirve para dos cosas. Ahí es donde se pierden los finales que parecían ganados por un tiempo de ventaja."
           ],
-          "practica": "Pon en el tablero el estudio de Réti (rey blanco en h8, peón blanco en c6; rey negro en a6, peón negro en h5) y encuentra el camino de tablas. Después explica con tus palabras por qué funciona."
+          "practica": "Pon en el tablero el estudio de Réti (rey blanco en h8, peón blanco en c6; rey negro en a6, peón negro en h5) y encuentra el camino de tablas. Después explica con tus palabras por qué funciona.",
+          "diagramas": [
+            {
+              "id": "EEF-3",
+              "fen": "7K/8/k1P5/7p/8/8/8/8 w - - 0 1",
+              "turno": "w",
+              "resultado": "½",
+              "pregunta": "Juegan las blancas. El peón negro corre y el rey blanco parece llegar tarde a todo. ¿Se puede salvar?",
+              "comentario": "Sí, y es el estudio de Réti: 1.Rg7! camina hacia las dos cosas a la vez — hacia el peón de h5 y hacia su propio peón de c6. Cada paso del rey sirve para los dos lados, y por eso llega a tiempo a un final que parecía perdido por dos tiempos.",
+              "linea": [
+                "Kg7",
+                "h4",
+                "Kf6",
+                "Kb6",
+                "Ke5",
+                "h3",
+                "Kd6",
+                "h2",
+                "c7",
+                "Kb7",
+                "Kd7"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Incursiones y refugio",
@@ -87,7 +136,24 @@
             "Antes de romper hay que contestar tres cosas: qué peón queda pasado después, qué casillas quedan débiles, y quién llega antes con el rey. Si la respuesta a la última no te favorece, la ruptura correcta es la que no haces todavía.",
             "Hay rupturas que ganan por sorpresa aunque cuesten dos peones: los tres peones contra tres en el mismo flanco donde 1.b6 axb6 2.c6! bxc6 3.a6 corona. Esa es la que vale la pena tener siempre en la cabeza, porque aparece cuando parece que no hay nada."
           ],
-          "practica": "Pon en el tablero peones blancos en a5, b5, c5 y negros en a7, b7, c7, con los reyes lejos, y encuentra la ruptura ganadora. Después busca cómo la frenan las negras si les toca mover."
+          "practica": "Pon en el tablero peones blancos en a5, b5, c5 y negros en a7, b7, c7, con los reyes lejos, y encuentra la ruptura ganadora. Después busca cómo la frenan las negras si les toca mover.",
+          "diagramas": [
+            {
+              "id": "EEF-7",
+              "fen": "8/ppp5/8/PPP5/8/4k3/8/4K3 w - - 0 1",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Juegan las blancas, con los reyes lejos del flanco. ¿Hay forma de coronar?",
+              "comentario": "La ruptura clásica: 1.b6! axb6 2.c6! bxc6 3.a6 y el peón corona. Capturen como capturen, siempre queda uno libre. Vale la pena aprenderla de memoria en las dos direcciones: con las negras al mover, 1...b6! la evita.",
+              "linea": [
+                "b6",
+                "axb6",
+                "c6",
+                "bxc6",
+                "a6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Debilidades que no se mueven",
@@ -123,7 +189,49 @@
             "Delante del peón, la torre queda condenada a mirar la partida desde ahí: no puede moverse sin soltarlo. Esa torre está fuera del juego aunque siga en el tablero, y el rival juega con una pieza de más en el resto del tablero.",
             "La excepción vale la pena conocerla: con un peón muy avanzado y el rey defensor cerca, a veces hay que ponerse delante igual, porque no queda otra. Pero es la excepción — la regla se juega primero y se revisa después."
           ],
-          "practica": "Arma un final de torres con un peón pasado en la quinta fila y juégalo dos veces contra el motor: una con la torre atrás y otra con la torre adelante. La diferencia se ve en tres jugadas."
+          "practica": "Arma un final de torres con un peón pasado en la quinta fila y juégalo dos veces contra el motor: una con la torre atrás y otra con la torre adelante. La diferencia se ve en tres jugadas.",
+          "diagramas": [
+            {
+              "id": "EEF-10a",
+              "fen": "3K4/3P2k1/8/8/8/8/r7/5R2 w - - 0 1",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Posición de Lucena. El rey negro está cortado en la columna f. Juegan las blancas: ¿cómo se gana?",
+              "comentario": "Construyendo el puente: 1.Tf4! sube la torre a la cuarta fila, donde después va a tapar los jaques. 1...Ta1 2.Rc7 Tc1+ 3.Rb6 Tb1+ 4.Rc6 Tc1+ 5.Rb5 Tb1+ 6.Tb4 y se acabaron los jaques: el peón corona. Sin la torre en la cuarta, esta posición es tablas.",
+              "linea": [
+                "Rf4",
+                "Ra1",
+                "Kc7",
+                "Rc1+",
+                "Kb6",
+                "Rb1+",
+                "Kc6",
+                "Rc1+",
+                "Kb5",
+                "Rb1+",
+                "Rb4"
+              ]
+            },
+            {
+              "id": "EEF-10b",
+              "fen": "8/4k3/r7/3KP3/8/8/1R6/8 b - - 0 1",
+              "turno": "b",
+              "resultado": "½",
+              "pregunta": "Juegan las negras, un peón abajo. ¿Cómo se defienden?",
+              "comentario": "Con la defensa de Philidor, que son dos etapas en este orden. Mientras el peón no llega a la sexta, la torre se queda ahí para que el rey blanco no avance: 1...Th6! En cuanto el peón entra (2.e6), la torre baja a la primera y empieza a dar jaques por detrás: 2...Th1! Sin el escudo del peón, el rey blanco no tiene dónde taparse.",
+              "linea": [
+                "Rh6",
+                "e6",
+                "Rh1",
+                "Ke5",
+                "Re1+",
+                "Kf5",
+                "Rf1+",
+                "Ke4",
+                "Re1+"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Alfil contra caballo",
@@ -169,7 +277,26 @@
             "Para provocarlo hay dos herramientas. La triangulación: el rey da un rodeo de tres casillas y vuelve a la misma, de modo que la posición se repite pero con el turno cambiado. Y las jugadas de espera: un peón que todavía puede avanzar una o dos casillas es, en realidad, un tiempo guardado en el bolsillo.",
             "De ahí una recomendación que parece menor y no lo es: no gastes tus avances de peón sin necesidad. Los tiempos de reserva se cuentan antes de entrar al final, igual que se cuenta el material."
           ],
-          "practica": "Arma un final de rey y peón donde tengas la oposición del lado equivocado y gánalo triangulando. Después cuenta, en una posición cualquiera, cuántos tiempos de reserva tienes."
+          "practica": "Arma un final de rey y peón donde tengas la oposición del lado equivocado y gánalo triangulando. Después cuenta, en una posición cualquiera, cuántos tiempos de reserva tienes.",
+          "diagramas": [
+            {
+              "id": "EEF-14",
+              "fen": "8/8/1p6/1P6/8/1K6/8/1k6 w - - 0 1",
+              "turno": "w",
+              "resultado": "1-0",
+              "pregunta": "Un peón cada uno y los reyes enfrentados. Juegan las blancas: ¿alcanza para ganar?",
+              "comentario": "Sí, y sin mover un solo peón. El peón de b6 está trabado y el rey negro tiene que cuidarlo, así que el blanco rodea: 1.Rc4 y el rey negro se queda sin casillas útiles. Cuando no le quede ninguna, suelta el peón y con él la partida. Eso es zugzwang: la posición aguanta, el turno no.",
+              "linea": [
+                "Kc4",
+                "Kc2",
+                "Kd5",
+                "Kd3",
+                "Kc6",
+                "Kc4",
+                "Kxb6"
+              ]
+            }
+          ]
         },
         {
           "titulo": "Profilaxis: quitarle el plan",
