@@ -16,26 +16,30 @@ directamente.
 
 ## Cursos
 
-Decisión vigente (revisada — antes fueron públicos del todo, ver historial de
-`worker.js`/`CLAUDE.md` si hace falta el detalle): el **temario es público**
-(portada, descripción y lista de lecciones de `cursos/<curso>.html`, visibles
-sin sesión) pero el **contenido completo de las lecciones es solo para
-alumnos de Academia**, a propósito, para motivar la inscripción.
+Decisión vigente: el **temario es público** (portada, descripción y lista de
+lecciones de `cursos/<curso>.html`, visibles sin sesión) pero el **contenido
+completo de las lecciones se muestra solo con sesión de Academia iniciada**,
+a propósito, para motivar la inscripción.
+
+Se probó primero a hacer cumplir esto en el servidor (`worker.js` exigiendo
+una cookie firmada, canjeada por la sesión vía `/api/curso-auth-session`) y
+se abandonó: esa cookie dependía de la variable de entorno `COURSE_PASSWORD`
+en Cloudflare, y cuando falta (se había borrado cuando los cursos fueron
+públicos del todo) deniega a **todos**, incluidas cuentas válidas — bloqueó
+al propio profesor. Decisión explícita: no depende de nada en Cloudflare.
 
 - `cursos/<curso>.html`: portada y temario del curso — público, enlazado desde
   el menú del sitio y el pie de página.
 - `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas
-  (texto, video, presentación y PDF) que inyecta `js/curso-acceso.js`. Exige
-  sesión de Academia — lo hace cumplir `worker.js` en el servidor (cookie
-  `curso_ok` firmada con HMAC, canjeada por la sesión de Supabase vía
-  `/api/curso-auth-session`), no solo el JavaScript del navegador.
+  (texto, video, presentación y PDF). `js/curso-acceso.js` decide, solo en el
+  navegador, si lo pide e inyecta: si `sb.auth.getSession()` devuelve una
+  sesión, lo hace; si no, muestra un aviso invitando a iniciar sesión.
+  **No hay bloqueo de servidor** — es la misma página para todos, el
+  contenido cambia según haya sesión o no. `worker.js` solo sirve archivos.
 - `cursos/recursos/<curso>/`: presentaciones (.pptx) y hojas de ejercicios
-  (.pdf) de las lecciones — mismo bloqueo que `cursos/protegido/`.
-- El bloqueo depende de que la variable de entorno `COURSE_PASSWORD` exista en
-  Cloudflare (es una llave interna para firmar la cookie, no una contraseña
-  que vea ningún visitante); si se llegó a borrar cuando los cursos eran
-  públicos, hay que volver a configurarla o el bloqueo deja fuera a todos,
-  alumnos incluidos.
+  (.pdf) — sin ningún bloqueo, ni siquiera informativo (se enlazan desde
+  dentro del fragmento de arriba).
+- No hace falta ninguna variable de entorno en Cloudflare para esto.
 
 ## Accesibilidad
 

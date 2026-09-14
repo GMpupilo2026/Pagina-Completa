@@ -1,23 +1,27 @@
 /**
  * Ajedrez Integral — acceso al contenido completo de un curso.
  *
- * Regla: cualquier cuenta de Academia con sesión iniciada ve el curso entero.
- * No hay inscripción aparte ni botón de WhatsApp en las páginas de cursos.
+ * Regla vigente: el temario (arriba, en la propia página) es público para
+ * cualquier visitante. El contenido completo de las lecciones
+ * (cursos/protegido/<curso>.html: texto, video, presentación y PDF) solo se
+ * carga cuando el navegador tiene una sesión de Academia iniciada — sin
+ * sesión, se muestra un aviso invitando a iniciar sesión en vez del
+ * contenido.
  *
- * Qué hace en cada página cursos/<curso>.html:
- *   1. Pide el fragmento protegido (cursos/protegido/<curso>.html).
- *   2. Si el Worker responde 403 (falta la cookie `curso_ok`), mira si el navegador
- *      tiene una sesión de Academia (Supabase). Si la tiene, la canjea por la cookie
- *      en /api/curso-auth-session y vuelve a pedir el fragmento: el alumno entra sin
- *      hacer nada más. Si no la tiene, muestra el aviso de iniciar sesión (con "next"
- *      para volver a este curso) y destapa los botones de "Iniciar sesión" de la página.
- *   3. Tras inyectar el fragmento avisa a los visores que lo necesiten
- *      (window.Finales100 en "Los 100 finales") y abre la lección del #hash.
+ * Es un control puramente informativo del lado del cliente, no un bloqueo de
+ * servidor: hubo un intento de exigir una cookie firmada por el Worker
+ * (canjeada por la sesión vía /api/curso-auth-session) y se abandonó porque
+ * dependía de una variable de entorno fácil de perder en Cloudflare, y
+ * cuando falta, deja fuera también a cuentas válidas. Esta versión es más
+ * simple: como cualquier alumno o profesor que entra a esta misma página ya
+ * con sesión iniciada ve el contenido de una vez, "la de cursos dentro del
+ * panel" no necesita ser una página aparte — es esta misma página, vista con
+ * sesión.
  *
- * Requiere: <div id="course-content-body" data-course="slug">, y opcionalmente
- * #course-access-cta y #course-login-cta (se muestran solo sin sesión). Usa
- * window.sb si js/supabase-client.js está cargado; sin él, se comporta como antes
- * (pide iniciar sesión).
+ * Requiere: <div id="course-content-body" data-course="slug">, y
+ * opcionalmente #course-access-cta y #course-login-cta (se muestran solo sin
+ * sesión). Usa window.sb si js/supabase-client.js está cargado; sin él, se
+ * comporta como sin sesión.
  */
 (function () {
   "use strict";
@@ -28,33 +32,7 @@
   var contentUrl = "protegido/" + courseSlug + ".html";
   var nextParam = encodeURIComponent("cursos/" + courseSlug + ".html");
 
-  function fetchContent() {
-    return fetch(contentUrl, { credentials: "same-origin" }).then(function (r) {
-      if (r.status === 403) throw new Error("no_session");
-      if (!r.ok) throw new Error("no_content");
-      return r.text();
-    });
-  }
-
-  // Canjea la sesión de Academia por la cookie del Worker. Devuelve true si lo logró.
-  function exchangeSession() {
-    if (!window.sb || !window.sb.auth) return Promise.resolve(false);
-    return window.sb.auth
-      .getSession()
-      .then(function (res) {
-        var session = res && res.data && res.data.session;
-        if (!session || !session.access_token) return false;
-        return fetch("/api/curso-auth-session", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ access_token: session.access_token }),
-        }).then(function (r) { return r.ok; });
-      })
-      .catch(function () { return false; });
-  }
-
-  function showLogin() {
+  function showInformative() {
     contentBody.innerHTML =
       '<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-5">' +
       '<p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Este contenido es para alumnos de Academia. Inicia sesión con tu cuenta para ver las lecciones completas de este curso.</p>' +
@@ -86,15 +64,28 @@
     }
   }
 
-  fetchContent()
-    .then(inject)
-    .catch(function (err) {
-      if (!(err && err.message === "no_session")) { showError(); return; }
-      exchangeSession().then(function (ok) {
-        if (!ok) { showLogin(); return; }
-        fetchContent().then(inject).catch(function (e2) {
-          if (e2 && e2.message === "no_session") showLogin(); else showError();
-        });
-      });
-    });
+  function fetchAndInject() {
+    fetch(contentUrl, { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("no_content");
+        return r.text();
+      })
+      .then(inject)
+      .catch(showError);
+  }
+
+  function hasSession() {
+    if (!window.sb || !window.sb.auth) return Promise.resolve(false);
+    return window.sb.auth
+      .getSession()
+      .then(function (res) {
+        var session = res && res.data && res.data.session;
+        return !!session;
+      })
+      .catch(function () { return false; });
+  }
+
+  hasSession().then(function (logged) {
+    if (logged) fetchAndInject(); else showInformative();
+  });
 })();
