@@ -490,7 +490,16 @@
     <script src="js/main.js"></script>
     <script>
         const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
-        const PRESENCE_CHANNEL = "clases-presence";
+        // Cada profesor tiene su propio tablero, su propia clase, sus propias
+        // preguntas y su propia práctica — completamente independientes de los de
+        // cualquier otro profesor, para que dos puedan dar clase al mismo tiempo sin
+        // pisarse. boardOwnerId es el id de ESE profesor: el propio (isTeacher) o el
+        // profesor asignado (profile.teacher_id) cuando quien mira es un alumno.
+        // myGameStateId es el id numérico de la fila de game_state de ese profesor
+        // (ya no existe una fila única global con id=1).
+        let boardOwnerId = null;
+        let myGameStateId = null;
+        function presenceChannelName() { return "clases-presence:" + boardOwnerId; }
         let profile = null;
         let session = null;
         let board = null;
@@ -563,20 +572,20 @@
         let variantNodes = [];
 
         async function loadVariantTree() {
-            const { data, error } = await sb.from("variant_nodes").select("*").order("created_at");
+            const { data, error } = await sb.from("variant_nodes").select("*").eq("teacher_id", boardOwnerId).order("created_at");
             if (error) { console.error(error); return; }
             variantNodes = data || [];
             renderMoveList();
         }
 
         function subscribeVariants() {
-            sb.channel("variant-nodes-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "variant_nodes" }, () => loadVariantTree())
+            sb.channel("variant-nodes-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "variant_nodes", filter: "teacher_id=eq." + boardOwnerId }, () => loadVariantTree())
                 .subscribe();
         }
 
         async function clearVariantTree() {
-            await sb.from("variant_nodes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+            await sb.from("variant_nodes").delete().eq("teacher_id", boardOwnerId);
         }
 
         function topVariantsAtPly(ply) {
@@ -752,7 +761,7 @@
                 circles: [],
                 updated_by: session.user.id,
                 updated_at: new Date().toISOString(),
-            }, extraFields || {})).eq("id", 1);
+            }, extraFields || {})).eq("id", myGameStateId);
             if (error) {
                 console.error(error);
                 setStatus("No se pudo guardar el cambio: " + error.message);
@@ -760,19 +769,28 @@
         }
 
         async function pushMarksToServer(marks) {
-            const { error } = await sb.from("game_state").update({ arrows: marks.arrows, circles: marks.circles }).eq("id", 1);
+            const { error } = await sb.from("game_state").update({ arrows: marks.arrows, circles: marks.circles }).eq("id", myGameStateId);
             if (error) console.error(error);
         }
 
+        // Cada profesor tiene su propia fila en game_state (owner_id). La primera vez
+        // que un profesor entra a dar clase todavía no existe — se crea aquí, con la
+        // posición inicial por defecto. Un alumno nunca la crea: si su profesor
+        // asignado aún no dio ninguna clase, simplemente no hay tablero que mostrar.
         async function loadGameState() {
-            const { data, error } = await sb.from("game_state").select("*").eq("id", 1).single();
+            const { data, error } = await sb.from("game_state").select("*").eq("owner_id", boardOwnerId).maybeSingle();
             if (error) { setStatus("No se pudo cargar el tablero: " + error.message); return; }
-            applyGameStateRow(data);
+            if (data) { myGameStateId = data.id; applyGameStateRow(data); return; }
+            if (!isTeacher) { setStatus("Tu profesor todavía no ha abierto su tablero de clase."); return; }
+            const { data: created, error: createError } = await sb.from("game_state").insert({ owner_id: boardOwnerId }).select().single();
+            if (createError) { setStatus("No se pudo crear tu tablero: " + createError.message); return; }
+            myGameStateId = created.id;
+            applyGameStateRow(created);
         }
 
         function subscribeRealtime() {
-            sb.channel("game_state-changes")
-                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "id=eq.1" }, (payload) => {
+            sb.channel("game_state-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: "owner_id=eq." + boardOwnerId }, (payload) => {
                     applyGameStateRow(payload.new);
                 })
                 .subscribe();
@@ -823,7 +841,7 @@
         }
 
         async function checkOpenClassSession() {
-            const { data } = await sb.from("class_sessions").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+            const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
             currentOpenSessionId = openSession ? openSession.id : null;
             if (openSession) {
@@ -833,8 +851,8 @@
         }
 
         function subscribeClassSessions() {
-            sb.channel("class_sessions-sesion")
-                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions" }, (payload) => {
+            sb.channel("class_sessions-sesion:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     if (payload.eventType === "INSERT" && !payload.new.ended_at) {
                         currentOpenSessionId = payload.new.id;
                         markAttendance(payload.new.id);
@@ -867,7 +885,7 @@
                     const fen = board.viewGame.fen();
                     const { data, error } = await sb.from("variant_nodes").insert({
                         parent_id: context.parentNodeId, root_ply: context.rootPly, san, fen,
-                        created_by: session.user.id,
+                        created_by: session.user.id, teacher_id: boardOwnerId,
                     }).select().single();
                     if (error) { console.error(error); setStatus("No se pudo guardar la variante: " + error.message); return; }
                     board.setVariantParent(data.id);
@@ -942,7 +960,7 @@
         document.getElementById("toggle-hide-btn").addEventListener("click", async () => {
             lastPiecesHidden = !lastPiecesHidden;
             updateHideBoardBtn();
-            const { error } = await sb.from("game_state").update({ pieces_hidden: lastPiecesHidden }).eq("id", 1);
+            const { error } = await sb.from("game_state").update({ pieces_hidden: lastPiecesHidden }).eq("id", myGameStateId);
             if (error) { console.error(error); setStatus("No se pudo cambiar la visibilidad de las piezas: " + error.message); }
         });
 
@@ -1156,7 +1174,7 @@
                 fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
                 arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", 1);
+            }).eq("id", myGameStateId);
             if (applyError) { console.error(applyError); setStatus("No se pudo transmitir la posición: " + applyError.message); return; }
             await clearVariantTree();
             // No hay que esperar a que llegue el eco de Realtime del propio cambio para
@@ -1276,7 +1294,7 @@
             const { error } = await sb.from("game_state").update({
                 active_player_id: studentId,
                 active_player_color: studentId ? (color || "both") : "both",
-            }).eq("id", 1);
+            }).eq("id", myGameStateId);
             if (error) {
                 console.error(error);
                 setStatus("No se pudo actualizar el control del tablero: " + error.message);
@@ -1328,7 +1346,7 @@
         if (raiseHandBtn) raiseHandBtn.addEventListener("click", () => setHandRaised(!handRaised));
 
         function subscribePresence() {
-            presenceChannel = sb.channel(PRESENCE_CHANNEL, { config: { presence: { key: profile.id } } });
+            presenceChannel = sb.channel(presenceChannelName(), { config: { presence: { key: profile.id } } });
             presenceChannel.on("presence", { event: "sync" }, () => {
                 const state = presenceChannel.presenceState();
                 onlineStudents.clear();
@@ -1594,7 +1612,7 @@
         }
 
         async function loadChatStudents() {
-            const { data, error } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+            const { data, error } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").eq("teacher_id", boardOwnerId).order("full_name");
             if (error) { console.error(error); return; }
             chatStudents.length = 0;
             chatStudents.push(...(data || []));
@@ -1689,8 +1707,8 @@
         let questionEngineLastFailed = false;
 
         function subscribeQuestions() {
-            sb.channel("questions-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => loadCurrentQuestion())
+            sb.channel("questions-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "questions", filter: "created_by=eq." + boardOwnerId }, () => loadCurrentQuestion())
                 .subscribe();
             if (isTeacher) {
                 sb.channel("question-answers-changes")
@@ -1714,7 +1732,7 @@
         }
 
         async function loadCurrentQuestion() {
-            const { data, error } = await sb.from("questions").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
+            const { data, error } = await sb.from("questions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             currentQuestion = data || null;
             if (isTeacher) renderTeacherQuestionPanel();
@@ -1879,7 +1897,7 @@
         document.getElementById("ask-question-btn").addEventListener("click", async () => {
             const expectedPlies = Math.max(1, Math.min(6, parseInt(document.getElementById("question-plies-input").value, 10) || 1));
             const fen = board.fen();
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).is("closed_at", null);
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
             const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             setStatus("Pregunta enviada a la clase.");
@@ -2104,11 +2122,11 @@
                 fen, moves: [], start_fen: fen, last_move: null,
                 arrows: [], circles: [], active_player_id: null, active_player_color: "both",
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", 1);
+            }).eq("id", myGameStateId);
             if (applyError) { console.error(applyError); setStatus("No se pudo transmitir el ejercicio: " + applyError.message); return; }
             await clearVariantTree();
             document.getElementById("question-plies-input").value = expectedPlies;
-            await sb.from("questions").update({ closed_at: new Date().toISOString() }).is("closed_at", null);
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
             const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
             if (isTeacher) updateEngineEval();
@@ -2384,13 +2402,13 @@
         }
 
         function subscribePractice() {
-            sb.channel("practice-sessions-changes")
-                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions" }, (payload) => {
+            sb.channel("practice-sessions-changes:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "practice_sessions", filter: "created_by=eq." + boardOwnerId }, (payload) => {
                     applyPracticeSessionUpdate(payload.new || payload.old);
                 })
                 .subscribe();
             if (isTeacher) {
-                sb.channel("practice-games-changes")
+                sb.channel("practice-games-changes:" + boardOwnerId)
                     .on("postgres_changes", { event: "*", schema: "public", table: "practice_games" }, (payload) => {
                         const row = (payload.new && payload.new.session_id) ? payload.new : payload.old;
                         if (!latestPracticeSession || !row || row.session_id !== latestPracticeSession.id) return;
@@ -2407,7 +2425,7 @@
         // vez de volver a consultar "la más reciente", que si dos consultas se cruzan en la
         // red puede resolver desordenado.
         async function loadCurrentPractice() {
-            const { data, error } = await sb.from("practice_sessions").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
+            const { data, error } = await sb.from("practice_sessions").select("*").eq("created_by", boardOwnerId).order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (error) { console.error(error); return; }
             latestPracticeSession = data || null;
             if (isTeacher) renderTeacherPracticePanel();
@@ -2518,7 +2536,7 @@
         document.getElementById("start-practice-btn").addEventListener("click", async () => {
             if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
             // Solo puede haber una ronda activa a la vez: cierra cualquier anterior sin cerrar.
-            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).is("ended_at", null);
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
             const { error } = await sb.from("practice_sessions").insert({
                 fen: board.fen(), level: selectedPracticeLevel, created_by: session.user.id,
             });
@@ -2759,6 +2777,12 @@
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
             isTeacher = profile.role === "profesor";
+            boardOwnerId = isTeacher ? profile.id : profile.teacher_id;
+            if (!boardOwnerId) {
+                setStatus("Todavía no tienes un profesor asignado — pídele a la persona administradora que te asigne uno.");
+                document.getElementById("loading").classList.add("hidden");
+                return;
+            }
 
             const badge = document.getElementById("role-badge");
             badge.textContent = isTeacher ? "Profesor" : "Alumno";

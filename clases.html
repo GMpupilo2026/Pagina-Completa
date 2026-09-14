@@ -245,6 +245,10 @@
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false, openSession = null;
+        // A qué profesor pertenece la clase que se muestra aquí: uno mismo si es
+        // profesor, o el profesor asignado si es alumno — cada profesor tiene su
+        // propio registro de clases, completamente aparte del de cualquier otro.
+        let boardOwnerId = null;
 
         // ---------- Grilla de accesos: agrupada por secciones para que se ubique todo
         // más rápido de un vistazo (antes eran 14 accesos sueltos en una sola grilla,
@@ -351,7 +355,8 @@
         }
 
         async function refreshSessionStatus() {
-            const { data } = await sb.from("class_sessions").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+            if (!boardOwnerId) { openSession = null; return; }
+            const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             openSession = (data && data[0]) || null;
 
             document.getElementById("session-status-open").classList.toggle("hidden", !openSession);
@@ -402,8 +407,9 @@
         }
 
         async function refreshSessionsLog() {
-            const { data, error } = await sb.from("class_sessions").select("*").order("started_at", { ascending: false }).limit(10);
             const body = document.getElementById("sessions-log-body");
+            if (!boardOwnerId) { body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay clases registradas.</td></tr>'; return; }
+            const { data, error } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).order("started_at", { ascending: false }).limit(10);
             body.innerHTML = "";
             if (error || !data || !data.length) {
                 body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay clases registradas.</td></tr>';
@@ -466,8 +472,9 @@
         });
 
         function subscribeSessions() {
-            sb.channel("class_sessions_panel")
-                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions" }, () => {
+            if (!boardOwnerId) return;
+            sb.channel("class_sessions_panel:" + boardOwnerId)
+                .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, () => {
                     refreshSessionStatus();
                     refreshSessionsLog();
                 })
@@ -518,6 +525,7 @@
             }
             profile = profileData;
             isTeacher = profile.role === "profesor";
+            boardOwnerId = isTeacher ? profile.id : profile.teacher_id;
 
             const displayName = profile.full_name || profile.email;
             document.getElementById("welcome-name").textContent = displayName;
