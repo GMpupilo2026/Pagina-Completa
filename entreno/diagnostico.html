@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+    <title>Diagnóstico de nivel — Ajedrez Integral</title>
+    <meta name="description" content="Diagnóstico completo de ajedrez: 32 preguntas y posiciones que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/entreno-progress.js"></script>
+    <script src="../js/plan-entrenamiento.js"></script>
+    <script src="../js/diagnostico-items.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== PASSWORD GATE ===== -->
+    <main id="main-content">
+
+    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- ---------- Portada ---------- -->
+            <section id="intro-view">
+                <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
+                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">32 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+
+                <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Antes de empezar</h2>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Tres preguntas sobre ti. No puntúan: sirven para ajustar el plan a tu realidad.</p>
+                    <div id="perfil-form" class="space-y-4"></div>
+                </div>
+
+                <div class="bg-brand-100 dark:bg-brand-900 rounded-xl px-4 py-3 text-xs text-brand-600 dark:text-brand-300 mb-6">
+                    <p class="mb-1"><strong>Cómo funciona:</strong> una pregunta por pantalla, sin volver atrás y sin decirte si acertaste — así la medición es real. Al final ves todo: cada respuesta, la explicación y tu plan.</p>
+                    <p>Se puede dejar a medias: la prueba recuerda por dónde ibas en este mismo dispositivo.</p>
+                </div>
+
+                <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
+            </section>
+
+            <!-- ---------- Prueba ---------- -->
+            <section id="test-view" class="hidden">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <p class="text-sm text-brand-500 dark:text-brand-400"><span id="q-counter"></span></p>
+                    <p id="q-area" class="text-xs font-semibold text-accent-600 dark:text-accent-400"></p>
+                </div>
+                <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-5">
+                    <div id="q-bar" class="h-full bg-accent-500 transition-[width] duration-300" style="width:0%"></div>
+                </div>
+
+                <h2 id="q-text" class="font-serif text-lg md:text-xl font-bold text-brand-800 dark:text-white mb-4"></h2>
+
+                <div id="q-board-wrap" class="hidden justify-center mb-4">
+                    <div id="q-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[380px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+                </div>
+
+                <p id="q-hint" class="text-center text-xs text-brand-400 dark:text-brand-500 mb-3 min-h-[1.2em]"></p>
+                <div id="q-options" class="space-y-2"></div>
+
+                <div class="flex justify-between items-center gap-3 mt-6">
+                    <button type="button" id="abandon-btn" class="text-sm text-brand-400 dark:text-brand-500 hover:text-accent-500 transition-colors">Guardar y salir</button>
+                    <button type="button" id="next-btn" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Siguiente →</button>
+                </div>
+            </section>
+
+            <!-- ---------- Resultado ---------- -->
+            <section id="result-view" class="hidden">
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">Tu diagnóstico</h1>
+                <p id="result-saved" class="text-xs text-brand-400 dark:text-brand-500 mb-5"></p>
+
+                <div class="bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <p class="text-xs font-semibold uppercase tracking-wide opacity-80">Nivel estimado</p>
+                    <p id="result-level" class="font-serif text-2xl font-bold"></p>
+                    <p id="result-level-desc" class="text-sm mt-1"></p>
+                    <p id="result-score" class="text-xs mt-2 opacity-90"></p>
+                </div>
+
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Área por área</h2>
+                <div id="result-areas" class="space-y-3 mb-8"></div>
+
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Qué estudiar primero</h2>
+                <div id="result-plan" class="space-y-4 mb-8"></div>
+
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Repaso de tus respuestas</h2>
+                <div id="result-review" class="space-y-2 mb-8"></div>
+
+                <div class="bg-brand-100 dark:bg-brand-900 rounded-xl px-4 py-3 text-xs text-brand-600 dark:text-brand-300 mb-6">
+                    Tu profesor ve este mismo diagnóstico en Informes, con un plan de entrenamiento de cuatro semanas hecho a partir de estos resultados. Puede compartírtelo cuando lo tenga listo: te aparecerá en tu página de Informes.
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <a href="../informes.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Ver mis Informes</a>
+                    <button type="button" id="repeat-btn" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl hover:border-accent-500 transition-colors">Repetir el diagnóstico</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="../index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="../te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="../tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="../sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="../inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="../js/main.js"></script>
+    <script>
+/* ===== Diagnóstico de nivel =====
+ * Una pregunta por pantalla, sin decir si se acertó: la corrección entera se
+ * muestra al final, para que la medición no se contamine con lo aprendido
+ * durante la propia prueba. La prueba se puede dejar a medias: el estado vive
+ * en localStorage y al volver retoma donde iba.
+ *
+ * Al terminar, el resultado se guarda en training_progress con la actividad
+ * "diagnostico" (EntrenoProgress), que es lo que lee Informes para armar el
+ * informe del alumno y su plan de entrenamiento.
+ */
+const ITEMS = window.DIAGNOSTICO_ITEMS;
+const PE = window.PlanEntrenamiento;
+const ESTADO_KEY = 'diagnostico_estado_v1';
+const RESULTADO_KEY = 'diagnostico_resultado_v1';
+const VERSION = 1;
+
+const PERFIL_PREGUNTAS = [
+  { id: 'tiempo', texto: '¿Hace cuánto juegas ajedrez?', opciones: ['Menos de 6 meses', 'Entre 6 meses y 2 años', 'Más de 2 años'] },
+  { id: 'torneos', texto: '¿Juegas torneos?', opciones: ['Todavía no', 'Alguno suelto', 'Sí, varios al año'] },
+  { id: 'practica', texto: '¿Cuánto practicas por semana, fuera de clase?', opciones: ['Casi nada', 'Un par de ratos', 'Casi todos los días'] },
+];
+
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const FILES = ['a','b','c','d','e','f','g','h'];
+
+let estado = { perfil: {}, idx: 0, respuestas: {} };
+let itemActual = null;
+let seleccion = null;      // respuesta en curso (índice de opción, casilla o jugada)
+let origenElegido = null;  // casilla de origen en los ítems de jugada
+
+/* ---------------- Estado guardado ---------------- */
+function cargarEstado() {
+  try {
+    const crudo = JSON.parse(localStorage.getItem(ESTADO_KEY) || 'null');
+    if (crudo && crudo.version === VERSION) estado = crudo.estado;
+  } catch (e) {}
+}
+function guardarEstado() {
+  try { localStorage.setItem(ESTADO_KEY, JSON.stringify({ version: VERSION, estado })); } catch (e) {}
+}
+function borrarEstado() {
+  try { localStorage.removeItem(ESTADO_KEY); } catch (e) {}
+  estado = { perfil: {}, idx: 0, respuestas: {} };
+}
+function resultadoGuardado() {
+  try { return JSON.parse(localStorage.getItem(RESULTADO_KEY) || 'null'); } catch (e) { return null; }
+}
+
+/* ---------------- Portada ---------------- */
+function pintarPerfil() {
+  const box = document.getElementById('perfil-form');
+  box.innerHTML = '';
+  PERFIL_PREGUNTAS.forEach((p) => {
+    const grupo = document.createElement('div');
+    grupo.innerHTML = `<p class="text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">${p.texto}</p>`;
+    const fila = document.createElement('div');
+    fila.className = 'flex flex-wrap gap-2';
+    p.opciones.forEach((op) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = op;
+      btn.dataset.valor = op;
+      btn.className = claseOpcionPerfil(estado.perfil[p.id] === op);
+      btn.addEventListener('click', () => {
+        estado.perfil[p.id] = op;
+        guardarEstado();
+        pintarPerfil();
+      });
+      fila.appendChild(btn);
+    });
+    grupo.appendChild(fila);
+    box.appendChild(grupo);
+  });
+}
+function claseOpcionPerfil(activa) {
+  return 'text-sm px-3 py-2 rounded-lg border transition-colors ' + (activa
+    ? 'bg-accent-500 border-accent-500 text-brand-900 font-semibold'
+    : 'bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 hover:border-accent-500');
+}
+
+function pintarPrevio() {
+  const previo = resultadoGuardado();
+  const box = document.getElementById('previo');
+  if (!previo) return;
+  const fecha = new Date(previo.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+  box.innerHTML = `
+    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Ya hiciste el diagnóstico</h2>
+    <p class="text-sm text-brand-500 dark:text-brand-400 mb-3">El ${fecha} quedaste en <strong class="text-brand-800 dark:text-white">${previo.nivel}</strong> con ${previo.porcentaje}% de la prueba. Repetirlo cada cuatro semanas es la forma de ver si el plan está funcionando.</p>
+    <button type="button" id="ver-previo-btn" class="text-sm text-accent-600 dark:text-accent-400 hover:underline">Ver ese resultado otra vez</button>`;
+  box.classList.remove('hidden');
+  document.getElementById('ver-previo-btn').addEventListener('click', () => mostrarResultado(previo.detalle, false));
+}
+
+/* ---------------- Prueba ---------------- */
+function irA(vista) {
+  ['intro-view', 'test-view', 'result-view'].forEach((id) => {
+    document.getElementById(id).classList.toggle('hidden', id !== vista);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function empezar() {
+  irA('test-view');
+  pintarItem();
+}
+
+function pintarItem() {
+  itemActual = ITEMS[estado.idx];
+  seleccion = null;
+  origenElegido = null;
+  const area = PE.AREA_POR_ID[itemActual.area];
+  document.getElementById('q-counter').textContent = `Pregunta ${estado.idx + 1} de ${ITEMS.length}`;
+  document.getElementById('q-area').textContent = `${area.emoji} ${area.nombre}`;
+  document.getElementById('q-bar').style.width = ((estado.idx / ITEMS.length) * 100) + '%';
+  document.getElementById('q-text').textContent = itemActual.enunciado;
+  document.getElementById('next-btn').disabled = true;
+  document.getElementById('next-btn').textContent = estado.idx === ITEMS.length - 1 ? 'Terminar y ver resultado →' : 'Siguiente →';
+
+  const opciones = document.getElementById('q-options');
+  const hint = document.getElementById('q-hint');
+  opciones.innerHTML = '';
+  hint.textContent = '';
+
+  const conTablero = !!itemActual.fen;
+  const wrap = document.getElementById('q-board-wrap');
+  wrap.classList.toggle('hidden', !conTablero);
+  wrap.classList.toggle('flex', conTablero);
+  if (conTablero) pintarTablero(new Chess(itemActual.fen));
+
+  if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
+    itemActual.opciones.forEach((texto, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.i = String(i);
+      btn.className = claseOpcion(false);
+      btn.textContent = texto;
+      btn.addEventListener('click', () => {
+        seleccion = i;
+        [...opciones.children].forEach((b, j) => { b.className = claseOpcion(j === i); });
+        document.getElementById('next-btn').disabled = false;
+      });
+      opciones.appendChild(btn);
+    });
+  } else if (itemActual.tipo === 'casilla') {
+    hint.textContent = 'Haz clic en la casilla que responde la pregunta.';
+  } else if (itemActual.tipo === 'jugada') {
+    hint.textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
+  }
+}
+
+function claseOpcion(activa) {
+  return 'w-full text-left text-sm px-4 py-3 rounded-xl border transition-colors ' + (activa
+    ? 'bg-accent-500 border-accent-500 text-brand-900 font-semibold'
+    : 'bg-white dark:bg-brand-900 border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 hover:border-accent-500');
+}
+
+function esCasillaClara(square) {
+  return ((square.charCodeAt(0) - 97) + (parseInt(square[1], 10) - 1)) % 2 === 1;
+}
+
+function pintarTablero(juego, destacadas) {
+  const board = document.getElementById('q-board');
+  board.innerHTML = '';
+  const interactivo = itemActual.tipo === 'jugada' || itemActual.tipo === 'casilla';
+  for (let rank = 8; rank >= 1; rank--) {
+    for (const f of FILES) {
+      const square = f + rank;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.square = square;
+      btn.disabled = !interactivo;
+      let cls = 'flex items-center justify-center select-none w-full h-full text-2xl sm:text-3xl md:text-4xl ' +
+        (esCasillaClara(square) ? 'bg-brand-100 ' : 'bg-brand-500 ') + (interactivo ? 'cursor-pointer ' : 'cursor-default ');
+      if (destacadas && destacadas.includes(square)) cls += 'outline outline-4 -outline-offset-4 outline-accent-500 ';
+      btn.className = cls;
+      const pieza = juego.get(square);
+      if (pieza) {
+        const span = document.createElement('span');
+        span.className = pieza.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[pieza.color][pieza.type];
+        span.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span);
+      }
+      if (interactivo) btn.addEventListener('click', () => clicEnCasilla(square));
+      board.appendChild(btn);
+    }
+  }
+}
+
+function clicEnCasilla(square) {
+  const juego = new Chess(itemActual.fen);
+  if (itemActual.tipo === 'casilla') {
+    seleccion = square;
+    pintarTablero(juego, [square]);
+    document.getElementById('q-hint').textContent = `Elegiste ${square}. Puedes cambiarla o seguir.`;
+    document.getElementById('next-btn').disabled = false;
+    return;
+  }
+  // Ítems de jugada: primero la pieza, después el destino.
+  const pieza = juego.get(square);
+  if (!origenElegido) {
+    if (!pieza || pieza.color !== juego.turn()) return;
+    origenElegido = square;
+    const destinos = juego.moves({ square, verbose: true }).map((m) => m.to);
+    pintarTablero(juego, [square].concat(destinos));
+    document.getElementById('q-hint').textContent = 'Ahora haz clic en la casilla de destino.';
+    return;
+  }
+  if (square === origenElegido) {
+    origenElegido = null;
+    pintarTablero(juego);
+    document.getElementById('q-hint').textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
+    return;
+  }
+  const intento = juego.move({ from: origenElegido, to: square, promotion: 'q' });
+  if (!intento) {
+    // Si hay otra pieza propia, se cambia de pieza en vez de no hacer nada.
+    if (pieza && pieza.color === juego.turn()) { origenElegido = null; clicEnCasilla(square); }
+    return;
+  }
+  seleccion = { from: intento.from, to: intento.to, promotion: intento.promotion, san: intento.san };
+  pintarTablero(juego, [intento.from, intento.to]);
+  document.getElementById('q-hint').textContent = `Jugaste ${intento.san}. Puedes rehacerla tocando otra pieza, o seguir.`;
+  origenElegido = null;
+  document.getElementById('next-btn').disabled = false;
+}
+
+function esCorrecta(item, respuesta) {
+  if (respuesta === null || respuesta === undefined) return false;
+  if (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') return respuesta === item.correcta;
+  if (item.tipo === 'casilla') return respuesta === item.solucion;
+  if (item.tipo === 'jugada') {
+    return !!respuesta.from && respuesta.from === item.solucion.from && respuesta.to === item.solucion.to &&
+      (!item.solucion.promotion || respuesta.promotion === item.solucion.promotion);
+  }
+  return false;
+}
+
+function siguiente() {
+  estado.respuestas[itemActual.id] = { dada: seleccion, ok: esCorrecta(itemActual, seleccion) };
+  estado.idx++;
+  guardarEstado();
+  if (estado.idx >= ITEMS.length) { terminar(); return; }
+  pintarItem();
+}
+
+/* ---------------- Resultado ---------------- */
+function construirDetalle() {
+  const areas = {};
+  ITEMS.forEach((item) => {
+    const r = estado.respuestas[item.id] || { ok: false };
+    const a = areas[item.area] || (areas[item.area] = { peso: 0, logrado: 0, aciertos: 0, total: 0 });
+    a.peso += item.peso;
+    a.total += 1;
+    if (r.ok) { a.logrado += item.peso; a.aciertos += 1; }
+  });
+  const respuestas = {};
+  Object.keys(estado.respuestas).forEach((id) => { respuestas[id] = !!estado.respuestas[id].ok; });
+  return {
+    version: VERSION,
+    fecha: new Date().toISOString(),
+    perfil: estado.perfil,
+    areas,
+    respuestas,
+  };
+}
+
+async function terminar() {
+  const detalle = construirDetalle();
+  const resumen = PE.resumir(detalle);
+  detalle.porcentaje = resumen.porcentaje;
+  detalle.nivel = resumen.nivel.clave;
+  detalle.nivel_etiqueta = resumen.nivel.etiqueta;
+
+  try {
+    localStorage.setItem(RESULTADO_KEY, JSON.stringify({
+      fecha: detalle.fecha, porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
+    }));
+  } catch (e) {}
+
+  mostrarResultado(detalle, true);
+  document.getElementById('result-saved').textContent = 'Guardando tu resultado…';
+  await EntrenoProgress.log('diagnostico', detalle);
+  document.getElementById('result-saved').textContent = EntrenoProgress.hasSession()
+    ? 'Resultado guardado: tu profesor ya puede verlo en Informes.'
+    : 'No se pudo guardar en línea (sesión vencida), pero tu resultado quedó en este dispositivo.';
+  borrarEstado();
+}
+
+function mostrarResultado(detalle, reciente) {
+  const resumen = PE.resumir(detalle);
+  const plan = PE.generarPlan(resumen);
+  irA('result-view');
+  if (!reciente) {
+    const fecha = new Date(detalle.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('result-saved').textContent = `Diagnóstico del ${fecha}.`;
+  }
+
+  document.getElementById('result-level').textContent = resumen.nivel.etiqueta;
+  document.getElementById('result-level-desc').textContent = resumen.nivel.descripcion;
+  document.getElementById('result-score').textContent =
+    `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% de la prueba · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
+
+  const areasBox = document.getElementById('result-areas');
+  areasBox.innerHTML = '';
+  resumen.porArea.forEach((a) => {
+    const color = a.porcentaje >= 80 ? 'bg-green-500' : a.porcentaje >= 60 ? 'bg-accent-500' : 'bg-red-500';
+    const fila = document.createElement('div');
+    fila.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
+    fila.innerHTML = `
+      <div class="flex items-center justify-between gap-3 mb-1">
+        <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${a.nombre}</p>
+        <p class="text-sm text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%</p>
+      </div>
+      <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2">
+        <div class="h-full ${color}" style="width:${a.porcentaje}%"></div>
+      </div>
+      <p class="text-xs text-brand-400 dark:text-brand-500">${a.mide}</p>`;
+    areasBox.appendChild(fila);
+  });
+
+  const planBox = document.getElementById('result-plan');
+  planBox.innerHTML = '';
+  const intro = document.createElement('p');
+  intro.className = 'text-sm text-brand-500 dark:text-brand-400';
+  intro.textContent = `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${plan.prioridad.join(', ')}.`;
+  planBox.appendChild(intro);
+  plan.semanas.slice(0, 3).forEach((semana) => {
+    const caja = document.createElement('div');
+    caja.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
+    caja.innerHTML = `
+      <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${semana.titulo}</p>
+      <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">${semana.porque}</p>
+      <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">
+        ${semana.tareas.map((t) => `<li>${t}</li>`).join('')}
+      </ul>
+      <p class="text-xs mt-2">${semana.recursos.map((r) => `<a href="${PE.enlace(r.href, '../')}" class="text-accent-600 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(' · ')}</p>`;
+    planBox.appendChild(caja);
+  });
+  if (resumen.fortalezas.length) {
+    const fuerte = document.createElement('p');
+    fuerte.className = 'text-sm text-brand-500 dark:text-brand-400';
+    fuerte.textContent = `Lo que ya tienes firme: ${resumen.fortalezas.map((f) => f.nombre.toLowerCase()).join(', ')}. Mantenlo con un repaso corto por semana.`;
+    planBox.appendChild(fuerte);
+  }
+
+  const review = document.getElementById('result-review');
+  review.innerHTML = '';
+  ITEMS.forEach((item, i) => {
+    const ok = detalle.respuestas[item.id];
+    const det = document.createElement('details');
+    det.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md px-4 py-3';
+    const correcta = item.tipo === 'jugada'
+      ? `${item.solucion.from}–${item.solucion.to}`
+      : item.tipo === 'casilla' ? item.solucion : item.opciones[item.correcta];
+    det.innerHTML = `
+      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : '❌'} ${i + 1}. ${item.enunciado}</summary>
+      <p class="text-sm text-brand-600 dark:text-brand-300 mt-2"><strong>Respuesta correcta:</strong> ${correcta}</p>
+      <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${item.explica}</p>`;
+    review.appendChild(det);
+  });
+}
+
+/* ---------------- Arranque ---------------- */
+document.getElementById('start-btn').addEventListener('click', empezar);
+document.getElementById('next-btn').addEventListener('click', siguiente);
+document.getElementById('abandon-btn').addEventListener('click', () => { guardarEstado(); irA('intro-view'); });
+document.getElementById('repeat-btn').addEventListener('click', () => { borrarEstado(); pintarPerfil(); irA('intro-view'); });
+
+async function init() {
+  let sesion = null;
+  try {
+    const { data } = await sb.auth.getSession();
+    sesion = data && data.session;
+  } catch (e) { sesion = null; }
+  if (!sesion) {
+    document.getElementById('loading').textContent = 'Necesitas iniciar sesión para hacer el diagnóstico. Redirigiendo…';
+    window.location.href = '../login.html?next=' + encodeURIComponent('entreno/diagnostico.html');
+    return;
+  }
+  await EntrenoProgress.init();
+  cargarEstado();
+  pintarPerfil();
+  pintarPrevio();
+  if (estado.idx > 0 && estado.idx < ITEMS.length) {
+    document.getElementById('start-btn').textContent = `Seguir donde ibas (pregunta ${estado.idx + 1}) →`;
+  }
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+init();
+    </script>
+</body>
+</html>

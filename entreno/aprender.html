@@ -46,6 +46,7 @@
     --movimientos:#75935a;
     --reglas:#c9a23e;
     --tacticas:#9c4148;
+    --asignaciones:#3f6f8f;
     --ok:#3f8f4f;
     --bad:#c0392b;
   }
@@ -407,9 +408,34 @@ const LESSONS = [
     fen:'r6n/8/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'} },
 ];
 
-const CATEGORY_ORDER = ['movimientos','reglas','tacticas'];
-const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas'};
-const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas'};
+const CATEGORY_ORDER = ['movimientos','reglas','tacticas','asignaciones'];
+const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas', asignaciones:'Asignaciones'};
+const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas', asignaciones:'--asignaciones'};
+
+/* ---------------- Asignaciones ----------------
+   La ficha "Asignaciones" no son lecciones: son trabajos que el alumno hace de
+   una sentada en su propia página y que el profesor ve en Informes. Hoy hay uno
+   —el diagnóstico de nivel— y de ahí sale su plan de entrenamiento. */
+const ASIGNACIONES = [
+  {
+    id: 'diagnostico',
+    titulo: 'Diagnóstico completo de nivel',
+    desc: '32 preguntas y posiciones · 8 áreas · al terminar, tu nivel y qué estudiar',
+    href: 'diagnostico.html',
+    estado() {
+      try {
+        const r = JSON.parse(localStorage.getItem('diagnostico_resultado_v1') || 'null');
+        if (r) return { hecho: true, nota: `Hecho · ${r.nivel} · ${r.porcentaje}% de la prueba` };
+        const enCurso = JSON.parse(localStorage.getItem('diagnostico_estado_v1') || 'null');
+        if (enCurso && enCurso.estado && enCurso.estado.idx > 0) {
+          return { hecho: false, nota: `A medias · vas por la pregunta ${enCurso.estado.idx + 1}` };
+        }
+      } catch (e) {}
+      return { hecho: false, nota: 'Sin hacer · toma unos 20 minutos' };
+    },
+  },
+];
+function asignacionesHechas(){ return ASIGNACIONES.filter((a) => a.estado().hecho).length; }
 
 /* ---------------- Modo normal / modo adaptado (lector de pantalla) ----------------
    Mismo interruptor y misma clave de localStorage que Tablero, 4x4 y
@@ -583,11 +609,13 @@ function buildTabs(){
   tabs.innerHTML = '';
   CATEGORY_ORDER.forEach((cat) => {
     const list = lessonsFor(cat);
+    const hechas = cat === 'asignaciones' ? asignacionesHechas() : countSolved(list);
+    const total = cat === 'asignaciones' ? ASIGNACIONES.length : list.length;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
-    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${countSolved(list)}/${list.length}</span>`;
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${hechas}/${total}</span>`;
     btn.addEventListener('click', () => { currentCategory = cat; showList(); });
     tabs.appendChild(btn);
   });
@@ -597,9 +625,10 @@ function showList(){
   document.getElementById('lesson-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
-  const list = lessonsFor(currentCategory);
   const box = document.getElementById('lesson-list');
   box.innerHTML = '';
+  if(currentCategory === 'asignaciones'){ showAsignaciones(box); return; }
+  const list = lessonsFor(currentCategory);
   list.forEach((lesson) => {
     const unlocked = isUnlocked(lesson, list);
     const solved = isSolved(lesson.id);
@@ -615,6 +644,25 @@ function showList(){
       </span>`;
     if(unlocked) btn.addEventListener('click', () => openLesson(lesson));
     box.appendChild(btn);
+  });
+}
+
+// Las asignaciones se abren en su propia página, así que la ficha son enlaces
+// con su estado al lado, no botones de lección.
+function showAsignaciones(box){
+  ASIGNACIONES.forEach((asignacion) => {
+    const estado = asignacion.estado();
+    const enlace = document.createElement('a');
+    enlace.href = asignacion.href;
+    enlace.className = 'lesson-item';
+    enlace.innerHTML = `
+      <span class="mark">${estado.hecho ? '✅' : '📋'}</span>
+      <span class="info">
+        <span class="name">${asignacion.titulo}</span>
+        <span class="desc">${asignacion.desc}</span>
+        <span class="desc">${estado.nota}</span>
+      </span>`;
+    box.appendChild(enlace);
   });
 }
 

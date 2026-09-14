@@ -28,6 +28,20 @@ salvo que se pida.
 - `cursos/recursos/<curso>/`: presentaciones (.pptx) y hojas de ejercicios
   (.pdf), descargables por cualquiera.
 
+## Diagnóstico y plan de entrenamiento
+
+`entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
+Aprende): 32 ítems verificados con chess.js en `js/diagnostico-items.js`. El
+criterio pedagógico —áreas, nivel estimado y plan de 4 semanas— está en
+`js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
+`informes.html` (informe del profesor). Si se tocan las posiciones, hay que
+volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumplir.
+
+- El resultado se guarda en `training_progress` con `activity = 'diagnostico'`.
+- El plan vive en la tabla `training_plans` (Supabase, proyecto AjedrezIntegral).
+  Su RLS es la que manda: el alumno solo ve el plan si `shared = true`, y solo su
+  profesor o un administrador puede crearlo o editarlo.
+
 ## Accesibilidad
 
 Buena parte del sitio tiene "modo adaptado" (`js/adaptive-mode.js`) para alumnos

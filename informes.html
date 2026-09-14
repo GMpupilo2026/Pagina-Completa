@@ -34,6 +34,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/plan-entrenamiento.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -121,6 +122,12 @@
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <!-- Diagnóstico de nivel y plan de entrenamiento (entreno/diagnostico.html) -->
+            <div id="diagnostico-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="diagnostico-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Diagnóstico y plan de entrenamiento</h2>
+                <div id="diagnostico-body"></div>
             </div>
 
             <div id="topic-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -262,6 +269,7 @@
             const matesSolved = { mate1: new Set(), mate2: new Set(), mate3: new Set() };
             const tacticaSolved = new Set();
             const concentracionHechos = new Set(); // "nivel-ejercicio": un ejercicio repetido cuenta una vez
+            let diagnostico = null; // el más reciente: es la foto vigente del alumno
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
@@ -275,6 +283,10 @@
                     tacticaSolved.add(d.puzzle_id);
                 } else if (r.activity === "concentracion" && d.nivel && d.ejercicio) {
                     concentracionHechos.add(d.nivel + "-" + d.ejercicio);
+                } else if (r.activity === "diagnostico" && d.areas) {
+                    if (!diagnostico || new Date(r.created_at) > new Date(diagnostico.created_at)) {
+                        diagnostico = { created_at: r.created_at, detail: d };
+                    }
                 }
             });
             const practiceValues = Object.values(practiceSets);
@@ -286,6 +298,7 @@
                 matesTotal, mate1: matesSolved.mate1.size, mate2: matesSolved.mate2.size, mate3: matesSolved.mate3.size,
                 tacticaTotal: tacticaSolved.size,
                 concentracionTotal: concentracionHechos.size,
+                diagnostico,
             };
         }
 
@@ -327,6 +340,8 @@
 
             const { data: progress } = await sb.from("training_progress").select("*").eq("student_id", profile.id);
             const entreno = summarizeTrainingProgress(progress);
+            // La política de la tabla solo devuelve el plan cuando el profesor lo compartió.
+            const { data: planCompartido } = await sb.from("training_plans").select("*").eq("student_id", profile.id).maybeSingle();
 
             const cards = document.getElementById("stat-cards");
             cards.append(
@@ -344,6 +359,8 @@
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
+
+            renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
             if (!list.length) {
@@ -380,7 +397,11 @@
             const { data: attendance } = await sb.from("class_attendance").select("*");
             const { data: presenceRows } = await sb.from("class_presence_log").select("*");
             const { data: progress } = await sb.from("training_progress").select("*");
+            const { data: plans } = await sb.from("training_plans").select("*");
+            const plansByStudent = {};
+            (plans || []).forEach((pl) => { plansByStudent[pl.student_id] = pl; });
             teacherData = {
+                plansByStudent,
                 sessions: sessions || [], sessionById, closedSessions: (sessions || []).filter((s) => s.ended_at).length,
                 questions: questions || [], games: games || [], students: students || [],
                 answers: answers || [], attendance: attendance || [], presenceRows: presenceRows || [], progress: progress || [],
@@ -404,6 +425,7 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
+            document.getElementById("diagnostico-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
         }
@@ -540,6 +562,8 @@
                 statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
 
+            renderDiagnosticoProfesor(studentId, name, entreno);
+
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
             if (!list.length) {
@@ -662,6 +686,174 @@
         document.getElementById("student-filter").addEventListener("change", applyTeacherFilters);
         document.getElementById("topic-filter").addEventListener("change", applyTeacherFilters);
 
+
+        /* ---------------- Diagnóstico de nivel y plan de entrenamiento ----------------
+           El diagnóstico lo hace el alumno en entreno/diagnostico.html y queda en
+           training_progress. Aquí se lee esa foto y se arma, con el mismo criterio
+           pedagógico que ve el alumno (js/plan-entrenamiento.js), un plan de cuatro
+           semanas. El profesor puede guardarlo, anotarle algo y compartirlo: el alumno
+           solo ve el plan cuando shared = true (lo impone la propia base, no esta
+           pantalla). */
+        const PE = window.PlanEntrenamiento;
+
+        function fmtFecha(iso) {
+            return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+        }
+
+        function barrasAreasHTML(resumen) {
+            return resumen.porArea.map((a) => {
+                const color = a.porcentaje >= 80 ? "bg-green-500" : a.porcentaje >= 60 ? "bg-accent-500" : "bg-red-500";
+                return `<div>
+                    <div class="flex items-center justify-between gap-3 text-sm mb-1">
+                        <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
+                        <span class="text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%</span>
+                    </div>
+                    <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
+                </div>`;
+            }).join("");
+        }
+
+        function cabeceraDiagnosticoHTML(resumen, fecha) {
+            const perfil = resumen.perfil || {};
+            const contexto = [perfil.tiempo, perfil.torneos && "torneos: " + perfil.torneos.toLowerCase(), perfil.practica && "practica: " + perfil.practica.toLowerCase()]
+                .filter(Boolean).join(" · ");
+            return `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4 mb-5">
+                <p class="text-xs text-brand-400 dark:text-brand-500">Diagnóstico del ${fmtFecha(fecha)}</p>
+                <p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${resumen.nivel.etiqueta} · ${resumen.porcentaje}%</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">${resumen.nivel.descripcion}</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
+                ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
+            </div>`;
+        }
+
+        function planHTML(plan) {
+            return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${plan.rutina}.</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Prioridad:</strong> ${plan.prioridad.join(" → ")}.</p>
+                <div class="space-y-3">${plan.semanas.map((s) => `
+                    <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4">
+                        <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${s.titulo}</p>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-1">${s.porque}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-400 mb-2"><strong>Meta:</strong> ${s.objetivo}</p>
+                        <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${x}</li>`).join("")}</ul>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-600 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(" · ")}</p>
+                    </div>`).join("")}</div>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">${plan.medicion}</p>`;
+        }
+
+        function sinDiagnosticoHTML(nombre, esProfesor) {
+            return esProfesor
+                ? `<p class="text-sm text-brand-500 dark:text-brand-400">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
+                : `<p class="text-sm text-brand-500 dark:text-brand-400 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 32 preguntas y posiciones: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                   <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
+        }
+
+        // Vista del profesor (o administrador) para un alumno concreto.
+        function renderDiagnosticoProfesor(studentId, nombre, entreno) {
+            const panel = document.getElementById("diagnostico-report");
+            const body = document.getElementById("diagnostico-body");
+            document.getElementById("diagnostico-title").textContent = "Diagnóstico y plan de entrenamiento — " + nombre;
+            panel.classList.remove("hidden");
+
+            if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML(nombre, true); return; }
+
+            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const plan = PE.generarPlan(resumen);
+            const guardado = (teacherData.plansByStudent || {})[studentId];
+            const estado = !guardado
+                ? "Sin guardar todavía."
+                : guardado.shared
+                    ? `Compartido con el alumno el ${fmtFecha(guardado.updated_at)}: lo ve en su propia página de Informes.`
+                    : `Guardado el ${fmtFecha(guardado.updated_at)}, sin compartir: el alumno no lo ve.`;
+
+            body.innerHTML = `
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
+                <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
+                <div class="grid sm:grid-cols-2 gap-4 mb-5">
+                    <div class="bg-red-50 dark:bg-red-950/30 rounded-xl p-4">
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Debilidades a atacar</p>
+                        <ul class="list-disc pl-5 text-sm text-brand-600 dark:text-brand-300 space-y-1">${
+                            resumen.debilidades.length
+                                ? resumen.debilidades.map((d) => `<li>${d.nombre} (${d.porcentaje}%): ${PE.AREA_POR_ID[d.id].flojo}</li>`).join("")
+                                : "<li>Ninguna área por debajo del 60%: el plan trabaja las tres más bajas para seguir subiendo.</li>"}</ul>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-950/30 rounded-xl p-4">
+                        <p class="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">Fortalezas a sostener</p>
+                        <ul class="list-disc pl-5 text-sm text-brand-600 dark:text-brand-300 space-y-1">${
+                            resumen.fortalezas.length
+                                ? resumen.fortalezas.map((f) => `<li>${f.nombre} (${f.porcentaje}%): ${PE.AREA_POR_ID[f.id].solido}</li>`).join("")
+                                : "<li>Todavía ninguna área por encima del 80%: conviene consolidar antes de ampliar temario.</li>"}</ul>
+                    </div>
+                </div>
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Plan de entrenamiento · 4 semanas</h3>
+                ${planHTML(plan)}
+                <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
+                    <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Nota para el alumno (opcional)</label>
+                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empezá por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
+                    <p id="plan-estado" class="text-xs text-brand-400 dark:text-brand-500 mt-2">${estado}</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
+                        <button type="button" id="plan-guardar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">Guardar sin compartir</button>
+                        ${guardado && guardado.shared ? '<button type="button" id="plan-ocultar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-red-500 transition-colors">Dejar de compartir</button>' : ""}
+                    </div>
+                </div>`;
+
+            const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
+            document.getElementById("plan-compartir").addEventListener("click", () => guardar(true));
+            document.getElementById("plan-guardar").addEventListener("click", () => guardar(false));
+            const ocultar = document.getElementById("plan-ocultar");
+            if (ocultar) ocultar.addEventListener("click", () => guardar(false));
+        }
+
+        async function guardarPlan(studentId, plan, diagnostico, compartir) {
+            const estadoEl = document.getElementById("plan-estado");
+            const nota = (document.getElementById("plan-nota").value || "").trim();
+            estadoEl.textContent = "Guardando…";
+            const fila = {
+                student_id: studentId,
+                teacher_id: profile.id,
+                plan: { generado: plan, diagnostico_fecha: diagnostico.created_at },
+                nota: nota || null,
+                shared: compartir,
+                updated_at: new Date().toISOString(),
+            };
+            const { data, error } = await sb.from("training_plans").upsert(fila, { onConflict: "student_id" }).select().maybeSingle();
+            if (error) {
+                estadoEl.textContent = "No se pudo guardar el plan: " + error.message;
+                return;
+            }
+            teacherData.plansByStudent[studentId] = data || fila;
+            estadoEl.textContent = compartir
+                ? "Compartido con el alumno: ya lo ve en su página de Informes."
+                : "Guardado sin compartir: el alumno no lo ve.";
+            applyTeacherFilters();
+        }
+
+        // Vista del propio alumno: su diagnóstico y, si el profesor se lo compartió, su plan.
+        function renderDiagnosticoAlumno(entreno, planCompartido) {
+            const panel = document.getElementById("diagnostico-report");
+            const body = document.getElementById("diagnostico-body");
+            document.getElementById("diagnostico-title").textContent = "Tu nivel y tu plan de entrenamiento";
+            panel.classList.remove("hidden");
+
+            if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML("", false); return; }
+            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const plan = (planCompartido && planCompartido.plan && planCompartido.plan.generado) || null;
+
+            body.innerHTML = `
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
+                <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
+                ${plan ? `
+                    <div class="bg-accent-500/10 border border-accent-500/40 rounded-xl p-4 mb-4">
+                        <p class="text-sm font-semibold text-brand-800 dark:text-white">Tu profesor te compartió un plan de entrenamiento</p>
+                        ${planCompartido.nota ? `<p class="text-sm text-brand-600 dark:text-brand-300 mt-1">“${planCompartido.nota}”</p>` : ""}
+                    </div>
+                    ${planHTML(plan)}`
+                  : `<p class="text-sm text-brand-500 dark:text-brand-400">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
+                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-2"><a href="entreno/diagnostico.html" class="text-accent-600 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -669,7 +861,7 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
             document.getElementById("subtitle").textContent = isTeacher
                 ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
                 : "Tu actividad y progreso en las asignaciones de clase.";
