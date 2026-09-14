@@ -120,6 +120,25 @@
 
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
+
+                <!-- Resumen con gráficos: solo en la vista del profesor/administrador (ver a UN
+                     alumno puntual desde el filtro) — cómo le fue en las asignaciones
+                     (correcta/incorrecta/pendiente) y su perfil de entrenamiento por actividad
+                     (4×4, Aprender, Coordenadas, Practicar, Mates, Táctica, Concentración)
+                     comparado contra el resto de sus compañeros. Mismos datos que las tarjetas
+                     de arriba, en forma de gráfico en vez de solo números. -->
+                <div id="student-charts-wrap" class="hidden grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h3 class="text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-2">Asignaciones — resultado</h3>
+                        <div id="student-accuracy-chart"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-2">Perfil de entrenamiento</h3>
+                        <div id="student-training-chart"></div>
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-2">Últimas asignaciones</h3>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
@@ -190,7 +209,7 @@
     </footer>
     <script src="js/main.js"></script>
     <script>
-        let session = null, profile = null, isTeacher = false;
+        let session = null, profile = null, isTeacher = false, isAdmin = false;
 
         function fmtDuration(totalMinutes) {
             const m = Math.round(totalMinutes);
@@ -305,6 +324,96 @@
             return wrap;
         }
 
+        // Gráfico de "Asignaciones — resultado": una sola barra dividida en
+        // correcta/incorrecta/pendiente. Nunca solo color — cada segmento lleva su
+        // ícono y su etiqueta en la leyenda de abajo, igual que el resto del sitio
+        // (✅/❌/⏳ ya se usan en el historial de asignaciones de esta misma página).
+        // Colores de estado fijos (good/critical), iguales en claro y oscuro — no
+        // siguen la paleta categórica del resto del sitio a propósito, para que un
+        // color de estado nunca se confunda con una serie. Van siempre con
+        // ícono + etiqueta (nunca solo color), que es lo que los hace legibles
+        // para daltonismo pese a ser el clásico par rojo/verde.
+        const STATUS_GOOD = "#0ca30c";
+        const STATUS_CRITICAL = "#d03b3b";
+        function accuracyChart(correct, incorrect, pending) {
+            const total = correct + incorrect + pending;
+            const wrap = document.createElement("div");
+            const track = document.createElement("div");
+            track.className = "h-3 rounded-full overflow-hidden flex gap-0.5 bg-brand-100 dark:bg-brand-800";
+            track.setAttribute("role", "img");
+            track.setAttribute("aria-label",
+                `${correct} correctas, ${incorrect} incorrectas y ${pending} pendientes de ${total} asignaciones respondidas.`);
+            if (!total) {
+                track.classList.add("opacity-50");
+            } else {
+                [
+                    { n: correct, color: STATUS_GOOD, label: "correctas" },
+                    { n: incorrect, color: STATUS_CRITICAL, label: "incorrectas" },
+                    { n: pending, cls: "bg-brand-300 dark:bg-brand-600", label: "pendientes" },
+                ].forEach(({ n, color, cls, label }) => {
+                    if (!n) return;
+                    const seg = document.createElement("div");
+                    if (cls) seg.className = cls; else seg.style.backgroundColor = color;
+                    seg.style.width = Math.round((n / total) * 100) + "%";
+                    seg.title = `${n} ${label} (${Math.round((n / total) * 100)}%)`;
+                    track.appendChild(seg);
+                });
+            }
+            const legend = document.createElement("div");
+            legend.className = "flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-500 dark:text-brand-400 mt-2";
+            legend.innerHTML =
+                `<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color:${STATUS_GOOD}" aria-hidden="true"></span>✅ Correctas: ${correct}</span>` +
+                `<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color:${STATUS_CRITICAL}" aria-hidden="true"></span>❌ Incorrectas: ${incorrect}</span>` +
+                `<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-brand-300 dark:bg-brand-600 inline-block" aria-hidden="true"></span>⏳ Pendientes: ${pending}</span>`;
+            wrap.append(track, legend);
+            if (!total) {
+                const empty = document.createElement("p");
+                empty.className = "text-xs text-brand-400 dark:text-brand-500 mt-2";
+                empty.textContent = "Todavía no ha respondido ninguna asignación.";
+                wrap.appendChild(empty);
+            }
+            return wrap;
+        }
+
+        // Gráfico "Perfil de entrenamiento": una barra por actividad, a escala del
+        // máximo alcanzado por cualquier alumno visible (del propio profesor, o de
+        // toda la Academia para la persona administradora) — así se ve de un
+        // vistazo en qué está fuerte o flojo este alumno frente a sus compañeros,
+        // no solo el número suelto que ya muestran las tarjetas de arriba.
+        function trainingProfileChart(entreno, maxByCategory) {
+            const CATS = [
+                ["🧩", "4×4", entreno.puzzles, maxByCategory.puzzles, "ejercicios resueltos"],
+                ["🎓", "Aprender", entreno.lessons, maxByCategory.lessons, "lecciones completadas"],
+                ["⚡", "Coordenadas", entreno.bestCoord, maxByCategory.bestCoord, "mejor puntuación"],
+                ["🏆", "Practicar", entreno.practiceCompleted, maxByCategory.practiceCompleted, "series completadas"],
+                ["♚", "Mates", entreno.matesTotal, maxByCategory.matesTotal, "posiciones resueltas"],
+                ["⚔️", "Táctica", entreno.tacticaTotal, maxByCategory.tacticaTotal, "posiciones resueltas"],
+                ["🧠", "Concentración", entreno.concentracionTotal, maxByCategory.concentracionTotal, "ejercicios resueltos"],
+            ];
+            const wrap = document.createElement("div");
+            wrap.className = "space-y-2.5";
+            CATS.forEach(([emoji, label, value, max, unit]) => {
+                const pct = max ? Math.round((value / max) * 100) : 0;
+                const row = document.createElement("div");
+                const head = document.createElement("div");
+                head.className = "flex items-center justify-between text-sm mb-1";
+                head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${emoji} ${label}</span><span class="text-brand-400 dark:text-brand-500">${value || "—"}</span>`;
+                const track = document.createElement("div");
+                track.className = "h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
+                track.title = `${value} ${unit}` + (max ? ` de ${max}, el máximo entre sus compañeros` : "");
+                const fill = document.createElement("div");
+                fill.className = "h-full bg-accent-500 rounded-full";
+                // Con valor > 0 se deja un mínimo visible (4%) aunque el porcentaje real
+                // sea muy chico — si no, un alumno con 1 ejercicio y un compañero con 200
+                // se verían idénticos (barra en cero).
+                fill.style.width = (value ? Math.max(pct, 4) : 0) + "%";
+                track.appendChild(fill);
+                row.append(head, track);
+                wrap.appendChild(row);
+            });
+            return wrap;
+        }
+
         async function loadStudentReport() {
             const { data: answers } = await sb.from("question_answers").select("*").eq("student_id", profile.id).order("created_at", { ascending: false });
             const list = answers || [];
@@ -367,7 +476,17 @@
         // fetchTeacherData): los dos filtros de arriba (alumno puntual, tema/actividad
         // puntual) solo cambian qué parte de estos mismos datos ya cargados se muestra,
         // sin volver a consultar Supabase cada vez que el profesor cambia de selección.
-        let teacherData = null; // { sessions, sessionById, closedSessions, questions, games, students, answers, attendance, presenceRows, progress }
+        let teacherData = null; // { sessions, sessionById, closedSessions, questions, games, students, answers, attendance, presenceRows, progress, teachersById, maxByCategory }
+
+        // Nombre para mostrar de un alumno — agrega "(Prof. X)" cuando quien mira es
+        // la persona administradora, que ve a los alumnos de TODOS los profesores
+        // mezclados: sin esto no habría forma de saber de quién es cada alumno.
+        function studentLabel(s) {
+            const name = s.full_name || s.email;
+            if (!isAdmin) return name;
+            const teacher = s.teacher_id && teacherData.teachersById[s.teacher_id];
+            return name + (teacher ? ` (Prof. ${teacher.full_name || teacher.email})` : " (sin profesor asignado)");
+        }
 
         async function fetchTeacherData() {
             const { data: sessions } = await sb.from("class_sessions").select("id, ended_at");
@@ -376,14 +495,30 @@
             const { data: questions } = await sb.from("questions").select("id");
             const { data: games } = await sb.from("saved_games").select("id");
             const { data: students } = await sb.from("profiles").select("*").eq("role", "alumno");
+            const { data: teachers } = await sb.from("profiles").select("id, full_name, email").eq("role", "profesor");
             const { data: answers } = await sb.from("question_answers").select("*");
             const { data: attendance } = await sb.from("class_attendance").select("*");
             const { data: presenceRows } = await sb.from("class_presence_log").select("*");
             const { data: progress } = await sb.from("training_progress").select("*");
+            const teachersById = {};
+            (teachers || []).forEach((t) => { teachersById[t.id] = t; });
+
+            // Máximo de cada categoría de entrenamiento entre todos los alumnos visibles
+            // (los del profesor, o de toda la Academia si es la persona administradora) —
+            // sirve para dibujar el perfil de UN alumno puntual a escala de su grupo.
+            const progressByStudent = {};
+            (progress || []).forEach((r) => { (progressByStudent[r.student_id] = progressByStudent[r.student_id] || []).push(r); });
+            const maxByCategory = { puzzles: 0, lessons: 0, bestCoord: 0, practiceCompleted: 0, matesTotal: 0, tacticaTotal: 0, concentracionTotal: 0 };
+            (students || []).forEach((s) => {
+                const e = summarizeTrainingProgress(progressByStudent[s.id]);
+                Object.keys(maxByCategory).forEach((k) => { maxByCategory[k] = Math.max(maxByCategory[k], e[k] || 0); });
+            });
+
             teacherData = {
                 sessions: sessions || [], sessionById, closedSessions: (sessions || []).filter((s) => s.ended_at).length,
-                questions: questions || [], games: games || [], students: students || [],
+                questions: questions || [], games: games || [], students: students || [], teachersById,
                 answers: answers || [], attendance: attendance || [], presenceRows: presenceRows || [], progress: progress || [],
+                maxByCategory,
             };
         }
 
@@ -395,7 +530,7 @@
                 .forEach((s) => {
                     const opt = document.createElement("option");
                     opt.value = s.id;
-                    opt.textContent = s.full_name || s.email;
+                    opt.textContent = studentLabel(s);
                     select.appendChild(opt);
                 });
         }
@@ -428,7 +563,7 @@
                 if (a.is_correct === true) byStudent[a.student_id].correct += 1;
             });
             const rows = students
-                .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
+                .map((s) => ({ name: studentLabel(s), ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
                 .sort((a, b) => b.total - a.total);
             if (!rows.length) {
                 leaderboard.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
@@ -459,7 +594,7 @@
                     const att = attByStudent[s.id] || { count: 0, minutes: 0 };
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-                    const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
+                    const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = studentLabel(s);
                     const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdAtt.textContent = `${att.count}/${closedSessions}`;
                     const tdTime = document.createElement("td"); tdTime.className = "py-2 text-brand-500 dark:text-brand-400"; tdTime.textContent = fmtDuration(att.minutes);
                     tr.append(tdName, tdAtt, tdTime);
@@ -480,7 +615,7 @@
                     const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-                    const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
+                    const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = studentLabel(s);
                     const tdPuzzles = document.createElement("td"); tdPuzzles.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPuzzles.textContent = String(entreno.puzzles);
                     const tdLessons = document.createElement("td"); tdLessons.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdLessons.textContent = String(entreno.lessons);
                     const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdCoord.textContent = entreno.bestCoord || "—";
@@ -502,7 +637,7 @@
         // de volver a consultar la base (cambiar de alumno en el filtro es instantáneo).
         function renderStudentDetail(studentId) {
             const student = teacherData.students.find((s) => s.id === studentId);
-            const name = student ? (student.full_name || student.email) : "el alumno";
+            const name = student ? (studentLabel(student)) : "el alumno";
             document.getElementById("student-report-title").textContent = "Informe de " + name;
 
             const list = teacherData.answers
@@ -556,6 +691,17 @@
                     historyEl.appendChild(li);
                 });
             }
+
+            const incorrect = graded.length - correct;
+            const pending = list.length - graded.length;
+            const accuracyEl = document.getElementById("student-accuracy-chart");
+            accuracyEl.innerHTML = "";
+            accuracyEl.appendChild(accuracyChart(correct, incorrect, pending));
+            const trainingEl = document.getElementById("student-training-chart");
+            trainingEl.innerHTML = "";
+            trainingEl.appendChild(trainingProfileChart(entreno, teacherData.maxByCategory));
+            document.getElementById("student-charts-wrap").classList.remove("hidden");
+
             document.getElementById("student-report").classList.remove("hidden");
         }
 
@@ -593,7 +739,7 @@
                     if (a.is_correct === true) byStudent[a.student_id].correct += 1;
                 });
                 students
-                    .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
+                    .map((s) => ({ name: studentLabel(s), ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
                     .sort((a, b) => b.total - a.total)
                     .forEach((r) => body.appendChild(barRow(r.name, r.correct, r.total)));
             } else if (topic === "asistencia") {
@@ -609,7 +755,7 @@
                     .map((s) => {
                         const count = (attByStudent[s.id] || { count: 0 }).count;
                         const minutes = minutesFromPresenceRows(presenceByStudent[s.id]);
-                        return { name: s.full_name || s.email, count, minutes };
+                        return { name: studentLabel(s), count, minutes };
                     })
                     .sort((a, b) => b.minutes - a.minutes)
                     .forEach((r) => {
@@ -632,7 +778,7 @@
                         else if (topic === "mates") { value = entreno.matesTotal; label = value ? `${value} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)` : "—"; }
                         else if (topic === "tactica") { value = entreno.tacticaTotal; label = value ? String(value) : "—"; }
                         else if (topic === "concentracion") { value = entreno.concentracionTotal; label = value ? value + " ejercicios" : "—"; }
-                        return { name: s.full_name || s.email, value, label };
+                        return { name: studentLabel(s), value, label };
                     })
                     .sort((a, b) => b.value - a.value)
                     .forEach((r) => {
@@ -670,10 +816,17 @@
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
             isTeacher = profile.role === "profesor";
-            document.getElementById("subtitle").textContent = isTeacher
+            isAdmin = !!profile.is_admin;
+            document.getElementById("subtitle").textContent = isAdmin
+                ? "Panorama de toda la Academia: asistencia, participación y precisión de los alumnos de todos los profesores."
+                : isTeacher
                 ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
                 : "Tu actividad y progreso en las asignaciones de clase.";
-            if (isTeacher) {
+            // La persona administradora ve exactamente lo mismo que ve cada profesor
+            // (mismo panel, mismos gráficos por alumno) pero de TODOS los alumnos de
+            // TODOS los profesores a la vez — RLS ya deja pasar todo para is_admin, así
+            // que fetchTeacherData() no necesita ningún cambio para esto.
+            if (isTeacher || isAdmin) {
                 await fetchTeacherData();
                 populateStudentFilter();
                 document.getElementById("teacher-filters").classList.remove("hidden");
