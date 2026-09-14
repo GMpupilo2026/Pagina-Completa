@@ -57,6 +57,7 @@
       if (el) { el.hidden = true; el.classList.add("hidden"); el.classList.remove("flex"); }
     });
     if (window.Finales100) window.Finales100.init(contentBody);
+    if (window.CursoPartidas) window.CursoPartidas.init(contentBody);
     document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: contentBody, curso: courseSlug } }));
     if (location.hash && location.hash.indexOf("#lec-") === 0) {
       var d = document.getElementById(location.hash.slice(1));
