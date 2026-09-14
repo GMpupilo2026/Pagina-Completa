@@ -52,6 +52,19 @@ body { -webkit-font-smoothing: antialiased; }
 }
 .radio-card-selected { background-color: rgba(240, 180, 41, 0.1); border-color: #de911d; }
 
+/* Piezas del Ajedrez para 4 (js/fourplayer-board.js): un solo set de glifos
+   sólidos (♚♛♜♝♞♟, los mismos que ya usa el sitio para "negras") coloreado
+   por asiento en vez de necesitar 4 sets de arte distintos — con el mismo
+   contorno claro de piece-black para que se lean bien sobre cualquier
+   casilla y cualquier tema de color. Las piezas de un jugador eliminado
+   (piece-dead) quedan en gris y sin contorno, para que se noten "apagadas"
+   de un vistazo. */
+.piece-red    { color: #dc2626; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-blue   { color: #2563eb; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-yellow { color: #ca8a04; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-green  { color: #16a34a; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-dead   { color: #9ca3af; opacity: .55; }
+
 /* Fichas de los temas de tablero "divertidos" (js/board-themes.js): un emoji dentro de
    un círculo de color, para distinguir bando sin depender de un glifo distinto por
    color como con las piezas de ajedrez clásicas. Tamaño relativo (em) al font-size ya

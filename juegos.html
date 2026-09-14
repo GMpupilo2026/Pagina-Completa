@@ -34,6 +34,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/fourplayer-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -112,27 +113,53 @@
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asignar rivales</h2>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige dos alumnos distintos y la modalidad — se crea la partida y a ambos les aparece de inmediato en su panel de Juegos.</p>
                     <form id="create-room-form" class="space-y-3">
-                        <div class="grid sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
+                            <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <option value="crazyhouse">♞ Crazyhouse</option>
+                                <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
+                                <option value="4teams">🤝 4 jugadores · Equipos</option>
+                            </select>
+                        </div>
+
+                        <!-- 2 jugadores (Crazyhouse) -->
+                        <div id="fields-2p" class="grid sm:grid-cols-2 gap-3">
                             <div>
                                 <label for="white-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⚪ Juega con blancas</label>
-                                <select id="white-select" required class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                <select id="white-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                             </div>
                             <div>
                                 <label for="black-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⚫ Juega con negras</label>
-                                <select id="black-select" required class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                <select id="black-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                             </div>
                         </div>
-                        <div class="grid sm:grid-cols-2 gap-3">
-                            <div>
-                                <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
-                                <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
-                                    <option value="crazyhouse">♞ Crazyhouse</option>
-                                </select>
+
+                        <!-- 4 jugadores (FFA o Equipos) -->
+                        <div id="fields-4p" class="hidden">
+                            <p id="fields-4p-hint" class="text-xs text-brand-400 dark:text-brand-500 mb-2"></p>
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="seat-red-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">🔴 Rojo (empieza)</label>
+                                    <select id="seat-red-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                </div>
+                                <div>
+                                    <label for="seat-blue-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">🔵 Azul</label>
+                                    <select id="seat-blue-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                </div>
+                                <div>
+                                    <label for="seat-yellow-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">🟡 Amarillo</label>
+                                    <select id="seat-yellow-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                </div>
+                                <div>
+                                    <label for="seat-green-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">🟢 Verde</label>
+                                    <select id="seat-green-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                                </div>
                             </div>
-                            <div>
-                                <label for="time-control-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⏱️ Tiempo</label>
-                                <select id="time-control-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
-                            </div>
+                        </div>
+
+                        <div>
+                            <label for="time-control-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⏱️ Tiempo</label>
+                            <select id="time-control-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                         </div>
                         <p id="create-room-msg" class="text-xs min-h-[1em]"></p>
                         <button type="submit" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">🎲 Crear partida</button>
@@ -178,9 +205,13 @@
         // exista, igual que las tarjetas del panel de Clases.
         const VARIANTS = [
             { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
+            { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
+            { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
             { id: "threecheck", emoji: "🎯", label: "Tres jaques", desc: "Próximamente", disabled: true },
         ];
+        const SEATS = ["red", "blue", "yellow", "green"];
+        const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
 
         // Tiempo asignado a cada jugador (reloj tipo Fischer: minutos + segundos que se
         // suman después de cada jugada). "Sin límite" (initial: null) es como se jugó
@@ -224,6 +255,12 @@
 
         function resultLabel(row) {
             if (row.status !== "finished") return "";
+            if (row._table === "fourplayer_games") {
+                const r = row.result || {};
+                if (r.reason === "draw") return "🤝 Tablas";
+                if (r.winners && r.winners.length) return "🏆 Ganó " + r.winners.map((s) => SEAT_LABEL[s]).join(" + ");
+                return "Terminada";
+            }
             if (row.result === "draw") return "🤝 Tablas";
             if (row.result === "white") return "🏆 Ganó " + (playerNames[row.white_id] || "blancas");
             if (row.result === "black") return "🏆 Ganó " + (playerNames[row.black_id] || "negras");
@@ -239,13 +276,20 @@
                 .or("white_id.eq." + profile.id + ",black_id.eq." + profile.id)
                 .order("created_at", { ascending: false })
                 .limit(10);
+            const { data: my4pGames } = await sb.from("fourplayer_games")
+                .select("*")
+                .or(SEATS.map((s) => "seats->" + s + "->>player_id.eq." + profile.id).join(","))
+                .order("created_at", { ascending: false })
+                .limit(10);
 
             const activeEl = document.getElementById("my-active-games");
             activeEl.innerHTML = "";
-            const active = (myRooms || []).filter((r) => r.status === "playing");
-            if (active.length) {
+            const active = (myRooms || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "game_rooms" }, r));
+            const active4p = (my4pGames || []).filter((r) => r.status === "playing").map((r) => Object.assign({ _table: "fourplayer_games" }, r));
+            if (active.length || active4p.length) {
                 const ids = new Set();
                 active.forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+                active4p.forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
                 const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
                 (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
 
@@ -259,6 +303,18 @@
                         '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(r.variant) + ' · en curso</p>' +
                         '<h2 class="font-semibold text-brand-800 dark:text-white">Contra ' + escapeHtml(playerNames[rivalId] || "tu rival") + '</h2>' +
                         '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Juegas con ' + (myColor === "w" ? "blancas ⚪" : "negras ⚫") + ' — toca para continuar →</p>';
+                    activeEl.appendChild(card);
+                });
+                active4p.forEach((r) => {
+                    const mySeat = SEATS.find((s) => r.seats[s].player_id === profile.id);
+                    const others = SEATS.filter((s) => s !== mySeat).map((s) => escapeHtml(playerNames[r.seats[s].player_id] || "?")).join(", ");
+                    const card = document.createElement("a");
+                    card.href = "cuatro-jugadores.html?room=" + r.id;
+                    card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
+                    card.innerHTML =
+                        '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(r.mode === "teams" ? "4teams" : "4ffa") + ' · en curso</p>' +
+                        '<h2 class="font-semibold text-brand-800 dark:text-white">Contra ' + others + '</h2>' +
+                        '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Jugás con ' + SEAT_LABEL[mySeat] + ' — toca para continuar →</p>';
                     activeEl.appendChild(card);
                 });
             } else {
@@ -300,7 +356,8 @@
             allStudents = data || [];
             const whiteSelect = document.getElementById("white-select");
             const blackSelect = document.getElementById("black-select");
-            [whiteSelect, blackSelect].forEach((sel) => {
+            const seatSelects = SEATS.map((s) => document.getElementById("seat-" + s + "-select"));
+            [whiteSelect, blackSelect, ...seatSelects].forEach((sel) => {
                 sel.innerHTML = "";
                 allStudents.forEach((s) => {
                     const opt = document.createElement("option");
@@ -310,20 +367,39 @@
                 });
             });
             if (allStudents.length > 1) blackSelect.selectedIndex = 1;
+            // Preseleccionar 4 alumnos distintos si hay suficientes, para que el
+            // profesor solo tenga que cambiar los que hagan falta.
+            seatSelects.forEach((sel, i) => { if (allStudents.length > i) sel.selectedIndex = i; });
         }
 
+        function updateVariantFieldsVisibility() {
+            const variant = document.getElementById("variant-select").value;
+            const is4p = variant === "4ffa" || variant === "4teams";
+            document.getElementById("fields-2p").classList.toggle("hidden", is4p);
+            document.getElementById("fields-4p").classList.toggle("hidden", !is4p);
+            document.getElementById("fields-4p-hint").textContent = variant === "4teams"
+                ? "En Equipos, los que quedan frente a frente en el tablero son compañeros: 🔴 Rojo + 🟡 Amarillo vs. 🔵 Azul + 🟢 Verde."
+                : "Todos contra todos: el orden de turno es Rojo → Azul → Amarillo → Verde.";
+        }
+        document.getElementById("variant-select").addEventListener("change", updateVariantFieldsVisibility);
+
         function renderRoomCard(row, container) {
+            const is4p = row._table === "fourplayer_games";
             const card = document.createElement("div");
             card.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
             const info = document.createElement("div");
+            const playersLine = is4p
+                ? SEATS.map((s) => SEAT_LABEL[s] + " " + escapeHtml(playerNames[row.seats[s].player_id] || "?")).join(" · ")
+                : escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?");
+            const variantId = is4p ? (row.mode === "teams" ? "4teams" : "4ffa") : row.variant;
             info.innerHTML =
-                '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(row.variant) + ' · ⏱️ ' + timeControlLabel(row.initial_seconds, row.increment_seconds) + '</p>' +
-                '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + escapeHtml(playerNames[row.white_id] || "?") + ' ⚪ vs ⚫ ' + escapeHtml(playerNames[row.black_id] || "?") + '</h3>' +
+                '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(variantId) + ' · ⏱️ ' + timeControlLabel(row.initial_seconds, row.increment_seconds) + '</p>' +
+                '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + playersLine + '</h3>' +
                 '<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
             const viewBtn = document.createElement("a");
-            viewBtn.href = "crazyhouse.html?room=" + row.id;
+            viewBtn.href = (is4p ? "cuatro-jugadores.html" : "crazyhouse.html") + "?room=" + row.id;
             viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
             viewBtn.textContent = "👀 Ver";
             actions.appendChild(viewBtn);
@@ -334,7 +410,15 @@
                 endBtn.textContent = "Terminar";
                 endBtn.addEventListener("click", async () => {
                     if (!window.confirm("¿Terminar esta partida sin declarar ganador?")) return;
-                    await sb.from("game_rooms").update({ status: "finished", updated_at: new Date().toISOString() }).eq("id", row.id);
+                    if (is4p) {
+                        const g = FourPlayerChess.Game.fromJSON(row.board);
+                        g.forceEnd();
+                        const newSeats = JSON.parse(JSON.stringify(row.seats));
+                        if (g.result && g.result.bonusPoints) Object.keys(g.result.bonusPoints).forEach((s) => { newSeats[s].score = (newSeats[s].score || 0) + g.result.bonusPoints[s]; });
+                        await sb.from("fourplayer_games").update({ status: "finished", result: g.result, board: g.toJSON(), seats: newSeats, updated_at: new Date().toISOString() }).eq("id", row.id);
+                    } else {
+                        await sb.from("game_rooms").update({ status: "finished", updated_at: new Date().toISOString() }).eq("id", row.id);
+                    }
                     await loadRooms();
                 });
                 actions.appendChild(endBtn);
@@ -345,7 +429,7 @@
             delBtn.textContent = "Eliminar";
             delBtn.addEventListener("click", async () => {
                 if (!window.confirm("¿Eliminar esta partida por completo? No se puede deshacer.")) return;
-                await sb.from("game_rooms").delete().eq("id", row.id);
+                await sb.from(is4p ? "fourplayer_games" : "game_rooms").delete().eq("id", row.id);
                 await loadRooms();
             });
             actions.appendChild(delBtn);
@@ -354,17 +438,26 @@
         }
 
         async function loadRooms() {
-            const { data: rooms, error } = await sb.from("game_rooms").select("*").order("created_at", { ascending: false }).limit(100);
-            if (error) { console.error(error); return; }
+            const [{ data: rooms, error }, { data: games4p, error: error4p }] = await Promise.all([
+                sb.from("game_rooms").select("*").order("created_at", { ascending: false }).limit(100),
+                sb.from("fourplayer_games").select("*").order("created_at", { ascending: false }).limit(100),
+            ]);
+            if (error) console.error(error);
+            if (error4p) console.error(error4p);
             const ids = new Set();
             (rooms || []).forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
+            (games4p || []).forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
             if (ids.size) {
                 const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
                 (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
             }
 
-            const ongoing = (rooms || []).filter((r) => r.status === "playing");
-            const finished = (rooms || []).filter((r) => r.status === "finished");
+            const all = (rooms || []).map((r) => Object.assign({ _table: "game_rooms" }, r))
+                .concat((games4p || []).map((r) => Object.assign({ _table: "fourplayer_games" }, r)))
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            const ongoing = all.filter((r) => r.status === "playing");
+            const finished = all.filter((r) => r.status === "finished");
 
             const ongoingEl = document.getElementById("ongoing-list");
             ongoingEl.innerHTML = "";
@@ -381,28 +474,49 @@
             sb.channel("game-rooms-list-changes")
                 .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, () => loadRooms())
                 .subscribe();
+            sb.channel("fourplayer-games-list-changes")
+                .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, () => loadRooms())
+                .subscribe();
         }
 
         document.getElementById("create-room-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const msg = document.getElementById("create-room-msg");
-            const whiteId = document.getElementById("white-select").value;
-            const blackId = document.getElementById("black-select").value;
+            const fail = (text) => { msg.textContent = text; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; };
             const variant = document.getElementById("variant-select").value;
-            if (!whiteId || !blackId) { msg.textContent = "Elige un alumno para cada color."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
-            if (whiteId === blackId) { msg.textContent = "Elige dos alumnos distintos."; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             const timeControlId = document.getElementById("time-control-select").value;
             const timeControl = TIME_CONTROLS.find((tc) => tc.id === timeControlId) || TIME_CONTROLS[0];
-            const { error } = await sb.from("game_rooms").insert({
-                variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
-                initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
-                // El reloj de ambos arranca completo, pero SIN empezar a correr todavía
-                // (clock_updated_at se deja sin poner) — recién arranca cuando los dos
-                // jugadores entran y se marcan listos (ver crazyhouse.html), no desde que
-                // el profesor crea la partida.
-                white_time_left: timeControl.initial, black_time_left: timeControl.initial,
-            });
-            if (error) { console.error(error); msg.textContent = "No se pudo crear la partida: " + error.message; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+
+            if (variant === "4ffa" || variant === "4teams") {
+                const ids = SEATS.map((s) => document.getElementById("seat-" + s + "-select").value);
+                if (ids.some((id) => !id)) return fail("Elige un alumno para cada uno de los 4 asientos.");
+                if (new Set(ids).size !== 4) return fail("Elige 4 alumnos distintos.");
+                const mode = variant === "4teams" ? "teams" : "ffa";
+                const engineGame = new FourPlayerChess.Game(mode);
+                const seats = {};
+                SEATS.forEach((s, i) => { seats[s] = { player_id: ids[i], ready: false, score: 0, time_left: timeControl.initial }; });
+                const { error } = await sb.from("fourplayer_games").insert({
+                    mode: mode, seats: seats, turn: "red", board: engineGame.toJSON(), moves: [],
+                    initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
+                    created_by: session.user.id,
+                });
+                if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
+            } else {
+                const whiteId = document.getElementById("white-select").value;
+                const blackId = document.getElementById("black-select").value;
+                if (!whiteId || !blackId) return fail("Elige un alumno para cada color.");
+                if (whiteId === blackId) return fail("Elige dos alumnos distintos.");
+                const { error } = await sb.from("game_rooms").insert({
+                    variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
+                    initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
+                    // El reloj de ambos arranca completo, pero SIN empezar a correr todavía
+                    // (clock_updated_at se deja sin poner) — recién arranca cuando los dos
+                    // jugadores entran y se marcan listos (ver crazyhouse.html), no desde que
+                    // el profesor crea la partida.
+                    white_time_left: timeControl.initial, black_time_left: timeControl.initial,
+                });
+                if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
+            }
             msg.textContent = "¡Partida creada!";
             msg.className = "text-xs text-green-600 dark:text-green-400 min-h-[1em]";
             await loadRooms();
@@ -412,8 +526,11 @@
             document.getElementById("teacher-view").classList.remove("hidden");
             populateTimeControlSelect();
             await loadStudentsIntoSelects();
+            updateVariantFieldsVisibility();
             if (allStudents.length < 2) {
                 setStatus("Necesitas al menos 2 alumnos registrados para armar una partida entre ellos.");
+            } else if (allStudents.length < 4) {
+                setStatus("Con menos de 4 alumnos registrados no vas a poder armar partidas de 4 jugadores.");
             }
             await loadRooms();
             subscribeRoomsList();
