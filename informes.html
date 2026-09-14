@@ -981,7 +981,7 @@
 
             if (!conDiagnostico.length) {
                 const empezados = pendientes.filter((p) => p.aMedias);
-                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-400">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-600 dark:text-accent-400 hover:underline">la versión imprimible</a>.</p>`;
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-400">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-600 dark:text-accent-400 hover:underline">la versión imprimible</a> (material docente: trae las respuestas y va con marca de agua, no se le entrega al alumno).</p>`;
                 return;
             }
 

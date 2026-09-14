@@ -191,13 +191,23 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
   .area-plan ul { margin: 3px 0 0; padding-left: 16px; }
   .area-plan li { margin-bottom: 2px; }
   footer { position: fixed; bottom: -8mm; left: 0; right: 0; font-size: 7.5pt; color: #9fb3c8; }
+  /* Marca de agua: el cuadernillo trae las respuestas, así que es material
+     docente y no se entrega al alumno. Va en position:fixed —igual que el pie—
+     para que Chromium la repita en TODAS las páginas, y por debajo del texto
+     (el contenido lleva z-index 1) para no estorbar la lectura ni al imprimir. */
+  .marca-agua { position: fixed; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .marca-agua span { transform: rotate(-30deg); font-family: "DejaVu Serif", Georgia, serif; font-size: 24pt; font-weight: 700; letter-spacing: .08em; color: #bcccdc; opacity: .45; white-space: nowrap; text-transform: uppercase; }
+  body > *:not(.marca-agua) { position: relative; z-index: 1; }
 </style></head><body>
+
+<div class="marca-agua" aria-hidden="true"><span>Ajedrez Integral · uso docente</span></div>
 
 <div class="portada">
   <p class="marca">Ajedrez Integral · Academia</p>
   <h1>Diagnóstico de nivel</h1>
   <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
   <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas salen del mismo banco de ${BANCO.length} ejercicios del sitio, verificadas con motor. En línea las preguntas se sortean cada vez; este cuadernillo es una de esas formas, con el mismo reparto por áreas y los mismos ${TOTAL_PUNTOS} puntos.</p>
+  <p class="apagado" style="max-width:130mm; margin-top:4mm; font-weight:700; color:#334e68;">Material docente: incluye las respuestas y la hoja de corrección. No se le entrega al alumno.</p>
   <div class="datos">
     <div>Alumno: <span class="raya larga"></span></div>
     <div>Fecha: <span class="raya"></span> &nbsp;&nbsp; Grupo: <span class="raya"></span></div>
@@ -290,7 +300,7 @@ console.log(`Maqueta: ${htmlTemporal} · ${ITEMS.length} ítems · ${TOTAL_PUNTO
     margin: { top: "16mm", bottom: "14mm", left: "14mm", right: "14mm" },
     displayHeaderFooter: true,
     headerTemplate: "<div></div>",
-    footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;"><span>Ajedrez Integral · Diagnóstico de nivel</span><span class="pageNumber"></span></div>',
+    footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;"><span>Ajedrez Integral · Diagnóstico de nivel · uso docente</span><span class="pageNumber"></span></div>',
   });
   await navegador.close();
   console.log("PDF listo:", destino);

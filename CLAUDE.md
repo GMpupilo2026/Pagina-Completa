@@ -158,7 +158,16 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   coincidir con la pantalla. El cuadernillo es **una** de las formas posibles
   de la prueba, sorteada con semilla fija: `SEMILLA=<número> node
   herramientas/diagnostico-pdf.js` saca otra versión, útil para aplicar dos
-  formas distintas en el mismo grupo.
+  formas distintas en el mismo grupo. **Es material docente**: trae las
+  respuestas y la hoja de corrección, así que lleva marca de agua ("Ajedrez
+  Integral · uso docente", repetida en todas las páginas) y el enlace para
+  descargarlo solo aparece con perfil de profesor o de administración —en
+  `entreno/diagnostico.html` lo muestra `mostrarPdfSiEsDocente()` y en
+  `informes.html` vive dentro del bloque que solo ven ellos. Como todo en el
+  sitio, el filtro es del navegador: el archivo sigue estando en la raíz, así
+  que quien conozca la dirección exacta puede bajarlo igual (la marca de agua
+  es justamente para eso). Cerrar esa puerta del todo pediría servir el PDF
+  desde Supabase Storage con RLS.
 
 ## Coordenadas en los tableros
 

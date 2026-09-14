@@ -109,10 +109,12 @@
                 <div class="flex flex-wrap items-center gap-3">
                     <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
                     <!-- Mismo diagnóstico en papel, con sus diagramas y su hoja de corrección:
-                         se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js). -->
-                    <a href="../diagnostico-de-nivel.pdf" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
+                         se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js).
+                         Es material docente —trae las respuestas—, así que solo se ofrece a
+                         profesores y a quien administra: init() lo muestra si el perfil lo es. -->
+                    <a href="../diagnostico-de-nivel.pdf" id="pdf-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
                 </div>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">La versión en papel trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla para sacar el nivel a mano — útil para aplicarlo en clase sin dispositivos.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-400 dark:text-brand-500 mt-2">Solo para docentes: el cuadernillo trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla de niveles, y va con marca de agua. No se le entrega al alumno.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -711,6 +713,15 @@ document.getElementById('next-btn').addEventListener('click', siguiente);
 document.getElementById('abandon-btn').addEventListener('click', () => { guardarEstado(); irA('intro-view'); });
 document.getElementById('repeat-btn').addEventListener('click', () => { borrarEstado(); pintarPerfil(); irA('intro-view'); });
 
+async function mostrarPdfSiEsDocente(userId) {
+  try {
+    const { data } = await sb.from('profiles').select('role, is_admin').eq('id', userId).maybeSingle();
+    if (!data || !(data.role === 'profesor' || data.is_admin === true)) return;
+    document.getElementById('pdf-docente').classList.remove('hidden');
+    document.getElementById('pdf-docente-nota').classList.remove('hidden');
+  } catch (e) { /* si no se puede saber, no se muestra */ }
+}
+
 async function init() {
   let sesion = null;
   try {
@@ -722,6 +733,10 @@ async function init() {
     window.location.href = '../login.html?next=' + encodeURIComponent('entreno/diagnostico.html');
     return;
   }
+  // El cuadernillo imprimible lleva las respuestas: se ofrece solo a quien da
+  // clase (profesor o administración), nunca al alumno que va a hacer la prueba.
+  mostrarPdfSiEsDocente(sesion.user.id);
+
   await EntrenoProgress.init();
   // Baja el progreso de la cuenta antes de leer el estado guardado: si la prueba
   // se empezó en otro aparato, se retoma donde iba.
