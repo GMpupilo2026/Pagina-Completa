@@ -210,6 +210,7 @@ const FILES = ['a','b','c','d','e','f','g','h'];
 
 let estado = { perfil: {}, idx: 0, respuestas: {} };
 let itemActual = null;
+let ordenOpciones = null;   // en qué orden se muestran las opciones de este ítem
 let seleccion = null;      // respuesta en curso (índice de opción, casilla o jugada)
 let origenElegido = null;  // casilla de origen en los ítems de jugada
 
@@ -313,15 +314,19 @@ function pintarItem() {
   if (conTablero) pintarTablero(new Chess(itemActual.fen));
 
   if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
-    itemActual.opciones.forEach((texto, i) => {
+    // Las opciones se barajan en cada intento: escritas siempre en el mismo orden,
+    // la correcta quedaría siempre en el mismo lugar y bastaría con marcar la
+    // primera para aprobar media prueba sin saber ajedrez.
+    ordenOpciones = barajar(itemActual.opciones.map((_, i) => i));
+    ordenOpciones.forEach((original, posicion) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.dataset.i = String(i);
+      btn.dataset.original = String(original);
       btn.className = claseOpcion(false);
-      btn.textContent = texto;
+      btn.textContent = itemActual.opciones[original];
       btn.addEventListener('click', () => {
-        seleccion = i;
-        [...opciones.children].forEach((b, j) => { b.className = claseOpcion(j === i); });
+        seleccion = original;
+        [...opciones.children].forEach((b, j) => { b.className = claseOpcion(j === posicion); });
         document.getElementById('next-btn').disabled = false;
       });
       opciones.appendChild(btn);
@@ -331,6 +336,15 @@ function pintarItem() {
   } else if (itemActual.tipo === 'jugada') {
     hint.textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
   }
+}
+
+function barajar(lista) {
+  const copia = lista.slice();
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
 function claseOpcion(activa) {
