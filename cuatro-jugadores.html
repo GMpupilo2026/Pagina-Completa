@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
-    <title>Crazyhouse — Ajedrez Integral</title>
-    <meta name="description" content="Partida de Crazyhouse: las piezas que capturas pasan a tu reserva y puedes soltarlas de vuelta en el tablero.">
+    <title>Ajedrez para 4 — Ajedrez Integral</title>
+    <meta name="description" content="Partida de Ajedrez para 4 jugadores: Todos contra todos o por Equipos, en un tablero en cruz de 160 casillas.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,13 +32,12 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
-    <script src="js/crazyhouse-engine.js"></script>
+    <script src="js/fourplayer-engine.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/board-color-themes.js"></script>
-    <script src="js/crazyhouse-board.js"></script>
+    <script src="js/fourplayer-board.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -95,33 +94,22 @@
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
             <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">♞ Crazyhouse</h1>
+                <h1 id="page-title" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">♟️ Ajedrez para 4</h1>
                 <button id="resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
             </div>
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
-            <!-- Antes de que ambos confirmen que están listos, el reloj no debe correr —
-                 así que el tablero se muestra pero solo con este botón activo, sin poder
-                 mover todavía (ver bothReady() y la condición de interactividad). -->
             <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
-            <div class="flex items-center justify-center gap-2 mb-1">
-                <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
-                <span id="top-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
-            </div>
-            <div id="top-pocket" class="flex justify-center gap-1.5 mb-2 min-h-[3rem]" role="group" aria-label="Reserva del rival"></div>
+            <!-- Un panel por asiento: color, nombre, estado, puntaje (solo FFA) y reloj.
+                 Se resalta el asiento a quien le toca mover. -->
+            <div id="seats-panel" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4"></div>
 
             <div class="flex justify-center">
-                <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
+                <div id="board" class="grid gap-0 w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none" style="grid-template-columns: repeat(14, minmax(0,1fr)); grid-template-rows: repeat(14, minmax(0,1fr));"></div>
             </div>
 
-            <div id="bottom-pocket" class="flex justify-center gap-1.5 mt-2 mb-1 min-h-[3rem]" role="group" aria-label="Tu reserva"></div>
-            <div class="flex items-center justify-center gap-2 mb-6">
-                <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
-                <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
-            </div>
-
-            <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
+            <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 mt-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>
                 <p id="moves-empty" class="text-xs text-brand-300 dark:text-brand-600">Sin jugadas todavía…</p>
                 <ol id="moves-list" class="hidden flex-wrap gap-x-3 gap-y-1 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
@@ -137,7 +125,6 @@
         </div>
     </div>
 
-    
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
@@ -153,174 +140,180 @@
     </footer>
     <script src="js/main.js"></script>
     <script>
-        let session = null, profile = null, isTeacher = false, room = null, myColor = null, board = null;
+        const SEATS = ["red", "blue", "yellow", "green"];
+        const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
+        const TEAMMATE = { red: "yellow", yellow: "red", blue: "green", green: "blue" };
+
+        let session = null, profile = null, isTeacher = false, room = null, mySeat = null, board = null, game = null;
         const ROOM_ID = new URLSearchParams(window.location.search).get("room");
         const playerNames = {}; // id -> nombre para mostrar
 
         function setStatus(text) {
             document.getElementById("status-banner").textContent = text;
         }
-
         function showError(text) {
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("error-text").textContent = text;
             document.getElementById("error-state").classList.remove("hidden");
         }
-
-        function nameFor(id) {
-            return playerNames[id] || "Alumno";
+        function nameFor(seat) {
+            const id = room.seats[seat] && room.seats[seat].player_id;
+            return id ? (playerNames[id] || "Alumno") : "—";
         }
-
-        // El reloj (si la partida tiene uno) no debe arrancar hasta que blancas Y negras
-        // hayan entrado y confirmado que están listas — antes arrancaba desde el momento
-        // en que el profesor creaba la partida, corriendo en vacío mientras los alumnos
-        // ni siquiera habían abierto la página.
-        function bothReady(row) {
-            return !!(row.white_ready && row.black_ready);
+        function allReady(row) {
+            return SEATS.every((s) => row.seats[s] && row.seats[s].ready);
+        }
+        function statusLabel(seat) {
+            const st = game.status[seat];
+            if (st === "eliminated") return "Eliminado";
+            if (st === "zombie") return "Se rindió (rey en piloto automático)";
+            return "Jugando";
         }
 
         function updateStatusText() {
-            document.getElementById("top-player").textContent = nameFor(myColor === "b" ? room.white_id : room.black_id) + (myColor === "b" ? " (blancas)" : " (negras)");
-            document.getElementById("bottom-player").textContent = myColor
-                ? nameFor(profile.id) + (myColor === "w" ? " (blancas) — tú" : " (negras) — tú")
-                : nameFor(room.white_id) + " (blancas)";
-            if (!myColor) {
-                document.getElementById("top-player").textContent = nameFor(room.black_id) + " (negras)";
-            }
-            document.getElementById("resign-btn").classList.toggle("hidden", !myColor || room.status !== "playing");
-
+            document.getElementById("resign-btn").classList.toggle("hidden", !mySeat || room.status !== "playing" || game.status[mySeat] !== "active");
             const readyBtn = document.getElementById("ready-btn");
-            const myReady = myColor === "w" ? room.white_ready : myColor === "b" ? room.black_ready : true;
-            const waitingToStart = room.status === "playing" && !bothReady(room);
-            readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
+            const myReady = mySeat && room.seats[mySeat].ready;
+            const waitingToStart = room.status === "playing" && !allReady(room);
+            readyBtn.classList.toggle("hidden", !mySeat || room.status !== "playing" || myReady);
 
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
-                setStatus("Partida terminada — " + resultText);
+                const r = room.result || {};
+                let text;
+                if (r.reason === "draw") text = "Tablas — se repartieron los puntos.";
+                else if (r.winners && r.winners.length) text = "Ganó " + r.winners.map((s) => SEAT_LABEL[s] + " (" + nameFor(s) + ")").join(" + ") + ".";
+                else text = "Partida terminada.";
+                setStatus("Partida terminada — " + text);
             } else if (waitingToStart) {
-                if (!myColor) {
-                    setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
-                } else if (myReady) {
-                    setStatus("Ya confirmaste que estás listo — esperando a " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
-                } else {
-                    setStatus("Toca \"Estoy listo\" cuando puedas empezar a jugar" + (room.initial_seconds != null ? " — el reloj arranca cuando ambos estén listos." : "."));
-                }
-            } else if (!myColor) {
-                setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
+                const pending = SEATS.filter((s) => !room.seats[s].ready).map((s) => nameFor(s));
+                setStatus(mySeat ? (myReady ? "Ya confirmaste que estás listo — esperando a " + pending.join(", ") + "…" : "Toca \"Estoy listo\" cuando puedas empezar.") : "Esperando a que confirmen: " + pending.join(", "));
+            } else if (!mySeat) {
+                setStatus("Estás mirando esta partida.");
+            } else if (game.gameOver) {
+                setStatus("La partida terminó.");
             } else {
-                const myTurn = board.game.turn() === myColor;
-                setStatus(myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                setStatus(game.turn === mySeat ? "Es tu turno." : "Le toca a " + SEAT_LABEL[game.turn] + " (" + nameFor(game.turn) + ")…");
             }
         }
 
-        document.getElementById("ready-btn").addEventListener("click", async () => {
-            if (!myColor || room.status !== "playing") return;
-            const myKey = myColor === "w" ? "white_ready" : "black_ready";
-            const otherAlreadyReady = myColor === "w" ? room.black_ready : room.white_ready;
-            const patch = { [myKey]: true };
-            // Si el rival ya estaba listo, esta confirmación es la que hace falta para
-            // arrancar de una vez — se incluye en la misma actualización para no depender
-            // de una segunda ida y vuelta (y de paso evita que ambos intenten arrancar el
-            // reloj a la vez si llegan a confirmar casi al mismo tiempo).
-            if (otherAlreadyReady && room.initial_seconds != null && !room.clock_updated_at) {
-                patch.clock_updated_at = new Date().toISOString();
-            }
-            const { error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
-            room = Object.assign({}, room, patch);
-            board.setInteractive(!!myColor && room.status === "playing" && bothReady(room));
-            updateStatusText();
-            renderClocks();
-        });
+        function renderSeatsPanel() {
+            const wrap = document.getElementById("seats-panel");
+            wrap.innerHTML = "";
+            SEATS.forEach((seat) => {
+                const card = document.createElement("div");
+                const isTurn = room.status === "playing" && !game.gameOver && game.turn === seat;
+                const eliminated = game.status[seat] === "eliminated";
+                card.className = "rounded-xl p-2.5 text-center border-2 " +
+                    (isTurn ? "border-accent-500 bg-accent-500/10" : "border-transparent bg-brand-50 dark:bg-brand-900") +
+                    (eliminated ? " opacity-50" : "");
+                const name = document.createElement("p");
+                name.className = "text-xs font-semibold text-brand-800 dark:text-white truncate";
+                name.textContent = SEAT_LABEL[seat] + (seat === mySeat ? " (tú)" : "");
+                const player = document.createElement("p");
+                player.className = "text-[11px] text-brand-500 dark:text-brand-400 truncate";
+                player.textContent = nameFor(seat);
+                const status = document.createElement("p");
+                status.className = "text-[10px] text-brand-400 dark:text-brand-500";
+                status.textContent = statusLabel(seat);
+                card.append(name, player, status);
+                if (room.mode === "ffa") {
+                    const score = document.createElement("p");
+                    score.className = "text-sm font-mono font-bold text-accent-600 dark:text-accent-400";
+                    score.textContent = (room.seats[seat].score || 0) + " pts";
+                    card.appendChild(score);
+                }
+                const clockEl = document.createElement("p");
+                clockEl.className = "font-mono text-xs font-bold mt-0.5";
+                clockEl.id = "clock-" + seat;
+                card.appendChild(clockEl);
+                wrap.appendChild(card);
+            });
+        }
 
-        // ---- Reloj (tiempo asignado a cada jugador) ----
-        // El servidor no recibe un "tick" cada segundo: solo guarda cuántos segundos
-        // le quedaban a cada color la última vez que se "congeló" su reloj (crear la
-        // partida o su propia jugada) más desde cuándo corre el reloj de quien tiene
-        // el turno ahora (clock_updated_at). El navegador calcula el tiempo restante
-        // real restando el tiempo transcurrido desde entonces — así todos los que
-        // miran la partida ven el mismo reloj sin sobrecargar la base de datos.
+        // ---- Reloj: igual patrón que crazyhouse.html — cada asiento guarda cuántos
+        // segundos le quedaban la última vez que se "congeló" (crear la partida o
+        // terminar su propia jugada); clock_updated_at (compartido) dice desde cuándo
+        // corre el reloj de quien tiene el turno ahora. ----
         function formatClock(seconds) {
             if (seconds == null) return "";
             const s = Math.max(0, Math.ceil(seconds));
-            const m = Math.floor(s / 60);
-            const r = s % 60;
-            return m + ":" + String(r).padStart(2, "0");
+            return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
         }
-
-        function liveTimeLeft(color) {
-            const stored = color === "w" ? room.white_time_left : room.black_time_left;
+        function liveTimeLeft(seat) {
+            const stored = room.seats[seat] && room.seats[seat].time_left;
             if (stored == null) return null;
-            const isRunning = room.status === "playing" && room.clock_updated_at && board.game.turn() === color;
+            const isRunning = room.status === "playing" && !game.gameOver && room.clock_updated_at && game.turn === seat && game.status[seat] !== "eliminated";
             if (!isRunning) return stored;
             const elapsed = (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000;
             return Math.max(0, stored - elapsed);
         }
-
         function renderClocks() {
-            const topEl = document.getElementById("top-clock");
-            const bottomEl = document.getElementById("bottom-clock");
-            if (room.initial_seconds == null) {
-                topEl.classList.add("hidden");
-                bottomEl.classList.add("hidden");
-                return;
-            }
-            const bottomColor = myColor || "w"; // espectadores ven blancas abajo, igual que updateStatusText()
-            const topColor = bottomColor === "w" ? "b" : "w";
-            const topSeconds = liveTimeLeft(topColor);
-            const bottomSeconds = liveTimeLeft(bottomColor);
-            topEl.textContent = formatClock(topSeconds);
-            bottomEl.textContent = formatClock(bottomSeconds);
-            topEl.classList.remove("hidden");
-            bottomEl.classList.remove("hidden");
-            const LOW_SECONDS = 30;
-            [[topEl, topSeconds], [bottomEl, bottomSeconds]].forEach(([el, secs]) => {
-                const isLow = room.status === "playing" && secs != null && secs <= LOW_SECONDS;
+            SEATS.forEach((seat) => {
+                const el = document.getElementById("clock-" + seat);
+                if (!el) return;
+                if (room.initial_seconds == null) { el.textContent = ""; return; }
+                const secs = liveTimeLeft(seat);
+                el.textContent = formatClock(secs);
+                const isLow = room.status === "playing" && secs != null && secs <= 30;
                 el.classList.toggle("text-red-600", isLow);
                 el.classList.toggle("dark:text-red-400", isLow);
+                el.classList.toggle("text-brand-600", !isLow);
+                el.classList.toggle("dark:text-brand-300", !isLow);
             });
         }
 
-        // Si a quien le toca mover se le acabó el reloj, declara ganador al rival.
-        // El filtro .eq("status", "playing") evita que dos navegadores (por ejemplo
-        // ambos jugadores, o un jugador y el profesor mirando) dupliquen el resultado
-        // si detectan el mismo cero casi al mismo tiempo.
+        // Si a quien le toca mover se le acabó el reloj, se le declara eliminado (pierde
+        // sus puntos de rey a quien estuviera al frente en FFA no aplica — simplemente
+        // pasa el turno como si hubiera abandonado). El filtro .eq("turn", turnSeat)
+        // evita que dos navegadores dupliquen el resultado si lo ven al mismo tiempo.
         async function checkFlagFall() {
-            if (room.status !== "playing" || room.initial_seconds == null) return;
-            const turnColor = board.game.turn();
-            const secondsLeft = liveTimeLeft(turnColor);
+            if (room.status !== "playing" || room.initial_seconds == null || game.gameOver) return;
+            const turnSeat = game.turn;
+            const secondsLeft = liveTimeLeft(turnSeat);
             if (secondsLeft === null || secondsLeft > 0) return;
-            const winner = turnColor === "w" ? "black" : "white";
-            const { error } = await sb.from("game_rooms")
-                .update({ status: "finished", result: winner, updated_at: new Date().toISOString() })
-                .eq("id", ROOM_ID).eq("status", "playing");
-            if (error) console.error(error);
+            game.resign(turnSeat);
+            await persist({ turn: game.turn }, turnSeat);
         }
 
         setInterval(() => {
-            if (!room || !board) return;
+            if (!room || !game) return;
             renderClocks();
             checkFlagFall();
-        }, 250);
+            maybeAdvanceZombie();
+        }, 700);
+
+        // ---- Un jugador zombi (se rindió o se le acabó el reloj): cualquier navegador
+        // conectado a la partida puede resolver su turno automáticamente. El guard
+        // .eq("turn", zombieSeat) hace que, si dos navegadores lo intentan casi a la vez,
+        // solo el primero en llegar a la base de datos tenga efecto (el segundo actualiza
+        // 0 filas porque el turno ya cambió) — no hace falta coordinación extra. ----
+        let zombieAttemptInFlight = false;
+        async function maybeAdvanceZombie() {
+            if (zombieAttemptInFlight || !room || room.status !== "playing" || game.gameOver) return;
+            const seat = game.turn;
+            if (game.status[seat] !== "zombie") return;
+            zombieAttemptInFlight = true;
+            try {
+                const res = game.playZombieTurn();
+                if (res && res.ok) await persist({}, seat);
+            } finally {
+                zombieAttemptInFlight = false;
+            }
+        }
 
         function renderMoveHistory(moves) {
             const listEl = document.getElementById("moves-list");
             const emptyEl = document.getElementById("moves-empty");
-            if (!moves || !moves.length) {
-                emptyEl.classList.remove("hidden");
-                listEl.classList.add("hidden");
-                return;
-            }
+            if (!moves || !moves.length) { emptyEl.classList.remove("hidden"); listEl.classList.add("hidden"); return; }
             emptyEl.classList.add("hidden");
             listEl.classList.remove("hidden");
             listEl.classList.add("flex");
             listEl.innerHTML = "";
-            for (let i = 0; i < moves.length; i += 2) {
+            moves.forEach((m, i) => {
                 const li = document.createElement("li");
-                const num = Math.floor(i / 2) + 1;
-                li.textContent = num + ". " + moves[i] + (moves[i + 1] ? " " + moves[i + 1] : "");
+                li.textContent = (i + 1) + ". " + SEAT_LABEL[m.seat].slice(2, 3) + " " + m.from + "→" + m.to + (m.capture ? "x" : "") + (m.promotion ? "=D" : "") + (m.castle ? " (enroque)" : "");
                 listEl.appendChild(li);
-            }
+            });
         }
 
         function showPromotionPicker(from, to, callback) {
@@ -329,12 +322,7 @@
             optionsEl.innerHTML = "";
             const pieces = [["q", "♛"], ["r", "♜"], ["b", "♝"], ["n", "♞"]];
             let resolved = false;
-            function finish(piece) {
-                if (resolved) return;
-                resolved = true;
-                modal.classList.add("hidden");
-                callback(piece);
-            }
+            function finish(piece) { if (resolved) return; resolved = true; modal.classList.add("hidden"); callback(piece); }
             pieces.forEach(([type, glyph]) => {
                 const btn = document.createElement("button");
                 btn.type = "button";
@@ -346,58 +334,86 @@
             modal.classList.remove("hidden");
         }
 
-        async function handleLocalMove(info) {
-            const newMoves = (room.moves || []).concat([info.san]);
-            const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
+        // Aplica al `seats` local los puntos ganados y, si la partida terminó, el bono
+        // final — y guarda todo (tablero + seats + estado) en la base de datos. `patch`
+        // son campos extra a fusionar (p. ej. el reloj); `turnGuardSeat`, si se pasa, se
+        // usa como condición .eq("turn", ...) para pisadas seguras (jugadas zombi/reloj).
+        async function persist(patch, turnGuardSeat) {
+            const newSeats = JSON.parse(JSON.stringify(room.seats));
+            SEATS.forEach((s) => { newSeats[s].status = game.status[s]; });
+            const fullPatch = Object.assign({
+                board: game.toJSON(),
+                turn: game.turn,
+                moves: game.moves,
+                seats: newSeats,
+                status: game.gameOver ? "finished" : "playing",
+                result: game.result,
+                updated_at: new Date().toISOString(),
+            }, patch);
+            let query = sb.from("fourplayer_games").update(fullPatch).eq("id", ROOM_ID);
+            if (turnGuardSeat) query = query.eq("turn", turnGuardSeat);
+            const { error } = await query;
+            if (error) { console.error(error); setStatus("No se pudo guardar: " + error.message); return; }
+            room = Object.assign({}, room, fullPatch, { seats: newSeats });
+            renderAll();
+        }
+
+        async function handleLocalMove(res) {
+            const newSeats = JSON.parse(JSON.stringify(room.seats));
+            Object.keys(res.pointsAwarded || {}).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + res.pointsAwarded[seat]; });
+            if (game.gameOver && game.result && game.result.bonusPoints) {
+                Object.keys(game.result.bonusPoints).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + game.result.bonusPoints[seat]; });
+            }
+            const patch = { seats: newSeats };
             if (room.initial_seconds != null) {
-                // Solo quien tiene el turno puede mover (ver _canActNow en
-                // CrazyhouseBoard), así que myColor es siempre quien acaba de jugar.
-                // Se "congela" su reloj: se le resta lo que pasó desde la última vez
-                // que arrancó a correr y se le suma el incremento tipo Fischer.
-                const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
                 const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
-                const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
-                patch[storedKey] = remaining;
+                newSeats[mySeat].time_left = Math.max(0, (room.seats[mySeat].time_left || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
-            if (info.gameOver) {
-                patch.status = "finished";
-                patch.result = info.result;
-            }
-            const { error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID);
-            if (error) {
-                console.error(error);
-                setStatus("No se pudo guardar la jugada: " + error.message);
-                return;
-            }
-            room = Object.assign({}, room, patch);
-            renderMoveHistory(room.moves);
+            room = Object.assign({}, room, { seats: newSeats });
+            await persist(patch);
+        }
+
+        function renderAll() {
+            board.loadGame(game);
+            board.setInteractive(!!mySeat && room.status === "playing" && allReady(room) && game.status[mySeat] === "active" && !game.gameOver);
+            renderSeatsPanel();
+            renderMoveHistory(game.moves);
             updateStatusText();
             renderClocks();
         }
 
         function applyRemoteRoom(row) {
-            const positionChanged = row.fen !== room.fen;
             room = row;
-            if (positionChanged) board.loadFen(row.fen);
-            board.setInteractive(!!myColor && row.status === "playing" && bothReady(row));
-            renderMoveHistory(row.moves);
-            updateStatusText();
-            renderClocks();
+            game = FourPlayerChess.Game.fromJSON(row.board);
+            renderAll();
         }
 
         function subscribeRoom() {
-            sb.channel("game-room-" + ROOM_ID)
-                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_rooms", filter: "id=eq." + ROOM_ID }, (payload) => applyRemoteRoom(payload.new))
+            sb.channel("fourplayer-game-" + ROOM_ID)
+                .on("postgres_changes", { event: "UPDATE", schema: "public", table: "fourplayer_games", filter: "id=eq." + ROOM_ID }, (payload) => applyRemoteRoom(payload.new))
                 .subscribe();
         }
 
+        document.getElementById("ready-btn").addEventListener("click", async () => {
+            if (!mySeat || room.status !== "playing") return;
+            const newSeats = JSON.parse(JSON.stringify(room.seats));
+            newSeats[mySeat].ready = true;
+            const patch = { seats: newSeats };
+            if (allReady(Object.assign({}, room, { seats: newSeats })) && room.initial_seconds != null && !room.clock_updated_at) {
+                patch.clock_updated_at = new Date().toISOString();
+            }
+            const { error } = await sb.from("fourplayer_games").update(patch).eq("id", ROOM_ID);
+            if (error) { console.error(error); setStatus("No se pudo confirmar: " + error.message); return; }
+            room = Object.assign({}, room, patch);
+            renderAll();
+        });
+
         document.getElementById("resign-btn").addEventListener("click", async () => {
-            if (!myColor || room.status !== "playing") return;
-            if (!window.confirm("¿Seguro que quieres rendirte?")) return;
-            const result = myColor === "w" ? "black" : "white";
-            const { error } = await sb.from("game_rooms").update({ status: "finished", result: result, updated_at: new Date().toISOString() }).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo registrar la rendición: " + error.message); }
+            if (!mySeat || room.status !== "playing") return;
+            if (!window.confirm("¿Seguro que quieres rendirte? Tu rey seguirá moviéndose solo hasta que le den mate.")) return;
+            game.resign(mySeat);
+            await persist({});
         });
 
         async function init() {
@@ -411,30 +427,26 @@
             profile = profileData;
             isTeacher = profile.role === "profesor";
 
-            const { data: roomData, error: roomError } = await sb.from("game_rooms").select("*").eq("id", ROOM_ID).maybeSingle();
+            const { data: roomData, error: roomError } = await sb.from("fourplayer_games").select("*").eq("id", ROOM_ID).maybeSingle();
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
             room = roomData;
-            myColor = room.white_id === profile.id ? "w" : (room.black_id === profile.id ? "b" : null);
-            if (!myColor && !isTeacher) { showError("No formas parte de esta partida."); return; }
+            game = FourPlayerChess.Game.fromJSON(room.board);
+            mySeat = SEATS.find((s) => room.seats[s].player_id === profile.id) || null;
+            if (!mySeat && !isTeacher) { showError("No formas parte de esta partida."); return; }
 
-            const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", [room.white_id, room.black_id]);
+            const ids = SEATS.map((s) => room.seats[s].player_id).filter(Boolean);
+            const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", ids);
             (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
 
-            board = new CrazyhouseBoard(
-                document.getElementById("board"),
-                document.getElementById("top-pocket"),
-                document.getElementById("bottom-pocket"),
-                {
-                    interactive: !!myColor && room.status === "playing" && bothReady(room),
-                    myColor: myColor || "w",
-                    onMove: handleLocalMove,
-                    onPromotionNeeded: showPromotionPicker,
-                }
-            );
-            board.loadFen(room.fen);
-            renderMoveHistory(room.moves);
-            updateStatusText();
-            renderClocks();
+            document.getElementById("page-title").textContent = "♟️ Ajedrez para 4 · " + (room.mode === "teams" ? "Equipos" : "Todos contra todos");
+
+            board = new FourPlayerBoard(document.getElementById("board"), {
+                mySeat: mySeat,
+                interactive: !!mySeat && room.status === "playing" && allReady(room) && game.status[mySeat] === "active",
+                onMove: handleLocalMove,
+                onPromotionNeeded: showPromotionPicker,
+            });
+            renderAll();
             subscribeRoom();
 
             document.getElementById("loading").classList.add("hidden");

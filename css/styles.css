@@ -1,4 +1,19 @@
 /* ===== Ajedrez Integral — Custom Styles ===== */
+/* Colores de las casillas del tablero, elegibles en Configuración (ver
+   js/board-color-themes.js). Los valores de acá son el tema "Clásico" — el
+   mismo azul grisáceo de siempre — y sirven de resguardo (fallback) si por
+   lo que sea ese script no llegó a correr todavía: ningún tablero del sitio
+   debería quedar con casillas transparentes por depender de una variable sin
+   definir. board-color-themes.js sobrescribe estos valores en <html> según
+   la preferencia guardada, así que todo tablero que use var(--sq-light) /
+   var(--sq-dark) (o las variantes -adaptive de Modo Adaptado) cambia de
+   color sin que haga falta tocar su propio CSS o JS. */
+:root {
+  --sq-light: #f0f4f8;
+  --sq-dark: #486581;
+  --sq-light-adaptive: #ffffff;
+  --sq-dark-adaptive: #d946ef;
+}
 html { scroll-behavior: smooth; }
 body { -webkit-font-smoothing: antialiased; }
 #header.scrolled { height: auto; }
@@ -36,6 +51,19 @@ body { -webkit-font-smoothing: antialiased; }
      0 1px 2px rgba(0, 0, 0, 0.25);
 }
 .radio-card-selected { background-color: rgba(240, 180, 41, 0.1); border-color: #de911d; }
+
+/* Piezas del Ajedrez para 4 (js/fourplayer-board.js): un solo set de glifos
+   sólidos (♚♛♜♝♞♟, los mismos que ya usa el sitio para "negras") coloreado
+   por asiento en vez de necesitar 4 sets de arte distintos — con el mismo
+   contorno claro de piece-black para que se lean bien sobre cualquier
+   casilla y cualquier tema de color. Las piezas de un jugador eliminado
+   (piece-dead) quedan en gris y sin contorno, para que se noten "apagadas"
+   de un vistazo. */
+.piece-red    { color: #dc2626; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-blue   { color: #2563eb; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-yellow { color: #ca8a04; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-green  { color: #16a34a; text-shadow: -1px -1px 0 rgba(255,255,255,.6), 1px -1px 0 rgba(255,255,255,.6), -1px 1px 0 rgba(255,255,255,.6), 1px 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.25); }
+.piece-dead   { color: #9ca3af; opacity: .55; }
 
 /* Fichas de los temas de tablero "divertidos" (js/board-themes.js): un emoji dentro de
    un círculo de color, para distinguir bando sin depender de un glifo distinto por
@@ -89,8 +117,8 @@ body { -webkit-font-smoothing: antialiased; }
   font-size: 22px;
   flex-shrink: 0;
 }
-.theme-preview-sq-light { background: #f0f4f8; }
-.theme-preview-sq-dark { background: #486581; }
+.theme-preview-sq-light { background: var(--sq-light); }
+.theme-preview-sq-dark { background: var(--sq-dark); }
 #move-history::-webkit-scrollbar { width: 6px; }
 #move-history::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 3px; }
 #move-history::-webkit-scrollbar-thumb { background: #9fb3c8; border-radius: 3px; }
@@ -201,19 +229,17 @@ html.adaptive-mode .piece-white {
  * 1. forced-colors: active — Windows con un tema de contraste alto activado
  *    (antes "Alto contraste", ahora "Temas de contraste"). El sistema
  *    operativo IMPONE una paleta muy reducida (texto/fondo/enlaces) sobre
- *    casi todo, sin importar el CSS del sitio — y por defecto esa
- *    imposición alcanza a los <button>, que es justo lo que usan los
- *    tableros de este sitio para cada casilla (ver data-square en
- *    clases-board.js/tablero-board.js/crazyhouse-board.js). Sin esta
- *    regla, TODAS las casillas (claras y oscuras) se verían del mismo
- *    color impuesto por Windows — imposible leer una posición si no se
- *    distingue casilla clara de oscura. forced-color-adjust: none le dice
- *    al navegador "acá confía en mis colores, no los reemplaces": se
- *    aplica solo donde el color es la única forma de transmitir un dato
- *    real (casillas, reserva de Crazyhouse, barra de evaluación, fichas
- *    de tema) — el resto del sitio (botones normales, enlaces, formularios)
- *    se deja tal cual, para que SÍ se beneficie del contraste que impone
- *    Windows, que es justamente lo que esa persona pidió activando el modo.
+ *    casi todo, sin importar el CSS del sitio. Antes esto se dejaba pasar
+ *    en el resto del sitio (botones normales, enlaces, formularios) y solo
+ *    se anulaba en el tablero de ajedrez (casillas, piezas, reserva de
+ *    Crazyhouse, barra de evaluación, fichas de tema), porque ahí el color
+ *    es la única forma de transmitir un dato real y esa imposición volvía
+ *    ilegible una posición (todas las casillas del mismo color). El
+ *    profesor pidió ir más allá: que el tema de contraste de Windows no
+ *    toque NADA del sitio, para que quien entra vea siempre el diseño
+ *    propio, sin la paleta reducida de Windows de por medio en ningún
+ *    elemento. forced-color-adjust es una propiedad heredable — poniéndola
+ *    en `html` alcanza a toda la página de una sola vez, tablero incluido.
  * 2. prefers-contrast: more — una preferencia más suave (macOS "Aumentar
  *    contraste", algunos navegadores/temas), que no impone una paleta:
  *    solo indica que la persona quiere más contraste. Se resuelve
@@ -221,16 +247,7 @@ html.adaptive-mode .piece-white {
  *    js/adaptive-mode.js) en vez de duplicar aquí sus mismas reglas.
  */
 @media (forced-colors: active) {
-  [data-square],
-  #top-pocket button,
-  #bottom-pocket button,
-  .theme-token,
-  .example-sq,
-  .theme-preview-sq,
-  #engine-eval-track,
-  #engine-eval-bar,
-  .piece-white,
-  .piece-black {
+  html {
     forced-color-adjust: none;
   }
 }

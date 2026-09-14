@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
     <title>Configuración — Ajedrez Integral</title>
     <meta name="description" content="Tu perfil, contraseña y preferencias en Ajedrez Integral.">
     <meta name="robots" content="noindex">
@@ -34,6 +35,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
+    <script src="js/board-color-themes.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
@@ -49,6 +51,8 @@
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li>
+                    <li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li>
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -69,6 +73,8 @@
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
                 <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
             </ul>
         </div>
@@ -124,6 +130,18 @@
                 <div id="board-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Tema de piezas del tablero"></div>
             </div>
 
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Colores del tablero</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Elige de qué color son las casillas claras y oscuras en todos los tableros del sitio (Clases, Tablero, Crazyhouse, Entreno). Es solo para tu pantalla.</p>
+                <div id="board-color-theme-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Colores del tablero"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Colores del tablero en Modo Adaptado</h2>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Con Modo Adaptado activado, el tablero usa este segundo par de colores en vez de los de arriba — pensados para más contraste. "Alto contraste" (blanco y negro) es el que más ayuda a baja visión.</p>
+                <div id="board-color-theme-adaptive-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Colores del tablero en Modo Adaptado"></div>
+            </div>
+
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Voz (Modo Speech)</h2>
                 <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">En Modo Adaptado, con Modo Speech activado (botón "🗣️ Voz" junto al tablero), tu navegador lee en voz alta las jugadas y anuncios. Elige aquí con cuál de las voces instaladas en tu navegador o dispositivo se lee — es una preferencia de este navegador, no de tu cuenta.</p>
@@ -143,7 +161,17 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null;
@@ -227,6 +255,59 @@
             });
         }
         renderBoardThemeGrid();
+
+        // ---------- Colores del tablero, normal y Modo Adaptado (preferencia local,
+        // ver js/board-color-themes.js) — mismo patrón visual que el tema de piezas de
+        // arriba, pero la "vista previa" acá son las 2 casillas del propio tema (no hace
+        // falta un tablero real: el color completo ya se ve con solo 2 cuadraditos). ----
+        function buildColorPreviewHTML(theme) {
+            return (
+                '<span class="theme-preview-row" aria-hidden="true">' +
+                '<span class="theme-preview-sq" style="background:' + theme.light + '"></span>' +
+                '<span class="theme-preview-sq" style="background:' + theme.dark + '"></span>' +
+                "</span>"
+            );
+        }
+
+        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent) {
+            const grid = document.getElementById(gridId);
+            if (!grid || !window.BoardColorThemes) return;
+            const current = getCurrent();
+            grid.innerHTML = "";
+            Object.keys(themes).forEach((id) => {
+                const theme = themes[id];
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = id === current ? THEME_ACTIVE : THEME_INACTIVE;
+                btn.setAttribute("role", "radio");
+                btn.setAttribute("aria-checked", id === current ? "true" : "false");
+                btn.innerHTML =
+                    buildColorPreviewHTML(theme) +
+                    '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
+                btn.addEventListener("click", () => {
+                    setCurrent(id);
+                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent);
+                });
+                grid.appendChild(btn);
+            });
+        }
+
+        function renderBoardColorThemeGrids() {
+            if (!window.BoardColorThemes) return;
+            renderColorThemeGrid(
+                "board-color-theme-grid",
+                window.BoardColorThemes.THEMES,
+                window.BoardColorThemes.getPreference,
+                window.BoardColorThemes.setPreference
+            );
+            renderColorThemeGrid(
+                "board-color-theme-adaptive-grid",
+                window.BoardColorThemes.ADAPTIVE_THEMES,
+                window.BoardColorThemes.getAdaptivePreference,
+                window.BoardColorThemes.setAdaptivePreference
+            );
+        }
+        renderBoardColorThemeGrids();
 
         // ---------- Voz de Modo Speech (preferencia local, ver js/blind-notation.js) ----------
         function populateVoiceSelect() {

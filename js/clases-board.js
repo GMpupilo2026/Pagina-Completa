@@ -485,7 +485,8 @@
       // con estas clases responsivas pensadas para un tablero de 300-560px de ancho.
       if (!this.compact) cls += "text-3xl sm:text-4xl md:text-5xl ";
       cls += canInteract ? "cursor-pointer " : "cursor-default ";
-      cls += light ? "bg-brand-100 " : "bg-brand-500 ";
+      // Color de casilla elegible en Configuración (ver js/board-color-themes.js).
+      cls += light ? "bg-[var(--sq-light)] " : "bg-[var(--sq-dark)] ";
       if (this.selected === square) {
         cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
       }

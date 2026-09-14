@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
 <title>Coordenadas — Entrenamiento — Ajedrez Integral</title>
 <meta name="description" content="Entrena a reconocer las casillas del tablero a toda velocidad: se muestra una casilla y hay que hacer clic en ella antes de que se acabe el tiempo.">
 <meta name="robots" content="noindex">
@@ -139,8 +140,8 @@
     max-width:440px; margin:0 auto;
   }
   .sq{position:relative; border:none; padding:0; cursor:pointer; transition:background .1s;}
-  .sq.light{background:#f0f4f8;}
-  .sq.dark{background:#486581;}
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
   .sq.flash-ok{background:color-mix(in srgb, var(--ok) 65%, transparent) !important;}
   .sq.flash-bad{background:color-mix(in srgb, var(--bad) 65%, transparent) !important;}
 
@@ -161,6 +162,7 @@
 <script src="../js/supabase-client.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/entreno-progress.js"></script>
+    <script src="../js/board-color-themes.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -390,11 +392,15 @@ blindPanel.addEventListener('submit', (e) => {
     announceBlind('Escribe "b" si la casilla es blanca, o "n" si es negra.');
     return;
   }
+  const missedColor = isLightSquare(currentTarget) ? 'blanca' : 'negra'; // antes de newTarget(), que cambia currentTarget
   const correct = handleColorGuess(answer);
   if(correct === null) return; // la ronda no está en curso
-  announceBlind(correct
-    ? '✅ Correcto.'
-    : `❌ Incorrecto, era ${isLightSquare(currentTarget) ? 'blanca' : 'negra'}.`);
+  // Primero el aviso de acierto/error y después newTarget() (que anuncia la casilla
+  // nueva): speak() cancela cualquier frase anterior, así que lo último en anunciarse
+  // debe ser la casilla que hay que resolver ahora, no "Correcto" (mismo criterio que
+  // ya usa onSquareTimeout() más abajo).
+  announceBlind(correct ? '✅ Correcto.' : `❌ Incorrecto, era ${missedColor}.`);
+  if(correct) newTarget();
 });
 
 // Modos: además del clásico (sin apuro por casilla, solo el reloj general de
@@ -519,6 +525,9 @@ function newTarget(){
   // En modo normal se ve el nombre real de la casilla ("e4"). En modo
   // adaptado, lo que se anuncia (y lee el lector de pantalla vía aria-live)
   // usa la notación de columnas — "Eva 4" — para no confundir letras al oído.
+  // Se anuncia solo el nombre, sin envolverlo en una pregunta completa: el
+  // contexto ya está dado (el label "Se anuncia:" y las instrucciones), y
+  // en una ronda de 30 segundos cada palabra de más cuesta tiempo real.
   const spokenSquare = blindMode ? window.BlindNotation.squareSpoken(currentTarget) : currentTarget;
   document.getElementById('target-square').textContent = spokenSquare;
   if(blindMode) window.BlindNotation.speak(spokenSquare);
@@ -571,7 +580,9 @@ function handleColorGuess(answer){
     streak++;
     bestStreak = Math.max(bestStreak, streak);
     reactionTimes.push(performance.now() - lastPromptAt);
-    newTarget();
+    // newTarget() ya NO se llama acá: lo llama quien invoca handleColorGuess(),
+    // después de anunciar si acertó o no (ver blindPanel "submit" más arriba) —
+    // así el nombre de la casilla nueva es siempre lo último que se anuncia.
   } else {
     misses++;
     streak = 0;
@@ -614,10 +625,14 @@ function startRound(){
   document.getElementById('hud-timer').textContent = String(timeLeft);
 
   drawBoard();
+  // El foco entra al campo ANTES de anunciar la primera pregunta (no después):
+  // si el foco se moviera después, un lector de pantalla real podría anunciar
+  // el label del campo justo cuando está por leer la pregunta y perderla —
+  // con el foco ya puesto, la pregunta que sigue se escucha sin ese cruce.
+  if(blindMode) blindInput.focus();
   newTarget();
   updateHud();
   timerId = setInterval(tick, 1000);
-  if(blindMode) blindInput.focus();
 }
 
 function endRound(){

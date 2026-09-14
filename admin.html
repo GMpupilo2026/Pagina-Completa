@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
     <title>Panel de Administración — Ajedrez Integral</title>
     <meta name="description" content="Control de todos los usuarios de la plataforma: crear, editar roles y administrar el acceso.">
     <meta name="robots" content="noindex">
@@ -47,6 +48,8 @@
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li>
+                    <li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li>
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -67,6 +70,8 @@
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
                 <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
             </ul>
         </div>
@@ -89,7 +94,15 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Panel de Administración 👑</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-8">Todas las cuentas de la plataforma: quién es profesor, quién es estudiante y quién administra.</p>
+            <p class="text-brand-500 dark:text-brand-400 mb-4">Todas las cuentas de la plataforma: quién es profesor, quién es estudiante y quién administra.</p>
+
+            <!-- Quien administra ve en Informes lo mismo que un profesor, pero de TODOS los
+                 alumnos de la plataforma, no solo de los suyos: diagnósticos, planes de
+                 entrenamiento y la actividad de Entrenamiento. -->
+            <div class="flex flex-wrap gap-3 mb-8">
+                <a href="informes.html" class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">📊 Informes de toda la plataforma</a>
+                <a href="informes.html?tema=diagnostico" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🧭 Diagnósticos de nivel</a>
+            </div>
 
             <!-- ===== Crear cuenta ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
@@ -99,25 +112,49 @@
                         <label for="create-name" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-1">Nombre</label>
                         <input type="text" id="create-name" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
                     </div>
-                    <div class="sm:col-span-1">
+                    <div class="sm:col-span-2">
                         <label for="create-email" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-1">Correo *</label>
                         <input type="email" id="create-email" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
                     </div>
-                    <div class="sm:col-span-1 flex gap-2">
-                        <select id="create-role" class="flex-1 px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    <div class="sm:col-span-1">
+                        <label for="create-role" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-1">Rol</label>
+                        <select id="create-role" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
                             <option value="alumno">Estudiante</option>
                             <option value="profesor">Profesor</option>
                         </select>
-                        <button type="submit" id="create-btn" class="shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Invitar</button>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="create-grupo" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-1">Grupo / equipo</label>
+                        <input type="text" id="create-grupo" placeholder="Ej: 7° B" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-1" id="create-teacher-wrap">
+                        <label for="create-teacher" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 uppercase tracking-wide mb-1">Profesor asignado</label>
+                        <select id="create-teacher" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <option value="">— Sin asignar —</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-3"></div>
+                    <div class="sm:col-span-1">
+                        <button type="submit" id="create-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Invitar</button>
                     </div>
                 </form>
                 <p id="create-msg" class="text-xs mt-3"></p>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña.</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña. El grupo es solo para ordenar la lista; el profesor asignado determina qué alumnos puede ver y gestionar cada profesor.</p>
             </div>
 
             <!-- ===== Lista de usuarios ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Todas las cuentas</h2>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Todas las cuentas</h2>
+                    <div class="flex items-center gap-2 text-xs">
+                        <label for="group-by" class="text-brand-500 dark:text-brand-400 font-semibold uppercase tracking-wide">Agrupar por</label>
+                        <select id="group-by" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <option value="none">Sin agrupar</option>
+                            <option value="grupo" selected>Grupo / equipo</option>
+                            <option value="teacher">Profesor asignado</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -125,6 +162,8 @@
                                 <th class="py-2 pr-3 font-semibold">Nombre</th>
                                 <th class="py-2 pr-3 font-semibold">Correo</th>
                                 <th class="py-2 pr-3 font-semibold">Rol</th>
+                                <th class="py-2 pr-3 font-semibold">Grupo</th>
+                                <th class="py-2 pr-3 font-semibold">Profesor</th>
                                 <th class="py-2 pr-3 font-semibold">Admin</th>
                                 <th class="py-2 pr-3 font-semibold">Creado</th>
                                 <th class="py-2 font-semibold text-right">Acciones</th>
@@ -140,7 +179,17 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
     <script src="js/main.js"></script>
     <script>
         let session = null;
@@ -169,16 +218,34 @@
             return result;
         }
 
-        async function loadUsers() {
-            const { data, error } = await sb.from("profiles").select("*").order("created_at", { ascending: true });
-            const body = document.getElementById("users-body");
-            body.innerHTML = "";
-            if (error || !data) {
-                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">No se pudo cargar la lista de cuentas.</td></tr>';
-                return;
-            }
+        // Todas las cuentas cargadas la última vez (para poder reagrupar sin
+        // volver a pedirlas a la base de datos cada vez que cambia el select).
+        let allUsers = [];
 
-            data.forEach((u) => {
+        function teacherLabel(u) {
+            return u.full_name || u.email;
+        }
+
+        function renderTeacherSelect(u, teachers) {
+            const wrap = document.createElement("select");
+            wrap.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs max-w-[10rem]";
+            wrap.innerHTML = '<option value="">— Sin asignar —</option>' +
+                teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
+            wrap.value = u.teacher_id || "";
+            wrap.addEventListener("change", async () => {
+                const prev = u.teacher_id || "";
+                try {
+                    await callAdmin("update", { target_id: u.id, teacher_id: wrap.value || null });
+                    u.teacher_id = wrap.value || null;
+                } catch (err) {
+                    alert("No se pudo asignar el profesor: " + err.message);
+                    wrap.value = prev;
+                }
+            });
+            return wrap;
+        }
+
+        function renderRow(u, teachers) {
                 const isSelf = u.id === currentUserId;
                 const tr = document.createElement("tr");
                 tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
@@ -215,12 +282,39 @@
                     try {
                         await callAdmin("update", { target_id: u.id, role: roleSelect.value });
                         u.role = roleSelect.value;
+                        loadUsers();
                     } catch (err) {
                         alert("No se pudo cambiar el rol: " + err.message);
                         roleSelect.value = prev;
                     }
                 });
                 tdRole.appendChild(roleSelect);
+
+                const tdGrupo = document.createElement("td");
+                tdGrupo.className = "py-2 pr-3";
+                const grupoInput = document.createElement("input");
+                grupoInput.type = "text";
+                grupoInput.value = u.grupo || "";
+                grupoInput.placeholder = "—";
+                grupoInput.className = "w-full px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm";
+                grupoInput.addEventListener("change", async () => {
+                    try {
+                        await callAdmin("update", { target_id: u.id, grupo: grupoInput.value.trim() });
+                        u.grupo = grupoInput.value.trim() || null;
+                    } catch (err) {
+                        alert("No se pudo guardar el grupo: " + err.message);
+                        grupoInput.value = u.grupo || "";
+                    }
+                });
+                tdGrupo.appendChild(grupoInput);
+
+                const tdTeacher = document.createElement("td");
+                tdTeacher.className = "py-2 pr-3";
+                if (u.role === "alumno") {
+                    tdTeacher.appendChild(renderTeacherSelect(u, teachers));
+                } else {
+                    tdTeacher.innerHTML = '<span class="text-xs text-brand-300 dark:text-brand-600">—</span>';
+                }
 
                 const tdAdmin = document.createElement("td");
                 tdAdmin.className = "py-2 pr-3";
@@ -283,10 +377,78 @@
                     tdActions.appendChild(delBtn);
                 }
 
-                tr.append(tdName, tdEmail, tdRole, tdAdmin, tdCreated, tdActions);
-                body.appendChild(tr);
+                tr.append(tdName, tdEmail, tdRole, tdGrupo, tdTeacher, tdAdmin, tdCreated, tdActions);
+                return tr;
+        }
+
+        function groupHeaderRow(label) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 8;
+            td.className = "pt-4 pb-1 text-xs font-bold uppercase tracking-wide text-accent-600 dark:text-accent-400";
+            td.textContent = label;
+            tr.appendChild(td);
+            return tr;
+        }
+
+        function renderUsers() {
+            const body = document.getElementById("users-body");
+            body.innerHTML = "";
+            const teachers = allUsers.filter((u) => u.role === "profesor");
+            const groupBy = document.getElementById("group-by").value;
+
+            if (groupBy === "none") {
+                allUsers.forEach((u) => body.appendChild(renderRow(u, teachers)));
+                return;
+            }
+
+            const teachersById = new Map(teachers.map((t) => [t.id, t]));
+            function keyFor(u) {
+                if (groupBy === "grupo") return u.grupo || "(sin grupo)";
+                // groupBy === "teacher"
+                if (u.role === "profesor") return `👑 ${teacherLabel(u)}`;
+                if (u.teacher_id && teachersById.has(u.teacher_id)) return teacherLabel(teachersById.get(u.teacher_id));
+                return "(sin profesor asignado)";
+            }
+            const groups = new Map();
+            allUsers.forEach((u) => {
+                const k = keyFor(u);
+                if (!groups.has(k)) groups.set(k, []);
+                groups.get(k).push(u);
+            });
+            const sortedKeys = [...groups.keys()].sort((a, b) => a.localeCompare(b, "es"));
+            sortedKeys.forEach((k) => {
+                body.appendChild(groupHeaderRow(k));
+                groups.get(k).forEach((u) => body.appendChild(renderRow(u, teachers)));
             });
         }
+
+        function populateTeacherSelect(selectEl, teachers) {
+            selectEl.innerHTML = '<option value="">— Sin asignar —</option>' +
+                teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
+        }
+
+        async function loadUsers() {
+            const { data, error } = await sb.from("profiles").select("*").order("full_name", { ascending: true, nullsFirst: false });
+            const body = document.getElementById("users-body");
+            if (error || !data) {
+                body.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-400 dark:text-brand-500">No se pudo cargar la lista de cuentas.</td></tr>';
+                return;
+            }
+            allUsers = data;
+            populateTeacherSelect(document.getElementById("create-teacher"), data.filter((u) => u.role === "profesor"));
+            renderUsers();
+        }
+
+        document.getElementById("group-by").addEventListener("change", renderUsers);
+
+        // El profesor asignado solo tiene sentido al crear un estudiante.
+        function toggleCreateTeacherField() {
+            const isAlumno = document.getElementById("create-role").value === "alumno";
+            document.getElementById("create-teacher-wrap").classList.toggle("hidden", !isAlumno);
+        }
+        document.getElementById("create-role").addEventListener("change", toggleCreateTeacherField);
+        toggleCreateTeacherField();
 
         document.getElementById("create-form").addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -295,10 +457,12 @@
             const email = document.getElementById("create-email").value.trim();
             const full_name = document.getElementById("create-name").value.trim();
             const role = document.getElementById("create-role").value;
+            const grupo = document.getElementById("create-grupo").value.trim();
+            const teacher_id = document.getElementById("create-teacher").value || null;
             msg.textContent = "";
             btn.disabled = true; btn.textContent = "Enviando…";
             try {
-                const result = await callAdmin("create", { email, full_name, role });
+                const result = await callAdmin("create", { email, full_name, role, grupo, teacher_id });
                 msg.textContent = `Invitación enviada a ${result.email}.`;
                 msg.className = "text-xs mt-3 text-green-600 dark:text-green-400";
                 document.getElementById("create-form").reset();

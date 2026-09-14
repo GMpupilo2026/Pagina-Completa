@@ -295,13 +295,18 @@
     const light = isLightSquare(square);
     let cls =
       "flex items-center justify-center text-3xl sm:text-4xl md:text-5xl cursor-pointer select-none relative transition-colors w-full h-full border-0 p-0 m-0 ";
-    // En modo adaptado, blanco puro / magenta bien saturado en vez de los tonos de marca
-    // (más apagados) — mucho más contraste entre casillas para baja visión, parecido al
-    // tema "Pink" de Lichess (ver captura que envió el profesor). Las piezas ya se ven
-    // bien sobre cualquiera de los dos: los glifos blancos llevan contorno negro propio y
-    // los negros son sólidos (ver piece-white/piece-black en css/styles.css), así que no
-    // hace falta tocarlos aparte.
-    cls += blindMode ? (light ? "bg-white " : "bg-fuchsia-500 ") : light ? "bg-brand-100 " : "bg-brand-500 ";
+    // Colores de casilla elegibles en Configuración (ver js/board-color-themes.js): un
+    // par en modo normal y otro de más contraste para Modo Adaptado (baja visión). Las
+    // piezas ya se ven bien sobre cualquiera de los dos: los glifos blancos llevan
+    // contorno negro propio y los negros son sólidos (ver piece-white/piece-black en
+    // css/styles.css), así que no hace falta tocarlos aparte.
+    cls += blindMode
+      ? light
+        ? "bg-[var(--sq-light-adaptive)] "
+        : "bg-[var(--sq-dark-adaptive)] "
+      : light
+        ? "bg-[var(--sq-light)] "
+        : "bg-[var(--sq-dark)] ";
     if (selected === square) {
       cls += "outline outline-4 -outline-offset-4 outline-accent-500 ";
     } else if (lastMove && (lastMove.from === square || lastMove.to === square)) {

@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
 <title>4×4 — Entrenamiento — Ajedrez Integral</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -333,13 +334,14 @@
     border:none;
     padding:0;
   }
-  .sq.light{background:#f0f4f8;}
-  .sq.dark{background:#486581;}
-  /* Modo adaptado: blanco puro / magenta bien saturado en vez de los tonos de marca
-     habituales — mucho más contraste entre casillas para baja visión, parecido al tema
-     "Pink" de Lichess (ver captura que envió el profesor). */
-  .sq.light-adaptive{background:#ffffff;}
-  .sq.dark-adaptive{background:#d946ef;}
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  /* Modo adaptado: colores propios (ver js/board-color-themes.js), elegibles en
+     Configuración — "Alto contraste" (blanco/casi negro) es el que de verdad ayuda a
+     baja visión; el tema "Clásico adaptado" (blanco/magenta) queda como recuerdo del
+     diseño original, para quien ya se acostumbró a esos colores. */
+  .sq.light-adaptive{background:var(--sq-light-adaptive);}
+  .sq.dark-adaptive{background:var(--sq-dark-adaptive);}
   .sq .piece{
     filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     pointer-events:none;
@@ -454,6 +456,7 @@
 <script src="../js/blind-notation.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
+    <script src="../js/board-color-themes.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -540,13 +543,44 @@
       </div>
       <div class="progress-bar"><div id="solo-progress-fill" style="width:0%"></div></div>
 
+      <!-- El encabezado "Piezas" + el tablero van ANTES de las indicaciones y del
+           panel de comandos (más abajo): la idea es que un ciego, apenas entra a un
+           ejercicio, llegue directo acá y con las flechas ya pueda consultar la
+           posición, en vez de tener que escuchar toda la instrucción y el recuadro
+           de jugada primero (ver loadPuzzleAt, que enfoca #piezas-heading en modo
+           adaptado). Las instrucciones siguen disponibles justo después, un
+           encabezado más allá, para quien las necesite. -->
+      <div class="board-pos-wrap">
+        <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
+        <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
+        <div id="win-overlay">
+          <div class="win-title">¡MUY BIEN!</div>
+          <div class="win-sub">Nivel completado</div>
+          <div class="board-controls">
+            <button class="bctrl" id="win-retry">Reintentar</button>
+            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- "Anterior/Reiniciar/Siguiente" van justo debajo del tablero, antes de las
+           indicaciones y del panel de comandos, para que "Reiniciar" quede a mano de
+           inmediato si alguien llega a un callejón sin salida (sin capturas posibles)
+           y no quiere tener que bajar por todo ese bloque para reiniciar. -->
+      <div class="board-controls">
+        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+        <button class="bctrl" id="board-reset">Reiniciar</button>
+        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+      </div>
+
       <p id="board-instructions" class="sr-only">
         Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d
         y las filas 1 a 4 (por ejemplo, a1). Usa las flechas del teclado para moverte entre casillas.
         Pulsa Intro o espacio sobre una casilla con pieza para seleccionarla; las casillas donde esa
         pieza puede capturar se anuncian y se marcan. Vuelve a pulsar Intro o espacio sobre una de esas
         casillas para mover y capturar. Cada movimiento debe ser una captura; no existe la regla de
-        jaque. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
+        jaque. El peón siempre captura hacia arriba (como si fuera blanco), nunca hacia abajo ni al
+        costado. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
         arriba de la página para escribir jugadas y comandos, y para atajos de teclado adicionales
         pensados para lectores de pantalla.
       </p>
@@ -574,27 +608,8 @@
         <p class="shortcuts-help">Con una casilla del tablero enfocada: i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas anteriores/siguientes).</p>
       </div>
 
-      <div class="board-pos-wrap">
-        <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
-        <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
-        <div id="win-overlay">
-          <div class="win-title">¡MUY BIEN!</div>
-          <div class="win-sub">Nivel completado</div>
-          <div class="board-controls">
-            <button class="bctrl" id="win-retry">Reintentar</button>
-            <button class="bctrl" id="win-next">Siguiente &#8250;</button>
-          </div>
-        </div>
-      </div>
-
       <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
       <div class="board-status" id="board-status" aria-hidden="true">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
-
-      <div class="board-controls">
-        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
-        <button class="bctrl" id="board-reset">Reiniciar</button>
-        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
-      </div>
     </section>
 
     <!-- Estado: toda la categoría resuelta -->
@@ -703,6 +718,20 @@ function puzzleForExercise(ex){
   const list = PUZZLES[CATEGORY_KEY[ex.category]] || [];
   return list.find(p => p.number === ex.number) || null;
 }
+/* La categoría jugable anterior a `cat` en CATEGORY_ORDER (o null si `cat` es la
+   primera, o si ninguna de las anteriores tiene ejercicios jugables todavía —
+   ver `hasPuzzles` en showCategory). Se usa para que "Anterior" pueda cruzar de
+   categoría: es solo para VER un ejercicio ya visto, no importa si esa
+   categoría anterior está resuelta del todo o no. */
+function previousPlayableCategory(cat){
+  const idx = CATEGORY_ORDER.indexOf(cat);
+  for(let i = idx - 1; i >= 0; i--){
+    const prevCat = CATEGORY_ORDER[i];
+    const list = EXERCISES.filter(e => e.category === prevCat).sort((a,b) => a.number - b.number);
+    if(list.length && puzzleForExercise(list[0])) return { cat: prevCat, list };
+  }
+  return null;
+}
 function isUnlocked(ex, list){
   const puz = puzzleForExercise(ex);
   if(!puz) return true; /* sin datos jugables: no aplica bloqueo, se ve como imagen */
@@ -746,13 +775,17 @@ function buildTabs(){
   });
 }
 
-function showCategory(cat){
-  currentCategory = cat;
+function setActiveTab(cat){
   document.querySelectorAll('.tab').forEach((btn,i) => {
     const active = CATEGORY_ORDER[i] === cat;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
+}
+
+function showCategory(cat){
+  currentCategory = cat;
+  setActiveTab(cat);
   currentList = EXERCISES.filter(e => e.category === cat).sort((a,b) => a.number - b.number);
   document.getElementById('visible-count').textContent = currentList.length;
 
@@ -856,6 +889,15 @@ const DIRS_ROOK = [[-1,0],[1,0],[0,-1],[0,1]];
 const DIRS_BISHOP = [[-1,-1],[-1,1],[1,-1],[1,1]];
 const DIRS_QUEEN = DIRS_ROOK.concat(DIRS_BISHOP);
 const KNIGHT_DELTAS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+// El peón no tiene bando en este modo, pero SÍ tiene un sentido fijo: captura
+// solo hacia "arriba" (fila menor, como si fuera blanco), nunca hacia abajo
+// ni al costado — igual que un peón real, que tampoco puede retroceder.
+// Antes capturaba en las 4 diagonales (DIRS_BISHOP completo), lo que producía
+// posiciones que, jugadas como un peón de ajedrez de verdad, no tenían
+// solución real (ver entreno/data/reorder_por_dificultad.py y
+// generar_ejercicios.py, que aplican la misma regla al generar y validar
+// los ejercicios).
+const DIRS_PAWN = [[-1,-1],[-1,1]];
 
 function boardKey(r,c){ return r + ',' + c; }
 
@@ -883,7 +925,7 @@ function captureTargets(piece, r, c, board){
       return DIRS_QUEEN.map(([dr,dc]) => [r+dr,c+dc])
         .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
     case 'P':
-      return DIRS_BISHOP.map(([dr,dc]) => [r+dr,c+dc])
+      return DIRS_PAWN.map(([dr,dc]) => [r+dr,c+dc])
         .filter(([nr,nc]) => nr>=0&&nr<4&&nc>=0&&nc<4&&board[boardKey(nr,nc)]);
     default: return [];
   }
@@ -1034,9 +1076,9 @@ function renderBoard(){
       const sq = document.createElement('button');
       const light = (r+c) % 2 === 0;
       sq.type = 'button';
-      // En modo adaptado, blanco puro / magenta bien saturado en vez de los tonos de
-      // marca habituales — mucho más contraste entre casillas para baja visión, parecido
-      // al tema "Pink" de Lichess.
+      // En modo adaptado usa el par de colores de alto contraste elegido en
+      // Configuración (ver js/board-color-themes.js), en vez de los tonos de marca
+      // habituales del modo normal.
       sq.className = 'sq ' + (blindMode ? (light ? 'light-adaptive' : 'dark-adaptive') : (light ? 'light' : 'dark'));
       sq.setAttribute('data-square', squareName(r,c));
       const piece = boardState[boardKey(r,c)];
@@ -1232,7 +1274,10 @@ function updatePuzzleNavButtons(){
   const prevBtn = document.getElementById('board-prev-puzzle');
   const nextBtn = document.getElementById('board-next-puzzle');
   const winNextBtn = document.getElementById('win-next');
-  prevBtn.disabled = boardExIndex <= 0;
+  // "Anterior" no se limita a la categoría actual: si ya es el primer ejercicio
+  // de la categoría, sigue habilitado mientras haya una categoría anterior para
+  // cruzar a su último ejercicio (ver el click de board-prev-puzzle más abajo).
+  prevBtn.disabled = boardExIndex <= 0 && !previousPlayableCategory(currentCategory);
   const ex = boardExList[boardExIndex];
   const puz = puzzleForExercise(ex);
   const solvedNow = puz && isSolved(puz.id);
@@ -1522,7 +1567,8 @@ const HELP_SECTIONS = [
       'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
       'También en notación algebraica, solo con la casilla de destino: T=Torre, A=Alfil, C=Caballo, D=Dama, R=Rey ' +
       '(sin letra es Peón) — por ejemplo "Ta3" o "Txa3" (la "x" es opcional: toda jugada aquí es una captura). ' +
-      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar.',
+      'Si hay más de una pieza de ese tipo que puede capturar ahí, se pide la casilla de origen y destino en su lugar. ' +
+      'El peón siempre captura hacia arriba (como si fuera blanco): nunca hacia abajo ni al costado.',
   },
   {
     title: 'Comandos',
@@ -1697,7 +1743,18 @@ document.getElementById('board-reset').addEventListener('click', () => {
 });
 document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('board-prev-puzzle').addEventListener('click', () => {
-  if(boardExIndex > 0) loadPuzzleAt(boardExIndex - 1);
+  if(boardExIndex > 0){
+    loadPuzzleAt(boardExIndex - 1);
+    return;
+  }
+  // Primer ejercicio de la categoría: cruzar a la categoría anterior y mostrar
+  // su último ejercicio (solo para ver — no hace falta tenerla resuelta).
+  const prev = previousPlayableCategory(currentCategory);
+  if(!prev) return;
+  currentCategory = prev.cat;
+  setActiveTab(prev.cat);
+  boardExList = prev.list;
+  loadPuzzleAt(prev.list.length - 1);
 });
 document.getElementById('board-next-puzzle').addEventListener('click', () => {
   if(boardExIndex < boardExList.length - 1) loadPuzzleAt(boardExIndex + 1);

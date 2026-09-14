@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
     <title>Informes — Ajedrez Integral</title>
     <meta name="description" content="Estadísticas de progreso: participación, precisión y actividad de la clase.">
     <meta name="robots" content="noindex">
@@ -33,6 +34,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/plan-entrenamiento.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -47,6 +49,8 @@
                     <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li>
+                    <li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li>
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -67,6 +71,8 @@
                 <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
                 <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
             </ul>
         </div>
@@ -106,6 +112,8 @@
                         <option value="practicar">🏆 Practicar</option>
                         <option value="mates">♚ Mates</option>
                         <option value="tactica">⚔️ Táctica</option>
+                        <option value="concentracion">🧠 Concentración</option>
+                        <option value="diagnostico">🧭 Diagnóstico de nivel</option>
                     </select>
                 </div>
             </div>
@@ -117,12 +125,26 @@
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
+            <!-- Diagnóstico de nivel y plan de entrenamiento (entreno/diagnostico.html) -->
+            <div id="diagnostico-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="diagnostico-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Diagnóstico y plan de entrenamiento</h2>
+                <div id="diagnostico-body"></div>
+            </div>
+
             <div id="topic-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="topic-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"></h2>
                 <div id="topic-report-body" class="space-y-2.5"></div>
             </div>
 
             <div id="teacher-report" class="hidden space-y-6">
+                <!-- Diagnósticos de nivel de todos los alumnos asignados: resumen y gráficos.
+                     Lo pinta renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel</h2>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
+                    <div id="diagnosticos-clase"></div>
+                </div>
+
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Precisión por alumno</h2>
                     <div id="leaderboard" class="space-y-3"></div>
@@ -145,7 +167,7 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates y Táctica, por alumno.</p>
+                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
@@ -156,7 +178,8 @@
                                     <th class="py-2 pr-4 font-semibold">⚡ Mejor Coordenadas</th>
                                     <th class="py-2 pr-4 font-semibold">🏆 Practicar</th>
                                     <th class="py-2 pr-4 font-semibold">♚ Mates</th>
-                                    <th class="py-2 font-semibold">⚔️ Táctica</th>
+                                    <th class="py-2 pr-4 font-semibold">⚔️ Táctica</th>
+                                    <th class="py-2 font-semibold">🧠 Concentración</th>
                                 </tr>
                             </thead>
                             <tbody id="entreno-table-body"></tbody>
@@ -170,7 +193,17 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false;
@@ -234,7 +267,8 @@
         // Coordenadas entre todos sus modos, las series de Practicar
         // completadas con su mejor puntuación en estrellas (1-3) cada una,
         // las posiciones de Mates resueltas (distintas) por categoría (mate
-        // en 1/2/3), y las posiciones de Táctica resueltas (distintas) en
+        // en 1/2/3), y las posiciones de Táctica resueltas (distintas) y los
+        // ejercicios de Concentración resueltos (distintos por nivel) en
         // total (por tema: última línea, enroque corto/largo, columnas y
         // diagonales, ataque doble).
         function summarizeTrainingProgress(rows) {
@@ -243,6 +277,8 @@
             const practiceSets = {}; // set_id -> mejores estrellas (1-3) logradas
             const matesSolved = { mate1: new Set(), mate2: new Set(), mate3: new Set() };
             const tacticaSolved = new Set();
+            const concentracionHechos = new Set(); // "nivel-ejercicio": un ejercicio repetido cuenta una vez
+            let diagnostico = null; // el más reciente: es la foto vigente del alumno
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
@@ -254,6 +290,12 @@
                     matesSolved[d.category].add(d.puzzle_id);
                 } else if (r.activity === "tactica" && d.puzzle_id) {
                     tacticaSolved.add(d.puzzle_id);
+                } else if (r.activity === "concentracion" && d.nivel && d.ejercicio) {
+                    concentracionHechos.add(d.nivel + "-" + d.ejercicio);
+                } else if (r.activity === "diagnostico" && d.areas) {
+                    if (!diagnostico || new Date(r.created_at) > new Date(diagnostico.created_at)) {
+                        diagnostico = { created_at: r.created_at, detail: d };
+                    }
                 }
             });
             const practiceValues = Object.values(practiceSets);
@@ -264,6 +306,8 @@
                 practiceCompleted: practiceValues.length, practiceStars,
                 matesTotal, mate1: matesSolved.mate1.size, mate2: matesSolved.mate2.size, mate3: matesSolved.mate3.size,
                 tacticaTotal: tacticaSolved.size,
+                concentracionTotal: concentracionHechos.size,
+                diagnostico,
             };
         }
 
@@ -305,6 +349,8 @@
 
             const { data: progress } = await sb.from("training_progress").select("*").eq("student_id", profile.id);
             const entreno = summarizeTrainingProgress(progress);
+            // La política de la tabla solo devuelve el plan cuando el profesor lo compartió.
+            const { data: planCompartido } = await sb.from("training_plans").select("*").eq("student_id", profile.id).maybeSingle();
 
             const cards = document.getElementById("stat-cards");
             cards.append(
@@ -319,8 +365,11 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
-                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas")
+                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
+
+            renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
             if (!list.length) {
@@ -357,7 +406,11 @@
             const { data: attendance } = await sb.from("class_attendance").select("*");
             const { data: presenceRows } = await sb.from("class_presence_log").select("*");
             const { data: progress } = await sb.from("training_progress").select("*");
+            const { data: plans } = await sb.from("training_plans").select("*");
+            const plansByStudent = {};
+            (plans || []).forEach((pl) => { plansByStudent[pl.student_id] = pl; });
             teacherData = {
+                plansByStudent,
                 sessions: sessions || [], sessionById, closedSessions: (sessions || []).filter((s) => s.ended_at).length,
                 questions: questions || [], games: games || [], students: students || [],
                 answers: answers || [], attendance: attendance || [], presenceRows: presenceRows || [], progress: progress || [],
@@ -381,6 +434,7 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
+            document.getElementById("diagnostico-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
         }
@@ -451,7 +505,7 @@
             const entrenoBody = document.getElementById("entreno-table-body");
             entrenoBody.innerHTML = "";
             if (!students.length) {
-                entrenoBody.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+                entrenoBody.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
                     const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
@@ -463,12 +517,14 @@
                     const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdCoord.textContent = entreno.bestCoord || "—";
                     const tdPractice = document.createElement("td"); tdPractice.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
                     const tdMates = document.createElement("td"); tdMates.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdMates.textContent = entreno.matesTotal ? `${entreno.matesTotal} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3})` : "—";
-                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 text-brand-500 dark:text-brand-400"; tdTactica.textContent = entreno.tacticaTotal || "—";
-                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates, tdTactica);
+                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdTactica.textContent = entreno.tacticaTotal || "—";
+                    const tdConcentracion = document.createElement("td"); tdConcentracion.className = "py-2 text-brand-500 dark:text-brand-400"; tdConcentracion.textContent = entreno.concentracionTotal || "—";
+                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates, tdTactica, tdConcentracion);
                     entrenoBody.appendChild(tr);
                 });
             }
 
+            renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
             document.getElementById("teacher-report").classList.remove("hidden");
         }
 
@@ -512,8 +568,11 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
-                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas")
+                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
+
+            renderDiagnosticoProfesor(studentId, name, entreno);
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
@@ -543,6 +602,8 @@
             practicar: "🏆 Practicar — series completadas",
             mates: "♚ Mates resueltos",
             tactica: "⚔️ Táctica — posiciones resueltas",
+            diagnostico: "🧭 Diagnóstico de nivel — resumen y gráficos del grupo",
+            concentracion: "🧠 Concentración — ejercicios resueltos",
         };
 
         // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
@@ -552,6 +613,11 @@
             document.getElementById("topic-report-title").textContent = TOPIC_LABELS[topic] || "Detalle";
             const body = document.getElementById("topic-report-body");
             body.innerHTML = "";
+            if (topic === "diagnostico") {
+                renderDiagnosticosClase(body);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
             const students = teacherData.students;
             if (!students.length) {
                 body.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
@@ -605,6 +671,7 @@
                         else if (topic === "practicar") { value = entreno.practiceCompleted; label = value ? `${value} series (${entreno.practiceStars}⭐)` : "—"; }
                         else if (topic === "mates") { value = entreno.matesTotal; label = value ? `${value} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)` : "—"; }
                         else if (topic === "tactica") { value = entreno.tacticaTotal; label = value ? String(value) : "—"; }
+                        else if (topic === "concentracion") { value = entreno.concentracionTotal; label = value ? value + " ejercicios" : "—"; }
                         return { name: s.full_name || s.email, value, label };
                     })
                     .sort((a, b) => b.value - a.value)
@@ -635,6 +702,311 @@
         document.getElementById("student-filter").addEventListener("change", applyTeacherFilters);
         document.getElementById("topic-filter").addEventListener("change", applyTeacherFilters);
 
+
+        /* ---------------- Diagnóstico de nivel y plan de entrenamiento ----------------
+           El diagnóstico lo hace el alumno en entreno/diagnostico.html y queda en
+           training_progress. Aquí se lee esa foto y se arma, con el mismo criterio
+           pedagógico que ve el alumno (js/plan-entrenamiento.js), un plan de cuatro
+           semanas. El profesor puede guardarlo, anotarle algo y compartirlo: el alumno
+           solo ve el plan cuando shared = true (lo impone la propia base, no esta
+           pantalla). */
+        const PE = window.PlanEntrenamiento;
+
+        function fmtFecha(iso) {
+            return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
+        }
+
+        function barrasAreasHTML(resumen) {
+            return resumen.porArea.map((a) => {
+                const color = a.porcentaje >= 80 ? "bg-green-500" : a.porcentaje >= 60 ? "bg-accent-500" : "bg-red-500";
+                return `<div>
+                    <div class="flex items-center justify-between gap-3 text-sm mb-1">
+                        <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
+                        <span class="text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%</span>
+                    </div>
+                    <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
+                </div>`;
+            }).join("");
+        }
+
+        function cabeceraDiagnosticoHTML(resumen, fecha) {
+            const perfil = resumen.perfil || {};
+            const contexto = [perfil.tiempo, perfil.torneos && "torneos: " + perfil.torneos.toLowerCase(), perfil.practica && "practica: " + perfil.practica.toLowerCase()]
+                .filter(Boolean).join(" · ");
+            return `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4 mb-5">
+                <p class="text-xs text-brand-400 dark:text-brand-500">Diagnóstico del ${fmtFecha(fecha)}</p>
+                <p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${resumen.nivel.etiqueta} · ${resumen.porcentaje}%</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">${resumen.nivel.descripcion}</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
+                ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
+            </div>`;
+        }
+
+        function planHTML(plan) {
+            return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${plan.rutina}.</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Prioridad:</strong> ${plan.prioridad.join(" → ")}.</p>
+                <div class="space-y-3">${plan.semanas.map((s) => `
+                    <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4">
+                        <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${s.titulo}</p>
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-1">${s.porque}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-400 mb-2"><strong>Meta:</strong> ${s.objetivo}</p>
+                        <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${x}</li>`).join("")}</ul>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-600 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(" · ")}</p>
+                    </div>`).join("")}</div>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">${plan.medicion}</p>`;
+        }
+
+        function sinDiagnosticoHTML(nombre, esProfesor) {
+            return esProfesor
+                ? `<p class="text-sm text-brand-500 dark:text-brand-400">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
+                : `<p class="text-sm text-brand-500 dark:text-brand-400 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 32 preguntas y posiciones: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                   <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
+        }
+
+        // Vista del profesor (o administrador) para un alumno concreto.
+        function renderDiagnosticoProfesor(studentId, nombre, entreno) {
+            const panel = document.getElementById("diagnostico-report");
+            const body = document.getElementById("diagnostico-body");
+            document.getElementById("diagnostico-title").textContent = "Diagnóstico y plan de entrenamiento — " + nombre;
+            panel.classList.remove("hidden");
+
+            if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML(nombre, true); return; }
+
+            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const plan = PE.generarPlan(resumen);
+            const guardado = (teacherData.plansByStudent || {})[studentId];
+            const estado = !guardado
+                ? "Sin guardar todavía."
+                : guardado.shared
+                    ? `Compartido con el alumno el ${fmtFecha(guardado.updated_at)}: lo ve en su propia página de Informes.`
+                    : `Guardado el ${fmtFecha(guardado.updated_at)}, sin compartir: el alumno no lo ve.`;
+
+            body.innerHTML = `
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
+                <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
+                <div class="grid sm:grid-cols-2 gap-4 mb-5">
+                    <div class="bg-red-50 dark:bg-red-950/30 rounded-xl p-4">
+                        <p class="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Debilidades a atacar</p>
+                        <ul class="list-disc pl-5 text-sm text-brand-600 dark:text-brand-300 space-y-1">${
+                            resumen.debilidades.length
+                                ? resumen.debilidades.map((d) => `<li>${d.nombre} (${d.porcentaje}%): ${PE.AREA_POR_ID[d.id].flojo}</li>`).join("")
+                                : "<li>Ninguna área por debajo del 60%: el plan trabaja las tres más bajas para seguir subiendo.</li>"}</ul>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-950/30 rounded-xl p-4">
+                        <p class="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">Fortalezas a sostener</p>
+                        <ul class="list-disc pl-5 text-sm text-brand-600 dark:text-brand-300 space-y-1">${
+                            resumen.fortalezas.length
+                                ? resumen.fortalezas.map((f) => `<li>${f.nombre} (${f.porcentaje}%): ${PE.AREA_POR_ID[f.id].solido}</li>`).join("")
+                                : "<li>Todavía ninguna área por encima del 80%: conviene consolidar antes de ampliar temario.</li>"}</ul>
+                    </div>
+                </div>
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Plan de entrenamiento · 4 semanas</h3>
+                ${planHTML(plan)}
+                <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
+                    <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Nota para el alumno (opcional)</label>
+                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empezá por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
+                    <p id="plan-estado" class="text-xs text-brand-400 dark:text-brand-500 mt-2">${estado}</p>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
+                        <button type="button" id="plan-guardar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">Guardar sin compartir</button>
+                        ${guardado && guardado.shared ? '<button type="button" id="plan-ocultar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-red-500 transition-colors">Dejar de compartir</button>' : ""}
+                    </div>
+                </div>`;
+
+            const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
+            document.getElementById("plan-compartir").addEventListener("click", () => guardar(true));
+            document.getElementById("plan-guardar").addEventListener("click", () => guardar(false));
+            const ocultar = document.getElementById("plan-ocultar");
+            if (ocultar) ocultar.addEventListener("click", () => guardar(false));
+        }
+
+        async function guardarPlan(studentId, plan, diagnostico, compartir) {
+            const estadoEl = document.getElementById("plan-estado");
+            const nota = (document.getElementById("plan-nota").value || "").trim();
+            estadoEl.textContent = "Guardando…";
+            const fila = {
+                student_id: studentId,
+                teacher_id: profile.id,
+                plan: { generado: plan, diagnostico_fecha: diagnostico.created_at },
+                nota: nota || null,
+                shared: compartir,
+                updated_at: new Date().toISOString(),
+            };
+            const { data, error } = await sb.from("training_plans").upsert(fila, { onConflict: "student_id" }).select().maybeSingle();
+            if (error) {
+                estadoEl.textContent = "No se pudo guardar el plan: " + error.message;
+                return;
+            }
+            teacherData.plansByStudent[studentId] = data || fila;
+            estadoEl.textContent = compartir
+                ? "Compartido con el alumno: ya lo ve en su página de Informes."
+                : "Guardado sin compartir: el alumno no lo ve.";
+            applyTeacherFilters();
+        }
+
+        // Vista del propio alumno: su diagnóstico y, si el profesor se lo compartió, su plan.
+        function renderDiagnosticoAlumno(entreno, planCompartido) {
+            const panel = document.getElementById("diagnostico-report");
+            const body = document.getElementById("diagnostico-body");
+            document.getElementById("diagnostico-title").textContent = "Tu nivel y tu plan de entrenamiento";
+            panel.classList.remove("hidden");
+
+            if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML("", false); return; }
+            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const plan = (planCompartido && planCompartido.plan && planCompartido.plan.generado) || null;
+
+            body.innerHTML = `
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
+                <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
+                ${plan ? `
+                    <div class="bg-accent-500/10 border border-accent-500/40 rounded-xl p-4 mb-4">
+                        <p class="text-sm font-semibold text-brand-800 dark:text-white">Tu profesor te compartió un plan de entrenamiento</p>
+                        ${planCompartido.nota ? `<p class="text-sm text-brand-600 dark:text-brand-300 mt-1">“${planCompartido.nota}”</p>` : ""}
+                    </div>
+                    ${planHTML(plan)}`
+                  : `<p class="text-sm text-brand-500 dark:text-brand-400">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
+                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-2"><a href="entreno/diagnostico.html" class="text-accent-600 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
+        }
+
+
+        /* ---------------- Diagnósticos de la clase ----------------
+           Resumen y gráficos de los diagnósticos de todos los alumnos asignados
+           (para un administrador, de todos los alumnos que ve).
+
+           Sobre el color: las barras usan las tres bandas pedagógicas —menos de
+           60% a trabajar, 60-79% en camino, 80% o más firme—. Verde y ámbar no se
+           distinguen con daltonismo (se comprobó: ΔE 5.7 en deutan), así que el
+           color NUNCA va solo: cada barra lleva su porcentaje y el nombre de su
+           banda en texto, y hay leyenda. */
+        const BANDAS = [
+            { desde: 80, clase: "bg-green-600", etiqueta: "firme" },
+            { desde: 60, clase: "bg-accent-500", etiqueta: "en camino" },
+            { desde: 0,  clase: "bg-red-500",   etiqueta: "a trabajar" },
+        ];
+        const bandaDe = (pct) => BANDAS.find((b) => pct >= b.desde);
+
+        // Barra horizontal: pista recesiva, marca de 10px con el extremo redondeado
+        // y pegada a la línea de base, y el valor siempre en texto al lado.
+        function barraHTML(pct, titulo) {
+            const banda = bandaDe(pct);
+            return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${titulo}">
+                <div class="h-full ${banda.clase} rounded-r" style="width:${Math.max(pct, 1)}%"></div>
+            </div>`;
+        }
+
+        function leyendaBandasHTML() {
+            return `<p class="text-xs text-brand-400 dark:text-brand-500 mt-4">
+                ${BANDAS.slice().reverse().map((b) => `<span class="inline-flex items-center gap-1 mr-3"><span class="inline-block w-2.5 h-2.5 rounded-sm ${b.clase}"></span>${b.etiqueta} (${b.desde === 0 ? "menos de 60" : b.desde === 60 ? "60 a 79" : "80 o más"}%)</span>`).join("")}
+            </p>`;
+        }
+
+        // Junta el último diagnóstico de cada alumno visible.
+        function diagnosticosDeClase() {
+            const progresoPorAlumno = {};
+            teacherData.progress.forEach((r) => { (progresoPorAlumno[r.student_id] = progresoPorAlumno[r.student_id] || []).push(r); });
+            const conDiagnostico = [], pendientes = [];
+            teacherData.students.forEach((s) => {
+                const entreno = summarizeTrainingProgress(progresoPorAlumno[s.id]);
+                const nombre = s.full_name || s.email;
+                if (entreno.diagnostico) {
+                    conDiagnostico.push({ id: s.id, nombre, fecha: entreno.diagnostico.created_at, resumen: PE.resumir(entreno.diagnostico.detail) });
+                } else {
+                    pendientes.push({ id: s.id, nombre });
+                }
+            });
+            conDiagnostico.sort((a, b) => b.resumen.porcentaje - a.resumen.porcentaje);
+            return { conDiagnostico, pendientes };
+        }
+
+        function renderDiagnosticosClase(contenedor) {
+            const { conDiagnostico, pendientes } = diagnosticosDeClase();
+            const total = conDiagnostico.length + pendientes.length;
+
+            if (!conDiagnostico.length) {
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-400">Todavía ningún alumno ha hecho el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-600 dark:text-accent-400 hover:underline">la versión imprimible</a>.</p>`;
+                return;
+            }
+
+            // Promedio de la clase por área y promedio general.
+            const promedioPorArea = PE.AREAS.map((a) => {
+                const valores = conDiagnostico.map((d) => d.resumen.porArea.find((x) => x.id === a.id).porcentaje);
+                return { id: a.id, nombre: a.nombre, emoji: a.emoji, promedio: Math.round(valores.reduce((s, v) => s + v, 0) / valores.length) };
+            }).sort((x, y) => x.promedio - y.promedio);
+            const promedioGeneral = Math.round(conDiagnostico.reduce((s, d) => s + d.resumen.porcentaje, 0) / conDiagnostico.length);
+            const masFloja = promedioPorArea[0];
+
+            const tile = (valor, etiqueta, detalle) => `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4">
+                <p class="font-serif text-2xl font-bold text-brand-800 dark:text-white">${valor}</p>
+                <p class="text-xs text-brand-500 dark:text-brand-400 mt-0.5">${etiqueta}</p>
+                ${detalle ? `<p class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">${detalle}</p>` : ""}
+            </div>`;
+
+            contenedor.innerHTML = `
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                    ${tile(`${conDiagnostico.length}/${total}`, "alumnos con diagnóstico hecho", pendientes.length ? `${pendientes.length} pendiente${pendientes.length === 1 ? "" : "s"}` : "todos al día")}
+                    ${tile(`${promedioGeneral}%`, "promedio del grupo", PE.nivelDe(promedioGeneral).etiqueta)}
+                    ${tile(`${masFloja.emoji} ${masFloja.promedio}%`, "área más floja del grupo", masFloja.nombre)}
+                </div>
+
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Nivel por alumno</h3>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
+                <div class="space-y-2.5">
+                    ${conDiagnostico.map((d) => `
+                        <div>
+                            <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
+                                <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}</span>
+                            </div>
+                            ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
+                        </div>`).join("")}
+                </div>
+                ${leyendaBandasHTML()}
+
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">Dónde está floja la clase</h3>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase.</p>
+                <div class="space-y-2.5">
+                    ${promedioPorArea.map((a) => `
+                        <div>
+                            <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
+                                <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
+                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${a.promedio}% · ${bandaDe(a.promedio).etiqueta}</span>
+                            </div>
+                            ${barraHTML(a.promedio, `${a.nombre}: promedio ${a.promedio}%`)}
+                        </div>`).join("")}
+                </div>
+
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">El perfil de cada alumno</h3>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Las ocho áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    ${conDiagnostico.map((d) => `
+                        <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-3">
+                            <div class="flex items-baseline justify-between gap-2 mb-2">
+                                <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <span class="text-xs text-brand-400 dark:text-brand-500 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
+                            </div>
+                            <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${d.nombre}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
+                                ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.porcentaje).clase} rounded-t" style="height:${Math.max(a.porcentaje, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.porcentaje).etiqueta})"></div>`).join("")}
+                            </div>
+                            <div class="flex gap-[2px] mt-1">
+                                ${d.resumen.porArea.map((a) => `<span class="flex-1 text-center text-[10px] text-brand-400 dark:text-brand-500" title="${a.nombre}">${a.emoji}</span>`).join("")}
+                            </div>
+                            <p class="text-[11px] text-brand-400 dark:text-brand-500 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje)[0].nombre.toLowerCase()}.</p>
+                        </div>`).join("")}
+                </div>
+
+                ${pendientes.length ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-6"><strong class="text-brand-500 dark:text-brand-400">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre).join(", ")}.</p>` : ""}`;
+
+            // Los nombres llevan al informe completo de ese alumno.
+            contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    document.getElementById("student-filter").value = btn.dataset.alumno;
+                    applyTeacherFilters();
+                });
+            });
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -642,7 +1014,7 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
             document.getElementById("subtitle").textContent = isTeacher
                 ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
                 : "Tu actividad y progreso en las asignaciones de clase.";
@@ -650,6 +1022,13 @@
                 await fetchTeacherData();
                 populateStudentFilter();
                 document.getElementById("teacher-filters").classList.remove("hidden");
+                // Permite enlazar directo a un tema, p. ej. informes.html?tema=diagnostico
+                // desde el panel de administración.
+                const temaPedido = new URLSearchParams(location.search).get("tema");
+                const selectorTema = document.getElementById("topic-filter");
+                if (temaPedido && [...selectorTema.options].some((o) => o.value === temaPedido)) {
+                    selectorTema.value = temaPedido;
+                }
                 applyTeacherFilters();
             } else {
                 await loadStudentReport();
