@@ -324,7 +324,11 @@
     const nodes = pendientes(root);
     if (!nodes.length) return Promise.resolve();
     injectDefs();
-    return loadData().then(() => {
+    // El progreso del curso (qué finales ya practicó) vive en la cuenta del
+    // alumno: se baja antes de marcar nada, así lo practicado en otro aparato
+    // aparece igual aquí. Si no hay sesión, sigue el progreso local de siempre.
+    const cuenta = window.ProgresoUsuario ? window.ProgresoUsuario.init().catch(() => {}) : Promise.resolve();
+    return cuenta.then(loadData).then(() => {
       nodes.forEach((el) => {
         const d = byId[el.dataset.id];
         if (!d) { el.innerHTML = '<p class="text-xs text-red-500">Diagrama no encontrado (' + esc(el.dataset.id) + ").</p>"; el.classList.add("f100-viewer"); return; }

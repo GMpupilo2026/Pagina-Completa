@@ -36,6 +36,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/entreno-progress.js"></script>
+    <script src="../js/progreso-usuario.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
     <script src="../js/diagnostico-items.js"></script>
     <script src="../js/adaptive-mode.js"></script>
@@ -584,6 +585,9 @@ async function init() {
     return;
   }
   await EntrenoProgress.init();
+  // Baja el progreso de la cuenta antes de leer el estado guardado: si la prueba
+  // se empezó en otro aparato, se retoma donde iba.
+  await ProgresoUsuario.init();
   cargarEstado();
   pintarPerfil();
   pintarPrevio();

@@ -83,6 +83,27 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+## El progreso vive en la cuenta, no en el aparato
+
+`js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por
+clave y alumno) las mismas claves de progreso que las páginas guardan en
+`localStorage`, para que quien entrena en la compu siga donde iba al abrir el
+celular.
+
+- Las páginas **no cambian su forma de guardar**: siguen usando `localStorage` y
+  el módulo intercepta las escrituras. Para sumar una página nueva: cargar el
+  script y `await ProgresoUsuario.init()` antes de leer el progreso y pintar.
+- **Toda clave de progreso nueva hay que declararla** en `CLAVES` con su forma de
+  fusión; si no, no se sincroniza.
+- Al juntar dos aparatos no gana "el último que escribió": los conjuntos de
+  ejercicios resueltos se unen, las mejores marcas se quedan con la mayor y lo
+  que es "por dónde iba" se queda con lo más avanzado. Entrenar en dos aparatos
+  suma, no pisa.
+- Las preferencias del aparato (tema, modo adaptado) **no** se sincronizan a
+  propósito: son de dónde se está mirando, no de quién mira.
+- Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
+  volver.
+
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en

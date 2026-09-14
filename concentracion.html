@@ -36,6 +36,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/entreno-progress.js"></script>
+    <script src="js/progreso-usuario.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -540,6 +541,8 @@ async function init(){
     return;
   }
   await EntrenoProgress.init();
+  // Los niveles hechos viajan con la cuenta, no con el aparato.
+  await ProgresoUsuario.init();
   aplicarModo();
   mostrarNiveles();
   document.getElementById('loading').classList.add('hidden');
