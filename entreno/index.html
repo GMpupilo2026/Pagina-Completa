@@ -34,6 +34,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="../js/supabase-client.js"></script>
+<script src="../js/progreso-usuario.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -162,9 +163,11 @@ const gateChecking = document.getElementById('gate-checking');
 
 const NEXT_PATH = 'entreno/index.html';
 
-function unlock(){
+async function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
+  // Los contadores salen del progreso de la cuenta, no solo de este aparato.
+  await ProgresoUsuario.init();
   showTemasProgress();
 }
 

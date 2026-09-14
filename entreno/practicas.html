@@ -327,16 +327,20 @@
 <script src="../js/blind-notation.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
+<script src="../js/progreso-usuario.js"></script>
 <script>
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
 const NEXT_PATH = 'entreno/practicas.html';
 
-function unlock(){
+async function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   EntrenoProgress.init();
+  // El progreso vive en la cuenta: se baja y se funde con el de este aparato
+  // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
+  await ProgresoUsuario.init();
   initApp();
 }
 
