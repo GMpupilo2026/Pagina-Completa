@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="../img/favicon.svg">
 <title>Aprende — Entreno — Ajedrez Integral</title>
 <meta name="description" content="Lecciones interactivas: cómo mueve cada pieza, las reglas especiales y las primeras tácticas — en el mismo tablero, jugando.">
 <meta name="robots" content="noindex">
@@ -47,7 +46,6 @@
     --movimientos:#75935a;
     --reglas:#c9a23e;
     --tacticas:#9c4148;
-    --concentracion:#3f6f8f;
     --ok:#3f8f4f;
     --bad:#c0392b;
   }
@@ -107,7 +105,7 @@
   .lesson-header h2{font-size:1.4rem; margin-bottom:8px;}
   .lesson-text{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:520px; margin:0 auto 18px;}
 
-  .board-wrap{max-width:440px; margin:0 auto; position:relative;}
+  .board-wrap{max-width:440px; margin:0 auto;}
   .board8{
     display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
     width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
@@ -117,36 +115,14 @@
     font-size:min(7vw,34px); cursor:pointer; user-select:none; border:none; padding:0;
     transition:background .12s;
   }
-  .sq.light{background:var(--sq-light);}
-  .sq.dark{background:var(--sq-dark);}
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
   .sq:disabled{cursor:default;}
   .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
   .sq.found{box-shadow:inset 0 0 0 4px var(--ok); background:color-mix(in srgb, var(--ok) 35%, transparent);}
   .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
   .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
   .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
-
-  /* ---------- Concentración: el juego del objeto perdido ---------- */
-  /* La tapa cubre el tablero mientras el niño tiene los ojos cerrados y se
-     retira uno de los objetos. */
-  .board-cover{
-    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:8px; background:var(--bg-panel); border:2px solid var(--brass); font-size:3rem; color:var(--text);
-  }
-  .board-cover span{font-family:'Inter', sans-serif; font-size:0.95rem; color:var(--text-muted);}
-  .memoria-opciones{
-    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:520px; margin:18px auto 0;
-  }
-  .memoria-op{
-    display:inline-flex; align-items:center; gap:8px;
-    background:var(--bg-panel); border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
-    font-size:0.9rem; padding:10px 16px; cursor:pointer; min-height:44px;
-    transition:border-color .2s, transform .12s ease-out;
-  }
-  .memoria-op .glifo{font-size:1.5rem; line-height:1;}
-  .memoria-op:hover:not(:disabled){border-color:var(--brass);}
-  .memoria-op:active:not(:disabled){transform:scale(0.97);}
-  .memoria-op:disabled{opacity:0.35; cursor:not-allowed;}
 
   /* ---------- Modo normal / modo adaptado (lector de pantalla) ---------- */
   .mode-bar{
@@ -199,7 +175,6 @@
     .tab, .lesson-item, .bctrl{transition-property: background-color, border-color, color;}
   }
 </style>
-    <script src="../js/board-color-themes.js"></script>
     <script src="../js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -282,12 +257,8 @@
       <p class="lesson-text" id="lesson-text"></p>
       <div class="board-wrap" id="board-wrap">
         <div class="board8" id="board" role="group" aria-label="Tablero de la lección"></div>
-        <div id="memoria-cover" class="board-cover" style="display:none;" aria-hidden="true">🙈<span>Cierra los ojos…</span></div>
       </div>
       <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
-      <!-- Concentración: lista de los objetos en texto (es lo único que hay en
-           modo adaptado, donde el tablero se oculta) y botones de respuesta. -->
-      <div id="memoria-lista" class="position-readout" role="region" aria-label="Objetos sobre el tablero" style="display:none;"></div>
 
       <form id="blind-panel" style="display:none;">
         <div id="blind-squares-group" style="display:none;">
@@ -307,10 +278,6 @@
       </form>
 
       <p class="lesson-status" id="lesson-status" role="status" aria-live="polite"></p>
-      <div class="memoria-opciones" id="memoria-opciones" role="group" aria-label="¿Qué objeto falta?" style="display:none;"></div>
-      <div class="lesson-controls" id="memoria-controls" style="display:none;">
-        <button type="button" class="bctrl primary" id="memoria-listo-btn">Ya me los aprendí — cerrar los ojos</button>
-      </div>
       <div class="lesson-controls" id="quiz-controls" style="display:none;">
         <button type="button" class="bctrl" id="quiz-mate-btn">Es jaque mate</button>
         <button type="button" class="bctrl" id="quiz-ahogado-btn">Es ahogado</button>
@@ -438,34 +405,11 @@ const LESSONS = [
   { id:'tac_doble', cat:'tacticas', title:'Ataque doble', type:'move',
     text:'Un ataque doble amenaza dos piezas rivales a la vez con una sola pieza de largo alcance (a diferencia de la horquilla, que siempre es de un caballo). Mueve la dama a la casilla que ataca la torre Y el caballo negros al mismo tiempo.',
     fen:'r6n/8/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'} },
-
-  // ---------- Concentración ----------
-  // Juegos de atención y memoria visual: no hay jugadas ni reglas de ajedrez,
-  // solo objetos (piezas) sobre el tablero. Cada ronda usa objetos distintos
-  // entre sí — dos iguales harían imposible decir cuál falta.
-  { id:'con_objeto_perdido', cat:'concentracion', title:'El juego del objeto perdido', type:'memoria',
-    text:'Sobre el tablero hay varios objetos. Míralos bien mientras dure la cuenta, cierra los ojos… y cuando los abras faltará uno: dinos cuál. Son tres rondas, y en cada una hay un objeto más que en la anterior.',
-    rondas:[
-      { segundos:10, objetos:[
-        {sq:'c3', color:'w', tipo:'n'}, {sq:'f6', color:'b', tipo:'r'},
-        {sq:'g2', color:'w', tipo:'b'}, {sq:'d7', color:'b', tipo:'p'},
-      ] },
-      { segundos:12, objetos:[
-        {sq:'d4', color:'w', tipo:'q'}, {sq:'a7', color:'w', tipo:'r'},
-        {sq:'e5', color:'b', tipo:'n'}, {sq:'b3', color:'b', tipo:'b'},
-        {sq:'h6', color:'w', tipo:'p'},
-      ] },
-      { segundos:15, objetos:[
-        {sq:'d8', color:'b', tipo:'q'}, {sq:'a1', color:'b', tipo:'r'},
-        {sq:'f4', color:'w', tipo:'b'}, {sq:'g6', color:'b', tipo:'n'},
-        {sq:'c2', color:'w', tipo:'p'}, {sq:'e3', color:'w', tipo:'k'},
-      ] },
-    ] },
 ];
 
-const CATEGORY_ORDER = ['movimientos','reglas','tacticas','concentracion'];
-const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas', concentracion:'Concentración'};
-const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas', concentracion:'--concentracion'};
+const CATEGORY_ORDER = ['movimientos','reglas','tacticas'];
+const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas'};
+const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas'};
 
 /* ---------------- Modo normal / modo adaptado (lector de pantalla) ----------------
    Mismo interruptor y misma clave de localStorage que Tablero, 4x4 y
@@ -524,12 +468,6 @@ function applyBlindModeUI(){
   }
   if(refreshSpeechToggle) refreshSpeechToggle();
   renderPositionReadout();
-  // Si se cambia de modo en mitad de un juego de concentración, la lista en
-  // texto aparece o desaparece con él (el contenido ya está puesto).
-  const memLista = document.getElementById('memoria-lista');
-  if(currentLesson && currentLesson.type === 'memoria' && memLista.innerHTML){
-    memLista.style.display = blindMode ? 'block' : 'none';
-  }
   if(currentLesson) updateBlindInputVisibility();
 }
 function setBlindMode(value){
@@ -655,15 +593,7 @@ function buildTabs(){
   });
 }
 
-const LESSON_DESC = {
-  squares: 'Encuentra todas las casillas',
-  move: 'Encuentra la jugada',
-  quiz: 'Identifica la posición',
-  memoria: 'Juego de concentración',
-};
-
 function showList(){
-  if(currentLesson && currentLesson.type === 'memoria') memoriaTeardown();
   document.getElementById('lesson-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
@@ -681,7 +611,7 @@ function showList(){
       <span class="mark">${solved ? '✅' : (unlocked ? '♟️' : '🔒')}</span>
       <span class="info">
         <span class="name">${lesson.title}</span>
-        <span class="desc">${LESSON_DESC[lesson.type] || 'Encuentra la jugada'}</span>
+        <span class="desc">${lesson.type === 'squares' ? 'Encuentra todas las casillas' : (lesson.type === 'quiz' ? 'Identifica la posición' : 'Encuentra la jugada')}</span>
       </span>`;
     if(unlocked) btn.addEventListener('click', () => openLesson(lesson));
     box.appendChild(btn);
@@ -853,195 +783,12 @@ function loadQuizRound(){
   setStatus(`Posición ${quizRoundIndex + 1} de ${currentLesson.rounds.length}.`);
 }
 
-/* ---------------- Concentración: el juego del objeto perdido ----------------
-   Tres fases por ronda: MIRAR (los objetos están a la vista, con una cuenta
-   atrás o el botón "ya me los aprendí"), OJOS (el tablero se tapa y se retira
-   un objeto al azar) y ADIVINAR (se destapa y el niño elige cuál falta entre
-   los objetos que había). Qué objeto se quita cambia en cada intento, así que
-   la misma ronda se puede repetir sin que se la sepa de memoria.
-
-   No usa chess.js ni FEN: aquí los objetos no son una posición de ajedrez
-   (pueden faltar reyes, o haber dos damas), solo figuras sobre casillas. */
-const OBJ_BASE = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
-const OBJ_FEMENINO = { r:true, q:true };
-const MEMORIA_TAPA_MS = 1600;
-
-function objetoNombre(obj, conArticulo){
-  const fem = !!OBJ_FEMENINO[obj.tipo];
-  const color = obj.color === 'w' ? (fem ? 'blanca' : 'blanco') : (fem ? 'negra' : 'negro');
-  return `${conArticulo ? (fem ? 'la ' : 'el ') : ''}${OBJ_BASE[obj.tipo]} ${color}`;
-}
-function casillaHablada(square){
-  return window.BlindNotation ? window.BlindNotation.squareSpoken(square) : square;
-}
-
-let memoriaRonda = 0;
-let memoriaObjetos = [];      // los objetos de la ronda, tal como se muestran al principio
-let memoriaFaltante = null;   // el que se retira en esta ronda
-let memoriaTimers = [];
-
-function memoriaClearTimers(){
-  memoriaTimers.forEach((t) => { clearTimeout(t); clearInterval(t); });
-  memoriaTimers = [];
-}
-// Deja la pantalla como estaba: se llama al salir de la lección o al cambiar de tipo.
-function memoriaTeardown(){
-  memoriaClearTimers();
-  document.getElementById('memoria-cover').style.display = 'none';
-  document.getElementById('memoria-lista').style.display = 'none';
-  document.getElementById('memoria-opciones').style.display = 'none';
-  document.getElementById('memoria-controls').style.display = 'none';
-}
-
-function memoriaDrawBoard(objetos){
-  const board = document.getElementById('board');
-  board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      btn.dataset.square = square;
-      btn.disabled = true; // los objetos no se tocan: se responde con los botones de abajo
-      const obj = objetos.find((o) => o.sq === square);
-      if(obj){
-        const span = document.createElement('span');
-        span.className = obj.color === 'w' ? 'piece-white' : 'piece-black';
-        span.textContent = GLYPH[obj.color][obj.tipo];
-        span.setAttribute('aria-hidden', 'true');
-        btn.appendChild(span);
-      }
-      board.appendChild(btn);
-    }
-  }
-}
-
-// La misma información del tablero, en texto. Solo se muestra en modo adaptado,
-// donde el tablero está oculto y es lo único que hay: en modo normal el juego
-// es justamente mirar el tablero, y una lista al lado lo resolvería sin mirarlo.
-function memoriaRenderLista(objetos, titulo){
-  const el = document.getElementById('memoria-lista');
-  const filas = objetos.map((o) => `<p>${objetoNombre(o, true)} en ${casillaHablada(o.sq)}.</p>`).join('');
-  el.innerHTML = `<h2>${titulo}</h2>${filas}`;
-  el.style.display = blindMode ? 'block' : 'none';
-}
-
-// La misma lista, pero en una sola frase, para decirla en voz alta en modo adaptado.
-function memoriaListaTexto(objetos){
-  return objetos.map((o) => `${objetoNombre(o, true)} en ${casillaHablada(o.sq)}`).join('; ');
-}
-
-function memoriaRenderOpciones(){
-  const box = document.getElementById('memoria-opciones');
-  box.innerHTML = '';
-  memoriaObjetos.forEach((obj) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'memoria-op';
-    btn.innerHTML = `<span class="glifo ${obj.color === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[obj.color][obj.tipo]}</span> ${objetoNombre(obj, true)}`;
-    btn.addEventListener('click', () => memoriaResponder(obj, btn));
-    box.appendChild(btn);
-  });
-  box.style.display = 'flex';
-  // En modo adaptado el foco cae directo en la primera opción — sin esto habría
-  // que ir a buscar los botones a mano en cada ronda.
-  if(blindMode){
-    const primera = box.querySelector('button');
-    if(primera) primera.focus();
-  }
-}
-
-function memoriaFaseMirar(){
-  const ronda = currentLesson.rondas[memoriaRonda];
-  memoriaObjetos = ronda.objetos;
-  memoriaFaltante = null;
-  memoriaDrawBoard(memoriaObjetos);
-  memoriaRenderLista(memoriaObjetos, `Ronda ${memoriaRonda + 1} de ${currentLesson.rondas.length} — mira bien estos ${memoriaObjetos.length} objetos`);
-  document.getElementById('memoria-opciones').style.display = 'none';
-  document.getElementById('memoria-controls').style.display = 'flex';
-  document.getElementById('memoria-cover').style.display = 'none';
-
-  const encabezado = `Ronda ${memoriaRonda + 1} de ${currentLesson.rondas.length}. Mira bien los ${memoriaObjetos.length} objetos`;
-
-  // En modo adaptado no hay cuenta atrás: los objetos se dicen en voz alta y el
-  // niño se toma el tiempo que necesite antes de pulsar el botón. Una cuenta
-  // atrás hablada cortaría la lectura de la lista, que es justo lo que hay que
-  // memorizar.
-  if(blindMode){
-    setStatus(`${encabezado}: ${memoriaListaTexto(memoriaObjetos)}. Cuando te los sepas, pulsa "Ya me los aprendí".`);
-    return;
-  }
-
-  let quedan = ronda.segundos;
-  const decir = () => setStatus(`${encabezado} — te quedan ${quedan} segundo${quedan === 1 ? '' : 's'}.`);
-  decir();
-  memoriaTimers.push(setInterval(() => {
-    quedan--;
-    if(quedan <= 0){ memoriaFaseOjos(); return; }
-    decir();
-  }, 1000));
-}
-
-function memoriaFaseOjos(){
-  memoriaClearTimers();
-  document.getElementById('memoria-controls').style.display = 'none';
-  document.getElementById('memoria-cover').style.display = 'flex';
-  document.getElementById('memoria-lista').style.display = 'none';
-  setStatus('Cierra los ojos… estoy quitando un objeto.');
-  memoriaTimers.push(setTimeout(memoriaFaseAdivinar, MEMORIA_TAPA_MS));
-}
-
-function memoriaFaseAdivinar(){
-  memoriaClearTimers();
-  memoriaFaltante = memoriaObjetos[Math.floor(Math.random() * memoriaObjetos.length)];
-  const quedan = memoriaObjetos.filter((o) => o !== memoriaFaltante);
-  document.getElementById('memoria-cover').style.display = 'none';
-  memoriaDrawBoard(quedan);
-  memoriaRenderLista(quedan, 'Abre los ojos — esto es lo que queda sobre el tablero');
-  memoriaRenderOpciones();
-  setStatus(blindMode
-    ? `¡Abre los ojos! Sobre el tablero quedan: ${memoriaListaTexto(quedan)}. ¿Cuál objeto falta?`
-    : '¡Abre los ojos! ¿Cuál objeto falta?');
-}
-
-function memoriaResponder(obj, btn){
-  if(lessonLocked || !memoriaFaltante) return;
-  if(obj !== memoriaFaltante){
-    btn.disabled = true;
-    setStatus(`${objetoNombre(obj, true).replace(/^el /, 'El ').replace(/^la /, 'La ')} sigue en el tablero, en ${casillaHablada(obj.sq)}. Mira otra vez.`, 'bad');
-    return;
-  }
-  document.getElementById('memoria-opciones').style.display = 'none';
-  if(memoriaRonda >= currentLesson.rondas.length - 1){
-    memoriaTeardown();
-    finishLesson();
-    return;
-  }
-  memoriaRonda++;
-  setStatus(`✅ ¡Eso es! Faltaba ${objetoNombre(memoriaFaltante, true)}, que estaba en ${casillaHablada(memoriaFaltante.sq)}. Vamos con la ronda ${memoriaRonda + 1}…`, 'ok');
-  memoriaTimers.push(setTimeout(memoriaFaseMirar, 1800));
-}
-
-document.getElementById('memoria-listo-btn').addEventListener('click', memoriaFaseOjos);
-
 function resetLesson(){
   lessonLocked = false;
   selectedSquare = null;
   foundSet = new Set();
   quizRoundIndex = 0;
   document.getElementById('next-btn').style.display = 'none';
-  memoriaTeardown();
-
-  if(currentLesson.type === 'memoria'){
-    game = null;
-    memoriaRonda = 0;
-    document.getElementById('quiz-controls').style.display = 'none';
-    document.getElementById('position-readout').style.display = 'none';
-    updateBlindInputVisibility();
-    memoriaFaseMirar();
-    return;
-  }
 
   if(currentLesson.type === 'quiz'){
     loadQuizRound();
