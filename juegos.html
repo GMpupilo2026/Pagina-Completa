@@ -135,6 +135,7 @@
                         <div>
                             <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
                             <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <option value="estandar">⚔️ Ajedrez Estándar</option>
                                 <option value="crazyhouse">♞ Crazyhouse</option>
                                 <option value="cartas">🃏 Ajedrez de Cartas</option>
                                 <option value="duelo">⚡ Duelo Simultáneo</option>
@@ -226,6 +227,7 @@
         // "Próximamente" — un mismo lugar para agregar la siguiente cuando
         // exista, igual que las tarjetas del panel de Clases.
         const VARIANTS = [
+            { id: "estandar", emoji: "⚔️", label: "Ajedrez Estándar", desc: "Ajedrez clásico, de toda la vida, en tiempo real — sin ninguna variante encima." },
             { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
             { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
             { id: "duelo", emoji: "⚡", label: "Duelo Simultáneo", desc: "Los dos jugadores eligen su jugada en secreto y a la vez, desde la misma posición. Se revelan juntas: si apuntan a la misma casilla, chocan; si uno escapaba de donde el otro atacaba, escapa de verdad." },
@@ -370,6 +372,7 @@
         // Cada variante de 2 jugadores comparte la tabla game_rooms, pero cada una
         // vive en su propia página — aquí se decide a cuál ir según row.variant.
         function pageFor2pVariant(variant) {
+            if (variant === "estandar") return "estandar.html";
             if (variant === "cartas") return "cartas.html";
             if (variant === "duelo") return "duelo.html";
             if (variant === "niebla") return "niebla.html";
@@ -552,9 +555,9 @@
                 if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
                 if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
                 // El fen por defecto de game_rooms trae el sufijo "[]" de Crazyhouse
-                // (la bandeja de reserva) — Niebla de Guerra es ajedrez normal, sin
-                // reserva, así que necesita el fen estándar explícito.
-                if (variant === "niebla") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+                // (la bandeja de reserva) — Niebla de Guerra y Ajedrez Estándar son
+                // ajedrez normal, sin reserva, así que necesitan el fen estándar explícito.
+                if (variant === "niebla" || variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
                 const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Torneo — Ajedrez Integral</title>
+    <meta name="description" content="Inscritos, rondas y posiciones de un torneo de Ajedrez Integral.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/cartas-engine.js"></script>
+    <script src="js/duelo-engine.js"></script>
+    <script src="js/torneo-engine.js"></script>
+    <script src="js/torneo-sync.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <div class="hidden lg:block h-8" aria-hidden="true"></div>
+    <main id="main-content">
+
+    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+
+    <div id="error-state" class="hidden pt-32 pb-16 text-center max-w-md mx-auto px-4">
+        <p class="text-4xl mb-3">🚫</p>
+        <p id="error-text" class="text-brand-500 dark:text-brand-400 mb-4">No se pudo cargar el torneo.</p>
+        <a href="torneos.html" class="inline-block bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">← Volver a Torneos</a>
+    </div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="torneos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Torneos</a>
+            <h1 id="t-name" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"></h1>
+            <p id="t-meta" class="text-sm text-brand-500 dark:text-brand-400 mb-6"></p>
+
+            <div id="finished-banner" class="hidden mb-6 rounded-xl bg-accent-500/15 border border-accent-500/40 px-4 py-3 text-center">
+                <p class="text-lg font-serif font-bold text-brand-800 dark:text-white">🏆 Campeón(es): <span id="champion-names"></span></p>
+                <a href="campeones.html" class="text-sm text-accent-600 hover:text-accent-700 transition-colors">Ver el salón de la fama →</a>
+            </div>
+
+            <section id="registration-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                    <h2 class="font-serif font-bold text-brand-800 dark:text-white">Inscritos (<span id="registrants-count">0</span>)</h2>
+                    <button id="self-register-btn" type="button" class="hidden text-sm font-semibold px-4 py-2 rounded-lg transition-colors"></button>
+                </div>
+                <ul id="registrants-list" class="text-sm text-brand-600 dark:text-brand-300 space-y-1 mb-4"></ul>
+
+                <div id="owner-start-panel" class="hidden border-t border-brand-100 dark:border-brand-800 pt-4">
+                    <div id="rounds-field" class="hidden mb-3">
+                        <label for="rounds-input" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Número de rondas (Suizo)</label>
+                        <input id="rounds-input" type="number" min="1" max="20" class="w-24 text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    </div>
+                    <button id="start-btn" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">Cerrar inscripciones y empezar</button>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Hacen falta al menos 2 inscritos. La primera ronda se genera automáticamente al empezar.</p>
+                </div>
+            </section>
+
+            <section id="rounds-section" class="hidden">
+                <div id="rounds-container"></div>
+                <button id="generate-round-btn" type="button" class="hidden w-full mb-6 bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors"></button>
+            </section>
+
+            <section id="standings-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Tabla de posiciones</h2>
+                <ul id="standings-list" class="text-sm text-brand-700 dark:text-brand-200"></ul>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null, profile = null, tournament = null, isOwner = false, amIRegistered = false;
+        let registrations = [], rounds = [], pairingsByRound = {};
+        const playerNames = {};
+        const TOURNEY_ID = new URLSearchParams(window.location.search).get("id");
+
+        const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
+        const VARIANT_LABEL = { estandar: "⚔️ Ajedrez Estándar", crazyhouse: "♞ Crazyhouse", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra" };
+        const STATUS_LABEL = { registration: "🟢 Inscripción abierta", in_progress: "🔵 En curso", finished: "🏁 Terminado" };
+
+        function nameFor(id) { return playerNames[id] || "Alumno"; }
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function showError(text) {
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("error-text").textContent = text;
+            document.getElementById("error-state").classList.remove("hidden");
+        }
+
+        // Cada variante de 2 jugadores vive en su propia página — igual que en
+        // juegos.html, pero acá se enlaza directo desde un cruce de torneo.
+        function pageFor2pVariant(variant) {
+            if (variant === "estandar") return "estandar.html";
+            if (variant === "cartas") return "cartas.html";
+            if (variant === "duelo") return "duelo.html";
+            if (variant === "niebla") return "niebla.html";
+            return "crazyhouse.html";
+        }
+
+        function buildGameRoomFields(whiteId, blackId) {
+            const fila = {
+                variant: tournament.variant, white_id: whiteId, black_id: blackId, created_by: profile.id,
+                initial_seconds: tournament.initial_seconds, increment_seconds: tournament.increment_seconds,
+                white_time_left: tournament.initial_seconds, black_time_left: tournament.initial_seconds,
+            };
+            if (tournament.variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
+            if (tournament.variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
+            if (tournament.variant === "niebla" || tournament.variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            return fila;
+        }
+
+        async function register() {
+            const { error } = await sb.from("tournament_registrations").insert({ tournament_id: tournament.id, player_id: profile.id });
+            if (error) { alert("No se pudo inscribir: " + error.message); return; }
+            await loadAll();
+        }
+        async function withdraw() {
+            const { error } = await sb.from("tournament_registrations").delete().eq("tournament_id", tournament.id).eq("player_id", profile.id);
+            if (error) { alert("No se pudo retirar la inscripción: " + error.message); return; }
+            await loadAll();
+        }
+
+        async function startTournament() {
+            if (registrations.length < 2) { alert("Hacen falta al menos 2 inscritos."); return; }
+            const players = registrations.map((r) => r.player_id);
+            let totalRounds;
+            if (tournament.format === "swiss") {
+                const input = document.getElementById("rounds-input");
+                totalRounds = parseInt(input.value, 10) || TorneoEngine.suggestedTotalRounds("swiss", players.length);
+            } else {
+                totalRounds = TorneoEngine.suggestedTotalRounds(tournament.format, players.length);
+            }
+            const { error } = await sb.from("tournaments").update({
+                status: "in_progress", total_rounds: totalRounds, current_round: 0,
+                started_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+            }).eq("id", tournament.id);
+            if (error) { alert("No se pudo empezar el torneo: " + error.message); return; }
+            tournament.status = "in_progress";
+            tournament.total_rounds = totalRounds;
+            tournament.current_round = 0;
+            await generateRound();
+        }
+
+        async function fetchAllPairingsFlat() {
+            const { data } = await sb.from("tournament_pairings").select("white_id, black_id, is_bye, result, advance_id").eq("tournament_id", tournament.id);
+            return (data || []).map((p) => ({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result, advanceId: p.advance_id }));
+        }
+
+        async function generateRound() {
+            const nextRoundNumber = tournament.current_round + 1;
+            const players = registrations.map((r) => r.player_id);
+            let pairings;
+            if (tournament.format === "round_robin") {
+                pairings = TorneoEngine.roundRobinRound(players, nextRoundNumber);
+            } else if (tournament.format === "swiss") {
+                pairings = TorneoEngine.swissRound(players, await fetchAllPairingsFlat(), players);
+            } else {
+                if (nextRoundNumber === 1) {
+                    pairings = TorneoEngine.eliminationFirstRound(players);
+                } else {
+                    const prevRound = rounds.find((r) => r.round_number === nextRoundNumber - 1);
+                    const prevPairings = (pairingsByRound[prevRound.id] || []).slice().sort((a, b) => a.board_number - b.board_number)
+                        .map((p) => ({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result, advanceId: p.advance_id }));
+                    pairings = TorneoEngine.eliminationNextRound(prevPairings);
+                }
+            }
+
+            const { data: roundRow, error: roundError } = await sb.from("tournament_rounds").insert({
+                tournament_id: tournament.id, round_number: nextRoundNumber,
+            }).select().single();
+            if (roundError) { alert("No se pudo crear la ronda: " + roundError.message); return; }
+
+            let boardNumber = 1;
+            for (const p of pairings) {
+                if (p.isBye) {
+                    await sb.from("tournament_pairings").insert({
+                        round_id: roundRow.id, tournament_id: tournament.id, board_number: boardNumber++,
+                        white_id: p.white, black_id: null, is_bye: true, result: "white", finished_at: new Date().toISOString(),
+                    });
+                    continue;
+                }
+                const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black)).select().single();
+                if (roomError) { console.error(roomError); alert("No se pudo crear la partida de un cruce: " + roomError.message); continue; }
+                await sb.from("tournament_pairings").insert({
+                    round_id: roundRow.id, tournament_id: tournament.id, board_number: boardNumber++,
+                    white_id: p.white, black_id: p.black, is_bye: false, game_room_id: roomRow.id,
+                });
+            }
+
+            await sb.from("tournaments").update({ current_round: nextRoundNumber, updated_at: new Date().toISOString() }).eq("id", tournament.id);
+            tournament.current_round = nextRoundNumber;
+            await TorneoSync.maybeFinishRound(sb, roundRow.id); // por si la ronda generada salió toda de byes
+            await loadAll();
+        }
+
+        async function resolveAdvance(pairingId, winnerId, roundId) {
+            await sb.from("tournament_pairings").update({ advance_id: winnerId, needs_manual_advance: false }).eq("id", pairingId);
+            await TorneoSync.maybeFinishRound(sb, roundId);
+            await loadAll();
+        }
+
+        function render() {
+            document.getElementById("t-name").textContent = tournament.name;
+            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + (VARIANT_LABEL[tournament.variant] || tournament.variant) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
+
+            document.getElementById("registration-section").classList.toggle("hidden", tournament.status !== "registration");
+            if (tournament.status === "registration") renderRegistration();
+
+            document.getElementById("rounds-section").classList.toggle("hidden", tournament.status === "registration");
+            if (tournament.status !== "registration") renderRounds();
+
+            const showStandings = tournament.status !== "registration" && tournament.format !== "elimination";
+            document.getElementById("standings-section").classList.toggle("hidden", !showStandings);
+            if (showStandings) renderStandings();
+
+            const finished = tournament.status === "finished";
+            document.getElementById("finished-banner").classList.toggle("hidden", !finished);
+            if (finished) document.getElementById("champion-names").textContent = (tournament.winner_ids || []).map(nameFor).join(" y ") || "—";
+        }
+
+        function renderRegistration() {
+            const listEl = document.getElementById("registrants-list");
+            listEl.innerHTML = "";
+            registrations.forEach((r) => {
+                const li = document.createElement("li");
+                li.textContent = nameFor(r.player_id);
+                listEl.appendChild(li);
+            });
+            document.getElementById("registrants-count").textContent = String(registrations.length);
+
+            const selfBtn = document.getElementById("self-register-btn");
+            if (!isOwner) {
+                selfBtn.classList.remove("hidden");
+                selfBtn.textContent = amIRegistered ? "Retirarme" : "Inscribirme";
+                selfBtn.className = "text-sm font-semibold px-4 py-2 rounded-lg transition-colors " +
+                    (amIRegistered ? "bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300" : "bg-accent-500 hover:bg-accent-600 text-brand-900");
+            } else {
+                selfBtn.classList.add("hidden");
+            }
+
+            document.getElementById("owner-start-panel").classList.toggle("hidden", !isOwner);
+            if (isOwner) {
+                document.getElementById("start-btn").disabled = registrations.length < 2;
+                const roundsField = document.getElementById("rounds-field");
+                roundsField.classList.toggle("hidden", tournament.format !== "swiss");
+                if (tournament.format === "swiss" && !roundsField.dataset.filled) {
+                    document.getElementById("rounds-input").value = TorneoEngine.suggestedTotalRounds("swiss", Math.max(registrations.length, 2));
+                    roundsField.dataset.filled = "1";
+                }
+            }
+        }
+
+        function renderPairingRow(p, round) {
+            const row = document.createElement("div");
+            row.className = "flex items-center justify-between gap-2 flex-wrap text-sm border-t border-brand-100 dark:border-brand-800 pt-2 mt-2 first:border-0 first:pt-0 first:mt-0";
+            const label = document.createElement("span");
+            label.textContent = p.is_bye
+                ? ("Tablero " + p.board_number + ": " + nameFor(p.white_id) + " — bye (pasa directo)")
+                : ("Tablero " + p.board_number + ": " + nameFor(p.white_id) + " (blancas) vs " + nameFor(p.black_id) + " (negras)");
+            row.appendChild(label);
+
+            const right = document.createElement("div");
+            right.className = "flex items-center gap-2 flex-wrap";
+            if (!p.is_bye) {
+                if (p.result && !p.needs_manual_advance) {
+                    const span = document.createElement("span");
+                    span.className = "text-xs text-brand-500 dark:text-brand-400";
+                    span.textContent = p.result === "draw" ? "Tablas" : (p.result === "white" ? nameFor(p.white_id) + " ganó" : nameFor(p.black_id) + " ganó");
+                    right.appendChild(span);
+                } else if (p.game_room_id && !p.result) {
+                    const link = document.createElement("a");
+                    link.href = pageFor2pVariant(tournament.variant) + "?room=" + p.game_room_id;
+                    link.className = "text-xs font-semibold text-accent-600 hover:text-accent-700 transition-colors";
+                    const soyJugador = p.white_id === profile.id || p.black_id === profile.id;
+                    link.textContent = soyJugador ? "Jugar →" : "Ver →";
+                    right.appendChild(link);
+                }
+                if (p.needs_manual_advance && isOwner) {
+                    const hint = document.createElement("span");
+                    hint.className = "text-xs text-amber-600 dark:text-amber-400 font-semibold";
+                    hint.textContent = "Tablas — ¿quién avanza?";
+                    right.appendChild(hint);
+                    [["white_id", p.white_id], ["black_id", p.black_id]].forEach(([key, id]) => {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                        btn.textContent = "Avanza " + nameFor(id);
+                        btn.addEventListener("click", () => resolveAdvance(p.id, id, round.id));
+                        right.appendChild(btn);
+                    });
+                }
+            }
+            row.appendChild(right);
+            return row;
+        }
+
+        function renderRounds() {
+            const container = document.getElementById("rounds-container");
+            container.innerHTML = "";
+            rounds.forEach((round) => {
+                const pairings = (pairingsByRound[round.id] || []).slice().sort((a, b) => a.board_number - b.board_number);
+                const box = document.createElement("div");
+                box.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 mb-4";
+                const heading = document.createElement("h3");
+                heading.className = "font-serif font-bold text-brand-800 dark:text-white mb-1";
+                heading.textContent = "Ronda " + round.round_number + (round.status === "finished" ? " ✅" : " (en curso)");
+                box.appendChild(heading);
+                pairings.forEach((p) => box.appendChild(renderPairingRow(p, round)));
+                container.appendChild(box);
+            });
+
+            const lastRound = rounds[rounds.length - 1];
+            const genBtn = document.getElementById("generate-round-btn");
+            const isManagerHere = isOwner && tournament.status === "in_progress";
+            genBtn.classList.toggle("hidden", !isManagerHere);
+            if (isManagerHere) {
+                const canGenerate = (!lastRound || lastRound.status === "finished") && tournament.current_round < (tournament.total_rounds || 0);
+                genBtn.disabled = !canGenerate;
+                genBtn.textContent = lastRound ? ("Generar ronda " + (tournament.current_round + 1)) : "Generar ronda 1";
+            }
+        }
+
+        function renderStandings() {
+            const players = registrations.map((r) => r.player_id);
+            const allPairings = [];
+            Object.keys(pairingsByRound).forEach((roundId) => {
+                pairingsByRound[roundId].forEach((p) => allPairings.push({ white: p.white_id, black: p.black_id, isBye: p.is_bye, result: p.result }));
+            });
+            const { score } = TorneoEngine.standingsFromPairings(players, allPairings);
+            const sorted = players.slice().sort((a, b) => score[b] - score[a]);
+            const listEl = document.getElementById("standings-list");
+            listEl.innerHTML = "";
+            sorted.forEach((id, i) => {
+                const li = document.createElement("li");
+                li.className = "flex justify-between py-1 border-b border-brand-100 dark:border-brand-800 last:border-0";
+                const left = document.createElement("span");
+                left.textContent = (i + 1) + ". " + nameFor(id);
+                const right = document.createElement("span");
+                right.className = "font-mono font-semibold";
+                right.textContent = String(score[id]);
+                li.appendChild(left); li.appendChild(right);
+                listEl.appendChild(li);
+            });
+        }
+
+        document.getElementById("self-register-btn").addEventListener("click", () => amIRegistered ? withdraw() : register());
+        document.getElementById("start-btn").addEventListener("click", startTournament);
+        document.getElementById("generate-round-btn").addEventListener("click", generateRound);
+
+        async function loadAll() {
+            const { data: t, error } = await sb.from("tournaments").select("*").eq("id", TOURNEY_ID).maybeSingle();
+            if (error || !t) { showError("No se encontró ese torneo — puede que ya se haya eliminado."); return; }
+            tournament = t;
+            isOwner = tournament.created_by === profile.id || !!profile.is_admin;
+
+            const { data: regs } = await sb.from("tournament_registrations").select("*").eq("tournament_id", TOURNEY_ID).order("registered_at", { ascending: true });
+            registrations = regs || [];
+            const ids = registrations.map((r) => r.player_id);
+            if (ids.length) {
+                const { data: perfiles } = await sb.from("profiles").select("id, full_name, email").in("id", ids);
+                (perfiles || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+            }
+            amIRegistered = registrations.some((r) => r.player_id === profile.id);
+
+            const { data: roundsData } = await sb.from("tournament_rounds").select("*").eq("tournament_id", TOURNEY_ID).order("round_number", { ascending: true });
+            rounds = roundsData || [];
+            pairingsByRound = {};
+            if (rounds.length) {
+                const { data: pairingsData } = await sb.from("tournament_pairings").select("*").eq("tournament_id", TOURNEY_ID).order("board_number", { ascending: true });
+                (pairingsData || []).forEach((p) => {
+                    if (!pairingsByRound[p.round_id]) pairingsByRound[p.round_id] = [];
+                    pairingsByRound[p.round_id].push(p);
+                });
+            }
+            render();
+        }
+
+        let reloadPending = false;
+        function scheduleReload() {
+            if (reloadPending) return;
+            reloadPending = true;
+            setTimeout(() => { reloadPending = false; loadAll(); }, 150);
+        }
+
+        function subscribe() {
+            const ch = sb.channel("torneo-" + TOURNEY_ID);
+            ["tournaments", "tournament_registrations", "tournament_rounds", "tournament_pairings"].forEach((table) => {
+                const filterColumn = table === "tournaments" ? "id" : "tournament_id";
+                ch.on("postgres_changes", { event: "*", schema: "public", table: table, filter: filterColumn + "=eq." + TOURNEY_ID }, scheduleReload);
+            });
+            ch.subscribe();
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+            if (!TOURNEY_ID) { showError("Falta indicar qué torneo abrir. Volvé a Torneos y entrá desde ahí."); return; }
+
+            const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+            if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
+            profile = profileData;
+
+            await loadAll();
+            if (!tournament) return;
+            subscribe();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+</body>
+</html>
