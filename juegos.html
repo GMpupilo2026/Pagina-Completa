@@ -34,6 +34,8 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/cartas-engine.js"></script>
     <script src="js/fourplayer-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
@@ -133,6 +135,7 @@
                             <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad</label>
                             <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <option value="crazyhouse">♞ Crazyhouse</option>
+                                <option value="cartas">🃏 Ajedrez de Cartas</option>
                                 <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
                                 <option value="4teams">🤝 4 jugadores · Equipos</option>
                             </select>
@@ -221,6 +224,7 @@
         // exista, igual que las tarjetas del panel de Clases.
         const VARIANTS = [
             { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
+            { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
             { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
@@ -313,7 +317,7 @@
                     const myColor = r.white_id === profile.id ? "w" : "b";
                     const rivalId = myColor === "w" ? r.black_id : r.white_id;
                     const card = document.createElement("a");
-                    card.href = "crazyhouse.html?room=" + r.id;
+                    card.href = pageFor2pVariant(r.variant) + "?room=" + r.id;
                     card.className = "block bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow";
                     card.innerHTML =
                         '<p class="text-xs text-accent-600 font-semibold uppercase mb-1">' + variantLabel(r.variant) + ' · en curso</p>' +
@@ -356,6 +360,12 @@
         function variantLabel(id) {
             const v = VARIANTS.find((x) => x.id === id);
             return v ? v.emoji + " " + v.label : id;
+        }
+
+        // Cada variante de 2 jugadores comparte la tabla game_rooms, pero cada una
+        // vive en su propia página — aquí se decide a cuál ir según row.variant.
+        function pageFor2pVariant(variant) {
+            return variant === "cartas" ? "cartas.html" : "crazyhouse.html";
         }
 
         function escapeHtml(text) {
@@ -415,7 +425,7 @@
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
             const viewBtn = document.createElement("a");
-            viewBtn.href = (is4p ? "cuatro-jugadores.html" : "crazyhouse.html") + "?room=" + row.id;
+            viewBtn.href = (is4p ? "cuatro-jugadores.html" : pageFor2pVariant(row.variant)) + "?room=" + row.id;
             viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
             viewBtn.textContent = "👀 Ver";
             actions.appendChild(viewBtn);
@@ -522,15 +532,17 @@
                 const blackId = document.getElementById("black-select").value;
                 if (!whiteId || !blackId) return fail("Elige un alumno para cada color.");
                 if (whiteId === blackId) return fail("Elige dos alumnos distintos.");
-                const { error } = await sb.from("game_rooms").insert({
+                const fila = {
                     variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
                     initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
                     // El reloj de ambos arranca completo, pero SIN empezar a correr todavía
                     // (clock_updated_at se deja sin poner) — recién arranca cuando los dos
-                    // jugadores entran y se marcan listos (ver crazyhouse.html), no desde que
-                    // el profesor crea la partida.
+                    // jugadores entran y se marcan listos (ver crazyhouse.html/cartas.html),
+                    // no desde que el profesor crea la partida.
                     white_time_left: timeControl.initial, black_time_left: timeControl.initial,
-                });
+                };
+                if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
+                const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }
             msg.textContent = "¡Partida creada!";
