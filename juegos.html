@@ -138,6 +138,7 @@
                                 <option value="crazyhouse">♞ Crazyhouse</option>
                                 <option value="cartas">🃏 Ajedrez de Cartas</option>
                                 <option value="duelo">⚡ Duelo Simultáneo</option>
+                                <option value="niebla">🌫️ Niebla de Guerra</option>
                                 <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
                                 <option value="4teams">🤝 4 jugadores · Equipos</option>
                             </select>
@@ -228,6 +229,7 @@
             { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
             { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
             { id: "duelo", emoji: "⚡", label: "Duelo Simultáneo", desc: "Los dos jugadores eligen su jugada en secreto y a la vez, desde la misma posición. Se revelan juntas: si apuntan a la misma casilla, chocan; si uno escapaba de donde el otro atacaba, escapa de verdad." },
+            { id: "niebla", emoji: "🌫️", label: "Niebla de Guerra", desc: "Ajedrez de siempre, pero el tablero está cubierto: solo ves las casillas que tus propias piezas alcanzan a atacar o defender. Hay que deducir dónde está el rival — sin dejar de ver tu propio alcance." },
             { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
@@ -370,6 +372,7 @@
         function pageFor2pVariant(variant) {
             if (variant === "cartas") return "cartas.html";
             if (variant === "duelo") return "duelo.html";
+            if (variant === "niebla") return "niebla.html";
             return "crazyhouse.html";
         }
 
@@ -548,6 +551,10 @@
                 };
                 if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
                 if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
+                // El fen por defecto de game_rooms trae el sufijo "[]" de Crazyhouse
+                // (la bandeja de reserva) — Niebla de Guerra es ajedrez normal, sin
+                // reserva, así que necesita el fen estándar explícito.
+                if (variant === "niebla") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
                 const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }
