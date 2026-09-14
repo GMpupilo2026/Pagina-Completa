@@ -90,6 +90,12 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 - El plan vive en la tabla `training_plans` (Supabase, proyecto AjedrezIntegral).
   Su RLS es la que manda: el alumno solo ve el plan si `shared = true`, y solo su
   profesor o un administrador puede crearlo o editarlo.
+- `diagnostico-de-nivel.pdf` (raíz) es el mismo diagnóstico en papel, con sus
+  diagramas y su hoja de corrección. **No se edita a mano**: lo genera
+  `herramientas/diagnostico-pdf.js` desde el banco de ítems, así que al tocar
+  ítems, áreas o niveles hay que volver a correrlo (`node
+  herramientas/diagnostico-pdf.js`, con playwright instalado) o el papel deja de
+  coincidir con la pantalla.
 
 ## Accesibilidad
 
