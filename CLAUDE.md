@@ -41,6 +41,42 @@ al propio profesor. Decisión explícita: no depende de nada en Cloudflare.
   dentro del fragmento de arriba).
 - No hace falta ninguna variable de entorno en Cloudflare para esto.
 
+## Multi-profesor: cada profesor con sus propios alumnos y su propia clase en vivo
+
+El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
+viendo y gestionando **solo sus propios alumnos asignados** — no toda la
+plataforma — y pudiendo dar clase en vivo al mismo tiempo que otro profesor
+sin pisarse.
+
+- `profiles.teacher_id`: a qué profesor pertenece un alumno (null = sin
+  asignar). Lo decide la persona administradora desde `admin.html`, o queda
+  asignado automático al propio profesor cuando él mismo invita al alumno
+  (`create-student` function). `profiles.grupo` es un texto libre
+  (equipo/subgrupo) puramente organizativo, sin efecto en permisos.
+- `public.my_profile()`: función `SECURITY DEFINER` que da el rol/is_admin/
+  teacher_id de quien llama, sin volver a pasar por RLS de `profiles` —
+  la usan casi todas las políticas nuevas. Antes, TODA política de
+  "profesor" era `role = 'profesor'` a secas (cualquier profesor veía y
+  gestionaba absolutamente todo); ahora casi todas exigen además que la fila
+  pertenezca a un alumno con `teacher_id = auth.uid()` (o que quien llama
+  sea `is_admin`, que sigue viendo todo).
+- **Tablero en vivo**: `game_state` dejó de ser una fila única global
+  (`CHECK (id = 1)`) — ahora cada profesor tiene su propia fila
+  (`owner_id`, único). `variant_nodes` igual, vía `teacher_id`. `questions`,
+  `class_sessions`, `practice_sessions` y `saved_games` ya tenían
+  `created_by`: solo hacía falta filtrar por ahí en vez de tratarlos como
+  globales (antes, por ejemplo, un profesor cerraba SIN darse cuenta la
+  pregunta o la ronda de práctica abierta de cualquier otro profesor).
+- En el cliente (`sesion.html`, `clases.html`), todo gira alrededor de
+  `boardOwnerId`: el propio id si es profesor, o `profile.teacher_id` si es
+  alumno — todas las consultas, canales de Realtime y el canal de presencia
+  (`clases-presence:<boardOwnerId>`, antes un string fijo) se filtran por
+  ahí. Un alumno sin `teacher_id` ve un aviso pidiendo que se le asigne uno,
+  en vez de mezclarse con la clase de otro profesor.
+- `class_chat_messages` no tiene tablero ni sesión: se filtra directo por
+  `profiles.teacher_id` del alumno del hilo (el chat es continuo, no "de una
+  clase puntual").
+
 ## Accesibilidad
 
 Buena parte del sitio tiene "modo adaptado" (`js/adaptive-mode.js`) para alumnos
