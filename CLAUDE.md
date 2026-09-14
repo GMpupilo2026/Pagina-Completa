@@ -86,7 +86,7 @@ sin pisarse.
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
-Aprende): 32 ítems verificados con chess.js en `js/diagnostico-items.js`. El
+Aprende): 56 ítems verificados con chess.js en `js/diagnostico-items.js`. El
 criterio pedagógico —áreas, nivel estimado y plan de 4 semanas— está en
 `js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
 `informes.html` (informe del profesor). Si se tocan las posiciones, hay que

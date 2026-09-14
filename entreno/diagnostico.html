@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
     <title>Diagnóstico de nivel — Ajedrez Integral</title>
-    <meta name="description" content="Diagnóstico completo de ajedrez: 32 preguntas y posiciones que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta name="description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones que miden ocho áreas del juego y devuelven un plan de estudio.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,7 +89,7 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">32 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -110,7 +110,7 @@
                          se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js). -->
                     <a href="../diagnostico-de-nivel.pdf" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
                 </div>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">La versión en papel trae los 32 ejercicios con sus diagramas, la hoja de corrección y la tabla para sacar el nivel a mano — útil para aplicarlo en clase sin dispositivos.</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">La versión en papel trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla para sacar el nivel a mano — útil para aplicarlo en clase sin dispositivos.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -430,13 +430,20 @@ function clicEnCasilla(square) {
   document.getElementById('next-btn').disabled = false;
 }
 
+function coincideJugada(respuesta, jugada) {
+  return !!respuesta.from && respuesta.from === jugada.from && respuesta.to === jugada.to &&
+    (!jugada.promotion || respuesta.promotion === jugada.promotion);
+}
+
 function esCorrecta(item, respuesta) {
   if (respuesta === null || respuesta === undefined) return false;
   if (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') return respuesta === item.correcta;
   if (item.tipo === 'casilla') return respuesta === item.solucion;
   if (item.tipo === 'jugada') {
-    return !!respuesta.from && respuesta.from === item.solucion.from && respuesta.to === item.solucion.to &&
-      (!item.solucion.promotion || respuesta.promotion === item.solucion.promotion);
+    // Algunos ítems tienen más de una jugada válida para el mismo enunciado
+    // (ver el comentario sobre `alternas` al inicio de js/diagnostico-items.js).
+    if (coincideJugada(respuesta, item.solucion)) return true;
+    return !!(item.alternas && item.alternas.some((alt) => coincideJugada(respuesta, alt)));
   }
   return false;
 }
@@ -556,7 +563,7 @@ function mostrarResultado(detalle, reciente) {
     const det = document.createElement('details');
     det.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md px-4 py-3';
     const correcta = item.tipo === 'jugada'
-      ? `${item.solucion.from}–${item.solucion.to}`
+      ? [item.solucion].concat(item.alternas || []).map((j) => `${j.from}–${j.to}`).join(' o ')
       : item.tipo === 'casilla' ? item.solucion : item.opciones[item.correcta];
     det.innerHTML = `
       <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : '❌'} ${i + 1}. ${item.enunciado}</summary>
