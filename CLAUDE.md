@@ -76,6 +76,12 @@ sin pisarse.
 - `class_chat_messages` no tiene tablero ni sesión: se filtra directo por
   `profiles.teacher_id` del alumno del hilo (el chat es continuo, no "de una
   clase puntual").
+- **Regla permanente: todo lo que se haga para los profesores se hace también
+  para quien administra**, con el mismo alcance que ya le da la base (el
+  profesor ve lo suyo; quien administra, todo). En la práctica: `informes.html`
+  trata `is_admin` como profesor, y lo que aparezca ahí para profesores
+  aparece igual para administradores; si una función nueva vive en otra
+  página, `admin.html` la enlaza.
 
 ## Diagnóstico y plan de entrenamiento
 
@@ -90,6 +96,13 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 - El plan vive en la tabla `training_plans` (Supabase, proyecto AjedrezIntegral).
   Su RLS es la que manda: el alumno solo ve el plan si `shared = true`, y solo su
   profesor o un administrador puede crearlo o editarlo.
+- En Informes, profesores y administradores ven "🧭 Diagnósticos de nivel": el
+  resumen del grupo con sus gráficos (nivel por alumno, promedio por área y el
+  perfil de ocho áreas de cada uno). Las barras usan tres bandas —a trabajar,
+  en camino, firme— y **el color nunca va solo**: verde y ámbar no se
+  distinguen con daltonismo (ΔE 5.7 en deutan, comprobado con el validador de
+  la skill dataviz), así que cada barra lleva su porcentaje y su etiqueta en
+  texto, y hay leyenda.
 - `diagnostico-de-nivel.pdf` (raíz) es el mismo diagnóstico en papel, con sus
   diagramas y su hoja de corrección. **No se edita a mano**: lo genera
   `herramientas/diagnostico-pdf.js` desde el banco de ítems, así que al tocar
