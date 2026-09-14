@@ -116,12 +116,29 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
   preguntas con `DiagnosticoPrueba.armar()` (al final de
   `js/diagnostico-items.js`). Lo que nunca cambia es la forma: 7 ítems por
-  área, el mismo reparto de dificultad y 109 puntos, para que dos diagnósticos
+  área, el mismo reparto de dificultad y 160 puntos, para que dos diagnósticos
   del mismo alumno se puedan comparar aunque las preguntas hayan sido otras.
-  Al agregar ítems hay que respetar el campo `peso` (1, 2 o 3): la cuota por
-  peso de cada área está en `FORMA`. Los ids de la prueba quedan guardados en
-  el estado (para retomarla) y en el resultado (`detalle.items`, para que la
-  corrección repase esas preguntas y no otras).
+  Los ids de la prueba quedan guardados en el estado (para retomarla) y en el
+  resultado (`detalle.items`, para que la corrección repase esas preguntas y no
+  otras).
+- **El nivel sale de los escalones de dificultad, no del porcentaje.** El
+  `peso` de cada ítem (1 a 5) es su escalón, y cada prueba lleva 1+2+2+1+1 por
+  área (cuota en `FORMA`): ocho preguntas de cada escalón difícil en la prueba
+  entera. El nivel estimado es **el escalón más alto superado** —60% de
+  aciertos ahí y el promedio de los anteriores también en 60%—, con un tope: si
+  un área quedó por debajo del 30% no pasa de Avanzado, y por debajo del 50% no
+  pasa de Experto (nadie con los finales en blanco es maestro). Está en
+  `nivelPorEscalones()` de `js/plan-entrenamiento.js`.
+  Por qué: con el porcentaje a secas, un jugador de 1400 y uno de 2300 sacaron
+  los dos "Experto" (93% y 99%), porque el techo de la prueba eran preguntas de
+  club. Al agregar ítems hay que respetar el `peso` — y si es de escalón 4 o 5,
+  que sea difícil de verdad y **sin opciones falsas absurdas**, o el techo se
+  vuelve a caer.
+- Los resultados viejos (sin `detalle.dificultad`) siguen calificándose por
+  porcentaje con los umbrales de entonces: se midieron con otra prueba y no se
+  vuelven a etiquetar. Una prueba empezada con una versión anterior no se
+  puede continuar (`VERSION` en `entreno/diagnostico.html`): se descarta con un
+  aviso, porque mezclaría dos mediciones distintas.
 
 - Cada pregunta ofrece **"🤔 No lo sé todavía"**, siempre al final y con otra
   pinta. Vale cero puntos igual que fallar, pero se guarda aparte (`nosabe` por

@@ -205,7 +205,7 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <div class="portada">
   <p class="marca">Ajedrez Integral · Academia</p>
   <h1>Diagnóstico de nivel</h1>
-  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
+  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— en cinco escalones de dificultad, y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
   <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas salen del mismo banco de ${BANCO.length} ejercicios del sitio, verificadas con motor. En línea las preguntas se sortean cada vez; este cuadernillo es una de esas formas, con el mismo reparto por áreas y los mismos ${TOTAL_PUNTOS} puntos.</p>
   <p class="apagado" style="max-width:130mm; margin-top:4mm; font-weight:700; color:#334e68;">Material docente: incluye las respuestas y la hoja de corrección. No se le entrega al alumno.</p>
   <div class="datos">
@@ -253,10 +253,18 @@ ${PE.AREAS.map((a, i) => `<div class="pagina">
     <tr><td><strong>Total</strong></td><td class="num"></td><td class="num">${TOTAL_PUNTOS}</td><td class="num"></td><td></td></tr>
   </table>
 
-  <h3>Nivel estimado según el porcentaje total</h3>
+  <h3>Aciertos por escalón de dificultad</h3>
+  <p class="apagado">Aquí sale el nivel. Cuenta los aciertos de cada escalón (las estrellas que lleva cada ejercicio) y saca su porcentaje.</p>
+  <table class="datos-tabla" style="margin-top:6px;">
+    <tr><th>Escalón</th><th class="num">Ejercicios</th><th class="num">Acertó</th><th class="num">%</th><th>¿Superado? (60% o más)</th></tr>
+    ${[1, 2, 3, 4, 5].map((w) => `<tr><td><strong>${"★".repeat(w)}</strong></td><td class="num">${ITEMS.filter((i) => i.peso === w).length}</td><td class="num"></td><td class="num"></td><td><span class="casilla-resp"></span> sí &nbsp; <span class="casilla-resp"></span> no</td></tr>`).join("")}
+  </table>
+
+  <h3>Nivel estimado</h3>
+  <div class="aviso">El nivel es <strong>el escalón más alto superado</strong> —60% de aciertos o más en ese escalón, y el promedio de los anteriores también en 60%—, no el porcentaje total de la prueba. Contar solo aciertos hace que quien responde bien todo lo fácil salga con nota de experto sin haber resuelto nada difícil.</div>
   <table class="datos-tabla">
-    <tr><th>Desde</th><th>Nivel</th><th>Fuerza orientativa</th><th>Qué toca</th></tr>
-    ${PE.NIVELES.map((n) => `<tr><td class="num">${n.desde}%</td><td><strong>${n.etiqueta}</strong></td><td>${n.rango}</td><td style="font-size:9pt;">${n.descripcion}</td></tr>`).join("")}
+    <tr><th>Escalón alcanzado</th><th>Nivel</th><th>Fuerza orientativa</th><th>Qué toca</th></tr>
+    ${PE.NIVELES.map((n) => `<tr><td>${n.escalon === 0 ? "ninguno" : "hasta " + "★".repeat(n.escalon)}</td><td><strong>${n.etiqueta}</strong></td><td>${n.rango}</td><td style="font-size:9pt;">${n.descripcion}</td></tr>`).join("")}
   </table>
 </div>
 

@@ -792,6 +792,32 @@
                 <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas${resumen.nosabe ? ` · 🤔 ${resumen.nosabe} marcadas como "no lo sé"` : ""} · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
                 ${resumen.nosabe ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Las marcadas como "no lo sé" son huecos que enseñar, no errores que corregir: se pueden dar por clase nueva, no por repaso.</p>` : ""}
                 ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
+                ${escaleraHTML(resumen)}
+            </div>`;
+        }
+
+        /* De dónde sale el nivel: los cinco escalones de dificultad de la prueba.
+           El nivel es el escalón más alto superado (60% de aciertos), no el
+           porcentaje total — con el porcentaje, quien contesta bien todo lo fácil
+           salía "Experto" sin resolver nada difícil. Los resultados viejos, de
+           cuando la prueba no tenía escalones 4 y 5, no traen este dato. */
+        function escaleraHTML(resumen) {
+            const escalones = (resumen.escalones || []).filter((e) => e.total > 0);
+            if (!escalones.length || resumen.escalonAlcanzado === null || resumen.escalonAlcanzado === undefined) return "";
+            const alcanzado = resumen.escalonAlcanzado;
+            return `<div class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-700">
+                <p class="text-xs text-brand-500 dark:text-brand-400 mb-2">Escalones de dificultad superados: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel es el escalón más alto con 60% de aciertos o más, no la suma de respuestas correctas.</p>
+                <div class="space-y-1">
+                    ${escalones.map((e) => `
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="w-16 shrink-0 text-brand-500 dark:text-brand-400">${"★".repeat(e.peso)}</span>
+                            <div class="flex-1 h-1.5 bg-brand-100 dark:bg-brand-700 rounded-full overflow-hidden">
+                                <div class="h-full ${e.peso <= alcanzado ? "bg-green-500" : "bg-brand-300 dark:bg-brand-600"}" style="width:${e.porcentaje}%"></div>
+                            </div>
+                            <span class="w-24 shrink-0 text-right text-brand-500 dark:text-brand-400">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+                            <span class="w-20 shrink-0 ${e.peso <= alcanzado ? "text-green-600 dark:text-green-400" : "text-brand-400 dark:text-brand-500"}">${e.peso <= alcanzado ? "superado" : "todavía no"}</span>
+                        </div>`).join("")}
+                </div>
             </div>`;
         }
 
@@ -812,7 +838,7 @@
         function sinDiagnosticoHTML(nombre, esProfesor) {
             return esProfesor
                 ? `<p class="text-sm text-brand-500 dark:text-brand-400">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
-                : `<p class="text-sm text-brand-500 dark:text-brand-400 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 56 preguntas y posiciones: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                : `<p class="text-sm text-brand-500 dark:text-brand-400 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 56 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
         }
 
@@ -991,6 +1017,13 @@
                 return { id: a.id, nombre: a.nombre, emoji: a.emoji, promedio: Math.round(valores.reduce((s, v) => s + v, 0) / valores.length) };
             }).sort((x, y) => x.promedio - y.promedio);
             const promedioGeneral = Math.round(conDiagnostico.reduce((s, d) => s + d.resumen.porcentaje, 0) / conDiagnostico.length);
+            /* La etiqueta del grupo sale del nivel de cada alumno, no del
+               porcentaje promedio: desde que el nivel se mide por escalones, un
+               promedio de porcentajes ya no se traduce a un nivel. */
+            const nivelPromedio = PE.NIVELES[Math.round(conDiagnostico.reduce((s, d) => {
+                const i = PE.NIVELES.findIndex((n) => n.clave === d.resumen.nivel.clave);
+                return s + (i < 0 ? 0 : i);
+            }, 0) / conDiagnostico.length)];
             const masFloja = promedioPorArea[0];
 
             const tile = (valor, etiqueta, detalle) => `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4">
@@ -1002,7 +1035,7 @@
             contenedor.innerHTML = `
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
                     ${tile(`${conDiagnostico.length}/${total}`, "alumnos con diagnóstico hecho", pendientes.length ? `${pendientes.length} pendiente${pendientes.length === 1 ? "" : "s"}` : "todos al día")}
-                    ${tile(`${promedioGeneral}%`, "promedio del grupo", PE.nivelDe(promedioGeneral).etiqueta)}
+                    ${tile(`${promedioGeneral}%`, "promedio del grupo", `nivel medio: ${nivelPromedio.etiqueta}`)}
                     ${tile(`${masFloja.emoji} ${masFloja.promedio}%`, "área más floja del grupo", masFloja.nombre)}
                 </div>
 
