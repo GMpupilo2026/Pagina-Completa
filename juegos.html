@@ -36,6 +36,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/cartas-engine.js"></script>
+    <script src="js/duelo-engine.js"></script>
     <script src="js/fourplayer-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
@@ -136,6 +137,7 @@
                             <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <option value="crazyhouse">♞ Crazyhouse</option>
                                 <option value="cartas">🃏 Ajedrez de Cartas</option>
+                                <option value="duelo">⚡ Duelo Simultáneo</option>
                                 <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
                                 <option value="4teams">🤝 4 jugadores · Equipos</option>
                             </select>
@@ -225,6 +227,7 @@
         const VARIANTS = [
             { id: "crazyhouse", emoji: "♞", label: "Crazyhouse", desc: "Las piezas que capturas pasan a tu reserva: puedes soltarlas de vuelta en el tablero como propias." },
             { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
+            { id: "duelo", emoji: "⚡", label: "Duelo Simultáneo", desc: "Los dos jugadores eligen su jugada en secreto y a la vez, desde la misma posición. Se revelan juntas: si apuntan a la misma casilla, chocan; si uno escapaba de donde el otro atacaba, escapa de verdad." },
             { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
@@ -365,7 +368,9 @@
         // Cada variante de 2 jugadores comparte la tabla game_rooms, pero cada una
         // vive en su propia página — aquí se decide a cuál ir según row.variant.
         function pageFor2pVariant(variant) {
-            return variant === "cartas" ? "cartas.html" : "crazyhouse.html";
+            if (variant === "cartas") return "cartas.html";
+            if (variant === "duelo") return "duelo.html";
+            return "crazyhouse.html";
         }
 
         function escapeHtml(text) {
@@ -542,6 +547,7 @@
                     white_time_left: timeControl.initial, black_time_left: timeControl.initial,
                 };
                 if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
+                if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
                 const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }
