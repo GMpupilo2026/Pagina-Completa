@@ -178,11 +178,13 @@ window.PlanEntrenamiento = (function () {
   function resumir(detalle) {
     const areas = (detalle && detalle.areas) || {};
     const porArea = AREAS.map((a) => {
-      const d = areas[a.id] || { peso: 0, logrado: 0, aciertos: 0, total: 0 };
+      const d = areas[a.id] || { peso: 0, logrado: 0, aciertos: 0, total: 0, nosabe: 0 };
       const porcentaje = d.peso ? Math.round((d.logrado / d.peso) * 100) : 0;
       return {
         id: a.id, nombre: a.nombre, emoji: a.emoji, mide: a.mide,
         porcentaje, aciertos: d.aciertos || 0, total: d.total || 0,
+        // Cuántas dijo no saber: un hueco que enseñar, distinto de un error que corregir.
+        nosabe: d.nosabe || 0,
       };
     });
     const pesoTotal = porArea.reduce((s, a) => s + (areas[a.id] ? areas[a.id].peso : 0), 0);
@@ -195,6 +197,7 @@ window.PlanEntrenamiento = (function () {
       nivel: nivelDe(porcentaje),
       aciertos: porArea.reduce((s, a) => s + a.aciertos, 0),
       total: porArea.reduce((s, a) => s + a.total, 0),
+      nosabe: porArea.reduce((s, a) => s + a.nosabe, 0),
       debilidades: ordenadas.filter((a) => a.porcentaje < 60).slice(0, 3),
       fortalezas: ordenadas.slice().reverse().filter((a) => a.porcentaje >= 80),
       perfil: (detalle && detalle.perfil) || {},

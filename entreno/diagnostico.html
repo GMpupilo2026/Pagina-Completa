@@ -102,6 +102,7 @@
 
                 <div class="bg-brand-100 dark:bg-brand-900 rounded-xl px-4 py-3 text-xs text-brand-600 dark:text-brand-300 mb-6">
                     <p class="mb-1"><strong>Cómo funciona:</strong> una pregunta por pantalla, sin volver atrás y sin decirte si acertaste — así la medición es real. Al final ves todo: cada respuesta, la explicación y tu plan.</p>
+                    <p class="mb-1"><strong>Si no lo sabes, dilo:</strong> cada pregunta tiene un "🤔 No lo sé todavía". No resta más que fallar y sirve muchísimo más que adivinar — con él, tu plan apunta justo a lo que te falta en vez de a lo que atinaste por suerte.</p>
                     <p>Se puede dejar a medias: la prueba recuerda por dónde ibas en este mismo dispositivo.</p>
                 </div>
 
@@ -202,6 +203,13 @@ const PE = window.PlanEntrenamiento;
 const ESTADO_KEY = 'diagnostico_estado_v1';
 const RESULTADO_KEY = 'diagnostico_resultado_v1';
 const VERSION = 1;
+
+/* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
+   puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
+   mismo un error (hay algo mal aprendido que corregir) que un "no sé" (hay un
+   hueco que enseñar), y para la medición es oro: quien adivina a ciegas infla
+   su porcentaje y sale con un plan que no le sirve. */
+const NO_SE = 'nose';
 
 const PERFIL_PREGUNTAS = [
   { id: 'tiempo', texto: '¿Hace cuánto juegas ajedrez?', opciones: ['Menos de 6 meses', 'Entre 6 meses y 2 años', 'Más de 2 años'] },
@@ -333,7 +341,10 @@ function pintarItem() {
       btn.textContent = itemActual.opciones[original];
       btn.addEventListener('click', () => {
         seleccion = original;
-        [...opciones.children].forEach((b, j) => { b.className = claseOpcion(j === posicion); });
+        [...opciones.children].forEach((b, j) => {
+          if (b.id === 'no-se-btn') b.className = claseNoSe(false);
+          else b.className = claseOpcion(j === posicion);
+        });
         document.getElementById('next-btn').disabled = false;
       });
       opciones.appendChild(btn);
@@ -343,6 +354,34 @@ function pintarItem() {
   } else if (itemActual.tipo === 'jugada') {
     hint.textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
   }
+  opciones.appendChild(botonNoSe());
+}
+
+// Siempre al final y con otra pinta: no compite con las opciones de contenido,
+// se ofrece como salida honesta cuando de verdad no se sabe.
+function botonNoSe() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'no-se-btn';
+  btn.className = claseNoSe(false);
+  btn.textContent = '🤔 No lo sé todavía';
+  btn.addEventListener('click', () => {
+    seleccion = NO_SE;
+    origenElegido = null;
+    const caja = document.getElementById('q-options');
+    [...caja.children].forEach((b) => { if (b !== btn) b.className = claseOpcion(false); });
+    btn.className = claseNoSe(true);
+    if (itemActual.fen) pintarTablero(new Chess(itemActual.fen));
+    document.getElementById('q-hint').textContent = 'Anotado: no lo sabías. Al final te explicamos esta.';
+    document.getElementById('next-btn').disabled = false;
+  });
+  return btn;
+}
+
+function claseNoSe(activa) {
+  return 'w-full text-left text-sm px-4 py-3 rounded-xl border border-dashed transition-colors mt-1 ' + (activa
+    ? 'bg-brand-100 dark:bg-brand-800 border-brand-400 text-brand-800 dark:text-white font-semibold'
+    : 'bg-transparent border-brand-300 dark:border-brand-700 text-brand-500 dark:text-brand-400 hover:border-accent-500');
 }
 
 function barajar(lista) {
@@ -395,6 +434,9 @@ function pintarTablero(juego, destacadas) {
 
 function clicEnCasilla(square) {
   const juego = new Chess(itemActual.fen);
+  // Tocar el tablero cancela un "no lo sé" marcado antes.
+  const noSe = document.getElementById('no-se-btn');
+  if (noSe) noSe.className = claseNoSe(false);
   if (itemActual.tipo === 'casilla') {
     seleccion = square;
     pintarTablero(juego, [square]);
@@ -437,7 +479,7 @@ function coincideJugada(respuesta, jugada) {
 }
 
 function esCorrecta(item, respuesta) {
-  if (respuesta === null || respuesta === undefined) return false;
+  if (respuesta === null || respuesta === undefined || respuesta === NO_SE) return false;
   if (item.tipo === 'opcion' || item.tipo === 'opcion_tablero') return respuesta === item.correcta;
   if (item.tipo === 'casilla') return respuesta === item.solucion;
   if (item.tipo === 'jugada') {
@@ -460,12 +502,14 @@ function siguiente() {
 /* ---------------- Resultado ---------------- */
 function construirDetalle() {
   const areas = {};
+  const nosabe = {};
   ITEMS.forEach((item) => {
     const r = estado.respuestas[item.id] || { ok: false };
-    const a = areas[item.area] || (areas[item.area] = { peso: 0, logrado: 0, aciertos: 0, total: 0 });
+    const a = areas[item.area] || (areas[item.area] = { peso: 0, logrado: 0, aciertos: 0, total: 0, nosabe: 0 });
     a.peso += item.peso;
     a.total += 1;
     if (r.ok) { a.logrado += item.peso; a.aciertos += 1; }
+    if (r.dada === NO_SE) { a.nosabe += 1; nosabe[item.id] = true; }
   });
   const respuestas = {};
   Object.keys(estado.respuestas).forEach((id) => { respuestas[id] = !!estado.respuestas[id].ok; });
@@ -475,6 +519,7 @@ function construirDetalle() {
     perfil: estado.perfil,
     areas,
     respuestas,
+    nosabe,
   };
 }
 
@@ -511,8 +556,11 @@ function mostrarResultado(detalle, reciente) {
 
   document.getElementById('result-level').textContent = resumen.nivel.etiqueta;
   document.getElementById('result-level-desc').textContent = resumen.nivel.descripcion;
+  const sinSaber = Object.keys(detalle.nosabe || {}).length;
   document.getElementById('result-score').textContent =
-    `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% de la prueba · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
+    `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% de la prueba` +
+    (sinSaber ? ` · ${sinSaber} que dijiste no saber (bien hecho: eso se estudia, no se adivina)` : '') +
+    ` · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
 
   const areasBox = document.getElementById('result-areas');
   areasBox.innerHTML = '';
@@ -523,7 +571,7 @@ function mostrarResultado(detalle, reciente) {
     fila.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-1">
         <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${a.nombre}</p>
-        <p class="text-sm text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%</p>
+        <p class="text-sm text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
       </div>
       <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2">
         <div class="h-full ${color}" style="width:${a.porcentaje}%"></div>
@@ -561,15 +609,17 @@ function mostrarResultado(detalle, reciente) {
   review.innerHTML = '';
   ITEMS.forEach((item, i) => {
     const ok = detalle.respuestas[item.id];
+    const dijoNoSaber = !!(detalle.nosabe && detalle.nosabe[item.id]);
     const det = document.createElement('details');
     det.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md px-4 py-3';
     const correcta = item.tipo === 'jugada'
       ? [item.solucion].concat(item.alternas || []).map((j) => `${j.from}–${j.to}`).join(' o ')
       : item.tipo === 'casilla' ? item.solucion : item.opciones[item.correcta];
     det.innerHTML = `
-      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : '❌'} ${i + 1}. ${item.enunciado}</summary>
+      <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : (dijoNoSaber ? '🤔' : '❌')} ${i + 1}. ${item.enunciado}</summary>
       <p class="text-sm text-brand-600 dark:text-brand-300 mt-2"><strong>Respuesta correcta:</strong> ${correcta}</p>
-      <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${item.explica}</p>`;
+      <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${item.explica}</p>
+      ${dijoNoSaber ? '<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Dijiste que no la sabías: por eso está en tu plan, no en tu lista de errores.</p>' : ''}`;
     review.appendChild(det);
   });
 }

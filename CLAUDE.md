@@ -113,6 +113,12 @@ criterio pedagógico —áreas, nivel estimado y plan de 4 semanas— está en
 `informes.html` (informe del profesor). Si se tocan las posiciones, hay que
 volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumplir.
 
+- Cada pregunta ofrece **"🤔 No lo sé todavía"**, siempre al final y con otra
+  pinta. Vale cero puntos igual que fallar, pero se guarda aparte (`nosabe` por
+  ítem y por área): para el profesor no es lo mismo un error —algo mal aprendido
+  que corregir— que un hueco que enseñar, y evita que el alumno adivine y salga
+  con un plan que no le sirve. Aparece en el resultado del alumno, en Informes y
+  en el cuadernillo impreso.
 - El resultado se guarda en `training_progress` con `activity = 'diagnostico'`.
 - El plan vive en la tabla `training_plans` (Supabase, proyecto AjedrezIntegral).
   Su RLS es la que manda: el alumno solo ve el plan si `shared = true`, y solo su
