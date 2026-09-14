@@ -41,6 +41,22 @@ al propio profesor. Decisión explícita: no depende de nada en Cloudflare.
   dentro del fragmento de arriba).
 - No hace falta ninguna variable de entorno en Cloudflare para esto.
 
+Para armar un curso nuevo del tipo "clásico" (lecciones de texto con su
+presentación y su PDF de ejercicios) está `herramientas/curso-generar.py`: se
+escribe el contenido en `herramientas/cursos/<slug>.json` (bloques, lecciones,
+párrafos y la tarea de cada una) y el script genera la portada, el fragmento
+protegido y los 2 archivos por lección en `cursos/recursos/<slug>/`. La portada
+se clona de un curso existente, así que el encabezado, el menú y el pie siguen
+siendo los mismos en todos. Necesita `pip install python-pptx reportlab`. Lo
+único que queda a mano es la tarjeta en `cursos.html` y los enlaces de "curso
+anterior / siguiente" de los dos cursos vecinos, porque el orden es una
+decisión editorial.
+
+Los cursos con tablero interactivo (`los-100-finales`, `partidas-modelo`,
+`desequilibrios-de-material`) no salen de ahí: tienen su JSON de posiciones en
+`cursos/protegido/data/` y su propio módulo (`js/finales-100.js`,
+`js/curso-partidas.js`).
+
 ## Multi-profesor: cada profesor con sus propios alumnos y su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
