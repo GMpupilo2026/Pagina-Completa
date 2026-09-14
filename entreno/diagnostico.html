@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
     <title>Diagnóstico de nivel — Ajedrez Integral</title>
-    <meta name="description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta name="description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones en cinco escalones de dificultad, que miden ocho áreas del juego y devuelven un plan de estudio.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,9 +90,11 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
+                <!-- Prueba a medias de una versión anterior: no se puede continuar. -->
+                <p id="aviso-version" class="hidden text-sm text-brand-600 dark:text-brand-300 bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3 mb-6">La prueba cambió: ahora trae preguntas más difíciles, para medir mejor a quien ya juega fuerte. La que habías dejado a medias no se puede seguir —serían dos mediciones distintas mezcladas—, así que hay que empezarla otra vez. Toma unos 20 minutos.</p>
 
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Antes de empezar</h2>
@@ -155,6 +157,7 @@
                 </div>
 
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Área por área</h2>
+                <div id="result-escalones" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
                 <div id="result-areas" class="space-y-3 mb-8"></div>
 
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Qué estudiar primero</h2>
@@ -215,9 +218,14 @@ const RESULTADO_KEY = 'diagnostico_resultado_v1';
    vencida, la base que lo rechazó). Se guarda aparte y se reintenta al abrir
    la página, porque el diagnóstico no sirve de nada si el profesor no lo ve. */
 const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
-/* 2: el estado guarda además qué ítems tocaron en esta prueba (antes eran
-   todos los del banco, así que no hacía falta apuntarlos). */
-const VERSION = 2;
+/* Versión de la prueba en curso:
+     1 — se preguntaba el banco entero.
+     2 — la prueba se sortea y el estado guarda qué ítems tocaron.
+     3 — la prueba tiene escalones de dificultad 4 y 5 (preguntas duras).
+   Una prueba empezada con una versión anterior no se puede continuar: los
+   ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
+   distintas. Se descarta y se avisa en la portada. */
+const VERSION = 3;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -245,27 +253,23 @@ let seleccion = null;      // respuesta en curso (índice de opción, casilla o 
 let origenElegido = null;  // casilla de origen en los ítems de jugada
 
 /* ---------------- Estado guardado ---------------- */
+let pruebaVieja = false;   // había una a medias, de una versión anterior
+
 function cargarEstado() {
   let crudo = null;
   try { crudo = JSON.parse(localStorage.getItem(ESTADO_KEY) || 'null'); } catch (e) {}
   if (!crudo || !crudo.estado) return;
-  if (crudo.version === VERSION) {
-    estado = crudo.estado;
-    ITEMS = PRUEBA.porIds(estado.items);
-    // Si el banco cambió y algún ítem ya no existe, se completa la prueba con
-    // otros del área que falte, en vez de dejarla corta.
-    if (ITEMS.length !== PRUEBA.TOTAL) ITEMS = PRUEBA.armar(ITEMS.map((i) => i.id));
-  } else if (crudo.version === 1) {
-    // Prueba empezada cuando se preguntaba el banco entero: se guardan las
-    // respuestas que ya dio y el sorteo completa el resto, así no vuelve a
-    // empezar de cero.
-    estado = Object.assign({ perfil: {}, idx: 0, respuestas: {} }, crudo.estado);
-    const contestados = Object.keys(estado.respuestas || {});
-    ITEMS = PRUEBA.armar(contestados);
-    estado.idx = Math.min(contestados.length, ITEMS.length);
-  } else {
+  if (crudo.version !== VERSION) {
+    // De otra versión de la prueba: se descarta (ver el comentario de VERSION).
+    pruebaVieja = (crudo.estado.idx || 0) > 0;
+    borrarEstado();
     return;
   }
+  estado = crudo.estado;
+  ITEMS = PRUEBA.porIds(estado.items);
+  // Si el banco cambió y algún ítem ya no existe, se completa la prueba con
+  // otros del área que falte, en vez de dejarla corta.
+  if (ITEMS.length !== PRUEBA.TOTAL) ITEMS = PRUEBA.armar(ITEMS.map((i) => i.id));
   estado.items = ITEMS.map((i) => i.id);
 }
 function guardarEstado() {
@@ -569,13 +573,19 @@ function siguiente() {
 function construirDetalle() {
   const areas = {};
   const nosabe = {};
+  /* Resultados por escalón de dificultad (el peso del ítem, de 1 a 5). De aquí
+     sale el nivel estimado: lo que importa es hasta dónde llega, no cuántas
+     preguntas fáciles acertó. */
+  const dificultad = {};
   ITEMS.forEach((item) => {
     const r = estado.respuestas[item.id] || { ok: false };
     const a = areas[item.area] || (areas[item.area] = { peso: 0, logrado: 0, aciertos: 0, total: 0, nosabe: 0 });
+    const e = dificultad[item.peso] || (dificultad[item.peso] = { aciertos: 0, total: 0, nosabe: 0 });
     a.peso += item.peso;
     a.total += 1;
-    if (r.ok) { a.logrado += item.peso; a.aciertos += 1; }
-    if (r.dada === NO_SE) { a.nosabe += 1; nosabe[item.id] = true; }
+    e.total += 1;
+    if (r.ok) { a.logrado += item.peso; a.aciertos += 1; e.aciertos += 1; }
+    if (r.dada === NO_SE) { a.nosabe += 1; e.nosabe += 1; nosabe[item.id] = true; }
   });
   const respuestas = {};
   Object.keys(estado.respuestas).forEach((id) => { respuestas[id] = !!estado.respuestas[id].ok; });
@@ -585,6 +595,7 @@ function construirDetalle() {
     perfil: estado.perfil,
     items: ITEMS.map((i) => i.id),   // qué preguntas tocaron en esta prueba
     areas,
+    dificultad,
     respuestas,
     nosabe,
   };
@@ -628,6 +639,35 @@ function itemsDelResultado(detalle) {
   return ids.length ? PRUEBA.porIds(ids) : ITEMS;
 }
 
+/* La escalera de dificultad: de dónde sale el nivel. Se muestra entera para
+   que el alumno (y el profesor) vean que la nota no es "cuántas acertó" sino
+   hasta qué escalón llegó, y cuál es el siguiente que tiene que romper. */
+function pintarEscalones(resumen) {
+  const caja = document.getElementById('result-escalones');
+  if (!caja) return;
+  const escalones = (resumen.escalones || []).filter((e) => e.total > 0);
+  if (!escalones.length || resumen.escalonAlcanzado === null) { caja.classList.add('hidden'); return; }
+  caja.classList.remove('hidden');
+  const alcanzado = resumen.escalonAlcanzado;
+  caja.innerHTML = `
+    <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Hasta dónde llegaste</p>
+    <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">La prueba tiene cinco escalones de dificultad. Tu nivel es el más alto que superaste (60% de aciertos o más), no la suma de respuestas buenas: así no cuenta lo mismo acertar lo fácil que resolver lo difícil.</p>
+    <div class="space-y-1.5">
+      ${escalones.map((e) => `
+        <div class="flex items-center gap-2 text-sm">
+          <span class="w-20 shrink-0 text-brand-500 dark:text-brand-400">${'★'.repeat(e.peso)}</span>
+          <div class="flex-1 h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
+            <div class="h-full ${e.peso <= alcanzado ? 'bg-green-500' : 'bg-brand-300 dark:bg-brand-700'}" style="width:${e.porcentaje}%"></div>
+          </div>
+          <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-400">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+          <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-400 dark:text-brand-500'}">${e.peso <= alcanzado ? 'superado' : 'todavía no'}</span>
+        </div>`).join('')}
+    </div>
+    <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">${alcanzado >= 5
+      ? 'Superaste los cinco escalones: la prueba ya no te mide, el siguiente paso es la competencia y el análisis de tus propias partidas.'
+      : `El próximo escalón es el de ${'★'.repeat(alcanzado + 1)}: ahí está lo que te falta para subir de nivel, y de ahí sale tu plan.`}</p>`;
+}
+
 function mostrarResultado(detalle, reciente) {
   const resumen = PE.resumir(detalle);
   const plan = PE.generarPlan(resumen);
@@ -644,6 +684,7 @@ function mostrarResultado(detalle, reciente) {
     `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% de la prueba` +
     (sinSaber ? ` · ${sinSaber} que dijiste no saber (bien hecho: eso se estudia, no se adivina)` : '') +
     ` · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
+  pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
   areasBox.innerHTML = '';
@@ -751,6 +792,9 @@ async function init() {
   }
   pintarPerfil();
   pintarPrevio();
+  if (pruebaVieja) {
+    document.getElementById('aviso-version').classList.remove('hidden');
+  }
   if (ITEMS.length && estado.idx > 0 && estado.idx < ITEMS.length) {
     document.getElementById('start-btn').textContent = `Seguir donde ibas (pregunta ${estado.idx + 1}) →`;
   }

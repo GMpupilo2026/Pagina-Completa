@@ -942,6 +942,445 @@ window.DIAGNOSTICO_ITEMS = [
     correcta: 0,
     explica: 'Cortar el cálculo a mitad de una serie de cambios es la trampa clásica: la posición parecía buena justo antes de la recaptura que lo cambiaba todo.',
   },
+
+  /* Tres ítems que le faltaban al banco para que el sorteo pueda cumplir la
+     cuota de todas las áreas (reglas y material necesitaban un segundo ítem de
+     peso 3; estrategia, un segundo de peso 1). */
+  {
+    id: 'reg_jaque_obligado', area: 'reglas', peso: 3, tipo: 'opcion',
+    enunciado: 'Tu rey está en jaque y tienes una jugada que gana la dama rival, pero no te saca del jaque. ¿Qué puedes hacer?',
+    opciones: [
+      'Nada de eso: estando en jaque solo son legales las jugadas que lo resuelven.',
+      'Ganar la dama: el material manda.',
+      'Cualquiera de las dos, a elección.',
+      'Ganar la dama, siempre que después puedas tapar el jaque.',
+    ],
+    correcta: 0,
+    explica: 'El jaque es obligatorio de atender: mover el rey, capturar a quien lo da o interponer algo. Cualquier otra jugada, por buena que sea, no existe.',
+  },
+  {
+    id: 'mat_cambiar_ganando', area: 'material', peso: 3, tipo: 'opcion',
+    enunciado: 'Vas ganando una pieza. ¿Qué criterio de cambios te conviene?',
+    opciones: [
+      'Cambiar piezas, no peones: con menos piezas en el tablero la ventaja material pesa más y hay menos contrajuego.',
+      'Cambiar peones, no piezas: así se abren líneas para tus piezas de más.',
+      'No cambiar nada: cada cambio le da una oportunidad al rival.',
+      'Cambiar damas solo si el rival lo propone.',
+    ],
+    correcta: 0,
+    explica: 'Es la regla práctica que convierte ventajas en puntos: con pieza de más, cada cambio de piezas acerca el final ganado; los peones, en cambio, hacen falta para coronar.',
+  },
+  {
+    id: 'est_rey_final', area: 'estrategia', peso: 1, tipo: 'opcion',
+    enunciado: 'En el final, ¿qué pasa con el rey?',
+    opciones: [
+      'Se convierte en una pieza fuerte y hay que activarlo: al centro, a apoyar peones.',
+      'Sigue escondido en el enroque hasta que termine la partida.',
+      'Solo sirve para dar mate.',
+      'Conviene dejarlo en la última fila para que no lo ataquen.',
+    ],
+    correcta: 0,
+    explica: 'Con pocas piezas ya no hay quien lo ataque: el rey pasa de ser el que se esconde a ser la pieza que decide, y quien lo activa primero suele ganar el final.',
+  },
+
+  /* ================== Escalones 4 y 5: el techo de la prueba ==================
+   * Sin preguntas difíciles de verdad la prueba no distingue: un jugador de
+   * 1400 y uno de 2300 contestaban bien casi todo y salían los dos "Experto".
+   * Estos ítems son el techo — peso 4 (fuerte de club) y peso 5 (competencia)
+   * — y son los que deciden el nivel estimado: se mide hasta qué escalón de
+   * dificultad llega el alumno, no cuántas preguntas fáciles acertó.
+   *
+   * La regla al escribirlos: ninguna opción falsa puede ser absurda. Si una se
+   * descarta de un vistazo, el ítem deja de medir y vuelve a regalar puntos.
+   */
+
+  /* ---------------- Reglas (escalones 4 y 5) ---------------- */
+  {
+    id: 'reg_enroque_torre_atacada', area: 'reglas', peso: 4, tipo: 'opcion',
+    enunciado: 'Enroque largo: la casilla b1, por la que pasa la torre, está atacada por un alfil negro. Las casillas del rey (e1, d1, c1) están todas libres de ataque. ¿Se puede enrocar?',
+    opciones: [
+      'Sí: la regla mira solo las casillas del rey; que la torre pase por una casilla atacada no importa.',
+      'No: ninguna de las casillas por las que pasan el rey y la torre puede estar atacada.',
+      'Sí, pero solo si después del enroque el alfil deja de atacar b1.',
+      'No, salvo que la torre esté defendida.',
+    ],
+    correcta: 0,
+    explica: 'El reglamento habla del rey: no puede estar en jaque, ni pasar ni terminar en casilla atacada. La torre puede cruzar b1 atacada sin problema — es la diferencia que más se discute en torneos escolares.',
+  },
+  {
+    id: 'reg_repeticion', area: 'reglas', peso: 4, tipo: 'opcion',
+    enunciado: 'Para reclamar tablas por repetición, ¿qué es exactamente lo que tiene que repetirse tres veces?',
+    opciones: [
+      'La misma posición, con el mismo bando en juego y los mismos derechos de enroque y de captura al paso.',
+      'Las mismas tres jugadas seguidas de cada bando, en el mismo orden.',
+      'La misma posición, sin importar a quién le toque mover.',
+      'El mismo jaque, tres veces seguidas.',
+    ],
+    correcta: 0,
+    explica: 'Son posiciones, no jugadas, y tienen que ser idénticas en todo: mismo turno, mismos enroques posibles y misma posibilidad de captura al paso. Por eso a veces "la misma posición" no cuenta.',
+  },
+  {
+    id: 'reg_tiempo_sin_material', area: 'reglas', peso: 5, tipo: 'opcion',
+    enunciado: 'A tu rival se le cae la bandera (se le acaba el tiempo). A ti te queda solo el rey. ¿Cuál es el resultado?',
+    opciones: [
+      'Tablas: no se gana por tiempo si no existe ninguna serie de jugadas legales con la que se pudiera dar mate.',
+      'Ganas tú: quien se queda sin tiempo pierde siempre.',
+      'Gana tu rival, porque tiene más material.',
+      'Se sigue jugando: la caída de bandera no vale en finales.',
+    ],
+    correcta: 0,
+    explica: 'Es el artículo del reglamento que más partidas de torneo decide mal cuando no se conoce: sin material para dar mate ni siquiera con la peor defensa posible, la caída de bandera es empate.',
+  },
+  {
+    id: 'reg_enroque_toque', area: 'reglas', peso: 5, tipo: 'opcion',
+    enunciado: 'En torneo, con pieza tocada: quieres enrocar y tocas primero la torre. ¿Qué pasa?',
+    opciones: [
+      'Solo puedes mover la torre: el enroque se hace tocando primero el rey.',
+      'Igual puedes enrocar: la intención era esa.',
+      'Pierdes el derecho al enroque para el resto de la partida.',
+      'No pasa nada: la regla de pieza tocada no se aplica al enroque.',
+    ],
+    correcta: 0,
+    explica: 'El enroque es una jugada de rey. Tocar la torre primero obliga a jugarla sola, y si estaba mal ubicada se pierde el enroque de esa jugada — un detalle que solo aparece cuando se juega con árbitro.',
+  },
+
+  /* ---------------- Valor del material (escalones 4 y 5) ---------------- */
+  {
+    id: 'mat_calidad_sacrificio', area: 'material', peso: 4, tipo: 'opcion',
+    enunciado: 'Sacrificar la calidad (dar torre por alfil o caballo). ¿Cuándo suele valer la pena?',
+    opciones: [
+      'Cuando a cambio queda algo permanente: una casilla fuerte para el caballo, la estructura del rival rota o su rey sin el alfil que lo defendía.',
+      'Nunca: la torre vale cinco y una pieza menor tres, así que siempre se pierde material.',
+      'Siempre que se recupere al menos un peón en la misma jugada.',
+      'Solo en los finales de torres, donde una torre de más no se aprovecha.',
+    ],
+    correcta: 0,
+    explica: 'La calidad se entrega por ventajas que no se van: casillas, estructura, seguridad del rey. Si lo que se obtiene se puede deshacer en tres jugadas, el sacrificio no era.',
+  },
+  {
+    id: 'mat_dos_menores_vs_torre', area: 'material', peso: 4, tipo: 'opcion',
+    enunciado: 'Dos piezas menores contra torre y peón, con damas y varias piezas todavía en el tablero. ¿Qué prefieres?',
+    opciones: [
+      'Las dos piezas menores: con el tablero lleno coordinan mejor, mientras la torre necesita líneas abiertas que todavía no existen.',
+      'La torre y el peón: seis puntos contra seis, pero la torre es una pieza mayor.',
+      'Da exactamente lo mismo: el conteo es el conteo.',
+      'La torre, salvo que una de las menores sea un alfil malo.',
+    ],
+    correcta: 0,
+    explica: 'La tabla de valores es una guía de principiante: en el medio juego dos menores activas valen más que torre y peón, y la relación se da vuelta cuando se cambian piezas y se abren columnas.',
+  },
+  {
+    id: 'mat_pareja_alfiles_contra', area: 'material', peso: 5, tipo: 'opcion',
+    enunciado: 'Tu rival tiene la pareja de alfiles y tú alfil y caballo. ¿Cuál es el plan correcto?',
+    opciones: [
+      'Cerrar la posición con peones y buscar cambiar uno de los dos alfiles, aunque cueste un tiempo.',
+      'Abrir la posición cuanto antes para que tu caballo tenga más casillas.',
+      'Cambiar damas: sin damas la pareja de alfiles no cuenta.',
+      'Avanzar los peones del flanco donde tu rival tiene el alfil bueno.',
+    ],
+    correcta: 0,
+    explica: 'La pareja vale por el trabajo conjunto en posiciones abiertas. Trabar los peones y cambiar uno de los dos la desarma: es la receta de Steinitz para el lado que no la tiene.',
+  },
+  {
+    id: 'mat_dos_torres_vs_dama_fuerte', area: 'material', peso: 5, tipo: 'opcion',
+    enunciado: 'Dos torres contra dama, con peones en los dos flancos. ¿Cuándo pelea mejor la dama?',
+    opciones: [
+      'Cuando hay peones sueltos que cobrar con jaques y el rey rival está algo expuesto: la dama ataca y da jaque a la vez; las torres necesitan tiempo para coordinarse.',
+      'Siempre: la dama vale nueve y dos torres diez, pero se mueve mucho más.',
+      'Nunca: dos torres coordinadas ganan en cualquier posición.',
+      'Solo si quedan menos de cuatro peones en el tablero.',
+    ],
+    correcta: 0,
+    explica: 'Es la relación de material que menos se decide por la tabla: dos torres bien puestas y con el rey seguro valen más, pero la dama se come las posiciones con debilidades sueltas y reyes al aire.',
+  },
+
+  /* ---------------- Apertura (escalones 4 y 5) ---------------- */
+  {
+    id: 'ap_carlsbad', area: 'apertura', peso: 4, tipo: 'opcion',
+    enunciado: 'Estructura Carlsbad (peones blancos en c3, d4, e3 y negros en c6, d5, e6, con el cambio ya hecho en d5). ¿Cuál es el plan clásico de las blancas?',
+    opciones: [
+      'El ataque de minorías: avanzar b4-b5 para cambiar en c6 y dejarle a las negras un peón débil en columna abierta.',
+      'Avanzar e3-e4 de inmediato, aunque quede un peón aislado.',
+      'Enrocar largo y tirar todos los peones del flanco de rey.',
+      'Cambiar todas las piezas para llegar a un final de peones.',
+    ],
+    correcta: 0,
+    explica: 'Dos peones atacando a tres: el cambio en c6 deja un peón atrasado en columna semiabierta. Es el plan más enseñado del Gambito de Dama y se juega igual en 1900 y hoy.',
+  },
+  {
+    id: 'ap_peon_aislado', area: 'apertura', peso: 4, tipo: 'opcion',
+    enunciado: 'Juegas contra un peón dama aislado del rival (su peón en d4, sin peones en c ni e). ¿Cuál es la estrategia correcta?',
+    opciones: [
+      'Cambiar piezas, bloquear la casilla de adelante con un caballo en d5 y dejar que el peón sea débil en el final.',
+      'Cambiar peones y dejar las piezas, para atacarlo con todo lo que queda.',
+      'Capturarlo cuanto antes, cueste lo que cueste.',
+      'Evitar los cambios y jugar en el flanco de dama.',
+    ],
+    correcta: 0,
+    explica: 'El peón aislado da actividad en el medio juego y es una debilidad en el final: quien lo sufre cambia piezas y bloquea; quien lo tiene evita los cambios y busca la ruptura d4-d5.',
+  },
+  {
+    id: 'ap_orden_jugadas', area: 'apertura', peso: 5, tipo: 'opcion',
+    enunciado: '¿Por qué los jugadores fuertes cuidan tanto el orden de jugadas en la apertura?',
+    opciones: [
+      'Porque transponiendo se entra en las variantes que uno quiere y se evitan las del rival, aunque la posición final se parezca.',
+      'Porque el reglamento obliga a desarrollar primero los caballos.',
+      'Porque cambiar el orden pierde el derecho al enroque.',
+      'Porque así se gana tiempo en el reloj.',
+    ],
+    correcta: 0,
+    explica: 'La misma posición se llega por caminos distintos, y en el camino cada bando tiene desvíos. Elegir el orden es elegir qué desvíos le dejás al rival.',
+  },
+  {
+    id: 'ap_najdorf_a6', area: 'apertura', peso: 5, tipo: 'opcion',
+    enunciado: 'Siciliana Najdorf (1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 Cf6 5.Cc3 a6). ¿Para qué juegan las negras ...a6?',
+    opciones: [
+      'Le quita b5 a las piezas blancas y prepara ...e5 sin que aparezca Ab5+ molestando.',
+      'Prepara el enroque largo.',
+      'Ataca el peón de b2 con la torre de a8.',
+      'Evita que las blancas jueguen el gambito de dama.',
+    ],
+    correcta: 0,
+    explica: 'Es una jugada de profilaxis pura: no desarrolla nada, pero le quita una casilla clave al rival y habilita el plan que las negras quieren (...e5 y ...b5).',
+  },
+
+  /* ---------------- Táctica (escalones 4 y 5) ---------------- */
+  {
+    id: 'tac_sacrificio_f7', area: 'tactica', peso: 4, tipo: 'jugada',
+    enunciado: 'Encuentra el golpe que fuerza el mate en dos jugadas.',
+    fen: '6k1/5ppp/6Q1/5R2/8/8/8/6K1 w - - 0 1',
+    solucion: { from: 'g6', to: 'f7' },
+    explica: 'Dxf7+ arrastra al rey (o tapa con la torre) y el mate llega en la siguiente. El sacrificio en f7 es el punto flojo del enroque corto desde la primera partida que uno juega.',
+    prueba: 'Dxf7+ fuerza mate en 2 y es la única jugada que lo hace (búsqueda exhaustiva sobre todas las respuestas negras)',
+  },
+  {
+    id: 'tac_orden_amenazas', area: 'tactica', peso: 4, tipo: 'opcion',
+    enunciado: 'Tu rival amenaza mate en una jugada y tú puedes ganar una torre. ¿Qué manda?',
+    opciones: [
+      'Parar el mate, salvo que tu jugada gane la torre con jaque o quite la amenaza al mismo tiempo.',
+      'Ganar la torre: con material de más después se defiende mejor.',
+      'Cambiar damas para simplificar.',
+      'Dar jaque con cualquier pieza para ganar tiempo.',
+    ],
+    correcta: 0,
+    explica: 'Lo forzado va antes que lo bueno. La excepción vale la pena buscarla siempre: una jugada que gana material Y para el mate es la que hay que encontrar.',
+  },
+  {
+    id: 'tac_senales_combinacion', area: 'tactica', peso: 5, tipo: 'opcion',
+    enunciado: '¿Qué señales avisan de que en una posición probablemente HAY una combinación?',
+    opciones: [
+      'Rey rival con pocas casillas, piezas suyas sin defensa, clavadas, piezas sobrecargadas o un peón a punto de coronar.',
+      'Tener más material que el rival.',
+      'Que el rival haya movido dos veces la misma pieza en la apertura.',
+      'Que queden menos de veinte piezas en el tablero.',
+    ],
+    correcta: 0,
+    explica: 'Las combinaciones no aparecen de la nada: viven de elementos concretos. Cuando hay dos o tres de esos elementos juntos, vale la pena gastar tiempo buscando; cuando no hay ninguno, casi nunca hay nada.',
+  },
+  {
+    id: 'tac_defensa_activa', area: 'tactica', peso: 5, tipo: 'opcion',
+    enunciado: 'Estás bajo ataque y aguantando. ¿Cuál es el criterio de defensa que más partidas salva?',
+    opciones: [
+      'Buscar el contragolpe o el cambio de las piezas atacantes, en vez de sumar defensores pasivos una jugada tras otra.',
+      'Retirar todas las piezas a la primera fila y esperar.',
+      'Devolver material de inmediato para calmar la posición.',
+      'Dar jaques hasta que el rival se equivoque.',
+    ],
+    correcta: 0,
+    explica: 'Defender sumando piezas pasivas pierde por acumulación: el atacante sigue trayendo gente. Cambiar a la pieza atacante clave o abrir un frente propio da vuelta muchas más partidas.',
+  },
+
+  /* ---------------- Jaque mate (escalones 4 y 5) ---------------- */
+  {
+    id: 'mate_dos_jugadas', area: 'mate', peso: 4, tipo: 'jugada',
+    enunciado: 'Da jaque mate en dos jugadas. Aviso: la primera no es jaque.',
+    fen: '6k1/5ppp/8/5N1Q/8/8/8/6K1 w - - 0 1',
+    solucion: { from: 'h5', to: 'g5' },
+    explica: 'Dg5 es una jugada callada: amenaza Dxg7 mate y las negras no tienen forma de cubrirlo todo, porque el caballo de f5 controla las casillas de escape.',
+    prueba: 'Dg5 fuerza mate en 2, no hay mate en 1 en la posición y ninguna otra jugada fuerza mate en 2',
+  },
+  {
+    id: 'mate_tres_jugadas', area: 'mate', peso: 5, tipo: 'jugada',
+    enunciado: 'Da jaque mate en tres jugadas. La primera tampoco es jaque.',
+    fen: '6k1/5p1p/6p1/8/8/7Q/8/4R1K1 w - - 0 1',
+    solucion: { from: 'h3', to: 'h6' },
+    explica: 'Dh6 mete la dama en la casilla desde donde amenaza mate y le quita al rey la salida por g7. Contra cualquier defensa, la torre entra por la columna e y el mate llega en tres.',
+    prueba: 'Dh6 fuerza mate en 3, no hay mate en 1 ni en 2 en la posición y ninguna otra jugada fuerza mate en 3',
+  },
+  {
+    id: 'mate_enroques_opuestos', area: 'mate', peso: 4, tipo: 'opcion',
+    enunciado: 'Partida con enroques opuestos (uno enrocó corto y el otro largo). ¿Qué decide el ataque?',
+    opciones: [
+      'La velocidad: se empujan los peones propios sin miedo y se cuentan los tiempos, porque quien abre una línea primero suele llegar primero.',
+      'Quién tiene más piezas menores.',
+      'Quién consigue cambiar damas antes.',
+      'Quién deja su estructura de peones intacta.',
+    ],
+    correcta: 0,
+    explica: 'Con enroques opuestos los peones propios ya no defienden al rey: son la artillería. Contar tiempos —cuántas jugadas me faltan a mí y cuántas a él— es literalmente la evaluación de la posición.',
+  },
+  {
+    id: 'mate_boden', area: 'mate', peso: 5, tipo: 'opcion',
+    enunciado: '¿Qué piezas dan el mate de Boden y contra qué rey?',
+    opciones: [
+      'Dos alfiles cruzados en diagonales que se cortan, casi siempre contra un rey que enrocó largo.',
+      'Dama y caballo contra un rey en el centro.',
+      'Dos torres en columnas contiguas contra un rey en la banda.',
+      'Torre y peón contra un rey ahogado por sus piezas.',
+    ],
+    correcta: 0,
+    explica: 'Aparece después de sacrificar en c3/c6 o a6/a3 para abrir las diagonales. Reconocer el patrón es lo que permite ver el sacrificio tres jugadas antes.',
+  },
+
+  /* ---------------- Finales (escalones 4 y 5) ---------------- */
+  {
+    id: 'fin_lucena', area: 'finales', peso: 4, tipo: 'opcion',
+    enunciado: 'Posición de Lucena: tienes rey, torre y un peón en séptima; tu rey está delante del peón y el rey rival está cortado a dos columnas. ¿Cómo se gana?',
+    opciones: [
+      'Construyendo el puente: llevar la torre a la cuarta fila y después sacar el rey, tapando con la torre el jaque que viene.',
+      'Dando jaques con la torre hasta que el rey rival se aleje.',
+      'Adelantando el rey por la columna del peón sin tocar la torre.',
+      'Cambiando las torres y ganando el final de peones.',
+    ],
+    correcta: 0,
+    explica: 'Es la técnica de torres que más puntos vale: sin el puente, el mismo final es tablas. La torre en cuarta fila es la jugada que se aprende y ya no se olvida.',
+  },
+  {
+    id: 'fin_torre_detras_pasado', area: 'finales', peso: 4, tipo: 'opcion',
+    enunciado: 'Final de torres con un peón pasado. ¿Dónde va la torre, según la regla de Tarrasch?',
+    opciones: [
+      'Detrás del peón pasado: la del que lo empuja, para apoyarlo; la del que lo frena, para perseguirlo. Las dos, detrás.',
+      'Delante del peón pasado, para bloquearlo con la torre.',
+      'Al costado, en la fila del peón.',
+      'En la columna del rey rival, sin importar dónde esté el peón.',
+    ],
+    correcta: 0,
+    explica: 'Detrás, la torre que apoya gana casillas a medida que el peón avanza, y la que frena no pierde ninguna. Delante, el bloqueo condena a la torre a mirar la partida desde ahí.',
+  },
+  {
+    id: 'fin_philidor', area: 'finales', peso: 5, tipo: 'opcion',
+    enunciado: 'Defiendes con rey y torre contra rey, torre y un peón que todavía no llegó a tu tercera fila. ¿Cuál es la defensa de Philidor?',
+    opciones: [
+      'Poner la torre en tu tercera fila para que el rey rival no avance, y cuando el peón llegue a esa fila, bajar la torre a la primera y dar jaques por detrás.',
+      'Cambiar torres a la primera oportunidad.',
+      'Dar jaques desde el costado sin parar, desde el principio.',
+      'Poner la torre delante del peón y dejarla ahí.',
+    ],
+    correcta: 0,
+    explica: 'Son dos etapas y en ese orden: la tercera fila frena al rey, y cuando el peón avanza pierde el escudo, por eso los jaques desde atrás ya no se pueden tapar. Es la defensa que salva medio punto en cada torneo.',
+  },
+  {
+    id: 'fin_triangulacion', area: 'finales', peso: 5, tipo: 'opcion',
+    enunciado: 'En un final de reyes y peones, ¿para qué sirve triangular con el rey?',
+    opciones: [
+      'Para perder un tiempo: el rey da un rodeo de tres casillas y vuelve, de modo que la misma posición le toque mover al rival.',
+      'Para llegar antes a la casilla de coronación.',
+      'Para atacar el peón por el otro lado.',
+      'Para evitar el ahogado.',
+    ],
+    correcta: 0,
+    explica: 'Es zugzwang fabricado: la posición no cambia, cambia de quién es el turno. Solo funciona si tu rey tiene tres casillas útiles y el del rival no.',
+  },
+
+  /* ---------------- Estrategia (escalones 4 y 5) ---------------- */
+  {
+    id: 'est_profilaxis', area: 'estrategia', peso: 4, tipo: 'opcion',
+    enunciado: '¿En qué consiste jugar con profilaxis?',
+    opciones: [
+      'Preguntarse qué quiere hacer el rival y jugar para impedírselo, aunque esa jugada no mejore nada tuyo de inmediato.',
+      'Cambiar piezas para no correr riesgos.',
+      'Defender el rey antes de empezar cualquier plan.',
+      'Repetir jugadas hasta que el rival se decida.',
+    ],
+    correcta: 0,
+    explica: 'La pregunta de Petrosian: "si me tocara mover a mí dos veces, ¿qué haría él?". Quitarle esa jugada suele valer más que adelantar el propio plan una casilla.',
+  },
+  {
+    id: 'est_dos_debilidades', area: 'estrategia', peso: 4, tipo: 'opcion',
+    enunciado: '¿Qué dice el principio de las dos debilidades?',
+    opciones: [
+      'Con una sola debilidad el rival se defiende; hay que crear una segunda en el otro flanco para que la defensa no alcance para las dos.',
+      'Que nunca hay que dejar dos peones débiles propios.',
+      'Que dos piezas mal puestas equivalen a un peón de menos.',
+      'Que hay que atacar siempre la debilidad más grande primero.',
+    ],
+    correcta: 0,
+    explica: 'Es cómo se convierte una ventaja chica en punto entero: se fija la primera debilidad, se lleva el juego al otro flanco y la defensa se parte. Sin la segunda, casi todo se aguanta.',
+  },
+  {
+    id: 'est_espacio_cambios', area: 'estrategia', peso: 5, tipo: 'opcion',
+    enunciado: 'Tienes menos espacio que tu rival. ¿Qué conviene hacer?',
+    opciones: [
+      'Cambiar piezas: cada pieza que sale del tablero le deja más aire a las que te quedan.',
+      'Evitar todos los cambios para no simplificar a favor del rival.',
+      'Avanzar los peones del flanco donde tienes menos espacio.',
+      'Enrocar al lado contrario y atacar.',
+    ],
+    correcta: 0,
+    explica: 'Con poco espacio el problema no son las piezas del rival: son las propias, que se estorban. El que tiene más espacio evita los cambios por la misma razón.',
+  },
+  {
+    id: 'est_plan_desde_estructura', area: 'estrategia', peso: 5, tipo: 'opcion',
+    enunciado: 'Llegas a una posición que no conoces y no sabes qué hacer. ¿De dónde sale el plan?',
+    opciones: [
+      'De la estructura de peones: ella dice qué rupturas hay, qué casillas quedan débiles y hacia qué flanco se juega.',
+      'De la apertura que se jugó, aunque la estructura haya cambiado.',
+      'De contar el material y elegir el flanco donde hay más piezas.',
+      'De dar jaque para ver cómo responde el rival.',
+    ],
+    correcta: 0,
+    explica: 'Los peones son lo único que casi no vuelve atrás: definen el terreno. Leer la estructura antes de mover piezas es la diferencia entre tener un plan y hacer jugadas.',
+  },
+
+  /* ---------------- Cálculo (escalones 4 y 5) ---------------- */
+  {
+    id: 'cal_posicion_critica', area: 'calculo', peso: 4, tipo: 'opcion',
+    enunciado: 'En una partida lenta, ¿dónde hay que gastar el tiempo de reflexión?',
+    opciones: [
+      'En las posiciones críticas: los pocos momentos en que la partida cambia de carácter y una jugada la define.',
+      'Repartido parejo entre todas las jugadas.',
+      'En la apertura, para salir bien de las primeras quince jugadas.',
+      'En el final, cuando quedan pocas piezas y se puede calcular todo.',
+    ],
+    correcta: 0,
+    explica: 'Reconocer la posición crítica —una ruptura, un cambio que no vuelve atrás, el momento de atacar— y ahí pensar veinte minutos es lo que separa a quien administra bien el reloj.',
+  },
+  {
+    id: 'cal_comparar_finales', area: 'calculo', peso: 4, tipo: 'opcion',
+    enunciado: 'Dos jugadas te parecen buenas y no llegas a calcularlas hasta el final. ¿Cómo decides?',
+    opciones: [
+      'Comparando las posiciones a las que llevan: cuál deja mejores piezas, el rey más seguro y mejor estructura.',
+      'Eligiendo la que da jaque.',
+      'Eligiendo la que gana más material en la primera jugada.',
+      'Repitiendo la posición para ganar tiempo y decidir después.',
+    ],
+    correcta: 0,
+    explica: 'El cálculo termina en una evaluación, no en un número: cuando no se ve el final de la variante, se compara la posición que queda. Calcular sin evaluar no sirve de nada.',
+  },
+  {
+    id: 'cal_jugadas_silenciosas', area: 'calculo', peso: 5, tipo: 'opcion',
+    enunciado: '¿Qué tipo de jugada es la que más se escapa cuando uno calcula?',
+    opciones: [
+      'Las silenciosas: las que no son jaque ni captura, sobre todo si son del rival o si van hacia atrás.',
+      'Los jaques, porque hay muchos.',
+      'Las capturas de peón.',
+      'Las jugadas de enroque.',
+    ],
+    correcta: 0,
+    explica: 'El cálculo se apoya en lo forzado, y ahí la vista funciona sola. Las combinaciones que uno no ve casi siempre terminan en una jugada callada — propia o del rival.',
+  },
+  {
+    id: 'cal_orden_del_arbol', area: 'calculo', peso: 5, tipo: 'opcion',
+    enunciado: 'Al calcular una variante larga, ¿qué hace un jugador fuerte para no perderse?',
+    opciones: [
+      'Recorre una rama entera y vuelve siempre a la posición inicial antes de mirar otra jugada candidata, sin saltar de una a otra.',
+      'Calcula todas las variantes a la vez para no olvidarse de ninguna.',
+      'Mira solo la primera jugada de cada variante y elige por intuición.',
+      'Mueve las piezas mentalmente hacia adelante y no vuelve atrás.',
+    ],
+    correcta: 0,
+    explica: 'Saltar de rama en rama es lo que produce esas alucinaciones donde una pieza queda en dos lados. Una rama, evaluación, vuelta al inicio: es lento al principio y después es la única forma de calcular limpio.',
+  },
 ];
 
 /* ===== Cómo se arma cada prueba =====
@@ -963,23 +1402,21 @@ window.DIAGNOSTICO_ITEMS = [
 window.DiagnosticoPrueba = (function () {
   "use strict";
 
-  const FORMA = {
-    reglas:     { 1: 3, 2: 3, 3: 1 },
-    material:   { 1: 3, 2: 3, 3: 1 },
-    apertura:   { 1: 2, 2: 3, 3: 2 },
-    tactica:    { 1: 1, 2: 4, 3: 2 },
-    mate:       { 1: 2, 2: 3, 3: 2 },
-    finales:    { 1: 3, 2: 2, 3: 2 },
-    estrategia: { 1: 1, 2: 4, 3: 2 },
-    calculo:    { 1: 2, 2: 3, 3: 2 },
-  };
-  const AREAS = Object.keys(FORMA);
+  /* Cuántos ítems de cada peso lleva cada área. Es igual en las ocho, y esa es
+     la clave de la medición: como cada área aporta un ítem de peso 4 y uno de
+     peso 5, la prueba entera tiene ocho preguntas de cada escalón difícil, que
+     es lo que permite decir "hasta dónde llega" en vez de "cuántas acertó".
+     Antes el techo era el peso 3 —contenido de club— y por eso un jugador de
+     1400 y uno de 2300 sacaban los dos la misma nota. */
+  const FORMA = { 1: 1, 2: 2, 3: 2, 4: 1, 5: 1 };
+  const AREAS = ['reglas', 'material', 'apertura', 'tactica', 'mate', 'finales', 'estrategia', 'calculo'];
+  const PESOS = [1, 2, 3, 4, 5];
   const BANCO = window.DIAGNOSTICO_ITEMS;
   const porId = {};
   BANCO.forEach((i) => { porId[i.id] = i; });
 
-  const TOTAL = AREAS.reduce((s, a) => s + [1, 2, 3].reduce((t, w) => t + FORMA[a][w], 0), 0);
-  const PUNTOS = AREAS.reduce((s, a) => s + [1, 2, 3].reduce((t, w) => t + FORMA[a][w] * w, 0), 0);
+  const TOTAL = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w], 0);
+  const PUNTOS = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w] * w, 0);
 
   /* Azar con semilla: la misma semilla arma siempre la misma prueba, que es lo
      que permite regenerar el cuadernillo imprimible igual una y otra vez. */
@@ -1019,11 +1456,12 @@ window.DiagnosticoPrueba = (function () {
     const elegidos = [];
     AREAS.forEach((area) => {
       const delArea = BANCO.filter((i) => i.area === area && !usados[i.id]);
-      const falta = { 1: FORMA[area][1], 2: FORMA[area][2], 3: FORMA[area][3] };
+      const falta = {};
+      PESOS.forEach((w) => { falta[w] = FORMA[w]; });
       yaEstan.filter((i) => i.area === area).forEach((i) => {
         if (falta[i.peso] > 0) falta[i.peso] -= 1;
       });
-      [1, 2, 3].forEach((peso) => {
+      PESOS.forEach((peso) => {
         const candidatos = barajar(delArea.filter((i) => i.peso === peso && !usados[i.id]), rnd);
         while (falta[peso] > 0 && candidatos.length) {
           const item = candidatos.shift();
@@ -1034,7 +1472,7 @@ window.DiagnosticoPrueba = (function () {
       });
       // Si al área le faltan ítems de algún peso (banco corto), se completa con
       // los que haya, empezando por la dificultad más parecida.
-      [1, 2, 3].forEach((peso) => {
+      PESOS.forEach((peso) => {
         while (falta[peso] > 0) {
           const resto = delArea.filter((i) => !usados[i.id]).sort((a, b) => Math.abs(a.peso - peso) - Math.abs(b.peso - peso));
           if (!resto.length) break;

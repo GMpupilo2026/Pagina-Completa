@@ -14,10 +14,22 @@
  *   generarPlan()— arma un plan de cuatro semanas: ataca primero las áreas más
  *                  flojas, sostiene las fuertes y termina con una medición.
  *
- * Sobre el nivel estimado: sale del porcentaje ponderado de la prueba (cada
- * ítem pesa 1, 2 o 3 según su dificultad). Es una estimación de trabajo para
- * ubicar al alumno y orientar el plan — no es un rating oficial ni sustituye a
- * los resultados de torneo, y así se dice en pantalla.
+ * Sobre el nivel estimado: NO sale del porcentaje. Sale de hasta qué escalón
+ * de dificultad llega el alumno. La prueba tiene cinco escalones (el peso de
+ * cada ítem, de 1 a 5) con ocho preguntas de cada uno de los difíciles, y el
+ * nivel es el escalón más alto que superó —al menos 60% de aciertos ahí, y el
+ * promedio de los escalones anteriores también en 60%—.
+ *
+ * Por qué: con el porcentaje a secas, quien contesta bien todo lo fácil sale
+ * con nota altísima aunque no resuelva nada difícil. Pasó de verdad: un
+ * jugador de 1400 y uno de 2300 sacaron los dos "Experto" (93% y 99%). Contar
+ * escalones, en cambio, pregunta "¿hasta dónde llega?" en vez de "¿cuánto
+ * acertó?", que es lo que uno quiere saber para armarle el plan.
+ *
+ * El porcentaje se sigue calculando y se sigue mostrando por área —sirve para
+ * ver dónde está flojo—, pero el nivel ya no depende de él. Sigue siendo una
+ * estimación de trabajo: no es un rating oficial ni sustituye a los resultados
+ * de torneo, y así se dice en pantalla.
  */
 window.PlanEntrenamiento = (function () {
   "use strict";
@@ -153,23 +165,80 @@ window.PlanEntrenamiento = (function () {
 
   // Tramos de nivel, de menor a mayor. El rango de fuerza es orientativo y así
   // se muestra siempre: ubica al alumno para elegir material, no certifica un rating.
+  /* `escalon` es el peso de ítem que hay que superar para llegar a este nivel.
+     `desde` es el porcentaje que hacía falta en la prueba VIEJA (la que no
+     tenía escalones 4 y 5): se conserva tal cual para no re-etiquetar los
+     resultados que se midieron con ella. Maestro lleva `desde: null` justamente
+     por eso: es un nivel que aquella prueba no podía distinguir. */
   const NIVELES = [
-    { clave: 'principiante', desde: 0,  etiqueta: 'Principiante', rango: 'menos de 800 aprox.',
+    { clave: 'principiante', escalon: 0, desde: 0,  etiqueta: 'Principiante', rango: 'menos de 800 aprox.',
       descripcion: 'Está aprendiendo las reglas y a no dejar piezas. El objetivo de estas semanas es jugar sin errores de reglamento y contar bien el material.' },
-    { clave: 'basico',       desde: 30, etiqueta: 'Básico',       rango: '800 a 1100 aprox.',
+    { clave: 'basico',       escalon: 1, desde: 30, etiqueta: 'Básico',       rango: '800 a 1100 aprox.',
       descripcion: 'Ya juega partidas completas. Toca asentar la táctica básica y los mates elementales: es lo que decide sus partidas hoy.' },
-    { clave: 'intermedio',   desde: 50, etiqueta: 'Intermedio',   rango: '1100 a 1400 aprox.',
+    { clave: 'intermedio',   escalon: 2, desde: 50, etiqueta: 'Intermedio',   rango: '1100 a 1400 aprox.',
       descripcion: 'Tiene base. Ahora los puntos se ganan con finales, planes y cálculo ordenado, más que con nuevas aperturas.' },
-    { clave: 'avanzado',     desde: 70, etiqueta: 'Avanzado',     rango: '1400 a 1700 aprox.',
+    { clave: 'avanzado',     escalon: 3, desde: 70, etiqueta: 'Avanzado',     rango: '1400 a 1700 aprox.',
       descripcion: 'Juega bien en general. Conviene trabajar por debilidades concretas y preparar torneos con partidas largas analizadas.' },
-    { clave: 'experto',      desde: 85, etiqueta: 'Experto',      rango: '1700 o más aprox.',
+    { clave: 'experto',      escalon: 4, desde: 85, etiqueta: 'Experto',      rango: '1700 a 2000 aprox.',
       descripcion: 'Nivel de competencia. El plan debe apuntar a repertorio propio, finales técnicos y análisis sistemático de las partidas.' },
+    { clave: 'maestro',      escalon: 5, desde: null, etiqueta: 'Maestro',      rango: '2000 o más aprox.',
+      descripcion: 'Resuelve también lo difícil: cálculo largo, técnica de finales y criterio posicional. El plan pasa a ser preparación de competencia: repertorio propio, análisis con motor y trabajo por rival.' },
   ];
+
+  const ESCALONES = [1, 2, 3, 4, 5];
+  const UMBRAL_ESCALON = 0.6;   // 60% de aciertos para dar un escalón por superado
 
   function nivelDe(porcentaje) {
     let nivel = NIVELES[0];
-    NIVELES.forEach((n) => { if (porcentaje >= n.desde) nivel = n; });
+    NIVELES.forEach((n) => { if (n.desde !== null && porcentaje >= n.desde) nivel = n; });
     return nivel;
+  }
+
+  /* Resultados por escalón de dificultad, que es de donde sale el nivel.
+     `dificultad` viene del diagnóstico: { 1: {aciertos, total}, 2: {...}, ... } */
+  function porEscalon(dificultad) {
+    return ESCALONES.map((peso) => {
+      const d = (dificultad || {})[peso] || (dificultad || {})[String(peso)] || { aciertos: 0, total: 0 };
+      const total = d.total || 0;
+      return {
+        peso, total, aciertos: d.aciertos || 0, nosabe: d.nosabe || 0,
+        porcentaje: total ? Math.round((d.aciertos / total) * 100) : null,
+      };
+    });
+  }
+
+  /* El escalón más alto superado. Se exige acertar el 60% DE ESE escalón y que
+     el promedio de los anteriores también llegue al 60%: así un tropiezo suelto
+     en una pregunta fácil no tapa a quien resuelve lo difícil, pero acertar dos
+     de ocho preguntas duras por descarte tampoco sube de nivel. */
+  function escalonAlcanzado(escalones) {
+    for (let i = escalones.length - 1; i >= 0; i--) {
+      const e = escalones[i];
+      if (e.total === 0 || e.porcentaje === null) continue;
+      const hasta = escalones.slice(0, i + 1).filter((x) => x.total > 0);
+      const promedio = hasta.reduce((s, x) => s + x.porcentaje, 0) / hasta.length;
+      if (e.porcentaje >= UMBRAL_ESCALON * 100 && promedio >= UMBRAL_ESCALON * 100) return e.peso;
+    }
+    return 0;
+  }
+
+  /* Tope por áreas: la escalera dice hasta dónde llega, pero un área en blanco
+     no se compensa con las otras. Nadie con los finales en cero es maestro,
+     por bien que resuelva la táctica difícil — y al revés, ese hueco es
+     justamente lo que el plan tiene que atacar. */
+  function topePorAreas(porArea) {
+    if (!porArea || !porArea.length) return NIVELES.length - 1;
+    const minima = Math.min.apply(null, porArea.map((a) => a.porcentaje));
+    if (minima < 30) return 3;   // como mucho Avanzado
+    if (minima < 50) return 4;   // como mucho Experto
+    return NIVELES.length - 1;
+  }
+
+  function nivelPorEscalones(dificultad, porArea) {
+    const escalones = porEscalon(dificultad);
+    const tope = topePorAreas(porArea);
+    const alcanzado = Math.min(escalonAlcanzado(escalones), tope);
+    return { escalones, alcanzado, nivel: NIVELES[alcanzado], topeAreas: tope };
   }
 
   /* Convierte el detalle guardado del diagnóstico en algo legible.
@@ -191,10 +260,19 @@ window.PlanEntrenamiento = (function () {
     const logradoTotal = porArea.reduce((s, a) => s + (areas[a.id] ? areas[a.id].logrado : 0), 0);
     const porcentaje = pesoTotal ? Math.round((logradoTotal / pesoTotal) * 100) : 0;
     const ordenadas = porArea.slice().sort((a, b) => a.porcentaje - b.porcentaje);
+    /* Con `dificultad` (pruebas nuevas) el nivel sale de los escalones; sin
+       ella —resultados de antes, medidos con otra prueba— se sigue usando el
+       porcentaje, que es lo único que hay y es como se calificaron entonces. */
+    const conEscalones = detalle && detalle.dificultad
+      ? nivelPorEscalones(detalle.dificultad, porArea)
+      : { escalones: porEscalon(null), alcanzado: null, nivel: nivelDe(porcentaje) };
     return {
       porArea,
       porcentaje,
-      nivel: nivelDe(porcentaje),
+      nivel: conEscalones.nivel,
+      escalones: conEscalones.escalones,
+      escalonAlcanzado: conEscalones.alcanzado,
+      topeAreas: conEscalones.topeAreas === undefined ? null : conEscalones.topeAreas,
       aciertos: porArea.reduce((s, a) => s + a.aciertos, 0),
       total: porArea.reduce((s, a) => s + a.total, 0),
       nosabe: porArea.reduce((s, a) => s + a.nosabe, 0),
@@ -299,5 +377,5 @@ window.PlanEntrenamiento = (function () {
   // que viven en una carpeta (entreno/) les anteponen su prefijo.
   function enlace(href, base) { return (base || '') + href; }
 
-  return { AREAS, AREA_POR_ID, NIVELES, nivelDe, resumir, generarPlan, enlace };
+  return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace };
 })();
