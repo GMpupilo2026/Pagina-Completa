@@ -90,7 +90,7 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Al terminar sabrás tu nivel estimado, qué tienes firme y qué estudiar primero. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -199,11 +199,23 @@
  * "diagnostico" (EntrenoProgress), que es lo que lee Informes para armar el
  * informe del alumno y su plan de entrenamiento.
  */
-const ITEMS = window.DIAGNOSTICO_ITEMS;
+/* El banco tiene más ítems de los que se preguntan: cada prueba sortea los
+   suyos (DiagnosticoPrueba, en js/diagnostico-items.js). ITEMS son los de ESTA
+   prueba —siempre 56, siempre 109 puntos, siempre 7 por área—, y sus ids
+   quedan guardados en el estado para poder retomarla igual y para volver a
+   mostrar el resultado con las preguntas que de verdad se hicieron. */
+const PRUEBA = window.DiagnosticoPrueba;
 const PE = window.PlanEntrenamiento;
+let ITEMS = [];
 const ESTADO_KEY = 'diagnostico_estado_v1';
 const RESULTADO_KEY = 'diagnostico_resultado_v1';
-const VERSION = 1;
+/* Resultado terminado que todavía no llegó a la base (red caída, sesión
+   vencida, la base que lo rechazó). Se guarda aparte y se reintenta al abrir
+   la página, porque el diagnóstico no sirve de nada si el profesor no lo ve. */
+const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
+/* 2: el estado guarda además qué ítems tocaron en esta prueba (antes eran
+   todos los del banco, así que no hacía falta apuntarlos). */
+const VERSION = 2;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -224,7 +236,7 @@ const GLYPH = {
 };
 const FILES = ['a','b','c','d','e','f','g','h'];
 
-let estado = { perfil: {}, idx: 0, respuestas: {} };
+let estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
 let itemActual = null;
 let ordenOpciones = null;   // en qué orden se muestran las opciones de este ítem
 let seleccion = null;      // respuesta en curso (índice de opción, casilla o jugada)
@@ -232,20 +244,63 @@ let origenElegido = null;  // casilla de origen en los ítems de jugada
 
 /* ---------------- Estado guardado ---------------- */
 function cargarEstado() {
-  try {
-    const crudo = JSON.parse(localStorage.getItem(ESTADO_KEY) || 'null');
-    if (crudo && crudo.version === VERSION) estado = crudo.estado;
-  } catch (e) {}
+  let crudo = null;
+  try { crudo = JSON.parse(localStorage.getItem(ESTADO_KEY) || 'null'); } catch (e) {}
+  if (!crudo || !crudo.estado) return;
+  if (crudo.version === VERSION) {
+    estado = crudo.estado;
+    ITEMS = PRUEBA.porIds(estado.items);
+    // Si el banco cambió y algún ítem ya no existe, se completa la prueba con
+    // otros del área que falte, en vez de dejarla corta.
+    if (ITEMS.length !== PRUEBA.TOTAL) ITEMS = PRUEBA.armar(ITEMS.map((i) => i.id));
+  } else if (crudo.version === 1) {
+    // Prueba empezada cuando se preguntaba el banco entero: se guardan las
+    // respuestas que ya dio y el sorteo completa el resto, así no vuelve a
+    // empezar de cero.
+    estado = Object.assign({ perfil: {}, idx: 0, respuestas: {} }, crudo.estado);
+    const contestados = Object.keys(estado.respuestas || {});
+    ITEMS = PRUEBA.armar(contestados);
+    estado.idx = Math.min(contestados.length, ITEMS.length);
+  } else {
+    return;
+  }
+  estado.items = ITEMS.map((i) => i.id);
 }
 function guardarEstado() {
   try { localStorage.setItem(ESTADO_KEY, JSON.stringify({ version: VERSION, estado })); } catch (e) {}
 }
 function borrarEstado() {
   try { localStorage.removeItem(ESTADO_KEY); } catch (e) {}
-  estado = { perfil: {}, idx: 0, respuestas: {} };
+  estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
+  ITEMS = [];
 }
 function resultadoGuardado() {
   try { return JSON.parse(localStorage.getItem(RESULTADO_KEY) || 'null'); } catch (e) { return null; }
+}
+function pendienteGuardado() {
+  try { return JSON.parse(localStorage.getItem(PENDIENTE_KEY) || 'null'); } catch (e) { return null; }
+}
+
+/* Sube el resultado a training_progress, que es de donde lo lee Informes.
+   Si no se puede, queda apuntado como pendiente y se reintenta al volver a
+   abrir la página: así un corte de red no borra la prueba de la vista del
+   profesor. Devuelve true solo si la base de verdad lo aceptó. */
+async function subirResultado(detalle) {
+  let r = null;
+  try { r = await EntrenoProgress.log('diagnostico', detalle); } catch (e) { r = null; }
+  if (r && r.ok) {
+    try { localStorage.removeItem(PENDIENTE_KEY); } catch (e) {}
+    return true;
+  }
+  try { localStorage.setItem(PENDIENTE_KEY, JSON.stringify(detalle)); } catch (e) {}
+  return false;
+}
+
+function avisoGuardado(ok) {
+  return ok
+    ? 'Resultado guardado: tu profesor ya puede verlo en Informes.'
+    : 'Tu resultado quedó en este dispositivo, pero todavía no se pudo subir a tu cuenta. '
+      + 'Se reintenta solo la próxima vez que abras esta página con internet.';
 }
 
 /* ---------------- Portada ---------------- */
@@ -288,7 +343,8 @@ function pintarPrevio() {
   box.innerHTML = `
     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Ya hiciste el diagnóstico</h2>
     <p class="text-sm text-brand-500 dark:text-brand-400 mb-3">El ${fecha} quedaste en <strong class="text-brand-800 dark:text-white">${previo.nivel}</strong> con ${previo.porcentaje}% de la prueba. Repetirlo cada cuatro semanas es la forma de ver si el plan está funcionando.</p>
-    <button type="button" id="ver-previo-btn" class="text-sm text-accent-600 dark:text-accent-400 hover:underline">Ver ese resultado otra vez</button>`;
+    <button type="button" id="ver-previo-btn" class="text-sm text-accent-600 dark:text-accent-400 hover:underline">Ver ese resultado otra vez</button>
+    ${pendienteGuardado() ? '<p class="text-xs text-red-600 dark:text-red-400 mt-2">Ese resultado todavía no llegó a tu cuenta, así que tu profesor aún no lo ve. Se está reintentando solo: deja esta página abierta un momento con internet.</p>' : ''}`;
   box.classList.remove('hidden');
   document.getElementById('ver-previo-btn').addEventListener('click', () => mostrarResultado(previo.detalle, false));
 }
@@ -302,6 +358,13 @@ function irA(vista) {
 }
 
 function empezar() {
+  if (!ITEMS.length || estado.idx >= ITEMS.length) {
+    ITEMS = PRUEBA.armar();
+    estado.items = ITEMS.map((i) => i.id);
+    estado.idx = 0;
+    estado.respuestas = {};
+  }
+  guardarEstado();
   irA('test-view');
   pintarItem();
 }
@@ -518,6 +581,7 @@ function construirDetalle() {
     version: VERSION,
     fecha: new Date().toISOString(),
     perfil: estado.perfil,
+    items: ITEMS.map((i) => i.id),   // qué preguntas tocaron en esta prueba
     areas,
     respuestas,
     nosabe,
@@ -537,13 +601,29 @@ async function terminar() {
     }));
   } catch (e) {}
 
-  mostrarResultado(detalle, true);
-  document.getElementById('result-saved').textContent = 'Guardando tu resultado…';
-  await EntrenoProgress.log('diagnostico', detalle);
-  document.getElementById('result-saved').textContent = EntrenoProgress.hasSession()
-    ? 'Resultado guardado: tu profesor ya puede verlo en Informes.'
-    : 'No se pudo guardar en línea (sesión vencida), pero tu resultado quedó en este dispositivo.';
+  /* La subida arranca ANTES de pintar y no se espera para pintar: si algo
+     falla dibujando el resultado, la fila ya va en camino a la base. Antes se
+     pintaba primero y se subía después, así que cualquier tropiezo al dibujar
+     dejaba el diagnóstico solo en el aparato del alumno. */
+  const subida = subirResultado(detalle);
   borrarEstado();
+  document.getElementById('result-saved').textContent = 'Guardando tu resultado…';
+  try {
+    mostrarResultado(detalle, true);
+  } catch (e) {
+    console.error('No se pudo dibujar el resultado del diagnóstico:', e);
+  }
+  document.getElementById('result-saved').textContent = avisoGuardado(await subida);
+}
+
+/* La corrección tiene que repasar las preguntas de ESA prueba, no las del
+   banco entero ni las de la prueba que se esté haciendo ahora: los resultados
+   guardados traen la lista de ítems (`items`), y los de antes del sorteo se
+   reconstruyen con las respuestas que quedaron anotadas. */
+function itemsDelResultado(detalle) {
+  if (Array.isArray(detalle.items) && detalle.items.length) return PRUEBA.porIds(detalle.items);
+  const ids = Object.keys(detalle.respuestas || {});
+  return ids.length ? PRUEBA.porIds(ids) : ITEMS;
 }
 
 function mostrarResultado(detalle, reciente) {
@@ -608,7 +688,7 @@ function mostrarResultado(detalle, reciente) {
 
   const review = document.getElementById('result-review');
   review.innerHTML = '';
-  ITEMS.forEach((item, i) => {
+  itemsDelResultado(detalle).forEach((item, i) => {
     const ok = detalle.respuestas[item.id];
     const dijoNoSaber = !!(detalle.nosabe && detalle.nosabe[item.id]);
     const det = document.createElement('details');
@@ -647,9 +727,16 @@ async function init() {
   // se empezó en otro aparato, se retoma donde iba.
   await ProgresoUsuario.init();
   cargarEstado();
+  // Si quedó un resultado terminado sin subir (se cerró la prueba sin internet
+  // o la base lo rechazó), se reintenta ahora, en silencio y sin trabar la
+  // página. Mientras no suba, el aviso del recuadro de arriba lo dice.
+  const pendiente = pendienteGuardado();
+  if (pendiente) {
+    subirResultado(pendiente).then((ok) => { if (ok) pintarPrevio(); });
+  }
   pintarPerfil();
   pintarPrevio();
-  if (estado.idx > 0 && estado.idx < ITEMS.length) {
+  if (ITEMS.length && estado.idx > 0 && estado.idx < ITEMS.length) {
     document.getElementById('start-btn').textContent = `Seguir donde ibas (pregunta ${estado.idx + 1}) →`;
   }
   document.getElementById('loading').classList.add('hidden');

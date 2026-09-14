@@ -21,7 +21,14 @@ const RAIZ = path.join(__dirname, "..");
 global.window = {};
 eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
 eval(fs.readFileSync(path.join(RAIZ, "js/plan-entrenamiento.js"), "utf8"));
-const ITEMS = global.window.DIAGNOSTICO_ITEMS;
+/* El banco tiene más ítems de los que entran en una prueba: el cuadernillo
+   lleva UNA de las formas posibles, sorteada con semilla fija para que volver
+   a correr el generador dé exactamente el mismo papel (misma prueba, mismas
+   respuestas en la hoja de corrección). Cambiar SEMILLA saca otra versión de
+   la prueba, útil para tener dos formas distintas en un mismo grupo. */
+const SEMILLA = Number(process.env.SEMILLA || 20260101);
+const ITEMS = global.window.DiagnosticoPrueba.armar([], SEMILLA);
+const BANCO = global.window.DIAGNOSTICO_ITEMS;
 const PE = global.window.PlanEntrenamiento;
 
 const GLYPH = { w: { p:"♙", n:"♘", b:"♗", r:"♖", q:"♕", k:"♔" }, b: { p:"♟", n:"♞", b:"♝", r:"♜", q:"♛", k:"♚" } };
@@ -190,7 +197,7 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
   <p class="marca">Ajedrez Integral · Academia</p>
   <h1>Diagnóstico de nivel</h1>
   <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
-  <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas de este cuadernillo son las mismas del sitio, verificadas con motor.</p>
+  <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas salen del mismo banco de ${BANCO.length} ejercicios del sitio, verificadas con motor. En línea las preguntas se sortean cada vez; este cuadernillo es una de esas formas, con el mismo reparto por áreas y los mismos ${TOTAL_PUNTOS} puntos.</p>
   <div class="datos">
     <div>Alumno: <span class="raya larga"></span></div>
     <div>Fecha: <span class="raya"></span> &nbsp;&nbsp; Grupo: <span class="raya"></span></div>
