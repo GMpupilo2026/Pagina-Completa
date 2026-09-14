@@ -16,17 +16,26 @@ directamente.
 
 ## Cursos
 
-Los cursos son **públicos**: no hay contraseña, ni inicio de sesión, ni ninguna
-otra restricción para ver las lecciones completas ni para descargar sus
-presentaciones y PDF. Fue una decisión explícita — no volver a poner un bloqueo
-salvo que se pida.
+Decisión vigente (revisada — antes fueron públicos del todo, ver historial de
+`worker.js`/`CLAUDE.md` si hace falta el detalle): el **temario es público**
+(portada, descripción y lista de lecciones de `cursos/<curso>.html`, visibles
+sin sesión) pero el **contenido completo de las lecciones es solo para
+alumnos de Academia**, a propósito, para motivar la inscripción.
 
-- `cursos/<curso>.html`: portada y temario del curso.
-- `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas que
-  inyecta `js/curso-acceso.js`. El nombre de la carpeta es histórico (antes
-  estaba bajo llave); hoy es contenido público como el resto.
+- `cursos/<curso>.html`: portada y temario del curso — público, enlazado desde
+  el menú del sitio y el pie de página.
+- `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas
+  (texto, video, presentación y PDF) que inyecta `js/curso-acceso.js`. Exige
+  sesión de Academia — lo hace cumplir `worker.js` en el servidor (cookie
+  `curso_ok` firmada con HMAC, canjeada por la sesión de Supabase vía
+  `/api/curso-auth-session`), no solo el JavaScript del navegador.
 - `cursos/recursos/<curso>/`: presentaciones (.pptx) y hojas de ejercicios
-  (.pdf), descargables por cualquiera.
+  (.pdf) de las lecciones — mismo bloqueo que `cursos/protegido/`.
+- El bloqueo depende de que la variable de entorno `COURSE_PASSWORD` exista en
+  Cloudflare (es una llave interna para firmar la cookie, no una contraseña
+  que vea ningún visitante); si se llegó a borrar cuando los cursos eran
+  públicos, hay que volver a configurarla o el bloqueo deja fuera a todos,
+  alumnos incluidos.
 
 ## Accesibilidad
 

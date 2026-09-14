@@ -42,6 +42,7 @@
                 <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
                     <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
                     <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
                     <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
@@ -61,6 +62,7 @@
         <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
             <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
                 <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
                 <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
                 <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
                 <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
@@ -83,6 +85,9 @@
                     <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">24 lecciones</strong> · Intermedio · Avanzado · 2 exámenes</p>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">100 finales, 240 posiciones interactivas con línea principal y práctica contra el motor, presentación y hoja de ejercicios por lección.</p>
                 </div>
+                <div class="hidden items-center gap-2" id="course-access-cta" hidden>
+                    <a href="../login.html?next=cursos/los-100-finales.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Iniciar sesión →</a>
+                </div>
             </div>
 
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
@@ -93,6 +98,12 @@
 
             <div id="course-content-body" data-course="los-100-finales" class="space-y-8">
                 <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
+            </div>
+
+            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
+                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
+                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las 24 lecciones completas de este curso, con sus recursos descargables.</p>
+                <a href="../login.html?next=cursos/los-100-finales.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
             </div>
 
             <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
