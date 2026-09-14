@@ -134,6 +134,22 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   club. Al agregar ítems hay que respetar el `peso` — y si es de escalón 4 o 5,
   que sea difícil de verdad y **sin opciones falsas absurdas**, o el techo se
   vuelve a caer.
+- **Ninguna opción puede delatarse por el largo.** La respuesta correcta era
+  la más larga en 91 de 96 ítems: se aprobaba media prueba eligiendo la más
+  larga, sin saber ajedrez. Ahora las cuatro opciones de cada ítem miden
+  prácticamente lo mismo (la correcta nunca gana por más de 2 caracteres) y la
+  explicación va en `explica`, no dentro de la opción.
+- **Los ítems de tablero se responden con UNA jugada**, incluidos los mates en
+  dos o en tres: se pide la jugada clave, no la secuencia. La página lo dice
+  antes de mover ("se responde con una sola jugada") y al mover ("no hace falta
+  jugar más"), y el enunciado de esos ítems lo repite; si no, el alumno juega
+  la primera, no pasa nada y se queda sin saber si tiene que seguir.
+- `herramientas/verificar-diagnostico.js` comprueba todo esto de una corrida
+  (ids repetidos, posiciones ilegales, soluciones que no son legales, los mates
+  forzados en la cantidad exacta de jugadas y con clave única, el largo de las
+  opciones y que el banco alcance para la cuota). Necesita chess.js instalado
+  aparte: `npm install chess.js@0.10.3 && node
+  herramientas/verificar-diagnostico.js`. **Al tocar el banco, correrlo.**
 - Los resultados viejos (sin `detalle.dificultad`) siguen calificándose por
   porcentaje con los umbrales de entonces: se midieron con otra prueba y no se
   vuelven a etiquetar. Una prueba empezada con una versión anterior no se
