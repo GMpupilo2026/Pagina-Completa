@@ -722,7 +722,7 @@
                 return `<div>
                     <div class="flex items-center justify-between gap-3 text-sm mb-1">
                         <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
-                        <span class="text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%</span>
+                        <span class="text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ""}</span>
                     </div>
                     <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
                 </div>`;
@@ -737,7 +737,8 @@
                 <p class="text-xs text-brand-400 dark:text-brand-500">Diagnóstico del ${fmtFecha(fecha)}</p>
                 <p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${resumen.nivel.etiqueta} · ${resumen.porcentaje}%</p>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">${resumen.nivel.descripcion}</p>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas${resumen.nosabe ? ` · 🤔 ${resumen.nosabe} marcadas como "no lo sé"` : ""} · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
+                ${resumen.nosabe ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Las marcadas como "no lo sé" son huecos que enseñar, no errores que corregir: se pueden dar por clase nueva, no por repaso.</p>` : ""}
                 ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
             </div>`;
         }

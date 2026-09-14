@@ -101,11 +101,14 @@ function bloqueItem(item, n) {
     : "Juegan las blancas";
   let respuesta = "";
   if (item.tipo === "opcion" || item.tipo === "opcion_tablero") {
-    respuesta = '<ol class="opciones">' + ordenDe(item).map((original, i) => `<li><span class="casilla-resp">${LETRAS[i]}</span> ${item.opciones[original]}</li>`).join("") + "</ol>";
+    respuesta = '<ol class="opciones">' + ordenDe(item).map((original, i) => `<li><span class="casilla-resp">${LETRAS[i]}</span> ${item.opciones[original]}</li>`).join("") +
+      '<li class="no-se"><span class="casilla-resp">?</span> No lo sé todavía</li></ol>';
   } else if (item.tipo === "jugada") {
-    respuesta = '<p class="linea">Escribe la jugada (casilla de salida y de llegada): <span class="raya"></span></p>';
+    respuesta = '<p class="linea">Escribe la jugada (casilla de salida y de llegada): <span class="raya"></span></p>' +
+      '<p class="linea no-se">…o marca aquí si no la sabes: <span class="casilla-resp">?</span></p>';
   } else if (item.tipo === "casilla") {
-    respuesta = '<p class="linea">Escribe la casilla: <span class="raya corta"></span></p>';
+    respuesta = '<p class="linea">Escribe la casilla: <span class="raya corta"></span></p>' +
+      '<p class="linea no-se">…o marca aquí si no la sabes: <span class="casilla-resp">?</span></p>';
   }
   return `<section class="item">
       <p class="etiqueta">${n}. <span class="area">${a.emoji} ${a.nombre}</span> · dificultad ${"★".repeat(item.peso)}</p>
@@ -157,6 +160,7 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
   .enunciado { font-weight: 600; margin-bottom: 5px; }
   .opciones { list-style: none; padding: 0; margin: 4px 0 0; }
   .opciones li { margin-bottom: 3px; padding-left: 2px; }
+  .no-se { color: #627d98; font-style: italic; }
   .casilla-resp { display: inline-block; width: 5.5mm; height: 5.5mm; border: 1px solid #486581; border-radius: 2px; text-align: center; font-size: 8.5pt; line-height: 5.2mm; margin-right: 4px; font-weight: 700; }
   .diagrama { margin: 5px 0 7px; }
   table.tablero { border-collapse: collapse; }
@@ -197,6 +201,7 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 
 <div class="pagina">
   <h2>Cómo se aplica</h2>
+  <div class="aviso"><strong>Si no lo sabe, que lo diga.</strong> Cada ejercicio tiene la casilla "No lo sé todavía": vale lo mismo que fallar (cero puntos) pero se cuenta aparte, y cambia el plan. Un error es algo mal aprendido que hay que corregir; un "no lo sé" es un hueco que hay que enseñar. Conviene decírselo al alumno antes de empezar: adivinar infla el resultado y le devuelve un plan que no le sirve.</div>
   <div class="aviso"><strong>Sin ayuda y sin mover piezas.</strong> El alumno responde de corrido, sin decirle si acierta: la corrección se hace al final, entre los dos. En todas las posiciones juegan las blancas salvo que el ejercicio diga lo contrario, y el tablero se mira siempre desde el lado blanco.</div>
   <p><strong>Tiempo:</strong> unos 20 minutos. No es una prueba de velocidad; si un alumno se traba en un ejercicio, que lo deje en blanco y siga.</p>
   <p><strong>Puntuación:</strong> cada ejercicio vale 1, 2 o 3 puntos según su dificultad (las estrellas junto al enunciado). El total de la prueba son ${TOTAL_PUNTOS} puntos. Lo que importa no es el total, sino el porcentaje de cada área: ahí está lo que hay que estudiar.</p>
@@ -217,8 +222,8 @@ ${PE.AREAS.map((a, i) => `<div class="pagina">
   <h2>Hoja de corrección</h2>
   <p class="apagado">Respuestas correctas y valor de cada ejercicio. Marca el punto solo si la respuesta es exactamente la indicada.</p>
   <table class="datos-tabla" style="margin-top:8px;">
-    <tr><th class="num">#</th><th>Área</th><th>Respuesta correcta</th><th class="num">Vale</th><th class="num">Logró</th></tr>
-    ${ITEMS.map((it, i) => `<tr><td class="num">${i + 1}</td><td>${areaDe(it.area).nombre}</td><td><strong>${respuestaCorrecta(it)}</strong></td><td class="num">${it.peso}</td><td class="num"></td></tr>`).join("")}
+    <tr><th class="num">#</th><th>Área</th><th>Respuesta correcta</th><th class="num">Vale</th><th class="num">Logró</th><th class="num">No sabía</th></tr>
+    ${ITEMS.map((it, i) => `<tr><td class="num">${i + 1}</td><td>${areaDe(it.area).nombre}</td><td><strong>${respuestaCorrecta(it)}</strong></td><td class="num">${it.peso}</td><td class="num"></td><td class="num"></td></tr>`).join("")}
   </table>
 </div>
 
