@@ -1,14 +1,18 @@
 // Worker del sitio: sirve los archivos estáticos y nada más.
 //
-// Los cursos son públicos. Antes este script guardaba bajo llave el contenido
-// completo de las lecciones (cursos/protegido/**) y sus presentaciones y PDF
-// (cursos/recursos/**): pedía una cookie firmada que se obtenía con la sesión
-// de Academia en /api/curso-auth-session y, sin ella, respondía 403. Todo eso
-// se quitó a propósito: cualquier visitante ve las lecciones enteras y puede
-// descargar los recursos sin contraseña, sin sesión y sin ninguna otra
-// restricción. Ya no queda ningún endpoint de autenticación de cursos, y la
-// variable de entorno COURSE_PASSWORD dejó de usarse (puede borrarse de
-// Cloudflare).
+// Los cursos volvieron a ser públicos a nivel de servidor. Hubo un intento de
+// bloquear cursos/protegido/** y cursos/recursos/** con una cookie firmada
+// que se canjeaba por la sesión de Academia (vía /api/curso-auth-session),
+// pero en la práctica dejaba fuera también a cuentas válidas — el bloqueo
+// dependía de una variable de entorno (COURSE_PASSWORD) fácil de perder en
+// Cloudflare, y cuando falta, deniega a todos por igual, profesor incluido.
+//
+// Se simplificó a propósito: el "temario público / contenido en Academia"
+// que se quería ahora es solo un control informativo del lado del cliente
+// (js/curso-acceso.js decide qué mostrar según haya o no sesión de Academia
+// en el navegador), no un bloqueo real de servidor. Cualquiera que conozca la
+// URL exacta de un archivo de cursos/protegido/** o cursos/recursos/** puede
+// seguir pidiéndolo directo — como cualquier otro archivo estático del sitio.
 //
 // Las cabeceras de seguridad del sitio (CSP, HSTS, X-Frame-Options…) siguen
 // viniendo del archivo _headers, que Cloudflare aplica a lo que sirve

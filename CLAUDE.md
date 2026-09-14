@@ -16,17 +16,66 @@ directamente.
 
 ## Cursos
 
-Los cursos son **públicos**: no hay contraseña, ni inicio de sesión, ni ninguna
-otra restricción para ver las lecciones completas ni para descargar sus
-presentaciones y PDF. Fue una decisión explícita — no volver a poner un bloqueo
-salvo que se pida.
+Decisión vigente: el **temario es público** (portada, descripción y lista de
+lecciones de `cursos/<curso>.html`, visibles sin sesión) pero el **contenido
+completo de las lecciones se muestra solo con sesión de Academia iniciada**,
+a propósito, para motivar la inscripción.
 
-- `cursos/<curso>.html`: portada y temario del curso.
-- `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas que
-  inyecta `js/curso-acceso.js`. El nombre de la carpeta es histórico (antes
-  estaba bajo llave); hoy es contenido público como el resto.
+Se probó primero a hacer cumplir esto en el servidor (`worker.js` exigiendo
+una cookie firmada, canjeada por la sesión vía `/api/curso-auth-session`) y
+se abandonó: esa cookie dependía de la variable de entorno `COURSE_PASSWORD`
+en Cloudflare, y cuando falta (se había borrado cuando los cursos fueron
+públicos del todo) deniega a **todos**, incluidas cuentas válidas — bloqueó
+al propio profesor. Decisión explícita: no depende de nada en Cloudflare.
+
+- `cursos/<curso>.html`: portada y temario del curso — público, enlazado desde
+  el menú del sitio y el pie de página.
+- `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas
+  (texto, video, presentación y PDF). `js/curso-acceso.js` decide, solo en el
+  navegador, si lo pide e inyecta: si `sb.auth.getSession()` devuelve una
+  sesión, lo hace; si no, muestra un aviso invitando a iniciar sesión.
+  **No hay bloqueo de servidor** — es la misma página para todos, el
+  contenido cambia según haya sesión o no. `worker.js` solo sirve archivos.
 - `cursos/recursos/<curso>/`: presentaciones (.pptx) y hojas de ejercicios
-  (.pdf), descargables por cualquiera.
+  (.pdf) — sin ningún bloqueo, ni siquiera informativo (se enlazan desde
+  dentro del fragmento de arriba).
+- No hace falta ninguna variable de entorno en Cloudflare para esto.
+
+## Multi-profesor: cada profesor con sus propios alumnos y su propia clase en vivo
+
+El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
+viendo y gestionando **solo sus propios alumnos asignados** — no toda la
+plataforma — y pudiendo dar clase en vivo al mismo tiempo que otro profesor
+sin pisarse.
+
+- `profiles.teacher_id`: a qué profesor pertenece un alumno (null = sin
+  asignar). Lo decide la persona administradora desde `admin.html`, o queda
+  asignado automático al propio profesor cuando él mismo invita al alumno
+  (`create-student` function). `profiles.grupo` es un texto libre
+  (equipo/subgrupo) puramente organizativo, sin efecto en permisos.
+- `public.my_profile()`: función `SECURITY DEFINER` que da el rol/is_admin/
+  teacher_id de quien llama, sin volver a pasar por RLS de `profiles` —
+  la usan casi todas las políticas nuevas. Antes, TODA política de
+  "profesor" era `role = 'profesor'` a secas (cualquier profesor veía y
+  gestionaba absolutamente todo); ahora casi todas exigen además que la fila
+  pertenezca a un alumno con `teacher_id = auth.uid()` (o que quien llama
+  sea `is_admin`, que sigue viendo todo).
+- **Tablero en vivo**: `game_state` dejó de ser una fila única global
+  (`CHECK (id = 1)`) — ahora cada profesor tiene su propia fila
+  (`owner_id`, único). `variant_nodes` igual, vía `teacher_id`. `questions`,
+  `class_sessions`, `practice_sessions` y `saved_games` ya tenían
+  `created_by`: solo hacía falta filtrar por ahí en vez de tratarlos como
+  globales (antes, por ejemplo, un profesor cerraba SIN darse cuenta la
+  pregunta o la ronda de práctica abierta de cualquier otro profesor).
+- En el cliente (`sesion.html`, `clases.html`), todo gira alrededor de
+  `boardOwnerId`: el propio id si es profesor, o `profile.teacher_id` si es
+  alumno — todas las consultas, canales de Realtime y el canal de presencia
+  (`clases-presence:<boardOwnerId>`, antes un string fijo) se filtran por
+  ahí. Un alumno sin `teacher_id` ve un aviso pidiendo que se le asigne uno,
+  en vez de mezclarse con la clase de otro profesor.
+- `class_chat_messages` no tiene tablero ni sesión: se filtra directo por
+  `profiles.teacher_id` del alumno del hilo (el chat es continuo, no "de una
+  clase puntual").
 
 ## Diagnóstico y plan de entrenamiento
 
