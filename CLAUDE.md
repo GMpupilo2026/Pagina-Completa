@@ -107,11 +107,21 @@ celular.
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
-Aprende): 56 ítems verificados con chess.js en `js/diagnostico-items.js`. El
-criterio pedagógico —áreas, nivel estimado y plan de 4 semanas— está en
-`js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
+Aprende). El banco de ítems está en `js/diagnostico-items.js`, verificado con
+chess.js. El criterio pedagógico —áreas, nivel estimado y plan de 4 semanas—
+está en `js/plan-entrenamiento.js` y lo comparten el alumno (al terminar) e
 `informes.html` (informe del profesor). Si se tocan las posiciones, hay que
 volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumplir.
+
+- **El banco es más grande que la prueba**: cada diagnóstico sortea sus
+  preguntas con `DiagnosticoPrueba.armar()` (al final de
+  `js/diagnostico-items.js`). Lo que nunca cambia es la forma: 7 ítems por
+  área, el mismo reparto de dificultad y 109 puntos, para que dos diagnósticos
+  del mismo alumno se puedan comparar aunque las preguntas hayan sido otras.
+  Al agregar ítems hay que respetar el campo `peso` (1, 2 o 3): la cuota por
+  peso de cada área está en `FORMA`. Los ids de la prueba quedan guardados en
+  el estado (para retomarla) y en el resultado (`detalle.items`, para que la
+  corrección repase esas preguntas y no otras).
 
 - Cada pregunta ofrece **"🤔 No lo sé todavía"**, siempre al final y con otra
   pinta. Vale cero puntos igual que fallar, pero se guarda aparte (`nosabe` por
@@ -120,6 +130,16 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   con un plan que no le sirve. Aparece en el resultado del alumno, en Informes y
   en el cuadernillo impreso.
 - El resultado se guarda en `training_progress` con `activity = 'diagnostico'`.
+  Esa tabla tiene un **CHECK con la lista de actividades permitidas**: si se
+  inventa una actividad nueva y no se agrega ahí, la base rechaza la fila y el
+  alumno no se entera (así se perdieron los primeros diagnósticos, que nunca
+  llegaron a Informes). La página ahora guarda **antes** de pintar el
+  resultado, dice la verdad cuando no pudo subirlo y lo deja apuntado en
+  `diagnostico_pendiente_v1` para reintentarlo al volver a entrar.
+- Informes lee además el espejo de progreso (`training_state`, claves
+  `diagnostico_resultado_v1` y `diagnostico_estado_v1`): así aparecen los
+  diagnósticos que quedaron solo ahí y se distingue "no lo ha empezado" de
+  "lo dejó en la pregunta N".
 - El plan vive en la tabla `training_plans` (Supabase, proyecto AjedrezIntegral).
   Su RLS es la que manda: el alumno solo ve el plan si `shared = true`, y solo su
   profesor o un administrador puede crearlo o editarlo.
@@ -130,12 +150,15 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   distinguen con daltonismo (ΔE 5.7 en deutan, comprobado con el validador de
   la skill dataviz), así que cada barra lleva su porcentaje y su etiqueta en
   texto, y hay leyenda.
-- `diagnostico-de-nivel.pdf` (raíz) es el mismo diagnóstico en papel, con sus
+- `diagnostico-de-nivel.pdf` (raíz) es el diagnóstico en papel, con sus
   diagramas y su hoja de corrección. **No se edita a mano**: lo genera
   `herramientas/diagnostico-pdf.js` desde el banco de ítems, así que al tocar
   ítems, áreas o niveles hay que volver a correrlo (`node
   herramientas/diagnostico-pdf.js`, con playwright instalado) o el papel deja de
-  coincidir con la pantalla.
+  coincidir con la pantalla. El cuadernillo es **una** de las formas posibles
+  de la prueba, sorteada con semilla fija: `SEMILLA=<número> node
+  herramientas/diagnostico-pdf.js` saca otra versión, útil para aplicar dos
+  formas distintas en el mismo grupo.
 
 ## Coordenadas en los tableros
 
@@ -157,3 +180,13 @@ diagnóstico, Concentración, Racha táctica y ¡Te reto!
 Buena parte del sitio tiene "modo adaptado" (`js/adaptive-mode.js`) para alumnos
 con discapacidad visual: al tocar textos, encabezados o contraste, mantener el
 alto contraste y los encabezados que permiten saltar directo al contenido.
+
+## Cómo se escribe en el sitio
+
+El español del sitio es el de acá: latinoamericano, costarricense. Se tutea
+(no "vosotros"), se dice computadora y celular (no ordenador ni móvil), y los
+términos de ajedrez van en el nombre que se usa en la región —horquilla,
+enfilada, clavada, mate de la coz, mate del pasillo—, con el término en inglés
+entre paréntesis solo cuando es el que el alumno va a encontrar buscando en
+internet (zwischenzug, smothered mate). Nada de traducciones calcadas del
+inglés ni de giros peninsulares.

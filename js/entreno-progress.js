@@ -25,16 +25,28 @@ window.EntrenoProgress = (function () {
     return userId;
   }
 
+  /* Devuelve { ok, motivo } para que quien llame pueda decir la verdad en
+     pantalla. Antes no devolvía nada y las páginas daban por guardado todo lo
+     que se intentaba con sesión abierta: cuando la base rechazaba la fila (una
+     actividad que faltaba en el CHECK de training_progress, por ejemplo) el
+     alumno leía "guardado" y el profesor no veía nada en Informes. Los motivos
+     son: "sin-sesion" (no hay quien la firme) y "error" (la base dijo que no).
+     Quien no mire el resultado sigue funcionando igual que antes. */
   async function log(activity, detail) {
     if (!ready) await init();
-    if (!userId) return;
+    if (!userId) return { ok: false, motivo: "sin-sesion" };
     try {
       const { error } = await window.sb.from("training_progress").insert([
         { student_id: userId, activity, detail: detail || {} },
       ]);
-      if (error) console.error("No se pudo registrar el avance de Entrenamiento:", error);
+      if (error) {
+        console.error("No se pudo registrar el avance de Entrenamiento:", error);
+        return { ok: false, motivo: "error", error };
+      }
+      return { ok: true };
     } catch (e) {
       console.error("No se pudo registrar el avance de Entrenamiento:", e);
+      return { ok: false, motivo: "error", error: e };
     }
   }
 
