@@ -638,6 +638,7 @@
 </div>
 
 <script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
 <script>
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
@@ -1795,6 +1796,11 @@ async function requireLoginThenGate(){
 }
 
 requireLoginThenGate();
+
+/* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo
+   y el número de fila a la izquierda, para que se entienda hacia dónde avanza la
+   posición. Se repintan solas cada vez que la página redibuja el tablero. */
+if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('board4'));
 </script>
 </body>
 </html>

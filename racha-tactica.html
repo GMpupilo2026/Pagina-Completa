@@ -137,6 +137,7 @@
         </div>
     </footer>
     <script src="js/main.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
     <script>
         let session = null, profile = null;
         let game = new Chess();
@@ -407,6 +408,11 @@
             document.getElementById("app").classList.remove("hidden");
         }
         init();
-    </script>
+    
+/* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo
+   y el número de fila a la izquierda, para que se entienda hacia dónde avanza la
+   posición. Se repintan solas cada vez que la página redibuja el tablero. */
+if (window.Coordenadas) Coordenadas.aplicar(document.getElementById('board'));
+</script>
 </body>
 </html>

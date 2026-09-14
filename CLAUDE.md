@@ -137,6 +137,21 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   herramientas/diagnostico-pdf.js`, con playwright instalado) o el papel deja de
   coincidir con la pantalla.
 
+## Coordenadas en los tableros
+
+`js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
+fila de abajo y el número de fila en la columna izquierda, dentro de las casillas
+del borde (no cambia la maqueta). Está en todos los tableros de ejercicios:
+Aprende, 4×4, Mates, Táctica, Ejercicios por tema, Practicar, Desafíos, el
+diagnóstico, Concentración, Racha táctica y ¡Te reto!
+
+- Se llama una vez por página: `Coordenadas.aplicar(document.getElementById('board'))`.
+  Un observador repinta las etiquetas cada vez que la página redibuja el tablero.
+- Requisito: cada casilla debe llevar su nombre en `data-square`. Lee ese nombre,
+  no la posición, así que funciona con el tablero girado y con el 4×4.
+- Las etiquetas son `<span class="coord-etiqueta">` dentro de la casilla: si algún
+  código cuenta `span` dentro del tablero, tiene que excluirlas.
+
 ## Accesibilidad
 
 Buena parte del sitio tiene "modo adaptado" (`js/adaptive-mode.js`) para alumnos
