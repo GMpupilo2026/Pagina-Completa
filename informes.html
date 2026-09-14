@@ -109,6 +109,7 @@
                         <option value="practicar">🏆 Practicar</option>
                         <option value="mates">♚ Mates</option>
                         <option value="tactica">⚔️ Táctica</option>
+                        <option value="concentracion">🧠 Concentración</option>
                     </select>
                 </div>
             </div>
@@ -148,7 +149,7 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates y Táctica, por alumno.</p>
+                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
@@ -159,7 +160,8 @@
                                     <th class="py-2 pr-4 font-semibold">⚡ Mejor Coordenadas</th>
                                     <th class="py-2 pr-4 font-semibold">🏆 Practicar</th>
                                     <th class="py-2 pr-4 font-semibold">♚ Mates</th>
-                                    <th class="py-2 font-semibold">⚔️ Táctica</th>
+                                    <th class="py-2 pr-4 font-semibold">⚔️ Táctica</th>
+                                    <th class="py-2 font-semibold">🧠 Concentración</th>
                                 </tr>
                             </thead>
                             <tbody id="entreno-table-body"></tbody>
@@ -247,7 +249,8 @@
         // Coordenadas entre todos sus modos, las series de Practicar
         // completadas con su mejor puntuación en estrellas (1-3) cada una,
         // las posiciones de Mates resueltas (distintas) por categoría (mate
-        // en 1/2/3), y las posiciones de Táctica resueltas (distintas) en
+        // en 1/2/3), y las posiciones de Táctica resueltas (distintas) y los
+        // ejercicios de Concentración resueltos (distintos por nivel) en
         // total (por tema: última línea, enroque corto/largo, columnas y
         // diagonales, ataque doble).
         function summarizeTrainingProgress(rows) {
@@ -256,6 +259,7 @@
             const practiceSets = {}; // set_id -> mejores estrellas (1-3) logradas
             const matesSolved = { mate1: new Set(), mate2: new Set(), mate3: new Set() };
             const tacticaSolved = new Set();
+            const concentracionHechos = new Set(); // "nivel-ejercicio": un ejercicio repetido cuenta una vez
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
@@ -267,6 +271,8 @@
                     matesSolved[d.category].add(d.puzzle_id);
                 } else if (r.activity === "tactica" && d.puzzle_id) {
                     tacticaSolved.add(d.puzzle_id);
+                } else if (r.activity === "concentracion" && d.nivel && d.ejercicio) {
+                    concentracionHechos.add(d.nivel + "-" + d.ejercicio);
                 }
             });
             const practiceValues = Object.values(practiceSets);
@@ -277,6 +283,7 @@
                 practiceCompleted: practiceValues.length, practiceStars,
                 matesTotal, mate1: matesSolved.mate1.size, mate2: matesSolved.mate2.size, mate3: matesSolved.mate3.size,
                 tacticaTotal: tacticaSolved.size,
+                concentracionTotal: concentracionHechos.size,
             };
         }
 
@@ -332,7 +339,8 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
-                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas")
+                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
 
             const historyEl = document.getElementById("student-history");
@@ -464,7 +472,7 @@
             const entrenoBody = document.getElementById("entreno-table-body");
             entrenoBody.innerHTML = "";
             if (!students.length) {
-                entrenoBody.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+                entrenoBody.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
                     const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
@@ -476,8 +484,9 @@
                     const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdCoord.textContent = entreno.bestCoord || "—";
                     const tdPractice = document.createElement("td"); tdPractice.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
                     const tdMates = document.createElement("td"); tdMates.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdMates.textContent = entreno.matesTotal ? `${entreno.matesTotal} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3})` : "—";
-                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 text-brand-500 dark:text-brand-400"; tdTactica.textContent = entreno.tacticaTotal || "—";
-                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates, tdTactica);
+                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdTactica.textContent = entreno.tacticaTotal || "—";
+                    const tdConcentracion = document.createElement("td"); tdConcentracion.className = "py-2 text-brand-500 dark:text-brand-400"; tdConcentracion.textContent = entreno.concentracionTotal || "—";
+                    tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates, tdTactica, tdConcentracion);
                     entrenoBody.appendChild(tr);
                 });
             }
@@ -525,7 +534,8 @@
                 statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
-                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas")
+                statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
             );
 
             const historyEl = document.getElementById("student-history");
@@ -556,6 +566,7 @@
             practicar: "🏆 Practicar — series completadas",
             mates: "♚ Mates resueltos",
             tactica: "⚔️ Táctica — posiciones resueltas",
+            concentracion: "🧠 Concentración — ejercicios resueltos",
         };
 
         // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
@@ -618,6 +629,7 @@
                         else if (topic === "practicar") { value = entreno.practiceCompleted; label = value ? `${value} series (${entreno.practiceStars}⭐)` : "—"; }
                         else if (topic === "mates") { value = entreno.matesTotal; label = value ? `${value} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)` : "—"; }
                         else if (topic === "tactica") { value = entreno.tacticaTotal; label = value ? String(value) : "—"; }
+                        else if (topic === "concentracion") { value = entreno.concentracionTotal; label = value ? value + " ejercicios" : "—"; }
                         return { name: s.full_name || s.email, value, label };
                     })
                     .sort((a, b) => b.value - a.value)
