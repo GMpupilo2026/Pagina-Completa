@@ -151,18 +151,18 @@ window.PlanEntrenamiento = (function () {
   const AREA_POR_ID = {};
   AREAS.forEach((a) => { AREA_POR_ID[a.id] = a; });
 
-  // Tramos de nivel. El rango de fuerza es orientativo y así se muestra siempre:
-  // ubica al alumno para elegir material, no certifica un rating.
+  // Tramos de nivel, de menor a mayor. El rango de fuerza es orientativo y así
+  // se muestra siempre: ubica al alumno para elegir material, no certifica un rating.
   const NIVELES = [
-    { clave: 'iniciacion',  desde: 0,  etiqueta: 'Iniciación',   rango: 'menos de 800 aprox.',
+    { clave: 'principiante', desde: 0,  etiqueta: 'Principiante', rango: 'menos de 800 aprox.',
       descripcion: 'Está aprendiendo las reglas y a no dejar piezas. El objetivo de estas semanas es jugar sin errores de reglamento y contar bien el material.' },
-    { clave: 'principiante', desde: 30, etiqueta: 'Principiante', rango: '800 a 1100 aprox.',
+    { clave: 'basico',       desde: 30, etiqueta: 'Básico',       rango: '800 a 1100 aprox.',
       descripcion: 'Ya juega partidas completas. Toca asentar la táctica básica y los mates elementales: es lo que decide sus partidas hoy.' },
     { clave: 'intermedio',   desde: 50, etiqueta: 'Intermedio',   rango: '1100 a 1400 aprox.',
       descripcion: 'Tiene base. Ahora los puntos se ganan con finales, planes y cálculo ordenado, más que con nuevas aperturas.' },
     { clave: 'avanzado',     desde: 70, etiqueta: 'Avanzado',     rango: '1400 a 1700 aprox.',
       descripcion: 'Juega bien en general. Conviene trabajar por debilidades concretas y preparar torneos con partidas largas analizadas.' },
-    { clave: 'competitivo',  desde: 85, etiqueta: 'Competitivo',  rango: '1700 o más aprox.',
+    { clave: 'experto',      desde: 85, etiqueta: 'Experto',      rango: '1700 o más aprox.',
       descripcion: 'Nivel de competencia. El plan debe apuntar a repertorio propio, finales técnicos y análisis sistemático de las partidas.' },
   ];
 
@@ -205,11 +205,11 @@ window.PlanEntrenamiento = (function () {
   // Minutos diarios sugeridos según el nivel: ni pedirle una hora a quien recién
   // empieza, ni quedarse corto con quien ya compite.
   const RUTINA = {
-    iniciacion: '15 minutos al día, 4 días por semana',
-    principiante: '20 minutos al día, 5 días por semana',
+    principiante: '15 minutos al día, 4 días por semana',
+    basico: '20 minutos al día, 5 días por semana',
     intermedio: '30 minutos al día, 5 días por semana',
     avanzado: '40 minutos al día, 5 días por semana',
-    competitivo: '1 hora al día, 6 días por semana',
+    experto: '1 hora al día, 6 días por semana',
   };
 
   /* Plan de cuatro semanas. La regla pedagógica: una sola área por semana (dos

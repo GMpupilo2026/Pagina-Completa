@@ -116,7 +116,13 @@ function bloqueItem(item, n) {
 }
 
 function respuestaCorrecta(item) {
-  if (item.tipo === "jugada") return `${item.solucion.from}–${item.solucion.to}${item.solucion.promotion ? "=D" : ""}`;
+  if (item.tipo === "jugada") {
+    // Algunos ítems aceptan más de una jugada para el mismo enunciado (ver
+    // `alternas` en js/diagnostico-items.js): se listan todas, separadas por "o".
+    return [item.solucion].concat(item.alternas || [])
+      .map((j) => `${j.from}–${j.to}${j.promotion ? "=D" : ""}`)
+      .join(" o ");
+  }
   if (item.tipo === "casilla") return item.solucion;
   return LETRAS[ordenDe(item).indexOf(item.correcta)];
 }
@@ -179,8 +185,8 @@ const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
 <div class="portada">
   <p class="marca">Ajedrez Integral · Academia</p>
   <h1>Diagnóstico de nivel</h1>
-  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 32 ejercicios que mide ocho áreas del juego —de las reglas a los finales— y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
-  <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las 32 posiciones y respuestas de este cuadernillo son las mismas del sitio, verificadas con motor.</p>
+  <p style="font-size:12pt; max-width:130mm; color:#334e68;">Prueba de 56 ejercicios que mide ocho áreas del juego —de las reglas a los finales— y devuelve un nivel estimado y un plan de estudio de cuatro semanas.</p>
+  <p class="apagado" style="max-width:130mm; margin-top:6mm;">Versión imprimible de la prueba que los alumnos hacen en línea en Entrenamiento › Aprende › Asignaciones. Las ${ITEMS.length} posiciones y respuestas de este cuadernillo son las mismas del sitio, verificadas con motor.</p>
   <div class="datos">
     <div>Alumno: <span class="raya larga"></span></div>
     <div>Fecha: <span class="raya"></span> &nbsp;&nbsp; Grupo: <span class="raya"></span></div>

@@ -1,6 +1,6 @@
 /* ===== Ajedrez Integral — Banco de ítems del diagnóstico de nivel =====
  *
- * 32 ítems repartidos en las 8 áreas de js/plan-entrenamiento.js (4 por área),
+ * 56 ítems repartidos en las 8 áreas de js/plan-entrenamiento.js (7 por área),
  * con tres niveles de dificultad (peso 1, 2 y 3). Se mezclan dos formas de
  * preguntar, porque miden cosas distintas:
  *   - "opcion": lo que el alumno SABE (conceptos, reglas, criterios), a veces
@@ -18,6 +18,15 @@
  * En todas las posiciones juegan las blancas: el alumno siempre mira el
  * tablero desde el mismo lado, que es una cosa menos que descifrar mientras se
  * le mide otra.
+ *
+ * Ítems de tipo "jugada"/"casilla" con más de una respuesta válida: además de
+ * `solucion` (la que se muestra en la corrección) pueden traer `alternas`, un
+ * arreglo con las demás jugadas/casillas que también cumplen el enunciado tal
+ * cual está escrito. `esCorrecta()` en entreno/diagnostico.html y
+ * `respuestaCorrecta()` en herramientas/diagnostico-pdf.js aceptan cualquiera
+ * de las dos. Antes de asumir que una jugada es la ÚNICA que sirve, hay que
+ * comprobarlo contra TODAS las jugadas legales de la posición (no solo las
+ * de la misma pieza): así se encontró y se corrigió el caso de `tac_descubierto`.
  */
 window.DIAGNOSTICO_ITEMS = [
   /* ---------------- Reglas y movimientos ---------------- */
@@ -57,6 +66,37 @@ window.DIAGNOSTICO_ITEMS = [
     solucion: { from: 'e5', to: 'd6' },
     explica: 'La captura al paso solo se puede hacer inmediatamente después del avance doble del peón rival.',
     prueba: 'la jugada es legal y su bandera incluye la captura al paso (e)',
+  },
+  {
+    id: 'reg_casillas', area: 'reglas', peso: 1, tipo: 'opcion',
+    enunciado: '¿Cuántas casillas tiene un tablero de ajedrez?',
+    opciones: ['60', '64', '72', '81'],
+    correcta: 1,
+    explica: 'El tablero es una cuadrícula de 8×8 = 64 casillas: 32 claras y 32 oscuras.',
+  },
+  {
+    id: 'reg_torre_recorrido', area: 'reglas', peso: 1, tipo: 'opcion',
+    enunciado: '¿Cómo se mueve la torre?',
+    opciones: [
+      'En línea recta por su fila o su columna, tantas casillas como quiera mientras estén libres.',
+      'En diagonal, sin límite de casillas.',
+      'En forma de L, como el caballo.',
+      'Una sola casilla por turno, en cualquier dirección.',
+    ],
+    correcta: 0,
+    explica: 'La torre se detiene en la primera pieza que encuentra en su camino: no puede saltar, a diferencia del caballo.',
+  },
+  {
+    id: 'reg_promocion', area: 'reglas', peso: 2, tipo: 'opcion',
+    enunciado: 'Un peón que llega a la última fila puede coronar en…',
+    opciones: [
+      'Dama, torre, alfil o caballo (nunca rey ni peón).',
+      'Solo dama.',
+      'Solo dama o caballo.',
+      'Cualquier pieza, incluido el rey.',
+    ],
+    correcta: 0,
+    explica: 'Coronar en dama es lo más frecuente, pero elegir torre, alfil o caballo a veces evita un ahogado o da un mate más rápido.',
   },
 
   /* ---------------- Valor del material ---------------- */
@@ -99,6 +139,37 @@ window.DIAGNOSTICO_ITEMS = [
     ],
     correcta: 0,
     explica: 'Torre (5) por alfil o caballo (3) se llama "ganar la calidad". Conviene salvo que la posición diga lo contrario.',
+  },
+  {
+    id: 'mat_dama_valor', area: 'material', peso: 1, tipo: 'opcion',
+    enunciado: '¿Cuál es el valor aproximado de la dama?',
+    opciones: ['5', '7', '9', '13'],
+    correcta: 2,
+    explica: 'La dama vale aproximadamente 9 peones: es la pieza más poderosa del tablero.',
+  },
+  {
+    id: 'mat_dos_torres_vs_dama', area: 'material', peso: 2, tipo: 'opcion',
+    enunciado: '¿Qué suele valer más: dos torres o una dama?',
+    opciones: [
+      'Dos torres (10 puntos) suelen ser algo más fuertes que una dama (9), aunque depende de la posición.',
+      'Una dama siempre gana a dos torres, sin excepción.',
+      'Da exactamente igual en cualquier posición.',
+      'Dos torres nunca pueden ganarle a una dama.',
+    ],
+    correcta: 0,
+    explica: 'Como referencia de valores, dos torres superan ligeramente a una dama, pero la coordinación de las piezas pesa tanto como la suma de puntos.',
+  },
+  {
+    id: 'mat_pareja_alfiles', area: 'material', peso: 3, tipo: 'opcion',
+    enunciado: '¿Por qué se considera valiosa la "pareja de alfiles" en posiciones abiertas?',
+    opciones: [
+      'Porque juntos controlan casillas de ambos colores y se complementan; uno solo únicamente domina las de su color.',
+      'Porque un alfil vale más que un caballo en cualquier posición.',
+      'Porque los alfiles no se pueden cambiar por otras piezas.',
+      'Porque solo pueden atacar al rey rival.',
+    ],
+    correcta: 0,
+    explica: 'Un solo alfil solo controla casillas de un color; con los dos, un jugador puede dominar todo el tablero, sobre todo con pocos peones que bloqueen las diagonales.',
   },
 
   /* ---------------- Principios de apertura ---------------- */
@@ -146,6 +217,32 @@ window.DIAGNOSTICO_ITEMS = [
     explica: 'Con las piezas menores del flanco de rey ya fuera, enrocar es casi siempre la mejor jugada disponible.',
     prueba: 'la jugada es legal y su bandera incluye el enroque corto (k)',
   },
+  {
+    id: 'ap_espanola', area: 'apertura', peso: 1, tipo: 'opcion',
+    enunciado: '1.e4 e5 2.Cf3 Cc6 3.Ab5 corresponde a la apertura…',
+    opciones: ['Española (Ruy López)', 'Siciliana', 'Francesa', 'Escocesa'],
+    correcta: 0,
+    explica: 'Esa secuencia es la Apertura Española o Ruy López, una de las más antiguas y estudiadas del ajedrez.',
+  },
+  {
+    id: 'ap_siciliana', area: 'apertura', peso: 2, tipo: 'opcion',
+    enunciado: '1.e4 c5 corresponde a la Defensa…',
+    opciones: ['Siciliana', 'Caro-Kann', 'Francesa', 'Pirc'],
+    correcta: 0,
+    explica: '1.e4 c5 es la Defensa Siciliana: la respuesta más popular y combativa contra 1.e4.',
+  },
+  {
+    id: 'ap_gambito', area: 'apertura', peso: 3, tipo: 'opcion',
+    enunciado: '¿Cuál es la idea principal detrás de un gambito?',
+    opciones: [
+      'Sacrificar material temporalmente a cambio de ventaja de desarrollo o iniciativa.',
+      'Ganar una pieza gratis sin ninguna compensación.',
+      'Evitar por completo el desarrollo de piezas.',
+      'Forzar tablas lo antes posible.',
+    ],
+    correcta: 0,
+    explica: 'En un gambito se entrega material (normalmente un peón) a cambio de más desarrollo, control del centro o iniciativa.',
+  },
 
   /* ---------------- Táctica ---------------- */
   {
@@ -173,8 +270,9 @@ window.DIAGNOSTICO_ITEMS = [
     enunciado: 'Mueve el caballo de manera que descubras jaque y de paso ataques la dama negra.',
     fen: '4k3/1q6/8/8/4N3/8/8/4R1K1 w - - 0 1',
     solucion: { from: 'e4', to: 'c5' },
-    explica: 'En el ataque descubierto la pieza que se aparta puede ir a robar donde quiera: el rival está obligado a atender el jaque.',
-    prueba: 'tras la jugada las negras están en jaque y el caballo ataca la casilla de la dama',
+    alternas: [{ from: 'e4', to: 'd6' }],
+    explica: 'En el ataque descubierto la pieza que se aparta puede ir a robar donde quiera: el rival está obligado a atender el jaque. Aquí el caballo tiene dos saltos que sirven: Cc5+ y Cd6+ atacan la dama por igual (los otros seis saltos también dan jaque, pero no amenazan la dama).',
+    prueba: 'las 8 jugadas legales del caballo descubren jaque de la torre (cualquier salto lo hace); de esas 8, se comprobó cuáles además atacan la casilla b7: solo Cc5+ y Cd6+ lo hacen (las otras seis — Cc3+, Cd2+, Cf2+, Cg3+, Cg5+, Cf6+ — dan jaque pero no atacan la dama). Verificado contra las 19 jugadas legales totales de la posición (también las de la torre y el rey), no solo las del caballo.',
   },
   {
     id: 'tac_revisar', area: 'tactica', peso: 2, tipo: 'opcion',
@@ -187,6 +285,33 @@ window.DIAGNOSTICO_ITEMS = [
     ],
     correcta: 0,
     explica: 'Jaques, capturas y amenazas — en ese orden, primero las del rival y luego las tuyas. Es la rutina que evita casi todos los descuidos.',
+  },
+  {
+    id: 'tac_horquilla2', area: 'tactica', peso: 2, tipo: 'jugada',
+    enunciado: 'Da jaque con el caballo de manera que además ataques la torre negra.',
+    fen: 'r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1',
+    solucion: { from: 'b5', to: 'c7' },
+    explica: 'Cc7+ es una horquilla familiar clásica: jaque al rey y ataque simultáneo a la torre de a8. Las negras tienen que atender el jaque moviendo el rey, y las blancas cobran la torre en la jugada siguiente.',
+    prueba: 'de las 11 jugadas legales de la posición (6 del caballo — Ca7, Cc7, Cd6, Cd4, Cc3, Ca3 — y 5 del rey), solo Cc7 y Cd6 dan jaque; de esas dos, solo Cc7 ataca además la torre de a8.',
+  },
+  {
+    id: 'tac_rayosx', area: 'tactica', peso: 3, tipo: 'opcion',
+    enunciado: '¿Qué es un "rayo X" (o clavada relativa) en ajedrez?',
+    opciones: [
+      'Cuando una pieza ataca a través de otra hasta un objetivo más valioso (o igual de valioso) detrás.',
+      'Cuando dos alfiles se cruzan en el centro del tablero.',
+      'Un tipo especial de enroque.',
+      'Una apertura poco frecuente.',
+    ],
+    correcta: 0,
+    explica: 'El rayo X es una línea de ataque que atraviesa una pieza para llegar a otra detrás, parecido a la clavada pero visto desde el otro lado.',
+  },
+  {
+    id: 'tac_desviacion', area: 'tactica', peso: 2, tipo: 'opcion',
+    enunciado: '¿Cómo se llama la táctica que obliga a una pieza defensora a abandonar la casilla que protegía?',
+    opciones: ['Desviación (eliminación del defensor)', 'Enroque', 'Promoción', 'Ahogado'],
+    correcta: 0,
+    explica: 'La desviación ataca o atrae a la pieza que defiende algo importante para forzarla a moverse, dejando esa casilla o pieza sin protección.',
   },
 
   /* ---------------- Mates y seguridad del rey ---------------- */
@@ -226,6 +351,32 @@ window.DIAGNOSTICO_ITEMS = [
     correcta: 0,
     explica: 'Una casilla de escape cuesta un tiempo y evita el mate del pasillo, que es de los finales más frecuentes en torneos escolares.',
   },
+  {
+    id: 'mate_definicion', area: 'mate', peso: 1, tipo: 'opcion',
+    enunciado: '¿Qué significa exactamente "jaque mate"?',
+    opciones: [
+      'El rey está en jaque y no existe ninguna jugada legal para librarlo.',
+      'El rey está en jaque pero todavía puede escapar.',
+      'Se acabó el tiempo en el reloj.',
+      'El rey fue capturado físicamente del tablero.',
+    ],
+    correcta: 0,
+    explica: 'El rey nunca llega a ser capturado: la partida termina en el instante en que un jaque no tiene ninguna respuesta legal.',
+  },
+  {
+    id: 'mate_sofocado', area: 'mate', peso: 3, tipo: 'opcion',
+    enunciado: '¿Cómo se llama el mate en el que el rey está completamente rodeado por sus propias piezas y un caballo da el jaque final?',
+    opciones: ['Mate ahogado', 'Mate sofocado (smothered mate)', 'Mate del pasillo', 'Mate de la escalera'],
+    correcta: 1,
+    explica: 'En el mate sofocado, el rey queda bloqueado por sus propias piezas y un caballo rival —imposible de capturar ni bloquear— le da jaque.',
+  },
+  {
+    id: 'mate_escalera', area: 'mate', peso: 2, tipo: 'opcion',
+    enunciado: '¿Cómo se llama la técnica de dar jaque mate con dos torres (o dama y torre), empujando al rey rival fila a fila hacia el borde del tablero?',
+    opciones: ['Mate de la escalera (staircase mate)', 'Mate ahogado', 'Enroque largo', 'Gambito de dama'],
+    correcta: 0,
+    explica: 'Dos piezas de largo alcance se turnan para dar jaque, empujando al rey fila a fila hasta acorralarlo en el borde.',
+  },
 
   /* ---------------- Finales ---------------- */
   {
@@ -264,6 +415,42 @@ window.DIAGNOSTICO_ITEMS = [
     ],
     correcta: 0,
     explica: 'Philidor defiende (tablas) y Lucena gana (el puente). Saber cuál es cuál salva y gana muchos medios puntos.',
+  },
+  {
+    id: 'fin_rey_activo', area: 'finales', peso: 1, tipo: 'opcion',
+    enunciado: 'En los finales, ¿qué suele ser más importante que en la apertura?',
+    opciones: [
+      'La actividad del rey, que ahora puede acercarse al centro con seguridad.',
+      'Enrocar lo antes posible.',
+      'Sacar la dama cuanto antes.',
+      'Mover los peones de torre.',
+    ],
+    correcta: 0,
+    explica: 'Con menos piezas en el tablero, el rey deja de estar en peligro constante y se convierte en pieza activa clave, sobre todo en finales de peones.',
+  },
+  {
+    id: 'fin_peon_pasado', area: 'finales', peso: 1, tipo: 'opcion',
+    enunciado: 'Un "peón pasado" es aquel que…',
+    opciones: [
+      'No tiene peones rivales que puedan detenerlo en su columna ni en las columnas vecinas.',
+      'Ya fue capturado por el rival.',
+      'Está clavado por un alfil.',
+      'Se movió dos casillas en su primer avance.',
+    ],
+    correcta: 0,
+    explica: 'Un peón pasado no puede ser detenido por ningún peón rival en su camino a coronar, lo que lo hace muy valioso en los finales.',
+  },
+  {
+    id: 'fin_alfiles_distinto_color', area: 'finales', peso: 3, tipo: 'opcion',
+    enunciado: '¿Qué hace especialmente difícil de ganar un final de alfiles de distinto color, incluso con material de más?',
+    opciones: [
+      'Que el bando con más material a veces no puede ganar porque el alfil rival controla las casillas clave de bloqueo.',
+      'Que los alfiles no pueden moverse en diagonal en los finales.',
+      'Que en ese final los alfiles valen menos que los peones.',
+      'Que en ese final las tablas son imposibles.',
+    ],
+    correcta: 0,
+    explica: 'Estos finales son famosos por sus tablas "de manual": el alfil defensor puede bloquear para siempre las casillas de su color, aunque el rival tenga varios peones de más.',
   },
 
   /* ---------------- Estrategia y planes ---------------- */
@@ -311,6 +498,42 @@ window.DIAGNOSTICO_ITEMS = [
     correcta: 0,
     explica: 'Un caballo bien puesto en la quinta o sexta fila, apoyado por un peón, puede valer más que una torre.',
   },
+  {
+    id: 'est_peon_aislado', area: 'estrategia', peso: 2, tipo: 'opcion',
+    enunciado: '¿Qué es un "peón aislado"?',
+    opciones: [
+      'Un peón sin peones propios en las columnas vecinas que puedan defenderlo.',
+      'Un peón que quedó solo en el tablero porque los demás fueron capturados.',
+      'Un peón a punto de coronar.',
+      'Un peón que se movió dos casillas en su primer avance.',
+    ],
+    correcta: 0,
+    explica: 'Al no tener peones vecinos que lo respalden, el peón aislado suele necesitar protección constante de las piezas, aunque también da movilidad a cambio.',
+  },
+  {
+    id: 'est_alfil_malo', area: 'estrategia', peso: 2, tipo: 'opcion',
+    enunciado: '¿Por qué se dice que un alfil es "malo" en ciertas estructuras de peones?',
+    opciones: [
+      'Porque sus propios peones ocupan casillas del mismo color, bloqueándole las diagonales.',
+      'Porque el alfil no puede capturar piezas rivales.',
+      'Porque en esa estructura el alfil vale menos que un peón.',
+      'Porque no puede moverse en absoluto.',
+    ],
+    correcta: 0,
+    explica: 'Un "alfil malo" queda encerrado por sus propios peones, colocados en casillas del mismo color que el alfil, lo que reduce mucho su actividad.',
+  },
+  {
+    id: 'est_mayoria_flanco', area: 'estrategia', peso: 3, tipo: 'opcion',
+    enunciado: 'En estructuras de peones, ¿qué es una "mayoría de peones" en un flanco?',
+    opciones: [
+      'Tener más peones que el rival en ese sector del tablero, lo que permite crear allí un peón pasado.',
+      'Tener todos los peones propios en la última fila.',
+      'Tener menos peones que el rival en ese sector.',
+      'Un tipo especial de enroque.',
+    ],
+    correcta: 0,
+    explica: 'Una mayoría de peones en un flanco es una ventaja a largo plazo: bien manejada, puede convertirse en un peón pasado que decida el final.',
+  },
 
   /* ---------------- Cálculo y visualización ---------------- */
   {
@@ -352,5 +575,36 @@ window.DIAGNOSTICO_ITEMS = [
     ],
     correcta: 0,
     explica: 'Al calcular, pregúntate siempre: "¿puedo meter un jaque útil antes de recapturar?". Ahí aparecen medio punto y muchas piezas.',
+  },
+  {
+    id: 'cal_torre_bloqueo', area: 'calculo', peso: 1, tipo: 'opcion',
+    enunciado: '¿Puede una torre saltar por encima de otras piezas?',
+    opciones: ['No: se detiene en la primera pieza que encuentra en su camino.', 'Sí, siempre.', 'Solo al enrocar.', 'Solo en su primera jugada.'],
+    correcta: 0,
+    explica: 'Salvo el caballo, ninguna pieza salta por encima de otra: la torre se detiene en la primera pieza que encuentra en su línea de movimiento.',
+  },
+  {
+    id: 'cal_orden_capturas', area: 'calculo', peso: 2, tipo: 'opcion',
+    enunciado: 'Al calcular una serie de capturas en una misma casilla, ¿qué principio general conviene seguir?',
+    opciones: [
+      'Capturar primero con la pieza de menor valor, para no arriesgar piezas valiosas si vienen más cambios.',
+      'Capturar siempre primero con la dama.',
+      'Nunca capturar con peones.',
+      'Capturar siempre con la pieza más valiosa, sin excepción.',
+    ],
+    correcta: 0,
+    explica: 'La regla práctica es "capturar de menor a mayor valor": si la secuencia de cambios se corta a mitad de camino, no arriesgaste tu pieza más valiosa de entrada.',
+  },
+  {
+    id: 'cal_jaques_primero', area: 'calculo', peso: 3, tipo: 'opcion',
+    enunciado: 'En el cálculo de variantes forzadas (jaques, capturas, amenazas), ¿por qué conviene analizar primero los jaques?',
+    opciones: [
+      'Porque limitan mucho las respuestas legales del rival, haciendo el árbol de variantes más manejable.',
+      'Porque el jaque siempre gana la partida.',
+      'Porque no se puede capturar mientras el propio rey está en jaque.',
+      'Porque el jaque solo es obligatorio en los finales.',
+    ],
+    correcta: 0,
+    explica: 'Los jaques son la jugada más forzada posible: reducen mucho las respuestas legales del rival, lo que hace más fácil calcular esa rama con precisión.',
   },
 ];
