@@ -111,7 +111,7 @@ function bloqueItem(item, n) {
     respuesta = '<ol class="opciones">' + ordenDe(item).map((original, i) => `<li><span class="casilla-resp">${LETRAS[i]}</span> ${item.opciones[original]}</li>`).join("") +
       '<li class="no-se"><span class="casilla-resp">?</span> No lo sé todavía</li></ol>';
   } else if (item.tipo === "jugada") {
-    respuesta = '<p class="linea">Escribe la jugada (casilla de salida y de llegada): <span class="raya"></span></p>' +
+    respuesta = '<p class="linea">Escribe <strong>una sola jugada</strong> (casilla de salida y de llegada): <span class="raya"></span></p>' +
       '<p class="linea no-se">…o marca aquí si no la sabes: <span class="casilla-resp">?</span></p>';
   } else if (item.tipo === "casilla") {
     respuesta = '<p class="linea">Escribe la casilla: <span class="raya corta"></span></p>' +

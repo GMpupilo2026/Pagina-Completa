@@ -422,7 +422,11 @@ function pintarItem() {
   } else if (itemActual.tipo === 'casilla') {
     hint.textContent = 'Haz clic en la casilla que responde la pregunta.';
   } else if (itemActual.tipo === 'jugada') {
-    hint.textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
+    // Siempre se responde con UNA jugada, también en los mates en dos o en
+    // tres: se pide la jugada clave, no la secuencia entera. Sin decirlo, el
+    // alumno juega la primera, no pasa nada y se queda sin saber si tiene que
+    // seguir.
+    hint.textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
   }
   opciones.appendChild(botonNoSe());
 }
@@ -527,7 +531,7 @@ function clicEnCasilla(square) {
   if (square === origenElegido) {
     origenElegido = null;
     pintarTablero(juego);
-    document.getElementById('q-hint').textContent = 'Haz clic en la pieza que quieres mover y después en su casilla de destino.';
+    document.getElementById('q-hint').textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
     return;
   }
   const intento = juego.move({ from: origenElegido, to: square, promotion: 'q' });
@@ -538,7 +542,8 @@ function clicEnCasilla(square) {
   }
   seleccion = { from: intento.from, to: intento.to, promotion: intento.promotion, san: intento.san };
   pintarTablero(juego, [intento.from, intento.to]);
-  document.getElementById('q-hint').textContent = `Jugaste ${intento.san}. Puedes rehacerla tocando otra pieza, o seguir.`;
+  document.getElementById('q-hint').textContent =
+    `Jugaste ${intento.san}: esa es tu respuesta y no hace falta jugar más. Puedes cambiarla tocando otra pieza, o seguir.`;
   origenElegido = null;
   document.getElementById('next-btn').disabled = false;
 }
