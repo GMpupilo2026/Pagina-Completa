@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
-    <title>Crazyhouse — Ajedrez Integral</title>
-    <meta name="description" content="Partida de Crazyhouse: las piezas que capturas pasan a tu reserva y puedes soltarlas de vuelta en el tablero.">
+    <title>Ajedrez Estándar — Ajedrez Integral</title>
+    <meta name="description" content="Partida de ajedrez clásico, de toda la vida, en tiempo real.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,12 +35,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
-    <script src="js/crazyhouse-engine.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/board-color-themes.js"></script>
-    <script src="js/crazyhouse-board.js"></script>
+    <!-- Reutiliza el tablero de Niebla de Guerra en modo "espectador" (sin
+         niebla, siempre): es exactamente un tablero de ajedrez normal, sin
+         duplicar la lógica de renderizado en un archivo nuevo. -->
+    <script src="js/niebla-board.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -103,28 +105,23 @@
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
             <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">♞ Crazyhouse</h1>
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">♟️ Ajedrez Estándar</h1>
                 <button id="resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
             </div>
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
-            <!-- Antes de que ambos confirmen que están listos, el reloj no debe correr —
-                 así que el tablero se muestra pero solo con este botón activo, sin poder
-                 mover todavía (ver bothReady() y la condición de interactividad). -->
             <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
-            <div class="flex items-center justify-center gap-2 mb-1">
+            <div class="flex items-center justify-center gap-2 mb-2">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="top-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
             </div>
-            <div id="top-pocket" class="flex justify-center gap-1.5 mb-2 min-h-[3rem]" role="group" aria-label="Reserva del rival"></div>
 
             <div class="flex justify-center">
                 <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
 
-            <div id="bottom-pocket" class="flex justify-center gap-1.5 mt-2 mb-1 min-h-[3rem]" role="group" aria-label="Tu reserva"></div>
-            <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="flex items-center justify-center gap-2 mt-2 mb-6">
                 <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
             </div>
@@ -137,7 +134,6 @@
         </div>
     </div>
 
-    <!-- Elegir pieza al coronar un peón -->
     <div id="promotion-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
         <div class="bg-white dark:bg-brand-900 rounded-xl shadow-xl p-5 text-center">
             <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3">¿A qué pieza coronas?</p>
@@ -145,7 +141,6 @@
         </div>
     </div>
 
-    
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
@@ -163,38 +158,24 @@
     <script>
         let session = null, profile = null, isTeacher = false, room = null, myColor = null, board = null;
         const ROOM_ID = new URLSearchParams(window.location.search).get("room");
-        const playerNames = {}; // id -> nombre para mostrar
+        const playerNames = {};
 
-        function setStatus(text) {
-            document.getElementById("status-banner").textContent = text;
-        }
-
+        function setStatus(text) { document.getElementById("status-banner").textContent = text; }
         function showError(text) {
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("error-text").textContent = text;
             document.getElementById("error-state").classList.remove("hidden");
         }
+        function nameFor(id) { return playerNames[id] || "Alumno"; }
 
-        function nameFor(id) {
-            return playerNames[id] || "Alumno";
-        }
-
-        // El reloj (si la partida tiene uno) no debe arrancar hasta que blancas Y negras
-        // hayan entrado y confirmado que están listas — antes arrancaba desde el momento
-        // en que el profesor creaba la partida, corriendo en vacío mientras los alumnos
-        // ni siquiera habían abierto la página.
-        function bothReady(row) {
-            return !!(row.white_ready && row.black_ready);
-        }
+        function bothReady(row) { return !!(row.white_ready && row.black_ready); }
 
         function updateStatusText() {
             document.getElementById("top-player").textContent = nameFor(myColor === "b" ? room.white_id : room.black_id) + (myColor === "b" ? " (blancas)" : " (negras)");
             document.getElementById("bottom-player").textContent = myColor
                 ? nameFor(profile.id) + (myColor === "w" ? " (blancas) — tú" : " (negras) — tú")
                 : nameFor(room.white_id) + " (blancas)";
-            if (!myColor) {
-                document.getElementById("top-player").textContent = nameFor(room.black_id) + " (negras)";
-            }
+            if (!myColor) document.getElementById("top-player").textContent = nameFor(room.black_id) + " (negras)";
             document.getElementById("resign-btn").classList.toggle("hidden", !myColor || room.status !== "playing");
 
             const readyBtn = document.getElementById("ready-btn");
@@ -206,18 +187,15 @@
                 const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
-                if (!myColor) {
-                    setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
-                } else if (myReady) {
-                    setStatus("Ya confirmaste que estás listo — esperando a " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
-                } else {
-                    setStatus("Toca \"Estoy listo\" cuando puedas empezar a jugar" + (room.initial_seconds != null ? " — el reloj arranca cuando ambos estén listos." : "."));
-                }
+                if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
+                else if (myReady) setStatus("Ya confirmaste que estás listo — esperando a " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                else setStatus("Toca \"Estoy listo\" cuando puedas empezar a jugar" + (room.initial_seconds != null ? " — el reloj arranca cuando ambos estén listos." : "."));
             } else if (!myColor) {
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
                 const myTurn = board.game.turn() === myColor;
-                setStatus(myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                const enJaque = board.game.in_check() && myTurn;
+                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
             }
         }
 
@@ -226,10 +204,6 @@
             const myKey = myColor === "w" ? "white_ready" : "black_ready";
             const otherAlreadyReady = myColor === "w" ? room.black_ready : room.white_ready;
             const patch = { [myKey]: true };
-            // Si el rival ya estaba listo, esta confirmación es la que hace falta para
-            // arrancar de una vez — se incluye en la misma actualización para no depender
-            // de una segunda ida y vuelta (y de paso evita que ambos intenten arrancar el
-            // reloj a la vez si llegan a confirmar casi al mismo tiempo).
             if (otherAlreadyReady && room.initial_seconds != null && !room.clock_updated_at) {
                 patch.clock_updated_at = new Date().toISOString();
             }
@@ -241,13 +215,6 @@
             renderClocks();
         });
 
-        // ---- Reloj (tiempo asignado a cada jugador) ----
-        // El servidor no recibe un "tick" cada segundo: solo guarda cuántos segundos
-        // le quedaban a cada color la última vez que se "congeló" su reloj (crear la
-        // partida o su propia jugada) más desde cuándo corre el reloj de quien tiene
-        // el turno ahora (clock_updated_at). El navegador calcula el tiempo restante
-        // real restando el tiempo transcurrido desde entonces — así todos los que
-        // miran la partida ven el mismo reloj sin sobrecargar la base de datos.
         function formatClock(seconds) {
             if (seconds == null) return "";
             const s = Math.max(0, Math.ceil(seconds));
@@ -273,7 +240,7 @@
                 bottomEl.classList.add("hidden");
                 return;
             }
-            const bottomColor = myColor || "w"; // espectadores ven blancas abajo, igual que updateStatusText()
+            const bottomColor = myColor || "w";
             const topColor = bottomColor === "w" ? "b" : "w";
             const topSeconds = liveTimeLeft(topColor);
             const bottomSeconds = liveTimeLeft(bottomColor);
@@ -289,10 +256,6 @@
             });
         }
 
-        // Si a quien le toca mover se le acabó el reloj, declara ganador al rival.
-        // El filtro .eq("status", "playing") evita que dos navegadores (por ejemplo
-        // ambos jugadores, o un jugador y el profesor mirando) dupliquen el resultado
-        // si detectan el mismo cero casi al mismo tiempo.
         async function checkFlagFall() {
             if (room.status !== "playing" || room.initial_seconds == null) return;
             const turnColor = board.game.turn();
@@ -335,20 +298,13 @@
             const modal = document.getElementById("promotion-modal");
             const optionsEl = document.getElementById("promotion-options");
             optionsEl.innerHTML = "";
-            const pieces = [["q", "♛"], ["r", "♜"], ["b", "♝"], ["n", "♞"]];
             let resolved = false;
-            function finish(piece) {
-                if (resolved) return;
-                resolved = true;
-                modal.classList.add("hidden");
-                callback(piece);
-            }
-            pieces.forEach(([type, glyph]) => {
+            [["q", "♛"], ["r", "♜"], ["b", "♝"], ["n", "♞"]].forEach(([type, glyph]) => {
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "w-12 h-12 text-3xl rounded-lg border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 bg-white dark:bg-brand-800 transition-colors";
                 btn.textContent = glyph;
-                btn.addEventListener("click", () => finish(type));
+                btn.addEventListener("click", () => { if (resolved) return; resolved = true; modal.classList.add("hidden"); callback(type); });
                 optionsEl.appendChild(btn);
             });
             modal.classList.remove("hidden");
@@ -358,10 +314,6 @@
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
-                // Solo quien tiene el turno puede mover (ver _canActNow en
-                // CrazyhouseBoard), así que myColor es siempre quien acaba de jugar.
-                // Se "congela" su reloj: se le resta lo que pasó desde la última vez
-                // que arrancó a correr y se le suma el incremento tipo Fischer.
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
                 const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
@@ -429,17 +381,13 @@
             const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", [room.white_id, room.black_id]);
             (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
 
-            board = new CrazyhouseBoard(
-                document.getElementById("board"),
-                document.getElementById("top-pocket"),
-                document.getElementById("bottom-pocket"),
-                {
-                    interactive: !!myColor && room.status === "playing" && bothReady(room),
-                    myColor: myColor || "w",
-                    onMove: handleLocalMove,
-                    onPromotionNeeded: showPromotionPicker,
-                }
-            );
+            board = new NieblaBoard(document.getElementById("board"), {
+                interactive: !!myColor && room.status === "playing" && bothReady(room),
+                myColor: myColor || "w",
+                spectator: true, // ajedrez estándar: nunca hay niebla, para nadie
+                onMove: handleLocalMove,
+                onPromotionNeeded: showPromotionPicker,
+            });
             board.loadFen(room.fen);
             renderMoveHistory(room.moves);
             updateStatusText();
