@@ -102,6 +102,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"></span>
+                    <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
                     <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
                 </div>
@@ -238,6 +239,7 @@
         </div>
     </footer>
     <script src="js/main.js"></script>
+    <script src="js/clase-elegida.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false, openSession = null;
         // A qué profesor pertenece la clase que se muestra aquí: uno mismo si es
@@ -531,7 +533,14 @@
             }
             profile = profileData;
             isTeacher = profile.role === "profesor";
-            boardOwnerId = isTeacher ? profile.id : profile.teacher_id;
+            if (isTeacher) {
+                boardOwnerId = profile.id;
+            } else {
+                // Con más de un profesor, el alumno elige a cuál clase entra.
+                const { clases, elegida } = await ClaseElegida.resolver();
+                boardOwnerId = elegida;
+                ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clases, elegida);
+            }
 
             const displayName = profile.full_name || profile.email;
             document.getElementById("welcome-name").textContent = displayName;

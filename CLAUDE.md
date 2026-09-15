@@ -75,25 +75,48 @@ posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
 
-## Multi-profesor: cada profesor con sus propios alumnos y su propia clase en vivo
+## Varios profesores por alumno, cada uno con su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
 viendo y gestionando **solo sus propios alumnos asignados** — no toda la
 plataforma — y pudiendo dar clase en vivo al mismo tiempo que otro profesor
 sin pisarse.
 
-- `profiles.teacher_id`: a qué profesor pertenece un alumno (null = sin
-  asignar). Lo decide la persona administradora desde `admin.html`, o queda
-  asignado automático al propio profesor cuando él mismo invita al alumno
-  (`create-student` function). `profiles.grupo` es un texto libre
-  (equipo/subgrupo) puramente organizativo, sin efecto en permisos.
-- `public.my_profile()`: función `SECURITY DEFINER` que da el rol/is_admin/
-  teacher_id de quien llama, sin volver a pasar por RLS de `profiles` —
-  la usan casi todas las políticas nuevas. Antes, TODA política de
-  "profesor" era `role = 'profesor'` a secas (cualquier profesor veía y
-  gestionaba absolutamente todo); ahora casi todas exigen además que la fila
-  pertenezca a un alumno con `teacher_id = auth.uid()` (o que quien llama
-  sea `is_admin`, que sigue viendo todo).
+- **`public.profile_teachers` (alumno, profesor) es la verdad**: un alumno
+  puede tener **varios** profesores y todos lo ven. Lo decide la persona
+  administradora desde `admin.html`, o queda asignado automático a quien lo
+  invita (`create-student`). Nadie escribe esa tabla desde el navegador —no
+  tiene política de insert/update/delete—: solo las Edge Functions con la
+  service role, igual que el cupo de invitaciones.
+- **`profiles.teacher_id` ya NO decide permisos.** Se quedó con un papel más
+  chico: el **profesor principal**, o sea el que viene preseleccionado cuando el
+  alumno entra a clase. Lo mantiene solo el trigger
+  `profile_teachers_sincroniza_principal`: al sumarle el primer profesor queda
+  ese, y al quitarle el principal pasa a otro de los que le queden o a NULL. Los
+  dos no pueden contradecirse porque nadie lo escribe a mano.
+- `profiles.grupo` es un texto libre (equipo/subgrupo) puramente organizativo,
+  sin efecto en permisos.
+- `public.my_profile()`: función `SECURITY DEFINER` que da el rol/is_admin de
+  quien llama sin volver a pasar por la RLS de `profiles`. **Su tercera
+  columna, `teacher_id`, ya no la usa ninguna política** (se dejó para no tener
+  que volver a crear las 66 políticas que la nombran en su alias).
+- **Las dos preguntas que hace toda política de profesor** tienen su función,
+  también `SECURITY DEFINER` para no morderse la cola con la RLS de `profiles`:
+  `soy_profesor_de(alumno)` ("este alumno es mío") y `es_mi_profesor(uuid)`
+  ("esto lo creó/es de uno de mis profesores"), más `soy_profesor_de_alguno()`
+  y `soy_profesor_de_todos()` para las partidas, y `es_companero(otro)` para
+  "compartimos profesor". **Al escribir una política nueva se usan estas, nunca
+  la columna.** Antes, TODA política de "profesor" era `role = 'profesor'` a
+  secas (cualquier profesor veía y gestionaba absolutamente todo).
+- Reescribir esto fueron **38 políticas** de las 68 que nombraban `teacher_id`;
+  las otras 30 solo la mencionaban dentro del alias de `my_profile()` y no
+  hacía falta tocarlas.
+- **`es_companero()` arregló una fuga que ya existía**: la regla de "compañeros
+  de clase" era "tenemos el mismo `teacher_id`", y un profesor también tenía
+  `teacher_id` puesto (el de quien lo creó). Resultado: un profesor nuevo, sin
+  un solo alumno asignado, veía los 30 perfiles y las 56 respuestas de la clase
+  entera de quien lo creó. Ahora `profile_teachers` solo tiene alumnos como
+  `student_id`, así que un profesor nunca es "compañero" de nadie.
 - **Tablero en vivo**: `game_state` dejó de ser una fila única global
   (`CHECK (id = 1)`) — ahora cada profesor tiene su propia fila
   (`owner_id`, único). `variant_nodes` igual, vía `teacher_id`. `questions`,
@@ -102,14 +125,27 @@ sin pisarse.
   globales (antes, por ejemplo, un profesor cerraba SIN darse cuenta la
   pregunta o la ronda de práctica abierta de cualquier otro profesor).
 - En el cliente (`sesion.html`, `clases.html`), todo gira alrededor de
-  `boardOwnerId`: el propio id si es profesor, o `profile.teacher_id` si es
+  `boardOwnerId`: el propio id si es profesor, o **la clase que eligió** si es
   alumno — todas las consultas, canales de Realtime y el canal de presencia
-  (`clases-presence:<boardOwnerId>`, antes un string fijo) se filtran por
-  ahí. Un alumno sin `teacher_id` ve un aviso pidiendo que se le asigne uno,
-  en vez de mezclarse con la clase de otro profesor.
-- `class_chat_messages` no tiene tablero ni sesión: se filtra directo por
-  `profiles.teacher_id` del alumno del hilo (el chat es continuo, no "de una
-  clase puntual").
+  (`clases-presence:<boardOwnerId>`) se filtran por ahí. Un alumno sin ningún
+  profesor ve un aviso pidiendo que se le asigne uno, en vez de mezclarse con
+  la clase de otro.
+- **`js/clase-elegida.js` decide en qué clase está mirando el alumno**: la que
+  eligió la última vez, o —la primera vez— la que tiene clase abierta ahora, o
+  la de su profesor principal. El selector **solo aparece con dos o más
+  profesores**: con uno sería un control que no hace nada. Se lo sirve
+  `public.mis_clases()`, que dice de cada profesor si tiene clase abierta en
+  este momento.
+- **Cambiar de clase recarga la página, a propósito.** Todo cuelga de
+  `boardOwnerId`; cambiarlo en caliente obligaría a desmontar y volver a montar
+  cada consulta, cada canal de Realtime y el de presencia, y cualquiera que
+  quedara colgado del profesor anterior seguiría recibiendo su clase — justo lo
+  que este cambio viene a evitar. La clase elegida vive en `localStorage` y
+  **no** se sincroniza entre aparatos: es de dónde se está mirando, como el
+  tema.
+- `class_chat_messages` no tiene tablero ni sesión: se filtra directo por quién
+  es profesor del alumno del hilo (el chat es continuo, no "de una clase
+  puntual"). Con dos profesores, los dos ven y escriben en el mismo hilo.
 - **Quién ve a quién ya lo hace cumplir la base, no las páginas.** Está
   comprobado impersonando roles en SQL: un profesor solo recibe sus alumnos en
   `profiles` y solo sus filas en `training_progress`, `training_state`,
@@ -117,12 +153,15 @@ sin pisarse.
   Las funciones de informes (ver abajo) piden los alumnos **sin filtro de
   profesor a propósito**: el filtro es de la RLS. Si algún día hay que tocarlo,
   se toca la política, no la consulta.
-- **`teacher_id` no lo puede cambiar el propio alumno.** `profiles_update_own`
+- **Sus profesores no los puede cambiar el propio alumno.** `profiles_update_own`
   deja a cada quien editar su fila, y el trigger
-  `protect_profiles_identity_columns` solo cubría `role`, `email` e `is_admin`:
-  un alumno podía asignarse a otro profesor y aparecer en su clase y en sus
-  informes. Ahora el trigger también revierte `teacher_id`,
-  `invitaciones_max` e `invitaciones_usadas`.
+  `protect_profiles_identity_columns` revierte `role`, `email`, `is_admin`,
+  `teacher_id`, `invitaciones_max` e `invitaciones_usadas`. Y a
+  `profile_teachers`, que es lo que de verdad manda, no se puede escribir desde
+  el navegador. El trigger respeta la marca local
+  `ajedrez.sincronizando_profesores` **solo** para `teacher_id`, para no
+  deshacer en silencio lo que pone el trigger del principal — el mismo fallo
+  callado que tuvo el contador de invitaciones.
 - **Cupo de invitaciones por profesor.** `profiles.invitaciones_max` es cuántos
   alumnos nuevos puede invitar por su cuenta desde la Academia, y
   `invitaciones_usadas` lo que lleva gastado. Lo fija quien administra desde
@@ -140,13 +179,24 @@ sin pisarse.
     tenía un fallo silencioso — el trigger deshacía el aumento y la función
     igual devolvía `ok`, porque el `RETURNING` trae la fila ya revertida y
     `found` sigue siendo cierto.
-- **Asignar alumnos se hace en lote.** En `admin.html`, además del selector por
-  fila, se pueden marcar alumnos (o un grupo entero desde su encabezado) y
-  mandarlos a un profesor con la acción `assign_bulk` de `admin-manage-users`,
-  que además se asegura de que todos sean alumnos. Así se reparte de verdad:
+- **Asignar alumnos se hace en lote.** En `admin.html`, cada alumno tiene una
+  etiqueta por profesor con su ✕ para quitarlo y un selector para sumar otro
+  (manda la lista completa con `set_teachers`: lo que no esté, se quita).
+  Además se pueden marcar alumnos (o un grupo entero desde su encabezado) y
+  mandarlos a un profesor con `assign_bulk`, que ahora lleva **modo**:
+  *agregar* ese profesor a los que ya tienen, *reemplazar* a todos por él, o
+  *quitarlo*. Se asegura de que todos sean alumnos. Así se reparte de verdad:
   "todo 7° B al profesor nuevo", no fila por fila. El panel "Profesores" de esa
-  misma página muestra cuántos alumnos tiene cada uno y su cupo, y **avisa si
-  hay alumnos sin profesor asignado**: esos no salen en los informes de nadie.
+  misma página muestra cuántos alumnos tiene cada uno —un alumno compartido
+  cuenta para los dos— y su cupo, y **avisa si hay alumnos sin ningún profesor
+  asignado**: esos no salen en los informes de nadie. Al agrupar la lista por
+  profesor se usa el principal, con un "(+ otros profesores)" cuando tiene más.
+- **Al tocar esto, correr `node herramientas/verificar-varios-profesores.js`**
+  (con el sitio en localhost:8777 y playwright). Comprueba en un navegador de
+  verdad lo que manda el panel —las etiquetas, quitar y agregar, los tres modos
+  del lote, los conteos— y qué clase elige `js/clase-elegida.js`. Lo que hace
+  cumplir la base se comprobó impersonando roles en SQL, con una foto de "quién
+  ve qué" antes y después: el único cambio fue el que se buscaba.
 - **Regla permanente: todo lo que se haga para los profesores se hace también
   para quien administra**, con el mismo alcance que ya le da la base (el
   profesor ve lo suyo; quien administra, todo). En la práctica: `informes.html`

@@ -672,12 +672,18 @@
 
         /* Con quién puedo jugar: la misma regla que aplica la base
            (public.pueden_jugar_entre_si). Acá es solo para no mostrar botones que
-           después van a fallar; quien manda es la base. */
+           después van a fallar; quien manda es la base.
+           Cada quien anuncia en el canal de presencia la lista de sus profesores
+           —un alumno puede tener varios—, así que "la misma clase" es compartir
+           al menos uno. */
+        let misProfesores = [];
+
         function puedoJugarCon(otro) {
             if (!otro || otro.id === profile.id) return false;
             if (profile.is_admin || otro.is_admin) return true;
-            if (profile.teacher_id && profile.teacher_id === otro.teacher_id) return true;
-            if (profile.teacher_id === otro.id || otro.teacher_id === profile.id) return true;
+            const suyos = otro.profesores || [];
+            if (misProfesores.some((t) => suyos.includes(t))) return true;   // compañeros
+            if (misProfesores.includes(otro.id) || suyos.includes(profile.id)) return true;  // alumno con su profesor
             return false;
         }
 
@@ -703,6 +709,12 @@
             prepararSelectoresDeReto();
             document.getElementById("en-linea-caja").classList.remove("hidden");
 
+            // Mis profesores, para poder decir quién es compañero mío. Un
+            // profesor no tiene profesores: su lista queda vacía y a él lo
+            // encuentran los suyos por el otro lado de la regla.
+            const { data: clases } = await sb.rpc("mis_clases");
+            misProfesores = (clases || []).map((c) => c.profesor_id);
+
             canalPresencia = sb.channel(CANAL_PRESENCIA, { config: { presence: { key: profile.id } } });
             canalPresencia.on("presence", { event: "sync" }, () => {
                 const estado = canalPresencia.presenceState();
@@ -717,7 +729,7 @@
                 if (estado !== "SUBSCRIBED") return;
                 await canalPresencia.track({
                     id: profile.id, nombre: nombreVisible(profile),
-                    teacher_id: profile.teacher_id || null, is_admin: !!profile.is_admin, role: profile.role,
+                    profesores: misProfesores, is_admin: !!profile.is_admin, role: profile.role,
                 });
             });
         }

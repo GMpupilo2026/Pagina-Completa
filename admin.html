@@ -179,7 +179,13 @@
                      de una vez, en vez de fila por fila. Arranca oculta y aparece al marcar. -->
                 <div id="asignar-lote" class="hidden flex-wrap items-center gap-3 mb-4 rounded-xl bg-accent-50 dark:bg-brand-800 border border-accent-500/40 px-4 py-3">
                     <span id="asignar-cuenta" class="text-sm font-semibold text-brand-800 dark:text-white"></span>
-                    <label for="asignar-profesor" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Asignar a</label>
+                    <label for="asignar-modo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Qué hacer</label>
+                    <select id="asignar-modo" class="px-2 py-1.5 rounded-lg bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <option value="agregar">Agregarles este profesor</option>
+                        <option value="reemplazar">Dejar solo este profesor</option>
+                        <option value="quitar">Quitarles este profesor</option>
+                    </select>
+                    <label for="asignar-profesor" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Profesor</label>
                     <select id="asignar-profesor" class="px-2 py-1.5 rounded-lg bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     <button type="button" id="asignar-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Asignar</button>
                     <button type="button" id="asignar-limpiar" class="text-xs text-brand-600 dark:text-brand-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Quitar la marca</button>
@@ -257,23 +263,66 @@
             return u.full_name || u.email;
         }
 
-        function renderTeacherSelect(u, teachers) {
-            const wrap = document.createElement("select");
-            wrap.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs max-w-[10rem]";
-            wrap.innerHTML = '<option value="">— Sin asignar —</option>' +
-                teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
-            wrap.value = u.teacher_id || "";
-            wrap.addEventListener("change", async () => {
-                const prev = u.teacher_id || "";
+        // Qué profesores tiene cada alumno. Un alumno puede tener varios: la
+        // verdad está en la tabla profile_teachers, no en una columna.
+        let profesoresPorAlumno = new Map();   // id de alumno -> [id de profesor…]
+
+        function profesoresDe(id) {
+            return profesoresPorAlumno.get(id) || [];
+        }
+
+        // Una etiqueta por profesor, cada una con su ✕ para quitarlo, y un
+        // selector al final para sumar otro. Cambiar esto manda la lista
+        // completa (set_teachers): lo que no esté, se quita.
+        function renderProfesoresCelda(u, teachers) {
+            const caja = document.createElement("div");
+            caja.className = "flex flex-wrap items-center gap-1";
+            const puestos = profesoresDe(u.id);
+            const porId = new Map(teachers.map((t) => [t.id, t]));
+
+            async function guardar(lista) {
                 try {
-                    await callAdmin("update", { target_id: u.id, teacher_id: wrap.value || null });
-                    u.teacher_id = wrap.value || null;
+                    await callAdmin("set_teachers", { target_id: u.id, teacher_ids: lista });
+                    profesoresPorAlumno.set(u.id, lista);
+                    renderUsers();
+                    renderProfesores();
                 } catch (err) {
-                    alert("No se pudo asignar el profesor: " + err.message);
-                    wrap.value = prev;
+                    alert("No se pudo cambiar los profesores: " + err.message);
                 }
+            }
+
+            puestos.forEach((tid) => {
+                const chip = document.createElement("span");
+                chip.className = "inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-800 px-2 py-0.5 text-xs text-brand-700 dark:text-brand-200";
+                chip.append(document.createTextNode(porId.has(tid) ? teacherLabel(porId.get(tid)) : "?"));
+                const quitar = document.createElement("button");
+                quitar.type = "button";
+                quitar.className = "text-brand-500 dark:text-brand-300 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                quitar.textContent = "✕";
+                quitar.setAttribute("aria-label", "Quitar a " + (porId.has(tid) ? teacherLabel(porId.get(tid)) : "este profesor"));
+                quitar.addEventListener("click", () => guardar(puestos.filter((x) => x !== tid)));
+                chip.appendChild(quitar);
+                caja.appendChild(chip);
             });
-            return wrap;
+
+            const libres = teachers.filter((t) => !puestos.includes(t.id) && t.id !== u.id);
+            if (libres.length) {
+                const sel = document.createElement("select");
+                sel.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs max-w-[9rem]";
+                sel.setAttribute("aria-label", "Agregar un profesor a " + teacherLabel(u));
+                sel.innerHTML = '<option value="">' + (puestos.length ? "＋ otro…" : "— Sin asignar —") + "</option>" +
+                    libres.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
+                sel.addEventListener("change", () => {
+                    if (sel.value) guardar(puestos.concat([sel.value]));
+                });
+                caja.appendChild(sel);
+            } else if (!puestos.length) {
+                const vacio = document.createElement("span");
+                vacio.className = "text-xs text-brand-450 dark:text-brand-350";
+                vacio.textContent = "—";
+                caja.appendChild(vacio);
+            }
+            return caja;
         }
 
         function renderRow(u, teachers) {
@@ -361,7 +410,7 @@
                 const tdTeacher = document.createElement("td");
                 tdTeacher.className = "py-2 pr-3";
                 if (u.role === "alumno") {
-                    tdTeacher.appendChild(renderTeacherSelect(u, teachers));
+                    tdTeacher.appendChild(renderProfesoresCelda(u, teachers));
                 } else {
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
                 }
@@ -476,7 +525,12 @@
                 if (groupBy === "grupo") return u.grupo || "(sin grupo)";
                 // groupBy === "teacher"
                 if (u.role === "profesor") return `👑 ${teacherLabel(u)}`;
-                if (u.teacher_id && teachersById.has(u.teacher_id)) return teacherLabel(teachersById.get(u.teacher_id));
+                // Con varios profesores hay que elegir uno para agrupar: se usa el
+                // principal, que es el que la base guarda en profiles.teacher_id.
+                if (u.teacher_id && teachersById.has(u.teacher_id)) {
+                    const otros = profesoresDe(u.id).length - 1;
+                    return teacherLabel(teachersById.get(u.teacher_id)) + (otros > 0 ? " (+ otros profesores)" : "");
+                }
                 return "(sin profesor asignado)";
             }
             const groups = new Map();
@@ -495,13 +549,18 @@
 
         /* ================= Asignar alumnos a un profesor ==================
          *
-         * Quién es el profesor de cada alumno (profiles.teacher_id) es lo que
+         * Qué profesores tiene cada alumno (tabla profile_teachers) es lo que
          * decide qué ve cada profesor: sus alumnos y nadie más, en Informes, en
          * la clase en vivo y en los retos. Eso lo hace cumplir la base de datos
-         * con RLS; acá solo se decide.
+         * con RLS; acá solo se decide. Un alumno puede tener VARIOS profesores
+         * y entonces los dos lo ven; profiles.teacher_id se quedó solo con el
+         * papel de "profesor principal" (el que viene preseleccionado cuando el
+         * alumno entra a clase) y lo mantiene solo un trigger de esa tabla.
          *
          * La asignación en lote existe porque así se reparte de verdad: "todo
-         * 7° B al profesor nuevo", no alumno por alumno.
+         * 7° B al profesor nuevo", no alumno por alumno. Su modo decide si el
+         * profesor se suma a los que ya tienen, si los reemplaza a todos, o si
+         * se les quita.
          */
         const marcados = new Set();
 
@@ -519,17 +578,21 @@
             const btn = document.getElementById("asignar-btn");
             const msg = document.getElementById("asignar-msg");
             const teacher_id = document.getElementById("asignar-profesor").value || null;
+            const modo = document.getElementById("asignar-modo").value;
             const ids = [...marcados];
             if (!ids.length) return;
             btn.disabled = true; msg.textContent = "Asignando…";
             msg.className = "text-xs text-brand-500 dark:text-brand-300";
             try {
-                const r = await callAdmin("assign_bulk", { target_ids: ids, teacher_id });
+                const r = await callAdmin("assign_bulk", { target_ids: ids, teacher_id, modo });
                 marcados.clear();
                 await loadUsers();
                 pintarBarraDeLote();
-                const donde = teacher_id ? "" : " (quedaron sin profesor)";
-                msg.textContent = r.asignados + (r.asignados === 1 ? " alumno asignado" : " alumnos asignados") + donde + ".";
+                const donde = modo === "quitar" ? " (se les quitó ese profesor)"
+                    : !teacher_id ? " (quedaron sin ningún profesor)"
+                    : modo === "reemplazar" ? " (ahora es su único profesor)"
+                    : "";
+                msg.textContent = r.asignados + (r.asignados === 1 ? " alumno cambiado" : " alumnos cambiados") + donde + ".";
                 msg.className = "text-xs text-green-600 dark:text-green-400";
             } catch (err) {
                 msg.textContent = err.message;
@@ -551,10 +614,11 @@
             body.innerHTML = "";
             const profes = allUsers.filter((u) => u.role === "profesor")
                 .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            // Cuenta TODOS los alumnos de cada profesor, no solo aquellos de los
+            // que es el principal: un alumno compartido suma para los dos.
             const porProfe = new Map();
-            allUsers.forEach((u) => {
-                if (u.role !== "alumno" || !u.teacher_id) return;
-                porProfe.set(u.teacher_id, (porProfe.get(u.teacher_id) || 0) + 1);
+            profesoresPorAlumno.forEach((profes) => {
+                profes.forEach((t) => porProfe.set(t, (porProfe.get(t) || 0) + 1));
             });
 
             profes.forEach((p) => {
@@ -646,7 +710,7 @@
 
             // Un alumno sin profesor no aparece en los informes de nadie: conviene
             // que salte a la vista en vez de quedarse perdido en la lista.
-            const sueltos = allUsers.filter((u) => u.role === "alumno" && !u.teacher_id).length;
+            const sueltos = allUsers.filter((u) => u.role === "alumno" && !profesoresDe(u.id).length).length;
             const aviso = document.getElementById("sin-profesor-aviso");
             aviso.classList.toggle("hidden", sueltos === 0);
             if (sueltos) {
@@ -669,6 +733,14 @@
                 return;
             }
             allUsers = data;
+            // Quién tiene a quién. La RLS ya limita qué filas llegan; quien
+            // administra las recibe todas.
+            const { data: parejas } = await sb.from("profile_teachers").select("student_id, teacher_id");
+            profesoresPorAlumno = new Map();
+            (parejas || []).forEach((r) => {
+                if (!profesoresPorAlumno.has(r.student_id)) profesoresPorAlumno.set(r.student_id, []);
+                profesoresPorAlumno.get(r.student_id).push(r.teacher_id);
+            });
             const profes = data.filter((u) => u.role === "profesor");
             populateTeacherSelect(document.getElementById("create-teacher"), profes);
             populateTeacherSelect(document.getElementById("asignar-profesor"), profes);
