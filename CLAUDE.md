@@ -269,11 +269,22 @@ no se puede "probar" una jugada.
   Árbitro Internacional" y **son una estimación de conocimiento del
   reglamento, no un título**: los títulos FIDE los da la FIDE, con normas y
   cursos (B.06).
-- **Cada respuesta cita el artículo** en `fuente`. Es parte de lo que enseña el
-  examen (un árbitro no discute de memoria) y es lo que permite volver a
-  contrastar el banco: el reglamento cambia —en 2023 la sanción por jugada
-  ilegal en rápidas bajó de dos minutos a uno—, así que al tocar una pregunta
-  hay que releer el artículo vigente en https://handbook.fide.com.
+- **Cada respuesta termina con su fuente exacta** en `fuente`, y la fuente exacta
+  es el documento con su código del Handbook más el artículo:
+  `Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.5`,
+  `Reglamento de títulos de árbitro (Handbook B.06.1)`,
+  `Reglas de desempate (Handbook C.07)`. Con el código se encuentra el capítulo
+  en handbook.fide.com sin adivinar; no se ponen enlaces directos a cada
+  capítulo porque la FIDE versiona esas direcciones con cada edición y quedarían
+  muertas. Lo poco que de verdad no sale del Handbook lo dice con todas las
+  letras (`Manual del árbitro (ARB)`, `Reglamento antitrampa de la FIDE (ACC)`,
+  `Reglamento de cada torneo: no está en el Handbook`), en vez de inventar una
+  cita precisa. Tanto la corrección en pantalla como el cuadernillo la imprimen
+  al final de cada respuesta, con la etiqueta "Fuente:".
+  Citar es parte de lo que enseña el examen —un árbitro no discute de memoria— y
+  es lo que permite volver a contrastar el banco: el reglamento cambia (en 2023
+  la sanción por jugada ilegal en rápidas bajó de dos minutos a uno), así que al
+  tocar una pregunta hay que releer el artículo vigente.
 - **Vocabulario latinoamericano, no peninsular.** El texto de la FIDE en
   español dice "reclamación"; en el banco se dice **reclamo**, que es lo que se
   usa acá. Los ids `tab_reclamacion_falsa` y `con_reclamacion_arbitro` conservan
@@ -286,7 +297,8 @@ no se puede "probar" una jugada.
   al revés.
 - `herramientas/verificar-arbitraje.js` comprueba todo esto de una corrida (ids
   repetidos, áreas y escalones válidos, cuatro opciones sin repetir, `fuente`
-  presente, el largo de las opciones y que el banco alcance para la cuota). No
+  presente **y con código de Handbook**, el largo de las opciones y que el banco
+  alcance para la cuota). No
   necesita nada instalado: `node herramientas/verificar-arbitraje.js`. **Al
   tocar el banco, correrlo.**
 - `examen-de-arbitraje.pdf` (raíz) es el banco entero en papel, tipo libro:

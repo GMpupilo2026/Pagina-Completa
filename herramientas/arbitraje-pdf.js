@@ -97,7 +97,7 @@ function pregunta(item, n) {
       <p class="enunciado">${esc(item.enunciado)}</p>
       <ol class="opciones">${opciones}</ol>
       <p class="explica"><strong>Por qué.</strong> ${esc(item.explica)}</p>
-      <p class="fuente">${esc(item.fuente)}</p>
+      <p class="fuente">Fuente: ${esc(item.fuente)}</p>
     </section>`;
 }
 

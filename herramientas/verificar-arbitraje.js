@@ -7,8 +7,9 @@
  *   - áreas y escalones (`peso` 1 a 5) fuera de los que el examen conoce;
  *   - preguntas sin cuatro opciones, sin respuesta correcta o con opciones
  *     repetidas;
- *   - preguntas sin `fuente`: un árbitro no discute de memoria, cita el
- *     artículo, así que cada respuesta tiene que decir de dónde sale;
+ *   - preguntas sin `fuente`, o con una fuente que no nombra el documento del
+ *     Handbook del que sale (un árbitro no discute de memoria: cita el
+ *     documento, su código y el artículo);
  *   - el largo de las opciones: si la correcta es siempre la más larga, se
  *     acierta sin saber el reglamento (pasó en el diagnóstico de jugadores);
  *   - que el banco alcance para la cuota de ArbitrajePrueba.FORMA en todas las
@@ -53,6 +54,12 @@ ITEMS.forEach((i, n) => {
   if (!i.enunciado || !i.enunciado.trim()) mal(id, "no tiene enunciado");
   if (!i.explica || !i.explica.trim()) mal(id, "no explica la respuesta");
   if (!i.fuente || !i.fuente.trim()) mal(id, "no cita el artículo del Handbook en `fuente`");
+  /* La cita tiene que ser exacta: el documento con su código del Handbook
+     (E.I.01, B.06.1, C.04.1, C.07…) o, si de verdad no sale del Handbook,
+     decirlo con todas las letras. */
+  else if (!/Handbook|\(ARB\)|\(ACC\)|no está en el Handbook/.test(i.fuente)) {
+    mal(id, `la fuente no dice de qué documento del Handbook sale: "${i.fuente}"`);
+  }
 
   const ops = i.opciones || [];
   if (ops.length !== 4) mal(id, `tiene ${ops.length} opciones y deberían ser 4`);
