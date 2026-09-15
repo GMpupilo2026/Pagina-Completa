@@ -103,12 +103,26 @@
         }
         if (p) {
           const types = p.types || [];
-          if (types.length === 1) {
+          // Abrazos: cuando el abrazo fue entre piezas del MISMO tipo, "types"
+          // no crece (peón+peón sigue siendo solo "p") — sin el anillo de acá
+          // se vería idéntico a una captura común. "veces" (cuántas piezas
+          // originales se fusionaron) es lo que permite distinguirlo.
+          const fusionada = types.length > 1 || (p.veces && p.veces > 1);
+          if (!fusionada) {
             const span = document.createElement("span");
             span.textContent = GLYPH[types[0]][p.color];
             span.className = (p.color === "w" ? "piece-white" : "piece-black") + " relative";
             span.setAttribute("aria-hidden", "true");
             btn.appendChild(span);
+          } else if (types.length === 1) {
+            // unión de piezas del mismo tipo: un solo glifo, pero con el
+            // mismo anillo de "unión" para que no se vea como una captura.
+            const ring = document.createElement("span"); ring.className = "absolute inset-1 rounded-full ring-2 ring-accent-500/80 pointer-events-none"; ring.setAttribute("aria-hidden", "true");
+            const span = document.createElement("span");
+            span.textContent = GLYPH[types[0]][p.color];
+            span.className = (p.color === "w" ? "piece-white" : "piece-black") + " relative";
+            span.setAttribute("aria-hidden", "true");
+            btn.appendChild(ring); btn.appendChild(span);
           } else {
             // unión de varias piezas (Abrazos): las piezas en miniatura, en fila
             const wrap = document.createElement("span");
