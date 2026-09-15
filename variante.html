@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Partida — Ajedrez Integral</title>
-    <meta name="description" content="Partida de una variante de Juegos: Ajedrez de abrazos, Camaleón o A ciegas.">
+    <meta name="description" content="Partida de una variante de Juegos: Ajedrez de abrazos, Camaleón, A ciegas o Ajedrez Vampiro.">
     <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -196,6 +196,17 @@
                     "La jugada del rival aparece escrita frente al tablero durante <strong>10 segundos</strong> y después desaparece. Si escribís una jugada ilegal, el panel te avisa y no cuenta.",
                     "Cada jugador tiene <strong>5 oportunidades</strong> de desbloquear la planilla de jugadas durante <strong>20 segundos</strong> para repasar; luego se vuelve a ocultar.",
                     "Se gana por jaque mate como siempre. Al terminar la partida, el tablero y la planilla se muestran completos.",
+                ],
+            },
+            vampiro: {
+                titulo: "🧛 Ajedrez Vampiro",
+                reglas: [
+                    "Ajedrez de toda la vida: las piezas mueven con sus reglas normales. La diferencia está solo en las capturas.",
+                    "Cuando una pieza <strong>captura</strong> a una rival, se <strong>transforma</strong> en el tipo de pieza que acaba de capturar — conservando <strong>su propio color</strong>. Un caballo que captura un alfil se vuelve alfil; una torre que captura una dama se vuelve dama; ¡hasta un peón puede terminar siendo una torre!",
+                    "El <strong>rey nunca se transforma</strong>: si captura una pieza, sigue siendo rey (si no, dejaría de haber rey en el tablero).",
+                    "Si un peón <strong>corona capturando</strong> en la última fila, gana la transformación de Vampiro: se convierte en lo que capturó, no en dama.",
+                    "Se captura, hay jaque y se gana por <strong>jaque mate</strong> como siempre, ya con las piezas transformadas.",
+                    "Anotación: Cxb5=A (el caballo capturó en b5 y se transformó en alfil); cxb8=T+ (el peón coronó capturando una torre y dio jaque).",
                 ],
             },
         };
