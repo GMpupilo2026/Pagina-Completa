@@ -38,6 +38,7 @@
     <script src="js/board-drag.js"></script>
     <script src="js/board-color-themes.js"></script>
     <script src="js/fourplayer-board.js"></script>
+    <script src="js/turn-alert.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -200,6 +201,7 @@
             } else {
                 setStatus(game.turn === mySeat ? "Es tu turno." : "Le toca a " + SEAT_LABEL[game.turn] + " (" + nameFor(game.turn) + ")…");
             }
+            if (window.TurnAlert) TurnAlert.check(!!mySeat && room.status === "playing" && !game.gameOver && game.turn === mySeat);
         }
 
         function renderSeatsPanel() {

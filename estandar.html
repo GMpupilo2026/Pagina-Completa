@@ -43,6 +43,7 @@
          niebla, siempre): es exactamente un tablero de ajedrez normal, sin
          duplicar la lógica de renderizado en un archivo nuevo. -->
     <script src="js/niebla-board.js"></script>
+    <script src="js/turn-alert.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -183,6 +184,7 @@
             const waitingToStart = room.status === "playing" && !bothReady(room);
             readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
 
+            let myTurnNow = false;
             if (room.status === "finished") {
                 const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
@@ -193,10 +195,11 @@
             } else if (!myColor) {
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
-                const myTurn = board.game.turn() === myColor;
-                const enJaque = board.game.in_check() && myTurn;
-                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
+                myTurnNow = board.game.turn() === myColor;
+                const enJaque = board.game.in_check() && myTurnNow;
+                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
             }
+            if (window.TurnAlert) TurnAlert.check(myTurnNow);
         }
 
         document.getElementById("ready-btn").addEventListener("click", async () => {

@@ -136,6 +136,21 @@
                 </div>
             </section>
 
+            <!-- Partidas propias de la academia en curso ahora mismo: tanto las de un
+                 torneo interno (torneo.html, que juega cada ronda como un game_rooms normal)
+                 como cualquier partida libre de "Juegos" (Crazyhouse, Cartas, Duelo, Niebla,
+                 Estándar y Ajedrez para 4) — se actualiza sola en tiempo real. Solo la ve
+                 quien tenga sesión iniciada (RLS de game_rooms/fourplayer_games ya limita
+                 esto a alumnos y profesores de la academia). Niebla de Guerra es la única
+                 excepción: mientras está en curso se avisa que existe pero NO se dibuja el
+                 tablero — mostrar la posición real en una pantalla que cualquiera de los dos
+                 jugadores podría estar mirando arruinaría la niebla del juego. -->
+            <section aria-labelledby="tv-internal-heading" class="mb-8">
+                <h2 id="tv-internal-heading" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 text-center">🏫 Partidas de la academia en vivo</h2>
+                <p id="tv-internal-empty" class="hidden text-center text-brand-400 dark:text-brand-500 text-sm">No hay ninguna partida de la academia en curso ahora mismo.</p>
+                <div id="tv-internal-grid" class="hidden grid gap-4"></div>
+            </section>
+
             <!-- Panel del profesor: solo se muestra si la sesión activa tiene rol "profesor" -->
             <section id="tv-admin-panel" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Configurar la transmisión</h2>
@@ -497,6 +512,126 @@
                 return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
             }
 
+            // ===================================================================
+            // Partidas propias de la academia en vivo (game_rooms + fourplayer_games)
+            // ===================================================================
+            const INTERNAL_VARIANT_LABEL = {
+                estandar: "♟️ Estándar", crazyhouse: "🏇 Crazyhouse", cartas: "🃏 Ajedrez de Cartas",
+                duelo: "⚔️ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra",
+            };
+            const INTERNAL_PAGE_FOR_VARIANT = {
+                estandar: "estandar.html", crazyhouse: "crazyhouse.html", cartas: "cartas.html",
+                duelo: "duelo.html", niebla: "niebla.html",
+            };
+
+            // El FEN de Crazyhouse (y Cartas, que comparte el mismo formato de reserva
+            // aunque no la use) trae la reserva de piezas entre corchetes al final del
+            // primer campo — chess.js 0.10.3 no la entiende, así que se recorta antes de
+            // dársela para dibujar el mini tablero.
+            function stripPockets(fen) {
+                return (fen || "").replace(/\[[^\]]*\]/, "");
+            }
+
+            // La posición real de Duelo Simultáneo vive en duelo_state.fen, no en la
+            // columna fen de game_rooms (que se queda en la posición inicial — ver
+            // duelo.html/js/duelo-engine.js: solo se actualiza duelo_state en cada ronda).
+            function fenForGameRoom(room) {
+                if (room.variant === "duelo") return room.duelo_state && room.duelo_state.fen;
+                return room.fen;
+            }
+
+            function internalPlayerLabel(id, names) {
+                return escapeHtml((id && names[id]) || "?");
+            }
+
+            function renderInternalCard(item, names) {
+                if (item.kind === "room") {
+                    const room = item.row;
+                    const label = INTERNAL_VARIANT_LABEL[room.variant] || room.variant;
+                    const href = (INTERNAL_PAGE_FOR_VARIANT[room.variant] || "juegos.html") + "?room=" + encodeURIComponent(room.id);
+                    const isHiddenNiebla = room.variant === "niebla";
+                    const boardHtml = isHiddenNiebla
+                        ? '<div class="aspect-square w-full flex items-center justify-center text-center text-xs text-brand-300 px-3">🌫️ Oculta por la niebla<br>hasta que termine</div>'
+                        : '<div class="aspect-square w-full grid grid-cols-8 grid-rows-8" data-board-id="room-' + escapeHtml(room.id) + '"></div>';
+                    return '<a href="' + escapeHtml(href) + '" class="block rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950 hover:border-accent-500 transition-colors">' +
+                        '<h3 class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900 gap-1">' +
+                            '<span class="truncate">' + internalPlayerLabel(room.white_id, names) + '</span>' +
+                            '<span class="shrink-0 opacity-70">' + label + '</span>' +
+                            '<span class="truncate text-right">' + internalPlayerLabel(room.black_id, names) + '</span>' +
+                        '</h3>' + boardHtml + '</a>';
+                }
+                // fourplayer_games: sin mini tablero (cruz de 14x14, muy chica para una
+                // grilla como esta) — se muestra el marcador de los 4 asientos en vivo.
+                const room = item.row;
+                const SEATS = ["red", "blue", "yellow", "green"];
+                const SEAT_EMOJI = { red: "🔴", blue: "🔵", yellow: "🟡", green: "🟢" };
+                const rows = SEATS.map((seat) => {
+                    const s = room.seats[seat] || {};
+                    const isTurn = room.turn === seat;
+                    return '<li class="flex items-center justify-between px-2 py-0.5' + (isTurn ? " text-accent-400 font-semibold" : "") + '">' +
+                        '<span>' + SEAT_EMOJI[seat] + ' ' + internalPlayerLabel(s.player_id, names) + '</span>' +
+                        (room.mode === "ffa" ? '<span class="font-mono">' + (s.score || 0) + '</span>' : "") +
+                        '</li>';
+                }).join("");
+                return '<a href="cuatro-jugadores.html?room=' + encodeURIComponent(room.id) + '" class="block rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950 hover:border-accent-500 transition-colors">' +
+                    '<h3 class="px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900 text-center">🎡 4 jugadores · ' + (room.mode === "teams" ? "Equipos" : "Todos contra todos") + '</h3>' +
+                    '<ul class="text-xs text-brand-100 py-1">' + rows + '</ul></a>';
+            }
+
+            async function fetchInternalGames() {
+                const [{ data: rooms }, { data: fpGames }] = await Promise.all([
+                    sb.from("game_rooms").select("*").eq("status", "playing").order("updated_at", { ascending: false }),
+                    sb.from("fourplayer_games").select("*").eq("status", "playing").order("updated_at", { ascending: false }),
+                ]);
+                const items = (rooms || []).map((row) => ({ kind: "room", row }))
+                    .concat((fpGames || []).map((row) => ({ kind: "fourplayer", row })));
+
+                const ids = new Set();
+                (rooms || []).forEach((r) => { if (r.white_id) ids.add(r.white_id); if (r.black_id) ids.add(r.black_id); });
+                (fpGames || []).forEach((r) => { ["red", "blue", "yellow", "green"].forEach((s) => { const id = r.seats[s] && r.seats[s].player_id; if (id) ids.add(id); }); });
+
+                let names = {};
+                if (ids.size) {
+                    const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
+                    (players || []).forEach((p) => { names[p.id] = p.full_name || p.email; });
+                }
+                return { items, names };
+            }
+
+            async function refreshInternalGames() {
+                const { items, names } = await fetchInternalGames();
+                const grid = document.getElementById("tv-internal-grid");
+                const emptyEl = document.getElementById("tv-internal-empty");
+                if (!items.length) {
+                    grid.classList.add("hidden");
+                    grid.innerHTML = "";
+                    emptyEl.classList.remove("hidden");
+                    return;
+                }
+                emptyEl.classList.add("hidden");
+                const columnas = Math.min(items.length, 5);
+                grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
+                grid.innerHTML = items.map((item) => renderInternalCard(item, names)).join("");
+                grid.classList.remove("hidden");
+                items.forEach((item) => {
+                    if (item.kind !== "room" || item.row.variant === "niebla") return;
+                    const container = grid.querySelector('[data-board-id="room-' + CSS.escape(item.row.id) + '"]');
+                    const fen = stripPockets(fenForGameRoom(item.row));
+                    if (container && fen) renderMiniBoard(container, fen);
+                });
+            }
+
+            function initInternalGames() {
+                refreshInternalGames();
+                // Sin filtro: son pocas partidas a la vez, así que ante cualquier cambio
+                // (nueva partida, jugada, o que termine) simplemente se vuelve a pedir la
+                // lista completa de "en curso" en vez de tratar de aplicar el parche a mano.
+                sb.channel("tv-internal-games")
+                    .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" }, refreshInternalGames)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "fourplayer_games" }, refreshInternalGames)
+                    .subscribe();
+            }
+
             function showState(state) {
                 document.getElementById("tv-loading").classList.toggle("hidden", state !== "loading");
                 document.getElementById("tv-empty").classList.toggle("hidden", state !== "empty");
@@ -625,6 +760,7 @@
                 .subscribe();
 
             loadSettings().then(initAdmin);
+            initInternalGames();
         })();
     </script>
 </body>
