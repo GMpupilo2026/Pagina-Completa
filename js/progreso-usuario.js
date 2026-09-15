@@ -114,6 +114,8 @@ window.ProgresoUsuario = (function () {
     { clave: "ilumina_solved",                   fusion: "unionObjeto" },   // Ilumina el Tablero
     { clave: "ilumina_hints_earned",             fusion: "maxNumero" },
     { clave: "ilumina_hints_used",               fusion: "maxNumero" },
+    { clave: "confites_best",                    fusion: "maxNumero" },   // Confites del caballo
+    { clave: "confites_best_limpio",             fusion: "maxNumero" },
   ];
 
   function fusionDe(clave) {

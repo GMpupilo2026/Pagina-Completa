@@ -405,6 +405,26 @@ escalones—, así que un resultado de afuera se lee igual que uno de adentro.
   lleva su `<title>` para quien use lector de pantalla.
 
 
+## Confites del caballo
+
+`confites.html` (ficha en Juegos) es el paseo del caballo contado como juego:
+hay un confite en cada una de las 64 casillas y el caballo los recoge saltando,
+pero **cada casilla pisada queda bloqueada**. La marca es cuántos juntó antes de
+quedarse sin saltos; 64 es el recorrido completo.
+
+- La **pista usa la regla de Warnsdorff** —ir a la casilla desde la que queden
+  menos saltos— y lo explica, porque es la idea que de verdad resuelve el
+  problema: las casillas con pocas salidas son las que se quedan aisladas si se
+  dejan para el final. Con esa regla se completan las 64 (está comprobado en la
+  prueba del navegador, jugando desde a1).
+- **Dos marcas**, las dos declaradas en `CLAVES` de `js/progreso-usuario.js`:
+  `confites_best` (la mejor, con ayuda o sin ella) y `confites_best_limpio` (la
+  mejor sin pistas y sin deshacer). Deshacer cuenta como ayuda a propósito: sin
+  eso se llega a 64 a fuerza de retroceder y la marca no diría nada.
+- No escribe en `training_progress` —esa tabla tiene el CHECK de actividades y
+  el juego no es una de ellas—; el tiempo sí se registra con
+  `js/tiempo-plataforma.js data-activity="confites"`, que no tiene CHECK.
+
 ## Coordenadas en los tableros
 
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
