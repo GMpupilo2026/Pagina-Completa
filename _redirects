@@ -1,0 +1,5 @@
+# El curso "Los 100 finales que hay que conocer" ahora es "El mapa de los finales" (sept. 2026)
+/cursos/los-100-finales.html /cursos/el-mapa-de-los-finales.html 301
+/cursos/protegido/los-100-finales.html /cursos/protegido/el-mapa-de-los-finales.html 301
+/cursos/protegido/data/los-100-finales.json /cursos/protegido/data/el-mapa-de-los-finales.json 301
+/cursos/recursos/los-100-finales/* /cursos/recursos/el-mapa-de-los-finales/:splat 301

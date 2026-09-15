@@ -1,12 +1,12 @@
 /**
- * Ajedrez Integral — "Los 100 finales que hay que conocer"
+ * Ajedrez Integral — "El mapa de los finales"
  *
- * Da vida al contenido protegido del curso (cursos/protegido/los-100-finales.html):
+ * Da vida al contenido protegido del curso (cursos/protegido/el-mapa-de-los-finales.html):
  * cada <div class="f100-diag" data-id="F52-1"> se convierte en un tablero con la
  * línea principal (jugada a jugada) y un modo "Practicar contra el motor" que usa
  * el Stockfish del sitio (js/shared-engine.js + js/practice-engine.js) y chess.js.
  *
- * Datos: cursos/protegido/data/los-100-finales.json (la base de datos del curso,
+ * Datos: cursos/protegido/data/el-mapa-de-los-finales.json (la base de datos del curso,
  * protegida por el Worker igual que el resto del contenido). Se descarga una sola
  * vez y se guarda en memoria.
  *
@@ -25,7 +25,7 @@
      el motor) sirve para cualquier curso: el curso lo dice en el
      data-course de #course-content-body y de ahí sale el JSON. */
   const DATA_BASE = "protegido/data/";
-  const CURSO_POR_DEFECTO = "los-100-finales";
+  const CURSO_POR_DEFECTO = "el-mapa-de-los-finales";
 
   function urlDatos(root) {
     const cont = (root && root.closest && root.closest("[data-course]")) ||

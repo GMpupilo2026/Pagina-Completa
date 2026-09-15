@@ -19,6 +19,15 @@
 // env.ASSETS.fetch() — es decir, a todas las respuestas de aquí abajo.
 export default {
   async fetch(request, env) {
+    // El curso "Los 100 finales que hay que conocer" pasó a llamarse "El mapa de los finales":
+    // las direcciones antiguas (página, contenido, datos y recursos) redirigen a las nuevas.
+    {
+      const url = new URL(request.url);
+      if (url.pathname.includes("los-100-finales")) {
+        url.pathname = url.pathname.replace("los-100-finales", "el-mapa-de-los-finales");
+        return Response.redirect(url.toString(), 301);
+      }
+    }
     return env.ASSETS.fetch(request);
   },
 };

@@ -122,7 +122,7 @@ window.PlanEntrenamiento = (function () {
         'Jugar finales contra el motor desde posiciones ganadas y desde posiciones de tablas.',
       ],
       recursos: [
-        { texto: 'Curso: Los 100 finales que hay que conocer', href: 'cursos/los-100-finales.html' },
+        { texto: 'Curso: El mapa de los finales', href: 'cursos/el-mapa-de-los-finales.html' },
         { texto: 'Curso: Finales Prácticos', href: 'cursos/finales-practicos.html' },
         { texto: 'Artículo: la oposición', href: 'articulos/la-oposicion.html' },
       ],
