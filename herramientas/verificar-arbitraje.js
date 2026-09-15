@@ -19,6 +19,9 @@
  *
  *     node herramientas/verificar-arbitraje.js
  *
+ * Al tocar el banco hay que volver a generar el cuadernillo
+ * (node herramientas/arbitraje-pdf.js) o el papel deja de coincidir.
+ *
  * Sale con código 1 si algo falla, así que sirve igual desde un hook.
  */
 const fs = require("fs");

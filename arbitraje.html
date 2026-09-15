@@ -115,7 +115,7 @@
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Cómo funciona</h2>
                     <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
-                        <li><strong>40 preguntas, 40 minutos.</strong> Una por pantalla; puedes volver atrás mientras quede tiempo. Al llegar a cero, el examen se cierra y se corrige con lo respondido.</li>
+                        <li><strong>40 preguntas, 50 minutos.</strong> Una por pantalla; puedes volver atrás mientras quede tiempo. Al llegar a cero, el examen se cierra y se corrige con lo respondido.</li>
                         <li><strong>Se sortean cada vez.</strong> Salen de un banco de <span id="tam-banco">—</span> preguntas: repetir el examen no es repetir de memoria.</li>
                         <li><strong>Dejar en blanco cuenta distinto que fallar.</strong> Vale cero igual, pero se informa aparte: un hueco se estudia, un error se corrige.</li>
                         <li><strong>La corrección llega al final</strong>, con la respuesta correcta y el artículo del reglamento de cada pregunta.</li>
@@ -125,6 +125,12 @@
                 <div class="bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3 mb-6">
                     <p class="text-sm text-brand-700 dark:text-brand-200"><strong>Esto mide conocimiento del reglamento, no otorga ningún título.</strong> Los títulos de árbitro (Nacional, FIDE, Internacional) los otorgan la federación y la FIDE con seminarios, normas y licencia. El resultado de acá sirve para ubicarte y para saber qué estudiar.</p>
                     <p class="text-xs text-brand-500 dark:text-brand-400 mt-2">Texto oficial y vigente: <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="text-accent-600 dark:text-accent-400 hover:underline">handbook.fide.com</a>. Ante cualquier diferencia, manda el Handbook.</p>
+                </div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">📕 El banco completo, para estudiar</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Las <span class="banco-total">—</span> preguntas del banco en un cuadernillo, área por área y escalón por escalón, con la respuesta correcta marcada, el porqué y el artículo del Handbook. <strong>Trae las respuestas</strong>, así que es material del equipo docente: no se le pasa a quien vaya a rendir el examen.</p>
+                    <a href="examen-de-arbitraje.pdf" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">⬇️ Descargar el cuadernillo (PDF)</a>
                 </div>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
@@ -139,7 +145,7 @@
             <section id="examen-view" class="hidden">
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <p class="text-sm text-brand-500 dark:text-brand-400"><span id="q-counter">Pregunta 1 de 40</span></p>
-                    <p class="text-sm font-mono font-semibold" id="q-timer" aria-live="off">40:00</p>
+                    <p class="text-sm font-mono font-semibold" id="q-timer" aria-live="off">50:00</p>
                 </div>
                 <div class="w-full h-1.5 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-5">
                     <div id="q-bar" class="h-full bg-accent-500 transition-all" style="width:0%"></div>
@@ -222,7 +228,7 @@ const BANCO = window.ARBITRAJE_ITEMS;
 const PRUEBA = window.ArbitrajePrueba;
 const AN = window.ArbitrajeNivel;
 
-const MINUTOS = 40;
+const MINUTOS = 50;
 const CLAVE_RESULTADO = 'arbitraje_resultado_v1';
 const CLAVE_HISTORIAL = 'arbitraje_historial_v1';
 const EN_BLANCO = 'blanco';
@@ -539,6 +545,7 @@ window.addEventListener('beforeunload', (e) => {
 
 async function init() {
   $('tam-banco').textContent = BANCO.length;
+  document.querySelectorAll('.banco-total').forEach((el) => { el.textContent = BANCO.length; });
   let sesion = null;
   try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
   if (!sesion) { window.location.href = 'login.html?next=' + encodeURIComponent('arbitraje.html'); return; }

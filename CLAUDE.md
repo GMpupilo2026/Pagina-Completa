@@ -239,7 +239,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 ## Examen de arbitraje (reglamento FIDE)
 
 `arbitraje.html` es el examen de reglas para quien arbitra: 40 preguntas del
-Handbook de la FIDE, 40 minutos y un nivel estimado de arbitraje. Es lo mismo
+Handbook de la FIDE, 50 minutos y un nivel estimado de arbitraje. Es lo mismo
 que el diagnóstico de jugadores en su forma —banco grande, sorteo, escalones de
 dificultad— pero más formal: no hay tablero, cada respuesta cita su artículo y
 no se puede "probar" una jugada.
@@ -255,10 +255,12 @@ no se puede "probar" una jugada.
   qué estudiar): `leyes` (art. 1-5), `reloj` (art. 6), `irregularidades`
   (art. 7), `tablas` (art. 8-9), `conducta` (art. 11-12), `ritmos` (apéndices
   A y B), `competicion` (C.04, C.07) y `titulos` (B.06).
-- **El banco es más grande que el examen**: `ArbitrajePrueba.armar()` sortea 5
-  preguntas por área —una de cada escalón, 1 a 5— para un total de 40 preguntas
-  y 120 puntos. La forma nunca cambia, así que dos exámenes de la misma persona
-  se comparan aunque las preguntas hayan sido otras.
+- **El banco es mucho más grande que el examen**: 200 preguntas, 25 por área y
+  5 en cada escalón de cada área. `ArbitrajePrueba.armar()` sortea 5 por área
+  —una de cada escalón, 1 a 5— para un total de 40 preguntas y 120 puntos. La
+  forma nunca cambia, así que dos exámenes de la misma persona se comparan
+  aunque las preguntas hayan sido otras; con cinco candidatas por casilla, dos
+  intentos seguidos casi no repiten preguntas.
 - **El nivel sale de los escalones, no del porcentaje**, igual que en el
   diagnóstico: el nivel estimado es el escalón más alto superado (70% de
   aciertos ahí y los anteriores también), con tope por área — un área por
@@ -281,6 +283,21 @@ no se puede "probar" una jugada.
   presente, el largo de las opciones y que el banco alcance para la cuota). No
   necesita nada instalado: `node herramientas/verificar-arbitraje.js`. **Al
   tocar el banco, correrlo.**
+- `examen-de-arbitraje.pdf` (raíz) es el banco entero en papel, tipo libro:
+  capítulo por área, dentro de cada uno las preguntas ordenadas por escalón, con
+  la opción correcta marcada, el porqué y el artículo del Handbook, más el índice
+  por área, la escala de niveles y la hoja de respuestas al final. **No se edita
+  a mano**: lo genera `herramientas/arbitraje-pdf.js` desde el mismo banco, así
+  que al tocar preguntas hay que volver a correrlo (`node
+  herramientas/arbitraje-pdf.js`, con playwright instalado) o el papel deja de
+  coincidir con la pantalla. Las opciones se barajan con una semilla sacada del
+  id de la pregunta: así la correcta no queda siempre primera y dos impresiones
+  salen idénticas. **Trae las respuestas**, así que lleva la misma marca de agua
+  que el cuadernillo del diagnóstico ("Ajedrez Integral · uso docente") y el
+  enlace para descargarlo vive dentro de `arbitraje.html`, que ya es solo de
+  profesores y administración. Como todo en el sitio, el filtro es del
+  navegador: el archivo está en la raíz y quien conozca la dirección lo baja
+  igual.
 - El resultado se guarda en `training_state` (claves `arbitraje_resultado_v1` y
   `arbitraje_historial_v1`), no en `training_progress`: no es actividad de
   alumno. Quien administra ve además, dentro de la misma página, el último
