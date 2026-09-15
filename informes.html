@@ -127,12 +127,21 @@
                         <option value="tactica">⚔️ Táctica</option>
                         <option value="concentracion">🧠 Concentración</option>
                         <option value="diagnostico">🧭 Diagnóstico de nivel</option>
+                        <option value="cursos">🏛️ Cursos — temas estudiados</option>
                         <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
                     </select>
                 </div>
             </div>
 
             <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
+            <!-- Avance en los cursos de Academia (cursos/academia/*.html): temas marcados
+                 como estudiados, en orden, por curso. Filas activity "curso" de training_progress. -->
+            <div id="cursos-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="cursos-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Cursos</h2>
+                <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-400 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
+                <div id="cursos-report-body" class="space-y-4"></div>
+            </div>
 
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
@@ -353,8 +362,17 @@
             const tacticaSolved = new Set();
             const concentracionHechos = new Set(); // "nivel-ejercicio": un ejercicio repetido cuenta una vez
             let diagnostico = null; // el más reciente: es la foto vigente del alumno
+            const cursos = {}; // slug -> { titulo, total, temas: Set, ultimo: {titulo, fecha} }
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
+                if (r.activity === "curso" && d.curso && d.leccion) {
+                    const c = cursos[d.curso] = cursos[d.curso] || { slug: d.curso, titulo: d.curso_titulo || d.curso, total: 0, temas: new Set(), ultimo: null };
+                    c.temas.add(d.leccion);
+                    if (d.curso_titulo) c.titulo = d.curso_titulo;
+                    if (d.total) c.total = Math.max(c.total, d.total);
+                    if (!c.ultimo || new Date(r.created_at) > new Date(c.ultimo.fecha)) c.ultimo = { titulo: d.titulo || d.leccion, n: d.n, fecha: r.created_at };
+                    return;
+                }
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
                 else if (r.activity === "aprender" && d.lesson_id) lessons.add(d.lesson_id);
                 else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
@@ -382,7 +400,37 @@
                 tacticaTotal: tacticaSolved.size,
                 concentracionTotal: concentracionHechos.size,
                 diagnostico,
+                cursos: Object.values(cursos).map((c) => ({ slug: c.slug, titulo: c.titulo, total: c.total, hechos: c.temas.size, ultimo: c.ultimo }))
+                    .sort((a, b) => a.titulo.localeCompare(b.titulo, "es")),
+                cursosTemas: Object.values(cursos).reduce((n, c) => n + c.temas.size, 0),
             };
+        }
+
+        // Tarjeta "Cursos": una barra por curso con los temas estudiados sobre el total y
+        // el último tema marcado. propio=true cuando la mira el propio alumno.
+        function renderCursosReport(entreno, propio, nombre) {
+            const box = document.getElementById("cursos-report"), body = document.getElementById("cursos-report-body");
+            body.innerHTML = "";
+            document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
+            if (!entreno.cursos.length) {
+                body.innerHTML = `<p class="text-sm text-brand-400 dark:text-brand-500">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-600 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
+            } else {
+                entreno.cursos.forEach((c) => {
+                    const wrap = document.createElement("div");
+                    wrap.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos));
+                    const nota = document.createElement("p");
+                    nota.className = "text-xs text-brand-400 dark:text-brand-500 mt-1";
+                    const fecha = c.ultimo ? new Date(c.ultimo.fecha).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }) : "";
+                    nota.textContent = c.total && c.hechos >= c.total ? `🏁 Curso completo (último tema el ${fecha})` : c.ultimo ? `Último tema estudiado: ${c.ultimo.titulo} (${fecha})` : "";
+                    if (propio) {
+                        const a = document.createElement("a"); a.href = "cursos/academia/" + c.slug + ".html"; a.className = "ml-2 text-accent-600 dark:text-accent-400 hover:underline"; a.textContent = "Continuar →";
+                        nota.appendChild(a);
+                    }
+                    wrap.appendChild(nota);
+                    body.appendChild(wrap);
+                });
+            }
+            box.classList.remove("hidden");
         }
 
         function barRow(name, correct, total) {
@@ -446,9 +494,11 @@
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
             );
 
+            renderCursosReport(entreno, true);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
@@ -550,6 +600,7 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
+            document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
@@ -700,9 +751,11 @@
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
             );
 
+            renderCursosReport(entreno, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
 
             const historyEl = document.getElementById("student-history");
@@ -736,6 +789,7 @@
             diagnostico: "🧭 Diagnóstico de nivel — resumen y gráficos del grupo",
             arbitraje: "⚖️ Exámenes de arbitraje del público — quiénes lo hicieron y a quién falta responder",
             concentracion: "🧠 Concentración — ejercicios resueltos",
+            cursos: "🏛️ Cursos — temas estudiados por alumno",
         };
 
         // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
@@ -747,6 +801,11 @@
             body.innerHTML = "";
             if (topic === "diagnostico") {
                 renderDiagnosticosClase(body);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+            if (topic === "cursos") {
+                renderCursosClase(body);
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }
@@ -823,6 +882,30 @@
                     });
             }
             document.getElementById("topic-report").classList.remove("hidden");
+        }
+
+        // Tema "Cursos": cada alumno con una barra por curso empezado (temas estudiados
+        // sobre el total), los que más avanzaron primero; al final, los que no empezaron.
+        function renderCursosClase(contenedor) {
+            const progressByStudent = {};
+            teacherData.progress.forEach((r) => { (progressByStudent[r.student_id] = progressByStudent[r.student_id] || []).push(r); });
+            const filas = teacherData.students.map((s) => ({ name: s.full_name || s.email, entreno: summarizeTrainingProgress(progressByStudent[s.id]) }))
+                .sort((a, b) => b.entreno.cursosTemas - a.entreno.cursosTemas || a.name.localeCompare(b.name, "es"));
+            const sinEmpezar = [];
+            filas.forEach((f) => {
+                if (!f.entreno.cursos.length) { sinEmpezar.push(f.name); return; }
+                const bloque = document.createElement("div");
+                bloque.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-3 space-y-2";
+                const h = document.createElement("p"); h.className = "font-semibold text-brand-800 dark:text-white text-sm"; h.textContent = f.name + " · " + f.entreno.cursosTemas + " temas";
+                bloque.appendChild(h);
+                f.entreno.cursos.forEach((c) => bloque.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos)));
+                contenedor.appendChild(bloque);
+            });
+            if (sinEmpezar.length) {
+                const p = document.createElement("p"); p.className = "text-sm text-brand-400 dark:text-brand-500";
+                p.textContent = "Sin empezar ningún curso: " + sinEmpezar.join(", ") + ".";
+                contenedor.appendChild(p);
+            }
         }
 
         // Los dos filtros combinados: un alumno puntual manda (su informe completo, sin

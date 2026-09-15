@@ -24,7 +24,15 @@
      finales", pero el visor (tablero, línea jugada a jugada y práctica contra
      el motor) sirve para cualquier curso: el curso lo dice en el
      data-course de #course-content-body y de ahí sale el JSON. */
-  const DATA_BASE = "protegido/data/";
+  // Carpeta de datos relativa a ESTE archivo (no a la página): así el visor funciona
+  // igual desde cursos/<curso>.html y desde cursos/academia/<curso>.html.
+  const DATA_BASE = (function () {
+    try {
+      const me = document.currentScript && document.currentScript.src;
+      if (me) return new URL("../cursos/protegido/data/", me).href;
+    } catch (e) {}
+    return "protegido/data/";
+  })();
   const CURSO_POR_DEFECTO = "el-mapa-de-los-finales";
 
   function urlDatos(root) {

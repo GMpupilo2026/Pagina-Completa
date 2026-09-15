@@ -1,0 +1,36 @@
+/* Cursos dentro de Academia (js/curso-academia.js): línea de progreso,
+   lecciones bloqueadas y pie de cada lección. */
+.ac-prog{background:#fff;border:1px solid #d9e2ec;border-radius:1rem;padding:1rem 1.25rem;margin:0 0 1.5rem;box-shadow:0 4px 14px rgba(16,42,67,.06)}
+.dark .ac-prog{background:#0a1f33;border-color:#243b53}
+.ac-prog-head{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.ac-prog-txt{margin:0;font-size:.95rem;color:#334e68}.dark .ac-prog-txt{color:#d9e2ec}
+.ac-prog-txt strong{color:#102a43;font-size:1.15rem}.dark .ac-prog-txt strong{color:#fff}
+.ac-track{height:.6rem;border-radius:9999px;background:#e5ecf3;overflow:hidden}
+.dark .ac-track{background:#243b53}
+.ac-fill{height:100%;border-radius:9999px;background:linear-gradient(90deg,#de911d,#f0b429);transition:width .4s ease}
+.ac-pasos{list-style:none;margin:.75rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
+.ac-paso a{display:inline-flex;align-items:center;justify-content:center;min-width:1.9rem;height:1.9rem;padding:0 .35rem;border-radius:9999px;font-size:.75rem;font-weight:600;text-decoration:none;border:1px solid #bcccdc;color:#486581;background:#f0f4f8}
+.ac-paso.ac-hecha a{background:#102a43;border-color:#102a43;color:#f0b429}
+.ac-paso.ac-disponible a{background:#f0b429;border-color:#de911d;color:#102a43;box-shadow:0 0 0 3px rgba(240,180,41,.25)}
+.ac-paso.ac-bloqueada a{opacity:.55;cursor:not-allowed}
+.dark .ac-paso a{background:#243b53;border-color:#334e68;color:#bcccdc}
+.dark .ac-paso.ac-hecha a{background:#f0b429;border-color:#f0b429;color:#102a43}
+.ac-paso a:focus-visible{outline:2px solid #de911d;outline-offset:2px}
+.ac-btn{background:#de911d;color:#102a43;font-weight:600;border:0;border-radius:.6rem;padding:.5rem .9rem;cursor:pointer;font-size:.85rem;font-family:inherit;transition:background-color .2s,transform .15s}
+.ac-btn:hover{background:#cb6e17}.ac-btn:active{transform:translateY(1px)}
+.ac-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ac-btn.ac-sec{background:#d9e2ec;color:#102a43}.ac-btn.ac-sec:hover{background:#bcccdc}
+.dark .ac-btn.ac-sec{background:#334e68;color:#f0f4f8}
+.ac-foot{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin-top:1rem;padding-top:.75rem;border-top:1px dashed #bcccdc}
+.dark .ac-foot{border-color:#334e68}
+.ac-estado{font-size:.8rem;color:#627d98}.dark .ac-estado{color:#9fb3c8}
+.ac-ok{color:#1f7a4d;font-weight:600}.dark .ac-ok{color:#7ee2a8}
+details.ac-bloqueada{opacity:.6}
+details.ac-bloqueada > summary{cursor:not-allowed}
+details.ac-hecha > summary .ac-marca{color:#1f7a4d}.dark details.ac-hecha > summary .ac-marca{color:#7ee2a8}
+.ac-avisos{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+/* catálogo */
+.ac-card-prog{margin:.6rem 0 .9rem}
+.ac-card-txt{font-size:.78rem;color:#627d98;margin-bottom:.35rem}.dark .ac-card-txt{color:#9fb3c8}
+.ac-completo .ac-card-txt::before{content:"🏁 "}
+@media (prefers-reduced-motion:reduce){.ac-fill{transition:none}}

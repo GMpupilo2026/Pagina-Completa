@@ -23,12 +23,21 @@
 
   let data = null, dataPromise = null, defsInjected = false, slug = null;
 
+  // Carpeta de datos relativa a ESTE archivo (no a la página): así el visor funciona
+  // igual desde cursos/<curso>.html y desde cursos/academia/<curso>.html.
+  const DATA_BASE = (function () {
+    try {
+      const me = document.currentScript && document.currentScript.src;
+      if (me) return new URL("../cursos/protegido/data/", me).href;
+    } catch (e) {}
+    return "protegido/data/";
+  })();
   function loadData(root) {
     if (data) return Promise.resolve(data);
     if (dataPromise) return dataPromise;
     const holder = (root && root.closest && root.closest("[data-course]")) || document.querySelector("[data-course]");
     slug = holder ? holder.dataset.course : "curso";
-    dataPromise = fetch("protegido/data/" + slug + ".json", { credentials: "same-origin" })
+    dataPromise = fetch(DATA_BASE + slug + ".json", { credentials: "same-origin" })
       .then((r) => { if (!r.ok) throw new Error("datos " + r.status); return r.json(); })
       .then((d) => { data = d; return d; });
     return dataPromise;
