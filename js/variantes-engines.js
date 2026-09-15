@@ -218,14 +218,26 @@
       for (const s in b) u[s] = { color: b[s].color, types: [b[s].type] };
       return JSON.stringify({ v: 1, t: "w", n: 1, b: Abrazos._compact(u) });
     }
-    static _compact(u) { const o = {}; for (const s in u) o[s] = u[s].color + ":" + u[s].types.join(""); return o; }
+    // "veces" cuenta cuántas piezas originales terminaron fusionadas acá (empieza
+    // en 1). Se guarda aparte de "types" porque dos piezas del MISMO tipo se
+    // abrazan sin agregar ningún tipo nuevo (p. ej. peón+peón sigue siendo solo
+    // "p") — sin este contador, ese abrazo se vería IDÉNTICO a una captura
+    // común, tanto en el tablero como para quien lee el estado guardado.
+    static _compact(u) {
+      const o = {};
+      for (const s in u) o[s] = u[s].color + ":" + u[s].types.join("") + ((u[s].veces || 1) > 1 ? ":" + u[s].veces : "");
+      return o;
+    }
     get pieceNames() { return NOMBRE; }
     load(texto) {
       let d;
       try { d = JSON.parse(texto); } catch (e) { d = null; }
       if (!d || !d.b) d = JSON.parse(Abrazos.START);
       this.board = {};
-      for (const s in d.b) { const [c, t] = d.b[s].split(":"); this.board[s] = { color: c, types: t.split("") }; }
+      for (const s in d.b) {
+        const [c, t, v] = d.b[s].split(":");
+        this.board[s] = { color: c, types: t.split(""), veces: v ? parseInt(v, 10) : 1 };
+      }
       this.turno = d.t === "b" ? "b" : "w";
       this.numero = d.n || 1;
       this.terminado = d.fin || null; // "white" | "black" cuando ya hubo abrazo al rey
@@ -238,8 +250,13 @@
       const u = this.board[s]; if (!u) return null;
       const t = Abrazos.tiposOrdenados(u.types);
       const nombres = t.map((x) => NOMBRE[x]);
-      const label = (u.color === "w" ? "Blancas: " : "Negras: ") + (t.length === 1 ? nombres[0] : "unión de " + nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1]);
-      return { color: u.color, types: t, label };
+      const veces = u.veces || 1;
+      let base = t.length === 1 ? nombres[0] : "unión de " + nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1];
+      // Cuando el abrazo fue entre piezas del mismo tipo, se avisa igual —
+      // si no, se ve y se lee exactamente como una captura común.
+      if (t.length === 1 && veces > 1) base += " (unión de " + veces + " piezas)";
+      const label = (u.color === "w" ? "Blancas: " : "Negras: ") + base;
+      return { color: u.color, types: t, veces, label };
     }
     _ocupada(color) { return (s) => { const u = this.board[s]; return u ? (u.color === color ? "propia" : "enemiga") : null; }; }
     inCheck() { return false; }
@@ -255,15 +272,16 @@
       if (!this.movesFrom(m.from).some((x) => x.to === m.to)) return null;
       const u = this.board[m.from], destino = this.board[m.to];
       const letras = Abrazos.tiposOrdenados(u.types).map((t) => LETRA[t] || "P").join("");
-      let types = u.types.slice(), abrazo = false, ganaRey = false;
+      let types = u.types.slice(), veces = u.veces || 1, abrazo = false, ganaRey = false;
       if (destino) {
         abrazo = true;
         if (destino.types.indexOf("k") !== -1) ganaRey = true;
         destino.types.forEach((t) => { if (types.indexOf(t) === -1) types.push(t); });
+        veces += destino.veces || 1;
       }
       if (types.indexOf("p") !== -1 && ultimaFila(u.color, m.to)) { types = types.filter((t) => t !== "p"); if (types.indexOf("q") === -1) types.push("q"); }
       delete this.board[m.from];
-      this.board[m.to] = { color: u.color, types };
+      this.board[m.to] = { color: u.color, types, veces };
       const san = letras + m.from + (abrazo ? "♥" : "-") + m.to + (ganaRey ? "#" : "");
       let gameOver = false, result = null;
       if (ganaRey) { gameOver = true; result = u.color === "w" ? "white" : "black"; this.terminado = result; }
