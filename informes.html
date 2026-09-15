@@ -1049,7 +1049,7 @@
             const progresoPorAlumno = {};
             teacherData.progress.forEach((r) => { (progresoPorAlumno[r.student_id] = progresoPorAlumno[r.student_id] || []).push(r); });
             const conDiagnostico = [], pendientes = [];
-            teacherData.students.forEach((s) => {
+            filteredStudents().forEach((s) => {
                 const entreno = summarizeTrainingProgress(progresoPorAlumno[s.id]);
                 const nombre = s.full_name || s.email;
                 if (entreno.diagnostico) {
