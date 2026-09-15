@@ -548,6 +548,14 @@
                 );
             }
 
+            // Herramientas del equipo docente: no se le muestran al alumnado
+            // (y la propia página vuelve a comprobar el perfil).
+            if (isTeacher || profile.is_admin) {
+                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    { emoji: "⚖️", label: "Examen de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
+                );
+            }
+
             renderTiles();
             await refreshSessionStatus();
             await refreshSessionsLog();
