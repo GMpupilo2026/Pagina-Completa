@@ -17,8 +17,8 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                     },
                     fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
                 }
@@ -39,7 +39,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -48,7 +48,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -59,10 +59,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                     <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -82,9 +82,8 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
     <main id="main-content">
-    <section class="relative pt-16 md:pt-20 min-h-[85vh] flex items-center bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 overflow-hidden">
+    <section class="relative min-h-[calc(85vh-5rem)] lg:min-h-[calc(85vh-7rem)] flex items-center bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22%3E%3Crect width=%2230%22 height=%2230%22 fill=%22%23ffffff%22/%3E%3Crect x=%2230%22 y=%2230%22 width=%2230%22 height=%2230%22 fill=%22%23ffffff%22/%3E%3C/svg%3E');"></div>
         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-900/50"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-12 items-center">
@@ -219,25 +218,25 @@
     <section class="py-20 bg-brand-50 dark:bg-brand-950">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-14">
-                <span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Cómo funciona</span>
+                <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Cómo funciona</span>
                 <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2">Tres pasos para empezar</h2>
-                <p class="text-brand-500 dark:text-brand-400 mt-4 max-w-2xl mx-auto">Nada de formularios automáticos ni esperar a un robot: hablas con nosotros y te acompañamos desde el primer mensaje.</p>
+                <p class="text-brand-500 dark:text-brand-300 mt-4 max-w-2xl mx-auto">Nada de formularios automáticos ni esperar a un robot: hablas con nosotros y te acompañamos desde el primer mensaje.</p>
             </div>
             <div class="grid md:grid-cols-3 gap-8">
                 <div class="text-center">
                     <div class="w-16 h-16 mx-auto rounded-full bg-accent-500 text-brand-900 font-serif text-2xl font-bold flex items-center justify-center mb-4 shadow-lg">1</div>
                     <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Escríbenos por WhatsApp</h3>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm">Cuéntanos la edad y el nivel del estudiante, o si es para un grupo escolar completo.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm">Cuéntanos la edad y el nivel del estudiante, o si es para un grupo escolar completo.</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 mx-auto rounded-full bg-accent-500 text-brand-900 font-serif text-2xl font-bold flex items-center justify-center mb-4 shadow-lg">2</div>
                     <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Te damos tu acceso a Academia</h3>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm">Creamos tu cuenta y te asignamos tu cupo: clases en vivo, cursos, entrenamiento e informes de progreso, todo en un mismo lugar.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm">Creamos tu cuenta y te asignamos tu cupo: clases en vivo, cursos, entrenamiento e informes de progreso, todo en un mismo lugar.</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 mx-auto rounded-full bg-accent-500 text-brand-900 font-serif text-2xl font-bold flex items-center justify-center mb-4 shadow-lg">3</div>
                     <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Asiste, practica y mejora</h3>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm">Vas a tus clases en vivo, practicas entre semana con Entrenamiento y revisas tu avance real en Informes.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm">Vas a tus clases en vivo, practicas entre semana con Entrenamiento y revisas tu avance real en Informes.</p>
                 </div>
             </div>
             <div class="text-center mt-12">
@@ -248,46 +247,46 @@
     <section class="py-20 bg-white dark:bg-brand-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
-                <div><span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Artículos recientes</span><h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2">Últimas publicaciones</h2></div>
+                <div><span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Artículos recientes</span><h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2">Últimas publicaciones</h2></div>
                 <a href="articulos.html" class="text-brand-600 dark:text-brand-300 font-semibold hover:text-accent-600 transition-colors">Ver todos →</a>
             </div>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <a href="articulos/regla-del-cuadrado.html" class="block" aria-label="Leer artículo: La regla del cuadrado: cómo ganar finales de peones — categoría Táctica, 8 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">📖</div><span class="text-xs text-accent-600 font-semibold uppercase">Táctica</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">La regla del cuadrado: cómo ganar finales de peones</h3><p class="text-brand-500 dark:text-brand-400 text-sm">Una técnica esencial para saber si tu rey puede detener un peón pasado. Con ejercicios prácticos.</p><p class="text-brand-400 dark:text-brand-500 text-xs mt-3">15 marzo 2026 · 8 min lectura</p></article></a>
-                <a href="articulos/gambito-dama-aceptado.html" class="block" aria-label="Leer artículo: Gambito de dama aceptado: guía completa para blancas — categoría Aperturas, 12 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🎯</div><span class="text-xs text-accent-600 font-semibold uppercase">Aperturas</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">Gambito de dama aceptado: guía completa para blancas</h3><p class="text-brand-500 dark:text-brand-400 text-sm">El gambito de dama sigue siendo una de las aperturas más sólidas. Analizamos las ideas principales.</p><p class="text-brand-400 dark:text-brand-500 text-xs mt-3">10 marzo 2026 · 12 min lectura</p></article></a>
-                <a href="articulos/peones-doblados.html" class="block" aria-label="Leer artículo: Peones doblados: ¿siempre son una debilidad? — categoría Estrategia, 10 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-brand-700 to-brand-900 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">💡</div><span class="text-xs text-accent-600 font-semibold uppercase">Estrategia</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">Peones doblados: ¿siempre son una debilidad?</h3><p class="text-brand-500 dark:text-brand-400 text-sm">Los peones doblados no siempre son malos. Descubre cuándo pueden convertirse en una ventaja.</p><p class="text-brand-400 dark:text-brand-500 text-xs mt-3">5 marzo 2026 · 10 min lectura</p></article></a>
+                <a href="articulos/regla-del-cuadrado.html" class="block" aria-label="Leer artículo: La regla del cuadrado: cómo ganar finales de peones — categoría Táctica, 8 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">📖</div><span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase">Táctica</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">La regla del cuadrado: cómo ganar finales de peones</h3><p class="text-brand-500 dark:text-brand-300 text-sm">Una técnica esencial para saber si tu rey puede detener un peón pasado. Con ejercicios prácticos.</p><p class="text-brand-450 dark:text-brand-350 text-xs mt-3">15 marzo 2026 · 8 min lectura</p></article></a>
+                <a href="articulos/gambito-dama-aceptado.html" class="block" aria-label="Leer artículo: Gambito de dama aceptado: guía completa para blancas — categoría Aperturas, 12 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">🎯</div><span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase">Aperturas</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">Gambito de dama aceptado: guía completa para blancas</h3><p class="text-brand-500 dark:text-brand-300 text-sm">El gambito de dama sigue siendo una de las aperturas más sólidas. Analizamos las ideas principales.</p><p class="text-brand-450 dark:text-brand-350 text-xs mt-3">10 marzo 2026 · 12 min lectura</p></article></a>
+                <a href="articulos/peones-doblados.html" class="block" aria-label="Leer artículo: Peones doblados: ¿siempre son una debilidad? — categoría Estrategia, 10 minutos de lectura"><article class="group cursor-pointer"><div aria-hidden="true" class="h-44 bg-gradient-to-br from-brand-700 to-brand-900 rounded-xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform">💡</div><span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase">Estrategia</span><h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-1 mb-2 group-hover:text-accent-600 transition-colors">Peones doblados: ¿siempre son una debilidad?</h3><p class="text-brand-500 dark:text-brand-300 text-sm">Los peones doblados no siempre son malos. Descubre cuándo pueden convertirse en una ventaja.</p><p class="text-brand-450 dark:text-brand-350 text-xs mt-3">5 marzo 2026 · 10 min lectura</p></article></a>
             </div>
         </div>
     </section>
     <section class="py-20 bg-white dark:bg-brand-900">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Preguntas frecuentes</span>
+                <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Preguntas frecuentes</span>
                 <h2 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2">Antes de escribirnos</h2>
             </div>
             <div class="space-y-3">
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Necesito saber jugar ajedrez para empezar?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">No. Los cursos empiezan desde los fundamentos absolutos: cómo se mueve cada pieza, jaque y jaque mate, hasta llegar a estrategia y preparación para torneos.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Necesito saber jugar ajedrez para empezar?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">No. Los cursos empiezan desde los fundamentos absolutos: cómo se mueve cada pieza, jaque y jaque mate, hasta llegar a estrategia y preparación para torneos.</p>
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Las clases son en vivo o son videos grabados?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">En vivo, con un profesor real que ve el tablero y corrige cada jugada. Entre clases puedes seguir practicando con Entrenamiento o jugando contra nuestro motor.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Las clases son en vivo o son videos grabados?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">En vivo, con un profesor real que ve el tablero y corrige cada jugada. Entre clases puedes seguir practicando con Entrenamiento o jugando contra nuestro motor.</p>
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Puedo ver el progreso de mi hijo o hija?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">Sí. Informes muestra la asistencia y el tiempo real conectado a cada clase, además del avance en los ejercicios de Entrenamiento.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Puedo ver el progreso de mi hijo o hija?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">Sí. Informes muestra la asistencia y el tiempo real conectado a cada clase, además del avance en los ejercicios de Entrenamiento.</p>
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Qué pasa si soy ciego o tengo baja visión?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">El sitio tiene un modo adaptado con notación hablada pensado para lectores de pantalla, disponible en el tablero y en el entrenamiento.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Qué pasa si soy ciego o tengo baja visión?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">El sitio tiene un modo adaptado con notación hablada pensado para lectores de pantalla, disponible en el tablero y en el entrenamiento.</p>
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Es solo para colegios o también puedo inscribir a un solo estudiante?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">Trabajamos con grupos escolares completos y también con familias que quieren inscribir a un solo estudiante. Escríbenos y vemos qué opción se ajusta mejor.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Es solo para colegios o también puedo inscribir a un solo estudiante?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">Trabajamos con grupos escolares completos y también con familias que quieren inscribir a un solo estudiante. Escríbenos y vemos qué opción se ajusta mejor.</p>
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
-                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Cómo empiezo?</h3><span class="text-accent-600 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mt-3">Escríbenos por WhatsApp, te contamos cómo funciona Academia y te ayudamos a inscribirte.</p>
+                    <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Cómo empiezo?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">Escríbenos por WhatsApp, te contamos cómo funciona Academia y te ayudamos a inscribirte.</p>
                 </details>
             </div>
         </div>
@@ -306,19 +305,19 @@
         <div class="max-w-3xl mx-auto px-4 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <img src="img/oscar-avatar.jpg" alt="Oscar Angulo Cubero" class="w-20 h-20 rounded-full object-cover shrink-0 shadow-md">
             <div class="flex-1">
-                <span class="text-accent-600 font-semibold uppercase tracking-wide text-xs">¿Quién te va a entrenar?</span>
+                <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-xs">¿Quién te va a entrenar?</span>
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mt-1 mb-1">Oscar Angulo — Maestro Nacional y Entrenador FIDE</h2>
-                <p class="text-brand-500 dark:text-brand-400 text-sm">18 años formando alumnos hasta campeonatos nacionales y centroamericanos. <a href="sobre-oscar.html" class="text-accent-600 dark:text-accent-400 font-semibold hover:underline">Conóceme más →</a></p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm">18 años formando alumnos hasta campeonatos nacionales y centroamericanos. <a href="sobre-oscar.html" class="text-accent-700 dark:text-accent-400 font-semibold hover:underline">Conóceme más →</a></p>
             </div>
         </div>
     </section>
     <section class="py-10 bg-brand-100 dark:bg-brand-900 border-t border-brand-200 dark:border-brand-800">
         <div class="max-w-4xl mx-auto px-4 text-center">
             <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">🏆 Inscribirse a torneos en línea</h2>
-            <p class="text-brand-500 dark:text-brand-400 text-sm mb-4 max-w-xl mx-auto">¿Buscas competir? Este es un formulario aparte, específico para nuestros torneos oficiales en línea.</p>
+            <p class="text-brand-500 dark:text-brand-300 text-sm mb-4 max-w-xl mx-auto">¿Buscas competir? Este es un formulario aparte, específico para nuestros torneos oficiales en línea.</p>
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="inscripcion.html" class="text-brand-600 dark:text-brand-300 font-semibold hover:text-accent-600 transition-colors underline">Ir al formulario del torneo →</a>
-                <span class="hidden sm:inline text-brand-300 dark:text-brand-600">·</span>
+                <span class="hidden sm:inline text-brand-450 dark:text-brand-350">·</span>
                 <a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="text-brand-600 dark:text-brand-300 font-semibold hover:text-accent-600 transition-colors">💬 Consultar por WhatsApp</a>
             </div>
         </div>
@@ -329,12 +328,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>

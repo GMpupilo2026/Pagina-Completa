@@ -17,8 +17,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -44,7 +44,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -53,7 +53,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -64,10 +64,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -87,23 +87,22 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
     <main id="main-content">
 
-    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
-        <p class="text-brand-400 dark:text-brand-500">Cargando…</p>
+    <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p class="text-brand-450 dark:text-brand-350">Cargando…</p>
     </div>
 
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Lector de planilla 📝</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. El lector no se detiene a preguntar: cuando una jugada no se lee bien, elige sola la jugada legal más parecida y sigue de largo — al final revisás el PGN completo y corregís a mano lo que haga falta.</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. El lector no se detiene a preguntar: cuando una jugada no se lee bien, elige sola la jugada legal más parecida y sigue de largo — al final revisás el PGN completo y corregís a mano lo que haga falta.</p>
 
             <!-- ---------- Paso 1: elegir imagen ---------- -->
             <div id="upload-section" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">1. Elegí la foto o el escaneo</h2>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Cuanto más derecha y bien iluminada esté la foto, mejor sale la lectura. Funciona mejor con planillas escritas con letra clara — la letra manuscrita es más difícil de leer para este lector automático, así que es normal tener que aclarar algunas jugadas a mano.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuanto más derecha y bien iluminada esté la foto, mejor sale la lectura. Funciona mejor con planillas escritas con letra clara — la letra manuscrita es más difícil de leer para este lector automático, así que es normal tener que aclarar algunas jugadas a mano.</p>
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
                     <!-- "capture" en este input hace que, en el celular, se abra la cámara
                          directamente — perfecto para sacar la foto en el momento, pero en la
@@ -128,14 +127,14 @@
                     <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
                         <div id="ocr-progress-bar" class="h-full bg-accent-500 transition-all" style="width:0%"></div>
                     </div>
-                    <p id="ocr-progress-text" class="text-xs text-brand-400 dark:text-brand-500 mt-1" role="status" aria-live="polite">Preparando…</p>
+                    <p id="ocr-progress-text" class="text-xs text-brand-450 dark:text-brand-350 mt-1" role="status" aria-live="polite">Preparando…</p>
                 </div>
             </div>
 
             <!-- ---------- Paso 2: procesar jugadas ---------- -->
             <div id="process-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">2. Revisá las jugadas</h2>
-                <p id="process-status" class="text-sm text-brand-500 dark:text-brand-400 mb-4" role="status" aria-live="polite"></p>
+                <p id="process-status" class="text-sm text-brand-500 dark:text-brand-300 mb-4" role="status" aria-live="polite"></p>
 
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div id="process-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-xl overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
@@ -149,13 +148,13 @@
             <!-- ---------- Paso 3: PGN final ---------- -->
             <div id="result-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">3. Tu PGN</h2>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">El lector nunca se detiene a preguntar: cuando una jugada no calza con lo que dice la planilla, elige sola la jugada legal más parecida y sigue — esas quedan marcadas con "≈" en la lista de arriba. Por eso conviene repasar el PGN antes de guardarlo: el cuadro de abajo se puede editar a mano si hace falta corregir algo.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">El lector nunca se detiene a preguntar: cuando una jugada no calza con lo que dice la planilla, elige sola la jugada legal más parecida y sigue — esas quedan marcadas con "≈" en la lista de arriba. Por eso conviene repasar el PGN antes de guardarlo: el cuadro de abajo se puede editar a mano si hace falta corregir algo.</p>
                 <textarea id="pgn-output" rows="6" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-accent-500 mb-3"></textarea>
                 <div class="flex flex-wrap gap-2">
                     <button type="button" id="copy-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">📋 Copiar</button>
                     <button type="button" id="download-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">⬇️ Descargar .pgn</button>
                     <button type="button" id="save-shared-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">💾 Guardar en Caja de Compartir</button>
-                    <button type="button" id="restart-btn" class="text-sm text-brand-400 dark:text-brand-500 hover:text-accent-500 transition-colors px-2 py-2">Leer otra planilla</button>
+                    <button type="button" id="restart-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors px-2 py-2">Leer otra planilla</button>
                 </div>
                 <p id="save-status" class="text-xs mt-2" role="status" aria-live="polite"></p>
             </div>
@@ -168,12 +167,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
@@ -579,7 +578,7 @@
             const statusEl = document.getElementById("save-status");
             const pgn = document.getElementById("pgn-output").value;
             const moveCount = game.history().length;
-            statusEl.className = "text-xs mt-2 text-brand-400 dark:text-brand-500";
+            statusEl.className = "text-xs mt-2 text-brand-450 dark:text-brand-350";
             statusEl.textContent = "Guardando…";
             const { error } = await sb.from("saved_games").insert({
                 pgn, fen_final: game.fen(), move_count: moveCount, created_by: session.user.id,

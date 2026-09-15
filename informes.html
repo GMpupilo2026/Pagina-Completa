@@ -17,8 +17,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -40,7 +40,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -49,7 +49,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -60,10 +60,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -83,18 +83,17 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
     <main id="main-content">
 
-    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
-        <p class="text-brand-400 dark:text-brand-500">Cargando…</p>
+    <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p class="text-brand-450 dark:text-brand-350">Cargando…</p>
     </div>
 
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes 📊</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-6" id="subtitle">Tu actividad y progreso en las clases.</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-6" id="subtitle">Tu actividad y progreso en las clases.</p>
 
             <!-- Filtros del profesor: elegir un alumno puntual (ver todo su detalle) o un
                  tema/actividad puntual (ver cuánto ha hecho cada alumno en ese apartado), en
@@ -102,19 +101,19 @@
                  vez (ver fetchTeacherData) — cambiar de filtro no vuelve a consultar la base. -->
             <div id="teacher-filters" class="hidden flex flex-col sm:flex-row gap-3 mb-6">
                 <div class="flex-1">
-                    <label for="student-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Alumno</label>
+                    <label for="student-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Alumno</label>
                     <select id="student-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Todos los alumnos</option>
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label for="group-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Grupo</label>
+                    <label for="group-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Grupo</label>
                     <select id="group-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Todos los grupos</option>
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label for="topic-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Tema o actividad</label>
+                    <label for="topic-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tema o actividad</label>
                     <select id="topic-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Todo (resumen general)</option>
                         <option value="asignaciones">🚩 Asignaciones (Preguntar a la clase)</option>
@@ -139,7 +138,7 @@
                  como estudiados, en orden, por curso. Filas activity "curso" de training_progress. -->
             <div id="cursos-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="cursos-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Cursos</h2>
-                <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-400 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
+                <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-300 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
                 <div id="cursos-report-body" class="space-y-4"></div>
             </div>
 
@@ -166,7 +165,7 @@
                      Lo pinta renderArbitrajesPublicos() y se reutiliza en el filtro por tema. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">⚖️ Exámenes de arbitraje</h2>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Quienes midieron su nivel de arbitraje desde <a href="nivel-de-arbitraje.html" class="underline">la página abierta</a>. La retroalimentación se escribe en <a href="arbitraje.html" class="underline">la herramienta de arbitraje</a>.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Quienes midieron su nivel de arbitraje desde <a href="nivel-de-arbitraje.html" class="underline">la página abierta</a>. La retroalimentación se escribe en <a href="arbitraje.html" class="underline">la herramienta de arbitraje</a>.</p>
                     <div id="arbitrajes-publicos"></div>
                 </div>
 
@@ -174,7 +173,7 @@
                      Lo pinta renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel — alumnos registrados</h2>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
                     <div id="diagnosticos-clase"></div>
                 </div>
 
@@ -183,7 +182,7 @@
                      mezclarse con los promedios de la clase. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🌐 Diagnósticos de visitantes (fuera del panel)</h2>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Personas sin cuenta que hicieron el diagnóstico público desde el sitio. No entran en los promedios de la clase. Cada uno deja nombre y correo: son contactos para invitar a Academia.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Personas sin cuenta que hicieron el diagnóstico público desde el sitio. No entran en los promedios de la clase. Cada uno deja nombre y correo: son contactos para invitar a Academia.</p>
                     <div id="diagnosticos-visitantes"></div>
                 </div>
 
@@ -193,11 +192,11 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asistencia y tiempo en la plataforma</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Asistencia a partir de las clases cerradas por el profesor. El tiempo en ejercicios cuenta solo mientras el alumno realmente interactúa con la página (sin contar ratos con la pestaña abierta sin hacer nada).</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Asistencia a partir de las clases cerradas por el profesor. El tiempo en ejercicios cuenta solo mientras el alumno realmente interactúa con la página (sin contar ratos con la pestaña abierta sin hacer nada).</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="text-left text-brand-400 dark:text-brand-500 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
                                     <th class="py-2 pr-4 font-semibold">Alumno</th>
                                     <th class="py-2 pr-4 font-semibold">Grupo</th>
                                     <th class="py-2 pr-4 font-semibold">Asistencia</th>
@@ -212,11 +211,11 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="text-left text-brand-400 dark:text-brand-500 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
                                     <th class="py-2 pr-4 font-semibold">Alumno</th>
                                     <th class="py-2 pr-4 font-semibold">🧩 4×4</th>
                                     <th class="py-2 pr-4 font-semibold">🎓 Lecciones</th>
@@ -241,12 +240,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
@@ -301,7 +300,7 @@
         function statCard(emoji, value, label) {
             const div = document.createElement("div");
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
-            div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-400 dark:text-brand-500 mt-1">${label}</div>`;
+            div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
             return div;
         }
 
@@ -422,13 +421,13 @@
             body.innerHTML = "";
             document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
             if (!entreno.cursos.length) {
-                body.innerHTML = `<p class="text-sm text-brand-400 dark:text-brand-500">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-600 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
+                body.innerHTML = `<p class="text-sm text-brand-450 dark:text-brand-350">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-700 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
             } else {
                 entreno.cursos.forEach((c) => {
                     const wrap = document.createElement("div");
                     wrap.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos));
                     const nota = document.createElement("p");
-                    nota.className = "text-xs text-brand-400 dark:text-brand-500 mt-1";
+                    nota.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
                     const fecha = c.ultimo ? new Date(c.ultimo.fecha).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }) : "";
                     nota.textContent = c.total && c.hechos >= c.total ? `🏁 Curso completo (último tema el ${fecha})` : c.ultimo ? `Último tema estudiado: ${c.ultimo.titulo} (${fecha})` : "";
                     if (propio) {
@@ -447,7 +446,7 @@
             const wrap = document.createElement("div");
             const head = document.createElement("div");
             head.className = "flex items-center justify-between text-sm mb-1";
-            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${name}</span><span class="text-brand-400 dark:text-brand-500">${correct}/${total} · ${pct}%</span>`;
+            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${name}</span><span class="text-brand-450 dark:text-brand-350">${correct}/${total} · ${pct}%</span>`;
             const track = document.createElement("div");
             track.className = "h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
             const fill = document.createElement("div");
@@ -512,7 +511,7 @@
 
             const historyEl = document.getElementById("student-history");
             if (!list.length) {
-                historyEl.innerHTML = '<li class="text-brand-400 dark:text-brand-500">Todavía no has respondido ninguna asignación.</li>';
+                historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no has respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
                     const li = document.createElement("li");
@@ -521,7 +520,7 @@
                     let badge = "Pendiente";
                     if (a.is_correct === true) badge = "✅ Correcta";
                     else if (a.is_correct === false) badge = "❌ Incorrecta";
-                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-400">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
+                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-300">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
                     historyEl.appendChild(li);
                 });
             }
@@ -641,7 +640,7 @@
                 .map((s) => ({ name: s.full_name || s.email, ...(byStudent[s.id] || { total: 0, correct: 0 }) }))
                 .sort((a, b) => b.total - a.total);
             if (!rows.length) {
-                leaderboard.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
+                leaderboard.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay alumnos registrados.</p>';
             } else {
                 rows.forEach((r) => leaderboard.appendChild(barRow(r.name, r.correct, r.total)));
             }
@@ -667,7 +666,7 @@
             const attBody = document.getElementById("attendance-table-body");
             attBody.innerHTML = "";
             if (!students.length) {
-                attBody.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+                attBody.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
                     const att = attByStudent[s.id] || { count: 0, minutes: 0 };
@@ -675,10 +674,10 @@
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
                     const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
-                    const tdGrupo = document.createElement("td"); tdGrupo.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdGrupo.textContent = s.grupo || "—";
-                    const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdAtt.textContent = `${att.count}/${closedSessions}`;
-                    const tdClase = document.createElement("td"); tdClase.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdClase.textContent = fmtDuration(att.minutes);
-                    const tdEjercicios = document.createElement("td"); tdEjercicios.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdEjercicios.textContent = fmtDuration(exerciseMinutes);
+                    const tdGrupo = document.createElement("td"); tdGrupo.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdGrupo.textContent = s.grupo || "—";
+                    const tdAtt = document.createElement("td"); tdAtt.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdAtt.textContent = `${att.count}/${closedSessions}`;
+                    const tdClase = document.createElement("td"); tdClase.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdClase.textContent = fmtDuration(att.minutes);
+                    const tdEjercicios = document.createElement("td"); tdEjercicios.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdEjercicios.textContent = fmtDuration(exerciseMinutes);
                     const tdTotal = document.createElement("td"); tdTotal.className = "py-2 font-semibold text-brand-700 dark:text-brand-200"; tdTotal.textContent = fmtDuration(att.minutes + exerciseMinutes);
                     tr.append(tdName, tdGrupo, tdAtt, tdClase, tdEjercicios, tdTotal);
                     attBody.appendChild(tr);
@@ -692,20 +691,20 @@
             const entrenoBody = document.getElementById("entreno-table-body");
             entrenoBody.innerHTML = "";
             if (!students.length) {
-                entrenoBody.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</td></tr>';
+                entrenoBody.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay alumnos registrados.</td></tr>';
             } else {
                 students.forEach((s) => {
                     const entreno = summarizeTrainingProgress(progressByStudent[s.id]);
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
                     const tdName = document.createElement("td"); tdName.className = "py-2 pr-4 font-medium text-brand-700 dark:text-brand-200"; tdName.textContent = s.full_name || s.email;
-                    const tdPuzzles = document.createElement("td"); tdPuzzles.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPuzzles.textContent = String(entreno.puzzles);
-                    const tdLessons = document.createElement("td"); tdLessons.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdLessons.textContent = String(entreno.lessons);
-                    const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdCoord.textContent = entreno.bestCoord || "—";
-                    const tdPractice = document.createElement("td"); tdPractice.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
-                    const tdMates = document.createElement("td"); tdMates.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdMates.textContent = entreno.matesTotal ? `${entreno.matesTotal} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3})` : "—";
-                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 pr-4 text-brand-500 dark:text-brand-400"; tdTactica.textContent = entreno.tacticaTotal || "—";
-                    const tdConcentracion = document.createElement("td"); tdConcentracion.className = "py-2 text-brand-500 dark:text-brand-400"; tdConcentracion.textContent = entreno.concentracionTotal || "—";
+                    const tdPuzzles = document.createElement("td"); tdPuzzles.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdPuzzles.textContent = String(entreno.puzzles);
+                    const tdLessons = document.createElement("td"); tdLessons.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdLessons.textContent = String(entreno.lessons);
+                    const tdCoord = document.createElement("td"); tdCoord.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdCoord.textContent = entreno.bestCoord || "—";
+                    const tdPractice = document.createElement("td"); tdPractice.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdPractice.textContent = entreno.practiceCompleted ? `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)` : "—";
+                    const tdMates = document.createElement("td"); tdMates.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdMates.textContent = entreno.matesTotal ? `${entreno.matesTotal} (${entreno.mate1}·${entreno.mate2}·${entreno.mate3})` : "—";
+                    const tdTactica = document.createElement("td"); tdTactica.className = "py-2 pr-4 text-brand-500 dark:text-brand-300"; tdTactica.textContent = entreno.tacticaTotal || "—";
+                    const tdConcentracion = document.createElement("td"); tdConcentracion.className = "py-2 text-brand-500 dark:text-brand-300"; tdConcentracion.textContent = entreno.concentracionTotal || "—";
                     tr.append(tdName, tdPuzzles, tdLessons, tdCoord, tdPractice, tdMates, tdTactica, tdConcentracion);
                     entrenoBody.appendChild(tr);
                 });
@@ -773,7 +772,7 @@
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
             if (!list.length) {
-                historyEl.innerHTML = '<li class="text-brand-400 dark:text-brand-500">Todavía no ha respondido ninguna asignación.</li>';
+                historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no ha respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
                     const li = document.createElement("li");
@@ -782,7 +781,7 @@
                     let badge = "Pendiente";
                     if (a.is_correct === true) badge = "✅ Correcta";
                     else if (a.is_correct === false) badge = "❌ Incorrecta";
-                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-400">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
+                    li.innerHTML = `<span class="text-brand-500 dark:text-brand-300">${date}</span><span class="font-medium text-brand-700 dark:text-brand-200">${badge}</span>`;
                     historyEl.appendChild(li);
                 });
             }
@@ -818,7 +817,7 @@
                 renderDiagnosticosClase(cajaAlumnos);
                 const visitantes = document.createElement("div");
                 visitantes.className = "mt-8 border-t border-brand-100 dark:border-brand-800 pt-6";
-                visitantes.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🌐 Visitantes (diagnóstico público, fuera del panel)</h3><p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Aparte de los alumnos y sin entrar en los promedios de la clase.</p>';
+                visitantes.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🌐 Visitantes (diagnóstico público, fuera del panel)</h3><p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Aparte de los alumnos y sin entrar en los promedios de la clase.</p>';
                 const cajaVis = document.createElement("div"); visitantes.appendChild(cajaVis);
                 renderDiagnosticosVisitantes(cajaVis);
                 body.append(alumnos, visitantes);
@@ -837,7 +836,7 @@
             }
             const students = filteredStudents();
             if (!students.length) {
-                body.innerHTML = '<p class="text-brand-400 dark:text-brand-500 text-sm">Todavía no hay alumnos registrados.</p>';
+                body.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay alumnos registrados.</p>';
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }
@@ -875,7 +874,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-400">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
                         body.appendChild(row);
                     });
             } else {
@@ -898,7 +897,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-400">${r.label}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.label}</span>`;
                         body.appendChild(row);
                     });
             }
@@ -923,7 +922,7 @@
                 contenedor.appendChild(bloque);
             });
             if (sinEmpezar.length) {
-                const p = document.createElement("p"); p.className = "text-sm text-brand-400 dark:text-brand-500";
+                const p = document.createElement("p"); p.className = "text-sm text-brand-450 dark:text-brand-350";
                 p.textContent = "Sin empezar ningún curso: " + sinEmpezar.join(", ") + ".";
                 contenedor.appendChild(p);
             }
@@ -967,7 +966,7 @@
                 return `<div>
                     <div class="flex items-center justify-between gap-3 text-sm mb-1">
                         <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
-                        <span class="text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ""}</span>
+                        <span class="text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ""}</span>
                     </div>
                     <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
                 </div>`;
@@ -989,7 +988,7 @@
             if (e.declarado) {
                 return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ≈${e.estimado} · nivel calculado con ambos (≈${e.combinado}). ${e.lectura.texto}</p>`;
             }
-            return `<p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-600 dark:text-accent-400 hover:underline">Agregá tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
+            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agregá tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
         }
 
         // Elo del alumno, editable por su profesor o un administrador (función
@@ -1000,12 +999,12 @@
             const cuando = student.elo_actualizado ? ` · actualizado el ${fmtFecha(student.elo_actualizado)}` : "";
             return `<div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4 mb-5">
                 <p class="text-sm font-semibold text-brand-800 dark:text-white mb-1">Elo del alumno</p>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">${student.elo ? `Registrado: ${student.elo}${cuando}.` : "Sin Elo registrado."} Al cambiarlo, el nivel estimado, la lectura y el plan se recalculan.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">${student.elo ? `Registrado: ${student.elo}${cuando}.` : "Sin Elo registrado."} Al cambiarlo, el nivel estimado, la lectura y el plan se recalculan.</p>
                 <div class="flex flex-wrap gap-2 items-center">
                     <input id="elo-alumno" type="number" inputmode="numeric" min="100" max="3500" step="1" value="${student.elo || ""}" placeholder="Ej. 1350" aria-label="Elo del alumno" class="w-28 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">
                     <select id="elo-alumno-tipo" aria-label="Origen del Elo" class="bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">${tipos}</select>
                     <button type="button" id="elo-alumno-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar Elo</button>
-                    <span id="elo-alumno-msg" class="text-xs text-brand-400 dark:text-brand-500" aria-live="polite"></span>
+                    <span id="elo-alumno-msg" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></span>
                 </div>
             </div>`;
         }
@@ -1032,12 +1031,12 @@
             const contexto = [perfil.tiempo, perfil.torneos && "torneos: " + perfil.torneos.toLowerCase(), perfil.practica && "practica: " + perfil.practica.toLowerCase()]
                 .filter(Boolean).join(" · ");
             return `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4 mb-5">
-                <p class="text-xs text-brand-400 dark:text-brand-500">Diagnóstico del ${fmtFecha(fecha)}</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350">Diagnóstico del ${fmtFecha(fecha)}</p>
                 <p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${resumen.nivel.etiqueta} · ${resumen.porcentaje}%</p>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">${resumen.nivel.descripcion}</p>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas${resumen.nosabe ? ` · 🤔 ${resumen.nosabe} marcadas como "no lo sé"` : ""} · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
-                ${resumen.nosabe ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Las marcadas como "no lo sé" son huecos que enseñar, no errores que corregir: se pueden dar por clase nueva, no por repaso.</p>` : ""}
-                ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas${resumen.nosabe ? ` · 🤔 ${resumen.nosabe} marcadas como "no lo sé"` : ""} · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
+                ${resumen.nosabe ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Las marcadas como "no lo sé" son huecos que enseñar, no errores que corregir: se pueden dar por clase nueva, no por repaso.</p>` : ""}
+                ${contexto ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
                 ${eloLineaHTML(resumen, propio)}
                 ${escaleraHTML(resumen)}
             </div>`;
@@ -1053,16 +1052,16 @@
             if (!escalones.length || resumen.escalonAlcanzado === null || resumen.escalonAlcanzado === undefined) return "";
             const alcanzado = resumen.escalonAlcanzado;
             return `<div class="mt-3 pt-3 border-t border-brand-100 dark:border-brand-700">
-                <p class="text-xs text-brand-500 dark:text-brand-400 mb-2">Escalones de dificultad superados: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel es el escalón más alto con 60% de aciertos o más, no la suma de respuestas correctas.</p>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mb-2">Escalones de dificultad superados: <strong class="text-brand-700 dark:text-brand-200">${alcanzado} de 5</strong>. El nivel es el escalón más alto con 60% de aciertos o más, no la suma de respuestas correctas.</p>
                 <div class="space-y-1">
                     ${escalones.map((e) => `
                         <div class="flex items-center gap-2 text-xs">
-                            <span class="w-16 shrink-0 text-brand-500 dark:text-brand-400">${"★".repeat(e.peso)}</span>
+                            <span class="w-16 shrink-0 text-brand-500 dark:text-brand-300">${"★".repeat(e.peso)}</span>
                             <div class="flex-1 h-1.5 bg-brand-100 dark:bg-brand-700 rounded-full overflow-hidden">
                                 <div class="h-full ${e.peso <= alcanzado ? "bg-green-500" : "bg-brand-300 dark:bg-brand-600"}" style="width:${e.porcentaje}%"></div>
                             </div>
-                            <span class="w-24 shrink-0 text-right text-brand-500 dark:text-brand-400">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
-                            <span class="w-20 shrink-0 ${e.peso <= alcanzado ? "text-green-600 dark:text-green-400" : "text-brand-400 dark:text-brand-500"}">${e.peso <= alcanzado ? "superado" : "todavía no"}</span>
+                            <span class="w-24 shrink-0 text-right text-brand-500 dark:text-brand-300">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+                            <span class="w-20 shrink-0 ${e.peso <= alcanzado ? "text-green-600 dark:text-green-400" : "text-brand-450 dark:text-brand-350"}">${e.peso <= alcanzado ? "superado" : "todavía no"}</span>
                         </div>`).join("")}
                 </div>
             </div>`;
@@ -1075,18 +1074,18 @@
                 <div class="space-y-3">${plan.semanas.map((s) => `
                     <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4">
                         <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${s.titulo}</p>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-1">${s.porque}</p>
-                        <p class="text-xs text-brand-500 dark:text-brand-400 mb-2"><strong>Meta:</strong> ${s.objetivo}</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">${s.porque}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mb-2"><strong>Meta:</strong> ${s.objetivo}</p>
                         <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${x}</li>`).join("")}</ul>
-                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-600 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(" · ")}</p>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-700 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(" · ")}</p>
                     </div>`).join("")}</div>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">${plan.medicion}</p>`;
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${plan.medicion}</p>`;
         }
 
         function sinDiagnosticoHTML(nombre, esProfesor) {
             return esProfesor
-                ? `<p class="text-sm text-brand-500 dark:text-brand-400">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
-                : `<p class="text-sm text-brand-500 dark:text-brand-400 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 56 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                ? `<p class="text-sm text-brand-500 dark:text-brand-300">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
+                : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 56 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
         }
 
@@ -1133,9 +1132,9 @@
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Plan de entrenamiento · 4 semanas</h3>
                 ${planHTML(plan)}
                 <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
-                    <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Nota para el alumno (opcional)</label>
+                    <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nota para el alumno (opcional)</label>
                     <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empezá por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
-                    <p id="plan-estado" class="text-xs text-brand-400 dark:text-brand-500 mt-2">${estado}</p>
+                    <p id="plan-estado" class="text-xs text-brand-450 dark:text-brand-350 mt-2">${estado}</p>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
                         <button type="button" id="plan-guardar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">Guardar sin compartir</button>
@@ -1196,8 +1195,8 @@
                         ${planCompartido.nota ? `<p class="text-sm text-brand-600 dark:text-brand-300 mt-1">“${planCompartido.nota}”</p>` : ""}
                     </div>
                     ${planHTML(plan)}`
-                  : `<p class="text-sm text-brand-500 dark:text-brand-400">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
-                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-2"><a href="entreno/diagnostico.html" class="text-accent-600 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
+                  : `<p class="text-sm text-brand-500 dark:text-brand-300">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>
+                     <p class="text-xs text-brand-450 dark:text-brand-350 mt-2"><a href="entreno/diagnostico.html" class="text-accent-700 dark:text-accent-400 hover:underline">Ver el detalle completo de tu diagnóstico</a></p>`}`;
         }
 
 
@@ -1227,7 +1226,7 @@
         }
 
         function leyendaBandasHTML() {
-            return `<p class="text-xs text-brand-400 dark:text-brand-500 mt-4">
+            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-4">
                 ${BANDAS.slice().reverse().map((b) => `<span class="inline-flex items-center gap-1 mr-3"><span class="inline-block w-2.5 h-2.5 rounded-sm ${b.clase}"></span>${b.etiqueta} (${b.desde === 0 ? "menos de 60" : b.desde === 60 ? "60 a 79" : "80 o más"}%)</span>`).join("")}
             </p>`;
         }
@@ -1278,19 +1277,19 @@ function renderArbitrajesPublicos(contenedor) {
     <div class="grid grid-cols-3 gap-3 mb-4">
       <div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-3">
         <p class="text-xl font-bold text-brand-800 dark:text-white">${todos.length}</p>
-        <p class="text-xs text-brand-500 dark:text-brand-400">exámenes recibidos</p>
+        <p class="text-xs text-brand-500 dark:text-brand-300">exámenes recibidos</p>
       </div>
       <div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-3">
         <p class="text-xl font-bold ${pendientes ? "text-accent-600" : "text-brand-800 dark:text-white"}">${pendientes}</p>
-        <p class="text-xs text-brand-500 dark:text-brand-400">sin responder</p>
+        <p class="text-xs text-brand-500 dark:text-brand-300">sin responder</p>
       </div>
       <div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-3">
         <p class="text-xl font-bold text-brand-800 dark:text-white">${promedio === null ? "—" : promedio + "%"}</p>
-        <p class="text-xs text-brand-500 dark:text-brand-400">promedio del grupo</p>
+        <p class="text-xs text-brand-500 dark:text-brand-300">promedio del grupo</p>
       </div>
     </div>
     <div class="mb-3 max-w-xs">
-      <label for="arbitraje-estado" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Estado</label>
+      <label for="arbitraje-estado" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Estado</label>
       <select id="arbitraje-estado" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
         <option value="">Todos</option>
         <option value="pendientes">🟡 Sin responder</option>
@@ -1298,7 +1297,7 @@ function renderArbitrajesPublicos(contenedor) {
       </select>
     </div>
     <div class="overflow-x-auto"><table class="w-full text-sm">
-      <thead><tr class="text-left text-brand-400 dark:text-brand-500 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+      <thead><tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
         <th class="py-2 pr-4 font-semibold">Persona</th>
         <th class="py-2 pr-4 font-semibold">Fecha</th>
         <th class="py-2 pr-4 font-semibold">Nivel estimado</th>
@@ -1327,7 +1326,7 @@ function pintarFilasArbitraje(contenedor) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
     td.colSpan = 6;
-    td.className = "py-3 text-brand-400 dark:text-brand-500";
+    td.className = "py-3 text-brand-450 dark:text-brand-350";
     td.textContent = (teacherData.arbitrajes || []).length
       ? "Ninguno con ese estado."
       : "Todavía no ha llegado ninguno.";
@@ -1345,24 +1344,24 @@ function pintarFilasArbitraje(contenedor) {
     nom.className = "font-medium text-brand-700 dark:text-brand-200";
     nom.textContent = r.nombre || "—";
     const correo = document.createElement("p");
-    correo.className = "text-xs text-brand-400 dark:text-brand-500";
+    correo.className = "text-xs text-brand-450 dark:text-brand-350";
     correo.textContent = r.email || "";
     persona.append(nom, correo);
 
     const fecha = document.createElement("td");
-    fecha.className = "py-2 pr-4 text-brand-500 dark:text-brand-400";
+    fecha.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
     fecha.textContent = fmtFecha(r.created_at);
 
     const nivel = document.createElement("td");
-    nivel.className = "py-2 pr-4 text-brand-500 dark:text-brand-400";
+    nivel.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
     nivel.textContent = r.nivel || "—";
 
     const nota = document.createElement("td");
-    nota.className = "py-2 pr-4 text-brand-500 dark:text-brand-400";
+    nota.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
     nota.textContent = typeof r.porcentaje === "number" ? r.porcentaje + "%" : "—";
 
     const flojas = document.createElement("td");
-    flojas.className = "py-2 pr-4 text-xs text-brand-500 dark:text-brand-400";
+    flojas.className = "py-2 pr-4 text-xs text-brand-500 dark:text-brand-300";
     flojas.textContent = areasFlojasArbitraje(r).join(", ") || "—";
 
     const estado = document.createElement("td");
@@ -1401,12 +1400,12 @@ function areasFlojasArbitraje(fila) {
             const lista = teacherData.visitantes || [];
             contenedor.innerHTML = "";
             if (!lista.length) {
-                contenedor.innerHTML = '<p class="text-sm text-brand-400 dark:text-brand-500">Todavía nadie ha hecho el diagnóstico público. El enlace está en la portada, en Cursos y en cada curso: <code class="text-xs">entreno/diagnostico.html</code>.</p>';
+                contenedor.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Todavía nadie ha hecho el diagnóstico público. El enlace está en la portada, en Cursos y en cada curso: <code class="text-xs">entreno/diagnostico.html</code>.</p>';
                 return;
             }
             const nuevos = lista.filter((v) => !v.atendido).length;
             const cab = document.createElement("p");
-            cab.className = "text-xs text-brand-400 dark:text-brand-500 mb-3";
+            cab.className = "text-xs text-brand-450 dark:text-brand-350 mb-3";
             cab.textContent = `${lista.length} diagnóstico${lista.length === 1 ? "" : "s"} de visitantes` + (nuevos ? ` · ${nuevos} sin atender` : " · todos atendidos");
             contenedor.appendChild(cab);
             lista.forEach((v) => {
@@ -1415,15 +1414,15 @@ function areasFlojasArbitraje(fila) {
                 fila.className = "border border-brand-100 dark:border-brand-800 rounded-xl p-3 mb-2" + (v.atendido ? "" : " border-l-4 border-l-accent-500");
                 const tel = (v.telefono || "").replace(/[^\d+]/g, "");
                 const contacto = [
-                    v.email ? `<a href="mailto:${escVis(v.email)}" class="text-accent-600 dark:text-accent-400 hover:underline">${escVis(v.email)}</a>` : "",
-                    v.telefono ? `<a href="https://wa.me/${escVis(tel.replace(/^\+/, ""))}" target="_blank" rel="noopener" class="text-accent-600 dark:text-accent-400 hover:underline">WhatsApp ${escVis(v.telefono)}</a>` : "",
+                    v.email ? `<a href="mailto:${escVis(v.email)}" class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(v.email)}</a>` : "",
+                    v.telefono ? `<a href="https://wa.me/${escVis(tel.replace(/^\+/, ""))}" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 hover:underline">WhatsApp ${escVis(v.telefono)}</a>` : "",
                 ].filter(Boolean).join(" · ");
                 fila.innerHTML = `
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
-                        <p class="text-sm font-semibold text-brand-800 dark:text-white">${escVis(v.nombre)}${v.atendido ? "" : ' <span class="text-[10px] uppercase tracking-wide text-accent-600 dark:text-accent-400 ml-1">nuevo</span>'}</p>
-                        <p class="text-xs text-brand-500 dark:text-brand-400 whitespace-nowrap">${fmtFecha(v.created_at)} · <strong>${escVis(v.nivel || resumen.nivel.etiqueta)}</strong> · ${v.porcentaje != null ? v.porcentaje : resumen.porcentaje}%${v.elo ? ` · Elo ${v.elo}` : ""}</p>
+                        <p class="text-sm font-semibold text-brand-800 dark:text-white">${escVis(v.nombre)}${v.atendido ? "" : ' <span class="text-[10px] uppercase tracking-wide text-accent-700 dark:text-accent-400 ml-1">nuevo</span>'}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 whitespace-nowrap">${fmtFecha(v.created_at)} · <strong>${escVis(v.nivel || resumen.nivel.etiqueta)}</strong> · ${v.porcentaje != null ? v.porcentaje : resumen.porcentaje}%${v.elo ? ` · Elo ${v.elo}` : ""}</p>
                     </div>
-                    ${contacto ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">${contacto}</p>` : ""}
+                    ${contacto ? `<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">${contacto}</p>` : ""}
                     <div class="flex flex-wrap gap-2 mt-2">
                         <button type="button" data-ver class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors" aria-expanded="false">Ver detalle</button>
                         <button type="button" data-atendido class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors">${v.atendido ? "Marcar como pendiente" : "Marcar como atendido"}</button>
@@ -1436,7 +1435,7 @@ function areasFlojasArbitraje(fila) {
                     ev.currentTarget.textContent = abierto ? "Ver detalle" : "Ocultar detalle";
                     if (!abierto && !det.innerHTML) {
                         det.innerHTML = cabeceraDiagnosticoHTML(resumen, v.created_at, false) + `<div class="space-y-3">${barrasAreasHTML(resumen)}</div>` +
-                            `<p class="text-xs text-brand-400 dark:text-brand-500 mt-3">Debilidades: ${resumen.debilidades.length ? resumen.debilidades.map((d) => `${d.nombre} (${d.porcentaje}%)`).join(", ") : "ninguna por debajo del 60%"}.</p>`;
+                            `<p class="text-xs text-brand-450 dark:text-brand-350 mt-3">Debilidades: ${resumen.debilidades.length ? resumen.debilidades.map((d) => `${d.nombre} (${d.porcentaje}%)`).join(", ") : "ninguna por debajo del 60%"}.</p>`;
                     }
                 });
                 fila.querySelector("[data-atendido]").addEventListener("click", async (ev) => {
@@ -1457,7 +1456,7 @@ function areasFlojasArbitraje(fila) {
 
             if (!conDiagnostico.length) {
                 const empezados = pendientes.filter((p) => p.aMedias);
-                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-400">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-600 dark:text-accent-400 hover:underline">la versión imprimible</a> (material docente: trae las respuestas y va con marca de agua, no se le entrega al alumno).</p>`;
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a> (material docente: trae las respuestas y va con marca de agua, no se le entrega al alumno).</p>`;
                 return;
             }
 
@@ -1478,8 +1477,8 @@ function areasFlojasArbitraje(fila) {
 
             const tile = (valor, etiqueta, detalle) => `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4">
                 <p class="font-serif text-2xl font-bold text-brand-800 dark:text-white">${valor}</p>
-                <p class="text-xs text-brand-500 dark:text-brand-400 mt-0.5">${etiqueta}</p>
-                ${detalle ? `<p class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">${detalle}</p>` : ""}
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-0.5">${etiqueta}</p>
+                ${detalle ? `<p class="text-[11px] text-brand-450 dark:text-brand-350 mt-1">${detalle}</p>` : ""}
             </div>`;
 
             contenedor.innerHTML = `
@@ -1490,13 +1489,13 @@ function areasFlojasArbitraje(fila) {
                 </div>
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Nivel por alumno</h3>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
                 <div class="space-y-2.5">
                     ${conDiagnostico.map((d) => `
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
-                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
+                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
                             </div>
                             ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
                         </div>`).join("")}
@@ -1504,38 +1503,38 @@ function areasFlojasArbitraje(fila) {
                 ${leyendaBandasHTML()}
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">Dónde está floja la clase</h3>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase.</p>
                 <div class="space-y-2.5">
                     ${promedioPorArea.map((a) => `
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <span class="font-medium text-brand-700 dark:text-brand-200">${a.emoji} ${a.nombre}</span>
-                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${a.promedio}% · ${bandaDe(a.promedio).etiqueta}</span>
+                                <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${a.promedio}% · ${bandaDe(a.promedio).etiqueta}</span>
                             </div>
                             ${barraHTML(a.promedio, `${a.nombre}: promedio ${a.promedio}%`)}
                         </div>`).join("")}
                 </div>
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">El perfil de cada alumno</h3>
-                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Las ocho áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Las ocho áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     ${conDiagnostico.map((d) => `
                         <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-3">
                             <div class="flex items-baseline justify-between gap-2 mb-2">
                                 <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
-                                <span class="text-xs text-brand-400 dark:text-brand-500 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
+                                <span class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
                             </div>
                             <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${d.nombre}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
                                 ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.porcentaje).clase} rounded-t" style="height:${Math.max(a.porcentaje, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.porcentaje).etiqueta})"></div>`).join("")}
                             </div>
                             <div class="flex gap-[2px] mt-1">
-                                ${d.resumen.porArea.map((a) => `<span class="flex-1 text-center text-[10px] text-brand-400 dark:text-brand-500" title="${a.nombre}">${a.emoji}</span>`).join("")}
+                                ${d.resumen.porArea.map((a) => `<span class="flex-1 text-center text-[10px] text-brand-450 dark:text-brand-350" title="${a.nombre}">${a.emoji}</span>`).join("")}
                             </div>
-                            <p class="text-[11px] text-brand-400 dark:text-brand-500 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje)[0].nombre.toLowerCase()}.</p>
+                            <p class="text-[11px] text-brand-450 dark:text-brand-350 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje)[0].nombre.toLowerCase()}.</p>
                         </div>`).join("")}
                 </div>
 
-                ${pendientes.length ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-6"><strong class="text-brand-500 dark:text-brand-400">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "")).join(", ")}.</p>` : ""}`;
+                ${pendientes.length ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-6"><strong class="text-brand-500 dark:text-brand-300">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "")).join(", ")}.</p>` : ""}`;
 
             // Los nombres llevan al informe completo de ese alumno.
             contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {

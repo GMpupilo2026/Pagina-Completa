@@ -16,8 +16,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -35,9 +35,9 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -48,10 +48,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -71,12 +71,12 @@
     </header>
 
     <main id="main-content">
-    <article class="pt-28 pb-16">
+    <article class="pt-8 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Artículos</a>
-            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Táctica</span>
+            <a href="../articulos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Artículos</a>
+            <span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide">Táctica</span>
             <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">La clavada: el arma táctica más poderosa</h1>
-            <p class="text-brand-400 dark:text-brand-500 text-sm mb-8">28 febrero 2026 · 7 min lectura</p>
+            <p class="text-brand-450 dark:text-brand-350 text-sm mb-8">28 febrero 2026 · 7 min lectura</p>
             <div aria-hidden="true" class="h-56 bg-gradient-to-br from-accent-400 to-accent-600 rounded-2xl flex items-center justify-center text-7xl mb-10">⚔️</div>
 
             <div class="prose-chess space-y-6 text-brand-700 dark:text-brand-200 leading-relaxed">
@@ -89,10 +89,10 @@
         <h2 id="ejemplo-heading-la-clavada" class="font-serif font-bold text-brand-800 dark:text-white text-base mt-0 mb-0">📋 Ejemplo</h2>
         <div class="inline-flex border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden text-xs" role="group" aria-label="Elegir modo de interacción">
             <button type="button" class="example-mode-btn px-3 py-1.5 bg-accent-500 text-brand-900 font-semibold transition-colors" data-mode="normal" aria-pressed="true">Modo normal</button>
-            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-400 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
+            <button type="button" class="example-mode-btn px-3 py-1.5 bg-white dark:bg-brand-900 text-brand-500 dark:text-brand-300 font-semibold transition-colors" data-mode="adaptado" aria-pressed="false">🔊 Adaptado</button>
         </div>
     </div>
-    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">El alfil en c4 clava el caballo en e6 contra el rey en g8: el caballo no tiene ninguna jugada legal (moverlo dejaría al rey en jaque), así que las blancas pueden capturarlo gratis.</p>
+    <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">El alfil en c4 clava el caballo en e6 contra el rey en g8: el caballo no tiene ninguna jugada legal (moverlo dejaría al rey en jaque), así que las blancas pueden capturarlo gratis.</p>
     <div class="example-board-wrap max-w-[280px] mx-auto">
         <div class="example-board" role="img" aria-label="Diagrama de ejemplo"></div>
     </div>
@@ -109,7 +109,7 @@
 
             <div class="mt-10 pt-6 border-t border-brand-100 dark:border-brand-800">
                 <h2 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-3">Fuentes</h2>
-                <ul class="list-disc pl-6 space-y-1 text-sm text-brand-500 dark:text-brand-400">
+                <ul class="list-disc pl-6 space-y-1 text-sm text-brand-500 dark:text-brand-300">
                     <li>Fred Reinfeld, <em>1001 Winning Chess Sacrifices and Combinations</em></li>
                     <li>Vladimir Vuković, <em>El arte del ataque en ajedrez</em></li>
                 </ul>
@@ -122,8 +122,8 @@
             </div>
 
             <nav aria-label="Navegación entre artículos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
-                <a href="peones-doblados.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Artículo anterior: Peones doblados: ¿siempre son una debilidad?"><span aria-hidden="true">←</span> Peones doblados: ¿siempre son una debilidad?</a>
-                <a href="horquillas-de-caballo.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente artículo: Horquillas de caballo: cómo ganar material">Horquillas de caballo: cómo ganar material <span aria-hidden="true">→</span></a>
+                <a href="peones-doblados.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors" aria-label="Artículo anterior: Peones doblados: ¿siempre son una debilidad?"><span aria-hidden="true">←</span> Peones doblados: ¿siempre son una debilidad?</a>
+                <a href="horquillas-de-caballo.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente artículo: Horquillas de caballo: cómo ganar material">Horquillas de caballo: cómo ganar material <span aria-hidden="true">→</span></a>
             </nav>
         </div>
     </article>

@@ -15,9 +15,17 @@
   --sq-dark-adaptive: #d946ef;
 }
 html { scroll-behavior: smooth; }
+/* El encabezado es sticky: al saltar a un ancla el navegador tiene que dejarle
+   su espacio arriba, o el destino queda debajo de la barra. Es la misma altura
+   del encabezado — 4rem la barra de navegación, más 2rem de la barra superior
+   que solo aparece en pantallas grandes. */
+html { scroll-padding-top: 5rem; }
+@media (min-width: 1024px) { html { scroll-padding-top: 7rem; } }
 body { -webkit-font-smoothing: antialiased; }
 #header.scrolled { height: auto; }
-#header.scrolled nav > div { height: 3.5rem; }
+/* min-height y no height: en modo adaptado la tipografía sube a 112% y con una
+   altura fija el contenido se sale de la caja en vez de empujarla. */
+#header.scrolled nav > div { min-height: 3.5rem; }
 #chessboard .square { display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 5vw, 2.5rem); cursor: pointer; transition: background-color 0.15s ease; user-select: none; }
 #chessboard .square.light { background-color: #f0f4f8; }
 #chessboard .square.dark  { background-color: #486581; }

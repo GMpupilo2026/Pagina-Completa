@@ -17,8 +17,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -44,9 +44,9 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -57,10 +57,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -82,16 +82,16 @@
 <!-- ===== PASSWORD GATE ===== -->
     <main id="main-content">
 
-    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+    <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
 
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- ---------- Portada ---------- -->
             <section id="intro-view">
-                <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
+                <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -122,7 +122,7 @@
 
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Antes de empezar</h2>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Cuatro preguntas sobre ti, incluido tu Elo si lo tenés. No puntúan: sirven para ajustar el nivel y el plan a tu realidad.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuatro preguntas sobre ti, incluido tu Elo si lo tenés. No puntúan: sirven para ajustar el nivel y el plan a tu realidad.</p>
                     <div id="perfil-form" class="space-y-4"></div>
                 </div>
 
@@ -140,14 +140,14 @@
                          profesores y a quien administra: init() lo muestra si el perfil lo es. -->
                     <a href="../diagnostico-de-nivel.pdf" id="pdf-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-400 dark:text-brand-500 mt-2">Solo para docentes: el cuadernillo trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla de niveles, y va con marca de agua. No se le entrega al alumno.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes: el cuadernillo trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla de niveles, y va con marca de agua. No se le entrega al alumno.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
             <section id="test-view" class="hidden">
                 <div class="flex items-center justify-between gap-3 mb-2">
-                    <p class="text-sm text-brand-500 dark:text-brand-400"><span id="q-counter"></span></p>
-                    <p id="q-area" class="text-xs font-semibold text-accent-600 dark:text-accent-400"></p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300"><span id="q-counter"></span></p>
+                    <p id="q-area" class="text-xs font-semibold text-accent-700 dark:text-accent-400"></p>
                 </div>
                 <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-5">
                     <div id="q-bar" class="h-full bg-accent-500 transition-[width] duration-300" style="width:0%"></div>
@@ -159,11 +159,11 @@
                     <div id="q-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[380px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                 </div>
 
-                <p id="q-hint" class="text-center text-xs text-brand-400 dark:text-brand-500 mb-3 min-h-[1.2em]"></p>
+                <p id="q-hint" class="text-center text-xs text-brand-450 dark:text-brand-350 mb-3 min-h-[1.2em]"></p>
                 <div id="q-options" class="space-y-2"></div>
 
                 <div class="flex justify-between items-center gap-3 mt-6">
-                    <button type="button" id="abandon-btn" class="text-sm text-brand-400 dark:text-brand-500 hover:text-accent-500 transition-colors">Guardar y salir</button>
+                    <button type="button" id="abandon-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors">Guardar y salir</button>
                     <button type="button" id="next-btn" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-bold px-6 py-3 rounded-xl transition-colors">Siguiente →</button>
                 </div>
             </section>
@@ -171,7 +171,7 @@
             <!-- ---------- Resultado ---------- -->
             <section id="result-view" class="hidden">
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">Tu diagnóstico</h1>
-                <p id="result-saved" class="text-xs text-brand-400 dark:text-brand-500 mb-5"></p>
+                <p id="result-saved" class="text-xs text-brand-450 dark:text-brand-350 mb-5"></p>
 
                 <div class="bg-gradient-to-r from-accent-500 to-accent-600 text-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <p class="text-xs font-semibold uppercase tracking-wide opacity-80">Nivel estimado</p>
@@ -216,12 +216,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="../index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="../index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="../te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="../tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="../sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="../inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="../js/main.js"></script>
@@ -381,7 +381,7 @@ function pintarPerfil() {
         ${PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${t.id === tipoActual ? ' selected' : ''}>${t.etiqueta}</option>`).join('')}
       </select>
     </div>
-    <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
   box.appendChild(g);
   const inp = g.querySelector('#perfil-elo'), sel = g.querySelector('#perfil-elo-tipo');
   const guardarElo = () => {
@@ -404,8 +404,8 @@ function pintarPrevio() {
   const fecha = new Date(previo.fecha).toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
   box.innerHTML = `
     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Ya hiciste el diagnóstico</h2>
-    <p class="text-sm text-brand-500 dark:text-brand-400 mb-3">El ${fecha} quedaste en <strong class="text-brand-800 dark:text-white">${previo.nivel}</strong> con ${previo.porcentaje}% de la prueba. Repetirlo cada cuatro semanas es la forma de ver si el plan está funcionando.</p>
-    <button type="button" id="ver-previo-btn" class="text-sm text-accent-600 dark:text-accent-400 hover:underline">Ver ese resultado otra vez</button>
+    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">El ${fecha} quedaste en <strong class="text-brand-800 dark:text-white">${previo.nivel}</strong> con ${previo.porcentaje}% de la prueba. Repetirlo cada cuatro semanas es la forma de ver si el plan está funcionando.</p>
+    <button type="button" id="ver-previo-btn" class="text-sm text-accent-700 dark:text-accent-400 hover:underline">Ver ese resultado otra vez</button>
     ${pendienteGuardado() ? '<p class="text-xs text-red-600 dark:text-red-400 mt-2">Ese resultado todavía no llegó a tu cuenta, así que tu profesor aún no lo ve. Se está reintentando solo: deja esta página abierta un momento con internet.</p>' : ''}`;
   box.classList.remove('hidden');
   document.getElementById('ver-previo-btn').addEventListener('click', () => mostrarResultado(previo.detalle, false));
@@ -522,7 +522,7 @@ function botonNoSe() {
 function claseNoSe(activa) {
   return 'w-full text-left text-sm px-4 py-3 rounded-xl border border-dashed transition-colors mt-1 ' + (activa
     ? 'bg-brand-100 dark:bg-brand-800 border-brand-400 text-brand-800 dark:text-white font-semibold'
-    : 'bg-transparent border-brand-300 dark:border-brand-700 text-brand-500 dark:text-brand-400 hover:border-accent-500');
+    : 'bg-transparent border-brand-300 dark:border-brand-700 text-brand-500 dark:text-brand-300 hover:border-accent-500');
 }
 
 function barajar(lista) {
@@ -753,19 +753,19 @@ function pintarEscalones(resumen) {
   const alcanzado = resumen.escalonAlcanzado;
   caja.innerHTML = `
     <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Hasta dónde llegaste</p>
-    <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">La prueba tiene cinco escalones de dificultad. Tu nivel es el más alto que superaste (60% de aciertos o más), no la suma de respuestas buenas: así no cuenta lo mismo acertar lo fácil que resolver lo difícil.</p>
+    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">La prueba tiene cinco escalones de dificultad. Tu nivel es el más alto que superaste (60% de aciertos o más), no la suma de respuestas buenas: así no cuenta lo mismo acertar lo fácil que resolver lo difícil.</p>
     <div class="space-y-1.5">
       ${escalones.map((e) => `
         <div class="flex items-center gap-2 text-sm">
-          <span class="w-20 shrink-0 text-brand-500 dark:text-brand-400">${'★'.repeat(e.peso)}</span>
+          <span class="w-20 shrink-0 text-brand-500 dark:text-brand-300">${'★'.repeat(e.peso)}</span>
           <div class="flex-1 h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
             <div class="h-full ${e.peso <= alcanzado ? 'bg-green-500' : 'bg-brand-300 dark:bg-brand-700'}" style="width:${e.porcentaje}%"></div>
           </div>
-          <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-400">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
-          <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-400 dark:text-brand-500'}">${e.peso <= alcanzado ? 'superado' : 'todavía no'}</span>
+          <span class="w-28 shrink-0 text-right text-brand-500 dark:text-brand-300">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+          <span class="w-24 shrink-0 text-xs ${e.peso <= alcanzado ? 'text-green-600 dark:text-green-400' : 'text-brand-450 dark:text-brand-350'}">${e.peso <= alcanzado ? 'superado' : 'todavía no'}</span>
         </div>`).join('')}
     </div>
-    <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">${alcanzado >= 5
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${alcanzado >= 5
       ? 'Superaste los cinco escalones: la prueba ya no te mide, el siguiente paso es la competencia y el análisis de tus propias partidas.'
       : `El próximo escalón es el de ${'★'.repeat(alcanzado + 1)}: ahí está lo que te falta para subir de nivel, y de ahí sale tu plan.`}</p>`;
 }
@@ -803,19 +803,19 @@ function mostrarResultado(detalle, reciente) {
     fila.innerHTML = `
       <div class="flex items-center justify-between gap-3 mb-1">
         <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${a.nombre}</p>
-        <p class="text-sm text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
+        <p class="text-sm text-brand-500 dark:text-brand-300">${a.aciertos}/${a.total} · ${a.porcentaje}%${a.nosabe ? ` · 🤔 ${a.nosabe}` : ''}</p>
       </div>
       <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2">
         <div class="h-full ${color}" style="width:${a.porcentaje}%"></div>
       </div>
-      <p class="text-xs text-brand-400 dark:text-brand-500">${a.mide}</p>`;
+      <p class="text-xs text-brand-450 dark:text-brand-350">${a.mide}</p>`;
     areasBox.appendChild(fila);
   });
 
   const planBox = document.getElementById('result-plan');
   planBox.innerHTML = '';
   const intro = document.createElement('p');
-  intro.className = 'text-sm text-brand-500 dark:text-brand-400';
+  intro.className = 'text-sm text-brand-500 dark:text-brand-300';
   intro.textContent = `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${plan.prioridad.join(', ')}.` + (plan.metaElo ? ` Meta: ${plan.metaElo.texto}` : '');
   planBox.appendChild(intro);
   plan.semanas.slice(0, 3).forEach((semana) => {
@@ -823,16 +823,16 @@ function mostrarResultado(detalle, reciente) {
     caja.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
     caja.innerHTML = `
       <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${semana.titulo}</p>
-      <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">${semana.porque}</p>
+      <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">${semana.porque}</p>
       <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">
         ${semana.tareas.map((t) => `<li>${t}</li>`).join('')}
       </ul>
-      <p class="text-xs mt-2">${semana.recursos.map((r) => `<a href="${PE.enlace(r.href, '../')}" class="text-accent-600 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(' · ')}</p>`;
+      <p class="text-xs mt-2">${semana.recursos.map((r) => `<a href="${PE.enlace(r.href, '../')}" class="text-accent-700 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(' · ')}</p>`;
     planBox.appendChild(caja);
   });
   if (resumen.fortalezas.length) {
     const fuerte = document.createElement('p');
-    fuerte.className = 'text-sm text-brand-500 dark:text-brand-400';
+    fuerte.className = 'text-sm text-brand-500 dark:text-brand-300';
     fuerte.textContent = `Lo que ya tienes firme: ${resumen.fortalezas.map((f) => f.nombre.toLowerCase()).join(', ')}. Mantenlo con un repaso corto por semana.`;
     planBox.appendChild(fuerte);
   }
@@ -850,8 +850,8 @@ function mostrarResultado(detalle, reciente) {
     det.innerHTML = `
       <summary class="cursor-pointer text-sm font-medium text-brand-700 dark:text-brand-200">${ok ? '✅' : (dijoNoSaber ? '🤔' : '❌')} ${i + 1}. ${item.enunciado}</summary>
       <p class="text-sm text-brand-600 dark:text-brand-300 mt-2"><strong>Respuesta correcta:</strong> ${correcta}</p>
-      <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${item.explica}</p>
-      ${dijoNoSaber ? '<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Dijiste que no la sabías: por eso está en tu plan, no en tu lista de errores.</p>' : ''}`;
+      <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${item.explica}</p>
+      ${dijoNoSaber ? '<p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Dijiste que no la sabías: por eso está en tu plan, no en tu lista de errores.</p>' : ''}`;
     review.appendChild(det);
   });
 }
