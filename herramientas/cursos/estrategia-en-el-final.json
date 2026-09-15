@@ -100,7 +100,7 @@
             "El otro lado de la misma moneda es el refugio. Antes de que el final se complique, conviene gastar una jugada en darle al rey una casilla segura — mover un peón para que no haya jaque perpetuo, dejar un hueco para no morir en el pasillo. Es la jugada que nunca parece urgente y siempre se extraña después.",
             "Las dos ideas se deciden con la misma pregunta: ¿por dónde entra el rey, el mío o el suyo? Contéstala antes de empezar a cambiar piezas, porque los cambios abren y cierran esas puertas."
           ],
-          "practica": "En tus tres últimas partidas con final de torres, busca la casilla por la que el rey rival podía haber entrado. Si no había ninguna, busca la que vos dejaste abierta."
+          "practica": "En tus tres últimas partidas con final de torres, busca la casilla por la que el rey rival podía haber entrado. Si no había ninguna, busca la que tú dejaste abierta."
         }
       ]
     },
@@ -126,7 +126,7 @@
             "Cuando la mayoría está lejos del centro —lo que se llama peón pasado exterior— vale todavía más, porque obliga al rey rival a irse a ese lado y el tuyo se queda solo con el resto de los peones. Muchas veces la ventaja mínima de un final de peones es exactamente eso: no un peón de más, sino un peón pasado más lejos.",
             "El error clásico es apurar la mayoría sin mirar la del rival. Casi siempre las dos se convierten al mismo tiempo, y ahí la partida la gana el que coronó primero o el que dejó a su rey mejor puesto para la carrera."
           ],
-          "practica": "Arma la posición de mayoría clásica (peones blancos en a2, b2, c2; negros en a7, b7) y convertila en un peón pasado contra el motor, tres veces seguidas, sin perder ninguno."
+          "practica": "Arma la posición de mayoría clásica (peones blancos en a2, b2, c2; negros en a7, b7) y conviértela en un peón pasado contra el motor, tres veces seguidas, sin perder ninguno."
         },
         {
           "titulo": "Rupturas de peones",

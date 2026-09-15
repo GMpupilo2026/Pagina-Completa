@@ -1133,7 +1133,7 @@
                 ${planHTML(plan)}
                 <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
                     <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nota para el alumno (opcional)</label>
-                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empezá por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
+                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empieza por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
                     <p id="plan-estado" class="text-xs text-brand-450 dark:text-brand-350 mt-2">${estado}</p>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
