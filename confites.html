@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Confites del caballo — Ajedrez Integral</title>
+    <meta name="description" content="¿Cuántos confites puedes recoger con el caballo? Cada casilla que pisas queda bloqueada: el reto es recorrer las 64 sin quedarte encerrado.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        .casilla { position: relative; display: flex; align-items: center; justify-content: center; font-size: clamp(14px, 4.2vw, 26px); line-height: 1; cursor: default; transition: background-color .15s, transform .1s; }
+        .casilla.clara { background: #f0d9b5; }
+        .casilla.oscura { background: #b58863; }
+        .casilla.pisada { background: #5b4636; }
+        .casilla.pisada.clara { background: #6d5442; }
+        .casilla.destino { cursor: pointer; }
+        .casilla.destino::after { content: ""; position: absolute; inset: 0; border: 3px solid #0b6b3a; border-radius: 4px; }
+        .casilla.destino:hover { transform: scale(1.06); }
+        .casilla.sugerida::after { border-color: #de911d; border-style: dashed; }
+        .casilla.caballo { background: #de911d; }
+        .casilla.inicio-libre { cursor: pointer; }
+        .casilla.inicio-libre:hover { transform: scale(1.06); }
+        .coord-etiqueta { position: absolute; font-size: 9px; font-weight: 700; color: rgba(16,42,67,.55); pointer-events: none; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tiempo-plataforma.js" data-activity="confites"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/progreso-usuario.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-20 pb-16">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎲 Juegos</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Confites del caballo 🍬</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-6">Hay un confite en cada una de las 64 casillas. El caballo los recoge saltando como sabe… pero cada casilla que pisa queda bloqueada para siempre. ¿Hasta dónde llegas sin quedarte encerrado?</p>
+
+            <!-- Marcador -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-600" id="m-confites" aria-live="polite">0</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-400">confites de 64</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-salidas">—</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-400">saltos posibles</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-record">—</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-400">tu récord</p>
+                </div>
+            </div>
+
+            <!-- Tablero -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 sm:p-4 mb-4">
+                <div id="board" class="grid grid-cols-8 w-full aspect-square rounded-lg overflow-hidden select-none" role="grid" aria-label="Tablero de los confites"></div>
+            </div>
+
+            <!-- Aviso / resultado -->
+            <div id="aviso" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300">
+                Para empezar, elige la casilla donde se para el caballo. Cualquiera sirve… pero unas ayudan más que otras.
+            </div>
+
+            <!-- Botones -->
+            <div class="flex flex-wrap gap-3 mb-8">
+                <button type="button" id="btn-reiniciar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">↺ Empezar de nuevo</button>
+                <button type="button" id="btn-deshacer" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors" disabled>↩ Deshacer</button>
+                <button type="button" id="btn-pista" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors" disabled>💡 Pista</button>
+            </div>
+
+            <!-- Cómo se juega -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Cómo se juega</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
+                    <li><strong>El caballo salta en L:</strong> dos casillas en una dirección y una en la otra. Los saltos posibles aparecen marcados en verde.</li>
+                    <li><strong>Cada casilla pisada se bloquea.</strong> No se puede volver a ella, ni siquiera de paso: por eso el orden importa tanto.</li>
+                    <li><strong>Se acaba cuando no queda ningún salto.</strong> Tu marca es cuántos confites alcanzaste a recoger.</li>
+                    <li><strong>64 es el máximo</strong> y tiene nombre propio: el <em>paseo del caballo</em>, un problema que trae de cabeza a los ajedrecistas desde hace siglos.</li>
+                </ul>
+            </div>
+
+            <div class="bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-5 py-4 mb-6">
+                <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">El truco que casi siempre funciona</p>
+                <p class="text-sm text-brand-700 dark:text-brand-200">Cuando dudes, ve a la casilla <strong>desde la que queden menos saltos</strong>. Suena al revés, pero es la clave: las casillas con pocas salidas son las que se quedan aisladas si las dejas para el final. Eso hace el botón de pista, y con esa regla se puede completar el tablero entero.</p>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* ===== Confites del caballo =====
+ *
+ * El paseo del caballo de toda la vida, contado como un juego: hay un confite
+ * en cada una de las 64 casillas y el caballo los recoge saltando, pero cada
+ * casilla que pisa queda bloqueada. La marca es cuántos confites juntó antes de
+ * quedarse sin saltos; 64 es el recorrido completo.
+ *
+ * La pista usa la regla de Warnsdorff: ir siempre a la casilla desde la que
+ * queden menos saltos. No es magia —hay posiciones donde falla— pero enseña la
+ * idea que de verdad resuelve el problema, que es no dejar casillas aisladas.
+ *
+ * El progreso son dos marcas en localStorage, que viajan con la cuenta vía
+ * js/progreso-usuario.js (hay que declararlas en sus CLAVES):
+ *   confites_best         la mejor marca, con ayuda o sin ella
+ *   confites_best_limpio  la mejor SIN pistas y SIN deshacer
+ */
+const FILAS = [8, 7, 6, 5, 4, 3, 2, 1];
+const COLUMNAS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const SALTOS = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]];
+const CLAVE_RECORD = "confites_best";
+const CLAVE_LIMPIO = "confites_best_limpio";
+
+const $ = (id) => document.getElementById(id);
+
+let pisadas = new Set();      // casillas ya visitadas (bloqueadas)
+let camino = [];              // el recorrido, para deshacer
+let caballo = null;           // casilla actual, o null antes de empezar
+let conAyuda = false;         // se usó pista o deshacer en esta partida
+let terminado = false;
+let sugerida = null;
+
+/* ---------------- Tablero ---------------- */
+const columnaDe = (c) => COLUMNAS.indexOf(c[0]);
+const filaDe = (c) => Number(c[1]);
+const casilla = (col, fila) => (col >= 0 && col < 8 && fila >= 1 && fila <= 8) ? COLUMNAS[col] + fila : null;
+
+function saltosDesde(desde, bloqueadas) {
+  const col = columnaDe(desde), fila = filaDe(desde);
+  const out = [];
+  SALTOS.forEach(([dc, df]) => {
+    const s = casilla(col + dc, fila + df);
+    if (s && !bloqueadas.has(s)) out.push(s);
+  });
+  return out;
+}
+
+function construirTablero() {
+  const board = $("board");
+  board.innerHTML = "";
+  FILAS.forEach((fila, i) => {
+    COLUMNAS.forEach((col, j) => {
+      const c = document.createElement("div");
+      c.className = "casilla " + ((i + j) % 2 === 0 ? "clara" : "oscura");
+      c.dataset.square = col + fila;
+      c.setAttribute("role", "gridcell");
+      c.addEventListener("click", () => tocar(col + fila));
+      board.appendChild(c);
+    });
+  });
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+function pintar() {
+  const destinos = caballo && !terminado ? saltosDesde(caballo, pisadas) : [];
+  document.querySelectorAll("#board .casilla").forEach((c) => {
+    const s = c.dataset.square;
+    c.classList.toggle("pisada", pisadas.has(s) && s !== caballo);
+    c.classList.toggle("caballo", s === caballo);
+    c.classList.toggle("destino", destinos.indexOf(s) !== -1);
+    c.classList.toggle("sugerida", s === sugerida);
+    c.classList.toggle("inicio-libre", !caballo && !terminado);
+
+    let texto = "";
+    let etiqueta = `${s}, `;
+    if (s === caballo) { texto = "♞"; etiqueta += "el caballo"; }
+    else if (pisadas.has(s)) { texto = ""; etiqueta += "casilla bloqueada"; }
+    else { texto = "🍬"; etiqueta += "confite sin recoger"; }
+    if (destinos.indexOf(s) !== -1) etiqueta += ", salto posible";
+
+    // Las etiquetas de coordenadas son <span> dentro de la casilla: se conservan.
+    [...c.childNodes].forEach((n) => { if (n.nodeType === Node.TEXT_NODE) n.remove(); });
+    if (texto) c.insertBefore(document.createTextNode(texto), c.firstChild);
+    c.setAttribute("aria-label", etiqueta);
+  });
+
+  $("m-confites").textContent = String(pisadas.size);
+  $("m-salidas").textContent = caballo ? String(destinos.length) : "—";
+  $("btn-deshacer").disabled = camino.length < 2;
+  $("btn-pista").disabled = !caballo || terminado || !destinos.length;
+  if (window.Coordenadas) Coordenadas.aplicar($("board"));
+}
+
+/* ---------------- Jugar ---------------- */
+function tocar(s) {
+  if (terminado) return;
+  if (!caballo) { empezarEn(s); return; }
+  if (saltosDesde(caballo, pisadas).indexOf(s) === -1) return;
+  caballo = s;
+  pisadas.add(s);
+  camino.push(s);
+  sugerida = null;
+  pintar();
+  revisarFinal();
+}
+
+function empezarEn(s) {
+  caballo = s;
+  pisadas = new Set([s]);
+  camino = [s];
+  sugerida = null;
+  avisar(`El caballo arranca en <strong>${s}</strong>. Salta a una casilla marcada para recoger su confite.`, "normal");
+  pintar();
+}
+
+function revisarFinal() {
+  const quedan = saltosDesde(caballo, pisadas);
+  if (quedan.length) {
+    if (quedan.length === 1) avisar("Cuidado: solo queda <strong>un salto</strong> posible.", "aviso");
+    else avisar(`Vas por <strong>${pisadas.size}</strong> confites. Te quedan ${quedan.length} saltos.`, "normal");
+    return;
+  }
+  terminado = true;
+  guardarMarca();
+  const n = pisadas.size;
+  avisar(`${cierre(n)} Recogiste <strong>${n} de 64</strong> confites${conAyuda ? " (con ayuda)" : ""}.`, n === 64 ? "logro" : "fin");
+  pintar();
+}
+
+function cierre(n) {
+  if (n === 64) return "🏆 ¡Paseo del caballo completo! Pisaste las 64 casillas sin repetir ninguna.";
+  if (n >= 55) return "🎉 ¡Casi completo! Te faltó muy poco.";
+  if (n >= 40) return "👏 Muy buen recorrido.";
+  if (n >= 25) return "🙂 Buen intento: el caballo se quedó encerrado a mitad de camino.";
+  return "🤔 Se encerró temprano. Prueba dejar para el final las casillas del centro.";
+}
+
+function avisar(html, tipo) {
+  const caja = $("aviso");
+  const estilos = {
+    normal: "bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300",
+    aviso: "bg-accent-50 dark:bg-brand-800 text-accent-700 dark:text-accent-400",
+    fin: "bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-200 font-medium",
+    logro: "bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-medium",
+  };
+  caja.className = "mb-4 rounded-xl px-4 py-3 text-sm " + (estilos[tipo] || estilos.normal);
+  caja.innerHTML = html;
+}
+
+/* ---------------- Pista (Warnsdorff) ---------------- */
+function pista() {
+  const destinos = saltosDesde(caballo, pisadas);
+  if (!destinos.length) return;
+  conAyuda = true;
+  const conSalidas = destinos.map((s) => {
+    const futuras = new Set(pisadas); futuras.add(s);
+    return { s, salidas: saltosDesde(s, futuras).length };
+  });
+  const menos = Math.min.apply(null, conSalidas.map((d) => d.salidas));
+  sugerida = conSalidas.find((d) => d.salidas === menos).s;
+  avisar(`Prueba <strong>${sugerida}</strong>: desde ahí quedan ${menos} saltos, que son los menos. Las casillas con pocas salidas son las que hay que pisar primero.`, "aviso");
+  pintar();
+}
+
+function deshacer() {
+  if (camino.length < 2 || terminado) return;
+  conAyuda = true;
+  const ultima = camino.pop();
+  pisadas.delete(ultima);
+  caballo = camino[camino.length - 1];
+  sugerida = null;
+  avisar(`Deshecho. El caballo vuelve a <strong>${caballo}</strong>.`, "normal");
+  pintar();
+}
+
+function reiniciar() {
+  pisadas = new Set(); camino = []; caballo = null;
+  conAyuda = false; terminado = false; sugerida = null;
+  avisar("Elige la casilla donde se para el caballo. Cualquiera sirve… pero unas ayudan más que otras.", "normal");
+  pintar();
+}
+
+/* ---------------- Récord ---------------- */
+function leerNumero(clave) {
+  try { return Number(localStorage.getItem(clave)) || 0; } catch (e) { return 0; }
+}
+
+function guardarMarca() {
+  const n = pisadas.size;
+  try {
+    if (n > leerNumero(CLAVE_RECORD)) localStorage.setItem(CLAVE_RECORD, String(n));
+    if (!conAyuda && n > leerNumero(CLAVE_LIMPIO)) localStorage.setItem(CLAVE_LIMPIO, String(n));
+  } catch (e) {}
+  pintarRecord();
+}
+
+function pintarRecord() {
+  const mejor = leerNumero(CLAVE_RECORD);
+  const limpio = leerNumero(CLAVE_LIMPIO);
+  $("m-record").textContent = mejor ? String(mejor) : "—";
+  $("m-record").nextElementSibling.textContent = (limpio && limpio !== mejor)
+    ? `tu récord · ${limpio} sin pistas`
+    : "tu récord";
+}
+
+/* ---------------- Arranque ---------------- */
+$("btn-reiniciar").addEventListener("click", reiniciar);
+$("btn-deshacer").addEventListener("click", deshacer);
+$("btn-pista").addEventListener("click", pista);
+
+(async function init() {
+  construirTablero();
+  if (window.ProgresoUsuario) { try { await ProgresoUsuario.init(); } catch (e) {} }
+  pintarRecord();
+  pintar();
+})();
+    </script>
+</body>
+</html>
