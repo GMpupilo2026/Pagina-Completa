@@ -1,0 +1,160 @@
+{
+  "_comentario": [
+    "El catálogo de cursos.html sale de acá. Para cambiar una tarjeta, o el orden,",
+    "o agregar un curso, se edita este archivo y se corre:",
+    "    python3 herramientas/cursos-catalogo.py",
+    "Antes las diez tarjetas eran el mismo bloque de HTML copiado diez veces, así",
+    "que tocar el diseño eran diez ediciones y era cuestión de tiempo que una",
+    "quedara distinta.",
+    "",
+    "niveles: el conjunto es CERRADO (los cuatro de 'niveles'). Antes convivían",
+    "seis etiquetas ('Todos los niveles', 'Intermedio · Avanzado', 'Competitivo')",
+    "para lo que en realidad son cuatro escalones, y así no se puede filtrar.",
+    "",
+    "",
+    "gradiente: va en el NIVEL, no en el curso. Antes cuatro cursos compartían el",
+    "mismo degradado por casualidad y dos naranjas quedaban uno al lado del otro.",
+    "Así el color agrupa: azul más oscuro = más avanzado, ámbar = competición.",
+    "precio / duracion / modalidad: vacíos a propósito. La tarjeta no los muestra",
+    "mientras estén en blanco, y los datos estructurados tampoco los declaran:",
+    "antes que inventar un precio, no decir nada."
+  ],
+  "niveles": [
+    {
+      "id": "principiante",
+      "nombre": "Principiante",
+      "descripcion": "Desde cero: las reglas y los primeros planes.",
+      "gradiente": "from-brand-500 to-brand-700"
+    },
+    {
+      "id": "intermedio",
+      "nombre": "Intermedio",
+      "descripcion": "Ya sabes jugar y quieres entender por qué.",
+      "gradiente": "from-brand-600 to-brand-800"
+    },
+    {
+      "id": "avanzado",
+      "nombre": "Avanzado",
+      "descripcion": "Técnica fina: finales teóricos y desequilibrios.",
+      "gradiente": "from-brand-700 to-brand-950"
+    },
+    {
+      "id": "competicion",
+      "nombre": "Competición",
+      "descripcion": "Para quien ya juega torneos.",
+      "gradiente": "from-accent-600 to-accent-700"
+    }
+  ],
+  "cursos": [
+    {
+      "slug": "fundamentos-del-ajedrez",
+      "titulo": "Fundamentos del Ajedrez",
+      "nivel": "principiante",
+      "resumen": "Movimientos de piezas, valor relativo, jaque, jaque mate y reglas básicas de apertura.",
+      "lecciones": 12,
+      "alt": "Mate del pasillo: la torre blanca entra por la primera fila y el rey negro, tapado por sus propios peones, no tiene salida.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "aperturas-y-defensas",
+      "titulo": "Aperturas y Defensas",
+      "nivel": "intermedio",
+      "resumen": "Española, Italiana, Siciliana, Gambito de Dama y Defensa Francesa con partidas modelo.",
+      "lecciones": 16,
+      "alt": "La Defensa Siciliana después de 1.e4 c5: el peón negro discute el centro desde el flanco.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "calculo-y-visualizacion",
+      "titulo": "Cálculo y Visualización",
+      "nivel": "intermedio",
+      "resumen": "Ejercicios de cálculo profundo y visualización del tablero sin mover las piezas.",
+      "lecciones": 10,
+      "alt": "Posición abierta con piezas apuntando al enroque: la clase de posición donde hay que calcular antes de mover.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "finales-practicos",
+      "titulo": "Finales Prácticos",
+      "nivel": "intermedio",
+      "resumen": "Finales de peones, torres, alfiles de distinto color y conversión de ventaja.",
+      "lecciones": 14,
+      "alt": "Final de alfiles de distinto color: cada alfil manda en casillas que el otro no pisa nunca.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "partidas-modelo",
+      "titulo": "Partidas modelo del ajedrez moderno",
+      "nivel": "intermedio",
+      "resumen": "Treinta partidas de grandes maestros explicadas jugada a jugada: apertura, ataque, defensa, juego posicional y final.",
+      "lecciones": 30,
+      "alt": "Un momento clave de una de las treinta partidas comentadas del curso.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "estrategia-y-tactica",
+      "titulo": "Estrategia y Táctica",
+      "nivel": "avanzado",
+      "resumen": "Clavadas, horquillas, sacrificios, debilidades y planificación de medio juego.",
+      "lecciones": 20,
+      "alt": "Una clavada: el alfil blanco de g5 sujeta al caballo de f6 contra la dama negra de d8.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "el-mapa-de-los-finales",
+      "titulo": "El mapa de los finales",
+      "nivel": "avanzado",
+      "resumen": "100 posiciones esenciales, de los peones a las torres, con tableros interactivos y práctica contra el motor.",
+      "lecciones": 24,
+      "alt": "La posición Lucena, del propio curso: el peón en séptima y la torre a punto de construir el puente.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "estrategia-en-el-final",
+      "titulo": "Estrategia en el final",
+      "nivel": "avanzado",
+      "resumen": "Rey activo, peones que mandan, piezas con trabajo y el cambio que decide: los principios que convierten un final cualquiera en un plan claro.",
+      "lecciones": 16,
+      "alt": "Rey contra rey con un peón: los reyes enfrentados deciden la partida antes que el peón.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "desequilibrios-de-material",
+      "titulo": "Desequilibrios de material",
+      "nivel": "avanzado",
+      "resumen": "Alfil contra caballo, alfiles de distinto color, pareja de alfiles y los sacrificios de peón, calidad, pieza y dama en sesenta partidas modelo.",
+      "lecciones": 19,
+      "alt": "Material parejo en puntos y posición desnivelada: el tipo de desequilibrio que estudia el curso.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "preparacion-para-torneos",
+      "titulo": "Preparación para Torneos",
+      "nivel": "competicion",
+      "resumen": "Gestión del reloj, repertorio de aperturas, psicología y análisis post-partida.",
+      "lecciones": 18,
+      "alt": "Posición de repertorio con ataques en flancos opuestos: la clase de lucha que aparece en torneo.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    }
+  ]
+}
