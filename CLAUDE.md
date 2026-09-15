@@ -236,6 +236,56 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   es justamente para eso). Cerrar esa puerta del todo pediría servir el PDF
   desde Supabase Storage con RLS.
 
+## Examen de arbitraje (reglamento FIDE)
+
+`arbitraje.html` es el examen de reglas para quien arbitra: 40 preguntas del
+Handbook de la FIDE, 40 minutos y un nivel estimado de arbitraje. Es lo mismo
+que el diagnóstico de jugadores en su forma —banco grande, sorteo, escalones de
+dificultad— pero más formal: no hay tablero, cada respuesta cita su artículo y
+no se puede "probar" una jugada.
+
+- **Solo profesores y administración.** El enlace vive en la ficha
+  "Herramientas" de `clases.html` y en `admin.html`, y la página lo vuelve a
+  comprobar (`perfil.role === 'profesor' || perfil.is_admin`): sin eso muestra
+  el aviso de acceso denegado. Como todo en el sitio, el filtro es del
+  navegador: `js/arbitraje-items.js` es un archivo estático con las respuestas
+  adentro, así que quien conozca la dirección puede leerlo. Es un examen de
+  formación entre docentes, no una certificación, y se asume así.
+- **Ocho áreas** (`js/arbitraje-nivel.js` las describe con qué mide cada una y
+  qué estudiar): `leyes` (art. 1-5), `reloj` (art. 6), `irregularidades`
+  (art. 7), `tablas` (art. 8-9), `conducta` (art. 11-12), `ritmos` (apéndices
+  A y B), `competicion` (C.04, C.07) y `titulos` (B.06).
+- **El banco es más grande que el examen**: `ArbitrajePrueba.armar()` sortea 5
+  preguntas por área —una de cada escalón, 1 a 5— para un total de 40 preguntas
+  y 120 puntos. La forma nunca cambia, así que dos exámenes de la misma persona
+  se comparan aunque las preguntas hayan sido otras.
+- **El nivel sale de los escalones, no del porcentaje**, igual que en el
+  diagnóstico: el nivel estimado es el escalón más alto superado (70% de
+  aciertos ahí y los anteriores también), con tope por área — un área por
+  debajo del 40% no pasa de Árbitro de club, por debajo del 60% no pasa de
+  Nivel de Árbitro Nacional. Los seis niveles van de "En formación" a "Nivel de
+  Árbitro Internacional" y **son una estimación de conocimiento del
+  reglamento, no un título**: los títulos FIDE los da la FIDE, con normas y
+  cursos (B.06).
+- **Cada respuesta cita el artículo** en `fuente`. Es parte de lo que enseña el
+  examen (un árbitro no discute de memoria) y es lo que permite volver a
+  contrastar el banco: el reglamento cambia —en 2023 la sanción por jugada
+  ilegal en rápidas bajó de dos minutos a uno—, así que al tocar una pregunta
+  hay que releer el artículo vigente en https://handbook.fide.com.
+- **Ninguna opción puede delatarse por el largo** (la misma regla que el
+  diagnóstico) y hay **"Dejar en blanco"**, que vale cero como fallar pero se
+  guarda aparte: un hueco que estudiar no es lo mismo que una regla aprendida
+  al revés.
+- `herramientas/verificar-arbitraje.js` comprueba todo esto de una corrida (ids
+  repetidos, áreas y escalones válidos, cuatro opciones sin repetir, `fuente`
+  presente, el largo de las opciones y que el banco alcance para la cuota). No
+  necesita nada instalado: `node herramientas/verificar-arbitraje.js`. **Al
+  tocar el banco, correrlo.**
+- El resultado se guarda en `training_state` (claves `arbitraje_resultado_v1` y
+  `arbitraje_historial_v1`), no en `training_progress`: no es actividad de
+  alumno. Quien administra ve además, dentro de la misma página, el último
+  resultado de cada profesor.
+
 ## Coordenadas en los tableros
 
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
