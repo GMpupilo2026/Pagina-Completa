@@ -17,8 +17,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -46,7 +46,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -55,7 +55,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -66,10 +66,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -89,20 +89,19 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
     <main id="main-content">
 
-    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+    <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
 
     <div id="error-state" class="hidden pt-32 pb-16 text-center max-w-md mx-auto px-4">
         <p class="text-4xl mb-3">🚫</p>
-        <p id="error-text" class="text-brand-500 dark:text-brand-400 mb-4">No se pudo cargar la partida.</p>
+        <p id="error-text" class="text-brand-500 dark:text-brand-300 mb-4">No se pudo cargar la partida.</p>
         <a href="juegos.html" class="inline-block bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">← Volver a Juegos</a>
     </div>
 
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
             <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">⚡ Duelo Simultáneo</h1>
                 <button id="resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
@@ -126,7 +125,7 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Rondas</h2>
-                <p id="rounds-empty" class="text-xs text-brand-300 dark:text-brand-600">Sin rondas resueltas todavía…</p>
+                <p id="rounds-empty" class="text-xs text-brand-450 dark:text-brand-350">Sin rondas resueltas todavía…</p>
                 <ol id="rounds-list" class="hidden space-y-1 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
             </div>
         </div>
@@ -144,12 +143,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="js/main.js"></script>

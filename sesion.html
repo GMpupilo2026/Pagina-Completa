@@ -18,8 +18,8 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                        brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                        accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                     },
                     fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
                 }
@@ -50,7 +50,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -59,7 +59,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -70,10 +70,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -93,7 +93,6 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
     <main id="main-content">
 
     <div id="app" class="hidden pt-20 pb-16">
@@ -103,7 +102,7 @@
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo ♟️</h1>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
-                    <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors">Contraseña</button>
+                    <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Salir</button>
                 </div>
             </div>
@@ -121,8 +120,8 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">✏️ Editando el tablero</h2>
                             <button type="button" id="board-edit-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar editor (descarta los cambios)" aria-label="Cerrar editor">✖</button>
                         </div>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">No se ve en vivo hasta que apliques.</p>
-                        <p class="text-xs text-brand-500 dark:text-brand-400 mb-2">Toca una pieza de aquí abajo y luego una o varias casillas del tablero para colocarla; toca 🗑️ y luego una casilla para quitar esa pieza. Vuelve a tocar la herramienta activa para soltarla. Sin ninguna herramienta activa, tocar una pieza ya puesta y luego otra casilla la mueve ahí.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">No se ve en vivo hasta que apliques.</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mb-2">Toca una pieza de aquí abajo y luego una o varias casillas del tablero para colocarla; toca 🗑️ y luego una casilla para quitar esa pieza. Vuelve a tocar la herramienta activa para soltarla. Sin ninguna herramienta activa, tocar una pieza ya puesta y luego otra casilla la mueve ahí.</p>
 
                         <div class="flex flex-wrap gap-1 mb-1.5" role="group" aria-label="Piezas blancas para colocar">
                             <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="k" title="Colocar rey blanco">♔</button>
@@ -149,14 +148,14 @@
 
                         <div class="grid sm:grid-cols-2 gap-3 mb-3">
                             <div>
-                                <p class="text-xs text-brand-500 dark:text-brand-400 mb-1">Le toca mover:</p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Le toca mover:</p>
                                 <div class="flex gap-1.5" role="radiogroup" aria-label="A quién le toca mover">
                                     <button type="button" id="edit-turn-w" class="edit-turn-btn text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-accent-500 text-brand-900" data-turn="w" aria-pressed="true">⚪ Blancas</button>
                                     <button type="button" id="edit-turn-b" class="edit-turn-btn text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-turn="b" aria-pressed="false">⚫ Negras</button>
                                 </div>
                             </div>
                             <div>
-                                <p class="text-xs text-brand-500 dark:text-brand-400 mb-1">Enroques permitidos:</p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Enroques permitidos:</p>
                                 <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-600 dark:text-brand-300">
                                     <label class="flex items-center gap-1"><input type="checkbox" id="edit-castle-wk" checked> Blancas O-O</label>
                                     <label class="flex items-center gap-1"><input type="checkbox" id="edit-castle-wq" checked> Blancas O-O-O</label>
@@ -167,17 +166,17 @@
                         </div>
 
                         <details class="mb-3">
-                            <summary class="text-xs text-brand-500 dark:text-brand-400 cursor-pointer">Cargar por FEN o PGN en vez de armar a mano</summary>
+                            <summary class="text-xs text-brand-500 dark:text-brand-300 cursor-pointer">Cargar por FEN o PGN en vez de armar a mano</summary>
                             <div class="mt-2">
                                 <div class="mb-2">
-                                    <label for="free-mode-fen-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Cargar posición por FEN</label>
+                                    <label for="free-mode-fen-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Cargar posición por FEN</label>
                                     <div class="flex gap-2">
                                         <input id="free-mode-fen-input" type="text" placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                         <button id="free-mode-fen-load-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <label for="free-mode-pgn-input" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">O pega una partida en PGN (se carga la posición final)</label>
+                                    <label for="free-mode-pgn-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">O pega una partida en PGN (se carga la posición final)</label>
                                     <div class="flex gap-2">
                                         <textarea id="free-mode-pgn-input" rows="2" placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 ..." class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></textarea>
                                         <button id="free-mode-pgn-load-btn" type="button" class="shrink-0 self-start bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Cargar</button>
@@ -211,8 +210,8 @@
                         </span>
                     </div>
 
-                    <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-400 text-sm mt-4"></p>
-                    <p id="arrows-hint" class="hidden text-center text-brand-400 dark:text-brand-500 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
+                    <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
+                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
 
                     <!-- Deshacer: visible para el profesor siempre, y para el alumno solo mientras tiene el control -->
                     <div class="flex justify-center mt-3">
@@ -224,7 +223,7 @@
                     <div id="practice-boards-section" class="hidden mt-6">
                         <div class="flex items-center justify-between gap-2 mb-3">
                             <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Tableros de los alumnos</h2>
-                            <p id="practice-boards-hint" class="text-xs text-brand-400 dark:text-brand-500"></p>
+                            <p id="practice-boards-hint" class="text-xs text-brand-450 dark:text-brand-350"></p>
                         </div>
                         <div id="practice-boards-grid" class="grid gap-3"></div>
                     </div>
@@ -236,12 +235,12 @@
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">Jugadas</h2>
                             <div id="history-controls" class="hidden items-center gap-2">
-                                <span class="text-xs text-brand-400 dark:text-brand-500">Viendo una jugada anterior</span>
+                                <span class="text-xs text-brand-450 dark:text-brand-350">Viendo una jugada anterior</span>
                                 <button id="history-fork-btn" class="hidden text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Jugar desde aquí</button>
                                 <button id="history-live-btn" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Volver al final</button>
                             </div>
                         </div>
-                        <p id="move-list-empty" class="text-xs text-brand-300 dark:text-brand-600">Sin jugadas todavía…</p>
+                        <p id="move-list-empty" class="text-xs text-brand-450 dark:text-brand-350">Sin jugadas todavía…</p>
                         <ol id="move-list" class="hidden flex-wrap gap-x-1 gap-y-1.5 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
                     </div>
 
@@ -265,8 +264,8 @@
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">❓ <span id="question-prompt-text"></span></h2>
                             <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
-                            <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-400 mb-1"></p>
-                            <p id="question-status-text" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Mueve las piezas que jugarías.</p>
+                            <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-300 mb-1"></p>
+                            <p id="question-status-text" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Mueve las piezas que jugarías.</p>
                             <div class="flex justify-center">
                                 <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
@@ -285,8 +284,8 @@
                     <div id="practice-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto text-center">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🎯 Práctica contra el motor</h2>
-                            <p class="text-xs text-brand-500 dark:text-brand-400 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
-                            <p id="practice-card-status" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Es tu turno.</p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
+                            <p id="practice-card-status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Es tu turno.</p>
                             <div class="flex justify-center">
                                 <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
@@ -295,7 +294,7 @@
                                 <button id="practice-resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
                                 <button id="practice-retry-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">↻ Reintentar</button>
                             </div>
-                            <p class="text-xs text-brand-400 dark:text-brand-500 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">El profesor ve tu partida en vivo. Espera a que termine la ronda para volver a la clase.</p>
                         </div>
                     </div>
 
@@ -306,14 +305,14 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white">💬 Chat privado con el profesor</h2>
                             <button id="clear-chat-btn" type="button" class="hidden text-xs font-semibold text-red-600 dark:text-red-400 hover:underline shrink-0">Vaciar esta conversación</button>
                         </div>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Escribe tus preguntas o dudas en privado — solo lo ven el profesor y tú.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Escribe tus preguntas o dudas en privado — solo lo ven el profesor y tú.</p>
                         <div id="chat-student-picker" class="hidden mb-3">
-                            <label for="chat-student-select" class="block text-xs text-brand-500 dark:text-brand-400 mb-1">Conversación con:</label>
+                            <label for="chat-student-select" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Conversación con:</label>
                             <select id="chat-student-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                         </div>
-                        <p id="chat-no-students" class="hidden text-xs text-brand-400 dark:text-brand-500">Todavía no hay alumnos registrados.</p>
+                        <p id="chat-no-students" class="hidden text-xs text-brand-450 dark:text-brand-350">Todavía no hay alumnos registrados.</p>
                         <ul id="chat-messages" class="space-y-2 text-sm max-h-72 overflow-y-auto mb-3 p-3 rounded-lg border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950">
-                            <li class="text-brand-300 dark:text-brand-600">Todavía no hay mensajes…</li>
+                            <li class="text-brand-450 dark:text-brand-350">Todavía no hay mensajes…</li>
                         </ul>
                         <form id="chat-form" class="flex gap-2">
                             <label for="chat-input" class="sr-only">Escribe un mensaje para el chat privado</label>
@@ -346,7 +345,7 @@
                             <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0">Activar</button>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
-                            <label for="engine-multipv" class="text-xs text-brand-500 dark:text-brand-400">Variantes:</label>
+                            <label for="engine-multipv" class="text-xs text-brand-500 dark:text-brand-300">Variantes:</label>
                             <select id="engine-multipv" class="text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -355,13 +354,13 @@
                                 <option value="5">5</option>
                             </select>
                         </div>
-                        <p id="engine-status" class="text-xs text-brand-400 dark:text-brand-500">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
+                        <p id="engine-status" class="text-xs text-brand-450 dark:text-brand-350">Solo lo ves tú — los alumnos nunca ven la evaluación.</p>
                         <div id="engine-output" class="hidden mt-3">
                             <div id="engine-eval-track" class="h-2.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-3" role="img" aria-label="Barra de evaluación: más blanco favorece a las blancas">
                                 <div id="engine-eval-bar" class="bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>
                             </div>
                             <ol id="engine-lines" class="space-y-1.5 text-xs text-brand-600 dark:text-brand-300"></ol>
-                            <button id="engine-retry-btn" type="button" class="hidden mt-2 text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline">🔁 Reintentar</button>
+                            <button id="engine-retry-btn" type="button" class="hidden mt-2 text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline">🔁 Reintentar</button>
                         </div>
                     </div>
 
@@ -378,7 +377,7 @@
 
                         <div id="teacher-panel" data-tab-panel="controles" role="tabpanel" aria-labelledby="teacher-tab-controles" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
-                            <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar) están arriba de las pestañas; "✏️ Editar" abre el editor visual justo debajo del tablero.</p>
+                            <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar) están arriba de las pestañas; "✏️ Editar" abre el editor visual justo debajo del tablero.</p>
 
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
                             <form id="create-student-form" class="space-y-3">
@@ -393,20 +392,20 @@
                         <div id="question-panel" data-tab-panel="preguntar" role="tabpanel" aria-labelledby="teacher-tab-preguntar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Preguntar a la clase</h2>
                         <div class="flex items-center gap-2 mb-1">
-                            <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-400">Jugadas del estudiante:</label>
+                            <label for="question-plies-input" class="text-xs text-brand-500 dark:text-brand-300">Jugadas del estudiante:</label>
                             <input id="question-plies-input" type="number" min="1" max="6" value="1" class="w-16 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         </div>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Ej.: con 2, el alumno mueve, el motor responde, y el alumno mueve una vez más — así hasta completar sus jugadas.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Ej.: con 2, el alumno mueve, el motor responde, y el alumno mueve una vez más — así hasta completar sus jugadas.</p>
                         <button id="ask-question-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors mb-3">❓ Preguntar: ¿qué jugarías?</button>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
-                                <p class="text-xs text-brand-500 dark:text-brand-400">Pregunta activa</p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa</p>
                                 <button id="close-question-btn" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">Cerrar pregunta</button>
                             </div>
-                            <p id="engine-reference-answer" class="text-xs text-brand-400 dark:text-brand-500 mb-1 italic">Calculando la mejor respuesta del motor…</p>
-                            <button id="engine-reference-retry-btn" type="button" class="hidden text-xs font-semibold text-accent-600 dark:text-accent-400 hover:underline mb-2">🔁 Reintentar cálculo del motor</button>
+                            <p id="engine-reference-answer" class="text-xs text-brand-450 dark:text-brand-350 mb-1 italic">Calculando la mejor respuesta del motor…</p>
+                            <button id="engine-reference-retry-btn" type="button" class="hidden text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline mb-2">🔁 Reintentar cálculo del motor</button>
                             <ul id="answers-list" class="space-y-1.5 text-sm">
-                                <li class="text-brand-300 dark:text-brand-600">Todavía nadie respondió…</li>
+                                <li class="text-brand-450 dark:text-brand-350">Todavía nadie respondió…</li>
                             </ul>
                         </div>
                     </div>
@@ -414,10 +413,10 @@
                         <!-- Practicar contra el motor (solo profesor) -->
                         <div id="practice-panel" data-tab-panel="practicar" role="tabpanel" aria-labelledby="teacher-tab-practicar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Practicar contra el motor</h2>
-                        <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Cada alumno juega la posición actual del tablero contra Stockfish, con el color que le toque mover en ella.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Cada alumno juega la posición actual del tablero contra Stockfish, con el color que le toque mover en ella.</p>
 
                         <div id="practice-start-controls">
-                            <p class="text-xs text-brand-500 dark:text-brand-400 mb-1.5">Nivel del motor:</p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mb-1.5">Nivel del motor:</p>
                             <div class="grid grid-cols-3 gap-1.5 mb-3" role="radiogroup" aria-label="Nivel del motor para la práctica">
                                 <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900" data-level="1500" aria-pressed="true">1500</button>
                                 <button type="button" class="practice-level-btn text-xs font-semibold px-2 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-level="1800" aria-pressed="false">1800</button>
@@ -428,7 +427,7 @@
 
                         <div id="practice-active-controls" class="hidden">
                             <p class="text-sm text-brand-600 dark:text-brand-300 mb-1">Práctica en curso — nivel <span id="practice-active-level" class="font-semibold"></span>.</p>
-                            <p id="practice-active-count" class="text-xs text-brand-400 dark:text-brand-500 mb-3">Esperando a que los alumnos empiecen a jugar…</p>
+                            <p id="practice-active-count" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Esperando a que los alumnos empiecen a jugar…</p>
                             <button id="end-practice-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Terminar práctica</button>
                         </div>
                     </div>
@@ -439,16 +438,16 @@
                              mecanismo de la pestaña Preguntar: transmite la posición y crea la pregunta. -->
                         <div id="tactics-panel" data-tab-panel="tactica" role="tabpanel" aria-labelledby="teacher-tab-tactica" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
-                            <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Elige un tema y una dificultad para preguntarle un ejercicio a la clase — la posición se transmite a todos como una pregunta nueva.</p>
-                            <div id="tactics-body"><p class="text-sm text-brand-400 dark:text-brand-500">Cargando temas…</p></div>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad para preguntarle un ejercicio a la clase — la posición se transmite a todos como una pregunta nueva.</p>
+                            <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
                         </div>
 
                         <!-- Alumnos conectados (solo profesor) -->
                         <div id="students-panel" data-tab-panel="alumnos" role="tabpanel" aria-labelledby="teacher-tab-alumnos" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Alumnos conectados</h2>
-                            <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Dale el control a un alumno para que pueda mover piezas él mismo.</p>
                             <ul id="students-list" class="space-y-2 text-sm">
-                                <li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>
+                                <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
                         </div>
                     </div>
@@ -456,14 +455,14 @@
                     <div id="student-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5 text-center">
                         <span class="text-4xl block mb-2">👀</span>
                         <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Estás viendo en vivo</h2>
-                        <p class="text-sm text-brand-500 dark:text-brand-400">El profesor está moviendo las piezas. El tablero se actualiza automáticamente con cada jugada.</p>
+                        <p class="text-sm text-brand-500 dark:text-brand-300">El profesor está moviendo las piezas. El tablero se actualiza automáticamente con cada jugada.</p>
                     </div>
                 </aside>
             </div>
         </section>
     </div>
 
-    <div id="loading" class="pt-32 text-center text-brand-400 dark:text-brand-500">Cargando…</div>
+    <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
 
     <!-- Modal cambiar contraseña -->
     <div id="pw-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
@@ -484,12 +483,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
 
@@ -669,7 +668,7 @@
                     const group = document.createElement("li");
                     group.className = "flex items-center gap-1";
                     const numSpan = document.createElement("span");
-                    numSpan.className = "text-brand-300 dark:text-brand-600";
+                    numSpan.className = "text-brand-450 dark:text-brand-350";
                     numSpan.textContent = (i / 2 + 1) + ".";
                     group.appendChild(numSpan);
                     group.appendChild(makeMoveButton(moves[i], i + 1));
@@ -1225,7 +1224,7 @@
             const entries = Array.from(onlineStudents.entries());
             if (badge) badge.classList.toggle("hidden", !entries.some(([, info]) => info.hand_raised));
             if (entries.length === 0) {
-                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Nadie conectado todavía…</li>';
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>';
                 return;
             }
             // Quienes piden la palabra aparecen primero, para que el profesor los vea sin buscar.
@@ -1419,7 +1418,7 @@
             const linesEl = document.getElementById("engine-lines");
             const retryBtn = document.getElementById("engine-retry-btn");
             retryBtn.classList.add("hidden");
-            linesEl.innerHTML = '<li class="text-brand-400">Calculando…</li>';
+            linesEl.innerHTML = '<li class="text-brand-300">Calculando…</li>';
 
             // Una posición armada a mano puede hacer que Stockfish falle una vez (ver la nota
             // en js/shared-engine.js): el mismo Worker recién levantado por ese fallo suele
@@ -1432,7 +1431,7 @@
                 results = await ClasesEngine.analyze(fen, multiPv, 700 + multiPv * 150);
                 if (myRequestId !== engineRequestId) return; // la posición ya cambió mientras calculaba
                 if (results.length) break;
-                if (attempt < 2) linesEl.innerHTML = '<li class="text-brand-400">Calculando… (reintentando)</li>';
+                if (attempt < 2) linesEl.innerHTML = '<li class="text-brand-300">Calculando… (reintentando)</li>';
             }
 
             if (!results.length) {
@@ -1523,7 +1522,7 @@
         function renderChatMessages(messages) {
             const listEl = document.getElementById("chat-messages");
             if (!messages.length) {
-                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600 text-center py-2">Todavía no hay mensajes…</li>';
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350 text-center py-2">Todavía no hay mensajes…</li>';
                 return;
             }
             // Solo hace auto-scroll si ya se estaba viendo el final: así no se interrumpe a
@@ -1560,7 +1559,7 @@
                     header.appendChild(roleBadge);
                 }
                 const time = document.createElement("span");
-                time.className = "text-[10px] ml-auto shrink-0 " + (isOwn ? "text-brand-900/60" : "text-brand-400 dark:text-brand-500");
+                time.className = "text-[10px] ml-auto shrink-0 " + (isOwn ? "text-brand-900/60" : "text-brand-450 dark:text-brand-350");
                 time.textContent = new Date(m.created_at).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
                 header.appendChild(time);
                 const body = document.createElement("p");
@@ -1769,7 +1768,7 @@
         function renderAnswersList(answers) {
             const listEl = document.getElementById("answers-list");
             if (!answers.length) {
-                listEl.innerHTML = '<li class="text-brand-300 dark:text-brand-600">Todavía nadie respondió…</li>';
+                listEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía nadie respondió…</li>';
                 return;
             }
             listEl.innerHTML = "";
@@ -1787,7 +1786,7 @@
                 const row = document.createElement("div");
                 row.className = "flex items-center justify-between gap-2 mt-0.5";
                 const movesEl = document.createElement("span");
-                movesEl.className = "text-brand-500 dark:text-brand-400 font-mono text-xs break-words";
+                movesEl.className = "text-brand-500 dark:text-brand-300 font-mono text-xs break-words";
                 movesEl.textContent = (a.moves || []).join(" ") || "—";
                 const actions = document.createElement("span");
                 actions.className = "flex items-center gap-1 shrink-0";
@@ -1962,7 +1961,7 @@
 
         function renderTacticsView() {
             const body = document.getElementById("tactics-body");
-            if (!tacticsData) { body.innerHTML = '<p class="text-sm text-brand-400 dark:text-brand-500">Cargando temas…</p>'; return; }
+            if (!tacticsData) { body.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p>'; return; }
             body.innerHTML = "";
 
             if (tacticsView.level === "themes" || tacticsView.level === "difficulty" || tacticsView.level === "exercises") {
@@ -1985,7 +1984,7 @@
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
-                    btn.innerHTML = "<span>" + group.title + "</span><span class=\"text-brand-400 dark:text-brand-500 font-normal shrink-0\">" + n + (n === 1 ? " tema ›" : " temas ›") + "</span>";
+                    btn.innerHTML = "<span>" + group.title + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">" + n + (n === 1 ? " tema ›" : " temas ›") + "</span>";
                     btn.addEventListener("click", () => { tacticsView = { level: "themes", groupId: group.id }; renderTacticsView(); });
                     list.appendChild(btn);
                 });
@@ -2008,8 +2007,8 @@
                     btn.type = "button";
                     btn.className = "w-full text-left text-sm px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 transition-colors";
                     btn.innerHTML = '<span class="font-semibold text-brand-800 dark:text-white">' + theme.name + "</span>" +
-                        '<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">' + theme.desc + "</span>" +
-                        '<span class="block text-xs text-accent-600 dark:text-accent-400 mt-1">' + available + " ejercicios ›</span>";
+                        '<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">' + theme.desc + "</span>" +
+                        '<span class="block text-xs text-accent-700 dark:text-accent-400 mt-1">' + available + " ejercicios ›</span>";
                     btn.addEventListener("click", () => { tacticsView = { level: "difficulty", groupId: group.id, themeKey: theme.key, themeName: theme.name }; renderTacticsView(); });
                     list.appendChild(btn);
                 });
@@ -2029,7 +2028,7 @@
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = "w-full text-left text-sm font-semibold px-3 py-2.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white flex items-center justify-between gap-2 transition-colors";
-                    btn.innerHTML = "<span>" + TACTICS_DIFF_LABELS[i] + "</span><span class=\"text-brand-400 dark:text-brand-500 font-normal shrink-0\">ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) + " · " + ids.length + " ›</span>";
+                    btn.innerHTML = "<span>" + TACTICS_DIFF_LABELS[i] + "</span><span class=\"text-brand-450 dark:text-brand-350 font-normal shrink-0\">ELO " + Math.min.apply(null, ratings) + "–" + Math.max.apply(null, ratings) + " · " + ids.length + " ›</span>";
                     btn.addEventListener("click", () => { tacticsView = Object.assign({}, tacticsView, { level: "exercises", diffIndex: i }); renderTacticsView(); });
                     list.appendChild(btn);
                 });
@@ -2483,7 +2482,7 @@
                     '<div class="h-1.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-1.5" role="img" aria-label="Barra de evaluación">' +
                         '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
                     "</div>" +
-                    '<p class="practice-mini-status text-[11px] text-brand-400 dark:text-brand-500"></p>';
+                    '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>';
                 grid.appendChild(wrap);
                 entry = {
                     el: wrap,

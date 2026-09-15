@@ -6,23 +6,42 @@
     const iconOpen = document.getElementById('icon-open');
     const iconClose = document.getElementById('icon-close');
     if (menuToggle && mobileMenu) {
+        // El botón tiene que DECIR si el menú está abierto: quien usa lector de
+        // pantalla no ve el icono, y sin aria-expanded no tiene forma de saber
+        // si ya lo abrió. El aria-label cambia con el estado, igual que ya lo
+        // hacía el botón del tema.
+        const pintarMenu = (abierto) => {
+            mobileMenu.classList.toggle('hidden', !abierto);
+            menuToggle.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+            menuToggle.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+            if (iconOpen && iconClose) {
+                iconOpen.classList.toggle('hidden', abierto);
+                iconClose.classList.toggle('hidden', !abierto);
+            }
+        };
+        pintarMenu(false);
         menuToggle.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-            if (iconOpen && iconClose) { iconOpen.classList.toggle('hidden'); iconClose.classList.toggle('hidden'); }
+            pintarMenu(mobileMenu.classList.contains('hidden'));
         });
         mobileMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-                if (iconOpen && iconClose) { iconOpen.classList.remove('hidden'); iconClose.classList.add('hidden'); }
-            });
+            link.addEventListener('click', () => pintarMenu(false));
+        });
+        // Escape cierra y devuelve el foco al botón: si no, el foco se queda
+        // dentro de un menú que ya no está en pantalla.
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape' || mobileMenu.classList.contains('hidden')) return;
+            pintarMenu(false);
+            menuToggle.focus();
         });
     }
     const header = document.getElementById('header');
     if (header) {
+        // passive: el navegador no tiene que esperar a ver si este listener
+        // cancela el scroll, así que puede seguir desplazando mientras corre.
         window.addEventListener('scroll', () => {
             if (window.scrollY > 30) { header.classList.add('scrolled', 'shadow-xl'); }
             else { header.classList.remove('scrolled', 'shadow-xl'); }
-        });
+        }, { passive: true });
     }
 
     // ---- Modo oscuro / claro (persistido en localStorage, con detección de preferencia del sistema) ----

@@ -16,8 +16,8 @@
         darkMode: 'class',
         theme: { extend: {
             colors: {
-                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
             },
             fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
         } }
@@ -181,9 +181,9 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -194,10 +194,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -217,11 +217,11 @@
     </header>
 
 <!-- ===== PASSWORD GATE ===== -->
-<div id="gate" class="pt-20 min-h-screen flex items-center justify-center px-4">
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
     <div class="w-full max-w-sm text-center">
         <p class="text-5xl mb-4" aria-hidden="true">🎓</p>
         <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Aprende</h1>
-        <p id="gate-checking" class="text-brand-500 dark:text-brand-400 mb-4">Comprobando tu sesión…</p>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
     </div>
 </div>
 
@@ -229,7 +229,7 @@
 <div id="app" class="hidden pt-20 pb-16">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
     <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Aprende ♟️</h1>
-    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-400">
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
       <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
       <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
     </div>

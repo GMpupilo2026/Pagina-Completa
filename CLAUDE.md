@@ -511,11 +511,69 @@ diagnóstico, Concentración, Racha táctica y ¡Te reto!
 - Las etiquetas son `<span class="coord-etiqueta">` dentro de la casilla: si algún
   código cuenta `span` dentro del tablero, tiene que excluirlas.
 
+## El encabezado ocupa su propio espacio
+
+El encabezado del sitio es `sticky top-0`, **no `fixed`**, y esa es la razón por
+la que ninguna página tiene que compensar su altura a mano. Antes era `fixed` y
+cada página descontaba esa altura por su cuenta: `pt-16 md:pt-20` en el `<main>`,
+un `<div class="hidden lg:block h-8">` suelto, `pt-28` en los artículos, `pt-32`
+en las pantallas de carga, `pt-20 min-h-screen` en las de acceso. Seis maneras
+distintas de escribir el mismo número.
+
+El problema es que la altura real cambia de cuatro formas —en `md`, en `lg`
+cuando aparece la barra de arriba, al hacer scroll (`#header.scrolled` la baja a
+3.5rem) y en modo adaptado, que sube la tipografía a 112%—, y ninguno de esos
+números escritos a mano se entera. Con `sticky` el encabezado está en el flujo:
+ocupa su espacio solo, se pega al hacer scroll y no hay nada que descontar.
+
+- **Regla: si te encontrás compensando a mano una altura que el navegador ya
+  sabe calcular, es que hay que dejarlo calcular.**
+- `html { scroll-padding-top }` en `css/styles.css` es lo que hace que saltar a
+  un ancla no deje el destino debajo de la barra — incluye el propio "Saltar al
+  contenido principal". Sin eso, `scroll-behavior: smooth` lleva el destino
+  exactamente a donde la barra lo tapa.
+- Las alturas del encabezado son `min-h-*`, nunca `h-*`: con altura fija, en
+  modo adaptado el contenido se sale de la caja en vez de empujarla.
+- Lo que quiere ocupar la pantalla entera resta la barra en vez de sumarle
+  padding: `min-h-[calc(100vh-5rem)]`, no `pt-20 min-h-screen` (que daba una
+  página más alta que la pantalla).
+
+## Contraste: el color nunca se elige a ojo
+
+Todo texto llega al mínimo de WCAG AA (4.5 para texto normal, 3 para el
+grande), **medido contra el fondo real, no contra blanco**: el cuerpo de la
+página es `brand-50`, no `#fff`, y ahí un color puede perder medio punto.
+`herramientas/` no tiene un validador propio: se mide en el navegador con la
+prueba de accesibilidad, que compone las capas semitransparentes y se salta lo
+que está sobre un degradado, porque contra un degradado no hay un número único.
+
+- La paleta tiene **un tono por tema**, no uno solo para los dos: ningún color
+  puede llegar a 4.5 contra blanco y contra `brand-900` a la vez (habría que
+  estar por debajo de 0.18 de luminancia y por encima de 0.24 al mismo tiempo).
+  Por eso se agregaron `brand-350` y `brand-450` — el par apagado— y
+  `accent-700`, la versión del ámbar que se lee sobre fondo claro.
+- Los pares que se usan: `text-brand-450 dark:text-brand-350` para el texto
+  secundario, `text-brand-500 dark:text-brand-300` para descripciones,
+  `text-brand-600 dark:text-brand-300` para texto normal y
+  `text-accent-700 dark:text-accent-400` para las etiquetas ámbar.
+- **Al escribir un par claro/oscuro, el número sube en uno y baja en el otro.**
+  Había 38 casos de `text-brand-300 dark:text-brand-600`, que es el par al
+  revés: el tono claro sobre fondo claro (1.95) y el oscuro sobre fondo oscuro
+  (1.93). Los dos ilegibles, en las dos pantallas.
+
 ## Accesibilidad
 
 Buena parte del sitio tiene "modo adaptado" (`js/adaptive-mode.js`) para alumnos
 con discapacidad visual: al tocar textos, encabezados o contraste, mantener el
 alto contraste y los encabezados que permiten saltar directo al contenido.
+
+- **El foco con teclado tiene que verse.** `focus:outline-none` a secas deja a
+  quien navega con teclado sin saber dónde está: si se quita el contorno, se
+  pone un anillo en su lugar (`focus-visible:ring-2 focus-visible:ring-accent-400`).
+- **Un botón que abre algo tiene que decir si está abierto**: `aria-expanded`,
+  `aria-controls` apuntando a lo que abre, y el nombre accesible cambiando con
+  el estado. El menú móvil además cierra con Escape y devuelve el foco al botón
+  —si no, el foco se queda dentro de algo que ya no está en pantalla—.
 
 ## Cómo se escribe en el sitio
 

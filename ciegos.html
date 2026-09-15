@@ -17,8 +17,8 @@
             darkMode: 'class',
             theme: { extend: {
                 colors: {
-                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
-                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',350:'#8aa1b8',400:'#627d98',450:'#55708a',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17',700:'#a85a0d' }
                 },
                 fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
             } }
@@ -38,7 +38,7 @@
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
                 <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
@@ -47,7 +47,7 @@
             </div>
         </div>
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between h-16 md:h-20">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
                 <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
                 <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
                     <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
@@ -58,10 +58,10 @@
                     <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -81,48 +81,47 @@
             </ul>
         </div>
     </header>
-    <div class="hidden lg:block h-8" aria-hidden="true"></div>
 
-    <div id="loading" class="pt-20 min-h-screen flex items-center justify-center">
-        <p class="text-brand-400 dark:text-brand-500">Cargando…</p>
+    <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p class="text-brand-450 dark:text-brand-350">Cargando…</p>
     </div>
 
     <main id="main-content" class="hidden pt-20 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Ciegos 🦯</h1>
-            <p class="text-brand-500 dark:text-brand-400 mb-8">Todo lo del Tablero y de Entrenamiento, adaptado para quienes usan lector de pantalla: navegación por teclado, anuncios por voz de cada jugada y atajos de texto en vez de arrastrar piezas o hacer clic en el tablero. Cada enlace de aquí abajo entra directo en modo adaptado, sin tener que buscar el interruptor.</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Todo lo del Tablero y de Entrenamiento, adaptado para quienes usan lector de pantalla: navegación por teclado, anuncios por voz de cada jugada y atajos de texto en vez de arrastrar piezas o hacer clic en el tablero. Cada enlace de aquí abajo entra directo en modo adaptado, sin tener que buscar el interruptor.</p>
 
             <div class="space-y-5">
                 <section aria-labelledby="h-tablero" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 id="h-tablero" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">♟️ Tablero</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Juega contra Oscar, nuestro motor, con atajos de una letra ("o" para casillas ocupadas, "c" para capturas, "m" para movimientos legales) y cada jugada — la tuya y la del motor — anunciada por voz apenas ocurre.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Juega contra Oscar, nuestro motor, con atajos de una letra ("o" para casillas ocupadas, "c" para capturas, "m" para movimientos legales) y cada jugada — la tuya y la del motor — anunciada por voz apenas ocurre.</p>
                     <a href="tablero.html?modo=ciego" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Entrar al Tablero adaptado →</a>
                 </section>
 
                 <section aria-labelledby="h-4x4" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 id="h-4x4" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧩 4×4</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Ejercicios de captura en un tablero reducido, navegable con las flechas del teclado y con la posición completa disponible como texto en cualquier momento.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Ejercicios de captura en un tablero reducido, navegable con las flechas del teclado y con la posición completa disponible como texto en cualquier momento.</p>
                     <a href="entreno/4x4.html?modo=ciego" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Entrar a 4×4 adaptado →</a>
                 </section>
 
                 <section aria-labelledby="h-aprender" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 id="h-aprender" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🎓 Aprender</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Las mismas lecciones de movimientos, reglas y tácticas — pero en vez de hacer clic en el tablero, se escribe la casilla (o la jugada) en un campo de texto, con cada resultado anunciado por voz.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Las mismas lecciones de movimientos, reglas y tácticas — pero en vez de hacer clic en el tablero, se escribe la casilla (o la jugada) en un campo de texto, con cada resultado anunciado por voz.</p>
                     <a href="entreno/aprender.html?modo=ciego" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Entrar a Aprender adaptado →</a>
                 </section>
 
                 <section aria-labelledby="h-coordenadas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 id="h-coordenadas" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🎯 Coordenadas</h2>
-                    <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Se anuncia una casilla por voz (por ejemplo, "e4") y hay que decir de qué color es — escribiendo "b" de blanca o "n" de negra — el mismo entrenamiento de memoria del tablero, pero pensado de verdad para quien no lo puede ver.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Se anuncia una casilla por voz (por ejemplo, "e4") y hay que decir de qué color es — escribiendo "b" de blanca o "n" de negra — el mismo entrenamiento de memoria del tablero, pero pensado de verdad para quien no lo puede ver.</p>
                     <a href="entreno/coordenadas.html?modo=ciego" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Entrar a Coordenadas adaptado →</a>
                 </section>
             </div>
 
             <section aria-labelledby="h-columnas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-8">
                 <h2 id="h-columnas" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">🔤 Cómo se dicen las casillas</h2>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Todo lo que se anuncia por voz en Modo Adaptado (Tablero, 4×4, Aprender y Coordenadas) reemplaza la letra de cada columna por una palabra propia — así ninguna letra se confunde con otra al oído. La fila (el número) no cambia:</p>
-                <ul class="text-brand-500 dark:text-brand-400 text-sm grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 mb-3">
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Todo lo que se anuncia por voz en Modo Adaptado (Tablero, 4×4, Aprender y Coordenadas) reemplaza la letra de cada columna por una palabra propia — así ninguna letra se confunde con otra al oído. La fila (el número) no cambia:</p>
+                <ul class="text-brand-500 dark:text-brand-300 text-sm grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 mb-3">
                     <li><strong class="text-brand-700 dark:text-brand-200">a</strong> → anna</li>
                     <li><strong class="text-brand-700 dark:text-brand-200">b</strong> → bella</li>
                     <li><strong class="text-brand-700 dark:text-brand-200">c</strong> → cesar</li>
@@ -132,23 +131,23 @@
                     <li><strong class="text-brand-700 dark:text-brand-200">g</strong> → gustav</li>
                     <li><strong class="text-brand-700 dark:text-brand-200">h</strong> → hector</li>
                 </ul>
-                <p class="text-brand-500 dark:text-brand-400 text-sm">Por ejemplo, la casilla "e4" se anuncia "eva 4". Esto aplica a las jugadas, las capturas y la posición completa — pero no a lo que escribes en el panel de jugadas: ahí siempre se escribe la notación normal (a-h), como se explica abajo.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm">Por ejemplo, la casilla "e4" se anuncia "eva 4". Esto aplica a las jugadas, las capturas y la posición completa — pero no a lo que escribes en el panel de jugadas: ahí siempre se escribe la notación normal (a-h), como se explica abajo.</p>
             </section>
 
             <section aria-labelledby="h-panel-jugadas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-8">
                 <h2 id="h-panel-jugadas" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">🖊️ Cómo usar el panel de jugadas</h2>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">En Aprender y en Coordenadas, el modo adaptado reemplaza el tablero por un campo de texto — el panel de jugadas — donde escribes tu respuesta y presionas Enter en vez de hacer clic en una casilla. Lo que se escribe cambia según el ejercicio:</p>
-                <ul class="text-brand-500 dark:text-brand-400 text-sm space-y-2 list-disc pl-5 mb-3">
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">En Aprender y en Coordenadas, el modo adaptado reemplaza el tablero por un campo de texto — el panel de jugadas — donde escribes tu respuesta y presionas Enter en vez de hacer clic en una casilla. Lo que se escribe cambia según el ejercicio:</p>
+                <ul class="text-brand-500 dark:text-brand-300 text-sm space-y-2 list-disc pl-5 mb-3">
                     <li><strong class="text-brand-700 dark:text-brand-200">Coordenadas:</strong> se anuncia una casilla (por ejemplo, "eva 4"). Escribe <strong>b</strong> si es blanca o <strong>n</strong> si es negra.</li>
                     <li><strong class="text-brand-700 dark:text-brand-200">Aprender — lecciones de movimiento:</strong> escribe la casilla a la que puede llegar la pieza, con la notación normal (por ejemplo, e4).</li>
                     <li><strong class="text-brand-700 dark:text-brand-200">Aprender — reglas y tácticas:</strong> escribe la casilla de origen y la de destino separadas por un espacio (por ejemplo, "e1 g1" para enrocar corto).</li>
                 </ul>
-                <p class="text-brand-500 dark:text-brand-400 text-sm">Cada respuesta se confirma por voz al instante. Además, arriba del campo siempre puedes leer la posición completa — agrupada por color y tipo de pieza ("rey: eva 1", "torre: anna 1, hector 1"...) — para saber exactamente qué hay en el tablero antes de responder.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm">Cada respuesta se confirma por voz al instante. Además, arriba del campo siempre puedes leer la posición completa — agrupada por color y tipo de pieza ("rey: eva 1", "torre: anna 1, hector 1"...) — para saber exactamente qué hay en el tablero antes de responder.</p>
             </section>
 
             <section aria-labelledby="h-pdf" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-8">
                 <h2 id="h-pdf" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">📄 Instrucciones adaptadas en PDF</h2>
-                <p class="text-brand-500 dark:text-brand-400 text-sm mb-3">Todo lo de esta página, en un documento descargable en formato accesible — para leer con tu lector de pantalla o guardar y compartir. Este mismo PDF llega adjunto en el correo de inscripción.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-3">Todo lo de esta página, en un documento descargable en formato accesible — para leer con tu lector de pantalla o guardar y compartir. Este mismo PDF llega adjunto en el correo de inscripción.</p>
                 <a href="instrucciones-adaptadas.pdf" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Descargar instrucciones adaptadas (PDF) →</a>
             </section>
         </div>
@@ -157,12 +156,12 @@
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
                 <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
                 <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
             </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
