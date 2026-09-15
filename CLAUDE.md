@@ -511,6 +511,57 @@ diagnóstico, Concentración, Racha táctica y ¡Te reto!
 - Las etiquetas son `<span class="coord-etiqueta">` dentro de la casilla: si algún
   código cuenta `span` dentro del tablero, tiene que excluirlas.
 
+## El catálogo de cursos
+
+Las tarjetas de `cursos.html` **no se editan a mano**: salen de
+`herramientas/cursos/catalogo.json` y las escribe
+`python3 herramientas/cursos-catalogo.py` entre las marcas
+`<!-- catálogo: inicio -->` y `<!-- catálogo: fin -->`. Antes eran el mismo
+bloque de HTML copiado diez veces, así que cambiar el diseño de una tarjeta
+eran diez ediciones y era cuestión de tiempo que una quedara distinta.
+
+- **Se genera, no se arma con JavaScript.** Es la página que más tiene que
+  encontrar Google; si el catálogo solo existiera al ejecutar un script, sin
+  JavaScript la página se vería vacía. El filtro por nivel sí es JavaScript, y
+  por eso su barra arranca con `hidden` y se muestra desde el script: sin
+  JavaScript no aparece un control que no haría nada, y se ven los diez cursos.
+- **Los niveles son un conjunto cerrado de cuatro** (Principiante, Intermedio,
+  Avanzado, Competición). Antes convivían seis etiquetas —"Todos los niveles",
+  "Intermedio · Avanzado", "Competitivo"— para lo que en realidad son cuatro
+  escalones, y con eso no se puede filtrar. El orden de las tarjetas es por
+  nivel.
+- **El degradado va en el nivel, no en el curso**: azul más oscuro cuanto más
+  avanzado, ámbar para competición. Antes cuatro cursos compartían el mismo por
+  casualidad y dos naranjas quedaban pegados.
+- **Un solo enlace por tarjeta.** El título es el enlace y su `::after` estira
+  el área de clic sobre toda la tarjeta, así quien usa lector de pantalla no
+  escucha el mismo destino dos veces ("Ver temario →" es `aria-hidden`). La
+  grilla es `<ul>`/`<li>` de verdad, para que se anuncie cuántos cursos hay.
+- `precio`, `duracion` y `modalidad` están en el JSON **vacíos a propósito**. La
+  tarjeta no muestra esa línea mientras estén en blanco y los datos
+  estructurados no los declaran: antes que inventar un precio, no decir nada.
+
+### Los diagramas de las tarjetas
+
+Cada tarjeta lleva una posición real en `img/cursos/<slug>.svg`, que genera
+`node herramientas/cursos-diagramas.js` (necesita chess.js). Antes eran emojis
+gigantes: dos cursos compartían el 🏁, los emojis se dibujan distinto en cada
+sistema y no decían nada del curso.
+
+- **Las posiciones no se inventan.** Las de los cursos con tablero salen de su
+  propio archivo de datos (`cursos/protegido/data/<slug>.json`), que ya está
+  verificado con motor; las demás van escritas en el generador y **se
+  comprueban con chess.js antes de dibujar**: que la FEN cargue, que la
+  posición sea legal, que haya jugadas y que la jugada clave exista y dé mate
+  si se prometió mate. Así se descartó una posición de Lucena inventada que no
+  era Lucena, que es exactamente el error que ya había pasado antes.
+- Los dibujos de las piezas se leen de `js/finales-100.js`, donde ya estaban,
+  en vez de tener una segunda copia que se pueda ir separando. Cada SVG
+  incluye solo las piezas que aparecen: un final de peones no carga el dibujo
+  de la dama.
+- El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
+  información del curso, no decoración.
+
 ## Metadatos: que el enlace se vea y la página se encuentre
 
 Cada página pública lleva su descripción, su `canonical` y su bloque de Open
