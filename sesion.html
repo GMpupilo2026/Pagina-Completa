@@ -373,6 +373,7 @@
                                 <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
+                                <p id="create-student-cupo" class="text-xs text-brand-450 dark:text-brand-350"></p>
                                 <p id="create-student-msg" class="text-xs"></p>
                             </form>
                         </div>
@@ -2791,6 +2792,7 @@
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
+                cargarCupoInvitaciones();
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
@@ -2844,6 +2846,40 @@
 
         document.getElementById("clear-marks-btn").addEventListener("click", () => board.clearMarks());
 
+        /* Cuántos alumnos nuevos puede invitar este profesor. El tope lo pone quien
+         * administra (profiles.invitaciones_max) y el descuento lo hace la función
+         * create-student al invitar: esto es solo para que el profesor lo sepa
+         * antes de escribir el correo, no es lo que manda. */
+        let cupoRestante = null;   // null = sin tope (quien administra)
+
+        function pintarCupo(restantes) {
+            cupoRestante = restantes;
+            const el = document.getElementById("create-student-cupo");
+            const btn = document.getElementById("create-student-btn");
+            if (!el) return;
+            if (restantes === null) { el.textContent = ""; return; }
+            if (restantes <= 0) {
+                el.textContent = "No te quedan invitaciones. Pídele más a la persona administradora.";
+                el.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                if (btn) btn.disabled = true;
+            } else {
+                el.textContent = restantes === 1 ? "Te queda 1 invitación." : `Te quedan ${restantes} invitaciones.`;
+                el.className = "text-xs text-brand-450 dark:text-brand-350";
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function cargarCupoInvitaciones() {
+            try {
+                const { data } = await sb.from("profiles")
+                    .select("is_admin, invitaciones_max, invitaciones_usadas")
+                    .eq("id", session.user.id).single();
+                if (!data) return;
+                if (data.is_admin) { pintarCupo(null); return; }
+                pintarCupo(Math.max((data.invitaciones_max || 0) - (data.invitaciones_usadas || 0), 0));
+            } catch (e) { /* si no se puede leer, el servidor igual lo hace cumplir */ }
+        }
+
         document.getElementById("create-student-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const msg = document.getElementById("create-student-msg");
@@ -2869,11 +2905,22 @@
                 msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo con un enlace para entrar.`;
                 msg.className = "text-xs text-green-600 dark:text-green-400";
                 document.getElementById("create-student-form").reset();
+                // El servidor devuelve cuántas quedan: así el número de la pantalla
+                // es el que de verdad tiene la base, no una cuenta del navegador.
+                if (!result.ilimitado && typeof result.restantes === "number") {
+                    pintarCupo(result.restantes);
+                }
             } catch (err) {
                 msg.textContent = err.message;
                 msg.className = "text-xs text-red-600 dark:text-red-400";
+                // El servidor es el que manda: si dice que no queda cupo, se
+                // vuelve a leer para que la pantalla diga lo mismo que la base.
+                if (/invitaciones/i.test(err.message)) cargarCupoInvitaciones();
             } finally {
-                btn.disabled = false; btn.textContent = "Enviar invitación";
+                btn.textContent = "Enviar invitación";
+                // Se vuelve a habilitar solo si de verdad queda cupo: si no, el
+                // botón tiene que quedarse apagado después de la última invitación.
+                btn.disabled = cupoRestante !== null && cupoRestante <= 0;
             }
         });
 

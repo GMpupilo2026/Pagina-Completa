@@ -110,6 +110,43 @@ sin pisarse.
 - `class_chat_messages` no tiene tablero ni sesión: se filtra directo por
   `profiles.teacher_id` del alumno del hilo (el chat es continuo, no "de una
   clase puntual").
+- **Quién ve a quién ya lo hace cumplir la base, no las páginas.** Está
+  comprobado impersonando roles en SQL: un profesor solo recibe sus alumnos en
+  `profiles` y solo sus filas en `training_progress`, `training_state`,
+  `platform_activity_log`, `class_attendance`, `question_answers` y las demás.
+  `informes.html` pide `select * from profiles where role='alumno'` sin filtro
+  de profesor **a propósito**: el filtro es de la RLS. Si algún día hay que
+  tocarlo, se toca la política, no la consulta.
+- **`teacher_id` no lo puede cambiar el propio alumno.** `profiles_update_own`
+  deja a cada quien editar su fila, y el trigger
+  `protect_profiles_identity_columns` solo cubría `role`, `email` e `is_admin`:
+  un alumno podía asignarse a otro profesor y aparecer en su clase y en sus
+  informes. Ahora el trigger también revierte `teacher_id`,
+  `invitaciones_max` e `invitaciones_usadas`.
+- **Cupo de invitaciones por profesor.** `profiles.invitaciones_max` es cuántos
+  alumnos nuevos puede invitar por su cuenta desde la Academia, y
+  `invitaciones_usadas` lo que lleva gastado. Lo fija quien administra desde
+  `admin.html`; **quien administra no tiene tope**. El descuento lo hace
+  `create-student` llamando a `public.consumir_invitacion()`, que comprueba y
+  descuenta **en una sola operación**: dos pestañas invitando a la vez no pueden
+  pasarse del cupo. Si la invitación falla después, `devolver_invitacion()` la
+  repone. Las dos funciones tienen el `execute` revocado de `anon` y
+  `authenticated`: solo las llama la Edge Function con la service role.
+  `invitaciones_usadas` **no baja** al reasignar o borrar un alumno: lo que se
+  controla es cuántas invitaciones manda, no cuántos alumnos tiene hoy.
+  - Cuidado con el trigger: es el mismo que protege las columnas, así que las
+    dos funciones ponen la marca local `ajedrez.contando_invitaciones` y el
+    trigger la respeta **solo** para esas dos columnas. Sin eso el contador
+    tenía un fallo silencioso — el trigger deshacía el aumento y la función
+    igual devolvía `ok`, porque el `RETURNING` trae la fila ya revertida y
+    `found` sigue siendo cierto.
+- **Asignar alumnos se hace en lote.** En `admin.html`, además del selector por
+  fila, se pueden marcar alumnos (o un grupo entero desde su encabezado) y
+  mandarlos a un profesor con la acción `assign_bulk` de `admin-manage-users`,
+  que además se asegura de que todos sean alumnos. Así se reparte de verdad:
+  "todo 7° B al profesor nuevo", no fila por fila. El panel "Profesores" de esa
+  misma página muestra cuántos alumnos tiene cada uno y su cupo, y **avisa si
+  hay alumnos sin profesor asignado**: esos no salen en los informes de nadie.
 - **Regla permanente: todo lo que se haga para los profesores se hace también
   para quien administra**, con el mismo alcance que ya le da la base (el
   profesor ve lo suyo; quien administra, todo). En la práctica: `informes.html`

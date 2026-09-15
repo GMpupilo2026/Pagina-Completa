@@ -1544,11 +1544,24 @@ function areasFlojasArbitraje(fila) {
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
+            // Quien administra ve a todo el mundo; un profesor, solo a los alumnos
+            // que tiene asignados. No es un filtro de esta página: la base de datos
+            // no le devuelve el resto (RLS sobre profiles y sobre cada tabla de
+            // actividad). Se dice en pantalla para que no parezca que faltan datos.
             document.getElementById("subtitle").textContent = isTeacher
-                ? "Panorama general de la clase: asistencia, participación y precisión de tus alumnos."
+                ? (profile.is_admin
+                    ? "Panorama general de toda la plataforma: asistencia, participación y precisión, de todos los alumnos."
+                    : "Panorama general de tu clase: asistencia, participación y precisión de los alumnos que tienes asignados.")
                 : "Tu actividad y progreso en las asignaciones de clase.";
             if (isTeacher) {
                 await fetchTeacherData();
+                if (!profile.is_admin && !(teacherData.students || []).length) {
+                    const aviso = document.createElement("p");
+                    aviso.className = "max-w-3xl mb-6 rounded-xl bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-4 py-3 text-sm text-brand-700 dark:text-brand-200";
+                    aviso.textContent = "Todavía no tienes alumnos asignados, así que no hay nada que mostrar. Pídele a la persona administradora que te asigne alumnos desde el panel de Administración, o invita a los tuyos desde la Academia.";
+                    const cont = document.getElementById("teacher-filters");
+                    if (cont && cont.parentNode) cont.parentNode.insertBefore(aviso, cont);
+                }
                 populateStudentFilter();
                 populateGroupFilter();
                 document.getElementById("teacher-filters").classList.remove("hidden");

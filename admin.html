@@ -140,6 +140,27 @@
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña. El grupo es solo para ordenar la lista; el profesor asignado determina qué alumnos puede ver y gestionar cada profesor.</p>
             </div>
 
+            <!-- ===== Profesores: sus alumnos y su cupo de invitaciones ===== -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Profesores</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
+                                <th class="py-2 pr-3 font-semibold">Profesor</th>
+                                <th class="py-2 pr-3 font-semibold text-right">Alumnos</th>
+                                <th class="py-2 pr-3 font-semibold">Cupo de invitaciones</th>
+                                <th class="py-2 pr-3 font-semibold">Usadas</th>
+                                <th class="py-2 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profesores-body"></tbody>
+                    </table>
+                </div>
+                <p id="sin-profesor-aviso" class="hidden text-xs mt-3 rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200"></p>
+            </div>
+
             <!-- ===== Lista de usuarios ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -153,10 +174,21 @@
                         </select>
                     </div>
                 </div>
+                <!-- Asignar de a muchos: marcar un grupo entero y mandarlo a un profesor
+                     de una vez, en vez de fila por fila. Arranca oculta y aparece al marcar. -->
+                <div id="asignar-lote" class="hidden flex-wrap items-center gap-3 mb-4 rounded-xl bg-accent-50 dark:bg-brand-800 border border-accent-500/40 px-4 py-3">
+                    <span id="asignar-cuenta" class="text-sm font-semibold text-brand-800 dark:text-white"></span>
+                    <label for="asignar-profesor" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Asignar a</label>
+                    <select id="asignar-profesor" class="px-2 py-1.5 rounded-lg bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    <button type="button" id="asignar-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Asignar</button>
+                    <button type="button" id="asignar-limpiar" class="text-xs text-brand-600 dark:text-brand-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Quitar la marca</button>
+                    <span id="asignar-msg" class="text-xs"></span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
+                                <th class="py-2 pr-2 font-semibold w-8"><span class="sr-only">Marcar</span></th>
                                 <th class="py-2 pr-3 font-semibold">Nombre</th>
                                 <th class="py-2 pr-3 font-semibold">Correo</th>
                                 <th class="py-2 pr-3 font-semibold">Rol</th>
@@ -247,6 +279,25 @@
                 const isSelf = u.id === currentUserId;
                 const tr = document.createElement("tr");
                 tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
+
+                // Marcar para asignar en lote. Solo los alumnos: a un profesor no
+                // se le asigna profesor.
+                const tdMarca = document.createElement("td");
+                tdMarca.className = "py-2 pr-2";
+                if (u.role === "alumno") {
+                    const marca = document.createElement("input");
+                    marca.type = "checkbox";
+                    marca.className = "marca-alumno w-4 h-4 accent-accent-500 cursor-pointer";
+                    marca.dataset.id = u.id;
+                    marca.checked = marcados.has(u.id);
+                    marca.setAttribute("aria-label", "Marcar a " + (u.full_name || u.email) + " para asignarle profesor");
+                    marca.addEventListener("change", () => {
+                        if (marca.checked) marcados.add(u.id); else marcados.delete(u.id);
+                        pintarBarraDeLote();
+                    });
+                    tdMarca.appendChild(marca);
+                }
+                tr.appendChild(tdMarca);
 
                 const tdName = document.createElement("td");
                 tdName.className = "py-2 pr-3";
@@ -379,12 +430,31 @@
                 return tr;
         }
 
-        function groupHeaderRow(label) {
+        function groupHeaderRow(label, alumnosDelGrupo) {
             const tr = document.createElement("tr");
             const td = document.createElement("td");
-            td.colSpan = 8;
-            td.className = "pt-4 pb-1 text-xs font-bold uppercase tracking-wide text-accent-600 dark:text-accent-400";
-            td.textContent = label;
+            td.colSpan = 9;
+            td.className = "pt-4 pb-1 text-xs font-bold uppercase tracking-wide text-accent-700 dark:text-accent-400";
+            const texto = document.createElement("span");
+            texto.textContent = label;
+            td.appendChild(texto);
+            // Marcar el grupo entero de una vez: es la forma en que de verdad se
+            // reparten los alumnos ("todo 7° B al profesor nuevo").
+            const ids = (alumnosDelGrupo || []).map((u) => u.id);
+            if (ids.length) {
+                const boton = document.createElement("button");
+                boton.type = "button";
+                boton.className = "ml-3 text-xs font-semibold normal-case underline text-brand-600 dark:text-brand-300 hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                const todosMarcados = ids.every((id) => marcados.has(id));
+                boton.textContent = todosMarcados ? "quitar la marca a los " + ids.length : "marcar los " + ids.length;
+                boton.addEventListener("click", () => {
+                    if (todosMarcados) ids.forEach((id) => marcados.delete(id));
+                    else ids.forEach((id) => marcados.add(id));
+                    renderUsers();
+                    pintarBarraDeLote();
+                });
+                td.appendChild(boton);
+            }
             tr.appendChild(td);
             return tr;
         }
@@ -416,9 +486,173 @@
             });
             const sortedKeys = [...groups.keys()].sort((a, b) => a.localeCompare(b, "es"));
             sortedKeys.forEach((k) => {
-                body.appendChild(groupHeaderRow(k));
-                groups.get(k).forEach((u) => body.appendChild(renderRow(u, teachers)));
+                const filas = groups.get(k);
+                body.appendChild(groupHeaderRow(k, filas.filter((u) => u.role === "alumno")));
+                filas.forEach((u) => body.appendChild(renderRow(u, teachers)));
             });
+        }
+
+        /* ================= Asignar alumnos a un profesor ==================
+         *
+         * Quién es el profesor de cada alumno (profiles.teacher_id) es lo que
+         * decide qué ve cada profesor: sus alumnos y nadie más, en Informes, en
+         * la clase en vivo y en los retos. Eso lo hace cumplir la base de datos
+         * con RLS; acá solo se decide.
+         *
+         * La asignación en lote existe porque así se reparte de verdad: "todo
+         * 7° B al profesor nuevo", no alumno por alumno.
+         */
+        const marcados = new Set();
+
+        function pintarBarraDeLote() {
+            const barra = document.getElementById("asignar-lote");
+            const cuenta = document.getElementById("asignar-cuenta");
+            const n = marcados.size;
+            barra.classList.toggle("hidden", n === 0);
+            barra.classList.toggle("flex", n > 0);
+            cuenta.textContent = n === 1 ? "1 alumno marcado" : n + " alumnos marcados";
+            document.getElementById("asignar-msg").textContent = "";
+        }
+
+        async function asignarLote() {
+            const btn = document.getElementById("asignar-btn");
+            const msg = document.getElementById("asignar-msg");
+            const teacher_id = document.getElementById("asignar-profesor").value || null;
+            const ids = [...marcados];
+            if (!ids.length) return;
+            btn.disabled = true; msg.textContent = "Asignando…";
+            msg.className = "text-xs text-brand-500 dark:text-brand-300";
+            try {
+                const r = await callAdmin("assign_bulk", { target_ids: ids, teacher_id });
+                marcados.clear();
+                await loadUsers();
+                pintarBarraDeLote();
+                const donde = teacher_id ? "" : " (quedaron sin profesor)";
+                msg.textContent = r.asignados + (r.asignados === 1 ? " alumno asignado" : " alumnos asignados") + donde + ".";
+                msg.className = "text-xs text-green-600 dark:text-green-400";
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        /* ================= Cupo de invitaciones =================
+         *
+         * Cuántos alumnos nuevos puede invitar cada profesor por su cuenta desde
+         * la Academia. El descuento lo hace la función create-student al invitar,
+         * no el navegador: acá solo se fija el techo y se puede reiniciar el
+         * contador. Quien administra no tiene tope.
+         */
+        function renderProfesores() {
+            const body = document.getElementById("profesores-body");
+            body.innerHTML = "";
+            const profes = allUsers.filter((u) => u.role === "profesor")
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            const porProfe = new Map();
+            allUsers.forEach((u) => {
+                if (u.role !== "alumno" || !u.teacher_id) return;
+                porProfe.set(u.teacher_id, (porProfe.get(u.teacher_id) || 0) + 1);
+            });
+
+            profes.forEach((p) => {
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 align-middle";
+
+                const tdNombre = document.createElement("td");
+                tdNombre.className = "py-2 pr-3 font-medium text-brand-700 dark:text-brand-200";
+                tdNombre.textContent = teacherLabel(p) + (p.is_admin ? " 👑" : "");
+                tr.appendChild(tdNombre);
+
+                const tdAlumnos = document.createElement("td");
+                tdAlumnos.className = "py-2 pr-3 text-right text-brand-600 dark:text-brand-300";
+                tdAlumnos.textContent = porProfe.get(p.id) || 0;
+                tr.appendChild(tdAlumnos);
+
+                const tdCupo = document.createElement("td");
+                tdCupo.className = "py-2 pr-3";
+                if (p.is_admin) {
+                    const sin = document.createElement("span");
+                    sin.className = "text-xs text-brand-450 dark:text-brand-350";
+                    sin.textContent = "sin tope";
+                    tdCupo.appendChild(sin);
+                } else {
+                    const input = document.createElement("input");
+                    input.type = "number"; input.min = "0"; input.max = "1000"; input.step = "1";
+                    input.value = p.invitaciones_max ?? 0;
+                    input.className = "w-24 px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    input.setAttribute("aria-label", "Cupo de invitaciones de " + teacherLabel(p));
+                    input.addEventListener("change", async () => {
+                        const antes = p.invitaciones_max ?? 0;
+                        try {
+                            await callAdmin("update", { target_id: p.id, invitaciones_max: Number(input.value) });
+                            p.invitaciones_max = Number(input.value);
+                            renderProfesores();
+                        } catch (err) {
+                            alert("No se pudo guardar el cupo: " + err.message);
+                            input.value = antes;
+                        }
+                    });
+                    tdCupo.appendChild(input);
+                }
+                tr.appendChild(tdCupo);
+
+                const tdUsadas = document.createElement("td");
+                tdUsadas.className = "py-2 pr-3 text-brand-600 dark:text-brand-300";
+                if (p.is_admin) {
+                    tdUsadas.textContent = "—";
+                } else {
+                    const usadas = p.invitaciones_usadas ?? 0;
+                    const max = p.invitaciones_max ?? 0;
+                    const restantes = Math.max(max - usadas, 0);
+                    tdUsadas.textContent = usadas + " de " + max;
+                    const nota = document.createElement("span");
+                    nota.className = restantes === 0
+                        ? "ml-2 text-xs font-semibold text-accent-700 dark:text-accent-400"
+                        : "ml-2 text-xs text-brand-450 dark:text-brand-350";
+                    nota.textContent = restantes === 0 ? "· sin invitaciones" : "· le quedan " + restantes;
+                    tdUsadas.appendChild(nota);
+                }
+                tr.appendChild(tdUsadas);
+
+                const tdAcc = document.createElement("td");
+                tdAcc.className = "py-2 text-right";
+                if (!p.is_admin) {
+                    const reiniciar = document.createElement("button");
+                    reiniciar.type = "button";
+                    reiniciar.className = "text-xs font-semibold text-brand-600 dark:text-brand-300 underline hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                    reiniciar.textContent = "Reiniciar contador";
+                    reiniciar.addEventListener("click", async () => {
+                        if (!confirm("¿Poner en cero las invitaciones usadas de " + teacherLabel(p) + "? Vuelve a tener su cupo completo.")) return;
+                        try {
+                            await callAdmin("update", { target_id: p.id, reset_invitaciones: true });
+                            p.invitaciones_usadas = 0;
+                            renderProfesores();
+                        } catch (err) {
+                            alert("No se pudo reiniciar: " + err.message);
+                        }
+                    });
+                    tdAcc.appendChild(reiniciar);
+                }
+                tr.appendChild(tdAcc);
+                body.appendChild(tr);
+            });
+
+            if (!profes.length) {
+                body.innerHTML = '<tr><td colspan="5" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta con rol de profesor.</td></tr>';
+            }
+
+            // Un alumno sin profesor no aparece en los informes de nadie: conviene
+            // que salte a la vista en vez de quedarse perdido en la lista.
+            const sueltos = allUsers.filter((u) => u.role === "alumno" && !u.teacher_id).length;
+            const aviso = document.getElementById("sin-profesor-aviso");
+            aviso.classList.toggle("hidden", sueltos === 0);
+            if (sueltos) {
+                aviso.textContent = sueltos === 1
+                    ? "⚠️ Hay 1 alumno sin profesor asignado: no aparece en los informes de nadie. Agrúpalo por “Profesor asignado” abajo para encontrarlo."
+                    : "⚠️ Hay " + sueltos + " alumnos sin profesor asignado: no aparecen en los informes de nadie. Agrúpalos por “Profesor asignado” abajo para encontrarlos.";
+            }
         }
 
         function populateTeacherSelect(selectEl, teachers) {
@@ -430,13 +664,25 @@
             const { data, error } = await sb.from("profiles").select("*").order("full_name", { ascending: true, nullsFirst: false });
             const body = document.getElementById("users-body");
             if (error || !data) {
-                body.innerHTML = '<tr><td colspan="8" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas.</td></tr>';
+                body.innerHTML = '<tr><td colspan="9" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas.</td></tr>';
                 return;
             }
             allUsers = data;
-            populateTeacherSelect(document.getElementById("create-teacher"), data.filter((u) => u.role === "profesor"));
+            const profes = data.filter((u) => u.role === "profesor");
+            populateTeacherSelect(document.getElementById("create-teacher"), profes);
+            populateTeacherSelect(document.getElementById("asignar-profesor"), profes);
+            // Si alguien marcado ya no está en la lista, se olvida.
+            const vivos = new Set(data.map((u) => u.id));
+            [...marcados].forEach((id) => { if (!vivos.has(id)) marcados.delete(id); });
+            renderProfesores();
             renderUsers();
+            pintarBarraDeLote();
         }
+
+        document.getElementById("asignar-btn").addEventListener("click", asignarLote);
+        document.getElementById("asignar-limpiar").addEventListener("click", () => {
+            marcados.clear(); renderUsers(); pintarBarraDeLote();
+        });
 
         document.getElementById("group-by").addEventListener("change", renderUsers);
 
