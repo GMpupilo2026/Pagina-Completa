@@ -94,12 +94,35 @@
                 <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
+
+                <!-- Modo visitante: la prueba es pública. Quien no tiene cuenta deja su nombre y
+                     correo, y su resultado va a la tabla diagnosticos_publicos (Informes los muestra
+                     aparte de los alumnos registrados). -->
+                <div id="visitante-box" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-brand-100">
+                    <h2 class="font-serif text-lg font-bold text-white mb-1">Diagnóstico gratuito, sin cuenta</h2>
+                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Dejanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya sos alumno de Academia? Iniciá sesión</a> y el resultado queda en tu cuenta.</p>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="visitante-nombre" class="block text-xs font-medium text-brand-200 mb-1">Nombre y apellido <span aria-hidden="true">*</span></label>
+                            <input id="visitante-nombre" type="text" autocomplete="name" required maxlength="120" class="w-full px-3 py-2 rounded-lg border border-brand-600 bg-brand-900 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                        <div>
+                            <label for="visitante-email" class="block text-xs font-medium text-brand-200 mb-1">Correo <span aria-hidden="true">*</span></label>
+                            <input id="visitante-email" type="email" autocomplete="email" required maxlength="200" class="w-full px-3 py-2 rounded-lg border border-brand-600 bg-brand-900 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                        <div>
+                            <label for="visitante-telefono" class="block text-xs font-medium text-brand-200 mb-1">WhatsApp (opcional)</label>
+                            <input id="visitante-telefono" type="tel" autocomplete="tel" maxlength="40" class="w-full px-3 py-2 rounded-lg border border-brand-600 bg-brand-900 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                    </div>
+                    <p id="visitante-msg" class="text-xs text-accent-400 mt-2" aria-live="polite"></p>
+                </div>
                 <!-- Prueba a medias de una versión anterior: no se puede continuar. -->
                 <p id="aviso-version" class="hidden text-sm text-brand-600 dark:text-brand-300 bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3 mb-6">La prueba cambió: ahora trae preguntas más difíciles, para medir mejor a quien ya juega fuerte. La que habías dejado a medias no se puede seguir —serían dos mediciones distintas mezcladas—, así que hay que empezarla otra vez. Toma unos 20 minutos.</p>
 
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Antes de empezar</h2>
-                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Tres preguntas sobre ti. No puntúan: sirven para ajustar el plan a tu realidad.</p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Cuatro preguntas sobre ti, incluido tu Elo si lo tenés. No puntúan: sirven para ajustar el nivel y el plan a tu realidad.</p>
                     <div id="perfil-form" class="space-y-4"></div>
                 </div>
 
@@ -155,6 +178,15 @@
                     <p id="result-level" class="font-serif text-2xl font-bold"></p>
                     <p id="result-level-desc" class="text-sm mt-1"></p>
                     <p id="result-score" class="text-xs mt-2 opacity-90"></p>
+                </div>
+
+                <div id="result-cta-visitante" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
+                    <p class="text-white font-serif text-lg font-bold mb-2">¿Querés un plan de entrenamiento con seguimiento?</p>
+                    <p class="text-brand-200 text-sm mb-4">En Academia el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Academia</a>
+                        <a href="../cursos.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver los cursos →</a>
+                    </div>
                 </div>
 
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Área por área</h2>
@@ -248,6 +280,8 @@ const GLYPH = {
 const FILES = ['a','b','c','d','e','f','g','h'];
 
 let estado = { perfil: {}, idx: 0, respuestas: {}, items: [] };
+let perfilCuenta = null;   // profiles: { elo, elo_tipo } del alumno (Configuración › Perfil)
+let sesionActual = null;   // sesión de Supabase (la fija init); null = visitante sin cuenta
 let itemActual = null;
 let ordenOpciones = null;   // en qué orden se muestran las opciones de este ítem
 let seleccion = null;      // respuesta en curso (índice de opción, casilla o jugada)
@@ -335,6 +369,27 @@ function pintarPerfil() {
     grupo.appendChild(fila);
     box.appendChild(grupo);
   });
+  // Elo: viene de Configuración › Perfil; acá se puede escribir o corregir y queda
+  // guardado en el perfil al terminar. Con él, el nivel estimado y el plan se afinan.
+  const g = document.createElement('div');
+  const eloActual = estado.perfil.elo != null ? estado.perfil.elo : (perfilCuenta && perfilCuenta.elo) || '';
+  const tipoActual = estado.perfil.elo_tipo || (perfilCuenta && perfilCuenta.elo_tipo) || 'fide';
+  g.innerHTML = `<label for="perfil-elo" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">¿Cuál es tu Elo (rating)? Si no tenés, dejalo vacío.</label>
+    <div class="flex flex-wrap gap-2">
+      <input id="perfil-elo" type="number" inputmode="numeric" min="100" max="3500" step="1" placeholder="Ej. 1350" value="${eloActual}" class="w-32 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+      <select id="perfil-elo-tipo" aria-label="Origen del Elo" class="flex-1 min-w-[12rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+        ${PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${t.id === tipoActual ? ' selected' : ''}>${t.etiqueta}</option>`).join('')}
+      </select>
+    </div>
+    <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
+  box.appendChild(g);
+  const inp = g.querySelector('#perfil-elo'), sel = g.querySelector('#perfil-elo-tipo');
+  const guardarElo = () => {
+    const v = PE.eloValido(inp.value);
+    estado.perfil.elo = v; estado.perfil.elo_tipo = v ? sel.value : null;
+    guardarEstado();
+  };
+  inp.addEventListener('change', guardarElo); sel.addEventListener('change', guardarElo);
 }
 function claseOpcionPerfil(activa) {
   return 'text-sm px-3 py-2 rounded-lg border transition-colors ' + (activa
@@ -365,6 +420,17 @@ function irA(vista) {
 }
 
 function empezar() {
+  if (!sesionActual) {
+    const nombre = document.getElementById('visitante-nombre').value.trim();
+    const email = document.getElementById('visitante-email').value.trim();
+    const telefono = document.getElementById('visitante-telefono').value.trim();
+    const msg = document.getElementById('visitante-msg');
+    if (!nombre) { msg.textContent = 'Escribí tu nombre para empezar.'; document.getElementById('visitante-nombre').focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribí un correo válido para poder enviarte el resultado.'; document.getElementById('visitante-email').focus(); return; }
+    msg.textContent = '';
+    estado.visitante = { nombre, email, telefono };
+    guardarEstado();
+  }
   if (!ITEMS.length || estado.idx >= ITEMS.length) {
     ITEMS = PRUEBA.armar();
     estado.items = ITEMS.map((i) => i.id);
@@ -608,6 +674,9 @@ function construirDetalle() {
 }
 
 async function terminar() {
+  const inp = document.getElementById('perfil-elo'), sel = document.getElementById('perfil-elo-tipo');
+  if (inp) { const v = PE.eloValido(inp.value); estado.perfil.elo = v; estado.perfil.elo_tipo = v ? sel.value : null; }
+  if (estado.perfil.elo == null && perfilCuenta && perfilCuenta.elo) { estado.perfil.elo = perfilCuenta.elo; estado.perfil.elo_tipo = perfilCuenta.elo_tipo; }
   const detalle = construirDetalle();
   const resumen = PE.resumir(detalle);
   detalle.porcentaje = resumen.porcentaje;
@@ -624,6 +693,33 @@ async function terminar() {
      falla dibujando el resultado, la fila ya va en camino a la base. Antes se
      pintaba primero y se subía después, así que cualquier tropiezo al dibujar
      dejaba el diagnóstico solo en el aparato del alumno. */
+  if (!sesionActual) {
+    // Visitante: el resultado va aparte de los alumnos (tabla diagnosticos_publicos).
+    const v = estado.visitante || {};
+    borrarEstado();
+    document.getElementById('result-saved').textContent = 'Enviando tu resultado…';
+    try { mostrarResultado(detalle, true); } catch (e) { console.error('No se pudo dibujar el resultado del diagnóstico:', e); }
+    let ok = false;
+    try {
+      const { error } = await sb.from('diagnosticos_publicos').insert([{
+        nombre: v.nombre, email: v.email || null, telefono: v.telefono || null,
+        elo: detalle.perfil.elo || null, elo_tipo: detalle.perfil.elo ? detalle.perfil.elo_tipo : null,
+        porcentaje: resumen.porcentaje, nivel: resumen.nivel.etiqueta, detalle,
+      }]);
+      ok = !error;
+    } catch (e) { ok = false; }
+    document.getElementById('result-saved').textContent = ok
+      ? `Resultado enviado a Ajedrez Integral a nombre de ${v.nombre}. También quedó guardado en este dispositivo.`
+      : 'No se pudo enviar el resultado (sin conexión). Quedó guardado en este dispositivo.';
+    return;
+  }
+  // El Elo escrito acá se guarda en el perfil (si cambió), para Configuración e Informes.
+  if (detalle.perfil.elo !== ((perfilCuenta && perfilCuenta.elo) || null) || detalle.perfil.elo_tipo !== ((perfilCuenta && perfilCuenta.elo_tipo) || null)) {
+    try {
+      await sb.from('profiles').update({ elo: detalle.perfil.elo, elo_tipo: detalle.perfil.elo_tipo, elo_actualizado: new Date().toISOString() }).eq('id', sesionActual.user.id);
+      perfilCuenta = { elo: detalle.perfil.elo, elo_tipo: detalle.perfil.elo_tipo };
+    } catch (e) {}
+  }
   const subida = subirResultado(detalle);
   borrarEstado();
   document.getElementById('result-saved').textContent = 'Guardando tu resultado…';
@@ -683,6 +779,7 @@ function mostrarResultado(detalle, reciente) {
     document.getElementById('result-saved').textContent = `Diagnóstico del ${fecha}.`;
   }
 
+  document.getElementById('result-cta-visitante').classList.toggle('hidden', !!sesionActual);
   document.getElementById('result-level').textContent = resumen.nivel.etiqueta;
   document.getElementById('result-level-desc').textContent = resumen.nivel.descripcion;
   const sinSaber = Object.keys(detalle.nosabe || {}).length;
@@ -690,6 +787,11 @@ function mostrarResultado(detalle, reciente) {
     `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% de la prueba` +
     (sinSaber ? ` · ${sinSaber} que dijiste no saber (bien hecho: eso se estudia, no se adivina)` : '') +
     ` · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).`;
+  let eloEl = document.getElementById('result-elo');
+  if (!eloEl) { eloEl = document.createElement('p'); eloEl.id = 'result-elo'; eloEl.className = 'text-xs mt-2 opacity-90'; document.getElementById('result-score').insertAdjacentElement('afterend', eloEl); }
+  eloEl.textContent = resumen.elo && resumen.elo.declarado
+    ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (≈${resumen.elo.combinado}).`
+    : `Sin Elo registrado: el nivel sale solo de la prueba (≈${resumen.elo.estimado}).${sesionActual ? ' Si tenés rating, agregalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
@@ -714,7 +816,7 @@ function mostrarResultado(detalle, reciente) {
   planBox.innerHTML = '';
   const intro = document.createElement('p');
   intro.className = 'text-sm text-brand-500 dark:text-brand-400';
-  intro.textContent = `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${plan.prioridad.join(', ')}.`;
+  intro.textContent = `Con ${plan.rutina} alcanza. Empieza por lo más flojo: ${plan.prioridad.join(', ')}.` + (plan.metaElo ? ` Meta: ${plan.metaElo.texto}` : '');
   planBox.appendChild(intro);
   plan.semanas.slice(0, 3).forEach((semana) => {
     const caja = document.createElement('div');
@@ -775,14 +877,16 @@ async function init() {
     const { data } = await sb.auth.getSession();
     sesion = data && data.session;
   } catch (e) { sesion = null; }
-  if (!sesion) {
-    document.getElementById('loading').textContent = 'Necesitas iniciar sesión para hacer el diagnóstico. Redirigiendo…';
-    window.location.href = '../login.html?next=' + encodeURIComponent('entreno/diagnostico.html');
-    return;
+  sesionActual = sesion || null;
+  if (sesion) {
+    // El cuadernillo imprimible lleva las respuestas: se ofrece solo a quien da
+    // clase (profesor o administración), nunca al alumno que va a hacer la prueba.
+    mostrarPdfSiEsDocente(sesion.user.id);
+    try {
+      const { data: pf } = await sb.from('profiles').select('elo, elo_tipo').eq('id', sesion.user.id).maybeSingle();
+      perfilCuenta = pf || null;
+    } catch (e) { perfilCuenta = null; }
   }
-  // El cuadernillo imprimible lleva las respuestas: se ofrece solo a quien da
-  // clase (profesor o administración), nunca al alumno que va a hacer la prueba.
-  mostrarPdfSiEsDocente(sesion.user.id);
 
   await EntrenoProgress.init();
   // Baja el progreso de la cuenta antes de leer el estado guardado: si la prueba
@@ -795,6 +899,16 @@ async function init() {
   const pendiente = pendienteGuardado();
   if (pendiente) {
     subirResultado(pendiente).then((ok) => { if (ok) pintarPrevio(); });
+  }
+  if (!sesion) {
+    // Prueba pública: sin cuenta se pide nombre y correo; el resultado va a diagnosticos_publicos.
+    document.getElementById('visitante-box').classList.remove('hidden');
+    const v = estado.visitante || {};
+    document.getElementById('visitante-nombre').value = v.nombre || '';
+    document.getElementById('visitante-email').value = v.email || '';
+    document.getElementById('visitante-telefono').value = v.telefono || '';
+    const volver = document.querySelector('#intro-view a[href="aprender.html"]');
+    if (volver) { volver.href = '../cursos.html'; volver.innerHTML = '<span aria-hidden="true">←</span> Cursos'; }
   }
   pintarPerfil();
   pintarPrevio();

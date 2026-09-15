@@ -194,6 +194,50 @@ window.PlanEntrenamiento = (function () {
     return nivel;
   }
 
+  // ---- Elo ----
+  /* Si el alumno registró su Elo (Configuración › Perfil, columna profiles.elo),
+     el diagnóstico lo tiene en cuenta: el nivel que dio la prueba se traduce a
+     una fuerza aproximada (el centro de su tramo) y se combina con el Elo
+     declarado según lo fiable que sea su origen (FIDE pesa más que un rating en
+     línea). El nivel sale de esa combinación —sin saltarse el tope por áreas— y
+     la diferencia entre lo que dice la prueba y lo que dice el Elo se comenta
+     (lecturaElo): un Elo por encima de la prueba señala huecos que se compensan
+     con experiencia; por debajo, falta rodaje de torneo. El alumno o su profesor
+     pueden ir ajustando el Elo y el análisis se recalcula. */
+  const ELO_TIPOS = [
+    { id: 'fide',     etiqueta: 'FIDE',                         peso: 0.6 },
+    { id: 'nacional', etiqueta: 'Federación nacional',          peso: 0.5 },
+    { id: 'online',   etiqueta: 'En línea (Lichess, Chess.com)', peso: 0.4 },
+    { id: 'estimado', etiqueta: 'Estimado por el profesor',     peso: 0.35 },
+  ];
+  const ELO_TIPO_POR_ID = {};
+  ELO_TIPOS.forEach((t) => { ELO_TIPO_POR_ID[t.id] = t; });
+  const ELO_MIN = 100, ELO_MAX = 3500;
+  // Los mismos cortes que los tramos de NIVELES, en Elo; y el centro de cada tramo.
+  const ELO_CORTES = [800, 1100, 1400, 1700, 2000];
+  const ELO_CENTRO = [650, 950, 1250, 1550, 1850, 2150];
+  function nivelDeElo(elo) {
+    let i = 0;
+    ELO_CORTES.forEach((c) => { if (elo >= c) i += 1; });
+    return NIVELES[i];
+  }
+  function eloDeNivel(nivel) { return ELO_CENTRO[Math.max(0, NIVELES.indexOf(nivel))]; }
+  function eloValido(v) {
+    const n = typeof v === 'number' ? v : parseInt(v, 10);
+    return Number.isFinite(n) && n >= ELO_MIN && n <= ELO_MAX ? Math.round(n) : null;
+  }
+  function lecturaElo(declarado, estimado, tipo) {
+    const dif = declarado - estimado;
+    const origen = ELO_TIPO_POR_ID[tipo] ? ELO_TIPO_POR_ID[tipo].etiqueta : 'declarado';
+    if (Math.abs(dif) < 150) {
+      return { clave: 'coherente', dif, texto: `El Elo (${declarado}, ${origen}) y la prueba (≈${estimado}) cuentan lo mismo: la estimación es sólida y el plan puede seguirse tal cual.` };
+    }
+    if (dif > 0) {
+      return { clave: 'prueba_baja', dif, texto: `El Elo (${declarado}, ${origen}) está ${dif} puntos por encima de lo que muestra la prueba (≈${estimado}). Suele significar que en torneo compensa con experiencia, ritmo y lucha, pero tiene huecos concretos en las áreas flojas; cerrarlos es lo que permite el siguiente salto de rating.` };
+    }
+    return { clave: 'prueba_alta', dif, texto: `La prueba (≈${estimado}) muestra ${-dif} puntos más de fuerza que el Elo (${declarado}, ${origen}). Sabe más de lo que rinde: falta rodaje de torneo, manejo del reloj y calma en la partida real. Conviene sumar partidas largas y torneos al plan.${tipo === 'online' ? '' : ' Si el Elo es antiguo o de pocas partidas, también puede estar quedado.'}` };
+  }
+
   /* Resultados por escalón de dificultad, que es de donde sale el nivel.
      `dificultad` viene del diagnóstico: { 1: {aciertos, total}, 2: {...}, ... } */
   function porEscalon(dificultad) {
@@ -266,10 +310,26 @@ window.PlanEntrenamiento = (function () {
     const conEscalones = detalle && detalle.dificultad
       ? nivelPorEscalones(detalle.dificultad, porArea)
       : { escalones: porEscalon(null), alcanzado: null, nivel: nivelDe(porcentaje) };
+    // Elo: el declarado en el perfil (si lo hay) frente al que sugiere la prueba.
+    const perfil = (detalle && detalle.perfil) || {};
+    const declarado = eloValido(perfil.elo);
+    const estimado = eloDeNivel(conEscalones.nivel);
+    let nivel = conEscalones.nivel;
+    let elo = { declarado: null, tipo: null, estimado, combinado: estimado, lectura: null };
+    if (declarado) {
+      const tipo = ELO_TIPO_POR_ID[perfil.elo_tipo] ? perfil.elo_tipo : 'estimado';
+      const w = ELO_TIPO_POR_ID[tipo].peso;
+      const combinado = Math.round(w * declarado + (1 - w) * estimado);
+      elo = { declarado, tipo, tipoEtiqueta: ELO_TIPO_POR_ID[tipo].etiqueta, estimado, combinado, lectura: lecturaElo(declarado, estimado, tipo) };
+      const tope = conEscalones.topeAreas === undefined ? NIVELES.length - 1 : conEscalones.topeAreas;
+      nivel = NIVELES[Math.min(NIVELES.indexOf(nivelDeElo(combinado)), tope)];
+    }
     return {
       porArea,
       porcentaje,
-      nivel: conEscalones.nivel,
+      nivel,
+      nivelPrueba: conEscalones.nivel,
+      elo,
       escalones: conEscalones.escalones,
       escalonAlcanzado: conEscalones.alcanzado,
       topeAreas: conEscalones.topeAreas === undefined ? null : conEscalones.topeAreas,
@@ -342,6 +402,29 @@ window.PlanEntrenamiento = (function () {
       });
     }
 
+    // Con Elo por debajo de lo que muestra la prueba, lo que falta es rodaje: la
+    // semana de partidas entra sí o sí (si no estaba) y con meta de torneo.
+    const elo = resumen.elo || {};
+    if (elo.lectura && elo.lectura.clave === 'prueba_alta' && !semanas.some((s) => s.area === 'juego')) {
+      const quitada = semanas.length >= 3 ? semanas.pop() : null; // la tercera área floja cede su semana
+      semanas.push({
+        numero: semanas.length + 1,
+        area: 'juego',
+        titulo: `Semana ${semanas.length + 1} · ♟️ Rodaje de torneo`,
+        porque: `La prueba muestra más fuerza (≈${elo.estimado}) que el Elo (${elo.declarado}): sabe más de lo que rinde en partida real.${quitada ? ' Esta semana sustituye a ' + quitada.titulo.split(' · ')[1] + ', que queda para el siguiente ciclo.' : ''}`,
+        objetivo: `Cuatro partidas largas con reloj, anotadas, y una inscripción a torneo. Meta de Elo: ${elo.declarado + 50} en los próximos torneos.`,
+        tareas: [
+          'Cuatro partidas de 25 minutos o más, con reloj y anotadas; sin abandonar ninguna.',
+          'Después de cada partida, anotar en qué jugada se gastó más tiempo y por qué.',
+          'Inscribirse en el próximo torneo disponible y llevar las planillas al profesor.',
+        ],
+        recursos: [
+          { texto: 'Torneos en vivo', href: 'tv.html' },
+          { texto: 'Jugar contra el profe', href: 'tablero.html' },
+        ],
+      });
+    }
+
     const sostener = fuertes.length ? fuertes : ordenadas.slice(-2).map((a) => AREA_POR_ID[a.id]);
     semanas.push({
       numero: semanas.length + 1,
@@ -362,10 +445,20 @@ window.PlanEntrenamiento = (function () {
       ],
     });
 
+    // Meta de Elo para el ciclo: modesta si el Elo ya va por delante de la prueba,
+    // más ambiciosa si la prueba muestra que hay margen sin explotar.
+    let metaElo = null;
+    if (elo.declarado) {
+      const salto = elo.lectura && elo.lectura.clave === 'prueba_alta' ? 75 : elo.lectura && elo.lectura.clave === 'coherente' ? 50 : 30;
+      metaElo = { actual: elo.declarado, meta: elo.declarado + salto, texto: `Elo ${elo.declarado} → ${elo.declarado + salto} en los próximos torneos (${elo.lectura ? elo.lectura.clave === 'prueba_alta' ? 'la prueba muestra margen sin explotar' : elo.lectura.clave === 'coherente' ? 'avance sostenido' : 'primero cerrar los huecos que la prueba señala' : ''}).` };
+    }
+
     return {
       nivel: resumen.nivel,
       porcentaje: resumen.porcentaje,
-      rutina: RUTINA[resumen.nivel.clave] || RUTINA.principiante,
+      elo: elo.declarado ? { declarado: elo.declarado, tipo: elo.tipo, estimado: elo.estimado, combinado: elo.combinado, lectura: elo.lectura.texto } : null,
+      metaElo,
+      rutina: RUTINA[resumen.nivel.clave] || RUTINA[resumen.nivel.clave === 'maestro' ? 'experto' : 'principiante'],
       prioridad: focos.length ? focos.map((f) => f.nombre) : ['Jugar y analizar: no hay área por debajo del 85%'],
       fortalezas: fuertes.map((f) => ({ nombre: f.nombre, emoji: f.emoji, nota: f.solido })),
       semanas,
@@ -377,5 +470,6 @@ window.PlanEntrenamiento = (function () {
   // que viven en una carpeta (entreno/) les anteponen su prefijo.
   function enlace(href, base) { return (base || '') + href; }
 
-  return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace };
+  return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
+           ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloValido, lecturaElo };
 })();
