@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>¿Cuánto sabes del reglamento? Mide tu nivel de arbitraje — Ajedrez Integral</title>
+    <meta name="description" content="Examen gratuito de 40 preguntas sobre el reglamento de la FIDE. Sabrás a qué nivel de arbitraje corresponde tu conocimiento y recibirás una retroalimentación personal.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>tailwind.config={darkMode:'class',theme:{extend:{colors:{brand:{50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527'},accent:{400:'#f0b429',500:'#de911d',600:'#cb6e17'}},fontFamily:{sans:['Inter','sans-serif'],serif:['Merriweather','serif']}}}}</script>
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();</script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/arbitraje-items.js"></script>
+    <script src="js/arbitraje-nivel.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-16">
+
+    <!-- ============ Portada ============ -->
+    <section id="intro-view" class="pb-16">
+        <div class="bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900 pt-14 pb-16">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-10 items-center">
+                <div>
+                    <span class="text-accent-400 font-semibold uppercase tracking-wide text-sm">Gratis · sin cuenta</span>
+                    <h1 class="font-serif text-3xl md:text-5xl font-bold text-white mt-2 mb-4 leading-tight">¿Cuánto sabes del reglamento de la FIDE?</h1>
+                    <p class="text-brand-200 text-lg mb-6">Cuarenta preguntas, cincuenta minutos y una respuesta clara: <strong class="text-white">a qué nivel de arbitraje corresponde lo que sabes hoy</strong> y qué te falta estudiar. Al terminar, Oscar revisa tu examen y te escribe.</p>
+                    <button type="button" id="ir-form-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3.5 rounded-xl text-base transition-all hover:scale-105 shadow-xl">Medir mi nivel →</button>
+                    <p class="text-brand-300 text-xs mt-3">No es una certificación: los títulos de árbitro los da la FIDE. Esto te ubica y te dice por dónde seguir.</p>
+                </div>
+                <div class="bg-white/95 dark:bg-brand-900/95 rounded-3xl p-6 shadow-2xl">
+<svg viewBox="0 0 220 180" role="img" aria-labelledby="t1" class="w-full h-auto">
+  <title id="t1">Un árbitro abrazado a un reloj de ajedrez enorme</title>
+  <ellipse cx="110" cy="166" rx="74" ry="9" fill="#0a1f33" opacity=".12"/>
+  <!-- reloj gigante -->
+  <rect x="58" y="72" width="104" height="60" rx="9" fill="#de911d"/>
+  <rect x="58" y="72" width="104" height="13" rx="6" fill="#cb6e17"/>
+  <circle cx="86" cy="106" r="17" fill="#f0f4f8"/><circle cx="134" cy="106" r="17" fill="#f0f4f8"/>
+  <path d="M86 106V95M86 106l8 5" stroke="#243b53" stroke-width="3" stroke-linecap="round"/>
+  <path d="M134 106V96M134 106l-7 6" stroke="#243b53" stroke-width="3" stroke-linecap="round"/>
+  <rect x="103" y="60" width="14" height="14" rx="4" fill="#9fb3c8"/>
+  <rect x="99" y="56" width="22" height="7" rx="3.5" fill="#627d98"/>
+  <!-- banderita levantada -->
+  <path d="M134 89v-9" stroke="#cb6e17" stroke-width="2"/>
+  <path d="M134 80l11 4-11 4z" fill="#e12d39"/>
+  <!-- árbitro asomado detrás -->
+  <circle cx="110" cy="38" r="20" fill="#f7c59f"/>
+  <path d="M90 36a20 20 0 0 1 40 0c0-13-9-19-20-19s-20 6-20 19z" fill="#243b53"/>
+  <circle cx="102" cy="38" r="2.6" fill="#102a43"/><circle cx="119" cy="38" r="2.6" fill="#102a43"/>
+  <path d="M103 47c4 4 10 4 14 0" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- manos agarrando el reloj -->
+  <circle cx="54" cy="104" r="11" fill="#f7c59f"/><circle cx="166" cy="104" r="11" fill="#f7c59f"/>
+  <path d="M96 60h28l-6 14H102z" fill="#334e68"/>
+</svg>
+                    <p class="text-center text-sm text-brand-500 dark:text-brand-400 mt-3 italic">«Yo solo quería apretar el reloj.»</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Qué mide -->
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+            <div class="text-center mb-10">
+                <span class="text-accent-600 font-semibold uppercase tracking-wide text-sm">Qué te vas a encontrar</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mt-2">Las situaciones que de verdad pasan en la sala</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <div class="mb-3">
+<svg viewBox="0 0 220 180" role="img" aria-labelledby="t2" class="w-full h-auto">
+  <title id="t2">Un árbitro levanta un cartel de dos minutos mientras un celular suena en la mesa</title>
+  <ellipse cx="110" cy="166" rx="74" ry="9" fill="#0a1f33" opacity=".12"/>
+  <!-- cartel -->
+  <g transform="rotate(-9 150 56)">
+    <rect x="122" y="26" width="58" height="60" rx="7" fill="#e12d39"/>
+    <text x="151" y="52" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="bold" fill="#fff">+1</text>
+    <text x="151" y="70" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#fff">MINUTO</text>
+  </g>
+  <!-- brazo levantado -->
+  <path d="M96 96c8-18 18-28 28-34" stroke="#334e68" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <!-- cuerpo -->
+  <path d="M74 152c0-24 12-40 30-40s30 16 30 40z" fill="#334e68"/>
+  <path d="M96 112h16l-3 20-5 6-5-6z" fill="#f0f4f8"/>
+  <circle cx="104" cy="82" r="20" fill="#f7c59f"/>
+  <path d="M84 80a20 20 0 0 1 40 0c0-13-9-19-20-19s-20 6-20 19z" fill="#243b53"/>
+  <circle cx="97" cy="82" r="2.6" fill="#102a43"/><circle cx="113" cy="82" r="2.6" fill="#102a43"/>
+  <path d="M97 92c4 3 10 3 14 0" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- celular sonando -->
+  <rect x="26" y="116" width="26" height="42" rx="5" fill="#102a43"/>
+  <rect x="30" y="122" width="18" height="28" rx="2" fill="#9fb3c8"/>
+  <g stroke="#de911d" stroke-width="3" stroke-linecap="round">
+    <path d="M18 112l-7-6"/><path d="M22 104l-3-9"/><path d="M58 112l7-6"/><path d="M54 104l3-9"/>
+  </g>
+</svg>
+                    </div>
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Suena un celular</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-400">¿Pierde, se le advierte o depende del reglamento del torneo? La respuesta está en un artículo, y hay que saber cuál.</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <div class="mb-3">
+<svg viewBox="0 0 220 180" role="img" aria-labelledby="t3" class="w-full h-auto">
+  <title id="t3">Un árbitro revisa una planilla con lupa, muy de cerca</title>
+  <ellipse cx="110" cy="166" rx="74" ry="9" fill="#0a1f33" opacity=".12"/>
+  <!-- planilla -->
+  <g transform="rotate(6 130 112)">
+    <rect x="96" y="76" width="70" height="80" rx="5" fill="#f0f4f8" stroke="#bcccdc" stroke-width="2"/>
+    <g stroke="#9fb3c8" stroke-width="2.6" stroke-linecap="round">
+      <path d="M106 92h22M136 92h18M106 104h26M138 104h16M106 116h20M134 116h20M106 128h24M136 128h16M106 140h18"/>
+    </g>
+  </g>
+  <!-- cuerpo -->
+  <path d="M26 156c0-24 12-40 30-40s30 16 30 40z" fill="#334e68"/>
+  <circle cx="56" cy="86" r="20" fill="#f7c59f"/>
+  <path d="M36 84a20 20 0 0 1 40 0c0-13-9-19-20-19s-20 6-20 19z" fill="#243b53"/>
+  <path d="M46 88c3-3 7-3 10 0" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <circle cx="66" cy="87" r="2.6" fill="#102a43"/>
+  <path d="M50 99c4 2 9 2 13-1" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- lupa -->
+  <g transform="rotate(-18 118 110)">
+    <circle cx="118" cy="110" r="22" fill="#f0b429" opacity=".22" stroke="#de911d" stroke-width="5"/>
+    <path d="M133 127l15 16" stroke="#243b53" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <path d="M72 124c14-6 26-10 34-12" stroke="#334e68" stroke-width="12" stroke-linecap="round" fill="none"/>
+</svg>
+                    </div>
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Una reclamación de tablas</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-400">Triple repetición con la planilla a medias y dos minutos en el reloj. Resolverla mal cambia el resultado de la partida.</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <div class="mb-3">
+<svg viewBox="0 0 220 180" role="img" aria-labelledby="t4" class="w-full h-auto">
+  <title id="t4">Dos jugadores discuten una jugada y el árbitro, en el medio, pone orden</title>
+  <ellipse cx="110" cy="166" rx="86" ry="9" fill="#0a1f33" opacity=".12"/>
+  <!-- jugador enojado a la izquierda -->
+  <path d="M8 156c0-20 10-33 24-33s24 13 24 33z" fill="#486581"/>
+  <circle cx="32" cy="104" r="16" fill="#f7c59f"/>
+  <path d="M18 100c2-9 8-13 14-13s12 4 14 13z" fill="#627d98"/>
+  <path d="M26 108l6 3M44 108l-6 3" stroke="#102a43" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M26 116c4-2 8-2 12 0" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- jugador enojado a la derecha -->
+  <path d="M164 156c0-20 10-33 24-33s24 13 24 33z" fill="#486581"/>
+  <circle cx="188" cy="104" r="16" fill="#f7c59f"/>
+  <path d="M174 100c2-9 8-13 14-13s12 4 14 13z" fill="#627d98"/>
+  <path d="M182 108l-6 3M196 108l6 3" stroke="#102a43" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M182 116c4-2 8-2 12 0" stroke="#102a43" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- árbitro en el medio, brazos abiertos -->
+  <path d="M78 156c0-26 14-43 32-43s32 17 32 45z" fill="#243b53"/>
+  <path d="M82 118L54 132M138 118l28 14" stroke="#243b53" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="52" cy="134" r="9" fill="#f7c59f"/><circle cx="168" cy="134" r="9" fill="#f7c59f"/>
+  <circle cx="110" cy="86" r="21" fill="#f7c59f"/>
+  <path d="M89 84a21 21 0 0 1 42 0c0-14-9-20-21-20s-21 6-21 20z" fill="#102a43"/>
+  <circle cx="102" cy="86" r="2.8" fill="#102a43"/><circle cx="119" cy="86" r="2.8" fill="#102a43"/>
+  <path d="M101 97h19" stroke="#102a43" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M100 113h20l-4 16h-12z" fill="#f0f4f8"/>
+  <circle cx="110" cy="122" r="3" fill="#de911d"/>
+</svg>
+                    </div>
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Dos jugadores discutiendo</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-400">Jugada ilegal advertida tarde, colores cambiados, el reloj mal puesto. Ahí se ve quién conoce el reglamento.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cómo funciona + formulario -->
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Cómo funciona</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
+                    <li><strong>40 preguntas, 50 minutos.</strong> Una por pantalla; puedes volver atrás mientras quede tiempo. Al llegar a cero se cierra y se corrige con lo respondido.</li>
+                    <li><strong>Ocho áreas del reglamento:</strong> las leyes del juego, el reloj, las jugadas ilegales, la planilla y las tablas, la conducta, las rápidas y el relámpago, los emparejamientos y el oficio del árbitro.</li>
+                    <li><strong>Se sortean cada vez</strong> de un banco de <span id="tam-banco">—</span> preguntas: repetirlo no es repetirlo de memoria.</li>
+                    <li><strong>"Dejar en blanco" cuenta distinto que fallar.</strong> Vale cero igual, pero se informa aparte: un hueco se estudia, un error se corrige.</li>
+                    <li><strong>El nivel sale de la dificultad, no del porcentaje.</strong> Cada pregunta tiene su escalón; el nivel es el escalón más alto que superas.</li>
+                </ul>
+            </div>
+
+            <form id="datos-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Para poder escribirte después</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-400 mb-4">Oscar revisa cada examen a mano y responde con una retroalimentación: qué te salió bien, qué conviene estudiar y con qué material. Para eso necesita cómo te llamas y a dónde escribirte.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="f-nombre" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Nombre completo</label>
+                        <input type="text" id="f-nombre" name="nombre" required minlength="2" maxlength="120" autocomplete="name"
+                               class="w-full px-4 py-2.5 rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label for="f-email" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Correo electrónico</label>
+                        <input type="email" id="f-email" name="email" required maxlength="160" autocomplete="email"
+                               class="w-full px-4 py-2.5 rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none transition-colors">
+                        <p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Se usa solo para mandarte tu retroalimentación. No se publica ni se le pasa a nadie.</p>
+                    </div>
+                    <p id="f-error" class="hidden text-sm text-red-600 dark:text-red-400"></p>
+                    <button type="submit" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el examen →</button>
+                    <p class="text-xs text-brand-400 dark:text-brand-500">Una vez que empieza, el examen no se puede pausar: si cierras la página, se pierde.</p>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- ============ El examen ============ -->
+    <section id="examen-view" class="hidden py-10">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between gap-3 mb-2">
+                <p class="text-sm text-brand-500 dark:text-brand-400"><span id="q-counter">Pregunta 1 de 40</span></p>
+                <p class="text-sm font-mono font-semibold" id="q-timer" aria-live="off">50:00</p>
+            </div>
+            <div class="w-full h-1.5 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-5">
+                <div id="q-bar" class="h-full bg-accent-500 transition-all" style="width:0%"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-accent-600" id="q-area">—</p>
+                    <p class="text-sm text-accent-500" id="q-escalon" title="Escalón de dificultad">★</p>
+                </div>
+                <p class="text-base sm:text-lg font-medium text-brand-800 dark:text-white mb-4" id="q-text">—</p>
+                <div id="q-options" class="space-y-2"></div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+                <button type="button" id="prev-btn" class="invisible text-sm text-brand-500 dark:text-brand-400 hover:text-accent-600 transition-colors">← Anterior</button>
+                <button type="button" id="next-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Siguiente →</button>
+            </div>
+            <button type="button" id="abandon-btn" class="mt-6 text-xs text-brand-400 dark:text-brand-500 hover:text-red-500 transition-colors">Abandonar el examen</button>
+        </div>
+    </section>
+
+    <!-- ============ Resultado ============ -->
+    <section id="resultado-view" class="hidden py-10">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-xs font-semibold uppercase tracking-wide text-accent-600">Tu nivel estimado de arbitraje</p>
+            <h2 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-2" id="r-nivel">—</h2>
+            <p class="text-brand-600 dark:text-brand-300 mb-2" id="r-descripcion">—</p>
+            <p class="text-sm text-brand-500 dark:text-brand-400 mb-6" id="r-marcador">—</p>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" id="r-escalones"></div>
+
+            <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Área por área</h3>
+            <div id="r-areas" class="space-y-3 mb-8"></div>
+
+            <h3 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Por dónde seguir</h3>
+            <div id="r-plan" class="space-y-3 mb-8"></div>
+
+            <div class="bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-5 py-4 mb-6">
+                <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">Lo que sigue</p>
+                <p class="text-sm text-brand-700 dark:text-brand-200" id="r-guardado">Guardando tu examen…</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mt-2">Oscar lo revisa a mano —no es un correo automático— y te escribe con la retroalimentación: en qué te apoyaste bien, dónde conviene volver al Handbook y con qué material seguir. Si te urge, escríbele por <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20examen%20de%20arbitraje%20en%20la%20p%C3%A1gina%20y%20quer%C3%ADa%20consultarle." target="_blank" rel="noopener" class="text-accent-600 dark:text-accent-400 hover:underline font-medium">WhatsApp</a>.</p>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8">
+                <p class="text-sm text-brand-600 dark:text-brand-300"><strong>Sobre las respuestas.</strong> No se muestran acá a propósito: el examen se sortea de un banco grande y verlas de una vez lo convertiría en un juego de memoria. Van en la retroalimentación, cada una con el artículo del Handbook que la sostiene.</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Texto oficial y vigente: <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="text-accent-600 dark:text-accent-400 hover:underline">handbook.fide.com</a>. Ante cualquier diferencia, manda el Handbook.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="cursos.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver los cursos</a>
+                <a href="index.html" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-6 py-2.5 rounded-lg hover:border-accent-500 transition-colors">Volver al inicio</a>
+            </div>
+        </div>
+    </section>
+
+    </main>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+/* ===== Mide tu nivel de arbitraje — versión pública =====
+ *
+ * Es el mismo examen que usa el equipo docente en arbitraje.html: mismo banco
+ * (js/arbitraje-items.js), mismo criterio (js/arbitraje-nivel.js), mismas 40
+ * preguntas en 50 minutos. Lo que cambia es quién lo hace y qué ve al final.
+ *
+ *   - Entra cualquiera, sin cuenta. Antes de empezar deja nombre y correo.
+ *   - El resultado se guarda con la función registrar_arbitraje_publico, que
+ *     valida y escribe en la tabla arbitrajes_publicos. Leerla y responderla
+ *     es solo de profesores y administración (el patrón de
+ *     diagnosticos_publicos, con la escritura por función).
+ *   - NO se muestran las respuestas correctas. Acá no es material de estudio:
+ *     el banco se sortea y enseñarlas convertiría el examen en memoria. Van en
+ *     la retroalimentación que escribe el profesor desde arbitraje.html.
+ *
+ * El banco es un archivo estático, así que quien sepa mirar el código ve las
+ * respuestas igual. Es un examen para ubicarse, no una certificación, y la
+ * página lo dice.
+ */
+const BANCO = window.ARBITRAJE_ITEMS;
+const PRUEBA = window.ArbitrajePrueba;
+const AN = window.ArbitrajeNivel;
+
+const MINUTOS = 50;
+const EN_BLANCO = 'blanco';
+
+let persona = null;           // { nombre, email }
+let examen = [];
+let respuestas = {};
+let idx = 0;
+let quedan = MINUTOS * 60;
+let cronometro = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const estrellas = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+const reloj = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+
+function irA(vista) {
+  ['intro-view', 'examen-view', 'resultado-view'].forEach((id) => $(id).classList.toggle('hidden', id !== vista));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------------- Los datos de quien rinde ---------------- */
+$('ir-form-btn').addEventListener('click', () => {
+  $('datos-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $('f-nombre').focus({ preventScroll: true });
+});
+
+$('datos-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const nombre = $('f-nombre').value.trim();
+  const email = $('f-email').value.trim();
+  const error = $('f-error');
+  if (nombre.length < 2) return avisar(error, 'Escribe tu nombre completo, por favor.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return avisar(error, 'Ese correo no se ve bien: revísalo y volvemos.');
+  error.classList.add('hidden');
+  persona = { nombre, email };
+  empezar();
+});
+
+function avisar(caja, texto) {
+  caja.textContent = texto;
+  caja.classList.remove('hidden');
+}
+
+/* ---------------- El examen ---------------- */
+function empezar() {
+  examen = PRUEBA.armar();
+  respuestas = {};
+  idx = 0;
+  quedan = MINUTOS * 60;
+  irA('examen-view');
+  pintarPregunta();
+  clearInterval(cronometro);
+  cronometro = setInterval(tic, 1000);
+}
+
+function tic() {
+  quedan -= 1;
+  $('q-timer').textContent = reloj(Math.max(quedan, 0));
+  $('q-timer').className = 'text-sm font-mono font-semibold ' +
+    (quedan <= 120 ? 'text-red-600 dark:text-red-400' : 'text-brand-500 dark:text-brand-400');
+  if (quedan <= 0) { clearInterval(cronometro); terminar(true); }
+}
+
+function pintarPregunta() {
+  const item = examen[idx];
+  const area = AN.AREA_POR_ID[item.area];
+  $('q-counter').textContent = `Pregunta ${idx + 1} de ${examen.length}`;
+  $('q-bar').style.width = ((idx / examen.length) * 100) + '%';
+  $('q-area').textContent = `${area.emoji} ${area.nombre}`;
+  $('q-escalon').textContent = estrellas(item.peso);
+  $('q-escalon').title = `Escalón de dificultad ${item.peso} de 5`;
+  $('q-text').textContent = item.enunciado;
+  $('prev-btn').classList.toggle('invisible', idx === 0);
+  $('next-btn').textContent = idx === examen.length - 1 ? 'Terminar y ver el resultado →' : 'Siguiente →';
+
+  const caja = $('q-options');
+  caja.innerHTML = '';
+  const orden = item.__orden || (item.__orden = barajar(item.opciones.map((_, i) => i)));
+  orden.forEach((original) => caja.appendChild(botonOpcion(item, original, respuestas[item.id] === original)));
+  const blanco = document.createElement('button');
+  blanco.type = 'button';
+  blanco.className = claseBlanco(respuestas[item.id] === EN_BLANCO);
+  blanco.textContent = '○ Dejar en blanco';
+  blanco.addEventListener('click', () => { respuestas[item.id] = EN_BLANCO; pintarPregunta(); });
+  caja.appendChild(blanco);
+}
+
+function botonOpcion(item, original, elegida) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = claseOpcion(elegida);
+  b.textContent = item.opciones[original];
+  b.addEventListener('click', () => { respuestas[item.id] = original; pintarPregunta(); });
+  return b;
+}
+
+const claseOpcion = (sel) => 'w-full text-left px-4 py-3 rounded-xl border-2 transition-colors text-sm ' +
+  (sel ? 'border-accent-500 bg-accent-50 dark:bg-brand-800 text-brand-800 dark:text-white font-medium'
+       : 'border-brand-100 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300');
+const claseBlanco = (sel) => 'w-full text-left px-4 py-2.5 rounded-xl border-2 border-dashed transition-colors text-sm italic ' +
+  (sel ? 'border-brand-400 bg-brand-50 dark:bg-brand-800 text-brand-700 dark:text-brand-200'
+       : 'border-brand-200 dark:border-brand-700 hover:border-brand-400 text-brand-400 dark:text-brand-500');
+
+function barajar(lista) {
+  const c = lista.slice();
+  for (let i = c.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = c[i]; c[i] = c[j]; c[j] = t; }
+  return c;
+}
+
+$('next-btn').addEventListener('click', () => {
+  if (idx === examen.length - 1) { terminar(false); return; }
+  idx += 1; pintarPregunta();
+});
+$('prev-btn').addEventListener('click', () => { if (idx > 0) { idx -= 1; pintarPregunta(); } });
+$('abandon-btn').addEventListener('click', () => {
+  if (!confirm('¿Seguro que quieres abandonar? El examen se pierde y hay que empezar de nuevo.')) return;
+  clearInterval(cronometro);
+  irA('intro-view');
+});
+window.addEventListener('beforeunload', (e) => {
+  if (!$('examen-view').classList.contains('hidden')) { e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ---------------- Corrección ---------------- */
+function construirDetalle(porTiempo) {
+  const areas = {}, dificultad = {}, dadas = {};
+  examen.forEach((item) => {
+    const dada = respuestas[item.id];
+    const ok = dada !== undefined && dada !== EN_BLANCO && dada === item.correcta;
+    const blanco = dada === undefined || dada === EN_BLANCO;
+    const a = areas[item.area] || (areas[item.area] = { peso: 0, logrado: 0, aciertos: 0, total: 0, nosabe: 0 });
+    const e = dificultad[item.peso] || (dificultad[item.peso] = { aciertos: 0, total: 0, nosabe: 0 });
+    a.peso += item.peso; a.total += 1; e.total += 1;
+    if (ok) { a.logrado += item.peso; a.aciertos += 1; e.aciertos += 1; }
+    if (blanco) { a.nosabe += 1; e.nosabe += 1; }
+    dadas[item.id] = blanco ? null : dada;
+  });
+  return {
+    version: 1,
+    fecha: new Date().toISOString(),
+    items: examen.map((i) => i.id),
+    respuestas: dadas,
+    areas, dificultad,
+    por_tiempo: !!porTiempo,
+    minutos_usados: Math.round((MINUTOS * 60 - Math.max(quedan, 0)) / 60),
+  };
+}
+
+async function terminar(porTiempo) {
+  clearInterval(cronometro);
+  const detalle = construirDetalle(porTiempo);
+  const resumen = AN.resumir(detalle);
+  detalle.nivel = resumen.nivel.clave;
+  detalle.nivel_etiqueta = resumen.nivel.etiqueta;
+  detalle.porcentaje = resumen.porcentaje;
+  detalle.escalon = resumen.escalonAlcanzado;
+
+  const subida = guardar(detalle, resumen);
+  mostrarResultado(detalle, resumen, porTiempo);
+  $('r-guardado').textContent = 'Guardando tu examen…';
+  const guardado = await subida;
+  $('r-guardado').innerHTML = guardado
+    ? `Tu examen quedó guardado a nombre de <strong>${esc(persona.nombre)}</strong> (${esc(persona.email)}).`
+    : 'No se pudo guardar en línea. Toma una captura de esta pantalla y escríbenos: así no se pierde tu resultado.';
+}
+
+/* Se guarda por función y no con un insert directo: quien no tiene sesión no
+   necesita ningún permiso de lectura sobre la tabla (y de hecho no lo tiene),
+   y la validación de nombre, correo y tamaño queda del lado del servidor. */
+async function guardar(detalle, resumen) {
+  try {
+    const { error } = await sb.rpc('registrar_arbitraje_publico', {
+      p_nombre: persona.nombre,
+      p_email: persona.email,
+      p_porcentaje: resumen.porcentaje,
+      p_nivel: resumen.nivel.etiqueta,
+      p_detalle: detalle,
+    });
+    return !error;
+  } catch (e) { return false; }
+}
+
+/* ---------------- La pantalla del resultado ---------------- */
+function mostrarResultado(detalle, resumen, porTiempo) {
+  irA('resultado-view');
+  $('r-nivel').textContent = resumen.nivel.etiqueta;
+  $('r-descripcion').textContent = resumen.nivel.descripcion;
+  $('r-marcador').textContent =
+    `${resumen.aciertos} de ${resumen.total} respuestas correctas · ${resumen.porcentaje}% del examen` +
+    (resumen.nosabe ? ` · ${resumen.nosabe} en blanco` : '') +
+    ` · equivale a ${resumen.nivel.referencia}` +
+    (porTiempo ? ' · se acabó el tiempo antes de terminar' : `, en ${detalle.minutos_usados} minutos`) + '.';
+
+  const alc = resumen.escalonAlcanzado;
+  $('r-escalones').innerHTML =
+    '<p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Hasta dónde llegaste</p>' +
+    `<p class="text-xs text-brand-400 dark:text-brand-500 mb-3">El nivel es el escalón más alto superado con ${Math.round(AN.UMBRAL * 100)}% o más de aciertos, no el porcentaje total. Un área floja pone techo: no se dirige a nivel internacional con un capítulo del reglamento en blanco.</p>` +
+    '<div class="space-y-1.5">' + resumen.escalones.filter((e) => e.total).map((e) => `
+      <div class="flex items-center gap-2 text-sm">
+        <span class="w-20 shrink-0 text-brand-500 dark:text-brand-400">${estrellas(e.peso)}</span>
+        <div class="flex-1 h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden">
+          <div class="h-full ${e.peso <= alc ? 'bg-green-500' : 'bg-brand-300 dark:bg-brand-700'}" style="width:${e.porcentaje}%"></div>
+        </div>
+        <span class="w-24 shrink-0 text-right text-brand-500 dark:text-brand-400">${e.aciertos}/${e.total} · ${e.porcentaje}%</span>
+        <span class="w-24 shrink-0 text-xs ${e.peso <= alc ? 'text-green-600 dark:text-green-400' : 'text-brand-400 dark:text-brand-500'}">${e.peso <= alc ? 'superado' : 'todavía no'}</span>
+      </div>`).join('') + '</div>';
+
+  const areas = $('r-areas');
+  areas.innerHTML = '';
+  resumen.porArea.forEach((a) => {
+    const color = a.porcentaje >= 85 ? 'bg-green-500' : a.porcentaje >= 60 ? 'bg-accent-500' : 'bg-red-500';
+    const banda = a.porcentaje >= 85 ? 'firme' : a.porcentaje >= 60 ? 'aceptable' : 'a reforzar';
+    const fila = document.createElement('div');
+    fila.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
+    fila.innerHTML = `
+      <div class="flex items-center justify-between gap-3 mb-1">
+        <p class="font-semibold text-brand-800 dark:text-white text-sm">${a.emoji} ${esc(a.nombre)}</p>
+        <p class="text-sm text-brand-500 dark:text-brand-400">${a.aciertos}/${a.total} · ${a.porcentaje}% · ${banda}${a.nosabe ? ` · ${a.nosabe} en blanco` : ''}</p>
+      </div>
+      <div class="w-full h-2 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-2"><div class="h-full ${color}" style="width:${a.porcentaje}%"></div></div>
+      <p class="text-xs text-brand-400 dark:text-brand-500">${esc(a.mide)}</p>`;
+    areas.appendChild(fila);
+  });
+
+  const plan = $('r-plan');
+  plan.innerHTML = '';
+  const aReforzar = resumen.aReforzar.length ? resumen.aReforzar : resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje).slice(0, 1);
+  aReforzar.forEach((a) => {
+    const caja = document.createElement('div');
+    caja.className = 'bg-white dark:bg-brand-900 rounded-xl shadow-md p-4';
+    caja.innerHTML = `
+      <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${a.emoji} ${esc(a.nombre)} — ${a.porcentaje}%</p>
+      <p class="text-xs text-brand-500 dark:text-brand-400 mb-2">${esc(a.flojo)}</p>
+      <p class="text-sm text-brand-600 dark:text-brand-300"><strong>Para estudiar:</strong> ${esc(a.estudiar)}</p>`;
+    plan.appendChild(caja);
+  });
+  if (resumen.firmes.length) {
+    const p = document.createElement('p');
+    p.className = 'text-sm text-brand-500 dark:text-brand-400';
+    p.textContent = 'Lo que tienes firme: ' + resumen.firmes.map((f) => f.nombre.toLowerCase()).join(', ') + '.';
+    plan.appendChild(p);
+  }
+}
+
+$('tam-banco').textContent = BANCO.length;
+    </script>
+</body>
+</html>

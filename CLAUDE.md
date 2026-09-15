@@ -356,6 +356,45 @@ no se puede "probar" una jugada.
   alumno. Quien administra ve además, dentro de la misma página, el último
   resultado de cada profesor.
 
+### El mismo examen, abierto al público
+
+`nivel-de-arbitraje.html` es la versión pública: entra cualquiera, sin cuenta,
+y está enlazada desde la portada del sitio. Usa **el mismo banco y el mismo
+criterio** que la herramienta docente —40 preguntas, 50 minutos, los mismos
+escalones—, así que un resultado de afuera se lee igual que uno de adentro.
+
+- **Pide nombre y correo antes de empezar**, y lo dice para qué: para poder
+  mandar la retroalimentación. No hay cuenta, ni contraseña, ni verificación
+  del correo.
+- **No muestra las respuestas correctas al terminar**, a diferencia de
+  `arbitraje.html`. El banco se sortea y enseñarlas convertiría el examen en un
+  juego de memoria; además las respuestas son el material docente. Van dentro de
+  la retroalimentación que escribe el profesor. (El banco es un archivo estático
+  y quien sepa mirar el código las ve igual: la página lo asume y por eso dice
+  que es para ubicarse, no una certificación.)
+- **Se guarda con `public.registrar_arbitraje_publico()`**, una función
+  `SECURITY DEFINER` con permiso de ejecución para `anon`, no con un insert
+  directo. Así quien no tiene sesión escribe su resultado sin necesitar ningún
+  permiso de lectura sobre la tabla —y no lo tiene: la RLS de
+  `arbitrajes_publicos` solo deja leer y actualizar a profesores y
+  administración— y la validación de nombre, correo y tamaño queda en el
+  servidor. Se probó primero con un insert directo y se descartó: un
+  `INSERT ... RETURNING` exige política de `SELECT`, que acá no debe existir.
+- **La revisión y la respuesta viven en `arbitraje.html`**, en el bloque
+  "📥 Exámenes del público": la lista con el desglose por área, un botón que
+  arma un borrador de retroalimentación (nota, nivel, áreas flojas y qué
+  estudiar, sacado del propio resultado) y el guardado, que marca `revisado`,
+  la fecha y quién respondió.
+- **El correo lo manda una persona, no un robot**: el botón abre el cliente de
+  correo con el mensaje puesto (`mailto:`), para que salga de la dirección de
+  quien responde. El sitio no tiene forma de enviar correo por su cuenta y no se
+  le agregó una: haría falta una función con la clave de un proveedor guardada
+  como secreto en Supabase.
+- Las ilustraciones de la página son **SVG escritos a mano dentro del HTML**, no
+  imágenes: no dependen de ningún archivo ni de ninguna licencia, y cada una
+  lleva su `<title>` para quien use lector de pantalla.
+
+
 ## Coordenadas en los tableros
 
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
