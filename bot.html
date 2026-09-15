@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Jugar contra el bot de Oscar — Ajedrez Integral</title>
+    <meta name="description" content="Practica cualquier modalidad contra el bot: ajedrez estándar, Crazyhouse, Niebla de Guerra, Ajedrez de abrazos, Camaleón y A ciegas.">
+    <meta name="robots" content="noindex">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tiempo-plataforma.js" data-activity="bot"></script>
+    <script src="js/crazyhouse-engine.js"></script>
+    <script src="js/niebla-engine.js"></script>
+    <script src="js/variantes-engines.js"></script>
+    <script src="js/board-drag.js"></script>
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/niebla-board.js"></script>
+    <script src="js/crazyhouse-board.js"></script>
+    <script src="js/variantes-board.js"></script>
+    <script src="js/bot-oscar.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content" class="pt-20 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-3">← 🎲 Juegos</a>
+
+            <!-- ============ Elegir partida ============ -->
+            <section id="setup-view">
+                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Jugar contra el bot de Oscar 🤖</h1>
+                <p class="text-brand-500 dark:text-brand-400 mb-6">Un rival para practicar cuando no hay nadie del otro lado. Juega todas las modalidades, no solo el ajedrez normal: aprende las reglas de cada una y se defiende.</p>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Modalidad</h2>
+                    <div id="modalidades" class="grid sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Nivel del bot</h2>
+                        <div id="niveles" class="space-y-2"></div>
+                    </div>
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus piezas</h2>
+                        <div class="space-y-2">
+                            <button type="button" data-color="w" class="color-opt w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors">⚪ Blancas — empiezas tú</button>
+                            <button type="button" data-color="b" class="color-opt w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors">⚫ Negras — empieza el bot</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="empezar-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar la partida →</button>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">La partida se juega en tu navegador y no queda guardada: es para practicar.</p>
+            </section>
+
+            <!-- ============ La partida ============ -->
+            <section id="game-view" class="hidden">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white" id="g-titulo">—</h1>
+                    <p class="text-sm text-brand-500 dark:text-brand-400" id="g-nivel">—</p>
+                </div>
+
+                <div id="status" class="mb-3 rounded-xl px-4 py-3 text-sm bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300" aria-live="polite">—</div>
+
+                <div id="top-pocket" class="hidden mb-2"></div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 sm:p-4 mb-2">
+                    <div id="board" class="w-full"></div>
+                </div>
+                <div id="bottom-pocket" class="hidden mb-3"></div>
+
+                <div id="panel-ciegas" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3">
+                    <label for="ciegas-input" class="block text-xs font-semibold text-brand-500 dark:text-brand-400 mb-1">Escribe tu jugada (Cf3, e4, 0-0)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="ciegas-input" autocomplete="off" class="flex-1 px-3 py-2 text-sm rounded-xl border-2 border-brand-100 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white focus:border-accent-500 focus:outline-none">
+                        <button type="button" id="ciegas-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-xl text-sm transition-colors">Jugar</button>
+                    </div>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-2" id="ciegas-aviso">El tablero está vacío a propósito: la jugada del bot aparece escrita arriba.</p>
+                </div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4">
+                    <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-400 dark:text-brand-500 mb-2">Jugadas</h2>
+                    <ol id="historial" class="text-sm text-brand-600 dark:text-brand-300 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1"></ol>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" id="otra-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">↺ Otra partida</button>
+                    <button type="button" id="rendirse-btn" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-red-400 transition-colors">🏳️ Rendirse</button>
+                </div>
+            </section>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-400">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Tutoriales</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra mí</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-400"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* ===== Jugar contra el bot de Oscar =====
+ *
+ * Una sola página para practicar CUALQUIER modalidad contra el bot. Se apoya en
+ * los motores y los tableros que ya usan las páginas de partida
+ * (js/crazyhouse-engine.js, js/variantes-engines.js, js/niebla-board.js…), que
+ * no saben nada de la base de datos: por eso se pueden montar acá sin tocar
+ * game_rooms ni Supabase.
+ *
+ * La partida vive solo en el navegador y no se guarda. Es a propósito: contra
+ * el bot se practica, y una partida de práctica no tiene por qué ocupar una
+ * fila ni aparecer en los informes.
+ *
+ * Cada modalidad aporta un ADAPTADOR con lo que el bot necesita (turno,
+ * jugadas, probar, material). El bot está en js/bot-oscar.js y no sabe de
+ * ninguna variante en concreto.
+ *
+ * Quedan fuera dos modalidades, por razones distintas:
+ *   - Ajedrez de Cartas: el tablero se monta desde un estado serializado
+ *     (loadState) que hoy solo arma la página de partida.
+ *   - Duelo Simultáneo: los dos mueven a la vez contra reloj, así que no hay
+ *     "turno del bot" que atender; pide otro diseño.
+ */
+const VALOR = { p: 1, n: 3, b: 3.2, r: 5, q: 9, k: 0 };
+const CENTRO = { d4: .12, d5: .12, e4: .12, e5: .12, c4: .05, c5: .05, f4: .05, f5: .05 };
+
+const MODALIDADES = {
+    estandar: {
+        emoji: "⚔️", titulo: "Ajedrez Estándar",
+        resumen: "La partida de siempre, con todas las reglas.",
+        crear: () => adaptadorChess(new Chess()),
+        tablero: "niebla", spectator: true,
+    },
+    niebla: {
+        emoji: "🌫️", titulo: "Niebla de Guerra",
+        resumen: "Solo ves lo que tus piezas alcanzan a ver.",
+        crear: () => adaptadorChess(new Chess()),
+        tablero: "niebla", spectator: false,
+    },
+    crazyhouse: {
+        emoji: "♞", titulo: "Crazyhouse",
+        resumen: "Las piezas que capturas vuelven al tablero de tu lado.",
+        crear: () => adaptadorCrazyhouse(new Crazyhouse.Game()),
+        tablero: "crazyhouse",
+    },
+    abrazos: {
+        emoji: "🤗", titulo: "Ajedrez de abrazos",
+        resumen: "Nadie captura: las piezas se abrazan y se unen.",
+        crear: () => adaptadorVariante(Variantes.crear("abrazos")),
+        tablero: "variante",
+    },
+    camaleon: {
+        emoji: "🦎", titulo: "Camaleón",
+        resumen: "Cada pieza mueve como la que empieza en su columna.",
+        crear: () => adaptadorVariante(Variantes.crear("camaleon")),
+        tablero: "variante",
+    },
+    ciegas: {
+        emoji: "🙈", titulo: "A ciegas",
+        resumen: "Ajedrez normal, pero sin ver las piezas: se escribe la jugada.",
+        crear: () => adaptadorCiegas(Variantes.crear("ciegas")),
+        tablero: "variante", ciegas: true,
+    },
+};
+
+/* ---------------- Adaptadores ----------------
+   Cada uno envuelve su motor y le da al bot las cuatro cosas que pide. `probar`
+   devuelve otro adaptador con la jugada hecha, sin tocar el original: por eso
+   todos saben clonarse desde su propia posición serializada. */
+
+function materialDeTablero(leer, casillas) {
+    let total = 0;
+    casillas.forEach((s) => {
+        const p = leer(s);
+        if (!p) return;
+        const tipos = p.types || [p.type];
+        let v = 0;
+        tipos.forEach((t) => { v += VALOR[t] || 0; });
+        total += (p.color === "w" ? 1 : -1) * (v + (CENTRO[s] || 0));
+    });
+    return total;
+}
+
+const TODAS_LAS_CASILLAS = (function () {
+    const out = [];
+    for (let r = 1; r <= 8; r++) "abcdefgh".split("").forEach((f) => out.push(f + r));
+    return out;
+})();
+
+function adaptadorChess(juego) {
+    return {
+        motor: juego,
+        turno: () => juego.turn(),
+        jugadas: () => juego.moves({ verbose: true }),
+        probar(j) {
+            const copia = new Chess(juego.fen());
+            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorChess(copia) : null;
+        },
+        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        terminada: () => juego.game_over(),
+        desenlace() {
+            if (juego.in_checkmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
+            if (juego.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (juego.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
+            return { fin: false };
+        },
+        posicion: () => juego.fen(),
+    };
+}
+
+function adaptadorCrazyhouse(juego) {
+    return {
+        motor: juego,
+        turno: () => juego.turn(),
+        jugadas: () => juego.moves({ verbose: true }),
+        probar(j) {
+            const copia = new Crazyhouse.Game(juego.fen());
+            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCrazyhouse(copia) : null;
+        },
+        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        terminada: () => juego.in_checkmate() || juego.in_stalemate() || juego.in_draw(),
+        desenlace() {
+            if (juego.in_checkmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
+            if (juego.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (juego.in_draw()) return { fin: true, ganador: null, texto: "Tablas" };
+            return { fin: false };
+        },
+        posicion: () => juego.fen(),
+    };
+}
+
+function adaptadorVariante(motor) {
+    const id = motor instanceof Variantes.Abrazos ? "abrazos" : (motor instanceof Variantes.Camaleon ? "camaleon" : "ciegas");
+    return {
+        motor,
+        id,
+        turno: () => motor.turn(),
+        jugadas: () => motor.allMoves(),
+        probar(j) {
+            const copia = Variantes.crear(id);
+            copia.load(motor.serialize());
+            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorVariante(copia) : null;
+        },
+        material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        terminada() { return !motor.allMoves().length || !!motor.terminado; },
+        desenlace() {
+            if (motor.allMoves().length && !motor.terminado) return { fin: false };
+            const enJaque = typeof motor.inCheck === "function" && motor.inCheck();
+            return { fin: true, ganador: enJaque ? (motor.turn() === "w" ? "b" : "w") : null, texto: enJaque ? "Jaque mate" : "Sin jugadas: tablas" };
+        },
+        posicion: () => motor.serialize(),
+    };
+}
+
+/* A ciegas es ajedrez normal con el tablero tapado: su motor delega en chess.js
+   y no tiene allMoves() como los otros dos. Se le pregunta a chess.js las
+   jugadas, pero se conserva el motor de la variante porque es el que el tablero
+   sabe dibujar. */
+function adaptadorCiegas(motor) {
+    return {
+        motor,
+        turno: () => motor.turn(),
+        jugadas: () => motor.game.moves({ verbose: true }),
+        probar(j) {
+            const copia = Variantes.crear("ciegas");
+            copia.load(motor.serialize());
+            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCiegas(copia) : null;
+        },
+        material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        terminada: () => motor.game.game_over(),
+        desenlace() {
+            const g = motor.game;
+            if (g.in_checkmate()) return { fin: true, ganador: g.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
+            if (g.in_stalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (g.game_over()) return { fin: true, ganador: null, texto: "Tablas" };
+            return { fin: false };
+        },
+        posicion: () => motor.serialize(),
+    };
+}
+
+/* ---------------- Estado de la pantalla ---------------- */
+const $ = (id) => document.getElementById(id);
+let modalidad = "estandar", nivel = 2, miColor = "w";
+let ad = null, board = null, historial = [], terminada = false, pensando = false;
+
+function pintarOpciones() {
+    const caja = $("modalidades");
+    caja.innerHTML = "";
+    Object.keys(MODALIDADES).forEach((id) => {
+        const m = MODALIDADES[id];
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.modalidad = id;
+        b.className = claseOpcion(id === modalidad);
+        b.innerHTML = `<span class="font-semibold">${m.emoji} ${m.titulo}</span><br><span class="text-xs opacity-80">${m.resumen}</span>`;
+        b.addEventListener("click", () => { modalidad = id; pintarOpciones(); });
+        caja.appendChild(b);
+    });
+
+    const niv = $("niveles");
+    niv.innerHTML = "";
+    Object.keys(BotOscar.NIVELES).forEach((n) => {
+        const d = BotOscar.NIVELES[n];
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.nivel = n;
+        b.className = claseOpcion(Number(n) === nivel);
+        b.innerHTML = `<span class="font-semibold">${"★".repeat(Number(n))} ${d.nombre}</span><br><span class="text-xs opacity-80">${d.descripcion}</span>`;
+        b.addEventListener("click", () => { nivel = Number(n); pintarOpciones(); });
+        niv.appendChild(b);
+    });
+
+    document.querySelectorAll(".color-opt").forEach((b) => {
+        b.className = "color-opt " + claseOpcion(b.dataset.color === miColor);
+        b.onclick = () => { miColor = b.dataset.color; pintarOpciones(); };
+    });
+}
+
+const claseOpcion = (sel) => "w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors " +
+    (sel ? "border-accent-500 bg-accent-50 dark:bg-brand-800 text-brand-800 dark:text-white"
+         : "border-brand-100 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300");
+
+/* ---------------- Jugar ---------------- */
+function empezar() {
+    const m = MODALIDADES[modalidad];
+    ad = m.crear();
+    historial = [];
+    terminada = false;
+    pensando = false;
+
+    $("setup-view").classList.add("hidden");
+    $("game-view").classList.remove("hidden");
+    $("g-titulo").textContent = `${m.emoji} ${m.titulo}`;
+    $("g-nivel").textContent = `Bot ${BotOscar.NIVELES[nivel].nombre} · tú con ${miColor === "w" ? "blancas" : "negras"}`;
+    $("panel-ciegas").classList.toggle("hidden", !m.ciegas);
+    $("top-pocket").classList.toggle("hidden", m.tablero !== "crazyhouse");
+    $("bottom-pocket").classList.toggle("hidden", m.tablero !== "crazyhouse");
+
+    montarTablero(m);
+    pintarHistorial();
+    actualizar();
+    if (ad.turno() !== miColor) setTimeout(turnoDelBot, 500);
+}
+
+function montarTablero(m) {
+    const el = $("board");
+    el.innerHTML = "";
+    const comun = {
+        interactive: true,
+        myColor: miColor,
+        onMove: alMover,
+        onPromotionNeeded: (info, cb) => cb("q"),
+    };
+    if (m.tablero === "niebla") {
+        board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator }, comun));
+        board.loadFen(ad.posicion());
+    } else if (m.tablero === "crazyhouse") {
+        board = new CrazyhouseBoard(el, $("top-pocket"), $("bottom-pocket"), comun);
+        board.loadFen(ad.posicion());
+    } else {
+        board = new VarianteBoard(el, Object.assign({
+            engine: ad.motor,
+            hidePieces: !!m.ciegas,
+            ariaLabel: "Tablero de " + m.titulo,
+        }, comun));
+        board.load(ad.posicion());
+        if (m.ciegas) board.setHidePieces(true);
+    }
+}
+
+function alMover(info) {
+    if (terminada || pensando || ad.turno() !== miColor) { refrescar(); return; }
+    const hecho = ad.jugar(info);
+    if (!hecho) { refrescar(); return; }
+    anotar(hecho, info);
+    refrescar();
+    if (revisarFinal()) return;
+    setTimeout(turnoDelBot, BotOscar.demora(nivel));
+}
+
+function turnoDelBot() {
+    if (terminada || ad.turno() === miColor) return;
+    pensando = true;
+    actualizar();
+    const jugada = BotOscar.jugar(ad, nivel);
+    pensando = false;
+    if (!jugada) { revisarFinal(); return; }
+    const hecho = ad.jugar(jugada);
+    anotar(hecho, jugada);
+    refrescar();
+    revisarFinal();
+}
+
+function anotar(hecho, jugada) {
+    const texto = (hecho && (hecho.san || hecho.sanEs)) || `${jugada.from}${jugada.to}`;
+    historial.push(texto);
+    pintarHistorial();
+}
+
+function refrescar() {
+    const m = MODALIDADES[modalidad];
+    if (m.tablero === "variante") board.load(ad.posicion());
+    else board.loadFen(ad.posicion());
+    actualizar();
+}
+
+function pintarHistorial() {
+    const ol = $("historial");
+    ol.innerHTML = "";
+    for (let i = 0; i < historial.length; i += 2) {
+        const li = document.createElement("li");
+        li.textContent = `${i / 2 + 1}. ${historial[i]}${historial[i + 1] ? " " + historial[i + 1] : ""}`;
+        ol.appendChild(li);
+    }
+}
+
+function actualizar() {
+    if (terminada) return;
+    const miTurno = ad.turno() === miColor;
+    avisar(pensando ? "El bot está pensando…" : (miTurno ? "Es tu turno." : "Juega el bot…"), "normal");
+    if (MODALIDADES[modalidad].ciegas) $("ciegas-input").disabled = !miTurno;
+}
+
+function revisarFinal() {
+    const d = ad.desenlace();
+    if (!d.fin) return false;
+    terminada = true;
+    const gane = d.ganador === miColor;
+    avisar(d.ganador === null
+        ? `${d.texto}. La partida terminó en tablas.`
+        : `${d.texto}. ${gane ? "🎉 ¡Ganaste!" : "Ganó el bot — a la próxima."}`, gane ? "logro" : "fin");
+    if (MODALIDADES[modalidad].ciegas && board.setHidePieces) { board.setHidePieces(false); refrescarSinAviso(); }
+    return true;
+}
+
+function refrescarSinAviso() {
+    const m = MODALIDADES[modalidad];
+    if (m.tablero === "variante") board.load(ad.posicion()); else board.loadFen(ad.posicion());
+}
+
+function avisar(texto, tipo) {
+    const estilos = {
+        normal: "bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300",
+        fin: "bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-200 font-medium",
+        logro: "bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-300 font-medium",
+        error: "bg-red-50 dark:bg-red-900/40 text-red-700 dark:text-red-300",
+    };
+    $("status").className = "mb-3 rounded-xl px-4 py-3 text-sm " + (estilos[tipo] || estilos.normal);
+    $("status").textContent = texto;
+}
+
+/* ---------------- A ciegas: la jugada se escribe ----------------
+   Se pasa por moveText() del motor, que es el que entiende la notación en
+   español y en inglés y también las coordenadas (Cf3, Nf3, g1f3, 0-0). Es el
+   mismo camino que usa la página de partida. */
+function jugarEscrita() {
+    if (terminada || pensando || ad.turno() !== miColor) return;
+    const texto = $("ciegas-input").value.trim();
+    if (!texto) return;
+    const hecho = ad.motor.moveText(texto);
+    if (!hecho) { avisar("Esa jugada no es legal. Prueba otra vez.", "error"); return; }
+    $("ciegas-input").value = "";
+    anotar(hecho, {});
+    refrescar();
+    if (revisarFinal()) return;
+    setTimeout(turnoDelBot, BotOscar.demora(nivel));
+}
+
+/* ---------------- Arranque ---------------- */
+$("empezar-btn").addEventListener("click", empezar);
+$("otra-btn").addEventListener("click", () => {
+    $("game-view").classList.add("hidden");
+    $("setup-view").classList.remove("hidden");
+});
+$("rendirse-btn").addEventListener("click", () => {
+    if (terminada || !confirm("¿Seguro que quieres rendirte?")) return;
+    terminada = true;
+    avisar("Te rendiste. Ganó el bot.", "fin");
+});
+$("ciegas-btn").addEventListener("click", jugarEscrita);
+$("ciegas-input").addEventListener("keydown", (e) => { if (e.key === "Enter") jugarEscrita(); });
+
+(function init() {
+    const pedida = new URLSearchParams(location.search).get("modalidad");
+    if (pedida && MODALIDADES[pedida]) modalidad = pedida;
+    pintarOpciones();
+})();
+    </script>
+</body>
+</html>
