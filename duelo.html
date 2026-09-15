@@ -41,6 +41,7 @@
     <script src="js/board-drag.js"></script>
     <script src="js/board-color-themes.js"></script>
     <script src="js/duelo-board.js"></script>
+    <script src="js/turn-alert.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -176,6 +177,7 @@
             document.getElementById("resign-btn").classList.toggle("hidden", !myColor || room.status !== "playing");
 
             const g = board.game;
+            let myTurnNow = false;
             if (room.status === "finished") {
                 const resultText = g.result === "draw" ? "Tablas." : (g.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
@@ -184,10 +186,12 @@
             } else {
                 const yaComprometi = !!g.commit[myColor];
                 const rivalComprometio = !!g.commit[myColor === "w" ? "b" : "w"];
+                myTurnNow = !yaComprometi;
                 if (!yaComprometi) setStatus("Ronda " + g.round + " — elige tu jugada en secreto. El rival no la ve hasta que las dos estén comprometidas.");
                 else if (!rivalComprometio) setStatus("Ya comprometiste tu jugada — esperando a que " + nameFor(myColor === "w" ? room.black_id : room.white_id) + " comprometa la suya.");
                 else setStatus("Las dos jugadas están comprometidas — revelando y resolviendo la ronda…");
             }
+            if (window.TurnAlert) TurnAlert.check(myTurnNow);
 
             const eventEl = document.getElementById("round-event");
             if (g.lastRound) {

@@ -41,6 +41,7 @@
     <script src="js/board-drag.js"></script>
     <script src="js/board-color-themes.js"></script>
     <script src="js/niebla-board.js"></script>
+    <script src="js/turn-alert.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -128,6 +129,7 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>
+                <p id="moves-hidden" class="hidden text-xs text-brand-400 dark:text-brand-500 italic">🌫️ Las jugadas quedan ocultas por la niebla — se revelan todas cuando termine la partida. Llevan <span id="moves-hidden-count">0</span>.</p>
                 <p id="moves-empty" class="text-xs text-brand-300 dark:text-brand-600">Sin jugadas todavía…</p>
                 <ol id="moves-list" class="hidden flex-wrap gap-x-3 gap-y-1 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
             </div>
@@ -183,6 +185,7 @@
             const waitingToStart = room.status === "playing" && !bothReady(room);
             readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
 
+            let myTurnNow = false;
             if (room.status === "finished") {
                 const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
@@ -193,10 +196,11 @@
             } else if (!myColor) {
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
-                const myTurn = board.game.turn() === myColor;
-                const enJaque = board.game.in_check() && myTurn;
-                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurn ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
+                myTurnNow = board.game.turn() === myColor;
+                const enJaque = board.game.in_check() && myTurnNow;
+                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…"));
             }
+            if (window.TurnAlert) TurnAlert.check(myTurnNow);
         }
 
         document.getElementById("ready-btn").addEventListener("click", async () => {
@@ -294,6 +298,25 @@
             }
         }
 
+        // La gracia de Niebla de Guerra es que nadie ve más que sus propias
+        // casillas — pero la lista de jugadas (una especie de PGN en vivo) sí
+        // revelaba, en texto plano, adónde se movió cada pieza, aunque
+        // estuviera bajo niebla en el tablero. Por eso se oculta mientras la
+        // partida está en curso y solo se revela completa cuando termina.
+        function renderMovesPanel(room) {
+            const hiddenEl = document.getElementById("moves-hidden");
+            const moves = room.moves || [];
+            if (room.status === "playing") {
+                hiddenEl.classList.remove("hidden");
+                document.getElementById("moves-empty").classList.add("hidden");
+                document.getElementById("moves-list").classList.add("hidden");
+                document.getElementById("moves-hidden-count").textContent = moves.length + (moves.length === 1 ? " jugada" : " jugadas");
+                return;
+            }
+            hiddenEl.classList.add("hidden");
+            renderMoveHistory(moves);
+        }
+
         function showPromotionPicker(from, to, callback) {
             const modal = document.getElementById("promotion-modal");
             const optionsEl = document.getElementById("promotion-options");
@@ -331,7 +354,7 @@
                 return;
             }
             room = Object.assign({}, room, patch);
-            renderMoveHistory(room.moves);
+            renderMovesPanel(room);
             updateStatusText();
             renderClocks();
         }
@@ -341,7 +364,7 @@
             room = row;
             if (positionChanged) board.loadFen(row.fen);
             board.setInteractive(!!myColor && row.status === "playing" && bothReady(row));
-            renderMoveHistory(row.moves);
+            renderMovesPanel(row);
             updateStatusText();
             renderClocks();
             TorneoSync.onRoomUpdate(sb, row);
@@ -392,7 +415,7 @@
                 onPromotionNeeded: showPromotionPicker,
             });
             board.loadFen(room.fen);
-            renderMoveHistory(room.moves);
+            renderMovesPanel(room);
             updateStatusText();
             renderClocks();
             subscribeRoom();
