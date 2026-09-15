@@ -1,4 +1,4 @@
-/* Visor de "Los 100 finales que hay que conocer" (js/finales-100.js) */
+/* Visor de "El mapa de los finales" (js/finales-100.js) */
 .f100-item{margin-top:.5rem}
 .f100-viewer{display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:.75rem 1rem;align-items:start;background:#fff;border:1px solid #d9e2ec;border-radius:.75rem;padding:.75rem;margin:.5rem 0}
 .dark .f100-viewer{background:#0a1f33;border-color:#243b53}

@@ -127,12 +127,21 @@
                         <option value="tactica">⚔️ Táctica</option>
                         <option value="concentracion">🧠 Concentración</option>
                         <option value="diagnostico">🧭 Diagnóstico de nivel</option>
+                        <option value="cursos">🏛️ Cursos — temas estudiados</option>
                         <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
                     </select>
                 </div>
             </div>
 
             <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
+            <!-- Avance en los cursos de Academia (cursos/academia/*.html): temas marcados
+                 como estudiados, en orden, por curso. Filas activity "curso" de training_progress. -->
+            <div id="cursos-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="cursos-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Cursos</h2>
+                <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-400 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
+                <div id="cursos-report-body" class="space-y-4"></div>
+            </div>
 
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
@@ -164,9 +173,18 @@
                 <!-- Diagnósticos de nivel de todos los alumnos asignados: resumen y gráficos.
                      Lo pinta renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel</h2>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel — alumnos registrados</h2>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
                     <div id="diagnosticos-clase"></div>
+                </div>
+
+                <!-- Diagnósticos hechos desde fuera del panel (la prueba es pública): quedan en
+                     la tabla diagnosticos_publicos y se muestran aparte de los alumnos, sin
+                     mezclarse con los promedios de la clase. -->
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🌐 Diagnósticos de visitantes (fuera del panel)</h2>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mb-4">Personas sin cuenta que hicieron el diagnóstico público desde el sitio. No entran en los promedios de la clase. Cada uno deja nombre y correo: son contactos para invitar a Academia.</p>
+                    <div id="diagnosticos-visitantes"></div>
                 </div>
 
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
@@ -353,8 +371,17 @@
             const tacticaSolved = new Set();
             const concentracionHechos = new Set(); // "nivel-ejercicio": un ejercicio repetido cuenta una vez
             let diagnostico = null; // el más reciente: es la foto vigente del alumno
+            const cursos = {}; // slug -> { titulo, total, temas: Set, ultimo: {titulo, fecha} }
             (rows || []).forEach((r) => {
                 const d = r.detail || {};
+                if (r.activity === "curso" && d.curso && d.leccion) {
+                    const c = cursos[d.curso] = cursos[d.curso] || { slug: d.curso, titulo: d.curso_titulo || d.curso, total: 0, temas: new Set(), ultimo: null };
+                    c.temas.add(d.leccion);
+                    if (d.curso_titulo) c.titulo = d.curso_titulo;
+                    if (d.total) c.total = Math.max(c.total, d.total);
+                    if (!c.ultimo || new Date(r.created_at) > new Date(c.ultimo.fecha)) c.ultimo = { titulo: d.titulo || d.leccion, n: d.n, fecha: r.created_at };
+                    return;
+                }
                 if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
                 else if (r.activity === "aprender" && d.lesson_id) lessons.add(d.lesson_id);
                 else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
@@ -382,7 +409,37 @@
                 tacticaTotal: tacticaSolved.size,
                 concentracionTotal: concentracionHechos.size,
                 diagnostico,
+                cursos: Object.values(cursos).map((c) => ({ slug: c.slug, titulo: c.titulo, total: c.total, hechos: c.temas.size, ultimo: c.ultimo }))
+                    .sort((a, b) => a.titulo.localeCompare(b.titulo, "es")),
+                cursosTemas: Object.values(cursos).reduce((n, c) => n + c.temas.size, 0),
             };
+        }
+
+        // Tarjeta "Cursos": una barra por curso con los temas estudiados sobre el total y
+        // el último tema marcado. propio=true cuando la mira el propio alumno.
+        function renderCursosReport(entreno, propio, nombre) {
+            const box = document.getElementById("cursos-report"), body = document.getElementById("cursos-report-body");
+            body.innerHTML = "";
+            document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
+            if (!entreno.cursos.length) {
+                body.innerHTML = `<p class="text-sm text-brand-400 dark:text-brand-500">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-600 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
+            } else {
+                entreno.cursos.forEach((c) => {
+                    const wrap = document.createElement("div");
+                    wrap.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos));
+                    const nota = document.createElement("p");
+                    nota.className = "text-xs text-brand-400 dark:text-brand-500 mt-1";
+                    const fecha = c.ultimo ? new Date(c.ultimo.fecha).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" }) : "";
+                    nota.textContent = c.total && c.hechos >= c.total ? `🏁 Curso completo (último tema el ${fecha})` : c.ultimo ? `Último tema estudiado: ${c.ultimo.titulo} (${fecha})` : "";
+                    if (propio) {
+                        const a = document.createElement("a"); a.href = "cursos/academia/" + c.slug + ".html"; a.className = "ml-2 text-accent-600 dark:text-accent-400 hover:underline"; a.textContent = "Continuar →";
+                        nota.appendChild(a);
+                    }
+                    wrap.appendChild(nota);
+                    body.appendChild(wrap);
+                });
+            }
+            box.classList.remove("hidden");
         }
 
         function barRow(name, correct, total) {
@@ -446,9 +503,11 @@
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
             );
 
+            renderCursosReport(entreno, true);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
@@ -490,6 +549,7 @@
             // Copia del diagnóstico en el espejo de progreso: ver diagnosticosDesdeEstado.
             const { data: estadoRows } = await sb.from("training_state").select("student_id, key, value, updated_at");
             const { data: plans } = await sb.from("training_plans").select("*");
+            const { data: visitantes } = await sb.from("diagnosticos_publicos").select("*").order("created_at", { ascending: false });
             // Exámenes de arbitraje del público (nivel-de-arbitraje.html). La RLS ya los
             // limita a profesores y administración, así que si no hay permiso llega vacío.
             const { data: arbitrajes } = await sb.from("arbitrajes_publicos")
@@ -500,6 +560,7 @@
             (plans || []).forEach((pl) => { plansByStudent[pl.student_id] = pl; });
             teacherData = {
                 plansByStudent,
+                visitantes: visitantes || [],
                 arbitrajes: arbitrajes || [],
                 sessions: sessions || [], sessionById, closedSessions: (sessions || []).filter((s) => s.ended_at).length,
                 questions: questions || [], games: games || [], students: students || [],
@@ -550,6 +611,7 @@
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
+            document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
@@ -651,6 +713,7 @@
 
             renderArbitrajesPublicos(document.getElementById("arbitrajes-publicos"));
             renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
+            renderDiagnosticosVisitantes(document.getElementById("diagnosticos-visitantes"));
             document.getElementById("teacher-report").classList.remove("hidden");
         }
 
@@ -700,9 +763,11 @@
                 statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos")
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
             );
 
+            renderCursosReport(entreno, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
 
             const historyEl = document.getElementById("student-history");
@@ -736,6 +801,7 @@
             diagnostico: "🧭 Diagnóstico de nivel — resumen y gráficos del grupo",
             arbitraje: "⚖️ Exámenes de arbitraje del público — quiénes lo hicieron y a quién falta responder",
             concentracion: "🧠 Concentración — ejercicios resueltos",
+            cursos: "🏛️ Cursos — temas estudiados por alumno",
         };
 
         // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
@@ -746,7 +812,21 @@
             const body = document.getElementById("topic-report-body");
             body.innerHTML = "";
             if (topic === "diagnostico") {
-                renderDiagnosticosClase(body);
+                const alumnos = document.createElement("div");
+                alumnos.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Alumnos registrados</h3>';
+                const cajaAlumnos = document.createElement("div"); alumnos.appendChild(cajaAlumnos);
+                renderDiagnosticosClase(cajaAlumnos);
+                const visitantes = document.createElement("div");
+                visitantes.className = "mt-8 border-t border-brand-100 dark:border-brand-800 pt-6";
+                visitantes.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🌐 Visitantes (diagnóstico público, fuera del panel)</h3><p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Aparte de los alumnos y sin entrar en los promedios de la clase.</p>';
+                const cajaVis = document.createElement("div"); visitantes.appendChild(cajaVis);
+                renderDiagnosticosVisitantes(cajaVis);
+                body.append(alumnos, visitantes);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+            if (topic === "cursos") {
+                renderCursosClase(body);
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }
@@ -825,6 +905,30 @@
             document.getElementById("topic-report").classList.remove("hidden");
         }
 
+        // Tema "Cursos": cada alumno con una barra por curso empezado (temas estudiados
+        // sobre el total), los que más avanzaron primero; al final, los que no empezaron.
+        function renderCursosClase(contenedor) {
+            const progressByStudent = {};
+            teacherData.progress.forEach((r) => { (progressByStudent[r.student_id] = progressByStudent[r.student_id] || []).push(r); });
+            const filas = teacherData.students.map((s) => ({ name: s.full_name || s.email, entreno: summarizeTrainingProgress(progressByStudent[s.id]) }))
+                .sort((a, b) => b.entreno.cursosTemas - a.entreno.cursosTemas || a.name.localeCompare(b.name, "es"));
+            const sinEmpezar = [];
+            filas.forEach((f) => {
+                if (!f.entreno.cursos.length) { sinEmpezar.push(f.name); return; }
+                const bloque = document.createElement("div");
+                bloque.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-3 space-y-2";
+                const h = document.createElement("p"); h.className = "font-semibold text-brand-800 dark:text-white text-sm"; h.textContent = f.name + " · " + f.entreno.cursosTemas + " temas";
+                bloque.appendChild(h);
+                f.entreno.cursos.forEach((c) => bloque.appendChild(barRow(c.titulo, c.hechos, c.total || c.hechos)));
+                contenedor.appendChild(bloque);
+            });
+            if (sinEmpezar.length) {
+                const p = document.createElement("p"); p.className = "text-sm text-brand-400 dark:text-brand-500";
+                p.textContent = "Sin empezar ningún curso: " + sinEmpezar.join(", ") + ".";
+                contenedor.appendChild(p);
+            }
+        }
+
         // Los dos filtros combinados: un alumno puntual manda (su informe completo, sin
         // importar el tema elegido — por eso se deshabilita el segundo filtro mientras haya
         // uno elegido); sin alumno, el tema puntual manda; sin ninguno de los dos, el
@@ -870,7 +974,60 @@
             }).join("");
         }
 
-        function cabeceraDiagnosticoHTML(resumen, fecha) {
+        // El diagnóstico se guardó con el Elo que el alumno tenía entonces; el informe usa
+        // siempre el Elo ACTUAL del perfil (el alumno lo cambia en Configuración, el profesor
+        // desde aquí), así el nivel y la lectura se recalculan al ajustarlo.
+        function conEloActual(detail, fila) {
+            const d = Object.assign({}, detail || {}, { perfil: Object.assign({}, (detail && detail.perfil) || {}) });
+            if (fila && fila.elo) { d.perfil.elo = fila.elo; d.perfil.elo_tipo = fila.elo_tipo || null; }
+            else if (fila) { d.perfil.elo = null; d.perfil.elo_tipo = null; }
+            return d;
+        }
+
+        function eloLineaHTML(resumen, propio) {
+            const e = resumen.elo || {};
+            if (e.declarado) {
+                return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ≈${e.estimado} · nivel calculado con ambos (≈${e.combinado}). ${e.lectura.texto}</p>`;
+            }
+            return `<p class="text-xs text-brand-400 dark:text-brand-500 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-600 dark:text-accent-400 hover:underline">Agregá tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
+        }
+
+        // Elo del alumno, editable por su profesor o un administrador (función
+        // set_student_elo en Supabase, que solo permite esas dos cosas). Sirve para ir
+        // ajustándolo cuando el rating cambia o cuando el alumno no lo puso.
+        function eloEditorHTML(student) {
+            const tipos = PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${student.elo_tipo === t.id ? " selected" : ""}>${t.etiqueta}</option>`).join("");
+            const cuando = student.elo_actualizado ? ` · actualizado el ${fmtFecha(student.elo_actualizado)}` : "";
+            return `<div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4 mb-5">
+                <p class="text-sm font-semibold text-brand-800 dark:text-white mb-1">Elo del alumno</p>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-2">${student.elo ? `Registrado: ${student.elo}${cuando}.` : "Sin Elo registrado."} Al cambiarlo, el nivel estimado, la lectura y el plan se recalculan.</p>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <input id="elo-alumno" type="number" inputmode="numeric" min="100" max="3500" step="1" value="${student.elo || ""}" placeholder="Ej. 1350" aria-label="Elo del alumno" class="w-28 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">
+                    <select id="elo-alumno-tipo" aria-label="Origen del Elo" class="bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">${tipos}</select>
+                    <button type="button" id="elo-alumno-guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Guardar Elo</button>
+                    <span id="elo-alumno-msg" class="text-xs text-brand-400 dark:text-brand-500" aria-live="polite"></span>
+                </div>
+            </div>`;
+        }
+
+        function conectarEloEditor(student) {
+            const btn = document.getElementById("elo-alumno-guardar");
+            if (!btn) return;
+            btn.addEventListener("click", async () => {
+                const msg = document.getElementById("elo-alumno-msg");
+                const raw = document.getElementById("elo-alumno").value.trim();
+                const tipo = document.getElementById("elo-alumno-tipo").value;
+                const elo = raw ? PE.eloValido(raw) : null;
+                if (raw && !elo) { msg.textContent = "El Elo tiene que estar entre 100 y 3500."; return; }
+                msg.textContent = "Guardando…";
+                const { error } = await sb.rpc("set_student_elo", { p_student: student.id, p_elo: elo, p_tipo: elo ? tipo : null });
+                if (error) { msg.textContent = "No se pudo guardar: " + error.message; return; }
+                student.elo = elo; student.elo_tipo = elo ? tipo : null; student.elo_actualizado = new Date().toISOString();
+                applyTeacherFilters();
+            });
+        }
+
+        function cabeceraDiagnosticoHTML(resumen, fecha, propio) {
             const perfil = resumen.perfil || {};
             const contexto = [perfil.tiempo, perfil.torneos && "torneos: " + perfil.torneos.toLowerCase(), perfil.practica && "practica: " + perfil.practica.toLowerCase()]
                 .filter(Boolean).join(" · ");
@@ -881,6 +1038,7 @@
                 <p class="text-xs text-brand-400 dark:text-brand-500 mt-2">${resumen.aciertos} de ${resumen.total} respuestas correctas${resumen.nosabe ? ` · 🤔 ${resumen.nosabe} marcadas como "no lo sé"` : ""} · fuerza estimada ${resumen.nivel.rango} (estimación para orientar el estudio, no un rating oficial).</p>
                 ${resumen.nosabe ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">Las marcadas como "no lo sé" son huecos que enseñar, no errores que corregir: se pueden dar por clase nueva, no por repaso.</p>` : ""}
                 ${contexto ? `<p class="text-xs text-brand-400 dark:text-brand-500 mt-1">Lo que cuenta el alumno: ${contexto}.</p>` : ""}
+                ${eloLineaHTML(resumen, propio)}
                 ${escaleraHTML(resumen)}
             </div>`;
         }
@@ -912,7 +1070,8 @@
 
         function planHTML(plan) {
             return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${plan.rutina}.</p>
-                <p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Prioridad:</strong> ${plan.prioridad.join(" → ")}.</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Prioridad:</strong> ${plan.prioridad.join(" → ")}.</p>
+                ${plan.metaElo ? `<p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Meta de Elo:</strong> ${plan.metaElo.texto}</p>` : '<p class="mb-3"></p>'}
                 <div class="space-y-3">${plan.semanas.map((s) => `
                     <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4">
                         <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${s.titulo}</p>
@@ -938,9 +1097,10 @@
             document.getElementById("diagnostico-title").textContent = "Diagnóstico y plan de entrenamiento — " + nombre;
             panel.classList.remove("hidden");
 
-            if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML(nombre, true); return; }
+            const student = teacherData.students.find((s) => s.id === studentId) || { id: studentId };
+            if (!entreno.diagnostico) { body.innerHTML = eloEditorHTML(student) + sinDiagnosticoHTML(nombre, true); conectarEloEditor(student); return; }
 
-            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const resumen = PE.resumir(conEloActual(entreno.diagnostico.detail, student));
             const plan = PE.generarPlan(resumen);
             const guardado = (teacherData.plansByStudent || {})[studentId];
             const estado = !guardado
@@ -950,7 +1110,8 @@
                     : `Guardado el ${fmtFecha(guardado.updated_at)}, sin compartir: el alumno no lo ve.`;
 
             body.innerHTML = `
-                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at, false)}
+                ${eloEditorHTML(student)}
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
                 <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
                 <div class="grid sm:grid-cols-2 gap-4 mb-5">
@@ -982,6 +1143,7 @@
                     </div>
                 </div>`;
 
+            conectarEloEditor(student);
             const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
             document.getElementById("plan-compartir").addEventListener("click", () => guardar(true));
             document.getElementById("plan-guardar").addEventListener("click", () => guardar(false));
@@ -1021,11 +1183,11 @@
             panel.classList.remove("hidden");
 
             if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML("", false); return; }
-            const resumen = PE.resumir(entreno.diagnostico.detail);
+            const resumen = PE.resumir(conEloActual(entreno.diagnostico.detail, profile));
             const plan = (planCompartido && planCompartido.plan && planCompartido.plan.generado) || null;
 
             body.innerHTML = `
-                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at)}
+                ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at, true)}
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Área por área</h3>
                 <div class="space-y-3 mb-5">${barrasAreasHTML(resumen)}</div>
                 ${plan ? `
@@ -1079,7 +1241,7 @@
                 const entreno = summarizeTrainingProgress(progresoPorAlumno[s.id]);
                 const nombre = s.full_name || s.email;
                 if (entreno.diagnostico) {
-                    conDiagnostico.push({ id: s.id, nombre, fecha: entreno.diagnostico.created_at, resumen: PE.resumir(entreno.diagnostico.detail) });
+                    conDiagnostico.push({ id: s.id, nombre, elo: s.elo || null, fecha: entreno.diagnostico.created_at, resumen: PE.resumir(conEloActual(entreno.diagnostico.detail, s)) });
                 } else {
                     // "Lo dejó a medias" no es lo mismo que "no lo ha empezado": al primero
                     // se le recuerda que lo termine, al segundo hay que asignárselo.
@@ -1230,6 +1392,65 @@ function areasFlojasArbitraje(fila) {
     .map((a) => `${a.nombre.toLowerCase()} (${a.porcentaje}%)`);
 }
 
+        // Texto de visitantes (nombre, correo, teléfono) → HTML seguro.
+        function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+        // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
+        // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
+        function renderDiagnosticosVisitantes(contenedor) {
+            const lista = teacherData.visitantes || [];
+            contenedor.innerHTML = "";
+            if (!lista.length) {
+                contenedor.innerHTML = '<p class="text-sm text-brand-400 dark:text-brand-500">Todavía nadie ha hecho el diagnóstico público. El enlace está en la portada, en Cursos y en cada curso: <code class="text-xs">entreno/diagnostico.html</code>.</p>';
+                return;
+            }
+            const nuevos = lista.filter((v) => !v.atendido).length;
+            const cab = document.createElement("p");
+            cab.className = "text-xs text-brand-400 dark:text-brand-500 mb-3";
+            cab.textContent = `${lista.length} diagnóstico${lista.length === 1 ? "" : "s"} de visitantes` + (nuevos ? ` · ${nuevos} sin atender` : " · todos atendidos");
+            contenedor.appendChild(cab);
+            lista.forEach((v) => {
+                const resumen = PE.resumir(v.detalle || {});
+                const fila = document.createElement("div");
+                fila.className = "border border-brand-100 dark:border-brand-800 rounded-xl p-3 mb-2" + (v.atendido ? "" : " border-l-4 border-l-accent-500");
+                const tel = (v.telefono || "").replace(/[^\d+]/g, "");
+                const contacto = [
+                    v.email ? `<a href="mailto:${escVis(v.email)}" class="text-accent-600 dark:text-accent-400 hover:underline">${escVis(v.email)}</a>` : "",
+                    v.telefono ? `<a href="https://wa.me/${escVis(tel.replace(/^\+/, ""))}" target="_blank" rel="noopener" class="text-accent-600 dark:text-accent-400 hover:underline">WhatsApp ${escVis(v.telefono)}</a>` : "",
+                ].filter(Boolean).join(" · ");
+                fila.innerHTML = `
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <p class="text-sm font-semibold text-brand-800 dark:text-white">${escVis(v.nombre)}${v.atendido ? "" : ' <span class="text-[10px] uppercase tracking-wide text-accent-600 dark:text-accent-400 ml-1">nuevo</span>'}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-400 whitespace-nowrap">${fmtFecha(v.created_at)} · <strong>${escVis(v.nivel || resumen.nivel.etiqueta)}</strong> · ${v.porcentaje != null ? v.porcentaje : resumen.porcentaje}%${v.elo ? ` · Elo ${v.elo}` : ""}</p>
+                    </div>
+                    ${contacto ? `<p class="text-xs text-brand-500 dark:text-brand-400 mt-1">${contacto}</p>` : ""}
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <button type="button" data-ver class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors" aria-expanded="false">Ver detalle</button>
+                        <button type="button" data-atendido class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors">${v.atendido ? "Marcar como pendiente" : "Marcar como atendido"}</button>
+                    </div>
+                    <div data-detalle class="hidden mt-3"></div>`;
+                const det = fila.querySelector("[data-detalle]");
+                fila.querySelector("[data-ver]").addEventListener("click", (ev) => {
+                    const abierto = det.classList.toggle("hidden");
+                    ev.currentTarget.setAttribute("aria-expanded", String(!abierto));
+                    ev.currentTarget.textContent = abierto ? "Ver detalle" : "Ocultar detalle";
+                    if (!abierto && !det.innerHTML) {
+                        det.innerHTML = cabeceraDiagnosticoHTML(resumen, v.created_at, false) + `<div class="space-y-3">${barrasAreasHTML(resumen)}</div>` +
+                            `<p class="text-xs text-brand-400 dark:text-brand-500 mt-3">Debilidades: ${resumen.debilidades.length ? resumen.debilidades.map((d) => `${d.nombre} (${d.porcentaje}%)`).join(", ") : "ninguna por debajo del 60%"}.</p>`;
+                    }
+                });
+                fila.querySelector("[data-atendido]").addEventListener("click", async (ev) => {
+                    const boton = ev.currentTarget;
+                    boton.disabled = true;
+                    const { error } = await sb.from("diagnosticos_publicos").update({ atendido: !v.atendido }).eq("id", v.id);
+                    if (error) { boton.disabled = false; boton.textContent = "No se pudo guardar"; return; }
+                    v.atendido = !v.atendido;
+                    applyTeacherFilters();
+                });
+                contenedor.appendChild(fila);
+            });
+        }
+
         function renderDiagnosticosClase(contenedor) {
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
             const total = conDiagnostico.length + pendientes.length;
@@ -1275,7 +1496,7 @@ function areasFlojasArbitraje(fila) {
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
-                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}</span>
+                                <span class="text-brand-500 dark:text-brand-400 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
                             </div>
                             ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
                         </div>`).join("")}

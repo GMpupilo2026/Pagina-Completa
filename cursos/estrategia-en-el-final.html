@@ -87,9 +87,6 @@
                     <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">16 lecciones</strong> · Intermedio · Avanzado</p>
                     <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
                 </div>
-                <div class="hidden items-center gap-2" id="course-access-cta" hidden>
-                    <a href="../login.html?next=cursos/estrategia-en-el-final.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Iniciar sesión →</a>
-                </div>
             </div>
 
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
@@ -131,22 +128,32 @@
                     </ol>
                 </div>
             </div>
+<!-- ac-desc: Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea para practicarla, la presentación y el PDF de ejercicios para imprimir. -->
+            <!-- ac-scripts:     &lt;script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/supabase-client.js"&gt;&lt;/script&gt;
+    &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/entreno-progress.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/progreso-usuario.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/shared-engine.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/practice-engine.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/finales-100.js"&gt;&lt;/script&gt;
+    &lt;script src="../js/curso-acceso.js"&gt;&lt;/script&gt;
+ -->
+            <section aria-labelledby="academia-invite" class="mt-12 rounded-2xl bg-brand-800 dark:bg-brand-900 p-6 md:p-8 text-center shadow-lg">
+                <p class="text-accent-400 text-xs font-semibold uppercase tracking-wide">Contenido completo</p>
+                <h2 id="academia-invite" class="font-serif text-2xl font-bold text-white mt-2 mb-3">Este curso se estudia en Academia</h2>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea para practicarla, la presentación y el PDF de ejercicios para imprimir.</p>
+                <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-6">Las 16 lecciones completas están dentro del panel de Academia, en orden y con tu línea de progreso: cada lección se abre al terminar la anterior, y tu profesor ve hasta dónde llegaste.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Academia</a>
+                    <a href="../login.html?next=cursos/academia/estrategia-en-el-final.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ya soy alumno: iniciar sesión →</a>
+                </div>
+                <p class="text-brand-200 text-sm mt-5">¿No sabés qué nivel tenés? <a href="../entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 font-semibold underline">Hacé el diagnóstico de nivel gratis</a> (20 minutos, sin cuenta) y el profesor ve tu resultado.</p>
+            </section>
 
-            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
-            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea para practicarla, la presentación y el PDF de ejercicios para imprimir.</p>
-
-            <div id="course-content-body" data-course="estrategia-en-el-final" class="space-y-8">
-                <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
-            </div>
-
-            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
-                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
-                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las 16 lecciones completas de este curso, con sus recursos descargables.</p>
-                <a href="../login.html?next=cursos/estrategia-en-el-final.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
-            </div>
 
             <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
-                <a href="los-100-finales.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Los 100 finales que hay que conocer"><span aria-hidden="true">←</span> Los 100 finales que hay que conocer</a>
+                <a href="el-mapa-de-los-finales.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: El mapa de los finales"><span aria-hidden="true">←</span> El mapa de los finales</a>
                 <a href="partidas-modelo.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Partidas modelo del ajedrez moderno">Partidas modelo del ajedrez moderno <span aria-hidden="true">→</span></a>
             </nav>
         </div>
@@ -155,14 +162,5 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../js/main.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="../js/supabase-client.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="../js/entreno-progress.js"></script>
-    <script src="../js/progreso-usuario.js"></script>
-    <script src="../js/shared-engine.js"></script>
-    <script src="../js/practice-engine.js"></script>
-    <script src="../js/finales-100.js"></script>
-    <script src="../js/curso-acceso.js"></script>
 </body>
 </html>

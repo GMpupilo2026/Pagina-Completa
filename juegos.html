@@ -38,7 +38,9 @@
     <script src="js/cartas-engine.js"></script>
     <script src="js/duelo-engine.js"></script>
     <script src="js/fourplayer-engine.js"></script>
+    <script src="js/variantes-engines.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/juego-aviso.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -150,6 +152,9 @@
                                 <option value="cartas">🃏 Ajedrez de Cartas</option>
                                 <option value="duelo">⚡ Duelo Simultáneo</option>
                                 <option value="niebla">🌫️ Niebla de Guerra</option>
+                                <option value="abrazos">🤗 Ajedrez de abrazos</option>
+                                <option value="camaleon">🦎 Camaleón</option>
+                                <option value="ciegas">🙈 A ciegas</option>
                                 <option value="4ffa">♟️ 4 jugadores · Todos contra todos</option>
                                 <option value="4teams">🤝 4 jugadores · Equipos</option>
                             </select>
@@ -242,6 +247,9 @@
             { id: "cartas", emoji: "🃏", label: "Ajedrez de Cartas", desc: "Ajedrez de toda la vida más una mano de cartas de un solo uso: refuerzos, congelar al rival, escudos, un salto de rey y más." },
             { id: "duelo", emoji: "⚡", label: "Duelo Simultáneo", desc: "Los dos jugadores eligen su jugada en secreto y a la vez, desde la misma posición. Se revelan juntas: si apuntan a la misma casilla, chocan; si uno escapaba de donde el otro atacaba, escapa de verdad." },
             { id: "niebla", emoji: "🌫️", label: "Niebla de Guerra", desc: "Ajedrez de siempre, pero el tablero está cubierto: solo ves las casillas que tus propias piezas alcanzan a atacar o defender. Hay que deducir dónde está el rival — sin dejar de ver tu propio alcance." },
+            { id: "abrazos", emoji: "🤗", label: "Ajedrez de abrazos", desc: "Nadie captura: al llegar a la casilla de una pieza rival, las dos se abrazan y forman una unidad tuya que mueve como cualquiera de sus piezas. Gana quien abraza al rey rival. Reacciones en cadena garantizadas." },
+            { id: "camaleon", emoji: "🦎", label: "Camaleón", desc: "Cada pieza mueve como la pieza que empieza en su columna: en a y h como torre, en b y g como caballo, en c y f como alfil, en d como dama y en e como rey. Los peones, como peones. Jaque mate de siempre." },
+            { id: "ciegas", emoji: "🙈", label: "A ciegas", desc: "Ajedrez normal sin ver las piezas: escribís tu jugada en un panel, la del rival aparece 10 segundos y desaparece. Cinco oportunidades de ver la planilla 20 segundos." },
             { id: "4ffa", emoji: "♟️", label: "4 jugadores · Todos contra todos", desc: "4 personas, un solo tablero en cruz. Suma puntos por capturas y jaque mate — no hace falta ser el último en pie para ganar." },
             { id: "4teams", emoji: "🤝", label: "4 jugadores · Equipos", desc: "2 parejas (los que quedan frente a frente en el tablero): gana el primer equipo que da jaque mate a un rival. No se puede capturar al compañero." },
             { id: "kingofthehill", emoji: "⛰️", label: "Rey de la colina", desc: "Próximamente", disabled: true },
@@ -386,6 +394,7 @@
             if (variant === "cartas") return "cartas.html";
             if (variant === "duelo") return "duelo.html";
             if (variant === "niebla") return "niebla.html";
+            if (variant === "abrazos" || variant === "camaleon" || variant === "ciegas") return "variante.html";
             return "crazyhouse.html";
         }
 
@@ -568,6 +577,12 @@
                 // (la bandeja de reserva) — Niebla de Guerra y Ajedrez Estándar son
                 // ajedrez normal, sin reserva, así que necesitan el fen estándar explícito.
                 if (variant === "niebla" || variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+                // Las variantes de variante.html guardan su propia posición inicial (Abrazos y
+                // Camaleón no usan el FEN de Crazyhouse); A ciegas lleva la cuenta de desbloqueos.
+                if (window.Variantes && (variant === "abrazos" || variant === "camaleon" || variant === "ciegas")) {
+                    fila.fen = Variantes.inicio(variant);
+                    if (variant === "ciegas") fila.variant_state = { w_unlocks: 5, b_unlocks: 5 };
+                }
                 const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }
@@ -604,6 +619,8 @@
 
             if (isTeacher) await renderTeacherView();
             else await renderStudentView();
+            // Si el profesor asigna una partida mientras el alumno está aquí, aviso y traslado automático.
+            if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

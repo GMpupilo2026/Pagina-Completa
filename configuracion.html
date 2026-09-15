@@ -105,6 +105,24 @@
                     <button id="save-name-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
                 </div>
                 <p id="name-msg" class="text-xs mb-4"></p>
+                <!-- Elo del alumno: lo usa el diagnóstico de nivel (entreno/diagnostico.html y
+                     js/plan-entrenamiento.js) para ajustar el nivel estimado y el plan. Columnas
+                     profiles.elo / elo_tipo / elo_actualizado. -->
+                <fieldset class="mb-4">
+                    <legend class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Tu Elo (rating)</legend>
+                    <div class="flex flex-wrap gap-2 mb-1">
+                        <input id="elo-input" type="number" inputmode="numeric" min="100" max="3500" step="1" placeholder="Ej. 1350" aria-label="Elo" class="w-32 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <select id="elo-tipo" aria-label="Origen del Elo" class="flex-1 min-w-[12rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <option value="fide">FIDE</option>
+                            <option value="nacional">Federación nacional</option>
+                            <option value="online">En línea (Lichess, Chess.com)</option>
+                            <option value="estimado">Estimado por mi profesor</option>
+                        </select>
+                        <button id="save-elo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
+                    </div>
+                    <p id="elo-msg" class="text-xs mb-1"></p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500">El diagnóstico de nivel usa tu Elo para afinar el nivel estimado y el plan de entrenamiento. Si no tenés rating, dejalo vacío. Actualizalo cuando cambie.</p>
+                </fieldset>
                 <label class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Correo</label>
                 <p id="email-display" class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>
                 <p class="text-xs text-brand-400 dark:text-brand-500">Por seguridad, el correo y el rol de la cuenta no se pueden cambiar desde aquí.</p>
@@ -191,6 +209,22 @@
             profile.full_name = value;
             msg.textContent = "Nombre actualizado.";
             msg.className = "text-xs text-green-600 dark:text-green-400 mb-4";
+        });
+
+        document.getElementById("save-elo-btn").addEventListener("click", async () => {
+            const msg = document.getElementById("elo-msg");
+            const raw = document.getElementById("elo-input").value.trim();
+            const tipo = document.getElementById("elo-tipo").value;
+            let elo = null;
+            if (raw) {
+                elo = parseInt(raw, 10);
+                if (!Number.isFinite(elo) || elo < 100 || elo > 3500) { msg.textContent = "El Elo tiene que ser un número entre 100 y 3500 (o dejarlo vacío)."; msg.className = "text-xs text-red-600 dark:text-red-400 mb-1"; return; }
+            }
+            const { error } = await sb.from("profiles").update({ elo, elo_tipo: elo ? tipo : null, elo_actualizado: new Date().toISOString() }).eq("id", profile.id);
+            if (error) { msg.textContent = error.message; msg.className = "text-xs text-red-600 dark:text-red-400 mb-1"; return; }
+            profile.elo = elo; profile.elo_tipo = elo ? tipo : null;
+            msg.textContent = elo ? `Elo guardado: ${elo}. El próximo diagnóstico lo tendrá en cuenta.` : "Elo borrado.";
+            msg.className = "text-xs text-green-600 dark:text-green-400 mb-1";
         });
 
         document.getElementById("pw-save-btn").addEventListener("click", async () => {
@@ -388,6 +422,8 @@
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
             document.getElementById("full-name-input").value = profile.full_name || "";
+            document.getElementById("elo-input").value = profile.elo || "";
+            if (profile.elo_tipo) document.getElementById("elo-tipo").value = profile.elo_tipo;
             document.getElementById("email-display").textContent = profile.email;
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

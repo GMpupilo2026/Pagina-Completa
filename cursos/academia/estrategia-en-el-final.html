@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../../img/favicon.svg">
+    <title>Academia · Estrategia en el final — Ajedrez Integral</title>
+    <meta name="description" content="Temario completo del curso Estrategia en el final: El final no se juega calculando más: se juega sabiendo qué hacer. Rey activo, peones que mandan, piezas con trabajo y el cambio que decide la partida.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {
+                colors: {
+                    brand: { 50:'#f0f4f8',100:'#d9e2ec',200:'#bcccdc',300:'#9fb3c8',400:'#627d98',500:'#486581',600:'#334e68',700:'#243b53',800:'#102a43',900:'#0a1f33',950:'#071527' },
+                    accent: { 400:'#f0b429',500:'#de911d',600:'#cb6e17' }
+                },
+                fontFamily: { sans:['Inter','sans-serif'], serif:['Merriweather','serif'] }
+            } }
+        }
+    </script>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="../../js/adaptive-mode.js"></script>
+    <link rel="stylesheet" href="../../css/finales-100.css">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="../../css/curso-academia.css">
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="../../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none" aria-label="Abrir menú">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <article class="pt-28 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="index.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Mis cursos</a> <span class="text-brand-300 dark:text-brand-600 text-sm mx-1" aria-hidden="true">·</span> <a href="../../clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4">Panel de Academia</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Intermedio · Avanzado</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Estrategia en el final</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-6">El final no se juega calculando más: se juega sabiendo qué hacer. Rey activo, peones que mandan, piezas con trabajo y el cambio que decide la partida.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-brand-600 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-6">♔</div>
+
+            <p class="text-brand-600 dark:text-brand-300 mb-8">Casi todo lo que se estudia de finales son posiciones teóricas: Lucena, Philidor, la regla del cuadrado. Pero en la partida real casi nunca aparecen esas posiciones exactas — aparece un final con seis peones y dos piezas donde hay que decidir qué hacer. Este curso es sobre eso: los principios que convierten un final cualquiera en un plan claro.</p>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">16 lecciones</strong> · Intermedio · Avanzado</p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cada lección con su presentación y su PDF de ejercicios para imprimir.</p>
+                </div>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · El rey</h3>
+                    <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Primero el rey<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Antes de empujar un peón, mejora la posición del rey: casi siempre es la jugada correcta.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La oposición y las casillas críticas<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cómo ganar el duelo de reyes, y qué casillas hay que alcanzar para que el peón corone.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La ruta del rey<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Dos caminos que tardan lo mismo no valen lo mismo: el rey puede amenazar dos cosas mientras camina.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Incursiones y refugio<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Meter el rey por donde no lo esperan, y hacerle una casa antes de que aparezcan los jaques.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Los peones mandan</h3>
+                    <ol start="5" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">El peón pasado<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Crearlo, empujarlo y, sobre todo, usarlo para distraer: el peón pasado casi nunca gana solo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Mayorías y el pasado exterior<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Tres peones contra dos en un flanco: cómo se convierte eso en un peón que corona.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Rupturas de peones<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">El momento en que se cambia la estructura es el momento en que se decide el final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Debilidades que no se mueven<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Peones atrasados, doblados y aislados: cómo se atacan cuando ya no quedan piezas.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · Las piezas en el final</h3>
+                    <ol start="9" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">La torre activa<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Una torre que ataca vale más que un peón: por eso se entrega material para activarla.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">La torre y el peón pasado<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Detrás del pasado, siempre: la regla de Tarrasch y por qué funciona.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Alfil contra caballo<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cuál de los dos manda depende de la estructura, no del gusto de cada quien.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Alfiles de distinto color<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">La fortaleza de tablas más famosa, y las tres formas de romperla.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 4 · Técnica y decisión</h3>
+                    <ol start="13" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">El cambio que decide<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Entrar o no entrar en un final es una decisión de estrategia, no de material.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Zugzwang, triangulación y espera<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Ganar un tiempo sin cambiar nada: el arma más rara y más decisiva del final.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Profilaxis: quitarle el plan<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Preguntarse qué quiere hacer el rival y jugar para impedírselo, aunque no mejore nada tuyo.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Convertir: las dos debilidades<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Cómo se transforma una ventaja chica en punto entero, paso por paso.</span></li>
+                    </ol>
+                </div>
+            </div>
+            <section aria-labelledby="ac-contenido" class="mt-12">
+                <h2 id="ac-contenido" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus lecciones</h2>
+                <p class="text-brand-500 dark:text-brand-400 text-sm mb-5">Cada lección desarrollada por completo: la idea explicada, las posiciones con su línea jugada a jugada y práctica contra el motor (Stockfish, en tu propio navegador), la tarea para practicarla, la presentación y el PDF de ejercicios para imprimir. Las lecciones se abren en orden: al terminar una, marcala como estudiada y se desbloquea la siguiente. Tu avance queda guardado y tu profesor puede verlo en Informes.</p>
+                <div id="ac-progreso" class="ac-prog" aria-label="Tu progreso en el curso"><p class="ac-prog-txt">Cargando tu progreso…</p></div>
+                <div id="ac-avisos" class="ac-avisos" aria-live="polite" role="status"></div>
+                <div id="course-content-body" data-course="estrategia-en-el-final" data-titulo="Estrategia en el final" class="space-y-8">
+                    <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
+                </div>
+            </section>
+
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="el-mapa-de-los-finales.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: El mapa de los finales"><span aria-hidden="true">←</span> El mapa de los finales</a>
+                <a href="partidas-modelo.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Partidas modelo del ajedrez moderno">Partidas modelo del ajedrez moderno <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../../js/supabase-client.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="../../js/entreno-progress.js"></script>
+    <script src="../../js/progreso-usuario.js"></script>
+    <script src="../../js/shared-engine.js"></script>
+    <script src="../../js/practice-engine.js"></script>
+    <script src="../../js/finales-100.js"></script>
+    <script src="../../js/curso-academia.js"></script>
+</body>
+</html>

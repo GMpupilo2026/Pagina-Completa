@@ -39,6 +39,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/juego-aviso.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -270,7 +271,7 @@
                 { emoji: "🏆", label: "Torneos", desc: "Partidas en vivo y tabla de posiciones", href: "tv.html" },
             ] },
             { title: "Aprender", tiles: [
-                { emoji: "🏛️", label: "Cursos", desc: "Cursos estructurados por nivel", href: "cursos.html" },
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
@@ -568,6 +569,8 @@
             }
 
             renderTiles();
+            // Partida asignada por el profesor: aviso en el panel y traslado automático al tablero.
+            if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
             await refreshSessionStatus();
             await refreshSessionsLog();
             await loadEntrenoProgress();

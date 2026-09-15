@@ -7,8 +7,8 @@
   "resumen": "El final no se juega calculando más: se juega sabiendo qué hacer. Rey activo, peones que mandan, piezas con trabajo y el cambio que decide la partida.",
   "descripcion_larga": "Casi todo lo que se estudia de finales son posiciones teóricas: Lucena, Philidor, la regla del cuadrado. Pero en la partida real casi nunca aparecen esas posiciones exactas — aparece un final con seis peones y dos piezas donde hay que decidir qué hacer. Este curso es sobre eso: los principios que convierten un final cualquiera en un plan claro.",
   "anterior": {
-    "href": "los-100-finales.html",
-    "titulo": "Los 100 finales que hay que conocer"
+    "href": "el-mapa-de-los-finales.html",
+    "titulo": "El mapa de los finales"
   },
   "siguiente": {
     "href": "partidas-modelo.html",
