@@ -44,7 +44,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La jugada se hace al soltar la pieza; presionar el reloj es lo que la completa a efectos del control de tiempo, pero la jugada en sí ya está hecha cuando la mano suelta la pieza.',
-    fuente: 'Leyes del Ajedrez, art. 4.7 y 6.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.7 y 6.2.1',
   },
   {
     id: 'ley_pieza_tocada', area: 'leyes', peso: 1,
@@ -57,7 +57,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Pieza tocada, pieza jugada, salvo que el jugador haya avisado "compongo" (j\'adoube) antes de tocarla. Si no tiene jugada legal, la obligación no se aplica.',
-    fuente: 'Leyes del Ajedrez, art. 4.2 y 4.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.2 y 4.3',
   },
   {
     id: 'ley_jadoube', area: 'leyes', peso: 1,
@@ -70,7 +70,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El aviso va antes de tocar la pieza y solo vale en el propio turno. Dicho después de tocarla, no sirve de nada: la pieza ya está tocada.',
-    fuente: 'Leyes del Ajedrez, art. 4.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.2.1',
   },
   {
     id: 'ley_enroque_torre', area: 'leyes', peso: 2,
@@ -83,7 +83,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El enroque es una jugada de rey y se toca primero el rey. Tocada la torre, se aplica la regla de pieza tocada y esa torre tiene que moverse.',
-    fuente: 'Leyes del Ajedrez, art. 4.4.b',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.4.2',
   },
   {
     id: 'ley_enroque_ilegal', area: 'leyes', peso: 3,
@@ -96,7 +96,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Tocó el rey, así que debe mover el rey si tiene jugada legal — y enrocar por el otro lado cuenta como jugada de rey. Solo si el rey no tiene ninguna jugada legal queda libre de elegir otra.',
-    fuente: 'Leyes del Ajedrez, art. 4.4.a',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.4.3',
   },
   {
     id: 'ley_promocion', area: 'leyes', peso: 2,
@@ -109,7 +109,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El peón se cambia como parte de la misma jugada y la promoción queda hecha al soltar la pieza nueva. Elegida y soltada, ya no se cambia.',
-    fuente: 'Leyes del Ajedrez, art. 4.6 y 3.7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 3.7.5',
   },
   {
     id: 'ley_dead_position', area: 'leyes', peso: 3,
@@ -122,7 +122,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La partida termina ahí mismo, sin reclamo: nadie puede dar mate ni siquiera con la peor serie de jugadas legales del rival (rey contra rey, por ejemplo).',
-    fuente: 'Leyes del Ajedrez, art. 5.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.2',
   },
   {
     id: 'ley_rey_en_jaque_final', area: 'leyes', peso: 4,
@@ -135,7 +135,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El mate termina la partida de inmediato, siempre que la jugada que lo produce sea legal. Lo mismo vale para el ahogado: presionar el reloj ya no juega ningún papel.',
-    fuente: 'Leyes del Ajedrez, art. 5.1.1 y 5.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y 5.2.1',
   },
   {
     id: 'ley_al_paso', area: 'leyes', peso: 2,
@@ -148,7 +148,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El derecho dura una sola jugada: si no se ejerce ahí, se pierde. Es uno de los tres datos que la posición necesita además de las piezas, junto con el turno y los enroques posibles.',
-    fuente: 'Leyes del Ajedrez, art. 3.7.4.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1',
   },
   {
     id: 'ley_jugada_rival', area: 'leyes', peso: 3,
@@ -161,7 +161,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La obligación de capturar existe solo si la captura es legal. Si no lo es, la jugada sigue normal, pero tocar piezas del rival sin necesidad es conducta que el árbitro puede sancionar.',
-    fuente: 'Leyes del Ajedrez, art. 4.3.2 y 4.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.3.2 y 4.5',
   },
   {
     id: 'ley_dos_manos', area: 'leyes', peso: 4,
@@ -174,7 +174,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Cada jugada se hace con una sola mano, y con esa misma mano se presiona el reloj. Usar las dos no vuelve ilegal la jugada: es una infracción de conducta y se sanciona según el artículo 12.9.',
-    fuente: 'Leyes del Ajedrez, art. 4.1 y 6.2.b',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.1 y 6.2.3',
   },
   {
     id: 'ley_abandono', area: 'leyes', peso: 5,
@@ -187,7 +187,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El abandono es distinto de la caída de bandera: no tiene la salvedad del material insuficiente. El que abandona pierde, aunque el rival no hubiera podido dar mate nunca.',
-    fuente: 'Leyes del Ajedrez, art. 5.1.2 (comparar con 6.9)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.2 (comparar con 6.9)',
   },
 
   /* ================= El reloj y el tiempo ================= */
@@ -202,7 +202,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La caída de bandera hace perder salvo que el rival no pudiera dar mate ni con la peor defensa posible. La prueba es "cualquier serie de jugadas legales", no "con juego razonable".',
-    fuente: 'Leyes del Ajedrez, art. 6.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.9',
   },
   {
     id: 'rel_quien_reclama', area: 'reloj', peso: 3,
@@ -215,7 +215,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'En ritmo clásico el árbitro aplica las Leyes de oficio, y la caída de bandera es un hecho observable. En relámpago, en cambio, la bandera la reclama el jugador.',
-    fuente: 'Leyes del Ajedrez, art. 6.8 y 12.2 (comparar con el apéndice B)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.8 y 12.2 (comparar con el apéndice B)',
   },
   {
     id: 'rel_default', area: 'reloj', peso: 2,
@@ -228,7 +228,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si el reglamento no fija otro, el tiempo de incomparecencia es cero — la llamada "tolerancia cero". El árbitro conserva la facultad de decidir otra cosa en un caso puntual.',
-    fuente: 'Leyes del Ajedrez, art. 6.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.7',
   },
   {
     id: 'rel_reloj_mano', area: 'reloj', peso: 1,
@@ -241,7 +241,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Una sola mano para mover y para presionar. Es lo que evita las maniobras de presionar antes de soltar la pieza y las discusiones sobre quién movió primero.',
-    fuente: 'Leyes del Ajedrez, art. 6.2.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.3',
   },
   {
     id: 'rel_defectuoso', area: 'reloj', peso: 3,
@@ -254,7 +254,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El árbitro repone el reloj y fija los tiempos usando su mejor criterio, que es exactamente lo que las Leyes le piden en las situaciones que el texto no cubre al detalle.',
-    fuente: 'Leyes del Ajedrez, art. 6.10 y 6.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10 y 6.11',
   },
   {
     id: 'rel_incremento', area: 'reloj', peso: 2,
@@ -267,7 +267,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El incremento se suma jugada a jugada desde la primera, y por eso un control con incremento de 30 segundos obliga a anotar toda la partida: nunca se entra en el supuesto de dejar de anotar.',
-    fuente: 'Leyes del Ajedrez, art. 6.3.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.3.1',
   },
   {
     id: 'rel_presionar_sin_mover', area: 'reloj', peso: 4,
@@ -280,7 +280,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Presionar sin mover no está previsto como jugada ilegal, sino como conducta indebida: el árbitro elige la sanción de la lista del 12.9, que empieza por la advertencia.',
-    fuente: 'Leyes del Ajedrez, art. 6.2.2 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.2 y 12.9',
   },
   {
     id: 'rel_parar_reloj', area: 'reloj', peso: 3,
@@ -293,7 +293,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Parar el reloj es el gesto para reclamar la presencia del árbitro; por ejemplo al reclamar tablas por repetición. Fuera de esos casos, detenerlo es una infracción.',
-    fuente: 'Leyes del Ajedrez, art. 6.12.1 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.12.1 y 12.9',
   },
   {
     id: 'rel_ambas_banderas', area: 'reloj', peso: 4,
@@ -306,7 +306,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si las dos banderas cayeron y no se puede determinar el orden, la partida sigue si todavía quedan controles por delante; en la última fase del control, son tablas.',
-    fuente: 'Leyes del Ajedrez, art. 6.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11',
   },
   {
     id: 'rel_ajuste_tiempo', area: 'reloj', peso: 5,
@@ -319,7 +319,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes le dan al árbitro la facultad de reponer los tiempos con su mejor criterio, incluidos los de quien reclama. El reclamo tardío no obliga a devolver todo el tiempo perdido.',
-    fuente: 'Leyes del Ajedrez, art. 6.10.2 y 6.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10.2 y 6.11',
   },
   {
     id: 'rel_llegada_tarde', area: 'reloj', peso: 5,
@@ -332,7 +332,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reloj del ausente arranca a la hora de inicio: el tiempo consumido es suyo. El tiempo de incomparecencia solo marca el límite a partir del cual pierde la partida.',
-    fuente: 'Leyes del Ajedrez, art. 6.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.7',
   },
 
   /* ================= Irregularidades: jugadas ilegales ================= */
@@ -347,7 +347,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Primera ilegal completada en clásico: se repone la posición anterior y el rival recibe dos minutos. La jugada queda completada cuando se puso en marcha el reloj del rival.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.1 y 7.5.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1 y 7.5.5',
   },
   {
     id: 'irr_segunda_ilegal', area: 'irregularidades', peso: 2,
@@ -360,7 +360,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La segunda ilegal del mismo jugador pierde la partida, con la misma salvedad de siempre: si el rival no puede dar mate por ninguna serie de jugadas legales, son tablas.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.5',
   },
   {
     id: 'irr_cuando_completada', area: 'irregularidades', peso: 3,
@@ -373,7 +373,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la diferencia entre corregir sin sanción y sancionar: mientras no presionó el reloj, el jugador todavía puede arreglar su jugada.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1',
   },
   {
     id: 'irr_colores_cambiados', area: 'irregularidades', peso: 4,
@@ -386,7 +386,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El límite son diez jugadas de cada bando. Pasado ese punto, cambiar los colores haría más daño que dejar la partida como está.',
-    fuente: 'Leyes del Ajedrez, art. 7.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.3',
   },
   {
     id: 'irr_posicion_inicial', area: 'irregularidades', peso: 4,
@@ -399,7 +399,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Una posición inicial incorrecta no se arregla a mitad de camino: la partida se cancela y se juega otra. Es distinto del tablero mal orientado o de los colores cambiados.',
-    fuente: 'Leyes del Ajedrez, art. 7.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.2.1',
   },
   {
     id: 'irr_tablero_orientacion', area: 'irregularidades', peso: 3,
@@ -412,7 +412,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La posición es la misma; lo que está mal es el soporte. Se pasa a un tablero correcto y se sigue jugando, sin anular nada.',
-    fuente: 'Leyes del Ajedrez, art. 7.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.2.2',
   },
   {
     id: 'irr_piezas_desplazadas', area: 'irregularidades', peso: 2,
@@ -425,7 +425,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Quien desordena, ordena, y lo hace con su reloj corriendo. Si además lo hace de forma repetida, el árbitro puede sancionarlo por conducta.',
-    fuente: 'Leyes del Ajedrez, art. 7.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.4',
   },
   {
     id: 'irr_ilegal_no_advertida', area: 'irregularidades', peso: 5,
@@ -438,7 +438,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla general de las irregularidades es reponer la posición anterior; cuando reconstruirla es imposible, se parte de la última posición que sí se puede determinar y la partida continúa.',
-    fuente: 'Leyes del Ajedrez, art. 7.1 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.1 y 7.5',
   },
   {
     id: 'irr_rey_en_jaque', area: 'irregularidades', peso: 3,
@@ -451,7 +451,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Dejar el propio rey atacado es una jugada ilegal como cualquier otra: reposición, y el conteo de primera o segunda ilegal según corresponda.',
-    fuente: 'Leyes del Ajedrez, art. 3.9.2 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9.2 y 7.5',
   },
   {
     id: 'irr_promocion_sin_pieza', area: 'irregularidades', peso: 5,
@@ -464,7 +464,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El peón no puede quedarse en la octava: hasta que la pieza nueva no está puesta, la jugada no está hecha. Presionar el reloj así la completa como ilegal.',
-    fuente: 'Leyes del Ajedrez, art. 4.6 y 7.5.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 7.5.1',
   },
   {
     id: 'irr_ilegal_ambos', area: 'irregularidades', peso: 4,
@@ -477,7 +477,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La cuenta es individual. Solo la segunda ilegal del MISMO jugador pierde la partida.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.5',
   },
 
   /* ================= Planilla y tablas ================= */
@@ -492,7 +492,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las dos columnas, jugada a jugada, en la notación algebraica del apéndice C y de forma legible. La planilla es documento del torneo, no una nota personal.',
-    fuente: 'Leyes del Ajedrez, art. 8.1.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1.1',
   },
   {
     id: 'tab_dejar_de_anotar', area: 'tablas', peso: 3,
@@ -505,7 +505,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las dos condiciones a la vez. Con incremento de 30 segundos por jugada no hay excusa: se anota toda la partida.',
-    fuente: 'Leyes del Ajedrez, art. 8.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.4',
   },
   {
     id: 'tab_triple_repeticion', area: 'tablas', peso: 2,
@@ -518,7 +518,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Tres veces la misma posición, entendida como piezas, turno, enroques posibles y posibilidad de capturar al paso. No son jugadas repetidas: son posiciones.',
-    fuente: 'Leyes del Ajedrez, art. 9.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.2',
   },
   {
     id: 'tab_como_reclamar', area: 'tablas', peso: 3,
@@ -531,7 +531,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La jugada que produciría la repetición se anota pero no se juega. Si se juega, el reclamo ya es otro: el de la posición que quedó en el tablero.',
-    fuente: 'Leyes del Ajedrez, art. 9.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.2.1',
   },
   {
     id: 'tab_reclamacion_falsa', area: 'tablas', peso: 4,
@@ -544,7 +544,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo equivocado le cuesta dos minutos a quien reclama en beneficio del rival (uno en rápidas y relámpago desde 2023), y hay que jugar la jugada anunciada.',
-    fuente: 'Leyes del Ajedrez, art. 9.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.5.2',
   },
   {
     id: 'tab_cincuenta', area: 'tablas', peso: 2,
@@ -557,7 +557,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Cincuenta de cada bando, y la cuenta se reinicia con cada avance de peón o cada captura.',
-    fuente: 'Leyes del Ajedrez, art. 9.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.3',
   },
   {
     id: 'tab_automaticas', area: 'tablas', peso: 4,
@@ -570,7 +570,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Tres repeticiones y 50 jugadas dan derecho a reclamar; cinco repeticiones y 75 jugadas son automáticas y el árbitro interviene de oficio.',
-    fuente: 'Leyes del Ajedrez, art. 9.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.6',
   },
   {
     id: 'tab_oferta', area: 'tablas', peso: 3,
@@ -583,7 +583,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Jugada, oferta, reloj: así el rival decide con la jugada ya sobre el tablero. Una oferta hecha en el turno del rival es una molestia sancionable.',
-    fuente: 'Leyes del Ajedrez, art. 9.1.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.1.2.1',
   },
   {
     id: 'tab_oferta_repetida', area: 'tablas', peso: 3,
@@ -596,7 +596,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'No hay un número exacto en las Leyes, pero repetir la oferta para incomodar entra en la prohibición de distraer o molestar, con las sanciones del 12.9.',
-    fuente: 'Leyes del Ajedrez, art. 11.5 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.5 y 12.9',
   },
   {
     id: 'tab_oferta_retirada', area: 'tablas', peso: 4,
@@ -609,7 +609,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Una vez hecha, la oferta no se retira. Se extingue cuando el rival la acepta, la rechaza de palabra, toca una pieza para mover, o la partida termina de otro modo.',
-    fuente: 'Leyes del Ajedrez, art. 9.1.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.1.3',
   },
   {
     id: 'tab_planilla_arbitro', area: 'tablas', peso: 5,
@@ -622,7 +622,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo necesita prueba. Sin planilla, el árbitro puede apoyarse en lo que haya observado o en el registro electrónico; sin nada de eso, no hay cómo darla por buena.',
-    fuente: 'Leyes del Ajedrez, art. 8.5 y 9.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.5 y 9.5',
   },
 
   /* ================= Conducta, dispositivos y sanciones ================= */
@@ -637,7 +637,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla es dura a propósito. El reglamento del evento puede fijar una sanción menos severa, pero si no dice nada, la consecuencia es la derrota.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2.1',
   },
   {
     id: 'con_dispositivo_encima', area: 'conducta', peso: 3,
@@ -650,7 +650,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Lo que prohíbe la regla es tener el dispositivo, no que suene: apagado cuenta igual. Por eso los torneos habilitan un lugar para dejar los teléfonos.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2.1',
   },
   {
     id: 'con_lista_sanciones', area: 'conducta', peso: 2,
@@ -663,7 +663,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La lista va de la advertencia a la expulsión, pasando por ajustar tiempos, dar o quitar puntos y excluir de rondas. Cambiar de tablero no está entre ellas.',
-    fuente: 'Leyes del Ajedrez, art. 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.9',
   },
   {
     id: 'con_advertencia_primero', area: 'conducta', peso: 2,
@@ -676,7 +676,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La lista del 12.9 está ordenada de la más suave a la más dura, y el árbitro elige la proporcionada. Aplicar la más severa a una infracción menor es tan mal arbitraje como no sancionar.',
-    fuente: 'Leyes del Ajedrez, art. 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.9',
   },
   {
     id: 'con_analizar_sala', area: 'conducta', peso: 3,
@@ -689,7 +689,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Analizar dentro de la sala está prohibido mientras haya partidas en curso: distrae y puede dar información. Para eso están las salas de análisis.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.1',
   },
   {
     id: 'con_ayuda_externa', area: 'conducta', peso: 3,
@@ -702,7 +702,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Ninguna fuente de información, consejo o análisis externo: ni notas, ni libros, ni consultas. La sanción sale de la lista del 12.9 y puede llegar a la derrota.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.1 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.1 y 12.9',
   },
   {
     id: 'con_dar_mano', area: 'conducta', peso: 4,
@@ -715,7 +715,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'No hay una sanción específica escrita para esto, pero sí la prohibición general de conducta que desprestigie el juego, con la escala del 12.9 detrás. El árbitro debe avisar antes de castigar.',
-    fuente: 'Leyes del Ajedrez, art. 11.1 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.1 y 12.9',
   },
   {
     id: 'con_salir_sala', area: 'conducta', peso: 3,
@@ -728,7 +728,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La sala de juego se abandona solo con permiso del árbitro, y la zona de juego (sala, baños, refrigerio) no se abandona sin autorización — es la regla que sostiene los controles antitrampa.',
-    fuente: 'Leyes del Ajedrez, art. 11.2.3 y 11.2.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.2.3 y 11.2.4',
   },
   {
     id: 'con_reclamacion_arbitro', area: 'conducta', peso: 4,
@@ -741,7 +741,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El derecho a apelar existe siempre, pero por el canal y en el plazo que fije el reglamento del torneo. Por eso todo reglamento debe decir cómo se compone el comité de apelación.',
-    fuente: 'Leyes del Ajedrez, art. 11.10',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10',
   },
   {
     id: 'con_espectador', area: 'conducta', peso: 4,
@@ -754,7 +754,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Los espectadores y los jugadores de otras partidas no comentan ni interfieren; el árbitro puede expulsar a quien lo haga. La decisión sobre la bandera la toma el árbitro, no el público.',
-    fuente: 'Leyes del Ajedrez, art. 11.8 y 12.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.8 y 12.8',
   },
   {
     id: 'con_no_intervenir', area: 'conducta', peso: 5,
@@ -767,7 +767,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El árbitro no juega la partida: no señala jugadas, ni banderas a punto de caer, ni reclamos disponibles. Intervenir de más es de los errores más graves del oficio.',
-    fuente: 'Leyes del Ajedrez, art. 12.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.6',
   },
   {
     id: 'con_reclamo_trampa', area: 'conducta', peso: 5,
@@ -780,7 +780,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Se toma nota y se aplican los procedimientos previstos (observación, controles, informe), sin decidir la partida por una sospecha. Acusar sin fundamento es a su vez conducta sancionable.',
-    fuente: 'Leyes del Ajedrez, art. 11.1, 12.2 y protocolo antitrampa de la FIDE',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.1 y 12.2, y Reglamento antitrampa de la FIDE (ACC)',
   },
 
   /* ================= Rápidas y relámpago ================= */
@@ -795,7 +795,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La cuenta oficial suma el tiempo base más 60 veces el incremento: 3+2 son 3 + 120 segundos, o sea 5 minutos, y entra en relámpago.',
-    fuente: 'Leyes del Ajedrez, apéndice B.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.1',
   },
   {
     id: 'rit_definicion_rapida', area: 'ritmos', peso: 2,
@@ -808,7 +808,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Por debajo del rango es relámpago; a partir de 60 minutos (con la misma cuenta) es ritmo clásico, con todo lo que eso implica para la validez del rating.',
-    fuente: 'Leyes del Ajedrez, apéndice A.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.1',
   },
   {
     id: 'rit_ilegal_rapidas', area: 'ritmos', peso: 4,
@@ -821,7 +821,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Hasta 2022 eran dos minutos; desde 2023 las rápidas se igualaron al relámpago con un minuto. Lo mismo vale para el reclamo de tablas incorrecta.',
-    fuente: 'Leyes del Ajedrez 2023, apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
   },
   {
     id: 'rit_ilegal_blitz_reclamo', area: 'ritmos', peso: 5,
@@ -834,7 +834,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'En relámpago manda el jugador: si responde con su jugada, la posición queda validada y ya no hay reclamo posible.',
-    fuente: 'Leyes del Ajedrez, apéndice B.3 (y A.4 para rápidas sin supervisión)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.3 (y A.4 para rápidas sin supervisión)',
   },
   {
     id: 'rit_anotar_rapidas', area: 'ritmos', peso: 3,
@@ -847,7 +847,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Sin obligación de anotar, la planilla deja de ser prueba: por eso en estos ritmos los reclamos dependen mucho más de lo que el árbitro observe.',
-    fuente: 'Leyes del Ajedrez, apéndices A.2 y B.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 y B.2',
   },
   {
     id: 'rit_arbitro_supervision', area: 'ritmos', peso: 4,
@@ -860,7 +860,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El apéndice A distingue los dos escenarios: con supervisión suficiente se aplican las reglas de competición normales; sin ella, se pasa al régimen de reclamo del jugador.',
-    fuente: 'Leyes del Ajedrez, apéndice A.3 y A.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3 y A.4',
   },
   {
     id: 'rit_bandera_blitz', area: 'ritmos', peso: 3,
@@ -873,7 +873,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo es del jugador, y vale siempre que él mismo no haya excedido su tiempo. Un espectador nunca puede intervenir.',
-    fuente: 'Leyes del Ajedrez, apéndice B.4 y art. 11.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.4 y art. 11.8',
   },
   {
     id: 'rit_apendice_c', area: 'ritmos', peso: 1,
@@ -886,7 +886,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Solo la algebraica. Las iniciales de las piezas pueden ser las del idioma del jugador, pero la estructura de la notación es la misma en todo el mundo.',
-    fuente: 'Leyes del Ajedrez, art. 8.1 y apéndice C',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1 y apéndice C',
   },
   {
     id: 'rit_quickplay', area: 'ritmos', peso: 5,
@@ -899,7 +899,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la regla del "final rápido sin incremento", que un reglamento puede adoptar. El árbitro puede posponer la decisión y quedarse mirando la partida antes de resolver.',
-    fuente: 'Leyes del Ajedrez, directriz III (partidas sin incremento y finales rápidos)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), directriz III (partidas sin incremento y finales rápidos)',
   },
   {
     id: 'rit_adaptado_ciegos', area: 'ritmos', peso: 5,
@@ -912,7 +912,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El apéndice sobre partidas adaptadas prevé el tablero con piezas asegurables, el anuncio en voz alta de las jugadas y la ayuda de un asistente cuando corresponde.',
-    fuente: 'Leyes del Ajedrez, apéndice D (jugadores ciegos y con discapacidad visual)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice D (jugadores ciegos y con discapacidad visual)',
   },
 
   /* ================= Competición: emparejamientos y desempates ================= */
@@ -927,7 +927,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la regla absoluta del suizo, por encima de puntuaciones y colores: si respetarla obliga a romper un grupo de puntuación, se rompe.',
-    fuente: 'Reglas de emparejamiento, C.04.1',
+    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
   },
   {
     id: 'com_bye', area: 'competicion', peso: 2,
@@ -940,7 +940,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El bye por emparejamiento vale un punto entero y no cuenta como partida jugada ni asigna color. Es distinto del medio punto que un reglamento puede dar a quien pide no jugar una ronda.',
-    fuente: 'Reglas de emparejamiento, C.04.1',
+    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
   },
   {
     id: 'com_color_absoluta', area: 'competicion', peso: 3,
@@ -953,7 +953,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La absoluta hay que respetarla salvo imposibilidad; la de ±1 es fuerte y la de igualdad (por alternancia) es leve. El orden entre ellas es lo que decide muchos emparejamientos.',
-    fuente: 'Reglas de emparejamiento, C.04.1 y C.04.3',
+    fuente: 'Sistema suizo de la FIDE (Handbook C.04.1 y C.04.3)',
   },
   {
     id: 'com_grupos', area: 'competicion', peso: 3,
@@ -966,7 +966,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Mitad superior contra mitad inferior, respetando colores y la prohibición de repetir rival. Los que sobran bajan al grupo siguiente como flotantes.',
-    fuente: 'Reglas de emparejamiento, C.04.3 (sistema holandés)',
+    fuente: 'Sistema holandés de la FIDE (Handbook C.04.3)',
   },
   {
     id: 'com_buchholz', area: 'competicion', peso: 2,
@@ -979,7 +979,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Mide la dureza del recorrido. Sus variantes (cortando el peor resultado, o el peor y el mejor) buscan reducir el peso de un rival que se hundió o que arrasó.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_sonneborn', area: 'competicion', peso: 3,
@@ -992,7 +992,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'En un round robin todos enfrentan a todos, así que el Buchholz no distingue nada: el Sonneborn-Berger sí, porque pondera contra quién se ganó.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_incomparecencia_desempate', area: 'competicion', peso: 5,
@@ -1005,7 +1005,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Contar las no jugadas como ceros castigaba al que había enfrentado a alguien que después se retiró. El rival virtual reconstruye lo que ese rival "habría" hecho.',
-    fuente: 'Reglas de desempate, C.07 (partidas no jugadas)',
+    fuente: 'Reglas de desempate (Handbook C.07), partidas no jugadas',
   },
   {
     id: 'com_orden_desempates', area: 'competicion', peso: 4,
@@ -1018,7 +1018,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Elegir el desempate una vez conocidos los resultados es la forma más rápida de perder la confianza de la sala: va anunciado de antemano y no se toca.',
-    fuente: 'Reglas de desempate, C.07 y práctica de organización',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_programa_emparejar', area: 'competicion', peso: 4,
@@ -1031,7 +1031,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El sistema es determinista: con los mismos datos, el resultado es el mismo. Si el emparejamiento sorprende, casi siempre el error está en los datos (un resultado mal cargado, un ausente sin marcar), no en el programa homologado.',
-    fuente: 'Reglas de emparejamiento, C.04 (programas homologados por la FIDE)',
+    fuente: 'Reglas de emparejamiento suizo (Handbook C.04), apéndice de programas homologados',
   },
   {
     id: 'com_incomparecencia_rating', area: 'competicion', peso: 5,
@@ -1044,7 +1044,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Puntúa en la tabla, pero no existe como partida: no hay jugadas. Para el rating y para el informe del torneo se marca como no jugada.',
-    fuente: 'Reglas de rating, B.02',
+    fuente: 'Reglamento de rating de la FIDE (Handbook B.02)',
   },
   {
     id: 'com_resultado_firmado', area: 'competicion', peso: 3,
@@ -1057,7 +1057,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Los dos firman o confirman el resultado, según el procedimiento del torneo. Un resultado mal anotado y firmado es de las cosas más difíciles de revertir después.',
-    fuente: 'Leyes del Ajedrez, art. 8.7 y reglamento del torneo',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.7',
   },
   {
     id: 'com_sala_condiciones', area: 'competicion', peso: 4,
@@ -1070,7 +1070,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El árbitro comparte con el organizador la responsabilidad de que las condiciones de juego sean las debidas, y esa revisión se hace antes de que entre el primer jugador.',
-    fuente: 'Leyes del Ajedrez, art. 12.2.3 y manual del árbitro',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.2.3, y Manual del árbitro (ARB)',
   },
 
   /* ================= El árbitro: títulos, categorías y deberes ================= */
@@ -1085,7 +1085,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las dos cosas a la vez, y en ese orden. El resto de los deberes —supervisar, sancionar, cuidar las condiciones de juego— salen de ahí.',
-    fuente: 'Leyes del Ajedrez, art. 12.1 y 12.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.1 y 12.2',
   },
   {
     id: 'tit_titulos_orden', area: 'titulos', peso: 2,
@@ -1098,7 +1098,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El Nacional lo otorga la federación; el FIDE (FA) es el primer título internacional y el Internacional (IA) es el siguiente escalón.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_fa_requisito', area: 'titulos', peso: 3,
@@ -1111,7 +1111,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El camino es: registro nacional, seminario con examen (que otorga una de las normas) y experiencia acreditada en torneos válidos. La edad mínima es 19 años.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1 y B.06.2',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1 y B.06.2)',
   },
   {
     id: 'tit_ia_norma', area: 'titulos', peso: 4,
@@ -1124,7 +1124,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El IA se construye sobre el FA y exige varias normas obtenidas en torneos distintos (una de ellas del seminario), además de la edad mínima de 21 años. La cifra exacta la fija el reglamento vigente.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_categorias', area: 'titulos', peso: 4,
@@ -1137,7 +1137,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La clasificación es distinta del título: el título se tiene de por vida, la categoría depende de la experiencia reciente y es la que abre la puerta a los eventos mundiales y continentales.',
-    fuente: 'Reglamento de clasificación de árbitros, B.06.3',
+    fuente: 'Reglamento de clasificación de árbitros (Handbook B.06.3)',
   },
   {
     id: 'tit_licencia', area: 'titulos', peso: 3,
@@ -1150,7 +1150,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El título es permanente, la licencia no: se paga y se mantiene. Un árbitro sin licencia vigente no puede firmar un informe de torneo válido para rating.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_conflicto_interes', area: 'titulos', peso: 4,
@@ -1163,7 +1163,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La imparcialidad no es solo un estado de ánimo: también tiene que verse. Lo que corresponde es declarar el vínculo y que otro árbitro resuelva lo que toque a esa partida.',
-    fuente: 'Código ético de la FIDE y deberes del árbitro (B.06, art. 12)',
+    fuente: 'Reglamento de árbitros de la FIDE (Handbook B.06), deberes del árbitro, y Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12',
   },
   {
     id: 'tit_informe', area: 'titulos', peso: 3,
@@ -1176,7 +1176,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El informe es lo que convierte al torneo en válido para rating y en base de normas. Va completo y a tiempo: un informe tardío o incompleto puede dejar sin efecto el trabajo de todo el torneo.',
-    fuente: 'Reglamento de rating, B.02 y deberes del árbitro',
+    fuente: 'Reglamento de rating de la FIDE (Handbook B.02)',
   },
   {
     id: 'tit_arbitro_adjunto', area: 'titulos', peso: 2,
@@ -1189,7 +1189,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Una sola voz decide, para que la sala no reciba dos criterios distintos. Los adjuntos observan, informan y aplican lo acordado; las decisiones difíciles suben al principal.',
-    fuente: 'Manual del árbitro de la FIDE (organización del equipo arbitral)',
+    fuente: 'Manual del árbitro de la Comisión de Árbitros (ARB), que no forma parte del Handbook',
   },
   {
     id: 'tit_reglamento_torneo', area: 'titulos', peso: 5,
@@ -1202,7 +1202,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes dejan huecos a propósito —tiempo de incomparecencia, sanción por dispositivos, finales rápidos— y ahí el reglamento manda. Fuera de esos huecos, no puede contradecirlas.',
-    fuente: 'Leyes del Ajedrez, prefacio y art. 6.7, 11.3.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), prefacio y art. 6.7, 11.3.2',
   },
   {
     id: 'tit_caso_dudoso', area: 'titulos', peso: 5,
@@ -1215,7 +1215,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El prefacio lo dice: las Leyes no pueden cubrir todas las situaciones, y donde no hay regla exacta se decide por analogía, con criterio y explicándolo. De ahí sale la autoridad del árbitro.',
-    fuente: 'Leyes del Ajedrez, prefacio',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), prefacio',
   },
   {
     id: 'tit_apelacion_composicion', area: 'titulos', peso: 4,
@@ -1228,7 +1228,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El comité se nombra al empezar, no cuando aparece el problema, y es independiente del árbitro. Su composición y los plazos van en el reglamento publicado.',
-    fuente: 'Leyes del Ajedrez, art. 11.10 y reglamento del torneo',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10',
   },
 
   /* ===== Ítems de base, para que el sorteo tenga de dónde elegir en todos
@@ -1244,7 +1244,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las otras tres son jugadas legales que suelen confundirse con irregularidades. Un rey nunca puede quedar ni ponerse en una casilla atacada.',
-    fuente: 'Leyes del Ajedrez, art. 3.9 y 3.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9 y 3.8',
   },
   {
     id: 'irr_corregir_a_tiempo', area: 'irregularidades', peso: 1,
@@ -1257,7 +1257,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reloj es la frontera: mientras no lo presione, la jugada se puede arreglar. Eso sí, la pieza tocada sigue obligando.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.1 y 4.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1 y 4.3',
   },
   {
     id: 'rel_quien_pone_marcha', area: 'reloj', peso: 1,
@@ -1270,7 +1270,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reloj de las blancas arranca a la hora de inicio, esté o no el jugador en la mesa: el tiempo que tarde en llegar corre de su cuenta.',
-    fuente: 'Leyes del Ajedrez, art. 6.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.6',
   },
   {
     id: 'tab_que_es_tablas_acuerdo', area: 'tablas', peso: 1,
@@ -1283,7 +1283,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La aceptación termina la partida de inmediato. Darse la mano sin oferta previa no es un acuerdo de tablas: cada tanto hay que aclararlo en la sala.',
-    fuente: 'Leyes del Ajedrez, art. 5.2.1 y 9.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.1 y 9.1',
   },
   {
     id: 'tab_material_insuficiente', area: 'tablas', peso: 5,
@@ -1296,7 +1296,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La prueba no es "con juego razonable" sino "por cualquier serie de jugadas legales". Con alfiles del mismo color no hay mate posible ni ayudando el rival, así que la partida está terminada.',
-    fuente: 'Leyes del Ajedrez, art. 5.2.2 (comparar con 6.9)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.2 (comparar con 6.9)',
   },
   {
     id: 'con_movil_apagado_bolso', area: 'conducta', peso: 1,
@@ -1309,7 +1309,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla prohíbe tenerlo encima en la sala; dónde se deja lo resuelve el organizador (casilleros, una mesa vigilada, fuera de la sala) y se anuncia antes de empezar.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
   },
   {
     id: 'rit_donde_se_aplican', area: 'ritmos', peso: 1,
@@ -1322,7 +1322,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Los apéndices no sustituyen a las Leyes: las modifican en lo que dicen expresamente (anotación, ilegales, reclamos) y en todo lo demás rige el texto general.',
-    fuente: 'Leyes del Ajedrez, apéndices A y B',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A y B',
   },
   {
     id: 'com_que_es_suizo', area: 'competicion', peso: 1,
@@ -1335,7 +1335,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'De ahí sale todo lo demás: el suizo permite torneos grandes en pocas rondas, pero obliga a cuidar los colores y a no repetir rivales.',
-    fuente: 'Reglas de emparejamiento, C.04',
+    fuente: 'Reglas de emparejamiento suizo (Handbook C.04)',
   },
   {
     id: 'tit_quien_nombra', area: 'titulos', peso: 1,
@@ -1348,7 +1348,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El Nacional es de la federación y es el punto de partida: sin estar registrado como tal no se entra al seminario de Árbitro FIDE.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1 y B.06.2',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1 y B.06.2)',
   },
   {
     id: 'ley_mate_ahogado_diferencia', area: 'leyes', peso: 5,
@@ -1361,7 +1361,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El ahogado termina la partida en el acto, igual que el mate, siempre que la jugada que lo produjo fuera legal. No se reclama ni se puede seguir jugando.',
-    fuente: 'Leyes del Ajedrez, art. 5.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.1',
   },
   /* ===== Ampliación del banco: más preguntas por área y por escalón, para
      que dos exámenes seguidos casi no compartan preguntas. ===== */
@@ -1378,7 +1378,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla de bolsillo es "clara a la derecha": h1 y a8 son casillas claras. De ahí sale también que la dama va en su color.',
-    fuente: 'Leyes del Ajedrez, art. 2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 2.1',
   },
   {
     id: 'ley_quien_empieza', area: 'leyes', peso: 1,
@@ -1391,7 +1391,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes abren con esto: dos rivales que mueven por turno, y siempre arrancan las blancas. El sorteo decide los colores, no quién empieza.',
-    fuente: 'Leyes del Ajedrez, art. 1.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 1.1',
   },
   {
     id: 'ley_derecho_enroque_perdido', area: 'leyes', peso: 2,
@@ -1404,7 +1404,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Mover el rey mata los dos enroques; mover una torre mata solo el de ese lado, y volverla a su casilla no lo devuelve. Lo demás son estorbos pasajeros.',
-    fuente: 'Leyes del Ajedrez, art. 3.8.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.8.2.1',
   },
   {
     id: 'ley_salir_del_jaque', area: 'leyes', peso: 2,
@@ -1417,7 +1417,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Nunca se enroca estando en jaque. Los otros tres son justamente las tres formas de salir: capturar, tapar o mover el rey.',
-    fuente: 'Leyes del Ajedrez, art. 3.8.2.2 y 3.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.8.2.2 y 3.9',
   },
   {
     id: 'ley_enroque_casilla_atacada', area: 'leyes', peso: 3,
@@ -1430,7 +1430,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El rey no puede salir de jaque, pasar por casilla atacada ni llegar a casilla atacada. La torre sí puede cruzar una casilla atacada: por eso b1 no estorba.',
-    fuente: 'Leyes del Ajedrez, art. 3.8.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.8.2.2',
   },
   {
     id: 'ley_soltar_en_casilla_ilegal', area: 'leyes', peso: 3,
@@ -1443,7 +1443,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La pieza tocada obliga aunque la jugada elegida no valga. La ilegal se completa al presionar el reloj: hasta ahí, se arregla sin sanción.',
-    fuente: 'Leyes del Ajedrez, art. 4.3, 4.7 y 7.5.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.3, 4.7 y 7.5.1',
   },
   {
     id: 'ley_mate_termina_todo', area: 'leyes', peso: 4,
@@ -1456,7 +1456,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El mate termina la partida en el acto, siempre que la jugada fuera legal. Lo que pase después con el reloj ya no cambia nada.',
-    fuente: 'Leyes del Ajedrez, art. 5.1.1 y 6.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y 6.9',
   },
   {
     id: 'ley_tocada_sin_jugada_legal', area: 'leyes', peso: 4,
@@ -1469,7 +1469,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La obligación de la pieza tocada solo existe si esa pieza puede moverse o ser capturada legalmente. Si no, la regla simplemente no se aplica.',
-    fuente: 'Leyes del Ajedrez, art. 4.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.5',
   },
   {
     id: 'ley_toca_rey_y_torre', area: 'leyes', peso: 4,
@@ -1482,7 +1482,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Tocar rey y torre juntos es declarar el enroque de ese lado. Si ese enroque no es legal, se aplica lo previsto para el rey o para la torre, según el caso.',
-    fuente: 'Leyes del Ajedrez, art. 4.4.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.4.1',
   },
   {
     id: 'ley_posicion_muerta_momento', area: 'leyes', peso: 5,
@@ -1495,7 +1495,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La posición muerta termina la partida en el acto, como el mate. Lo que se "jugó" después no existe: el árbitro anota tablas desde esa jugada.',
-    fuente: 'Leyes del Ajedrez, art. 5.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.2',
   },
   {
     id: 'ley_rey_capturado', area: 'leyes', peso: 5,
@@ -1508,7 +1508,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El rey nunca se captura: llegar a esa posición significa que la jugada anterior dejó el rey en jaque, y eso es una ilegal con todo su procedimiento.',
-    fuente: 'Leyes del Ajedrez, art. 3.9 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9 y 7.5',
   },
   {
     id: 'ley_duda_pieza_tocada', area: 'leyes', peso: 5,
@@ -1521,7 +1521,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes traen la regla escrita para este empate de versiones, y se resuelve en contra de quien tocó: primero la propia. Así el árbitro no improvisa.',
-    fuente: 'Leyes del Ajedrez, art. 4.3.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.3.3',
   },
 
   /* ---------- El reloj y el tiempo ---------- */
@@ -1536,7 +1536,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es una de las cosas que el árbitro deja resueltas antes de la ronda. Se suele poner del lado de las negras, pero la decisión es del árbitro.',
-    fuente: 'Leyes del Ajedrez, art. 6.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.5',
   },
   {
     id: 'rel_que_es_bandera', area: 'reloj', peso: 1,
@@ -1549,7 +1549,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Viene de los relojes analógicos, que tenían una banderita. Hoy es simplemente que el tiempo de ese jugador llegó a cero en ese período.',
-    fuente: 'Leyes del Ajedrez, art. 6.8 y glosario',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.8 y glosario',
   },
   {
     id: 'rel_orden_mover_presionar', area: 'reloj', peso: 1,
@@ -1562,7 +1562,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Presionar el reloj es lo que cierra la jugada: hacerlo antes de mover es una infracción, y en apuro de tiempo es de las que más se ven.',
-    fuente: 'Leyes del Ajedrez, art. 6.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.1',
   },
   {
     id: 'rel_periodo_siguiente', area: 'reloj', peso: 2,
@@ -1575,7 +1575,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reloj lo hace solo: el tiempo del período siguiente se suma al completar las jugadas prescritas, y lo que sobró del anterior no se pierde.',
-    fuente: 'Leyes del Ajedrez, art. 6.3.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.3.1',
   },
   {
     id: 'rel_blancas_no_llegaron', area: 'reloj', peso: 2,
@@ -1588,7 +1588,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La hora de inicio no se mueve: el reloj de las blancas arranca y el tiempo del ausente corre hasta que llegue, o hasta el tiempo de incomparecencia.',
-    fuente: 'Leyes del Ajedrez, art. 6.6 y 6.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.6 y 6.7',
   },
   {
     id: 'rel_contador_jugadas', area: 'reloj', peso: 3,
@@ -1601,7 +1601,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El contador se desajusta con cualquier incidencia. Para contar jugadas, el árbitro va a las planillas y, si hace falta, reconstruye la partida.',
-    fuente: 'Leyes del Ajedrez, art. 6.10 y 8.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10 y 8.5',
   },
   {
     id: 'rel_tiempos_tras_reponer', area: 'reloj', peso: 3,
@@ -1614,7 +1614,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes le dan el criterio al árbitro justamente porque no siempre se sabe qué había. Puede además ajustar el contador de jugadas.',
-    fuente: 'Leyes del Ajedrez, art. 7.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.1',
   },
   {
     id: 'rel_pantalla_no_pierde', area: 'reloj', peso: 4,
@@ -1627,7 +1627,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las pantallas y los tableros murales están permitidos, pero van retrasados y fallan. Un reclamo se apoya en el tablero, el reloj y las planillas.',
-    fuente: 'Leyes del Ajedrez, art. 6.12.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.12.2',
   },
   {
     id: 'rel_indicacion_concluyente', area: 'reloj', peso: 4,
@@ -1640,7 +1640,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La palabra de las Leyes es "defecto evidente". Sin eso, la indicación del reloj se toma como buena: si no, cualquier apuro de tiempo sería discutible.',
-    fuente: 'Leyes del Ajedrez, art. 6.10.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.10.1',
   },
   {
     id: 'rel_demora_vs_incremento', area: 'reloj', peso: 4,
@@ -1653,7 +1653,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Con incremento, los segundos que no usas se te quedan y el tiempo puede subir. Con demora, el reloj espera unos segundos y recién después descuenta.',
-    fuente: 'Leyes del Ajedrez, glosario, y normas de material (C.02)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), glosario, y normas de material (Handbook C.02)',
   },
   {
     id: 'rel_jugada_sin_presionar', area: 'reloj', peso: 5,
@@ -1666,7 +1666,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La jugada no está completada hasta que el jugador detiene su reloj, con una sola excepción: la jugada que termina la partida, como el mate.',
-    fuente: 'Leyes del Ajedrez, art. 6.2.1 y 6.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.1 y 6.2.2',
   },
   {
     id: 'rel_dos_caballos_bandera', area: 'reloj', peso: 5,
@@ -1679,7 +1679,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La prueba no es "¿se puede forzar?", sino "¿existe alguna serie de jugadas legales que dé mate?". Con dos caballos existe, jugando el rival lo peor posible.',
-    fuente: 'Leyes del Ajedrez, art. 6.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.9',
   },
   {
     id: 'rel_dos_banderas_periodo', area: 'reloj', peso: 5,
@@ -1692,7 +1692,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes separan los casos: en un período intermedio la partida sigue (con los tiempos que el árbitro ajuste); solo en el último período son tablas.',
-    fuente: 'Leyes del Ajedrez, art. 6.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11',
   },
 
   /* ---------- Irregularidades ---------- */
@@ -1707,7 +1707,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Primero la posición, después la sanción. La partida no puede seguir desde una posición a la que se llegó por una jugada que no existía.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1',
   },
   {
     id: 'irr_peon_octava_sin_coronar', area: 'irregularidades', peso: 1,
@@ -1720,7 +1720,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El cambio de peón por dama, torre, alfil o caballo del mismo color es parte de la misma jugada. Un peón no puede quedarse en la última fila.',
-    fuente: 'Leyes del Ajedrez, art. 3.7.5 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5',
   },
   {
     id: 'irr_torre_salta', area: 'irregularidades', peso: 1,
@@ -1733,7 +1733,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Solo el caballo salta. Que una ilegal sea evidente no la hace menos ilegal: si el reloj ya se presionó, corresponde reponer y sancionar.',
-    fuente: 'Leyes del Ajedrez, art. 3.3 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.3 y 7.5',
   },
   {
     id: 'irr_dos_jugadas_seguidas', area: 'irregularidades', peso: 2,
@@ -1746,7 +1746,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Mover fuera de turno es de las ilegales más discutidas y es una ilegal como cualquier otra: se repone la posición anterior y cuenta para el conteo.',
-    fuente: 'Leyes del Ajedrez, art. 1.1 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 1.1 y 7.5',
   },
   {
     id: 'irr_tocada_tras_corregir', area: 'irregularidades', peso: 2,
@@ -1759,7 +1759,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si tocó una pieza que sí tiene jugada legal, con esa tiene que jugar. No se puede usar una ilegal para deshacer una pieza tocada incómoda.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.3',
   },
   {
     id: 'irr_posicion_no_identificable', area: 'irregularidades', peso: 3,
@@ -1772,7 +1772,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes prevén el caso: se retrocede hasta donde las planillas y los dos jugadores permitan reconstruir, y desde ahí sigue la partida.',
-    fuente: 'Leyes del Ajedrez, art. 7.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.2',
   },
   {
     id: 'irr_al_paso_tardia', area: 'irregularidades', peso: 3,
@@ -1785,7 +1785,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La captura al paso caduca de inmediato: si no se hace en la respuesta al avance de dos casillas, se pierde el derecho para siempre.',
-    fuente: 'Leyes del Ajedrez, art. 3.7.3 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1 y 7.5',
   },
   {
     id: 'irr_mate_con_jugada_ilegal', area: 'irregularidades', peso: 4,
@@ -1798,7 +1798,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El mate termina la partida solo si la jugada que lo produce es legal. Si no lo es, es una ilegal más: se repone y se cuenta para la sanción.',
-    fuente: 'Leyes del Ajedrez, art. 5.1.1 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y 7.5',
   },
   {
     id: 'irr_presiona_con_piezas_caidas', area: 'irregularidades', peso: 4,
@@ -1811,7 +1811,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes son claras en que repone quien desplazó, y en su propio tiempo. Cargárselo al rival entra además en molestar al adversario.',
-    fuente: 'Leyes del Ajedrez, art. 7.4, 11.5 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.4, 11.5 y 12.9',
   },
   {
     id: 'irr_resultado_firmado', area: 'irregularidades', peso: 5,
@@ -1824,7 +1824,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El artículo 7 se aplica durante la partida. Terminada y firmada, lo que queda es la vía de la apelación contra decisiones del árbitro, no reabrir el tablero.',
-    fuente: 'Leyes del Ajedrez, art. 7.5, 8.7 y 11.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5, 8.7 y 11.11',
   },
   {
     id: 'irr_ambos_reyes_en_jaque', area: 'irregularidades', peso: 5,
@@ -1837,7 +1837,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es una posición imposible de alcanzar legalmente: alguien dejó su rey en jaque y nadie lo notó. El árbitro retrocede hasta la última posición legal.',
-    fuente: 'Leyes del Ajedrez, art. 3.9 y 7.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9 y 7.5.2',
   },
   {
     id: 'irr_reconstruir_entre_todos', area: 'irregularidades', peso: 5,
@@ -1850,7 +1850,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes obligan a los dos jugadores a asistir al árbitro en cualquier situación que exija reconstruir la partida, incluidos los reclamos de tablas.',
-    fuente: 'Leyes del Ajedrez, art. 11.12 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.12 y 12.9',
   },
 
   /* ---------- Planilla y tablas ---------- */
@@ -1865,7 +1865,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La planilla es el documento de la partida y el árbitro tiene que poder verla en cualquier momento, sobre todo al acercarse el control de tiempo.',
-    fuente: 'Leyes del Ajedrez, art. 8.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1',
   },
   {
     id: 'tab_firmar_planillas', area: 'tablas', peso: 1,
@@ -1878,7 +1878,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Firmar las dos es la forma de que los dos estén de acuerdo con el resultado. Aun así, firmar no impide apelar después una decisión del árbitro.',
-    fuente: 'Leyes del Ajedrez, art. 8.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.7',
   },
   {
     id: 'tab_planilla_de_quien', area: 'tablas', peso: 1,
@@ -1891,7 +1891,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Por eso el organizador puede publicar las partidas y por eso el árbitro puede exigirlas al final de la ronda: no son papel privado del jugador.',
-    fuente: 'Leyes del Ajedrez, art. 8.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.3',
   },
   {
     id: 'tab_escribir_antes', area: 'tablas', peso: 2,
@@ -1904,7 +1904,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Escribir primero y mirar después es una ayuda que las Leyes prohíben. La excepción es el reclamo de tablas, donde la jugada se escribe y no se juega.',
-    fuente: 'Leyes del Ajedrez, art. 8.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1',
   },
   {
     id: 'tab_rey_contra_rey', area: 'tablas', peso: 2,
@@ -1917,7 +1917,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Ninguna serie de jugadas legales puede dar mate, así que la partida está terminada. El árbitro lo declara aunque los jugadores quieran seguir.',
-    fuente: 'Leyes del Ajedrez, art. 5.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.2',
   },
   {
     id: 'tab_repeticion_no_seguida', area: 'tablas', peso: 2,
@@ -1930,7 +1930,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla habla de la posición, no de los movimientos: puede aparecer en la jugada 12, en la 30 y en la 58, y la tercera vez ya permite reclamar.',
-    fuente: 'Leyes del Ajedrez, art. 9.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.2',
   },
   {
     id: 'tab_toco_pierde_reclamo', area: 'tablas', peso: 3,
@@ -1943,7 +1943,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo se hace antes de tocar nada: se escribe la jugada, se paran los relojes y se llama al árbitro. Tocar una pieza ya es empezar a jugar.',
-    fuente: 'Leyes del Ajedrez, art. 9.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.4',
   },
   {
     id: 'tab_oferta_fuera_de_turno', area: 'tablas', peso: 4,
@@ -1956,7 +1956,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La forma correcta es ofrecer después de mover y antes de presionar. Fuera de ahí la oferta sigue siendo válida, pero entra en el terreno de molestar.',
-    fuente: 'Leyes del Ajedrez, art. 9.1.2 y 11.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.1.2 y 11.5',
   },
   {
     id: 'tab_reclamo_rechazado_jugada', area: 'tablas', peso: 4,
@@ -1969,7 +1969,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es el precio de reclamar: además de los dos minutos que gana el rival, quien reclamó queda atado a la jugada que escribió.',
-    fuente: 'Leyes del Ajedrez, art. 9.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.5',
   },
   {
     id: 'tab_75_jugadas_mate', area: 'tablas', peso: 5,
@@ -1982,7 +1982,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes resuelven el choque a favor del mate. Es el mismo criterio de siempre: la jugada que da mate termina la partida en el acto.',
-    fuente: 'Leyes del Ajedrez, art. 9.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.6',
   },
   {
     id: 'tab_misma_posicion_derechos', area: 'tablas', peso: 5,
@@ -1995,7 +1995,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es el detalle que más reclamos tumba. Mismo turno, mismas piezas, mismas casillas y además las mismas jugadas posibles, enroque y al paso incluidos.',
-    fuente: 'Leyes del Ajedrez, art. 9.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.2.2',
   },
   {
     id: 'tab_alfil_y_caballo', area: 'tablas', peso: 5,
@@ -2008,7 +2008,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Alfil y caballo dan mate forzado, aunque cueste. La pregunta del artículo 6.9 no es si es fácil: es si existe alguna serie de jugadas legales que lo dé.',
-    fuente: 'Leyes del Ajedrez, art. 6.9 y 5.2.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.9 y 5.2.2',
   },
 
   /* ---------- Conducta, dispositivos y sanciones ---------- */
@@ -2023,7 +2023,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La prohibición alcanza a todo el mundo, jugadores y público: un comentario suelto cerca de una mesa puede valer tanto como una ayuda directa.',
-    fuente: 'Leyes del Ajedrez, art. 12.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.7',
   },
   {
     id: 'con_pedir_explicacion', area: 'conducta', peso: 1,
@@ -2036,7 +2036,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Está escrito como un derecho del jugador. El árbitro explica la regla; lo que no hace es aconsejar sobre la posición ni sobre qué conviene jugar.',
-    fuente: 'Leyes del Ajedrez, art. 11.10',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10',
   },
   {
     id: 'con_fumar', area: 'conducta', peso: 1,
@@ -2049,7 +2049,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El recinto de juego incluye la sala, los baños, la zona de descanso y la de fumar, y quien define cada una es el árbitro.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.3 y 11.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.3 y 11.2',
   },
   {
     id: 'con_terminaron_espectadores', area: 'conducta', peso: 2,
@@ -2062,7 +2062,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la base para poder sancionar al que ya jugó y anda dando vueltas: terminada su partida, pasa a ser público y no puede interferir en nada.',
-    fuente: 'Leyes del Ajedrez, art. 11.4 y 12.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.4 y 12.6',
   },
   {
     id: 'con_apelar_tras_firmar', area: 'conducta', peso: 2,
@@ -2075,7 +2075,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes lo dicen expresamente, porque firmar es dejar constancia del resultado, no renunciar a nada. El reglamento del torneo fija plazos y forma.',
-    fuente: 'Leyes del Ajedrez, art. 11.11 y 8.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.11 y 8.7',
   },
   {
     id: 'con_desprestigio', area: 'conducta', peso: 2,
@@ -2088,7 +2088,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la cláusula que le permite al árbitro actuar ante conductas que ningún artículo previó, sin tener que inventarse una regla nueva.',
-    fuente: 'Leyes del Ajedrez, art. 11.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.1',
   },
   {
     id: 'con_inspeccion_privada', area: 'conducta', peso: 3,
@@ -2101,7 +2101,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La revisión se hace en privado y acompañada, no en medio de la sala. Negarse a la inspección tiene sus propias consecuencias.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
   },
   {
     id: 'con_negativa_persistente', area: 'conducta', peso: 4,
@@ -2114,7 +2114,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Que el árbitro decida el puntaje del rival importa: si el rival no tenía cómo dar mate, no se le regala el punto entero.',
-    fuente: 'Leyes del Ajedrez, art. 11.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.8',
   },
   {
     id: 'con_maximo_puntaje', area: 'conducta', peso: 4,
@@ -2127,7 +2127,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La escala del artículo 12.9 va de la advertencia a la expulsión, y en el medio están los ajustes de tiempo y de puntaje de esa partida.',
-    fuente: 'Leyes del Ajedrez, art. 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.9',
   },
   {
     id: 'con_ambos_culpables', area: 'conducta', peso: 5,
@@ -2140,7 +2140,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes lo dicen con todas las letras, y es la única situación en la que una partida termina 0-0. Suele ir acompañada de sanciones del artículo 12.9.',
-    fuente: 'Leyes del Ajedrez, art. 11.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.9',
   },
   {
     id: 'con_cuantas_jugadas', area: 'conducta', peso: 5,
@@ -2153,7 +2153,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El árbitro no juega. Tampoco avisa de que el rival ya movió ni de que a alguien se le olvidó presionar el reloj: solo interviene donde las Leyes lo mandan.',
-    fuente: 'Leyes del Ajedrez, art. 12.5 y 8.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.5 y 8.5',
   },
   {
     id: 'con_dispositivo_sancion_menor', area: 'conducta', peso: 5,
@@ -2166,7 +2166,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las propias Leyes dejan esa puerta abierta, pensando justamente en el ajedrez de base. Eso sí, la regla más suave debe estar escrita y anunciada antes.',
-    fuente: 'Leyes del Ajedrez, art. 11.3.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
   },
 
   /* ---------- Rápidas y relámpago ---------- */
@@ -2181,7 +2181,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La cuenta es tiempo base más 60 veces el incremento: 15 + 10 = 25 minutos. Entre 10 y 60 minutos es rápidas.',
-    fuente: 'Leyes del Ajedrez, apéndice A.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.1',
   },
   {
     id: 'rit_ejemplo_blitz', area: 'ritmos', peso: 1,
@@ -2194,7 +2194,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: '3 + 60 × 2 segundos = 3 + 2 = 5 minutos. Diez minutos o menos es relámpago, con incremento o sin él.',
-    fuente: 'Leyes del Ajedrez, apéndice B.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.1',
   },
   {
     id: 'rit_ejemplo_clasico', area: 'ritmos', peso: 1,
@@ -2207,7 +2207,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: '90 + 30 = 120 minutos. De 60 minutos para arriba es clásico, que es el ritmo que las Leyes tratan como el normal.',
-    fuente: 'Leyes del Ajedrez, apéndices A.1 y B.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.1 y B.1',
   },
   {
     id: 'rit_formula_incremento', area: 'ritmos', peso: 2,
@@ -2220,7 +2220,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Se supone una partida de 60 jugadas. Por eso 3+2 es relámpago y 15+10 es rápidas, aunque los tiempos base digan otra cosa a primera vista.',
-    fuente: 'Leyes del Ajedrez, apéndices A.1 y B.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.1 y B.1',
   },
   {
     id: 'rit_supervision_adecuada', area: 'ritmos', peso: 2,
@@ -2233,7 +2233,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La diferencia es grande: con supervisión adecuada rigen casi las mismas reglas del clásico; sin ella, se pasa al régimen de reclamos del apéndice.',
-    fuente: 'Leyes del Ajedrez, apéndice A.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3',
   },
   {
     id: 'rit_un_minuto_general', area: 'ritmos', peso: 2,
@@ -2246,7 +2246,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Dos minutos en una partida de cinco sería la partida entera. Desde 2023 el minuto también se aplica en rápidas.',
-    fuente: 'Leyes del Ajedrez, apéndice B.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.2',
   },
   {
     id: 'rit_planilla_derechos', area: 'ritmos', peso: 3,
@@ -2259,7 +2259,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El apéndice lo dice expresamente: no anotar no hace perder los reclamos que normalmente se apoyan en la planilla, y se puede pedir una para empezar a anotar.',
-    fuente: 'Leyes del Ajedrez, apéndice A.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.2',
   },
   {
     id: 'rit_segunda_ilegal_rapidas', area: 'ritmos', peso: 3,
@@ -2272,7 +2272,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El criterio es el mismo del clásico, con la sanción de tiempo reducida a un minuto: la primera cuesta tiempo, la segunda cuesta la partida.',
-    fuente: 'Leyes del Ajedrez, apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
   },
   {
     id: 'rit_mate_y_bandera_blitz', area: 'ritmos', peso: 3,
@@ -2285,7 +2285,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El apéndice cambia sanciones y reclamos, no las reglas básicas: mate, ahogado y posición muerta terminan la partida igual que en clásico.',
-    fuente: 'Leyes del Ajedrez, art. 5.1.1 y apéndice B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.1 y apéndice B.3',
   },
   {
     id: 'rit_ilegal_blitz_minuto', area: 'ritmos', peso: 4,
@@ -2298,7 +2298,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Un minuto en la primera, la partida en la segunda. Lo que cambia sin supervisión es quién lo hace valer: ahí depende de que el rival lo reclame.',
-    fuente: 'Leyes del Ajedrez, apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
   },
   {
     id: 'rit_reclamo_antes_de_mover', area: 'ritmos', peso: 4,
@@ -2311,7 +2311,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Sin árbitro mirando, el reclamo es del rival y hay que hacerlo antes de mover. Es la diferencia más grande con el ritmo clásico.',
-    fuente: 'Leyes del Ajedrez, apéndice A.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.4',
   },
   {
     id: 'rit_bandera_sin_mate_blitz', area: 'ritmos', peso: 4,
@@ -2324,7 +2324,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla del material vale en todos los ritmos: si ninguna serie de jugadas legales da mate, la caída de bandera es tablas y no victoria.',
-    fuente: 'Leyes del Ajedrez, art. 6.9 y apéndice B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.9 y apéndice B.3',
   },
   {
     id: 'rit_arbitro_observa_ilegal', area: 'ritmos', peso: 5,
@@ -2337,7 +2337,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Esa es la razón de ser de la supervisión adecuada: con un árbitro por pocas mesas, las rápidas se arbitran casi como el clásico.',
-    fuente: 'Leyes del Ajedrez, apéndice A.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3',
   },
   {
     id: 'rit_dos_banderas_un_periodo', area: 'ritmos', peso: 5,
@@ -2350,7 +2350,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla general distingue período intermedio de período final. En relámpago y rápidas solo hay uno, así que siempre se cae en el caso de tablas.',
-    fuente: 'Leyes del Ajedrez, art. 6.11 y apéndice B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11 y apéndice B.3',
   },
 
   /* ---------- Competición: emparejamientos y desempates ---------- */
@@ -2365,7 +2365,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es el único artículo de las Leyes dedicado al puntaje. Un torneo puede usar otro sistema, pero tiene que estar anunciado de antemano.',
-    fuente: 'Leyes del Ajedrez, art. 10',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 10',
   },
   {
     id: 'com_lista_inicial', area: 'competicion', peso: 1,
@@ -2378,7 +2378,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Ese orden inicial es el número de cada jugador y se usa toda la competición: los emparejamientos y los desempates se apoyan en él.',
-    fuente: 'Reglas de emparejamiento, C.04.1',
+    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
   },
   {
     id: 'com_rondas_anunciadas', area: 'competicion', peso: 1,
@@ -2391,7 +2391,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'De ahí sale todo lo demás: el número de rondas condiciona los emparejamientos, los desempates y hasta si el torneo sirve para normas.',
-    fuente: 'Reglas de emparejamiento, C.04.1',
+    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
   },
   {
     id: 'com_alternancia_color', area: 'competicion', peso: 2,
@@ -2404,7 +2404,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El sistema mira dos cosas: la diferencia acumulada de colores y el color de la última ronda. De ahí salen las preferencias fuerte, suave y absoluta.',
-    fuente: 'Reglas de emparejamiento, C.04.1 y C.04.3',
+    fuente: 'Sistema suizo de la FIDE (Handbook C.04.1 y C.04.3)',
   },
   {
     id: 'com_bye_solicitado', area: 'competicion', peso: 2,
@@ -2417,7 +2417,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Conviene no confundirlos: el descanso por emparejamiento (número impar) suele valer un punto, y el solicitado, medio. Lo fija el reglamento y no cuenta para rating.',
-    fuente: 'Reglas de emparejamiento, C.04.1',
+    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
   },
   {
     id: 'com_encuentro_directo', area: 'competicion', peso: 2,
@@ -2430,7 +2430,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si falta alguna de esas partidas, el criterio no se puede aplicar a ese grupo y se pasa al siguiente desempate de la lista anunciada.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_sonneborn_calculo', area: 'competicion', peso: 3,
@@ -2443,7 +2443,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Premia haberles ganado a los que terminaron arriba. Por eso encaja bien en torneos de todos contra todos, donde todos juegan contra todos.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_buchholz_cut1', area: 'competicion', peso: 4,
@@ -2456,7 +2456,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Un solo rival que se retiró y perdió todo puede hundir un Buchholz sin culpa del jugador. Por eso la FIDE recomienda el Cut-1 como primer desempate.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_flotante', area: 'competicion', peso: 4,
@@ -2469,7 +2469,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Cuando un grupo tiene un número impar, alguien tiene que bajar o subir. El sistema procura que no le toque siempre a los mismos.',
-    fuente: 'Reglas de emparejamiento, C.04.3',
+    fuente: 'Sistema holandés de la FIDE (Handbook C.04.3)',
   },
   {
     id: 'com_progresivo', area: 'competicion', peso: 5,
@@ -2482,7 +2482,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Favorece a quien arrancó fuerte, porque esos puntos se suman en todas las rondas siguientes. Es un criterio discutido y por eso casi nunca va primero.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_promedio_rivales', area: 'competicion', peso: 5,
@@ -2495,7 +2495,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Sirve para distinguir a quien anduvo por las mesas de arriba. Como los rivales no jugados distorsionan el promedio, el reglamento dice cómo tratarlos.',
-    fuente: 'Reglas de desempate, C.07',
+    fuente: 'Reglas de desempate (Handbook C.07)',
   },
   {
     id: 'com_equipos_puntos', area: 'competicion', peso: 5,
@@ -2508,7 +2508,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las dos formas son válidas y cambian por completo la tabla final. Por eso tiene que estar escrito antes, junto con el orden de los desempates.',
-    fuente: 'Reglas de emparejamiento y desempate por equipos, C.04 y C.07',
+    fuente: 'Sistema suizo por equipos y desempates (Handbook C.04.6 y C.07)',
   },
 
   /* ---------- El árbitro: títulos, categorías y deberes ---------- */
@@ -2523,7 +2523,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Conviene separar tres cosas: el título es de por vida, la licencia se renueva y se paga, y la categoría depende de la actividad reciente.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_que_es_seminario', area: 'titulos', peso: 1,
@@ -2536,7 +2536,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Lo dicta un formador habilitado y con programa aprobado. Aprobar el examen del seminario es uno de los pasos del camino al título.',
-    fuente: 'Reglamento de formación de árbitros, B.06.2',
+    fuente: 'Reglamento de formación de árbitros (Handbook B.06.2)',
   },
   {
     id: 'tit_edad_minima', area: 'titulos', peso: 1,
@@ -2549,7 +2549,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Se pide edad mínima y también experiencia real dirigiendo torneos. La cifra exacta la fija el reglamento vigente y conviene consultarla cada año.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_arbitro_no_juega', area: 'titulos', peso: 2,
@@ -2562,7 +2562,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es lo más básico de la imparcialidad: quien tiene algo en juego en la tabla no puede decidir sobre las partidas que la arman.',
-    fuente: 'Código ético de la FIDE y deberes del árbitro (B.06)',
+    fuente: 'Reglamento de árbitros de la FIDE (Handbook B.06), deberes y ética del árbitro',
   },
   {
     id: 'tit_torneo_valido_norma', area: 'titulos', peso: 2,
@@ -2575,7 +2575,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reglamento fija cantidad de jugadores, federaciones representadas, rondas y composición del equipo arbitral. Sin eso, el trabajo no vale como norma.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_fide_id', area: 'titulos', peso: 2,
@@ -2588,7 +2588,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Con ese número se cargan las normas, la licencia y la categoría, y es lo que se pone en el informe de cada torneo válido para rating.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1)',
   },
   {
     id: 'tit_comision_arbitros', area: 'titulos', peso: 3,
@@ -2601,7 +2601,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Conviene no confundirla con la Comisión de Reglas: una escribe e interpreta las Leyes, la otra forma, titula, clasifica y sanciona a quienes arbitran.',
-    fuente: 'Reglamento de árbitros, B.06',
+    fuente: 'Reglamento de árbitros de la FIDE (Handbook B.06)',
   },
   {
     id: 'tit_norma_del_seminario', area: 'titulos', peso: 3,
@@ -2614,7 +2614,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la puerta de entrada: una norma sale del seminario y las demás, de dirigir torneos que cumplan los requisitos.',
-    fuente: 'Reglamento de títulos de árbitro, B.06.1 y B.06.2',
+    fuente: 'Reglamento de títulos de árbitro (Handbook B.06.1 y B.06.2)',
   },
   {
     id: 'tit_disciplinario', area: 'titulos', peso: 4,
@@ -2627,7 +2627,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Hay un reglamento disciplinario propio, con su procedimiento y su derecho de defensa. Perder la licencia deja al árbitro fuera de los torneos válidos para rating.',
-    fuente: 'Reglamento disciplinario de árbitros, B.06.5',
+    fuente: 'Reglamento disciplinario de árbitros (Handbook B.06.5)',
   },
   {
     id: 'tit_apelacion_deposito', area: 'titulos', peso: 5,
@@ -2640,7 +2640,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El plazo corto evita que una ronda quede en el aire y el depósito filtra las apelaciones de trámite: se devuelve si la apelación prospera.',
-    fuente: 'Reglas generales de torneos (C.01) y reglamento del torneo',
+    fuente: 'Reglamento de cada torneo: no está en el Handbook, lo fija la organización',
   },
   {
     id: 'tit_decision_se_aplica_ya', area: 'titulos', peso: 5,
@@ -2653,7 +2653,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si cada apelación congelara la ronda, el torneo se detendría. El árbitro decide, la partida sigue y el comité repara después si corresponde.',
-    fuente: 'Leyes del Ajedrez, art. 11.11, y reglas generales de torneos',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.11',
   },
   {
     id: 'tit_categoria_a_eventos', area: 'titulos', peso: 5,
@@ -2666,7 +2666,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La categoría se revisa según la experiencia reciente, así que un árbitro puede subir y bajar. El título no cambia; lo que cambia es a qué eventos puede aspirar.',
-    fuente: 'Reglamento de clasificación de árbitros, B.06.3',
+    fuente: 'Reglamento de clasificación de árbitros (Handbook B.06.3)',
   },
 ];
 

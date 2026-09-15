@@ -473,7 +473,7 @@ function mostrarResultado(detalle, resumen, porTiempo) {
       <p class="text-sm text-brand-600 dark:text-brand-300 mt-2"><strong>Correcta:</strong> ${esc(item.opciones[item.correcta])}</p>
       ${!ok && !blanco ? `<p class="text-sm text-brand-500 dark:text-brand-400 mt-1"><strong>Tu respuesta:</strong> ${esc(item.opciones[dada])}</p>` : ''}
       <p class="text-xs text-brand-500 dark:text-brand-400 mt-2">${esc(item.explica)}</p>
-      <p class="text-xs text-accent-700 dark:text-accent-400 mt-1">${esc(item.fuente)}</p>`;
+      <p class="text-xs text-accent-700 dark:text-accent-400 mt-1"><strong>Fuente:</strong> ${esc(item.fuente)}${/Handbook/.test(item.fuente) ? ' · <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="underline">handbook.fide.com</a>' : ''}</p>`;
     rev.appendChild(det);
   });
 }
