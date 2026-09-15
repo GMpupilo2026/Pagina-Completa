@@ -131,8 +131,6 @@ for (let i = 0; i < respuestas.length; i += 4) {
     `<td class="resp"><span class="rnum">${r.n}</span> ${r.letra}</td>`).join("") + "</tr>");
 }
 
-const HOY = new Date().toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
-
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <title>Examen de arbitraje · cuerpo</title>
 <style>
@@ -396,6 +394,7 @@ escritor.add_metadata({
     "/Author": autor,
     "/Subject": "Reglamento de la FIDE - material de uso docente",
     "/Creator": "Ajedrez Integral",
+    "/Producer": "Ajedrez Integral",
 })
 escritor.encrypt(
     user_password="",
