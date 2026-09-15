@@ -1,0 +1,22 @@
+# Ajedrez Integral — https://ajedrez-integral.com
+#
+# Lo que pide sesión lleva además <meta name="robots" content="noindex"> en la
+# propia página: esto es el primer filtro, no el único. cursos/protegido/ son
+# los fragmentos con las lecciones completas, que no son páginas: los pide el
+# navegador desde la portada del curso cuando hay sesión.
+
+User-agent: *
+Allow: /
+
+Disallow: /cursos/protegido/
+Disallow: /cursos/academia/
+Disallow: /entreno/
+Disallow: /admin.html
+Disallow: /arbitraje.html
+Disallow: /informes.html
+Disallow: /sesion.html
+Disallow: /clases.html
+Disallow: /configuracion.html
+Disallow: /login.html
+
+Sitemap: https://ajedrez-integral.com/sitemap.xml
