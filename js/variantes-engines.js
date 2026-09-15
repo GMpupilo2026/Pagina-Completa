@@ -14,6 +14,19 @@
  *                        siempre, con esos movimientos.
  *   Variantes.Ciegas   — ajedrez normal (delega en chess.js): la gracia está en la
  *                        pantalla (variante.html), que no muestra las piezas.
+ *   Variantes.Vampiro  — "Ajedrez Vampiro": mueve igual que el ajedrez normal
+ *                        (delega en chess.js), pero al capturar, la pieza que
+ *                        captura se transforma en el tipo de la pieza capturada,
+ *                        conservando SU PROPIO color. El rey nunca se transforma
+ *                        (si no, dejaría de haber rey y rompería jaque/mate). Si
+ *                        un peón corona capturando, gana la transformación de
+ *                        Vampiro sobre la corona. No detecta tablas por triple
+ *                        repetición (in_threefold_repetition de chess.js
+ *                        reconstruye el tablero reproduciendo el historial de
+ *                        jugadas, y esa reproducción no sabe nada de estas
+ *                        transformaciones — pisaría el tablero real); sí
+ *                        detecta jaque mate, ahogado, material insuficiente y
+ *                        la regla de 50 jugadas.
  *
  * Todos comparten la misma interfaz, que es la que usa js/variantes-board.js:
  *   load(texto) / serialize()      posición completa como texto (va en game_rooms.fen)
@@ -308,7 +321,65 @@
     }
   }
 
-  window.Variantes = { Abrazos, Camaleon, Ciegas, LETRA, NOMBRE, COLUMNA_TIPO,
-    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : new Ciegas(); },
-    inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : Ciegas.START; } };
+  /* ======================= VAMPIRO (chess.js) ======================= */
+  class Vampiro {
+    constructor() { this.game = new Chess(); }
+    static get START() { return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; }
+    get pieceNames() { return NOMBRE; }
+    load(fen) { this.game.load(fen || Vampiro.START); }
+    serialize() { return this.game.fen(); }
+    turn() { return this.game.turn(); }
+    get(s) { const p = this.game.get(s); return p ? { color: p.color, types: [p.type], label: (p.color === "w" ? "Blanco " : "Negro ") + NOMBRE[p.type] } : null; }
+    inCheck() { return this.game.in_check(); }
+    // Las 4 variantes de corona que chess.js genera para una captura no aplican
+    // acá (la transformación de Vampiro las reemplaza a todas por igual): se
+    // muestran como una sola jugada, sin elegir corona.
+    movesFrom(from) {
+      const vistos = new Set(), out = [];
+      this.game.moves({ square: from, verbose: true }).forEach((m) => {
+        const forzada = !!m.captured;
+        const clave = m.to + (forzada ? "" : m.promotion || "");
+        if (vistos.has(clave)) return;
+        vistos.add(clave);
+        out.push({ from: m.from, to: m.to, promotion: forzada ? undefined : m.promotion });
+      });
+      return out;
+    }
+    move(m) {
+      const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
+      if (!mv) return null;
+      let transformo = false, tipoFinal = mv.piece;
+      if (mv.captured && mv.piece !== "k" && mv.captured !== mv.piece) {
+        if (this.game.remove(mv.to) && this.game.put({ type: mv.captured, color: mv.color }, mv.to)) {
+          transformo = true;
+          tipoFinal = mv.captured;
+        }
+      }
+      // El san de chess.js puede traer una corona ("=Q") y un jaque ("+"/"#")
+      // que ya no valen tras la transformación: se recalculan desde cero.
+      let san = mv.san.replace(/=[QRBN]/, "").replace(/[+#]$/, "");
+      if (transformo && LETRA[tipoFinal]) san += "=" + LETRA[tipoFinal];
+      const jaqueMate = this.game.in_checkmate();
+      const jaque = !jaqueMate && this.game.in_check();
+      // No se usa in_draw()/in_threefold_repetition(): esas reconstruyen la
+      // posición reproduciendo this.history() desde el arranque, y esa
+      // reproducción no sabe nada de la transformación que se acaba de hacer
+      // con remove()/put() — "revive" la pieza original y pisa el tablero
+      // real (bug real, encontrado y confirmado con una prueba antes de subir
+      // esto). Por eso se arma la misma condición a mano con los únicos
+      // sub-chequeos que sí leen el tablero actual sin reproducir nada.
+      const semiJugadas = parseInt(this.game.fen().split(" ")[4], 10) || 0;
+      const tablas = !jaqueMate && (this.game.in_stalemate() || this.game.insufficient_material() || semiJugadas >= 100);
+      if (jaqueMate) san += "#";
+      else if (jaque) san += "+";
+      let gameOver = false, result = null;
+      if (jaqueMate) { gameOver = true; result = mv.color === "w" ? "white" : "black"; }
+      else if (tablas) { gameOver = true; result = "draw"; }
+      return { san, gameOver, result, captura: !!mv.captured, transformo, tipoFinal };
+    }
+  }
+
+  window.Variantes = { Abrazos, Camaleon, Ciegas, Vampiro, LETRA, NOMBRE, COLUMNA_TIPO,
+    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : id === "vampiro" ? new Vampiro() : new Ciegas(); },
+    inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : id === "vampiro" ? Vampiro.START : Ciegas.START; } };
 })();
