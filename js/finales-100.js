@@ -248,14 +248,14 @@
       expected = state.ply > 0 && d.fin && state.ply === moves.length ? d.fin : state.ply > 0 && d.fin ? d.fin : d.resultado;
       practBtn.textContent = "✕ Terminar la práctica";
       msgEl.textContent = "";
-      pst.textContent = "Jugás con " + (human === "w" ? "blancas" : "negras") + ". Objetivo: " + objetivo();
+      pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Objetivo: " + objetivo();
       PracticeEngine.preload();
       renderPractice();
     }
     function objetivo() {
       if (expected === "½") return human === "w" ? "sostener las tablas contra el motor" : "sostener las tablas contra el motor";
       const winner = expected === "1-0" ? "w" : "b";
-      return winner === human ? "ganar la posición" : "resistir (el motor debería ganar; aguantá lo más posible)";
+      return winner === human ? "ganar la posición" : "resistir (el motor debería ganar; aguanta lo más posible)";
     }
     function stopPractice(final) {
       state.mode = "ver"; practBtn.textContent = "♟ Practicar contra el motor"; pst.textContent = "";
@@ -306,9 +306,9 @@
       const ok = res === expected;
       const humanWon = (res === "1-0" && human === "w") || (res === "0-1" && human === "b");
       let txt = "Fin de la partida: " + RES_TXT[res] + ". ";
-      if (expected === "½") txt += res === "½" ? "¡Bien! Sostuviste las tablas, como dice la teoría." : humanWon ? "¡Ganaste! El motor se equivocó en una posición de tablas." : "La teoría dice tablas: repasá la defensa y volvé a intentarlo.";
-      else if (ok) txt += humanWon ? "¡Bien! Ganaste la posición como dice la teoría." : "El motor ganó, como dice la teoría. Fijate cuántas jugadas resististe.";
-      else txt += humanWon ? "¡Ganaste una posición que la teoría da por perdida!" : "La teoría dice " + RES_TXT[expected] + ": repasá la línea principal y probá de nuevo.";
+      if (expected === "½") txt += res === "½" ? "¡Bien! Sostuviste las tablas, como dice la teoría." : humanWon ? "¡Ganaste! El motor se equivocó en una posición de tablas." : "La teoría dice tablas: repasa la defensa y vuelve a intentarlo.";
+      else if (ok) txt += humanWon ? "¡Bien! Ganaste la posición como dice la teoría." : "El motor ganó, como dice la teoría. Fíjate cuántas jugadas resististe.";
+      else txt += humanWon ? "¡Ganaste una posición que la teoría da por perdida!" : "La teoría dice " + RES_TXT[expected] + ": repasa la línea principal y prueba de nuevo.";
       guardar(d.id, { resultado: res, esperado: expected, jugaste: human, nivel: levelKey(), ok: ok, jugadas: game.history().length, fecha: new Date().toISOString().slice(0, 10) });
       renderPractice(txt); stopPractice(true); msgEl.textContent = txt;
       return true;
@@ -321,9 +321,9 @@
       try { uci = await PracticeEngine.getMove(game.fen(), levelKey()); } catch (e) { uci = null; }
       thinking = false;
       if (state.mode !== "practicar") return;
-      if (!uci) { renderPractice("El motor no respondió. Probá de nuevo o recargá la página."); return; }
+      if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); return; }
       game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
-      pst.textContent = "Jugás con " + (human === "w" ? "blancas" : "negras") + ". Te toca.";
+      pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Te toca.";
       renderPractice();
       checkEnd();
     }

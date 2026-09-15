@@ -137,7 +137,7 @@
       if (st === "bloqueada") {
         d.open = false;
         sum.setAttribute("aria-disabled", "true");
-        sum.setAttribute("aria-label", L.titulo + " — bloqueada: primero marcá como estudiada " + lecciones[i - 1].titulo);
+        sum.setAttribute("aria-label", L.titulo + " — bloqueada: primero marca como estudiada " + lecciones[i - 1].titulo);
         sum.title = "Bloqueada hasta que marques como estudiada la lección anterior";
       } else {
         sum.removeAttribute("aria-disabled"); sum.removeAttribute("aria-label"); sum.removeAttribute("title");
@@ -165,7 +165,7 @@
     var nota = el("span", "ac-estado"); nota.setAttribute("aria-live", "polite");
     if (tieneCuestionario(L.el) && !cuestionarioHecho(L.el)) {
       btn.disabled = true;
-      nota.textContent = "Respondé el cuestionario de la lección (Comprobar respuestas) para poder marcarla.";
+      nota.textContent = "Responde el cuestionario de la lección (Comprobar respuestas) para poder marcarla.";
     }
     btn.addEventListener("click", function () { marcar(i, btn, nota); });
     foot.append(btn, nota);
@@ -174,14 +174,14 @@
   async function marcar(i, btn, nota) {
     var L = lecciones[i];
     if (hechas[L.key] || estado(i) === "bloqueada") return;
-    if (tieneCuestionario(L.el) && !cuestionarioHecho(L.el)) { nota.textContent = "Primero comprobá las respuestas del cuestionario."; return; }
+    if (tieneCuestionario(L.el) && !cuestionarioHecho(L.el)) { nota.textContent = "Primero comprueba las respuestas del cuestionario."; return; }
     btn.disabled = true; nota.textContent = "Guardando…";
     var detail = { curso: slug, curso_titulo: titulo, leccion: L.key, n: i + 1, titulo: L.titulo, total: lecciones.length };
     try {
       var r = await sb().from("training_progress").insert([{ student_id: uid, activity: "curso", detail: detail }]);
       if (r && r.error) throw r.error;
     } catch (e) {
-      btn.disabled = false; nota.textContent = "No se pudo guardar el avance. Revisá tu conexión y volvé a intentarlo.";
+      btn.disabled = false; nota.textContent = "No se pudo guardar el avance. Revisa tu conexión y vuelve a intentarlo.";
       return;
     }
     hechas[L.key] = new Date().toISOString();
@@ -231,7 +231,7 @@
       var a = el("a", null, String(i + 1)); a.href = "#" + L.el.id;
       a.setAttribute("aria-label", "Tema " + (i + 1) + ": " + L.titulo + " — " + (st === "hecha" ? "estudiada" : st === "disponible" ? "disponible" : "bloqueada"));
       a.title = L.titulo;
-      a.addEventListener("click", function (ev) { ev.preventDefault(); if (st === "bloqueada") anunciar("El tema " + (i + 1) + " está bloqueado: primero marcá como estudiada la anterior."); else abrir(i); });
+      a.addEventListener("click", function (ev) { ev.preventDefault(); if (st === "bloqueada") anunciar("El tema " + (i + 1) + " está bloqueado: primero marca como estudiada la anterior."); else abrir(i); });
       li.appendChild(a); pasos.appendChild(li);
     });
     prog.append(head, track, pasos);
@@ -248,7 +248,7 @@
       var d = sum.parentElement; if (!d || !d.classList.contains("ac-bloqueada")) return;
       ev.preventDefault();
       var i = lecciones.findIndex(function (L) { return L.el === d; });
-      anunciar("Este tema está bloqueado. Primero marcá como estudiado el tema " + i + ": " + lecciones[i - 1].titulo + ".");
+      anunciar("Este tema está bloqueado. Primero marca como estudiado el tema " + i + ": " + lecciones[i - 1].titulo + ".");
     });
     body.addEventListener("toggle", function (ev) {
       var d = ev.target; if (d.tagName === "DETAILS" && d.classList.contains("ac-bloqueada") && d.open) d.open = false;
@@ -276,7 +276,7 @@
       if (!r.ok) throw new Error("no_content");
       html = await r.text();
     } catch (e) {
-      body.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recargá la página.</p>';
+      body.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
       return;
     }
     body.innerHTML = html;

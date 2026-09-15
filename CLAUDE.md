@@ -672,9 +672,30 @@ alto contraste y los encabezados que permiten saltar directo al contenido.
 ## Cómo se escribe en el sitio
 
 El español del sitio es el de acá: latinoamericano, costarricense. Se tutea
-(no "vosotros"), se dice computadora y celular (no ordenador ni móvil), y los
+—**tuteo, no voseo**: "puedes", no "podés"; "juega", no "jugá"— y tampoco
+"vosotros". Se dice computadora y celular (no ordenador ni móvil), y los
 términos de ajedrez van en el nombre que se usa en la región —horquilla,
 enfilada, clavada, mate de la coz, mate del pasillo—, con el término en inglés
 entre paréntesis solo cuando es el que el alumno va a encontrar buscando en
 internet (zwischenzug, smothered mate). Nada de traducciones calcadas del
 inglés ni de giros peninsulares.
+
+**`python3 herramientas/verificar-voseo.py` revisa que no se cuele voseo** y
+falla si encuentra; con `--arreglar` lo convierte. Al escribir texto nuevo o
+importar contenido, correrlo. Con el contenido de septiembre entraron unas
+1.900 formas de voseo y se colaron hasta dentro de los datos estructurados que
+lee Google.
+
+- **No es quitar la tilde**: el imperativo de tuteo cambia la raíz en muchos
+  verbos ("pensá" es *piensa*, "jugá" es *juega*, "hacé" es *haz*, "volvé" es
+  *vuelve*, "elegí" es *elige*), y con el pronombre pegado pasa al revés — el
+  voseo no lleva tilde ("dejalo") y el tuteo sí ("déjalo"). Por eso la
+  conversión es una tabla escrita verbo por verbo dentro del script, no una
+  regla.
+- Lo que **no** es voseo y por eso está en la lista blanca: los futuros
+  ("quedará", "tendrás", "podrá"), los pretéritos de primera persona
+  ("empecé", "aprendí", "entendí", "tomé") y los nombres propios ("Elistá",
+  "Andrés", "Valdés"). Si aparece una palabra nueva que el script marca mal,
+  se agrega ahí.
+- "vos" se resuelve por contexto: con preposición delante es *ti* ("un lugar
+  para ti"), si no es *tú* ("busca tú mismo").

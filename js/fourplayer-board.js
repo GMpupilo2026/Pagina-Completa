@@ -5,7 +5,7 @@
  * antes que este archivo.
  *
  * Orientación: cada jugador ve SU PROPIO brazo abajo de la pantalla (como
- * en cualquier tablero de 2 — vos siempre abajo), rotando el tablero según
+ * en cualquier tablero de 2 — tú siempre abajo), rotando el tablero según
  * el asiento que mira la pantalla. Esto se resuelve con dos transformadas
  * de coordenadas chiquitas (ver rotCCW/screenToBoard) en vez de rotar
  * visualmente el DOM (que además giraría los glifos de las piezas).

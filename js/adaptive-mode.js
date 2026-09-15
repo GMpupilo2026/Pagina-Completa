@@ -95,7 +95,7 @@
     note.setAttribute("aria-live", "polite");
     note.className = "sr-only";
     note.textContent =
-      reason + " Podés volver al modo visual cuando quieras desde el botón en la parte superior de la página.";
+      reason + " Puedes volver al modo visual cuando quieras desde el botón en la parte superior de la página.";
     document.body.appendChild(note);
     setTimeout(function () {
       note.remove();
@@ -111,7 +111,7 @@
     if (e.key === "Tab" && getStored() === null) {
       setStored(true);
       applyMode(true);
-      announceAutoSwitchWhenReady("Detectamos que navegás con el teclado: se activó el modo adaptado.");
+      announceAutoSwitchWhenReady("Detectamos que navegas con el teclado: se activó el modo adaptado.");
     }
     cleanupDetection();
   }

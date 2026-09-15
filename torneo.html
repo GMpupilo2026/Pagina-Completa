@@ -480,7 +480,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!TOURNEY_ID) { showError("Falta indicar qué torneo abrir. Volvé a Torneos y entrá desde ahí."); return; }
+            if (!TOURNEY_ID) { showError("Falta indicar qué torneo abrir. Vuelve a Torneos y entrá desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }

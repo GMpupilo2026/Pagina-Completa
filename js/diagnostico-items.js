@@ -1159,7 +1159,7 @@ window.DIAGNOSTICO_ITEMS = [
       'Porque así se gana tiempo en el reloj del rival.',
     ],
     correcta: 0,
-    explica: 'La misma posición se llega por caminos distintos, y en el camino cada bando tiene desvíos. Elegir el orden es elegir qué desvíos le dejás al rival.',
+    explica: 'La misma posición se llega por caminos distintos, y en el camino cada bando tiene desvíos. Elegir el orden es elegir qué desvíos le dejas al rival.',
   },
   {
     id: 'ap_najdorf_a6', area: 'apertura', peso: 5, tipo: 'opcion',

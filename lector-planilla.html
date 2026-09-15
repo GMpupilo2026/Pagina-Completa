@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Lector de planilla — Ajedrez Integral</title>
-    <meta name="description" content="Fotografía o escanea tu planilla de partida y convertila directamente en PGN, jugada por jugada.">
+    <meta name="description" content="Fotografía o escanea tu planilla de partida y conviértela directamente en PGN, jugada por jugada.">
     <meta name="robots" content="noindex">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,11 +97,11 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Lector de planilla 📝</h1>
-            <p class="text-brand-500 dark:text-brand-300 mb-8">Fotografiá o escaneá la planilla donde anotaste una partida, y convertila directamente en PGN. El lector no se detiene a preguntar: cuando una jugada no se lee bien, elige sola la jugada legal más parecida y sigue de largo — al final revisás el PGN completo y corregís a mano lo que haga falta.</p>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Fotografía o escanea la planilla donde anotaste una partida, y conviértela directamente en PGN. El lector no se detiene a preguntar: cuando una jugada no se lee bien, elige sola la jugada legal más parecida y sigue de largo — al final revisas el PGN completo y corriges a mano lo que haga falta.</p>
 
             <!-- ---------- Paso 1: elegir imagen ---------- -->
             <div id="upload-section" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">1. Elegí la foto o el escaneo</h2>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">1. Elige la foto o el escaneo</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuanto más derecha y bien iluminada esté la foto, mejor sale la lectura. Funciona mejor con planillas escritas con letra clara — la letra manuscrita es más difícil de leer para este lector automático, así que es normal tener que aclarar algunas jugadas a mano.</p>
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
                     <!-- "capture" en este input hace que, en el celular, se abra la cámara
@@ -133,7 +133,7 @@
 
             <!-- ---------- Paso 2: procesar jugadas ---------- -->
             <div id="process-section" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">2. Revisá las jugadas</h2>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">2. Revisa las jugadas</h2>
                 <p id="process-status" class="text-sm text-brand-500 dark:text-brand-300 mb-4" role="status" aria-live="polite"></p>
 
                 <div class="grid sm:grid-cols-2 gap-6">
@@ -432,7 +432,7 @@
                 const whiteMove = (guessedPlies.has(i) ? "≈" : "") + history[i];
                 const blackMove = history[i + 1] ? "  " + (guessedPlies.has(i + 1) ? "≈" : "") + history[i + 1] : "";
                 li.textContent = `${num}. ${whiteMove}${blackMove}`;
-                if (guessedPlies.has(i) || guessedPlies.has(i + 1)) li.title = "≈ = adivinada por parecido con una jugada legal, revisala si querés";
+                if (guessedPlies.has(i) || guessedPlies.has(i + 1)) li.title = "≈ = adivinada por parecido con una jugada legal, revisala si quieres";
                 list.appendChild(li);
             }
             list.scrollTop = list.scrollHeight;
@@ -543,7 +543,7 @@
                 progressWrap.classList.add("hidden");
                 if (!moveTokens.length) {
                     progressText.textContent = "";
-                    alert("No encontré texto legible en la imagen. Probá con una foto más nítida y bien iluminada.");
+                    alert("No encontré texto legible en la imagen. Prueba con una foto más nítida y bien iluminada.");
                     readBtn.disabled = false;
                     return;
                 }
@@ -551,7 +551,7 @@
             } catch (err) {
                 console.error(err);
                 progressWrap.classList.add("hidden");
-                alert("No se pudo leer la imagen: " + (err && err.message ? err.message : "error desconocido") + ". Probá de nuevo.");
+                alert("No se pudo leer la imagen: " + (err && err.message ? err.message : "error desconocido") + ". Prueba de nuevo.");
                 readBtn.disabled = false;
             }
         });

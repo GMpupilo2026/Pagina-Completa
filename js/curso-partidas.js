@@ -227,7 +227,7 @@
       game = new Chess(); game.load(fenAt(ply - 1));
       renderMoves(ply); renderView();
       const m = moves[ply - 1];
-      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Momento clave ' + (claves.length - state.pendientes.length) + "/" + claves.length + " · juegan " + (m.color === "w" ? "blancas" : "negras") + ".</strong> " + esc(state.guess.pregunta || "¿Qué jugarías aquí?") + " Hacé la jugada en el tablero.</p>";
+      comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Momento clave ' + (claves.length - state.pendientes.length) + "/" + claves.length + " · juegan " + (m.color === "w" ? "blancas" : "negras") + ".</strong> " + esc(state.guess.pregunta || "¿Qué jugarías aquí?") + " Haz la jugada en el tablero.</p>";
       msgEl.innerHTML = '<button type="button" data-act="hint" class="cp-mini">Pista</button> <button type="button" data-act="skip" class="cp-mini">Ver la jugada</button>';
       input.enable(true);
     }
@@ -245,7 +245,7 @@
           state.intentos++;
           renderView({ bad: [uci.slice(0, 2), uci.slice(2, 4)] });
           if (state.intentos >= 2) { revealGuess(true); return; }
-          comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(state.guess.pista || "Probá otra vez: pensá en el plan de la lección.") + "</p>";
+          comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(state.guess.pista || "Prueba otra vez: piensa en el plan de la lección.") + "</p>";
         }
         return;
       }
@@ -263,7 +263,7 @@
       state.mode = "ver"; input.enable(false); guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false;
       renderMoves(); renderView();
       msgEl.innerHTML = "";
-      comEl.innerHTML = '<p class="cp-c cp-good"><strong>Resultado: ' + state.aciertos + " de " + total + " momentos clave (" + pct + "%).</strong> " + (pct >= 80 ? "Excelente: entendiste el hilo de la partida." : pct >= 50 ? "Bien. Repasá los comentarios de los momentos que fallaste y volvé a intentarlo." : "Volvé a recorrer la partida leyendo los comentarios y repetí el ejercicio.") + "</p>";
+      comEl.innerHTML = '<p class="cp-c cp-good"><strong>Resultado: ' + state.aciertos + " de " + total + " momentos clave (" + pct + "%).</strong> " + (pct >= 80 ? "Excelente: entendiste el hilo de la partida." : pct >= 50 ? "Bien. Repasa los comentarios de los momentos que fallaste y vuelve a intentarlo." : "Vuelve a recorrer la partida leyendo los comentarios y repite el ejercicio.") + "</p>";
       guardar(g.id, { tipo: "adivinar", aciertos: state.aciertos, total: total, pct: pct });
     }
     function stopGuess() { state.mode = "ver"; input.enable(false); guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false; msgEl.innerHTML = ""; renderMoves(); renderView(); }
@@ -276,7 +276,7 @@
       game = new Chess(); if (!game.load(fenAt(state.ply))) { msgEl.textContent = "No se pudo cargar la posición."; return; }
       human = game.turn(); state.mode = "practicar";
       practBtn.textContent = "✕ Terminar la práctica"; guessBtn.disabled = true;
-      comEl.innerHTML = '<p class="cp-c">Jugás con ' + (human === "w" ? "blancas" : "negras") + " desde la posición de la jugada " + state.ply + ". Intentá seguir el plan de la partida; el motor responde por el otro bando.</p>";
+      comEl.innerHTML = '<p class="cp-c">Juegas con ' + (human === "w" ? "blancas" : "negras") + " desde la posición de la jugada " + state.ply + ". Intenta seguir el plan de la partida; el motor responde por el otro bando.</p>";
       msgEl.textContent = "";
       PracticeEngine.preload(); input.enable(true); renderPractice();
     }
@@ -301,14 +301,14 @@
       try { uci = await PracticeEngine.getMove(game.fen(), levelKey()); } catch (e) { uci = null; }
       thinking = false;
       if (state.mode !== "practicar") return;
-      if (!uci) { renderPractice("El motor no respondió. Probá de nuevo o recargá la página."); input.enable(true); return; }
+      if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); input.enable(true); return; }
       game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
       msgEl.textContent = "Te toca."; input.enable(true); renderPractice();
       const r2 = resultOf(); if (r2) endPractice(r2);
     }
     function endPractice(res) {
       const humanWon = (res === "1-0" && human === "w") || (res === "0-1" && human === "b");
-      const txt = "Fin de la partida: " + RES_TXT[res] + (humanWon ? ". ¡Bien jugado!" : res === "½-½" ? "." : ". Revisá la partida modelo y volvé a intentarlo.");
+      const txt = "Fin de la partida: " + RES_TXT[res] + (humanWon ? ". ¡Bien jugado!" : res === "½-½" ? "." : ". Revisa la partida modelo y vuelve a intentarlo.");
       guardar(g.id, { tipo: "practica", resultado: res, jugaste: human, desde: state.ply, nivel: levelKey(), jugadas: game.history().length });
       stopPractice(); msgEl.textContent = txt;
     }
@@ -326,7 +326,7 @@
       if (act === "flip") { state.flip = !state.flip; if (state.mode === "practicar") renderPractice(); else renderView(); return; }
       if (act === "guess") { state.mode === "adivinar" ? stopGuess() : startGuess(); return; }
       if (act === "practice") { state.mode === "practicar" ? stopPractice() : startPractice(); return; }
-      if (act === "hint" && state.guess) { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(state.guess.pista || "Buscá la jugada que cumple el plan de la lección.") + "</p>"; return; }
+      if (act === "hint" && state.guess) { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(state.guess.pista || "Busca la jugada que cumple el plan de la lección.") + "</p>"; return; }
       if (act === "skip") { revealGuess(true); return; }
       if (act === "continue") { nextGuess(); return; }
     });
@@ -345,7 +345,7 @@
     el.innerHTML =
       '<div class="cp-head"><span class="cp-players">' + esc(x.titulo || ("Ejercicio " + x.n)) + '</span><span class="cp-res">' + (parseFen(x.fen).turn === "w" ? "Juegan blancas" : "Juegan negras") + "</span></div>" +
       '<div class="cp-board" tabindex="0" aria-label="Tablero del ejercicio"></div>' +
-      '<div class="cp-side"><div class="cp-comment"><p class="cp-c">' + esc(x.pregunta || "Encontrá la mejor jugada.") + " Jugala en el tablero.</p></div>" +
+      '<div class="cp-side"><div class="cp-comment"><p class="cp-c">' + esc(x.pregunta || "Encuentra la mejor jugada.") + " Juégala en el tablero.</p></div>" +
       '<div class="cp-controls" role="group" aria-label="Recorrer la solución" hidden><button type="button" data-act="first">⏮</button><button type="button" data-act="prev">◀</button><span class="cp-ply"></span><button type="button" data-act="next">▶</button><button type="button" data-act="last">⏭</button></div>' +
       '<div class="cp-actions"><button type="button" data-act="hint" class="cp-mini">Pista</button><button type="button" data-act="show" class="cp-mini">Ver la solución</button></div>' +
       '<div class="cp-promo" hidden><span>Coronar:</span><button type="button" data-p="q">♕ Dama</button><button type="button" data-p="r">♖ Torre</button><button type="button" data-p="b">♗ Alfil</button><button type="button" data-p="n">♘ Caballo</button></div>' +
@@ -372,8 +372,8 @@
       if (ok) { solve(true); }
       else {
         render({ bad: [uci.slice(0, 2), uci.slice(2, 4)] });
-        if (state.tries >= 3) { comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> Mirá la solución y estudiá la idea.</p>'; }
-        else comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(x.pista || "Buscá la idea principal de la lección.") + " Intento " + state.tries + " de 3.</p>";
+        if (state.tries >= 3) { comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> Mira la solución y estudia la idea.</p>'; }
+        else comEl.innerHTML = '<p class="cp-c cp-bad"><strong>No es esa.</strong> ' + esc(x.pista || "Busca la idea principal de la lección.") + " Intento " + state.tries + " de 3.</p>";
       }
     }, (sel) => {
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
@@ -383,7 +383,7 @@
       state.solved = true; input.enable(false); ctr.hidden = false; el.querySelector('[data-act="show"]').hidden = true; el.querySelector('[data-act="hint"]').hidden = true;
       movesEl.innerHTML = sol.map((m, i) => '<button type="button" data-ply="' + (i + 1) + '">' + esc(moveLabel(m)) + "</button>").join("") + (x.resultado ? '<span class="cp-h"> ' + esc(x.resultado) + "</span>" : "");
       state.ply = 1; render(byUser ? { good: [sol[0].uci.slice(0, 2), sol[0].uci.slice(2, 4)] } : {});
-      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(moveLabel(sol[0])) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorré la línea completa con las flechas.</p>";
+      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(moveLabel(sol[0])) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con las flechas.</p>";
       guardar(x.id, { tipo: "ejercicio", ok: !!byUser, intentos: state.tries });
     }
     if (typeof Chess === "function") { game = new Chess(); game.load(x.fen); input.enable(true); }
@@ -392,7 +392,7 @@
       const b = ev.target.closest("button"); if (!b) return;
       const act = b.dataset.act;
       if (b.dataset.ply) { state.ply = parseInt(b.dataset.ply, 10); render(); return; }
-      if (act === "hint") { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(x.pista || "Pensá en el desequilibrio de material y en qué pieza está mal colocada.") + "</p>"; return; }
+      if (act === "hint") { comEl.innerHTML = '<p class="cp-c cp-ask"><strong>Pista:</strong> ' + esc(x.pista || "Piensa en el desequilibrio de material y en qué pieza está mal colocada.") + "</p>"; return; }
       if (act === "show") { solve(false); return; }
       if (!state.solved) return;
       if (act === "first") state.ply = 0; else if (act === "prev") state.ply = Math.max(0, state.ply - 1);
@@ -428,7 +428,7 @@
         exp.hidden = false; exp.textContent = (sel && parseInt(sel.value, 10) === it.correcta ? "✔ " : "✘ ") + (it.explicacion || "");
       });
       const pct = items.length ? Math.round((100 * ok) / items.length) : 0;
-      el.querySelector(".cp-qscore").textContent = "Resultado: " + ok + " de " + items.length + " (" + pct + "%)" + (answered < items.length ? " · dejaste " + (items.length - answered) + " sin responder" : "") + (pct >= 80 ? " · ¡muy bien!" : pct >= 60 ? " · aprobado; repasá lo que fallaste" : " · repasá la lección y volvé a intentarlo");
+      el.querySelector(".cp-qscore").textContent = "Resultado: " + ok + " de " + items.length + " (" + pct + "%)" + (answered < items.length ? " · dejaste " + (items.length - answered) + " sin responder" : "") + (pct >= 80 ? " · ¡muy bien!" : pct >= 60 ? " · aprobado; repasa lo que fallaste" : " · repasa la lección y vuelve a intentarlo");
       guardar(q.id, { tipo: "quiz", aciertos: ok, total: items.length, pct: pct });
     });
   }

@@ -143,7 +143,7 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>
-                <p id="moves-hidden" class="hidden text-xs text-brand-450 dark:text-brand-350">La planilla está oculta. Podés desbloquearla 20 segundos con el botón de arriba.</p>
+                <p id="moves-hidden" class="hidden text-xs text-brand-450 dark:text-brand-350">La planilla está oculta. Puedes desbloquearla 20 segundos con el botón de arriba.</p>
                 <p id="moves-empty" class="text-xs text-brand-450 dark:text-brand-350">Sin jugadas todavía…</p>
                 <ol id="moves-list" class="hidden flex-wrap gap-x-3 gap-y-1 text-sm font-mono text-brand-600 dark:text-brand-300"></ol>
             </div>
@@ -270,7 +270,7 @@
             const texto = input.value.trim();
             if (!texto) return;
             const r = engine.moveText(texto);
-            if (!r) { msg.textContent = "\u201c" + texto + "\u201d no es una jugada legal en esta posición. Probá otra vez."; input.select(); return; }
+            if (!r) { msg.textContent = "\u201c" + texto + "\u201d no es una jugada legal en esta posición. Prueba otra vez."; input.select(); return; }
             input.value = ""; msg.textContent = "";
             board.render();
             ciegasMostrarUltima(r.san, true);
@@ -330,7 +330,7 @@
             } else {
                 const myTurn = engine.turn() === myColor;
                 const jaque = engine.inCheck() ? " ¡Jaque!" : "";
-                setStatus((myTurn ? "Es tu turno." + jaque : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…") + (room.variant === "ciegas" && myTurn ? " Escribí tu jugada en el panel." : ""));
+                setStatus((myTurn ? "Es tu turno." + jaque : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…") + (room.variant === "ciegas" && myTurn ? " Escribe tu jugada en el panel." : ""));
             }
         }
 
@@ -539,7 +539,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Volvé a Juegos y entrá desde ahí."); return; }
+            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entrá desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }

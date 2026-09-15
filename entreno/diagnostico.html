@@ -112,7 +112,7 @@
                      aparte de los alumnos registrados). -->
                 <div id="visitante-box" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-brand-100">
                     <h2 class="font-serif text-lg font-bold text-white mb-1">Diagnóstico gratuito, sin cuenta</h2>
-                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Dejanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya sos alumno de Academia? Iniciá sesión</a> y el resultado queda en tu cuenta.</p>
+                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Déjanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya eres alumno de Academia? Inicia sesión</a> y el resultado queda en tu cuenta.</p>
                     <div class="grid sm:grid-cols-2 gap-3">
                         <div>
                             <label for="visitante-nombre" class="block text-xs font-medium text-brand-200 mb-1">Nombre y apellido <span aria-hidden="true">*</span></label>
@@ -134,7 +134,7 @@
 
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Antes de empezar</h2>
-                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuatro preguntas sobre ti, incluido tu Elo si lo tenés. No puntúan: sirven para ajustar el nivel y el plan a tu realidad.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuatro preguntas sobre ti, incluido tu Elo si lo tienes. No puntúan: sirven para ajustar el nivel y el plan a tu realidad.</p>
                     <div id="perfil-form" class="space-y-4"></div>
                 </div>
 
@@ -193,7 +193,7 @@
                 </div>
 
                 <div id="result-cta-visitante" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
-                    <p class="text-white font-serif text-lg font-bold mb-2">¿Querés un plan de entrenamiento con seguimiento?</p>
+                    <p class="text-white font-serif text-lg font-bold mb-2">¿Quieres un plan de entrenamiento con seguimiento?</p>
                     <p class="text-brand-200 text-sm mb-4">En Academia el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
                     <div class="flex flex-wrap justify-center gap-3">
                         <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Academia</a>
@@ -386,14 +386,14 @@ function pintarPerfil() {
   const g = document.createElement('div');
   const eloActual = estado.perfil.elo != null ? estado.perfil.elo : (perfilCuenta && perfilCuenta.elo) || '';
   const tipoActual = estado.perfil.elo_tipo || (perfilCuenta && perfilCuenta.elo_tipo) || 'fide';
-  g.innerHTML = `<label for="perfil-elo" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">¿Cuál es tu Elo (rating)? Si no tenés, dejalo vacío.</label>
+  g.innerHTML = `<label for="perfil-elo" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-2">¿Cuál es tu Elo (rating)? Si no tienes, déjalo vacío.</label>
     <div class="flex flex-wrap gap-2">
       <input id="perfil-elo" type="number" inputmode="numeric" min="100" max="3500" step="1" placeholder="Ej. 1350" value="${eloActual}" class="w-32 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
       <select id="perfil-elo-tipo" aria-label="Origen del Elo" class="flex-1 min-w-[12rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
         ${PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${t.id === tipoActual ? ' selected' : ''}>${t.etiqueta}</option>`).join('')}
       </select>
     </div>
-    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabés con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
   box.appendChild(g);
   const inp = g.querySelector('#perfil-elo'), sel = g.querySelector('#perfil-elo-tipo');
   const guardarElo = () => {
@@ -437,8 +437,8 @@ function empezar() {
     const email = document.getElementById('visitante-email').value.trim();
     const telefono = document.getElementById('visitante-telefono').value.trim();
     const msg = document.getElementById('visitante-msg');
-    if (!nombre) { msg.textContent = 'Escribí tu nombre para empezar.'; document.getElementById('visitante-nombre').focus(); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribí un correo válido para poder enviarte el resultado.'; document.getElementById('visitante-email').focus(); return; }
+    if (!nombre) { msg.textContent = 'Escribe tu nombre para empezar.'; document.getElementById('visitante-nombre').focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Escribe un correo válido para poder enviarte el resultado.'; document.getElementById('visitante-email').focus(); return; }
     msg.textContent = '';
     estado.visitante = { nombre, email, telefono };
     guardarEstado();
@@ -803,7 +803,7 @@ function mostrarResultado(detalle, reciente) {
   if (!eloEl) { eloEl = document.createElement('p'); eloEl.id = 'result-elo'; eloEl.className = 'text-xs mt-2 opacity-90'; document.getElementById('result-score').insertAdjacentElement('afterend', eloEl); }
   eloEl.textContent = resumen.elo && resumen.elo.declarado
     ? `Elo: ${resumen.elo.lectura.texto} Nivel calculado combinando tu Elo con la prueba (≈${resumen.elo.combinado}).`
-    : `Sin Elo registrado: el nivel sale solo de la prueba (≈${resumen.elo.estimado}).${sesionActual ? ' Si tenés rating, agregalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
+    : `Sin Elo registrado: el nivel sale solo de la prueba (≈${resumen.elo.estimado}).${sesionActual ? ' Si tienes rating, agregalo en Configuración › Perfil y el próximo diagnóstico lo tendrá en cuenta.' : ''}`;
   pintarEscalones(resumen);
 
   const areasBox = document.getElementById('result-areas');
