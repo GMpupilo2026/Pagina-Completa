@@ -148,6 +148,12 @@
             <section aria-labelledby="tv-internal-heading" class="mb-8">
                 <h2 id="tv-internal-heading" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 text-center">🏫 Partidas de la academia en vivo</h2>
                 <p id="tv-internal-empty" class="hidden text-center text-brand-400 dark:text-brand-500 text-sm">No hay ninguna partida de la academia en curso ahora mismo.</p>
+                <!-- Ajedrez para 4 recibe su propio espacio, ancho y a todo el tablero
+                     (160 casillas en cruz no cabe bien en la grilla chica de tableros de
+                     8x8) — aparece solo mientras haya una partida así en curso, y este
+                     contenedor vuelve a quedar vacío/oculto en cuanto termina, sin tocar
+                     el resto de la página. -->
+                <div id="tv-internal-fourplayer" class="hidden space-y-8 mb-6"></div>
                 <div id="tv-internal-grid" class="hidden grid gap-4"></div>
             </section>
 
@@ -196,6 +202,8 @@
     <!-- Para dibujar nosotros mismos el tablero de cada partida en vivo del torneo (ver
          más abajo por qué: el iframe embed/game de Lichess no se estaba actualizando). -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/fourplayer-engine.js"></script>
+    <script src="js/fourplayer-board.js"></script>
     <script src="js/main.js"></script>
     <script>
         (function () {
@@ -545,37 +553,43 @@
             }
 
             function renderInternalCard(item, names) {
-                if (item.kind === "room") {
-                    const room = item.row;
-                    const label = INTERNAL_VARIANT_LABEL[room.variant] || room.variant;
-                    const href = (INTERNAL_PAGE_FOR_VARIANT[room.variant] || "juegos.html") + "?room=" + encodeURIComponent(room.id);
-                    const isHiddenNiebla = room.variant === "niebla";
-                    const boardHtml = isHiddenNiebla
-                        ? '<div class="aspect-square w-full flex items-center justify-center text-center text-xs text-brand-300 px-3">🌫️ Oculta por la niebla<br>hasta que termine</div>'
-                        : '<div class="aspect-square w-full grid grid-cols-8 grid-rows-8" data-board-id="room-' + escapeHtml(room.id) + '"></div>';
-                    return '<a href="' + escapeHtml(href) + '" class="block rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950 hover:border-accent-500 transition-colors">' +
-                        '<h3 class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900 gap-1">' +
-                            '<span class="truncate">' + internalPlayerLabel(room.white_id, names) + '</span>' +
-                            '<span class="shrink-0 opacity-70">' + label + '</span>' +
-                            '<span class="truncate text-right">' + internalPlayerLabel(room.black_id, names) + '</span>' +
-                        '</h3>' + boardHtml + '</a>';
-                }
-                // fourplayer_games: sin mini tablero (cruz de 14x14, muy chica para una
-                // grilla como esta) — se muestra el marcador de los 4 asientos en vivo.
                 const room = item.row;
+                const label = INTERNAL_VARIANT_LABEL[room.variant] || room.variant;
+                const href = (INTERNAL_PAGE_FOR_VARIANT[room.variant] || "juegos.html") + "?room=" + encodeURIComponent(room.id);
+                const isHiddenNiebla = room.variant === "niebla";
+                const boardHtml = isHiddenNiebla
+                    ? '<div class="aspect-square w-full flex items-center justify-center text-center text-xs text-brand-300 px-3">🌫️ Oculta por la niebla<br>hasta que termine</div>'
+                    : '<div class="aspect-square w-full grid grid-cols-8 grid-rows-8" data-board-id="room-' + escapeHtml(room.id) + '"></div>';
+                return '<a href="' + escapeHtml(href) + '" class="block rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950 hover:border-accent-500 transition-colors">' +
+                    '<h3 class="flex items-center justify-between px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900 gap-1">' +
+                        '<span class="truncate">' + internalPlayerLabel(room.white_id, names) + '</span>' +
+                        '<span class="shrink-0 opacity-70">' + label + '</span>' +
+                        '<span class="truncate text-right">' + internalPlayerLabel(room.black_id, names) + '</span>' +
+                    '</h3>' + boardHtml + '</a>';
+            }
+
+            // Ajedrez para 4 se dibuja aparte, con el tablero real (js/fourplayer-engine.js
+            // + js/fourplayer-board.js, los mismos que usa cuatro-jugadores.html en modo
+            // espectador: mySeat null, interactive false) en su propio ancho — la cruz de
+            // 160 casillas no entra bien en la grilla chica pensada para tableros de 8x8.
+            function renderFourplayerCard(room, names) {
                 const SEATS = ["red", "blue", "yellow", "green"];
                 const SEAT_EMOJI = { red: "🔴", blue: "🔵", yellow: "🟡", green: "🟢" };
-                const rows = SEATS.map((seat) => {
+                const seatLabels = SEATS.map((seat) => {
                     const s = room.seats[seat] || {};
                     const isTurn = room.turn === seat;
-                    return '<li class="flex items-center justify-between px-2 py-0.5' + (isTurn ? " text-accent-400 font-semibold" : "") + '">' +
-                        '<span>' + SEAT_EMOJI[seat] + ' ' + internalPlayerLabel(s.player_id, names) + '</span>' +
-                        (room.mode === "ffa" ? '<span class="font-mono">' + (s.score || 0) + '</span>' : "") +
-                        '</li>';
+                    const score = room.mode === "ffa" ? " (" + (s.score || 0) + ")" : "";
+                    return '<span class="' + (isTurn ? "text-accent-500 dark:text-accent-400 font-semibold" : "") + '">' +
+                        SEAT_EMOJI[seat] + " " + internalPlayerLabel(s.player_id, names) + score + "</span>";
                 }).join("");
-                return '<a href="cuatro-jugadores.html?room=' + encodeURIComponent(room.id) + '" class="block rounded-xl overflow-hidden shadow-md border-2 border-brand-700 bg-brand-950 hover:border-accent-500 transition-colors">' +
-                    '<h3 class="px-2 py-1 text-[11px] sm:text-xs text-brand-200 bg-brand-900 text-center">🎡 4 jugadores · ' + (room.mode === "teams" ? "Equipos" : "Todos contra todos") + '</h3>' +
-                    '<ul class="text-xs text-brand-100 py-1">' + rows + '</ul></a>';
+                return '<div class="max-w-[560px] mx-auto">' +
+                    '<h3 class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm text-brand-600 dark:text-brand-300 mb-2 text-center">' +
+                        '<span class="font-semibold text-brand-800 dark:text-white">🎡 4 jugadores · ' + (room.mode === "teams" ? "Equipos" : "Todos contra todos") + '</span>' +
+                        seatLabels +
+                    '</h3>' +
+                    '<a href="cuatro-jugadores.html?room=' + encodeURIComponent(room.id) + '" class="block" aria-label="Ver esta partida de Ajedrez para 4 completa">' +
+                        '<div id="fp-board-' + escapeHtml(room.id) + '" class="grid gap-0 w-full aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none" style="grid-template-columns: repeat(14, minmax(0,1fr)); grid-template-rows: repeat(14, minmax(0,1fr));"></div>' +
+                    '</a></div>';
             }
 
             async function fetchInternalGames() {
@@ -600,25 +614,48 @@
 
             async function refreshInternalGames() {
                 const { items, names } = await fetchInternalGames();
+                const roomItems = items.filter((item) => item.kind === "room");
+                const fpItems = items.filter((item) => item.kind === "fourplayer");
+
+                // Ajedrez para 4: tablero real, ancho propio. Se reconstruye entero en cada
+                // refresco (son pocas partidas a la vez) — en cuanto una termina y deja de
+                // venir en la lista, el contenedor simplemente se vacía y se oculta solo,
+                // sin dejar un hueco ni tocar el resto de "Partidas en vivo".
+                const fpContainer = document.getElementById("tv-internal-fourplayer");
+                if (fpItems.length) {
+                    fpContainer.innerHTML = fpItems.map((item) => renderFourplayerCard(item.row, names)).join("");
+                    fpContainer.classList.remove("hidden");
+                    fpItems.forEach((item) => {
+                        const boardEl = document.getElementById("fp-board-" + item.row.id);
+                        if (!boardEl || typeof FourPlayerBoard === "undefined" || typeof FourPlayerChess === "undefined") return;
+                        try {
+                            const board = new FourPlayerBoard(boardEl, { mySeat: null, interactive: false });
+                            board.loadGame(FourPlayerChess.Game.fromJSON(item.row.board));
+                        } catch (e) { console.error("No se pudo dibujar la partida de 4 jugadores " + item.row.id + ":", e); }
+                    });
+                } else {
+                    fpContainer.classList.add("hidden");
+                    fpContainer.innerHTML = "";
+                }
+
                 const grid = document.getElementById("tv-internal-grid");
-                const emptyEl = document.getElementById("tv-internal-empty");
-                if (!items.length) {
+                if (roomItems.length) {
+                    const columnas = Math.min(roomItems.length, 5);
+                    grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
+                    grid.innerHTML = roomItems.map((item) => renderInternalCard(item, names)).join("");
+                    grid.classList.remove("hidden");
+                    roomItems.forEach((item) => {
+                        if (item.row.variant === "niebla") return;
+                        const container = grid.querySelector('[data-board-id="room-' + CSS.escape(item.row.id) + '"]');
+                        const fen = stripPockets(fenForGameRoom(item.row));
+                        if (container && fen) renderMiniBoard(container, fen);
+                    });
+                } else {
                     grid.classList.add("hidden");
                     grid.innerHTML = "";
-                    emptyEl.classList.remove("hidden");
-                    return;
                 }
-                emptyEl.classList.add("hidden");
-                const columnas = Math.min(items.length, 5);
-                grid.style.gridTemplateColumns = "repeat(" + columnas + ", minmax(0, 1fr))";
-                grid.innerHTML = items.map((item) => renderInternalCard(item, names)).join("");
-                grid.classList.remove("hidden");
-                items.forEach((item) => {
-                    if (item.kind !== "room" || item.row.variant === "niebla") return;
-                    const container = grid.querySelector('[data-board-id="room-' + CSS.escape(item.row.id) + '"]');
-                    const fen = stripPockets(fenForGameRoom(item.row));
-                    if (container && fen) renderMiniBoard(container, fen);
-                });
+
+                document.getElementById("tv-internal-empty").classList.toggle("hidden", !!(roomItems.length || fpItems.length));
             }
 
             function initInternalGames() {
