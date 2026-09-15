@@ -9,10 +9,18 @@
  * Al tocar el banco hay que volver a correrlo o el papel deja de coincidir con
  * la pantalla.
  *
- * Cómo se corre (necesita Node y Chromium por Playwright, que no son parte del
- * sitio: son solo para generar el archivo):
+ * Sale protegido: se puede abrir sin contraseña, pero no copiar el texto, ni
+ * editarlo, ni imprimirlo. Esas restricciones las levanta la contraseña de
+ * propietario (CLAVE_PROPIETARIO, más abajo). Es una protección del formato
+ * PDF: los lectores serios la respetan, pero no es una caja fuerte — quien
+ * quiera saltársela con una herramienta puede hacerlo. Lo que evita es la
+ * copia y la reimpresión de paso.
+ *
+ * Cómo se corre (necesita Node, Chromium por Playwright y pypdf, que no son
+ * parte del sitio: son solo para generar el archivo):
  *
  *     npm install playwright        # una vez, en cualquier carpeta temporal
+ *     pip install pypdf
  *     node herramientas/arbitraje-pdf.js
  *
  * Deja el PDF en la raíz del repositorio y un HTML intermedio en /tmp por si
@@ -30,6 +38,15 @@ const PRUEBA = global.window.ArbitrajePrueba;
 const NIVEL = global.window.ArbitrajeNivel;
 
 const LETRAS = ["a", "b", "c", "d"];
+
+/* Quien firma el cuadernillo: va en la portada, en el pie de cada página y en
+   los datos del archivo. */
+const AUTOR = "IA Oscar Angulo Cubero";
+
+/* Contraseña de propietario: no hace falta para abrir el PDF, solo para quitarle
+   las restricciones de copia e impresión. Vive acá a propósito, para poder
+   volver a generar el archivo. */
+const CLAVE_PROPIETARIO = "arbitraje-ai-2026";
 
 function esc(t) {
   return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -131,7 +148,8 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .portada .sello { font-size: 10pt; letter-spacing: .2em; text-transform: uppercase; color: #de911d; font-weight: 700; margin-bottom: 6mm; }
   .portada .sub { font-size: 12pt; color: #334e68; margin: 0 0 12mm; }
   .portada .aviso { margin: 0 auto; max-width: 120mm; border: 1.5px solid #de911d; background: #fffaf0; padding: 5mm 6mm; font-size: 9.5pt; text-align: left; }
-  .portada .pie { margin-top: 14mm; font-size: 8.5pt; color: #627d98; }
+  .portada .autor { margin: 12mm 0 0; font-size: 11pt; font-weight: 700; color: #334e68; letter-spacing: .04em; }
+  .portada .pie { margin-top: 4mm; font-size: 8.5pt; color: #627d98; }
   .pagina { page-break-before: always; }
   .pregunta { page-break-inside: avoid; margin-bottom: 4.5mm; padding-bottom: 3mm; border-bottom: 1px solid #eef2f6; }
   .cabecera { margin: 0 0 1mm; font-size: 8pt; color: #627d98; }
@@ -148,6 +166,7 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .fuente { margin: 0 0 0 9mm; font-size: 8pt; color: #829ab1; font-style: italic; }
   .mide { margin: 0 0 1.5mm; font-size: 9pt; color: #334e68; }
   table { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+  table, tr, .junto { page-break-inside: avoid; }
   th, td { text-align: left; padding: 1.6mm 2mm; border-bottom: 1px solid #d9e2ec; vertical-align: top; }
   th { font-size: 8pt; text-transform: uppercase; letter-spacing: .05em; color: #627d98; }
   td.num { text-align: right; width: 18mm; font-weight: 700; }
@@ -172,6 +191,7 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
     artículo del Handbook. No sirve para tomarlo como examen. El examen se rinde
     en <em>arbitraje.html</em>, que sortea 40 preguntas de este mismo banco.
   </div>
+  <p class="autor">${AUTOR}</p>
   <p class="pie">Generado desde js/arbitraje-items.js · ${HOY}<br>Fuente de todas las respuestas: Handbook de la FIDE, handbook.fide.com</p>
 </div>
 
@@ -198,11 +218,14 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   reglamento. Los títulos de árbitro los otorga la FIDE con seminarios, normas y
   licencia (B.06): este examen no los reemplaza ni los anticipa.</p>
 
-  <h3 class="escalon">Las áreas</h3>
-  <table>
-    <tr><th>Área</th><th class="num">Preguntas</th><th class="reparto">Por escalón (1·2·3·4·5)</th></tr>
-    ${indice}
-  </table>
+  <div class="junto">
+    <h3 class="escalon">Las áreas</h3>
+    <table>
+      <tr><th>Área</th><th class="num">Preguntas</th><th class="reparto">Por escalón (1·2·3·4·5)</th></tr>
+      ${indice}
+    </table>
+    <p class="mide" style="margin-top:4mm">Cada examen toma una pregunta de cada escalón en cada área. Con cinco candidatas por casilla, dos intentos seguidos casi no repiten pregunta.</p>
+  </div>
 </div>
 
 ${capitulos}
@@ -234,8 +257,52 @@ console.log(`Maqueta: ${htmlTemporal} · ${BANCO.length} preguntas · ${NIVEL.AR
     margin: { top: "16mm", bottom: "14mm", left: "14mm", right: "14mm" },
     displayHeaderFooter: true,
     headerTemplate: "<div></div>",
-    footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;"><span>Ajedrez Integral · Examen de arbitraje · uso docente</span><span class="pageNumber"></span></div>',
+    footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;align-items:center;"><span>Ajedrez Integral · Examen de arbitraje · uso docente</span><span style="font-weight:700;color:#829ab1;">IA Oscar Angulo Cubero</span><span class="pageNumber"></span></div>',
   });
   await navegador.close();
+  proteger(destino);
   console.log("PDF listo:", destino);
 })();
+
+/* Chromium no sabe proteger el PDF, así que el archivo se vuelve a escribir
+   con pypdf: sin contraseña de apertura (se abre normal) pero sin permiso de
+   copiar, editar ni imprimir. Se deja habilitada la extracción de texto para
+   lectores de pantalla: bloquearla dejaría el cuadernillo fuera del alcance de
+   quien lo lee con un lector, y no es lo que se quiere evitar. */
+function proteger(archivo) {
+  const { execFileSync } = require("child_process");
+  const guion = `
+import sys
+from pypdf import PdfReader, PdfWriter
+from pypdf.constants import UserAccessPermissions
+
+archivo, clave, autor = sys.argv[1], sys.argv[2], sys.argv[3]
+lector = PdfReader(archivo)
+escritor = PdfWriter()
+escritor.append_pages_from_reader(lector)
+escritor.add_metadata({
+    "/Title": "Examen de arbitraje - banco de preguntas",
+    "/Author": autor,
+    "/Subject": "Reglamento de la FIDE - material de uso docente",
+    "/Creator": "Ajedrez Integral",
+})
+escritor.encrypt(
+    user_password="",
+    owner_password=clave,
+    permissions_flag=UserAccessPermissions.EXTRACT_TEXT_AND_GRAPHICS,
+    algorithm="AES-256",
+)
+with open(archivo, "wb") as f:
+    escritor.write(f)
+print("protegido")
+`;
+  try {
+    execFileSync("python3", ["-c", guion, archivo, CLAVE_PROPIETARIO, AUTOR], { stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    console.error("\nNo se pudo proteger el PDF. Falta pypdf: pip install pypdf");
+    console.error(String((e.stderr || "")).trim().split("\n").slice(-3).join("\n"));
+    fs.unlinkSync(archivo);   // mejor sin archivo que con uno sin proteger
+    process.exit(1);
+  }
+  console.log("Protegido: se abre sin contraseña, no se puede copiar ni imprimir.");
+}
