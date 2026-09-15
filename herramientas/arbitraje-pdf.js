@@ -134,7 +134,7 @@ for (let i = 0; i < respuestas.length; i += 4) {
 const HOY = new Date().toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
 
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>Examen de arbitraje · banco de preguntas</title>
+<title>Examen de arbitraje · cuerpo</title>
 <style>
   @page { size: A4; margin: 16mm 14mm 14mm; }
   * { box-sizing: border-box; }
@@ -144,12 +144,7 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   h3.escalon { font-size: 10.5pt; margin: 6mm 0 3mm; color: #334e68; border-bottom: 1px solid #d9e2ec; padding-bottom: 1mm; }
   .cuantas { font-size: 8pt; color: #627d98; font-weight: 400; letter-spacing: .02em; }
   .estrellas { color: #de911d; letter-spacing: .06em; }
-  .portada { height: 245mm; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-  .portada .sello { font-size: 10pt; letter-spacing: .2em; text-transform: uppercase; color: #de911d; font-weight: 700; margin-bottom: 6mm; }
-  .portada .sub { font-size: 12pt; color: #334e68; margin: 0 0 12mm; }
-  .portada .aviso { margin: 0 auto; max-width: 120mm; border: 1.5px solid #de911d; background: #fffaf0; padding: 5mm 6mm; font-size: 9.5pt; text-align: left; }
-  .portada .autor { margin: 12mm 0 0; font-size: 11pt; font-weight: 700; color: #334e68; letter-spacing: .04em; }
-  .portada .pie { margin-top: 4mm; font-size: 8.5pt; color: #627d98; }
+  .aviso { border: 1.5px solid #de911d; background: #fffaf0; padding: 4mm 5mm; font-size: 9.5pt; margin-bottom: 4mm; }
   .pagina { page-break-before: always; }
   .pregunta { page-break-inside: avoid; margin-bottom: 4.5mm; padding-bottom: 3mm; border-bottom: 1px solid #eef2f6; }
   .cabecera { margin: 0 0 1mm; font-size: 8pt; color: #627d98; }
@@ -181,22 +176,14 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 </head><body>
 <div class="marca-agua" aria-hidden="true"><span>Ajedrez Integral · uso docente</span></div>
 
-<div class="portada">
-  <p class="sello">Ajedrez Integral</p>
-  <h1>Examen de arbitraje</h1>
-  <p class="sub">Banco completo de preguntas sobre el reglamento de la FIDE<br>${BANCO.length} preguntas · ${NIVEL.AREAS.length} áreas · 5 escalones de dificultad</p>
+<div>
+  <h2 class="area">Cómo está armado</h2>
   <div class="aviso">
     <strong>Trae las respuestas.</strong> Este cuadernillo es para estudiar y para
     corregir: cada pregunta viene con la opción correcta marcada, el porqué y el
     artículo del Handbook. No sirve para tomarlo como examen. El examen se rinde
-    en <em>arbitraje.html</em>, que sortea 40 preguntas de este mismo banco.
+    en <em>arbitraje.html</em>, que sortea ${PRUEBA.TOTAL} preguntas de este mismo banco.
   </div>
-  <p class="autor">${AUTOR}</p>
-  <p class="pie">Generado desde js/arbitraje-items.js · ${HOY}<br>Fuente de todas las respuestas: Handbook de la FIDE, handbook.fide.com</p>
-</div>
-
-<div class="pagina">
-  <h2 class="area">Cómo está armado</h2>
   <div class="nota">
     <strong>El examen sortea, el banco no cambia.</strong> Cada intento toma
     ${PRUEBA.TOTAL} preguntas —una de cada escalón en cada una de las
@@ -240,18 +227,118 @@ ${capitulos}
 
 </body></html>`;
 
+/* ---------- la tapa ----------
+   Va en su propio documento, a página completa y sin márgenes ni pie: así el
+   fondo llega al borde del papel y el pie de página del cuerpo no le cae
+   encima. Después se pegan los dos con pypdf. */
+const ANIO = new Date().getFullYear();
+const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<title>Examen de arbitraje</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { width: 210mm; height: 297mm; font-family: "DejaVu Serif", Georgia, "Times New Roman", serif; color: #f0f4f8;
+         background: linear-gradient(158deg, #081b2e 0%, #143253 48%, #0a2138 100%); position: relative; overflow: hidden; }
+
+  /* el tablero del fondo: ocho por ocho, apoyado en la esquina de abajo */
+  .tablero-fondo { position: absolute; right: -34mm; bottom: -38mm; width: 168mm; height: 168mm;
+      background-image:
+        linear-gradient(45deg, rgba(222,145,29,.14) 25%, transparent 25%, transparent 75%, rgba(222,145,29,.14) 75%),
+        linear-gradient(45deg, rgba(222,145,29,.14) 25%, transparent 25%, transparent 75%, rgba(222,145,29,.14) 75%);
+      background-size: 21mm 21mm; background-position: 0 0, 10.5mm 10.5mm;
+      transform: rotate(-12deg); }
+  .brillo { position: absolute; left: -40mm; top: -50mm; width: 150mm; height: 150mm; border-radius: 50%;
+      background: radial-gradient(circle, rgba(93,143,196,.22) 0%, rgba(93,143,196,0) 70%); }
+
+  /* el lomo */
+  .lomo { position: absolute; left: 0; top: 0; bottom: 0; width: 7mm; background: linear-gradient(180deg, #de911d, #b4740f); }
+  .lomo::after { content: ""; position: absolute; left: 7mm; top: 0; bottom: 0; width: 1.2mm; background: rgba(240,244,248,.18); }
+
+  .hoja { position: relative; z-index: 2; height: 297mm; padding: 26mm 20mm 20mm 27mm; display: flex; flex-direction: column; }
+
+  .marca-casa { display: flex; align-items: center; gap: 3mm; font-size: 10pt; letter-spacing: .28em;
+      text-transform: uppercase; color: #f0b429; font-weight: 700; }
+  .marca-casa .peon { font-size: 16pt; letter-spacing: 0; line-height: 1; }
+  .sello-uso { position: absolute; top: 24mm; right: 20mm; z-index: 3; border: 1px solid rgba(240,180,41,.8); color: #f0b429;
+      font-size: 7.5pt; letter-spacing: .2em; text-transform: uppercase; padding: 1.6mm 3.5mm; border-radius: 1mm; font-weight: 700; }
+
+  .centro { margin-top: auto; margin-bottom: auto; }
+  .eyebrow { font-size: 9.5pt; letter-spacing: .22em; text-transform: uppercase; color: #9fb3c8; margin: 0 0 6mm; }
+  h1 { font-size: 42pt; line-height: 1.02; margin: 0; letter-spacing: -.015em; color: #ffffff; font-weight: 700; }
+  h1 .segunda { display: block; color: #f0b429; }
+  .filete { width: 46mm; height: 1.4mm; background: #de911d; margin: 8mm 0 7mm; }
+  .sub { font-size: 13pt; line-height: 1.5; color: #cfdbe6; margin: 0; max-width: 108mm; text-wrap: balance; }
+  .cifras { margin: 9mm 0 0; display: flex; gap: 10mm; }
+  .cifra { border-left: .8mm solid rgba(240,180,41,.55); padding-left: 4mm; }
+  .cifra .n { display: block; font-size: 21pt; font-weight: 700; color: #ffffff; line-height: 1.1; }
+  .cifra .q { display: block; font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: #9fb3c8; margin-top: 1mm; }
+
+  .piezas { font-size: 30pt; letter-spacing: .05em; color: rgba(240,180,41,.55); margin: 11mm 0 0; line-height: 1; }
+
+  .pie-tapa { margin-top: auto; }
+  .autor { font-size: 15pt; font-weight: 700; color: #ffffff; letter-spacing: .02em; margin: 0; }
+  .autor-rol { font-size: 8.5pt; letter-spacing: .18em; text-transform: uppercase; color: #f0b429; margin: 1.5mm 0 0; }
+  .editorial { margin: 7mm 0 0; padding-top: 4mm; border-top: 1px solid rgba(159,179,200,.3);
+      font-size: 8.5pt; color: #9fb3c8; display: flex; justify-content: space-between; gap: 6mm; }
+</style>
+</head><body>
+  <div class="tablero-fondo"></div>
+  <div class="brillo"></div>
+  <div class="lomo"></div>
+  <div class="sello-uso">Uso docente</div>
+
+  <div class="hoja">
+    <p class="marca-casa"><span class="peon">&#9822;</span> Ajedrez Integral</p>
+
+    <div class="centro">
+      <p class="eyebrow">Formación de árbitros</p>
+      <h1>Examen<span class="segunda">de arbitraje</span></h1>
+      <div class="filete"></div>
+      <p class="sub">Todas las preguntas del reglamento de la FIDE, con su respuesta,
+        el porqué y el artículo del Handbook.</p>
+      <div class="cifras">
+        <div class="cifra"><span class="n">${BANCO.length}</span><span class="q">preguntas</span></div>
+        <div class="cifra"><span class="n">${NIVEL.AREAS.length}</span><span class="q">áreas</span></div>
+        <div class="cifra"><span class="n">5</span><span class="q">escalones</span></div>
+      </div>
+      <p class="piezas">&#9812; &#9813; &#9814; &#9815; &#9816; &#9817;</p>
+    </div>
+
+    <div class="pie-tapa">
+      <p class="autor">${AUTOR}</p>
+      <p class="autor-rol">Academia Ajedrez Integral</p>
+      <div class="editorial">
+        <span>Fuente de todas las respuestas: Handbook de la FIDE · handbook.fide.com</span>
+        <span>${ANIO}</span>
+      </div>
+    </div>
+  </div>
+</body></html>`;
+
+const htmlPortadaTemporal = path.join(require("os").tmpdir(), "arbitraje-portada.html");
+fs.writeFileSync(htmlPortadaTemporal, htmlPortada);
+
 const htmlTemporal = path.join(require("os").tmpdir(), "arbitraje-imprimible.html");
 fs.writeFileSync(htmlTemporal, html);
-console.log(`Maqueta: ${htmlTemporal} · ${BANCO.length} preguntas · ${NIVEL.AREAS.length} áreas`);
+console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}\n${BANCO.length} preguntas · ${NIVEL.AREAS.length} áreas`);
 
 (async () => {
   const { chromium } = require("playwright");
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const destino = path.join(RAIZ, "examen-de-arbitraje.pdf");
+  const tapa = path.join(require("os").tmpdir(), "arbitraje-tapa.pdf");
+  const cuerpo = path.join(require("os").tmpdir(), "arbitraje-cuerpo.pdf");
+
+  // la tapa: a página completa, sin márgenes y sin pie
+  const pTapa = await navegador.newPage();
+  await pTapa.goto("file://" + htmlPortadaTemporal, { waitUntil: "load" });
+  await pTapa.pdf({ path: tapa, format: "A4", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+
   const pagina = await navegador.newPage();
   await pagina.goto("file://" + htmlTemporal, { waitUntil: "load" });
-  const destino = path.join(RAIZ, "examen-de-arbitraje.pdf");
   await pagina.pdf({
-    path: destino,
+    path: cuerpo,
     format: "A4",
     printBackground: true,
     margin: { top: "16mm", bottom: "14mm", left: "14mm", right: "14mm" },
@@ -260,9 +347,33 @@ console.log(`Maqueta: ${htmlTemporal} · ${BANCO.length} preguntas · ${NIVEL.AR
     footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;align-items:center;"><span>Ajedrez Integral · Examen de arbitraje · uso docente</span><span style="font-weight:700;color:#829ab1;">IA Oscar Angulo Cubero</span><span class="pageNumber"></span></div>',
   });
   await navegador.close();
+  unir(tapa, cuerpo, destino);
   proteger(destino);
   console.log("PDF listo:", destino);
 })();
+
+/* Tapa y cuerpo salen de dos impresiones distintas (la tapa no lleva márgenes
+   ni pie de página), así que se pegan acá. */
+function unir(tapa, cuerpo, destino) {
+  const { execFileSync } = require("child_process");
+  const guion = `
+import sys
+from pypdf import PdfReader, PdfWriter
+tapa, cuerpo, destino = sys.argv[1], sys.argv[2], sys.argv[3]
+escritor = PdfWriter()
+for archivo in (tapa, cuerpo):
+    escritor.append_pages_from_reader(PdfReader(archivo))
+with open(destino, "wb") as f:
+    escritor.write(f)
+`;
+  try {
+    execFileSync("python3", ["-c", guion, tapa, cuerpo, destino], { stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    console.error("\nNo se pudieron unir tapa y cuerpo. Falta pypdf: pip install pypdf");
+    console.error(String((e.stderr || "")).trim().split("\n").slice(-3).join("\n"));
+    process.exit(1);
+  }
+}
 
 /* Chromium no sabe proteger el PDF, así que el archivo se vuelve a escribir
    con pypdf: sin contraseña de apertura (se abre normal) pero sin permiso de

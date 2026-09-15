@@ -284,13 +284,19 @@ no se puede "probar" una jugada.
   necesita nada instalado: `node herramientas/verificar-arbitraje.js`. **Al
   tocar el banco, correrlo.**
 - `examen-de-arbitraje.pdf` (raíz) es el banco entero en papel, tipo libro:
-  capítulo por área, dentro de cada uno las preguntas ordenadas por escalón, con
+  tapa diseñada, capítulo por área, dentro de cada uno las preguntas ordenadas
+  por escalón, con
   la opción correcta marcada, el porqué y el artículo del Handbook, más el índice
   por área, la escala de niveles y la hoja de respuestas al final. **No se edita
   a mano**: lo genera `herramientas/arbitraje-pdf.js` desde el mismo banco, así
   que al tocar preguntas hay que volver a correrlo (`node
   herramientas/arbitraje-pdf.js`, con playwright instalado) o el papel deja de
-  coincidir con la pantalla. Las opciones se barajan con una semilla sacada del
+  coincidir con la pantalla. **La tapa se imprime aparte** y se pega al cuerpo
+  con `pypdf`: va a página completa, sin márgenes ni pie de página (por eso no
+  lleva número y el cuerpo empieza en la página 1), con el fondo llegando al
+  borde del papel. Ese fondo opaco es además lo que tapa la marca de agua en la
+  tapa, que es `position: fixed` y si no se repetiría también ahí; el aviso de
+  uso docente va en la tapa como sello propio. Las opciones se barajan con una semilla sacada del
   id de la pregunta: así la correcta no queda siempre primera y dos impresiones
   salen idénticas. **Trae las respuestas**, así que lleva la misma marca de agua
   que el cuadernillo del diagnóstico ("Ajedrez Integral · uso docente"), va
