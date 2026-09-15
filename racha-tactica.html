@@ -107,7 +107,7 @@
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
                     <div class="text-lg font-bold text-brand-800 dark:text-white truncate" id="class-record-name">—</div>
-                    <div class="text-[11px] text-brand-400 dark:text-brand-500 mt-1">🏆 Récord de la clase (<span id="class-record-streak">0</span>)</div>
+                    <div class="text-[11px] text-brand-400 dark:text-brand-500 mt-1"><span id="class-record-label">🏆 Récord de la clase</span> (<span id="class-record-streak">0</span>)</div>
                 </div>
             </div>
 
@@ -385,13 +385,21 @@
             updatePersonalBestDisplay();
         }
 
+        // El "récord de la clase" se compara solo dentro del propio grupo del
+        // alumno (profiles.grupo) — no tiene sentido que un alumno de un grupo
+        // vea (o compita contra) la racha de alumnos de otro grupo. Si el
+        // alumno todavía no tiene grupo asignado, se muestra el récord general
+        // como respaldo (profiles!inner es necesario para poder filtrar por una
+        // columna de la tabla relacionada).
         async function loadLeaderboard() {
-            const { data, error } = await sb.from("puzzle_rush_scores")
-                .select("best_streak, profiles(full_name, email)")
+            let query = sb.from("puzzle_rush_scores")
+                .select("best_streak, profiles!inner(full_name, email, grupo)")
                 .order("best_streak", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
+            if (profile.grupo) query = query.eq("profiles.grupo", profile.grupo);
+            const { data, error } = await query.maybeSingle();
             if (error) { console.error(error); return; }
+            document.getElementById("class-record-label").textContent = profile.grupo ? `🏆 Récord del grupo ${profile.grupo}` : "🏆 Récord de la clase";
             const nameEl = document.getElementById("class-record-name");
             const streakEl = document.getElementById("class-record-streak");
             if (!data || !data.best_streak) { nameEl.textContent = "—"; streakEl.textContent = "0"; return; }

@@ -166,7 +166,7 @@
                 <div class="flex items-center gap-4 flex-wrap">
                     <span class="text-4xl" aria-hidden="true">🏆</span>
                     <div class="flex-1 min-w-[200px]">
-                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Racha táctica — récord de la clase</h2>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica — récord de la clase</h2>
                         <p class="text-sm text-brand-500 dark:text-brand-400" id="tactics-record-text">Cargando…</p>
                     </div>
                     <span class="text-sm font-semibold text-accent-600 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
@@ -381,14 +381,24 @@
             }
         }
 
-        // ---------- Logro público: récord de "Racha táctica" (puzzle_rush_scores) ----------
+        // ---------- Logro: récord de "Racha táctica" (puzzle_rush_scores) ----------
+        // Para un alumno, este récord se compara solo dentro de su propio grupo
+        // (profiles.grupo) — no debe ver ni comparar contra la racha de alumnos
+        // de otro grupo. El profesor sigue viendo el récord general de toda la
+        // academia, igual que en Informes. profiles!inner es necesario para
+        // poder filtrar por una columna de la tabla relacionada.
         async function loadTacticsRecord() {
             const el = document.getElementById("tactics-record-text");
-            const { data, error } = await sb.from("puzzle_rush_scores")
-                .select("best_streak, profiles(full_name, email)")
+            const scopedToGroup = !isTeacher && profile.grupo;
+            document.getElementById("tactics-record-title").textContent = scopedToGroup
+                ? `Racha táctica — récord del grupo ${profile.grupo}`
+                : "Racha táctica — récord de la clase";
+            let query = sb.from("puzzle_rush_scores")
+                .select("best_streak, profiles!inner(full_name, email, grupo)")
                 .order("best_streak", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .limit(1);
+            if (scopedToGroup) query = query.eq("profiles.grupo", profile.grupo);
+            const { data, error } = await query.maybeSingle();
             if (error) { el.textContent = "Encuentra la jugada correcta en 10 segundos y suma tu racha."; return; }
             if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
             const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
