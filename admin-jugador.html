@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Base de datos de jugadores — Ajedrez Integral</title>
+    <meta name="description" content="Panel de administración: busca el historial completo de un jugador en chess-results.com.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+
+    <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
+        <p class="text-brand-450 dark:text-brand-350">Cargando…</p>
+    </div>
+
+    <div id="denied" class="hidden pt-20 min-h-screen flex items-center justify-center px-4">
+        <div class="text-center">
+            <p class="text-5xl mb-3" aria-hidden="true">🔒</p>
+            <p class="text-brand-500 dark:text-brand-300">Esta sección es solo para la persona administradora.</p>
+            <a href="admin.html" class="inline-block mt-4 text-accent-500 hover:underline">← Volver al panel de administración</a>
+        </div>
+    </div>
+
+    <div id="app" class="hidden pt-20 pb-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="admin.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 👑 Panel de administración</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">🔎 Base de datos de jugadores</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">
+                Trae el historial de torneos de una persona directamente desde
+                <a href="https://s3.chess-results.com/SpielerSuche.aspx?lan=2&amp;SNode=S0" target="_blank" rel="noopener" class="text-accent-500 hover:underline">chess-results.com</a>.
+                La búsqueda es por nombre, así que si el jugador tiene homónimos revisa el Código FIDE de cada resultado antes de darlo por bueno.
+            </p>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Buscar jugador</h2>
+                <form id="search-form" class="grid sm:grid-cols-4 gap-3 items-end">
+                    <div class="sm:col-span-2">
+                        <label for="f-apellido" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Apellido *</label>
+                        <input type="text" id="f-apellido" required placeholder="ej. Angulo Cubero" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="f-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre</label>
+                        <input type="text" id="f-nombre" placeholder="ej. Oscar" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="f-fideid" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Código FIDE</label>
+                        <input type="text" id="f-fideid" placeholder="si ya lo sabes" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <button type="submit" id="search-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Buscar</button>
+                        <p id="search-msg" class="text-xs mt-2"></p>
+                    </div>
+                </form>
+            </div>
+
+            <div id="results" class="hidden space-y-6">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <p id="results-summary" class="text-sm text-brand-500 dark:text-brand-300"></p>
+                    <button id="download-btn" type="button" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-xs hover:border-accent-500 transition-colors">⬇️ Descargar CSV</button>
+                </div>
+                <div id="grupos-container" class="space-y-6"></div>
+                <div id="sinfide-container" class="hidden"></div>
+            </div>
+
+            <p id="empty-msg" class="hidden text-sm text-brand-450 dark:text-brand-350 text-center py-6">No se encontraron torneos con ese nombre en chess-results.com.</p>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+        let session = null;
+        const FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/chess-results-proxy`;
+        const fichasCache = {};
+        let ultimaBusqueda = { grupos: [], sinFide: [], apellido: "" };
+
+        function claveTorneo(tnr, snr) { return tnr + "-" + snr; }
+        function escapeHtml(s) {
+            return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        async function callChessResults(action, payload) {
+            const res = await fetch(FUNCTION_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "apikey": window.SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify({ action, ...payload }),
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok || result.error) throw new Error(result.error || "Error desconocido");
+            return result;
+        }
+
+        // ---------------------------------------------------------------
+        // Agrupar por Código FIDE (lo único estable entre torneos). Las
+        // filas con FIDE-ID "0" se listan aparte, SIN mezclarlas con ningún
+        // grupo, porque un nombre igual no siempre es la misma persona.
+        // ---------------------------------------------------------------
+        function agruparPorJugador(filas) {
+            const porFide = new Map();
+            const sinFide = [];
+            filas.forEach((f) => {
+                if (f.fideId && f.fideId !== "0") {
+                    if (!porFide.has(f.fideId)) porFide.set(f.fideId, { fideId: f.fideId, club: f.club, fed: f.fed, filas: [] });
+                    porFide.get(f.fideId).filas.push(f);
+                } else {
+                    sinFide.push(f);
+                }
+            });
+            const grupos = [...porFide.values()];
+            grupos.forEach((g) => g.filas.sort((a, b) => (b.fechaFinal || "").localeCompare(a.fechaFinal || "")));
+            grupos.sort((a, b) => b.filas.length - a.filas.length);
+            sinFide.sort((a, b) => (b.fechaFinal || "").localeCompare(a.fechaFinal || ""));
+            return { grupos, sinFide };
+        }
+
+        function filaTorneoHtml(fila) {
+            const wrap = document.createElement("div");
+            wrap.className = "border border-brand-100 dark:border-brand-800 rounded-xl p-4";
+            wrap.innerHTML = `
+                <div class="flex justify-between items-start gap-3 flex-wrap">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-brand-800 dark:text-white text-sm truncate">
+                            <a href="${escapeHtml(fila.torneoUrl)}" target="_blank" rel="noopener" class="hover:underline">${escapeHtml(fila.torneoNombre || "(sin nombre)")}</a>
+                        </p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">${escapeHtml(fila.fechaFinal || "?")} · ${escapeHtml(fila.club || "sin club")} · ${escapeHtml(fila.fed || "?")}</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350">Puesto ${escapeHtml(fila.puesto || "?")} de ${escapeHtml(fila.participantes || "?")} · ${escapeHtml(fila.rondas || "?")} rondas</p>
+                    </div>
+                    <button type="button" class="ver-rondas-btn shrink-0 text-xs font-semibold text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline">Ver rondas</button>
+                </div>
+                <div class="rondas-detalle hidden mt-3 border-t border-brand-100 dark:border-brand-800 pt-3 text-xs"></div>
+            `;
+            const btn = wrap.querySelector(".ver-rondas-btn");
+            const detalle = wrap.querySelector(".rondas-detalle");
+            btn.addEventListener("click", async () => {
+                if (!detalle.classList.contains("hidden")) { detalle.classList.add("hidden"); return; }
+                if (!fila.tnr || !fila.snr) { detalle.innerHTML = "<p class='text-red-600 dark:text-red-400'>Esta fila no trae enlace directo al torneo.</p>"; detalle.classList.remove("hidden"); return; }
+                detalle.innerHTML = "<p class='text-brand-450 dark:text-brand-350'>Cargando…</p>";
+                detalle.classList.remove("hidden");
+                try {
+                    const clave = claveTorneo(fila.tnr, fila.snr);
+                    let ficha = fichasCache[clave];
+                    if (!ficha) {
+                        ficha = await callChessResults("torneo-jugador", { tnr: fila.tnr, snr: fila.snr });
+                        fichasCache[clave] = ficha;
+                    }
+                    detalle.innerHTML = renderFichaTorneo(ficha);
+                } catch (err) {
+                    detalle.innerHTML = "<p class='text-red-600 dark:text-red-400'>No se pudo cargar: " + escapeHtml(err.message) + "</p>";
+                }
+            });
+            return wrap;
+        }
+
+        function renderFichaTorneo(ficha) {
+            const r = ficha.resumen || {};
+            const resumenHtml = `
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div><p class="text-brand-450 dark:text-brand-350">Elo</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Elo"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Performance</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Performance"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Puntos</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Puntos"] || "-")}</p></div>
+                    <div><p class="text-brand-450 dark:text-brand-350">Puesto</p><p class="font-semibold text-brand-800 dark:text-white">${escapeHtml(r["Puesto"] || "-")}</p></div>
+                </div>`;
+            if (!ficha.rondas || !ficha.rondas.length) {
+                return resumenHtml + "<p class='text-brand-450 dark:text-brand-350'>chess-results.com no mostró el detalle ronda a ronda para este torneo.</p>";
+            }
+            const filas = ficha.rondas.map((rd) => `
+                <tr class="border-b border-brand-50 dark:border-brand-800/60">
+                    <td class="py-1 pr-2">${escapeHtml(rd.ronda)}</td>
+                    <td class="py-1 pr-2">${rd.color === "blancas" ? "⚪" : rd.color === "negras" ? "⚫" : "?"}</td>
+                    <td class="py-1 pr-2">${rd.tituloRival ? escapeHtml(rd.tituloRival) + " " : ""}${escapeHtml(rd.nombreRival)}</td>
+                    <td class="py-1 pr-2">${escapeHtml(rd.eloRival)}</td>
+                    <td class="py-1 pr-2">${escapeHtml(rd.fedRival)}</td>
+                    <td class="py-1 font-semibold">${escapeHtml(rd.resultado)}</td>
+                </tr>`).join("");
+            return resumenHtml + `
+                <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="text-brand-450 dark:text-brand-350"><tr><th class="pb-1 pr-2">Rd</th><th class="pb-1 pr-2">Color</th><th class="pb-1 pr-2">Rival</th><th class="pb-1 pr-2">Elo</th><th class="pb-1 pr-2">Fed</th><th class="pb-1">Res.</th></tr></thead>
+                    <tbody>${filas}</tbody>
+                </table>
+                </div>`;
+        }
+
+        function renderGrupo(grupo) {
+            const card = document.createElement("div");
+            card.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6";
+            const primerNombre = grupo.filas[0].nombreMostrado;
+            card.innerHTML = `
+                <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">${escapeHtml(primerNombre)}</h3>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Código FIDE ${escapeHtml(grupo.fideId)} · ${escapeHtml(grupo.club || "sin club registrado")} · ${escapeHtml(grupo.fed)} · ${grupo.filas.length} torneo(s) encontrado(s)</p>
+                <div class="space-y-2 torneos-list"></div>
+            `;
+            const list = card.querySelector(".torneos-list");
+            grupo.filas.forEach((fila) => list.appendChild(filaTorneoHtml(fila)));
+            return card;
+        }
+
+        function renderResultados(grupos, sinFide) {
+            const gruposEl = document.getElementById("grupos-container");
+            const sinFideEl = document.getElementById("sinfide-container");
+            gruposEl.innerHTML = "";
+            sinFideEl.innerHTML = "";
+
+            grupos.forEach((g) => gruposEl.appendChild(renderGrupo(g)));
+
+            if (sinFide.length) {
+                const wrap = document.createElement("div");
+                wrap.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6";
+                wrap.innerHTML = `
+                    <h3 class="font-serif text-base font-bold text-amber-600 dark:text-amber-400 mb-1">⚠️ Coincidencias sin Código FIDE confirmado</h3>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                        Estas filas comparten el nombre buscado, pero chess-results.com no tiene su Código FIDE registrado en ese torneo —
+                        no se puede saber sin revisarlas a mano si son la misma persona u otra con el mismo nombre.
+                    </p>
+                    <div class="space-y-2 torneos-list"></div>`;
+                const list = wrap.querySelector(".torneos-list");
+                sinFide.forEach((fila) => list.appendChild(filaTorneoHtml(fila)));
+                sinFideEl.appendChild(wrap);
+                sinFideEl.classList.remove("hidden");
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Descarga en CSV: el resumen de torneos de cada grupo + el detalle
+        // ronda a ronda de cualquier torneo ya expandido en pantalla.
+        // ---------------------------------------------------------------
+        function csvEscape(v) {
+            const s = String(v == null ? "" : v);
+            return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }
+
+        function construirCsv() {
+            const lineas = [];
+            const agregarTabla = (encabezados, filas) => {
+                lineas.push(encabezados.map(csvEscape).join(","));
+                filas.forEach((f) => lineas.push(f.map(csvEscape).join(",")));
+                lineas.push("");
+            };
+
+            [...ultimaBusqueda.grupos, { fideId: "(sin confirmar)", filas: ultimaBusqueda.sinFide }]
+                .filter((g) => g.filas.length)
+                .forEach((g) => {
+                    lineas.push("Jugador: " + (g.filas[0].nombreMostrado || "") + " — Código FIDE " + g.fideId);
+                    agregarTabla(
+                        ["Fecha final", "Torneo", "Club", "Federación", "Puesto", "Rondas", "Participantes", "URL torneo"],
+                        g.filas.map((f) => [f.fechaFinal, f.torneoNombre, f.club, f.fed, f.puesto, f.rondas, f.participantes, f.torneoUrl])
+                    );
+                    g.filas.forEach((f) => {
+                        const ficha = fichasCache[claveTorneo(f.tnr, f.snr)];
+                        if (ficha && ficha.rondas && ficha.rondas.length) {
+                            lineas.push("  Ronda a ronda — " + f.torneoNombre);
+                            agregarTabla(
+                                ["Ronda", "Color", "Rival", "Elo rival", "Fed rival", "Resultado"],
+                                ficha.rondas.map((r) => [r.ronda, r.color, (r.tituloRival ? r.tituloRival + " " : "") + r.nombreRival, r.eloRival, r.fedRival, r.resultado])
+                            );
+                        }
+                    });
+                });
+            return lineas.join("\n");
+        }
+
+        document.getElementById("download-btn").addEventListener("click", () => {
+            const csv = "﻿" + construirCsv();
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const nombreArchivo = (ultimaBusqueda.apellido || "jugador").replace(/[^a-z0-9]+/gi, "_");
+            a.href = url;
+            a.download = "chess-results_" + nombreArchivo + ".csv";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById("search-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const apellido = document.getElementById("f-apellido").value.trim();
+            const nombre = document.getElementById("f-nombre").value.trim();
+            const fideId = document.getElementById("f-fideid").value.trim();
+            const msg = document.getElementById("search-msg");
+            const btn = document.getElementById("search-btn");
+            if (!apellido) { msg.textContent = "El apellido es requerido."; msg.className = "text-xs mt-2 text-red-600 dark:text-red-400"; return; }
+
+            msg.textContent = "";
+            btn.disabled = true;
+            btn.textContent = "Buscando en chess-results.com…";
+            document.getElementById("results").classList.add("hidden");
+            document.getElementById("empty-msg").classList.add("hidden");
+
+            try {
+                const data = await callChessResults("search", { apellido, nombre, fideId });
+                const { grupos, sinFide } = agruparPorJugador(data.filas || []);
+                ultimaBusqueda = { grupos, sinFide, apellido };
+
+                if (!grupos.length && !sinFide.length) {
+                    document.getElementById("empty-msg").classList.remove("hidden");
+                } else {
+                    document.getElementById("results-summary").textContent =
+                        grupos.length + " jugador(es) identificado(s) por Código FIDE" + (sinFide.length ? ", " + sinFide.length + " torneo(s) sin FIDE-ID confirmado" : "") + ".";
+                    renderResultados(grupos, sinFide);
+                    document.getElementById("results").classList.remove("hidden");
+                }
+            } catch (err) {
+                msg.textContent = err.message || "No se pudo consultar chess-results.com.";
+                msg.className = "text-xs mt-2 text-red-600 dark:text-red-400";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Buscar";
+            }
+        });
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            session = data.session;
+            if (!session) { window.location.href = "login.html"; return; }
+
+            const { data: profile, error } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).single();
+            document.getElementById("loading").classList.add("hidden");
+
+            if (error || !profile?.is_admin) {
+                document.getElementById("denied").classList.remove("hidden");
+                return;
+            }
+
+            document.getElementById("app").classList.remove("hidden");
+        }
+
+        init();
+    </script>
+</body>
+</html>
