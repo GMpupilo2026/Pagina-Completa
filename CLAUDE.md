@@ -114,9 +114,9 @@ sin pisarse.
   comprobado impersonando roles en SQL: un profesor solo recibe sus alumnos en
   `profiles` y solo sus filas en `training_progress`, `training_state`,
   `platform_activity_log`, `class_attendance`, `question_answers` y las demás.
-  `informes.html` pide `select * from profiles where role='alumno'` sin filtro
-  de profesor **a propósito**: el filtro es de la RLS. Si algún día hay que
-  tocarlo, se toca la política, no la consulta.
+  Las funciones de informes (ver abajo) piden los alumnos **sin filtro de
+  profesor a propósito**: el filtro es de la RLS. Si algún día hay que tocarlo,
+  se toca la política, no la consulta.
 - **`teacher_id` no lo puede cambiar el propio alumno.** `profiles_update_own`
   deja a cada quien editar su fila, y el trigger
   `protect_profiles_identity_columns` solo cubría `role`, `email` e `is_admin`:
@@ -153,6 +153,63 @@ sin pisarse.
   trata `is_admin` como profesor, y lo que aparezca ahí para profesores
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
+
+## Informes: la cuenta la hace la base, no el navegador
+
+`informes.html` **no se baja las tablas de actividad**. Antes sí: pedía
+`question_answers`, `class_attendance`, `class_presence_log`,
+`platform_activity_log`, `training_progress` y `training_state` enteras y sumaba
+en JavaScript. Eso tenía un techo invisible: **PostgREST corta la respuesta a
+partir de cierta cantidad de filas** (mil, salvo que se cambie en Settings ›
+API) y los totales salían calculados sobre un pedazo de los datos, **sin ningún
+error a la vista**. Con `training_progress` creciendo unas 5 filas por alumno y
+por día, ese techo se cruza en días, no en años.
+
+Ahora la cuenta vive en tres funciones, y la página solo pone los números en su
+lugar:
+
+- `public.informes_resumen_alumnos()` — un renglón por alumno con todo ya
+  contado: respuestas y aciertos, clases asistidas, minutos en clase y en
+  ejercicios, ejercicios 4×4 y lecciones distintos, mejor marca de Coordenadas,
+  series de Practicar con sus estrellas, mates por categoría, táctica,
+  concentración y temas de curso. Trae además `grupo` y el Elo, así que
+  reemplaza también el `select * from profiles`.
+- `public.informes_cursos_alumnos()` — un renglón por alumno y curso empezado.
+- `public.informes_diagnosticos_alumnos()` — **como mucho** un renglón por
+  alumno: el diagnóstico vigente (el más reciente entre `training_progress` y el
+  espejo `training_state`) y, si dejó uno a medias, por qué pregunta iba.
+- `public.informes_totales()` — las tres cuentas de las tarjetas de arriba.
+
+Detalles que importan:
+
+- **Son `SECURITY INVOKER`, no `DEFINER`.** Quién ve a quién lo sigue decidiendo
+  la RLS de cada tabla, exactamente igual que cuando la consulta salía del
+  navegador. De regalo: un alumno que las llama recibe **solo su propio
+  renglón**, así que su propia página de Informes usa las mismas tres funciones
+  y la cuenta no está escrita dos veces.
+- **El tiempo conectado no es sumar filas.** Una ventana sin cierre vale como
+  mucho un latido (20 s) y dos pestañas abiertas a la vez se solapan, así que
+  los tramos se unen antes de sumar (gaps and islands con funciones de ventana).
+  Está comprobado contra el bucle que hacía la página, con 4.000 tramos
+  inventados al azar: cero diferencia.
+- **Lo que sigue viniendo fila por fila va paginado.** `traerTodo()` pide de mil
+  en mil hasta que llega una página corta. Ninguna consulta de la página puede
+  quedar cortada sin que se note — y si alguna falla, ahora **se dice en
+  pantalla** en vez de pintar ceros.
+- `json_seguro()` y `fecha_segura()` existen porque el espejo de progreso guarda
+  el texto tal cual lo escribió `localStorage`: el JSON de dentro puede estar
+  roto y una fecha puede no ser una fecha. Devuelven NULL en vez de tumbar el
+  informe entero.
+- **Al tocar informes.html, correr `node herramientas/verificar-informes.js`**
+  (con el sitio en localhost:8777 y playwright instalado). Abre la página en un
+  navegador de verdad con un cliente de Supabase de mentira y comprueba número
+  por número las dos vistas —la del profesor y la del alumno—, más que una tabla
+  de 1005 filas llegue entera y en dos pedidos. Lo que se rompe al tocar esto es
+  un campo mal escrito, y eso no da error: pinta un cero.
+- Índices que se agregaron de paso: `class_presence_log(student_id)`,
+  `class_attendance(student_id)` y `question_answers(student_id, created_at
+  desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
+  `student_id`.
 
 ## El progreso vive en la cuenta, no en el aparato
 
