@@ -226,6 +226,7 @@ const CLAVE_HISTORIAL = 'arbitraje_historial_v1';
 const EN_BLANCO = 'blanco';
 
 let perfil = null;
+let sesion = null;             // sesión de quien entra (para el token de las edge functions)
 let examen = [];              // las 40 preguntas de este intento
 let respuestas = {};          // id → índice elegido, o EN_BLANCO
 let idx = 0;
@@ -500,7 +501,7 @@ let publicos = [];
 
 async function pintarPublicos() {
   const { data, error } = await sb.from('arbitrajes_publicos')
-    .select('id, created_at, nombre, email, porcentaje, nivel, detalle, revisado, retroalimentacion, revisado_at')
+    .select('id, created_at, nombre, email, porcentaje, nivel, detalle, revisado, retroalimentacion, revisado_at, resultado_enviado_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) return;
@@ -558,6 +559,14 @@ function fichaPublico(r) {
         <button type="button" data-borrador="${r.id}" class="text-xs text-brand-450 dark:text-brand-350 hover:text-accent-600 transition-colors">Armar un borrador</button>
         <span class="text-xs text-brand-450 dark:text-brand-350" data-estado="${r.id}">${r.revisado ? 'Respondido el ' + fechaCorta(r.revisado_at || r.created_at) : 'Sin responder'}</span>
       </div>
+      <div class="border-t border-brand-100 dark:border-brand-800 pt-3">
+        <p class="text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Enviar las respuestas del examen por correo (aparte de la retroalimentación)</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-enviar-todo="${r.id}" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">📧 Enviar todas las respuestas</button>
+          <button type="button" data-enviar-errores="${r.id}" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">📧 Enviar solo las que tuvo mal</button>
+          <span class="text-xs text-brand-450 dark:text-brand-350" data-estado-correo="${r.id}">${r.resultado_enviado_at ? 'Enviado el ' + fechaCorta(r.resultado_enviado_at) : ''}</span>
+        </div>
+      </div>
     </div>`;
 
   det.querySelector(`[data-guardar="${r.id}"]`).addEventListener('click', () => guardarRetro(r, false));
@@ -567,7 +576,41 @@ function fichaPublico(r) {
     if (caja.value.trim() && !confirm('Ya hay algo escrito. ¿Reemplazarlo por el borrador?')) return;
     caja.value = borrador(r, porArea, flojas);
   });
+  det.querySelector(`[data-enviar-todo="${r.id}"]`).addEventListener('click', () => enviarResultadoCorreo(r, false));
+  det.querySelector(`[data-enviar-errores="${r.id}"]`).addEventListener('click', () => enviarResultadoCorreo(r, true));
   return det;
+}
+
+/* Envío real por correo (Resend, vía la edge function) de las respuestas del
+ * examen — completas o solo las que tuvo mal — con la explicación y el
+ * artículo del Handbook de cada una. Es aparte de la retroalimentación
+ * escrita a mano de arriba: esto es la corrección en sí, automática. */
+async function enviarResultadoCorreo(r, soloErrores) {
+  const estado = document.querySelector(`[data-estado-correo="${r.id}"]`);
+  const mensaje = soloErrores
+    ? `¿Enviar por correo a ${r.email} solo las preguntas que tuvo mal?`
+    : `¿Enviar por correo a ${r.email} el examen completo con todas las respuestas?`;
+  if (!confirm(mensaje)) return;
+  estado.textContent = 'Enviando…';
+  try {
+    const res = await fetch(`${window.SUPABASE_URL}/functions/v1/enviar-resultado-arbitraje`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sesion.access_token}`,
+        'apikey': window.SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ id: r.id, soloErrores }),
+    });
+    const resultado = await res.json().catch(() => ({}));
+    if (!res.ok || resultado.error) throw new Error(resultado.error || 'Error desconocido');
+    r.resultado_enviado_at = new Date().toISOString();
+    estado.textContent = soloErrores
+      ? `Enviadas ${resultado.relevantes} de ${resultado.total} preguntas (las que tuvo mal) — ahora mismo`
+      : `Enviadas las ${resultado.total} preguntas — ahora mismo`;
+  } catch (err) {
+    estado.textContent = 'No se pudo enviar: ' + err.message;
+  }
 }
 
 /* Un punto de partida, no la respuesta: el profesor lo corrige y lo firma. */
@@ -654,7 +697,6 @@ window.addEventListener('beforeunload', (e) => {
 async function init() {
   $('tam-banco').textContent = BANCO.length;
   document.querySelectorAll('.banco-total').forEach((el) => { el.textContent = BANCO.length; });
-  let sesion = null;
   try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
   if (!sesion) { window.location.href = 'login.html?next=' + encodeURIComponent('arbitraje.html'); return; }
   const { data } = await sb.from('profiles').select('id, full_name, email, role, is_admin').eq('id', sesion.user.id).maybeSingle();

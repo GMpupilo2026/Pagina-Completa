@@ -14,6 +14,19 @@
  *                        siempre, con esos movimientos.
  *   Variantes.Ciegas   — ajedrez normal (delega en chess.js): la gracia está en la
  *                        pantalla (variante.html), que no muestra las piezas.
+ *   Variantes.Vampiro  — "Ajedrez Vampiro": mueve igual que el ajedrez normal
+ *                        (delega en chess.js), pero al capturar, la pieza que
+ *                        captura se transforma en el tipo de la pieza capturada,
+ *                        conservando SU PROPIO color. El rey nunca se transforma
+ *                        (si no, dejaría de haber rey y rompería jaque/mate). Si
+ *                        un peón corona capturando, gana la transformación de
+ *                        Vampiro sobre la corona. No detecta tablas por triple
+ *                        repetición (in_threefold_repetition de chess.js
+ *                        reconstruye el tablero reproduciendo el historial de
+ *                        jugadas, y esa reproducción no sabe nada de estas
+ *                        transformaciones — pisaría el tablero real); sí
+ *                        detecta jaque mate, ahogado, material insuficiente y
+ *                        la regla de 50 jugadas.
  *
  * Todos comparten la misma interfaz, que es la que usa js/variantes-board.js:
  *   load(texto) / serialize()      posición completa como texto (va en game_rooms.fen)
@@ -205,14 +218,26 @@
       for (const s in b) u[s] = { color: b[s].color, types: [b[s].type] };
       return JSON.stringify({ v: 1, t: "w", n: 1, b: Abrazos._compact(u) });
     }
-    static _compact(u) { const o = {}; for (const s in u) o[s] = u[s].color + ":" + u[s].types.join(""); return o; }
+    // "veces" cuenta cuántas piezas originales terminaron fusionadas acá (empieza
+    // en 1). Se guarda aparte de "types" porque dos piezas del MISMO tipo se
+    // abrazan sin agregar ningún tipo nuevo (p. ej. peón+peón sigue siendo solo
+    // "p") — sin este contador, ese abrazo se vería IDÉNTICO a una captura
+    // común, tanto en el tablero como para quien lee el estado guardado.
+    static _compact(u) {
+      const o = {};
+      for (const s in u) o[s] = u[s].color + ":" + u[s].types.join("") + ((u[s].veces || 1) > 1 ? ":" + u[s].veces : "");
+      return o;
+    }
     get pieceNames() { return NOMBRE; }
     load(texto) {
       let d;
       try { d = JSON.parse(texto); } catch (e) { d = null; }
       if (!d || !d.b) d = JSON.parse(Abrazos.START);
       this.board = {};
-      for (const s in d.b) { const [c, t] = d.b[s].split(":"); this.board[s] = { color: c, types: t.split("") }; }
+      for (const s in d.b) {
+        const [c, t, v] = d.b[s].split(":");
+        this.board[s] = { color: c, types: t.split(""), veces: v ? parseInt(v, 10) : 1 };
+      }
       this.turno = d.t === "b" ? "b" : "w";
       this.numero = d.n || 1;
       this.terminado = d.fin || null; // "white" | "black" cuando ya hubo abrazo al rey
@@ -225,8 +250,13 @@
       const u = this.board[s]; if (!u) return null;
       const t = Abrazos.tiposOrdenados(u.types);
       const nombres = t.map((x) => NOMBRE[x]);
-      const label = (u.color === "w" ? "Blancas: " : "Negras: ") + (t.length === 1 ? nombres[0] : "unión de " + nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1]);
-      return { color: u.color, types: t, label };
+      const veces = u.veces || 1;
+      let base = t.length === 1 ? nombres[0] : "unión de " + nombres.slice(0, -1).join(", ") + " y " + nombres[nombres.length - 1];
+      // Cuando el abrazo fue entre piezas del mismo tipo, se avisa igual —
+      // si no, se ve y se lee exactamente como una captura común.
+      if (t.length === 1 && veces > 1) base += " (unión de " + veces + " piezas)";
+      const label = (u.color === "w" ? "Blancas: " : "Negras: ") + base;
+      return { color: u.color, types: t, veces, label };
     }
     _ocupada(color) { return (s) => { const u = this.board[s]; return u ? (u.color === color ? "propia" : "enemiga") : null; }; }
     inCheck() { return false; }
@@ -242,15 +272,16 @@
       if (!this.movesFrom(m.from).some((x) => x.to === m.to)) return null;
       const u = this.board[m.from], destino = this.board[m.to];
       const letras = Abrazos.tiposOrdenados(u.types).map((t) => LETRA[t] || "P").join("");
-      let types = u.types.slice(), abrazo = false, ganaRey = false;
+      let types = u.types.slice(), veces = u.veces || 1, abrazo = false, ganaRey = false;
       if (destino) {
         abrazo = true;
         if (destino.types.indexOf("k") !== -1) ganaRey = true;
         destino.types.forEach((t) => { if (types.indexOf(t) === -1) types.push(t); });
+        veces += destino.veces || 1;
       }
       if (types.indexOf("p") !== -1 && ultimaFila(u.color, m.to)) { types = types.filter((t) => t !== "p"); if (types.indexOf("q") === -1) types.push("q"); }
       delete this.board[m.from];
-      this.board[m.to] = { color: u.color, types };
+      this.board[m.to] = { color: u.color, types, veces };
       const san = letras + m.from + (abrazo ? "♥" : "-") + m.to + (ganaRey ? "#" : "");
       let gameOver = false, result = null;
       if (ganaRey) { gameOver = true; result = u.color === "w" ? "white" : "black"; this.terminado = result; }
@@ -308,7 +339,65 @@
     }
   }
 
-  window.Variantes = { Abrazos, Camaleon, Ciegas, LETRA, NOMBRE, COLUMNA_TIPO,
-    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : new Ciegas(); },
-    inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : Ciegas.START; } };
+  /* ======================= VAMPIRO (chess.js) ======================= */
+  class Vampiro {
+    constructor() { this.game = new Chess(); }
+    static get START() { return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; }
+    get pieceNames() { return NOMBRE; }
+    load(fen) { this.game.load(fen || Vampiro.START); }
+    serialize() { return this.game.fen(); }
+    turn() { return this.game.turn(); }
+    get(s) { const p = this.game.get(s); return p ? { color: p.color, types: [p.type], label: (p.color === "w" ? "Blanco " : "Negro ") + NOMBRE[p.type] } : null; }
+    inCheck() { return this.game.in_check(); }
+    // Las 4 variantes de corona que chess.js genera para una captura no aplican
+    // acá (la transformación de Vampiro las reemplaza a todas por igual): se
+    // muestran como una sola jugada, sin elegir corona.
+    movesFrom(from) {
+      const vistos = new Set(), out = [];
+      this.game.moves({ square: from, verbose: true }).forEach((m) => {
+        const forzada = !!m.captured;
+        const clave = m.to + (forzada ? "" : m.promotion || "");
+        if (vistos.has(clave)) return;
+        vistos.add(clave);
+        out.push({ from: m.from, to: m.to, promotion: forzada ? undefined : m.promotion });
+      });
+      return out;
+    }
+    move(m) {
+      const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
+      if (!mv) return null;
+      let transformo = false, tipoFinal = mv.piece;
+      if (mv.captured && mv.piece !== "k" && mv.captured !== mv.piece) {
+        if (this.game.remove(mv.to) && this.game.put({ type: mv.captured, color: mv.color }, mv.to)) {
+          transformo = true;
+          tipoFinal = mv.captured;
+        }
+      }
+      // El san de chess.js puede traer una corona ("=Q") y un jaque ("+"/"#")
+      // que ya no valen tras la transformación: se recalculan desde cero.
+      let san = mv.san.replace(/=[QRBN]/, "").replace(/[+#]$/, "");
+      if (transformo && LETRA[tipoFinal]) san += "=" + LETRA[tipoFinal];
+      const jaqueMate = this.game.in_checkmate();
+      const jaque = !jaqueMate && this.game.in_check();
+      // No se usa in_draw()/in_threefold_repetition(): esas reconstruyen la
+      // posición reproduciendo this.history() desde el arranque, y esa
+      // reproducción no sabe nada de la transformación que se acaba de hacer
+      // con remove()/put() — "revive" la pieza original y pisa el tablero
+      // real (bug real, encontrado y confirmado con una prueba antes de subir
+      // esto). Por eso se arma la misma condición a mano con los únicos
+      // sub-chequeos que sí leen el tablero actual sin reproducir nada.
+      const semiJugadas = parseInt(this.game.fen().split(" ")[4], 10) || 0;
+      const tablas = !jaqueMate && (this.game.in_stalemate() || this.game.insufficient_material() || semiJugadas >= 100);
+      if (jaqueMate) san += "#";
+      else if (jaque) san += "+";
+      let gameOver = false, result = null;
+      if (jaqueMate) { gameOver = true; result = mv.color === "w" ? "white" : "black"; }
+      else if (tablas) { gameOver = true; result = "draw"; }
+      return { san, gameOver, result, captura: !!mv.captured, transformo, tipoFinal };
+    }
+  }
+
+  window.Variantes = { Abrazos, Camaleon, Ciegas, Vampiro, LETRA, NOMBRE, COLUMNA_TIPO,
+    crear(id) { return id === "abrazos" ? new Abrazos() : id === "camaleon" ? new Camaleon() : id === "vampiro" ? new Vampiro() : new Ciegas(); },
+    inicio(id) { return id === "abrazos" ? Abrazos.START : id === "camaleon" ? Camaleon.START : id === "vampiro" ? Vampiro.START : Ciegas.START; } };
 })();
