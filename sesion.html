@@ -91,6 +91,7 @@
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo ♟️</h1>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
+                    <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
                     <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Salir</button>
                 </div>
@@ -483,13 +484,15 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/clase-elegida.js"></script>
     <script>
         const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
         // Cada profesor tiene su propio tablero, su propia clase, sus propias
         // preguntas y su propia práctica — completamente independientes de los de
         // cualquier otro profesor, para que dos puedan dar clase al mismo tiempo sin
-        // pisarse. boardOwnerId es el id de ESE profesor: el propio (isTeacher) o el
-        // profesor asignado (profile.teacher_id) cuando quien mira es un alumno.
+        // pisarse. boardOwnerId es el id de ESE profesor: el propio (isTeacher) o,
+        // cuando quien mira es un alumno, el de la clase que eligió — puede tener
+        // varios profesores, y lo resuelve js/clase-elegida.js.
         // myGameStateId es el id numérico de la fila de game_state de ese profesor
         // (ya no existe una fila única global con id=1).
         let boardOwnerId = null;
@@ -1607,7 +1610,9 @@
         }
 
         async function loadChatStudents() {
-            const { data, error } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").eq("teacher_id", boardOwnerId).order("full_name");
+            // Los alumnos de ESTE profesor. Ya no basta con mirar una columna:
+            // la relación vive en profile_teachers (un alumno puede tener varios).
+            const { data, error } = await sb.rpc("alumnos_del_profesor", { p_profesor: boardOwnerId });
             if (error) { console.error(error); return; }
             chatStudents.length = 0;
             chatStudents.push(...(data || []));
@@ -2772,7 +2777,14 @@
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
             isTeacher = profile.role === "profesor";
-            boardOwnerId = isTeacher ? profile.id : profile.teacher_id;
+            if (isTeacher) {
+                boardOwnerId = profile.id;
+            } else {
+                // Con más de un profesor, el alumno elige a cuál clase entra.
+                const { clases, elegida } = await ClaseElegida.resolver();
+                boardOwnerId = elegida;
+                ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clases, elegida);
+            }
             if (!boardOwnerId) {
                 setStatus("Todavía no tienes un profesor asignado — pídele a la persona administradora que te asigne uno.");
                 document.getElementById("loading").classList.add("hidden");
