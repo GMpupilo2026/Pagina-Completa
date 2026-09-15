@@ -15,7 +15,7 @@
  *   leyes           Leyes del Ajedrez: la partida y el acto de mover (art. 1-5)
  *   reloj           El reloj, el control de tiempo y la bandera (art. 6)
  *   irregularidades Jugadas ilegales y posiciones incorrectas (art. 7)
- *   tablas          Planilla y tablas: reclamaciones y automatismos (art. 8-9)
+ *   tablas          Planilla y tablas: reclamos y automatismos (art. 8-9)
  *   conducta        Conducta, dispositivos y sanciones (art. 11-12)
  *   ritmos          Rápidas y relámpago (apéndices A y B)
  *   competicion     Emparejamientos, desempates y organización (C.04, C.07)
@@ -121,7 +121,7 @@ window.ARBITRAJE_ITEMS = [
       'Aquella en la que ninguno de los dos quiere seguir jugando.',
     ],
     correcta: 0,
-    explica: 'La partida termina ahí mismo, sin reclamación: nadie puede dar mate ni siquiera con la peor serie de jugadas legales del rival (rey contra rey, por ejemplo).',
+    explica: 'La partida termina ahí mismo, sin reclamo: nadie puede dar mate ni siquiera con la peor serie de jugadas legales del rival (rey contra rey, por ejemplo).',
     fuente: 'Leyes del Ajedrez, art. 5.2.2',
   },
   {
@@ -208,10 +208,10 @@ window.ARBITRAJE_ITEMS = [
     id: 'rel_quien_reclama', area: 'reloj', peso: 3,
     enunciado: 'En una partida de ritmo clásico con árbitro presente, cae una bandera y nadie dice nada. ¿Qué corresponde?',
     opciones: [
-      'El árbitro la declara, sin esperar reclamación.',
+      'El árbitro la declara, sin esperar un reclamo.',
       'Solo vale si el rival la reclama antes de mover.',
       'Se espera a que terminen la partida y se revisa.',
-      'La partida sigue: sin reclamación no hay bandera.',
+      'La partida sigue: sin reclamo no hay bandera.',
     ],
     correcta: 0,
     explica: 'En ritmo clásico el árbitro aplica las Leyes de oficio, y la caída de bandera es un hecho observable. En relámpago, en cambio, la bandera la reclama el jugador.',
@@ -318,7 +318,7 @@ window.ARBITRAJE_ITEMS = [
       'Debe repetir la partida entera desde la posición inicial.',
     ],
     correcta: 0,
-    explica: 'Las Leyes le dan al árbitro la facultad de reponer los tiempos con su mejor criterio, incluidos los del reclamante. La reclamación tardía no obliga a devolver todo el tiempo perdido.',
+    explica: 'Las Leyes le dan al árbitro la facultad de reponer los tiempos con su mejor criterio, incluidos los de quien reclama. El reclamo tardío no obliga a devolver todo el tiempo perdido.',
     fuente: 'Leyes del Ajedrez, art. 6.10.2 y 6.11',
   },
   {
@@ -526,16 +526,16 @@ window.ARBITRAJE_ITEMS = [
     opciones: [
       'Anota la jugada sin jugarla, para el reloj y llama al árbitro.',
       'Hace la jugada, presiona el reloj y recién entonces reclama.',
-      'Anuncia la reclamación en voz alta y espera sin tocar nada.',
+      'Anuncia el reclamo en voz alta y espera sin tocar nada.',
       'Reclama al terminar la partida, mostrando su planilla firmada.',
     ],
     correcta: 0,
-    explica: 'La jugada que produciría la repetición se anota pero no se juega. Si se juega, la reclamación ya es otra: la de la posición que quedó en el tablero.',
+    explica: 'La jugada que produciría la repetición se anota pero no se juega. Si se juega, el reclamo ya es otro: el de la posición que quedó en el tablero.',
     fuente: 'Leyes del Ajedrez, art. 9.2.1',
   },
   {
     id: 'tab_reclamacion_falsa', area: 'tablas', peso: 4,
-    enunciado: 'Un jugador reclama tablas por repetición en ritmo clásico y la reclamación es incorrecta. ¿Qué pasa?',
+    enunciado: 'Un jugador reclama tablas por repetición en ritmo clásico y el reclamo es incorrecto. ¿Qué pasa?',
     opciones: [
       'Da dos minutos al rival y se juega la jugada anunciada.',
       'Pierde la partida por haber reclamado tablas en falso.',
@@ -543,7 +543,7 @@ window.ARBITRAJE_ITEMS = [
       'Se le descuentan dos minutos de su propio reloj y sigue.',
     ],
     correcta: 0,
-    explica: 'La reclamación errónea le cuesta dos minutos al reclamante en beneficio del rival (uno en rápidas y relámpago desde 2023), y hay que jugar la jugada anunciada.',
+    explica: 'El reclamo equivocado le cuesta dos minutos a quien reclama en beneficio del rival (uno en rápidas y relámpago desde 2023), y hay que jugar la jugada anunciada.',
     fuente: 'Leyes del Ajedrez, art. 9.5.2',
   },
   {
@@ -616,12 +616,12 @@ window.ARBITRAJE_ITEMS = [
     enunciado: 'Un jugador con menos de cinco minutos y sin incremento dejó de anotar, y ahora quiere reclamar tablas por 50 jugadas. ¿Qué hace el árbitro?',
     opciones: [
       'Puede aceptarla si logra verificarla por otros medios.',
-      'La rechaza siempre: sin planilla completa no hay reclamación.',
+      'Lo rechaza siempre: sin planilla completa no hay reclamo.',
       'La acepta siempre: el jugador estaba autorizado a no anotar.',
       'Manda reconstruir la planilla con el rival antes de decidir.',
     ],
     correcta: 0,
-    explica: 'La reclamación necesita prueba. Sin planilla, el árbitro puede apoyarse en lo que haya observado o en el registro electrónico; sin nada de eso, no hay cómo darla por buena.',
+    explica: 'El reclamo necesita prueba. Sin planilla, el árbitro puede apoyarse en lo que haya observado o en el registro electrónico; sin nada de eso, no hay cómo darla por buena.',
     fuente: 'Leyes del Ajedrez, art. 8.5 y 9.5',
   },
 
@@ -760,13 +760,13 @@ window.ARBITRAJE_ITEMS = [
     id: 'con_no_intervenir', area: 'conducta', peso: 5,
     enunciado: 'El árbitro ve que un jugador va a dejar caer su bandera por distracción. ¿Qué debe hacer?',
     opciones: [
-      'No intervenir: no avisa banderas ni reclamaciones.',
+      'No intervenir: no avisa banderas ni reclamos.',
       'Avisarle, porque su deber es cuidar la deportividad.',
       'Avisar solo si el jugador es menor de edad o principiante.',
       'Detener el reloj hasta que el jugador reaccione y mire.',
     ],
     correcta: 0,
-    explica: 'El árbitro no juega la partida: no señala jugadas, ni banderas a punto de caer, ni reclamaciones disponibles. Intervenir de más es de los errores más graves del oficio.',
+    explica: 'El árbitro no juega la partida: no señala jugadas, ni banderas a punto de caer, ni reclamos disponibles. Intervenir de más es de los errores más graves del oficio.',
     fuente: 'Leyes del Ajedrez, art. 12.6',
   },
   {
@@ -820,7 +820,7 @@ window.ARBITRAJE_ITEMS = [
       'Treinta segundos.',
     ],
     correcta: 0,
-    explica: 'Hasta 2022 eran dos minutos; desde 2023 las rápidas se igualaron al relámpago con un minuto. Lo mismo vale para la reclamación de tablas incorrecta.',
+    explica: 'Hasta 2022 eran dos minutos; desde 2023 las rápidas se igualaron al relámpago con un minuto. Lo mismo vale para el reclamo de tablas incorrecta.',
     fuente: 'Leyes del Ajedrez 2023, apéndices A.4 y B.3',
   },
   {
@@ -833,7 +833,7 @@ window.ARBITRAJE_ITEMS = [
       'Detener el reloj y esperar a que el árbitro lo vea.',
     ],
     correcta: 0,
-    explica: 'En relámpago manda el jugador: si responde con su jugada, la posición queda validada y ya no hay reclamación posible.',
+    explica: 'En relámpago manda el jugador: si responde con su jugada, la posición queda validada y ya no hay reclamo posible.',
     fuente: 'Leyes del Ajedrez, apéndice B.3 (y A.4 para rápidas sin supervisión)',
   },
   {
@@ -846,7 +846,7 @@ window.ARBITRAJE_ITEMS = [
       'Solo a partir de la jugada 20 en los dos ritmos.',
     ],
     correcta: 0,
-    explica: 'Sin obligación de anotar, la planilla deja de ser prueba: por eso en estos ritmos las reclamaciones dependen mucho más de lo que el árbitro observe.',
+    explica: 'Sin obligación de anotar, la planilla deja de ser prueba: por eso en estos ritmos los reclamos dependen mucho más de lo que el árbitro observe.',
     fuente: 'Leyes del Ajedrez, apéndices A.2 y B.2',
   },
   {
@@ -854,12 +854,12 @@ window.ARBITRAJE_ITEMS = [
     enunciado: 'En rápidas con supervisión adecuada (un árbitro por pocas partidas), ¿cómo se tratan las jugadas ilegales?',
     opciones: [
       'Como en clásico, con el árbitro interviniendo de oficio.',
-      'Igual que en relámpago, solo a reclamación del jugador.',
+      'Igual que en relámpago, solo a reclamo del jugador.',
       'No se sancionan: en rápidas todo vale si nadie protesta.',
       'Se anota el incidente y se resuelve al final de la ronda.',
     ],
     correcta: 0,
-    explica: 'El apéndice A distingue los dos escenarios: con supervisión suficiente se aplican las reglas de competición normales; sin ella, se pasa al régimen de reclamación del jugador.',
+    explica: 'El apéndice A distingue los dos escenarios: con supervisión suficiente se aplican las reglas de competición normales; sin ella, se pasa al régimen de reclamo del jugador.',
     fuente: 'Leyes del Ajedrez, apéndice A.3 y A.4',
   },
   {
@@ -872,7 +872,7 @@ window.ARBITRAJE_ITEMS = [
       'Nadie: en relámpago no cuenta.',
     ],
     correcta: 0,
-    explica: 'La reclamación es del jugador, y es válida siempre que él mismo no haya excedido su tiempo. Un espectador nunca puede intervenir.',
+    explica: 'El reclamo es del jugador, y vale siempre que él mismo no haya excedido su tiempo. Un espectador nunca puede intervenir.',
     fuente: 'Leyes del Ajedrez, apéndice B.4 y art. 11.8',
   },
   {
@@ -893,7 +893,7 @@ window.ARBITRAJE_ITEMS = [
     enunciado: 'En un final sin incremento, con menos de dos minutos, un jugador reclama tablas porque su rival no hace ningún progreso. ¿Qué puede hacer el árbitro?',
     opciones: [
       'Aplicar el apéndice G si el reglamento lo adoptó.',
-      'Rechazarla siempre: esa reclamación ya no existe.',
+      'Rechazarlo siempre: ese reclamo ya no existe.',
       'Aceptarla, porque hay menos de dos minutos en el reloj.',
       'Declarar tablas solo si los dos jugadores lo piden.',
     ],
@@ -1321,7 +1321,7 @@ window.ARBITRAJE_ITEMS = [
       'Las Leyes sin cambios: los apéndices son solo orientativos.',
     ],
     correcta: 0,
-    explica: 'Los apéndices no sustituyen a las Leyes: las modifican en lo que dicen expresamente (anotación, ilegales, reclamaciones) y en todo lo demás rige el texto general.',
+    explica: 'Los apéndices no sustituyen a las Leyes: las modifican en lo que dicen expresamente (anotación, ilegales, reclamos) y en todo lo demás rige el texto general.',
     fuente: 'Leyes del Ajedrez, apéndices A y B',
   },
   {
@@ -1626,7 +1626,7 @@ window.ARBITRAJE_ITEMS = [
       'Que la pantalla manda si discrepa con lo anotado en la planilla.',
     ],
     correcta: 0,
-    explica: 'Las pantallas y los tableros murales están permitidos, pero van retrasados y fallan. Una reclamación se apoya en el tablero, el reloj y las planillas.',
+    explica: 'Las pantallas y los tableros murales están permitidos, pero van retrasados y fallan. Un reclamo se apoya en el tablero, el reloj y las planillas.',
     fuente: 'Leyes del Ajedrez, art. 6.12.2',
   },
   {
@@ -1844,12 +1844,12 @@ window.ARBITRAJE_ITEMS = [
     enunciado: 'Hay que reconstruir la partida y uno de los jugadores se niega a colaborar. ¿Qué dicen las Leyes?',
     opciones: [
       'Los dos están obligados a ayudar; negarse se sanciona.',
-      'Solo ayuda quien reclamó: la reclamación es suya y la carga también.',
+      'Solo ayuda quien reclamó: el reclamo es suyo y la carga también.',
       'Reconstruye el árbitro solo, sin hablar con los jugadores.',
       'Si uno se niega, la reconstrucción se cancela sin más.',
     ],
     correcta: 0,
-    explica: 'Las Leyes obligan a los dos jugadores a asistir al árbitro en cualquier situación que exija reconstruir la partida, incluidas las reclamaciones de tablas.',
+    explica: 'Las Leyes obligan a los dos jugadores a asistir al árbitro en cualquier situación que exija reconstruir la partida, incluidos los reclamos de tablas.',
     fuente: 'Leyes del Ajedrez, art. 11.12 y 12.9',
   },
 
@@ -1903,14 +1903,14 @@ window.ARBITRAJE_ITEMS = [
       'No, en ningún caso, ni siquiera reclamando tablas.',
     ],
     correcta: 0,
-    explica: 'Escribir primero y mirar después es una ayuda que las Leyes prohíben. La excepción es la reclamación de tablas, donde la jugada se escribe y no se juega.',
+    explica: 'Escribir primero y mirar después es una ayuda que las Leyes prohíben. La excepción es el reclamo de tablas, donde la jugada se escribe y no se juega.',
     fuente: 'Leyes del Ajedrez, art. 8.1',
   },
   {
     id: 'tab_rey_contra_rey', area: 'tablas', peso: 2,
     enunciado: 'Queda rey contra rey en el tablero. ¿Qué corresponde?',
     opciones: [
-      'Tablas de inmediato: es posición muerta, sin reclamación.',
+      'Tablas de inmediato: es posición muerta, sin reclamo.',
       'Tablas solo cuando uno de los dos jugadores las reclame.',
       'Se sigue jugando hasta que caiga una de las dos banderas.',
       'Tablas solo si se completan además cincuenta jugadas.',
@@ -1942,7 +1942,7 @@ window.ARBITRAJE_ITEMS = [
       'Puede reclamar, pero el árbitro le descuenta dos minutos.',
     ],
     correcta: 0,
-    explica: 'La reclamación se hace antes de tocar nada: se escribe la jugada, se paran los relojes y se llama al árbitro. Tocar una pieza ya es empezar a jugar.',
+    explica: 'El reclamo se hace antes de tocar nada: se escribe la jugada, se paran los relojes y se llama al árbitro. Tocar una pieza ya es empezar a jugar.',
     fuente: 'Leyes del Ajedrez, art. 9.4',
   },
   {
@@ -1960,10 +1960,10 @@ window.ARBITRAJE_ITEMS = [
   },
   {
     id: 'tab_reclamo_rechazado_jugada', area: 'tablas', peso: 4,
-    enunciado: 'Un jugador escribió su jugada para reclamar tablas y el árbitro rechaza la reclamación. ¿Qué pasa con esa jugada?',
+    enunciado: 'Un jugador escribió su jugada para reclamar tablas y el árbitro rechaza el reclamo. ¿Qué pasa con esa jugada?',
     opciones: [
-      'Está obligado a jugarla: la escribió y la reclamó con ella.',
-      'Puede jugar cualquier otra: la reclamación quedó sin efecto.',
+      'Está obligado a jugarla: la escribió y reclamó con ella.',
+      'Puede jugar cualquier otra: el reclamo quedó sin efecto.',
       'Debe jugar cualquier jugada, menos la que había escrito.',
       'Decide el árbitro cuál de las dos jugadas se juega.',
     ],
@@ -1994,7 +1994,7 @@ window.ARBITRAJE_ITEMS = [
       'No: además tienen que darse con el mismo tiempo en el reloj.',
     ],
     correcta: 0,
-    explica: 'Es el detalle que más reclamaciones tumba. Mismo turno, mismas piezas, mismas casillas y además las mismas jugadas posibles, enroque y al paso incluidos.',
+    explica: 'Es el detalle que más reclamos tumba. Mismo turno, mismas piezas, mismas casillas y además las mismas jugadas posibles, enroque y al paso incluidos.',
     fuente: 'Leyes del Ajedrez, art. 9.2.2',
   },
   {
@@ -2232,7 +2232,7 @@ window.ARBITRAJE_ITEMS = [
       'Cámaras que graben todas las partidas de la ronda.',
     ],
     correcta: 0,
-    explica: 'La diferencia es grande: con supervisión adecuada rigen casi las mismas reglas del clásico; sin ella, se pasa al régimen de reclamaciones del apéndice.',
+    explica: 'La diferencia es grande: con supervisión adecuada rigen casi las mismas reglas del clásico; sin ella, se pasa al régimen de reclamos del apéndice.',
     fuente: 'Leyes del Ajedrez, apéndice A.3',
   },
   {
@@ -2252,13 +2252,13 @@ window.ARBITRAJE_ITEMS = [
     id: 'rit_planilla_derechos', area: 'ritmos', peso: 3,
     enunciado: 'En rápidas nadie está obligado a anotar. ¿Eso le quita derechos al jugador?',
     opciones: [
-      'No: conserva las reclamaciones y puede pedir una planilla.',
+      'No: conserva los reclamos y puede pedir una planilla.',
       'Sí: sin planilla no puede reclamar repetición ni 50 jugadas.',
       'Sí: solo puede reclamar si el árbitro estaba mirando la mesa.',
       'No, pero debe avisar al árbitro antes de empezar a jugar.',
     ],
     correcta: 0,
-    explica: 'El apéndice lo dice expresamente: no anotar no hace perder las reclamaciones que normalmente se apoyan en la planilla, y se puede pedir una para empezar a anotar.',
+    explica: 'El apéndice lo dice expresamente: no anotar no hace perder los reclamos que normalmente se apoyan en la planilla, y se puede pedir una para empezar a anotar.',
     fuente: 'Leyes del Ajedrez, apéndice A.2',
   },
   {
@@ -2284,7 +2284,7 @@ window.ARBITRAJE_ITEMS = [
       'Decide el árbitro según lo que alcanzara a ver en la mesa.',
     ],
     correcta: 0,
-    explica: 'El apéndice cambia sanciones y reclamaciones, no las reglas básicas: mate, ahogado y posición muerta terminan la partida igual que en clásico.',
+    explica: 'El apéndice cambia sanciones y reclamos, no las reglas básicas: mate, ahogado y posición muerta terminan la partida igual que en clásico.',
     fuente: 'Leyes del Ajedrez, art. 5.1.1 y apéndice B.3',
   },
   {
@@ -2310,7 +2310,7 @@ window.ARBITRAJE_ITEMS = [
       'El árbitro debe intervenir de oficio cuando se entere.',
     ],
     correcta: 0,
-    explica: 'Sin árbitro mirando, la reclamación es del rival y hay que hacerla antes de mover. Es la diferencia más grande con el ritmo clásico.',
+    explica: 'Sin árbitro mirando, el reclamo es del rival y hay que hacerlo antes de mover. Es la diferencia más grande con el ritmo clásico.',
     fuente: 'Leyes del Ajedrez, apéndice A.4',
   },
   {
@@ -2330,7 +2330,7 @@ window.ARBITRAJE_ITEMS = [
     id: 'rit_arbitro_observa_ilegal', area: 'ritmos', peso: 5,
     enunciado: 'En rápidas con supervisión adecuada, el árbitro ve una jugada ilegal y nadie reclama. ¿Qué hace?',
     opciones: [
-      'Interviene: con supervisión adecuada actúa sin reclamación.',
+      'Interviene: con supervisión adecuada actúa sin reclamo.',
       'Espera: en rápidas solo se actúa si el rival reclama.',
       'Anota la incidencia y la resuelve al terminar la partida.',
       'Advierte a los dos jugadores sin tocar los relojes.',

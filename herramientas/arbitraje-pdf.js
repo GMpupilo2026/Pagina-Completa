@@ -39,6 +39,15 @@ const NIVEL = global.window.ArbitrajeNivel;
 
 const LETRAS = ["a", "b", "c", "d"];
 
+/* El logo va incrustado en el HTML como data URI: la maqueta se imprime desde
+   /tmp y desde ahí no alcanzaría los archivos de img/. */
+function incrustar(relativo) {
+  const datos = fs.readFileSync(path.join(RAIZ, relativo));
+  return "data:image/png;base64," + datos.toString("base64");
+}
+const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");        // para la tapa oscura
+const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");  // para la marca de agua
+
 /* Quien firma el cuadernillo: va en la portada, en el pie de cada página y en
    los datos del archivo. */
 const AUTOR = "IA Oscar Angulo Cubero";
@@ -167,13 +176,8 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   table.respuestas td.resp { width: 25%; font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; }
   .rnum { display: inline-block; min-width: 10mm; color: #627d98; }
   .nota { background: #f0f4f8; border-left: 3px solid #486581; padding: 3mm 4mm; margin: 4mm 0; font-size: 9pt; }
-  .marca-agua { position: fixed; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .marca-agua span { transform: rotate(-30deg); font-family: "DejaVu Serif", Georgia, serif; font-size: 24pt; font-weight: 700; letter-spacing: .08em; color: #bcccdc; opacity: .45; white-space: nowrap; text-transform: uppercase; }
-  body > *:not(.marca-agua) { position: relative; z-index: 1; }
 </style>
 </head><body>
-<div class="marca-agua" aria-hidden="true"><span>Ajedrez Integral · uso docente</span></div>
-
 <div>
   <h2 class="area">Cómo está armado</h2>
   <div class="aviso">
@@ -240,7 +244,7 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
          background: linear-gradient(158deg, #081b2e 0%, #143253 48%, #0a2138 100%); position: relative; overflow: hidden; }
 
   /* el tablero del fondo: ocho por ocho, apoyado en la esquina de abajo */
-  .tablero-fondo { position: absolute; right: -34mm; bottom: -38mm; width: 168mm; height: 168mm;
+  .tablero-fondo { position: absolute; right: -44mm; bottom: -44mm; width: 158mm; height: 158mm;
       background-image:
         linear-gradient(45deg, rgba(222,145,29,.14) 25%, transparent 25%, transparent 75%, rgba(222,145,29,.14) 75%),
         linear-gradient(45deg, rgba(222,145,29,.14) 25%, transparent 25%, transparent 75%, rgba(222,145,29,.14) 75%);
@@ -272,7 +276,7 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
   .cifra .n { display: block; font-size: 21pt; font-weight: 700; color: #ffffff; line-height: 1.1; }
   .cifra .q { display: block; font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: #9fb3c8; margin-top: 1mm; }
 
-  .piezas { font-size: 30pt; letter-spacing: .05em; color: rgba(240,180,41,.55); margin: 11mm 0 0; line-height: 1; }
+  .logo { display: block; width: 86mm; height: auto; margin: 10mm 0 0; }
 
   .pie-tapa { margin-top: auto; }
   .autor { font-size: 15pt; font-weight: 700; color: #ffffff; letter-spacing: .02em; margin: 0; }
@@ -300,7 +304,7 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
         <div class="cifra"><span class="n">${NIVEL.AREAS.length}</span><span class="q">áreas</span></div>
         <div class="cifra"><span class="n">5</span><span class="q">escalones</span></div>
       </div>
-      <p class="piezas">&#9812; &#9813; &#9814; &#9815; &#9816; &#9817;</p>
+      <img class="logo" src="${LOGO_CREMA}" alt="Oscar Angulo Cubero · Profesional de Ajedrez">
     </div>
 
     <div class="pie-tapa">
@@ -313,6 +317,26 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
     </div>
   </div>
 </body></html>`;
+
+/* ---------- la marca de agua ----------
+   Va en su propia hoja y se estampa encima de cada página del cuerpo con
+   pypdf. Se probó primero con CSS (position: fixed, que Chromium repite en
+   todas las páginas) y se abandonó: al paginar no respeta el centrado, y la
+   marca terminaba corrida a la derecha y cortada por el borde. */
+const htmlMarca = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0; padding: 0; width: 210mm; height: 297mm; }
+  /* Centrada: 105mm de ancho sobre 210mm de página, y su alto (79mm) sobre 297mm.
+     El giro es suave a propósito: con más grados el logo se come los márgenes. */
+  .sello { position: absolute; left: 52.5mm; top: 109mm; width: 105mm; transform: rotate(-15deg); opacity: .11; }
+  .sello img { display: block; width: 105mm; height: auto; }
+</style>
+</head><body>
+  <div class="sello"><img src="${LOGO_MARCA}" alt=""></div>
+</body></html>`;
+const htmlMarcaTemporal = path.join(require("os").tmpdir(), "arbitraje-marca.html");
+fs.writeFileSync(htmlMarcaTemporal, htmlMarca);
 
 const htmlPortadaTemporal = path.join(require("os").tmpdir(), "arbitraje-portada.html");
 fs.writeFileSync(htmlPortadaTemporal, htmlPortada);
@@ -333,6 +357,12 @@ console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}\n${BANCO.
   await pTapa.goto("file://" + htmlPortadaTemporal, { waitUntil: "load" });
   await pTapa.pdf({ path: tapa, format: "A4", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
 
+  // la hoja del sello, del tamaño exacto de la página
+  const marca = path.join(require("os").tmpdir(), "arbitraje-marca.pdf");
+  const pMarca = await navegador.newPage();
+  await pMarca.goto("file://" + htmlMarcaTemporal, { waitUntil: "load" });
+  await pMarca.pdf({ path: marca, format: "A4", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+
   const pagina = await navegador.newPage();
   await pagina.goto("file://" + htmlTemporal, { waitUntil: "load" });
   await pagina.pdf({
@@ -345,27 +375,36 @@ console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}\n${BANCO.
     footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#9fb3c8;font-family:Arial,sans-serif;padding:0 14mm;display:flex;justify-content:space-between;align-items:center;"><span>Ajedrez Integral · Examen de arbitraje · uso docente</span><span style="font-weight:700;color:#829ab1;">IA Oscar Angulo Cubero</span><span class="pageNumber"></span></div>',
   });
   await navegador.close();
-  unir(tapa, cuerpo, destino);
+  unir(tapa, cuerpo, marca, destino);
   proteger(destino);
   console.log("PDF listo:", destino);
 })();
 
 /* Tapa y cuerpo salen de dos impresiones distintas (la tapa no lleva márgenes
-   ni pie de página), así que se pegan acá. */
-function unir(tapa, cuerpo, destino) {
+   ni pie de página), así que se pegan acá; de paso se estampa la marca de agua
+   sobre cada página del cuerpo. La tapa no la lleva: ya tiene el logo en grande
+   y su propio sello de uso docente. */
+function unir(tapa, cuerpo, marca, destino) {
   const { execFileSync } = require("child_process");
   const guion = `
 import sys
 from pypdf import PdfReader, PdfWriter
-tapa, cuerpo, destino = sys.argv[1], sys.argv[2], sys.argv[3]
+tapa, cuerpo, marca, destino = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 escritor = PdfWriter()
 for archivo in (tapa, cuerpo):
     escritor.append_pages_from_reader(PdfReader(archivo))
+sello = PdfReader(marca).pages[0]
+for n, pagina in enumerate(escritor.pages):
+    if n == 0:
+        continue
+    pagina.merge_page(sello, over=True)
 with open(destino, "wb") as f:
     escritor.write(f)
+print("marca de agua en", len(escritor.pages) - 1, "páginas")
 `;
   try {
-    execFileSync("python3", ["-c", guion, tapa, cuerpo, destino], { stdio: ["ignore", "pipe", "pipe"] });
+    const salida = execFileSync("python3", ["-c", guion, tapa, cuerpo, marca, destino], { stdio: ["ignore", "pipe", "pipe"] });
+    console.log(String(salida).trim());
   } catch (e) {
     console.error("\nNo se pudieron unir tapa y cuerpo. Falta pypdf: pip install pypdf");
     console.error(String((e.stderr || "")).trim().split("\n").slice(-3).join("\n"));
