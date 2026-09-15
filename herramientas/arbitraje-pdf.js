@@ -387,8 +387,9 @@ console.log(`Maqueta: ${htmlTemporal}\nTapa:    ${htmlPortadaTemporal}\n${BANCO.
 function unir(tapa, cuerpo, marca, destino) {
   const { execFileSync } = require("child_process");
   const guion = `
-import sys
+import sys, zlib
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import StreamObject, NameObject
 tapa, cuerpo, marca, destino = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 escritor = PdfWriter()
 for archivo in (tapa, cuerpo):
@@ -398,8 +399,20 @@ for n, pagina in enumerate(escritor.pages):
     if n == 0:
         continue
     pagina.merge_page(sello, over=True)
-with open(destino, "wb") as f:
-    escritor.write(f)
+
+# Estampar deja el contenido de cada página SIN comprimir (unos 60 KB por hoja:
+# 4 MB de más en un cuadernillo de 62 páginas). Se vuelve a comprimir a mano...
+for pagina in escritor.pages:
+    flujo = StreamObject()
+    flujo._data = zlib.compress(pagina.get_contents().get_data(), 9)
+    flujo[NameObject("/Filter")] = NameObject("/FlateDecode")
+    pagina[NameObject("/Contents")] = escritor._add_object(flujo)
+escritor.write(destino)
+
+# ...y se clona el resultado, que es lo que de verdad tira los flujos viejos:
+# quedan sueltos pero el escritor los sigue guardando, y clonar solo copia lo
+# que cuelga del catálogo. Con esto el archivo pasa de 4,2 MB a 1,2 MB.
+PdfWriter(clone_from=destino).write(destino)
 print("marca de agua en", len(escritor.pages) - 1, "páginas")
 `;
   try {

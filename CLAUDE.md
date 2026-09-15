@@ -328,7 +328,13 @@ no se puede "probar" una jugada.
   Chromium sí la repite en todas las páginas) y se abandonó: al paginar no
   respeta el centrado y la marca terminaba corrida a la derecha y cortada por el
   borde. Ahora el generador imprime una hoja de sello del tamaño exacto de la
-  página y la mezcla sobre cada página del cuerpo. La tapa no la lleva: ya tiene
+  página y la mezcla sobre cada página del cuerpo. **Después de estampar hay que
+  recomprimir y clonar**: mezclar deja el contenido de cada página sin comprimir
+  (unos 60 KB por hoja, 4,2 MB de archivo). El generador vuelve a comprimir cada
+  flujo y después abre el resultado con `PdfWriter(clone_from=...)`, que es lo
+  que de verdad tira los flujos viejos —quedan sueltos pero el escritor los
+  sigue guardando, y clonar solo copia lo que cuelga del catálogo—. Así el
+  cuadernillo pesa 1,3 MB en vez de 4,2 MB. La tapa no la lleva: ya tiene
   el logo en grande. Los dos PNG del logo salieron de recortar el logotipo
   original y pasarle el fondo a transparente; el de la marca es gris para que se
   vea sobre papel blanco.
