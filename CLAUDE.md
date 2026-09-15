@@ -274,6 +274,12 @@ no se puede "probar" una jugada.
   contrastar el banco: el reglamento cambia —en 2023 la sanción por jugada
   ilegal en rápidas bajó de dos minutos a uno—, así que al tocar una pregunta
   hay que releer el artículo vigente en https://handbook.fide.com.
+- **Vocabulario latinoamericano, no peninsular.** El texto de la FIDE en
+  español dice "reclamación"; en el banco se dice **reclamo**, que es lo que se
+  usa acá. Los ids `tab_reclamacion_falsa` y `con_reclamacion_arbitro` conservan
+  la palabra vieja a propósito: son identificadores y se guardan en
+  `training_state` con cada examen rendido, así que cambiarlos rompería los
+  resultados ya guardados.
 - **Ninguna opción puede delatarse por el largo** (la misma regla que el
   diagnóstico) y hay **"Dejar en blanco"**, que vale cero como fallar pero se
   guarda aparte: un hueco que estudiar no es lo mismo que una regla aprendida
@@ -298,11 +304,22 @@ no se puede "probar" una jugada.
   tapa, que es `position: fixed` y si no se repetiría también ahí; el aviso de
   uso docente va en la tapa como sello propio. Las opciones se barajan con una semilla sacada del
   id de la pregunta: así la correcta no queda siempre primera y dos impresiones
-  salen idénticas. **Trae las respuestas**, así que lleva la misma marca de agua
-  que el cuadernillo del diagnóstico ("Ajedrez Integral · uso docente"), va
-  firmado por **IA Oscar Angulo Cubero** (portada, pie de cada página y datos
-  del archivo) y el enlace para descargarlo vive dentro de `arbitraje.html`, que
-  ya es solo de profesores y administración.
+  salen idénticas. **Trae las respuestas**, así que va marcado: el logo de Oscar
+  Angulo Cubero (`img/logo-oscar-angulo-marca.png`) como marca de agua en las 61
+  páginas del cuerpo, el mismo logo en grande en la tapa
+  (`img/logo-oscar-angulo.png`), el sello "uso docente" en la tapa y en el pie
+  de cada página, y la firma **IA Oscar Angulo Cubero** en la tapa, en el pie y
+  en los datos del archivo. El enlace para descargarlo vive dentro de
+  `arbitraje.html`, que ya es solo de profesores y administración.
+- **La marca de agua se estampa con `pypdf`, no con CSS.** Se probó primero con
+  `position: fixed` (que es como la lleva el cuadernillo del diagnóstico y
+  Chromium sí la repite en todas las páginas) y se abandonó: al paginar no
+  respeta el centrado y la marca terminaba corrida a la derecha y cortada por el
+  borde. Ahora el generador imprime una hoja de sello del tamaño exacto de la
+  página y la mezcla sobre cada página del cuerpo. La tapa no la lleva: ya tiene
+  el logo en grande. Los dos PNG del logo salieron de recortar el logotipo
+  original y pasarle el fondo a transparente; el de la marca es gris para que se
+  vea sobre papel blanco.
 - **El PDF sale protegido**: se abre sin contraseña, pero no se puede copiar el
   texto, ni editarlo, ni imprimirlo. Lo hace el propio generador, que después de
   Chromium vuelve a escribir el archivo con `pypdf` (`pip install pypdf`); la

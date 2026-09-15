@@ -25,7 +25,7 @@ window.ArbitrajeNivel = (function () {
     {
       id: 'leyes', nombre: 'Leyes del Ajedrez', emoji: '📖',
       mide: 'La partida y el acto de mover: jugada completada, pieza tocada, enroque, coronación, mate y ahogado.',
-      flojo: 'Es la base de todo lo demás: sin esto firme, cualquier reclamación en la sala se resuelve por intuición.',
+      flojo: 'Es la base de todo lo demás: sin esto firme, cualquier reclamo en la sala se resuelve por intuición.',
       estudiar: 'Leyes del Ajedrez, artículos 1 a 5, leídos completos y seguidos.',
     },
     {
@@ -42,8 +42,8 @@ window.ArbitrajeNivel = (function () {
     },
     {
       id: 'tablas', nombre: 'Planilla y tablas', emoji: '🤝',
-      mide: 'Obligación de anotar, ofertas de tablas y las reclamaciones por repetición y por 50 jugadas.',
-      flojo: 'Una reclamación mal resuelta cambia el resultado de la partida y casi siempre termina en apelación.',
+      mide: 'Obligación de anotar, ofertas de tablas y los reclamos por repetición y por 50 jugadas.',
+      flojo: 'Un reclamo mal resuelta cambia el resultado de la partida y casi siempre termina en apelación.',
       estudiar: 'Leyes del Ajedrez, artículos 8 y 9, con el procedimiento del 9.2 paso a paso.',
     },
     {
@@ -54,7 +54,7 @@ window.ArbitrajeNivel = (function () {
     },
     {
       id: 'ritmos', nombre: 'Rápidas y relámpago', emoji: '⚡',
-      mide: 'Definición de cada ritmo y las reglas propias de los apéndices: ilegales, anotación, reclamaciones, supervisión.',
+      mide: 'Definición de cada ritmo y las reglas propias de los apéndices: ilegales, anotación, reclamos, supervisión.',
       flojo: 'Aplicar en relámpago el criterio del clásico (o al revés) es el error más común en torneos de fin de semana.',
       estudiar: 'Leyes del Ajedrez, apéndices A y B, con los cambios de 2023 (un minuto también en rápidas).',
     },
@@ -81,9 +81,9 @@ window.ArbitrajeNivel = (function () {
     { clave: 'formacion', escalon: 0, etiqueta: 'En formación', referencia: 'todavía no',
       descripcion: 'Faltan las bases del reglamento. Antes de dirigir una ronda hay que leer las Leyes completas, de principio a fin, y volver a rendir.' },
     { clave: 'auxiliar', escalon: 1, etiqueta: 'Auxiliar de sala', referencia: 'apoyo con supervisión',
-      descripcion: 'Alcanza para acompañar una sala con un árbitro responsable al lado: controlar planillas, relojes y resultados, sin resolver reclamaciones.' },
+      descripcion: 'Alcanza para acompañar una sala con un árbitro responsable al lado: controlar planillas, relojes y resultados, sin resolver reclamos.' },
     { clave: 'club', escalon: 2, etiqueta: 'Árbitro de club', referencia: 'torneos escolares y de club',
-      descripcion: 'Puede dirigir un torneo interno o escolar. Lo que falta es lo que aparece cuando el torneo se complica: reclamaciones, ritmos y emparejamientos.' },
+      descripcion: 'Puede dirigir un torneo interno o escolar. Lo que falta es lo que aparece cuando el torneo se complica: reclamos, ritmos y emparejamientos.' },
     { clave: 'nacional', escalon: 3, etiqueta: 'Nivel de Árbitro Nacional', referencia: 'examen de NA',
       descripcion: 'El conocimiento alcanza el nivel que suele pedir un examen de árbitro nacional. El paso siguiente es el seminario de la FIDE y la práctica en torneos válidos para rating.' },
     { clave: 'fide', escalon: 4, etiqueta: 'Nivel de Árbitro FIDE', referencia: 'examen de FA',
