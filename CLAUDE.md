@@ -405,6 +405,33 @@ escalones—, así que un resultado de afuera se lee igual que uno de adentro.
   lleva su `<title>` para quien use lector de pantalla.
 
 
+## El bot de Oscar
+
+`bot.html` es una sola página para practicar **cualquier modalidad** contra un
+rival de la casa. No usa `game_rooms` ni Supabase: la partida vive en el
+navegador y no se guarda, a propósito —contra el bot se practica, y una partida
+de práctica no tiene por qué ocupar una fila ni salir en los informes—.
+
+- Se pudo hacer en una página porque **los tableros no saben nada de la base**:
+  `js/niebla-board.js`, `js/crazyhouse-board.js` y `js/variantes-board.js` se
+  montan con `{ engine, interactive, myColor, onMove }` y listo. Los motores
+  tampoco. Por eso no hizo falta tocar las seis páginas de partida.
+- `js/bot-oscar.js` **no conoce ninguna variante**: cada modalidad le pasa un
+  adaptador con cuatro cosas —`turno()`, `jugadas()`, `probar(jugada)` (que
+  devuelve otro adaptador con la jugada hecha) y `material()`—. Tres niveles:
+  al azar con gusto por las capturas, una jugada mirando la respuesta, y dos
+  jugadas con poda alfa-beta. Está comprobado que el nivel 3 termina con ventaja
+  sobre el nivel 1.
+- No usa Stockfish a propósito: solo sabría jugar el ajedrez normal, y acá vale
+  más un rival que entienda abrazos, camaleón y crazyhouse.
+- **A ciegas lleva su propio adaptador**: su motor delega en chess.js y no tiene
+  `allMoves()` como abrazos y camaleón. La jugada escrita pasa por
+  `moveText()`, que entiende español, inglés y coordenadas.
+- **Faltan dos modalidades**, por razones distintas: Ajedrez de Cartas monta su
+  tablero desde un estado serializado (`loadState`) que hoy solo arma la página
+  de partida, y Duelo Simultáneo no tiene turnos —los dos mueven a la vez contra
+  reloj—, así que no hay "turno del bot" que atender y pide otro diseño.
+
 ## Confites del caballo
 
 `confites.html` (ficha en Juegos) es el paseo del caballo contado como juego:
