@@ -511,6 +511,49 @@ diagnóstico, Concentración, Racha táctica y ¡Te reto!
 - Las etiquetas son `<span class="coord-etiqueta">` dentro de la casilla: si algún
   código cuenta `span` dentro del tablero, tiene que excluirlas.
 
+## Metadatos: que el enlace se vea y la página se encuentre
+
+Cada página pública lleva su descripción, su `canonical` y su bloque de Open
+Graph, todo junto debajo del `<title>`. **Lo del Open Graph no es un detalle
+acá**: el botón principal del sitio manda a WhatsApp, o sea que WhatsApp es por
+donde se comparte esto, y sin `og:image` el enlace sale pelado.
+
+- `img/og-ajedrez-integral.jpg` (1200×630) es la imagen que se ve al compartir.
+  **No se edita a mano**: la genera `herramientas/og-imagen.js` con los colores
+  de la paleta, así que si cambian se vuelve a correr (`node
+  herramientas/og-imagen.js`, con playwright). Va en JPEG y no en PNG porque es
+  un degradado: el mismo dibujo pesa 490 KB en PNG y 91 en JPEG, y WhatsApp
+  descarta las previsualizaciones pesadas.
+- **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
+  tiene sentido indexar una pantalla de acceso, y así no compiten con las
+  públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
+  la Academia — si se indexara, competiría con `cursos/` por el mismo contenido.
+- El `canonical` apunta a la dirección **con `.html`**, que es la que usan todos
+  los enlaces internos. Cloudflare sirve además `/cursos` con el mismo
+  contenido; el canonical le dice a Google cuál de las dos vale, sin tocar el
+  enrutamiento.
+- `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
+  leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
+  se vuelve a correr y el sitemap se entera solo.
+- Los datos estructurados (JSON-LD) los genera
+  `herramientas/datos-estructurados.py` desde el propio HTML —título,
+  descripción, fecha impresa del artículo, lista de cursos de la portada—, así
+  que no se pueden desincronizar del contenido. Falta a propósito `offers` y
+  `hasCourseInstance` en cada curso (precio, duración, modalidad): sin esos
+  datos Google no muestra la ficha enriquecida, y se prefiere el marcado a
+  medias antes que inventar números.
+- **Todo esto se comprueba de una corrida**, sin instalar nada:
+  `python3 herramientas/verificar-metadatos.py` (unos 330 chequeos). **Al tocar
+  metadatos, correrlo**, y volver a generar sitemap y datos estructurados.
+- Las fuentes: solo se piden los pesos que el sitio usa. Inter en 400, 500, 600
+  y 700; **Merriweather solo en 700**, porque `font-serif` aparece 963 veces y
+  siempre con `font-bold`, ni una sin peso. Antes se bajaban nueve archivos de
+  fuente y se usaban cinco.
+- `js/adaptive-mode.js` **sigue sin `defer` a propósito**: aplica la clase
+  `adaptive-mode` en el `<html>` al ejecutarse, igual que el script del tema que
+  está justo arriba. Con `defer` correría después de parsear el HTML y quien
+  tiene el modo adaptado encendido vería un parpadeo con la página sin adaptar.
+
 ## El encabezado ocupa su propio espacio
 
 El encabezado del sitio es `sticky top-0`, **no `fixed`**, y esa es la razón por
