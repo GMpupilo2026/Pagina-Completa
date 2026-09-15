@@ -41,6 +41,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/variantes-engines.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/juego-aviso.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -619,6 +620,8 @@
 
             if (isTeacher) await renderTeacherView();
             else await renderStudentView();
+            // Si el profesor asigna una partida mientras el alumno está aquí, aviso y traslado automático.
+            if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
