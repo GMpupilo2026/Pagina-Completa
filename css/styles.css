@@ -52,6 +52,18 @@ body { -webkit-font-smoothing: antialiased; }
 }
 .radio-card-selected { background-color: rgba(240, 180, 41, 0.1); border-color: #de911d; }
 
+/* Tablero de "Ilumina el Tablero" (js/ilumina-board.js): la figura de cada
+   nivel es una grilla irregular — las casillas fuera de la figura se dejan
+   invisibles (ilumina-fuera) para que se note el contorno recortado, igual
+   que el tablero en cruz de Ajedrez para 4. */
+.ilumina-fuera { visibility: hidden; }
+.ilumina-casilla { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; font-size: clamp(1.1rem, 3.5vw, 1.8rem); cursor: pointer; border: none; padding: 0; transition: background-color 0.15s ease; }
+.ilumina-casilla.clara { background: var(--sq-light); }
+.ilumina-casilla.oscura { background: var(--sq-dark); }
+.ilumina-casilla.iluminada { background-color: #f0b429 !important; box-shadow: inset 0 0 0 2px #cb6e17; }
+.ilumina-casilla.amenazada { background-color: #e53e3e !important; }
+.ilumina-pieza.amenazada { opacity: 0.55; filter: grayscale(60%); }
+
 /* Piezas del Ajedrez para 4 (js/fourplayer-board.js): un solo set de glifos
    sólidos (♚♛♜♝♞♟, los mismos que ya usa el sitio para "negras") coloreado
    por asiento en vez de necesitar 4 sets de arte distintos — con el mismo
