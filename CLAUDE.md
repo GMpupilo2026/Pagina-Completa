@@ -432,6 +432,50 @@ de práctica no tiene por qué ocupar una fila ni salir en los informes—.
   de partida, y Duelo Simultáneo no tiene turnos —los dos mueven a la vez contra
   reloj—, así que no hay "turno del bot" que atender y pide otro diseño.
 
+## Retar a quien está en línea
+
+En `juegos.html`, debajo de las tarjetas, está "🟢 En línea ahora": quién más
+tiene abierta la página en este momento y un botón para retarlo a la modalidad y
+el reloj que uno elija. Si acepta, la partida nace sola y a los dos los manda a
+la página de la modalidad. Hasta ahora las partidas entre personas solo las
+armaba el profesor desde esa misma página; ahora los alumnos también pueden
+arrancar una entre ellos.
+
+- **Quién está conectado no es una tabla**: es un canal de presencia de Realtime
+  (`juegos-en-linea`) donde cada quien se anuncia mientras tiene la página
+  abierta. Al cerrar la pestaña desaparece solo, sin "última vez visto" que
+  limpiar ni fila que se quede colgada.
+- **El reto sí es una fila**, en `desafios` (`de_id`, `para_id`, `modalidad`,
+  `estado`, `room_id`, `initial_seconds`, `increment_seconds`). Tiene que
+  sobrevivir el rato que el otro tarda en contestar, y así le llega aunque en
+  ese momento no estuviera mirando la página. La tabla está en la publicación
+  `supabase_realtime`: sin eso los retos no llegan solos, que es todo el punto.
+- **Solo se ve y se puede retar a gente de la propia clase.** La regla es
+  `public.pueden_jugar_entre_si(a, b)` (`SECURITY DEFINER`): mismo profesor, o
+  alumno con su propio profesor, o alguien que administra. La página filtra la
+  lista con la misma regla, pero solo para no mostrar botones que van a fallar
+  — quien manda es la política de la base.
+- **Aceptar no crea la partida con un insert**: un alumno no puede insertar en
+  `game_rooms` (esa política sigue exigiendo profesor, y así se queda). La crea
+  `public.aceptar_desafio()`, `SECURITY DEFINER`, que comprueba que el reto
+  existe, que sigue pendiente y que quien acepta es quien lo recibió, sortea los
+  colores, arma la sala y de paso cancela los otros retos pendientes entre esos
+  dos. Es el mismo patrón que `registrar_arbitraje_publico()`: lo que el cliente
+  no tiene permiso de hacer directo, lo hace una función que valida.
+- La RLS de `desafios` reparte los verbos: **quien recibe** es el único que
+  puede rechazar, **quien reta** solo puede cancelar, y aceptar no lo puede
+  hacer nadie a mano (es cosa de la función). Antes los dos podían dejar
+  cualquier estado; no abría ninguna partida ajena, pero quien retaba podía
+  marcarse el reto como aceptado y mandarse solo a una sala que no podía leer.
+- La posición de salida de cada modalidad la da `estadoInicial(variant)`, una
+  sola función que usan **los dos caminos** — el formulario del profesor y
+  aceptar un reto—. Si se duplicara, una partida creada por un lado y otra por
+  el otro podrían arrancar distinto.
+- Se retan las modalidades de a dos que ya existen; las de 4 jugadores no
+  (necesitan cuatro personas y otro reparto) y las que están "Próximamente"
+  tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
+  la lista le ofrece el bot de Oscar mientras tanto.
+
 ## Confites del caballo
 
 `confites.html` (ficha en Juegos) es el paseo del caballo contado como juego:
