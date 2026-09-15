@@ -293,11 +293,23 @@ no se puede "probar" una jugada.
   coincidir con la pantalla. Las opciones se barajan con una semilla sacada del
   id de la pregunta: así la correcta no queda siempre primera y dos impresiones
   salen idénticas. **Trae las respuestas**, así que lleva la misma marca de agua
-  que el cuadernillo del diagnóstico ("Ajedrez Integral · uso docente") y el
-  enlace para descargarlo vive dentro de `arbitraje.html`, que ya es solo de
-  profesores y administración. Como todo en el sitio, el filtro es del
-  navegador: el archivo está en la raíz y quien conozca la dirección lo baja
-  igual.
+  que el cuadernillo del diagnóstico ("Ajedrez Integral · uso docente"), va
+  firmado por **IA Oscar Angulo Cubero** (portada, pie de cada página y datos
+  del archivo) y el enlace para descargarlo vive dentro de `arbitraje.html`, que
+  ya es solo de profesores y administración.
+- **El PDF sale protegido**: se abre sin contraseña, pero no se puede copiar el
+  texto, ni editarlo, ni imprimirlo. Lo hace el propio generador, que después de
+  Chromium vuelve a escribir el archivo con `pypdf` (`pip install pypdf`); la
+  contraseña de propietario —la que levanta esas restricciones— es
+  `arbitraje-ai-2026` y está en `CLAVE_PROPIETARIO`, dentro del generador. Queda
+  habilitada a propósito la extracción de texto para lectores de pantalla:
+  bloquearla dejaría el cuadernillo fuera del alcance de quien lo lee así, y no
+  es lo que se quiere evitar. Si falta `pypdf`, el generador borra el archivo y
+  falla en vez de dejar un PDF sin proteger. Con todo, es protección del formato
+  PDF, no una caja fuerte: quien conozca la dirección lo baja igual y con una
+  herramienta puede quitarle las restricciones. Evita la copia y la reimpresión
+  de paso; para cerrar la puerta del todo habría que servirlo desde Supabase
+  Storage con RLS.
 - El resultado se guarda en `training_state` (claves `arbitraje_resultado_v1` y
   `arbitraje_historial_v1`), no en `training_progress`: no es actividad de
   alumno. Quien administra ve además, dentro de la misma página, el último
