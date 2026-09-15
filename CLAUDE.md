@@ -385,6 +385,16 @@ escalones—, así que un resultado de afuera se lee igual que uno de adentro.
   arma un borrador de retroalimentación (nota, nivel, áreas flojas y qué
   estudiar, sacado del propio resultado) y el guardado, que marca `revisado`,
   la fecha y quién respondió.
+- **El seguimiento vive en `informes.html`**, en el bloque "⚖️ Exámenes de
+  arbitraje": cuántos llegaron, cuántos faltan por responder, el promedio, y la
+  tabla con nombre, correo, fecha, nivel, nota, las áreas flojas y el estado.
+  Aparece en el resumen general y también solo, eligiendo "⚖️ Exámenes de
+  arbitraje (público)" en el filtro de tema (`informes.html?tema=arbitraje`, que
+  es lo que enlaza `admin.html`). Como no son alumnos sino visitantes, los
+  filtros de alumno y de grupo no les aplican: llevan **su propio filtro de
+  estado** (todos / sin responder / respondidos), que es la pregunta que se hace
+  desde ahí. Informes solo muestra y cuenta; escribir la respuesta sigue siendo
+  en `arbitraje.html`, que es donde está el detalle pregunta por pregunta.
 - **El correo lo manda una persona, no un robot**: el botón abre el cliente de
   correo con el mensaje puesto (`mailto:`), para que salga de la dirección de
   quien responde. El sitio no tiene forma de enviar correo por su cuenta y no se
