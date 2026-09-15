@@ -43,6 +43,9 @@
     clasico: { label: "Clásico adaptado", light: "#ffffff", dark: "#d946ef" },
     altocontraste: { label: "Alto contraste", light: "#ffffff", dark: "#0a0a0a" },
     amarillo: { label: "Amarillo y negro", light: "#fef9c3", dark: "#000000" },
+    moradoclaro: { label: "Morado claro y negro", light: "#e9d5ff", dark: "#000000" },
+    morado: { label: "Morado y negro", light: "#c084fc", dark: "#000000" },
+    moradooscuro: { label: "Morado oscuro y negro", light: "#9333ea", dark: "#000000" },
   };
 
   function readKey(key, themes) {
