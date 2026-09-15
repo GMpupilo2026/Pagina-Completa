@@ -151,6 +151,30 @@
                 </div>
             </a>
 
+            <!-- Quién está conectado ahora y a quién se puede retar. Es de todos:
+                 alumnos y profesores lo ven igual. -->
+            <div id="en-linea-caja" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">🟢 En línea ahora</h2>
+                    <span class="text-xs text-brand-400 dark:text-brand-500" id="en-linea-cuenta"></span>
+                </div>
+                <p class="text-xs text-brand-400 dark:text-brand-500 mb-3">Quien esté en esta página aparece acá. Rétalo y, si acepta, la partida empieza sola para los dos.</p>
+                <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label for="reto-modalidad" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">Modalidad del reto</label>
+                        <select id="reto-modalidad" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    </div>
+                    <div>
+                        <label for="reto-tiempo" class="block text-xs font-medium text-brand-500 dark:text-brand-400 mb-1">⏱️ Tiempo</label>
+                        <select id="reto-tiempo" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    </div>
+                </div>
+                <div id="en-linea-lista" class="space-y-2"></div>
+            </div>
+
+            <!-- Retos que me llegan: aparecen encima de todo y esperan respuesta -->
+            <div id="retos-recibidos" class="space-y-3 mb-6"></div>
+
             <!-- Vista del alumno: sus partidas asignadas -->
             <div id="student-view" class="hidden">
                 <div id="my-active-games" class="space-y-3 mb-8"></div>
@@ -407,6 +431,27 @@
             return v ? v.emoji + " " + v.label : id;
         }
 
+        // La posición de salida de cada modalidad. Vive acá y no en dos lugares
+        // porque la usan el formulario del profesor y también aceptar un reto: si
+        // se duplicara, una partida creada por un camino y otra por el otro
+        // podrían arrancar distinto.
+        function estadoInicial(variant) {
+            const fila = {};
+            if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
+            if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
+            // El fen por defecto de game_rooms trae el sufijo "[]" de Crazyhouse
+            // (la bandeja de reserva) — Niebla de Guerra y Ajedrez Estándar son
+            // ajedrez normal, sin reserva, así que necesitan el fen estándar explícito.
+            if (variant === "niebla" || variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            // Las variantes de variante.html guardan su propia posición inicial (Abrazos y
+            // Camaleón no usan el FEN de Crazyhouse); A ciegas lleva la cuenta de desbloqueos.
+            if (window.Variantes && (variant === "abrazos" || variant === "camaleon" || variant === "ciegas")) {
+                fila.fen = Variantes.inicio(variant);
+                if (variant === "ciegas") fila.variant_state = { w_unlocks: 5, b_unlocks: 5 };
+            }
+            return fila;
+        }
+
         // Cada variante de 2 jugadores comparte la tabla game_rooms, pero cada una
         // vive en su propia página — aquí se decide a cuál ir según row.variant.
         function pageFor2pVariant(variant) {
@@ -591,18 +636,7 @@
                     // no desde que el profesor crea la partida.
                     white_time_left: timeControl.initial, black_time_left: timeControl.initial,
                 };
-                if (variant === "cartas") fila.cartas_state = CartasChess.Game.iniciar().toJSON();
-                if (variant === "duelo") fila.duelo_state = new DueloSimultaneo.Game().toJSON();
-                // El fen por defecto de game_rooms trae el sufijo "[]" de Crazyhouse
-                // (la bandeja de reserva) — Niebla de Guerra y Ajedrez Estándar son
-                // ajedrez normal, sin reserva, así que necesitan el fen estándar explícito.
-                if (variant === "niebla" || variant === "estandar") fila.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-                // Las variantes de variante.html guardan su propia posición inicial (Abrazos y
-                // Camaleón no usan el FEN de Crazyhouse); A ciegas lleva la cuenta de desbloqueos.
-                if (window.Variantes && (variant === "abrazos" || variant === "camaleon" || variant === "ciegas")) {
-                    fila.fen = Variantes.inicio(variant);
-                    if (variant === "ciegas") fila.variant_state = { w_unlocks: 5, b_unlocks: 5 };
-                }
+                Object.assign(fila, estadoInicial(variant));
                 const { error } = await sb.from("game_rooms").insert(fila);
                 if (error) { console.error(error); return fail("No se pudo crear la partida: " + error.message); }
             }
@@ -625,6 +659,210 @@
             subscribeRoomsList();
         }
 
+        /* ================= Retar a quien está en línea =================
+         *
+         * Presencia: un canal de Realtime donde cada quien se anuncia mientras tiene
+         * abierta esta página. No hay tabla de "conectados": si cierras la pestaña,
+         * desapareces solo.
+         *
+         * El reto sí es una fila en `desafios`, porque tiene que sobrevivir al segundo
+         * que tarda el otro en contestar y porque quien lo recibe se entera por
+         * Realtime aunque no estuviera mirando. Al aceptar, la partida NO se crea con
+         * un insert: un alumno no puede crear partidas (la política game_rooms_insert
+         * exige profesor, y sigue igual). La crea la función aceptar_desafio(), que
+         * comprueba que el desafío existe, que está pendiente y que quien acepta es
+         * quien lo recibió, y sortea los colores.
+         */
+        const CANAL_PRESENCIA = "juegos-en-linea";
+        let canalPresencia = null, canalDesafios = null;
+        let gente = [];              // quién está conectado, sin contarme
+        let retosPendientes = [];    // los que me llegaron y no he respondido
+
+        const nombreVisible = (p) => p.full_name || p.email || "Alguien";
+
+        /* Con quién puedo jugar: la misma regla que aplica la base
+           (public.pueden_jugar_entre_si). Acá es solo para no mostrar botones que
+           después van a fallar; quien manda es la base. */
+        function puedoJugarCon(otro) {
+            if (!otro || otro.id === profile.id) return false;
+            if (profile.is_admin || otro.is_admin) return true;
+            if (profile.teacher_id && profile.teacher_id === otro.teacher_id) return true;
+            if (profile.teacher_id === otro.id || otro.teacher_id === profile.id) return true;
+            return false;
+        }
+
+        function prepararSelectoresDeReto() {
+            const mod = document.getElementById("reto-modalidad");
+            mod.innerHTML = "";
+            VARIANTS.filter((v) => !v.disabled && v.id.indexOf("4") !== 0).forEach((v) => {
+                const o = document.createElement("option");
+                o.value = v.id; o.textContent = v.emoji + " " + v.label;
+                mod.appendChild(o);
+            });
+            const t = document.getElementById("reto-tiempo");
+            t.innerHTML = "";
+            TIME_CONTROLS.forEach((tc) => {
+                const o = document.createElement("option");
+                o.value = tc.id; o.textContent = tc.label;
+                t.appendChild(o);
+            });
+            t.value = "10+0";
+        }
+
+        async function iniciarPresencia() {
+            prepararSelectoresDeReto();
+            document.getElementById("en-linea-caja").classList.remove("hidden");
+
+            canalPresencia = sb.channel(CANAL_PRESENCIA, { config: { presence: { key: profile.id } } });
+            canalPresencia.on("presence", { event: "sync" }, () => {
+                const estado = canalPresencia.presenceState();
+                const vistos = {};
+                Object.keys(estado).forEach((k) => {
+                    (estado[k] || []).forEach((p) => { if (p && p.id) vistos[p.id] = p; });
+                });
+                gente = Object.values(vistos).filter((p) => p.id !== profile.id);
+                pintarEnLinea();
+            });
+            canalPresencia.subscribe(async (estado) => {
+                if (estado !== "SUBSCRIBED") return;
+                await canalPresencia.track({
+                    id: profile.id, nombre: nombreVisible(profile),
+                    teacher_id: profile.teacher_id || null, is_admin: !!profile.is_admin, role: profile.role,
+                });
+            });
+        }
+
+        function pintarEnLinea() {
+            const lista = document.getElementById("en-linea-lista");
+            const cuenta = document.getElementById("en-linea-cuenta");
+            const disponibles = gente.filter(puedoJugarCon);
+            cuenta.textContent = disponibles.length ? disponibles.length + (disponibles.length === 1 ? " persona" : " personas") : "";
+            lista.innerHTML = "";
+            if (!disponibles.length) {
+                lista.innerHTML = '<p class="text-sm text-brand-400 dark:text-brand-500">Ahora mismo no hay nadie más de tu clase en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
+                return;
+            }
+            disponibles.forEach((p) => {
+                const fila = document.createElement("div");
+                fila.className = "flex items-center justify-between gap-3 border border-brand-100 dark:border-brand-800 rounded-xl px-3 py-2";
+                const quien = document.createElement("p");
+                quien.className = "text-sm font-medium text-brand-700 dark:text-brand-200";
+                quien.textContent = "🟢 " + p.nombre + (p.role === "profesor" ? " · profe" : "");
+                const boton = document.createElement("button");
+                boton.type = "button";
+                boton.dataset.retar = p.id;
+                boton.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors";
+                boton.textContent = "Retar";
+                boton.addEventListener("click", () => retar(p, boton));
+                fila.append(quien, boton);
+                lista.appendChild(fila);
+            });
+        }
+
+        async function retar(quien, boton) {
+            const modalidad = document.getElementById("reto-modalidad").value;
+            const tc = TIME_CONTROLS.find((t) => t.id === document.getElementById("reto-tiempo").value) || TIME_CONTROLS[0];
+            boton.disabled = true;
+            boton.textContent = "Enviado…";
+            const { error } = await sb.from("desafios").insert({
+                de_id: profile.id, para_id: quien.id, modalidad: modalidad,
+                initial_seconds: tc.initial, increment_seconds: tc.increment,
+            });
+            if (error) {
+                boton.disabled = false; boton.textContent = "Retar";
+                alert("No se pudo enviar el reto: " + error.message);
+                return;
+            }
+            boton.textContent = "Esperando…";
+            setTimeout(() => { boton.disabled = false; boton.textContent = "Retar"; }, 20000);
+        }
+
+        /* Los retos que me llegan y la respuesta al mío: las dos cosas por Realtime. */
+        function escucharDesafios() {
+            canalDesafios = sb.channel("desafios:" + profile.id)
+                .on("postgres_changes",
+                    { event: "INSERT", schema: "public", table: "desafios", filter: "para_id=eq." + profile.id },
+                    (msg) => { if (msg.new && msg.new.estado === "pendiente") mostrarReto(msg.new); })
+                .on("postgres_changes",
+                    { event: "UPDATE", schema: "public", table: "desafios", filter: "de_id=eq." + profile.id },
+                    (msg) => {
+                        if (!msg.new) return;
+                        if (msg.new.estado === "aceptado" && msg.new.room_id) irALaPartida(msg.new);
+                        if (msg.new.estado === "rechazado") avisoArriba("Tu reto no fue aceptado esta vez.");
+                    })
+                .subscribe();
+            // Por si llegó uno mientras la página estaba cerrada.
+            cargarRetosPendientes();
+        }
+
+        async function cargarRetosPendientes() {
+            const { data } = await sb.from("desafios").select("*")
+                .eq("para_id", profile.id).eq("estado", "pendiente")
+                .order("created_at", { ascending: false }).limit(5);
+            (data || []).forEach(mostrarReto);
+        }
+
+        async function mostrarReto(reto) {
+            if (retosPendientes.some((r) => r.id === reto.id)) return;
+            retosPendientes.push(reto);
+            let nombre = playerNames[reto.de_id];
+            if (!nombre) {
+                const { data } = await sb.from("profiles").select("id, full_name, email").eq("id", reto.de_id).maybeSingle();
+                nombre = data ? nombreVisible(data) : "Alguien";
+                playerNames[reto.de_id] = nombre;
+            }
+            const tc = TIME_CONTROLS.find((t) => t.initial === reto.initial_seconds && t.increment === reto.increment_seconds);
+            const caja = document.createElement("div");
+            caja.dataset.reto = reto.id;
+            caja.className = "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3";
+            caja.innerHTML =
+                '<p class="font-serif font-bold text-brand-800 dark:text-white mb-1">⚔️ ' + escapeHtml(nombre) + ' te reta</p>' +
+                '<p class="text-sm text-brand-700 dark:text-brand-200 mb-3">' + escapeHtml(variantLabel(reto.modalidad)) +
+                (tc ? " · " + escapeHtml(tc.label) : "") + '</p>' +
+                '<div class="flex flex-wrap gap-2">' +
+                '<button type="button" data-aceptar="' + reto.id + '" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors">Aceptar y jugar</button>' +
+                '<button type="button" data-rechazar="' + reto.id + '" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-1.5 rounded-lg text-sm hover:border-red-400 transition-colors">Ahora no</button>' +
+                '</div>';
+            caja.querySelector("[data-aceptar]").addEventListener("click", () => aceptar(reto, caja));
+            caja.querySelector("[data-rechazar]").addEventListener("click", () => rechazar(reto, caja));
+            document.getElementById("retos-recibidos").appendChild(caja);
+        }
+
+        async function aceptar(reto, caja) {
+            caja.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+            const inicial = estadoInicial(reto.modalidad);
+            const { data, error } = await sb.rpc("aceptar_desafio", {
+                p_desafio: reto.id,
+                p_fen: inicial.fen || null,
+                p_cartas: inicial.cartas_state || null,
+                p_duelo: inicial.duelo_state || null,
+                p_variant: inicial.variant_state || null,
+            });
+            if (error || !data) {
+                caja.querySelectorAll("button").forEach((b) => { b.disabled = false; });
+                alert("No se pudo empezar la partida: " + (error ? error.message : "el reto ya no está disponible"));
+                return;
+            }
+            irALaPartida({ modalidad: reto.modalidad, room_id: data });
+        }
+
+        async function rechazar(reto, caja) {
+            await sb.from("desafios").update({ estado: "rechazado", respondido_at: new Date().toISOString() }).eq("id", reto.id);
+            retosPendientes = retosPendientes.filter((r) => r.id !== reto.id);
+            caja.remove();
+        }
+
+        function irALaPartida(reto) {
+            window.location.href = pageFor2pVariant(reto.modalidad) + "?room=" + reto.room_id;
+        }
+
+        function avisoArriba(texto) {
+            const banner = document.getElementById("status-banner");
+            banner.textContent = texto;
+            banner.classList.remove("hidden");
+            setTimeout(() => banner.classList.add("hidden"), 6000);
+        }
+
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
@@ -641,6 +879,10 @@
             else await renderStudentView();
             // Si el profesor asigna una partida mientras el alumno está aquí, aviso y traslado automático.
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
+
+            // Quién está en línea y los retos: para todos, alumnos y profesores.
+            await iniciarPresencia();
+            escucharDesafios();
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
