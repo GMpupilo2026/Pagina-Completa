@@ -1,9 +1,9 @@
 # Ajedrez Integral — notas para Claude
 
-Sitio estático (HTML + Tailwind por CDN + JS sin framework) servido con
+Sitio estático (HTML + Tailwind compilado + JS sin framework) servido con
 Cloudflare Workers Assets. `worker.js` solo sirve los archivos; `_headers` pone
-las cabeceras de seguridad. No hay build ni tests: se edita el HTML/JS
-directamente.
+las cabeceras de seguridad. Se edita el HTML/JS directamente; lo único que se
+"construye" es el CSS (ver abajo) y lo generan los scripts de `herramientas/`.
 
 ## Flujo de git
 
@@ -561,6 +561,53 @@ sistema y no decían nada del curso.
   de la dama.
 - El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
   información del curso, no decoración.
+
+## El CSS va compilado, no por CDN
+
+`css/tailwind.css` lo genera `node herramientas/css-construir.js` (después de
+`npm install tailwindcss@3`). Antes el sitio cargaba `cdn.tailwindcss.com`, que
+es el modo de juguete de Tailwind: baja unos 400 KB de JavaScript y **compila el
+CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
+parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
+el navegador cachea.
+
+- **La paleta vive en `herramientas/css-construir.js`**, no en el `<head>`.
+  Antes estaba copiada en las 73 páginas, en dos formatos distintos.
+- `inscripcion.html` lleva su propio `css/tailwind-inscripcion.css`: tiene otro
+  diseño y su `brand` es verde, así que los dos no pueden convivir en un mismo
+  archivo.
+- **Al agregar una clase que no estaba en ninguna parte del sitio, hay que
+  volver a compilar**: el compilador solo escribe las clases que encuentra
+  leyendo el código. Ese es el riesgo de este cambio, y por eso existe la
+  comprobación de abajo.
+- Se quitó `cdn.tailwindcss.com` del `script-src` en `_headers`.
+
+### Comprobar que no falte ninguna clase
+
+`node herramientas/verificar-css.js` (con el sitio servido en localhost:8777).
+**No lee los archivos**: abre 49 páginas en un navegador de verdad, deja correr
+el JavaScript, enciende el modo oscuro y el adaptado, abre los `<details>`,
+destapa lo escondido, y recorre el DOM juntando **todas** las clases que
+quedaron puestas — unas 14.500. Después comprueba que cada una esté definida en
+alguna de las hojas que el navegador cargó.
+
+Es así porque el peligro es justamente el que no se ve leyendo el código: una
+clase armada en JavaScript, o que solo aparece después de una interacción,
+falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
+
+- Leer el CSS a mano no sirve: los caracteres raros van escapados
+  (`grid-rows-[repeat(8,minmax(0,1fr))]` se escribe con `\2c ` en lugar de la
+  coma) y Tailwind 3.4 escribe el modo oscuro como
+  `.dark\:text-white:is(.dark *)`, con los dos puntos de la variante escapados
+  y los de `:is` sin escapar. Por eso las clases conocidas se piden al
+  navegador, que ya las tiene interpretadas.
+- Las clases que **a propósito** no definen ningún estilo —marcadores de estado
+  y ganchos para `querySelectorAll`, como `filter-btn` o `color-opt`— están
+  listadas en `SIN_ESTILO`. Si aparece una nueva que no hace nada, va ahí.
+- La primera corrida encontró **huecos de la paleta que ya estaban muertos con
+  el CDN**: `bg-accent-50` y `hover:text-accent-300` no pintaban nada porque el
+  ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
+  `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
 
 ## Metadatos: que el enlace se vea y la página se encuentre
 
