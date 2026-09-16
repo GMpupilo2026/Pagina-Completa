@@ -374,6 +374,41 @@ de arbitraje).
   dirección de pruebas, que no llega a ninguna bandeja real): la primera corrida
   mandó 1 y la segunda saltó 1, que es exactamente lo que tiene que pasar.
 
+## Para quien administra, el contenido está todo abierto
+
+El sitio abre su contenido de a poco: la lección siguiente cuando la anterior
+queda estudiada, el nivel siguiente cuando el anterior queda resuelto. Para el
+alumno eso es el camino; para quien administra es un estorbo — no puede revisar
+ni preparar material que todavía no resolvió. Así que `js/acceso-admin.js`
+responde una sola pregunta, una vez por carga de página
+(`await AccesoAdmin.init()` y después `AccesoAdmin.esAdmin()` ya sin esperar), y
+los cuatro candados del sitio la consultan:
+
+- `js/curso-academia.js` → `estado()` — las lecciones de los cursos de Academia.
+- `entreno/aprender.html` → `isUnlocked()` — las lecciones de Aprende.
+- `concentracion.html` → `nivelDesbloqueado()` — los niveles.
+- `ilumina-tablero.html` → `nivelDesbloqueado()` — los niveles.
+
+**Es solo `is_admin`, no el rol de profesor.** Al profesor esto no le cambia
+nada a propósito: lo suyo es "Desbloquear hasta el tema" de `informes.html`, que
+le abre el curso **a un alumno concreto** (tabla `course_unlocks`) y deja
+rastro. Abrirle todo a todo profesor sería otra decisión, y no es la que se
+pidió.
+
+Sin sesión, sin red o si la consulta falla, responde que **no**: el peor caso es
+que quien administra vea la página como la ve un alumno, nunca al revés.
+
+Como todo filtro del sitio, esto decide qué se **pinta**, no qué se puede leer:
+`cursos/protegido/<curso>.html` ya viaja entero a cualquiera con sesión
+iniciada, así que abrirlo acá no destapa nada que estuviera bajo llave.
+
+**Al tocar cualquiera de los cuatro candados, correr `node
+herramientas/verificar-contenido-admin.js`** (con el sitio en localhost:8777 y
+playwright). Abre las cuatro páginas en un navegador de verdad, tres veces cada
+una —alumno, profesor y administración, con el mismo progreso: ninguno— y
+cuenta cuántas lecciones o niveles quedaron abiertos: todos para administración,
+solo el primero para los otros dos.
+
 ## El progreso vive en la cuenta, no en el aparato
 
 `js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por

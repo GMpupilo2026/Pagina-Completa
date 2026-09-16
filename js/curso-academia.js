@@ -134,6 +134,9 @@
     if (hechas[L.key]) return "hecha";
     if (i === 0 || hechas[lecciones[i - 1].key]) return "disponible";
     if (unlockHasta && i + 1 <= unlockHasta) return "disponible";
+    // Quien administra ve el curso entero de una vez: el orden marca el camino
+    // del alumno, pero a quien prepara la clase le estorba (js/acceso-admin.js).
+    if (window.AccesoAdmin && window.AccesoAdmin.esAdmin()) return "disponible";
     return "bloqueada";
   }
 
@@ -298,6 +301,7 @@
     var todo = await progresoCursos(uid);
     hechas = todo[slug] || {};
     unlockHasta = await desbloqueoManual(uid, slug);
+    if (window.AccesoAdmin) await window.AccesoAdmin.init();
     aplicarEstados();
     // #lec-… en la dirección: se abre si está disponible; si no, se va a la siguiente pendiente.
     var pedido = location.hash && location.hash.indexOf("#") === 0 ? location.hash.slice(1) : null;
