@@ -110,8 +110,13 @@
           const fusionada = types.length > 1 || (p.veces && p.veces > 1);
           if (!fusionada) {
             const span = document.createElement("span");
-            span.textContent = GLYPH[types[0]][p.color];
-            span.className = (p.color === "w" ? "piece-white" : "piece-black") + " relative";
+            if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+              span.innerHTML = window.ChessPieceSVG.markup(types[0], p.color);
+              span.className = "chess-piece-illustrated relative";
+            } else {
+              span.textContent = GLYPH[types[0]][p.color];
+              span.className = (p.color === "w" ? "piece-white" : "piece-black") + " relative";
+            }
             span.setAttribute("aria-hidden", "true");
             btn.appendChild(span);
           } else if (types.length === 1) {

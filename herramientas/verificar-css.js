@@ -51,6 +51,13 @@ const SIN_ESTILO = new Set([
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "ficha-btn",
+    // Clases descriptivas del set SVG de piezas (js/chess-piece-svg.js): vienen
+    // en el <g class="white king"> de cada pieza tal como las trae el arte
+    // original — nadie las usa para dar estilo, solo identifican qué es cada
+    // <g> dentro del propio SVG. Antes solo se veían en Cursos (con sesión,
+    // fuera del alcance de este chequeo); ahora también en la vista previa de
+    // "Estilo de pieza" de configuracion.html.
+    "white", "black", "king", "queen", "rook", "bishop", "knight", "pawn",
     // Sin CSS en ninguna parte: quedó de algo que ya no está.
     "prose-chess",
 ]);

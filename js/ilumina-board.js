@@ -153,17 +153,18 @@
           cell.setAttribute("role", "button");
           cell.setAttribute("tabindex", "0");
 
+          const ilustrado = window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG;
           if (negra) {
             const span = document.createElement("span");
-            span.className = "ilumina-pieza piece-black";
-            span.textContent = E.PIECE_GLYPH_BLACK[negra.type];
+            if (ilustrado) { span.innerHTML = window.ChessPieceSVG.markup(negra.type, "b"); span.className = "ilumina-pieza chess-piece-illustrated"; }
+            else { span.className = "ilumina-pieza piece-black"; span.textContent = E.PIECE_GLYPH_BLACK[negra.type]; }
             cell.appendChild(span);
             cell.setAttribute("aria-label", "Casilla " + c + "," + r + ": " + E.PIECE_NAME[negra.type] + " negro");
           } else if (blancaId) {
             const tipo = this.level.piezas.find((p) => p.id === blancaId).type;
             const span = document.createElement("span");
-            span.className = "ilumina-pieza piece-white" + (neutralizada ? " amenazada" : "");
-            span.textContent = E.PIECE_GLYPH_WHITE[tipo];
+            if (ilustrado) { span.innerHTML = window.ChessPieceSVG.markup(tipo, "w"); span.className = "ilumina-pieza chess-piece-illustrated" + (neutralizada ? " amenazada" : ""); }
+            else { span.className = "ilumina-pieza piece-white" + (neutralizada ? " amenazada" : ""); span.textContent = E.PIECE_GLYPH_WHITE[tipo]; }
             cell.appendChild(span);
             cell.setAttribute("aria-label", "Casilla " + c + "," + r + ": " + E.PIECE_NAME[tipo] + " blanco" + (neutralizada ? ", amenazado, no ilumina nada" : ""));
           } else {

@@ -226,8 +226,13 @@
 
         if (piece) {
           const span = document.createElement("span");
-          span.textContent = GLYPH[piece.type][piece.color];
-          span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+            span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+            span.className = "chess-piece-illustrated";
+          } else {
+            span.textContent = GLYPH[piece.type][piece.color];
+            span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          }
           span.setAttribute("aria-hidden", "true");
           btn.appendChild(span);
         }
@@ -265,8 +270,13 @@
             ? "border-accent-500 bg-accent-500/10"
             : "border-transparent " + (canDrop ? "hover:border-accent-400 cursor-pointer" : "cursor-default opacity-90"));
         const span = document.createElement("span");
-        span.textContent = GLYPH[type][color];
-        span.className = color === "w" ? "piece-white" : "piece-black";
+        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+          span.innerHTML = window.ChessPieceSVG.markup(type, color);
+          span.className = "chess-piece-illustrated";
+        } else {
+          span.textContent = GLYPH[type][color];
+          span.className = color === "w" ? "piece-white" : "piece-black";
+        }
         span.setAttribute("aria-hidden", "true");
         btn.appendChild(span);
         const badge = document.createElement("span");

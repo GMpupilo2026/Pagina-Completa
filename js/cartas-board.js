@@ -254,8 +254,13 @@
 
         if (piece) {
           const span = document.createElement("span");
-          span.textContent = GLYPH[piece.type][piece.color];
-          span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+            span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+            span.className = "chess-piece-illustrated";
+          } else {
+            span.textContent = GLYPH[piece.type][piece.color];
+            span.className = piece.color === "w" ? "piece-white" : "piece-black";
+          }
           span.setAttribute("aria-hidden", "true");
           btn.appendChild(span);
         }
