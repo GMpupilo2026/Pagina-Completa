@@ -27,7 +27,11 @@
 .cp-level select{border:1px solid #bcccdc;border-radius:.4rem;padding:.2rem .4rem;background:#fff;color:#102a43;font-size:.8rem}
 .dark .cp-level select{background:#243b53;color:#f0f4f8;border-color:#334e68}
 .cp-promo{display:flex;gap:.4rem;align-items:center;font-size:.8rem}.cp-promo button{border:1px solid #bcccdc;border-radius:.4rem;background:#fff;padding:.2rem .5rem;cursor:pointer}
-.cp-promo[hidden],.cp-controls[hidden],.cp-actions [hidden]{display:none}
+.cp-cmd{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.8rem;color:#627d98}
+.cp-cmd label{white-space:nowrap}
+.cp-cmd-input{border:1px solid #bcccdc;border-radius:.4rem;padding:.3rem .5rem;font-size:.85rem;background:#fff;color:#102a43;flex:1;min-width:8rem}
+.dark .cp-cmd-input{background:#243b53;color:#f0f4f8;border-color:#334e68}
+.cp-promo[hidden],.cp-controls[hidden],.cp-cmd[hidden],.cp-actions [hidden]{display:none}
 .cp-msg{font-size:.85rem;color:#243b53;font-weight:500}.dark .cp-msg{color:#f0f4f8}.cp-msg:empty{display:none}
 .cp-moves{grid-column:1/-1;font-size:.84rem;line-height:1.9;color:#334e68;max-height:9.5rem;overflow:auto;border-top:1px dashed #d9e2ec;padding-top:.4rem}
 .dark .cp-moves{color:#d9e2ec;border-color:#334e68}
