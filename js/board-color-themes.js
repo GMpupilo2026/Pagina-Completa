@@ -34,6 +34,8 @@
     madera: { label: "Madera", light: "#f0d9b5", dark: "#b58863" },
     verde: { label: "Verde", light: "#eeeed2", dark: "#769656" },
     azul: { label: "Azul", light: "#dee3e6", dark: "#4b7399" },
+    morado: { label: "Morado", light: "#e8dcf5", dark: "#7c5cbf" },
+    negro: { label: "Negro", light: "#e5e5e5", dark: "#2b2b2b" },
   };
 
   // El de alto contraste (blanco y negro) es justo lo que pidió el profesor
