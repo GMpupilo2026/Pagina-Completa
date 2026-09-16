@@ -30,6 +30,7 @@
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-asistencia.js"></script>
     <script src="js/reporte-textos.js"></script>
+    <script src="js/reporte-transcribir.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/reporte-docx.js"></script>
     <script src="js/reporte-accesible.js"></script>
@@ -395,9 +396,86 @@
                     ? d.conFechas + (d.conFechas === 1 ? " clase reconocida por su fecha" : " clases reconocidas por su fecha")
                     : "sin fechas reconocibles, va como nota suelta"),
                 () => archivos.documentos.splice(i, 1)));
-            archivos.grabaciones.forEach((g, i) => poner(g.clase.startsWith("Video") ? "🎬" : "🎙️", g.nombre,
-                g.duracion + " · " + ReporteArmar._tamanoLegible(g.tamano),
-                () => archivos.grabaciones.splice(i, 1)));
+            archivos.grabaciones.forEach((g, i) => {
+                const li = poner(g.clase.startsWith("Video") ? "🎬" : "🎙️", g.nombre,
+                    g.duracion + " · " + ReporteArmar._tamanoLegible(g.tamano),
+                    () => archivos.grabaciones.splice(i, 1));
+                li.parentElement.insertBefore(cajaDeTranscripcion(g), li.nextSibling);
+            });
+        }
+
+        /* ---------------------- transcribir una grabación ----------------------
+           El audio NO se sube a ningún lado: se decodifica y se transcribe en
+           esta misma computadora (ver js/reporte-transcribir.js). Por eso la
+           primera vez baja el modelo, y por eso tarda: es el precio de que las
+           voces de los niños no salgan de acá. */
+        function cajaDeTranscripcion(grabacion) {
+            const caja = document.createElement("div");
+            caja.className = "mt-2 mb-1";
+
+            const fila = document.createElement("div");
+            fila.className = "flex items-center gap-3 flex-wrap";
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            boton.textContent = grabacion.transcripcion ? "Transcribir otra vez" : "📝 Transcribir";
+            const aviso = document.createElement("p");
+            aviso.className = "text-xs text-brand-450 dark:text-brand-350";
+            aviso.setAttribute("role", "status");
+            aviso.setAttribute("aria-live", "polite");
+            aviso.textContent = grabacion.transcripcion
+                ? "Transcrita: " + grabacion.transcripcion.split(/\s+/).length + " palabras."
+                : "Se transcribe en esta computadora; el audio no se sube a ningún lado.";
+            fila.appendChild(boton);
+            fila.appendChild(aviso);
+            caja.appendChild(fila);
+
+            const barra = document.createElement("div");
+            barra.className = "h-1.5 bg-brand-100 dark:bg-brand-800 rounded-full mt-2 overflow-hidden";
+            barra.hidden = true;
+            const relleno = document.createElement("div");
+            relleno.className = "h-full bg-accent-500 rounded-full transition-all";
+            relleno.style.width = "0%";
+            barra.appendChild(relleno);
+            caja.appendChild(barra);
+
+            boton.addEventListener("click", async () => {
+                if (!ReporteTranscribir.hayCómo()) {
+                    aviso.textContent = "Este navegador no puede transcribir. Prueba con Chrome o Edge en una computadora.";
+                    return;
+                }
+                boton.disabled = true;
+                barra.hidden = false;
+                try {
+                    grabacion.transcripcion = await ReporteTranscribir.transcribir(
+                        grabacion.archivo,
+                        (a) => {
+                            aviso.textContent = a.detalle || "Trabajando…";
+                            // Mientras transcribe no hay porcentaje de verdad, así
+                            // que la barra se llena de a poco: es para que se note
+                            // que sigue viva, no para prometer cuánto falta.
+                            if (a.etapa === "transcribiendo" && !a.porcentaje) {
+                                const actual = parseFloat(relleno.style.width) || 0;
+                                relleno.style.width = Math.min(95, actual + 1.5) + "%";
+                            } else {
+                                relleno.style.width = (a.porcentaje || 0) + "%";
+                            }
+                        });
+                    relleno.style.width = "100%";
+                    aviso.textContent = grabacion.transcripcion
+                        ? "Listo: " + grabacion.transcripcion.split(/\s+/).length + " palabras. Ya está en el informe."
+                        : "La grabación no trae voz reconocible.";
+                    boton.textContent = "Transcribir otra vez";
+                    refrescar();
+                } catch (e) {
+                    aviso.textContent = e.message || String(e);
+                    aviso.className = "text-xs text-red-600 dark:text-red-400";
+                    barra.hidden = true;
+                }
+                boton.disabled = false;
+            });
+
+            return caja;
         }
 
         /* ------------------------- la vista previa ------------------------- */

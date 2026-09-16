@@ -661,14 +661,51 @@ y no salte niveles, y que la foto esté contada en palabras.
   las rutas de una página. Con las rutas en la página, al recargar servía la
   copia cacheada del cliente de verdad y todo se caía con "sb is not defined".
 
-### Lo que falta
+### La transcripción corre en la máquina de quien hace el informe
 
-**Transcribir el video y el audio.** Hoy las grabaciones entran al informe como
-material de respaldo (nombre, tipo, duración y tamaño) y el campo
-`transcripcion` de cada una ya está en su sitio, esperando. La decisión tomada
-es que el audio **no salga de la máquina**, así que la transcripción tiene que
-correr ahí mismo (Whisper por `transformers.js`), no en un servicio con
-credencial.
+Cada grabación tiene su botón "📝 Transcribir", y lo que sale entra al informe
+en los tres formatos.
+
+**El audio NO sale de la computadora, y esa es la decisión de fondo.** Un
+servicio de transcripción sería más rápido y más exacto, pero estas son clases
+con voces de menores: mandarlas a un servidor ajeno es sacar esos datos del
+control de quien dio la clase, y eso pide el consentimiento de las familias (en
+Costa Rica, Ley 8968). Corriendo el modelo ahí mismo, ese problema no existe —
+y de paso no hace falta ninguna credencial ni cuesta nada.
+
+- **Dos piezas, y la separación importa.** `js/reporte-transcribir.js`
+  decodifica el audio en la página: cualquier formato que el navegador sepa
+  abrir se convierte en muestras a 16 kHz en un canal, que es lo único que
+  entiende Whisper (sirve igual para un `.mp4`: se decodifica la pista de audio
+  y el video se ignora). `js/reporte-transcribir-worker.js` corre el modelo en
+  un Web Worker, porque una clase de 40 minutos tarda minutos y en el hilo de
+  la página dejaría el navegador congelado todo ese rato.
+- Es un worker **de módulo**: hace `import()` para traer la librería, y en un
+  worker clásico ese import no está en todos los navegadores.
+- El modelo (`onnx-community/whisper-base`, unos 80 MB) se baja **una vez** y
+  queda en la caché del navegador; después funciona hasta sin internet. Usa
+  WebGPU cuando el navegador lo tiene y WASM cuando no.
+- `no_repeat_ngram_size` no es un adorno: ante un silencio largo Whisper se
+  pone a repetir la última frase hasta llenar el trozo, y en una clase hay
+  silencios de sobra.
+- **`_usarMotor()` es una costura de verdad, no un adorno de pruebas.** Es por
+  donde entraría un servicio con credencial el día que se prefiera la velocidad
+  a la privacidad, y es lo que permite comprobar toda la página sin bajar 80 MB
+  en cada corrida.
+- **`_headers` abrió `connect-src` a `cdn.jsdelivr.net`, `huggingface.co` y
+  `*.hf.co`**, que es de donde sale el modelo. Es lo único que se les pide y es
+  de bajada: el audio no va a ninguna parte. Si algún día se quita la función,
+  se quitan esos tres.
+- El informe avisa que la transcripción es automática y que se hizo en esa
+  computadora: puede traer errores de nombres y de términos de ajedrez, y quien
+  lo lee tiene que saberlo.
+
+**Lo que la comprobación NO prueba es el modelo.** Se prueba que el audio se
+decodifique bien (con un WAV de verdad, estéreo y a 44.100 Hz, que tiene que
+salir a 16 kHz en mono), que el worker arranque y que su camino de error
+conteste en vez de quedarse mudo, y que el texto llegue hasta el informe. Si
+Whisper entiende bien el español es lo único que hay que mirar a mano, con una
+grabación de verdad.
 
 ## El material de estudio de cada lección
 

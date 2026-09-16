@@ -96,17 +96,47 @@ def revisar_docx(ruta):
            "Oscar Angulo Cubero" in z.read("word/footer1.xml").decode("utf-8"))
 
 
+def revisar_externo(ruta):
+    """El informe de clases dadas por fuera: los números salen de las hojas."""
+    from pypdf import PdfReader
+    print("\n=== El PDF del informe de clases externas ===")
+    lector = PdfReader(ruta)
+    cumple("abre y tiene páginas", len(lector.pages) > 0, str(len(lector.pages)) + " páginas")
+    sin_marca = [i + 1 for i, p in enumerate(lector.pages)
+                 if "/Marca" not in (p.get("/Resources", {}).get("/XObject", {}) or {})]
+    cumple("la marca de agua está en todas las páginas", not sin_marca,
+           "faltan en " + str(sin_marca) if sin_marca else "todas")
+    texto = "\n".join((p.extract_text() or "") for p in lector.pages)
+    cumple("trae la asistencia por clase y por estudiante",
+           "Asistencia por clase" in texto and "Asistencia por estudiante" in texto)
+    cumple("dice quién faltó", "No vinieron" in texto)
+    cumple("trae el contenido que venía en el documento",
+           "Empezamos con el caballo" in texto)
+    # Que el informe EXPLIQUE cómo leyó la hoja no es un adorno: una cuadrícula
+    # mal entendida da números creíbles y falsos, y esta es la única forma de
+    # que el error se vea desde el papel.
+    cumple("y explica cómo leyó la hoja de asistencia",
+           "De dónde salen estos números" in texto and "en blanco se contaron como falta" in texto)
+
+
 if __name__ == "__main__":
     carpeta = sys.argv[1] if len(sys.argv) > 1 else ""
     if not carpeta or not os.path.isdir(carpeta):
         print("Uso: python3 herramientas/verificar-reportes.py <carpeta que dejó el script de node>")
         sys.exit(2)
-    pdfs = glob.glob(os.path.join(carpeta, "*.pdf"))
+    # El script de navegador deja también el PDF del informe de clases externas,
+    # con el prefijo "externo-". Dice otras cosas, así que se revisa aparte: si
+    # se mezclaran, las comprobaciones fallarían por mirar el archivo que no es.
+    todos = glob.glob(os.path.join(carpeta, "*.pdf"))
+    pdfs = [f for f in todos if not os.path.basename(f).startswith("externo-")]
+    externos = [f for f in todos if os.path.basename(f).startswith("externo-")]
     docxs = glob.glob(os.path.join(carpeta, "*.docx"))
     if not pdfs or not docxs:
         print("En esa carpeta no están los dos archivos.")
         sys.exit(2)
     revisar_pdf(pdfs[0])
     revisar_docx(docxs[0])
+    if externos:
+        revisar_externo(externos[0])
     print("\n" + (str(fallos) + " fallo(s)" if fallos else "Los dos archivos, bien."))
     sys.exit(1 if fallos else 0)

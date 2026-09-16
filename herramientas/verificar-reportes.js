@@ -116,6 +116,24 @@ const FOTO_JPEG_B64 =
   "x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/APn+iiigAooooAKKKKAC" +
   "iiigAooooAKKKKACiiigAooooAKKKKACiiigD//Z";
 
+/* Un WAV de 2 segundos, estéreo y a 44.100 Hz: ni el muestreo ni la cantidad de
+   canales que espera Whisper, que es justo lo que hay que convertir. Se escribe
+   acá para no depender de ningún archivo suelto. */
+function wavDePrueba(segundos) {
+  const tasa = 44100, marcos = tasa * segundos, datos = marcos * 4;   // 2 canales × 16 bits
+  const b = Buffer.alloc(44 + datos);
+  b.write("RIFF", 0); b.writeUInt32LE(36 + datos, 4); b.write("WAVE", 8);
+  b.write("fmt ", 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20);
+  b.writeUInt16LE(2, 22); b.writeUInt32LE(tasa, 24); b.writeUInt32LE(tasa * 4, 28);
+  b.writeUInt16LE(4, 32); b.writeUInt16LE(16, 34);
+  b.write("data", 36); b.writeUInt32LE(datos, 40);
+  for (let i = 0; i < marcos; i++) {
+    const v = Math.round(12000 * Math.sin((2 * Math.PI * 440 * i) / tasa));
+    b.writeInt16LE(v, 44 + i * 4); b.writeInt16LE(v, 46 + i * 4);
+  }
+  return b;
+}
+
 /* La cuadrícula de asistencia tal como la lleva una persona: nombres a la
    izquierda, fechas arriba, una X donde vino. La casilla vacía es una falta. */
 const ASISTENCIA_CSV = [
@@ -188,6 +206,108 @@ async function probarModoExterno(navegador, carpeta) {
   await descarga.saveAs(destino);
   cumple("el PDF del informe externo se descarga", fs.statSync(destino).size > 3000,
     (fs.statSync(destino).size / 1024).toFixed(0) + " KB");
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await contexto.close();
+}
+
+/* La transcripción.
+ *
+ * Lo que SÍ se prueba de verdad: que el audio se decodifique bien —cualquier
+ * muestreo y cualquier número de canales a 16 kHz en mono, que es lo único que
+ * entiende Whisper—, y que el texto que sale llegue hasta el informe.
+ *
+ * Lo que NO se prueba: el modelo. Son 80 MB que habría que bajar en cada
+ * corrida, así que se reemplaza el motor por la costura que existe justo para
+ * esto (`_usarMotor`). O sea: acá se comprueba todo menos si Whisper entiende
+ * bien el español, que es lo único que hay que mirar a mano con una grabación
+ * de verdad. */
+async function probarTranscripcion(navegador) {
+  console.log("\n=== La transcripción ===");
+  const contexto = await navegador.newContext();
+  const { p, errores } = await abrir(contexto, {
+    id: "u-1", full_name: "Oscar Angulo Cubero", role: "profesor", is_admin: true, es_coordinador: true,
+  });
+
+  igual("este navegador puede transcribir",
+    await p.evaluate(() => window.ReporteTranscribir.hayCómo()), "true");
+
+  // --- decodificar: esto es de verdad, con un WAV de verdad
+  const wav = wavDePrueba(2).toString("base64");
+  const audio = await p.evaluate(async (wav) => {
+    const bin = atob(wav); const u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    const muestras = await window.ReporteTranscribir.decodificar(
+      new File([u], "clase.wav", { type: "audio/wav" }));
+    let pico = 0;
+    for (let i = 0; i < muestras.length; i++) pico = Math.max(pico, Math.abs(muestras[i]));
+    return { n: muestras.length, float32: muestras instanceof Float32Array, pico: pico };
+  }, wav);
+  igual("2 segundos de audio dan 32.000 muestras a 16 kHz", audio.n, 32000);
+  igual("y vienen como Float32Array, que es lo que pide el modelo", audio.float32, "true");
+  cumple("no es silencio: el audio se decodificó de verdad", audio.pico > 0.1, audio.pico.toFixed(3));
+
+  /* Que el WORKER arranque de verdad. No se puede bajar el modelo acá, pero sí
+     comprobar que el archivo existe, que el navegador lo acepta como worker de
+     módulo y que su camino de error devuelve un mensaje en vez de quedarse
+     mudo — que es como se vería un worker roto desde la página. */
+  const delWorker = await p.evaluate(() => new Promise((listo) => {
+    let w;
+    try { w = new Worker("js/reporte-transcribir-worker.js", { type: "module" }); }
+    catch (e) { return listo({ arranco: false, porque: String(e) }); }
+    const reloj = setTimeout(() => listo({ arranco: true, respondio: false }), 8000);
+    w.onerror = (e) => { clearTimeout(reloj); listo({ arranco: false, porque: e.message || "error del worker" }); };
+    w.onmessage = (e) => {
+      clearTimeout(reloj);
+      listo({ arranco: true, respondio: true, tipo: e.data && e.data.tipo, hayMensaje: !!(e.data && e.data.error) });
+      w.terminate();
+    };
+    // Un CDN que no existe: tiene que contestar con un error, no callarse.
+    w.postMessage({ cdn: "https://127.0.0.1:1/no-existe.js", modelo: "x", muestreo: 16000,
+                    muestras: new Float32Array(16) });
+  }));
+  igual("el worker de transcripción arranca", delWorker.arranco, "true");
+  igual("y cuando algo le falla, lo dice en vez de quedarse mudo",
+    delWorker.respondio && delWorker.tipo === "error" && delWorker.hayMensaje, "true");
+
+  // --- el motor de mentira, para probar el camino completo sin bajar 80 MB
+  await p.evaluate(() => {
+    window.__avances = [];
+    window.ReporteTranscribir._usarMotor(async (muestras, alAvanzar) => {
+      window.__muestrasRecibidas = muestras.length;
+      alAvanzar({ etapa: "modelo", porcentaje: 50 });
+      alAvanzar({ etapa: "transcribiendo" });
+      return "Hoy repasamos la horquilla de caballo y cada niño resolvió cinco posiciones.";
+    });
+  });
+
+  await p.setInputFiles("#archivos", [
+    { name: "clase-del-14.wav", mimeType: "audio/wav", buffer: wavDePrueba(2) },
+  ]);
+  await p.waitForTimeout(1200);
+
+  igual("la grabación queda en la lista con su duración",
+    await p.evaluate(() => {
+      const t = document.querySelector("#lista-archivos").textContent;
+      return /clase-del-14\.wav/.test(t) && /0 min 0?2 s/.test(t);
+    }), "true");
+  igual("y dice que el audio no se sube a ningún lado",
+    await p.evaluate(() => /no se sube a ning[úu]n lado/.test(document.querySelector("#lista-archivos").textContent)), "true");
+
+  await p.click('#lista-archivos button:has-text("Transcribir")');
+  await p.waitForTimeout(1500);
+
+  igual("al motor le llegan las muestras, no el archivo",
+    await p.evaluate(() => window.__muestrasRecibidas), 32000);
+  igual("cuando termina, dice cuántas palabras salieron",
+    await p.evaluate(() => /Listo: 1[0-9] palabras/.test(document.querySelector("#lista-archivos").textContent)), "true");
+
+  const vista = await p.textContent("#vista");
+  cumple("y la transcripción entra al informe",
+    vista.includes("Lo que se trabajó, según las grabaciones") &&
+    vista.includes("Hoy repasamos la horquilla de caballo"));
+  cumple("con el aviso de que es automática y se hizo en esta computadora",
+    /se transcribieron en esta misma computadora/.test(vista) && /puede traer errores/.test(vista));
 
   if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
   await contexto.close();
@@ -328,6 +448,8 @@ async function probarModoExterno(navegador, carpeta) {
      ====================================================================== */
   console.log("\n=== Clases dadas por fuera ===");
   await probarModoExterno(navegador, carpeta);
+
+  await probarTranscripcion(navegador);
 
   // ------------------------------------------- que la página SE VEA
   /* Esta página se clonó de formularios.html, y clonar una cabecera ya salió
