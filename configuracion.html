@@ -25,6 +25,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/notificaciones.js"></script>
     <script src="js/board-themes.js"></script>
     <script src="js/chess-piece-svg.js"></script>
     <script src="js/piece-color-themes.js"></script>
@@ -141,6 +142,22 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350">Cambia entre modo claro y oscuro con el botón <span aria-hidden="true">☀️/🌙</span> de la barra superior.</p>
                     </div>
                 </div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Avisos en el celular</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                    Te avisamos cuando tu profe abre la clase y cuando alguien te reta a una partida.
+                    Se enciende <strong>en cada aparato por separado</strong>: si lo prendes en el celular, la compu sigue igual.
+                </p>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p id="avisos-estado" class="text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite">Revisando…</p>
+                    <div class="flex gap-2">
+                        <button type="button" id="avisos-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" hidden></button>
+                        <button type="button" id="avisos-probar" class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" hidden>Mandarme uno de prueba</button>
+                    </div>
+                </div>
+                <p id="avisos-msg" class="text-xs mt-3" role="status" aria-live="polite"></p>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -509,7 +526,75 @@
             document.getElementById("email-display").textContent = profile.email;
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
+            pintarAvisos();
+            Notificaciones.atenderRenovaciones();
         }
+
+        /* ---------------- Avisos en el celular ----------------
+           El permiso se pide SOLO al apretar el botón: el navegador deja
+           pedirlo una vez por aparato, y si dicen que no, no se puede volver a
+           preguntar nunca. Pedirlo al cargar la página es la forma más rápida
+           de perder ese único tiro. */
+        const avisosEstado = document.getElementById("avisos-estado");
+        const avisosBtn = document.getElementById("avisos-btn");
+        const avisosProbar = document.getElementById("avisos-probar");
+        const avisosMsg = document.getElementById("avisos-msg");
+
+        function decirAvisos(texto, malo) {
+            avisosMsg.textContent = texto;
+            avisosMsg.className = "text-xs mt-3 " + (malo
+                ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400");
+        }
+
+        async function pintarAvisos() {
+            const est = await Notificaciones.estado();
+            avisosBtn.hidden = est === "no-se-puede" || est === "bloqueado";
+            avisosProbar.hidden = est !== "encendido";
+            if (est === "no-se-puede") {
+                avisosEstado.textContent = "Este navegador no puede mandar avisos.";
+                decirAvisos("En iPhone hay que instalar la Academia en la pantalla de inicio para que funcionen.", false);
+                avisosMsg.className = "text-xs mt-3 text-brand-450 dark:text-brand-350";
+            } else if (est === "bloqueado") {
+                avisosEstado.textContent = "Los avisos están bloqueados.";
+                decirAvisos("Se vuelven a permitir desde la configuración del navegador, en los permisos de este sitio.", true);
+            } else if (est === "encendido") {
+                avisosEstado.textContent = "✅ Este aparato recibe avisos.";
+                avisosBtn.textContent = "Apagar";
+            } else {
+                avisosEstado.textContent = "Este aparato no recibe avisos.";
+                avisosBtn.textContent = "Encender avisos";
+            }
+        }
+
+        avisosBtn.addEventListener("click", async () => {
+            const est = await Notificaciones.estado();
+            avisosBtn.disabled = true;
+            try {
+                if (est === "encendido") {
+                    await Notificaciones.apagar();
+                    decirAvisos("Listo: este aparato deja de recibir avisos.", false);
+                } else {
+                    await Notificaciones.encender(session);
+                    decirAvisos("Listo. Prueba con el botón de al lado para ver cómo se ven.", false);
+                }
+            } catch (e) {
+                decirAvisos(e.message || String(e), true);
+            }
+            avisosBtn.disabled = false;
+            pintarAvisos();
+        });
+
+        avisosProbar.addEventListener("click", async () => {
+            avisosProbar.disabled = true;
+            try {
+                await Notificaciones.probar(session);
+                decirAvisos("Mandado. Debería aparecer en un momento.", false);
+            } catch (e) {
+                decirAvisos(e.message || String(e), true);
+            }
+            avisosProbar.disabled = false;
+        });
+
         init();
     </script>
 </body>

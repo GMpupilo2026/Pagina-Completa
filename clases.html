@@ -27,6 +27,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/notificaciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/juego-aviso.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -595,6 +596,10 @@
             }
 
             renderTiles();
+            // Si el navegador renueva la suscripción de avisos por su cuenta,
+            // se vuelve a guardar sola; si no, el aparato deja de recibir sin
+            // que nadie se entere.
+            if (window.Notificaciones) Notificaciones.atenderRenovaciones();
             // Partida asignada por el profesor: aviso en el panel y traslado automático al tablero.
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
             await refreshSessionStatus();

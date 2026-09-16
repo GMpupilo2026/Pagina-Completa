@@ -666,11 +666,70 @@ lo declaren, que el service worker tome el control y —lo que de verdad
 importa— que **no guarde** `cursos/protegido/`, `cursos/recursos/` ni nada de
 otro dominio, y que sin red una página caiga en `offline.html`.
 
-### Notificaciones push: no vienen con esto
+### Avisos push: los manda el sitio, no la tienda
 
-Una TWA no las trae. Si algún día se quieren ("tienes clase en 15 minutos", "te
-llegó un reto"), hay que rehacer el cascarón con Capacitor, que es otro trabajo
-y otra forma de mantenerlo.
+**Los avisos no son de la app, son del sitio**, y por eso funcionan igual en la
+PWA instalada desde el navegador y dentro de la TWA. (Acá quedó escrito una vez
+lo contrario —"una TWA no las trae"— y era falso: lo único que la TWA agrega es
+que salgan con el nombre y el icono de la Academia en vez de con los de Chrome,
+y eso se pide con la *delegación de notificaciones* de Bubblewrap; está en
+`herramientas/plantillas/LEEME-app-android.md`.)
+
+- **El permiso se pide SOLO al apretar el interruptor**, nunca al cargar la
+  página. El navegador deja pedirlo **una vez por aparato**: si se pide de
+  entrada y dicen que no, se perdió el único tiro y ya no hay forma de volver a
+  preguntar desde el sitio. El interruptor vive en `configuracion.html` →
+  "Avisos en el celular".
+- **La fila es por aparato, no por persona.** `push_suscripciones` se escribe
+  con `upsert ... onConflict: "endpoint"`: la compu y el celular se encienden
+  por separado, y volver a suscribir el mismo aparato actualiza en vez de dejar
+  dos filas apuntando al mismo lugar.
+- **Apagar borra la fila ANTES de darse de baja.** Al revés, si el borrado
+  falla queda un endpoint muerto al que el sitio le sigue mandando.
+- **El navegador renueva la suscripción por su cuenta** y avisa al service
+  worker (`pushsubscriptionchange`). Si no se vuelve a guardar, el aparato deja
+  de recibir **en silencio** — nadie se entera hasta que alguien pregunta por
+  qué no le llegan los avisos. `Notificaciones.atenderRenovaciones()` la vuelve
+  a guardar sola, y cualquier página que cargue `js/notificaciones.js` la
+  atiende: busca la sesión por su cuenta a propósito.
+- **`js/notificaciones.js` va SIN `defer`.** Con `defer` corre después de
+  parsear el HTML, o sea después del script del cuerpo que lo llama: la tarjeta
+  de avisos salía vacía cuando la sesión resolvía rápido, sin dar ningún error.
+  Misma carrera que `js/adaptive-mode.js`.
+
+#### El cifrado se escribió a mano, y por eso se prueba
+
+La Edge Function `notificar` implementa VAPID (RFC 8292) y el cifrado
+`aes128gcm` (RFC 8291/8188) con Web Crypto, sin ninguna dependencia de npm:
+`webpush.ts`. **Un mensaje mal cifrado no da error en ninguna parte** — el
+servidor de push lo acepta, lo reenvía y el teléfono lo descarta callado.
+
+- **El par VAPID lo genera la propia función la primera vez** y lo guarda en el
+  Vault (`push_vapid_publica` / `push_vapid_privada`). No está escrito en
+  ninguna migración, ni en el repositorio, ni se imprime nunca.
+- **La tanda va firmada**, igual que los informes a la casa y los avisos de
+  cobro: `verify_jwt` en `false` y un secreto del Vault
+  (`tanda_push_secreto`) que la función vuelve a leer con la service role.
+  Comprobado: con una firma inventada responde 401.
+- **Quién puede avisarle a quién lo decide la RLS, no un `if`.** Para la acción
+  `avisar`, la función lee `profiles` con el JWT de quien llama: solo se le
+  manda a los ids que la RLS le devuelve. Un profesor no puede meterle una
+  notificación en el teléfono a un alumno que no es suyo.
+- Los avisos salen solos de dos disparadores: `class_sessions` (empezó la
+  clase) y `desafios` (te retaron), los dos por `pg_net`.
+- Un endpoint que responde 404 o 410 está muerto: se marca `activa = false` en
+  vez de seguir intentándolo.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-notificaciones.js`** (con el sitio en localhost:8777 y
+playwright). Son dos partes, por dos peligros distintos: cifra un mensaje con
+llaves de aparato de verdad y lo descifra de vuelta haciendo el papel del
+navegador (y comprueba que dos envíos del mismo texto salgan distintos: si
+salieran iguales, se estaría reusando la llave efímera); y abre
+`configuracion.html` en un navegador de verdad para ver **cuándo** se pide el
+permiso, qué se guarda y qué se borra. Esa segunda parte le pone un servicio de
+push de mentira porque Chromium sin cabeza no tiene ninguno detrás — lo que se
+comprueba ahí es qué hace la página, no que Chromium alcance a Google.
 
 ## El progreso vive en la cuenta, no en el aparato
 
