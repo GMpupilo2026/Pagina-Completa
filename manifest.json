@@ -1,0 +1,30 @@
+{
+  "name": "Ajedrez Integral",
+  "short_name": "Ajedrez",
+  "description": "La Academia de Ajedrez Integral: clases en vivo, cursos, entrenamiento y torneos.",
+  "lang": "es-CR",
+  "dir": "ltr",
+  "id": "/",
+  "start_url": "/clases.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#102a43",
+  "background_color": "#102a43",
+  "categories": ["education", "games"],
+  "icons": [
+    { "src": "/img/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/app/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Sesión en vivo", "short_name": "En vivo", "url": "/sesion.html",
+      "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Entrenamiento", "short_name": "Entrenar", "url": "/entreno/index.html",
+      "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mis cursos", "short_name": "Cursos", "url": "/cursos/academia/index.html",
+      "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Juegos", "short_name": "Juegos", "url": "/juegos.html",
+      "icons": [{ "src": "/img/app/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -28,7 +28,7 @@ const PAGINAS = [
     "/te-reto.html", "/campeones.html", "/tv.html", "/nivel-de-arbitraje.html", "/login.html",
     "/juegos.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",
-    "/formularios.html", "/formulario.html", "/cobros.html",
+    "/formularios.html", "/formulario.html", "/cobros.html", "/offline.html",
     "/crazyhouse.html", "/cartas.html", "/duelo.html", "/niebla.html", "/estandar.html",
     "/variante.html", "/cuatro-jugadores.html", "/partidas.html", "/torneo.html", "/torneos.html",
     "/lector-planilla.html", "/racha-tactica.html", "/concentracion.html", "/ciegos.html",

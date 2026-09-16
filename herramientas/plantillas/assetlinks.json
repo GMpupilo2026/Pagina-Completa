@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.ajedrezintegral.academia",
+    "sha256_cert_fingerprints": [
+      "PONER-AQUÍ-LA-HUELLA-SHA256-DE-LA-FIRMA-DE-PLAY"
+    ]
+  }
+}]
