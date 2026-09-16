@@ -401,12 +401,21 @@
       const piece = game.get(square);
       if (piece) {
         const span = document.createElement("span");
-        span.textContent = GLYPH[piece.color][piece.type];
-        // Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son sólo un contorno hueco: si se
-        // pintan con el mismo color que las negras (heredado del texto de la página) quedan
-        // indistinguibles entre sí. piece-white/piece-black (css/styles.css) les dan relleno y
-        // contorno propios para que se vean claramente en cualquier casilla y en cualquier tema.
-        span.className = piece.color === "w" ? "piece-white" : "piece-black";
+        // Estilo de pieza elegible en Configuración (js/piece-style-themes.js): "Clásico" sigue
+        // usando el glifo Unicode de siempre; "Clásico ilustrado" dibuja el set SVG compartido
+        // (js/chess-piece-svg.js), que ya lee el color de pieza elegido (piece-color-themes.js)
+        // por su cuenta — por eso ese caso no necesita la clase piece-white/piece-black.
+        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+          span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+          span.className = "chess-piece-illustrated";
+        } else {
+          span.textContent = GLYPH[piece.color][piece.type];
+          // Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son sólo un contorno hueco: si se
+          // pintan con el mismo color que las negras (heredado del texto de la página) quedan
+          // indistinguibles entre sí. piece-white/piece-black (css/styles.css) les dan relleno y
+          // contorno propios para que se vean claramente en cualquier casilla y en cualquier tema.
+          span.className = piece.color === "w" ? "piece-white" : "piece-black";
+        }
         span.setAttribute("aria-hidden", "true");
         btn.appendChild(span);
       }

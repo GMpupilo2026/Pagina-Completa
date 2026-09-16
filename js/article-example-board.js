@@ -32,9 +32,14 @@
         const piece = game.get(square);
         if (piece) {
           const span = document.createElement("span");
-          span.className = piece.color === "w" ? "piece-white" : "piece-black";
           span.setAttribute("aria-hidden", "true");
-          span.textContent = GLYPH[piece.type][piece.color];
+          if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+            span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+            span.className = "chess-piece-illustrated";
+          } else {
+            span.className = piece.color === "w" ? "piece-white" : "piece-black";
+            span.textContent = GLYPH[piece.type][piece.color];
+          }
           sq.appendChild(span);
         }
         el.appendChild(sq);

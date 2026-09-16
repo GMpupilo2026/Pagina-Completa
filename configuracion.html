@@ -26,6 +26,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
     <script src="js/board-color-themes.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -156,6 +159,24 @@
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Colores del tablero en Modo Adaptado</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Con Modo Adaptado activado, el tablero usa este segundo par de colores en vez de los de arriba — pensados para más contraste. "Alto contraste" (blanco y negro) es el que más ayuda a baja visión.</p>
                 <div id="board-color-theme-adaptive-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Colores del tablero en Modo Adaptado"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Estilo de pieza</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige cómo se dibuja cada pieza en todos los tableros del sitio: el símbolo de ajedrez de siempre, o el mismo dibujo detallado que ya usan los Cursos. Se aplica igual en modo normal y en Modo Adaptado.</p>
+                <div id="piece-style-theme-grid" class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Estilo de pieza"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Color de las piezas</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige de qué color son las piezas de un bando y del otro en todos los tableros del sitio, en vez del blanco y negro de siempre.</p>
+                <div id="piece-color-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Color de las piezas"></div>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Color de las piezas en Modo Adaptado</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Con Modo Adaptado activado, las piezas usan este segundo par de colores en vez del de arriba — pensados para más contraste.</p>
+                <div id="piece-color-theme-adaptive-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Color de las piezas en Modo Adaptado"></div>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
@@ -301,9 +322,10 @@
             );
         }
 
-        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent) {
+        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview) {
+            buildPreview = buildPreview || buildColorPreviewHTML;
             const grid = document.getElementById(gridId);
-            if (!grid || !window.BoardColorThemes) return;
+            if (!grid) return;
             const current = getCurrent();
             grid.innerHTML = "";
             Object.keys(themes).forEach((id) => {
@@ -314,11 +336,11 @@
                 btn.setAttribute("role", "radio");
                 btn.setAttribute("aria-checked", id === current ? "true" : "false");
                 btn.innerHTML =
-                    buildColorPreviewHTML(theme) +
+                    buildPreview(theme) +
                     '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
                 btn.addEventListener("click", () => {
                     setCurrent(id);
-                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent);
+                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview);
                 });
                 grid.appendChild(btn);
             });
@@ -340,6 +362,74 @@
             );
         }
         renderBoardColorThemeGrids();
+
+        // ---------- Color de las piezas, normal y Modo Adaptado (js/piece-color-themes.js) —
+        // mismo renderColorThemeGrid de arriba, con una vista previa propia: acá el par es
+        // "blancas"/"negras" (theme.white/theme.black), no "casilla clara"/"casilla oscura". ----
+        function buildPiecePreviewHTML(theme) {
+            return (
+                '<span class="theme-preview-row" aria-hidden="true">' +
+                '<span class="theme-preview-sq" style="background:' + theme.white + '"></span>' +
+                '<span class="theme-preview-sq" style="background:' + theme.black + '"></span>' +
+                "</span>"
+            );
+        }
+        function renderPieceColorThemeGrids() {
+            if (!window.PieceColorThemes) return;
+            renderColorThemeGrid(
+                "piece-color-theme-grid",
+                window.PieceColorThemes.THEMES,
+                window.PieceColorThemes.getPreference,
+                window.PieceColorThemes.setPreference,
+                buildPiecePreviewHTML
+            );
+            renderColorThemeGrid(
+                "piece-color-theme-adaptive-grid",
+                window.PieceColorThemes.ADAPTIVE_THEMES,
+                window.PieceColorThemes.getAdaptivePreference,
+                window.PieceColorThemes.setAdaptivePreference,
+                buildPiecePreviewHTML
+            );
+        }
+        renderPieceColorThemeGrids();
+
+        // ---------- Estilo de pieza (js/piece-style-themes.js) — acá la vista previa no es
+        // un color, es una pieza de muestra dibujada de verdad con cada estilo (un rey), para
+        // que se note la diferencia real entre el símbolo de siempre y el dibujo ilustrado. ----
+        function buildPieceStylePreviewHTML(id) {
+            const ilustrado = id === "ilustrado" && window.ChessPieceSVG;
+            const white = ilustrado ? window.ChessPieceSVG.markup("k", "w") : '<span class="piece-white">♔</span>';
+            const black = ilustrado ? window.ChessPieceSVG.markup("k", "b") : '<span class="piece-black">♚</span>';
+            return (
+                '<span class="theme-preview-row text-2xl" aria-hidden="true">' +
+                '<span class="theme-preview-sq theme-preview-sq-light">' + white + "</span>" +
+                '<span class="theme-preview-sq theme-preview-sq-dark">' + black + "</span>" +
+                "</span>"
+            );
+        }
+        function renderPieceStyleThemeGrid() {
+            const grid = document.getElementById("piece-style-theme-grid");
+            if (!grid || !window.PieceStyleThemes) return;
+            const current = window.PieceStyleThemes.getPreference();
+            grid.innerHTML = "";
+            Object.keys(window.PieceStyleThemes.THEMES).forEach((id) => {
+                const theme = window.PieceStyleThemes.THEMES[id];
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = id === current ? THEME_ACTIVE : THEME_INACTIVE;
+                btn.setAttribute("role", "radio");
+                btn.setAttribute("aria-checked", id === current ? "true" : "false");
+                btn.innerHTML =
+                    buildPieceStylePreviewHTML(id) +
+                    '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
+                btn.addEventListener("click", () => {
+                    window.PieceStyleThemes.setPreference(id);
+                    renderPieceStyleThemeGrid();
+                });
+                grid.appendChild(btn);
+            });
+        }
+        renderPieceStyleThemeGrid();
 
         // ---------- Voz de Modo Speech (preferencia local, ver js/blind-notation.js) ----------
         function populateVoiceSelect() {

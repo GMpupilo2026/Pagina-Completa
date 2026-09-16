@@ -550,6 +550,9 @@
             label.textContent = TYPE_LABEL[piece.type];
             label.setAttribute("aria-hidden", "true");
             span.appendChild(label);
+          } else if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+            span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+            span.className = "chess-piece-illustrated";
           } else {
             span.textContent = GLYPH[piece.color][piece.type];
             span.className = piece.color === "w" ? "piece-white" : "piece-black";

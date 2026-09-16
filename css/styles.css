@@ -13,6 +13,17 @@
   --sq-dark: #486581;
   --sq-light-adaptive: #ffffff;
   --sq-dark-adaptive: #d946ef;
+  /* Color de las PIEZAS, elegible en Configuración (js/piece-color-themes.js) —
+     mismo patrón que arriba: estos valores son el tema "Blanco y negro" de
+     siempre, de resguardo si ese script no corrió todavía. */
+  --piece-white: #ffffff;
+  --piece-black: #17202a;
+  --piece-white-outline: #1e293b;
+  --piece-black-outline: rgba(255, 255, 255, 0.55);
+  --piece-white-adaptive: #ffffff;
+  --piece-black-adaptive: #000000;
+  --piece-white-outline-adaptive: #000000;
+  --piece-black-outline-adaptive: #ffffff;
 }
 html { scroll-behavior: smooth; }
 /* El encabezado es sticky: al saltar a un ancla el navegador tiene que dejarle
@@ -40,23 +51,34 @@ body { -webkit-font-smoothing: antialiased; }
    casilla (clara u oscura) y en cualquier tema (claro u oscuro). */
 #chessboard .piece-white,
 .piece-white {
-  color: #ffffff;
+  color: var(--piece-white, #ffffff);
   text-shadow:
-    -1px -1px 0 #1e293b,
-     1px -1px 0 #1e293b,
-    -1px  1px 0 #1e293b,
-     1px  1px 0 #1e293b,
+    -1px -1px 0 var(--piece-white-outline, #1e293b),
+     1px -1px 0 var(--piece-white-outline, #1e293b),
+    -1px  1px 0 var(--piece-white-outline, #1e293b),
+     1px  1px 0 var(--piece-white-outline, #1e293b),
      0 2px 3px rgba(0, 0, 0, 0.35);
 }
 #chessboard .piece-black,
 .piece-black {
-  color: #17202a;
+  color: var(--piece-black, #17202a);
   text-shadow:
-    -1px -1px 0 rgba(255, 255, 255, 0.55),
-     1px -1px 0 rgba(255, 255, 255, 0.55),
-    -1px  1px 0 rgba(255, 255, 255, 0.55),
-     1px  1px 0 rgba(255, 255, 255, 0.55),
+    -1px -1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
+     1px -1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
+    -1px  1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
+     1px  1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
      0 1px 2px rgba(0, 0, 0, 0.25);
+}
+/* Pieza dibujada (js/chess-piece-svg.js, tema "Clásico ilustrado" de
+   js/piece-style-themes.js): mismo tamaño que el glifo de texto que
+   reemplaza, para caer en el mismo lugar sin tocar el layout de cada
+   tablero. */
+.chess-piece-svg {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 .radio-card-selected { background-color: rgba(240, 180, 41, 0.1); border-color: #de911d; }
 
@@ -230,16 +252,38 @@ html.adaptive-mode *:focus-visible {
   outline: 3px solid #de911d !important;
   outline-offset: 3px !important;
 }
-/* Piezas blancas: .piece-white (más arriba) ya las bordea en #1e293b (azul muy oscuro,
-   no negro puro) para que se lean sobre cualquier casilla — en Modo Adaptado se refuerza
-   ese contorno con negro puro y un poco más grueso, para que se distingan con la mayor
-   claridad posible en baja visión. */
+/* Piezas en Modo Adaptado: redefine las 4 variables "normales" a los valores
+   "-adaptive" del tema elegido (js/piece-color-themes.js). Necesita
+   !important: board-color-themes.js/piece-color-themes.js escriben las
+   variables como estilo EN LÍNEA sobre <html>, y un estilo en línea gana
+   sobre cualquier regla de hoja de estilos sobre ese mismo elemento, tenga la
+   regla la clase que tenga — !important es la única forma de ganarle desde
+   afuera. Sin esto, el set ilustrado (js/chess-piece-svg.js) nunca se
+   enteraría de Modo Adaptado: sus piezas viven en un <defs> compartido que
+   cuelga de <body>, y heredan var(--piece-white) de ahí, del mismo <html>
+   con el valor en línea — no del <use> que las dibuja en el tablero. */
+html.adaptive-mode {
+  --piece-white: var(--piece-white-adaptive, #ffffff) !important;
+  --piece-black: var(--piece-black-adaptive, #17202a) !important;
+  --piece-white-outline: var(--piece-white-outline-adaptive, #000000) !important;
+  --piece-black-outline: var(--piece-black-outline-adaptive, #ffffff) !important;
+}
+/* Además del color (ya cubierto arriba), en Modo Adaptado el contorno de las
+   piezas de glifo se refuerza más grueso — no solo el color cambia. */
 html.adaptive-mode .piece-white {
   text-shadow:
-    -1.5px -1.5px 0 #000,
-     1.5px -1.5px 0 #000,
-    -1.5px  1.5px 0 #000,
-     1.5px  1.5px 0 #000,
+    -1.5px -1.5px 0 var(--piece-white-outline),
+     1.5px -1.5px 0 var(--piece-white-outline),
+    -1.5px  1.5px 0 var(--piece-white-outline),
+     1.5px  1.5px 0 var(--piece-white-outline),
+     0 2px 3px rgba(0, 0, 0, 0.5);
+}
+html.adaptive-mode .piece-black {
+  text-shadow:
+    -1.5px -1.5px 0 var(--piece-black-outline),
+     1.5px -1.5px 0 var(--piece-black-outline),
+    -1.5px  1.5px 0 var(--piece-black-outline),
+     1.5px  1.5px 0 var(--piece-black-outline),
      0 2px 3px rgba(0, 0, 0, 0.5);
 }
 

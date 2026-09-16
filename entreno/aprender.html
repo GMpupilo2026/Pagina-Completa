@@ -698,9 +698,14 @@ function drawBoard(){
       const piece = game.get(square);
       if(piece){
         const span = document.createElement('span');
-        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-        span.textContent = GLYPH[piece.color][piece.type];
         span.setAttribute('aria-hidden', 'true');
+        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
+          span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+          span.className = 'chess-piece-illustrated';
+        } else {
+          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+          span.textContent = GLYPH[piece.color][piece.type];
+        }
         btn.appendChild(span);
       }
       if(currentLesson.type === 'squares' && foundSet.has(square)) btn.classList.add('found');
