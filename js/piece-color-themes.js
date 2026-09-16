@@ -23,6 +23,12 @@
  * (rojo/azul/amarillo/verde, js/fourplayer-board.js) y el entrenador de
  * entreno/4x4.html (una sola pieza dorada en pantalla, sin bando).
  *
+ * THEMES incluye además tres temas "invertidos" (inv*): la pieza "blanca" usa
+ * un color oscuro y la "negra" uno claro, al revés de la convención de
+ * siempre — es solo estética, `white`/`black` siguen siendo las claves de
+ * SIEMPRE (el bando real de la pieza), lo único que cambia es qué color le
+ * toca a cada una.
+ *
  * Requiere cargarse antes de cualquier tablero (junto a
  * js/board-color-themes.js, cerca del <head>).
  */
@@ -53,6 +59,32 @@
       black: "#7c3aed",
       whiteOutline: "rgba(255, 255, 255, 0.6)",
       blackOutline: "rgba(255, 255, 255, 0.6)",
+    },
+    // Modo inverso: al revés de la convención de siempre, las piezas "blancas"
+    // usan un color OSCURO y las "negras" uno CLARO. El contorno de cada una
+    // sigue la misma regla del resto del archivo (pieza clara → contorno
+    // oscuro, pieza oscura → contorno claro), solo que ahora le toca a la
+    // pieza contraria.
+    invclasico: {
+      label: "Invertido: blancas oscuras",
+      white: "#1e293b",
+      black: "#f8f5ef",
+      whiteOutline: "rgba(255, 255, 255, 0.6)",
+      blackOutline: "#1e293b",
+    },
+    invazulambar: {
+      label: "Invertido: azul y ámbar",
+      white: "#1e3a5f",
+      black: "#fde68a",
+      whiteOutline: "rgba(255, 255, 255, 0.6)",
+      blackOutline: "#1f2937",
+    },
+    invvinomenta: {
+      label: "Invertido: vino y menta",
+      white: "#5b1a35",
+      black: "#bbf7d0",
+      whiteOutline: "rgba(255, 255, 255, 0.6)",
+      blackOutline: "#1f2937",
     },
   };
 
