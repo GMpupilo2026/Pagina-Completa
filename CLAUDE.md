@@ -874,8 +874,16 @@ por las marcas `<!-- app: inicio -->`.
 
 El aviso de instalación de `clases.html` (`#instalar-app`) **arranca oculto** y
 `js/pwa.js` lo destapa solo cuando el navegador confirma que se puede instalar.
-Un botón que no haría nada es peor que ningún botón. Quien dice "ahora no" no lo
-vuelve a ver por 30 días.
+Un botón que no haría nada es peor que ningún botón.
+
+**Se muestra UNA vez.** Antes salía en cada carga de la página, porque el
+navegador dispara `beforeinstallprompt` cada vez: quien entraba a diario lo veía
+a diario, y un cartel que se repite deja de leerse y empieza a molestar. Ahora
+se apunta en `localStorage` (`app_instalar_v2`, con `visto` y `rechazado`) y solo
+vuelve en un caso: **quien apretó "Ahora no" lo ve de nuevo una semana después**,
+por si en ese momento le venía mal. Quien lo dejó pasar sin tocar nada tampoco lo
+vuelve a ver — no contestar también es una respuesta. Al instalarse se borra todo,
+por si algún día la desinstala.
 
 **Al tocar cualquiera de estas piezas, correr `node
 herramientas/verificar-pwa.js`** (con el sitio en localhost:8777 y playwright).

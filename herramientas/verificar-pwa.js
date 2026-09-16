@@ -42,6 +42,110 @@ function tamanoPng(archivo) {
   return b.readUInt32BE(16) + "x" + b.readUInt32BE(20);
 }
 
+/* El cartel de "Instala la Academia".
+ *
+ * `beforeinstallprompt` no se dispara en un navegador sin cabeza —hace falta
+ * que el navegador decida que el sitio merece instalarse—, así que se dispara a
+ * mano. Lo que se prueba es la DECISIÓN de mostrarlo o no, que es donde está la
+ * lógica, y se prueba con el cartel de verdad: se saca de clases.html, no se
+ * inventa uno, para que renombrar un botón allá se note acá.
+ *
+ * El paso del tiempo se simula moviendo la fecha guardada, no un reloj falso:
+ * es lo mismo que le pasa a quien vuelve una semana después, y no depende de
+ * ninguna trampa del navegador. */
+async function probarCartelDeInstalar(navegador) {
+  console.log("\n=== El cartel de instalar ===");
+  const fs = require("fs");
+  const path = require("path");
+  const clases = fs.readFileSync(path.join(__dirname, "..", "clases.html"), "utf8");
+  // Se corta contando <div> y </div>, no a ojo: así aguanta que alguien le
+  // agregue una capa más al cartel.
+  const desde = clases.indexOf('<div id="instalar-app"');
+  if (desde < 0) { console.log("  ✗ clases.html ya no tiene el cartel #instalar-app"); fallos += 1; return; }
+  let nivel = 0, i = desde, fin = -1;
+  const etiquetas = /<\/?div\b/g;
+  etiquetas.lastIndex = desde;
+  let m;
+  while ((m = etiquetas.exec(clases))) {
+    nivel += m[0][1] === "/" ? -1 : 1;
+    if (nivel === 0) { fin = clases.indexOf(">", m.index) + 1; break; }
+  }
+  const cartel = fin > 0 ? clases.slice(desde, fin) : "";
+  if (!/data-instalar\b/.test(cartel) || !/data-instalar-no\b/.test(cartel)) {
+    console.log("  ✗ el cartel de clases.html no trae sus dos botones"); fallos += 1; return;
+  }
+
+  const contexto = await navegador.newContext();
+  const p = await contexto.newPage();
+  await p.goto(BASE + "/offline.html", { waitUntil: "load" });
+
+  const preparar = async () => {
+    await p.evaluate((cartel) => {
+      document.querySelectorAll("#instalar-app").forEach((n) => n.remove());
+      document.body.insertAdjacentHTML("afterbegin", cartel);
+    }, cartel);
+    await p.addScriptTag({ url: "/js/pwa.js" });
+  };
+
+  // Lo que el navegador dispararía si decidiera que se puede instalar.
+  const disparar = () => p.evaluate(() => {
+    const e = new Event("beforeinstallprompt");
+    e.prompt = () => {};
+    e.userChoice = Promise.resolve({ outcome: "dismissed" });
+    window.dispatchEvent(e);
+    return !document.getElementById("instalar-app").hidden;
+  });
+
+  await p.evaluate(() => localStorage.clear());
+  await preparar();
+  igual("la primera vez, se muestra", await disparar(), "true");
+
+  // Otra visita: la página se recarga y el evento vuelve a dispararse.
+  await p.reload({ waitUntil: "load" });
+  await preparar();
+  igual("la segunda visita ya NO lo muestra: se da una sola vez", await disparar(), "false");
+
+  // Ahora una persona que sí aprieta "Ahora no".
+  await p.evaluate(() => localStorage.clear());
+  await p.reload({ waitUntil: "load" });
+  await preparar();
+  await disparar();
+  await p.click("#instalar-app [data-instalar-no]");
+  igual("al apretar «Ahora no» se cierra",
+    await p.evaluate(() => document.getElementById("instalar-app").hidden), "true");
+
+  // Seis días después: todavía no.
+  await p.evaluate(() => {
+    const e = JSON.parse(localStorage.getItem("app_instalar_v2"));
+    e.rechazado = Date.now() - 6 * 86400000;
+    e.visto = e.rechazado - 1000;
+    localStorage.setItem("app_instalar_v2", JSON.stringify(e));
+  });
+  await p.reload({ waitUntil: "load" });
+  await preparar();
+  igual("a los seis días todavía no lo molesta", await disparar(), "false");
+
+  // A los ocho, sí.
+  await p.evaluate(() => {
+    const e = JSON.parse(localStorage.getItem("app_instalar_v2"));
+    e.rechazado = Date.now() - 8 * 86400000;
+    e.visto = e.rechazado - 1000;
+    localStorage.setItem("app_instalar_v2", JSON.stringify(e));
+  });
+  await p.reload({ waitUntil: "load" });
+  await preparar();
+  igual("a los ocho días se lo vuelve a ofrecer, una vez", await disparar(), "true");
+
+  // Y quien ya la instaló no lo ve nunca.
+  await p.evaluate(() => localStorage.clear());
+  await p.reload({ waitUntil: "load" });
+  await p.evaluate(() => { window.matchMedia = () => ({ matches: true, addListener() {}, removeListener() {} }); });
+  await preparar();
+  igual("y a quien ya la instaló no se le ofrece", await disparar(), "false");
+
+  await contexto.close();
+}
+
 (async () => {
   console.log("=== El manifest ===");
   const manifest = JSON.parse(fs.readFileSync(path.join(RAIZ, "manifest.json"), "utf8"));
@@ -138,6 +242,8 @@ function tamanoPng(archivo) {
   await contexto.setOffline(false);
 
   if (errores.length) mal("errores en la página: " + errores.join(" | "));
+  await probarCartelDeInstalar(navegador);
+
   await navegador.close();
 
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");
