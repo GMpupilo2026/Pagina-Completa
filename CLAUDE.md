@@ -516,6 +516,61 @@ Es de **quien coordina o administra** (`is_admin || es_coordinador`), como
   — la misma razón por la que el informe que llega a la casa vive en un solo
   `informe-html.ts`.
 
+### Dos informes distintos, no uno con opciones
+
+La página tiene **dos modos**, y la diferencia no es cosmética: cambia de dónde
+sale la información.
+
+1. **De la Academia** — las clases dadas en la plataforma. Los datos los pone
+   `public.reporte_actividades()`.
+2. **De clases dadas por fuera** — una escuela, un colegio, donde sea. Acá **no
+   se consulta nada**: la asistencia sale del Excel que llevó quien dio la
+   clase y el contenido, de sus documentos. Es el caso de todo profesor que da
+   clases fuera del sitio y tiene que reportarlas igual.
+
+#### Entender una hoja de asistencia hecha por una persona
+
+`js/reporte-asistencia.js`. Esa hoja no la escribió un sistema, y por eso
+reconoce **las dos formas** en que la gente lleva asistencia:
+
+- **Una fila por asistencia** ("fecha | estudiante | asistió"), que es lo que
+  sale de un formulario. Si no hay encabezados reconocibles, se deduce por el
+  contenido: la columna con fechas en casi todas sus celdas es la fecha, y la
+  de textos largos con letras es el nombre.
+- **Matriz**: alumnos en las filas, fechas en las columnas, una marca en cada
+  cruce. Es la que hace todo el mundo a mano y la que una librería de Excel no
+  entiende sola — para ella son columnas con nombres raros.
+
+**En una matriz, la casilla vacía es una FALTA.** Es lo que hace que la cuenta
+sirva de algo: en la cuadrícula hay una casilla por cada alumno y cada fecha, y
+quien lleva la lista marca a los que vinieron. Tratando el blanco como "no dice
+nada", *todo el mundo salía con 100 % de asistencia* — un número perfectamente
+creíble y falso, que es lo peor que puede llevar un informe. Una columna sin
+ninguna marca sí se salta entera: es un día que no hubo clase, y contarlo le
+pondría una falta a todos.
+
+**El informe DICE cómo leyó cada hoja**, y esa explicación va dentro del
+documento, no en un rincón de la pantalla: qué columna tomó por la fecha, cuál
+por el nombre, qué marcas contó como presente. Una hoja mal leída da números
+creíbles y equivocados; con la explicación al pie, el error se ve de una ojeada
+y quien lo recibe puede confiar en el resto. Si no entiende una hoja, lo dice y
+no inventa.
+
+#### El contenido sale de los documentos, ordenado por clase
+
+`js/reporte-textos.js` lee `.txt`, `.md` y `.docx` (el `.docx` con el mismo
+lector de ZIP que `js/reporte-excel.js`, que los dos formatos son un ZIP con XML
+adentro). Corta el documento en secciones cuando una línea **empieza** con una
+fecha —"12/09/2026", "16 de septiembre de 2026"— y `armarExterno()` las empareja
+con las clases de la asistencia. Ahí está la gracia: cada clase queda con su
+asistencia **y** con lo que se trabajó ese día, en vez de dos listas sueltas que
+hay que ir cruzando a mano.
+
+**Lo que NO hace: resumir ni interpretar.** Eso pide un modelo de lenguaje, con
+su credencial y su costo, y este sitio no usa ninguno. Lo que va en el informe
+son las palabras de quien dio la clase, ordenadas y puestas donde corresponden,
+no una versión inventada de ellas.
+
 ### Los dos generadores están escritos a mano
 
 Ninguno usa librería, y no es capricho: las de PDF pesan entre 300 KB y 1 MB y

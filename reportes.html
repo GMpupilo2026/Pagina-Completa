@@ -28,6 +28,8 @@
     <script src="js/adaptive-mode.js"></script>
     <script src="js/reporte-armar.js"></script>
     <script src="js/reporte-excel.js"></script>
+    <script src="js/reporte-asistencia.js"></script>
+    <script src="js/reporte-textos.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/reporte-docx.js"></script>
     <script src="js/reporte-accesible.js"></script>
@@ -97,8 +99,29 @@
                 tiempo salen de la Academia; las fotos, las hojas y las grabaciones las pones tú.
             </p>
 
+            <!-- ===================== 0. De qué clases ===================== -->
+            <fieldset class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                <legend class="font-serif text-xl font-bold text-brand-800 dark:text-white px-2">¿De qué clases es el informe?</legend>
+                <div class="grid sm:grid-cols-2 gap-3 mt-2">
+                    <label class="flex gap-3 items-start border border-brand-200 dark:border-brand-700 rounded-xl p-4 cursor-pointer hover:border-accent-400 transition-colors">
+                        <input type="radio" name="modo" value="academia" checked class="mt-1 accent-accent-500">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">De la Academia</span>
+                            <span class="block text-sm text-brand-500 dark:text-brand-300">Las clases dadas en la plataforma. Las fechas, las asistencias y el tiempo los saca el sitio solo.</span>
+                        </span>
+                    </label>
+                    <label class="flex gap-3 items-start border border-brand-200 dark:border-brand-700 rounded-xl p-4 cursor-pointer hover:border-accent-400 transition-colors">
+                        <input type="radio" name="modo" value="externo" class="mt-1 accent-accent-500">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">De clases dadas por fuera</span>
+                            <span class="block text-sm text-brand-500 dark:text-brand-300">Clases en una escuela o en otro lado. Todo sale de lo que subas: la asistencia del Excel y el contenido de tus documentos.</span>
+                        </span>
+                    </label>
+                </div>
+            </fieldset>
+
             <!-- ===================== 1. El periodo ===================== -->
-            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+            <section id="paso-periodo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">1. ¿Qué periodo cubre?</h2>
                 <div class="flex flex-wrap items-end gap-4">
                     <div>
@@ -112,6 +135,10 @@
                     <button type="button" id="traer" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Traer los datos</button>
                     <p id="traer-estado" class="text-sm text-brand-500 dark:text-brand-300" role="status" aria-live="polite"></p>
                 </div>
+                <div class="mt-4" id="campo-titulo" hidden>
+                    <label for="titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título del informe</label>
+                    <input type="text" id="titulo" placeholder="Informe de actividades — Escuela La Guaria" class="w-full bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
                 <div class="mt-4">
                     <label for="intro" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Presentación (opcional)</label>
                     <textarea id="intro" rows="2" placeholder="Un párrafo tuyo para abrir el informe: a quién va dirigido, qué se buscaba este mes…" class="w-full bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
@@ -120,8 +147,8 @@
 
             <!-- ===================== 2. Los archivos ===================== -->
             <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
-                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">2. Lo que quieras adjuntar</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">
+                <h2 id="titulo-archivos" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">2. Lo que quieras adjuntar</h2>
+                <p id="texto-archivos" class="text-sm text-brand-500 dark:text-brand-300 mb-4">
                     Fotos de la clase, hojas de Excel, grabaciones de video o audio.
                     <strong class="text-brand-600 dark:text-brand-200">Nada de esto se sube a ningún servidor</strong>:
                     se lee acá, en tu computadora, para armar el informe.
@@ -129,9 +156,9 @@
                 <label id="zona" for="archivos" class="block border-2 border-dashed border-brand-200 dark:border-brand-700 rounded-xl p-8 text-center cursor-pointer hover:border-accent-400 transition-colors">
                     <span class="block text-3xl mb-2" aria-hidden="true">📎</span>
                     <span class="block text-sm font-semibold text-brand-600 dark:text-brand-200">Arrastra los archivos aquí o toca para elegirlos</span>
-                    <span class="block text-xs text-brand-450 dark:text-brand-350 mt-1">Fotos (JPG, PNG), hojas (XLSX, CSV), video y audio</span>
+                    <span id="zona-tipos" class="block text-xs text-brand-450 dark:text-brand-350 mt-1">Fotos (JPG, PNG), hojas (XLSX, CSV), video y audio</span>
                 </label>
-                <input type="file" id="archivos" multiple accept="image/*,video/*,audio/*,.xlsx,.csv" class="sr-only">
+                <input type="file" id="archivos" multiple accept="image/*,video/*,audio/*,.xlsx,.csv,.txt,.md,.docx" class="sr-only">
                 <ul id="lista-archivos" class="mt-4 space-y-2"></ul>
                 <p id="archivos-estado" class="text-sm mt-3" role="status" aria-live="polite"></p>
             </section>
@@ -179,7 +206,8 @@
            con ReporteArmar y de ahí salen la vista previa, el Word y el PDF. */
         let perfil = null;
         let datos = null;                                   // lo que trajo la base
-        const archivos = { fotos: [], hojas: [], grabaciones: [], marca: null };
+        const archivos = { fotos: [], hojas: [], grabaciones: [], documentos: [], marca: null };
+        const modo = () => document.querySelector('input[name="modo"]:checked').value;
 
         const $ = (id) => document.getElementById(id);
         const decir = (elemento, texto, malo) => {
@@ -296,6 +324,9 @@
                             duracion: await duracionDe(archivo),
                             archivo: archivo, transcripcion: "",
                         });
+                    } else if (/\.(txt|md|docx|doc)$/.test(nombre)) {
+                        decir(estado, "Leyendo " + archivo.name + "…");
+                        archivos.documentos.push(await ReporteTextos.leer(archivo));
                     } else {
                         decir(estado, "«" + archivo.name + "» no es un tipo que este informe sepa usar.", true);
                         continue;
@@ -359,6 +390,11 @@
             });
             archivos.hojas.forEach((h, i) => poner("📊", h.hoja, (h.filas.length - 1) + " filas",
                 () => archivos.hojas.splice(i, 1)));
+            archivos.documentos.forEach((d, i) => poner("📝", d.nombre,
+                d.palabras + " palabras · " + (d.conFechas
+                    ? d.conFechas + (d.conFechas === 1 ? " clase reconocida por su fecha" : " clases reconocidas por su fecha")
+                    : "sin fechas reconocibles, va como nota suelta"),
+                () => archivos.documentos.splice(i, 1)));
             archivos.grabaciones.forEach((g, i) => poner(g.clase.startsWith("Video") ? "🎬" : "🎙️", g.nombre,
                 g.duracion + " · " + ReporteArmar._tamanoLegible(g.tamano),
                 () => archivos.grabaciones.splice(i, 1)));
@@ -431,12 +467,48 @@
         }
 
         function documentoActual() {
-            if (!datos) return null;
-            return ReporteArmar.armar(datos, archivos, {
+            const comun = {
                 autor: perfil && perfil.full_name ? perfil.full_name : "Oscar Angulo Cubero",
-                academia: "Academia Ajedrez Integral",
                 introduccion: $("intro").value,
-            });
+            };
+            if (modo() === "externo") {
+                // Sin base de datos: la asistencia se recopila de las hojas y el
+                // contenido sale de los documentos.
+                if (!archivos.hojas.length && !archivos.documentos.length) return null;
+                const asistencia = ReporteAsistencia.recopilar(archivos.hojas);
+                return ReporteArmar.armarExterno(asistencia, archivos.documentos, archivos,
+                    Object.assign({ academia: "Ajedrez Integral", titulo: $("titulo").value }, comun));
+            }
+            if (!datos) return null;
+            return ReporteArmar.armar(datos, archivos,
+                Object.assign({ academia: "Academia Ajedrez Integral" }, comun));
+        }
+
+        /* La página cambia de cara según el modo: en el de clases externas no hay
+           periodo que pedirle a la base —las fechas salen de las hojas— y lo
+           que se sube deja de ser "adjuntos" para ser la fuente del informe. */
+        function pintarModo() {
+            const externo = modo() === "externo";
+            $("paso-periodo").hidden = externo;
+            $("campo-titulo").hidden = !externo;
+            $("titulo-archivos").textContent = externo
+                ? "1. Los archivos de tus clases"
+                : "2. Lo que quieras adjuntar";
+            $("texto-archivos").innerHTML = externo
+                ? "Sube el Excel con la asistencia y los documentos con lo que trabajaste en cada clase. " +
+                  "De ahí sale todo el informe: el sitio no consulta nada. " +
+                  "<strong class=\"text-brand-600 dark:text-brand-200\">Nada se sube a ningún servidor</strong>: " +
+                  "se lee acá, en tu computadora."
+                : "Fotos de la clase, hojas de Excel, grabaciones de video o audio. " +
+                  "<strong class=\"text-brand-600 dark:text-brand-200\">Nada de esto se sube a ningún servidor</strong>: " +
+                  "se lee acá, en tu computadora, para armar el informe.";
+            $("zona-tipos").textContent = externo
+                ? "Asistencia (XLSX, CSV), contenido (DOCX, TXT, MD), fotos, video y audio"
+                : "Fotos (JPG, PNG), hojas (XLSX, CSV), video y audio";
+            // El paso del informe se renumera solo, para que no queden dos "2.".
+            const paso3 = document.querySelector("#app section:last-of-type h2");
+            if (paso3) paso3.textContent = externo ? "2. El informe" : "3. El informe";
+            refrescar();
         }
 
         function refrescar() {
@@ -445,6 +517,14 @@
             $("bajar-pdf").disabled = !documento;
             $("bajar-accesible").disabled = !documento;
             if (documento) pintarVista(documento);
+            else if (modo() === "externo") {
+                $("vista").innerHTML = "";
+                const p = document.createElement("p");
+                p.className = "text-brand-450 dark:text-brand-350 text-sm";
+                p.textContent = "Sube el Excel con la asistencia —y, si tienes, los documentos con el " +
+                    "contenido de las clases— y acá va a aparecer el informe.";
+                $("vista").appendChild(p);
+            }
         }
 
         /* --------------------------- traer y bajar --------------------------- */
@@ -527,6 +607,10 @@
 
             $("traer").addEventListener("click", traer);
             $("intro").addEventListener("input", refrescar);
+            $("titulo").addEventListener("input", refrescar);
+            for (const radio of document.querySelectorAll('input[name="modo"]')) {
+                radio.addEventListener("change", pintarModo);
+            }
             $("archivos").addEventListener("change", (e) => { recibir([...e.target.files]); e.target.value = ""; });
             $("bajar-docx").addEventListener("click", () => descargar("docx"));
             $("bajar-pdf").addEventListener("click", () => descargar("pdf"));
@@ -545,6 +629,7 @@
                 if (e.dataTransfer && e.dataTransfer.files.length) recibir([...e.dataTransfer.files]);
             });
 
+            pintarModo();
             traer();
         }
 

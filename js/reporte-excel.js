@@ -236,5 +236,8 @@ window.ReporteExcel = (function () {
     return { hoja: nombre, filas: filas };
   }
 
-  return { leer: leer, _fechaDeExcel: fechaDeExcel, _leerCsv: leerCsv };
+  // abrirZip se comparte con js/reporte-textos.js, que lo necesita para los
+  // .docx: un .docx también es un ZIP con XML adentro. Dos copias del mismo
+  // lector de ZIP se irían separando a la primera corrección.
+  return { leer: leer, abrirZip: abrirZip, _fechaDeExcel: fechaDeExcel, _leerCsv: leerCsv };
 })();

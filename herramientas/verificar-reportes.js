@@ -116,6 +116,83 @@ const FOTO_JPEG_B64 =
   "x8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oACAEBAAA/APn+iiigAooooAKKKKAC" +
   "iiigAooooAKKKKACiiigAooooAKKKKACiiigD//Z";
 
+/* La cuadrícula de asistencia tal como la lleva una persona: nombres a la
+   izquierda, fechas arriba, una X donde vino. La casilla vacía es una falta. */
+const ASISTENCIA_CSV = [
+  "Estudiante;02/09/2026;09/09/2026;16/09/2026;23/09/2026",
+  "Ana Rojas;X;X;X;X",
+  "Bruno Vega;X;;X;X",
+  "Carla Mora;;X;X;",
+  "Diego Solís;X;X;;X",
+  "Total;3;3;3;3",
+].join("\n");
+
+const BITACORA = [
+  "Bitácora del grupo de la tarde",
+  "",
+  "02/09/2026 — Táctica: la horquilla",
+  "Empezamos con el caballo. Cada niño resolvió cinco horquillas en el tablero grande.",
+  "",
+  "09/09/2026 — Finales de peones",
+  "La regla del cuadrado y la oposición. Costó más de lo esperado.",
+  "",
+  "16 de septiembre de 2026 — Aperturas",
+  "Centro, desarrollo y enroque. Partida de práctica por parejas.",
+].join("\n");
+
+/* El modo de clases externas, sobre la misma página ya abierta: se cambia el
+   selector, se sueltan los archivos y se mira el informe que sale. */
+async function probarModoExterno(navegador, carpeta) {
+  // Página limpia a propósito: el modo externo tiene que armar el informe SOLO
+  // con lo que se le da. Reutilizando la página anterior se colaban sus
+  // archivos y los números salían de dos sitios a la vez.
+  const contexto = await navegador.newContext({ acceptDownloads: true });
+  const { p, errores } = await abrir(contexto, {
+    id: "u-1", full_name: "Oscar Angulo Cubero", role: "profesor", is_admin: true, es_coordinador: true,
+  });
+  await p.check('input[name="modo"][value="externo"]');
+  await p.waitForTimeout(400);
+
+  igual("desaparece el paso del periodo: las fechas salen de las hojas",
+    await p.evaluate(() => document.getElementById("paso-periodo").hidden), "true");
+  igual("y aparece el título propio del informe",
+    await p.evaluate(() => !document.getElementById("campo-titulo").hidden), "true");
+
+  await p.setInputFiles("#archivos", [
+    { name: "asistencia.csv", mimeType: "text/csv", buffer: Buffer.from(ASISTENCIA_CSV, "utf8") },
+    { name: "bitacora.txt", mimeType: "text/plain", buffer: Buffer.from(BITACORA, "utf8") },
+  ]);
+  await p.waitForTimeout(1500);
+
+  const vista = await p.textContent("#vista");
+  cumple("cuenta las clases y la asistencia del grupo",
+    /Se impartieron 4 clases/.test(vista) && /75 % de asistencia/.test(vista));
+  cumple("saca la asistencia por clase", vista.includes("Asistencia por clase"));
+  cumple("y dice quién faltó cada día", /No vinieron: Carla Mora/.test(vista));
+  cumple("saca la asistencia por estudiante, con su porcentaje",
+    vista.includes("Asistencia por estudiante") && /50 %/.test(vista));
+  cumple("avisa de quien va por debajo del 70 %", /Por debajo del 70 %/.test(vista));
+  cumple("pega el contenido del documento en la clase de su fecha",
+    vista.includes("Empezamos con el caballo"));
+  /* Que el informe DIGA cómo leyó la hoja no es un adorno: una cuadrícula mal
+     entendida da números creíbles y falsos, y esta es la única forma de que el
+     error se vea. */
+  cumple("y explica de dónde salen los números",
+    vista.includes("De dónde salen estos números") && vista.includes("en blanco se contaron como falta"));
+  cumple("no mezcla nada de la Academia: este informe no la consultó",
+    !/posiciones en la pizarra/.test(vista));
+
+  const [descarga] = await Promise.all([
+    p.waitForEvent("download", { timeout: 30000 }), p.click("#bajar-pdf")]);
+  const destino = path.join(carpeta, "externo-" + descarga.suggestedFilename());
+  await descarga.saveAs(destino);
+  cumple("el PDF del informe externo se descarga", fs.statSync(destino).size > 3000,
+    (fs.statSync(destino).size / 1024).toFixed(0) + " KB");
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await contexto.close();
+}
+
 (async () => {
   const navegador = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   const carpeta = fs.mkdtempSync(path.join(os.tmpdir(), "reportes-"));
@@ -239,6 +316,18 @@ const FOTO_JPEG_B64 =
   cumple("y lo que se trabajó", html.includes("Horquillas y clavadas"));
   cumple("la foto está CONTADA en palabras, ya que no se puede ver",
     html.includes("Los niños del grupo de 7") && html.includes("Fotografía:"));
+
+  /* ======================================================================
+     EL SEGUNDO MODO: clases dadas por fuera de la plataforma.
+     Acá no se consulta nada: todo tiene que salir de los archivos.
+
+     La hoja de prueba va como CSV y no como .xlsx a propósito: se escribe acá
+     mismo, así la comprobación no depende de ningún archivo suelto que haya
+     que mantener al día. Lo que se prueba —entender una cuadrícula de
+     asistencia— es igual en los dos formatos.
+     ====================================================================== */
+  console.log("\n=== Clases dadas por fuera ===");
+  await probarModoExterno(navegador, carpeta);
 
   // ------------------------------------------- que la página SE VEA
   /* Esta página se clonó de formularios.html, y clonar una cabecera ya salió
