@@ -24,6 +24,7 @@
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
+<script src="../js/acceso-admin.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="aprender"></script>
 <style>
   :root{
@@ -305,6 +306,7 @@ async function unlock(){
   // El progreso vive en la cuenta: se baja y se funde con el de este aparato
   // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
   await ProgresoUsuario.init();
+  if(window.AccesoAdmin) await window.AccesoAdmin.init();
   initApp();
 }
 
@@ -592,6 +594,9 @@ function isSolved(id){ return !!getSolvedSet()[id]; }
 
 function lessonsFor(cat){ return LESSONS.filter(l => l.cat === cat); }
 function isUnlocked(lesson, list){
+  // Quien administra tiene todas las lecciones abiertas (js/acceso-admin.js);
+  // para el alumno siguen abriéndose una a una.
+  if(window.AccesoAdmin && window.AccesoAdmin.esAdmin()) return true;
   const idx = list.findIndex(l => l.id === lesson.id);
   if(idx <= 0) return true;
   return isSolved(list[idx - 1].id);

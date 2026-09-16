@@ -25,6 +25,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/acceso-admin.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="concentracion"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/entreno-progress.js"></script>
@@ -234,6 +235,9 @@ function guardarEjercicio(nivelId, hechos){
 }
 function nivelCompleto(nivel){ return ejerciciosHechos(nivel.id) >= nivel.ejercicios; }
 function nivelDesbloqueado(nivel){
+  // Quien administra ve los niveles todos abiertos (js/acceso-admin.js); para
+  // el alumno cada uno sigue abriéndose al terminar el anterior.
+  if(window.AccesoAdmin && window.AccesoAdmin.esAdmin()) return true;
   const idx = NIVELES.findIndex((n) => n.id === nivel.id);
   return idx <= 0 || nivelCompleto(NIVELES[idx - 1]);
 }
@@ -543,6 +547,7 @@ async function init(){
   await EntrenoProgress.init();
   // Los niveles hechos viajan con la cuenta, no con el aparato.
   await ProgresoUsuario.init();
+  if(window.AccesoAdmin) await window.AccesoAdmin.init();
   aplicarModo();
   mostrarNiveles();
   document.getElementById('loading').classList.add('hidden');

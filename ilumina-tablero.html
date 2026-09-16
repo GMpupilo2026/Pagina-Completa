@@ -25,6 +25,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/acceso-admin.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="ilumina"></script>
     <script src="js/ilumina-engine.js"></script>
     <script src="js/ilumina-niveles.js"></script>
@@ -182,6 +183,9 @@ function gastarPista() {
 }
 
 function nivelDesbloqueado(idx) {
+    // Quien administra ve los niveles todos abiertos (js/acceso-admin.js); para
+    // el alumno cada uno sigue abriéndose al resolver el anterior.
+    if (window.AccesoAdmin && window.AccesoAdmin.esAdmin()) return true;
     if (idx <= 0) return true;
     const resueltos = leerResueltos();
     return !!resueltos[NIVELES[idx - 1].id];
@@ -287,6 +291,7 @@ async function init() {
         return;
     }
     await ProgresoUsuario.init();
+    if (window.AccesoAdmin) await window.AccesoAdmin.init();
 
     board = new IluminaBoard(document.getElementById("board"), document.getElementById("tray"), { onChange: onBoardChange });
     pintarNiveles();
