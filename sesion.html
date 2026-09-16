@@ -153,6 +153,13 @@
                                     <label class="flex items-center gap-1"><input type="checkbox" id="edit-castle-bq" checked> Negras O-O-O</label>
                                 </div>
                             </div>
+                            <div>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">FEN de la posición armada (se arma solo, a medida que editas):</p>
+                                <div class="flex gap-2">
+                                    <input id="edit-current-fen" type="text" readonly class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-600 dark:text-brand-300 focus:outline-none" aria-label="FEN de la posición que estás armando">
+                                    <button id="edit-current-fen-copy-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Copiar</button>
+                                </div>
+                            </div>
                         </div>
 
                         <details class="mb-3">
@@ -872,6 +879,7 @@
                 interactive: isTeacher,
                 allowArrows: isTeacher,
                 externalCoords: true,
+                onFreeModeChange: () => updateLiveFenDisplay(),
                 onMove: () => {
                     pushBoardState();
                     updateTurnIndicator();
@@ -999,9 +1007,13 @@
             editTurn = turn;
             document.getElementById("edit-turn-w").className = turn === "w" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
             document.getElementById("edit-turn-b").className = turn === "b" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
+            updateLiveFenDisplay();
         }
         document.getElementById("edit-turn-w").addEventListener("click", () => setEditTurn("w"));
         document.getElementById("edit-turn-b").addEventListener("click", () => setEditTurn("b"));
+        ["edit-castle-wk", "edit-castle-wq", "edit-castle-bk", "edit-castle-bq"].forEach((id) => {
+            document.getElementById(id).addEventListener("change", updateLiveFenDisplay);
+        });
 
         document.getElementById("edit-clear-btn").addEventListener("click", () => {
             board.clearBoard();
@@ -1024,7 +1036,41 @@
             document.getElementById("edit-castle-wq").checked = castling.includes("Q");
             document.getElementById("edit-castle-bk").checked = castling.includes("k");
             document.getElementById("edit-castle-bq").checked = castling.includes("q");
+            updateLiveFenDisplay();
         }
+
+        // Arma el FEN candidato (posición actual del tablero + turno/enroques ya elegidos
+        // en el panel, igual que hace free-mode-apply-btn) y lo muestra en el campo de solo
+        // lectura — así el profesor ve hacia dónde va la posición mientras la arma, sin
+        // esperar a aplicarla. No valida nada (esa validación solo corre al aplicar).
+        function updateLiveFenDisplay() {
+            const field = document.getElementById("edit-current-fen");
+            if (!field) return;
+            const parts = board.fen().split(" ");
+            parts[1] = editTurn;
+            let castling = "";
+            if (document.getElementById("edit-castle-wk").checked) castling += "K";
+            if (document.getElementById("edit-castle-wq").checked) castling += "Q";
+            if (document.getElementById("edit-castle-bk").checked) castling += "k";
+            if (document.getElementById("edit-castle-bq").checked) castling += "q";
+            parts[2] = castling || "-";
+            parts[3] = "-";
+            field.value = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
+        }
+
+        document.getElementById("edit-current-fen-copy-btn").addEventListener("click", async () => {
+            const field = document.getElementById("edit-current-fen");
+            const btn = document.getElementById("edit-current-fen-copy-btn");
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                field.select();
+                document.execCommand("copy");
+            }
+            const original = btn.textContent;
+            btn.textContent = "✅ Copiado";
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        });
 
         // ---------- Panel flotante del editor de tablero: arrastrable desde el título ----------
         // Es una herramienta temporal (se abre, se usa un momento, se cierra), así que flota por
