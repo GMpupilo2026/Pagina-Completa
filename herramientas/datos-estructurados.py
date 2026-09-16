@@ -40,7 +40,12 @@ ORG = {
 }
 
 MARCA = "<!-- datos estructurados: los genera herramientas/datos-estructurados.py -->"
-RE_BLOQUE = re.compile(re.escape(MARCA) + r'\n\s*<script type="application/ld\+json">.*?</script>\n', re.S)
+# Se come también la sangría que va ANTES de la marca. Sin eso, cada corrida
+# borraba el bloque pero dejaba sus cuatro espacios colgando, y la línea de
+# abajo se corría cuatro espacios más: a la décima corrida el <meta> estaba a
+# cuarenta espacios del margen. No rompía nada, pero ensuciaba 18 archivos en
+# cada corrida y enterraba los cambios de verdad en el diff.
+RE_BLOQUE = re.compile(r'[ \t]*' + re.escape(MARCA) + r'\n\s*<script type="application/ld\+json">.*?</script>\n', re.S)
 
 def leer(ruta):
     return open(ruta, encoding="utf-8").read()
