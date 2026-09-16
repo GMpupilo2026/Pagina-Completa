@@ -6,3 +6,12 @@
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
+
+# El service worker y el manifest NO se cachean. Si el navegador se queda con
+# un sw.js viejo, la app deja de actualizarse y no hay forma de avisarle a
+# nadie: sigue sirviendo lo de antes sin dar ningún error.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: no-cache

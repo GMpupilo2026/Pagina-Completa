@@ -598,6 +598,80 @@ verificadas es casi todo de finales y de desequilibrios, y no hay de dónde
 prestarles. Cuando esos cursos tengan su archivo de posiciones, la corrida se
 repite y las toman solas.
 
+## El sitio se instala como app (PWA)
+
+`manifest.json`, `sw.js`, `js/pwa.js` y los iconos de `img/app/` hacen que el
+sitio se pueda instalar en el celular: queda un icono, abre a pantalla completa
+sin barra del navegador y entra directo a la Academia (`start_url` es
+`/clases.html`, que ya redirige al login sin sesión).
+
+Es además **el cimiento de la app de Google Play**: la ruta elegida es una TWA
+—la app *es* esta PWA corriendo en el motor de Chrome—, así que publicar en el
+sitio actualiza la app sin pasar por la tienda. Lo que falta para eso son
+trámites, no código, y está escrito en
+`herramientas/plantillas/LEEME-app-android.md` con su `assetlinks.json` listo
+para pegarle la huella de firma.
+
+### El service worker es deliberadamente tonto
+
+**La red va SIEMPRE primero y la caché es solo la red de seguridad para cuando
+no hay señal.** Servir de la caché primero haría que el sitio arrancara más
+rápido, y abriría la puerta a la peor falla que tiene este sitio: **HTML nuevo
+con CSS viejo**. El CSS se compila y los archivos no llevan huella en el
+nombre, así que una hoja vieja en caché deja la página sin la mitad de sus
+clases — y eso **no da error**: simplemente se ve mal, que es exactamente
+contra lo que existe `verificar-css.js`.
+
+Lo que el service worker no toca nunca:
+
+- nada que no sea de este dominio (Supabase, los CDN): ni lo mira;
+- nada que no sea `GET`;
+- `cursos/protegido/` y `cursos/recursos/` — guardar el contenido de la
+  Academia o el material de uso docente sería dejarlos en el teléfono después
+  de cerrar sesión;
+- las respuestas que no vengan bien: un 404 no se guarda.
+
+**`sw.js` y `manifest.json` llevan `Cache-Control: no-cache` en `_headers`.** Si
+el navegador se queda con un `sw.js` viejo, la app deja de actualizarse y no hay
+forma de avisarle a nadie: sigue sirviendo lo de antes sin dar ningún error.
+
+### Los iconos no son el favicon
+
+El favicon del sitio es un emoji, y un emoji no sirve de icono de app: cada
+sistema lo dibuja distinto y las tiendas piden un PNG. `node
+herramientas/pwa-iconos.js` dibuja el caballo del juego de piezas que el sitio
+ya usa (leído de `js/finales-100.js` vía `lib/tablero-svg.js`), en ámbar sobre
+el azul del encabezado. **Van dos de 512 y no uno**: Android recorta el icono en
+círculo, así que el `maskable` lleva bastante más margen — sin eso le come las
+orejas al caballo.
+
+### La cabecera va en TODAS las páginas
+
+`python3 herramientas/pwa-cabecera.py` pone el `manifest`, el `theme-color`, el
+icono de iPhone y `js/pwa.js` en las 76 páginas del sitio, no solo en la
+portada: la gente entra por donde sea —un enlace a un curso, lo que le mandaron
+por WhatsApp— y el celular **solo ofrece instalar si la página por la que entró
+lo declara**. Se puede correr todas las veces que se quiera; reconoce lo suyo
+por las marcas `<!-- app: inicio -->`.
+
+El aviso de instalación de `clases.html` (`#instalar-app`) **arranca oculto** y
+`js/pwa.js` lo destapa solo cuando el navegador confirma que se puede instalar.
+Un botón que no haría nada es peor que ningún botón. Quien dice "ahora no" no lo
+vuelve a ver por 30 días.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-pwa.js`** (con el sitio en localhost:8777 y playwright).
+Comprueba el manifest, que los iconos midan lo que prometen, que las 77 páginas
+lo declaren, que el service worker tome el control y —lo que de verdad
+importa— que **no guarde** `cursos/protegido/`, `cursos/recursos/` ni nada de
+otro dominio, y que sin red una página caiga en `offline.html`.
+
+### Notificaciones push: no vienen con esto
+
+Una TWA no las trae. Si algún día se quieren ("tienes clase en 15 minutos", "te
+llegó un reto"), hay que rehacer el cascarón con Capacitor, que es otro trabajo
+y otra forma de mantenerlo.
+
 ## El progreso vive en la cuenta, no en el aparato
 
 `js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por
