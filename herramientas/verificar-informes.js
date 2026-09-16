@@ -215,9 +215,21 @@ async function pruebaProfesor(browser) {
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
   igual("historial (quince como mucho)", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 3);
-  igual("cursos del alumno", await page.evaluate(() =>
-    [...document.querySelectorAll("#cursos-report-body > div")].map((d) => d.textContent.replace(/\s+/g, " ").trim()).join(" // ")),
-    "Finales prácticos3/8 · 38%Último tema estudiado: La oposición (09 sept 2026) // Táctica básica1/1 · 100%Último tema estudiado: La horquilla (08 sept 2026)");
+  // Se comprueban los hechos, no el texto entero de la tarjeta: ahí conviven
+  // otros controles (desbloquear temas) que van creciendo y no son de esta
+  // prueba. Una comprobación que se rompe cuando alguien agrega un botón al
+  // lado deja de decir nada.
+  igual("cursos del alumno", await page.evaluate(() => {
+    const t = [...document.querySelectorAll("#cursos-report-body > div")]
+      .map((d) => d.textContent.replace(/\s+/g, " "));
+    return [
+      t.length,
+      t[0].includes("Finales prácticos3/8 · 38%"),
+      t[0].includes("Último tema estudiado: La oposición (09 sept 2026)"),
+      t[1].includes("Táctica básica1/1 · 100%"),
+      t[1].includes("Último tema estudiado: La horquilla (08 sept 2026)"),
+    ].join(",");
+  }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
 
   console.log("-- Informes a la casa");
