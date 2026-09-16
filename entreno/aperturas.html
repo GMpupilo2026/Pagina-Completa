@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+<title>Aperturas y celadas — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Memoriza aperturas y celadas jugándolas en el tablero, con repetición espaciada: lo que te sale bien vuelve más tarde cada vez.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="aperturas"></script>
+<style>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --mate1:#3b6ea5;
+    --mate2:#9c4148;
+    --mate3:#6b3fa0;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  .streak-bar{
+    max-width:900px; margin:0 auto; padding:10px 24px 0; display:flex; align-items:center;
+    justify-content:center; gap:8px; font-size:0.95rem; color:var(--text-muted);
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:14px 24px 0; flex-wrap:wrap; justify-content:center;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  .board-wrap{max-width:420px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); cursor:pointer; user-select:none; border:none; padding:0;
+    transition:background .12s;
+  }
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  .sq.selected{box-shadow:inset 0 0 0 4px var(--brass-bright);}
+  .sq.wrong-flash{background:color-mix(in srgb, var(--bad) 55%, transparent) !important;}
+  .sq.hint-from{box-shadow:inset 0 0 0 4px #f0b429; animation:hint-pulse 1s ease-in-out infinite;}
+  .sq.target::after{content:""; position:absolute; inset:32%; border-radius:50%; background:rgba(240,180,41,0.5);}
+  .sq.target-capture::after{content:""; position:absolute; inset:8%; border:4px solid rgba(203,110,23,0.7); border-radius:50%; background:none;}
+  @keyframes hint-pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .mode-bar{
+    max-width:420px; margin:10px auto 0; padding:0 24px; display:flex;
+    justify-content:flex-end; align-items:center; gap:8px; font-size:0.78rem; color:var(--text-muted);
+  }
+  .mode-switch{display:inline-flex; border:1px solid var(--line); overflow:hidden;}
+  .mode-btn{
+    background:var(--bg-panel); border:none; color:var(--text-muted); font-family:'Inter', sans-serif;
+    font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .mode-btn + .mode-btn{border-left:1px solid var(--line);}
+  .mode-btn.active{background:var(--brass); color:#102a43;}
+  .speech-btn{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:4px; color:var(--text-muted);
+    font-family:'Inter', sans-serif; font-size:0.78rem; padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+
+  .position-readout{
+    background:var(--bg-panel); border:1px solid var(--line); padding:12px 16px; margin:0 0 16px;
+    font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .position-readout p{margin:2px 0;}
+  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
+  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
+  #blind-panel input{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
+  }
+  #blind-panel input:focus{border-color:var(--brass);}
+
+  .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+
+  .round-status{margin-top:12px; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* ---------- Selector de coronación ---------- */
+  #promo-modal{display:none; position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:16px;}
+  #promo-modal .box{background:var(--bg-panel); border-radius:14px; padding:20px; text-align:center;}
+  #promo-modal p{color:var(--text-muted); font-size:0.85rem; margin:0 0 12px;}
+  #promo-modal .opts{display:flex; gap:8px;}
+  .promo-btn{width:52px; height:52px; font-size:1.8rem; border:1px solid var(--line); background:var(--bg-panel-2); cursor:pointer; border-radius:10px;}
+  .promo-btn:hover{border-color:var(--brass);}
+
+  /* ---------- Celebración al terminar una categoría ---------- */
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .tab, .bctrl{transition-property: background-color, border-color, color;}
+    .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+</style>
+  /* ---- propios de esta página ---- */
+  .wrap{max-width:900px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+  .hidden{display:none !important;}
+  h1{font-family:Merriweather,Georgia,serif;font-size:1.9rem;font-weight:700;color:var(--text);margin:0 0 .3rem;}
+  h2{font-family:Merriweather,Georgia,serif;font-size:1.25rem;font-weight:700;color:var(--text);margin:0;}
+  .sub{color:var(--text-muted);font-size:.95rem;margin:0 0 1.2rem;}
+  .panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem;color:var(--text);}
+  .resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.6rem;margin-bottom:1.3rem;}
+  .resumen div{background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:.7rem;text-align:center;}
+  .resumen b{display:block;font-size:1.5rem;color:var(--text);}
+  .resumen span{font-size:.75rem;color:var(--text-muted);}
+  .filtros{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0 0 1rem;font-size:.85rem;color:var(--text-muted);}
+  .filtros select{background:var(--bg-panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:.35rem .5rem;font:inherit;}
+  .ficha{width:100%;text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
+         padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer;color:var(--text);font:inherit;display:flex;
+         align-items:center;gap:.8rem;transition:border-color .15s;}
+  .ficha:hover{border-color:var(--brass);}
+  .ficha .estado{font-size:1.3rem;flex-shrink:0;}
+  .ficha .info{flex:1;min-width:0;}
+  .ficha .nombre{font-weight:600;}
+  .ficha .detalle{font-size:.8rem;color:var(--text-muted);}
+  .ficha .cuando{font-size:.75rem;color:var(--text-muted);white-space:nowrap;}
+  .cabecera-linea{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1rem;}
+  .jugadas{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;color:var(--text);
+           background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;
+           margin:.7rem 0;min-height:2.4rem;line-height:1.9;}
+  .jugadas .num{color:var(--text-muted);}
+  .jugadas .mia{font-weight:700;}
+  .promo{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         gap:.6rem;background:color-mix(in srgb, var(--bg-panel) 94%, transparent);}
+  .promo p{color:var(--text);font-weight:600;margin:0;}
+  .promo div{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;}
+  .final-nota{font-size:1.1rem;font-weight:700;margin:0 0 .5rem;color:var(--text);}
+  .clave{border-left:3px solid var(--brass);padding-left:.7rem;color:var(--text);}
+  .bctrl.principal{background:var(--brass-bright);color:#102a43;border-color:var(--brass);font-weight:700;}
+  .board-wrap{position:relative;}
+</style>
+    <script src="../js/board-color-themes.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+            </ul>
+        </div>
+    </header>
+  <main id="main-content">
+    <div id="gate" class="wrap">
+      <p id="gate-checking" class="panel">Comprobando tu sesión…</p>
+    </div>
+
+    <div id="app" class="wrap hidden">
+      <h1>♞ Aperturas y celadas</h1>
+      <p class="sub">Memoriza líneas jugándolas. Lo que te sale bien vuelve más tarde cada vez; lo que fallas, vuelve hoy.</p>
+
+      <!-- ------- Cómo va el estudio ------- -->
+      <div class="resumen" id="resumen"></div>
+
+      <!-- ------- Lista ------- -->
+      <section id="vista-lista">
+        <div class="mode-bar" role="group" aria-label="Qué estudiar">
+          <button type="button" class="mode-btn" id="btn-repaso">🔁 Repasar lo de hoy</button>
+          <button type="button" class="mode-btn" id="btn-todas">📚 Ver todas</button>
+        </div>
+
+        <div class="filtros">
+          <label for="f-tipo">Qué</label>
+          <select id="f-tipo">
+            <option value="">Todo</option>
+            <option value="celada">Solo celadas</option>
+            <option value="apertura">Solo aperturas</option>
+          </select>
+          <label for="f-nivel">Nivel</label>
+          <select id="f-nivel">
+            <option value="">Todos</option>
+            <option value="1">Principiante</option>
+            <option value="2">Intermedio</option>
+            <option value="3">Avanzado</option>
+          </select>
+        </div>
+
+        <div id="lista"></div>
+        <p id="lista-vacia" class="panel hidden"></p>
+      </section>
+
+      <!-- ------- Entrenador ------- -->
+      <section id="vista-tablero" class="hidden">
+        <div class="cabecera-linea">
+          <button type="button" class="bctrl" id="volver-btn">← Volver</button>
+          <div>
+            <h2 id="linea-nombre"></h2>
+            <p id="linea-apertura" class="sub"></p>
+          </div>
+        </div>
+
+        <p class="turn-banner" id="turn-banner" role="status" aria-live="polite"></p>
+
+        <div class="board-wrap">
+          <div class="board8" id="board" role="group" aria-label="Tablero de la línea"></div>
+          <div id="promo" class="promo hidden" role="group" aria-label="Elige en qué pieza corona">
+            <p>¿En qué coronas?</p>
+            <div>
+              <button type="button" class="promo-btn" data-pieza="q">♕ Dama</button>
+              <button type="button" class="promo-btn" data-pieza="r">♖ Torre</button>
+              <button type="button" class="promo-btn" data-pieza="b">♗ Alfil</button>
+              <button type="button" class="promo-btn" data-pieza="n">♘ Caballo</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+        <p class="jugadas" id="jugadas-hechas" aria-label="Jugadas de la línea"></p>
+
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="pista-btn">💡 Enséñame la jugada</button>
+          <button type="button" class="bctrl" id="reiniciar-btn">↺ Empezar de nuevo</button>
+        </div>
+
+        <div id="final" class="panel hidden">
+          <p id="final-nota" class="final-nota"></p>
+          <p id="final-idea"></p>
+          <p id="final-clave" class="clave"></p>
+          <p id="final-cuando" class="sub"></p>
+          <div class="round-controls">
+            <button type="button" class="bctrl principal" id="siguiente-btn">Siguiente →</button>
+            <button type="button" class="bctrl" id="repetir-btn">Repetirla ahora</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/progreso-usuario.js"></script>
+<script src="../js/aperturas-lineas.js"></script>
+<script src="../js/repaso-espaciado.js"></script>
+<script>
+/* Entrenador de aperturas y celadas con repetición espaciada.
+ *
+ * El alumno juega la línea EN EL TABLERO, de memoria: el entrenador mueve por
+ * el rival y él tiene que dar todas las jugadas de su color. Al terminar, la
+ * línea se programa para más adelante según cómo le fue (js/repaso-espaciado.js).
+ *
+ * LA NOTA LA PONE LA PÁGINA, NO EL ALUMNO. Los SRS suelen preguntar "¿qué tal
+ * te salió?", y con chicos eso no mide nada: el que quiere terminar rápido
+ * aprieta "bien" siempre y el inseguro aprieta "mal" aunque le haya salido.
+ * Acá la nota sale de lo que de verdad pasó — cuántas veces se equivocó y
+ * cuántas pidió ver la jugada—, que es un dato que no se puede maquillar.
+ *
+ * El progreso se guarda en localStorage y js/progreso-usuario.js lo espeja en
+ * la cuenta (claves aperturas_srs_v1 y aperturas_vistas_v1, declaradas en su
+ * lista CLAVES), así que se puede estudiar en la compu y seguir en el celular.
+ * No escribe en training_progress: esa tabla tiene el CHECK de actividades y
+ * esto no es una de ellas.
+ */
+const CLAVE_SRS = "aperturas_srs_v1";
+const CLAVE_VISTAS = "aperturas_vistas_v1";
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const GLYPH = {
+  w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
+  b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
+};
+// Las jugadas se guardan en inglés porque es lo que entiende chess.js, y se
+// enseñan en la notación de acá. La tabla es la misma que usa el verificador.
+const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
+const NIVELES = { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" };
+const TIPOS = { celada: "Celada", apertura: "Apertura" };
+
+function aEspanol(san) { return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]); }
+
+let estado = {};          // id → ficha de repaso
+let cola = [];            // los ids que toca repasar, en orden
+let linea = null, juego = null, indice = 0;
+let errores = 0, pistas = 0;
+let seleccion = null, promoPendiente = null, esperandoRival = false;
+
+/* ---------------- guardar y leer ---------------- */
+function leerEstado() {
+  try { const v = JSON.parse(localStorage.getItem(CLAVE_SRS) || "{}"); return v && typeof v === "object" ? v : {}; }
+  catch (e) { return {}; }
+}
+function guardarEstado() {
+  try { localStorage.setItem(CLAVE_SRS, JSON.stringify(estado)); } catch (e) {}
+}
+function sumarVista() {
+  try {
+    const n = Number(localStorage.getItem(CLAVE_VISTAS) || 0) || 0;
+    localStorage.setItem(CLAVE_VISTAS, String(n + 1));
+  } catch (e) {}
+}
+
+/* ---------------- qué se está mirando ---------------- */
+function lineasFiltradas() {
+  const tipo = document.getElementById("f-tipo").value;
+  const nivel = document.getElementById("f-nivel").value;
+  return AperturasLineas.LINEAS.filter((L) =>
+    (!tipo || L.tipo === tipo) && (!nivel || String(L.nivel) === nivel));
+}
+
+function pintarResumen() {
+  const ids = AperturasLineas.LINEAS.map((L) => L.id);
+  const r = RepasoEspaciado.resumen(ids, estado);
+  const caja = document.getElementById("resumen");
+  caja.innerHTML = "";
+  [[r.pendientes, "para hoy"], [r.nuevas, r.nuevas === 1 ? "sin empezar" : "sin empezar"],
+   [r.aprendiendo, "aprendiendo"], [r.firmes, "firmes"], [r.total, "en total"]]
+    .forEach(([n, etiqueta]) => {
+      const d = document.createElement("div");
+      const b = document.createElement("b"); b.textContent = String(n);
+      const s = document.createElement("span"); s.textContent = etiqueta;
+      d.append(b, s); caja.appendChild(d);
+    });
+}
+
+function cuandoTexto(ficha) {
+  if (!ficha || !ficha.ultimo) return "sin empezar";
+  const hoy = RepasoEspaciado.hoy();
+  if (ficha.vence <= hoy) return "toca hoy";
+  const dias = Math.round((Date.parse(ficha.vence) - Date.parse(hoy)) / 86400000);
+  if (dias === 1) return "mañana";
+  if (dias < 30) return "en " + dias + " días";
+  return "en " + Math.round(dias / 30) + (Math.round(dias / 30) === 1 ? " mes" : " meses");
+}
+
+function pintarLista(soloPendientes) {
+  const caja = document.getElementById("lista");
+  caja.innerHTML = "";
+  let lista = lineasFiltradas();
+  if (soloPendientes) {
+    const ids = new Set(RepasoEspaciado.pendientes(lista.map((L) => L.id), estado));
+    lista = lista.filter((L) => ids.has(L.id));
+    // El orden del repaso no es el del banco: primero lo más atrasado.
+    const orden = RepasoEspaciado.pendientes(lista.map((L) => L.id), estado);
+    lista.sort((a, b) => orden.indexOf(a.id) - orden.indexOf(b.id));
+  }
+  const vacia = document.getElementById("lista-vacia");
+  vacia.classList.toggle("hidden", lista.length > 0);
+  if (!lista.length) {
+    vacia.textContent = soloPendientes
+      ? "Por hoy no te toca repasar nada de este grupo. Puedes ver todas y estudiar alguna nueva."
+      : "No hay líneas con ese filtro.";
+    return;
+  }
+  lista.forEach((L) => {
+    const f = estado[L.id];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ficha";
+    const marca = document.createElement("span");
+    marca.className = "estado";
+    marca.setAttribute("aria-hidden", "true");
+    marca.textContent = !f || !f.ultimo ? "•" : (f.intervalo >= 21 ? "✅" : (f.vence <= RepasoEspaciado.hoy() ? "🔁" : "🕑"));
+    const info = document.createElement("span");
+    info.className = "info";
+    const n = document.createElement("span"); n.className = "nombre"; n.textContent = L.nombre;
+    const d = document.createElement("span"); d.className = "detalle";
+    d.textContent = `${TIPOS[L.tipo]} · ${L.apertura} · ${NIVELES[L.nivel]} · juegas con ${L.color === "w" ? "blancas" : "negras"}`;
+    info.append(n, document.createElement("br"), d);
+    const cuando = document.createElement("span");
+    cuando.className = "cuando";
+    cuando.textContent = cuandoTexto(f);
+    btn.append(marca, info, cuando);
+    btn.setAttribute("aria-label", `${L.nombre}. ${d.textContent}. ${cuando.textContent}.`);
+    btn.addEventListener("click", () => empezar(L.id));
+    caja.appendChild(btn);
+  });
+}
+
+/* ---------------- el tablero ---------------- */
+function esClara(casilla) {
+  return ((casilla.charCodeAt(0) - 97) + (parseInt(casilla[1], 10) - 1)) % 2 === 1;
+}
+
+function dibujar() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  // Se pinta desde el lado del alumno: quien juega con negras ve su lado abajo.
+  const filas = linea.color === "w" ? [8, 7, 6, 5, 4, 3, 2, 1] : [1, 2, 3, 4, 5, 6, 7, 8];
+  const cols = linea.color === "w" ? FILES : FILES.slice().reverse();
+  filas.forEach((rank) => {
+    cols.forEach((f) => {
+      const casilla = f + rank;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sq " + (esClara(casilla) ? "light" : "dark");
+      btn.dataset.square = casilla;
+      const pieza = juego.get(casilla);
+      if (pieza) {
+        const span = document.createElement("span");
+        span.className = pieza.color === "w" ? "piece-white" : "piece-black";
+        span.textContent = GLYPH[pieza.color][pieza.type];
+        span.setAttribute("aria-hidden", "true");
+        btn.appendChild(span);
+      }
+      if (casilla === seleccion) btn.classList.add("selected");
+      btn.addEventListener("click", () => tocar(casilla));
+      board.appendChild(btn);
+    });
+  });
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+function marcarMal(casilla) {
+  const c = document.querySelector('[data-square="' + casilla + '"]');
+  if (!c) return;
+  c.classList.add("wrong-flash");
+  setTimeout(() => c.classList.remove("wrong-flash"), 350);
+}
+
+function decir(texto, clase) {
+  const e = document.getElementById("round-status");
+  e.textContent = texto;
+  e.className = "round-status" + (clase ? " " + clase : "");
+}
+
+function pintarJugadas() {
+  const caja = document.getElementById("jugadas-hechas");
+  caja.innerHTML = "";
+  for (let i = 0; i < indice; i++) {
+    if (i % 2 === 0) {
+      const n = document.createElement("span");
+      n.className = "num";
+      n.textContent = (i / 2 + 1) + ". ";
+      caja.appendChild(n);
+    }
+    const s = document.createElement("span");
+    const esMia = (linea.color === "w") === (i % 2 === 0);
+    if (esMia) s.className = "mia";
+    s.textContent = aEspanol(linea.jugadas[i]) + " ";
+    caja.appendChild(s);
+  }
+}
+
+function meToca() {
+  return indice < linea.jugadas.length && (linea.color === "w") === (indice % 2 === 0);
+}
+
+function actualizarBanner() {
+  const b = document.getElementById("turn-banner");
+  if (indice >= linea.jugadas.length) { b.textContent = "Línea completa."; return; }
+  b.textContent = meToca()
+    ? "Te toca a ti — juegas con " + (linea.color === "w" ? "blancas" : "negras")
+    : "Juega el rival…";
+}
+
+// El rival mueve solo, con una pausa para que se vea qué hizo.
+function jugarRival() {
+  if (meToca() || indice >= linea.jugadas.length) { actualizarBanner(); return; }
+  esperandoRival = true;
+  actualizarBanner();
+  setTimeout(() => {
+    juego.move(linea.jugadas[indice], { sloppy: true });
+    indice += 1;
+    esperandoRival = false;
+    seleccion = null;
+    dibujar();
+    pintarJugadas();
+    if (indice >= linea.jugadas.length) terminar();
+    else actualizarBanner();
+  }, 550);
+}
+
+function tocar(casilla) {
+  if (esperandoRival || promoPendiente || indice >= linea.jugadas.length || !meToca()) return;
+  if (!seleccion) {
+    const p = juego.get(casilla);
+    if (!p || p.color !== juego.turn()) return;
+    seleccion = casilla;
+    dibujar();
+    return;
+  }
+  if (casilla === seleccion) { seleccion = null; dibujar(); return; }
+
+  const posibles = juego.moves({ square: seleccion, verbose: true }).filter((m) => m.to === casilla);
+  if (!posibles.length) {
+    // Puede que esté eligiendo otra pieza suya.
+    const p = juego.get(casilla);
+    if (p && p.color === juego.turn()) { seleccion = casilla; dibujar(); return; }
+    marcarMal(casilla);
+    return;
+  }
+  if (posibles.length > 1 && posibles[0].promotion) {
+    // Coronar: se pregunta en qué pieza. Importa — hay celadas que solo
+    // funcionan coronando caballo.
+    promoPendiente = { from: seleccion, to: casilla };
+    document.getElementById("promo").classList.remove("hidden");
+    return;
+  }
+  intentar({ from: seleccion, to: casilla, promotion: posibles[0].promotion });
+}
+
+function intentar(jugada) {
+  const esperada = linea.jugadas[indice];
+  const hecha = juego.move(jugada);
+  if (!hecha) { marcarMal(jugada.to); return; }
+  if (hecha.san !== esperada) {
+    // Es legal pero no es la de la línea: se deshace y se avisa.
+    juego.undo();
+    errores += 1;
+    seleccion = null;
+    marcarMal(jugada.to);
+    decir("Esa no es la jugada de esta línea. Vuelve a intentarlo.", "bad");
+    dibujar();
+    return;
+  }
+  indice += 1;
+  seleccion = null;
+  decir("", "");
+  dibujar();
+  pintarJugadas();
+  if (indice >= linea.jugadas.length) terminar();
+  else jugarRival();
+}
+
+/* ---------------- empezar, pista, terminar ---------------- */
+function empezar(id) {
+  linea = AperturasLineas.LINEAS.find((L) => L.id === id);
+  if (!linea) return;
+  juego = new Chess();
+  indice = 0; errores = 0; pistas = 0;
+  seleccion = null; promoPendiente = null; esperandoRival = false;
+
+  document.getElementById("linea-nombre").textContent = linea.nombre;
+  document.getElementById("linea-apertura").textContent =
+    `${TIPOS[linea.tipo]} · ${linea.apertura} · ${NIVELES[linea.nivel]}`;
+  document.getElementById("final").classList.add("hidden");
+  document.getElementById("promo").classList.add("hidden");
+  document.getElementById("pista-btn").disabled = false;
+  decir("", "");
+  dibujar();
+  pintarJugadas();
+  mostrar("vista-tablero");
+  if (!meToca()) jugarRival(); else actualizarBanner();
+}
+
+function pista() {
+  if (!meToca() || indice >= linea.jugadas.length) return;
+  pistas += 1;
+  const esperada = linea.jugadas[indice];
+  decir("La jugada es " + aEspanol(esperada) + ". Hazla en el tablero.", "");
+  // Se marca de dónde sale, que es la mitad del trabajo de encontrarla.
+  const prueba = new Chess(juego.fen());
+  const m = prueba.move(esperada, { sloppy: true });
+  if (m) {
+    const c = document.querySelector('[data-square="' + m.from + '"]');
+    if (c) c.classList.add("selected");
+  }
+}
+
+// La nota sale de lo que pasó, no de lo que el alumno diga que pasó.
+function notaDe() {
+  if (errores === 0 && pistas === 0) return "bien";
+  if (pistas >= 2 || errores >= 3) return "mal";
+  return "regular";
+}
+
+const EXPLICACION = {
+  bien: "Te salió entera y sin ayuda. ",
+  regular: "Te salió, pero con alguna ayuda. ",
+  mal: "Esta todavía no está. ",
+};
+
+function terminar() {
+  const nota = notaDe();
+  estado[linea.id] = RepasoEspaciado.calificar(estado[linea.id], nota);
+  guardarEstado();
+  sumarVista();
+
+  document.getElementById("turn-banner").textContent = "Línea completa.";
+  decir("", "");
+  document.getElementById("pista-btn").disabled = true;
+
+  const f = estado[linea.id];
+  document.getElementById("final-nota").textContent =
+    (nota === "bien" ? "✅ " : nota === "regular" ? "🟡 " : "🔁 ") + EXPLICACION[nota];
+  document.getElementById("final-idea").textContent = linea.idea;
+  document.getElementById("final-clave").textContent = linea.clave;
+  document.getElementById("final-cuando").textContent = f.intervalo === 0
+    ? "Vuelve a aparecer hoy mismo."
+    : "Vuelve a aparecer " + (f.intervalo === 1 ? "mañana." : "en " + f.intervalo + " días.");
+  document.getElementById("final").classList.remove("hidden");
+  pintarResumen();
+}
+
+function siguiente() {
+  // La cola se recalcula: si la línea se falló, vuelve a estar en ella.
+  const lista = lineasFiltradas().map((L) => L.id);
+  cola = RepasoEspaciado.pendientes(lista, estado).filter((id) => id !== linea.id);
+  if (cola.length) { empezar(cola[0]); return; }
+  mostrar("vista-lista");
+  pintarLista(true);
+  pintarResumen();
+}
+
+/* ---------------- ir y venir ---------------- */
+function mostrar(cual) {
+  document.getElementById("vista-lista").classList.toggle("hidden", cual !== "vista-lista");
+  document.getElementById("vista-tablero").classList.toggle("hidden", cual !== "vista-tablero");
+}
+
+document.getElementById("btn-repaso").addEventListener("click", () => {
+  document.getElementById("btn-repaso").classList.add("active");
+  document.getElementById("btn-todas").classList.remove("active");
+  pintarLista(true);
+});
+document.getElementById("btn-todas").addEventListener("click", () => {
+  document.getElementById("btn-todas").classList.add("active");
+  document.getElementById("btn-repaso").classList.remove("active");
+  pintarLista(false);
+});
+document.getElementById("f-tipo").addEventListener("change", () =>
+  pintarLista(document.getElementById("btn-repaso").classList.contains("active")));
+document.getElementById("f-nivel").addEventListener("change", () =>
+  pintarLista(document.getElementById("btn-repaso").classList.contains("active")));
+document.getElementById("volver-btn").addEventListener("click", () => {
+  mostrar("vista-lista");
+  pintarLista(document.getElementById("btn-repaso").classList.contains("active"));
+  pintarResumen();
+});
+document.getElementById("pista-btn").addEventListener("click", pista);
+document.getElementById("reiniciar-btn").addEventListener("click", () => empezar(linea.id));
+document.getElementById("siguiente-btn").addEventListener("click", siguiente);
+document.getElementById("repetir-btn").addEventListener("click", () => empezar(linea.id));
+document.querySelectorAll(".promo-btn").forEach((b) => b.addEventListener("click", () => {
+  if (!promoPendiente) return;
+  const jugada = Object.assign({ promotion: b.dataset.pieza }, promoPendiente);
+  promoPendiente = null;
+  document.getElementById("promo").classList.add("hidden");
+  intentar(jugada);
+}));
+
+/* ---------------- arranque ---------------- */
+async function init() {
+  let hay = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hay = !!(data && data.session);
+  } catch (e) { hay = false; }
+  if (!hay) {
+    document.getElementById("gate-checking").textContent =
+      "Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo…";
+    window.location.href = "../login.html?next=" + encodeURIComponent("entreno/aperturas.html");
+    return;
+  }
+  // El avance viaja con la cuenta: se baja y se funde ANTES de pintar, para
+  // seguir donde se quedó aunque sea otro aparato.
+  if (window.ProgresoUsuario) await ProgresoUsuario.init();
+  estado = leerEstado();
+
+  document.getElementById("gate").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("btn-repaso").classList.add("active");
+  pintarResumen();
+  pintarLista(true);
+}
+init();
+</script>
+</body>
+</html>

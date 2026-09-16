@@ -107,8 +107,8 @@ más además después jamás quizás atrás detrás través compás interés ing
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés
 demás porqué comité josé café también según razón bebé qué holandés
 aperturasmás
-elistá andrés valdés josué prevé
-empecé aprendí entendí tomé
+elistá andrés valdés josué prevé noé
+empecé aprendí entendí tomé repasé jugué estudié
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
 """.split())
@@ -203,7 +203,7 @@ def main():
     for pal in sorted(por_palabra):
         f, ctx = por_palabra[pal][0]
         print(f"{len(por_palabra[pal]):5d}  {pal:16s} {f}: …{ctx[:80]}…")
-    print("\nSi alguna no es voseo (un nombre propio, un futuro), agregala a BLANCA.")
+    print("\nSi alguna no es voseo (un nombre propio, un futuro), agrégala a BLANCA.")
     return 1
 
 sys.exit(main())
