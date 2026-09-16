@@ -409,6 +409,86 @@ una —alumno, profesor y administración, con el mismo progreso: ninguno— y
 cuenta cuántas lecciones o niveles quedaron abiertos: todos para administración,
 solo el primero para los otros dos.
 
+## Cobros: lo que se guarda es lo que pasó, no el estado
+
+`cobros.html` son las mensualidades de la Academia: planes, quién paga qué,
+cobros emitidos, pagos y morosidad. Es **una página para dos públicos**, como
+`informes.html`: quien coordina o administra lo maneja todo; cualquier otra
+cuenta ve **solo sus propios recibos**, de lectura.
+
+**No es una función de profesor, a propósito.** Todo pasa por
+`soy_coordinador()` (`es_coordinador or is_admin`): un profesor cualquiera no
+tiene por qué ver cuánto paga cada alumno. Está comprobado impersonando roles
+en SQL — un profesor sin coordinación recibe **cero filas** de `cobros_vista` y
+de `planes_cobro`; el alumno recibe la suya y ninguna más.
+
+- **`cobros.estado` solo vale `emitido` o `anulado`.** "Pagado" y "vencido" NO
+  se guardan: los calcula `public.cobros_vista` a partir de lo único que se
+  escribe — que se emitió un cobro y que entró un pago. Si "pagado" fuera una
+  columna habría que mantenerla al día con un trigger y podría contradecir a la
+  suma de los pagos, que es exactamente el fallo callado que ya tuvimos con el
+  contador de invitaciones. **La página tampoco recalcula: pinta la `situacion`
+  que viene de la base.**
+- Se aceptan **pagos parciales**: `pagos` es una fila por abono y el saldo es la
+  resta. Un cobro queda pagado cuando la suma alcanza, sin que nadie lo marque.
+- **`generar_cobros()` se puede correr todas las veces que se quiera.** El
+  índice único `(suscripcion_id, periodo_inicio)` es lo que impide duplicar:
+  la segunda corrida devuelve 0. Comprobado, y también que al mes siguiente
+  emite exactamente uno más.
+- El periodo arranca en el **mes** de `inicio`, no el día: la mensualidad de
+  quien entra el 20 cubre ese mes completo.
+- `cobros_resumen()` devuelve **una fila por moneda**: sumar colones con dólares
+  daría un número que no significa nada.
+- Las tres funciones de cuenta son **`SECURITY INVOKER`**, igual que las de
+  informes: quién ve qué lo sigue decidiendo la RLS de cada tabla.
+
+### Los avisos de morosidad
+
+Mismo circuito que los informes a la casa: `pg_cron` → `pg_net` → Edge Function
+`cobros-recordatorios` → Resend, desde el dominio verificado. Dos tareas
+diarias: `cobros-generar` a las 11:30 UTC (5:30 de la mañana en Costa Rica) y
+`cobros-recordatorios` a las 12:30 — los cobros quedan emitidos **antes** de que
+salgan los avisos.
+
+- Tres avisos: **tres días antes** de vencer, **al día siguiente** del
+  vencimiento y **a los 15 días**. Van a los encargados apuntados en Informes y
+  a la propia cuenta del alumno.
+- **Un correo por alumno, no uno por cobro**: a nadie le sirve recibir tres el
+  mismo día. Se manda el estado de cuenta entero con el tono del aviso más
+  urgente que tenga.
+- **Cada aviso se manda una sola vez**, y lo garantiza el índice único de
+  `avisos_cobro (cobro_id, tipo, correo)`, no un `if` en el código. La fila se
+  apunta **después** de que Resend acepte: si falla, mañana se reintenta en vez
+  de darlo por mandado. Comprobado de punta a punta contra `delivered@resend.dev`
+  — la primera corrida mandó 2 y la segunda saltó 2.
+- La tanda va firmada con su propio secreto del Vault (`tanda_cobros_secreto`,
+  generado por la migración y nunca escrito en ninguna parte). Comprobado: con
+  una firma inventada responde 401.
+- **El tono no amenaza.** Ni el aviso de los 15 días habla de sacar a nadie de
+  clase: dice que se hable. Quien lee puede ser una familia a la que se le
+  complicó el mes.
+
+### Pasarela y factura electrónica
+
+**No hay pasarela de pago, por decisión explícita**: el cobro se registra a mano
+(SINPE Móvil, transferencia o efectivo), que es como funciona de verdad la
+mayoría de academias acá y no necesita ninguna credencial. `pagos.metodo` ya
+contempla `tarjeta`, así que enchufar una pasarela (ONVO Pay, Tilopay) es sumar
+quién escribe esa fila, no rehacer el modelo.
+
+**Tampoco se emite factura electrónica de Hacienda**, pero las tablas ya tienen
+sus campos (`cobros.hacienda_clave`, `hacienda_consecutivo`, `hacienda_estado` y
+la tabla `datos_facturacion`) para no tener que migrar después. El consecutivo
+de hoy es el del **recibo interno** (`AI-2026-000123`). Emitir de verdad pide
+credenciales de ATV y certificado de firma digital, que son un trámite del
+dueño del negocio, no código.
+
+**Al tocar cobros.html, correr `node herramientas/verificar-cobros.js`** (con el
+sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad las
+dos caras de la página, que no recalcule situaciones, qué manda al crear un
+plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
+el CSV salga con punto y coma y BOM.
+
 ## El progreso vive en la cuenta, no en el aparato
 
 `js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por

@@ -568,7 +568,14 @@
             // página lo vuelve a comprobar, y la RLS es la que de verdad manda.
             if (profile.es_coordinador || profile.is_admin) {
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" }
+                    { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
+                    { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
+                );
+            } else {
+                // La misma página, pero quien no coordina solo ve lo suyo.
+                // No se le pone a quien coordina para no repetir el destino.
+                TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
+                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html" }
                 );
             }
 

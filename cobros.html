@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Cobros de la Academia — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: mensualidades, pagos y morosidad de la Academia.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Necesitas iniciar sesión</h1>
+            <p class="text-brand-500 dark:text-brand-300">Los cobros de la Academia son de cada cuenta.</p>
+            <a href="login.html?next=cobros.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Iniciar sesión</a>
+        </div>
+
+        <!-- ================= Lo que ve un alumno: solo sus propios recibos ================= -->
+        <div id="vista-alumno" class="hidden">
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">💳 Mis pagos</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Lo que se te ha cobrado y lo que queda pendiente.</p>
+
+            <div id="alumno-saldo" class="mb-6"></div>
+            <div id="alumno-lista" class="space-y-3"></div>
+            <p id="alumno-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                Todavía no tienes ningún cobro registrado.
+            </p>
+            <p class="mt-8 text-xs text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4">
+                ¿Algo no cuadra? Escríbenos por WhatsApp al
+                <a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline">+506 8309-2291</a>
+                y lo revisamos.
+            </p>
+        </div>
+
+        <!-- ================= Lo que ve quien coordina o administra ================= -->
+        <div id="app" class="hidden">
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">💳 Cobros de la Academia</h1>
+                    <p class="text-brand-500 dark:text-brand-300 mt-1">Planes, mensualidades, pagos y morosidad. Los cobros del periodo salen solos todos los días.</p>
+                </div>
+                <button type="button" id="generar-btn" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⚙️ Emitir los que falten</button>
+            </div>
+
+            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <!-- Tarjetas -->
+            <div id="tarjetas" class="mb-8 space-y-4"></div>
+
+            <!-- Fichas -->
+            <div class="flex flex-wrap gap-2 mb-6 border-b border-brand-200 dark:border-brand-700" role="tablist">
+                <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="cobros" aria-selected="true">📄 Cobros</button>
+                <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="morosidad" aria-selected="false">⏰ Morosidad</button>
+                <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="suscripciones" aria-selected="false">👥 Quién paga qué</button>
+                <button type="button" role="tab" class="ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg" data-ficha="planes" aria-selected="false">🏷️ Planes</button>
+            </div>
+
+            <!-- ---------------- Cobros ---------------- -->
+            <section id="ficha-cobros">
+                <div class="flex flex-wrap items-end gap-3 mb-4">
+                    <div>
+                        <label for="f-situacion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Situación</label>
+                        <select id="f-situacion" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendientes</option>
+                            <option value="vencido">Vencidos</option>
+                            <option value="pagado">Pagados</option>
+                            <option value="anulado">Anulados</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="f-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
+                        <select id="f-alumno" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                    <button type="button" id="csv-btn" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
+                </div>
+                <div id="cobros-lista" class="space-y-3"></div>
+                <p id="cobros-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    No hay cobros con ese filtro. Si todavía no has creado ningún plan, empieza por la ficha «Planes».
+                </p>
+            </section>
+
+            <!-- ---------------- Morosidad ---------------- -->
+            <section id="ficha-morosidad" class="hidden">
+                <div id="morosos-lista" class="space-y-3"></div>
+                <p id="morosos-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    Nadie está atrasado. 🎉
+                </p>
+                <p class="mt-6 text-xs text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4 leading-relaxed">
+                    Los avisos salen solos: uno tres días antes de vencer, otro al día siguiente del vencimiento y otro a los 15 días.
+                    Van a los encargados apuntados en Informes y a la propia cuenta del alumno, y cada aviso se manda una sola vez.
+                    «Recordar ahora» lo manda en el momento, sin esperar a la corrida del día.
+                </p>
+            </section>
+
+            <!-- ---------------- Suscripciones ---------------- -->
+            <section id="ficha-suscripciones" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Poner a un alumno en un plan</h2>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                        <div class="lg:col-span-2">
+                            <label for="s-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
+                            <select id="s-alumno" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="s-plan" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Plan</label>
+                            <select id="s-plan" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="s-dia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence el día</label>
+                            <input id="s-dia" type="number" min="1" max="28" value="5" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="s-descuento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Beca (%)</label>
+                            <input id="s-descuento" type="number" min="0" max="100" value="0" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <label for="s-inicio" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Desde</label>
+                            <input id="s-inicio" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">El primer cobro cubre el mes entero de esta fecha, aunque entre a mitad de mes.</p>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" id="s-guardar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="suscripciones-lista" class="space-y-3"></div>
+                <p id="suscripciones-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    Todavía nadie está en un plan.
+                </p>
+            </section>
+
+            <!-- ---------------- Planes ---------------- -->
+            <section id="ficha-planes" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Plan nuevo</h2>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                        <div class="lg:col-span-2">
+                            <label for="p-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre</label>
+                            <input id="p-nombre" type="text" maxlength="120" placeholder="Mensualidad" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="p-monto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Monto</label>
+                            <input id="p-monto" type="number" min="0" step="1" placeholder="25000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="p-moneda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Moneda</label>
+                            <select id="p-moneda" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="CRC">Colones (₡)</option>
+                                <option value="USD">Dólares ($)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="p-periodicidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cada cuánto</label>
+                            <select id="p-periodicidad" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="mensual">Cada mes</option>
+                                <option value="trimestral">Cada tres meses</option>
+                                <option value="semestral">Cada seis meses</option>
+                                <option value="anual">Cada año</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <label for="p-descripcion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Detalle (opcional)</label>
+                            <input id="p-descripcion" type="text" maxlength="500" placeholder="Dos clases por semana, grupo de la tarde" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" id="p-guardar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="planes-lista" class="space-y-3"></div>
+                <p id="planes-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    Todavía no hay ningún plan. El primero suele ser «Mensualidad».
+                </p>
+            </section>
+        </div>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* Cobros de la Academia.
+ *
+ * Una sola página para dos públicos, como informes.html:
+ *   - quien coordina o administra (profiles.es_coordinador / is_admin) ve y
+ *     maneja todo: planes, suscripciones, cobros, pagos y morosidad;
+ *   - cualquier otra cuenta ve SOLO sus propios recibos, de lectura.
+ * La página lo comprueba para no enseñar botones que van a fallar, pero quien
+ * de verdad lo impide es la RLS de cobros/pagos/planes_cobro.
+ *
+ * LO QUE ESTA PÁGINA NO HACE: decidir si un cobro está pagado o vencido. Eso
+ * lo calcula la vista cobros_vista en la base, a partir de lo único que se
+ * guarda — que se emitió un cobro y que entró un pago. Si la página lo
+ * recalculara por su lado, tarde o temprano diría algo distinto que la base.
+ */
+let session = null, perfil = null, coordina = false;
+let planes = [], suscripciones = [], cobros = [], alumnos = [];
+
+const FUNCION_COBROS = `${window.SUPABASE_URL}/functions/v1/cobros-recordatorios`;
+
+const METODOS = { sinpe: "SINPE Móvil", transferencia: "Transferencia", efectivo: "Efectivo", tarjeta: "Tarjeta", otro: "Otro" };
+const PERIODICIDAD = { mensual: "cada mes", trimestral: "cada tres meses", semestral: "cada seis meses", anual: "cada año" };
+const SITUACION = {
+    pendiente: { texto: "Pendiente", clase: "bg-brand-100 text-brand-700 dark:bg-brand-800 dark:text-brand-200" },
+    vencido:   { texto: "Vencido",   clase: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200" },
+    pagado:    { texto: "Pagado",    clase: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" },
+    anulado:   { texto: "Anulado",   clase: "bg-brand-100 text-brand-450 dark:bg-brand-800 dark:text-brand-350" },
+};
+
+// ------------------------------------------------------------------ ayudas
+function plata(monto, moneda) {
+    const n = Number(monto) || 0;
+    try {
+        return new Intl.NumberFormat("es-CR", { style: "currency", currency: moneda || "CRC",
+                                                minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+    } catch (e) {
+        return (moneda === "USD" ? "$" : "₡") + n.toLocaleString("es-CR");
+    }
+}
+function fecha(iso) {
+    if (!iso) return "";
+    return new Date(iso + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
+}
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200");
+    a.classList.remove("hidden");
+    if (!malo) setTimeout(() => a.classList.add("hidden"), 6000);
+}
+function nombreDe(id) {
+    const a = alumnos.find((x) => x.id === id);
+    return a ? (a.full_name || a.email || "Sin nombre") : "Alumno";
+}
+
+// ---------------------------------------------------------------- cargar
+async function cargarTodo() {
+    const [p, s, c, r] = await Promise.all([
+        sb.from("planes_cobro").select("*").order("created_at", { ascending: false }),
+        sb.from("suscripciones").select("*").eq("activa", true),
+        sb.from("cobros_vista").select("*").order("vence", { ascending: false }).limit(1000),
+        sb.rpc("cobros_resumen"),
+    ]);
+    for (const x of [p, s, c, r]) if (x.error) throw new Error(x.error.message);
+    planes = p.data || [];
+    suscripciones = s.data || [];
+    cobros = c.data || [];
+    pintarTarjetas(r.data || []);
+    pintarPlanes();
+    pintarSuscripciones();
+    pintarCobros();
+    await pintarMorosos();
+}
+
+// -------------------------------------------------------------- tarjetas
+function pintarTarjetas(resumen) {
+    const caja = document.getElementById("tarjetas");
+    caja.innerHTML = "";
+    if (!resumen.length) {
+        caja.appendChild(el("p", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 text-center text-brand-450 dark:text-brand-350 text-sm",
+            "Todavía no hay nada cobrado. Crea un plan, ponle alumnos y los cobros salen solos."));
+        return;
+    }
+    // Una fila de tarjetas por moneda: sumar colones con dólares daría un
+    // número que no significa nada.
+    resumen.forEach((r) => {
+        const fila = el("div", "grid gap-4 sm:grid-cols-2 lg:grid-cols-4");
+        const tarjeta = (valor, etiqueta, tono) => {
+            const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
+            d.appendChild(el("p", "text-2xl font-bold " + (tono || "text-brand-800 dark:text-white"), valor));
+            d.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", etiqueta));
+            return d;
+        };
+        fila.appendChild(tarjeta(plata(r.cobrado_mes, r.moneda), "cobrado este mes", "text-green-600 dark:text-green-400"));
+        fila.appendChild(tarjeta(plata(r.pendiente, r.moneda), "pendiente, aún al día"));
+        fila.appendChild(tarjeta(plata(r.vencido, r.moneda), "vencido", Number(r.vencido) > 0 ? "text-red-600 dark:text-red-400" : null));
+        fila.appendChild(tarjeta(String(r.alumnos_morosos), Number(r.alumnos_morosos) === 1 ? "alumno atrasado" : "alumnos atrasados"));
+        caja.appendChild(fila);
+    });
+}
+
+// ----------------------------------------------------------------- planes
+function pintarPlanes() {
+    const caja = document.getElementById("planes-lista");
+    caja.innerHTML = "";
+    document.getElementById("planes-vacio").classList.toggle("hidden", planes.length > 0);
+    planes.forEach((p) => {
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div");
+        const t = el("p", "font-semibold text-brand-800 dark:text-white");
+        t.append(p.nombre + " · ", el("span", "text-accent-700 dark:text-accent-400", plata(p.monto, p.moneda)));
+        t.append(" " + (PERIODICIDAD[p.periodicidad] || p.periodicidad));
+        izq.appendChild(t);
+        if (p.descripcion) izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", p.descripcion));
+        const cuantos = suscripciones.filter((s) => s.plan_id === p.id).length;
+        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1",
+            cuantos === 1 ? "1 alumno en este plan" : cuantos + " alumnos en este plan"));
+        d.appendChild(izq);
+
+        const btn = el("button", "text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+            + (p.activo ? "border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300"
+                        : "border-accent-400 text-accent-700 dark:text-accent-400"),
+            p.activo ? "Desactivar" : "Reactivar");
+        btn.type = "button";
+        btn.addEventListener("click", async () => {
+            const { error } = await sb.from("planes_cobro").update({ activo: !p.activo }).eq("id", p.id);
+            if (error) return avisar("No se pudo cambiar el plan: " + error.message, true);
+            p.activo = !p.activo;
+            avisar(p.activo ? "Plan reactivado." : "Plan desactivado: deja de emitir cobros nuevos, los que ya salieron se quedan.");
+            pintarPlanes();
+        });
+        d.appendChild(btn);
+        if (!p.activo) d.classList.add("opacity-60");
+        caja.appendChild(d);
+    });
+}
+
+async function crearPlan() {
+    const nombre = document.getElementById("p-nombre").value.trim();
+    const monto = Number(document.getElementById("p-monto").value);
+    if (!nombre) return avisar("Ponle nombre al plan.", true);
+    if (!(monto >= 0)) return avisar("El monto tiene que ser un número.", true);
+    const { error } = await sb.from("planes_cobro").insert({
+        nombre,
+        monto,
+        moneda: document.getElementById("p-moneda").value,
+        periodicidad: document.getElementById("p-periodicidad").value,
+        descripcion: document.getElementById("p-descripcion").value.trim() || null,
+        creado_por: session.user.id,
+    });
+    if (error) return avisar("No se pudo crear: " + error.message, true);
+    document.getElementById("p-nombre").value = "";
+    document.getElementById("p-monto").value = "";
+    document.getElementById("p-descripcion").value = "";
+    avisar("Plan creado.");
+    await cargarTodo();
+}
+
+// ---------------------------------------------------------- suscripciones
+function pintarSuscripciones() {
+    const caja = document.getElementById("suscripciones-lista");
+    caja.innerHTML = "";
+    document.getElementById("suscripciones-vacio").classList.toggle("hidden", suscripciones.length > 0);
+    const ordenadas = suscripciones.slice().sort((a, b) => nombreDe(a.student_id).localeCompare(nombreDe(b.student_id), "es"));
+    ordenadas.forEach((s) => {
+        const plan = planes.find((p) => p.id === s.plan_id);
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div");
+        izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", nombreDe(s.student_id)));
+        const detalle = [plan ? plan.nombre : "Plan borrado",
+                         plan ? plata(plan.monto * (1 - (Number(s.descuento_pct) || 0) / 100), plan.moneda) : "",
+                         "vence el " + s.dia_cobro,
+                         Number(s.descuento_pct) > 0 ? "beca " + Number(s.descuento_pct) + " %" : ""].filter(Boolean);
+        izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", detalle.join(" · ")));
+        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "Desde " + fecha(s.inicio)));
+        d.appendChild(izq);
+
+        const btn = el("button", "text-sm font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Dar de baja");
+        btn.type = "button";
+        btn.addEventListener("click", async () => {
+            if (!confirm("¿Dar de baja a " + nombreDe(s.student_id) + " de este plan? Los cobros ya emitidos se quedan como están.")) return;
+            const { error } = await sb.from("suscripciones")
+                .update({ activa: false, fin: new Date().toISOString().slice(0, 10) }).eq("id", s.id);
+            if (error) return avisar("No se pudo: " + error.message, true);
+            avisar("Dado de baja.");
+            await cargarTodo();
+        });
+        d.appendChild(btn);
+        caja.appendChild(d);
+    });
+}
+
+async function crearSuscripcion() {
+    const studentId = document.getElementById("s-alumno").value;
+    const planId = document.getElementById("s-plan").value;
+    if (!studentId || !planId) return avisar("Elige alumno y plan.", true);
+    const { error } = await sb.from("suscripciones").insert({
+        student_id: studentId,
+        plan_id: planId,
+        inicio: document.getElementById("s-inicio").value || new Date().toISOString().slice(0, 10),
+        dia_cobro: Number(document.getElementById("s-dia").value) || 5,
+        descuento_pct: Number(document.getElementById("s-descuento").value) || 0,
+        creado_por: session.user.id,
+    });
+    if (error) {
+        return avisar(error.code === "23505"
+            ? "Ese alumno ya está en ese plan."
+            : "No se pudo: " + error.message, true);
+    }
+    avisar("Listo. Los cobros de los periodos que correspondan salen con «Emitir los que falten» o solos mañana.");
+    await cargarTodo();
+}
+
+// ----------------------------------------------------------------- cobros
+function cobrosFiltrados() {
+    const situacion = document.getElementById("f-situacion").value;
+    const alumno = document.getElementById("f-alumno").value;
+    return cobros.filter((c) => (!situacion || c.situacion === situacion) && (!alumno || c.student_id === alumno));
+}
+
+function pintarCobros() {
+    const caja = document.getElementById("cobros-lista");
+    caja.innerHTML = "";
+    const lista = cobrosFiltrados();
+    document.getElementById("cobros-vacio").classList.toggle("hidden", lista.length > 0);
+    lista.slice(0, 300).forEach((c) => caja.appendChild(tarjetaCobro(c, true)));
+}
+
+function tarjetaCobro(c, conBotones) {
+    const s = SITUACION[c.situacion] || SITUACION.pendiente;
+    const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+    const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
+
+    const izq = el("div", "min-w-0");
+    const linea = el("p", "font-semibold text-brand-800 dark:text-white");
+    linea.append(c.concepto + " ");
+    linea.appendChild(el("span", "ml-1 inline-block px-2 py-0.5 rounded-full text-xs font-semibold " + s.clase, s.texto));
+    izq.appendChild(linea);
+    if (conBotones) izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", nombreDe(c.student_id)));
+    const pie = [c.consecutivo, "vence el " + fecha(c.vence)];
+    if (c.dias_atraso > 0) pie.push(c.dias_atraso + (c.dias_atraso === 1 ? " día de atraso" : " días de atraso"));
+    if (Number(c.pagado) > 0 && Number(c.saldo) > 0) pie.push("abonado " + plata(c.pagado, c.moneda));
+    izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", pie.join(" · ")));
+    fila.appendChild(izq);
+
+    const der = el("div", "text-right");
+    der.appendChild(el("p", "text-lg font-bold text-brand-800 dark:text-white", plata(c.monto, c.moneda)));
+    if (Number(c.saldo) > 0 && c.situacion !== "anulado") {
+        der.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350", "faltan " + plata(c.saldo, c.moneda)));
+    }
+    fila.appendChild(der);
+    d.appendChild(fila);
+
+    if (conBotones && c.situacion !== "anulado" && Number(c.saldo) > 0) {
+        const botones = el("div", "flex flex-wrap gap-2 mt-3 pt-3 border-t border-brand-100 dark:border-brand-800");
+        const pagar = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "💵 Registrar pago");
+        pagar.type = "button";
+        pagar.addEventListener("click", () => registrarPago(c));
+        botones.appendChild(pagar);
+
+        const anular = el("button", "border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Anular");
+        anular.type = "button";
+        anular.addEventListener("click", () => anularCobro(c));
+        botones.appendChild(anular);
+        d.appendChild(botones);
+    }
+    return d;
+}
+
+async function registrarPago(c) {
+    const cuanto = prompt("¿Cuánto entró? Faltan " + plata(c.saldo, c.moneda) + ".", String(c.saldo));
+    if (cuanto === null) return;
+    const monto = Number(String(cuanto).replace(/[^\d.]/g, ""));
+    if (!(monto > 0)) return avisar("Ese monto no es un número.", true);
+    const metodo = (prompt("¿Cómo pagó? Escribe: sinpe, transferencia, efectivo, tarjeta u otro.", "sinpe") || "").trim().toLowerCase();
+    if (!METODOS[metodo]) return avisar("Método desconocido. Usa sinpe, transferencia, efectivo, tarjeta u otro.", true);
+    const referencia = prompt("Número de comprobante o referencia (opcional):", "") || null;
+
+    const { error } = await sb.from("pagos").insert({
+        cobro_id: c.id, monto, metodo, referencia, registrado_por: session.user.id,
+    });
+    if (error) return avisar("No se pudo registrar: " + error.message, true);
+    avisar("Pago registrado: " + plata(monto, c.moneda) + " por " + METODOS[metodo] + ".");
+    await cargarTodo();
+}
+
+async function anularCobro(c) {
+    const motivo = prompt("¿Por qué se anula este cobro? (queda apuntado)", "");
+    if (motivo === null) return;
+    const { error } = await sb.from("cobros")
+        .update({ estado: "anulado", anulado_motivo: motivo.trim() || null }).eq("id", c.id);
+    if (error) return avisar("No se pudo anular: " + error.message, true);
+    avisar("Cobro anulado.");
+    await cargarTodo();
+}
+
+// -------------------------------------------------------------- morosidad
+async function pintarMorosos() {
+    const caja = document.getElementById("morosos-lista");
+    caja.innerHTML = "";
+    const { data, error } = await sb.rpc("cobros_morosos");
+    if (error) { caja.appendChild(el("p", "text-sm text-red-500", "No se pudo cargar: " + error.message)); return; }
+    const lista = data || [];
+    document.getElementById("morosos-vacio").classList.toggle("hidden", lista.length > 0);
+    lista.forEach((m) => {
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div");
+        izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", m.alumno));
+        izq.appendChild(el("p", "text-sm text-red-600 dark:text-red-400",
+            plata(m.deuda, m.moneda) + " · " + m.cobros + (Number(m.cobros) === 1 ? " cobro" : " cobros")
+            + " · " + m.dias_atraso + (Number(m.dias_atraso) === 1 ? " día" : " días") + " de atraso"));
+        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
+            (m.grupo ? m.grupo + " · " : "") + (m.correo || "") + " · el más viejo vencía el " + fecha(m.vence_mas_viejo)));
+        d.appendChild(izq);
+
+        const btn = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "📧 Recordar ahora");
+        btn.type = "button";
+        btn.addEventListener("click", async () => {
+            btn.disabled = true; btn.textContent = "Mandando…";
+            try {
+                const r = await llamarCobros({ action: "recordar_ahora", student_id: m.student_id });
+                avisar("Recordatorio mandado a: " + (r.correos || []).join(", "));
+            } catch (err) {
+                avisar("No se pudo mandar: " + err.message, true);
+            }
+            btn.disabled = false; btn.textContent = "📧 Recordar ahora";
+        });
+        d.appendChild(btn);
+        caja.appendChild(d);
+    });
+}
+
+async function llamarCobros(cuerpo) {
+    const res = await fetch(FUNCION_COBROS, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": window.SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(cuerpo),
+    });
+    const datos = await res.json().catch(() => ({}));
+    if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+    return datos;
+}
+
+// -------------------------------------------------------------------- CSV
+function bajarCsv() {
+    const lista = cobrosFiltrados();
+    if (!lista.length) return avisar("No hay nada que bajar con ese filtro.", true);
+    const cols = ["Consecutivo", "Alumno", "Concepto", "Periodo", "Monto", "Pagado", "Saldo", "Moneda", "Vence", "Situación", "Días de atraso"];
+    const filas = lista.map((c) => [
+        c.consecutivo, nombreDe(c.student_id), c.concepto,
+        c.periodo_inicio + " a " + c.periodo_fin,
+        c.monto, c.pagado, c.saldo, c.moneda, c.vence,
+        (SITUACION[c.situacion] || {}).texto || c.situacion, c.dias_atraso,
+    ]);
+    const escapar = (v) => {
+        const t = String(v == null ? "" : v);
+        return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+    };
+    // Punto y coma y BOM: es lo que Excel en español abre de un doble clic.
+    // Con coma, Excel mete la fila entera en la columna A.
+    const texto = "﻿" + [cols, ...filas].map((f) => f.map(escapar).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([texto], { type: "text/csv;charset=utf-8;" }));
+    a.download = "cobros-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ------------------------------------------------------- vista del alumno
+async function vistaAlumno() {
+    const { data, error } = await sb.from("cobros_vista").select("*").order("vence", { ascending: false });
+    const caja = document.getElementById("alumno-lista");
+    if (error) {
+        caja.appendChild(el("p", "text-sm text-red-500", "No se pudieron cargar tus cobros: " + error.message));
+        return;
+    }
+    const lista = data || [];
+    document.getElementById("alumno-vacio").classList.toggle("hidden", lista.length > 0);
+    const debe = lista.filter((c) => c.situacion === "pendiente" || c.situacion === "vencido");
+    const saldo = document.getElementById("alumno-saldo");
+    if (debe.length) {
+        const moneda = debe[0].moneda;
+        const total = debe.filter((c) => c.moneda === moneda).reduce((s, c) => s + Number(c.saldo), 0);
+        const hayVencido = debe.some((c) => c.situacion === "vencido");
+        const d = el("div", "rounded-2xl p-5 " + (hayVencido
+            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+            : "bg-white dark:bg-brand-900 shadow-md"));
+        d.appendChild(el("p", "text-2xl font-bold", plata(total, moneda)));
+        d.appendChild(el("p", "text-sm mt-1", hayVencido ? "pendiente, con algo ya vencido" : "pendiente de pago"));
+        saldo.appendChild(d);
+    } else if (lista.length) {
+        const d = el("div", "rounded-2xl p-5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100");
+        d.appendChild(el("p", "text-lg font-bold", "Estás al día. 🎉"));
+        saldo.appendChild(d);
+    }
+    lista.forEach((c) => caja.appendChild(tarjetaCobro(c, false)));
+}
+
+// ------------------------------------------------------------------ fichas
+function mostrarFicha(cual) {
+    ["cobros", "morosidad", "suscripciones", "planes"].forEach((f) => {
+        document.getElementById("ficha-" + f).classList.toggle("hidden", f !== cual);
+    });
+    document.querySelectorAll(".ficha-btn").forEach((b) => {
+        const activa = b.dataset.ficha === cual;
+        b.setAttribute("aria-selected", activa ? "true" : "false");
+        b.className = "ficha-btn px-4 py-2.5 text-sm font-semibold rounded-t-lg " + (activa
+            ? "bg-white dark:bg-brand-900 text-brand-800 dark:text-white border-b-2 border-accent-500"
+            : "text-brand-500 dark:text-brand-300 hover:text-brand-800 dark:hover:text-white");
+    });
+}
+
+// ---------------------------------------------------------------- arranque
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) {
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+    perfil = p;
+    coordina = !!(perfil && (perfil.es_coordinador || perfil.is_admin));
+
+    if (!coordina) {
+        await vistaAlumno();
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("vista-alumno").classList.remove("hidden");
+        return;
+    }
+
+    // Los alumnos que uno ve: la misma función de Informes, así que el filtro
+    // de quién sale es el de la RLS y no está escrito dos veces.
+    const { data: gente } = await sb.rpc("informes_resumen_alumnos");
+    alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email }))
+        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || "", "es"));
+    const opciones = (vacio) => '<option value="">' + vacio + "</option>"
+        + alumnos.map((a) => `<option value="${a.id}">${(a.full_name || a.email || "Sin nombre").replace(/[<>&"]/g, "")}</option>`).join("");
+    document.getElementById("f-alumno").innerHTML = opciones("Todos");
+    document.getElementById("s-alumno").innerHTML = opciones("— Elige —");
+    document.getElementById("s-inicio").value = new Date().toISOString().slice(0, 10);
+
+    try {
+        await cargarTodo();
+    } catch (err) {
+        document.getElementById("loading").textContent = "No se pudieron cargar los cobros: " + (err.message || err);
+        return;
+    }
+    // El selector de plan se llena después de cargar, que es cuando hay planes.
+    document.getElementById("s-plan").innerHTML = planes.filter((x) => x.activo)
+        .map((x) => `<option value="${x.id}">${x.nombre.replace(/[<>&"]/g, "")} · ${plata(x.monto, x.moneda)}</option>`).join("");
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    mostrarFicha("cobros");
+}
+
+document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
+document.getElementById("p-guardar").addEventListener("click", crearPlan);
+document.getElementById("s-guardar").addEventListener("click", crearSuscripcion);
+document.getElementById("f-situacion").addEventListener("change", pintarCobros);
+document.getElementById("f-alumno").addEventListener("change", pintarCobros);
+document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+document.getElementById("generar-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("generar-btn");
+    btn.disabled = true; btn.textContent = "Emitiendo…";
+    const { data, error } = await sb.rpc("generar_cobros");
+    btn.disabled = false; btn.textContent = "⚙️ Emitir los que falten";
+    if (error) return avisar("No se pudo: " + error.message, true);
+    avisar(data ? "Se emitieron " + data + (data === 1 ? " cobro." : " cobros.") : "No faltaba ninguno: ya estaban todos emitidos.");
+    if (data) await cargarTodo();
+});
+init();
+    </script>
+</body>
+</html>
