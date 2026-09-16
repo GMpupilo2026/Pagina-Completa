@@ -480,7 +480,7 @@ function updateBlindInputVisibility(){
 // lee un lector de pantalla real), para quien no tiene uno activado. Ver
 // js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 function applyBlindModeUI(){
@@ -726,7 +726,7 @@ function setStatus(text, cls){
   const el = document.getElementById('lesson-status');
   el.textContent = text;
   el.className = 'lesson-status' + (cls ? ' ' + cls : '');
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  if(window.BlindNotation) window.BlindNotation.speak(text);
 }
 
 function finishLesson(){

@@ -72,7 +72,7 @@ window.JuegosBlind = (function () {
     } catch (e) {}
 
     const refreshSpeechToggle = typeof BlindNotation !== "undefined"
-      ? BlindNotation.setupSpeechToggle("speech-toggle-btn", function () { return blindMode; })
+      ? BlindNotation.setupSpeechToggle("speech-toggle-btn", function () { return true; })
       : null;
 
     function applyModeUI() {

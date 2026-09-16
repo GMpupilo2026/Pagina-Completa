@@ -203,9 +203,11 @@ window.BlindNotation = (function () {
   }
 
   // Botón "🗣️ Voz" reutilizable: se coloca junto al interruptor normal/adaptado de
-  // cada página y solo aparece cuando el modo adaptado está activo (sin lector de
-  // pantalla real ni modo adaptado, no tiene nada que leer). `getVisible()` decide
-  // si el botón debe mostrarse en este momento (normalmente, si blindMode es true).
+  // cada página. Disponible en modo normal y en modo adaptado por igual — decir en
+  // voz alta cada jugada es útil aunque no se esté usando la interacción por
+  // comandos de texto de Modo Adaptado. `getVisible()` sigue existiendo por si
+  // alguna página necesita ocultarlo en algún caso (normalmente devuelve `true`
+  // sin condición).
   function setupSpeechToggle(buttonId, getVisible) {
     const btn = document.getElementById(buttonId);
     if (!btn || !hasSpeechApi) return null;
