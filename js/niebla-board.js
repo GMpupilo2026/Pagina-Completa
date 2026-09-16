@@ -110,6 +110,10 @@
       if (!move) return;
       this.selected = null;
       this.render();
+      this._afterMove(move);
+    }
+
+    _afterMove(move) {
       let gameOver = false, result = null;
       if (this.game.in_checkmate()) {
         gameOver = true;
@@ -119,6 +123,20 @@
         result = "draw";
       }
       this.onMove({ fen: this.game.fen(), san: move.san, gameOver: gameOver, result: result });
+    }
+
+    // ---------- Accesibilidad: jugar escribiendo la jugada en vez de tocar el tablero ----------
+    // Usa el mismo intérprete de texto que el resto del sitio (js/chess-move-parser.js) —
+    // ver js/juegos-blind.js, que llama a esto desde el cuadro de texto del modo adaptado.
+    tryMove(rawText) {
+      if (!this._canActNow()) return { ok: false, reason: "no_turn" };
+      if (typeof ChessMoveParser === "undefined") return { ok: false, reason: "no_parser" };
+      const move = ChessMoveParser.tryParseMove(this.game, rawText);
+      if (!move) return { ok: false, reason: "invalid" };
+      this.selected = null;
+      this.render();
+      this._afterMove(move);
+      return { ok: true, san: move.san };
     }
 
     _onSquareClick(square) {

@@ -33,6 +33,9 @@
     <script src="js/board-color-themes.js"></script>
     <script src="js/niebla-board.js"></script>
     <script src="js/turn-alert.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/chess-move-parser.js"></script>
+    <script src="js/juegos-blind.js"></script>
     <script src="js/adaptive-mode.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
@@ -93,19 +96,42 @@
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
-            <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">🌫️ Niebla de Guerra</h1>
                 <button id="resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
             </div>
 
+            <div class="flex items-center justify-end gap-2 mb-3 text-[11px]">
+                <span class="text-brand-450 dark:text-brand-350">Modo:</span>
+                <div class="inline-flex rounded border border-brand-100 dark:border-brand-800 overflow-hidden font-medium" role="group" aria-label="Elegir modo de interacción">
+                    <button type="button" id="mode-normal-btn" aria-pressed="true" class="px-2 py-1 transition-colors bg-brand-700 text-white">Modo normal</button>
+                    <button type="button" id="mode-blind-btn" aria-pressed="false" class="px-2 py-1 transition-colors text-brand-450 dark:text-brand-350 hover:text-brand-600 dark:hover:text-brand-300">🔊 Adaptado</button>
+                </div>
+                <button type="button" id="speech-toggle-btn" style="display:none" class="px-2 py-1 rounded border border-brand-100 dark:border-brand-800 transition-colors text-brand-500 dark:text-brand-300 hover:text-brand-700 dark:hover:text-brand-200"></button>
+            </div>
+
             <p id="spectator-hint" class="hidden mb-3 text-xs text-brand-450 dark:text-brand-350 italic">👁️ Estás mirando como profesor: ves el tablero completo, sin niebla, para poder supervisar.</p>
 
-            <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
+            <div id="status-banner" role="status" aria-live="polite" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
             <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex items-center justify-center gap-2 mb-2">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="top-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
+            </div>
+
+            <div class="blind-mode-only hidden max-w-[480px] mx-auto mb-4">
+                <h2 class="text-sm font-serif font-bold text-brand-700 dark:text-brand-200 mb-2">Escribir jugada</h2>
+                <form id="move-form" class="flex flex-col sm:flex-row gap-2 sm:items-end">
+                    <div class="flex-1">
+                        <label for="move-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Escribe tu jugada (útil con lector de pantalla)</label>
+                        <input id="move-input" type="text" autocomplete="off" placeholder="Ej: e4, Cf3, Dxe5, O-O" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    </div>
+                    <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
+                </form>
+                <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
+                <div id="position-readout" role="region" aria-live="polite" aria-label="Lo que ves en el tablero" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 italic">🌫️ En Niebla de Guerra, "lo que ves" solo incluye tus propias piezas y las casillas que alcanzan a atacar o defender — igual que en el tablero visual, no se revela lo que hay bajo la niebla.</p>
             </div>
 
             <div class="flex justify-center">
@@ -148,7 +174,7 @@
     </footer>
     <script src="js/main.js"></script>
     <script>
-        let session = null, profile = null, isTeacher = false, room = null, myColor = null, board = null;
+        let session = null, profile = null, isTeacher = false, room = null, myColor = null, board = null, blindCtl = null;
         const ROOM_ID = new URLSearchParams(window.location.search).get("room");
         const playerNames = {};
 
@@ -347,6 +373,7 @@
             renderMovesPanel(room);
             updateStatusText();
             renderClocks();
+            if (blindCtl) blindCtl.announceOwnMove(info.san);
         }
 
         function applyRemoteRoom(row) {
@@ -358,6 +385,12 @@
             updateStatusText();
             renderClocks();
             TorneoSync.onRoomUpdate(sb, row);
+            // Si cambió la posición, es porque la jugada la hizo el rival — la propia ya
+            // quedó reflejada en "room" de forma local antes de que llegue este eco (ver
+            // handleLocalMove), así que este caso siempre es una jugada ajena de verdad.
+            if (positionChanged && blindCtl && row.moves && row.moves.length) {
+                blindCtl.announceOpponentMove(row.moves[row.moves.length - 1]);
+            }
         }
 
         function subscribeRoom() {
@@ -409,6 +442,29 @@
             updateStatusText();
             renderClocks();
             subscribeRoom();
+
+            // Modo adaptado: "lo que ves" respeta la niebla — solo tus propias piezas y las
+            // casillas que alcanzan a atacar o defender, igual que en el tablero visual. Un
+            // espectador (el profesor) ve todo, sin niebla, igual que en el tablero visual.
+            if (window.JuegosBlind) {
+                blindCtl = JuegosBlind.init({
+                    tryMove: (text) => board.tryMove(text),
+                    getVisibleGame: () => {
+                        if (!myColor) return board.game;
+                        const visible = NieblaGuerra.visibleSquaresFor(board.game, myColor);
+                        return {
+                            get: (sq) => (visible.has(sq) ? board.game.get(sq) : null),
+                            turn: () => board.game.turn(),
+                            in_check: () => board.game.in_check(),
+                        };
+                    },
+                    // La niebla oculta la jugada del rival igual que oculta el panel de
+                    // jugadas visual (ver renderMovesPanel) — no se anuncia qué jugó ni
+                    // adónde, solo que ya jugó (el status "Es tu turno" ya lo dice, por el
+                    // aria-live del status-banner).
+                    describeOpponentMove: () => null,
+                });
+            }
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
