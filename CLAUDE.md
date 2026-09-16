@@ -1280,6 +1280,68 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
   `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
 
+## Lo pesado se baja cuando se usa, no al entrar
+
+La portada pesaba **7,9 MB** y tardaba 16 segundos en terminar de cargar con red
+de celular. No era el diseño ni el CSS: eran tres archivos del bot que se
+bajaban al abrir la página, jugara alguien o no.
+
+- `js/oscar-book.js` traía el libro de aperturas **escrito adentro**: 2,9 MB con
+  las 94.106 posiciones de las ~32.400 partidas de Oscar.
+- `tablero-board.js` pedía al cargar la **procedencia** de cada jugada
+  (`data/oscar-book-provenance.json`, 4,2 MB) — y en `index.html` el panel que
+  la muestra **ni existe**: se bajaba entera para tirarla a la basura.
+- …y arrancaba el motor Stockfish (587 KB de WASM) con un `preload()`.
+
+Quien entra a leer que hay clases en vivo y se va sin tocar una pieza —que es
+la mayoría— se descargaba los tres. Ahora:
+
+- **El libro vive en `data/oscar-book.json`** y lo baja `chess-bot.js` con
+  `cargarLibro()`, memoizado, la primera vez que al bot le toca mover. En
+  `js/oscar-book.js` solo quedó `OSCAR_ELO_CALIB` (medio kilobyte), que sí hace
+  falta enseguida: es con lo que el bot sabe con qué Elo juega en "Difícil".
+- **La procedencia se pide cuando el bot juega su primera jugada del libro**,
+  que es el primer momento en que el panel tiene algo que decir, y **solo en las
+  páginas que tienen el panel**.
+- **El motor y el libro se precalientan al tocar el tablero**, no al cargar la
+  página. Entre que alguien agarra una pieza y la suelta hay tiempo de sobra,
+  así que para quien juega no cambia nada.
+- Los scripts del tablero van con `defer`.
+
+Resultado medido en un navegador de verdad, con 4G lenta y el procesador a un
+cuarto: **7,9 MB → 0,21 MB**, y el `load` de 16,6 s a 1,6 s.
+
+**Si la descarga del libro falla, no pasa nada, y es a propósito**:
+`getBookMoveForHash()` ya devolvía `null` para una posición que el libro no
+conoce, así que sin libro el bot juega con el motor — exactamente lo que hacía
+antes en cualquier posición fuera del repertorio.
+
+Y ahí está el peligro de todo esto: **nada de esto da error**. Si el libro no
+llega, el bot no falla — deja de jugar como Oscar y nadie se entera. Si mañana
+algo vuelve a pedir el libro al cargar, tampoco falla nada: la portada vuelve a
+pesar 8 MB en silencio. Por eso:
+
+**Al tocar el tablero, el bot o lo que carga, correr `node
+herramientas/verificar-carga-tablero.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Comprueba las dos mitades en un
+navegador de verdad: que al CARGAR no se pida ninguno de los tres pesos
+pesados y que la portada quepa en 1 MB; y que al JUGAR sí se pidan, que el
+libro llegue **completo** (cuenta las posiciones contra el archivo, porque un
+JSON truncado o un 404 tampoco darían error) y que el bot conteste.
+
+- **`_headers` le pone un día de caché a los dos archivos de datos.** Cambian
+  cuando se regeneran con partidas nuevas, o sea casi nunca, y sin eso quien
+  juega un par de partidas se los vuelve a bajar en cada visita. Que queden un
+  día viejos no rompe nada — ahí está la diferencia con el CSS, que si queda
+  viejo deja la página sin la mitad de sus clases (por eso `sw.js` va a la red
+  primero). Un libro viejo es un repertorio de hace unos días.
+- **El service worker no los guarda** (`/data/oscar-book` está en `NUNCA`):
+  serían 7 MB en el teléfono de quien probó el tablero una vez. Jugar sin red no
+  es algo que el sitio prometa.
+- `img/oscar-avatar-160.jpg` existe porque el de 480 px se mostraba en casillas
+  de 40 y 80 px. El grande se sigue usando donde de verdad se ve grande
+  (`sobre-oscar.html`, a 256 px).
+
 ## Metadatos: que el enlace se vea y la página se encuentre
 
 Cada página pública lleva su descripción, su `canonical` y su bloque de Open

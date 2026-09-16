@@ -20,7 +20,7 @@
  *     teléfono sería dejarlos ahí después de cerrar sesión;
  *   - las respuestas que no vengan bien (un 404 o un 500 no se guardan).
  */
-const VERSION = "ai-2026-09-1";
+const VERSION = "ai-2026-09-2";
 const CACHE = "ajedrez-integral-" + VERSION;
 
 /* El mínimo para que la app abra sin red y explique qué pasa. */
@@ -40,6 +40,12 @@ const NUNCA = [
   /^\/cursos\/recursos\//,
   /^\/api\//,
   /^\/\.well-known\//,
+  // El libro de aperturas (2,9 MB) y la procedencia de cada jugada (4,2 MB).
+  // Son los datos del bot y solo se piden cuando alguien juega contra él;
+  // guardarlos sería dejarle 7 MB en el teléfono a quien probó el tablero una
+  // vez. Jugar sin red no es algo que este sitio prometa: sin señal se cae en
+  // offline.html, como todo lo demás.
+  /^\/data\/oscar-book/,
 ];
 
 self.addEventListener("install", (evento) => {
