@@ -47,7 +47,7 @@
   const RES_TXT = { "1-0": "Ganan blancas", "0-1": "Ganan negras", "½": "Tablas" };
   const ES = { K: "R", Q: "D", R: "T", B: "A", N: "C" };
 
-  let data = null, dataPromise = null, defsInjected = false;
+  let data = null, dataPromise = null, defsInjected = false, cmdSeq = 0;
 
   function loadData(url) {
     if (data && data.__url === url) return Promise.resolve(data);
@@ -164,12 +164,13 @@
     const moves = d.jugadas || [];
     const state = { ply: 0, flip: false, mode: "ver", practice: null, showSol: !d.examen };
     const hasSol = moves.length > 0 && !d.ilustracion;
+    const cmdId = "f100-cmd-" + (++cmdSeq);
     el.classList.add("f100-viewer");
     el.innerHTML =
       '<div class="f100-head"><span class="f100-num">' + esc(d.id.replace(/^F(\d+)-(\d+)$/, "Final $1 · diagrama $2").replace(/^EB-/, "Pregunta ").replace(/^EF-/, "Pregunta ").replace(/^FT-/, "Fortaleza ")) + "</span>" +
       '<span class="f100-res" data-res="' + esc(d.resultado) + '">' + esc(d.examen ? "Juegan " + (d.turno === "w" ? "blancas" : "negras") : RES_TXT[d.resultado] + (d.fin ? " → " + RES_TXT[d.fin] : "")) + "</span></div>" +
       '<div class="f100-board" tabindex="0" aria-label="Diagrama"></div>' +
-      '<p class="f100-desc sr-only"></p>' +
+      '<p class="f100-desc sr-only" aria-live="polite" aria-atomic="true"></p>' +
       '<div class="f100-controls" role="group" aria-label="Recorrer la línea">' +
       '<button type="button" data-act="first" aria-label="Posición inicial">⏮</button><button type="button" data-act="prev" aria-label="Jugada anterior">◀</button>' +
       '<span class="f100-ply" aria-live="polite"></span>' +
@@ -179,6 +180,9 @@
       '<div class="f100-practice"><button type="button" data-act="practice" class="f100-btn">♟ Practicar contra el motor</button>' +
       '<label class="f100-level">Nivel <select data-act="level"><option value="1500">1500</option><option value="1800" selected>1800</option><option value="max">Máximo</option></select></label>' +
       '<span class="f100-pstatus" aria-live="polite"></span></div>' +
+      '<form class="f100-cmd" hidden><label for="' + cmdId + '">Escribe tu jugada</label> ' +
+      '<input type="text" id="' + cmdId + '" class="f100-cmd-input" autocomplete="off" placeholder="ej. Cf3, e4, Dxh7+, e8=D"> ' +
+      '<button type="submit" class="f100-btn f100-btn2">Jugar</button></form>' +
       '<div class="f100-promo" hidden><span>Coronar:</span><button data-p="q">♕ Dama</button><button data-p="r">♖ Torre</button><button data-p="b">♗ Alfil</button><button data-p="n">♘ Caballo</button></div>' +
       '<div class="f100-msg" aria-live="polite"></div>';
     const boardEl = el.querySelector(".f100-board");
@@ -187,6 +191,8 @@
     const msgEl = el.querySelector(".f100-msg");
     const pst = el.querySelector(".f100-pstatus");
     const descEl = el.querySelector(".f100-desc");
+    const cmdForm = el.querySelector(".f100-cmd");
+    const cmdInput = cmdForm.querySelector("input");
 
     function currentFen() { return state.ply === 0 ? startFen : moves[state.ply - 1].fen; }
     function lastSquares() {
@@ -249,6 +255,7 @@
       practBtn.textContent = "✕ Terminar la práctica";
       msgEl.textContent = "";
       pst.textContent = "Juegas con " + (human === "w" ? "blancas" : "negras") + ". Objetivo: " + objetivo();
+      cmdForm.hidden = false;
       PracticeEngine.preload();
       renderPractice();
     }
@@ -259,7 +266,7 @@
     }
     function stopPractice(final) {
       state.mode = "ver"; practBtn.textContent = "♟ Practicar contra el motor"; pst.textContent = "";
-      el.querySelector(".f100-promo").hidden = true; thinking = false;
+      el.querySelector(".f100-promo").hidden = true; cmdForm.hidden = true; thinking = false;
       if (!final) msgEl.textContent = "";
       renderView();
     }
@@ -289,6 +296,17 @@
       const p = game.get(sq);
       sel = p && p.color === human ? sq : null;
       renderPractice();
+    });
+    cmdForm.addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      if (state.mode !== "practicar" || thinking || pendingPromo) return;
+      const raw = cmdInput.value;
+      if (!raw.trim()) return;
+      if (game.turn() !== human) { msgEl.textContent = "No es tu turno todavía."; return; }
+      if (typeof ChessMoveParser === "undefined") { msgEl.textContent = "Falta cargar el intérprete de jugadas."; return; }
+      const mv = ChessMoveParser.tryParseMove(game, raw);
+      if (!mv) { msgEl.textContent = 'Jugada no válida: "' + raw + '". Revísala e intenta de nuevo.'; return; }
+      cmdInput.value = ""; sel = null; afterHuman();
     });
     function finishPromotion(piece) {
       if (!pendingPromo) return;

@@ -31,6 +31,14 @@
 .dark .f100-level select{background:#243b53;color:#f0f4f8;border-color:#334e68}
 .f100-promo{display:flex;gap:.4rem;align-items:center;font-size:.8rem;grid-column:1/-1}
 .f100-promo button{border:1px solid #bcccdc;border-radius:.4rem;background:#fff;padding:.2rem .5rem;cursor:pointer}
+.f100-cmd{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.8rem;color:#627d98;grid-column:1/-1}
+.f100-cmd label{white-space:nowrap}
+.f100-cmd-input{border:1px solid #bcccdc;border-radius:.4rem;padding:.3rem .5rem;font-size:.85rem;background:#fff;color:#102a43;flex:1;min-width:8rem}
+.dark .f100-cmd-input{background:#243b53;color:#f0f4f8;border-color:#334e68}
+.f100-btn2{background:#f0f4f8;color:#102a43;border:1px solid #bcccdc}
+.dark .f100-btn2{background:#243b53;color:#f0f4f8;border-color:#334e68}
+.f100-btn2:hover{background:#d9e2ec}
+.f100-cmd[hidden]{display:none}
 .f100-msg{grid-column:1/-1;font-size:.85rem;color:#243b53;font-weight:500;min-height:0}.dark .f100-msg{color:#f0f4f8}
 .f100-msg:empty{display:none}
 .f100-reglas{list-style:disc;padding-left:1.25rem;font-size:.85rem;color:#486581;line-height:1.5;margin:.4rem 0}
