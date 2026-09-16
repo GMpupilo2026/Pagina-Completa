@@ -379,8 +379,10 @@
         }
 
         // Tarjeta "Cursos": una barra por curso con los temas estudiados sobre el total y
-        // el último tema marcado. propio=true cuando la mira el propio alumno.
-        function renderCursosReport(entreno, propio, nombre) {
+        // el último tema marcado. propio=true cuando la mira el propio alumno. Cuando el
+        // profesor mira a un alumno puntual (studentId + unlocksPorCurso), suma un control
+        // para saltarle el orden de lecciones a ese alumno (ver course_unlocks).
+        function renderCursosReport(entreno, propio, nombre, studentId, unlocksPorCurso) {
             const box = document.getElementById("cursos-report"), body = document.getElementById("cursos-report-body");
             body.innerHTML = "";
             document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
@@ -399,10 +401,61 @@
                         nota.appendChild(a);
                     }
                     wrap.appendChild(nota);
+                    if (!propio && studentId && c.total) wrap.appendChild(cursoUnlockControl(studentId, c, unlocksPorCurso));
                     body.appendChild(wrap);
                 });
             }
             box.classList.remove("hidden");
+        }
+
+        // Control "Desbloquear hasta el tema N": le salta a ESTE alumno el orden de
+        // lecciones de este curso, sin que tenga que marcar las anteriores como
+        // estudiadas (curso-academia.js lee course_unlocks para abrir las lecciones hasta
+        // ese número). No toca training_progress: lo que el alumno estudió de verdad
+        // sigue siendo lo único que cuenta ahí y en el resto de Informes.
+        function cursoUnlockControl(studentId, c, unlocksPorCurso) {
+            const wrap = document.createElement("div");
+            wrap.className = "mt-2 flex items-center gap-2 flex-wrap";
+            const label = document.createElement("label");
+            label.className = "text-xs text-brand-500 dark:text-brand-300";
+            label.textContent = "Desbloquear hasta el tema:";
+            const selectId = "unlock-" + c.slug + "-" + studentId;
+            label.htmlFor = selectId;
+            const select = document.createElement("select");
+            select.id = selectId;
+            select.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+            const noneOpt = document.createElement("option"); noneOpt.value = "0"; noneOpt.textContent = "Sin desbloqueo manual";
+            select.appendChild(noneOpt);
+            for (let n = 1; n <= c.total; n++) {
+                const opt = document.createElement("option"); opt.value = String(n); opt.textContent = "Tema " + n;
+                select.appendChild(opt);
+            }
+            select.value = String((unlocksPorCurso && unlocksPorCurso[c.slug]) || 0);
+            const status = document.createElement("span");
+            status.className = "text-xs text-brand-450 dark:text-brand-350";
+            status.setAttribute("aria-live", "polite");
+            select.addEventListener("change", async () => {
+                const n = parseInt(select.value, 10) || 0;
+                status.textContent = "Guardando…";
+                try {
+                    if (n <= 0) {
+                        const { error } = await sb.from("course_unlocks").delete().eq("student_id", studentId).eq("curso", c.slug);
+                        if (error) throw error;
+                        status.textContent = "Desbloqueo manual quitado.";
+                    } else {
+                        const { error } = await sb.from("course_unlocks").upsert(
+                            { student_id: studentId, curso: c.slug, hasta_leccion: n, granted_by: profile.id, updated_at: new Date().toISOString() },
+                            { onConflict: "student_id,curso" }
+                        );
+                        if (error) throw error;
+                        status.textContent = "Desbloqueado hasta el tema " + n + ".";
+                    }
+                } catch (e) {
+                    status.textContent = "No se pudo guardar: " + e.message;
+                }
+            });
+            wrap.append(label, select, status);
+            return wrap;
         }
 
         function barRow(name, correct, total) {
@@ -669,6 +722,10 @@
                 .order("created_at", { ascending: false }).limit(15);
             const list = answers || [];
 
+            const { data: unlocks } = await sb.from("course_unlocks").select("curso, hasta_leccion").eq("student_id", studentId);
+            const unlocksPorCurso = {};
+            (unlocks || []).forEach((u) => { unlocksPorCurso[u.curso] = u.hasta_leccion; });
+
             const cards = document.getElementById("stat-cards");
             cards.classList.remove("hidden");
             cards.append(
@@ -690,7 +747,7 @@
                 statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
             );
 
-            renderCursosReport(entreno, false, name);
+            renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderEncargados(studentId, name);
 

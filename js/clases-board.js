@@ -80,6 +80,8 @@
      * @param {(fen: string, san: string, moves: string[]) => void} opts.onMove
      * @param {(marks: {arrows: Array<{from:string,to:string}>, circles: string[]}) => void} opts.onMarksChange
      * @param {(san: string, fullPath: string[], context: {parentNodeId: string|null, rootPly: number}) => void} opts.onVariantMove
+     * @param {() => void} opts.onFreeModeChange - se llama después de cada cambio al
+     *   tablero en modo edición libre (ver setFreeMode)
      */
     constructor(el, opts = {}) {
       this.el = el;
@@ -89,6 +91,10 @@
       this.onMove = opts.onMove || (() => {});
       this.onMarksChange = opts.onMarksChange || (() => {});
       this.onVariantMove = opts.onVariantMove || (() => {});
+      // Avisa después de cada cambio al tablero en modo edición libre (colocar/quitar
+      // piezas, vaciar, posición inicial, cargar FEN/PGN) — lo usa sesion.html para
+      // mantener un campo de FEN en vivo mientras se arma la posición (ver setFreeMode).
+      this.onFreeModeChange = opts.onFreeModeChange || (() => {});
       this.game = new Chess();
       this.startFen = null; // FEN inicial de la partida (null = posición estándar); ver loadMoves()
       this.selected = null;
@@ -271,6 +277,7 @@
       this.game = temp;
       this.selected = null;
       this.render();
+      this.onFreeModeChange();
       return true;
     }
 
@@ -283,6 +290,7 @@
       this.game = temp;
       this.selected = null;
       this.render();
+      this.onFreeModeChange();
       return true;
     }
 
@@ -358,6 +366,7 @@
       this.game.clear();
       this.selected = null;
       this.render();
+      this.onFreeModeChange();
     }
 
     // Posición inicial estándar, con todos los derechos de enroque.
@@ -365,6 +374,7 @@
       this.game.reset();
       this.selected = null;
       this.render();
+      this.onFreeModeChange();
     }
 
     _onFreeModeClick(square) {
@@ -377,6 +387,7 @@
           g.put({ type: this._freeModeTool.type, color: this._freeModeTool.color }, square);
         }
         this.render();
+        this.onFreeModeChange();
         return;
       }
       if (this.selected === square) {
@@ -393,6 +404,7 @@
         }
         this.selected = null;
         this.render();
+        this.onFreeModeChange();
         return;
       }
       const piece = g.get(square);

@@ -15,6 +15,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/finales-100.css">
+    <link rel="stylesheet" href="css/curso-partidas.css">
     <script>
         (function () {
             try {
@@ -36,6 +38,10 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/finales-100.js"></script>
+    <script src="js/curso-partidas.js"></script>
+    <script src="js/pdf.min.js"></script>
+    <script src="js/pdf-diagramas.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -153,6 +159,13 @@
                                     <label class="flex items-center gap-1"><input type="checkbox" id="edit-castle-bq" checked> Negras O-O-O</label>
                                 </div>
                             </div>
+                            <div>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">FEN de la posición armada (se arma solo, a medida que editas):</p>
+                                <div class="flex gap-2">
+                                    <input id="edit-current-fen" type="text" readonly class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs font-mono text-brand-600 dark:text-brand-300 focus:outline-none" aria-label="FEN de la posición que estás armando">
+                                    <button id="edit-current-fen-copy-btn" type="button" class="shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors">Copiar</button>
+                                </div>
+                            </div>
                         </div>
 
                         <details class="mb-3">
@@ -182,6 +195,80 @@
                         </div>
                     </div>
 
+                    <!-- Elegir un curso para darlo como lección en vivo (solo profesor): se abre con
+                         "📚 Curso" de la barra de abajo. El contenido elegido se muestra a toda la
+                         clase en #class-lesson-panel, más abajo (ver applyShownLesson). -->
+                    <div id="lesson-picker-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Dar un curso como lección</h2>
+                            <button type="button" id="lesson-picker-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: se muestra debajo del tablero, igual para ti y para los alumnos conectados.</p>
+                        <div class="mb-2">
+                            <label for="lesson-curso-select" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Curso</label>
+                            <select id="lesson-curso-select" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lesson-leccion-select" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Tema</label>
+                            <select id="lesson-leccion-select" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                        </div>
+                        <p id="lesson-picker-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                        <div class="flex gap-2">
+                            <button id="lesson-show-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">👁️ Mostrar a la clase</button>
+                            <button id="lesson-hide-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">🙈 Ocultar</button>
+                        </div>
+                    </div>
+
+                    <!-- Leer un PDF durante la clase (solo el profesor lo ve — no se comparte con los
+                     alumnos, es una chuleta privada) y, si trae un diagrama, reconocerlo y mandarlo
+                     al editor del tablero (ver js/pdf-diagramas.js). -->
+                    <div id="pdf-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(94vw,480px)] max-h-[85vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📄 Leer un PDF en clase</h2>
+                            <button type="button" id="pdf-panel-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Solo tú ves este PDF — no se comparte con los alumnos conectados. Si una página trae un diagrama, toca cerca de él para intentar reconocerlo y mandarlo al editor del tablero.</p>
+                        <label for="pdf-file-input" class="sr-only">Elegir archivo PDF</label>
+                        <input id="pdf-file-input" type="file" accept="application/pdf" class="block w-full text-xs text-brand-600 dark:text-brand-300 mb-2 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-100 dark:file:bg-brand-800 file:text-brand-700 dark:file:text-brand-200 hover:file:bg-brand-200 dark:hover:file:bg-brand-700">
+                        <p id="pdf-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                        <div id="pdf-viewer" class="hidden">
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <button id="pdf-prev-btn" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Página anterior">◀</button>
+                                <span id="pdf-page-indicator" class="text-xs text-brand-500 dark:text-brand-300 min-w-[5rem] text-center"></span>
+                                <button id="pdf-next-btn" type="button" class="text-xs font-semibold w-8 h-8 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Página siguiente">▶</button>
+                            </div>
+                            <div class="relative border border-brand-200 dark:border-brand-700 rounded-lg overflow-auto max-h-[55vh] bg-brand-50 dark:bg-brand-950">
+                                <canvas id="pdf-page-canvas" class="block max-w-full cursor-crosshair"></canvas>
+                                <canvas id="pdf-overlay-canvas" class="absolute top-0 left-0 pointer-events-none"></canvas>
+                            </div>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">👆 Toca cerca del diagrama que quieras reconocer.</p>
+                        </div>
+                    </div>
+
+                    <!-- Revisión del diagrama reconocido (solo el profesor): confirma el recuadro y
+                         corrige las piezas que hayan quedado sin identificar antes de mandarlo al
+                         editor del tablero. -->
+                    <div id="pdf-diagram-review-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(94vw,420px)] max-h-[85vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">🔍 Diagrama reconocido</h2>
+                            <button type="button" id="pdf-review-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Las casillas marcadas con "?" no se pudieron identificar. Toca una pieza de la paleta y luego las casillas que quieras corregir (corrige una vez y se corrigen solas las demás casillas iguales).</p>
+                        <div id="pdf-review-grid" class="grid grid-cols-8 gap-0.5 mb-3 w-full max-w-[320px] mx-auto border-2 border-brand-700 rounded-lg overflow-hidden"></div>
+                        <div id="pdf-review-palette" class="flex flex-wrap gap-1 mb-2" role="group" aria-label="Piezas para corregir el diagrama"></div>
+                        <div class="mb-3">
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Le toca mover:</p>
+                            <div class="flex gap-1.5" role="radiogroup" aria-label="A quién le toca mover en este diagrama">
+                                <button type="button" id="pdf-review-turn-w" class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-accent-500 text-brand-900" aria-pressed="true">⚪ Blancas</button>
+                                <button type="button" id="pdf-review-turn-b" class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" aria-pressed="false">⚫ Negras</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="pdf-review-apply-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✅ Cargar en el editor</button>
+                            <button id="pdf-review-cancel-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Descartar</button>
+                        </div>
+                    </div>
+
                     <div class="flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
@@ -202,6 +289,18 @@
 
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
+
+                    <!-- Lección de un curso que el profesor eligió mostrar a la clase (ver
+                         #lesson-picker-panel). Visible igual para el profesor y los alumnos: se
+                         sincroniza vía game_state.shown_curso/shown_leccion (ver applyShownLesson). -->
+                    <section id="class-lesson-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <h2 id="class-lesson-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Lección</h2>
+                            <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Dejar de mostrar esta lección a la clase">🙈 Ocultar</button>
+                        </div>
+                        <p id="class-lesson-msg" class="text-xs text-brand-450 dark:text-brand-350"></p>
+                        <div id="class-lesson-body"></div>
+                    </section>
 
                     <!-- Deshacer: visible para el profesor siempre, y para el alumno solo mientras tiene el control -->
                     <div class="flex justify-center mt-3">
@@ -323,6 +422,8 @@
                             <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
                             <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
                             <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
+                            <button id="toggle-lesson-btn" type="button" title="Mostrar a la clase una lección de cualquier curso, como si la estuvieras dando ahí mismo" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
+                            <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
                         </div>
                     </div>
 
@@ -731,6 +832,7 @@
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
+            applyShownLesson(row.shown_curso || null, row.shown_leccion || null);
         }
 
         function updateAccessForRole() {
@@ -746,6 +848,166 @@
                     : "¡El profesor te dio el control del tablero! Ya puedes mover piezas.";
             }
             setStatus(text);
+        }
+
+        // ---------- Dar un curso como lección en vivo (solo el profesor lo elige; se ve
+        // igual para el profesor y los alumnos, sincronizado vía game_state.shown_curso/
+        // shown_leccion — ver applyGameStateRow). El contenido en sí no viaja por Supabase:
+        // cada cliente lo pide directo a cursos/protegido/<curso>.html, igual que hace
+        // js/curso-academia.js con el panel de Academia. ----------
+        const CLASS_LESSON_CATALOG = [
+            { slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez" },
+            { slug: "aperturas-y-defensas", titulo: "Aperturas y Defensas" },
+            { slug: "calculo-y-visualizacion", titulo: "Cálculo y Visualización" },
+            { slug: "estrategia-y-tactica", titulo: "Estrategia y Táctica" },
+            { slug: "desequilibrios-de-material", titulo: "Desequilibrios de material" },
+            { slug: "finales-practicos", titulo: "Finales Prácticos" },
+            { slug: "el-mapa-de-los-finales", titulo: "El mapa de los finales" },
+            { slug: "estrategia-en-el-final", titulo: "Estrategia en el final" },
+            { slug: "partidas-modelo", titulo: "Partidas modelo del ajedrez moderno" },
+            { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
+        ];
+        const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
+        let lastShownCurso = null, lastShownLeccion = null; // para no volver a pedir lo mismo en cada eco de Realtime
+
+        // Un <details> de nivel superior (con su propio <summary>) es una lección; se
+        // ignoran los que están anidados dentro de otro <details> (por ejemplo, alguna
+        // aclaración interna de un cuestionario) — mismo filtro que usa curso-academia.js.
+        function detallesDeLeccion(root) {
+            return Array.from(root.querySelectorAll("details")).filter((d) =>
+                !(d.parentElement && d.parentElement.closest("details")) && d.querySelector(":scope > summary")
+            );
+        }
+
+        async function fetchLeccionesDeCurso(slug) {
+            if (leccionesPorCurso[slug]) return leccionesPorCurso[slug];
+            const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
+            if (!r.ok) throw new Error("no_content");
+            const html = await r.text();
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            const detalles = detallesDeLeccion(temp);
+            const lecciones = detalles.map((d) => (d.querySelector(":scope > summary").textContent || "").replace(/\s+/g, " ").trim());
+            leccionesPorCurso[slug] = lecciones;
+            return lecciones;
+        }
+
+        if (isTeacher) {
+            const cursoSelect = document.getElementById("lesson-curso-select");
+            const leccionSelect = document.getElementById("lesson-leccion-select");
+            const panelMsg = document.getElementById("lesson-picker-msg");
+            CLASS_LESSON_CATALOG.forEach((c) => {
+                const opt = document.createElement("option"); opt.value = c.slug; opt.textContent = c.titulo;
+                cursoSelect.appendChild(opt);
+            });
+
+            async function refreshLeccionOptions() {
+                leccionSelect.innerHTML = '<option value="">Cargando…</option>';
+                panelMsg.textContent = "";
+                try {
+                    const lecciones = await fetchLeccionesDeCurso(cursoSelect.value);
+                    leccionSelect.innerHTML = "";
+                    lecciones.forEach((titulo, i) => {
+                        const opt = document.createElement("option"); opt.value = String(i + 1); opt.textContent = titulo;
+                        leccionSelect.appendChild(opt);
+                    });
+                } catch (e) {
+                    leccionSelect.innerHTML = "";
+                    panelMsg.textContent = "No se pudo cargar el temario de este curso.";
+                }
+            }
+
+            cursoSelect.addEventListener("change", refreshLeccionOptions);
+
+            document.getElementById("toggle-lesson-btn").addEventListener("click", () => {
+                const panel = document.getElementById("lesson-picker-panel");
+                const active = panel.classList.contains("hidden");
+                panel.classList.toggle("hidden", !active);
+                document.getElementById("board-edit-panel").classList.add("hidden"); // no los dos a la vez
+                if (active && leccionSelect.options.length === 0) refreshLeccionOptions();
+            });
+            document.getElementById("lesson-picker-close-btn").addEventListener("click", () => {
+                document.getElementById("lesson-picker-panel").classList.add("hidden");
+            });
+
+            document.getElementById("lesson-show-btn").addEventListener("click", async () => {
+                const slug = cursoSelect.value, n = parseInt(leccionSelect.value, 10);
+                if (!slug || !n) { panelMsg.textContent = "Elige un curso y un tema."; return; }
+                const { error } = await sb.from("game_state").update({
+                    shown_curso: slug, shown_leccion: n,
+                    updated_by: session.user.id, updated_at: new Date().toISOString(),
+                }).eq("id", myGameStateId);
+                if (error) { panelMsg.textContent = "No se pudo mostrar la lección: " + error.message; return; }
+                panelMsg.textContent = "";
+            });
+            document.getElementById("lesson-hide-btn").addEventListener("click", async () => {
+                const { error } = await sb.from("game_state").update({
+                    shown_curso: null, shown_leccion: null,
+                    updated_by: session.user.id, updated_at: new Date().toISOString(),
+                }).eq("id", myGameStateId);
+                if (error) panelMsg.textContent = "No se pudo ocultar la lección: " + error.message;
+            });
+            document.getElementById("class-lesson-hide-btn").addEventListener("click", () => {
+                document.getElementById("lesson-hide-btn").click();
+            });
+
+            // ---------- Leer un PDF en clase + reconocer sus diagramas (ver js/pdf-diagramas.js) ----------
+            // El módulo hace todo el trabajo de PDF/reconocimiento; acá solo se le indica qué
+            // hacer con el FEN que arma: mandarlo al editor de tablero YA EXISTENTE (mismo
+            // flujo de "✏️ Editar" con su paleta y su botón "Aplicar posición"), en vez de
+            // reimplementar una segunda forma de aplicar una posición.
+            if (window.PdfDiagramas) {
+                window.PdfDiagramas.init({
+                    onFenReady: (fen) => {
+                        if (!board.freeMode) document.getElementById("toggle-free-mode-btn").click();
+                        const ok = board.loadFreeModeFen(fen);
+                        if (ok) {
+                            syncEditPanelFromPosition();
+                            setStatus("Diagrama cargado en el editor: revisa la posición, el turno y los enroques antes de aplicar.");
+                        } else {
+                            setStatus("No se pudo cargar el diagrama reconocido.");
+                        }
+                    },
+                });
+            }
+        }
+
+        // Se llama desde applyGameStateRow cada vez que llega una fila nueva (propia o por
+        // Realtime) — para el profesor y para cada alumno conectado por igual. Compara con
+        // lo último mostrado para no volver a pedir el mismo archivo en cada jugada.
+        async function applyShownLesson(slug, n) {
+            const panel = document.getElementById("class-lesson-panel");
+            if (slug === lastShownCurso && n === lastShownLeccion) return;
+            lastShownCurso = slug; lastShownLeccion = n;
+            if (!slug || !n) { panel.classList.add("hidden"); return; }
+            const titleEl = document.getElementById("class-lesson-title");
+            const msgEl = document.getElementById("class-lesson-msg");
+            const bodyEl = document.getElementById("class-lesson-body");
+            const catalogEntry = CLASS_LESSON_CATALOG.find((c) => c.slug === slug);
+            panel.classList.remove("hidden");
+            document.getElementById("class-lesson-hide-btn").classList.toggle("hidden", !isTeacher);
+            titleEl.textContent = "📚 " + (catalogEntry ? catalogEntry.titulo : slug);
+            msgEl.textContent = "Cargando…";
+            bodyEl.innerHTML = "";
+            try {
+                const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
+                if (!r.ok) throw new Error("no_content");
+                const html = await r.text();
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
+                const detalles = detallesDeLeccion(temp);
+                const leccion = detalles[n - 1];
+                if (!leccion) throw new Error("sin_leccion");
+                leccion.open = true;
+                bodyEl.dataset.course = slug;
+                bodyEl.appendChild(leccion);
+                if (window.Finales100) window.Finales100.init(bodyEl);
+                if (window.CursoPartidas) window.CursoPartidas.init(bodyEl);
+                document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: bodyEl, curso: slug } }));
+                msgEl.textContent = "";
+            } catch (e) {
+                msgEl.textContent = "No se pudo cargar esta lección.";
+            }
         }
 
         async function pushBoardState(extraFields) {
@@ -872,6 +1134,7 @@
                 interactive: isTeacher,
                 allowArrows: isTeacher,
                 externalCoords: true,
+                onFreeModeChange: () => updateLiveFenDisplay(),
                 onMove: () => {
                     pushBoardState();
                     updateTurnIndicator();
@@ -999,9 +1262,13 @@
             editTurn = turn;
             document.getElementById("edit-turn-w").className = turn === "w" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
             document.getElementById("edit-turn-b").className = turn === "b" ? EDIT_TURN_ACTIVE : EDIT_TURN_INACTIVE;
+            updateLiveFenDisplay();
         }
         document.getElementById("edit-turn-w").addEventListener("click", () => setEditTurn("w"));
         document.getElementById("edit-turn-b").addEventListener("click", () => setEditTurn("b"));
+        ["edit-castle-wk", "edit-castle-wq", "edit-castle-bk", "edit-castle-bq"].forEach((id) => {
+            document.getElementById(id).addEventListener("change", updateLiveFenDisplay);
+        });
 
         document.getElementById("edit-clear-btn").addEventListener("click", () => {
             board.clearBoard();
@@ -1024,7 +1291,41 @@
             document.getElementById("edit-castle-wq").checked = castling.includes("Q");
             document.getElementById("edit-castle-bk").checked = castling.includes("k");
             document.getElementById("edit-castle-bq").checked = castling.includes("q");
+            updateLiveFenDisplay();
         }
+
+        // Arma el FEN candidato (posición actual del tablero + turno/enroques ya elegidos
+        // en el panel, igual que hace free-mode-apply-btn) y lo muestra en el campo de solo
+        // lectura — así el profesor ve hacia dónde va la posición mientras la arma, sin
+        // esperar a aplicarla. No valida nada (esa validación solo corre al aplicar).
+        function updateLiveFenDisplay() {
+            const field = document.getElementById("edit-current-fen");
+            if (!field) return;
+            const parts = board.fen().split(" ");
+            parts[1] = editTurn;
+            let castling = "";
+            if (document.getElementById("edit-castle-wk").checked) castling += "K";
+            if (document.getElementById("edit-castle-wq").checked) castling += "Q";
+            if (document.getElementById("edit-castle-bk").checked) castling += "k";
+            if (document.getElementById("edit-castle-bq").checked) castling += "q";
+            parts[2] = castling || "-";
+            parts[3] = "-";
+            field.value = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
+        }
+
+        document.getElementById("edit-current-fen-copy-btn").addEventListener("click", async () => {
+            const field = document.getElementById("edit-current-fen");
+            const btn = document.getElementById("edit-current-fen-copy-btn");
+            try {
+                await navigator.clipboard.writeText(field.value);
+            } catch (e) {
+                field.select();
+                document.execCommand("copy");
+            }
+            const original = btn.textContent;
+            btn.textContent = "✅ Copiado";
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        });
 
         // ---------- Panel flotante del editor de tablero: arrastrable desde el título ----------
         // Es una herramienta temporal (se abre, se usa un momento, se cierra), así que flota por
@@ -1077,6 +1378,7 @@
             setEditTool(null);
             if (active) resetBoardEditPanelPosition();
             document.getElementById("board-edit-panel").classList.toggle("hidden", !active);
+            if (active) document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
             document.getElementById("free-mode-load-msg").textContent = "";
             const freeModeBtn = document.getElementById("toggle-free-mode-btn");
             freeModeBtn.textContent = active ? "🔒 Editando…" : "✏️ Editar";
