@@ -176,6 +176,13 @@ const FOTO_JPEG_B64 =
 
   igual("quedan los dos en la lista",
     await p.evaluate(() => document.querySelectorAll("#lista-archivos li").length), 2);
+
+  // La descripción de la foto es lo ÚNICO que va a oír quien use lector de
+  // pantalla: la versión adaptada no lleva imágenes.
+  igual("la foto pide que se describa",
+    await p.evaluate(() => !!document.getElementById("pie-foto-0")), "true");
+  await p.fill("#pie-foto-0", "Los niños del grupo de 7° B resolviendo una posición en el tablero grande");
+  await p.waitForTimeout(400);
   const vista2 = await p.textContent("#vista");
   cumple("la hoja entra al informe como tabla", vista2.includes("Hoja adjunta: notas.csv") && vista2.includes("Quesada, Jean"));
   cumple("la foto entra al informe", vista2.includes("clase-del-14.jpg"));
@@ -191,11 +198,47 @@ const FOTO_JPEG_B64 =
   };
   const rutaDocx = await bajar("#bajar-docx");
   const rutaPdf = await bajar("#bajar-pdf");
+  const rutaHtml = await bajar("#bajar-accesible");
 
   cumple("el Word se llama por su periodo", /informe-actividades-2026-09-01-a-2026-09-30\.docx$/.test(rutaDocx), path.basename(rutaDocx));
   cumple("el PDF también", /informe-actividades-2026-09-01-a-2026-09-30\.pdf$/.test(rutaPdf), path.basename(rutaPdf));
   cumple("el Word pesa algo", fs.statSync(rutaDocx).size > 5000, (fs.statSync(rutaDocx).size / 1024).toFixed(0) + " KB");
   cumple("el PDF pesa algo", fs.statSync(rutaPdf).size > 5000, (fs.statSync(rutaPdf).size / 1024).toFixed(0) + " KB");
+  cumple("y el formato adaptado también", /informe-actividades-.*-adaptado\.html$/.test(rutaHtml), path.basename(rutaHtml));
+
+  // ------------------------------------------------- el formato adaptado
+  /* Las reglas son las mismas que ya tiene el material de estudio de los cursos
+     (ver herramientas/verificar-material.py): sin imágenes, encabezados en
+     orden y todo lo que en el PDF está dibujado, dicho en palabras. */
+  console.log("\n=== El formato adaptado ===");
+  const html = fs.readFileSync(rutaHtml, "utf8");
+  igual("no depende de NINGUNA imagen",
+    /<img|background-image/.test(html), "false");
+  igual("declara el idioma", /lang="es"/.test(html), "true");
+  cumple("lleva al autor", html.includes("Oscar Angulo Cubero"));
+  cumple("lleva el aviso de uso", html.includes("No se autoriza"));
+
+  const niveles = (html.match(/<h([1-6])\b/g) || []).map((h) => Number(h.slice(2)));
+  igual("tiene exactamente un h1", niveles.filter((n) => n === 1).length, 1);
+  igual("y el h1 va primero", niveles[0], 1);
+  const salto = niveles.slice(1).some((n, i) => n > niveles[i] + 1);
+  igual("no salta niveles de encabezado (h2 a h4 y esas cosas)", salto, "false");
+
+  cumple("las tablas son tablas de verdad, con encabezados marcados",
+    /<th scope="col">/.test(html) && /<th scope="row">/.test(html));
+  // El <caption> va siempre, aunque quede escondido a la vista cuando repite el
+  // encabezado de arriba: es lo que identifica a la tabla para quien salta de
+  // tabla en tabla con el lector de pantalla.
+  cumple("y cada una dice de qué es", /<caption[ >]/.test(html));
+  cumple("y cuando el título repite el encabezado, se esconde solo a la vista",
+    /<caption class="solo-lectores">/.test(html) && /\.solo-lectores\s*\{/.test(html));
+  cumple("escondido de la vista, pero NO del lector de pantalla",
+    !/\.solo-lectores\s*\{[^}]*(display:\s*none|visibility:\s*hidden)/.test(html));
+  cumple("dice lo mismo que el informe: los números",
+    html.includes("Se impartieron 4 clases") && html.includes("Jean Quesada Arauz"));
+  cumple("y lo que se trabajó", html.includes("Horquillas y clavadas"));
+  cumple("la foto está CONTADA en palabras, ya que no se puede ver",
+    html.includes("Los niños del grupo de 7") && html.includes("Fotografía:"));
 
   // ------------------------------------------- que la página SE VEA
   /* Esta página se clonó de formularios.html, y clonar una cabecera ya salió

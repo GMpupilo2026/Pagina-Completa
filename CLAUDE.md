@@ -545,6 +545,34 @@ el navegador ya trae alcanza.
   informe para los jefes tendría una columna de números sin sentido. Lee también
   CSV, detectando solo si el separador es coma o punto y coma.
 
+### El tercer archivo: el formato adaptado
+
+Además del Word y el PDF sale un **HTML en formato adaptado**
+(`js/reporte-accesible.js`), con el mismo contenido y del mismo documento
+neutral. **No es un PDF, a propósito**: es la misma decisión que ya se tomó con
+el material de estudio de los cursos. Un PDF con marca de agua, tablas dibujadas
+y fotos es lo peor que se le puede dar a un lector de pantalla — el orden de
+lectura se desordena, la marca de agua se lee en medio del texto y las tablas
+salen como una hilera de números sueltos.
+
+Sirve para dos personas distintas: quien usa lector de pantalla (sin ninguna
+imagen, encabezados sin saltos de nivel, tablas con `<caption>` y `<th scope>`)
+y quien ve poco y necesita agrandar (una sola columna, 1.15rem, interlínea 1.8,
+alto contraste y su versión en oscuro). Va todo en un archivo, sin CSS ni
+fuentes de fuera: se manda por correo y se abre sin internet.
+
+- **Las fotos hay que describirlas, y por eso la página lo pide.** Al adjuntar
+  una foto aparece el campo "Qué se ve en la foto": eso es a la vez el pie en el
+  PDF y en el Word, y **lo único que va a oír quien no la puede ver**. Si no se
+  llena, la versión adaptada lo dice con todas las letras en vez de callarlo —
+  quien lee tiene derecho a saber que ahí hay algo que se está perdiendo.
+- **El `<caption>` de cada tabla va siempre**, aunque repita el encabezado de
+  arriba: quien usa lector de pantalla puede saltar de tabla en tabla sin pasar
+  por los encabezados, y ahí el nombre es lo único que la identifica. Cuando
+  repite, se esconde **a la vista** con `.solo-lectores` (posición absoluta y
+  recorte), nunca con `display: none` ni `visibility: hidden`, que lo sacarían
+  también del lector.
+
 ### Cómo se comprueba
 
 Son dos piezas, porque un informe roto **no da error**: se descarga igual. Un
@@ -567,6 +595,11 @@ El de Python abre los dos archivos con `pypdf` y `python-docx` y mira lo que no
 se ve en pantalla: que abran, que la marca de agua esté en **todas** las páginas
 (el error clásico es estamparla solo en la portada) y que las tildes hayan
 llegado.
+
+El formato adaptado se revisa con **las mismas reglas que el material de estudio**
+(ver `herramientas/verificar-material.py`): que no dependa de ninguna imagen, que
+declare el idioma, que lleve al autor y el aviso de uso, que tenga un solo `<h1>`
+y no salte niveles, y que la foto esté contada en palabras.
 
 - Los dobles del verificador van en el **contexto** y no en la página: esta
   página registra el service worker, y lo que pide el service worker no pasa por
