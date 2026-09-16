@@ -36,6 +36,7 @@
     azul: { label: "Azul", light: "#dee3e6", dark: "#4b7399" },
     morado: { label: "Morado", light: "#e8dcf5", dark: "#7c5cbf" },
     negro: { label: "Negro", light: "#e5e5e5", dark: "#2b2b2b" },
+    moradooscuro: { label: "Morado oscuro y negro", light: "#9333ea", dark: "#000000" },
   };
 
   // El de alto contraste (blanco y negro) es justo lo que pidió el profesor
