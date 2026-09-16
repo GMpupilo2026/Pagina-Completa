@@ -130,6 +130,13 @@ def archivos():
     return [f for f in vistos
             if os.path.getsize(f) < 2_000_000
             and not f.startswith("herramientas/verificar")
+            # node_modules son las librerías que se instalan para compilar el
+            # CSS o correr las comprobaciones: no son del sitio y vienen llenas
+            # de nombres propios que el detector marca sin razón ("Matté").
+            # Aparecen solo después de un `npm install` y desaparecen al
+            # borrarlas, así que sin esto la revisión falla o no según lo que
+            # uno tenga instalado en ese momento.
+            and not f.startswith("node_modules" + os.sep)
             and not f.endswith(".min.js")]
 
 def hallazgos(ruta):
