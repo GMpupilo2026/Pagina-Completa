@@ -95,3 +95,59 @@ self.addEventListener("fetch", (evento) => {
     }
   })());
 });
+
+/* ---------------------------------------------------------------------------
+ * Los avisos push.
+ *
+ * El texto llega YA CIFRADO para este aparato: ni el servidor de push de Google
+ * ni nadie más lo puede leer por el camino. Acá se descifra solo y se enseña.
+ *
+ * Si el mensaje viniera roto o vacío, igual hay que enseñar ALGO: los
+ * navegadores castigan al sitio que recibe un push y no muestra nada — pueden
+ * llegar a quitarle el permiso. Por eso el catch no se queda callado.
+ * ------------------------------------------------------------------------- */
+self.addEventListener("push", (evento) => {
+  let aviso = {};
+  try { aviso = evento.data ? evento.data.json() : {}; } catch (e) { aviso = {}; }
+  const titulo = aviso.titulo || "Ajedrez Integral";
+  evento.waitUntil(self.registration.showNotification(titulo, {
+    body: aviso.cuerpo || "Tienes algo nuevo en la Academia.",
+    icon: "/img/app/icon-192.png",
+    badge: "/img/app/icon-192.png",
+    lang: "es",
+    // La etiqueta hace que un aviso del mismo tipo REEMPLACE al anterior en vez
+    // de amontonarse: tres "te retaron" seguidos son una sola notificación.
+    tag: aviso.etiqueta || "ajedrez-integral",
+    renotify: !!aviso.etiqueta,
+    data: { url: aviso.url || "/clases.html" },
+  }));
+});
+
+/* Al tocar el aviso: si la Academia ya está abierta en alguna ventana, se usa
+   esa y se la lleva a donde toca. Abrir una segunda copia de la app sería la
+   forma más rápida de perder lo que el alumno tenía a medias. */
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  const destino = (evento.notification.data && evento.notification.data.url) || "/clases.html";
+  evento.waitUntil((async () => {
+    const abiertas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const ventana of abiertas) {
+      if (new URL(ventana.url).origin === self.location.origin) {
+        await ventana.focus();
+        if ("navigate" in ventana) { try { await ventana.navigate(destino); } catch (e) {} }
+        return;
+      }
+    }
+    await self.clients.openWindow(destino);
+  })());
+});
+
+/* El navegador puede renovar la suscripción por su cuenta (pasa cada tanto).
+   Si no se vuelve a guardar la nueva, el aparato deja de recibir en silencio:
+   nadie se entera hasta que alguien pregunta por qué no le llegan los avisos. */
+self.addEventListener("pushsubscriptionchange", (evento) => {
+  evento.waitUntil((async () => {
+    const clientes = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    clientes.forEach((c) => c.postMessage({ tipo: "push-renovar" }));
+  })());
+});

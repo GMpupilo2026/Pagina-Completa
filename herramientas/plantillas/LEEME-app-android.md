@@ -55,5 +55,22 @@ da 404, hay que servirlo desde `worker.js` a mano.
   entra directo en la app.
 - **Los PDF del material se abren en Chrome**, que es lo que se quiere: son
   archivos protegidos y el visor del sistema los maneja bien.
-- **Notificaciones push: no vienen con esto.** Una TWA no las trae. Para eso
-  hay que rehacer el cascarón con Capacitor, que es otro trabajo.
+- **Los avisos push sí funcionan**, y no hay que rehacer nada. Los manda el
+  sitio (el interruptor está en Configuración → "Avisos en el celular"), así
+  que llegan igual con la Academia instalada desde el navegador. Para que
+  dentro de la app salgan **con el nombre y el icono de Ajedrez Integral** en
+  vez de con los de Chrome, hay que pedirle a Bubblewrap la *delegación de
+  notificaciones* al armar el cascarón:
+
+      bubblewrap init --manifest https://ajedrez-integral.com/manifest.json
+
+  y responder **sí** a "Do you want to enable notification delegation?" (si ya
+  está armado, se pone `"enableNotifications": true` en
+  `twa-manifest.json` y se vuelve a correr `bubblewrap update && bubblewrap
+  build`). Eso agrega el permiso `POST_NOTIFICATIONS` al `AndroidManifest`,
+  que Android 13 en adelante exige. **La delegación no funciona sin el
+  `assetlinks.json` bien puesto** (paso 3): sin esa verificación Android no
+  le cree a la app que el sitio es suyo.
+- **En iPhone hay que instalar la Academia en la pantalla de inicio** para que
+  los avisos lleguen: Safari no los da desde una pestaña normal. La página de
+  Configuración ya lo dice cuando detecta que no se puede.
