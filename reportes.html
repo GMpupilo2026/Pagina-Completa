@@ -30,6 +30,7 @@
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/reporte-docx.js"></script>
+    <script src="js/reporte-accesible.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -142,6 +143,7 @@
                     <div class="flex flex-wrap gap-2">
                         <button type="button" id="bajar-docx" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Word (.docx)</button>
                         <button type="button" id="bajar-pdf" disabled class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 disabled:opacity-40 disabled:cursor-not-allowed text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ PDF</button>
+                        <button type="button" id="bajar-accesible" disabled class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 disabled:opacity-40 disabled:cursor-not-allowed text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" title="El mismo informe sin imágenes, para lector de pantalla o para agrandar el texto">⬇ Formato adaptado</button>
                     </div>
                 </div>
                 <p id="bajar-estado" class="text-sm mb-4" role="status" aria-live="polite"></p>
@@ -149,7 +151,10 @@
                     <p class="text-brand-450 dark:text-brand-350 text-sm">Elige el periodo y toca «Traer los datos» para ver aquí cómo va a quedar.</p>
                 </div>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">
-                    Los dos archivos llevan tu marca de agua en todas las páginas y tu nombre en el pie.
+                    El Word y el PDF llevan tu marca de agua en todas las páginas y tu nombre en el pie.
+                    El <strong>formato adaptado</strong> es el mismo informe sin ninguna imagen, con las
+                    tablas marcadas como tablas: es el que sirve para quien usa lector de pantalla o
+                    necesita agrandar mucho el texto.
                 </p>
             </section>
         </div>
@@ -328,9 +333,30 @@
                 boton.addEventListener("click", () => { quitar(); pintarArchivos(); refrescar(); });
                 li.appendChild(boton);
                 ul.appendChild(li);
+                return li;
             };
-            archivos.fotos.forEach((f, i) => poner("🖼️", f.nombre, ReporteArmar._tamanoLegible(f.tamano),
-                () => archivos.fotos.splice(i, 1), f.vista));
+            archivos.fotos.forEach((f, i) => {
+                const li = poner("🖼️", f.nombre, ReporteArmar._tamanoLegible(f.tamano),
+                    () => archivos.fotos.splice(i, 1), f.vista);
+                // El pie de foto no es un adorno: es lo ÚNICO que va a oír quien
+                // use lector de pantalla, porque la versión adaptada no lleva
+                // imágenes. Por eso se pide acá y no en un rincón.
+                const caja = document.createElement("div");
+                caja.className = "mt-2";
+                const id = "pie-foto-" + i;
+                caja.innerHTML =
+                    '<label class="block text-xs text-brand-450 dark:text-brand-350 mb-1" for="' + id + '">' +
+                    "Qué se ve en la foto (va de pie, y es lo que oye quien no la puede ver)</label>";
+                const campo = document.createElement("input");
+                campo.type = "text";
+                campo.id = id;
+                campo.value = f.pie || "";
+                campo.placeholder = "Los niños del grupo de 7° B en la clase del 14";
+                campo.className = "w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                campo.addEventListener("input", () => { f.pie = campo.value; refrescar(); });
+                caja.appendChild(campo);
+                li.parentElement.insertBefore(caja, li.nextSibling);
+            });
             archivos.hojas.forEach((h, i) => poner("📊", h.hoja, (h.filas.length - 1) + " filas",
                 () => archivos.hojas.splice(i, 1)));
             archivos.grabaciones.forEach((g, i) => poner(g.clase.startsWith("Video") ? "🎬" : "🎙️", g.nombre,
@@ -417,6 +443,7 @@
             const documento = documentoActual();
             $("bajar-docx").disabled = !documento;
             $("bajar-pdf").disabled = !documento;
+            $("bajar-accesible").disabled = !documento;
             if (documento) pintarVista(documento);
         }
 
@@ -448,8 +475,9 @@
             setTimeout(() => URL.revokeObjectURL(a.href), 4000);
         }
 
-        const nombreArchivo = (ext) =>
-            "informe-actividades-" + ($("desde").value || "") + "-a-" + ($("hasta").value || "") + "." + ext;
+        const nombreArchivo = (ext, apellido) =>
+            "informe-actividades-" + ($("desde").value || "") + "-a-" + ($("hasta").value || "") +
+            (apellido ? "-" + apellido : "") + "." + ext;
 
         async function descargar(cual) {
             const estado = $("bajar-estado");
@@ -457,11 +485,12 @@
             if (!documento) return;
             try {
                 decir(estado, "Armando el archivo…");
-                const blob = cual === "docx"
-                    ? ReporteDOCX.generar(documento)
+                const blob = cual === "docx" ? ReporteDOCX.generar(documento)
+                    : cual === "html" ? ReporteAccesible.generar(documento)
                     : await ReportePDF.generar(documento);
-                bajar(blob, nombreArchivo(cual));
-                decir(estado, "Listo, se descargó el " + (cual === "docx" ? "Word" : "PDF") + ".");
+                const nombres = { docx: "Word", pdf: "PDF", html: "formato adaptado" };
+                bajar(blob, cual === "html" ? nombreArchivo("html", "adaptado") : nombreArchivo(cual));
+                decir(estado, "Listo, se descargó el " + nombres[cual] + ".");
             } catch (e) {
                 decir(estado, "No se pudo armar el archivo: " + (e.message || e), true);
             }
@@ -501,6 +530,7 @@
             $("archivos").addEventListener("change", (e) => { recibir([...e.target.files]); e.target.value = ""; });
             $("bajar-docx").addEventListener("click", () => descargar("docx"));
             $("bajar-pdf").addEventListener("click", () => descargar("pdf"));
+            $("bajar-accesible").addEventListener("click", () => descargar("html"));
 
             const zona = $("zona");
             ["dragenter", "dragover"].forEach((ev) => zona.addEventListener(ev, (e) => {
