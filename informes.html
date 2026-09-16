@@ -144,6 +144,47 @@
                 <div id="diagnostico-body"></div>
             </div>
 
+            <!-- A quién de la casa se le manda el informe de este alumno y cada cuánto.
+                 Solo aparece mirando a UN alumno: es de él. -->
+            <div id="encargados-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📧 Informes a la casa</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">El informe sale solo, a la hora que toque, al correo de quien esté encargado. No hace falta que tenga cuenta en el sitio.</p>
+                <div id="encargados-lista" class="space-y-2 mb-4"></div>
+                <div class="flex flex-wrap items-end gap-2 border-t border-brand-100 dark:border-brand-800 pt-4">
+                    <div class="flex-1 min-w-[10rem]">
+                        <label for="enc-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                        <input id="enc-nombre" type="text" maxlength="120" placeholder="Ej. Mamá de Ana" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div class="flex-1 min-w-[12rem]">
+                        <label for="enc-email" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo</label>
+                        <input id="enc-email" type="email" maxlength="200" placeholder="correo@ejemplo.com" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="enc-frecuencia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cada cuánto</label>
+                        <select id="enc-frecuencia" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <option value="diario">Todos los días</option>
+                            <option value="semanal" selected>Cada semana</option>
+                            <option value="mensual">Cada mes</option>
+                            <option value="anual">Cada año</option>
+                        </select>
+                    </div>
+                    <button type="button" id="enc-agregar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
+                    <span id="enc-msg" class="text-xs w-full" aria-live="polite"></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 border-t border-brand-100 dark:border-brand-800 pt-4 mt-4">
+                    <span class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Ver o descargar</span>
+                    <select id="enc-ver-frecuencia" aria-label="Periodo del informe" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <option value="diario">El día</option>
+                        <option value="semanal" selected>La semana</option>
+                        <option value="mensual">El mes</option>
+                        <option value="anual">El año</option>
+                    </select>
+                    <button type="button" id="enc-ver" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">👁️ Ver</button>
+                    <button type="button" id="enc-descargar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Descargar</button>
+                    <span id="enc-ver-msg" class="text-xs" aria-live="polite"></span>
+                </div>
+            </div>
+
             <div id="topic-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="topic-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"></h2>
                 <div id="topic-report-body" class="space-y-2.5"></div>
@@ -580,6 +621,7 @@
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
+            document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
         }
@@ -707,6 +749,7 @@
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderDiagnosticoProfesor(studentId, name, entreno);
+            renderEncargados(studentId, name);
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
@@ -726,6 +769,202 @@
             }
             document.getElementById("student-report").classList.remove("hidden");
         }
+
+        /* ---------------- Informes a la casa ----------------
+           A quién se le manda el informe de este alumno y cada cuánto. El envío
+           automático lo hace pg_cron una vez al día llamando a la Edge Function
+           informes-encargados, que arma el correo y lo manda por Resend; acá
+           solo se decide a quién y con qué frecuencia, más los dos botones de
+           "ahora mismo".
+
+           El HTML del informe NO se arma en esta página: lo devuelve la misma
+           función que manda el correo (acción "vista_previa"). Así lo que se ve
+           en pantalla, lo que se descarga y lo que le llega a la casa son
+           exactamente lo mismo; si estuviera escrito dos veces, se irían
+           separando. */
+        const FUNCION_INFORMES = `${window.SUPABASE_URL}/functions/v1/informes-encargados`;
+        const FRECUENCIAS = { diario: "todos los días", semanal: "cada semana", mensual: "cada mes", anual: "cada año" };
+        let encargadoAlumno = null;   // el alumno que se está mirando
+
+        async function llamarInformes(cuerpo) {
+            const res = await fetch(FUNCION_INFORMES, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "apikey": window.SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify(cuerpo),
+            });
+            const r = await res.json().catch(() => ({}));
+            if (!res.ok || r.error) throw new Error(r.error || "No se pudo completar");
+            return r;
+        }
+
+        async function renderEncargados(studentId, nombreAlumno) {
+            encargadoAlumno = { id: studentId, nombre: nombreAlumno };
+            document.getElementById("encargados-report").classList.remove("hidden");
+            document.getElementById("enc-msg").textContent = "";
+            document.getElementById("enc-ver-msg").textContent = "";
+            const caja = document.getElementById("encargados-lista");
+            caja.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Cargando…</p>';
+
+            const { data, error } = await sb.from("encargados")
+                .select("*").eq("student_id", studentId).order("created_at");
+            if (error) {
+                caja.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudo cargar: ' + error.message + "</p>";
+                return;
+            }
+            caja.innerHTML = "";
+            if (!(data || []).length) {
+                caja.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Todavía no hay nadie apuntado. Agrega un correo abajo y el informe empieza a salir solo.</p>';
+                return;
+            }
+
+            data.forEach((e) => {
+                const fila = document.createElement("div");
+                fila.className = "flex flex-wrap items-center gap-2 border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+
+                // Con nodos y textContent, no con innerHTML: el nombre y el correo
+                // los escribe una persona y no tienen por qué pasar por el parser.
+                const quien = document.createElement("div");
+                quien.className = "flex-1 min-w-[12rem]";
+                const titulo = document.createElement("p");
+                titulo.className = "text-sm font-medium text-brand-700 dark:text-brand-200";
+                titulo.textContent = e.nombre || e.email;
+                const detalle = document.createElement("p");
+                detalle.className = "text-xs text-brand-450 dark:text-brand-350";
+                detalle.textContent = (e.nombre ? e.email + " · " : "") + (e.ultimo_envio_at
+                    ? "último envío el " + new Date(e.ultimo_envio_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
+                    : "todavía sin mandar");
+                quien.append(titulo, detalle);
+
+                const frec = document.createElement("select");
+                frec.className = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                frec.setAttribute("aria-label", "Cada cuánto se le manda a " + (e.nombre || e.email));
+                frec.innerHTML = Object.keys(FRECUENCIAS).map((f) =>
+                    `<option value="${f}"${e.frecuencia === f ? " selected" : ""}>${FRECUENCIAS[f]}</option>`).join("");
+                frec.addEventListener("change", async () => {
+                    const { error } = await sb.from("encargados").update({ frecuencia: frec.value }).eq("id", e.id);
+                    if (error) { alert("No se pudo cambiar: " + error.message); frec.value = e.frecuencia; return; }
+                    e.frecuencia = frec.value;
+                });
+
+                const activo = document.createElement("label");
+                activo.className = "flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-300";
+                const activoInput = document.createElement("input");
+                activoInput.type = "checkbox"; activoInput.checked = !!e.activo;
+                activoInput.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+                activoInput.addEventListener("change", async () => {
+                    const { error } = await sb.from("encargados").update({ activo: activoInput.checked }).eq("id", e.id);
+                    if (error) { alert("No se pudo cambiar: " + error.message); activoInput.checked = !activoInput.checked; }
+                });
+                activo.append(activoInput, document.createTextNode("activo"));
+
+                const ahora = document.createElement("button");
+                ahora.type = "button"; ahora.textContent = "Enviar ahora";
+                ahora.className = "text-xs bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                ahora.addEventListener("click", async () => {
+                    if (!confirm(`¿Mandarle ahora mismo el informe de ${nombreAlumno} a ${e.email}?`)) return;
+                    ahora.disabled = true; ahora.textContent = "Enviando…";
+                    try {
+                        await llamarInformes({ action: "enviar_ahora", encargado_id: e.id });
+                        ahora.textContent = "¡Enviado!";
+                        setTimeout(() => renderEncargados(studentId, nombreAlumno), 1200);
+                    } catch (err) {
+                        alert("No se pudo enviar: " + err.message);
+                        ahora.disabled = false; ahora.textContent = "Enviar ahora";
+                    }
+                });
+
+                const quitar = document.createElement("button");
+                quitar.type = "button"; quitar.textContent = "✕";
+                quitar.setAttribute("aria-label", "Quitar a " + (e.nombre || e.email));
+                quitar.className = "text-brand-500 dark:text-brand-300 hover:text-red-600 px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                quitar.addEventListener("click", async () => {
+                    if (!confirm(`¿Dejar de mandarle el informe a ${e.email}?`)) return;
+                    const { error } = await sb.from("encargados").delete().eq("id", e.id);
+                    if (error) { alert("No se pudo quitar: " + error.message); return; }
+                    renderEncargados(studentId, nombreAlumno);
+                });
+
+                fila.append(quien, frec, activo, ahora, quitar);
+                caja.appendChild(fila);
+            });
+        }
+
+        document.getElementById("enc-agregar").addEventListener("click", async () => {
+            if (!encargadoAlumno) return;
+            const btn = document.getElementById("enc-agregar");
+            const msg = document.getElementById("enc-msg");
+            const email = document.getElementById("enc-email").value.trim();
+            const nombre = document.getElementById("enc-nombre").value.trim();
+            if (!email) { msg.textContent = "Escribe el correo."; msg.className = "text-xs w-full text-red-600 dark:text-red-400"; return; }
+            btn.disabled = true;
+            msg.textContent = "Guardando…"; msg.className = "text-xs w-full text-brand-500 dark:text-brand-300";
+            const { error } = await sb.from("encargados").insert({
+                student_id: encargadoAlumno.id,
+                nombre: nombre || null,
+                email,
+                frecuencia: document.getElementById("enc-frecuencia").value,
+                creado_por: profile.id,
+            });
+            btn.disabled = false;
+            if (error) {
+                msg.textContent = error.code === "23505"
+                    ? "Ese correo ya está apuntado para este alumno."
+                    : "No se pudo guardar: " + error.message;
+                msg.className = "text-xs w-full text-red-600 dark:text-red-400";
+                return;
+            }
+            document.getElementById("enc-email").value = "";
+            document.getElementById("enc-nombre").value = "";
+            msg.textContent = "";
+            renderEncargados(encargadoAlumno.id, encargadoAlumno.nombre);
+        });
+
+        // Ver y descargar piden el MISMO HTML que sale por correo.
+        async function informeHtmlDelAlumno() {
+            return (await llamarInformes({
+                action: "vista_previa",
+                student_id: encargadoAlumno.id,
+                frecuencia: document.getElementById("enc-ver-frecuencia").value,
+            })).html;
+        }
+
+        document.getElementById("enc-ver").addEventListener("click", async () => {
+            const msg = document.getElementById("enc-ver-msg");
+            msg.textContent = "Armando…"; msg.className = "text-xs text-brand-500 dark:text-brand-300";
+            try {
+                const html = await informeHtmlDelAlumno();
+                // En una pestaña aparte, escrito con Blob: así no hereda nada de
+                // esta página y se ve tal cual le va a llegar a la casa.
+                const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+                window.open(url, "_blank", "noopener");
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+                msg.textContent = "";
+            } catch (err) {
+                msg.textContent = err.message; msg.className = "text-xs text-red-600 dark:text-red-400";
+            }
+        });
+
+        document.getElementById("enc-descargar").addEventListener("click", async () => {
+            const msg = document.getElementById("enc-ver-msg");
+            msg.textContent = "Armando…"; msg.className = "text-xs text-brand-500 dark:text-brand-300";
+            try {
+                const html = await informeHtmlDelAlumno();
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+                const limpio = (encargadoAlumno.nombre || "alumno").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+                a.download = `informe-${limpio}-${document.getElementById("enc-ver-frecuencia").value}.html`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                msg.textContent = "";
+            } catch (err) {
+                msg.textContent = err.message; msg.className = "text-xs text-red-600 dark:text-red-400";
+            }
+        });
 
         const TOPIC_LABELS = {
             asignaciones: "🚩 Asignaciones — precisión por alumno",

@@ -325,6 +325,55 @@ Detalles que importan:
   desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
   `student_id`.
 
+## Los informes que llegan a la casa
+
+En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
+le manda su informe y cada cuánto (diario, semanal, mensual o anual). Sale solo,
+sin que nadie apriete nada. **Es lo primero que el sitio manda por su cuenta**:
+hasta ahora el correo lo escribía siempre una persona (el `mailto:` del examen
+de arbitraje).
+
+- `encargados` (alumno, nombre, correo, frecuencia, activo, último envío). La
+  persona encargada **no tiene cuenta en el sitio ni la necesita**: solo un
+  correo. Los maneja cualquiera de los profesores del alumno, y quien
+  administra.
+- **La frecuencia es las dos cosas a la vez**: cada cuánto se manda Y qué
+  periodo cubre. El informe semanal cuenta la semana, no todo lo que lleva
+  hecho. Por eso `informe_de_alumno(alumno, desde, hasta)` es una función
+  aparte de `informes_resumen_alumnos()`, que cuenta desde siempre.
+- **El circuito**: `pg_cron` (todos los días a las 13:00 UTC, 7 de la mañana en
+  Costa Rica) → `disparar_informes_encargados()` → `pg_net` → la Edge Function
+  `informes-encargados` → Resend, desde `informes@ajedrez-integral.com` (el
+  dominio está verificado). Corre a diario y cada encargado recibe el suyo solo
+  cuando le toca, con medio día de margen para que un minuto de diferencia no le
+  haga saltar una vuelta entera.
+- **La tanda va firmada.** `verify_jwt` está en `false` porque el disparador no
+  trae sesión de persona; a cambio, esa acción exige un secreto que vive en la
+  bóveda (Vault) y que la propia función vuelve a leer con la service role para
+  compararlo. Está comprobado: con una firma inventada responde 401. El secreto
+  lo generó la migración con `gen_random_bytes` y no está escrito en ninguna
+  parte.
+- **`ultimo_envio_at` se marca DESPUÉS de que Resend acepte el correo**, nunca
+  antes: si falla, la tanda del día siguiente lo vuelve a intentar en vez de
+  darlo por mandado.
+- **El HTML del informe se escribe una sola vez**, en `informe-html.ts` dentro de
+  la función. Lo que se ve en pantalla, lo que se descarga y lo que le llega a la
+  casa son el mismo archivo; la página **no** lo arma por su lado (pide la acción
+  `vista_previa`). Si estuviera duplicado, el correo y la descarga se irían
+  separando.
+- Va con los estilos puestos **a mano en cada etiqueta**, no con una hoja aparte:
+  Gmail descarta `<style>` del `<head>`, así que un CSS bonito se vería perfecto
+  en el navegador y roto en el correo, que es donde de verdad se lee. Y el tono
+  es para una madre o un padre, no para un colega: nada de "filas" ni "registros",
+  y cuando la semana viene vacía se dice sin regañar a nadie.
+- **El permiso no se comprueba a mano en la Edge Function**: para "enviar ahora"
+  lee la fila con un cliente que lleva el JWT de quien llama, o sea pasando por
+  la RLS. Si la RLS no se la devuelve, no es profesor de ese alumno. Una regla
+  menos escrita dos veces.
+- Comprobado de punta a punta contra Resend con `delivered@resend.dev` (su
+  dirección de pruebas, que no llega a ninguna bandeja real): la primera corrida
+  mandó 1 y la segunda saltó 1, que es exactamente lo que tiene que pasar.
+
 ## El progreso vive en la cuenta, no en el aparato
 
 `js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por

@@ -124,8 +124,13 @@ def texto_visible(ruta):
 def archivos():
     vistos = sorted(set(glob.glob("**/*.html", recursive=True) +
                         glob.glob("js/*.js") + glob.glob("**/*.json", recursive=True)))
+    # Los .min.js son librerías de fuera, minificadas: no tienen prosa que
+    # revisar y sí nombres propios que el detector marca sin razón (pdf.js trae
+    # una tabla de fuentes con "Trinité"). Revisarlos es ruido garantizado.
     return [f for f in vistos
-            if os.path.getsize(f) < 2_000_000 and not f.startswith("herramientas/verificar")]
+            if os.path.getsize(f) < 2_000_000
+            and not f.startswith("herramientas/verificar")
+            and not f.endswith(".min.js")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""

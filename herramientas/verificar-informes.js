@@ -72,6 +72,8 @@ const RESPUESTAS = [
 function clienteFalso(datos, usuarioId) {
   return `
 window.__consultas = [];
+window.__escrituras = [];
+window.__funcion = [];
 (function () {
   const DATOS = ${JSON.stringify(datos)};
   function constructor(filas, etiqueta) {
@@ -82,6 +84,9 @@ window.__consultas = [];
       range(a, z) { desde = a; hasta = z; return b; },
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
+      insert(fila) { window.__escrituras.push({ etiqueta: etiqueta, accion: "insert", fila: fila }); return b; },
+      update(fila) { window.__escrituras.push({ etiqueta: etiqueta, accion: "update", fila: fila }); return b; },
+      delete() { window.__escrituras.push({ etiqueta: etiqueta, accion: "delete" }); return b; },
       then(res, rej) {
         window.__consultas.push(etiqueta);
         let d = filas;
@@ -95,8 +100,19 @@ window.__consultas = [];
     };
     return b;
   }
+  // La Edge Function de los informes a la casa se atiende acá.
+  const fetchReal = window.fetch;
+  window.fetch = function (url, opciones) {
+    if (String(url).indexOf("/functions/v1/informes-encargados") !== -1) {
+      const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
+      window.__funcion.push(cuerpo);
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, html: "<p>informe</p>", alumno: "Ana Rojas" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }));
+    }
+    return fetchReal.apply(this, arguments);
+  };
   window.sb = {
-    auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} } } } }) },
+    auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} }, access_token: "t" } } }) },
     from: (t) => constructor(DATOS.tablas[t] !== undefined ? DATOS.tablas[t] : [], "from:" + t),
     rpc: (n) => constructor(DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : [], "rpc:" + n),
   };
@@ -163,6 +179,8 @@ async function pruebaProfesor(browser) {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
       training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: arbitrajes,
       question_answers: RESPUESTAS,
+      encargados: [{ id: "enc-1", student_id: "a-1", nombre: "Mamá de Ana", email: "mama@x.cr",
+                     frecuencia: "semanal", activo: true, ultimo_envio_at: "2026-09-08T12:00:00Z" }],
     },
   }, "prof-1");
 
@@ -197,10 +215,55 @@ async function pruebaProfesor(browser) {
   igual("Tiempo total en la plataforma", await tarjeta(page, "Tiempo total en la plataforma"), "1 h 35 min");
   igual("Temas de cursos estudiados", await tarjeta(page, "Temas de cursos estudiados"), "3");
   igual("historial (quince como mucho)", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 3);
-  igual("cursos del alumno", await page.evaluate(() =>
-    [...document.querySelectorAll("#cursos-report-body > div")].map((d) => d.textContent.replace(/\s+/g, " ").trim()).join(" // ")),
-    "Finales prácticos3/8 · 38%Último tema estudiado: La oposición (09 sept 2026) // Táctica básica1/1 · 100%Último tema estudiado: La horquilla (08 sept 2026)");
+  // Se comprueban los hechos, no el texto entero de la tarjeta: ahí conviven
+  // otros controles (desbloquear temas) que van creciendo y no son de esta
+  // prueba. Una comprobación que se rompe cuando alguien agrega un botón al
+  // lado deja de decir nada.
+  igual("cursos del alumno", await page.evaluate(() => {
+    const t = [...document.querySelectorAll("#cursos-report-body > div")]
+      .map((d) => d.textContent.replace(/\s+/g, " "));
+    return [
+      t.length,
+      t[0].includes("Finales prácticos3/8 · 38%"),
+      t[0].includes("Último tema estudiado: La oposición (09 sept 2026)"),
+      t[1].includes("Táctica básica1/1 · 100%"),
+      t[1].includes("Último tema estudiado: La horquilla (08 sept 2026)"),
+    ].join(",");
+  }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
+
+  console.log("-- Informes a la casa");
+  igual("el encargado aparece con su frecuencia y su último envío", await page.evaluate(() => {
+    const f = document.querySelector("#encargados-lista > div");
+    return [f.children[0].textContent.replace(/\s+/g, " ").trim(), f.querySelector("select").value].join(" | ");
+  }), "Mamá de Anamama@x.cr · último envío el 08 sept 2026 | semanal");
+
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.fill("#enc-nombre", "Papá de Ana");
+  await page.fill("#enc-email", "papa@x.cr");
+  await page.selectOption("#enc-frecuencia", "mensual");
+  await page.click("#enc-agregar");
+  await page.waitForFunction(() => window.__escrituras.length > 0);
+  igual("agregar un encargado manda lo correcto", await page.evaluate(() => window.__escrituras[0]),
+    { etiqueta: "from:encargados", accion: "insert",
+      fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual", creado_por: "prof-1" } });
+
+  page.on("dialog", (d) => d.accept());
+  await page.evaluate(() => {
+    window.__funcion.length = 0;
+    [...document.querySelectorAll("#encargados-lista button")].find((b) => b.textContent === "Enviar ahora").click();
+  });
+  await page.waitForFunction(() => window.__funcion.length > 0);
+  igual("«enviar ahora» le pide a la función ese encargado", await page.evaluate(() => window.__funcion[0]),
+    { action: "enviar_ahora", encargado_id: "enc-1" });
+
+  await page.evaluate(() => { window.__funcion.length = 0; });
+  await page.selectOption("#enc-ver-frecuencia", "mensual");
+  await page.click("#enc-descargar");
+  await page.waitForFunction(() => window.__funcion.length > 0);
+  igual("descargar pide el MISMO informe que sale por correo, del periodo elegido",
+    await page.evaluate(() => window.__funcion[0]),
+    { action: "vista_previa", student_id: "a-1", frecuencia: "mensual" });
 
   console.log("-- Filtros de grupo y de tema");
   await page.selectOption("#student-filter", "");
