@@ -1,0 +1,32 @@
+{
+  "_nota": "Obras de referencia reales, por área. Se listan al final de cada cuadernillo como LECTURA RECOMENDADA, nunca como origen del texto: el texto es de Oscar Angulo Cubero. Si algún día se cita literalmente algo de alguna de ellas, la cita va con página y comillas en el propio texto, no acá.",
+  "fundamentos": [
+    "Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).",
+    "José Raúl Capablanca, «Fundamentos del ajedrez» (1921).",
+    "Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01."
+  ],
+  "tactica": [
+    "Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).",
+    "Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).",
+    "Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012)."
+  ],
+  "estrategia": [
+    "Aron Nimzowitsch, «Mi sistema» (1925).",
+    "Andrew Soltis, «Pawn Structure Chess» (1976).",
+    "Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009)."
+  ],
+  "finales": [
+    "Mark Dvoretsky, «Dvoretsky's Endgame Manual» (Russell Enterprises, 2003).",
+    "Karsten Müller y Frank Lamprecht, «Fundamental Chess Endings» (Gambit, 2001).",
+    "Reuben Fine, «Basic Chess Endings» (1941)."
+  ],
+  "aperturas": [
+    "Paul van der Sterren, «Fundamental Chess Openings» (Gambit, 2009).",
+    "Sam Collins, «Understanding the Chess Openings» (Gambit, 2005)."
+  ],
+  "competicion": [
+    "Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.",
+    "Reglamento de competición y de desempates de la FIDE, FIDE Handbook, capítulos C.04 y C.07.",
+    "Jesús de la Villa, «100 finales que hay que saber» (Esfera, 2008)."
+  ]
+}

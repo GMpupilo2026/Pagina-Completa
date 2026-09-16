@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo calcular variantes sin mover las piezas — Estrategia y Táctica — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 6 del curso Estrategia y Táctica.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Estrategia y Táctica · Lección 6</p>
+  <h1>Cómo calcular variantes sin mover las piezas</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Calcular bien es organizar mentalmente un árbol de variantes: por cada jugada candidata tuya, considera las respuestas más peligrosas del rival, no todas las posibles. Verbaliza mentalmente cada jugada (&quot;si yo juego esto, él responde esto&quot;) en vez de &quot;ver&quot; el tablero de forma difusa.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El mate de la coz</dt>
+  <dd>El rey queda rodeado por sus propias piezas y un caballo le da mate. En inglés se llama smothered mate. El patrón completo lleva un sacrificio de dama.</dd>
+  <dd><strong>El error de siempre:</strong> Intentarlo sin el sacrificio. El mate de la coz se ve bonito pero necesita una secuencia exacta: jaque de caballo, rey a la esquina, jaque doble, rey vuelve, dama a la esquina y caballo mata.</dd>
+  <dd><strong>Para verlo:</strong> Con el rey negro en g8, torre en f8 y peones en g7 y h7: Cf7+ Rg8, Ch6++ Rh8, Dg8+ Txg8, Cf7 mate. Cada jugada es forzada.</dd>
+  <dt>La jugada intermedia (zwischenzug)</dt>
+  <dd>En medio de una secuencia que parece obligada, se mete otra jugada más fuerte —casi siempre un jaque o una amenaza mayor— antes de completar la captura esperada.</dd>
+  <dd><strong>El error de siempre:</strong> Calcular las capturas en el orden en que aparecen. Cuando calculas una serie de cambios, hay que preguntarse en cada paso si hay algo más fuerte que recapturar.</dd>
+  <dd><strong>Para verlo:</strong> El rival te come una pieza y esperas recapturar. En vez de eso das jaque: el rival atiende el jaque, y recién entonces recapturas, ahora con una pieza de más.</dd>
+</dl>
+
+
+
+<h2>3. Ejercicios</h2>
+<ol>
+  <li>repasa el curso Cálculo y Visualización si quieres profundizar en esta habilidad específica.</li>
+  <li>Juega el mate de la coz completo cinco veces en el tablero hasta poder hacerlo sin mirar.</li>
+  <li>Busca en tus partidas alguna posición donde el rival tuviera el rey rodeado y un caballo tuyo cerca.</li>
+  <li>En quince ejercicios tácticos, antes de dar por buena tu solución, busca un jaque que se pueda colar antes.</li>
+  <li>Repasa una partida tuya y marca cada secuencia de cambios. Busca en cada una si había algo intermedio.</li>
+</ol>
+
+<h2>4. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Por qué hay que sacrificar la dama?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Para obligar a la torre a ir a g8 y tapar la última casilla de escape del rey. Sin esa torre ahí, no hay mate.</p>
+  </li>
+  <li>
+    <p>¿Qué papel juega el doble jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Obliga al rey a moverse sin poder capturar el caballo ni interponer. Es lo que lleva al rey de vuelta a la esquina.</p>
+  </li>
+  <li>
+    <p>¿Contra qué enroque funciona?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Contra el corto, con los peones f, g y h sin mover y una torre en f8. Por eso desaparece en cuanto el rival juega h6.</p>
+  </li>
+  <li>
+    <p>¿Se puede dar con el rey en el centro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, cuando las propias piezas le tapan todo alrededor. El nombre describe la situación, no una casilla concreta.</p>
+  </li>
+  <li>
+    <p>¿Dónde se busca una jugada intermedia?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En cualquier momento de una secuencia forzada. La pregunta es siempre: antes de recapturar, ¿tengo un jaque o una amenaza más grande?</p>
+  </li>
+  <li>
+    <p>¿Por qué se les escapa a los jugadores de club?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la mente cierra la secuencia: 'me come, le como'. La jugada intermedia rompe ese automatismo.</p>
+  </li>
+  <li>
+    <p>¿Qué relación tiene con la captura al paso de tiempo?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Ninguna reglamentaria. Es un recurso de cálculo: aprovechar que el rival está obligado a algo para colar otra cosa antes.</p>
+  </li>
+  <li>
+    <p>¿Cómo se entrena?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Resolviendo ejercicios donde la primera jugada obvia es buena pero la segunda mejor es el jaque intermedio. Los libros los marcan como 'zwischenzug'.</p>
+  </li>
+</ol>
+
+<h2>5. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Estrategia y Táctica» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).</li>
+  <li>Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).</li>
+  <li>Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

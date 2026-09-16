@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dama contra piezas: cuándo gana cada bando — Desequilibrios de material — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 17 del curso Desequilibrios de material.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Desequilibrios de material · Lección 17</p>
+  <h1>Dama contra piezas: cuándo gana cada bando</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Objetivo: Distinguir las posiciones en que la dama domina (piezas descoordinadas, rey expuesto) de aquellas en que las piezas se imponen.</p>
+<p>Idea guía: La dama necesita objetivos y jaques; las piezas necesitan coordinación, peones pasados y un rey seguro.</p>
+<p>3 partidas y ejemplos · 14 momentos clave · 10 preguntas</p>
+<p>Si la lección anterior mostró cómo sobrevivir sin dama, esta se enfoca en el otro extremo: cuándo la dama, contra varias piezas menores, es en realidad el bando superior, y cómo aplicar en la práctica los principios S1 a S5 de supervivencia cuando los papeles se invierten. La clave para distinguir ambos escenarios es reconocer qué tipo de posición favorece a cada bando.</p>
+<p>La dama domina en posiciones rápidas y abiertas, donde puede generar jaques y amenazas de un extremo al otro del tablero sin que las piezas menores rivales tengan tiempo de coordinarse. También domina cuando el rey rival queda expuesto, porque entonces la velocidad de la dama para combinar amenazas se vuelve letal. Las piezas menores, en cambio, se imponen cuando logran una coordinación sólida, cuentan con peones pasados propios y, sobre todo, cuando su rey está completamente seguro: en esas condiciones, el bando de la dama puede terminar sin ningún plan efectivo, muy similar a lo que veíamos en los primeros principios del curso sobre piezas pesadas sin objetivos.</p>
+<p>El plan de quien tiene la dama consiste en buscar activamente la apertura del juego, incluso a costa de material adicional, para maximizar su capacidad de generar amenazas rápidas; también puede intentar zugzwangs contra un rival que crea tener todo bajo control. El plan de quien tiene las piezas menores es exactamente el modo supervivencia de la lección anterior: estabilidad, reducción de flancos, cautela con los cambios, peones pasados propios y paciencia para no salir del refugio antes de tiempo.</p>
+<p>El error más común del bando de la dama es jugar de manera pasiva o esperar, cuando su verdadera fuerza depende de la apertura y la velocidad del juego. El error más común del bando de las piezas menores es confiarse en una posición material o defensivamente sólida sin prestar atención a la posibilidad de zugzwang, que puede aparecer incluso con material igual y sin ningún error evidente de por medio.</p>
+<p>Grigoryan–Petrosian muestra a la dama en su mejor versión: combinada con la iniciativa, resulta letal incluso con un déficit material considerable, y la evaluación del motor puede pasar de 0.00 a una ventaja decisiva en una sola jugada por la acumulación de decisiones prácticas correctas. Carlsen–Tari (en la variante analizada) demuestra que, aun con material exactamente igual, el bando sin dama puede perder por la simple imposibilidad de encontrar jugadas de espera, es decir, por zugzwang puro. Brown–Flores Rios es un ejemplo del propio autor aplicando los principios S1 a S5 (con S1, la estabilidad, como el más determinante) para rescatar una posición que el motor consideraba perdida durante buena parte de la partida.</p>
+<p>Reglas para recordar</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Desarrollo y tiempo</dt>
+  <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
+  <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
+  <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Los puntos engañan: coordinación contra dama</h3>
+  
+  <p>Piezas blancas: rey en g1; dama en b1; alfil en f1; peónes en f2, g4, h3.</p>
+  <p>Piezas negras: rey en g7; alfils en e6, f6; caballo en f4; peónes en c3, d4, f7, g5, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  
+  
+  <p>Dama y alfil contra dos alfiles, caballo y dos peones de más. Todas las piezas negras están defendidas y los peones c3 y d4 avanzan apoyados; la dama no tiene nada que atacar.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/5pkp/4bb2/6p1/3p1nP1/2p4P/5P2/1Q3BK1 w - - 0 1</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Las piezas pesadas necesitan blancos: Carlsen contra la dama</h3>
+  
+  <p>Piezas blancas: rey en f2; torre en a7; caballo en e2; peónes en e3, f4, g3.</p>
+  <p>Piezas negras: rey en g6; dama en d3; peón en h5.</p>
+  <p>Juegan las blancas.</p>
+  
+  
+  
+  <p>Torre, caballo y tres peones contra dama y peón. Los peones blancos se protegen entre sí y el caballo tapa los jaques; la dama no tiene blancos y sólo las blancas pueden jugar a ganar.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/R7/6k1/7p/5P2/3qP1P1/4NK2/8 w - - 0 1</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
+  <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Por qué los caballos antes que los alfiles?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+  </li>
+  <li>
+    <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Tener más piezas jugando. Se aprovecha abriendo líneas y atacando rápido: si la posición se cierra o se cambian piezas, la ventaja se evapora.</p>
+  </li>
+  <li>
+    <p>¿Cuántos tiempos vale un peón en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, unos tres. Por eso un gambito que entrega un peón por tres jugadas de desarrollo está en equilibrio.</p>
+  </li>
+  <li>
+    <p>¿Es malo mover dos veces la misma pieza en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En general sí, pero no es una ley: si la segunda jugada gana algo o mejora mucho la pieza, vale la pena. Los principios ceden ante el cálculo concreto.</p>
+  </li>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+  <li>Herman Grooten, «Chess Strategy for Club Players» (New in Chess, 2009).</li>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

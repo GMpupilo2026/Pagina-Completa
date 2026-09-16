@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jugadas candidatas — Cálculo y Visualización — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 3 del curso Cálculo y Visualización.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Cálculo y Visualización · Lección 3</p>
+  <h1>Jugadas candidatas</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Antes de calcular en profundidad, identifica entre 2 y 4 jugadas candidatas razonables (no más). Calcular superficialmente 6 opciones distintas suele ser peor que calcular a fondo las 2 o 3 más prometedoras.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El jaque descubierto</dt>
+  <dd>Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.</dd>
+  <dd><strong>El error de siempre:</strong> Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
+  <dt>Desviación y atracción</dt>
+  <dd>Desviar es obligar a una pieza a soltar lo que defiende. Atraer es obligarla a ir a una casilla mala. Sobrecarga es cuando una pieza defiende dos cosas y no puede con las dos.</dd>
+  <dd><strong>El error de siempre:</strong> Mirar solo qué está colgando y no quién lo defiende. La pregunta que abre estas tácticas no es '¿qué puedo comer?', sino '¿quién defiende esto, y qué pasa si lo obligo a irse?'.</dd>
+  <dd><strong>Para verlo:</strong> Un alfil defiende a la vez la torre de f8 y el peón de d5. Se cambia por la torre: el alfil recaptura obligado, y el peón de d5 cae de regalo.</dd>
+</dl>
+
+
+
+<h2>3. Ejercicios</h2>
+<ol>
+  <li>en tu próxima partida, antes de mover, di en voz alta tus jugadas candidatas antes de decidir cuál calcular primero.</li>
+  <li>Busca el mate de la coz en un libro o en internet y juégalo tres veces: es un descubierto y un doble jaque trabajando juntos.</li>
+  <li>En diez ejercicios de descubierto, anota primero a dónde va la pieza que se mueve y solo después mira la solución.</li>
+  <li>En tu próxima partida, antes de cada captura, escribe mentalmente quién defiende la casilla. En un mes ves tácticas que hoy no ves.</li>
+  <li>Toma una posición tuya cualquiera y haz la lista de defensores de cada bando. Busca las sobrecargas.</li>
+</ol>
+
+<h2>4. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Qué es el doble jaque y por qué es tan fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando las dos piezas dan jaque a la vez. Solo se puede responder moviendo el rey: no hay captura ni interposición que tape dos líneas.</p>
+  </li>
+  <li>
+    <p>¿La pieza que se descubre puede capturar algo defendido?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, y esa es la gracia: el rival no puede recapturar porque primero tiene que salir del jaque.</p>
+  </li>
+  <li>
+    <p>¿Cómo se prepara un descubierto?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Poniendo una pieza propia entre una pieza de línea propia y el rey rival, y buscando después la casilla que más daño haga al moverla.</p>
+  </li>
+  <li>
+    <p>¿Contra qué otra pieza sirve el descubierto?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Contra cualquiera que obligue: la dama funciona casi igual de bien que el rey, porque el rival tampoco la puede dejar.</p>
+  </li>
+  <li>
+    <p>¿Cómo se reconoce una sobrecarga?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Se hace una lista de lo que defiende cada pieza rival. La que aparece dos veces está sobrecargada.</p>
+  </li>
+  <li>
+    <p>¿Qué es un sacrificio de atracción?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Entregar material para llevar al rey o a una pieza a una casilla donde después hay horquilla, clavada o mate. Se calcula hasta el final antes de jugarlo.</p>
+  </li>
+  <li>
+    <p>¿Por qué el jaque es la mejor herramienta de desviación?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque obliga: el rival no puede elegir ignorarlo. Toda desviación con jaque es forzada, y lo forzado se calcula entero.</p>
+  </li>
+  <li>
+    <p>¿Desviación o eliminación del defensor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Desviar es obligarlo a irse; eliminar es cambiarlo o capturarlo. El resultado es el mismo y el nombre importa poco: lo que importa es ver quién defiende.</p>
+  </li>
+</ol>
+
+<h2>5. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Cálculo y Visualización» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).</li>
+  <li>Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).</li>
+  <li>Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

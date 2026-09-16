@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualización sin mover piezas — Cálculo y Visualización — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 2 del curso Cálculo y Visualización.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Cálculo y Visualización · Lección 2</p>
+  <h1>Visualización sin mover piezas</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Empieza visualizando solo una jugada por adelantado, sin tocar las piezas; luego dos, luego tres. La clave es no tener prisa: es preferible visualizar 2 jugadas con precisión total que 5 jugadas con dudas sobre dónde queda cada pieza.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La enfilada</dt>
+  <dd>Es la clavada al revés: la pieza valiosa está delante y, al moverse, deja expuesta a la de atrás. Se ataca al rey o a la dama y se gana lo que estaba detrás.</dd>
+  <dd><strong>El error de siempre:</strong> Confundirla con la clavada. En la clavada la pieza de adelante no se puede mover; en la enfilada se mueve obligada y por eso pierde. Nombrar bien lo que ves es la mitad de calcularlo.</dd>
+  <dd><strong>Para verlo:</strong> Rey negro en g8, torre negra en g1 y alfil blanco que llega a la diagonal larga: el rey tiene que salir del jaque y la torre cae.</dd>
+  <dt>El jaque descubierto</dt>
+  <dd>Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.</dd>
+  <dd><strong>El error de siempre:</strong> Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.</dd>
+  <dd><strong>Para verlo:</strong> Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.</dd>
+</dl>
+
+
+
+<h2>3. Ejercicios</h2>
+<ol>
+  <li>desde una posición sencilla, cierra los ojos y anuncia en voz alta la posición resultante tras 3 jugadas específicas.</li>
+  <li>Arma cinco finales de torre y rey y busca en cada uno la enfilada que gana la torre rival.</li>
+  <li>Toma diez ejercicios mezclados de clavada y enfilada y clasifícalos antes de resolverlos.</li>
+  <li>Busca el mate de la coz en un libro o en internet y juégalo tres veces: es un descubierto y un doble jaque trabajando juntos.</li>
+  <li>En diez ejercicios de descubierto, anota primero a dónde va la pieza que se mueve y solo después mira la solución.</li>
+</ol>
+
+<h2>4. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿En qué se diferencian clavada y enfilada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el orden. Clavada: valiosa detrás, la de adelante no puede moverse. Enfilada: valiosa adelante, se mueve y cae la de atrás.</p>
+  </li>
+  <li>
+    <p>¿Qué piezas enfilan?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Las mismas que clavan: alfil, torre y dama. Necesitan una línea con dos piezas rivales en fila.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende una enfilada?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Moviendo la pieza de adelante de modo que siga tapando la línea, interponiendo, o capturando la pieza que enfila.</p>
+  </li>
+  <li>
+    <p>¿Por qué es tan frecuente en finales de torre?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quedan pocas piezas, las líneas están abiertas y el rey no se puede esconder detrás de nada.</p>
+  </li>
+  <li>
+    <p>¿Qué es el doble jaque y por qué es tan fuerte?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando las dos piezas dan jaque a la vez. Solo se puede responder moviendo el rey: no hay captura ni interposición que tape dos líneas.</p>
+  </li>
+  <li>
+    <p>¿La pieza que se descubre puede capturar algo defendido?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, y esa es la gracia: el rival no puede recapturar porque primero tiene que salir del jaque.</p>
+  </li>
+  <li>
+    <p>¿Cómo se prepara un descubierto?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Poniendo una pieza propia entre una pieza de línea propia y el rey rival, y buscando después la casilla que más daño haga al moverla.</p>
+  </li>
+  <li>
+    <p>¿Contra qué otra pieza sirve el descubierto?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Contra cualquiera que obligue: la dama funciona casi igual de bien que el rey, porque el rival tampoco la puede dejar.</p>
+  </li>
+</ol>
+
+<h2>5. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Cálculo y Visualización» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Martin Weteschnik, «Chess Tactics from Scratch» (Quality Chess, 2012).</li>
+  <li>Fred Reinfeld, «1001 Brilliant Ways to Checkmate» (1955).</li>
+  <li>Jacob Aagaard, «Calculation» — serie Grandmaster Preparation (Quality Chess, 2012).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>
