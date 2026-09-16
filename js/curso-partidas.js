@@ -49,6 +49,15 @@
   // ---------- utilidades ----------
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
   function esSan(san) { return String(san).replace(/^([KQRBN])/, (m, p) => ES[p]).replace(/=([QRBN])/, (m, p) => "=" + ES[p]); }
+  // Igual que en Modo Adaptado (js/blind-notation.js): nombra la pieza completa y dice cada
+  // casilla con su palabra fonética ("felix 3", no "f3"), para las respuestas del cuadro de
+  // comandos ("Escribe tu jugada") — ahí sí importa: quien no ve el tablero (lector de
+  // pantalla) necesita oír algo sin ambigüedad, a diferencia de la lista de jugadas visible
+  // (esSan/moveLabel), que sigue en notación compacta porque eso sí se lee con la vista.
+  function spokenSan(san) { return window.BlindNotation ? BlindNotation.sanSpoken(san) : esSan(san); }
+  function spokenSquares(sqs) {
+    return window.BlindNotation ? sqs.map((sq) => BlindNotation.squareSpoken(sq)).join(", ") : sqs.join(", ");
+  }
   function parseFen(fen) {
     const parts = fen.split(" "), rows = parts[0].split("/"), board = {};
     for (let r = 0; r < 8; r++) { let f = 0; for (const ch of rows[r]) { if (/\d/.test(ch)) f += parseInt(ch, 10); else { board["abcdefgh"[f] + (8 - r)] = ch; f++; } } }
@@ -62,7 +71,7 @@
       const parts = [];
       "KQRBNP".split("").forEach((t) => {
         const sqs = Object.keys(board).filter((sq) => board[sq] === (col === "w" ? t : t.toLowerCase())).sort();
-        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + sqs.join(", "));
+        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + spokenSquares(sqs));
       });
       out.push(nom + ": " + (parts.join("; ") || "sin piezas") + ".");
     });
@@ -255,7 +264,7 @@
         if (ok || alt) {
           state.aciertos++; setMoveInputEnabled(false); state.ply = ply;
           renderMoves(); renderView({ good: [uci.slice(0, 2), uci.slice(2, 4)] });
-          comEl.innerHTML = '<p class="cp-c cp-good"><strong>' + (ok ? "¡Correcto! " : "¡Muy bien! Esa jugada también es buena; en la partida se jugó " + esc(moveLabel(m)) + ". ") + "</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
+          comEl.innerHTML = '<p class="cp-c cp-good"><strong>' + (ok ? "¡Correcto! " : "¡Muy bien! Esa jugada también es buena; en la partida se jugó " + esc(spokenSan(m.san)) + ". ") + "</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
           msgEl.innerHTML = '<button type="button" data-act="continue" class="cp-btn">Seguir ▶</button>';
         } else {
           state.intentos++;
@@ -271,7 +280,7 @@
       const ply = state.ply + 1, m = moves[ply - 1];
       if (failed) state.fallos++;
       setMoveInputEnabled(false); state.ply = ply; renderMoves(); renderView();
-      comEl.innerHTML = '<p class="cp-c ' + (failed ? "cp-bad" : "") + '"><strong>La jugada de la partida fue ' + esc(moveLabel(m)) + ".</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
+      comEl.innerHTML = '<p class="cp-c ' + (failed ? "cp-bad" : "") + '"><strong>La jugada de la partida fue ' + esc(spokenSan(m.san)) + ".</strong> " + esc(state.guess.explicacion || m.comentario || "") + "</p>";
       msgEl.innerHTML = '<button type="button" data-act="continue" class="cp-btn">Seguir ▶</button>';
     }
     function finishGuess() {
@@ -320,7 +329,7 @@
       if (state.mode !== "practicar") return;
       if (!uci) { renderPractice("El motor no respondió. Prueba de nuevo o recarga la página."); setMoveInputEnabled(true); return; }
       const rival = game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.length > 4 ? uci[4] : undefined });
-      msgEl.textContent = "El motor jugó " + esSan(rival.san) + ". Te toca."; setMoveInputEnabled(true); renderPractice();
+      msgEl.textContent = "El motor jugó " + spokenSan(rival.san) + ". Te toca."; setMoveInputEnabled(true); renderPractice();
       const r2 = resultOf(); if (r2) endPractice(r2);
     }
     function endPractice(res) {
@@ -422,7 +431,7 @@
       ctr.hidden = false; el.querySelector('[data-act="show"]').hidden = true; el.querySelector('[data-act="hint"]').hidden = true;
       movesEl.innerHTML = sol.map((m, i) => '<button type="button" data-ply="' + (i + 1) + '">' + esc(moveLabel(m)) + "</button>").join("") + (x.resultado ? '<span class="cp-h"> ' + esc(x.resultado) + "</span>" : "");
       state.ply = 1; render(byUser ? { good: [sol[0].uci.slice(0, 2), sol[0].uci.slice(2, 4)] } : {});
-      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(moveLabel(sol[0])) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con las flechas.</p>";
+      comEl.innerHTML = '<p class="cp-c ' + (byUser ? "cp-good" : "") + '"><strong>' + (byUser ? "¡Correcto! " : "Solución: ") + esc(spokenSan(sol[0].san)) + ".</strong> " + esc(x.explicacion || sol[0].comentario || "") + " Recorre la línea completa con las flechas.</p>";
       guardar(x.id, { tipo: "ejercicio", ok: !!byUser, intentos: state.tries });
     }
     if (typeof Chess === "function") { game = new Chess(); game.load(x.fen); input.enable(true); }
