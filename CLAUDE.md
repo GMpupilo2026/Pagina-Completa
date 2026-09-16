@@ -489,6 +489,99 @@ dos caras de la página, que no recalcule situaciones, qué manda al crear un
 plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
 el CSV salga con punto y coma y BOM.
 
+## Reportes de actividades para presentar
+
+`reportes.html` (botón "📄 Reportes de actividades" en `admin.html`) arma el
+informe de lo que pasó en clase en un periodo, para presentarlo a quien haya
+que presentárselo. Sale en **Word y en PDF**, los dos con la marca de agua de
+Oscar en todas las páginas.
+
+Es de **quien coordina o administra** (`is_admin || es_coordinador`), como
+`cobros.html`. Lo que se ve dentro lo sigue acotando la RLS.
+
+- **Los datos salen de `public.reporte_actividades(desde, hasta)`**, que es
+  `SECURITY INVOKER` como las de informes: clases con su título, fecha, duración
+  y notas; asistencia por clase y por estudiante; minutos en clase; preguntas de
+  pizarra y aciertos. **Los minutos se cuentan con la misma técnica que
+  `informes_resumen_alumnos()`** (unir tramos superpuestos antes de sumar): un
+  informe que diga otro número que la página de Informes sería peor que no
+  tenerlo.
+- **Los archivos que se suben no se suben a ningún lado.** Fotos, hojas de
+  cálculo y grabaciones se leen en el navegador, entran al documento y ahí
+  termina. No hace falta Supabase Storage, no hay gigabyte que administrar y
+  —lo que más pesa— no quedan fotos de menores guardadas en un servidor.
+- **El contenido se arma UNA sola vez**, en `js/reporte-armar.js`: de esa
+  estructura neutral salen la vista previa, el PDF y el Word. Si cada generador
+  armara lo suyo, los dos archivos se irían separando a la primera corrección
+  — la misma razón por la que el informe que llega a la casa vive en un solo
+  `informe-html.ts`.
+
+### Los dos generadores están escritos a mano
+
+Ninguno usa librería, y no es capricho: las de PDF pesan entre 300 KB y 1 MB y
+SheetJS otros 900 KB, para una página que se abre de vez en cuando. Con lo que
+el navegador ya trae alcanza.
+
+- **`js/reporte-pdf.js`.** Las fotos van con `DCTDecode`, que quiere decir
+  "adentro va un JPEG tal cual", así que la página pasa toda imagen por un
+  canvas y la saca en JPEG: el generador no tiene que saber decodificar PNG ni
+  WebP. La marca de agua va con su canal alfa aparte (`/SMask`); sin el alfa,
+  taparía el texto con un rectángulo blanco.
+  **Ojo con el texto: WinAnsi NO es Latin-1.** El guion largo y las comillas
+  tipográficas viven en los bytes 0x80-0x9F, que en Latin-1 no son nada.
+  Tratarlo como Latin-1 a secas se comía el guion largo de "Jean Quesada — 1
+  clase" y dejaba un hueco en el papel, sin dar ningún error.
+- **`js/reporte-docx.js`.** Un .docx es un ZIP con XML; el ZIP va sin comprimir,
+  que Word acepta igual. **`[Content_Types].xml` TIENE que ser la primera
+  entrada**: con ese archivo al final, Word lo abría igual pero LibreOffice
+  respondía "source file could not be loaded" y nada más — o sea que el fallo
+  solo aparecía en la mitad de los programas. La marca de agua es una forma VML
+  en el encabezado, con el `gain` y el `blacklevel` que usa el propio Word para
+  lavarla y dejarla detrás del texto.
+- **`js/reporte-excel.js`.** Un .xlsx también es un ZIP, y el navegador trae
+  `DecompressionStream("deflate-raw")`. Lee la primera hoja, los textos
+  compartidos y los estilos. Los estilos hacen falta porque **una fecha de Excel
+  es un número**: "14/09/2026" se guarda como 46280, y sin convertirlo el
+  informe para los jefes tendría una columna de números sin sentido. Lee también
+  CSV, detectando solo si el separador es coma o punto y coma.
+
+### Cómo se comprueba
+
+Son dos piezas, porque un informe roto **no da error**: se descarga igual. Un
+.docx con una etiqueta mal cerrada abre con el aviso de "contenido ilegible", un
+PDF con la tabla de posiciones mal calculada no abre en ningún lado, y una marca
+de agua que no se dibuja se ve perfecta en la vista previa y falta en el papel.
+
+    node herramientas/verificar-reportes.js      # la página, en un navegador
+    python3 herramientas/verificar-reportes.py <carpeta que dejó el anterior>
+
+El de navegador comprueba quién entra y quién no, que la vista previa diga lo
+que dicen los datos, que una foto y una hoja entren al informe, y que los dos
+archivos se descarguen. **Comprueba además que la página SE VEA** —sin CSS
+impreso como texto, sin `<style>` suelto, y que con el tema en oscuro arranque
+en oscuro—: se clonó de `formularios.html`, y clonar una cabecera ya salió mal
+una vez; `verificar-css.js` no lo vería porque todo esto solo existe después de
+iniciar sesión.
+
+El de Python abre los dos archivos con `pypdf` y `python-docx` y mira lo que no
+se ve en pantalla: que abran, que la marca de agua esté en **todas** las páginas
+(el error clásico es estamparla solo en la portada) y que las tildes hayan
+llegado.
+
+- Los dobles del verificador van en el **contexto** y no en la página: esta
+  página registra el service worker, y lo que pide el service worker no pasa por
+  las rutas de una página. Con las rutas en la página, al recargar servía la
+  copia cacheada del cliente de verdad y todo se caía con "sb is not defined".
+
+### Lo que falta
+
+**Transcribir el video y el audio.** Hoy las grabaciones entran al informe como
+material de respaldo (nombre, tipo, duración y tamaño) y el campo
+`transcripcion` de cada una ya está en su sitio, esperando. La decisión tomada
+es que el audio **no salga de la máquina**, así que la transcripción tiene que
+correr ahí mismo (Whisper por `transformers.js`), no en un servicio con
+credencial.
+
 ## El material de estudio de cada lección
 
 Cada una de las **186 lecciones** de los diez cursos tiene dos archivos de

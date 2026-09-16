@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Reportes de actividades — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: informe de actividades de clases para presentar, en Word y PDF.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/reporte-armar.js"></script>
+    <script src="js/reporte-excel.js"></script>
+    <script src="js/reporte-pdf.js"></script>
+    <script src="js/reporte-docx.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esta página es de coordinación</h1>
+            <p class="text-brand-500 dark:text-brand-300">Los reportes de actividades los arma quien coordina o administra la Academia.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Volver a la Academia</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="admin.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500">← Volver al panel</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mt-3 mb-1">📄 Reportes de actividades</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">
+                El informe de lo que pasó en clase, listo para presentar. Las fechas, las asistencias y el
+                tiempo salen de la Academia; las fotos, las hojas y las grabaciones las pones tú.
+            </p>
+
+            <!-- ===================== 1. El periodo ===================== -->
+            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">1. ¿Qué periodo cubre?</h2>
+                <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label for="desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Desde</label>
+                        <input type="date" id="desde" class="bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="hasta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Hasta</label>
+                        <input type="date" id="hasta" class="bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <button type="button" id="traer" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Traer los datos</button>
+                    <p id="traer-estado" class="text-sm text-brand-500 dark:text-brand-300" role="status" aria-live="polite"></p>
+                </div>
+                <div class="mt-4">
+                    <label for="intro" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Presentación (opcional)</label>
+                    <textarea id="intro" rows="2" placeholder="Un párrafo tuyo para abrir el informe: a quién va dirigido, qué se buscaba este mes…" class="w-full bg-brand-50 dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                </div>
+            </section>
+
+            <!-- ===================== 2. Los archivos ===================== -->
+            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">2. Lo que quieras adjuntar</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">
+                    Fotos de la clase, hojas de Excel, grabaciones de video o audio.
+                    <strong class="text-brand-600 dark:text-brand-200">Nada de esto se sube a ningún servidor</strong>:
+                    se lee acá, en tu computadora, para armar el informe.
+                </p>
+                <label id="zona" for="archivos" class="block border-2 border-dashed border-brand-200 dark:border-brand-700 rounded-xl p-8 text-center cursor-pointer hover:border-accent-400 transition-colors">
+                    <span class="block text-3xl mb-2" aria-hidden="true">📎</span>
+                    <span class="block text-sm font-semibold text-brand-600 dark:text-brand-200">Arrastra los archivos aquí o toca para elegirlos</span>
+                    <span class="block text-xs text-brand-450 dark:text-brand-350 mt-1">Fotos (JPG, PNG), hojas (XLSX, CSV), video y audio</span>
+                </label>
+                <input type="file" id="archivos" multiple accept="image/*,video/*,audio/*,.xlsx,.csv" class="sr-only">
+                <ul id="lista-archivos" class="mt-4 space-y-2"></ul>
+                <p id="archivos-estado" class="text-sm mt-3" role="status" aria-live="polite"></p>
+            </section>
+
+            <!-- ===================== 3. El informe ===================== -->
+            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">3. El informe</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="bajar-docx" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ Word (.docx)</button>
+                        <button type="button" id="bajar-pdf" disabled class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 disabled:opacity-40 disabled:cursor-not-allowed text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇ PDF</button>
+                    </div>
+                </div>
+                <p id="bajar-estado" class="text-sm mb-4" role="status" aria-live="polite"></p>
+                <div id="vista" class="border border-brand-100 dark:border-brand-800 rounded-xl p-5 max-h-[32rem] overflow-y-auto">
+                    <p class="text-brand-450 dark:text-brand-350 text-sm">Elige el periodo y toca «Traer los datos» para ver aquí cómo va a quedar.</p>
+                </div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">
+                    Los dos archivos llevan tu marca de agua en todas las páginas y tu nombre en el pie.
+                </p>
+            </section>
+        </div>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+        <script src="js/main.js"></script>
+    <script>
+        /* ===== Reportes de actividades =====
+           Los datos salen de public.reporte_actividades(); los archivos se leen
+           acá y no se suben a ninguna parte. El contenido se arma una sola vez
+           con ReporteArmar y de ahí salen la vista previa, el Word y el PDF. */
+        let perfil = null;
+        let datos = null;                                   // lo que trajo la base
+        const archivos = { fotos: [], hojas: [], grabaciones: [], marca: null };
+
+        const $ = (id) => document.getElementById(id);
+        const decir = (elemento, texto, malo) => {
+            elemento.textContent = texto;
+            elemento.className = "text-sm " + (malo
+                ? "text-red-600 dark:text-red-400"
+                : "text-brand-500 dark:text-brand-300");
+        };
+
+        /* ---------- la marca de agua, sacada del logo del sitio ---------- */
+        /* El PDF necesita el gris y el canal alfa por separado: sin el alfa, la
+           imagen taparía el texto con un rectángulo blanco. Word, en cambio,
+           usa el PNG tal cual y lo lava él. */
+        async function prepararMarca() {
+            const url = "img/logo-oscar-angulo-marca.png";
+            const png = new Uint8Array(await (await fetch(url)).arrayBuffer());
+            const img = new Image();
+            img.src = url;
+            await img.decode();
+            const lienzo = document.createElement("canvas");
+            lienzo.width = img.naturalWidth;
+            lienzo.height = img.naturalHeight;
+            const ctx = lienzo.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const pixeles = ctx.getImageData(0, 0, lienzo.width, lienzo.height).data;
+            const alfa = new Uint8Array(lienzo.width * lienzo.height);
+            for (let i = 0; i < alfa.length; i++) alfa[i] = pixeles[i * 4 + 3];
+
+            const sobreBlanco = document.createElement("canvas");
+            sobreBlanco.width = lienzo.width;
+            sobreBlanco.height = lienzo.height;
+            const ctx2 = sobreBlanco.getContext("2d");
+            ctx2.fillStyle = "#fff";
+            ctx2.fillRect(0, 0, lienzo.width, lienzo.height);
+            ctx2.drawImage(img, 0, 0);
+            const jpeg = await new Promise((r) => sobreBlanco.toBlob(r, "image/jpeg", 0.92));
+
+            archivos.marca = {
+                ancho: lienzo.width, alto: lienzo.height,
+                jpeg: new Uint8Array(await jpeg.arrayBuffer()),
+                alfa: alfa, png: png,
+            };
+        }
+
+        /* ---------------------- los archivos que suben ---------------------- */
+
+        /* Toda imagen pasa por un canvas y sale en JPEG: así el PDF y el Word
+           reciben siempre lo mismo y no hay que saber decodificar PNG, WebP ni
+           lo que traiga el teléfono. De paso se achica: una foto de 12 MP en un
+           informe no aporta nada y lo vuelve imposible de mandar por correo. */
+        async function prepararFoto(archivo) {
+            const url = URL.createObjectURL(archivo);
+            try {
+                const img = new Image();
+                img.src = url;
+                await img.decode();
+                const MAX = 1400;
+                const escala = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+                const ancho = Math.max(1, Math.round(img.naturalWidth * escala));
+                const alto = Math.max(1, Math.round(img.naturalHeight * escala));
+                const lienzo = document.createElement("canvas");
+                lienzo.width = ancho;
+                lienzo.height = alto;
+                const ctx = lienzo.getContext("2d");
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(0, 0, ancho, alto);    // un PNG transparente en JPEG sale negro
+                ctx.drawImage(img, 0, 0, ancho, alto);
+                const blob = await new Promise((r) => lienzo.toBlob(r, "image/jpeg", 0.82));
+                return {
+                    nombre: archivo.name, tamano: archivo.size, ancho: ancho, alto: alto,
+                    jpeg: new Uint8Array(await blob.arrayBuffer()),
+                    vista: lienzo.toDataURL("image/jpeg", 0.5),
+                };
+            } finally { URL.revokeObjectURL(url); }
+        }
+
+        /* De una grabación se saca su duración sin reproducirla entera. */
+        function duracionDe(archivo) {
+            return new Promise((resolver) => {
+                const medio = document.createElement(archivo.type.startsWith("video") ? "video" : "audio");
+                const url = URL.createObjectURL(archivo);
+                const listo = () => {
+                    const s = medio.duration;
+                    URL.revokeObjectURL(url);
+                    if (!isFinite(s)) return resolver("—");
+                    const m = Math.floor(s / 60), r = Math.round(s % 60);
+                    resolver(m + " min " + String(r).padStart(2, "0") + " s");
+                };
+                medio.onloadedmetadata = listo;
+                medio.onerror = () => { URL.revokeObjectURL(url); resolver("—"); };
+                medio.preload = "metadata";
+                medio.src = url;
+            });
+        }
+
+        async function recibir(lista) {
+            const estado = $("archivos-estado");
+            for (const archivo of lista) {
+                try {
+                    const nombre = archivo.name.toLowerCase();
+                    if (archivo.type.startsWith("image/")) {
+                        decir(estado, "Preparando " + archivo.name + "…");
+                        archivos.fotos.push(await prepararFoto(archivo));
+                    } else if (nombre.endsWith(".xlsx") || nombre.endsWith(".csv")) {
+                        decir(estado, "Leyendo " + archivo.name + "…");
+                        const hoja = await ReporteExcel.leer(archivo);
+                        hoja.tamano = archivo.size;
+                        archivos.hojas.push(hoja);
+                    } else if (archivo.type.startsWith("video/") || archivo.type.startsWith("audio/")) {
+                        decir(estado, "Mirando " + archivo.name + "…");
+                        archivos.grabaciones.push({
+                            nombre: archivo.name, tamano: archivo.size,
+                            clase: archivo.type.startsWith("video") ? "Video de clase" : "Audio de clase",
+                            duracion: await duracionDe(archivo),
+                            archivo: archivo, transcripcion: "",
+                        });
+                    } else {
+                        decir(estado, "«" + archivo.name + "» no es un tipo que este informe sepa usar.", true);
+                        continue;
+                    }
+                } catch (e) {
+                    decir(estado, "No se pudo leer «" + archivo.name + "»: " + (e.message || e), true);
+                    continue;
+                }
+            }
+            if (!estado.textContent.startsWith("No se pudo") && !estado.textContent.includes("no es un tipo")) {
+                decir(estado, "");
+            }
+            pintarArchivos();
+            refrescar();
+        }
+
+        function pintarArchivos() {
+            const ul = $("lista-archivos");
+            ul.innerHTML = "";
+            const poner = (icono, nombre, detalle, quitar, vista) => {
+                const li = document.createElement("li");
+                li.className = "flex items-center gap-3 bg-brand-50 dark:bg-brand-800 rounded-lg px-3 py-2";
+                li.innerHTML =
+                    (vista ? '<img src="' + vista + '" alt="" class="w-10 h-10 rounded object-cover shrink-0">'
+                           : '<span class="text-xl shrink-0" aria-hidden="true">' + icono + "</span>") +
+                    '<span class="min-w-0 flex-1"><span class="block text-sm text-brand-800 dark:text-white truncate"></span>' +
+                    '<span class="block text-xs text-brand-450 dark:text-brand-350"></span></span>';
+                li.querySelectorAll("span.block")[0].textContent = nombre;
+                li.querySelectorAll("span.block")[1].textContent = detalle;
+                const boton = document.createElement("button");
+                boton.type = "button";
+                boton.className = "text-brand-450 hover:text-red-600 text-lg px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                boton.textContent = "✕";
+                boton.setAttribute("aria-label", "Quitar " + nombre);
+                boton.addEventListener("click", () => { quitar(); pintarArchivos(); refrescar(); });
+                li.appendChild(boton);
+                ul.appendChild(li);
+            };
+            archivos.fotos.forEach((f, i) => poner("🖼️", f.nombre, ReporteArmar._tamanoLegible(f.tamano),
+                () => archivos.fotos.splice(i, 1), f.vista));
+            archivos.hojas.forEach((h, i) => poner("📊", h.hoja, (h.filas.length - 1) + " filas",
+                () => archivos.hojas.splice(i, 1)));
+            archivos.grabaciones.forEach((g, i) => poner(g.clase.startsWith("Video") ? "🎬" : "🎙️", g.nombre,
+                g.duracion + " · " + ReporteArmar._tamanoLegible(g.tamano),
+                () => archivos.grabaciones.splice(i, 1)));
+        }
+
+        /* ------------------------- la vista previa ------------------------- */
+        /* Pinta el MISMO documento que se va a descargar, para que nadie baje un
+           archivo a ciegas. */
+        function pintarVista(documento) {
+            const caja = $("vista");
+            caja.innerHTML = "";
+            const poner = (etiqueta, texto, clase) => {
+                const n = document.createElement(etiqueta);
+                n.className = clase;
+                n.textContent = texto;
+                caja.appendChild(n);
+                return n;
+            };
+            poner("h3", documento.titulo, "font-serif text-2xl font-bold text-brand-800 dark:text-white");
+            poner("p", documento.subtitulo, "text-sm text-brand-500 dark:text-brand-300 mb-4");
+            for (const b of documento.bloques) {
+                if (b.tipo === "titulo") poner("h4", b.texto, "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5 mb-2");
+                else if (b.tipo === "subtitulo") poner("h5", b.texto, "font-semibold text-brand-700 dark:text-brand-100 mt-3 mb-1");
+                else if (b.tipo === "parrafo") poner("p", b.texto, "text-sm text-brand-600 dark:text-brand-300 mb-2");
+                else if (b.tipo === "nota") poner("p", b.texto, "text-xs text-brand-450 dark:text-brand-350 mb-2");
+                else if (b.tipo === "lista") {
+                    const ul = poner("ul", "", "list-disc pl-5 text-sm text-brand-600 dark:text-brand-300 mb-2");
+                    for (const item of b.items) {
+                        const li = document.createElement("li");
+                        li.textContent = item;
+                        ul.appendChild(li);
+                    }
+                } else if (b.tipo === "tabla") {
+                    const tabla = document.createElement("table");
+                    tabla.className = "w-full text-xs mb-3 border border-brand-100 dark:border-brand-800";
+                    const thead = document.createElement("thead");
+                    const tr = document.createElement("tr");
+                    for (const h of b.encabezados) {
+                        const th = document.createElement("th");
+                        th.className = "text-left px-2 py-1 bg-brand-50 dark:bg-brand-800 text-brand-700 dark:text-brand-100";
+                        th.textContent = h;
+                        tr.appendChild(th);
+                    }
+                    thead.appendChild(tr);
+                    tabla.appendChild(thead);
+                    const tbody = document.createElement("tbody");
+                    for (const fila of b.filas) {
+                        const f = document.createElement("tr");
+                        for (const celda of fila) {
+                            const td = document.createElement("td");
+                            td.className = "px-2 py-1 border-t border-brand-100 dark:border-brand-800 text-brand-600 dark:text-brand-300";
+                            td.textContent = celda;
+                            f.appendChild(td);
+                        }
+                        tbody.appendChild(f);
+                    }
+                    tabla.appendChild(tbody);
+                    caja.appendChild(tabla);
+                } else if (b.tipo === "foto" && b.foto.vista) {
+                    const img = document.createElement("img");
+                    img.src = b.foto.vista;
+                    img.alt = b.pie || "Fotografía de la clase";
+                    img.className = "rounded-lg max-w-[260px] mb-1";
+                    caja.appendChild(img);
+                    if (b.pie) poner("p", b.pie, "text-xs text-brand-450 dark:text-brand-350 mb-3");
+                } else if (b.tipo === "separador") {
+                    caja.appendChild(document.createElement("hr")).className = "my-3 border-brand-100 dark:border-brand-800";
+                }
+            }
+        }
+
+        function documentoActual() {
+            if (!datos) return null;
+            return ReporteArmar.armar(datos, archivos, {
+                autor: perfil && perfil.full_name ? perfil.full_name : "Oscar Angulo Cubero",
+                academia: "Academia Ajedrez Integral",
+                introduccion: $("intro").value,
+            });
+        }
+
+        function refrescar() {
+            const documento = documentoActual();
+            $("bajar-docx").disabled = !documento;
+            $("bajar-pdf").disabled = !documento;
+            if (documento) pintarVista(documento);
+        }
+
+        /* --------------------------- traer y bajar --------------------------- */
+
+        async function traer() {
+            const estado = $("traer-estado");
+            const desde = $("desde").value, hasta = $("hasta").value;
+            if (!desde || !hasta) return decir(estado, "Falta decir desde y hasta cuándo.", true);
+            if (desde > hasta) return decir(estado, "La fecha de inicio va antes que la de fin.", true);
+            decir(estado, "Buscando…");
+            const { data, error } = await sb.rpc("reporte_actividades", { p_desde: desde, p_hasta: hasta });
+            if (error) return decir(estado, "No se pudieron traer los datos: " + error.message, true);
+            datos = data;
+            const t = (data && data.totales) || {};
+            decir(estado, t.clases
+                ? "Listo: " + t.clases + (t.clases === 1 ? " clase" : " clases") + " y " + (t.asistencias || 0) + " asistencias."
+                : "No hay clases registradas en ese periodo.");
+            refrescar();
+        }
+
+        function bajar(blob, nombre) {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = nombre;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        }
+
+        const nombreArchivo = (ext) =>
+            "informe-actividades-" + ($("desde").value || "") + "-a-" + ($("hasta").value || "") + "." + ext;
+
+        async function descargar(cual) {
+            const estado = $("bajar-estado");
+            const documento = documentoActual();
+            if (!documento) return;
+            try {
+                decir(estado, "Armando el archivo…");
+                const blob = cual === "docx"
+                    ? ReporteDOCX.generar(documento)
+                    : await ReportePDF.generar(documento);
+                bajar(blob, nombreArchivo(cual));
+                decir(estado, "Listo, se descargó el " + (cual === "docx" ? "Word" : "PDF") + ".");
+            } catch (e) {
+                decir(estado, "No se pudo armar el archivo: " + (e.message || e), true);
+            }
+        }
+
+        /* ------------------------------- arranque ------------------------------- */
+
+        function mesActual() {
+            const hoy = new Date();
+            const p = (n) => String(n).padStart(2, "0");
+            const primero = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const fmt = (d) => d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+            return { desde: fmt(primero), hasta: fmt(hoy) };
+        }
+
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            const sesion = data.session;
+            if (!sesion) { window.location.href = "login.html?next=reportes.html"; return; }
+            const { data: fila, error } = await sb.from("profiles").select("*").eq("id", sesion.user.id).single();
+            $("loading").classList.add("hidden");
+            if (error || !fila || !(fila.is_admin || fila.es_coordinador)) {
+                $("denegado").classList.remove("hidden");
+                return;
+            }
+            perfil = fila;
+            $("app").classList.remove("hidden");
+
+            const mes = mesActual();
+            $("desde").value = mes.desde;
+            $("hasta").value = mes.hasta;
+
+            try { await prepararMarca(); } catch (e) { /* sin marca, el informe sale igual */ }
+
+            $("traer").addEventListener("click", traer);
+            $("intro").addEventListener("input", refrescar);
+            $("archivos").addEventListener("change", (e) => { recibir([...e.target.files]); e.target.value = ""; });
+            $("bajar-docx").addEventListener("click", () => descargar("docx"));
+            $("bajar-pdf").addEventListener("click", () => descargar("pdf"));
+
+            const zona = $("zona");
+            ["dragenter", "dragover"].forEach((ev) => zona.addEventListener(ev, (e) => {
+                e.preventDefault();
+                zona.classList.add("border-accent-400");
+            }));
+            ["dragleave", "drop"].forEach((ev) => zona.addEventListener(ev, (e) => {
+                e.preventDefault();
+                zona.classList.remove("border-accent-400");
+            }));
+            zona.addEventListener("drop", (e) => {
+                if (e.dataTransfer && e.dataTransfer.files.length) recibir([...e.dataTransfer.files]);
+            });
+
+            traer();
+        }
+
+        init();
+    </script>
+</body>
+</html>
