@@ -14,6 +14,40 @@ las cabeceras de seguridad. Se edita el HTML/JS directamente; lo único que se
   historial.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
 
+## El dominio: `www` manda al dominio sin `www`
+
+`worker.js` redirige `www.ajedrez-integral.com` a `ajedrez-integral.com` con un
+301. **No es una preferencia de estilo.** Para el navegador son **dos orígenes
+distintos**, así que si los dos sirvieran el sitio, quien entrara por `www`
+tendría:
+
+- otro `localStorage` — o sea otro progreso, otro tema y otra clase elegida;
+- **otro service worker**, es decir una segunda app instalable con el estado en
+  blanco;
+- **otra suscripción de avisos push**, que no recibiría nada de la primera.
+
+Y de paso: todos los `canonical`, el `sitemap.xml` y el Open Graph apuntan al
+dominio sin `www`, así que servir las dos direcciones sería contenido duplicado.
+
+- **Las dos correcciones del worker se resuelven en UNA respuesta.** Quien entra
+  por `www` a una dirección vieja de "Los 100 finales" recibe un solo 301, ya
+  con el dominio y la dirección arreglados. Encadenar dos redirecciones —una
+  para el dominio y otra para la dirección— es el error natural si cada arreglo
+  devuelve lo suyo, y le cuesta un viaje de más a quien entra.
+- Lo único que hay que hacer **fuera del repositorio** es que el nombre exista:
+  en Cloudflare, el Worker tiene que tener `www.ajedrez-integral.com` entre sus
+  dominios (Workers → el worker → Domains & Routes → Add custom domain), que de
+  paso crea el registro de DNS y emite el certificado. Sin eso, el worker nunca
+  llega a ver esas peticiones.
+- **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
+  necesita ni Cloudflare ni internet: el worker es una función que recibe una
+  petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
+  con un `env.ASSETS` de mentira. Lo que se comprueba es lo que no se ve: que la
+  redirección **conserve la dirección completa y sus parámetros**. Una que se
+  coma lo que va después del dominio manda a la portada a quien venía a un
+  curso, y de eso no se entera nadie salvo quien se quedó mirando la página que
+  no era.
+
 ## Cursos
 
 Decisión vigente: el **temario es público** (portada, descripción y lista de
