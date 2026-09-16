@@ -15,10 +15,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/styles.css">
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="aperturas"></script>
-<style>
 <style>
   :root{
     --bg-deep:#f0f4f8;
@@ -160,7 +167,6 @@
     .tab, .bctrl{transition-property: background-color, border-color, color;}
     .sq.hint-from, .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
   }
-</style>
   /* ---- propios de esta página ---- */
   .wrap{max-width:900px;margin:0 auto;padding:1.5rem 1rem 3rem;}
   .hidden{display:none !important;}
@@ -176,13 +182,13 @@
   .filtros select{background:var(--bg-panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:.35rem .5rem;font:inherit;}
   .ficha{width:100%;text-align:left;background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
          padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer;color:var(--text);font:inherit;display:flex;
-         align-items:center;gap:.8rem;transition:border-color .15s;}
+         align-items:flex-start;gap:.7rem;transition:border-color .15s;}
   .ficha:hover{border-color:var(--brass);}
-  .ficha .estado{font-size:1.3rem;flex-shrink:0;}
+  .ficha .estado{font-size:1.25rem;line-height:1.3;flex-shrink:0;}
   .ficha .info{flex:1;min-width:0;}
-  .ficha .nombre{font-weight:600;}
-  .ficha .detalle{font-size:.8rem;color:var(--text-muted);}
-  .ficha .cuando{font-size:.75rem;color:var(--text-muted);white-space:nowrap;}
+  .ficha .nombre{display:block;font-weight:600;line-height:1.35;}
+  .ficha .detalle{display:block;font-size:.8rem;color:var(--text-muted);margin-top:.15rem;}
+  .ficha .cuando{display:block;font-size:.75rem;color:var(--text-muted);margin-top:.25rem;}
   .cabecera-linea{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1rem;}
   .jugadas{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;color:var(--text);
            background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;
@@ -195,6 +201,7 @@
   .promo div{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;}
   .final-nota{font-size:1.1rem;font-weight:700;margin:0 0 .5rem;color:var(--text);}
   .clave{border-left:3px solid var(--brass);padding-left:.7rem;color:var(--text);}
+  .bctrl{white-space:nowrap;}
   .bctrl.principal{background:var(--brass-bright);color:#102a43;border-color:var(--brass);font-weight:700;}
   .board-wrap{position:relative;}
 </style>
@@ -240,7 +247,7 @@
 
     <div id="app" class="wrap hidden">
       <h1>♞ Aperturas y celadas</h1>
-      <p class="sub">Memoriza líneas jugándolas. Lo que te sale bien vuelve más tarde cada vez; lo que fallas, vuelve hoy.</p>
+      <p class="sub" id="sub-total">Memoriza líneas jugándolas. Lo que te sale bien vuelve más tarde cada vez; lo que fallas, vuelve hoy.</p>
 
       <!-- ------- Cómo va el estudio ------- -->
       <div class="resumen" id="resumen"></div>
@@ -393,14 +400,18 @@ function pintarResumen() {
   const r = RepasoEspaciado.resumen(ids, estado);
   const caja = document.getElementById("resumen");
   caja.innerHTML = "";
-  [[r.pendientes, "para hoy"], [r.nuevas, r.nuevas === 1 ? "sin empezar" : "sin empezar"],
-   [r.aprendiendo, "aprendiendo"], [r.firmes, "firmes"], [r.total, "en total"]]
+  // Cuatro tarjetas y no cinco: en un celular son dos filas de dos, sin que
+  // quede una huérfana abajo. El total va en la bajada de la página.
+  [[r.pendientes, "para hoy"], [r.nuevas, "sin empezar"],
+   [r.aprendiendo, "aprendiendo"], [r.firmes, "firmes"]]
     .forEach(([n, etiqueta]) => {
       const d = document.createElement("div");
       const b = document.createElement("b"); b.textContent = String(n);
       const s = document.createElement("span"); s.textContent = etiqueta;
       d.append(b, s); caja.appendChild(d);
     });
+  document.getElementById("sub-total").textContent =
+    `${r.total} líneas para memorizar jugándolas. Lo que te sale bien vuelve más tarde cada vez; lo que fallas, vuelve hoy.`;
 }
 
 function cuandoTexto(ficha) {
@@ -446,7 +457,7 @@ function pintarLista(soloPendientes) {
     const n = document.createElement("span"); n.className = "nombre"; n.textContent = L.nombre;
     const d = document.createElement("span"); d.className = "detalle";
     d.textContent = `${TIPOS[L.tipo]} · ${L.apertura} · ${NIVELES[L.nivel]} · juegas con ${L.color === "w" ? "blancas" : "negras"}`;
-    info.append(n, document.createElement("br"), d);
+    info.append(n, d);   // los dos son bloque: el <br> abría un renglón vacío
     const cuando = document.createElement("span");
     cuando.className = "cuando";
     cuando.textContent = cuandoTexto(f);
@@ -507,6 +518,8 @@ function decir(texto, clase) {
 function pintarJugadas() {
   const caja = document.getElementById("jugadas-hechas");
   caja.innerHTML = "";
+  // Vacío se vería como una caja rota: no se enseña hasta que hay jugadas.
+  caja.classList.toggle("hidden", indice === 0);
   for (let i = 0; i < indice; i++) {
     if (i % 2 === 0) {
       const n = document.createElement("span");
@@ -621,6 +634,7 @@ function empezar(id) {
   dibujar();
   pintarJugadas();
   mostrar("vista-tablero");
+  window.scrollTo({ top: 0 });
   if (!meToca()) jugarRival(); else actualizarBanner();
 }
 
@@ -687,6 +701,9 @@ function siguiente() {
 function mostrar(cual) {
   document.getElementById("vista-lista").classList.toggle("hidden", cual !== "vista-lista");
   document.getElementById("vista-tablero").classList.toggle("hidden", cual !== "vista-tablero");
+  // Con el tablero abierto, el resumen de arriba no aporta nada y en un celular
+  // empuja el tablero fuera de la pantalla.
+  document.getElementById("resumen").classList.toggle("hidden", cual !== "vista-lista");
 }
 
 document.getElementById("btn-repaso").addEventListener("click", () => {
