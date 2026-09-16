@@ -909,6 +909,13 @@
             uci: move._bookUci,
           });
           renderOrigins();
+          // Recién acá hace falta saber de qué partida salió: se piden los
+          // 4,2 MB de procedencia, y solo en las páginas que tienen el panel.
+          // preloadProvenance() se acuerda de lo que ya bajó, así que llamarla
+          // en cada jugada del libro no vuelve a pedir nada.
+          if (originsPanelEl && OscarBot.preloadProvenance) {
+            OscarBot.preloadProvenance().then(renderOrigins);
+          }
         }
       }
     }
@@ -2249,9 +2256,23 @@
     currentPositionIndex = dailyPositionIndex();
     renderChallengeCard();
   }
-  if (typeof OscarBot !== "undefined") {
-    OscarBot.preload();
-    if (OscarBot.preloadProvenance) OscarBot.preloadProvenance().then(renderOrigins);
+  /* Ni el motor, ni el libro, ni la procedencia se piden al cargar la página.
+     Entre los tres son 7,7 MB y en la portada la mayoría de la gente nunca
+     mueve una pieza: viene a leer que hay clases en vivo y se va. Ahora se
+     precalientan cuando la persona toca el tablero por primera vez, que es
+     cuando de verdad van a hacer falta; para quien juega no cambia nada.
+
+     La procedencia (4,2 MB) ni siquiera se precalienta: solo tiene sentido
+     cuando el bot ya jugó una jugada sacada del libro, y en index.html el panel
+     que la muestra NO EXISTE — se bajaba entera para tirarla a la basura. */
+  if (typeof OscarBot !== "undefined" && boardEl) {
+    const precalentar = () => {
+      boardEl.removeEventListener("pointerdown", precalentar);
+      boardEl.removeEventListener("keydown", precalentar);
+      OscarBot.preload();
+    };
+    boardEl.addEventListener("pointerdown", precalentar, { once: true, passive: true });
+    boardEl.addEventListener("keydown", precalentar, { once: true });
   }
   maybeTriggerBot().then(updateEvalBar);
 })();

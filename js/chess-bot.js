@@ -35,6 +35,7 @@ const OscarBot = (function () {
   // Rutas relativas: funcionan tanto desde tablero.html como desde index.html (ambos en la raíz).
   const STOCKFISH_URL = "js/vendor/stockfish/stockfish-nnue-16-single.js";
   const PROVENANCE_URL = "data/oscar-book-provenance.json";
+  const BOOK_URL = "data/oscar-book.json";
 
   // ELO real de Oscar tomado de sus partidas (bullet, que es la mayoría de su historial).
   // window.OSCAR_ELO_CALIB llega desde oscar-book.js; si no está disponible, usamos un valor por defecto razonable.
@@ -91,6 +92,29 @@ const OscarBot = (function () {
   }
 
   // ---------- Libro de Oscar ----------
+  // Son 2,9 MB: las 94.106 posiciones de sus ~32.400 partidas. NO se bajan al
+  // cargar la página — se bajan la primera vez que al bot le toca mover, que es
+  // el primer momento en que sirven de algo. Antes venían escritas dentro de
+  // js/oscar-book.js y las descargaba toda visita a la portada, jugara o no.
+  //
+  // Si la descarga falla no pasa nada grave y a propósito: getBookMoveForHash()
+  // devuelve null sin libro y el bot juega con el motor, que es exactamente lo
+  // que ya hacía en una posición que el libro no conoce.
+  let bookPromise = null;
+
+  function cargarLibro() {
+    if (bookPromise) return bookPromise;
+    if (window.OSCAR_BOOK) return (bookPromise = Promise.resolve(window.OSCAR_BOOK));
+    bookPromise = fetch(BOOK_URL)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) window.OSCAR_BOOK = data;
+        return data;
+      })
+      .catch(() => null);
+    return bookPromise;
+  }
+
   // biasPower > 1 exagera la ventaja de las jugadas más frecuentes en esa posición
   // (peso_final = peso_guardado ^ biasPower), así el bot se parece más a "lo que Oscar
   // realmente suele jugar ahí" en vez de tratar todas las alternativas casi por igual.
@@ -331,6 +355,7 @@ const OscarBot = (function () {
     const plyCount = game.history().length;
 
     if (plyCount < diff.bookMaxPly) {
+      await cargarLibro();
       const fen = game.fen();
       const hash = positionHash(fen);
       const uci = getBookMoveForHash(hash, diff.bookBias);
@@ -358,12 +383,18 @@ const OscarBot = (function () {
     return heuristicMove(game);
   }
 
-  // Precalienta el motor en segundo plano para que la primera jugada no tarde.
+  /* Precalienta en segundo plano lo que la primera jugada del bot va a
+     necesitar: el motor (562 KB de WASM) y el libro (2,9 MB). Se llama cuando
+     la persona toca el tablero por primera vez, NO al cargar la página: quien
+     entra a leer que hay clases en vivo y se va sin jugar no descarga nada de
+     esto. Para quien sí juega no cambia nada — entre tocar una pieza y soltarla
+     hay tiempo de sobra. */
   function preload() {
     try {
       setTimeout(() => {
         ensureEngine();
-      }, 400);
+        cargarLibro();
+      }, 0);
     } catch (e) {}
   }
 
@@ -373,6 +404,7 @@ const OscarBot = (function () {
     evaluatePosition,
     getMoveOrigin,
     preloadProvenance,
+    cargarLibro,
     positionHash,
     difficultyLabels: {
       easy: "Fácil",

@@ -15,3 +15,18 @@
 
 /manifest.json
   Cache-Control: no-cache
+
+# Los datos del bot: el libro de aperturas de Oscar y la procedencia de cada
+# jugada. Son 7 MB entre los dos y cambian cuando se regeneran con partidas
+# nuevas, o sea casi nunca. Sin esto, cada visita de quien juega un par de
+# partidas los vuelve a bajar enteros.
+#
+# Que queden un día viejos no rompe nada, y ahí está la diferencia con el CSS:
+# una hoja vieja deja la página sin la mitad de sus clases (por eso sw.js va a
+# la red primero), pero un libro viejo solo significa un repertorio de hace unos
+# días. No hay forma de que se contradiga con el HTML.
+/data/oscar-book.json
+  Cache-Control: public, max-age=86400
+
+/data/oscar-book-provenance.json
+  Cache-Control: public, max-age=86400
