@@ -93,8 +93,18 @@
     catalogo.classList.add("ac-listo");
   }
 
+  // Hasta qué tema el profesor desbloqueó manualmente este curso para este alumno
+  // (tabla course_unlocks) — le salta el orden sin necesidad de marcar los
+  // anteriores como estudiados. 0 si no hay ningún desbloqueo manual.
+  async function desbloqueoManual(uid, slug) {
+    try {
+      var r = await sb().from("course_unlocks").select("hasta_leccion").eq("student_id", uid).eq("curso", slug).maybeSingle();
+      return r && r.data ? (r.data.hasta_leccion || 0) : 0;
+    } catch (e) { return 0; }
+  }
+
   // ---------- página de un curso ----------
-  var slug, titulo, uid, lecciones = [], hechas = {}, prog, live;
+  var slug, titulo, uid, lecciones = [], hechas = {}, prog, live, unlockHasta = 0;
 
   function leccionesDe(root) {
     return Array.from(root.querySelectorAll("details")).filter(function (d) {
@@ -123,6 +133,7 @@
     var L = lecciones[i];
     if (hechas[L.key]) return "hecha";
     if (i === 0 || hechas[lecciones[i - 1].key]) return "disponible";
+    if (unlockHasta && i + 1 <= unlockHasta) return "disponible";
     return "bloqueada";
   }
 
@@ -286,6 +297,7 @@
     prepararLecciones();
     var todo = await progresoCursos(uid);
     hechas = todo[slug] || {};
+    unlockHasta = await desbloqueoManual(uid, slug);
     aplicarEstados();
     // #lec-… en la dirección: se abre si está disponible; si no, se va a la siguiente pendiente.
     var pedido = location.hash && location.hash.indexOf("#") === 0 ? location.hash.slice(1) : null;
