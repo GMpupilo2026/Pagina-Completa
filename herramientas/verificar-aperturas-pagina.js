@@ -47,8 +47,10 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-async function abrir(browser) {
+async function abrir(browser, tema) {
   const page = await browser.newPage();
+  // El tema se decide ANTES de cargar, con el script que va en el <head>.
+  if (tema) await page.addInitScript((t) => { try { localStorage.setItem("theme", t); } catch (e) {} }, tema);
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
@@ -100,7 +102,35 @@ async function abrirPorNombre(page, nombre) {
   try {
     const { page, errores } = await abrir(browser);
 
-    console.log("\n=== La lista ===");
+    // ---------- que la hoja de estilos sea hoja y no texto ----------
+    // Esto pasó de verdad: al recortar el estilo de otra página se coló su
+    // </style>, la hoja se cerró antes de tiempo y el navegador imprimió el
+    // resto del CSS como texto arriba de todo. Ninguna otra comprobación lo
+    // veía: la página "funcionaba", solo que se veía rota. Y verificar-css.js
+    // tampoco, porque la lista solo existe después de iniciar sesión.
+    console.log("\n=== Que el CSS sea CSS ===");
+    igual("no hay CSS impreso como texto en la página",
+      await page.evaluate(() => /[{;]\s*(max-width|font-family|border-radius)\s*:/.test(document.body.innerText)), "false");
+    igual("un solo bloque de estilos, bien cerrado",
+      await page.evaluate(() => document.querySelectorAll("style").length), 1);
+    // Las clases propias de la página tienen que pintar algo de verdad.
+    const estilos = await page.evaluate(() => {
+      const medir = (clase, etiqueta) => {
+        const n = document.createElement(etiqueta || "div");
+        n.className = clase;
+        document.body.appendChild(n);
+        const c = getComputedStyle(n);
+        const r = { radio: c.borderRadius, fondo: c.backgroundColor, display: c.display };
+        n.remove();
+        return r;
+      };
+      return { ficha: medir("ficha", "button"), panel: medir("panel"), jugadas: medir("jugadas", "p") };
+    });
+    igual(".ficha tiene su estilo puesto", estilos.ficha.radio !== "0px" && estilos.ficha.display === "flex", "true");
+    igual(".panel tiene su estilo puesto", estilos.panel.radio !== "0px", "true");
+    igual(".jugadas tiene su estilo puesto", estilos.jugadas.radio !== "0px", "true");
+
+    console.log("\n=== La lista ==="); 
     igual("al entrar, todas están pendientes",
       await page.evaluate(() => document.querySelectorAll(".ficha").length), LINEAS.length);
     igual("el resumen dice cuántas hay",
@@ -179,6 +209,20 @@ async function abrirPorNombre(page, nombre) {
 
     if (errores.length) { console.log("\n  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
     await page.close();
+
+    // ---------- el modo oscuro ----------
+    // También pasó de verdad: al recortar la cabecera de otra página se quedó
+    // fuera el script que aplica el tema, y la página salía siempre clara
+    // aunque el resto del sitio estuviera en oscuro.
+    console.log("\n=== Modo oscuro ===");
+    const oscuro = await abrir(browser, "dark");
+    igual("el <html> lleva la clase dark",
+      await oscuro.page.evaluate(() => document.documentElement.classList.contains("dark")), "true");
+    const fondo = await oscuro.page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const claro = (await oscuro.page.evaluate(() => getComputedStyle(document.body).backgroundColor))
+      .match(/\d+/g).map(Number).reduce((a, b) => a + b, 0);
+    igual("y el fondo de la página es oscuro de verdad (" + fondo + ")", claro < 200, "true");
+    await oscuro.page.close();
   } finally {
     await browser.close();
   }

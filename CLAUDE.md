@@ -552,6 +552,20 @@ la línea se programa para más adelante.
   clics en un navegador de verdad, incluida la de la coronación, y comprueba que
   una jugada legal que no es la de la línea se rechace, que la pista baje la
   nota y que el avance quede guardado.
+- **Esa comprobación mira además que la página se vea**, no solo que funcione,
+  porque la primera versión salió rota de las dos maneras que se pueden romper
+  al clonar la cabecera de otra página del sitio:
+  - se coló el `</style>` de la página original, la hoja se cerró antes de
+    tiempo y el navegador **imprimió el resto del CSS como texto** arriba de
+    todo;
+  - se quedó fuera el script del `<head>` que aplica el tema, y la página salía
+    **siempre clara** aunque el resto del sitio estuviera en oscuro.
+  Ninguna de las dos daba error: la página "funcionaba". Y `verificar-css.js`
+  tampoco las veía, porque la lista de líneas solo existe después de iniciar
+  sesión y él abre las páginas sin cuenta. Por eso ahora se comprueba que no
+  haya CSS impreso como texto, que haya un solo `<style>`, que las clases
+  propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
+  **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
 ## Diagnóstico y plan de entrenamiento
 
