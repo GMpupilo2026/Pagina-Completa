@@ -29,6 +29,7 @@ const PAGINAS = [
     "/juegos.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",
     "/formularios.html", "/formulario.html", "/cobros.html", "/offline.html",
+    "/unirse.html", "/elegir-plan.html", "/solicitudes.html",
     "/crazyhouse.html", "/cartas.html", "/duelo.html", "/niebla.html", "/estandar.html",
     "/variante.html", "/cuatro-jugadores.html", "/partidas.html", "/torneo.html", "/torneos.html",
     "/lector-planilla.html", "/racha-tactica.html", "/concentracion.html", "/ciegos.html",
@@ -50,7 +51,7 @@ const SIN_ESTILO = new Set([
     "example-card", "example-board-wrap",
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
-    "ficha-btn",
+    "ficha-btn", "plan-btn",
     // Clases descriptivas del set SVG de piezas (js/chess-piece-svg.js): vienen
     // en el <g class="white king"> de cada pieza tal como las trae el arte
     // original — nadie las usa para dar estilo, solo identifican qué es cada

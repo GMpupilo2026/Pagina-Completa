@@ -584,6 +584,7 @@
             // página lo vuelve a comprobar, y la RLS es la que de verdad manda.
             if (profile.es_coordinador || profile.is_admin) {
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse desde unirse.html: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );

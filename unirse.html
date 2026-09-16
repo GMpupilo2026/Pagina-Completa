@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Unite a la Academia — Ajedrez Integral</title>
+    <meta name="description" content="Dejanos tus datos y te contactamos para sumarte a la Academia de Ajedrez Integral.">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300 min-h-screen flex flex-col">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header class="bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <span id="theme-icon" aria-hidden="true">☀️</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="flex-1 flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-lg">
+            <div id="form-card" class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8">
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 text-center">Unite a la Academia</h1>
+                <p class="text-brand-500 dark:text-brand-300 text-sm text-center mb-6">Dejanos tus datos y te contactamos para coordinar cómo empezar.</p>
+
+                <div class="bg-brand-50 dark:bg-brand-800 border border-brand-100 dark:border-brand-700 rounded-lg px-4 py-3 mb-6 text-sm text-brand-600 dark:text-brand-300">
+                    ¿Querés saber tu nivel antes de escribirnos?
+                    <a href="entreno/diagnostico.html" target="_blank" rel="noopener" class="text-accent-500 hover:text-accent-600 font-semibold underline">Hacé el Diagnóstico de nivel gratis</a>
+                    y contanos el resultado en el mensaje.
+                </div>
+
+                <form id="unirse-form" class="space-y-4">
+                    <div>
+                        <label for="nombre" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Nombre completo *</label>
+                        <input id="nombre" type="text" required maxlength="200" autocomplete="name"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Correo electrónico *</label>
+                        <input id="email" type="email" required maxlength="254" autocomplete="email"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <div>
+                        <label for="telefono" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Teléfono o WhatsApp</label>
+                        <input id="telefono" type="tel" maxlength="60" autocomplete="tel"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    </div>
+                    <div>
+                        <label for="edad-nivel" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Edad o nivel de ajedrez</label>
+                        <input id="edad-nivel" type="text" maxlength="200" placeholder="ej. 10 años, o principiante"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    </div>
+                    <div>
+                        <label for="mensaje" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Mensaje</label>
+                        <textarea id="mensaje" rows="3" maxlength="2000"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="Contanos por qué querés unirte, o el resultado de tu diagnóstico"></textarea>
+                    </div>
+
+                    <!-- Honeypot: invisible para una persona, un formulario automático sí lo
+                         llena. No es la única defensa (solicitar_academia también valida
+                         largos y formato), pero corta el spam más simple sin costo de
+                         servidor. -->
+                    <div class="sr-only" aria-hidden="true">
+                        <label for="sitio-web">No completar este campo</label>
+                        <input id="sitio-web" type="text" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <p id="error-msg" class="text-sm text-red-600 dark:text-red-400 hidden"></p>
+
+                    <button type="submit" id="submit-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Enviar solicitud</button>
+                </form>
+            </div>
+
+            <div id="success-card" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8 text-center">
+                <p class="text-4xl mb-3" aria-hidden="true">✅</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">¡Gracias!</h1>
+                <p class="text-brand-500 dark:text-brand-300 text-sm">Recibimos tu solicitud. Te vamos a escribir pronto a tu correo.</p>
+            </div>
+
+            <p class="text-center mt-6">
+                <a href="index.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">← Volver al inicio</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        const form = document.getElementById("unirse-form");
+        const errorMsg = document.getElementById("error-msg");
+        const submitBtn = document.getElementById("submit-btn");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            errorMsg.classList.add("hidden");
+
+            // El honeypot no debería tener nada escrito: si lo tiene, es un bot.
+            // Se responde igual que un envío exitoso para no darle pistas.
+            if (document.getElementById("sitio-web").value.trim()) {
+                document.getElementById("form-card").classList.add("hidden");
+                document.getElementById("success-card").classList.remove("hidden");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Enviando...";
+
+            const { data, error } = await sb.rpc("solicitar_academia", {
+                p_nombre: document.getElementById("nombre").value.trim(),
+                p_email: document.getElementById("email").value.trim(),
+                p_telefono: document.getElementById("telefono").value.trim() || null,
+                p_edad_nivel: document.getElementById("edad-nivel").value.trim() || null,
+                p_mensaje: document.getElementById("mensaje").value.trim() || null,
+            });
+
+            if (error || !data?.ok) {
+                errorMsg.textContent = data?.error || "No se pudo enviar la solicitud. Intenta de nuevo.";
+                errorMsg.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Enviar solicitud";
+                return;
+            }
+
+            document.getElementById("form-card").classList.add("hidden");
+            document.getElementById("success-card").classList.remove("hidden");
+        });
+    </script>
+</body>
+</html>
