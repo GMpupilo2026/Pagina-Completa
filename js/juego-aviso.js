@@ -16,9 +16,9 @@ window.JuegoAviso = (function () {
   "use strict";
 
   const PAGINA = { crazyhouse: "crazyhouse.html", estandar: "estandar.html", cartas: "cartas.html", duelo: "duelo.html", niebla: "niebla.html",
-                   abrazos: "variante.html", camaleon: "variante.html", ciegas: "variante.html" };
+                   abrazos: "variante.html", camaleon: "variante.html", ciegas: "variante.html", vampiro: "variante.html" };
   const ETIQUETA = { crazyhouse: "♞ Crazyhouse", estandar: "♟️ Ajedrez estándar", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra",
-                     abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas" };
+                     abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas", vampiro: "🧛 Ajedrez Vampiro" };
   const SEATS = ["red", "blue", "yellow", "green"];
   const ESPERA_MS = 4000;
   let sb = null, userId = null, yaAvisado = false;
