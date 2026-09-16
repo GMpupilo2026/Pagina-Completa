@@ -451,7 +451,7 @@ function renderPositionReadout(){
 // lee un lector de pantalla real), para quien no tiene uno activado. Ver
 // js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 function applyBlindModeUI(){
@@ -627,7 +627,7 @@ function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  if(window.BlindNotation) window.BlindNotation.speak(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
@@ -753,8 +753,8 @@ function finishSet(){
   const titleText = stars === 3 ? '¡Serie perfecta! 🏆' : (stars === 2 ? '¡Serie completada! 🎉' : 'Serie completada — ¡a repetirla para subir de estrellas!');
   document.getElementById('celebration-title').textContent = titleText;
   EntrenoProgress.log('practicar', { set_id: currentSet.id, category: currentSet.cat, title: currentSet.title, stars, seconds: Number(totalSeconds) });
-  if(blindMode && window.BlindNotation){
-    window.BlindNotation.speak(titleText);
+  if(window.BlindNotation) window.BlindNotation.speak(titleText);
+  if(blindMode){
     // El foco cae directo en "Siguiente serie" — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
     document.getElementById('celebration-next-btn').focus();

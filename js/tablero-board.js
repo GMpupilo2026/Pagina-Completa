@@ -108,10 +108,11 @@
   // Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
   // lee un lector de pantalla real), para quien no tiene uno activado. Ver
   // js/blind-notation.js para el porqué es un complemento aparte, apagado por
-  // defecto. Sólo tiene sentido mostrarlo en modo adaptado (refreshSpeechToggle se
-  // vuelve a llamar cada vez que cambia blindMode, ver applyBlindModeUI).
+  // defecto. Disponible en modo normal y en modo adaptado por igual — no depende
+  // de blindMode (refreshSpeechToggle se sigue llamando en cada cambio de modo,
+  // ver applyBlindModeUI, por si algún día vuelve a depender de él).
   const refreshSpeechToggle = typeof BlindNotation !== "undefined"
-    ? BlindNotation.setupSpeechToggle("speech-toggle-btn", () => blindMode)
+    ? BlindNotation.setupSpeechToggle("speech-toggle-btn", () => true)
     : null;
 
   // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
@@ -857,10 +858,13 @@
     updateCapturedDisplay();
     updateHistoryDisplay();
     updateMaterialDisplay();
-    // En modo adaptado, cada jugada se anuncia por voz apenas ocurre — la propia y la
-    // respuesta de Oscar — sin importar si el foco está en el tablero o en el recuadro de
-    // comandos, para no depender de tener que ir a revisar manualmente con "L".
-    if (blindMode) {
+    // Cada jugada se anuncia por voz apenas ocurre — la propia y la respuesta de Oscar —
+    // sin importar si el foco está en el tablero o en el recuadro de comandos, para no
+    // depender de tener que ir a revisar manualmente con "L". No depende de blindMode:
+    // announceMoveInput solo habla si el botón "🗣️ Voz" está activado (ver
+    // BlindNotation.speak en js/blind-notation.js), así que en modo normal esto no hace
+    // nada salvo que la persona haya prendido la voz a propósito.
+    {
       const moveNum = Math.floor((game.history().length - 1) / 2) + 1;
       announceMoveInput(describeMove(moveResult, moveNum));
     }

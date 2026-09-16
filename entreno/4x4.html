@@ -960,7 +960,7 @@ const a11yPanel = document.getElementById('a11y-panel');
 // lee un lector de pantalla real), para quien no tiene uno activado. Ver
 // js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 function applyBlindModeUI(){
@@ -1021,7 +1021,7 @@ let captureLog = [];       // capturas hechas en el intento actual: {fromSq,toSq
 let captureReviewIndex = null; // índice de "repaso" de capturas (shift+A/shift+D), solo narra
 
 function announce(text){
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  if(window.BlindNotation) window.BlindNotation.speak(text);
   const el = document.getElementById('board-announcer');
   el.textContent = '';
   /* pequeño retardo para que los lectores de pantalla noten el cambio

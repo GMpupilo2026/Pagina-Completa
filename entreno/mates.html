@@ -344,7 +344,7 @@ function renderPositionReadout(){
 // lee un lector de pantalla real), para quien no tiene uno activado. Ver
 // js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 function applyBlindModeUI(){
@@ -538,7 +538,7 @@ function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  if(window.BlindNotation) window.BlindNotation.speak(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
@@ -717,8 +717,8 @@ function finishCategory(){
   const total = PUZZLES[currentCategory].length;
   const statsText = `Resolviste las ${total} posiciones de ${CATEGORY_LABEL[currentCategory].replace(/^\S+\s/, '')}.`;
   document.getElementById('celebration-stats').textContent = statsText;
-  if(blindMode && window.BlindNotation){
-    window.BlindNotation.speak('¡Categoría completa! ' + statsText);
+  if(window.BlindNotation) window.BlindNotation.speak('¡Categoría completa! ' + statsText);
+  if(blindMode){
     // El foco cae directo en el botón de reinicio — así, en modo adaptado, basta con
     // presionar Enter para seguir en vez de tener que ir a buscar el botón a mano.
     document.getElementById('celebration-replay-btn').focus();

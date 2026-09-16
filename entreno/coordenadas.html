@@ -347,15 +347,16 @@ const blindAnnouncer = document.getElementById('blind-announcer');
 // lee un lector de pantalla real), para quien no tiene uno activado. Ver
 // js/blind-notation.js para el porqué es un complemento aparte, apagado por defecto.
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 // Único punto de anuncio (además de "Se anuncia: <casilla>", que va aparte en
 // newTarget()): actualiza el texto para el lector de pantalla y, si el modo Speech
-// está activo, lo lee en voz alta con el navegador.
+// está activo, lo lee en voz alta con el navegador — en modo normal y en modo
+// adaptado por igual.
 function announceBlind(text){
   blindAnnouncer.textContent = text;
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+  if(window.BlindNotation) window.BlindNotation.speak(text);
 }
 
 function applyBlindModeUI(){
@@ -515,7 +516,7 @@ function onSquareTimeout(){
   // Primero el aviso del fallo y después newTarget() (que anuncia la casilla nueva):
   // speak() cancela cualquier frase anterior, así que lo último en anunciarse debe
   // ser la casilla que el alumno tiene que resolver ahora, no el aviso del error.
-  if(blindMode) announceBlind(`⏱️ Se acabó el tiempo, era ${missedSquareColor}.`);
+  announceBlind(`⏱️ Se acabó el tiempo, era ${missedSquareColor}.`);
   newTarget();
 }
 
@@ -531,7 +532,7 @@ function newTarget(){
   // en una ronda de 30 segundos cada palabra de más cuesta tiempo real.
   const spokenSquare = blindMode ? window.BlindNotation.squareSpoken(currentTarget) : currentTarget;
   document.getElementById('target-square').textContent = spokenSquare;
-  if(blindMode) window.BlindNotation.speak(spokenSquare);
+  if(window.BlindNotation) window.BlindNotation.speak(spokenSquare);
   lastPromptAt = performance.now();
   armPerSquareTimer();
 }
@@ -670,9 +671,7 @@ function endRound(){
 
   const againBtn = document.getElementById('again-btn');
   againBtn.focus();
-  if(blindMode){
-    announceBlind(`Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`);
-  }
+  announceBlind(`Tiempo terminado. Puntuación: ${score}. ${misses} error${misses === 1 ? '' : 'es'}.${isNewBest ? ' Nueva mejor puntuación.' : ''}`);
 }
 
 function renderBestLine(){

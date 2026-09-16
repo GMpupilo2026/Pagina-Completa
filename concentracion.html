@@ -253,7 +253,7 @@ if(new URLSearchParams(window.location.search).get('modo') === 'ciego'){
   try{ localStorage.setItem(BLIND_MODE_KEY, '1'); }catch(e){}
 }
 const refreshSpeechToggle = window.BlindNotation
-  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => blindMode)
+  ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
 function aplicarModo(){
@@ -329,7 +329,7 @@ function setStatus(texto, cls){
   const el = document.getElementById('status');
   el.textContent = texto;
   el.className = 'text-center text-sm mt-4 min-h-[1.5em] ' + (cls || 'text-brand-600 dark:text-brand-300');
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(texto);
+  if(window.BlindNotation) window.BlindNotation.speak(texto);
 }
 
 // Arma un ejercicio nuevo: N objetos distintos entre sí, en casillas distintas.
