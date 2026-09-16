@@ -74,6 +74,19 @@ window.ProgresoUsuario = (function () {
       };
       return idx(local) >= idx(remoto) ? local : remoto;
     },
+    // Repetición espaciada: un objeto id → { ultimo, vence, … }. No gana un
+    // aparato entero, sino la ficha de CADA línea que se repasó más tarde: si
+    // repasé unas en la compu y otras en el celular, se quedan las dos.
+    srsPorLinea(local, remoto) {
+      if (local === null) return remoto;
+      if (remoto === null) return local;
+      const a = leerObjeto(remoto), b = leerObjeto(local), salida = Object.assign({}, a);
+      Object.keys(b).forEach((k) => {
+        const cuando = (f) => Date.parse((f && f.ultimo) || 0) || 0;
+        if (!salida[k] || cuando(b[k]) >= cuando(salida[k])) salida[k] = b[k];
+      });
+      return JSON.stringify(salida);
+    },
     // Resultado de una prueba: el más reciente por fecha.
     masReciente(local, remoto) {
       if (local === null) return remoto;
@@ -116,6 +129,8 @@ window.ProgresoUsuario = (function () {
     { clave: "ilumina_hints_used",               fusion: "maxNumero" },
     { clave: "confites_best",                    fusion: "maxNumero" },   // Confites del caballo
     { clave: "confites_best_limpio",             fusion: "maxNumero" },
+    { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
+    { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
   ];
 
   function fusionDe(clave) {

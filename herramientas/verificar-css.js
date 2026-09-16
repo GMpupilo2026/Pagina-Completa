@@ -34,7 +34,7 @@ const PAGINAS = [
     "/lector-planilla.html", "/racha-tactica.html", "/concentracion.html", "/ciegos.html",
     "/articulos/la-clavada.html", "/cursos/fundamentos-del-ajedrez.html",
     "/cursos/el-mapa-de-los-finales.html", "/cursos/academia/index.html",
-    "/entreno/index.html", "/entreno/diagnostico.html", "/entreno/mates.html",
+    "/entreno/index.html", "/entreno/diagnostico.html", "/entreno/mates.html", "/entreno/aperturas.html",
     "/entreno/aprender.html", "/entreno/4x4.html", "/entreno/tactica.html",
     "/entreno/temas.html", "/entreno/practicas.html", "/entreno/desafios.html",
     "/entreno/coordenadas.html", "/inscripcion.html",

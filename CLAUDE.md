@@ -510,6 +510,49 @@ celular.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
   volver.
 
+## Aperturas y celadas: memorizar jugando, con repaso espaciado
+
+`entreno/aperturas.html` es un banco de 37 líneas —12 celadas y 25 aperturas—
+que el alumno memoriza **jugándolas en el tablero**: el entrenador mueve por el
+rival y él tiene que dar todas las jugadas de su color, de memoria. Al terminar,
+la línea se programa para más adelante.
+
+- **El banco vive en `js/aperturas-lineas.js`**, en notación inglesa porque es la
+  que entiende chess.js; la página la traduce (C, A, T, D, R) antes de
+  enseñarla. **El `id` de cada línea no se cambia nunca**: es la clave con la que
+  queda guardado el avance de cada alumno.
+- **`js/repaso-espaciado.js` es SM-2 recortado**: facilidad de 1.3 a 3.0,
+  intervalos de 1 y 3 días fijos al principio y de ahí multiplicando, con tope
+  de medio año. No sabe nada de ajedrez —es `{ id → ficha }`—, así que sirve
+  para cualquier cosa que se repase.
+- **Tres notas, no cinco.** Cinco grados obligan a pensar cuánto de bien te
+  salió, que es justo lo que no debe ocupar la cabeza mientras se estudia.
+- **La nota la pone la página, no el alumno.** Los SRS suelen preguntar "¿qué
+  tal te salió?" y con chicos eso no mide nada: el que quiere terminar rápido
+  aprieta "bien" siempre. Acá sale de lo que de verdad pasó —cuántas veces se
+  equivocó y cuántas pidió ver la jugada—, que no se puede maquillar.
+- **La coronación se elige**, no se asume dama: la trampa de Lasker en la Albin
+  solo funciona coronando caballo, y ese es el punto de la línea.
+- El progreso son las claves `aperturas_srs_v1` (fusión `srsPorLinea`) y
+  `aperturas_vistas_v1`, declaradas en `CLAVES` de `js/progreso-usuario.js`. La
+  fusión nueva **no deja ganar a un aparato entero**: se queda con la ficha de
+  CADA línea que se repasó más tarde, así que estudiar en la compu y en el
+  celular suma. No escribe en `training_progress` —esa tabla tiene el CHECK de
+  actividades y esto no es una de ellas—; el tiempo sí se registra con
+  `js/tiempo-plataforma.js data-activity="aperturas"`.
+- **Al tocar el banco o el SRS, correr `node herramientas/verificar-aperturas.js`**
+  (necesita `npm install chess.js@0.10.3`). Comprueba con chess.js que **cada
+  jugada exista de verdad en su posición** —431 jugadas—, que el mate prometido
+  sea mate, que los ids no se repitan, que al alumno le toquen al menos tres
+  jugadas, y de paso corre las pruebas del algoritmo de repaso. Una jugada mal
+  escrita no da error en pantalla: el alumno no puede terminar la línea nunca y
+  no entiende por qué.
+- **Al tocar la página, correr `node herramientas/verificar-aperturas-pagina.js`**
+  (con el sitio en localhost:8777 y playwright). Juega líneas enteras a punta de
+  clics en un navegador de verdad, incluida la de la coronación, y comprueba que
+  una jugada legal que no es la de la línea se rechace, que la pista baje la
+  nota y que el avance quede guardado.
+
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
