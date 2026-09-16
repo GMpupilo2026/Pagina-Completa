@@ -1280,6 +1280,56 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
   `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
 
+## El dedo y el scroll: arrastrar piezas en el celular
+
+Un navegador de celular, ante un dedo que se desliza, asume que quiere
+desplazar la página: se queda con el gesto, manda `pointercancel` y el arrastre
+muere a medio camino. Así que **arrastrar una pieza en el celular movía la
+PÁGINA y la jugada no se hacía** — en los 16 tableros del sitio, y sin dar
+ningún error: el alumno arrastraba, la pantalla se movía sola y la pieza se
+quedaba donde estaba.
+
+Se arregla con `touch-action`, en `js/board-drag.js`, que es el único lugar:
+los 16 tableros lo comparten.
+
+- **No se marca el tablero entero, y eso es la mitad del arreglo.** Poner
+  `touch-action: none` en el tablero deja un cuadrado de media pantalla por el
+  que no se puede desplazar la página, que en una página larga es un fastidio
+  peor que el que se viene a arreglar. Se marcan **solo las casillas que en ese
+  momento se pueden levantar** (las que `isDraggable` aprueba): en la posición
+  inicial son las dos filas propias —16 de 64— y por las otras seis la página
+  se sigue desplazando como siempre.
+- Como el conjunto cambia con cada jugada, un `MutationObserver` lo recalcula
+  cada vez que el tablero se vuelve a dibujar, agrupado en un cuadro de
+  animación. Es el mismo patrón que ya usa `js/coordenadas-tablero.js`.
+- Esto obliga a que `isDraggable` sea un **predicado puro**: ahora se lo llama
+  para las 64 casillas en cada redibujado, no solo durante un gesto. Los 16 lo
+  eran ya; al escribir uno nuevo, que lo siga siendo.
+- **Al tocar `js/board-drag.js`, correr `node
+  herramientas/verificar-arrastre-tactil.js`** (con el sitio en localhost:8777,
+  playwright y chess.js). Hace el gesto de verdad con eventos de toque y
+  comprueba **las dos mitades**: que arrastrar una pieza haga la jugada y no
+  mueva la página, y que deslizando sobre una casilla vacía o sobre una pieza
+  del rival la página sí se desplace. Comprobar solo la primera dejaría pasar
+  el arreglo fácil que rompe el scroll.
+
+**`js/variantes-board.js` no usa `enableBoardDrag`**: ahí se juega solo a
+clic-clic. No es un olvido que este arreglo tape — es que ese tablero nunca
+tuvo arrastre.
+
+### El tamaño de las casillas
+
+El tablero de la portada tenía casillas de **36 px** en un celular de 360, y la
+guía de Apple y la de Google piden 44 px para algo que se toca con el dedo. El
+tablero recupera el relleno de la tarjeta con `-mx-4 sm:mx-0`: la tarjeta lo
+conserva para el encabezado y los controles, pero el tablero no. Quedó en 40 px
+(360), 44 px (iPhone) y 47 px (Android normal).
+
+Al hacerlo salió otra vez la piedra de siempre: `-mx-4` **no estaba en el CSS
+compilado**, así que la clase no pintaba nada y la medida no se movía. Hay que
+correr `node herramientas/css-construir.js` al agregar una clase que no estaba
+en ninguna parte del sitio.
+
 ## Lo pesado se baja cuando se usa, no al entrar
 
 La portada pesaba **7,9 MB** y tardaba 16 segundos en terminar de cargar con red
