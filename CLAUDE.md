@@ -204,6 +204,70 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+## Coordinación: el rol nuevo y los formularios de inscripción
+
+**Coordinar es una marca encima de "profesor", no un tercer valor de `role`**, y
+eso es a propósito: hay 23 comprobaciones de `role === "profesor"` en el
+navegador y 13 en la base, y con un tercer valor olvidar una sola le quitaría en
+silencio un permiso de profesor a quien coordina — sin dar error, simplemente no
+le aparece el botón. Con `profiles.es_coordinador` encima del rol, "todos los
+permisos de profesor" queda garantizado por construcción. Es el mismo camino que
+ya seguía `is_admin`.
+
+- Un CHECK impide que la marca vaya sola: `not es_coordinador or role =
+  'profesor'`.
+- La pone y la quita `public.marcar_coordinador()`, que exige `is_admin`. Nadie
+  se la puede dar a sí mismo: el trigger de identidad revierte `es_coordinador`
+  igual que `role`, `email` e `is_admin`.
+- **Ese mismo trigger le dio el tropiezo de siempre**: también deshacía el
+  cambio legítimo de quien administra, y *sin ruido* — el UPDATE "funcionaba" y
+  el trigger revertía el valor después, así que la función devolvía "listo" con
+  la marca en `false`. Es literalmente el fallo que ya había tenido el contador
+  de invitaciones. Se arregló igual, con la marca local
+  `ajedrez.nombrando_coordinador` que el trigger respeta **solo** para esa
+  columna — **y además la función vuelve a leer la fila y falla si no quedó**,
+  para que no pueda mentir otra vez.
+- `public.soy_coordinador()` (`es_coordinador or is_admin`) es lo que preguntan
+  las políticas nuevas.
+
+### Los formularios
+
+`formularios.html` (armador, solo para quien coordina) y `formulario.html?f=…`
+(el enlace público que se comparte). Es lo que `inscripcion.html` hace hoy
+escrito a mano para un solo torneo, pero generado: el formulario es **datos**
+—el campo `campos` de la tabla—, así que armar el siguiente no es copiar 400
+líneas de HTML.
+
+- Dos tablas: `formularios` (slug, título, equipo, `campos`, abierto, cierre) y
+  `formulario_respuestas`. Cada quien maneja los suyos (`creado_por`); quien
+  administra, todos.
+- **El enlace da acceso al formulario, nunca a las respuestas.** El público no
+  toca las tablas: lee con `public.formulario_publico(slug)` —que solo devuelve
+  los abiertos, y ni quién lo creó ni cuándo— y escribe con
+  `public.responder_formulario()`, las dos `SECURITY DEFINER`. Mismo patrón que
+  `registrar_arbitraje_publico()`.
+- **`responder_formulario()` recorre los campos del formulario, no lo que le
+  mandaron**: una clave inventada no se guarda (está comprobado: un
+  `"es_admin": true` de regalo se descarta), un obligatorio que falte se dice
+  con su nombre, y hay techos de tamaño.
+- **A `anon` se le quitaron los permisos de tabla** sobre `formularios`,
+  `formulario_respuestas` y `profile_teachers`. Supabase se los da por omisión a
+  todo lo nuevo de `public` y confía en la RLS; acá la RLS lo paraba igual, pero
+  de mala manera —sus políticas llaman a `my_profile()`, que `anon` no puede
+  ejecutar, así que leer daba un error de permisos en vez de "0 filas"—. Como el
+  público no tiene nada que hacer en esas tablas, se le quita de raíz: una
+  puerta menos que dependa de que la política esté bien escrita.
+- **El `id` de cada pregunta se calcula una sola vez, al crearla**, y después no
+  se mueve: es la clave con la que queda guardada cada respuesta, así que
+  corregirle una tilde a la etiqueta no puede cambiarlo.
+- El CSV sale con **punto y coma y BOM**: es lo que Excel en español abre de un
+  doble clic. Con coma, Excel mete la fila entera en la columna A.
+- `formulario.html` lleva `noindex`: es el formulario de una actividad puntual,
+  con su enlace propio.
+- **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
+  sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
+  manda el armador a guardar y qué manda el formulario público al contestar.
+
 ## Informes: la cuenta la hace la base, no el navegador
 
 `informes.html` **no se baja las tablas de actividad**. Antes sí: pedía

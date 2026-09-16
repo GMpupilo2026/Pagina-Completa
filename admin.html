@@ -100,6 +100,7 @@
                 <a href="informes.html?tema=diagnostico" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🧭 Diagnósticos de nivel</a>
                 <a href="arbitraje.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">⚖️ Examen de arbitraje</a>
                 <a href="informes.html?tema=arbitraje" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📊 Exámenes de arbitraje del público</a>
+                <a href="formularios.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📋 Formularios de inscripción</a>
                 <a href="admin-jugador.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🔎 Base de datos de jugadores (chess-results.com)</a>
             </div>
 
@@ -144,13 +145,14 @@
             <!-- ===== Profesores: sus alumnos y su cupo de invitaciones ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Profesores</h2>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope. <strong>Coordina</strong> le suma, encima de todo lo de profesor, armar formularios de inscripción a torneos para sus equipos.</p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
                                 <th class="py-2 pr-3 font-semibold">Profesor</th>
                                 <th class="py-2 pr-3 font-semibold text-right">Alumnos</th>
+                                <th class="py-2 pr-3 font-semibold">Coordina</th>
                                 <th class="py-2 pr-3 font-semibold">Cupo de invitaciones</th>
                                 <th class="py-2 pr-3 font-semibold">Usadas</th>
                                 <th class="py-2 font-semibold text-right">Acciones</th>
@@ -635,6 +637,26 @@
                 tdAlumnos.textContent = porProfe.get(p.id) || 0;
                 tr.appendChild(tdAlumnos);
 
+                // Coordinar es un añadido al rol de profesor, no un rol aparte:
+                // así "todos los permisos de profesor" queda garantizado sin
+                // tener que revisar una por una las 23 comprobaciones de
+                // role === "profesor" que hay en el sitio.
+                const tdCoord = document.createElement("td");
+                tdCoord.className = "py-2 pr-3";
+                const coord = document.createElement("input");
+                coord.type = "checkbox";
+                coord.checked = !!p.es_coordinador;
+                coord.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+                coord.setAttribute("aria-label", "Coordina: " + teacherLabel(p));
+                coord.addEventListener("change", async () => {
+                    const antes = !coord.checked;
+                    const { error } = await sb.rpc("marcar_coordinador", { p_profesor: p.id, p_valor: coord.checked });
+                    if (error) { alert("No se pudo cambiar: " + error.message); coord.checked = antes; return; }
+                    p.es_coordinador = coord.checked;
+                });
+                tdCoord.appendChild(coord);
+                tr.appendChild(tdCoord);
+
                 const tdCupo = document.createElement("td");
                 tdCupo.className = "py-2 pr-3";
                 if (p.is_admin) {
@@ -705,7 +727,7 @@
             });
 
             if (!profes.length) {
-                body.innerHTML = '<tr><td colspan="5" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta con rol de profesor.</td></tr>';
+                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta con rol de profesor.</td></tr>';
             }
 
             // Un alumno sin profesor no aparece en los informes de nadie: conviene

@@ -564,6 +564,14 @@
                 );
             }
 
+            // Coordinación: armar formularios de inscripción a torneos. La
+            // página lo vuelve a comprobar, y la RLS es la que de verdad manda.
+            if (profile.es_coordinador || profile.is_admin) {
+                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" }
+                );
+            }
+
             renderTiles();
             // Partida asignada por el profesor: aviso en el panel y traslado automático al tablero.
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
