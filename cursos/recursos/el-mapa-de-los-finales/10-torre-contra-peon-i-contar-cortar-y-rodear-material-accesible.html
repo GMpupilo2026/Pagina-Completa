@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Torre contra peón (I): contar, cortar y rodear — El mapa de los finales — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 10 del curso El mapa de los finales.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>El mapa de los finales · Lección 10</p>
+  <h1>Torre contra peón (I): contar, cortar y rodear</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Objetivo: Resolver el final de torre contra peón contando tiempos, con el corte horizontal, el rodeo del rey y el jaque que gana un tiempo.</p>
+<p>Idea guía: La torre sola no gana: hay que contar los tiempos del rey. El corte, el rodeo y el jaque intermedio son las herramientas.</p>
+<p>Finales 21 a 24 · 12 posiciones</p>
+<p>Cuando los reyes no se estorban, el final de torre contra peón se resuelve contando: la torre sola no gana, necesita que su rey llegue a tiempo para capturar el peón (o para controlar la casilla de coronación). Se cuentan las jugadas del peón y las del rey fuerte; una columna de más o de menos cambia el resultado. Cuando los reyes se cruzan de camino, el rey del peón puede &quot;molestar&quot; un poco y ganar el tiempo decisivo.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>La oposición</dt>
+  <dd>Dos reyes enfrentados con una casilla de por medio, en la misma columna, fila o diagonal. Tiene la oposición quien NO está obligado a mover: el otro tiene que ceder el paso.</dd>
+  <dd><strong>El error de siempre:</strong> Correr con el peón antes que con el rey. En los finales de rey y peón manda el rey: el peón avanza cuando el rey ya conquistó las casillas de delante.</dd>
+  <dd><strong>Para verlo:</strong> Rey blanco en e5, rey negro en e7, peón blanco en e4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.</dd>
+  <dt>El rey activo en el final</dt>
+  <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
+  <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
+  <dd><strong>Para verlo:</strong> En un final de torres con peones parejos, el bando cuyo rey llega antes al centro suele ganar un peón sin hacer nada más. No es táctica: es geografía.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Simplemente contando: el rey llega</h3>
+  
+  <p>Piezas blancas: rey en f5; torre en a1.</p>
+  <p>Piezas negras: rey en c4; peón en c3.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 1.Re4 c2 2.Tc1 Rc3 3.Re3 Rb2 4.Txc2+ Rxc2</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>El rey blanco entra en la zona a tiempo: tras 1.Re4 el peón avanza, la torre lo frena desde c1 y el rey blanco apoya la captura. Cuente: el peón necesita dos jugadas y el apoyo de su rey; el rey blanco llega en dos.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/5K2/2k5/2p5/8/R7 w - - 0 1</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Una columna más lejos: tablas</h3>
+  
+  <p>Piezas blancas: rey en g5; torre en a1.</p>
+  <p>Piezas negras: rey en c4; peón en c3.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 1.Rf4 Rd3 2.Rf3 c2 3.Ta3+ Rd2 4.Ta2 Rd1 5.Ta1+ c1=D 6.Txc1+ Rxc1</p>
+  <p>Resultado: Tablas</p>
+  <p>Con el rey en g5 en vez de f5 falta exactamente un tiempo. El rey negro se interpone en d3 y el peón corona; la torre sólo puede entregarse por la dama.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/6K1/2k5/2p5/8/R7 w - - 0 1</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: Los reyes se molestan... poco</h3>
+  
+  <p>Piezas blancas: rey en f4; torre en a1.</p>
+  <p>Piezas negras: rey en c4; peón en c3.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 1...Rd3 2.Re5 c2 3.Re6 Rc3 4.Tg1 Rb2 5.Rf7 c1=D 6.Txc1 Rxc1</p>
+  <p>Resultado: Tablas</p>
+  <p>Aunque el rey blanco está a la misma distancia que en el primer diagrama, mueven las negras y 1...Rd3! le cierra el paso por e4. El rey blanco tiene que dar un rodeo y llega tarde.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/8/2k2K2/2p5/8/R7 b - - 0 1</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Arma rey y peón contra rey en cinco posiciones distintas y decide, antes de jugar, quién gana. Después compruébalo.</li>
+  <li>Practica la triangulación hasta poder ganar una posición donde la oposición directa no alcanza.</li>
+  <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
+  <li>Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Qué es la oposición lejana?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La misma idea con tres o cinco casillas de por medio. Se cuenta: si entre los dos reyes hay un número impar de casillas, tiene la oposición quien no mueve.</p>
+  </li>
+  <li>
+    <p>¿Qué son las casillas críticas de un peón?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Las tres casillas delante del peón, a dos filas de distancia. Si el rey propio llega a una de ellas, el peón corona pase lo que pase.</p>
+  </li>
+  <li>
+    <p>¿Qué es la triangulación?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Maniobrar con el rey por tres casillas para perder un tiempo y devolverle el turno al rival, quedándose con la oposición.</p>
+  </li>
+  <li>
+    <p>¿Un peón de torre cambia algo?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Todo. Con el peón en la columna a o h, el rey defensor que llega a la esquina hace tablas siempre, aunque esté en desventaja de oposición.</p>
+  </li>
+  <li>
+    <p>¿Cuándo empieza el final a efectos del rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando ya no hay damas ni suficiente material para un ataque de mate. A partir de ahí el rey camina.</p>
+  </li>
+  <li>
+    <p>¿Cuánto vale el rey como pieza de ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, algo más que una pieza menor: unos cuatro puntos. No se cambia, pero come peones como cualquiera.</p>
+  </li>
+  <li>
+    <p>¿Qué es la 'zona de las tablas' en finales de torre?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La idea de que muchos finales de torre con un peón menos se salvan si el rey defensor llega delante del peón. Llegar con el rey vale más que el peón.</p>
+  </li>
+  <li>
+    <p>¿Conviene cambiar piezas cuando tienes un peón de más?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, piezas; no peones. Con menos piezas la ventaja material pesa más, pero sin peones no hay con qué ganar.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Mark Dvoretsky, «Dvoretsky's Endgame Manual» (Russell Enterprises, 2003).</li>
+  <li>Karsten Müller y Frank Lamprecht, «Fundamental Chess Endings» (Gambit, 2001).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

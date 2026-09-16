@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sacrificios de pieza por peones — Desequilibrios de material — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 15 del curso Desequilibrios de material.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Desequilibrios de material · Lección 15</p>
+  <h1>Sacrificios de pieza por peones</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Objetivo: Evaluar cuándo dos o tres peones compensan una pieza: peones pasados, centro móvil y ataque al rey.</p>
+<p>Idea guía: Los peones compensan una pieza sólo si son móviles, están apoyados y el rival no puede bloquearlos.</p>
+<p>4 partidas y ejemplos · 20 momentos clave · 10 preguntas</p>
+<p>Entregar una pieza menor entera a cambio de sólo dos o tres peones es el sacrificio más audaz de todos los que vimos hasta ahora, y esta lección explica bajo qué condiciones esos peones alcanzan realmente como compensación. La respuesta corta es: sólo si son móviles, están apoyados entre sí y el rival no puede bloquearlos con facilidad; peones estáticos, por más que sean tres, casi nunca justifican el sacrificio.</p>
+<p>Hay tres formas típicas en que estos peones producen compensación suficiente. La primera es que formen (o estén a punto de formar) pasados conectados: dos pasados conectados avanzados pueden pesar tanto como la pieza entregada, y tres, todavía más. La segunda es que constituyan una masa central móvil, capaz de avanzar constantemente mientras a la vez le quita casillas y actividad a las piezas menores rivales, cumpliendo así dos funciones al mismo tiempo. La tercera es que sirvan de apoyo directo a un ataque contra el rey rival, sobre todo cuando ese rey queda expuesto justo en el momento del sacrificio.</p>
+<p>El plan de quien entrega la pieza consiste en mantener siempre en movimiento a esos peones, evitando cualquier estabilización que le permita al rival bloquearlos con comodidad, y en coordinar el resto de las piezas para sostener el avance. El plan de quien recibe la pieza es exactamente el contrario: bloquear cuanto antes, cambiar piezas para reducir el apoyo al avance, y evitar sobre todo que los peones lleguen a conectarse entre sí.</p>
+<p>El error más común de quien sacrifica es hacerlo con peones que en realidad están destinados a quedar bloqueados o aislados, convirtiendo la pieza entregada en pura pérdida material sin ninguna compensación real. El error más común de quien recibe la pieza es subestimar la velocidad con la que esos peones pueden coordinarse, dejando pasar el momento justo para bloquearlos.</p>
+<p>Nyback–Carlsen y Anand–Wang Hao muestran los dos primeros caminos de la lección: en la primera, dos peones pasados conectados alcanzan para ganar por la fuerza, mientras en la segunda, una masa de peones centrales cumple el doble rol de amenazar avances y neutralizar a las piezas menores rivales al mismo tiempo. Ivanchuk–Erdos lleva la idea al extremo con el sacrificio de una torre entera por sólo dos peones, compensados por pasados conectados y un rey rival expuesto. Vocaturo–Vallejo Pons, en cambio, sirve de advertencia: los tres peones entregados por la pieza nunca logran movilizarse, y terminan siendo simples debilidades frente a la pareja de alfiles negra.</p>
+<p>Reglas para recordar</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El valor de las piezas</dt>
+  <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
+  <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
+  <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
+  <dt>La iniciativa</dt>
+  <dd>Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.</dd>
+  <dd><strong>El error de siempre:</strong> Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.</dd>
+  <dd><strong>Para verlo:</strong> En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.</dd>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+</dl>
+
+
+
+<h2>3. Ejercicios</h2>
+<ol>
+  <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
+  <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
+  <li>Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.</li>
+  <li>Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer.</li>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+</ol>
+
+<h2>4. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuánto vale la calidad y qué significa 'ganar la calidad'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil.</p>
+  </li>
+  <li>
+    <p>¿Por qué el rey no tiene valor en la tabla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa.</p>
+  </li>
+  <li>
+    <p>Tienes dama por torre y alfil. ¿Estás mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas.</p>
+  </li>
+  <li>
+    <p>¿Cuándo tres peones compensan una pieza menor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más.</p>
+  </li>
+  <li>
+    <p>¿Cómo se sabe si tienes la iniciativa?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes.</p>
+  </li>
+  <li>
+    <p>¿Iniciativa es lo mismo que ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo.</p>
+  </li>
+  <li>
+    <p>¿Cómo se defiende quien no la tiene?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona.</p>
+  </li>
+  <li>
+    <p>¿Por qué se dice que la iniciativa es del que mueve?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo.</p>
+  </li>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+</ol>
+
+<h2>5. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

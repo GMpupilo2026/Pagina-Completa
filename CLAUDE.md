@@ -489,6 +489,115 @@ dos caras de la página, que no recalcule situaciones, qué manda al crear un
 plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
 el CSV salga con punto y coma y BOM.
 
+## El material de estudio de cada lección
+
+Cada una de las **186 lecciones** de los diez cursos tiene dos archivos de
+estudio, enlazados desde la propia lección:
+
+- `cursos/recursos/<curso>/NN-<leccion>-material.pdf` — el cuadernillo: de qué
+  trata la lección, los conceptos que toca con su error frecuente, ejemplos con
+  diagrama, ejercicios, preguntas con su respuesta y las fuentes.
+- `cursos/recursos/<curso>/NN-<leccion>-material-accesible.html` — el **mismo**
+  contenido para quien usa lector de pantalla.
+
+**La versión accesible no es un PDF, a propósito.** Un PDF con diagramas, marca
+de agua y cifrado es lo peor que se le puede dar a un lector de pantalla. En el
+HTML cada posición va descrita pieza por pieza ("Rey blanco en e4; peón blanco
+en d3"), con la línea escrita y la FEN por si se quiere cargar en un programa,
+así que no hace falta ver ninguna imagen — y no hay ninguna: el verificador
+falla si aparece un `<img>`.
+
+### De dónde sale el contenido (y por qué importa)
+
+Nada de esto se inventa, y esa es la regla:
+
+- El texto de cada lección sale de `cursos/protegido/<curso>.html`, que es de
+  Oscar Angulo Cubero. Al extraerlo **hay que cortar antes de los visores**
+  (`f100-`, `cp-`, `ac-`): sin eso el material se lleva el aviso de "Activa
+  JavaScript…" y, peor, la respuesta del diagrama, que se repite más abajo.
+- En `partidas-modelo` la lección **es** el visor de una partida y no tiene
+  texto propio: el resumen, la teoría y lo que deja cada partida salen del
+  archivo de datos, y los ejemplos son sus propias jugadas comentadas.
+- Los conceptos, preguntas y ejercicios viven en
+  `herramientas/material/conceptos.json` — 33 conceptos, 132 preguntas y 66
+  ejercicios escritos para esto— y se emparejan con cada lección por palabras
+  clave, con el área del curso como desempate.
+- **Las posiciones no se inventan nunca.** Salen del fondo de 1.178 posiciones
+  ya verificadas con motor que tienen los cuatro cursos con archivo de datos.
+  Los otros seis cursos **las piden prestadas**, y la posición prestada va
+  rotulada con el curso del que viene. Inventar una posición es exactamente el
+  error que este repositorio ya cometió una vez, con una "Lucena" que no era
+  Lucena.
+
+### Las fuentes, y por qué están separadas en dos listas
+
+Cada cuadernillo termina con **Fuentes** —de dónde sale de verdad lo que
+dice— y, aparte, **Para seguir leyendo**. Están separadas a propósito: poner una
+bibliografía de libros famosos al pie de un texto que no salió de ellos es
+atribución falsa, que es justo lo contrario de lo que una sección de fuentes
+tiene que evitar. Por eso la segunda lista dice con todas las letras que el
+cuadernillo **no reproduce texto de esas obras**.
+
+`herramientas/material/lecturas.json` guarda esa lectura recomendada por área.
+Si algún día se cita algo literal, la cita va con página y comillas dentro del
+texto, no en esa lista.
+
+### Firma y protección
+
+- **Oscar Angulo Cubero** va en la portada, en el pie de cada página, en la
+  sección de fuentes, en el aviso de uso docente y en los datos del archivo.
+- **Marca de agua en todas las páginas**, estampada con `pypdf` y no con CSS
+  (misma lección que `herramientas/arbitraje-pdf.js`: con `position: fixed`,
+  al paginar Chromium no respeta el centrado y la marca sale corrida).
+  Después de estampar hay que **recomprimir y clonar**, o el archivo se va a
+  megabytes.
+- **El PDF se abre sin contraseña pero no se puede imprimir, copiar ni
+  editar.** La contraseña de propietario es `material-ai-2026`, en
+  `CLAVE_PROPIETARIO`. **La extracción de texto queda habilitada a propósito**:
+  bloquearla dejaría el material fuera del alcance de quien lo lee con lector de
+  pantalla, que es justamente a quien esta tanda quiere incluir. Bloquear la
+  impresión y la extracción a la vez sería contradecir la mitad del encargo.
+- Como todo acá, es protección del formato PDF, no una caja fuerte: quien
+  conozca la dirección lo baja igual y con una herramienta puede quitarle las
+  restricciones. `robots.txt` deja `cursos/recursos/` fuera de los buscadores
+  —un filtro informativo más, no una puerta—.
+
+### Cómo se regenera
+
+    npm install playwright && pip install pypdf
+    node herramientas/curso-material-generar.js      # los 372 archivos, ~2 min
+    node herramientas/curso-material-enlazar.js      # pone los enlaces
+
+El enlazador **se puede correr todas las veces que se quiera**: reconoce lo que
+puso una corrida anterior por las marcas `<!-- material: inicio -->` y lo
+reemplaza en vez de duplicarlo. Eso importa porque el nombre del archivo sale
+del título de la lección: corregirle una tilde a un título dejaría el enlace
+viejo apuntando a un archivo que ya no existe.
+
+`herramientas/lib/tablero-svg.js` dibuja los diagramas y lo comparten este
+generador y el de las tarjetas de `cursos.html`: una segunda copia de los mismos
+dibujos se iría separando de la primera a la primera corrección.
+
+**Al tocar cualquiera de estas piezas, correr
+`python3 herramientas/verificar-material.py`** (necesita `pypdf`). Comprueba
+archivo por archivo que cada lección tenga sus dos enlaces y que apunten a algo
+que existe, que cada PDF esté cifrado y se abra sin contraseña, que NO deje
+imprimir, copiar ni modificar pero SÍ extraer texto, que lleve al autor en los
+datos y en el texto, que tenga marca de agua en **todas** las páginas, y que la
+versión accesible no dependa de ninguna imagen, tenga los encabezados en orden
+y describa en palabras el diagrama que el PDF dibuja. Lo que se rompe acá no da
+error en pantalla: un PDF sin proteger se baja igual y un enlace roto solo lo ve
+el alumno.
+
+### Lo que queda por hacer
+
+De las 186 lecciones, **92 traen posiciones de ejemplo**. Las que no son sobre
+todo de `calculo-y-visualizacion`, `preparacion-para-torneos`,
+`estrategia-y-tactica` y `aperturas-y-defensas`: el fondo de posiciones
+verificadas es casi todo de finales y de desequilibrios, y no hay de dónde
+prestarles. Cuando esos cursos tengan su archivo de posiciones, la corrida se
+repite y las toman solas.
+
 ## El progreso vive en la cuenta, no en el aparato
 
 `js/progreso-usuario.js` espeja en Supabase (tabla `training_state`, una fila por

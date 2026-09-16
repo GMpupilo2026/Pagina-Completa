@@ -1,0 +1,1191 @@
+[
+ {
+  "id": "valor-material",
+  "nombre": "El valor de las piezas",
+  "area": "fundamentos",
+  "claves": [
+   "material",
+   "valor",
+   "cambio",
+   "pieza menor",
+   "calidad"
+  ],
+  "definicion": "Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.",
+  "error": "Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.",
+  "ejemplo": "Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.",
+  "preguntas": [
+   {
+    "p": "¿Cuánto vale la calidad y qué significa 'ganar la calidad'?",
+    "r": "Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil."
+   },
+   {
+    "p": "¿Por qué el rey no tiene valor en la tabla?",
+    "r": "Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa."
+   },
+   {
+    "p": "Tienes dama por torre y alfil. ¿Estás mejor?",
+    "r": "En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas."
+   },
+   {
+    "p": "¿Cuándo tres peones compensan una pieza menor?",
+    "r": "Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más."
+   }
+  ],
+  "ejercicios": [
+   "Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.",
+   "Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos."
+  ]
+ },
+ {
+  "id": "jaque-mate-ahogado",
+  "nombre": "Jaque, mate y ahogado",
+  "area": "fundamentos",
+  "claves": [
+   "jaque",
+   "mate",
+   "ahogado",
+   "tablas",
+   "rey"
+  ],
+  "definicion": "Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.",
+  "error": "Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.",
+  "ejemplo": "Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.",
+  "preguntas": [
+   {
+    "p": "¿Cuáles son las tres maneras de salir de un jaque?",
+    "r": "Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar."
+   },
+   {
+    "p": "¿Por qué el ahogado son tablas y no derrota?",
+    "r": "Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real."
+   },
+   {
+    "p": "¿Cómo se evita el ahogado en un final de dama contra rey?",
+    "r": "Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca."
+   },
+   {
+    "p": "¿Un rey puede quedar al lado del otro?",
+    "r": "No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan."
+   }
+  ],
+  "ejercicios": [
+   "Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.",
+   "Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando."
+  ]
+ },
+ {
+  "id": "enroque",
+  "nombre": "El enroque",
+  "area": "fundamentos",
+  "claves": [
+   "enroque",
+   "seguridad del rey",
+   "corto",
+   "largo"
+  ],
+  "definicion": "La única jugada que mueve dos piezas: el rey va dos casillas hacia la torre y la torre salta al otro lado. Pone al rey a salvo y saca la torre al centro de un solo golpe.",
+  "error": "Dejarlo para después. El enroque tardío es el motivo más común de derrota por debajo de los 1600: el centro se abre, el rey sigue en e1 o e8 y la partida se acaba en cinco jugadas.",
+  "ejemplo": "En la mayoría de las aperturas abiertas, el plan de las primeras diez jugadas es: peón al centro, caballos, alfil, enroque. Si a la jugada ocho no estás enrocado, algo salió mal.",
+  "preguntas": [
+   {
+    "p": "¿Cuándo NO se puede enrocar?",
+    "r": "Si el rey o esa torre ya se movieron, si el rey está en jaque, si pasa por una casilla atacada o si cae en una atacada. Que la torre pase por una casilla atacada sí se permite."
+   },
+   {
+    "p": "¿Corto o largo?",
+    "r": "El corto es más seguro y más rápido; el largo deja el rey más cerca del centro y la columna c algo floja, pero mete la torre en la columna d de una vez. Se elige por dónde va a estar el juego."
+   },
+   {
+    "p": "Los dos enrocan a lados distintos. ¿Qué cambia?",
+    "r": "Que los peones de cada uno pueden avanzar contra el rey rival sin exponer al propio. Son las partidas más filosas: gana quien llega primero, y se calcula, no se maniobra."
+   },
+   {
+    "p": "¿Tocar el rey obliga a enrocar?",
+    "r": "Si tocaste el rey con intención de mover, debes mover el rey; si el enroque es legal, puedes enrocar. Pero si tocas primero la torre, la jugada es de torre."
+   }
+  ],
+  "ejercicios": [
+   "Revisa tus últimas cinco partidas y anota en qué jugada enrocaste. Si el promedio pasa de la jugada 10, ahí tienes trabajo.",
+   "Juega tres partidas obligándote a enrocar antes de la jugada 8. Verás cuántas decisiones se ordenan solas."
+  ]
+ },
+ {
+  "id": "coronacion",
+  "nombre": "La coronación y el peón pasado",
+  "area": "fundamentos",
+  "claves": [
+   "coronación",
+   "coronar",
+   "peón pasado",
+   "promoción",
+   "dama"
+  ],
+  "definicion": "Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.",
+  "error": "Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.",
+  "ejemplo": "Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.",
+  "preguntas": [
+   {
+    "p": "¿Un peón puede coronar en una pieza que ya está en el tablero?",
+    "r": "Sí. Se pueden tener dos, tres o nueve damas: la regla no limita cuántas piezas iguales hay."
+   },
+   {
+    "p": "¿Qué hace peligroso a un peón pasado?",
+    "r": "Que nadie lo puede frenar con peones: hay que gastarle una pieza. Una pieza atada a vigilar un peón vale la mitad, y por eso el peón pasado gana finales."
+   },
+   {
+    "p": "¿Qué es un peón pasado lejano y por qué gana?",
+    "r": "El que está en el ala contraria a donde están los reyes. Obliga al rey rival a correr a pararlo, y mientras tanto el propio rey se come los peones del otro lado."
+   },
+   {
+    "p": "¿Cuál es la regla del cuadrado?",
+    "r": "Traza un cuadrado entre el peón y su casilla de coronación: si el rey defensor puede entrar en ese cuadrado en su jugada, atrapa al peón; si no, corona solo. Si el peón todavía no se movió, cuenta desde la tercera fila."
+   }
+  ],
+  "ejercicios": [
+   "Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.",
+   "Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una."
+  ]
+ },
+ {
+  "id": "al-paso",
+  "nombre": "La captura al paso",
+  "area": "fundamentos",
+  "claves": [
+   "al paso",
+   "en passant",
+   "peón"
+  ],
+  "definicion": "Cuando un peón avanza dos casillas y cae al lado de un peón rival, ese peón rival puede capturarlo como si hubiera avanzado una sola. Solo en la jugada inmediatamente siguiente.",
+  "error": "No usarla porque no se conoce, o intentarla una jugada tarde. El derecho se pierde si no se ejerce de inmediato: no se guarda para después.",
+  "ejemplo": "Peón blanco en e5, el negro juega d7-d5. El blanco puede jugar exd6 y su peón termina en d6, como si el negro solo hubiera avanzado una. El peón de d5 se retira del tablero.",
+  "preguntas": [
+   {
+    "p": "¿Se puede capturar al paso un peón que avanzó una sola casilla?",
+    "r": "No. Solo cuando el avance fue de dos casillas desde su posición inicial."
+   },
+   {
+    "p": "¿Se puede dejar para la jugada siguiente?",
+    "r": "No. Si no se captura de inmediato, el derecho se pierde para siempre sobre ese peón."
+   },
+   {
+    "p": "¿Un peón puede capturar al paso una pieza que no sea peón?",
+    "r": "No. La captura al paso es únicamente peón contra peón."
+   },
+   {
+    "p": "¿Por qué existe esta regla?",
+    "r": "Cuando se permitió el avance de dos casillas, un peón podía pasar de largo ante un peón rival sin darle la oportunidad de capturarlo. La regla devuelve esa oportunidad."
+   }
+  ],
+  "ejercicios": [
+   "Arma la posición del ejemplo y juégala en las dos direcciones. Repítela hasta que la veas sin pensar.",
+   "En tus próximas tres partidas, cada vez que tu rival avance dos casillas al lado de uno de tus peones, párate a mirar si te conviene la captura al paso."
+  ]
+ },
+ {
+  "id": "notacion",
+  "nombre": "La notación y la planilla",
+  "area": "fundamentos",
+  "claves": [
+   "notación",
+   "planilla",
+   "anotar",
+   "algebraica"
+  ],
+  "definicion": "Cada casilla tiene letra de columna (a-h) y número de fila (1-8). Una jugada se escribe con la inicial de la pieza y la casilla de destino: Cf3, Ac4, Dh5. El peón no lleva inicial. La captura lleva una x y el jaque un +.",
+  "error": "Anotar después de mover y en apuro. La planilla es obligatoria en torneo y además es tu material de estudio: una partida sin anotar es una partida que no vas a poder revisar nunca.",
+  "ejemplo": "1.e4 e5 2.Cf3 Cc6 3.Ab5 es la Apertura española escrita en tres jugadas. En inglés las iniciales cambian (N, B, R, Q, K), y es lo que vas a encontrar en internet.",
+  "preguntas": [
+   {
+    "p": "¿Cómo se escribe el enroque?",
+    "r": "O-O el corto y O-O-O el largo, con letras O, no con ceros."
+   },
+   {
+    "p": "Dos caballos pueden ir a la misma casilla. ¿Cómo se distingue?",
+    "r": "Se agrega la columna del que mueve, y si comparten columna, la fila: Cbd2, C1f3."
+   },
+   {
+    "p": "¿Cómo se anota una coronación?",
+    "r": "La casilla seguida de un igual y la pieza: e8=D. Si es coronando caballo, e8=C."
+   },
+   {
+    "p": "¿Qué significan !, ?, !? y ?!",
+    "r": "Buena jugada, mala jugada, jugada interesante y jugada dudosa. Son comentarios de quien analiza, no parte de la partida."
+   }
+  ],
+  "ejercicios": [
+   "Anota una partida entera contra alguien, en papel, sin ayuda. Después pásala a un tablero y revisa que se pueda reconstruir.",
+   "Toma una partida famosa escrita en inglés y tradúcela a la notación de acá. Es la forma más rápida de aprender las dos."
+  ]
+ },
+ {
+  "id": "clavada",
+  "nombre": "La clavada",
+  "area": "tactica",
+  "claves": [
+   "clavada",
+   "clavar",
+   "clavado"
+  ],
+  "definicion": "Una pieza queda clavada cuando no puede moverse porque detrás de ella hay algo más valioso. Si detrás está el rey, la clavada es absoluta y la pieza legalmente no se puede mover; si detrás hay una dama o una torre, es relativa y moverse solo cuesta material.",
+  "error": "Creer que una pieza clavada defiende. No defiende nada: si la pieza que defiende está clavada contra su rey, no puede capturar. Ese es el motor de media táctica de club.",
+  "ejemplo": "En la Española, Ab5 clava el caballo de c6 contra el rey solo mientras no haya nada en el medio. La respuesta a6 gana tiempo justamente para deshacerla.",
+  "preguntas": [
+   {
+    "p": "¿Qué piezas pueden clavar?",
+    "r": "Solo las de línea: alfil, torre y dama. El caballo no clava nunca, porque su salto no deja una línea detrás."
+   },
+   {
+    "p": "¿Cómo se rompe una clavada?",
+    "r": "Moviendo la pieza de atrás, interponiendo otra, echando a la pieza que clava con un peón, o capturándola."
+   },
+   {
+    "p": "¿Por qué la clavada absoluta es más fuerte?",
+    "r": "Porque la pieza clavada no se puede mover ni aunque quiera: la regla lo impide. En la relativa, siempre existe la opción de moverse y pagar."
+   },
+   {
+    "p": "Tienes un caballo clavado contra tu rey defendiendo un peón. ¿Está defendido el peón?",
+    "r": "No. El caballo no puede capturar sin dejar a su rey en jaque, así que el peón está colgando aunque parezca defendido."
+   }
+  ],
+  "ejercicios": [
+   "En tus tres últimas partidas, busca todas las clavadas que hubo, tuyas y del rival, y anota si se aprovecharon.",
+   "Arma una posición donde un peón esté defendido solo por una pieza clavada, y encuentra la captura que gana."
+  ]
+ },
+ {
+  "id": "horquilla",
+  "nombre": "La horquilla (ataque doble)",
+  "area": "tactica",
+  "claves": [
+   "horquilla",
+   "ataque doble",
+   "doble",
+   "tenedor"
+  ],
+  "definicion": "Una sola pieza ataca dos cosas a la vez. El rival solo puede salvar una. La hace cualquier pieza, pero el caballo es el especialista porque ataca casillas de los dos colores.",
+  "error": "Buscar la horquilla y no preparar la casilla. Casi ninguna horquilla aparece sola: se llega a ella con un jaque, un cambio o una desviación que deja las dos piezas rivales en casillas del mismo color.",
+  "ejemplo": "Caballo en e5 con el rey negro en g8 y la torre en c6: no hay horquilla. Pero si un jaque obliga al rey a ir a f8, el caballo salta a d7 y se lleva la torre.",
+  "preguntas": [
+   {
+    "p": "¿Por qué el caballo es el rey de la horquilla?",
+    "r": "Porque salta y porque desde una casilla clara ataca ocho casillas oscuras: nadie lo ve venir y ninguna pieza rival lo bloquea."
+   },
+   {
+    "p": "¿Qué es una horquilla de peón?",
+    "r": "Un peón que avanza y ataca dos piezas a la vez. Es la más barata de todas: aunque lo capturen, el peón vale uno."
+   },
+   {
+    "p": "¿Cómo se evita caer en horquillas de caballo?",
+    "r": "Mirando, antes de mover, las casillas desde las que un caballo rival atacaría dos piezas tuyas, y no dejando el rey y la dama en casillas del mismo color con un caballo cerca."
+   },
+   {
+    "p": "La horquilla ataca dos piezas defendidas. ¿Sirve igual?",
+    "r": "Solo si una de las dos es el rey, o si la que se pierde vale más que la que da la horquilla. Atacar dos torres defendidas con la dama no gana nada."
+   }
+  ],
+  "ejercicios": [
+   "Pon un caballo en el centro del tablero vacío y anota las ocho casillas que ataca. Repítelo desde una esquina y compara.",
+   "Resuelve veinte ejercicios de horquilla seguidos y anota, en cada uno, cuál fue la jugada que preparó la casilla."
+  ]
+ },
+ {
+  "id": "enfilada",
+  "nombre": "La enfilada",
+  "area": "tactica",
+  "claves": [
+   "enfilada",
+   "brocheta",
+   "rayos x",
+   "rayos X"
+  ],
+  "definicion": "Es la clavada al revés: la pieza valiosa está delante y, al moverse, deja expuesta a la de atrás. Se ataca al rey o a la dama y se gana lo que estaba detrás.",
+  "error": "Confundirla con la clavada. En la clavada la pieza de adelante no se puede mover; en la enfilada se mueve obligada y por eso pierde. Nombrar bien lo que ves es la mitad de calcularlo.",
+  "ejemplo": "Rey negro en g8, torre negra en g1 y alfil blanco que llega a la diagonal larga: el rey tiene que salir del jaque y la torre cae.",
+  "preguntas": [
+   {
+    "p": "¿En qué se diferencian clavada y enfilada?",
+    "r": "En el orden. Clavada: valiosa detrás, la de adelante no puede moverse. Enfilada: valiosa adelante, se mueve y cae la de atrás."
+   },
+   {
+    "p": "¿Qué piezas enfilan?",
+    "r": "Las mismas que clavan: alfil, torre y dama. Necesitan una línea con dos piezas rivales en fila."
+   },
+   {
+    "p": "¿Cómo se defiende una enfilada?",
+    "r": "Moviendo la pieza de adelante de modo que siga tapando la línea, interponiendo, o capturando la pieza que enfila."
+   },
+   {
+    "p": "¿Por qué es tan frecuente en finales de torre?",
+    "r": "Porque quedan pocas piezas, las líneas están abiertas y el rey no se puede esconder detrás de nada."
+   }
+  ],
+  "ejercicios": [
+   "Arma cinco finales de torre y rey y busca en cada uno la enfilada que gana la torre rival.",
+   "Toma diez ejercicios mezclados de clavada y enfilada y clasifícalos antes de resolverlos."
+  ]
+ },
+ {
+  "id": "descubierto",
+  "nombre": "El jaque descubierto",
+  "area": "tactica",
+  "claves": [
+   "descubierto",
+   "descubierta",
+   "doble jaque"
+  ],
+  "definicion": "Una pieza se quita del medio y deja que otra, detrás, dé el jaque. La que se movió queda libre para hacer cualquier cosa, porque el rival está obligado a atender el jaque.",
+  "error": "Usarlo para dar un jaque cualquiera. El descubierto vale por lo que hace la pieza que se va: si se va a una casilla donde no captura ni amenaza nada, se desperdició la jugada más fuerte del tablero.",
+  "ejemplo": "Torre blanca en e1, alfil blanco en e5, rey negro en e8. El alfil se lleva un peón en b8 con jaque de la torre: el negro tiene que atender el jaque y el alfil se queda con lo que comió.",
+  "preguntas": [
+   {
+    "p": "¿Qué es el doble jaque y por qué es tan fuerte?",
+    "r": "Cuando las dos piezas dan jaque a la vez. Solo se puede responder moviendo el rey: no hay captura ni interposición que tape dos líneas."
+   },
+   {
+    "p": "¿La pieza que se descubre puede capturar algo defendido?",
+    "r": "Sí, y esa es la gracia: el rival no puede recapturar porque primero tiene que salir del jaque."
+   },
+   {
+    "p": "¿Cómo se prepara un descubierto?",
+    "r": "Poniendo una pieza propia entre una pieza de línea propia y el rey rival, y buscando después la casilla que más daño haga al moverla."
+   },
+   {
+    "p": "¿Contra qué otra pieza sirve el descubierto?",
+    "r": "Contra cualquiera que obligue: la dama funciona casi igual de bien que el rey, porque el rival tampoco la puede dejar."
+   }
+  ],
+  "ejercicios": [
+   "Busca el mate de la coz en un libro o en internet y juégalo tres veces: es un descubierto y un doble jaque trabajando juntos.",
+   "En diez ejercicios de descubierto, anota primero a dónde va la pieza que se mueve y solo después mira la solución."
+  ]
+ },
+ {
+  "id": "desviacion",
+  "nombre": "Desviación y atracción",
+  "area": "tactica",
+  "claves": [
+   "desviación",
+   "atracción",
+   "sobrecarga",
+   "eliminación del defensor"
+  ],
+  "definicion": "Desviar es obligar a una pieza a soltar lo que defiende. Atraer es obligarla a ir a una casilla mala. Sobrecarga es cuando una pieza defiende dos cosas y no puede con las dos.",
+  "error": "Mirar solo qué está colgando y no quién lo defiende. La pregunta que abre estas tácticas no es '¿qué puedo comer?', sino '¿quién defiende esto, y qué pasa si lo obligo a irse?'.",
+  "ejemplo": "Un alfil defiende a la vez la torre de f8 y el peón de d5. Se cambia por la torre: el alfil recaptura obligado, y el peón de d5 cae de regalo.",
+  "preguntas": [
+   {
+    "p": "¿Cómo se reconoce una sobrecarga?",
+    "r": "Se hace una lista de lo que defiende cada pieza rival. La que aparece dos veces está sobrecargada."
+   },
+   {
+    "p": "¿Qué es un sacrificio de atracción?",
+    "r": "Entregar material para llevar al rey o a una pieza a una casilla donde después hay horquilla, clavada o mate. Se calcula hasta el final antes de jugarlo."
+   },
+   {
+    "p": "¿Por qué el jaque es la mejor herramienta de desviación?",
+    "r": "Porque obliga: el rival no puede elegir ignorarlo. Toda desviación con jaque es forzada, y lo forzado se calcula entero."
+   },
+   {
+    "p": "¿Desviación o eliminación del defensor?",
+    "r": "Desviar es obligarlo a irse; eliminar es cambiarlo o capturarlo. El resultado es el mismo y el nombre importa poco: lo que importa es ver quién defiende."
+   }
+  ],
+  "ejercicios": [
+   "En tu próxima partida, antes de cada captura, escribe mentalmente quién defiende la casilla. En un mes ves tácticas que hoy no ves.",
+   "Toma una posición tuya cualquiera y haz la lista de defensores de cada bando. Busca las sobrecargas."
+  ]
+ },
+ {
+  "id": "mate-pasillo",
+  "nombre": "El mate del pasillo",
+  "area": "tactica",
+  "claves": [
+   "pasillo",
+   "última fila",
+   "primera fila",
+   "mate del pasillo"
+  ],
+  "definicion": "El rey enrocado queda encerrado por sus propios peones y una torre o dama entra en la última fila a dar mate. Es la debilidad más común de todas las partidas de club.",
+  "error": "No hacer el hueco. Una jugadita de peón —h6, h3, g3— cuesta un tiempo y quita de la partida una familia entera de tácticas. Hacerlo en el momento correcto es de las mejores costumbres que se pueden tomar.",
+  "ejemplo": "Torre blanca que llega a e8 con el rey negro en g8 y peones en f7, g7 y h7: mate. Si el peón estuviera en h6, el rey sale por h7 y no pasa nada.",
+  "preguntas": [
+   {
+    "p": "¿Qué es 'hacerle el hueco al rey'?",
+    "r": "Avanzar un peón del enroque —normalmente el de la torre— para que el rey tenga una casilla de escape en la segunda fila."
+   },
+   {
+    "p": "¿Cuál es el riesgo de hacer el hueco demasiado pronto?",
+    "r": "Que debilita el enroque y regala un tiempo. Se hace cuando la última fila ya es una amenaza real, no por costumbre en la jugada 12."
+   },
+   {
+    "p": "¿Cómo se defiende la última fila sin mover peones?",
+    "r": "Dejando una torre en ella, o una pieza que pueda interponerse. Cuidado: si esa pieza está sobrecargada, la defensa es de mentira."
+   },
+   {
+    "p": "¿Por qué tantas combinaciones terminan en la última fila?",
+    "r": "Porque la debilidad es permanente: los peones del enroque no vuelven atrás. Cualquier desviación del defensor la convierte en mate."
+   }
+  ],
+  "ejercicios": [
+   "Revisa tus partidas perdidas y cuenta cuántas terminaron en la última fila. El número suele sorprender.",
+   "Arma cinco posiciones con la última fila débil y busca en cada una la desviación que da mate."
+  ]
+ },
+ {
+  "id": "mate-coz",
+  "nombre": "El mate de la coz",
+  "area": "tactica",
+  "claves": [
+   "coz",
+   "smothered",
+   "mate de la coz",
+   "ahogado por sus piezas"
+  ],
+  "definicion": "El rey queda rodeado por sus propias piezas y un caballo le da mate. En inglés se llama smothered mate. El patrón completo lleva un sacrificio de dama.",
+  "error": "Intentarlo sin el sacrificio. El mate de la coz se ve bonito pero necesita una secuencia exacta: jaque de caballo, rey a la esquina, jaque doble, rey vuelve, dama a la esquina y caballo mata.",
+  "ejemplo": "Con el rey negro en g8, torre en f8 y peones en g7 y h7: Cf7+ Rg8, Ch6++ Rh8, Dg8+ Txg8, Cf7 mate. Cada jugada es forzada.",
+  "preguntas": [
+   {
+    "p": "¿Por qué hay que sacrificar la dama?",
+    "r": "Para obligar a la torre a ir a g8 y tapar la última casilla de escape del rey. Sin esa torre ahí, no hay mate."
+   },
+   {
+    "p": "¿Qué papel juega el doble jaque?",
+    "r": "Obliga al rey a moverse sin poder capturar el caballo ni interponer. Es lo que lleva al rey de vuelta a la esquina."
+   },
+   {
+    "p": "¿Contra qué enroque funciona?",
+    "r": "Contra el corto, con los peones f, g y h sin mover y una torre en f8. Por eso desaparece en cuanto el rival juega h6."
+   },
+   {
+    "p": "¿Se puede dar con el rey en el centro?",
+    "r": "Sí, cuando las propias piezas le tapan todo alrededor. El nombre describe la situación, no una casilla concreta."
+   }
+  ],
+  "ejercicios": [
+   "Juega el mate de la coz completo cinco veces en el tablero hasta poder hacerlo sin mirar.",
+   "Busca en tus partidas alguna posición donde el rival tuviera el rey rodeado y un caballo tuyo cerca."
+  ]
+ },
+ {
+  "id": "zwischenzug",
+  "nombre": "La jugada intermedia (zwischenzug)",
+  "area": "tactica",
+  "claves": [
+   "intermedia",
+   "zwischenzug",
+   "jugada intermedia"
+  ],
+  "definicion": "En medio de una secuencia que parece obligada, se mete otra jugada más fuerte —casi siempre un jaque o una amenaza mayor— antes de completar la captura esperada.",
+  "error": "Calcular las capturas en el orden en que aparecen. Cuando calculas una serie de cambios, hay que preguntarse en cada paso si hay algo más fuerte que recapturar.",
+  "ejemplo": "El rival te come una pieza y esperas recapturar. En vez de eso das jaque: el rival atiende el jaque, y recién entonces recapturas, ahora con una pieza de más.",
+  "preguntas": [
+   {
+    "p": "¿Dónde se busca una jugada intermedia?",
+    "r": "En cualquier momento de una secuencia forzada. La pregunta es siempre: antes de recapturar, ¿tengo un jaque o una amenaza más grande?"
+   },
+   {
+    "p": "¿Por qué se les escapa a los jugadores de club?",
+    "r": "Porque la mente cierra la secuencia: 'me come, le como'. La jugada intermedia rompe ese automatismo."
+   },
+   {
+    "p": "¿Qué relación tiene con la captura al paso de tiempo?",
+    "r": "Ninguna reglamentaria. Es un recurso de cálculo: aprovechar que el rival está obligado a algo para colar otra cosa antes."
+   },
+   {
+    "p": "¿Cómo se entrena?",
+    "r": "Resolviendo ejercicios donde la primera jugada obvia es buena pero la segunda mejor es el jaque intermedio. Los libros los marcan como 'zwischenzug'."
+   }
+  ],
+  "ejercicios": [
+   "En quince ejercicios tácticos, antes de dar por buena tu solución, busca un jaque que se pueda colar antes.",
+   "Repasa una partida tuya y marca cada secuencia de cambios. Busca en cada una si había algo intermedio."
+  ]
+ },
+ {
+  "id": "sacrificio",
+  "nombre": "El sacrificio",
+  "area": "tactica",
+  "claves": [
+   "sacrificio",
+   "sacrificar",
+   "entrega",
+   "gambito"
+  ],
+  "definicion": "Entregar material a cambio de algo que no es material: tiempo, líneas abiertas, el rey rival expuesto o una casilla. Un sacrificio correcto se calcula hasta el final o se apoya en una ventaja que se puede explicar.",
+  "error": "Sacrificar por entusiasmo. Si no puedes decir con palabras qué recibes a cambio, y ver hasta dónde llega la secuencia, no es un sacrificio: es regalar una pieza.",
+  "ejemplo": "El clásico Axh7+ existe porque después del jaque llega el caballo a g5 y la dama a h5. Sin esas dos piezas listas, es solo un alfil menos.",
+  "preguntas": [
+   {
+    "p": "¿Qué diferencia un sacrificio de una combinación?",
+    "r": "La combinación es forzada de principio a fin y termina en algo medible. El sacrificio puede ser posicional: se entrega material por una ventaja duradera que no se calcula hasta el mate."
+   },
+   {
+    "p": "¿Qué hay que tener antes de sacrificar contra el enroque?",
+    "r": "Piezas cerca y jugando: normalmente dama, un caballo y un alfil apuntando. Con una sola pieza no hay ataque."
+   },
+   {
+    "p": "¿Qué es un gambito?",
+    "r": "Un sacrificio de apertura, casi siempre de un peón, a cambio de desarrollo y centro. El Gambito de rey y el Gambito de dama son los dos más conocidos."
+   },
+   {
+    "p": "¿Cómo se defiende uno de un sacrificio?",
+    "r": "Contando las piezas atacantes y las defensoras, y aceptando material solo cuando has visto la respuesta a la amenaza siguiente. Muchas veces devolver el material es la mejor defensa."
+   }
+  ],
+  "ejercicios": [
+   "Toma cinco partidas de ataque famosas y en cada una cuenta cuántas piezas atacaban antes del sacrificio.",
+   "En tu próxima partida, si sientes ganas de sacrificar, escribe antes en la planilla qué recibes a cambio. Si no te sale la frase, no lo hagas."
+  ]
+ },
+ {
+  "id": "centro",
+  "nombre": "El centro",
+  "area": "estrategia",
+  "claves": [
+   "centro",
+   "casillas centrales",
+   "e4",
+   "d4",
+   "dominio del centro"
+  ],
+  "definicion": "Las cuatro casillas del medio —d4, e4, d5, e5— y las que las rodean. Quien las controla mueve sus piezas de un lado al otro del tablero más rápido que el rival.",
+  "error": "Confundir ocupar con controlar. Un peón en e4 ocupa; un alfil en g7 y un caballo en f6 controlan e4 sin estar ahí. Las aperturas hipermodernas se basan justamente en eso.",
+  "ejemplo": "Un caballo en e5 ataca ocho casillas; el mismo caballo en a1 ataca dos. Es el mismo caballo y vale cuatro veces menos.",
+  "preguntas": [
+   {
+    "p": "¿Por qué el centro es más importante que las alas?",
+    "r": "Porque desde el centro cada pieza alcanza más casillas y llega antes a los dos lados. Un ataque de flanco se responde con un golpe en el centro."
+   },
+   {
+    "p": "¿Qué es un centro de peones móvil y por qué es peligroso?",
+    "r": "Dos peones centrales que pueden avanzar juntos. Al avanzar echan a las piezas rivales y abren líneas para las propias."
+   },
+   {
+    "p": "¿Qué son las aperturas hipermodernas?",
+    "r": "Las que dejan al rival ocupar el centro con peones para atacarlo después con piezas desde lejos: India de rey, Grünfeld, Alekhine, Pirc."
+   },
+   {
+    "p": "¿Cuándo conviene cerrar el centro?",
+    "r": "Cuando vas a atacar en un flanco. Con el centro cerrado, el rival no puede contragolpear por el medio y el ataque de ala llega."
+   }
+  ],
+  "ejercicios": [
+   "Pon un caballo en el centro y otro en la esquina y cuenta las casillas que ataca cada uno. Hazlo con alfil, torre y dama.",
+   "En tus tres últimas partidas, marca en qué jugada se resolvió el centro (se abrió, se cerró o se cambió) y qué hiciste después."
+  ]
+ },
+ {
+  "id": "desarrollo",
+  "nombre": "Desarrollo y tiempo",
+  "area": "estrategia",
+  "claves": [
+   "desarrollo",
+   "tiempo",
+   "apertura",
+   "principios"
+  ],
+  "definicion": "Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.",
+  "error": "Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.",
+  "ejemplo": "Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.",
+  "preguntas": [
+   {
+    "p": "¿Por qué los caballos antes que los alfiles?",
+    "r": "Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones."
+   },
+   {
+    "p": "¿Qué es una ventaja de desarrollo y cómo se aprovecha?",
+    "r": "Tener más piezas jugando. Se aprovecha abriendo líneas y atacando rápido: si la posición se cierra o se cambian piezas, la ventaja se evapora."
+   },
+   {
+    "p": "¿Cuántos tiempos vale un peón en la apertura?",
+    "r": "Como referencia, unos tres. Por eso un gambito que entrega un peón por tres jugadas de desarrollo está en equilibrio."
+   },
+   {
+    "p": "¿Es malo mover dos veces la misma pieza en la apertura?",
+    "r": "En general sí, pero no es una ley: si la segunda jugada gana algo o mejora mucho la pieza, vale la pena. Los principios ceden ante el cálculo concreto."
+   }
+  ],
+  "ejercicios": [
+   "Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.",
+   "Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees."
+  ]
+ },
+ {
+  "id": "estructura-peones",
+  "nombre": "La estructura de peones",
+  "area": "estrategia",
+  "claves": [
+   "estructura",
+   "peones",
+   "cadena de peones",
+   "peón retrasado"
+  ],
+  "definicion": "Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.",
+  "error": "Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.",
+  "ejemplo": "Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.",
+  "preguntas": [
+   {
+    "p": "¿Qué es un peón retrasado y por qué es débil?",
+    "r": "El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival."
+   },
+   {
+    "p": "¿Los peones doblados son siempre malos?",
+    "r": "No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena."
+   },
+   {
+    "p": "¿Qué es un peón aislado y qué da a cambio?",
+    "r": "El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas."
+   },
+   {
+    "p": "¿Qué son los peones colgantes?",
+    "r": "Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades."
+   }
+  ],
+  "ejercicios": [
+   "Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.",
+   "Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados."
+  ]
+ },
+ {
+  "id": "columnas-abiertas",
+  "nombre": "Columnas abiertas y torres",
+  "area": "estrategia",
+  "claves": [
+   "columna abierta",
+   "torres",
+   "séptima",
+   "columna semiabierta"
+  ],
+  "definicion": "Una columna sin peones es el camino de las torres. Una columna semiabierta —sin peones propios pero con uno rival— es por donde se ataca ese peón.",
+  "error": "Poner la torre en la columna abierta y no hacer nada más. La columna es un medio: sirve para entrar a la séptima fila, para cambiar las torres rivales o para presionar un peón concreto.",
+  "ejemplo": "Dos torres dobladas en la séptima fila se llaman 'los cerdos en la séptima' y suelen ganar solas: comen peones y el rey rival no puede salir.",
+  "preguntas": [
+   {
+    "p": "¿Por qué la séptima fila es tan fuerte?",
+    "r": "Porque ahí están los peones que no se movieron y el rey rival. Una torre en la séptima ataca material y encierra al rey a la vez."
+   },
+   {
+    "p": "¿Quién gana una columna abierta disputada?",
+    "r": "Quien pueda doblar torres primero, o quien tenga una casilla de entrada. Si nadie puede entrar, la columna no vale nada y se cambian todas las torres."
+   },
+   {
+    "p": "¿Qué hace la torre detrás de un peón pasado?",
+    "r": "Lo empuja. La regla de Tarrasch: las torres van detrás del peón pasado, el propio y el del rival."
+   },
+   {
+    "p": "¿Cuándo conviene una columna semiabierta?",
+    "r": "Cuando el peón rival que está en ella no puede avanzar y no lo defiende otro peón. Entonces es un blanco fijo, que es lo que las piezas saben atacar."
+   }
+  ],
+  "ejercicios": [
+   "Busca cinco partidas donde el ganador doblara torres en una columna y anota qué hizo después de doblarlas.",
+   "Arma un final de dos torres contra dos torres con una columna abierta y juégalo: verás por qué la casilla de entrada decide."
+  ]
+ },
+ {
+  "id": "casillas-debiles",
+  "nombre": "Casillas débiles y puestos avanzados",
+  "area": "estrategia",
+  "claves": [
+   "casilla débil",
+   "puesto avanzado",
+   "agujero",
+   "casilla fuerte"
+  ],
+  "definicion": "Una casilla es débil cuando ningún peón rival la puede volver a controlar. Si además está en campo rival y la puedes defender con un peón, es un puesto avanzado: el mejor lugar para un caballo.",
+  "error": "Mover peones sin preguntar qué casilla se abandona para siempre. Cada peón que avanza deja detrás casillas que no vuelven a estar cubiertas.",
+  "ejemplo": "Un caballo en d5 defendido por un peón en e4, con el rival sin peones en c ni e, es una pieza que no se puede echar. Suele valer más que una torre.",
+  "preguntas": [
+   {
+    "p": "¿Cómo se sabe si una casilla es débil?",
+    "r": "Se mira si algún peón rival puede llegar a controlarla alguna vez. Si ninguno puede, es débil de forma permanente."
+   },
+   {
+    "p": "¿Por qué el caballo es la mejor pieza para un puesto avanzado?",
+    "r": "Porque desde una casilla fija ataca ocho, no necesita líneas abiertas y no se le puede echar con piezas menores si está bien defendido."
+   },
+   {
+    "p": "¿Qué hacer si el rival tiene un puesto avanzado?",
+    "r": "Cambiar la pieza que lo ocupa, aunque cueste el par de alfiles, o tapar las líneas por donde ese puesto hace daño."
+   },
+   {
+    "p": "¿Qué es un agujero?",
+    "r": "La misma idea vista desde el otro lado: una casilla en el propio campo que los peones ya no pueden cubrir. Fianchettar y después cambiar el alfil suele dejar agujeros alrededor del rey."
+   }
+  ],
+  "ejercicios": [
+   "En tres partidas tuyas, marca en la jugada 15 todas las casillas débiles de los dos bandos.",
+   "Arma una posición con un caballo en un puesto avanzado y juégala desde el lado que lo sufre: busca cómo cambiarlo."
+  ]
+ },
+ {
+  "id": "par-de-alfiles",
+  "nombre": "El par de alfiles y el alfil malo",
+  "area": "estrategia",
+  "claves": [
+   "par de alfiles",
+   "alfil malo",
+   "alfil bueno",
+   "alfiles"
+  ],
+  "definicion": "Tener los dos alfiles contra alfil y caballo, o contra dos caballos, es una pequeña ventaja duradera: entre los dos cubren las casillas de los dos colores. Un alfil es malo cuando sus propios peones están en casillas de su color.",
+  "error": "Cambiar un alfil por un caballo sin motivo. El cambio es correcto muchas veces —contra un caballo en puesto avanzado, o en posiciones cerradas—, pero hay que poder decir por qué.",
+  "ejemplo": "En la Francesa, el alfil de c8 del negro queda detrás de la cadena e6-d5 y es el problema de toda la apertura: casi todos los planes del negro empiezan por sacarlo o cambiarlo.",
+  "preguntas": [
+   {
+    "p": "¿Cuándo vale más el caballo que el alfil?",
+    "r": "En posiciones cerradas, con peones trabados, y cuando tiene un puesto avanzado que no le pueden quitar. El caballo salta lo que el alfil no atraviesa."
+   },
+   {
+    "p": "¿Y cuándo vale más el alfil?",
+    "r": "En posiciones abiertas, con juego en los dos flancos, y sobre todo en finales: el alfil cruza el tablero en una jugada."
+   },
+   {
+    "p": "¿Cómo se arregla un alfil malo?",
+    "r": "Moviendo los peones a casillas del otro color, cambiándolo, o sacándolo fuera de la cadena antes de cerrarla."
+   },
+   {
+    "p": "¿Alfiles de distinto color son tablas?",
+    "r": "En finales puros con pocos peones, muy a menudo sí, porque cada alfil vigila un color y no se pueden echar. Con damas o torres en el tablero es lo contrario: favorecen al que ataca."
+   }
+  ],
+  "ejercicios": [
+   "Juega tres partidas propias hasta el final y anota en cada una si tu alfil era bueno o malo y por qué.",
+   "Arma un final de alfil bueno contra alfil malo con el mismo material y juégalo desde los dos lados."
+  ]
+ },
+ {
+  "id": "iniciativa",
+  "nombre": "La iniciativa",
+  "area": "estrategia",
+  "claves": [
+   "iniciativa",
+   "tempo",
+   "amenaza",
+   "ataque"
+  ],
+  "definicion": "Tenerla es obligar: el rival contesta a lo que tú haces en vez de hacer lo suyo. No es material y no dura para siempre: o se convierte en algo o se pierde.",
+  "error": "Soltarla por comer un peón. Perder dos tiempos por un peón devuelve el turno al rival justo cuando estaba obligado, y la ventaja se desarma.",
+  "ejemplo": "En un gambito aceptado, el que entregó el peón tiene iniciativa: cada jugada suya es una amenaza, y el rival no alcanza a desarrollar. Si la iniciativa se apaga, queda un peón menos y nada más.",
+  "preguntas": [
+   {
+    "p": "¿Cómo se sabe si tienes la iniciativa?",
+    "r": "Mira las últimas cinco jugadas del rival: si todas fueron respuestas a algo tuyo, la tienes."
+   },
+   {
+    "p": "¿Iniciativa es lo mismo que ataque?",
+    "r": "No. El ataque va contra el rey; la iniciativa es obligar al rival en cualquier parte del tablero. Un ataque casi siempre nace de una iniciativa que se mantuvo."
+   },
+   {
+    "p": "¿Cómo se defiende quien no la tiene?",
+    "r": "Cambiando piezas, devolviendo material para desactivar amenazas y buscando un golpe en el centro. Defender pasivo y esperar rara vez funciona."
+   },
+   {
+    "p": "¿Por qué se dice que la iniciativa es del que mueve?",
+    "r": "Porque mover primero es un derecho: las blancas empiezan con medio tiempo de ventaja y toda la teoría de aperturas es una discusión sobre si eso alcanza para algo."
+   }
+  ],
+  "ejercicios": [
+   "Revisa una partida tuya y marca en cada jugada quién estaba obligando. Vas a ver el momento exacto en que se te escapó.",
+   "Juega tres partidas con el compromiso de no comer ningún peón lateral mientras tengas amenazas que hacer."
+  ]
+ },
+ {
+  "id": "plan",
+  "nombre": "Cómo hacer un plan",
+  "area": "estrategia",
+  "claves": [
+   "plan",
+   "planes",
+   "evaluación",
+   "qué hacer"
+  ],
+  "definicion": "Un plan es una secuencia corta de jugadas con un objetivo concreto: 'llevar el caballo a d5', 'abrir la columna b', 'cambiar su alfil bueno'. Sale de la posición, no de las ganas.",
+  "error": "Jugar sin plan, mirando solo la jugada que sigue. El otro error es enamorarse del plan y no cambiarlo cuando la posición cambia.",
+  "ejemplo": "El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.",
+  "preguntas": [
+   {
+    "p": "¿Cuál es la pregunta que más rinde en una posición tranquila?",
+    "r": "'¿Cuál es mi peor pieza?' Mejorarla es un plan que casi nunca está mal."
+   },
+   {
+    "p": "¿De qué depende dónde atacar?",
+    "r": "De la estructura de peones: se ataca donde tus peones apuntan. Con la cadena e4-d5 el juego es en el flanco de rey; con d4-e3, en el de dama."
+   },
+   {
+    "p": "¿Cada cuánto se revisa un plan?",
+    "r": "Cada vez que el rival hace algo que no esperabas, y siempre después de un cambio de piezas o de un avance de peones."
+   },
+   {
+    "p": "¿Un plan puede ser esperar?",
+    "r": "Sí, en posiciones donde cualquier avance debilita. Se mejoran las piezas y se obliga al rival a definir. Se llama maniobrar, y es un plan legítimo."
+   }
+  ],
+  "ejercicios": [
+   "Para en la jugada 15 de tu próxima partida y escribe tu plan en una frase. Al final, mira si lo cumpliste.",
+   "Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó."
+  ]
+ },
+ {
+  "id": "oposicion",
+  "nombre": "La oposición",
+  "area": "finales",
+  "claves": [
+   "oposición",
+   "oposicion",
+   "casillas críticas",
+   "rey y peón",
+   "reyes"
+  ],
+  "definicion": "Dos reyes enfrentados con una casilla de por medio, en la misma columna, fila o diagonal. Tiene la oposición quien NO está obligado a mover: el otro tiene que ceder el paso.",
+  "error": "Correr con el peón antes que con el rey. En los finales de rey y peón manda el rey: el peón avanza cuando el rey ya conquistó las casillas de delante.",
+  "ejemplo": "Rey blanco en e5, rey negro en e7, peón blanco en e4 y le toca mover al negro: el blanco tiene la oposición, el rey negro cede y el peón corona. Con el turno cambiado, son tablas.",
+  "preguntas": [
+   {
+    "p": "¿Qué es la oposición lejana?",
+    "r": "La misma idea con tres o cinco casillas de por medio. Se cuenta: si entre los dos reyes hay un número impar de casillas, tiene la oposición quien no mueve."
+   },
+   {
+    "p": "¿Qué son las casillas críticas de un peón?",
+    "r": "Las tres casillas delante del peón, a dos filas de distancia. Si el rey propio llega a una de ellas, el peón corona pase lo que pase."
+   },
+   {
+    "p": "¿Qué es la triangulación?",
+    "r": "Maniobrar con el rey por tres casillas para perder un tiempo y devolverle el turno al rival, quedándose con la oposición."
+   },
+   {
+    "p": "¿Un peón de torre cambia algo?",
+    "r": "Todo. Con el peón en la columna a o h, el rey defensor que llega a la esquina hace tablas siempre, aunque esté en desventaja de oposición."
+   }
+  ],
+  "ejercicios": [
+   "Arma rey y peón contra rey en cinco posiciones distintas y decide, antes de jugar, quién gana. Después compruébalo.",
+   "Practica la triangulación hasta poder ganar una posición donde la oposición directa no alcanza."
+  ]
+ },
+ {
+  "id": "rey-activo",
+  "nombre": "El rey activo en el final",
+  "area": "finales",
+  "claves": [
+   "rey activo",
+   "centralizar el rey",
+   "final"
+  ],
+  "definicion": "Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.",
+  "error": "Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.",
+  "ejemplo": "En un final de torres con peones parejos, el bando cuyo rey llega antes al centro suele ganar un peón sin hacer nada más. No es táctica: es geografía.",
+  "preguntas": [
+   {
+    "p": "¿Cuándo empieza el final a efectos del rey?",
+    "r": "Cuando ya no hay damas ni suficiente material para un ataque de mate. A partir de ahí el rey camina."
+   },
+   {
+    "p": "¿Cuánto vale el rey como pieza de ataque?",
+    "r": "Como referencia, algo más que una pieza menor: unos cuatro puntos. No se cambia, pero come peones como cualquiera."
+   },
+   {
+    "p": "¿Qué es la 'zona de las tablas' en finales de torre?",
+    "r": "La idea de que muchos finales de torre con un peón menos se salvan si el rey defensor llega delante del peón. Llegar con el rey vale más que el peón."
+   },
+   {
+    "p": "¿Conviene cambiar piezas cuando tienes un peón de más?",
+    "r": "Sí, piezas; no peones. Con menos piezas la ventaja material pesa más, pero sin peones no hay con qué ganar."
+   }
+  ],
+  "ejercicios": [
+   "Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.",
+   "Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón."
+  ]
+ },
+ {
+  "id": "lucena",
+  "nombre": "La posición de Lucena",
+  "area": "finales",
+  "claves": [
+   "lucena",
+   "puente",
+   "torre y peón"
+  ],
+  "definicion": "Final de torre y peón contra torre donde el bando fuerte gana construyendo un puente: la torre se pone en la cuarta fila para taparle los jaques al rival mientras el rey sale de delante de su peón.",
+  "error": "Sacar el rey sin construir el puente. Sin la torre en la cuarta fila, los jaques por el costado no se acaban nunca y el final es tablas.",
+  "ejemplo": "Peón blanco en d7, rey blanco en d8, torre blanca en c1, rey negro lejos, torre negra dando jaques. Se juega Tc4: cuando el rey salga y llegue el jaque, la torre se interpone en d4 y el peón corona.",
+  "preguntas": [
+   {
+    "p": "¿Qué condiciones hace falta que se cumplan?",
+    "r": "Que el peón esté en séptima (o pueda llegar), que el rey propio esté delante de él y que el rey rival esté cortado a dos o más columnas de distancia."
+   },
+   {
+    "p": "¿Para qué sirve exactamente la torre en la cuarta fila?",
+    "r": "Para interponerse cuando llegue el jaque lateral, y de paso hacer de escudo al rey que camina. Eso es el puente."
+   },
+   {
+    "p": "¿Y si el rey rival está al lado del peón?",
+    "r": "Entonces no es Lucena: es Philidor u otra posición, y suele ser tablas. La distancia del rey defensor es lo que decide."
+   },
+   {
+    "p": "¿Sirve con peón de torre?",
+    "r": "No. Con el peón en a o h no hay espacio para el puente por un lado, y la técnica falla."
+   }
+  ],
+  "ejercicios": [
+   "Monta Lucena y gánala cinco veces seguidas sin mirar. Es la posición de final que más partidas decide en torneos de club.",
+   "Juégala desde el lado débil y busca dónde tiene que estar tu rey para que no sea Lucena."
+  ]
+ },
+ {
+  "id": "philidor",
+  "nombre": "La posición de Philidor",
+  "area": "finales",
+  "claves": [
+   "philidor",
+   "tercera fila",
+   "defensa de torre"
+  ],
+  "definicion": "La defensa básica de torre y peón contra torre: el defensor pone su torre en la tercera fila para impedir que el rey rival avance, y cuando el peón llega a esa fila, baja la torre a la octava a dar jaques por detrás.",
+  "error": "Dar jaques desde el principio. Mientras el peón no ha pasado de la quinta, los jaques por detrás no sirven: el rey rival se esconde delante de su peón. Primero la tercera fila.",
+  "ejemplo": "Rey negro en e8, torre negra en a6, peón blanco en e5 y rey blanco en e6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.",
+  "preguntas": [
+   {
+    "p": "¿Por qué la tercera fila?",
+    "r": "Porque le quita al rey atacante la fila que necesita para colocarse delante de su peón. Sin eso, el peón no puede avanzar con apoyo."
+   },
+   {
+    "p": "¿Cuándo se baja la torre a dar jaques?",
+    "r": "En cuanto el peón avanza a la tercera fila y le tapa la casilla a su propia torre. Ahí los jaques por detrás ya no tienen refugio."
+   },
+   {
+    "p": "¿Desde dónde hay que dar los jaques?",
+    "r": "Desde lo más lejos posible, para que el rey atacante no pueda acercarse a la torre y echarla. Tres columnas de distancia como mínimo."
+   },
+   {
+    "p": "¿Qué pasa si el rey defensor no está delante del peón?",
+    "r": "Que normalmente se pierde: la defensa de Philidor empieza por llevar el rey a la casilla de coronación."
+   }
+  ],
+  "ejercicios": [
+   "Monta Philidor y defiéndela cinco veces contra alguien que intente ganarla.",
+   "Practica la transición: parte de Philidor y deja que el peón avance, para ver el momento exacto de bajar la torre."
+  ]
+ },
+ {
+  "id": "torre-detras",
+  "nombre": "La torre detrás del peón pasado",
+  "area": "finales",
+  "claves": [
+   "torre detrás",
+   "tarrasch",
+   "peón pasado",
+   "final de torres"
+  ],
+  "definicion": "Regla de Tarrasch: las torres van detrás de los peones pasados, del propio y del rival. Detrás del propio lo empujan y su radio de acción crece al avanzar; detrás del rival lo frenan sin quedarse encerradas.",
+  "error": "Poner la torre delante del peón propio. Ahí lo tapa: el peón no puede avanzar sin que la torre se mueva, y la torre queda de portero en vez de jugar.",
+  "ejemplo": "Torre en a1 con peón propio en a4: a medida que el peón avanza, la torre sigue controlando toda la columna. Torre en a8 con el mismo peón: cada avance obliga a mover la torre.",
+  "preguntas": [
+   {
+    "p": "¿Por qué vale también contra el peón del rival?",
+    "r": "Porque desde atrás la torre lo frena sin bloquearse a sí misma, y si el peón avanza, la torre gana casillas en vez de perderlas."
+   },
+   {
+    "p": "¿Hay excepciones?",
+    "r": "Sí: cuando la torre delante del peón corta al rey rival, o cuando el peón está a un paso de coronar y bloquearlo es lo único que hay. Es una regla práctica, no una ley."
+   },
+   {
+    "p": "¿Qué es 'cortar al rey'?",
+    "r": "Poner la torre en una columna o fila que el rey rival no puede cruzar. Cortar al rey a tres columnas suele ganar; a una, casi nunca."
+   },
+   {
+    "p": "¿Por qué los finales de torre son tan tablíferos?",
+    "r": "Porque la torre defiende de lejos, da jaques sin acercarse y un peón de más muchas veces no alcanza. Se dice que todos los finales de torre son tablas, y es una broma con bastante verdad."
+   }
+  ],
+  "ejercicios": [
+   "Arma el mismo final con la torre delante y detrás del peón y juega los dos. La diferencia se ve en tres jugadas.",
+   "Practica cortar al rey a una, dos y tres columnas y anota desde cuál empieza a ganarse."
+  ]
+ },
+ {
+  "id": "zugzwang",
+  "nombre": "El zugzwang",
+  "area": "finales",
+  "claves": [
+   "zugzwang",
+   "obligado a mover",
+   "espera"
+  ],
+  "definicion": "Estar obligado a mover y que cualquier jugada empeore la posición. En ajedrez no se puede pasar: el turno es una obligación, y en los finales eso decide partidas.",
+  "error": "Buscar jugadas activas cuando lo que gana es esperar. En posiciones de zugzwang, la mejor jugada suele ser la que no cambia nada y devuelve el turno.",
+  "ejemplo": "Rey blanco en e6, rey negro en e8, peón blanco en e7: le toca al negro y tiene que soltar la casilla de coronación. La misma posición con el blanco a mover son tablas por ahogado.",
+  "preguntas": [
+   {
+    "p": "¿Qué es una jugada de espera?",
+    "r": "Una que no cambia nada importante y sirve solo para devolverle el turno al rival. Un peón de reserva en el flanco vale oro por eso."
+   },
+   {
+    "p": "¿Qué es el zugzwang recíproco?",
+    "r": "Cuando quien mueva pierde, sea quien sea. Esas son las posiciones clave de los finales de peones: todo el cálculo consiste en llegar a ellas con el rival a mover."
+   },
+   {
+    "p": "¿Por qué casi no existe en el medio juego?",
+    "r": "Porque con muchas piezas siempre hay alguna jugada inofensiva. Aparece cuando quedan pocas y cada movimiento cuesta algo."
+   },
+   {
+    "p": "¿Cómo se guarda un tiempo para más adelante?",
+    "r": "Dejando un peón sin avanzar del todo: un peón que puede mover una o dos casillas vale dos tiempos de espera."
+   }
+  ],
+  "ejercicios": [
+   "Arma tres posiciones de zugzwang recíproco de rey y peón y decide en cada una quién gana según a quién le toque.",
+   "En tus finales, antes de mover, pregúntate si te conviene que sea el rival quien mueva. Si es así, busca la jugada de espera."
+  ]
+ },
+ {
+  "id": "mayoria",
+  "nombre": "La mayoría de peones",
+  "area": "finales",
+  "claves": [
+   "mayoría",
+   "peón pasado lejano",
+   "flanco de dama",
+   "candidato"
+  ],
+  "definicion": "Tener más peones que el rival en un flanco. De una mayoría sana sale un peón pasado, y de un peón pasado sale una partida ganada.",
+  "error": "Avanzar primero el peón que no tiene rival enfrente. Se avanza primero el peón candidato —el que no tiene un peón rival directamente delante—, apoyado por los otros.",
+  "ejemplo": "Peones blancos en a2, b2 y c2 contra peones negros en a7 y b7: el candidato es el de c. Se juega c4-c5 y detrás vienen los otros dos.",
+  "preguntas": [
+   {
+    "p": "¿Qué es el peón candidato?",
+    "r": "El de la mayoría que no tiene un peón rival en su misma columna. Es el que va a llegar a ser pasado, y por eso avanza primero."
+   },
+   {
+    "p": "¿Por qué la mayoría en el flanco de dama suele ser mejor?",
+    "r": "Porque los reyes normalmente están en el flanco de rey, así que el peón pasado nace lejos del rey rival: es el peón pasado lejano."
+   },
+   {
+    "p": "¿Qué es una mayoría inválida?",
+    "r": "Una donde los peones están doblados o tan trabados que no puede salir un pasado. Tres peones contra dos con dos doblados no es mayoría de nada."
+   },
+   {
+    "p": "¿Cómo se frena una mayoría rival?",
+    "r": "Bloqueando el candidato con una pieza y, si se puede, cambiando peones para que la mayoría deje de serlo."
+   }
+  ],
+  "ejercicios": [
+   "Arma la mayoría del ejemplo y saca el peón pasado tres veces, contando las jugadas que te toma.",
+   "Revisa tus partidas y busca una donde tuvieras mayoría en un flanco y no la usaras."
+  ]
+ },
+ {
+  "id": "mates-basicos",
+  "nombre": "Los mates básicos",
+  "area": "finales",
+  "claves": [
+   "mate básico",
+   "dama y rey",
+   "torre y rey",
+   "dos alfiles",
+   "técnica"
+  ],
+  "definicion": "Dar mate con rey y dama, rey y torre, y dos alfiles contra rey solo. Son técnica pura: se aprenden una vez y se usan toda la vida.",
+  "error": "Perseguir al rey en vez de encerrarlo. El método siempre es el mismo: achicar la caja con la pieza y acercar el rey propio, sin dar jaques que no achiquen.",
+  "ejemplo": "Con torre y rey, se corta al rey rival con la torre y se avanza el rey propio hasta la oposición; entonces la torre da el jaque que empuja una fila. Se repite hasta el borde.",
+  "preguntas": [
+   {
+    "p": "¿Cuántas jugadas toma cada mate básico?",
+    "r": "Con dama, no más de diez desde cualquier posición; con torre, unas dieciséis; con dos alfiles, hasta unas veinte. La regla de las 50 jugadas alcanza de sobra."
+   },
+   {
+    "p": "¿Se puede dar mate con rey y dos caballos?",
+    "r": "No se puede forzar contra rey solo. Con un peón rival en el tablero a veces sí, y eso son las posiciones de Troitsky."
+   },
+   {
+    "p": "¿Y con alfil y caballo?",
+    "r": "Sí, pero es el mate largo y difícil: hay que llevar al rey a una esquina del color del alfil, con una maniobra que se estudia aparte."
+   },
+   {
+    "p": "¿Por qué hay que saberlos de memoria?",
+    "r": "Porque llegan con poco tiempo en el reloj y con la partida ganada. Fallar un mate básico por apuro es la derrota más cara que hay."
+   }
+  ],
+  "ejercicios": [
+   "Da los tres mates básicos cinco veces cada uno, cronometrándote. Con dama deberías bajar de un minuto.",
+   "Pídele a alguien que ponga el rey donde quiera y dale mate con torre sin pensar más de cinco segundos por jugada."
+  ]
+ },
+ {
+  "id": "principios-apertura",
+  "nombre": "Cómo elegir y estudiar una apertura",
+  "area": "aperturas",
+  "claves": [
+   "apertura",
+   "repertorio",
+   "teoría",
+   "celada",
+   "gambito"
+  ],
+  "definicion": "Un repertorio es el conjunto de aperturas que uno juega siempre. Se elige por el tipo de posición que a uno le gusta jugar, no por lo que está de moda.",
+  "error": "Memorizar líneas largas sin entender las ideas. Diez jugadas memorizadas se caen con la primera desviación; una idea entendida —dónde van las piezas, cuál es el plan— aguanta cualquier cosa.",
+  "ejemplo": "De cada línea conviene saber tres cosas: qué quiere hacer cada bando, cuál es la ruptura típica y qué final sale si se cambia todo. Con eso se juega mejor que con veinte jugadas de memoria.",
+  "preguntas": [
+   {
+    "p": "¿Cuántas aperturas hay que saber?",
+    "r": "Una con blancas y una respuesta a 1.e4 y a 1.d4 con negras. Eso ya es un repertorio, y alcanza para años."
+   },
+   {
+    "p": "¿Sirve estudiar celadas?",
+    "r": "Sí, en los dos sentidos: para ganar partidas rápidas y, sobre todo, para no caer. La celada que conoces es la que no te hacen."
+   },
+   {
+    "p": "¿Qué hacer si el rival se sale de la teoría en la jugada 4?",
+    "r": "Volver a los principios: centro, desarrollo, enroque, y castigar lo que su jugada debilitó. Salirse de la teoría temprano casi siempre es un error."
+   },
+   {
+    "p": "¿Conviene jugar gambitos siendo principiante?",
+    "r": "Sí, un tiempo: enseñan a valorar el desarrollo y la iniciativa por encima del material, que es justo lo que cuesta aprender."
+   }
+  ],
+  "ejercicios": [
+   "Escribe tu repertorio en una hoja: qué juegas con blancas y qué contestas a 1.e4 y a 1.d4. Si no te sale, ese es el trabajo.",
+   "Toma la línea principal de tu apertura y escribe, sin mirar, qué quiere hacer cada bando. Después compáralo con una fuente."
+  ]
+ },
+ {
+  "id": "reloj-torneo",
+  "nombre": "El reloj y la conducta en torneo",
+  "area": "competicion",
+  "claves": [
+   "reloj",
+   "torneo",
+   "tiempo",
+   "árbitro",
+   "reglamento",
+   "planilla"
+  ],
+  "definicion": "En torneo se juega con reloj y con planilla. El tiempo es parte de la partida: perderlo es perder, igual que un mate.",
+  "error": "Gastar media hora en la apertura. El reparto sano es poco tiempo en lo conocido, mucho en el momento crítico y una reserva para el final, que es donde se pierden más partidas por apuro.",
+  "ejemplo": "Con 90 minutos más 30 segundos por jugada, el incremento es una red: si se juega rápido cuando la posición es simple, el incremento va devolviendo tiempo para los momentos difíciles.",
+  "preguntas": [
+   {
+    "p": "¿Qué pasa si se cae la bandera?",
+    "r": "Pierde quien se quedó sin tiempo, salvo que el rival no tenga material suficiente para dar mate: entonces son tablas."
+   },
+   {
+    "p": "¿Con qué mano se aprieta el reloj?",
+    "r": "Con la misma con la que se movió la pieza. Mover con una y apretar con la otra está prohibido."
+   },
+   {
+    "p": "¿Cuándo se puede dejar de anotar?",
+    "r": "Cuando quedan menos de cinco minutos y no hay incremento de al menos 30 segundos. Después de la partida hay que completar la planilla."
+   },
+   {
+    "p": "¿Qué es 'pieza tocada, pieza movida'?",
+    "r": "Si tocas una pieza tuya con intención de jugar, debes moverla si tiene jugada legal; si tocas una del rival, debes capturarla si se puede. Para acomodar, se avisa antes diciendo 'compongo'."
+   }
+  ],
+  "ejercicios": [
+   "Juega tres partidas con reloj anotando cuánto tiempo gastaste en las primeras diez jugadas. El objetivo es bajar de diez minutos.",
+   "Lee el artículo de las Leyes del Ajedrez sobre el reloj (art. 6) completo. Son dos páginas y evitan discusiones."
+  ]
+ }
+]

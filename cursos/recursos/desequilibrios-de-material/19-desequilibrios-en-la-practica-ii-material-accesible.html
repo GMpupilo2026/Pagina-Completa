@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desequilibrios en la práctica II — Desequilibrios de material — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 19 del curso Desequilibrios de material.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Desequilibrios de material · Lección 19</p>
+  <h1>Desequilibrios en la práctica II</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Objetivo: Consolidar la evaluación rápida de los desequilibrios en posiciones de torneo de alto nivel.</p>
+<p>Idea guía: La práctica consiste en reconocer el patrón y elegir el desequilibrio favorable antes de calcular.</p>
+<p>6 partidas y ejemplos · 14 momentos clave · 10 preguntas</p>
+<p>Esta última lección consolida todo el curso con una nueva serie de posiciones breves tomadas de partidas de torneo de alto nivel, pensadas para entrenar la evaluación rápida más que el análisis profundo. La idea de fondo es que, a esta altura, el alumno ya conoce los principios fundamentales (valor relativo de las piezas, alfil contra caballo, pareja de alfiles, torre contra piezas menores, sacrificios de peón, calidad y pieza, y dama contra piezas) y lo que falta entrenar es la velocidad para reconocerlos en el tablero.</p>
+<p>El método de esta lección final es reconocer primero el patrón general (¿es esto un caso de pieza pesada sin objetivos? ¿de peones pasados conectados compensando material? ¿de una pieza menor dominante en posición cerrada?) y recién después profundizar en el cálculo concreto que la posición exige. En la práctica de torneo, sobre todo con reloj limitado, esta secuencia ahorra tiempo valioso y evita perderse en variantes que ni siquiera corresponden al tipo de posición correcto.</p>
+<p>Un punto que atraviesa todos los ejemplos de esta lección es que, en el ajedrez de elite, estos desequilibrios no son casualidades aisladas sino recursos que los mejores jugadores aplican de manera consciente y repetida, apoyándose exactamente en los mismos principios estudiados en las lecciones anteriores. Reconocer eso ayuda al alumno a confiar en su propio criterio a la hora de decidir un sacrificio o de aceptar una estructura de material inusual en sus propias partidas.</p>
+<p>El error más común, a esta altura del curso, ya no suele ser desconocer los principios sino dudar de ellos en el momento de aplicarlos bajo presión de reloj: la solución es practicar estos reconocimientos rápidos hasta que se vuelvan automáticos, en vez de tener que reconstruir el razonamiento completo cada vez.</p>
+<p>Las partidas de esta lección (entre ellas Sasikiran–Potkin, Karjakin–Mamedyarov, Carlsen–Keymer, Shimanov–Pridorozhni, Xiong–Flores Rios y Francisco–Mkrtchyan) recorren un amplio abanico de niveles y estilos, desde partidas de campeonato del mundo hasta encuentros de torneos abiertos, mostrando que los mismos principios de evaluación de desequilibrios de material se aplican por igual en cualquier categoría de juego, siempre que se sepa reconocer el patrón correcto a tiempo.</p>
+<p>Reglas para recordar</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>El valor de las piezas</dt>
+  <dd>Peón 1, caballo y alfil 3, torre 5, dama 9. El rey no tiene valor de cambio porque no se puede entregar. Son números de referencia, no una verdad: sirven para decidir cambios rápido, no para juzgar una posición.</dd>
+  <dd><strong>El error de siempre:</strong> Tratar los números como si fueran exactos. Un caballo clavado en el borde vale menos que un peón pasado a punto de coronar, y la calidad (torre por pieza menor) se entrega todos los días cuando la pieza menor domina una casilla fuerte.</dd>
+  <dd><strong>Para verlo:</strong> Dos piezas menores (6) contra una torre y un peón (6) están igualadas en el papel; en la práctica las dos piezas suelen ser mejores en el medio juego, porque hacen dos trabajos a la vez, y peores en el final, donde la torre corre.</dd>
+  <dt>El reloj y la conducta en torneo</dt>
+  <dd>En torneo se juega con reloj y con planilla. El tiempo es parte de la partida: perderlo es perder, igual que un mate.</dd>
+  <dd><strong>El error de siempre:</strong> Gastar media hora en la apertura. El reparto sano es poco tiempo en lo conocido, mucho en el momento crítico y una reserva para el final, que es donde se pierden más partidas por apuro.</dd>
+  <dd><strong>Para verlo:</strong> Con 90 minutos más 30 segundos por jugada, el incremento es una red: si se juega rápido cuando la posición es simple, el incremento va devolviendo tiempo para los momentos difíciles.</dd>
+  <dt>Desarrollo y tiempo</dt>
+  <dd>Sacar cada pieza a una casilla donde trabaje, y hacerlo rápido. Un tiempo es una jugada: moverse dos veces con la misma pieza en la apertura regala uno.</dd>
+  <dd><strong>El error de siempre:</strong> Sacar la dama temprano. La dama es la pieza más valiosa y por eso la más fácil de echar: cada jaque que le dan al rival lo desarrolla a él y a ti te cuesta una jugada.</dd>
+  <dd><strong>Para verlo:</strong> Tres principios que resuelven casi toda apertura: un peón al centro, las piezas menores antes que las mayores, y enrocar. Lo que sobre, para después.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Después de 31...Nxc4</h3>
+  
+  <p>Piezas blancas: rey en g2; torre en e4; caballo en f4; peónes en a2, e6, f3, g5, h4.</p>
+  <p>Piezas negras: rey en e7; torre en f5; caballo en c4; peónes en a7, b7, c5, d6, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  
+  
+  <p>La única respuesta buena a la amenaza Cd5+ y f4. Parece un sacrificio, pero es el inicio de una combinación corta: el caballo se recupera con dos horquillas de peón. La ganancia real no es material sino estructural.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/pp2k2p/3pP1p1/2p2rP1/2n1RN1P/5P2/P5K1/8 w - - 0 32</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: Después de 32...b5</h3>
+  
+  <p>Piezas blancas: rey en g2; torre en c4; caballo en f4; peónes en a2, e6, f3, g5, h4.</p>
+  <p>Piezas negras: rey en e7; torre en f5; peónes en a7, b5, c5, d6, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  
+  
+  <p>Primera horquilla: el peón ataca a la torre y la obliga a moverse por segunda vez. Las blancas no pueden evitar que llegue la segunda.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/p3k2p/3pP1p1/1pp2rP1/2R2N1P/5P2/P5K1/8 w - - 0 33</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: Después de 33...d5</h3>
+  
+  <p>Piezas blancas: rey en g2; torre en e4; caballo en f4; peónes en a2, e6, f3, g5, h4.</p>
+  <p>Piezas negras: rey en e7; torre en f5; peónes en a7, b5, c5, d5, g6, h7.</p>
+  <p>Juegan las blancas.</p>
+  
+  
+  
+  <p>Segunda horquilla: ...d5 ataca la torre otra vez, y a donde vaya, las negras recuperarán la pieza con ...dxe4 o con el ataque a f4. Las blancas prefieren devolver el caballo enseguida. Con 34.Cxg6+ hxg6 35.Te2 d4 se llegaba a algo parecido.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/p3k2p/4P1p1/1ppp1rP1/4RN1P/5P2/P5K1/8 w - - 0 34</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Anota diez cambios de tu última partida y di, en cada uno, si ganaste o perdiste material y si la posición mejoró o empeoró. Vas a encontrar cambios parejos que fueron buenos y cambios parejos que fueron malos.</li>
+  <li>Arma en el tablero torre y dos peones contra dos caballos y juégala contra alguien. Cuenta quién gana en cinco intentos.</li>
+  <li>Juega tres partidas con reloj anotando cuánto tiempo gastaste en las primeras diez jugadas. El objetivo es bajar de diez minutos.</li>
+  <li>Lee el artículo de las Leyes del Ajedrez sobre el reloj (art. 6) completo. Son dos páginas y evitan discusiones.</li>
+  <li>Juega tres partidas contándote los tiempos en voz alta: cada vez que muevas dos veces una pieza, anótalo.</li>
+  <li>Toma diez partidas de grandes maestros y cuenta en qué jugada terminaron de desarrollar. El número es más bajo de lo que crees.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuánto vale la calidad y qué significa 'ganar la calidad'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Unos dos puntos: cambiar una pieza menor (3) por una torre (5). Ganar la calidad es quedarse con la torre a cambio de un caballo o un alfil.</p>
+  </li>
+  <li>
+    <p>¿Por qué el rey no tiene valor en la tabla?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque no se puede cambiar ni perder: si cae, se acaba la partida. En el final sí se le calcula una fuerza de ataque parecida a la de una pieza menor, pero eso es otra cosa.</p>
+  </li>
+  <li>
+    <p>Tienes dama por torre y alfil. ¿Estás mejor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En el papel sí (9 contra 8), pero depende: con las dos piezas coordinadas y el rey rival abierto, la dama sola puede quedar peor. La tabla decide cambios, no partidas.</p>
+  </li>
+  <li>
+    <p>¿Cuándo tres peones compensan una pieza menor?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando están conectados, avanzados y el rival no tiene cómo frenarlos; sobre todo en finales. En el medio juego, con las piezas puestas, la pieza suele valer más.</p>
+  </li>
+  <li>
+    <p>¿Qué pasa si se cae la bandera?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Pierde quien se quedó sin tiempo, salvo que el rival no tenga material suficiente para dar mate: entonces son tablas.</p>
+  </li>
+  <li>
+    <p>¿Con qué mano se aprieta el reloj?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Con la misma con la que se movió la pieza. Mover con una y apretar con la otra está prohibido.</p>
+  </li>
+  <li>
+    <p>¿Cuándo se puede dejar de anotar?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando quedan menos de cinco minutos y no hay incremento de al menos 30 segundos. Después de la partida hay que completar la planilla.</p>
+  </li>
+  <li>
+    <p>¿Qué es 'pieza tocada, pieza movida'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Si tocas una pieza tuya con intención de jugar, debes moverla si tiene jugada legal; si tocas una del rival, debes capturarla si se puede. Para acomodar, se avisa antes diciendo 'compongo'.</p>
+  </li>
+  <li>
+    <p>¿Por qué los caballos antes que los alfiles?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque su mejor casilla casi siempre se sabe de entrada (f3 y c3, f6 y c6), mientras que la del alfil depende de cómo se acomoden los peones.</p>
+  </li>
+  <li>
+    <p>¿Qué es una ventaja de desarrollo y cómo se aprovecha?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Tener más piezas jugando. Se aprovecha abriendo líneas y atacando rápido: si la posición se cierra o se cambian piezas, la ventaja se evapora.</p>
+  </li>
+  <li>
+    <p>¿Cuántos tiempos vale un peón en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, unos tres. Por eso un gambito que entrega un peón por tres jugadas de desarrollo está en equilibrio.</p>
+  </li>
+  <li>
+    <p>¿Es malo mover dos veces la misma pieza en la apertura?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En general sí, pero no es una ley: si la segunda jugada gana algo o mejora mucho la pieza, vale la pena. Los principios ceden ante el cálculo concreto.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Desequilibrios de material» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+  <li>Reglas citadas: Leyes del Ajedrez de la FIDE (FIDE Handbook, capítulo E.I.01).</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Reglamento de competición y de desempates de la FIDE, FIDE Handbook, capítulos C.04 y C.07.</li>
+  <li>Jesús de la Villa, «100 finales que hay que saber» (Esfera, 2008).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

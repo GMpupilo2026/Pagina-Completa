@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El mate de alfil y caballo y torre y alfil contra torre — El mapa de los finales — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 23 del curso El mapa de los finales.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>El mapa de los finales · Lección 23</p>
+  <h1>El mate de alfil y caballo y torre y alfil contra torre</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Objetivo: Dar el mate de alfil y caballo con el método clásico y defender torre y alfil contra torre con Cochrane y la segunda fila, conociendo la maniobra de Philidor.</p>
+<p>Idea guía: En los dos finales manda el plan, no la memoria: el cajón y la W del caballo; la clavada de Cochrane y la torre en la segunda.</p>
+<p>Finales 93 a 96 · 16 posiciones</p>
+<p>El mate de alfil y caballo no es mecánico: exige entender el plan. Sólo puede darse en el rincón del color del alfil. Desde la peor posición se necesita algo más de 30 jugadas, pero con buena técnica sobra margen. El plan: centralizar rey y caballo, llevar al rey rival a la banda, ocupar la casilla pivote, desalojarlo del rincón seguro con caballo y alfil, conducirlo al rincón del mate con la ruta en W del caballo, construir el cajón y rematar con dos jaques seguidos.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>Jaque, mate y ahogado</dt>
+  <dd>Jaque es atacar al rey; mate es atacarlo sin que tenga salida; ahogado es que NO esté atacado y aun así no tenga ninguna jugada legal, y eso son tablas.</dd>
+  <dd><strong>El error de siempre:</strong> Buscar el jaque en vez del mate. Dar jaques sueltos deja al rey rival mejor colocado y gasta tiempo. Y en finales ganados, empujar sin mirar: entregar el ahogado es la forma más cara de no ganar.</dd>
+  <dd><strong>Para verlo:</strong> Rey y dama contra rey solo: si el rey negro está en a8 y pones la dama en b6, no hay jaque, pero tampoco hay jugada legal. Es ahogado y la partida queda en tablas con dama de más.</dd>
+  <dt>El rey activo en el final</dt>
+  <dd>Cuando se van las damas, el rey deja de ser un problema y se vuelve una pieza de ataque que vale más o menos como una pieza menor. En el final se lleva al centro.</dd>
+  <dd><strong>El error de siempre:</strong> Seguir escondiendo el rey por costumbre. La jugada más común que falta en los finales de club es simplemente acercar el rey.</dd>
+  <dd><strong>Para verlo:</strong> En un final de torres con peones parejos, el bando cuyo rey llega antes al centro suele ganar un peón sin hacer nada más. No es táctica: es geografía.</dd>
+  <dt>La posición de Philidor</dt>
+  <dd>La defensa básica de torre y peón contra torre: el defensor pone su torre en la tercera fila para impedir que el rey rival avance, y cuando el peón llega a esa fila, baja la torre a la octava a dar jaques por detrás.</dd>
+  <dd><strong>El error de siempre:</strong> Dar jaques desde el principio. Mientras el peón no ha pasado de la quinta, los jaques por detrás no sirven: el rey rival se esconde delante de su peón. Primero la tercera fila.</dd>
+  <dd><strong>Para verlo:</strong> Rey negro en e8, torre negra en a6, peón blanco en e5 y rey blanco en e6. Mientras la torre esté en la sexta fila —la tercera desde el lado blanco—, el rey blanco no puede avanzar.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: La peor posición de partida: el método clásico</h3>
+  
+  <p>Piezas blancas: rey en g2; alfil en g1; caballo en h1.</p>
+  <p>Piezas negras: rey en e4.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 1.Rg3 Re5 2.Rf3 Rd5 3.Rf4 Rd6 4.Re4 Rc6 5.Cg3 Rd6 6.Cf5+ Rc6 7.Re5 Rd7 8.Rd5 Rc7 9.Ac5 Rb7 10.Rd6 Rb8 11.Rc6 Ra8 12.Cd6 Rb8 13.Cb5 Ra8 14.Cc7+ Rb8 15.Ad4 Rc8 16.Aa7 Rd8 17.Cd5 Re8 18.Rd6 Rf7 19.Ce7 Rf6 20.Ae3 Rf7 21.Ag5 Re8 22.Cc6 Rf7 23.Ce5+ Re8 24.Re6 Rf8 25.Rd7 Rg8 26.Re8 Rg7 27.Re7 Rg8 28.Ah6 Rh7 29.Af8 Rg8 30.Re8 Rh8 31.Rf7 Rh7 32.Cg4 Rh8 33.Ag7+ Rh7 34.Cf6#</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>Todas las piezas blancas están lejos del centro. Se juega con lógica, no a la perfección: primero rey y caballo al centro, después se empuja al rey negro a la banda y al rincón seguro (a8), el rey blanco ocupa la casilla pivote c6, caballo y alfil lo desalojan, y comienza el traslado hacia h8, el rincón del mate. La jugada 20.Ae3 es la clave que impide la fuga.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/8/8/8/4k3/8/6K1/6BN w - - 0 1</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: La trayectoria del caballo (diagrama 13.5)</h3>
+  
+  <p>Piezas blancas: rey en c6; alfil en a7; caballo en c7.</p>
+  <p>Piezas negras: rey en c8.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 1...Rd8 2.Cd5 Re8 3.Rd6 Rd8 4.Ce7 Re8 5.Re6 Rd8 6.Ab6+ Re8 7.Ac7 Rf8 8.Cf5 Re8 9.Cg7+ Rf8 10.Rf6 Rg8 11.Rg6 Rf8 12.Ad6+ Rg8 13.Cf5 Rh8 14.Ac5 Rg8 15.Ch6+ Rh8 16.Ad4#</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>El rey ha sido desalojado del rincón seguro. Si se empeña en quedarse en la banda, el caballo repite su recorrido de 7 a 5 y de 5 a 7 (la W) y el alfil, con jaques en las casillas negras, lo va empujando hacia el rincón del mate. Al llegar a h8 se pierde un tiempo con el alfil y se dan los dos jaques finales.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2k5/B1N5/2K5/8/8/8/8/8 b - - 0 1</p>
+</div>
+<div class="posicion">
+  <h3>Posición 3: El intento de fuga y la barrera (diagrama 13.6)</h3>
+  
+  <p>Piezas blancas: rey en d6; alfil en a7; caballo en e7.</p>
+  <p>Piezas negras: rey en f6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 1.Ae3 Rf7 2.Ag5 Re8 3.Cc6 Rf7 4.Ce5+ Re8 5.Re6 Rf8 6.Rd7 Rg8 7.Re8 Rg7 8.Re7 Rg8 9.Ah6 Rh7 10.Af8 Rg8 11.Re8 Rh8 12.Rf7 Rh7 13.Cg4 Rh8 14.Ag7+ Rh7 15.Cf6#</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>Parece que el rey escapa por f6, pero el caballo de e7 controla f5 y g6: al alfil le basta con controlar g5. Tras 1.Ae3 el rey negro está encerrado entre la barrera de las piezas menores y el rey blanco. El alfil y el caballo construyen después el cajón (Ag5 y Ce5) y el rey blanco entra tranquilamente hasta la casilla del mate f7.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/B3N3/3K1k2/8/8/8/8/8 w - - 0 1</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>Da mate con rey y dama contra rey solo en menos de diez jugadas, empezando con el rey negro en el centro. Hazlo tres veces sin ahogarlo.</li>
+  <li>Arma tres posiciones de ahogado distintas y anótalas. Verlas te enseña a olerlas cuando vas ganando.</li>
+  <li>Toma tres finales tuyos y cuenta en qué jugada moviste el rey por primera vez. Compáralo con el rival.</li>
+  <li>Juega cinco finales de peones parejos poniéndote como única regla acercar el rey antes que tocar un peón.</li>
+  <li>Monta Philidor y defiéndela cinco veces contra alguien que intente ganarla.</li>
+  <li>Practica la transición: parte de Philidor y deja que el peón avance, para ver el momento exacto de bajar la torre.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Cuáles son las tres maneras de salir de un jaque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Mover el rey, capturar la pieza que da jaque o interponer una pieza en el camino. Contra un jaque de caballo la interposición no existe: solo mover o capturar.</p>
+  </li>
+  <li>
+    <p>¿Por qué el ahogado son tablas y no derrota?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque quien está ahogado no está en jaque: no se le puede dar mate. La regla premia al que se quedó sin jugadas, y por eso es un recurso defensivo real.</p>
+  </li>
+  <li>
+    <p>¿Cómo se evita el ahogado en un final de dama contra rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Acercando el rey propio antes de cerrar la jaula, y dejando siempre al rey rival una casilla mientras no sea mate. La regla práctica: si vas a encerrarlo, que sea con el rey cerca.</p>
+  </li>
+  <li>
+    <p>¿Un rey puede quedar al lado del otro?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Un rey no puede moverse a una casilla atacada, y el otro rey ataca las suyas. Por eso los reyes nunca se tocan.</p>
+  </li>
+  <li>
+    <p>¿Cuándo empieza el final a efectos del rey?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Cuando ya no hay damas ni suficiente material para un ataque de mate. A partir de ahí el rey camina.</p>
+  </li>
+  <li>
+    <p>¿Cuánto vale el rey como pieza de ataque?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Como referencia, algo más que una pieza menor: unos cuatro puntos. No se cambia, pero come peones como cualquiera.</p>
+  </li>
+  <li>
+    <p>¿Qué es la 'zona de las tablas' en finales de torre?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> La idea de que muchos finales de torre con un peón menos se salvan si el rey defensor llega delante del peón. Llegar con el rey vale más que el peón.</p>
+  </li>
+  <li>
+    <p>¿Conviene cambiar piezas cuando tienes un peón de más?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí, piezas; no peones. Con menos piezas la ventaja material pesa más, pero sin peones no hay con qué ganar.</p>
+  </li>
+  <li>
+    <p>¿Por qué la tercera fila?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque le quita al rey atacante la fila que necesita para colocarse delante de su peón. Sin eso, el peón no puede avanzar con apoyo.</p>
+  </li>
+  <li>
+    <p>¿Cuándo se baja la torre a dar jaques?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> En cuanto el peón avanza a la tercera fila y le tapa la casilla a su propia torre. Ahí los jaques por detrás ya no tienen refugio.</p>
+  </li>
+  <li>
+    <p>¿Desde dónde hay que dar los jaques?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Desde lo más lejos posible, para que el rey atacante no pueda acercarse a la torre y echarla. Tres columnas de distancia como mínimo.</p>
+  </li>
+  <li>
+    <p>¿Qué pasa si el rey defensor no está delante del peón?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que normalmente se pierde: la defensa de Philidor empieza por llevar el rey a la casilla de coronación.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «El mapa de los finales» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Mark Dvoretsky, «Dvoretsky's Endgame Manual» (Russell Enterprises, 2003).</li>
+  <li>Karsten Müller y Frank Lamprecht, «Fundamental Chess Endings» (Gambit, 2001).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>

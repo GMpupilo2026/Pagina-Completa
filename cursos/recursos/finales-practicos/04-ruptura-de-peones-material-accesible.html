@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruptura de peones — Finales Prácticos — material de estudio</title>
+<meta name="robots" content="noindex">
+<meta name="author" content="Oscar Angulo Cubero">
+<meta name="description" content="Material de estudio en formato accesible de la lección 4 del curso Finales Prácticos.">
+<style>
+  /* Sin imágenes y sin columnas a propósito: esta versión está hecha para
+     lectores de pantalla y para quien necesita agrandar mucho el texto. */
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         font-size: 1.15rem; line-height: 1.8; color: #102a43; background: #ffffff;
+         max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.7rem; line-height: 1.3; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #102a43; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.8rem; }
+  a { color: #8a4a00; }
+  dt { font-weight: 700; margin-top: 1rem; }
+  dd { margin: .3rem 0 0; }
+  .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
+  footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0a1f33; color: #f0f4f8; }
+    h2, footer { border-color: #f0b429; }
+    a { color: #f0b429; }
+    .posicion { border-color: #829ab1; }
+    .respuesta { background: #102a43; border-color: #f0b429; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <p>Finales Prácticos · Lección 4</p>
+  <h1>Ruptura de peones</h1>
+  <p>Material de estudio en formato accesible. Autor: Oscar Angulo Cubero, Ajedrez Integral.</p>
+  <p>Esta versión dice en palabras todo lo que en el cuadernillo en PDF está dibujado: cada
+     posición viene descrita pieza por pieza, así que no hace falta ver ninguna imagen.</p>
+</header>
+
+<h2>1. De qué trata esta lección</h2>
+
+<p>Una ruptura de peones sacrifica temporalmente la estructura para crear un peón pasado o abrir una vía de coronación. El momento correcto depende de contar peones: si tienes mayoría de peones de un lado, casi siempre existe una ruptura ganadora en algún momento del final.</p>
+
+
+<h2>2. Conceptos clave</h2>
+<dl>
+  <dt>La coronación y el peón pasado</dt>
+  <dd>Un peón que llega a la octava fila se cambia por dama, torre, alfil o caballo, a elección y sin importar las piezas que ya haya en el tablero. Un peón pasado es el que no tiene peones rivales delante ni en las columnas vecinas.</dd>
+  <dd><strong>El error de siempre:</strong> Coronar siempre dama. Hay posiciones en que la dama ahoga al rival y la torre gana, y otras en que el caballo da un jaque que la dama no da. Coronar en algo que no es dama tiene nombre —subpromoción— y decide partidas.</dd>
+  <dd><strong>Para verlo:</strong> Con peón en g7 y el rey negro encerrado, coronar dama puede ser ahogado; coronar torre da mate en dos. Vale la pena mirar antes de apretar.</dd>
+  <dt>La estructura de peones</dt>
+  <dd>Los peones son los únicos que no vuelven atrás, así que su forma decide el carácter de la partida: dónde están las casillas fuertes, por dónde se ataca y qué final conviene.</dd>
+  <dd><strong>El error de siempre:</strong> Cambiar piezas sin mirar qué estructura queda. Los cambios llevan al final, y el final lo gana quien tenga la mejor estructura, no quien tuviera mejores piezas hace diez jugadas.</dd>
+  <dd><strong>Para verlo:</strong> Una cadena de peones apunta en una dirección: e4-d5 apunta al flanco de rey. La regla es atacar la base de la cadena, no la punta, porque la base es la que sostiene todo.</dd>
+  <dt>La torre detrás del peón pasado</dt>
+  <dd>Regla de Tarrasch: las torres van detrás de los peones pasados, del propio y del rival. Detrás del propio lo empujan y su radio de acción crece al avanzar; detrás del rival lo frenan sin quedarse encerradas.</dd>
+  <dd><strong>El error de siempre:</strong> Poner la torre delante del peón propio. Ahí lo tapa: el peón no puede avanzar sin que la torre se mueva, y la torre queda de portero en vez de jugar.</dd>
+  <dd><strong>Para verlo:</strong> Torre en a1 con peón propio en a4: a medida que el peón avanza, la torre sigue controlando toda la columna. Torre en a8 con el mismo peón: cada avance obliga a mover la torre.</dd>
+</dl>
+
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: La ruptura clásica</h3>
+  <p>Esta posición viene del curso El mapa de los finales de la Academia.</p>
+  <p>Piezas blancas: rey en e1; peónes en a5, b5, c5.</p>
+  <p>Piezas negras: rey en e3; peónes en a7, b7, c7.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 1.b6 axb6 2.c6 bxc6 3.a6</p>
+  <p>Resultado: Ganan blancas</p>
+  <p>Capturen como capturen las negras, un peón blanco llega a octava. Con negras al mover, 1...b6! evita todas las rupturas.</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 8/ppp5/8/PPP5/8/4k3/8/4K3 w - - 0 1</p>
+</div>
+
+<h2>4. Ejercicios</h2>
+<ol>
+  <li>en un final de peones de tus partidas guardadas, busca si existía una ruptura que no jugaste.</li>
+  <li>Pon un peón blanco en cada columna, por turnos, con el rey negro a distintas distancias, y decide con la regla del cuadrado si corona. Después compruébalo jugando.</li>
+  <li>Busca en tus partidas una posición donde tuviste peón pasado y no lo usaste. Casi siempre hay una.</li>
+  <li>Dibuja la estructura de peones —solo los peones— de tus tres últimas partidas en la jugada 20 y di qué plan pedía cada una.</li>
+  <li>Arma en el tablero un peón aislado en d4 con las piezas de los dos bandos y juégalo desde los dos lados.</li>
+  <li>Arma el mismo final con la torre delante y detrás del peón y juega los dos. La diferencia se ve en tres jugadas.</li>
+  <li>Practica cortar al rey a una, dos y tres columnas y anota desde cuál empieza a ganarse.</li>
+</ol>
+
+<h2>5. Preguntas con su respuesta</h2>
+<p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
+<ol>
+  <li>
+    <p>¿Un peón puede coronar en una pieza que ya está en el tablero?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí. Se pueden tener dos, tres o nueve damas: la regla no limita cuántas piezas iguales hay.</p>
+  </li>
+  <li>
+    <p>¿Qué hace peligroso a un peón pasado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Que nadie lo puede frenar con peones: hay que gastarle una pieza. Una pieza atada a vigilar un peón vale la mitad, y por eso el peón pasado gana finales.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón pasado lejano y por qué gana?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que está en el ala contraria a donde están los reyes. Obliga al rey rival a correr a pararlo, y mientras tanto el propio rey se come los peones del otro lado.</p>
+  </li>
+  <li>
+    <p>¿Cuál es la regla del cuadrado?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Traza un cuadrado entre el peón y su casilla de coronación: si el rey defensor puede entrar en ese cuadrado en su jugada, atrapa al peón; si no, corona solo. Si el peón todavía no se movió, cuenta desde la tercera fila.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón retrasado y por qué es débil?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que quedó atrás de sus vecinos y no puede avanzar sin perderse. Es débil porque hay que defenderlo con piezas y la casilla de delante queda para el rival.</p>
+  </li>
+  <li>
+    <p>¿Los peones doblados son siempre malos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> No. Pierden movilidad y no se defienden entre ellos, pero abren una columna y controlan casillas nuevas. En posiciones de ataque suelen valer la pena.</p>
+  </li>
+  <li>
+    <p>¿Qué es un peón aislado y qué da a cambio?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> El que no tiene peones vecinos. Es débil en el final, pero en el medio juego da una columna abierta, espacio y dos buenas casillas para las piezas.</p>
+  </li>
+  <li>
+    <p>¿Qué son los peones colgantes?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Dos peones juntos sin vecinos, normalmente c y d. Mientras avanzan juntos son fuerza; si se les obliga a avanzar uno solo, se vuelven dos debilidades.</p>
+  </li>
+  <li>
+    <p>¿Por qué vale también contra el peón del rival?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque desde atrás la torre lo frena sin bloquearse a sí misma, y si el peón avanza, la torre gana casillas en vez de perderlas.</p>
+  </li>
+  <li>
+    <p>¿Hay excepciones?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Sí: cuando la torre delante del peón corta al rey rival, o cuando el peón está a un paso de coronar y bloquearlo es lo único que hay. Es una regla práctica, no una ley.</p>
+  </li>
+  <li>
+    <p>¿Qué es 'cortar al rey'?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Poner la torre en una columna o fila que el rey rival no puede cruzar. Cortar al rey a tres columnas suele ganar; a una, casi nunca.</p>
+  </li>
+  <li>
+    <p>¿Por qué los finales de torre son tan tablíferos?</p>
+    <p class="respuesta"><strong>Respuesta.</strong> Porque la torre defiende de lejos, da jaques sin acercarse y un peón de más muchas veces no alcanza. Se dice que todos los finales de torre son tablas, y es una broma con bastante verdad.</p>
+  </li>
+</ol>
+
+<h2>6. Fuentes</h2>
+<ul>
+  <li>Texto de la lección: curso «Finales Prácticos» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
+</ul>
+<h3>Para seguir leyendo</h3>
+<p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
+<ul>
+  <li>Irving Chernev, «Logical Chess: Move by Move» (Batsford, 1957).</li>
+  <li>José Raúl Capablanca, «Fundamentos del ajedrez» (1921).</li>
+  <li>Leyes del Ajedrez de la FIDE, FIDE Handbook, capítulo E.I.01.</li>
+  <li>Aron Nimzowitsch, «Mi sistema» (1925).</li>
+  <li>Andrew Soltis, «Pawn Structure Chess» (1976).</li>
+</ul>
+
+<footer>
+  <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
+  <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+</footer>
+</body>
+</html>
