@@ -137,6 +137,14 @@
   // ---------- visor ----------
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
+  // Igual que en Modo Adaptado (js/blind-notation.js): "a1" se dice "anna 1", no letra por
+  // letra, para que un lector de pantalla no confunda "b"/"v" ni "c"/"s" al oído. describe()
+  // solo alimenta contenido sr-only (.f100-desc) y el aria-label del SVG, nunca texto visible,
+  // así que la notación hablada no cambia nada para quien ve el tablero.
+  function spokenSquares(sqs) {
+    return window.BlindNotation ? sqs.map((sq) => BlindNotation.squareSpoken(sq)).join(", ") : sqs.join(", ");
+  }
+
   function describe(fen) {
     const { board, turn } = parseFen(fen);
     const names = { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" };
@@ -145,7 +153,7 @@
       const parts = [];
       "KQRBNP".split("").forEach((t) => {
         const sqs = Object.keys(board).filter((sq) => board[sq] === (col === "w" ? t : t.toLowerCase())).sort();
-        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + sqs.join(", "));
+        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + spokenSquares(sqs));
       });
       out.push(nom + ": " + (parts.join("; ") || "sin piezas") + ".");
     });
