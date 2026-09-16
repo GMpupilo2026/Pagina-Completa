@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Formularios de inscripción — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: armar formularios de inscripción a torneos para un equipo y bajar las respuestas.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Solo para quien coordina</h1>
+            <p class="text-brand-500 dark:text-brand-300">Los formularios de inscripción los arma el equipo de coordinación. Si crees que deberías tener acceso, pídeselo a la persona administradora.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">← Volver a la Academia</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+                <div>
+                    <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">📋 Formularios de inscripción</h1>
+                    <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mt-1">Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas en Excel.</p>
+                </div>
+                <button type="button" id="nuevo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Formulario nuevo</button>
+            </div>
+
+            <!-- ============ Lista ============ -->
+            <section id="vista-lista">
+                <div id="lista" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+                <p id="lista-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                    Todavía no has armado ningún formulario. El botón de arriba crea el primero.
+                </p>
+            </section>
+
+            <!-- ============ Editor ============ -->
+            <section id="vista-editor" class="hidden">
+                <button type="button" id="volver-btn" class="text-sm text-brand-600 dark:text-brand-300 underline mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">← Volver a la lista</button>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Lo básico</h2>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="f-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
+                            <input id="f-titulo" type="text" maxlength="200" placeholder="Ej. Inscripción al Torneo Nacional Sub-14" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="f-descripcion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Descripción <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <textarea id="f-descripcion" rows="3" maxlength="2000" placeholder="Fechas, sede, qué hay que llevar…" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+                        <div>
+                            <label for="f-grupo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Equipo</label>
+                            <select id="f-grupo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Para quién es. Sale en el formulario; no restringe quién puede contestarlo.</p>
+                        </div>
+                        <div>
+                            <label for="f-cierra" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cierra el <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <input id="f-cierra" type="date" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-2">
+                            <input id="f-abierto" type="checkbox" checked class="rounded border-brand-300 text-accent-500 focus:ring-accent-400">
+                            <label for="f-abierto" class="text-sm text-brand-700 dark:text-brand-200">Recibiendo respuestas</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Qué se le pregunta</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="plantilla-btn" class="text-xs bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 px-3 py-1.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar las preguntas de siempre</button>
+                            <button type="button" id="campo-btn" class="text-xs bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Pregunta</button>
+                        </div>
+                    </div>
+                    <div id="campos" class="space-y-3"></div>
+                    <p id="campos-vacio" class="text-sm text-brand-450 dark:text-brand-350">Todavía no hay preguntas. "Usar las preguntas de siempre" pone las de una inscripción a torneo y después las puedes cambiar.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="button" id="guardar-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar</button>
+                    <span id="guardar-msg" class="text-sm" aria-live="polite"></span>
+                </div>
+            </section>
+
+            <!-- ============ Respuestas ============ -->
+            <section id="vista-respuestas" class="hidden">
+                <button type="button" id="volver-btn-2" class="text-sm text-brand-600 dark:text-brand-300 underline mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">← Volver a la lista</button>
+                <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <h2 id="respuestas-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
+                    <button type="button" id="csv-btn" class="bg-brand-700 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead><tr id="respuestas-cabecera" class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800"></tr></thead>
+                        <tbody id="respuestas-cuerpo"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* Formularios de inscripción a torneos.
+ *
+ * Los arma quien coordina (profiles.es_coordinador, o quien administra) y se
+ * comparten por enlace: quien contesta no necesita cuenta. El enlace da acceso
+ * al formulario, NUNCA a las respuestas — esas las lee solo quien lo creó, y
+ * eso lo hace cumplir la RLS de formulario_respuestas, no esta página.
+ *
+ * Esto es lo que inscripcion.html hace hoy escrito a mano para un solo torneo.
+ * La diferencia es que acá el formulario es datos (el campo `campos` de la
+ * tabla), así que armar el siguiente no es copiar 400 líneas de HTML.
+ */
+let session = null, perfil = null;
+let misFormularios = [];
+let campos = [];          // lo que se está editando
+let editando = null;      // el formulario abierto en el editor, o null si es nuevo
+let respuestasActuales = { formulario: null, filas: [] };
+
+const TIPOS = [
+    { id: "texto",    etiqueta: "Texto corto" },
+    { id: "parrafo",  etiqueta: "Texto largo" },
+    { id: "numero",   etiqueta: "Número" },
+    { id: "fecha",    etiqueta: "Fecha" },
+    { id: "correo",   etiqueta: "Correo" },
+    { id: "telefono", etiqueta: "Teléfono" },
+    { id: "opcion",   etiqueta: "Una opción" },
+    { id: "varias",   etiqueta: "Varias opciones" },
+    { id: "si_no",    etiqueta: "Sí o no" },
+];
+const TIPO_VALIDO = new Set(TIPOS.map((t) => t.id));
+
+/* Las preguntas de una inscripción a torneo de verdad, sacadas de las que ya
+   pide inscripcion.html. Es un punto de partida: se borran y se cambian. */
+const PLANTILLA = [
+    { etiqueta: "Nombre completo", tipo: "texto", requerido: true },
+    { etiqueta: "Fecha de nacimiento", tipo: "fecha", requerido: true },
+    { etiqueta: "Género", tipo: "opcion", requerido: true, opciones: ["Femenino", "Masculino", "Prefiero no decirlo"] },
+    { etiqueta: "Centro educativo", tipo: "texto", requerido: true },
+    { etiqueta: "Grado o nivel", tipo: "texto", requerido: true },
+    { etiqueta: "Provincia", tipo: "texto", requerido: true },
+    { etiqueta: "Cantón", tipo: "texto", requerido: false },
+    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: true, ayuda: "Ahí se manda la confirmación." },
+    { etiqueta: "Teléfono de contacto", tipo: "telefono", requerido: true },
+    { etiqueta: "Modalidad", tipo: "opcion", requerido: true, opciones: ["Presencial", "En línea"] },
+    { etiqueta: "Autorizo el uso de estos datos para organizar el torneo", tipo: "si_no", requerido: true },
+];
+
+const escapar = (t) => String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/* El id de cada campo es lo que queda guardado en cada respuesta, así que NO
+   puede cambiar cuando se le corrige una tilde a la etiqueta: se calcula una
+   sola vez, al crear la pregunta, y después se queda quieto. */
+function idDesde(texto, usados) {
+    let base = String(texto || "campo").toLowerCase()
+        .normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "campo";
+    let id = base, n = 2;
+    while (usados.has(id)) { id = base + "_" + n; n += 1; }
+    usados.add(id);
+    return id;
+}
+
+function slugDesde(titulo) {
+    const base = String(titulo || "").toLowerCase()
+        .normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 44) || "formulario";
+    // Cuatro caracteres al azar: dos formularios con el mismo título no chocan,
+    // y de paso la dirección no se adivina escribiendo el nombre del torneo.
+    return base + "-" + Math.random().toString(36).slice(2, 6);
+}
+
+// ------------------------------------------------------------------ editor
+function pintarCampos() {
+    const caja = document.getElementById("campos");
+    caja.innerHTML = "";
+    document.getElementById("campos-vacio").classList.toggle("hidden", campos.length > 0);
+
+    campos.forEach((c, i) => {
+        const fila = document.createElement("div");
+        fila.className = "border border-brand-100 dark:border-brand-800 rounded-xl p-4 bg-brand-50 dark:bg-brand-950";
+
+        const arriba = document.createElement("div");
+        arriba.className = "flex flex-wrap items-center gap-2 mb-2";
+
+        const etiqueta = document.createElement("input");
+        etiqueta.type = "text";
+        etiqueta.value = c.etiqueta || "";
+        etiqueta.maxLength = 200;
+        etiqueta.placeholder = "La pregunta";
+        etiqueta.setAttribute("aria-label", "Pregunta " + (i + 1));
+        etiqueta.className = "flex-1 min-w-[12rem] bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        etiqueta.addEventListener("input", () => { c.etiqueta = etiqueta.value; });
+
+        const tipo = document.createElement("select");
+        tipo.setAttribute("aria-label", "Tipo de la pregunta " + (i + 1));
+        tipo.className = "bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        tipo.innerHTML = TIPOS.map((t) => `<option value="${t.id}"${c.tipo === t.id ? " selected" : ""}>${t.etiqueta}</option>`).join("");
+        tipo.addEventListener("change", () => { c.tipo = tipo.value; pintarCampos(); });
+
+        const req = document.createElement("label");
+        req.className = "flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-300";
+        const reqInput = document.createElement("input");
+        reqInput.type = "checkbox"; reqInput.checked = !!c.requerido;
+        reqInput.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+        reqInput.addEventListener("change", () => { c.requerido = reqInput.checked; });
+        req.append(reqInput, document.createTextNode("Obligatoria"));
+
+        const subir = document.createElement("button");
+        subir.type = "button"; subir.textContent = "↑"; subir.title = "Subir";
+        subir.setAttribute("aria-label", "Subir la pregunta " + (i + 1));
+        subir.className = "px-2 py-1 text-brand-600 dark:text-brand-300 hover:text-accent-600 disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        subir.disabled = i === 0;
+        subir.addEventListener("click", () => { campos.splice(i - 1, 0, campos.splice(i, 1)[0]); pintarCampos(); });
+
+        const bajar = document.createElement("button");
+        bajar.type = "button"; bajar.textContent = "↓"; bajar.title = "Bajar";
+        bajar.setAttribute("aria-label", "Bajar la pregunta " + (i + 1));
+        bajar.className = subir.className;
+        bajar.disabled = i === campos.length - 1;
+        bajar.addEventListener("click", () => { campos.splice(i + 1, 0, campos.splice(i, 1)[0]); pintarCampos(); });
+
+        const quitar = document.createElement("button");
+        quitar.type = "button"; quitar.textContent = "✕";
+        quitar.setAttribute("aria-label", "Quitar la pregunta " + (i + 1));
+        quitar.className = "px-2 py-1 text-brand-500 dark:text-brand-300 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        quitar.addEventListener("click", () => { campos.splice(i, 1); pintarCampos(); });
+
+        arriba.append(etiqueta, tipo, req, subir, bajar, quitar);
+        fila.appendChild(arriba);
+
+        const ayuda = document.createElement("input");
+        ayuda.type = "text"; ayuda.value = c.ayuda || ""; ayuda.maxLength = 300;
+        ayuda.placeholder = "Aclaración debajo de la pregunta (opcional)";
+        ayuda.setAttribute("aria-label", "Aclaración de la pregunta " + (i + 1));
+        ayuda.className = "w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        ayuda.addEventListener("input", () => { c.ayuda = ayuda.value; });
+        fila.appendChild(ayuda);
+
+        if (c.tipo === "opcion" || c.tipo === "varias") {
+            const ops = document.createElement("input");
+            ops.type = "text";
+            ops.value = (c.opciones || []).join(", ");
+            ops.placeholder = "Las opciones, separadas por coma";
+            ops.setAttribute("aria-label", "Opciones de la pregunta " + (i + 1));
+            ops.className = "w-full mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            ops.addEventListener("input", () => {
+                c.opciones = ops.value.split(",").map((x) => x.trim()).filter(Boolean);
+            });
+            fila.appendChild(ops);
+        }
+
+        caja.appendChild(fila);
+    });
+}
+
+function agregarCampo(base) {
+    const usados = new Set(campos.map((c) => c.id));
+    const c = Object.assign({ etiqueta: "", tipo: "texto", requerido: false, ayuda: "", opciones: [] }, base || {});
+    c.id = idDesde(c.etiqueta || "pregunta", usados);
+    campos.push(c);
+}
+
+function abrirEditor(form) {
+    editando = form || null;
+    campos = form ? JSON.parse(JSON.stringify(form.campos || [])) : [];
+    document.getElementById("f-titulo").value = form ? form.titulo : "";
+    document.getElementById("f-descripcion").value = form ? (form.descripcion || "") : "";
+    document.getElementById("f-abierto").checked = form ? !!form.abierto : true;
+    document.getElementById("f-cierra").value = form && form.cierra_el ? form.cierra_el.slice(0, 10) : "";
+    document.getElementById("f-grupo").value = form ? (form.grupo || "") : "";
+    document.getElementById("guardar-msg").textContent = "";
+    pintarCampos();
+    mostrar("vista-editor");
+}
+
+function mostrar(cual) {
+    ["vista-lista", "vista-editor", "vista-respuestas"].forEach((v) => {
+        document.getElementById(v).classList.toggle("hidden", v !== cual);
+    });
+    document.getElementById("nuevo-btn").classList.toggle("hidden", cual !== "vista-lista");
+}
+
+async function guardar() {
+    const btn = document.getElementById("guardar-btn");
+    const msg = document.getElementById("guardar-msg");
+    const titulo = document.getElementById("f-titulo").value.trim();
+    if (!titulo) { msg.textContent = "Ponle un título."; msg.className = "text-sm text-red-600 dark:text-red-400"; return; }
+
+    const limpios = campos
+        .filter((c) => (c.etiqueta || "").trim())
+        .map((c) => ({
+            id: c.id, etiqueta: c.etiqueta.trim(), tipo: TIPO_VALIDO.has(c.tipo) ? c.tipo : "texto",
+            requerido: !!c.requerido, ayuda: (c.ayuda || "").trim(),
+            opciones: (c.tipo === "opcion" || c.tipo === "varias") ? (c.opciones || []) : [],
+        }));
+    if (!limpios.length) { msg.textContent = "Agrégale al menos una pregunta."; msg.className = "text-sm text-red-600 dark:text-red-400"; return; }
+    const sinOpciones = limpios.find((c) => (c.tipo === "opcion" || c.tipo === "varias") && !c.opciones.length);
+    if (sinOpciones) {
+        msg.textContent = `"${sinOpciones.etiqueta}" es de opciones pero no tiene ninguna.`;
+        msg.className = "text-sm text-red-600 dark:text-red-400";
+        return;
+    }
+
+    const cierra = document.getElementById("f-cierra").value;
+    const fila = {
+        titulo,
+        descripcion: document.getElementById("f-descripcion").value.trim() || null,
+        grupo: document.getElementById("f-grupo").value || null,
+        campos: limpios,
+        abierto: document.getElementById("f-abierto").checked,
+        // La fecha se guarda como el final de ese día: "cierra el 20" es que el
+        // 20 todavía se puede contestar.
+        cierra_el: cierra ? new Date(cierra + "T23:59:59").toISOString() : null,
+        updated_at: new Date().toISOString(),
+    };
+
+    btn.disabled = true;
+    msg.textContent = "Guardando…";
+    msg.className = "text-sm text-brand-500 dark:text-brand-300";
+    try {
+        if (editando) {
+            const { error } = await sb.from("formularios").update(fila).eq("id", editando.id);
+            if (error) throw error;
+        } else {
+            fila.slug = slugDesde(titulo);
+            fila.creado_por = perfil.id;
+            const { error } = await sb.from("formularios").insert(fila);
+            if (error) throw error;
+        }
+        await cargarFormularios();
+        mostrar("vista-lista");
+    } catch (err) {
+        msg.textContent = "No se pudo guardar: " + (err.message || err);
+        msg.className = "text-sm text-red-600 dark:text-red-400";
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ------------------------------------------------------------------ lista
+function enlacePublico(slug) {
+    return location.origin + location.pathname.replace(/formularios\.html$/, "") + "formulario.html?f=" + encodeURIComponent(slug);
+}
+
+function pintarLista() {
+    const caja = document.getElementById("lista");
+    caja.innerHTML = "";
+    document.getElementById("lista-vacia").classList.toggle("hidden", misFormularios.length > 0);
+
+    misFormularios.forEach((f) => {
+        const card = document.createElement("div");
+        card.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 flex flex-col gap-3";
+
+        const cerrado = !f.abierto || (f.cierra_el && new Date(f.cierra_el) < new Date());
+        card.innerHTML = `
+            <div>
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white">${escapar(f.titulo)}</h3>
+                    <span class="shrink-0 text-xs px-2 py-0.5 rounded-full ${cerrado ? "bg-brand-100 dark:bg-brand-800 text-brand-600 dark:text-brand-300" : "bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400"}">${cerrado ? "cerrado" : "abierto"}</span>
+                </div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">
+                    ${f.grupo ? escapar(f.grupo) + " · " : ""}${(f.campos || []).length} pregunta${(f.campos || []).length === 1 ? "" : "s"} ·
+                    <strong class="text-brand-600 dark:text-brand-300">${f.n_respuestas} respuesta${f.n_respuestas === 1 ? "" : "s"}</strong>
+                </p>
+            </div>`;
+
+        const acciones = document.createElement("div");
+        acciones.className = "flex flex-wrap gap-2 mt-auto";
+        const boton = (texto, clases, alPulsar) => {
+            const b = document.createElement("button");
+            b.type = "button"; b.textContent = texto;
+            b.className = clases + " text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.addEventListener("click", alPulsar);
+            return b;
+        };
+        acciones.append(
+            boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)),
+            boton("Respuestas", "bg-accent-500 hover:bg-accent-600 text-brand-900", () => verRespuestas(f)),
+            boton("Copiar enlace", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", async (e) => {
+                const b = e.currentTarget;
+                try { await navigator.clipboard.writeText(enlacePublico(f.slug)); b.textContent = "¡Copiado!"; }
+                catch (err) { window.prompt("Copia el enlace:", enlacePublico(f.slug)); }
+                setTimeout(() => { b.textContent = "Copiar enlace"; }, 1500);
+            }),
+            boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
+                if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
+                const { error } = await sb.from("formularios").delete().eq("id", f.id);
+                if (error) { alert("No se pudo borrar: " + error.message); return; }
+                await cargarFormularios();
+            })
+        );
+        card.appendChild(acciones);
+        caja.appendChild(card);
+    });
+}
+
+async function cargarFormularios() {
+    const { data, error } = await sb.from("formularios")
+        .select("*, formulario_respuestas(count)")
+        .order("created_at", { ascending: false });
+    if (error) throw error;
+    misFormularios = (data || []).map((f) => Object.assign({}, f, {
+        n_respuestas: (f.formulario_respuestas && f.formulario_respuestas[0] && f.formulario_respuestas[0].count) || 0,
+    }));
+    pintarLista();
+}
+
+// ------------------------------------------------------------------ respuestas
+async function verRespuestas(f) {
+    document.getElementById("respuestas-titulo").textContent = "Respuestas · " + f.titulo;
+    const { data, error } = await sb.from("formulario_respuestas")
+        .select("respuestas, created_at").eq("formulario_id", f.id)
+        .order("created_at", { ascending: false });
+    if (error) { alert("No se pudieron cargar: " + error.message); return; }
+    respuestasActuales = { formulario: f, filas: data || [] };
+
+    const cabecera = document.getElementById("respuestas-cabecera");
+    const cuerpo = document.getElementById("respuestas-cuerpo");
+    cabecera.innerHTML = "";
+    cuerpo.innerHTML = "";
+
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(f.campos || []);
+    columnas.forEach((c) => {
+        const th = document.createElement("th");
+        th.className = "py-2 pr-4 font-semibold whitespace-nowrap";
+        th.textContent = c.etiqueta;
+        cabecera.appendChild(th);
+    });
+
+    if (!respuestasActuales.filas.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = columnas.length;
+        td.className = "py-4 text-brand-450 dark:text-brand-350";
+        td.textContent = "Todavía no ha contestado nadie.";
+        tr.appendChild(td); cuerpo.appendChild(tr);
+    } else {
+        respuestasActuales.filas.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+            columnas.forEach((c) => {
+                const td = document.createElement("td");
+                td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
+                td.textContent = c.id === "__fecha"
+                    ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
+                    : valorLegible(r.respuestas[c.id]);
+                tr.appendChild(td);
+            });
+            cuerpo.appendChild(tr);
+        });
+    }
+    mostrar("vista-respuestas");
+}
+
+function valorLegible(v) {
+    if (v === null || v === undefined) return "";
+    if (Array.isArray(v)) return v.join(", ");
+    if (v === true) return "Sí";
+    if (v === false) return "No";
+    return String(v);
+}
+
+/* CSV con punto y coma y BOM: es lo que Excel en español abre de un doble clic
+   sin preguntar nada. Con coma, Excel mete la fila entera en la columna A. */
+function bajarCsv() {
+    const { formulario, filas } = respuestasActuales;
+    if (!formulario) return;
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(formulario.campos || []);
+    const celda = (t) => '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"';
+    const lineas = [columnas.map((c) => celda(c.etiqueta)).join(";")];
+    filas.forEach((r) => {
+        lineas.push(columnas.map((c) => celda(
+            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR") : valorLegible(r.respuestas[c.id])
+        )).join(";"));
+    });
+    const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (formulario.slug || "respuestas") + ".csv";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ------------------------------------------------------------------ arranque
+document.getElementById("nuevo-btn").addEventListener("click", () => abrirEditor(null));
+document.getElementById("volver-btn").addEventListener("click", () => mostrar("vista-lista"));
+document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
+document.getElementById("guardar-btn").addEventListener("click", guardar);
+document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
+document.getElementById("plantilla-btn").addEventListener("click", () => {
+    if (campos.length && !confirm("Esto reemplaza las preguntas que ya pusiste. ¿Seguir?")) return;
+    campos = [];
+    PLANTILLA.forEach(agregarCampo);
+    pintarCampos();
+});
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { window.location.href = "login.html?next=formularios.html"; return; }
+
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    perfil = p;
+    // La página lo comprueba para no enseñar lo que no toca, pero quien de
+    // verdad lo impide es la RLS: sin es_coordinador, el insert no pasa.
+    if (!perfil || !(perfil.es_coordinador || perfil.is_admin)) {
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    if (perfil.is_admin) {
+        document.getElementById("subtitulo").textContent =
+            "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
+    }
+
+    // Los equipos que de verdad existen entre los alumnos que uno ve.
+    const { data: alumnos } = await sb.rpc("informes_resumen_alumnos");
+    const grupos = [...new Set((alumnos || []).map((a) => a.grupo).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    document.getElementById("f-grupo").innerHTML =
+        '<option value="">— Sin equipo en particular —</option>' +
+        grupos.map((g) => `<option value="${escapar(g)}">${escapar(g)}</option>`).join("");
+
+    try {
+        await cargarFormularios();
+    } catch (err) {
+        document.getElementById("loading").textContent = "No se pudieron cargar los formularios: " + (err.message || err);
+        return;
+    }
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    mostrar("vista-lista");
+}
+init();
+    </script>
+</body>
+</html>

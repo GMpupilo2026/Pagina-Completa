@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Inscripción — Ajedrez Integral</title>
+    <meta name="description" content="Formulario de inscripción a una actividad de Ajedrez Integral.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+</head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content" class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando el formulario…</div>
+
+        <div id="no-esta" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">📋</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Este formulario no está recibiendo respuestas</h1>
+            <p class="text-brand-500 dark:text-brand-300">O ya cerró, o el enlace no es el correcto. Pídeselo de nuevo a quien te lo compartió.</p>
+            <a href="index.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Ir a Ajedrez Integral</a>
+        </div>
+
+        <div id="listo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-5xl mb-3">✅</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">¡Inscripción enviada!</h1>
+            <p class="text-brand-500 dark:text-brand-300">Ya quedó registrada. Si hace falta algo más, quien organiza te escribe.</p>
+            <a href="index.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Conocer Ajedrez Integral</a>
+        </div>
+
+        <form id="formulario" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 sm:p-8" novalidate>
+            <h1 id="titulo" class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white"></h1>
+            <p id="equipo" class="hidden text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase tracking-wide mt-1"></p>
+            <p id="descripcion" class="hidden text-brand-600 dark:text-brand-300 mt-3 whitespace-pre-line"></p>
+            <p id="cierre" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-3"></p>
+
+            <div id="campos" class="space-y-5 mt-6"></div>
+
+            <p class="text-xs text-brand-450 dark:text-brand-350 mt-6">
+                Los datos se usan solo para organizar esta actividad y los ve quien la coordina.
+                Los campos con <span class="text-red-600 dark:text-red-400">*</span> son obligatorios.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3 mt-4">
+                <button type="submit" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-3 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enviar la inscripción</button>
+                <span id="msg" class="text-sm" role="alert" aria-live="assertive"></span>
+            </div>
+        </form>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* El lado público de un formulario de inscripción: lo abre cualquiera con el
+   enlace, sin cuenta.
+ *
+ * La página no toca las tablas. Lee con public.formulario_publico(slug) —que
+ * solo devuelve los formularios abiertos, y ni quién lo creó ni cuándo— y
+ * escribe con public.responder_formulario(), que valida del lado del servidor.
+ * Es el mismo camino que usa nivel-de-arbitraje.html: lo que el cliente no
+ * tiene permiso de hacer directo, lo hace una función que valida.
+ *
+ * Por eso mismo, lo que se compruebe acá es solo cortesía —decirle a la persona
+ * qué le falta antes de mandar—; quien de verdad decide es la función. */
+const slug = new URLSearchParams(location.search).get("f") || "";
+let campos = [];
+
+const escapar = (t) => String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const TIPO_INPUT = { texto: "text", numero: "number", fecha: "date", correo: "email", telefono: "tel" };
+
+function pintarCampo(c, i) {
+    const caja = document.createElement("div");
+    const idHtml = "campo-" + i;
+    const marca = c.requerido ? ' <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span>' : "";
+    const clasesEntrada = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+    let control = "";
+    if (c.tipo === "parrafo") {
+        control = `<textarea id="${idHtml}" rows="4" maxlength="2000" class="${clasesEntrada}"></textarea>`;
+    } else if (c.tipo === "opcion") {
+        control = `<select id="${idHtml}" class="${clasesEntrada}">
+            <option value="">— Elige una —</option>
+            ${(c.opciones || []).map((o) => `<option value="${escapar(o)}">${escapar(o)}</option>`).join("")}
+        </select>`;
+    } else if (c.tipo === "varias") {
+        control = `<fieldset id="${idHtml}" class="space-y-1.5">
+            ${(c.opciones || []).map((o, j) => `
+                <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200">
+                    <input type="checkbox" value="${escapar(o)}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400">
+                    ${escapar(o)}
+                </label>`).join("")}
+        </fieldset>`;
+    } else if (c.tipo === "si_no") {
+        control = `<label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200">
+            <input type="checkbox" id="${idHtml}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400">
+            Sí
+        </label>`;
+    } else {
+        control = `<input type="${TIPO_INPUT[c.tipo] || "text"}" id="${idHtml}" maxlength="2000" class="${clasesEntrada}">`;
+    }
+
+    // Un <fieldset> se rotula con <legend>, no con <label for>: un label
+    // apuntando a un grupo no lo anuncia bien ningún lector de pantalla.
+    const rotulo = c.tipo === "varias"
+        ? `<legend class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">${escapar(c.etiqueta)}${marca}</legend>`
+        : `<label for="${idHtml}" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">${escapar(c.etiqueta)}${marca}</label>`;
+    const ayuda = c.ayuda ? `<p class="text-xs text-brand-450 dark:text-brand-350 mb-1.5">${escapar(c.ayuda)}</p>` : "";
+
+    caja.innerHTML = c.tipo === "varias"
+        ? control.replace('<fieldset id="' + idHtml + '" class="space-y-1.5">',
+                          '<fieldset id="' + idHtml + '" class="space-y-1.5">' + rotulo + ayuda)
+        : rotulo + ayuda + control;
+    return caja;
+}
+
+function leerCampo(c, i) {
+    const el = document.getElementById("campo-" + i);
+    if (!el) return null;
+    if (c.tipo === "varias") {
+        return [...el.querySelectorAll("input:checked")].map((x) => x.value);
+    }
+    if (c.tipo === "si_no") return el.checked;
+    if (c.tipo === "numero") {
+        const v = el.value.trim();
+        return v === "" ? null : Number(v);
+    }
+    return el.value.trim();
+}
+
+function vacio(v) {
+    return v === null || v === undefined || v === "" || v === false
+        || (Array.isArray(v) && !v.length) || (typeof v === "number" && !Number.isFinite(v));
+}
+
+document.getElementById("formulario").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("enviar");
+    const msg = document.getElementById("msg");
+
+    const respuestas = {};
+    for (let i = 0; i < campos.length; i += 1) {
+        const c = campos[i];
+        const v = leerCampo(c, i);
+        if (c.requerido && vacio(v)) {
+            msg.textContent = "Falta llenar: " + c.etiqueta;
+            msg.className = "text-sm text-red-600 dark:text-red-400";
+            const el = document.getElementById("campo-" + i);
+            if (el && el.focus) el.focus();
+            return;
+        }
+        if (!vacio(v)) respuestas[c.id] = v;
+    }
+
+    btn.disabled = true;
+    msg.textContent = "Enviando…";
+    msg.className = "text-sm text-brand-500 dark:text-brand-300";
+    const { data, error } = await sb.rpc("responder_formulario", { p_slug: slug, p_respuestas: respuestas });
+    if (error || !data || !data.ok) {
+        msg.textContent = (data && data.error) || (error && error.message) || "No se pudo enviar. Vuelve a intentarlo.";
+        msg.className = "text-sm text-red-600 dark:text-red-400";
+        btn.disabled = false;
+        return;
+    }
+    document.getElementById("formulario").classList.add("hidden");
+    document.getElementById("listo").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+async function init() {
+    const noEsta = () => {
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("no-esta").classList.remove("hidden");
+    };
+    if (!slug) { noEsta(); return; }
+
+    const { data, error } = await sb.rpc("formulario_publico", { p_slug: slug });
+    const f = Array.isArray(data) ? data[0] : data;
+    if (error || !f) { noEsta(); return; }
+
+    document.title = f.titulo + " — Ajedrez Integral";
+    document.getElementById("titulo").textContent = f.titulo;
+    if (f.grupo) {
+        const g = document.getElementById("equipo");
+        g.textContent = f.grupo;
+        g.classList.remove("hidden");
+    }
+    if (f.descripcion) {
+        const d = document.getElementById("descripcion");
+        d.textContent = f.descripcion;
+        d.classList.remove("hidden");
+    }
+    if (f.cierra_el) {
+        const c = document.getElementById("cierre");
+        c.textContent = "Se puede llenar hasta el " +
+            new Date(f.cierra_el).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" }) + ".";
+        c.classList.remove("hidden");
+    }
+
+    campos = (f.campos || []).filter((c) => c && c.id && c.etiqueta);
+    const caja = document.getElementById("campos");
+    campos.forEach((c, i) => caja.appendChild(pintarCampo(c, i)));
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("formulario").classList.remove("hidden");
+}
+init();
+    </script>
+</body>
+</html>
