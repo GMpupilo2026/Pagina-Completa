@@ -120,6 +120,7 @@
                         <option value="concentracion">🧠 Concentración</option>
                         <option value="diagnostico">🧭 Diagnóstico de nivel</option>
                         <option value="cursos">🏛️ Cursos — temas estudiados</option>
+                        <option value="diagnostico-publico">🌐 Diagnósticos de nivel (público)</option>
                         <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
                     </select>
                 </div>
@@ -978,6 +979,7 @@
             mates: "♚ Mates resueltos",
             tactica: "⚔️ Táctica — posiciones resueltas",
             diagnostico: "🧭 Diagnóstico de nivel — resumen y gráficos del grupo",
+            "diagnostico-publico": "🌐 Diagnósticos de nivel del público — quiénes lo hicieron y a quién falta atender",
             arbitraje: "⚖️ Exámenes de arbitraje del público — quiénes lo hicieron y a quién falta responder",
             concentracion: "🧠 Concentración — ejercicios resueltos",
             cursos: "🏛️ Cursos — temas estudiados por alumno",
@@ -1006,6 +1008,16 @@
             }
             if (topic === "cursos") {
                 renderCursosClase(body);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+            /* El diagnóstico público, SOLO. Ya sale dentro del tema "diagnostico"
+               (debajo de los alumnos) y en el resumen general, pero ahí es un
+               apartado al que hay que bajar; acá es la pregunta entera, igual
+               que con los exámenes de arbitraje del público. Son contactos para
+               invitar a Academia, así que se consultan seguido. */
+            if (topic === "diagnostico-publico") {
+                renderDiagnosticosVisitantes(body);
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }

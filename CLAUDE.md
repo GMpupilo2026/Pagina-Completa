@@ -1805,6 +1805,108 @@ nota— y **que la página se vea**: que el cartel de instalar arranque invisibl
 de verdad, que no haya CSS impreso como texto y que con el tema en oscuro el
 fondo salga oscuro.
 
+## El panel de Administración
+
+`admin.html` es de quien administra y tiene dos mitades: los atajos de arriba y
+la lista de cuentas.
+
+### Los atajos, por grupos
+
+Eran ocho botones en una fila corrida, sin ningún criterio de orden —el
+diagnóstico de los alumnos al lado de la base de datos de chess-results— y cada
+uno con las mismas doce clases de Tailwind copiadas. Ahora salen de `ATAJOS`,
+una lista con cuatro grupos: **Resultados** (los dos diagnósticos y los dos
+exámenes, el de la Academia y el del público), **Formularios**, **Bases de
+datos** y **Reportes**.
+
+- Las tarjetas son **más chicas** que las del panel de la Academia a propósito:
+  acá son atajos de quien ya sabe lo que busca, no la puerta de entrada de un
+  alumno.
+- **"Informes de toda la plataforma" queda aparte y primero**, con su botón
+  ámbar: es la puerta grande, y las tarjetas son atajos a un apartado suyo.
+- Cuatro de los cinco atajos de Resultados llevan a `informes.html?tema=…`. Ese
+  enlace directo **depende de que el tema exista en el selector de
+  `informes.html`**: si se le cambia el nombre a una opción, el atajo lleva al
+  resumen general sin decir nada. Por eso `verificar-admin.js` comprueba que
+  cada atajo apunte a un archivo que existe y, si lleva `?tema=`, a un tema que
+  el selector de verdad tiene.
+- Se agregó el tema `diagnostico-publico`, hermano del de arbitraje público: los
+  diagnósticos de visitantes ya salían dentro del tema `diagnostico` y en el
+  resumen general, pero ahí hay que bajar a buscarlos, y son contactos para
+  invitar a Academia — se consultan seguido.
+
+### Todas las cuentas: pensada para muchas
+
+- **El nombre se cortaba, y la causa era la maqueta**: nueve columnas dentro de
+  un `max-w-5xl` (1024 px). Ahora la página es `max-w-7xl` y **nombre y correo
+  van en UNA sola celda**, uno debajo del otro. De paso "Hacer administrador"
+  se fue a Acciones (es de una vez cada tanto, no de todos los días) y la corona
+  quedó al lado del nombre. Siete columnas en vez de nueve.
+- **Buscar, filtrar y mostrar de a poco**, las tres cosas juntas: búsqueda por
+  nombre, correo o grupo **sin tildes** (quien escribe "ramirez" tiene que
+  encontrar a "Ramírez"), filtro de rol, y 50 filas por vez con "Ver más". Cada
+  fila lleva cuatro campos editables y sus etiquetas de profesor: pintar
+  trescientas para buscar a una es trabajo tirado.
+- El filtro de rol tiene una opción que **no es un rol**: "Sin profesor
+  asignado". Es la pregunta que más se hace en esta página —esos alumnos no
+  salen en los informes de nadie— y el aviso de arriba ahora los deja a la vista
+  de un clic en vez de decir "agrúpalos abajo para encontrarlos".
+- **Las cuentas se piden de mil en mil.** Se pedían de un solo tiro, y PostgREST
+  corta la respuesta a partir de cierta cantidad de filas **sin dar ningún
+  error**: el día que la plataforma pase de mil cuentas, el panel habría
+  empezado a esconder cuentas en silencio, y los conteos de alumnos por profesor
+  habrían salido calculados sobre un pedazo. Es la misma piedra de
+  `informes.html`, con el mismo `traerTodo()`.
+
+**Al tocar `admin.html` o `inscripciones.html`, correr `node
+herramientas/verificar-admin.js`** (con el sitio en localhost:8777 y
+playwright). Las dos están detrás del login, así que `verificar-css.js` no las
+ve. Su Supabase de mentira trae **1.205 cuentas a propósito**: es el único
+número con el que se nota si la página se las pide de una sola vez. Y mide el
+ancho del campo del nombre con un nombre largo de verdad, que es con lo que
+empezó todo esto.
+
+## Las inscripciones a torneos en línea
+
+`inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
+público de torneos. Es de **quien administra o coordina**, no de todo el equipo
+docente.
+
+**Esos datos viven en OTRO Supabase.** `inscripcion.html` escribe en el proyecto
+"Base de Colegios" (`prcfbzvshnusisczlpxl`), no en el de la Academia, y esa es
+toda la razón de que esta página esté armada distinto al resto del sitio.
+
+- **La tabla no se abre, y no se va a abrir.** `public.inscripciones` tiene RLS
+  y **ni una sola política**: desde el navegador no la lee nadie. Son cédulas,
+  fechas de nacimiento y teléfonos de personas menores de edad, y la clave
+  pública de ese proyecto está escrita dentro de `inscripcion.html`, a la vista
+  de cualquiera — darle lectura a `anon` sería publicarlas.
+- Las trae la Edge Function **`inscripciones-torneo`**, que vive en ese mismo
+  proyecto y lee con la service role. Las pide de mil en mil, por lo de siempre.
+- **El permiso lo decide la Academia, no la función**, y no podría decidirlo
+  aunque quisiera: el JWT de quien llama lo firmó el otro proyecto, así que este
+  no lo puede validar (por eso su `verify_jwt` va en `false`). Lo que hace es
+  **reenviar esa misma sesión** a la Academia y llamar a
+  `public.soy_coordinador()`, que es `SECURITY DEFINER` y solo `authenticated`
+  puede ejecutar. O sea: la misma regla que decide `cobros.html`, escrita una
+  sola vez.
+- Comprobado, impersonando roles en SQL y llamando a la función de verdad: el
+  administrador recibe `true`; un alumno con sesión válida, `false`; una sesión
+  con un `sub` que no existe, `false`; `anon` ni siquiera puede ejecutarla. Y la
+  función contesta **401 sin token, 403 con un token inventado y 403 con la
+  clave pública de la Academia**. Lo único que no se pudo probar desde acá es el
+  camino bueno de punta a punta —hace falta una sesión de verdad de quien
+  administra—, así que eso se mira al entrar la primera vez.
+- La página vuelve a preguntar `soy_coordinador()` antes de pintar, pero eso es
+  solo para mostrar el aviso de siempre en vez de un error feo: quien de verdad
+  deja pasar es la función.
+- El CSV sale con **punto y coma y BOM**, como el de formularios, y baja **lo
+  que se está viendo** (con su filtro puesto): si se filtró por provincia es
+  porque se quiere esa lista.
+- **Si algún día hay que cambiar quién puede ver esto**, se cambia
+  `soy_coordinador()` en la Academia y se cambia solo; la función no tiene
+  ninguna regla propia que actualizar.
+
 ## Coordenadas en los tableros
 
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
@@ -2054,6 +2156,19 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.
+  - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
+    `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
+    está en `.gitignore` la falla solo aparece en la máquina de quien siguió las
+    instrucciones de este mismo archivo y corrió `npm install`: el sitemap salía
+    ofreciéndole a Google media docena de páginas internas de playwright, y no
+    daba ningún error — quedaban escritas en el archivo y ya. `pwa-cabecera.py`
+    y `verificar-voseo.py` ya lo hacían; ahora lo hacen los cuatro.
+  - **Las dos listas de páginas exceptuadas de la app tienen que decir lo
+    mismo.** `verificar-pwa.js` exceptuaba `libro-de-diagnostico-accesible.html`
+    y `pwa-cabecera.py` no, así que el generador le ponía el `manifest` en cada
+    corrida y el verificador no se quejaba nunca. Es un documento que se abre
+    suelto, hasta por correo y sin red: declarar un `manifest` que no va a poder
+    cargar es peor que no declararlo.
 - Los datos estructurados (JSON-LD) los genera
   `herramientas/datos-estructurados.py` desde el propio HTML —título,
   descripción, fecha impresa del artículo, lista de cursos de la portada—, así
