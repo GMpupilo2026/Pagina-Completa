@@ -14,6 +14,23 @@ las cabeceras de seguridad. Se edita el HTML/JS directamente; lo único que se
   historial.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
 
+## Los servidores MCP van en `.mcp.json`, no en la máquina
+
+`.mcp.json` (raíz) declara los servidores MCP del proyecto y **se commitea a
+propósito**. Es la única de las tres formas de agregarlo que sobrevive: el
+alcance `local` escribe en `~/.claude.json` y el `user` en la carpeta personal,
+así que en una sesión de Claude Code en la web —donde el contenedor es de usar y
+tirar— el servidor se pierde al terminar la sesión, sin dar ningún error: la
+siguiente sesión simplemente no lo tiene. En el repositorio lo lee cualquier
+sesión al arrancar, en cualquier máquina.
+
+- **Ahí no va ninguna credencial.** La dirección de un servidor no es secreta;
+  un token sí, y un token en el repositorio es un token publicado. Si un
+  servidor pide autenticación, la clave entra por variable de entorno.
+- Los servidores se conectan **al arrancar**, así que agregar uno no lo activa
+  en la sesión que lo agregó: hace falta abrir otra (o reiniciar `claude` en la
+  terminal). `/mcp` dice cuáles se conectaron de verdad.
+
 ## El dominio: `www` manda al dominio sin `www`
 
 `worker.js` redirige `www.ajedrez-integral.com` a `ajedrez-integral.com` con un
