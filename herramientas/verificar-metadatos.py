@@ -29,8 +29,12 @@ def canonical(texto):
     m = re.search(r'<link rel="canonical" href="([^"]*)"', texto)
     return m.group(1) if m else None
 
+# node_modules son las librerías que se instalan para compilar el CSS o correr
+# las comprobaciones (está en .gitignore): no son páginas del sitio, y marcarlas
+# como mal escritas es ruido que tapa una falla de verdad.
+FUERA = ("cursos/protegido/", "node_modules/")
 TODAS = [f for f in sorted(glob.glob("**/*.html", recursive=True))
-         if not f.startswith("cursos/protegido/")]
+         if not f.replace(os.sep, "/").startswith(FUERA)]
 publicas = [f for f in TODAS if not re.search(r'<meta name="robots"[^>]*noindex', leer(f))]
 privadas = [f for f in TODAS if f not in publicas]
 

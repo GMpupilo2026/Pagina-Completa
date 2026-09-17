@@ -29,8 +29,14 @@ FIN = "<!-- app: fin -->"
 # Estas quedan fuera: no son páginas del sitio.
 #   - inscripcion.html tiene su propio diseño y su propio CSS;
 #   - offline.html ya las trae escritas a mano (es la que se enseña sin red);
+#   - libro-de-diagnostico-accesible.html es un documento que se descarga y se
+#     abre suelto, hasta por correo y sin red: declarar un manifest que no va a
+#     poder cargar es peor que no declararlo. Esta lista tiene que decir lo
+#     mismo que la de verificar-pwa.js, y no lo decía: el verificador ya lo
+#     exceptuaba y el generador se lo ponía igual en cada corrida;
 #   - el material de estudio de las lecciones son documentos, no páginas.
-FUERA = {"inscripcion.html", "offline.html", "formulario.html"}
+FUERA = {"inscripcion.html", "offline.html", "formulario.html",
+         "libro-de-diagnostico-accesible.html"}
 CARPETAS_FUERA = ("cursos/recursos/", "cursos/protegido/", "herramientas/", "node_modules/")
 
 
