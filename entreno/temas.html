@@ -341,6 +341,7 @@ async function unlock(){
   // El progreso vive en la cuenta: se baja y se funde con el de este aparato
   // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
   await ProgresoUsuario.init();
+  heredarTactica();
   loadDataThenStart();
 }
 
@@ -349,7 +350,9 @@ const GLYPH = {
   b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
 };
 const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
-const GROUP_ICON = { recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
+// Un grupo sin icono se pinta con un punto pelado, así que al sumar uno nuevo
+// hay que sumarlo acá también: el de táctica es el mismo ⚔️ que tenía su página.
+const GROUP_ICON = { tactica:'⚔️', recommended:'🎲', phases:'⏳', motifs:'🎯', advanced:'🧠', mates:'♚', mateThemes:'👑', specialMoves:'✨', goals:'🏁', lengths:'📏', origin:'🏛️' };
 
 let DATA = null;           // {groups, themes:{key:[ids]}, puzzles:{id:{fen,solution,rating,themes,mate}}}
 let THEME_INFO = {};       // key -> {name, desc, lichess}
@@ -360,6 +363,7 @@ async function loadDataThenStart(){
     if(!res.ok) throw new Error('temas.json: ' + res.status);
     DATA = await res.json();
     DATA.groups.forEach((g) => g.themes.forEach((t) => { THEME_INFO[t.key] = t; }));
+    TEMAS_DE_TACTICA = temasDeTactica();
   } catch (e) {
     document.getElementById('main-content').innerHTML =
       '<p class="text-center text-brand-450 dark:text-brand-350 py-10">No se pudo cargar la base de ejercicios por tema. Intenta recargar la página.</p>';
@@ -367,6 +371,36 @@ async function loadDataThenStart(){
     return;
   }
   initApp();
+}
+
+// Qué temas llegaron de la página de Táctica. NO va escrito a mano: sale del
+// propio grupo de temas.json, que es quien lo decide (lo escribe
+// entreno/data/sumar_tactica.py). Con la lista copiada acá, agregarle una
+// categoría al grupo la dejaría contando como "temas" sin que nada fallara.
+let TEMAS_DE_TACTICA = new Set();
+function temasDeTactica(){
+  const g = (DATA.groups || []).find((x) => x.id === 'tactica');
+  return new Set(g ? g.themes.map((t) => t.key) : []);
+}
+
+/* Los 148 ejercicios de táctica vivían en su propia página, con su propia
+   lista de resueltos (`entreno_tactica_solved`). Al traerlos acá, quien ya
+   llevaba cuarenta hechos empezaría de cero y no entendería por qué — así que
+   su lista se funde con la de esta página. Los ids no se pisan (los de táctica
+   son texto, `ultima-linea-001`; los de Lichess son números), y como se unen y
+   no se reemplazan, correrlo mil veces da lo mismo. Se hace DESPUÉS de
+   ProgresoUsuario.init(), o sea sobre la lista ya bajada de la cuenta, y el
+   resultado se vuelve a subir por la misma vía. */
+function heredarTactica(){
+  try {
+    const viejos = JSON.parse(localStorage.getItem('entreno_tactica_solved') || '{}');
+    const ids = Object.keys(viejos).filter((id) => viejos[id]);
+    if(!ids.length) return;
+    const ahora = JSON.parse(localStorage.getItem('entreno_temas_solved') || '{}');
+    let nuevos = 0;
+    ids.forEach((id) => { if(!ahora[id]){ ahora[id] = true; nuevos += 1; } });
+    if(nuevos) localStorage.setItem('entreno_temas_solved', JSON.stringify(ahora));
+  } catch (e) { /* sin progreso heredado se empieza de cero, no se rompe nada */ }
 }
 
 /* ---------------- Progreso y racha (localStorage) ---------------- */
@@ -611,7 +645,11 @@ function loadPuzzle(){
   updateProgressBar();
   const turnColor = game.turn() === 'w' ? 'blancas' : 'negras';
   document.getElementById('turn-banner').innerHTML = `Juegan <b>${turnColor}</b> — ${puzzle.mate ? 'encuentra el mate' : 'encuentra la mejor jugada'}`;
-  document.getElementById('puzzle-meta').textContent = `Dificultad ${puzzle.rating}` + (puzzle.players ? ` · de la partida ${puzzle.players}` : '');
+  // Los ejercicios de táctica son de la casa y NO traen `rating`: sin esta
+  // comprobación el tablero decía "Dificultad undefined" debajo de cada uno.
+  const meta = [puzzle.rating ? `Dificultad ${puzzle.rating}` : '',
+                puzzle.players ? `de la partida ${puzzle.players}` : ''].filter(Boolean).join(' · ');
+  document.getElementById('puzzle-meta').textContent = meta;
   setStatus('Haz clic en la pieza que quieres mover.');
 }
 
@@ -732,7 +770,14 @@ function finishPuzzle(){
   setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
   if(!alreadySolved){
     markSolved(id);
-    EntrenoProgress.log('temas', { puzzle_id: id, theme: currentTheme, rating: puzzle.rating });
+    /* Informes tiene una columna de Táctica aparte de la de Ejercicios por tema.
+       Al traerse los 148 ejercicios acá, si todo se apuntara como 'temas' esa
+       columna se quedaría congelada en el número del día de la mudanza — y eso
+       no da ningún error: el profesor ve un número que ya no sube y no sabe por
+       qué. Así que cada ejercicio se apunta bajo la actividad que le
+       corresponde, que es lo mismo que se apuntaba antes de mudarlos. */
+    const actividad = TEMAS_DE_TACTICA.has(currentTheme) ? 'tactica' : 'temas';
+    EntrenoProgress.log(actividad, { puzzle_id: id, theme: currentTheme, rating: puzzle.rating ?? null });
   }
   updateProgressBar();
   updateOverall();

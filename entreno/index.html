@@ -93,65 +93,76 @@
                 <p class="text-brand-500 dark:text-brand-300">Elige qué quieres practicar hoy.</p>
                 <a href="../clases.html" class="inline-block mt-3 text-sm text-accent-700 dark:text-accent-400 hover:underline">← 🏛️ Academia</a>
             </div>
+            <!-- Los accesos, en tres grupos y con CADA UNO en su propio encabezado.
+                 Eso último no es cosmético: quien usa lector de pantalla salta de
+                 encabezado en encabezado, así que con el nombre de cada acceso en un
+                 <h3> se recorre Entrenamiento entero sin pasar por el resto de la
+                 página. Antes el nombre era un <span> dentro del enlace y para llegar
+                 al último había que tabular por los ocho anteriores.
+
+                 El enlace es el título y su ::after estira el área de clic sobre toda
+                 la tarjeta: así hay UN solo enlace por tarjeta y quien usa lector de
+                 pantalla no escucha dos veces el mismo destino. Es el mismo patrón de
+                 las tarjetas de cursos.html. -->
             <div class="space-y-8">
-                <section>
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Fundamentos</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5">
-                        <a href="4x4.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🧩</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">4×4</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">Ejercicios tácticos por nivel</span>
-                        </a>
-                        <a href="aprender.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🎓</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Aprender</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">Lecciones interactivas paso a paso</span>
-                        </a>
-                        <a href="coordenadas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🎯</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Coordenadas</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">Reconoce las casillas a toda velocidad</span>
-                        </a>
-                    </div>
+                <section aria-labelledby="g-fundamentos">
+                    <h2 id="g-fundamentos" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Fundamentos</h2>
+                    <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 list-none p-0 m-0">
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">♚</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="mates.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Mates</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">2455 posiciones — mate en 1, 2 o 3 jugadas</p>
+                        </li>
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🎓</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="aprender.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Aprender</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Lecciones interactivas paso a paso</p>
+                        </li>
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🎯</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="coordenadas.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Coordenadas</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Reconoce las casillas a toda velocidad</p>
+                        </li>
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🧠</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="desafios.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Desafíos</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">90 desafíos: coronación, ganar material, salir del apuro y jaque mate</p>
+                        </li>
+                    </ul>
                 </section>
-                <section>
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Practicar y desafiar</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5">
-                        <a href="practicas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🏆</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Practicar</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">Series de mates y tácticas, con racha y estrellas</span>
-                        </a>
-                        <a href="mates.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">♚</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Mates</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">2455 posiciones — mate en 1, 2 o 3 jugadas</span>
-                        </a>
-                        <a href="aperturas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">♞</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Aperturas y celadas</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">37 líneas para memorizar jugándolas, con repaso espaciado</span>
-                        </a>
-                        <a href="tactica.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">⚔️</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Táctica</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">148 posiciones por tema: última línea, enroques, columnas y ataque doble</span>
-                        </a>
-                        <a href="temas.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🗂️</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Ejercicios por tema</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">Clavadas, ataques dobles, mates, finales… 100 ejercicios por tema</span>
-                            <span id="temas-progress" class="hidden w-full mt-1" aria-live="polite">
+                <section aria-labelledby="g-practicar">
+                    <h2 id="g-practicar" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Practicar</h2>
+                    <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 list-none p-0 m-0">
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🗂️</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="temas.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Ejercicios por tema</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Clavadas, ataques dobles, mates, finales y los 148 de táctica de ataque</p>
+                            <p id="temas-progress" class="hidden w-full mt-1" aria-live="polite">
                                 <span class="block h-1.5 w-full rounded bg-brand-100 dark:bg-brand-800 overflow-hidden"><span id="temas-progress-fill" class="block h-full bg-accent-500 rounded" style="width:0%"></span></span>
                                 <span id="temas-progress-text" class="block text-[11px] text-brand-450 dark:text-brand-350 mt-1"></span>
-                            </span>
-                        </a>
-                        <a href="desafios.html" class="group flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform">🧠</div>
-                            <span class="font-semibold text-brand-800 dark:text-white text-sm">Desafíos</span>
-                            <span class="text-xs text-brand-450 dark:text-brand-350">90 desafíos: coronación, ganar material, salir del apuro y jaque mate</span>
-                        </a>
-                    </div>
+                            </p>
+                        </li>
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🏆</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="practicas.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Practicar</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Series de mates y tácticas, con racha y estrellas</p>
+                        </li>
+                    </ul>
+                </section>
+                <section aria-labelledby="g-entreno">
+                    <h2 id="g-entreno" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Entreno</h2>
+                    <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 list-none p-0 m-0">
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">♞</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="aperturas.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Aperturas y celadas</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">37 líneas para memorizar jugándolas, con repaso espaciado</p>
+                        </li>
+                        <li class="group relative flex flex-col items-center text-center gap-2 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl bg-brand-50 dark:bg-brand-800 group-hover:scale-105 transition-transform" aria-hidden="true">🧩</span>
+                            <h3 class="font-semibold text-brand-800 dark:text-white text-sm"><a href="4x4.html" class="rounded after:absolute after:inset-0 after:rounded-2xl hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">4×4</a></h3>
+                            <p class="text-xs text-brand-450 dark:text-brand-350">Ejercicios tácticos por nivel</p>
+                        </li>
+                    </ul>
                 </section>
             </div>
         </div>
