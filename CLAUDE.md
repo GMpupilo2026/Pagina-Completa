@@ -2706,3 +2706,21 @@ lee Google.
   se agrega ahí.
 - "vos" se resuelve por contexto: con preposición delante es *ti* ("un lugar
   para ti"), si no es *tú* ("busca tú mismo").
+
+### Y las respuestas de Claude también van en español
+
+**Todo lo que Claude escriba en la conversación va en español**, no solo el
+texto que termina en el sitio: las explicaciones, los resúmenes de lo que hizo,
+las preguntas, los mensajes de commit y los cuerpos de los PR. El dueño del
+repositorio trabaja en español y contestarle en inglés lo obliga a traducir
+mentalmente cada respuesta.
+
+Y va con **el mismo español de arriba** —tuteo, latinoamericano, sin voseo y sin
+giros peninsulares— por una razón práctica, no de estilo: buena parte de lo que
+se escribe en la conversación termina copiado dentro del sitio (un aviso, el
+texto de un botón, la descripción de una lección). Si en el chat se escribe
+"podés" y en el sitio "puedes", el voseo entra por esa puerta — que es
+exactamente por donde entraron las 1.900 formas de septiembre.
+
+Los nombres de archivo, las clases de CSS, los identificadores y los comandos
+se quedan como están: son código, no texto.
