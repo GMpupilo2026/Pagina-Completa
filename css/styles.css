@@ -25,6 +25,17 @@
   --piece-white-outline-adaptive: #000000;
   --piece-black-outline-adaptive: #ffffff;
 }
+/* El atributo `hidden` tiene que ganarle a las clases de display de Tailwind.
+   `[hidden]:where(...)` y `.flex` tienen la MISMA especificidad (0,1,0 — `:where`
+   no suma nada) y la utilidad va después en la hoja, así que gana `.flex`: un
+   elemento con `hidden` y `flex` a la vez se sigue viendo. Eso es lo que tenía
+   el cartel de "Instala la Academia en tu celular" — salía siempre, y "Ahora no"
+   le ponía `hidden` sin que desapareciera nada. Y no daba ningún error: la
+   comprobación miraba la propiedad `.hidden` del elemento, que sí estaba puesta.
+   Va acá y no en la página porque el atributo tiene que significar lo mismo en
+   todo el sitio. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 /* El encabezado es sticky: al saltar a un ancla el navegador tiene que dejarle
    su espacio arriba, o el destino queda debajo de la barra. Es la misma altura

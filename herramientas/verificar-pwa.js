@@ -83,6 +83,12 @@ async function probarCartelDeInstalar(navegador) {
     await p.evaluate((cartel) => {
       document.querySelectorAll("#instalar-app").forEach((n) => n.remove());
       document.body.insertAdjacentHTML("afterbegin", cartel);
+      // Se pregunta por lo que SE VE, no por el atributo: el cartel lleva la
+      // clase `flex` de Tailwind, que tiene la misma especificidad que
+      // `[hidden]` y va después en la hoja. Durante meses el atributo estuvo
+      // puesto y el cartel igual se veía — con `.hidden` a secas, esta
+      // comprobación daba verde sobre una página rota.
+      window.seVe = (n) => getComputedStyle(n).display !== "none";
     }, cartel);
     await p.addScriptTag({ url: "/js/pwa.js" });
   };
@@ -93,7 +99,7 @@ async function probarCartelDeInstalar(navegador) {
     e.prompt = () => {};
     e.userChoice = Promise.resolve({ outcome: "dismissed" });
     window.dispatchEvent(e);
-    return !document.getElementById("instalar-app").hidden;
+    return seVe(document.getElementById("instalar-app"));
   });
 
   await p.evaluate(() => localStorage.clear());
@@ -111,8 +117,8 @@ async function probarCartelDeInstalar(navegador) {
   await preparar();
   await disparar();
   await p.click("#instalar-app [data-instalar-no]");
-  igual("al apretar «Ahora no» se cierra",
-    await p.evaluate(() => document.getElementById("instalar-app").hidden), "true");
+  igual("al apretar «Ahora no» se cierra de verdad (se MIRA la pantalla, no `.hidden`)",
+    await p.evaluate(() => !seVe(document.getElementById("instalar-app"))), "true");
 
   // Seis días después: todavía no.
   await p.evaluate(() => {

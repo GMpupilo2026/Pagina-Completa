@@ -201,26 +201,32 @@
                 </div>
             </div>
 
-            <!-- ===== Registro de clases ===== -->
+            <!-- ===== Registro de clases =====
+                 Con 100 clases una tabla corrida no se puede leer, así que el
+                 historial se pide a la base filtrado y por páginas (nunca entero)
+                 y se muestra agrupado por mes, con el mes más reciente abierto.
+                 Ver cargarSesiones() más abajo. -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Historial de clases con día, hora de inicio y de cierre.</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
-                                <th class="py-2 pr-4 font-semibold">Fecha</th>
-                                <th class="py-2 pr-4 font-semibold">Inicio</th>
-                                <th class="py-2 pr-4 font-semibold">Cierre</th>
-                                <th class="py-2 pr-4 font-semibold">Duración</th>
-                                <th class="py-2 pr-4 font-semibold">Notas</th>
-                                <th class="py-2 font-semibold"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="sessions-log-body">
-                            <tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Cargando…</td></tr>
-                        </tbody>
-                    </table>
+                <div class="flex items-start justify-between flex-wrap gap-4 mb-4">
+                    <div>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
+                        <p class="text-brand-500 dark:text-brand-300 text-sm" id="sessions-log-summary">Cargando…</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label for="sessions-search" class="sr-only">Buscar en el registro de clases</label>
+                        <input id="sessions-search" type="search" placeholder="🔍 Título o notas…" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <label for="sessions-period" class="sr-only">Periodo del registro de clases</label>
+                        <select id="sessions-period" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <option value="30">Últimos 30 días</option>
+                            <option value="90" selected>Últimos 3 meses</option>
+                            <option value="365">Último año</option>
+                            <option value="0">Todas</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="sessions-log" class="space-y-2"></div>
+                <div class="mt-4 text-center">
+                    <button id="sessions-more" type="button" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más clases</button>
                 </div>
             </div>
 
@@ -268,8 +274,15 @@
         // sin ningún criterio de orden). Un solo lugar para agregar o mover destinos:
         // basta con cambiar de grupo el objeto del tile, el resto se acomoda solo. ----------
         const TILE_GROUPS = [
-            { title: "Jugar y competir", tiles: [
+            /* "Sesión en vivo" va sola y de primera: es lo único del panel que
+               pasa AHORA MISMO, y mezclada entre Juegos y Torneos costaba
+               encontrarla justo cuando hay clase. Su grupo lleva `destacado`,
+               que la pinta ancha y en una línea en vez de como un cuadrito
+               más. */
+            { title: "Clase en vivo", destacado: true, tiles: [
                 { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", href: "sesion.html", primary: true },
+            ] },
+            { title: "Jugar y competir", tiles: [
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
                 { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", href: "torneos.html" },
@@ -279,17 +292,20 @@
             { title: "Aprender", tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
-                /* El diagnóstico tiene tarjeta propia: estaba enterrado dentro de
-                   Entrenamiento › Aprende › Asignaciones, que es tres clics para
-                   lo primero que conviene hacer al entrar. El examen de arbitraje
-                   va a la par porque es lo mismo para el equipo docente: una
-                   prueba que ubica el nivel, no una herramienta de clase. */
-                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
+            /* Evaluaciones: lo que MIDE el nivel de quien lo hace, aparte de lo
+               que lo enseña. El diagnóstico estaba en Aprender y el examen de
+               arbitraje detrás de él; son otra cosa que un curso, y con su
+               propio grupo se encuentran de una. El de arbitraje lo suma init()
+               solo para el equipo docente, como hasta ahora. */
+            { title: "Evaluaciones", tiles: [
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
+                { emoji: "📄", label: "Exámenes", desc: "Pruebas de cada curso, con su nota", nota: "Próximamente", disabled: true },
+            ] },
             { title: "Herramientas", tiles: [
-                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html" },
-                { emoji: "💾", label: "Caja de Compartir", desc: "Partidas guardadas en clase: revísalas y descárgalas en PGN", href: "partidas.html" },
+                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", mantenimientoAlumno: true },
+                { emoji: "💾", label: "Caja de Compartir", desc: "Partidas guardadas en clase: revísalas y descárgalas en PGN", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             { title: "Tu cuenta", tiles: [
                 { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
@@ -298,12 +314,34 @@
             ] },
         ];
 
-        function renderTileCard(t) {
-            const base = "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200";
+        /* Un acceso "en mantenimiento" se apaga SOLO para el alumnado: el equipo
+           docente lo sigue necesitando. Se apaga acá, en un solo lugar y sobre
+           la lista ya armada, en vez de escribir `disabled` a mano en cada
+           tile — así prender de nuevo un acceso es borrar una línea. Como todo
+           filtro del sitio, esto decide qué se PINTA: la dirección sigue
+           existiendo y quien la conozca entra igual. */
+        function apagarEnMantenimiento() {
+            if (isTeacher || profile.is_admin) return;
+            TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
+                if (!t.mantenimientoAlumno) return;
+                t.disabled = true;
+                t.nota = "En mantenimiento";
+                delete t.href;
+            }));
+        }
+
+        function renderTileCard(t, destacado) {
+            const base = "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200"
+                + (destacado ? " sm:flex-row sm:items-center sm:text-left sm:gap-5" : "");
             let el;
             if (t.disabled) {
+                // Ni <a> ni <button>: un acceso apagado no debe recibir el foco
+                // del teclado ni prometer un destino que no va a abrir. La
+                // razón va escrita en la tarjeta (t.nota) — un cuadro gris sin
+                // explicación se lee como una página rota.
                 el = document.createElement("div");
                 el.className = base + " bg-white/60 dark:bg-brand-900/60 opacity-60 cursor-not-allowed";
+                el.setAttribute("aria-disabled", "true");
             } else if (t.action === "logout") {
                 el = document.createElement("button");
                 el.type = "button";
@@ -315,7 +353,7 @@
                 el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5" + (t.primary ? " ring-2 ring-accent-500" : "");
             }
             const iconWrap = document.createElement("div");
-            iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
+            iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
             if (t.photo) {
                 // Foto real de Oscar en vez de un emoji genérico, igual que en tablero.html
                 // ("Juega contra Oscar"): la etiqueta de al lado ya dice de qué se trata,
@@ -328,13 +366,22 @@
             } else {
                 iconWrap.textContent = t.emoji;
             }
+            const texto = document.createElement("span");
+            texto.className = "flex flex-col items-center gap-1" + (destacado ? " sm:items-start" : "");
             const label = document.createElement("span");
             label.className = "font-semibold text-brand-800 dark:text-white text-sm";
             label.textContent = t.label;
             const desc = document.createElement("span");
             desc.className = "text-xs text-brand-450 dark:text-brand-350";
             desc.textContent = t.desc;
-            el.append(iconWrap, label, desc);
+            texto.append(label, desc);
+            if (t.nota) {
+                const nota = document.createElement("span");
+                nota.className = "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-500 dark:text-brand-300";
+                nota.textContent = t.nota;
+                texto.appendChild(nota);
+            }
+            el.append(iconWrap, texto);
             return el;
         }
 
@@ -347,8 +394,13 @@
                 heading.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-3";
                 heading.textContent = group.title;
                 const tilesGrid = document.createElement("div");
-                tilesGrid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
-                group.tiles.forEach((t) => tilesGrid.appendChild(renderTileCard(t)));
+                // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
+                // columnas quedaría un cuadrito perdido a la izquierda, así que
+                // ocupa el ancho entero.
+                tilesGrid.className = group.destacado
+                    ? "grid grid-cols-1 gap-4 md:gap-5"
+                    : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
+                group.tiles.forEach((t) => tilesGrid.appendChild(renderTileCard(t, !!group.destacado)));
                 section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
@@ -435,45 +487,221 @@
             document.getElementById("entreno-coord").textContent = bestCoord || "—";
         }
 
-        async function refreshSessionsLog() {
-            const body = document.getElementById("sessions-log-body");
-            if (!boardOwnerId) { body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay clases registradas.</td></tr>'; return; }
-            const { data, error } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).order("started_at", { ascending: false }).limit(10);
-            body.innerHTML = "";
-            if (error || !data || !data.length) {
-                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay clases registradas.</td></tr>';
-                return;
+        // ---------- Registro de clases ----------
+        // Con 100 clases, bajarlas todas y pintarlas de corrido no sirve de
+        // nada: no se encuentra ninguna. Así que el filtro y el corte los hace
+        // la BASE — `.gte()` por periodo, `.ilike()` por texto y `.range()` por
+        // página— y acá solo se pinta. La cuenta total viene con
+        // `count: "exact"`, así que "Mostrando 20 de 143" dice la verdad
+        // aunque solo hayan llegado 20 filas.
+        const SESIONES_POR_PAGINA = 20;
+        let sesionesCargadas = [];
+        let sesionesTotal = 0;
+        let sesionesBusqueda = "";
+        let sesionesPeriodo = 90;           // días; 0 = todas
+        let sesionesPeticion = 0;           // descarta respuestas que llegan tarde
+        // Qué meses dejó abiertos o cerrados quien mira, para que repintar no
+        // los vuelva a cerrar todos. Lo que no está acá toma el valor por
+        // omisión: abierto el más reciente, cerrados los de atrás.
+        const sesionesMeses = new Map();
+
+        function claveMes(iso) {
+            const d = new Date(iso);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+        }
+        function nombreMes(iso) {
+            const t = new Date(iso).toLocaleDateString("es-CR", { month: "long", year: "numeric" });
+            return t.charAt(0).toUpperCase() + t.slice(1);
+        }
+        function fmtMinutos(mins) {
+            const h = Math.floor(mins / 60), m = mins % 60;
+            if (!h) return `${m} min`;
+            return m ? `${h} h ${m} min` : `${h} h`;   // "6 h", no "6 h 0 min"
+        }
+
+        // PostgREST arma el filtro `or=(...)` con comas y paréntesis, así que un
+        // texto que los traiga rompe la consulta entera. Se limpian (y se corta
+        // el largo) antes de mandarlo: lo que se busca es un título, no una
+        // expresión.
+        function limpiarBusqueda(t) {
+            return t.replace(/[,()%*\\"']/g, " ").trim().slice(0, 60);
+        }
+
+        function consultaSesiones() {
+            let q = sb.from("class_sessions").select("*", { count: "exact" }).eq("created_by", boardOwnerId);
+            if (sesionesPeriodo) {
+                q = q.gte("started_at", new Date(Date.now() - sesionesPeriodo * 86400000).toISOString());
             }
-            data.forEach((s) => {
-                const tr = document.createElement("tr");
-                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-                const tdDate = document.createElement("td"); tdDate.className = "py-2 pr-4"; tdDate.textContent = fmtDate(s.started_at);
-                const tdStart = document.createElement("td"); tdStart.className = "py-2 pr-4"; tdStart.textContent = fmtTime(s.started_at);
-                const tdEnd = document.createElement("td"); tdEnd.className = "py-2 pr-4";
-                tdEnd.textContent = s.ended_at ? fmtTime(s.ended_at) : "En curso";
-                const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4";
-                tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
-                const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
-                tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
-                const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
-                if (isTeacher) {
-                    const delBtn = document.createElement("button");
-                    delBtn.type = "button";
-                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
-                    delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", async () => {
-                        if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
-                        const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
-                        if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
-                        refreshSessionStatus();
-                        refreshSessionsLog();
-                    });
-                    tdActions.appendChild(delBtn);
-                }
-                tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes, tdActions);
-                body.appendChild(tr);
+            const texto = limpiarBusqueda(sesionesBusqueda);
+            if (texto) q = q.or(`title.ilike.%${texto}%,notes.ilike.%${texto}%`);
+            return q.order("started_at", { ascending: false });
+        }
+
+        function filaDeSesion(s) {
+            const tr = document.createElement("tr");
+            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+            const tdDate = document.createElement("td"); tdDate.className = "py-2 pr-4 whitespace-nowrap"; tdDate.textContent = fmtDate(s.started_at);
+            const tdStart = document.createElement("td"); tdStart.className = "py-2 pr-4 whitespace-nowrap"; tdStart.textContent = fmtTime(s.started_at);
+            const tdEnd = document.createElement("td"); tdEnd.className = "py-2 pr-4 whitespace-nowrap";
+            tdEnd.textContent = s.ended_at ? fmtTime(s.ended_at) : "En curso";
+            const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4 whitespace-nowrap";
+            tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
+            const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
+            tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
+            const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
+            if (isTeacher) {
+                const delBtn = document.createElement("button");
+                delBtn.type = "button";
+                delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+                delBtn.textContent = "Eliminar";
+                delBtn.addEventListener("click", async () => {
+                    if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
+                    const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
+                    if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
+                    refreshSessionStatus();
+                    cargarSesiones();
+                });
+                tdActions.appendChild(delBtn);
+            }
+            tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes, tdActions);
+            return tr;
+        }
+
+        function avisoSesiones(texto) {
+            const caja = document.getElementById("sessions-log");
+            caja.innerHTML = "";
+            const p = document.createElement("p");
+            p.className = "py-4 text-sm text-brand-450 dark:text-brand-350";
+            p.textContent = texto;
+            caja.appendChild(p);
+        }
+
+        // Se repinta la lista entera desde lo que se lleva cargado, en vez de ir
+        // pegando filas: así un mes partido entre dos páginas queda en un solo
+        // bloque y su encabezado cuenta bien. Qué mes está abierto vive en
+        // `sesionesMeses`, o al repintar se cerrarían todos.
+        function pintarSesiones() {
+            const caja = document.getElementById("sessions-log");
+            caja.innerHTML = "";
+            const meses = new Map();
+            sesionesCargadas.forEach((s) => {
+                const k = claveMes(s.started_at);
+                if (!meses.has(k)) meses.set(k, []);
+                meses.get(k).push(s);
+            });
+            let primero = true;
+            meses.forEach((filas, k) => {
+                const det = document.createElement("details");
+                det.className = "border border-brand-100 dark:border-brand-800 rounded-xl overflow-hidden";
+                // El mes más reciente abierto y los de atrás cerrados: eso es
+                // lo que hace que 100 clases se puedan mirar. Salvo que quien
+                // mira haya dicho otra cosa.
+                det.open = sesionesMeses.has(k) ? sesionesMeses.get(k) : primero;
+                det.addEventListener("toggle", () => sesionesMeses.set(k, det.open));
+                primero = false;
+
+                const sum = document.createElement("summary");
+                sum.className = "cursor-pointer select-none px-4 py-3 bg-brand-50 dark:bg-brand-800/50 text-sm font-semibold text-brand-800 dark:text-white flex items-center justify-between gap-3";
+                const nombre = document.createElement("span");
+                nombre.textContent = nombreMes(filas[0].started_at);
+                const cuenta = document.createElement("span");
+                const minutos = filas.reduce((a, s) => a + (s.ended_at
+                    ? Math.max(0, Math.round((new Date(s.ended_at) - new Date(s.started_at)) / 60000)) : 0), 0);
+                cuenta.className = "text-xs font-normal text-brand-450 dark:text-brand-350";
+                cuenta.textContent = filas.length + (filas.length === 1 ? " clase" : " clases")
+                    + (minutos ? " · " + fmtMinutos(minutos) : "");
+                sum.append(nombre, cuenta);
+
+                const envoltura = document.createElement("div");
+                envoltura.className = "overflow-x-auto px-4 pb-3";
+                const tabla = document.createElement("table");
+                tabla.className = "w-full text-sm";
+                tabla.innerHTML = '<caption class="sr-only">Clases de ' + nombreMes(filas[0].started_at) + '</caption>'
+                    + '<thead><tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Fecha</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Inicio</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Cierre</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Duración</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Notas</th>'
+                    + '<th scope="col" class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>'
+                    + '</tr></thead>';
+                const tbody = document.createElement("tbody");
+                filas.forEach((s) => tbody.appendChild(filaDeSesion(s)));
+                tabla.appendChild(tbody);
+                envoltura.appendChild(tabla);
+                det.append(sum, envoltura);
+                caja.appendChild(det);
             });
         }
+
+        function pintarResumenSesiones(error) {
+            const resumen = document.getElementById("sessions-log-summary");
+            const masBtn = document.getElementById("sessions-more");
+            if (error) {
+                // Se DICE que falló, en vez de dejar el hueco de "no hay clases":
+                // un registro vacío por un error de red se lee como un registro
+                // vacío de verdad.
+                resumen.textContent = "No se pudo cargar el registro: " + error;
+                masBtn.hidden = true;
+                return;
+            }
+            const hayFiltro = !!limpiarBusqueda(sesionesBusqueda) || sesionesPeriodo !== 0;
+            resumen.textContent = sesionesTotal === 0
+                ? (hayFiltro ? "Ninguna clase coincide con el filtro." : "Todavía no hay clases registradas.")
+                : "Mostrando " + sesionesCargadas.length + " de " + sesionesTotal
+                  + (sesionesTotal === 1 ? " clase" : " clases") + (hayFiltro ? " en el filtro elegido." : ".");
+            masBtn.hidden = sesionesCargadas.length >= sesionesTotal;
+        }
+
+        async function cargarSesiones({ mas = false } = {}) {
+            const masBtn = document.getElementById("sessions-more");
+            if (!boardOwnerId) {
+                sesionesCargadas = []; sesionesTotal = 0;
+                avisoSesiones("Todavía no hay clases registradas.");
+                masBtn.hidden = true;
+                document.getElementById("sessions-log-summary").textContent = "Todavía no hay clases registradas.";
+                return;
+            }
+            const marca = ++sesionesPeticion;
+            const desde = mas ? sesionesCargadas.length : 0;
+            masBtn.disabled = true;
+            const { data, error, count } = await consultaSesiones().range(desde, desde + SESIONES_POR_PAGINA - 1);
+            masBtn.disabled = false;
+            // Llegó tarde: mientras tanto se escribió otra búsqueda. Pintarla
+            // ahora dejaría en pantalla el resultado de un filtro que ya no está.
+            if (marca !== sesionesPeticion) return;
+            if (error) {
+                sesionesCargadas = []; sesionesTotal = 0;
+                avisoSesiones("No se pudo cargar el registro de clases.");
+                pintarResumenSesiones(error.message);
+                return;
+            }
+            sesionesCargadas = mas ? sesionesCargadas.concat(data || []) : (data || []);
+            sesionesTotal = typeof count === "number" ? count : sesionesCargadas.length;
+            if (!sesionesCargadas.length) {
+                avisoSesiones(limpiarBusqueda(sesionesBusqueda) || sesionesPeriodo
+                    ? "Ninguna clase coincide con el filtro. Prueba con otro periodo."
+                    : "Todavía no hay clases registradas.");
+            } else {
+                pintarSesiones();
+            }
+            pintarResumenSesiones(null);
+        }
+
+        // Los filtros: el texto con un respiro de 300 ms para no pedirle a la
+        // base una consulta por tecla.
+        let sesionesTimer = null;
+        document.getElementById("sessions-search").addEventListener("input", (e) => {
+            sesionesBusqueda = e.target.value;
+            clearTimeout(sesionesTimer);
+            sesionesTimer = setTimeout(() => cargarSesiones(), 300);
+        });
+        document.getElementById("sessions-period").addEventListener("change", (e) => {
+            sesionesPeriodo = Number(e.target.value) || 0;
+            cargarSesiones();
+        });
+        document.getElementById("sessions-more").addEventListener("click", () => cargarSesiones({ mas: true }));
+
 
         document.getElementById("start-session-btn").addEventListener("click", async () => {
             const btn = document.getElementById("start-session-btn");
@@ -484,7 +712,7 @@
             if (error) { alert("No se pudo iniciar la clase: " + error.message); return; }
             document.getElementById("new-session-title").value = "";
             await refreshSessionStatus();
-            await refreshSessionsLog();
+            await cargarSesiones();
         });
 
         document.getElementById("close-session-btn").addEventListener("click", async () => {
@@ -497,7 +725,7 @@
             if (error) { alert("No se pudo cerrar la clase: " + error.message); return; }
             document.getElementById("close-session-notes").value = "";
             await refreshSessionStatus();
-            await refreshSessionsLog();
+            await cargarSesiones();
         });
 
         function subscribeSessions() {
@@ -505,7 +733,7 @@
             sb.channel("class_sessions_panel:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, () => {
                     refreshSessionStatus();
-                    refreshSessionsLog();
+                    cargarSesiones();
                 })
                 .subscribe();
         }
@@ -581,15 +809,15 @@
             // Herramientas del equipo docente: no se le muestran al alumnado
             // (y la propia página vuelve a comprobar el perfil).
             if (isTeacher || profile.is_admin) {
-                /* Va en Aprender y no en Herramientas, justo detrás del diagnóstico:
-                   las dos son pruebas que ubican el nivel de quien las hace. En
-                   Herramientas quedaba entre el lector de planilla y la caja de
-                   partidas, que son otra cosa. Se inserta después del diagnóstico
-                   buscándolo por su destino, no por su posición. */
-                const aprender = TILE_GROUPS.find((g) => g.title === "Aprender");
-                const donde = aprender.tiles.findIndex((t) => t.href === "entreno/diagnostico.html");
-                aprender.tiles.splice(donde + 1, 0,
-                    { emoji: "⚖️", label: "Examen de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
+                /* Va en Evaluaciones, a la par del diagnóstico de jugadores:
+                   las dos son pruebas que ubican el nivel de quien las hace.
+                   Se inserta detrás del diagnóstico buscándolo por su destino,
+                   no por su posición, para que reordenar el grupo no lo mande
+                   a otro lado. */
+                const evaluaciones = TILE_GROUPS.find((g) => g.title === "Evaluaciones");
+                const donde = evaluaciones.tiles.findIndex((t) => t.href === "entreno/diagnostico.html");
+                evaluaciones.tiles.splice(donde + 1, 0,
+                    { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
                 );
             }
 
@@ -604,10 +832,14 @@
                 // La misma página, pero quien no coordina solo ve lo suyo.
                 // No se le pone a quien coordina para no repetir el destino.
                 TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
-                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html" }
+                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html", mantenimientoAlumno: true }
                 );
             }
 
+            // Después de armar la lista y antes de pintarla: apaga para el
+            // alumnado lo que está en mantenimiento, sin tocar lo del equipo
+            // docente.
+            apagarEnMantenimiento();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
             // se vuelve a guardar sola; si no, el aparato deja de recibir sin
@@ -616,7 +848,7 @@
             // Partida asignada por el profesor: aviso en el panel y traslado automático al tablero.
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
             await refreshSessionStatus();
-            await refreshSessionsLog();
+            await cargarSesiones();
             await loadEntrenoProgress();
             await loadTacticsRecord();
             subscribeSessions();
