@@ -133,8 +133,24 @@ locs = re.findall(r"<loc>([^<]+)</loc>", mapa)
 esperadas = sorted((SITIO + "/") if f == "index.html" else (SITIO + "/" + f) for f in publicas)
 check(sorted(locs) == esperadas,
       f"el sitemap lista exactamente las páginas públicas ({len(locs)} contra {len(esperadas)})")
-check(not [u for u in locs if "/cursos/protegido/" in u or "/entreno/" in u or "/cursos/academia/" in u],
+# El diagnóstico de nivel es la excepción de /entreno/: se hace sin cuenta y es
+# la puerta de entrada al sitio, así que sí va en el sitemap.
+DIAGNOSTICO = SITIO + "/entreno/diagnostico.html"
+check(not [u for u in locs
+           if ("/cursos/protegido/" in u or "/cursos/academia/" in u
+               or ("/entreno/" in u and u != DIAGNOSTICO))],
       "el sitemap no incluye contenido protegido ni el espejo de Academia")
+
+# Las dos mitades del filtro tienen que decir lo mismo: si robots.txt lo sigue
+# tapando, quitarle el noindex a la página no sirve de nada y nadie se entera —
+# la página se indexa igual de poco, sin ningún error a la vista.
+check(DIAGNOSTICO in locs, "el diagnóstico de nivel está en el sitemap")
+check("Allow: /entreno/diagnostico.html" in robots,
+      "robots.txt deja pasar el diagnóstico de nivel")
+check(robots.index("Allow: /entreno/diagnostico.html") < robots.index("Disallow: /entreno/"),
+      "ese Allow va antes del Disallow de /entreno/")
+check('name="robots"' not in leer("entreno/diagnostico.html"),
+      "el diagnóstico de nivel ya no lleva noindex")
 check(all(re.match(r"20\d\d-\d\d-\d\d$", d) for d in re.findall(r"<lastmod>([^<]+)</lastmod>", mapa)),
       "todas las fechas del sitemap tienen forma válida")
 

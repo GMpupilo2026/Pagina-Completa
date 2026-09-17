@@ -15,6 +15,12 @@ Disallow: /cursos/protegido/
 # eso los PDF van además con marca de agua y protegidos.
 Disallow: /cursos/recursos/
 Disallow: /cursos/academia/
+# El entrenamiento pide sesión, salvo el diagnóstico de nivel: ese se hace sin
+# cuenta y es la puerta de entrada al sitio, así que tiene que poder indexarse.
+# El Allow va ANTES y es más específico, que es como se desempata: sin esta
+# línea, quitarle el noindex a la página no habría servido de nada — Google ni
+# siquiera llegaría a leerlo.
+Allow: /entreno/diagnostico.html
 Disallow: /entreno/
 Disallow: /admin.html
 Disallow: /arbitraje.html
