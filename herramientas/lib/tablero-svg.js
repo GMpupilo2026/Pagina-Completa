@@ -18,12 +18,16 @@ const path = require("path");
 
 const RAIZ = path.join(__dirname, "..", "..");
 
-// Las piezas se sacan del mismo sitio que las usa el visor de finales, para no
-// tener dos copias de los mismos dibujos que se puedan ir separando.
-const FUENTE_PIEZAS = path.join(RAIZ, "js", "finales-100.js");
+// Las piezas se sacan del mismo archivo que usan los tableros del sitio, para
+// no tener dos copias de los mismos dibujos que se puedan ir separando.
+// Vivían dentro de js/finales-100.js y se mudaron a js/chess-piece-svg.js;
+// este archivo se quedó apuntando al viejo y los dos generadores que dependen
+// de él —las tarjetas de cursos.html y el material de estudio— morían al
+// arrancar. No daba error en el sitio: solo al regenerar.
+const FUENTE_PIEZAS = path.join(RAIZ, "js", "chess-piece-svg.js");
 const bruto = fs.readFileSync(FUENTE_PIEZAS, "utf8");
 const m = bruto.match(/const PIECE_DEFS = ("(?:[^"\\]|\\.)*");/);
-if (!m) { console.error("No se encontraron las piezas en js/finales-100.js"); process.exit(1); }
+if (!m) { console.error("No se encontraron las piezas en js/chess-piece-svg.js"); process.exit(1); }
 const PIEZAS = JSON.parse(m[1]);
 
 function defsDe(usadas) {

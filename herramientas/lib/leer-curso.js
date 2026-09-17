@@ -70,7 +70,6 @@ function lecciones(slug) {
       titulo: conNumero ? conNumero[2] : tituloCrudo,
       texto,
       tarea: tarea ? tarea.replace(/^practica\s*:\s*/i, "") : null,
-      video: enlaces.find((h) => /youtube|youtu\.be|vimeo/.test(h)) || null,
       pptx: enlaces.find((h) => h.endsWith(".pptx")) || null,
       pdf: enlaces.find((h) => h.endsWith(".pdf")) || null,
       idxDetalle: i,

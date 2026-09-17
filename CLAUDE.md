@@ -221,7 +221,29 @@ encabezado, y que el summary siga abriendo), qué material se ofrece en cada mod
 que la posición escrita esté pegada al cuadro de comandos y **se vea de verdad**
 en Modo Adaptado (se mide el `position` que calcula el navegador, no la clase), y
 que no quede ningún plural inventado ni en los generadores ni en los archivos ya
-generados.
+generados, que ningún fragmento de curso vuelva a traer un enlace de video y que
+ninguna página de curso de la Academia vuelva a repetir el temario.
+
+### Los cursos ya no ofrecen video, y dentro de la plataforma no repiten el temario
+
+Dos cosas que se quitaron de los cursos, por razones distintas:
+
+- **Los 86 enlaces a video, fuera.** Vivían en seis de los diez fragmentos de
+  `cursos/protegido/`, apuntando a YouTube. Con ellos se fueron las frases que
+  los prometían —"Video, ejercicios interactivos…", "con su video explicativo",
+  "lecciones en video"— en `cursos.html`, en las diez portadas públicas y en las
+  diez páginas de la Academia: una promesa que la lección ya no cumple es peor
+  que no hacerla. Lo que **no** se tocó es `tv.html`, que es la TV en vivo y no
+  tiene nada que ver, ni las frases de la portada que contrastan las clases en
+  vivo con "videos grabados", que siguen siendo ciertas. El campo `video` de
+  `herramientas/lib/leer-curso.js` se fue también: no lo leía nadie y sugería
+  que aún los hay.
+- **El temario introductorio de `cursos/academia/*.html`, fuera.** Ahí abajo
+  viene el contenido completo, lección por lección: el índice de arriba decía lo
+  mismo dos veces. Y para quien salta de encabezado en encabezado no era solo
+  repetición — había que recorrer el índice entero antes de llegar a la primera
+  lección de verdad. **Las portadas públicas de `cursos/` lo conservan**: ahí el
+  temario es lo único que hay, y es lo que se mira antes de inscribirse.
 
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
@@ -873,6 +895,16 @@ en d3"), con la línea escrita y la FEN por si se quiere cargar en un programa,
 así que no hace falta ver ninguna imagen — y no hay ninguna: el verificador
 falla si aparece un `<img>`.
 
+**Lleva de vuelta al curso, arriba y en el pie.** El material se abre en su
+propia pestaña desde la lección, y sin esos enlaces quedaba en un callejón sin
+salida: no tiene el encabezado del sitio ni el menú, así que lo único que
+quedaba era el botón "atrás" del navegador, que con lector de pantalla no
+siempre está a mano. Arriba va como región de navegación con su nombre; abajo,
+dentro del pie, como párrafo — dos `<nav>` con el mismo nombre se anuncian como
+dos regiones iguales y no se sabe cuál es cuál. Va en los dos extremos porque el
+documento es largo: quien termina de leerlo no tendría que subir de nuevo para
+salir.
+
 ### De dónde sale el contenido (y por qué importa)
 
 Nada de esto se inventa, y esa es la regla:
@@ -934,6 +966,12 @@ texto, no en esa lista.
     node herramientas/curso-material-generar.js      # los 372 archivos, ~2 min
     node herramientas/curso-material-enlazar.js      # pone los enlaces
 
+**`--solo-accesible` rehace únicamente los 186 HTML** y no toca ningún PDF (ni
+necesita playwright ni pypdf). El cuadernillo sale distinto byte por byte en
+cada corrida —lleva la fecha adentro—, así que retocar una línea del HTML no
+tiene por qué mover 186 archivos binarios. Sin esa puerta, la tentación es
+editar los HTML a mano y que el generador y lo generado se vayan separando.
+
 El enlazador **se puede correr todas las veces que se quiera**: reconoce lo que
 puso una corrida anterior por las marcas `<!-- material: inicio -->` y lo
 reemplaza en vez de duplicarlo. Eso importa porque el nombre del archivo sale
@@ -942,7 +980,11 @@ viejo apuntando a un archivo que ya no existe.
 
 `herramientas/lib/tablero-svg.js` dibuja los diagramas y lo comparten este
 generador y el de las tarjetas de `cursos.html`: una segunda copia de los mismos
-dibujos se iría separando de la primera a la primera corrección.
+dibujos se iría separando de la primera a la primera corrección. **Lee las
+piezas de `js/chess-piece-svg.js`**, que es donde viven hoy; estuvieron dentro
+de `js/finales-100.js` y al mudarse nadie tocó esta línea, así que los dos
+generadores morían al arrancar con "No se encontraron las piezas". No se notó
+en meses porque no rompe el sitio: solo rompe regenerar.
 
 **Al tocar cualquiera de estas piezas, correr
 `python3 herramientas/verificar-material.py`** (necesita `pypdf`). Comprueba

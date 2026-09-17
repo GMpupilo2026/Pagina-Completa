@@ -1,7 +1,7 @@
 /* Comprueba que los cursos de Academia se puedan recorrer con lector de pantalla
    (js/curso-adaptado.js) y qué cambia el Modo Adaptado.
 
-   Cuatro peligros, y ninguno da error en pantalla:
+   Cinco peligros, y ninguno da error en pantalla:
 
    1. LOS ENCABEZADOS. El título de cada lección era un <summary> —que se anuncia
       como botón, no como encabezado— y los bloques eran <h4> colgando de un
@@ -19,7 +19,11 @@
       se escribe la jugada, y verse en Modo Adaptado. Se mide el `position` que
       calcula el navegador, no la clase: una clase puesta no garantiza nada.
 
-   4. LOS PLURALES. "alfils" y "peónes" no son palabras: el lector de pantalla
+   4. LOS VIDEOS. Las lecciones ya no ofrecen ninguno. Un enlace que vuelva a
+      colarse en un fragmento no falla: simplemente reaparece en la lección, y
+      con él la promesa de un video que no está.
+
+   5. LOS PLURALES. "alfils" y "peónes" no son palabras: el lector de pantalla
       las dice tal cual. Estuvieron así en 61 materiales accesibles y en el libro
       del diagnóstico, que es justo lo único que esas personas pueden leer. Se
       revisa el texto que sale de los tres describir/describe del sitio.
@@ -151,17 +155,47 @@ async function pruebaMaterial(browser) {
       igual("adaptado · la presentación tampoco", m.cuenta.presentacion || 0, "0");
       if ((m.cuenta.accesible || 0) < 5) mal("adaptado: se quedó sin el material accesible (" + (m.cuenta.accesible || 0) + ")");
       else bien("adaptado · sí queda el material accesible: " + m.cuenta.accesible);
-      // El video es audio: eso sí se oye, así que se queda.
-      if (!m.cuenta.video) mal("adaptado: se escondió también el video, que es audio y sí sirve");
-      else bien("adaptado · el video se queda (" + m.cuenta.video + "): un video es audio");
       igual("adaptado · y se explica por qué falta el resto", m.aviso, "true");
     } else {
       if (!m.cuenta.pdf) mal("en modo normal desapareció el PDF, y ahí tiene que estar");
       else bien("normal · el PDF sigue ahí: " + m.cuenta.pdf);
       igual("normal · y el aviso del modo adaptado no estorba", m.aviso, "false");
     }
+    // Los cursos ya no ofrecen video. No es cosa del Modo Adaptado: no hay
+    // ninguno en ninguno de los dos modos.
+    igual((adaptado ? "adaptado" : "normal") + " · ya no se ofrece ningún video", m.cuenta.video || 0, "0");
     await ctx.close();
   }
+}
+
+/* Y el barrido: el navegador solo mira un curso, pero los enlaces de video
+   estaban en seis de los diez fragmentos. Uno que vuelva a colarse no daría
+   ningún error — simplemente aparecería otra vez en la lección. */
+function pruebaSinVideos() {
+  console.log("\n=== Ningún curso ofrece video ===");
+  const dir = path.join(RAIZ, "cursos", "protegido");
+  let sueltos = 0;
+  fs.readdirSync(dir).filter((n) => n.endsWith(".html")).forEach((n) => {
+    const s = fs.readFileSync(path.join(dir, n), "utf8");
+    const m = s.match(/youtube\.com|youtu\.be|🎥/g);
+    if (m) { mal("cursos/protegido/" + n + " volvió a traer video (" + m.length + ")"); sueltos += m.length; }
+  });
+  if (!sueltos) bien("ninguno de los fragmentos de curso trae enlace de video");
+}
+
+/* Dentro de la plataforma, el temario introductorio sobraba: la lista completa
+   de lecciones viene justo debajo, con su contenido. Repetida, quien salta de
+   encabezado en encabezado recorre dos veces el mismo índice antes de llegar a
+   la primera lección. */
+function pruebaSinTemarioDuplicado() {
+  console.log("\n=== En la plataforma, el temario no se repite ===");
+  const dir = path.join(RAIZ, "cursos", "academia");
+  let repes = 0;
+  fs.readdirSync(dir).filter((n) => n.endsWith(".html") && n !== "index.html").forEach((n) => {
+    const s = fs.readFileSync(path.join(dir, n), "utf8");
+    if (/>Temario del curso</.test(s)) { mal("cursos/academia/" + n + " volvió a traer el temario introductorio"); repes += 1; }
+  });
+  if (!repes) bien("ninguna página de curso de la Academia repite el temario");
 }
 
 /* ============ 3. La posición escrita, junto al cuadro de comandos ============ */
@@ -256,6 +290,8 @@ async function pruebaPluralesEnPantalla(browser) {
 
 (async () => {
   pruebaPlurales();
+  pruebaSinVideos();
+  pruebaSinTemarioDuplicado();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaEncabezados(browser);

@@ -15,6 +15,8 @@ De una corrida:
   - que lleve a Oscar Angulo Cubero como autor en los datos del archivo Y en
     el texto, la sección de fuentes, el aviso de uso y la marca de agua en
     TODAS las páginas;
+  - que la versión accesible lleve de vuelta al curso y al panel de Academia
+    (se abre en su propia pestaña: sin eso queda en un callejón sin salida);
   - que la versión accesible no dependa de ninguna imagen, tenga los
     encabezados en orden y describa cada posición en palabras.
 
@@ -175,6 +177,18 @@ for slug in CURSOS:
         for antes, despues in zip(niveles, niveles[1:]):
             if despues > antes + 1:
                 mal(donde, f"la versión accesible salta de h{antes} a h{despues}")
+        # El camino de vuelta. El material se abre en su propia pestaña desde la
+        # lección: sin estos enlaces queda en un callejón sin salida, y eso no
+        # da ningún error — solo se nota al querer volver y no poder.
+        vuelta = f'href="../../academia/{slug}.html"'
+        if acc.count(vuelta) < 2:
+            mal(donde, "la versión accesible no lleva de vuelta al curso (arriba y en el pie)")
+        if acc.count('href="../../../clases.html"') < 2:
+            mal(donde, "la versión accesible no lleva de vuelta al panel de Academia")
+        for destino in (os.path.join(RAIZ, "cursos", "academia", f"{slug}.html"),
+                        os.path.join(RAIZ, "clases.html")):
+            if not os.path.exists(destino):
+                mal(donde, f"el enlace de vuelta apunta a {os.path.basename(destino)}, que no existe")
         # Si el cuadernillo trae diagrama, la versión accesible tiene que decirlo
         # en palabras: sin eso, quien la usa se queda sin el ejemplo.
         if "Ejemplos del curso" in texto:
