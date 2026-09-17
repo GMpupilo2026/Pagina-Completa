@@ -960,6 +960,21 @@ por si en ese momento le venía mal. Quien lo dejó pasar sin tocar nada tampoco
 vuelve a ver — no contestar también es una respuesta. Al instalarse se borra todo,
 por si algún día la desinstala.
 
+**Y durante meses nada de eso se cumplió, porque el cartel no se escondía.** El
+atributo `hidden` y la clase `flex` de Tailwind tienen la MISMA especificidad
+(`[hidden]:where(:not([hidden=until-found]))` vale 0,1,0 — `:where` no suma
+nada), y la utilidad va después en la hoja: gana `.flex`. El cartel lleva las
+dos cosas, así que salía en cada carga y "Ahora no" no lo hacía desaparecer. Lo
+arregla una línea en `css/styles.css` — `[hidden] { display: none !important; }`
+—, que va ahí y no en la página porque el atributo tiene que significar lo mismo
+en todo el sitio.
+
+**Y no daba ningún error, ni siquiera en la comprobación**: `verificar-pwa.js`
+preguntaba por `elemento.hidden`, la propiedad, que sí estaba puesta. Daba verde
+sobre una página rota. Ahora pregunta por `getComputedStyle(...).display`, que
+es lo que ve quien entra. **Al comprobar que algo se esconde, mirar la pantalla,
+nunca el atributo.**
+
 **Al tocar cualquiera de estas piezas, correr `node
 herramientas/verificar-pwa.js`** (con el sitio en localhost:8777 y playwright).
 Comprueba el manifest, que los iconos midan lo que prometen, que las 77 páginas
@@ -1724,6 +1739,71 @@ quedarse sin saltos; 64 es el recorrido completo.
 - No escribe en `training_progress` —esa tabla tiene el CHECK de actividades y
   el juego no es una de ellas—; el tiempo sí se registra con
   `js/tiempo-plataforma.js data-activity="confites"`, que no tiene CHECK.
+
+## El panel de la Academia
+
+`clases.html` es por donde entra todo el mundo. Sus accesos viven en
+`TILE_GROUPS`, un solo lugar: mover un acceso de grupo es cambiarle el objeto de
+lista, y el resto se acomoda solo.
+
+- **"Sesión en vivo" va sola y de primera**, en su propio grupo ("Clase en
+  vivo") y con `destacado: true`, que la pinta ancha y en una línea. Es lo único
+  del panel que pasa AHORA MISMO; mezclada entre Juegos y Torneos había que
+  buscarla justo cuando hay clase. Un grupo de un solo acceso pintado con la
+  grilla de cuatro columnas sería un cuadrito perdido a la izquierda, que es
+  peor que no destacarlo.
+- **"Evaluaciones" es un grupo aparte de "Aprender"**: lo que MIDE el nivel de
+  quien lo hace no es lo mismo que lo que lo enseña. Ahí viven el diagnóstico de
+  jugadores y el de arbitraje (este último solo para el equipo docente, como
+  siempre), y ahí va a vivir "Exámenes" cuando exista.
+- **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
+  `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
+  promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
+  ("En mantenimiento", "Próximamente") en la propia tarjeta — un cuadro gris sin
+  explicación se lee como una página rota.
+- **Lo de mantenimiento se apaga SOLO para el alumnado**, en
+  `apagarEnMantenimiento()`, sobre la lista ya armada y en un solo lugar. Se
+  marca con `mantenimientoAlumno: true` en el tile, así que volver a prender un
+  acceso es borrar esa palabra. Como todo filtro del sitio esto decide qué se
+  PINTA: la dirección sigue existiendo y quien la conozca entra igual.
+
+### El registro de clases no se baja entero
+
+Es la misma piedra de `informes.html`: con 100 clases, bajarlas todas y
+pintarlas de corrido no sirve de nada —no se encuentra ninguna— y a partir de
+cierta cantidad de filas **PostgREST corta la respuesta sin dar ningún error**.
+Así que el filtro y el corte los hace la base y la página solo pinta:
+
+- el periodo, con un `gte` sobre `started_at` (30 días, 3 meses, un año, todas);
+- la búsqueda por título o notas, con un `or(...ilike...)`;
+- la página, con un `range()` de 20 y un "Ver más clases";
+- y la cuenta total con `count: "exact"`, que es lo que permite decir "Mostrando
+  20 de 143" sin haber traído 143 filas.
+- **El texto de búsqueda se limpia antes de mandarlo**: PostgREST arma el
+  `or=(...)` con comas y paréntesis, así que un título con una coma rompería la
+  consulta entera.
+- Cada consulta lleva su marca (`sesionesPeticion`): una respuesta que llega
+  tarde, después de que se escribió otra búsqueda, se descarta en vez de pintar
+  el resultado de un filtro que ya no está.
+
+Se muestra **agrupado por mes**, con el más reciente abierto y los de atrás
+cerrados, y el encabezado de cada mes dice cuántas clases y cuántas horas. Eso
+es lo que hace que un año de clases se pueda mirar. Qué mes quedó abierto vive
+en `sesionesMeses`, o repintar los cerraría todos. Y la lista se repinta entera
+desde lo que se lleva cargado, en vez de ir pegando filas: así un mes partido
+entre dos páginas queda en un solo bloque y su encabezado cuenta bien.
+
+**Al tocar el panel, correr `node herramientas/verificar-panel.js`** (con el
+sitio en localhost:8777 y playwright). Existe porque `clases.html` está detrás
+del login: `verificar-css.js` abre las páginas sin cuenta, así que nada de esto
+lo ve nunca. Comprueba en un navegador de verdad los grupos y su orden con las
+tres caras (alumna, profesora, administración), que lo apagado esté apagado para
+quien tiene que estarlo y abierto para los demás, que el registro mande a la
+base un `gte`, un `ilike` y un `range` de 20 —su Supabase de mentira anota cada
+consulta, así que si algún día alguien vuelve a bajarse la tabla entera se
+nota— y **que la página se vea**: que el cartel de instalar arranque invisible
+de verdad, que no haya CSS impreso como texto y que con el tema en oscuro el
+fondo salga oscuro.
 
 ## Coordenadas en los tableros
 
