@@ -6,3 +6,7 @@ entreno/data/temas_fuente.json
 node_modules/
 package.json
 package-lock.json
+
+# Lo que deja Python al importar un módulo de al lado (herramientas/, entreno/data/).
+__pycache__/
+*.pyc

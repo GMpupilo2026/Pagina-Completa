@@ -1068,6 +1068,71 @@ celular.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
   volver.
 
+## El hub de Entrenamiento y sus tres grupos
+
+`entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,
+Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar)
+y **Entreno** (Aperturas y celadas, 4×4).
+
+- **Cada acceso es un encabezado de verdad (`<h3>`), no un `<span>`**, y eso es
+  el punto, no un detalle de maqueta: quien usa lector de pantalla se mueve
+  saltando de encabezado en encabezado. Con el nombre metido en un `<span>`
+  había que tabular por los ocho enlaces para llegar al último; con un `<h3>`
+  por acceso dentro del `<h2>` de su grupo, Entrenamiento se recorre entero de
+  un salto por tarjeta. Los niveles van `h1 → h2 → h3` **sin saltarse
+  ninguno**.
+- **Un solo enlace por tarjeta**, con el título como enlace y su `::after`
+  estirando el área de clic sobre toda la tarjeta — el mismo patrón de
+  `cursos.html`. Con dos enlaces al mismo destino, el lector de pantalla lo
+  anuncia dos veces.
+
+### La táctica se mudó dentro de Ejercicios por tema
+
+`entreno/tactica.html` era una segunda página resolviendo exactamente lo mismo
+que `entreno/temas.html`: su propio tablero, su propia racha y su propia lista
+de resueltos. El mismo ejercicio se podía resolver en las dos y contaba dos
+veces. Ahora sus 148 ejercicios son **un grupo más del selector de temas**
+("Táctica de ataque", con sus cinco categorías), y `tactica.html` solo manda a
+`temas.html` — la dirección está en favoritos de quien la usaba y un 404 no le
+dice a nadie a dónde ir.
+
+- **El traslado lo hace `entreno/data/sumar_tactica.py`, no una edición a mano
+  de `temas.json`.** Ese archivo lo GENERA `construir_temas.py` desde Supabase,
+  así que un grupo escrito a mano se perdería en la siguiente corrida sin que
+  nada fallara. Por eso `construir_temas.py` llama a `sumar()` al final: una
+  sola implementación, dos puertas de entrada. Se puede correr todas las veces
+  que se quiera (si el grupo ya está, lo reemplaza).
+- **Estos ejercicios no traen `rating`**: son de la casa, no de Lichess. La
+  página tiene que aguantar que falte, y no lo hacía — escribía "Dificultad
+  undefined" debajo de cada tablero, que no da ningún error, solo se ve mal.
+- **Lo que ya llevaba resuelto cada quien se hereda.** `heredarTactica()` funde
+  `entreno_tactica_solved` dentro de `entreno_temas_solved` al cargar. Los ids
+  no se pisan (los de táctica son texto, `ultima-linea-001`; los de Lichess son
+  números) y como se unen y no se reemplazan, correrlo mil veces da lo mismo.
+  Va **después** de `ProgresoUsuario.init()`, o sea sobre la lista ya bajada de
+  la cuenta.
+- **Informes sigue contando Táctica aparte.** Si todo se apuntara como `temas`,
+  esa columna se habría quedado congelada en el número del día de la mudanza —
+  y eso no da ningún error: el profesor ve un número que ya no sube y no sabe
+  por qué. Así que `EntrenoProgress.log()` elige la actividad según el tema.
+  **Qué temas son de táctica sale del propio `temas.json`** (`temasDeTactica()`
+  lee el grupo), no de una lista copiada en la página: con la lista a mano,
+  agregarle una categoría al grupo la dejaría contando como "temas" sin que
+  nada fallara.
+- `GROUP_ICON` de `temas.html` necesita una entrada por grupo: sin ella el
+  grupo nuevo se pinta con un punto pelado.
+
+**Al tocar el hub, `temas.html` o el traslado, correr `node
+herramientas/verificar-entreno.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Cuenta los 148 ejercicios uno por
+uno contra `tactica.json` —uno que se pierda por el camino no da ningún error,
+el grupo simplemente tiene menos— y comprueba con chess.js que cada solución
+siga siendo jugable y que el mate prometido sea mate. Después, en un navegador:
+los tres grupos con lo suyo, que cada acceso sea un encabezado, que no se salte
+ningún nivel, que el clic en la esquina de la tarjeta siga abriendo su enlace,
+que `tactica.html` redirija, que el progreso se herede y que un ejercicio de
+táctica se apunte como `tactica`.
+
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
 `entreno/aperturas.html` es un banco de 37 líneas —12 celadas y 25 aperturas—
@@ -1912,8 +1977,9 @@ toda la razón de que esta página esté armada distinto al resto del sitio.
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
 fila de abajo y el número de fila en la columna izquierda, dentro de las casillas
 del borde (no cambia la maqueta). Está en todos los tableros de ejercicios:
-Aprende, 4×4, Mates, Táctica, Ejercicios por tema, Practicar, Desafíos, el
-diagnóstico, Concentración, Racha táctica y ¡Te reto!
+Aprende, 4×4, Mates, Ejercicios por tema (incluida la táctica, que se mudó ahí
+dentro), Practicar, Desafíos, el diagnóstico, Concentración, Racha táctica y
+¡Te reto!
 
 - Se llama una vez por página: `Coordenadas.aplicar(document.getElementById('board'))`.
   Un observador repinta las etiquetas cada vez que la página redibuja el tablero.

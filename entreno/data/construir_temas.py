@@ -142,6 +142,13 @@ for g in GROUPS:
 
 out = {'source': 'Base abierta de ejercicios de Lichess (CC0), tabla "Ejercicios Lichess" de Supabase',
        'groups': groups, 'themes': themes, 'puzzles': puzzles}
+
+# Y los 148 de táctica, que son de la casa y no de Lichess. Va acá y no aparte
+# para que rehacer temas.json NO se los coma: eran una página suya y ahora son
+# un grupo más del selector de temas.
+from sumar_tactica import sumar  # noqa: E402  (vive al lado, en esta misma carpeta)
+out = sumar(out, json.loads((HERE / 'tactica.json').read_text(encoding='utf-8')))
+
 txt = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
 OUT.write_text(txt, encoding='utf-8')
 print(f'descartados al convertir: {bad}')
