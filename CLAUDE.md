@@ -1350,6 +1350,46 @@ guardados se siguen leyendo y calificando con los umbrales de entonces, como los
 de la versión 1: **no se vuelven a etiquetar**, porque se midieron con otra
 prueba.
 
+#### El diagnóstico es una puerta de entrada, así que se puede encontrar
+
+`entreno/diagnostico.html` siempre se pudo hacer **sin cuenta** —quien no tiene
+sesión deja nombre y correo y su resultado va a `diagnosticos_publicos`— pero
+estaba escondido de dos maneras a la vez, y las dos había que quitarlas:
+
+- la página llevaba `<meta name="robots" content="noindex">` y no tenía
+  `canonical`, como todo lo que pide sesión;
+- y **`robots.txt` tapa `/entreno/` entero**, que es lo que de verdad importa:
+  con el `Disallow` puesto, quitarle el `noindex` no habría servido de nada,
+  porque el buscador ni siquiera llega a leer la página. Por eso lleva
+  `Allow: /entreno/diagnostico.html` **antes** del `Disallow`, que es como se
+  desempata (gana la regla más específica).
+
+Las dos mitades tienen que decir lo mismo, y separarlas no daría ningún error:
+la página simplemente seguiría sin aparecer nunca. `verificar-metadatos.py`
+comprueba ahora las cuatro cosas —el `Allow`, su orden, que no quede `noindex` y
+que esté en el sitemap—, y el sitemap lo agrega solo (lo arma leyendo qué
+páginas NO tienen `noindex`, así que solo hubo que volver a correrlo). Es la
+**única** excepción de `/entreno/`; el resto del entrenamiento sigue tapado.
+
+En la portada tiene su propia sección, hermana de la del examen de arbitraje y
+justo antes: antes era una línea de letra chica debajo del hero. **Lo que NO se
+enlaza ahí es `diagnostico-de-nivel.pdf`**: ese cuadernillo trae las respuestas
+y la hoja de corrección, así que su enlace sigue apareciendo solo con perfil de
+profesor o de administración.
+
+#### Dónde vive en el panel de la Academia
+
+En `clases.html` el diagnóstico tiene **tarjeta propia** en el grupo "Aprender".
+Estaba enterrado en Entrenamiento › Aprende › Asignaciones, que son tres clics
+para lo primero que conviene hacer al entrar. El **examen de arbitraje** se mudó
+de "Herramientas" a la par del diagnóstico: las dos son pruebas que ubican el
+nivel de quien las hace, y en Herramientas quedaba entre el lector de planilla y
+la caja de partidas. Se inserta buscando el diagnóstico **por su destino**
+(`t.href`), no por su posición, para que reordenar el grupo no lo mande a otro
+lado. De paso, la ficha de `tv.html` pasó a llamarse **"📺 TV en vivo"**: se
+llamaba "Torneos" igual que la de `torneos.html`, así que el panel tenía dos
+tarjetas con el mismo nombre y destinos distintos.
+
 
 ## Examen de arbitraje (reglamento FIDE)
 

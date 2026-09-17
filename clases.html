@@ -274,11 +274,17 @@
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
                 { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", href: "torneos.html" },
                 { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
-                { emoji: "🏆", label: "Torneos", desc: "Partidas en vivo y tabla de posiciones", href: "tv.html" },
+                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
             { title: "Aprender", tiles: [
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
+                /* El diagnóstico tiene tarjeta propia: estaba enterrado dentro de
+                   Entrenamiento › Aprende › Asignaciones, que es tres clics para
+                   lo primero que conviene hacer al entrar. El examen de arbitraje
+                   va a la par porque es lo mismo para el equipo docente: una
+                   prueba que ubica el nivel, no una herramienta de clase. */
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
             { title: "Herramientas", tiles: [
@@ -575,7 +581,14 @@
             // Herramientas del equipo docente: no se le muestran al alumnado
             // (y la propia página vuelve a comprobar el perfil).
             if (isTeacher || profile.is_admin) {
-                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                /* Va en Aprender y no en Herramientas, justo detrás del diagnóstico:
+                   las dos son pruebas que ubican el nivel de quien las hace. En
+                   Herramientas quedaba entre el lector de planilla y la caja de
+                   partidas, que son otra cosa. Se inserta después del diagnóstico
+                   buscándolo por su destino, no por su posición. */
+                const aprender = TILE_GROUPS.find((g) => g.title === "Aprender");
+                const donde = aprender.tiles.findIndex((t) => t.href === "entreno/diagnostico.html");
+                aprender.tiles.splice(donde + 1, 0,
                     { emoji: "⚖️", label: "Examen de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
                 );
             }
