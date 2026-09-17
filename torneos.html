@@ -212,7 +212,12 @@
                 viewLink.className = "text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-600 transition-colors";
                 viewLink.textContent = "Ver →";
                 actions.appendChild(viewLink);
-                if (!isManager && t.status === "registration") {
+                /* El botón sale para cualquiera, también para el profesor: puede
+                   jugar sus propios torneos. No hace falta preguntar de quién es
+                   cada uno — la RLS de `tournaments` solo devuelve los que creé,
+                   los de mis profesores o, si administro, todos, y en los tres
+                   casos la inscripción está permitida. */
+                if (t.status === "registration") {
                     const btn = document.createElement("button");
                     btn.type = "button";
                     const registrado = myRegistrations.has(t.id);
@@ -255,10 +260,9 @@
             const { data: rows, error } = await sb.from("tournaments").select("*").order("created_at", { ascending: false });
             if (error) { console.error(error); showError("No se pudieron cargar los torneos: " + error.message); return; }
             tournaments = rows || [];
-            if (!isManager) {
-                const { data: regs } = await sb.from("tournament_registrations").select("tournament_id").eq("player_id", profile.id);
-                myRegistrations = new Set((regs || []).map((r) => r.tournament_id));
-            }
+            // También para quien gestiona: el profesor juega sus propios torneos.
+            const { data: regs } = await sb.from("tournament_registrations").select("tournament_id").eq("player_id", profile.id);
+            myRegistrations = new Set((regs || []).map((r) => r.tournament_id));
             renderList();
         }
 

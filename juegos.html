@@ -167,9 +167,13 @@
             <!-- Retos que me llegan: aparecen encima de todo y esperan respuesta -->
             <div id="retos-recibidos" class="space-y-3 mb-6"></div>
 
-            <!-- Vista del alumno: sus partidas asignadas -->
+            <!-- Mis partidas en curso. Va FUERA de las dos vistas a propósito:
+                 desde que el profesor también se sienta a jugar, él necesita la
+                 misma puerta de entrada a su partida que el alumno. -->
+            <div id="my-active-games" class="space-y-3 mb-8"></div>
+
+            <!-- Vista del alumno: el catálogo de modalidades -->
             <div id="student-view" class="hidden">
-                <div id="my-active-games" class="space-y-3 mb-8"></div>
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Modalidades</h2>
                 <div id="variant-grid" class="grid sm:grid-cols-2 gap-4"></div>
             </div>
@@ -350,10 +354,12 @@
             return "Terminada";
         }
 
-        // ---------- Vista del alumno ----------
-        async function renderStudentView() {
-            document.getElementById("student-view").classList.remove("hidden");
-
+        // ---------- Mis partidas en curso ----------
+        /* La usan los DOS, alumno y profesor. Desde que el profesor se sienta a
+           jugar —contra un alumno suyo, o emparejado en su propio torneo—
+           necesita entrar a su partida igual que cualquiera: verla pasar en la
+           lista de supervisión de abajo no es lo mismo que tener el botón. */
+        async function renderMisPartidas() {
             const { data: myRooms } = await sb.from("game_rooms")
                 .select("*")
                 .or("white_id.eq." + profile.id + ",black_id.eq." + profile.id)
@@ -400,13 +406,20 @@
                         '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Juegas con ' + SEAT_LABEL[mySeat] + ' — toca para continuar →</p>';
                     activeEl.appendChild(card);
                 });
-            } else {
+            } else if (!isTeacher) {
+                // Al profesor sin partidas propias no se le dice nada: lo suyo
+                // empieza en el panel de abajo. El aviso de "espera a que te
+                // asignen" es para el alumno y solo para él.
                 const p = document.createElement("p");
                 p.className = "text-sm text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4";
                 p.textContent = "Todavía no tienes ninguna partida asignada. Espera a que tu profesor te asigne un rival.";
                 activeEl.appendChild(p);
             }
+        }
 
+        // ---------- Vista del alumno ----------
+        async function renderStudentView() {
+            document.getElementById("student-view").classList.remove("hidden");
             const grid = document.getElementById("variant-grid");
             grid.innerHTML = "";
             VARIANTS.forEach((v) => {
@@ -466,7 +479,16 @@
         // ---------- Vista del profesor ----------
         let allStudents = [];
 
-        async function loadStudentsIntoSelects() {
+        /* Los selectores llevan a los alumnos Y al propio profesor: desde que se
+           puede sentar a jugar, es un jugador más. La lista de alumnos la acota
+           la RLS de `profiles`, no este `.eq()`: cada profesor recibe los suyos.
+
+           "Yo" va en su propio <optgroup> y AL FINAL, no arriba. Si fuera la
+           primera opción, el caso de todos los días —armar una partida entre dos
+           alumnos— arrancaría con el profesor puesto de blancas y habría que
+           sacarlo a mano cada vez. Así los índices de la preselección siguen
+           cayendo donde caían. */
+        async function loadPlayersIntoSelects() {
             const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
             allStudents = data || [];
             const whiteSelect = document.getElementById("white-select");
@@ -474,16 +496,32 @@
             const seatSelects = SEATS.map((s) => document.getElementById("seat-" + s + "-select"));
             [whiteSelect, blackSelect, ...seatSelects].forEach((sel) => {
                 sel.innerHTML = "";
-                allStudents.forEach((s) => {
-                    const opt = document.createElement("option");
-                    opt.value = s.id;
-                    opt.textContent = s.full_name || s.email;
-                    sel.appendChild(opt);
-                });
+                if (allStudents.length) {
+                    const grupo = document.createElement("optgroup");
+                    grupo.label = "Mis alumnos";
+                    allStudents.forEach((s) => {
+                        const opt = document.createElement("option");
+                        opt.value = s.id;
+                        opt.textContent = s.full_name || s.email;
+                        grupo.appendChild(opt);
+                    });
+                    sel.appendChild(grupo);
+                }
+                const mio = document.createElement("optgroup");
+                mio.label = "Yo";
+                const opt = document.createElement("option");
+                opt.value = profile.id;
+                opt.textContent = nombreVisible(profile);
+                mio.appendChild(opt);
+                sel.appendChild(mio);
             });
+            // Con dos alumnos o más, el caso de siempre: los dos primeros. Con uno
+            // solo, el rival natural soy yo — antes quedaban las dos casillas en
+            // el mismo alumno y el formulario se quejaba sin razón aparente.
             if (allStudents.length > 1) blackSelect.selectedIndex = 1;
-            // Preseleccionar 4 alumnos distintos si hay suficientes, para que el
-            // profesor solo tenga que cambiar los que hagan falta.
+            else blackSelect.value = profile.id;
+            // Preseleccionar 4 jugadores distintos si hay suficientes, para que
+            // solo haya que cambiar los que hagan falta.
             seatSelects.forEach((sel, i) => { if (allStudents.length > i) sel.selectedIndex = i; });
         }
 
@@ -513,10 +551,18 @@
                 '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
+            // Si el profesor es uno de los jugadores no viene a mirar: viene a
+            // jugar. Mismo enlace, otro nombre y otro color — un "Ver" sobre la
+            // partida propia se pasa por alto.
+            const juegoYo = is4p
+                ? SEATS.some((sc) => row.seats[sc] && row.seats[sc].player_id === profile.id)
+                : (row.white_id === profile.id || row.black_id === profile.id);
             const viewBtn = document.createElement("a");
             viewBtn.href = (is4p ? "cuatro-jugadores.html" : pageFor2pVariant(row.variant)) + "?room=" + row.id;
-            viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-            viewBtn.textContent = "👀 Ver";
+            viewBtn.className = juegoYo
+                ? "text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
+                : "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            viewBtn.textContent = juegoYo ? "♟️ Jugar" : "👀 Ver";
             actions.appendChild(viewBtn);
             if (row.status === "playing") {
                 const endBtn = document.createElement("button");
@@ -604,8 +650,8 @@
 
             if (variant === "4ffa" || variant === "4teams") {
                 const ids = SEATS.map((s) => document.getElementById("seat-" + s + "-select").value);
-                if (ids.some((id) => !id)) return fail("Elige un alumno para cada uno de los 4 asientos.");
-                if (new Set(ids).size !== 4) return fail("Elige 4 alumnos distintos.");
+                if (ids.some((id) => !id)) return fail("Elige un jugador para cada uno de los 4 asientos.");
+                if (new Set(ids).size !== 4) return fail("Elige 4 jugadores distintos.");
                 const mode = variant === "4teams" ? "teams" : "ffa";
                 const engineGame = new FourPlayerChess.Game(mode);
                 const seats = {};
@@ -619,8 +665,8 @@
             } else {
                 const whiteId = document.getElementById("white-select").value;
                 const blackId = document.getElementById("black-select").value;
-                if (!whiteId || !blackId) return fail("Elige un alumno para cada color.");
-                if (whiteId === blackId) return fail("Elige dos alumnos distintos.");
+                if (!whiteId || !blackId) return fail("Elige un jugador para cada color.");
+                if (whiteId === blackId) return fail("Elige dos jugadores distintos.");
                 const fila = {
                     variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
                     initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
@@ -642,12 +688,15 @@
         async function renderTeacherView() {
             document.getElementById("teacher-view").classList.remove("hidden");
             populateTimeControlSelect();
-            await loadStudentsIntoSelects();
+            await loadPlayersIntoSelects();
             updateVariantFieldsVisibility();
-            if (allStudents.length < 2) {
-                setStatus("Necesitas al menos 2 alumnos registrados para armar una partida entre ellos.");
-            } else if (allStudents.length < 4) {
-                setStatus("Con menos de 4 alumnos registrados no vas a poder armar partidas de 4 jugadores.");
+            // Los topes bajan en uno porque el profesor cuenta como jugador: con
+            // un solo alumno ya hay partida, y con tres ya se puede armar una de
+            // cuatro.
+            if (!allStudents.length) {
+                setStatus("Todavía no tienes ningún alumno asignado, así que no hay con quién armar una partida.");
+            } else if (allStudents.length < 3) {
+                setStatus("Con menos de 3 alumnos no vas a poder armar partidas de 4 jugadores, aunque te cuentes a ti mismo.");
             }
             await loadRooms();
             subscribeRoomsList();
@@ -876,11 +925,14 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            // Quien administra ve esta página como profesor, igual que en Informes:
+            // lo que se hace para el profesor se hace para administración.
+            isTeacher = profile.role === "profesor" || !!profile.is_admin;
             document.getElementById("subtitle").textContent = isTeacher
-                ? "Arma partidas entre tus alumnos en distintas modalidades y sigue su avance."
+                ? "Arma partidas entre tus alumnos —o contra ti mismo— y sigue su avance."
                 : "Otras formas de jugar ajedrez, además de la partida clásica. Tu profesor te asigna el rival.";
 
+            await renderMisPartidas();
             if (isTeacher) await renderTeacherView();
             else await renderStudentView();
             // Si el profesor asigna una partida mientras el alumno está aquí, aviso y traslado automático.
