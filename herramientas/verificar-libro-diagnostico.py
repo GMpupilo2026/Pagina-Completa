@@ -14,7 +14,7 @@ De una corrida:
   - que lleve a Oscar Angulo Cubero en los datos del archivo y en el texto;
   - que tenga marca de agua en TODAS las páginas del cuerpo (el error clásico
     es estamparla solo en la primera) y NO en la tapa, que ya lleva el logo;
-  - que estén las 118 preguntas del banco, cada una con su respuesta marcada;
+  - que estén TODAS las preguntas del banco, cada una con su respuesta marcada;
   - que la versión accesible no dependa de NINGUNA imagen, declare el idioma,
     tenga los encabezados en orden y cuente en palabras cada una de las
     posiciones que el PDF dibuja.

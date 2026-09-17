@@ -35,8 +35,9 @@ const RAIZ = path.join(__dirname, "..");
 const { describir } = require("./lib/describir-fen.js");
 
 global.window = {};
-eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
+// El plan va PRIMERO: de ahí saca el banco la lista de áreas de la prueba.
 eval(fs.readFileSync(path.join(RAIZ, "js/plan-entrenamiento.js"), "utf8"));
+eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
 const BANCO = global.window.DIAGNOSTICO_ITEMS;
 const PRUEBA = global.window.DiagnosticoPrueba;
 const PE = global.window.PlanEntrenamiento;

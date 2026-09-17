@@ -6,13 +6,13 @@
     <link rel="icon" href="../img/favicon.svg">
     <title>Diagnóstico de nivel — Ajedrez Integral</title>
     <meta name="robots" content="noindex">
-    <meta name="description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones en cinco escalones de dificultad, que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta name="description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
     <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Diagnóstico de nivel — Ajedrez Integral">
-    <meta property="og:description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones en cinco escalones de dificultad, que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta property="og:description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
     <meta property="og:url" content="https://ajedrez-integral.com/entreno/diagnostico.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -96,7 +96,7 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">63 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -149,7 +149,7 @@
                          conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
                     <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes, los dos con marca de agua y sin entregar al alumno. El <strong>cuadernillo</strong> es una prueba de 56 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —118 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes, los dos con marca de agua y sin entregar al alumno. El <strong>cuadernillo</strong> es una prueba de 63 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —301 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -248,7 +248,7 @@
  */
 /* El banco tiene más ítems de los que se preguntan: cada prueba sortea los
    suyos (DiagnosticoPrueba, en js/diagnostico-items.js). ITEMS son los de ESTA
-   prueba —siempre 56, siempre 109 puntos, siempre 7 por área—, y sus ids
+   prueba —siempre 63, siempre 180 puntos, siempre 7 por área—, y sus ids
    quedan guardados en el estado para poder retomarla igual y para volver a
    mostrar el resultado con las preguntas que de verdad se hicieron. */
 const PRUEBA = window.DiagnosticoPrueba;
@@ -264,10 +264,12 @@ const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
      1 — se preguntaba el banco entero.
      2 — la prueba se sortea y el estado guarda qué ítems tocaron.
      3 — la prueba tiene escalones de dificultad 4 y 5 (preguntas duras).
+     4 — se suma la novena área (Maestría): 63 ítems en vez de 56, y otro
+         puntaje. Un resultado nuevo ya no se compara con uno de antes.
    Una prueba empezada con una versión anterior no se puede continuar: los
    ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
    distintas. Se descarta y se avisa en la portada. */
-const VERSION = 3;
+const VERSION = 4;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
