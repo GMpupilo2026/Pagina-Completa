@@ -1448,6 +1448,80 @@ arrancar una entre ellos.
   tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
   la lista le ofrece el bot de Oscar mientras tanto.
 
+## El profesor también se sienta a jugar
+
+El sitio asumía que el profesor reparte rivales y mira. Ahora además **juega**:
+contra sus alumnos en una partida amistosa y emparejado como uno más en sus
+propios torneos.
+
+**Lo que lo impedía no era el botón, era la base.** Crear una partida exigía
+`soy_profesor_de_todos([blancas, negras])`, o sea "¿son todos alumnos míos?", y
+**un profesor no es alumno de sí mismo** — `profile_teachers` solo tiene alumnos
+como `student_id`. Ponerse en el tablero daba `false` y la fila se rechazaba.
+
+Y no era solo el formulario de Juegos: `torneo.html` inserta en `game_rooms` al
+generar cada ronda, así que un profesor inscrito en su propio torneo **tumbaba la
+ronda entera**, no su partida. Ese es el tipo de fallo que este cambio tenía que
+mirar entero antes de tocar nada.
+
+- La pregunta correcta no era "¿son todos alumnos míos?" sino **"¿puedo sentar a
+  esta gente en un tablero?"**, que es la misma más una excepción: yo. Vive en
+  `public.puedo_armar_partida_con(uuid[])` (`SECURITY DEFINER`, como sus
+  hermanas) y la usan las dos políticas de insert, `game_rooms` y
+  `fourplayer_games`. Administración arma partidas con cualquiera, igual que
+  antes en el resto del sitio.
+- **`game_rooms_insert` suma `white_id is distinct from black_id`.** Antes eso lo
+  impedía de rebote la propia regla (nadie es alumno de sí mismo); al abrir la
+  excepción del "yo" había que escribirlo, o un profesor podía crearse una
+  partida contra sí mismo.
+- Comprobado impersonando roles en SQL, diez casos: el profesor crea con su
+  alumno y no con uno ajeno, no contra sí mismo, no firmando como otro; un
+  profesor sin alumnos no crea nada; un alumno tampoco; administración sí; **y
+  sigue funcionando lo de siempre**, dos alumnos distintos del mismo profesor.
+- **El reto en vivo de "🟢 En línea ahora" ya funcionaba** profesor↔alumno
+  (`pueden_jugar_entre_si` lo contempla y la lista rotula "· profe"): ese camino
+  crea la sala con `aceptar_desafio()`, que es `SECURITY DEFINER` y no pasa por
+  la política. Era la única de las tres puertas que estaba abierta.
+
+En el navegador:
+
+- **"Yo" va en su propio `<optgroup>` y AL FINAL de los selectores, no arriba.**
+  Si fuera la primera opción, el caso de todos los días —armar una partida entre
+  dos alumnos— arrancaría con el profesor puesto de blancas y habría que sacarlo
+  a mano cada vez. Al final, los índices de la preselección siguen cayendo donde
+  caían. Con un solo alumno, las negras arrancan en el profesor: antes quedaban
+  las dos casillas en el mismo alumno y el formulario se quejaba sin razón
+  aparente.
+- **`#my-active-games` salió de la vista del alumno** y vive fuera de las dos:
+  desde que el profesor juega, necesita la misma puerta de entrada a su partida.
+  El aviso de "espera a que tu profesor te asigne un rival" sigue siendo solo del
+  alumno. En la lista de supervisión, la partida propia del profesor dice
+  **"♟️ Jugar"** y no "👀 Ver" — el mismo enlace, pero un "Ver" sobre la partida
+  propia se pasa por alto.
+- **En los torneos lo único que lo impedía era el botón escondido.** La RLS ya
+  dejaba inscribirse a quien organiza (`tournament_registrations_insert` tiene su
+  rama de dueño), y `TorneoEngine` no sabe quién es profesor: empareja ids. Se
+  quitó el `!isManager` de `torneos.html` y el `else` que escondía el botón en
+  `torneo.html`.
+- `juegos.html` trata `is_admin` como profesor, como `informes.html`.
+
+**Quien organiza y juega también anota los resultados de su propia partida**, y se
+deja así a propósito: es una academia, no un torneo federado, y la alternativa
+—pedir un árbitro para que el profesor pueda jugar— no la pidió nadie. Los
+cruces y los resultados quedan a la vista de todos los inscritos, que es el
+control que corresponde a esta escala.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-profesor-juega.js`** (con el sitio en localhost:8777 y
+playwright). Comprueba en un navegador de verdad qué manda el formulario, que la
+preselección de siempre no se haya movido, que la partida propia se vea y su
+botón diga "Jugar", que al alumno no se le haya movido nada y que el botón de
+inscripción aparezca para quien organiza. Su Supabase de mentira **filtra de
+verdad** (`eq`, `in`, `or`): la página pide `profiles` tres veces seguidas con
+filtros distintos, y un doble que devolviera siempre la tabla entera daría por
+buena una página rota.
+
+
 ## Confites del caballo
 
 `confites.html` (ficha en Juegos) es el paseo del caballo contado como juego:
