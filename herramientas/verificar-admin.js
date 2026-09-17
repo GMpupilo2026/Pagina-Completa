@@ -41,6 +41,7 @@ const RAIZ = path.join(__dirname, "..");
 
 const ADMIN = { id: "u-admin", role: "profesor", is_admin: true, es_coordinador: false, full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null, created_at: "2026-01-10T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: null };
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null, created_at: "2026-02-01T10:00:00Z", invitaciones_max: 10, invitaciones_usadas: 3, teacher_id: null };
+const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, es_coordinador: false, full_name: "Ana Rojas", email: "ana@x.cr", grupo: "7B", created_at: "2026-03-01T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: "u-profe" };
 
 /* 1.205 cuentas: MÁS DE MIL a propósito. Es el único número con el que se nota
    si la página se las pide de una sola vez. */
@@ -123,6 +124,9 @@ window.__consultas = [];
 `;
 }
 
+// Lo que la página le mandó a la Edge Function, en orden.
+let llamadasDeAdmin = [];
+
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
   const a = typeof hallado === "object" ? JSON.stringify(hallado) : String(hallado);
@@ -135,16 +139,37 @@ function bien(t) { console.log("  ✓ " + t); }
 
 async function abrir(browser, ruta, usuario, extra) {
   const ctx = await browser.newContext(extra || {});
+  /* admin-manage-users es la Edge Function que de verdad escribe. Acá se dobla y
+     se ANOTA lo que la página le manda: es lo único que se puede comprobar desde
+     un navegador, y es justo donde está el riesgo (mandar medio grupo, o mandar
+     "reemplazar" donde debía decir "agregar"). */
+  await ctx.route("**/functions/v1/admin-manage-users", async (ruta2) => {
+    const cuerpo = JSON.parse(ruta2.request().postData() || "{}");
+    await ruta2.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, asignados: (cuerpo.target_ids || []).length }) });
+    llamadasDeAdmin.push(cuerpo);
+  });
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(usuario, cuentasDeMentira(), parejasDeMentira()) }));
+  llamadasDeAdmin = [];
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   return { page, ctx, errores };
+}
+
+// Espera a que la página le haya mandado tal acción a la Edge Function.
+async function esperarLlamada(accion, ms = 10000) {
+  const hasta = Date.now() + ms;
+  for (;;) {
+    const hallada = llamadasDeAdmin.filter((l) => l.action === accion).pop();
+    if (hallada) return hallada;
+    if (Date.now() > hasta) throw new Error("no llegó ninguna llamada de " + accion);
+    await new Promise((r) => setTimeout(r, 100));
+  }
 }
 
 /* ====================== admin.html · los atajos ====================== */
@@ -198,13 +223,14 @@ async function pruebaAtajos(browser) {
 
 /* ====================== admin.html · las cuentas ====================== */
 
-async function pruebaCuentas(browser) {
-  console.log("\n=== Todas las cuentas ===");
+async function pruebaFichasDeGrupo(browser) {
+  console.log("\n=== Las fichas de grupo (lo primero que se ve) ===");
   const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
 
-  // LO QUE MÁS IMPORTA: las cuentas se piden de mil en mil.
+  // LO QUE MÁS IMPORTA: las cuentas se piden de mil en mil. PostgREST corta a
+  // las mil filas sin dar ningún error.
   const rangos = await page.evaluate(() =>
     window.__consultas.filter((c) => c.tabla === "profiles" && c.range).map((c) => c.range));
   igual("las 1205 cuentas se piden de mil en mil, no de un solo pedido",
@@ -213,30 +239,109 @@ async function pruebaCuentas(browser) {
     window.__consultas.filter((c) => c.tabla === "profile_teachers" && c.range).map((c) => c.range));
   igual("y los profesores de cada alumno, igual", rangosPT, [[0, 999], [1000, 1999]]);
 
+  /* Y lo que se pidió: que la pantalla NO se sature. Con 1205 cuentas, lo
+     primero que se ve son tres fichas, no mil doscientas filas. */
+  igual("al entrar no se pinta ni una fila de cuenta",
+    await page.evaluate(() => document.querySelectorAll("#users-body tr").length), "0");
+  igual("el panel de cuentas arranca escondido",
+    await page.evaluate(() => document.getElementById("users-panel").hidden), "true");
+
+  const fichas = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#grupos-fichas article")).map((f) => ({
+      nombre: f.querySelector("h3").textContent,
+      cuenta: f.querySelector("p").textContent,
+      profesores: Array.from(f.querySelectorAll("span.rounded-full")).map((n) => n.textContent),
+      tieneSelector: !!f.querySelector("select"),
+      aviso: (f.textContent.match(/⚠️[^＋]*/) || [""])[0].trim(),
+    })));
+  igual("una ficha por grupo, y el equipo docente al final",
+    fichas.map((f) => f.nombre), ["7B", "8A", "Profesores y administración"]);
+  igual("cada una dice cuánta gente tiene",
+    fichas.map((f) => f.cuenta), ["401 alumnos", "802 alumnos", "2 cuentas"]);
+  igual("y qué profesores la llevan", fichas[1].profesores, ["Karina Rojas · 800"]);
+  // Los tres sin profesor caen 1 en 7B y 2 en 8A: cada ficha avisa de LOS SUYOS,
+  // que es lo que sirve para ir a arreglarlo.
+  igual("los alumnos sin profesor se ven en la ficha de su propio grupo",
+    [fichas[0].aviso, fichas[1].aviso],
+    ["⚠️ 1 sin profesor asignado", "⚠️ 2 sin profesor asignado"]);
+  igual("el equipo docente no lleva selector de profesor (a un profesor no se le asigna profesor)",
+    fichas[2].tieneSelector, "false");
+
+  /* Agregarle un profesor a TODO el grupo desde su ficha, que es la operación
+     de todos los años ("todo 7° B también al profesor nuevo"). Va en modo
+     "agregar": suma, no reemplaza — quitarle un profesor a alguien sin querer
+     es el error caro acá. */
+  page.on("dialog", (d) => d.accept());
+  await page.selectOption("#grupos-fichas article:first-of-type select", PROFE.id);
+  const lote = await esperarLlamada("assign_bulk");
+  igual("la ficha manda a todo el grupo, no a una página de él", lote.target_ids.length, "401");
+  igual("en modo «agregar», que suma y no reemplaza", lote.modo, "agregar");
+  igual("y con el profesor elegido", lote.teacher_id, PROFE.id);
+  igual("solo alumnos: a un profesor no se le asigna profesor",
+    lote.target_ids.every((id) => id.startsWith("u-") && id !== "u-profe" && id !== "u-admin"), "true");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaCuentasDeUnGrupo(browser) {
+  console.log("\n=== Las cuentas de un grupo ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+
   const resumen = () => page.textContent("#users-summary");
-  igual("dice cuántas muestra de cuántas hay", (await resumen()).trim(), "Mostrando 50 de 1205 cuentas.");
-  igual("y pinta 50 filas de cuenta, no 1205",
+  igual("de entrada, el resumen cuenta GRUPOS y no cuentas sueltas",
+    (await resumen()).trim(), "1205 cuentas en 2 grupos. Abre uno para ver las suyas.");
+
+  // Abrir 7B: 401 alumnos, de 50 en 50.
+  await page.click("#grupos-fichas article:first-of-type button");
+  await page.waitForFunction(() => !document.getElementById("users-panel").hidden, { timeout: 10000 });
+  igual("se abre con su nombre a la vista", await page.textContent("#users-panel-title"), "7B");
+  igual("y solo trae las suyas, de 50 en 50", (await resumen()).trim(), "Mostrando 50 de 401 cuentas.");
+  igual("50 filas pintadas, no 401",
     await page.evaluate(() => document.querySelectorAll("#users-body tr td select[aria-label^='Rol']").length), "50");
+  igual("las fichas se esconden mientras tanto",
+    await page.evaluate(() => document.getElementById("grupos-fichas").hidden), "true");
 
   await page.click("#users-more");
-  igual("«Ver más» trae otras 50", (await resumen()).trim(), "Mostrando 100 de 1205 cuentas.");
+  igual("«Ver más» trae otras 50", (await resumen()).trim(), "Mostrando 100 de 401 cuentas.");
 
-  // Buscar, sin tildes.
+  // Y se vuelve.
+  await page.click("#volver-grupos");
+  await page.waitForFunction(() => document.getElementById("users-panel").hidden, { timeout: 10000 });
+  igual("«Volver a los grupos» devuelve a las fichas",
+    await page.evaluate(() => document.getElementById("grupos-fichas").hidden), "false");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaBuscarEntreGrupos(browser) {
+  console.log("\n=== Buscar, que manda sobre los grupos ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  const resumen = () => page.textContent("#users-summary");
+
+  /* Buscar sin saber en qué grupo está alguien es justamente para lo que se
+     busca: la búsqueda mira TODOS los grupos, aunque haya uno abierto. */
   await page.fill("#user-search", "ramirez");
   await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
-  igual("buscar «ramirez» encuentra a «Ana Ramírez»",
+  igual("buscar «ramirez» encuentra a «Ana Ramírez» aunque no se sepa su grupo",
     await page.evaluate(() => document.querySelector("#users-body input[type=text]").value), "Ana Ramírez");
-  igual("y el «Ver más» se va", await page.evaluate(() => document.getElementById("users-more").hidden), "true");
+  igual("y el panel se llama por lo que es",
+    await page.textContent("#users-panel-title"), "Resultado de la búsqueda");
+
+  await page.fill("#user-search", "");
+  await page.waitForFunction(() => !document.getElementById("grupos-fichas").hidden, { timeout: 10000 });
+  igual("al borrar la búsqueda se vuelve solo a las fichas",
+    await page.evaluate(() => document.getElementById("users-panel").hidden), "true");
 
   // El filtro de rol, y la opción que no es un rol.
-  await page.fill("#user-search", "");
   await page.selectOption("#role-filter", "profesor");
   await page.waitForFunction(() => /2 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   bien("filtrar por «Profesores» deja 2");
-
-  await page.selectOption("#role-filter", "admin");
-  await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
-  bien("filtrar por «Administración» deja 1");
 
   await page.selectOption("#role-filter", "sin-profesor");
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
@@ -249,21 +354,6 @@ async function pruebaCuentas(browser) {
   igual("y el aviso de «alumnos sin profesor» los deja a la vista de un clic",
     await page.evaluate(() => document.getElementById("role-filter").value), "sin-profesor");
 
-  /* El encabezado de cada grupo cuenta el GRUPO ENTERO, no las filas que se
-     alcanzan a ver. Es lo que se rompe solo al empezar a mostrar de a 50: un
-     7° B de cuatrocientos diría "· 50" y su botón marcaría cincuenta de
-     cuatrocientos sin avisar — justo lo contrario de "todo 7° B al profesor
-     nuevo", que es para lo que existe ese botón. */
-  await page.selectOption("#role-filter", "");
-  await page.fill("#user-search", "");
-  await page.selectOption("#group-by", "grupo");
-  const encabezados = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#users-body tr td[colspan='7']")).map((td) => td.textContent));
-  igual("el encabezado del grupo cuenta el grupo entero, no las 50 que se ven",
-    encabezados.some((t) => /8A · 802/.test(t)), "true");
-  igual("y su botón ofrece marcarlos a todos",
-    encabezados.some((t) => /marcar los 802/.test(t)), "true");
-
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -274,6 +364,9 @@ async function pruebaElNombreNoSeCorta(browser) {
   const { page, ctx } = await abrir(browser, "/admin.html", ADMIN, { viewport: { width: 1280, height: 900 } });
   await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  // Hay que abrir un grupo: al entrar se ven las fichas, no las cuentas.
+  await page.click("#grupos-fichas article:first-of-type button");
+  await page.waitForFunction(() => document.querySelectorAll("#users-body input[type=text]").length > 0, { timeout: 10000 });
 
   const medidas = await page.evaluate(() => {
     const campo = document.querySelector("#users-body input[type=text]");
@@ -404,6 +497,83 @@ async function pruebaInscripcionesDenegado(browser) {
   await ctx.close();
 }
 
+/* ============ Los PDF con las respuestas: SOLO administración ============
+ *
+ * El cuadernillo del diagnóstico, el libro del banco y el cuadernillo de
+ * arbitraje traen las respuestas y la hoja de corrección. Cuanta más gente los
+ * tenga bajados, más fácil es que circulen y que las dos pruebas dejen de medir
+ * nada. Antes se le ofrecían a todo el equipo docente; ahora solo a quien
+ * administra.
+ *
+ * Esto es exactamente lo que no da ningún error al romperse: el enlace vuelve a
+ * aparecer y la página se ve igual de bien. Por eso se abre cada página con las
+ * tres caras y se MIRA si el enlace está a la vista. */
+async function pruebaPdfSoloAdmin(browser) {
+  console.log("\n=== Los PDF con las respuestas ===");
+
+  const casos = [
+    { ruta: "/entreno/diagnostico.html", espera: "#pdf-docente", nombre: "el cuadernillo del diagnóstico" },
+    { ruta: "/entreno/diagnostico.html", espera: "#libro-docente", nombre: "el libro del banco" },
+    { ruta: "/arbitraje.html", espera: "#banco-pdf", nombre: "el cuadernillo de arbitraje" },
+  ];
+  const quienes = [
+    { quien: ALUMNA, etiqueta: "una alumna", debeVer: false },
+    { quien: PROFE, etiqueta: "una profesora", debeVer: false },
+    { quien: ADMIN, etiqueta: "administración", debeVer: true },
+  ];
+
+  for (const caso of casos) {
+    for (const q of quienes) {
+      // arbitraje.html no deja entrar al alumnado: ahí el PDF ni se plantea.
+      if (caso.ruta === "/arbitraje.html" && q.quien === ALUMNA) continue;
+      const { page, ctx } = await abrir(browser, caso.ruta, q.quien);
+      await page.goto(BASE + caso.ruta, { waitUntil: "networkidle" });
+      await page.waitForTimeout(1200);   // las páginas destapan el enlace después de leer el perfil
+      const seVe = await page.evaluate((sel) => {
+        const n = document.querySelector(sel);
+        if (!n) return "no está en la página";
+        return getComputedStyle(n).display !== "none";
+      }, caso.espera);
+      igual(caso.nombre + " · " + q.etiqueta, seVe, String(q.debeVer));
+      await ctx.close();
+    }
+  }
+
+  /* Y que el enlace siga saliendo de un solo lugar: si alguien lo vuelve a
+     escribir suelto en otra página, este barrido lo encuentra. */
+  const pdfs = ["diagnostico-de-nivel.pdf", "libro-de-diagnostico.pdf", "examen-de-arbitraje.pdf"];
+  const paginas = [];
+  (function recorrer(dir) {
+    fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => {
+      if (e.name === "node_modules" || e.name === ".git") return;
+      const completo = path.join(dir, e.name);
+      if (e.isDirectory()) recorrer(completo);
+      else if (e.name.endsWith(".html")) paginas.push(completo);
+    });
+  })(RAIZ);
+  const sueltos = [];
+  paginas.forEach((f) => {
+    const txt = fs.readFileSync(f, "utf8");
+    pdfs.forEach((pdf) => {
+      if (!new RegExp('href="[^"]*' + pdf.replace(/\./g, "\\.") + '"').test(txt)) return;
+      const rel = path.relative(RAIZ, f);
+      // informes.html también los enlaza, pero DENTRO de un `profile.is_admin ?`:
+      // ahí no es un enlace suelto y la prueba de más abajo lo comprueba.
+      if (!["entreno/diagnostico.html", "arbitraje.html", "informes.html"].includes(rel)) sueltos.push(rel + " → " + pdf);
+    });
+  });
+  igual("nadie más enlaza esos PDF", sueltos.join(" | ") || "ninguno", "ninguno");
+
+  /* informes.html los nombra en el texto de "todavía nadie ha hecho el
+     diagnóstico". Ahí también tienen que salir solo para administración, y es
+     el caso que se escapa: no es un enlace en el HTML, se arma con JavaScript
+     dentro de un template. */
+  const informes = fs.readFileSync(path.join(RAIZ, "informes.html"), "utf8");
+  const trozo = informes.slice(Math.max(0, informes.indexOf("diagnostico-de-nivel.pdf") - 600), informes.indexOf("libro-de-diagnostico.pdf"));
+  igual("en informes.html los dos PDF van detrás de un is_admin",
+    /is_admin\s*\?/.test(trozo), "true");
+}
+
 /* ====================== que se vean ====================== */
 
 async function pruebaPantalla(browser) {
@@ -437,10 +607,13 @@ async function pruebaPantalla(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAtajos(browser);
-    await pruebaCuentas(browser);
+    await pruebaFichasDeGrupo(browser);
+    await pruebaCuentasDeUnGrupo(browser);
+    await pruebaBuscarEntreGrupos(browser);
     await pruebaElNombreNoSeCorta(browser);
     await pruebaInscripciones(browser);
     await pruebaInscripcionesDenegado(browser);
+    await pruebaPdfSoloAdmin(browser);
     await pruebaPantalla(browser);
   } finally {
     await browser.close();

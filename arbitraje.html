@@ -119,9 +119,14 @@
                     <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Texto oficial y vigente: <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 hover:underline">handbook.fide.com</a>. Ante cualquier diferencia, manda el Handbook.</p>
                 </div>
 
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <!-- El cuadernillo con TODAS las respuestas: arranca oculto y solo lo
+                     destapa init() para quien administra, no para todo el equipo
+                     docente. Cuanta más gente lo tenga bajado, más fácil es que
+                     circule y que el examen deje de medir nada. Quien dé clase y lo
+                     necesite se lo pide a quien administra. -->
+                <div id="banco-pdf" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">📕 El banco completo, para estudiar</h2>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Las <span class="banco-total">—</span> preguntas del banco en un cuadernillo, área por área y escalón por escalón, con la respuesta correcta marcada, el porqué y el artículo del Handbook. <strong>Trae las respuestas</strong>, así que es material del equipo docente: no se le pasa a quien vaya a rendir el examen. Va protegido —se abre normal, pero no se puede copiar ni imprimir— y firmado por IA Oscar Angulo Cubero.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Las <span class="banco-total">—</span> preguntas del banco en un cuadernillo, área por área y escalón por escalón, con la respuesta correcta marcada, el porqué y el artículo del Handbook. <strong>Trae las respuestas</strong>, así que es solo para administración: no se le pasa a quien vaya a rendir el examen. Va protegido —se abre normal, pero no se puede copiar ni imprimir— y firmado por IA Oscar Angulo Cubero.</p>
                     <a href="examen-de-arbitraje.pdf" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">⬇️ Descargar el cuadernillo (PDF)</a>
                 </div>
 
@@ -707,6 +712,8 @@ async function init() {
   $('loading').classList.add('hidden');
   if (!puede) { $('denegado').classList.remove('hidden'); return; }
   $('app').classList.remove('hidden');
+  // El cuadernillo trae las respuestas: solo administración.
+  if (perfil.is_admin === true) $('banco-pdf').classList.remove('hidden');
   await pintarPrevio();
   await pintarPublicos();
   await pintarEquipo();

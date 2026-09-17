@@ -295,12 +295,22 @@
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
             /* Evaluaciones: lo que MIDE el nivel de quien lo hace, aparte de lo
-               que lo enseña. El diagnóstico estaba en Aprender y el examen de
-               arbitraje detrás de él; son otra cosa que un curso, y con su
-               propio grupo se encuentran de una. El de arbitraje lo suma init()
-               solo para el equipo docente, como hasta ahora. */
+               que lo enseña. El diagnóstico estaba en Aprender y el de arbitraje
+               detrás de él; son otra cosa que un curso, y con su propio grupo se
+               encuentran de una.
+
+               Los DOS diagnósticos son para todo el mundo: cualquiera puede medir
+               su nivel de arbitraje, no solo quien da clase. Lo que cambia según
+               quién mira es a dónde lleva la tarjeta, y lo decide init(): el
+               equipo docente va a arbitraje.html, que además trae la revisión de
+               los exámenes del público y el detalle pregunta por pregunta; todos
+               los demás van a nivel-de-arbitraje.html, que es el mismo examen y
+               el mismo criterio pero SIN enseñar las respuestas al terminar (el
+               banco es material docente). Una sola tarjeta y no dos, para no
+               repetir el nombre en el panel — ya pasó una vez con "Torneos". */
             { title: "Evaluaciones", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
+                { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "nivel-de-arbitraje.html" },
                 { emoji: "📄", label: "Exámenes", desc: "Pruebas de cada curso, con su nota", nota: "Próximamente", disabled: true },
             ] },
             { title: "Herramientas", tiles: [
@@ -809,16 +819,17 @@
             // Herramientas del equipo docente: no se le muestran al alumnado
             // (y la propia página vuelve a comprobar el perfil).
             if (isTeacher || profile.is_admin) {
-                /* Va en Evaluaciones, a la par del diagnóstico de jugadores:
-                   las dos son pruebas que ubican el nivel de quien las hace.
-                   Se inserta detrás del diagnóstico buscándolo por su destino,
-                   no por su posición, para que reordenar el grupo no lo mande
-                   a otro lado. */
+                /* La tarjeta del diagnóstico de arbitraje ya está para todo el
+                   mundo; al equipo docente se le cambia el destino a la página
+                   con la revisión y el detalle pregunta por pregunta. Se busca
+                   por su destino y no por su posición, para que reordenar el
+                   grupo no la deje sin cambiar. */
                 const evaluaciones = TILE_GROUPS.find((g) => g.title === "Evaluaciones");
-                const donde = evaluaciones.tiles.findIndex((t) => t.href === "entreno/diagnostico.html");
-                evaluaciones.tiles.splice(donde + 1, 0,
-                    { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
-                );
+                const arbitraje = evaluaciones.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
+                if (arbitraje) {
+                    arbitraje.href = "arbitraje.html";
+                    arbitraje.desc = "Reglamento FIDE: hazlo, revisa los del público y responde";
+                }
             }
 
             // Coordinación: armar formularios de inscripción a torneos. La
