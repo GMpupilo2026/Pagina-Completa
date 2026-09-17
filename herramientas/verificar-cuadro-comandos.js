@@ -28,6 +28,13 @@
       termina la prueba: quedarse trabado ahí dejaría a quien contesta
       escribiendo sin forma de llegar al resultado.
 
+   6. EL ORDEN EN QUE SE OFRECEN LAS COSAS. Un ejercicio se recorre de arriba
+      abajo: primero hay que saber QUÉ HAY en el tablero y recién después
+      contestarlo. Si la lectura de la posición queda debajo del recuadro y de la
+      ayuda, hay que recorrer medio ejercicio para enterarse de qué se trata — y
+      la página se ve exactamente igual. Por eso se mide el orden del DOM, y que
+      la ayuda arranque plegada.
+
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install playwright chess.js@0.10.3
          node herramientas/verificar-cuadro-comandos.js                        */
@@ -656,6 +663,168 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   await ctx.close();
 }
 
+/* ============ 7. Los ejercicios 4×4 ============ */
+
+/* 4×4 tiene su propio recuadro de comandos (#cmd-form, más viejo que
+   js/cuadro-comandos.js) y su propio interruptor de modo. Lo que se comprueba acá
+   no es el recuadro sino el ORDEN: encabezado "Piezas" → qué hay en el tablero →
+   el tablero → dónde se contesta, con la ayuda plegada al final. */
+async function prueba4x4(browser) {
+  console.log("\n=== Los ejercicios 4×4, en Modo Adaptado ===");
+  const { page, ctx, errores } = await abrir(browser, "/entreno/4x4.html", true);
+  await page.waitForSelector("#board4 [data-square], #board4 .sq4, #board4 button", { timeout: 25000 });
+  await page.waitForFunction(() => {
+    const p = document.getElementById("position-readout");
+    return p && p.textContent.trim().length > 10;
+  }, null, { timeout: 25000 });
+
+  // --- el orden, medido sobre el documento y no sobre el CSS
+  const orden = await page.evaluate(() => {
+    const ids = ["piezas-heading", "position-readout", "board4", "cmd-form", "ayuda-detalles"];
+    const nodos = ids.map((id) => document.getElementById(id));
+    if (nodos.some((n) => !n)) return nodos.map((n, i) => (n ? ids[i] : "FALTA:" + ids[i]));
+    // compareDocumentPosition: 4 = el segundo va después del primero.
+    const ok = nodos.every((n, i) => i === 0 || (nodos[i - 1].compareDocumentPosition(n) & 4) !== 0);
+    return ok ? "en orden" : "desordenado";
+  });
+  igual("Piezas → la posición → el tablero → el recuadro → la ayuda", orden, "en orden");
+
+  // --- qué dice la lectura: cuántas piezas hay y dónde está cada una
+  const lectura = await enPantalla(page, "#position-readout");
+  igual("la lectura dice cuántas piezas hay", /\d+ piezas? en el tablero/.test(lectura), "true");
+  igual("y dónde está cada una", /:\s*\w+\s*[1-4]/.test(lectura), "true");
+  igual("y se ve de verdad",
+    await page.evaluate(() => { const e = document.getElementById("position-readout"); return e ? getComputedStyle(e).display : "no está"; }), "block");
+
+  // --- la ayuda, plegada
+  const ayuda = await page.evaluate(() => {
+    const d = document.getElementById("ayuda-detalles");
+    const cuerpo = document.getElementById("cmd-help");
+    return {
+      abierta: !!(d && d.open),
+      escrita: !!(cuerpo && cuerpo.textContent.trim().length > 100),
+      // checkVisibility() y no el rectángulo: un <details> cerrado esconde su
+      // contenido con content-visibility, y ahí getBoundingClientRect() sigue
+      // devolviendo el alto de antes — daría verde sobre una ayuda desplegada.
+      visible: !!(cuerpo && cuerpo.checkVisibility({ checkVisibilityCSS: true, contentVisibilityAuto: true })),
+      titulo: d ? d.querySelector("summary").textContent.trim() : "",
+      encabezadoEnSummary: !!(d && d.querySelector("summary h2")),
+    };
+  });
+  igual("la ayuda arranca plegada, también la primera vez", ayuda.abierta, "false");
+  // Lo que SÍ se dice la primera vez es una línea que señala la puerta, no el manual.
+  const bienvenida = await enPantalla(page, "#board-announcer");
+  igual('la primera vez se dice dónde contestar y cómo pedir ayuda, en una línea',
+    /ayuda/i.test(bienvenida) && bienvenida.length < 200, "true");
+  igual("y por eso no se ve", ayuda.visible, "false");
+  igual("pero ya está escrita, para que abrirla no muestre una caja vacía", ayuda.escrita, "true");
+  igual("su título es un encabezado de verdad dentro del summary", ayuda.encabezadoEnSummary, "true");
+  igual("y dice que es la ayuda", /Ayuda/.test(ayuda.titulo), "true");
+
+  // --- el tablero ya no recita el manual en cada foco
+  const desc = await page.evaluate(() => {
+    const b = document.getElementById("board4");
+    const id = b && b.getAttribute("aria-describedby");
+    const p = id && document.getElementById(id);
+    return p ? p.textContent.trim().replace(/\s+/g, " ") : "";
+  });
+  igual("lo que el tablero describe en cada foco es UNA línea, no el manual",
+    desc.length > 0 && desc.length < 220, "true");
+  igual("y lo que hace es señalar dónde está la ayuda", /Ayuda/.test(desc), "true");
+
+  // --- la ayuda vive en un solo lugar
+  igual("los atajos no están escritos dos veces",
+    await page.evaluate(() => document.querySelectorAll(".shortcuts-help").length), "0");
+
+  // --- el comando "ayuda" la abre y la vuelve a leer
+  await page.fill("#cmd-input", "ayuda");
+  await page.press("#cmd-input", "Enter");
+  await page.waitForTimeout(300);
+  igual('el comando "ayuda" la abre',
+    await page.evaluate(() => document.getElementById("ayuda-detalles").open), "true");
+  igual("y entonces sí se ve",
+    await page.evaluate(() => document.getElementById("cmd-help").checkVisibility({ checkVisibilityCSS: true, contentVisibilityAuto: true })), "true");
+
+  // --- la posición NO se dice dos veces: la lleva la lectura, no el anuncio
+  igual("el anuncio del ejercicio no repite la posición (la dice la lectura de arriba)",
+    await page.evaluate(() => /piezas? en el tablero/.test(document.getElementById("board-announcer").textContent)), "false");
+
+  // --- y sobre todo: se puede contestar escribiendo, y la lectura lo refleja.
+  // La captura se busca en la PANTALLA: se toca cada pieza y se mira qué casillas
+  // queda marcando la propia página como capturables.
+  const captura = await page.evaluate(() => {
+    const celdas = () => [...document.querySelectorAll("#board4 [data-square]")];
+    // Ojo: cada clic repinta el tablero entero, así que hay que volver a pedir las
+    // casillas después de tocar — las de antes ya no están en el documento.
+    const conPieza = celdas().filter((c) => c.textContent.trim()).map((c) => c.dataset.square);
+    for (const sq of conPieza) {
+      const origen = celdas().find((c) => c.dataset.square === sq);
+      origen.click();
+      const destino = celdas().find((x) => x.classList.contains("target-capture"));
+      if (destino) return { de: sq, a: destino.dataset.square };
+      celdas().find((c) => c.dataset.square === sq).click(); // deseleccionar y seguir
+    }
+    return null;
+  });
+  if (!captura) mal("no se encontró ninguna captura posible para probar el recuadro");
+  else {
+    const cuantas = (t) => Number((t.match(/(\d+) piezas? en el tablero/) || [])[1] || 0);
+    const antes = cuantas(await enPantalla(page, "#position-readout"));
+    await page.fill("#cmd-input", captura.de + " " + captura.a);
+    await page.press("#cmd-input", "Enter");
+    await page.waitForTimeout(400);
+    const despues = cuantas(await enPantalla(page, "#position-readout"));
+    igual(`escribir la captura (${captura.de} ${captura.a}) la hace y la lectura lo dice`,
+      despues === antes - 1, "true");
+    igual("y el aviso de la captura no repite la posición entera",
+      await page.evaluate(() => /piezas? en el tablero/.test(document.getElementById("board-announcer").textContent)), "false");
+  }
+
+  // --- la voz: UNA frase, con todo dentro
+  // No deja rastro en el DOM, así que se engancha en BlindNotation.speak(), que es
+  // la puerta por donde el sitio habla. Hace falta porque speak() CANCELA lo
+  // anterior: dos llamadas seguidas se comen la primera, y repartir el texto entre
+  // las dos regiones vivas —que es justo lo que hay que hacer para el lector de
+  // pantalla— dejaba a quien usa la voz sin oír la mitad.
+  await page.evaluate(() => {
+    window.__dicho = [];
+    const orig = window.BlindNotation.speak;
+    window.BlindNotation.speak = function (t) { window.__dicho.push(String(t)); return orig.apply(this, arguments); };
+  });
+  // "Reiniciar" y no "Siguiente": los dos pasan por loadPuzzleAt(), pero Siguiente
+  // puede estar deshabilitado según dónde quedó el recorrido.
+  await page.click("#board-reset");
+  await page.waitForTimeout(400);
+  const dicho = await page.evaluate(() => window.__dicho);
+  igual("al reiniciar, la voz habla UNA sola vez", dicho.length, "1");
+  igual("y en esa frase van el aviso, el ejercicio Y la posición",
+    dicho.length === 1 && /reiniciado/i.test(dicho[0]) && /Ejercicio \d+ de \d+/.test(dicho[0])
+      && /piezas? en el tablero/.test(dicho[0]), "true");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* Fuera del Modo Adaptado, la lectura y la ayuda no estorban a quien ve el tablero. */
+async function prueba4x4Normal(browser) {
+  console.log("\n=== 4×4 fuera del Modo Adaptado ===");
+  const { page, ctx } = await abrir(browser, "/entreno/4x4.html", false);
+  await page.waitForSelector("#board4", { timeout: 25000 });
+  await page.waitForTimeout(500);
+  const r = await page.evaluate(() => {
+    const ver = (id) => {
+      const e = document.getElementById(id);
+      return !!(e && e.checkVisibility({ checkVisibilityCSS: true, contentVisibilityAuto: true }));
+    };
+    return { pos: ver("position-readout"), ayuda: ver("ayuda-detalles"), panel: ver("a11y-panel"), tablero: ver("board4") };
+  });
+  igual("el tablero se ve", r.tablero, "true");
+  igual("la posición escrita no", r.pos, "false");
+  igual("la ayuda tampoco", r.ayuda, "false");
+  igual("ni el recuadro de comandos", r.panel, "false");
+  await ctx.close();
+}
+
 (async () => {
   pruebaLectura();
   pruebaPosicionUnaSolaVez();
@@ -670,6 +839,8 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
     await pruebaTemas(browser);
     await pruebaContrarreloj(browser, "/racha-tactica.html", "Racha táctica");
     await pruebaContrarreloj(browser, "/te-reto.html", "¡Te reto!");
+    await prueba4x4(browser);
+    await prueba4x4Normal(browser);
   } finally {
     await browser.close();
   }
