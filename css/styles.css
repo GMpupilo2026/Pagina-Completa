@@ -336,3 +336,77 @@ html.adaptive-mode .piece-black {
 .dragging-from {
   opacity: 0.35;
 }
+
+/* ===== Los cursos en Modo Adaptado (js/curso-adaptado.js) =====
+ *
+ * Lo que decide qué se ve está acá y no en el JavaScript, a propósito: encender
+ * y apagar el modo surte efecto al instante, sin volver a recorrer el contenido
+ * del curso.
+ *
+ * 1) El material que solo sirve mirándolo. El cuadernillo en PDF y la
+ *    presentación son diagramas con marca de agua — para un lector de pantalla
+ *    son lo peor que se le puede dar, y por eso cada lección tiene su versión en
+ *    HTML accesible. En Modo Adaptado se ofrece esa y nada más. El video no se
+ *    esconde: un video es audio, y eso sí se oye.
+ */
+html.adaptive-mode .curso-solo-visual {
+  display: none !important;
+}
+
+/* El aviso que explica lo de arriba: si no, en Modo Adaptado parecería que a las
+   lecciones les faltan cosas. Faltan a propósito, y se dice cuáles. */
+.curso-aviso-adaptado {
+  display: none;
+}
+html.adaptive-mode .curso-aviso-adaptado {
+  display: block;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #de911d;
+  background: rgba(222, 145, 29, 0.12);
+  border-radius: 0 0.5rem 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* 2) La posición contada en palabras ("Blancas: rey en anna 4; …").
+ *
+ *    Fuera de Modo Adaptado se comporta igual que antes —solo la oye el lector
+ *    de pantalla, mismo recorte que .sr-only—, así que a quien ve el tablero no
+ *    le cambia nada. Dentro, se lee en pantalla y vive pegada al cuadro donde se
+ *    escribe la jugada: leer la posición y contestarla son el mismo gesto, y
+ *    tenerla al final del visor obligaba a ir y volver.
+ */
+.curso-posicion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+html.adaptive-mode .curso-posicion {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 0.6rem;
+  padding: 0.6rem 0.8rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  border: 0;
+  border-left: 4px solid #de911d;
+  background: rgba(222, 145, 29, 0.12);
+  border-radius: 0 0.5rem 0.5rem 0;
+  line-height: 1.7;
+}
+/* El rótulo va en el CSS y no en el texto del párrafo: ese párrafo es una región
+   viva (aria-live) que se vuelve a leer con cada jugada, y el rótulo tiene que
+   ir con ella — pero escribirlo dentro obligaría a los visores a recomponerlo
+   cada vez. */
+html.adaptive-mode .curso-posicion::before {
+  content: "Posición: ";
+  font-weight: 700;
+}

@@ -63,15 +63,24 @@
     for (let r = 0; r < 8; r++) { let f = 0; for (const ch of rows[r]) { if (/\d/.test(ch)) f += parseInt(ch, 10); else { board["abcdefgh"[f] + (8 - r)] = ch; f++; } } }
     return { board, turn: parts[1] || "w", full: parseInt(parts[5] || "1", 10) };
   }
+  // Sin BlindNotation cargado se queda con el singular: es mejor "alfil en c1, f1"
+  // que inventar un plural.
+  function nombrePieza(t, cuantas) {
+    if (window.BlindNotation && BlindNotation.pieceLabel) return BlindNotation.pieceLabel(t, cuantas);
+    return { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" }[t.toUpperCase()] || t;
+  }
+
   function describe(fen) {
     const { board, turn } = parseFen(fen);
-    const names = { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" };
     const out = [];
     [["w", "Blancas"], ["b", "Negras"]].forEach(([col, nom]) => {
       const parts = [];
       "KQRBNP".split("").forEach((t) => {
         const sqs = Object.keys(board).filter((sq) => board[sq] === (col === "w" ? t : t.toLowerCase())).sort();
-        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + spokenSquares(sqs));
+        // El plural sale de BlindNotation: sumarle una "s" daba "alfils" y "peóns",
+        // que el lector de pantalla dice tal cual. Es el mismo lugar del que sale la
+        // forma hablada de las casillas, dos líneas más abajo.
+        if (sqs.length) parts.push(nombrePieza(t, sqs.length) + " en " + spokenSquares(sqs));
       });
       out.push(nom + ": " + (parts.join("; ") || "sin piezas") + ".");
     });
