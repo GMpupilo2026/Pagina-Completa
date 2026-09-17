@@ -160,6 +160,27 @@ window.PlanEntrenamiento = (function () {
     },
   ];
 
+  /* La novena área. Es la que el banco de Oscar llama «un tema adicional un
+     poco más difícil»: no mide una habilidad del tablero como las otras ocho,
+     sino lo que rodea al juego —cultura ajedrecística, reglamento de torneo,
+     Elo y títulos, motores y bases de datos, partidas históricas—. Por eso sus
+     tareas no son de entrenamiento técnico sino de lectura y de competir. */
+  AREAS.push({
+    id: 'maestria', nombre: 'Maestría', emoji: '🎓',
+    mide: 'Lo que rodea al tablero: reglamento de torneo, Elo y títulos, motores y bases de datos, y las partidas que hay que conocer.',
+    flojo: 'Sabe jugar, pero le falta el mundo alrededor: cómo funciona un torneo, qué dice el Elo, qué hacen los motores. Eso se nota apenas sale a competir.',
+    solido: 'Se mueve con soltura en el ambiente del ajedrez: entiende el reglamento, sabe leer una evaluación de motor y conoce las partidas de referencia.',
+    tareas: [
+      'Leer el reglamento del próximo torneo antes de jugarlo: ritmo, incremento y criterios de desempate.',
+      'Repasar una partida histórica por semana (la Inmortal, la del Siglo, alguna de Capablanca) siguiéndola en un tablero.',
+      'Analizar dos partidas propias con motor, primero sin verlo: anotar dónde uno cree que se equivocó y recién después comparar.',
+    ],
+    recursos: [
+      { texto: 'Examen de nivel de arbitraje', href: 'nivel-de-arbitraje.html' },
+      { texto: 'Partidas modelo', href: 'cursos/partidas-modelo.html' },
+    ],
+  });
+
   const AREA_POR_ID = {};
   AREAS.forEach((a) => { AREA_POR_ID[a.id] = a; });
 
@@ -170,18 +191,32 @@ window.PlanEntrenamiento = (function () {
      tenía escalones 4 y 5): se conserva tal cual para no re-etiquetar los
      resultados que se midieron con ella. Maestro lleva `desde: null` justamente
      por eso: es un nivel que aquella prueba no podía distinguir. */
+  /* Los cinco niveles y su tramo de Elo, como los fijó Oscar. Dos cosas que
+     conviene tener presentes al tocarlos:
+
+     - El tramo de Principiante es enorme (hasta 1399) porque recoge a todo el
+       que todavía está aprendiendo. Por eso el Elo estimado NO es el centro del
+       tramo sino un valor interpolado según el porcentaje (ver eloEstimado):
+       con el centro, quien saca 2 % y quien saca 28 % recibirían el mismo
+       número, y eso no le sirve a nadie.
+     - La lista que llegó tenía un hueco: Básico terminaba en 1599 e Intermedio
+       arrancaba en 1601, así que el 1600 no caía en ningún nivel. Se cierra
+       acá, en Intermedio.
+     - Arriba de 2199 se sigue siendo «Muy avanzado»: es el último tramo y tiene
+       que quedar abierto, o alguien de 2300 se quedaría sin nivel.
+     - El piso de Principiante es 400 y no 0: cero no es una puntuación que
+       exista. Es solo el extremo del que arranca la interpolación; el corte
+       que decide el nivel sigue siendo 1400. */
   const NIVELES = [
-    { clave: 'principiante', escalon: 0, desde: 0,  etiqueta: 'Principiante', rango: 'menos de 800 aprox.',
+    { clave: 'principiante', escalon: 0, desde: 0,  hasta: 29,  elo: [400, 1399],  etiqueta: 'Principiante', rango: 'hasta 1399',
       descripcion: 'Está aprendiendo las reglas y a no dejar piezas. El objetivo de estas semanas es jugar sin errores de reglamento y contar bien el material.' },
-    { clave: 'basico',       escalon: 1, desde: 30, etiqueta: 'Básico',       rango: '800 a 1100 aprox.',
+    { clave: 'basico',       escalon: 1, desde: 30, hasta: 49,  elo: [1400, 1599], etiqueta: 'Básico',       rango: '1400 a 1599',
       descripcion: 'Ya juega partidas completas. Toca asentar la táctica básica y los mates elementales: es lo que decide sus partidas hoy.' },
-    { clave: 'intermedio',   escalon: 2, desde: 50, etiqueta: 'Intermedio',   rango: '1100 a 1400 aprox.',
+    { clave: 'intermedio',   escalon: 2, desde: 50, hasta: 69,  elo: [1600, 1799], etiqueta: 'Intermedio',   rango: '1600 a 1799',
       descripcion: 'Tiene base. Ahora los puntos se ganan con finales, planes y cálculo ordenado, más que con nuevas aperturas.' },
-    { clave: 'avanzado',     escalon: 3, desde: 70, etiqueta: 'Avanzado',     rango: '1400 a 1700 aprox.',
+    { clave: 'avanzado',     escalon: 3, desde: 70, hasta: 86,  elo: [1800, 1999], etiqueta: 'Avanzado',     rango: '1800 a 1999',
       descripcion: 'Juega bien en general. Conviene trabajar por debilidades concretas y preparar torneos con partidas largas analizadas.' },
-    { clave: 'experto',      escalon: 4, desde: 85, etiqueta: 'Experto',      rango: '1700 a 2000 aprox.',
-      descripcion: 'Nivel de competencia. El plan debe apuntar a repertorio propio, finales técnicos y análisis sistemático de las partidas.' },
-    { clave: 'maestro',      escalon: 5, desde: null, etiqueta: 'Maestro',      rango: '2000 o más aprox.',
+    { clave: 'muy_avanzado', escalon: 4, desde: 87, hasta: 100, elo: [2000, 2199], etiqueta: 'Muy avanzado', rango: '2000 o más',
       descripcion: 'Resuelve también lo difícil: cálculo largo, técnica de finales y criterio posicional. El plan pasa a ser preparación de competencia: repertorio propio, análisis con motor y trabajo por rival.' },
   ];
 
@@ -213,15 +248,28 @@ window.PlanEntrenamiento = (function () {
   const ELO_TIPO_POR_ID = {};
   ELO_TIPOS.forEach((t) => { ELO_TIPO_POR_ID[t.id] = t; });
   const ELO_MIN = 100, ELO_MAX = 3500;
-  // Los mismos cortes que los tramos de NIVELES, en Elo; y el centro de cada tramo.
-  const ELO_CORTES = [800, 1100, 1400, 1700, 2000];
-  const ELO_CENTRO = [650, 950, 1250, 1550, 1850, 2150];
+  // Los cortes salen de los propios tramos de NIVELES: una sola fuente.
+  const ELO_CORTES = NIVELES.slice(1).map((n) => n.elo[0]);
   function nivelDeElo(elo) {
     let i = 0;
     ELO_CORTES.forEach((c) => { if (elo >= c) i += 1; });
-    return NIVELES[i];
+    return NIVELES[Math.min(i, NIVELES.length - 1)];
   }
-  function eloDeNivel(nivel) { return ELO_CENTRO[Math.max(0, NIVELES.indexOf(nivel))]; }
+  function eloDeNivel(nivel) {
+    const n = NIVELES[Math.max(0, NIVELES.indexOf(nivel))];
+    return Math.round((n.elo[0] + n.elo[1]) / 2);
+  }
+  /* El Elo estimado se interpola DENTRO del tramo según el porcentaje, en vez
+     de devolver el centro. Importa sobre todo en Principiante, que va de 0 a
+     1399: con el centro, quien acertó el 2 % y quien acertó el 28 % saldrían
+     los dos con el mismo número. */
+  function eloEstimado(nivel, porcentaje) {
+    const n = NIVELES[Math.max(0, NIVELES.indexOf(nivel))];
+    const ancho = n.hasta - n.desde;
+    if (!ancho || typeof porcentaje !== 'number') return eloDeNivel(n);
+    const dentro = Math.min(1, Math.max(0, (porcentaje - n.desde) / ancho));
+    return Math.round(n.elo[0] + dentro * (n.elo[1] - n.elo[0]));
+  }
   function eloValido(v) {
     const n = typeof v === 'number' ? v : parseInt(v, 10);
     return Number.isFinite(n) && n >= ELO_MIN && n <= ELO_MAX ? Math.round(n) : null;
@@ -273,15 +321,18 @@ window.PlanEntrenamiento = (function () {
   function topePorAreas(porArea) {
     if (!porArea || !porArea.length) return NIVELES.length - 1;
     const minima = Math.min.apply(null, porArea.map((a) => a.porcentaje));
-    if (minima < 30) return 3;   // como mucho Avanzado
-    if (minima < 50) return 4;   // como mucho Experto
+    if (minima < 30) return 2;   // como mucho Intermedio
+    if (minima < 50) return 3;   // como mucho Avanzado
     return NIVELES.length - 1;
   }
 
   function nivelPorEscalones(dificultad, porArea) {
     const escalones = porEscalon(dificultad);
     const tope = topePorAreas(porArea);
-    const alcanzado = Math.min(escalonAlcanzado(escalones), tope);
+    /* escalonAlcanzado devuelve de 0 a 5 y los niveles son cinco: el escalón 5
+       y el 4 caen los dos en el último. Sin este tope, un alumno que supera el
+       escalón 5 se quedaba sin nivel (NIVELES[5] no existe). */
+    const alcanzado = Math.min(escalonAlcanzado(escalones), tope, NIVELES.length - 1);
     return { escalones, alcanzado, nivel: NIVELES[alcanzado], topeAreas: tope };
   }
 
@@ -313,7 +364,7 @@ window.PlanEntrenamiento = (function () {
     // Elo: el declarado en el perfil (si lo hay) frente al que sugiere la prueba.
     const perfil = (detalle && detalle.perfil) || {};
     const declarado = eloValido(perfil.elo);
-    const estimado = eloDeNivel(conEscalones.nivel);
+    const estimado = eloEstimado(conEscalones.nivel, porcentaje);
     let nivel = conEscalones.nivel;
     let elo = { declarado: null, tipo: null, estimado, combinado: estimado, lectura: null };
     if (declarado) {
@@ -471,5 +522,5 @@ window.PlanEntrenamiento = (function () {
   function enlace(href, base) { return (base || '') + href; }
 
   return { AREAS, AREA_POR_ID, NIVELES, ESCALONES, nivelDe, nivelPorEscalones, porEscalon, resumir, generarPlan, enlace,
-           ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloValido, lecturaElo };
+           ELO_TIPOS, ELO_TIPO_POR_ID, ELO_MIN, ELO_MAX, nivelDeElo, eloDeNivel, eloEstimado, eloValido, lecturaElo };
 })();

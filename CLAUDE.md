@@ -1122,7 +1122,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
   preguntas con `DiagnosticoPrueba.armar()` (al final de
   `js/diagnostico-items.js`). Lo que nunca cambia es la forma: 7 ítems por
-  área, el mismo reparto de dificultad y 160 puntos, para que dos diagnósticos
+  área, el mismo reparto de dificultad y 180 puntos, para que dos diagnósticos
   del mismo alumno se puedan comparar aunque las preguntas hayan sido otras.
   Los ids de la prueba quedan guardados en el estado (para retomarla) y en el
   resultado (`detalle.items`, para que la corrección repase esas preguntas y no
@@ -1133,7 +1133,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   entera. El nivel estimado es **el escalón más alto superado** —60% de
   aciertos ahí y el promedio de los anteriores también en 60%—, con un tope: si
   un área quedó por debajo del 30% no pasa de Avanzado, y por debajo del 50% no
-  pasa de Experto (nadie con los finales en blanco es maestro). Está en
+  pasa de Avanzado (nadie con los finales en blanco es «muy avanzado»). Está en
   `nivelPorEscalones()` de `js/plan-entrenamiento.js`.
   Por qué: con el porcentaje a secas, un jugador de 1400 y uno de 2300 sacaron
   los dos "Experto" (93% y 99%), porque el techo de la prueba eran preguntas de
@@ -1184,7 +1184,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   profesor o un administrador puede crearlo o editarlo.
 - En Informes, profesores y administradores ven "🧭 Diagnósticos de nivel": el
   resumen del grupo con sus gráficos (nivel por alumno, promedio por área y el
-  perfil de ocho áreas de cada uno). Las barras usan tres bandas —a trabajar,
+  perfil de nueve áreas de cada uno). Las barras usan tres bandas —a trabajar,
   en camino, firme— y **el color nunca va solo**: verde y ámbar no se
   distinguen con daltonismo (ΔE 5.7 en deutan, comprobado con el validador de
   la skill dataviz), así que cada barra lleva su porcentaje y su etiqueta en
@@ -1212,7 +1212,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 
 `libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
 conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
-alumno la conteste en papel; este es el **banco entero** —las 118 preguntas, área
+alumno la conteste en papel; este es el **banco entero** —las 301 preguntas, área
 por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
 comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
 no. Lo genera `herramientas/diagnostico-libro.js`.
@@ -1262,9 +1262,93 @@ con Node desde el mismo archivo que usa el sitio —comprobar el libro contra un
 copia de la lista no comprobaría nada— y mira que el PDF esté cifrado y se abra
 sin contraseña, que NO deje imprimir, copiar ni modificar pero SÍ extraer texto,
 que lleve al autor, que tenga marca de agua en **todas** las páginas del cuerpo y
-no en la tapa, que estén las 118 preguntas con su respuesta marcada, y que la
+no en la tapa, que estén las 301 preguntas con su respuesta marcada, y que la
 versión accesible no dependa de ninguna imagen, tenga los encabezados en orden y
 cuente en palabras **cada una** de las posiciones que el PDF dibuja.
+
+
+### Las 301 preguntas y los cinco niveles
+
+El banco pasó de 118 ítems en 8 áreas a **301 en 9**: se sumaron 183 preguntas
+del documento de Oscar («225 preguntas con sus opciones, la respuesta correcta y
+la explicación») y con ellas la novena área, **Maestría** — lo que rodea al
+tablero: reglamento de torneo, Elo y títulos, motores, partidas históricas.
+
+**De las 225 del documento, 42 ya estaban** preguntadas de otra forma, muchas
+veces al revés: «¿qué piezas dan el mate de Boden?» contra «¿cómo se llama el
+mate de los dos alfiles cruzados?». Esas no se agregaron. Dos preguntas hermanas
+en la misma prueba se regalan la respuesta entre ellas, y el comparador
+automático no las distingue de las que solo comparten la plantilla de la frase
+(«1.e4 e6 corresponde a la Defensa…» no es la Siciliana): la última pasada fue a
+mano.
+
+**Y no se reemplazó el banco viejo.** Los ids de los 118 ítems anteriores están
+guardados dentro de los resultados ya rendidos (`detalle.items`), así que borrar
+los que no aparecían en el documento habría roto la corrección de esos
+diagnósticos.
+
+#### El documento llegaba con la respuesta delatada
+
+Medido antes de importar nada: **la correcta era la opción más larga en 193 de
+las 225 (86 %)**, con 28 caracteres de ventaja de mediana —71 contra 34 de
+promedio— y era la opción A en 208 de 225. Quien no supiera nada de ajedrez
+aprobaba marcando siempre la más larga.
+
+Lo de la posición se arregla solo, porque el sitio baraja las opciones en cada
+intento. Lo del largo no: es **exactamente la falla que este banco ya había
+tenido** (la correcta era la más larga en 91 de 96 ítems) y por la que
+`verificar-diagnostico.js` falla si la correcta gana por más de 2 caracteres. La
+causa era siempre la misma —la explicación venía metida dentro de la opción—, así
+que se pasó a `explica`, que es donde vive, y las cuatro opciones quedaron
+parejas. Son 183 ítems reescritos uno por uno; no hay forma de automatizarlo sin
+estropear el contenido.
+
+El documento **no traía los pesos**, aunque su introducción habla de 1 a 3. Están
+puestos a mano, en la escala de 1 a 5 del resto del banco, según cuánto exige
+cada pregunta. Maestría quedó con 5 en cada escalón, que es el reparto ideal.
+
+Una de las 225 estaba **en el área equivocada** —«Un alfil se mueve siempre…»
+figuraba en Cálculo— y se movió a Reglas: puntuada como cálculo, distorsionaba
+esa área del informe.
+
+#### Los niveles pasaron a cinco, con rangos de Elo
+
+| Nivel | % global | Elo |
+|---|---|---|
+| Principiante | 0-29 % | hasta 1399 |
+| Básico | 30-49 % | 1400 a 1599 |
+| Intermedio | 50-69 % | 1600 a 1799 |
+| Avanzado | 70-86 % | 1800 a 1999 |
+| Muy avanzado | 87-100 % | 2000 o más |
+
+- **La lista que llegó tenía un hueco**: Básico terminaba en 1599 e Intermedio
+  arrancaba en 1601, así que el 1600 no caía en ningún nivel. Se cerró en
+  Intermedio.
+- **El último tramo queda abierto** hacia arriba aunque se muestre «2000 a
+  2199»: si no, alguien de 2300 se quedaría sin nivel.
+- **El Elo estimado se interpola DENTRO del tramo según el porcentaje**, no es
+  el centro. Con un tramo tan ancho como Principiante (hasta 1399), el centro le
+  pondría el mismo número a quien sacó 2 % y a quien sacó 28 %. El piso de ese
+  tramo es 400 y no 0, porque cero no es una puntuación que exista.
+- `nivelPorEscalones()` **tiene que recortar el índice**: `escalonAlcanzado()`
+  devuelve de 0 a 5 y ahora los niveles son cinco, así que sin el tope quien
+  supera el escalón 5 se quedaba con `NIVELES[5]`, que no existe. Los topes por
+  área bajaron en consecuencia: un área por debajo del 30 % no pasa de
+  Intermedio, y por debajo del 50 % no pasa de Avanzado.
+- **`DiagnosticoPrueba.AREAS` ya no es una lista escrita a mano**: sale de
+  `PlanEntrenamiento.AREAS`. Con la lista a mano, sumar la novena área habría
+  dejado la prueba en ocho **sin que nada fallara** — simplemente no habría
+  preguntado nada de Maestría y el informe la habría pintado en cero. Por eso
+  los dos generadores de PDF cargan `plan-entrenamiento.js` ANTES que el banco.
+
+#### Un diagnóstico nuevo ya no se compara con uno viejo
+
+La prueba pasó de 56 ítems y 160 puntos a **63 y 180**, porque son nueve áreas
+por siete ítems. Eso cambia la medición, así que `VERSION` subió a **4** y una
+prueba empezada con la anterior se descarta con aviso. Los resultados ya
+guardados se siguen leyendo y calificando con los umbrales de entonces, como los
+de la versión 1: **no se vuelven a etiquetar**, porque se midieron con otra
+prueba.
 
 
 ## Examen de arbitraje (reglamento FIDE)
