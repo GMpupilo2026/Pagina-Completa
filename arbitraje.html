@@ -28,6 +28,7 @@
     <script src="js/arbitraje-items.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/cuadro-comandos.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -157,6 +158,10 @@
                     </div>
                     <p class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4" id="q-text">…</p>
                     <div id="q-options" class="space-y-2"></div>
+                    <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js).
+                         Va aparte de #q-options porque esa caja se repinta entera en cada
+                         clic y el cuadro se monta una sola vez. -->
+                    <div id="q-comandos"></div>
                 </div>
 
                 <div class="flex items-center justify-between gap-3">
@@ -298,13 +303,59 @@ function pintarPregunta() {
   blanco.textContent = '○ Dejar en blanco';
   blanco.addEventListener('click', () => { respuestas[item.id] = EN_BLANCO; pintarPregunta(); });
   caja.appendChild(blanco);
+  prepararComandos(item);
 }
+
+/* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+ * El examen solo se podía contestar apretando el botón de la opción. Con
+ * lector de pantalla eso se oye, pero no dice CUÁL es cuál: "la segunda" hay
+ * que contarla. Ahora cada opción lleva su letra escrita —"Opción A. …"— y la
+ * respuesta también se escribe.
+ *
+ * El cuadro se monta UNA vez, fuera de #q-options (que se repinta entero en
+ * cada clic), y lo que decide si se ve es el CSS. Ver js/cuadro-comandos.js. */
+let comandos = null;
+
+function prepararComandos(item) {
+  if (!window.CuadroComandos) return;
+  if (!comandos) {
+    comandos = CuadroComandos.montar($('q-comandos'), { onEnviar: responderEscribiendo });
+  }
+  comandos.etiqueta('Escribe la letra de la opción');
+  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. `
+    + 'Puedes escribir solo la letra ("B"), "opción B", o "en blanco".');
+}
+
+function responderEscribiendo(texto, api) {
+  const item = examen[idx];
+  if (CuadroComandos.esNoSe(texto)) {
+    respuestas[item.id] = EN_BLANCO;
+    pintarPregunta();
+    api.limpiar().decir('Anotado: en blanco.');
+    return;
+  }
+  const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
+  if (i === null) {
+    api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}.`);
+    return;
+  }
+  // `i` es la POSICIÓN en la lista barajada; lo que se guarda es cuál opción
+  // del ítem es esa. Guardar la posición dejaría la respuesta atada al barajado.
+  const orden = item.__orden;
+  respuestas[item.id] = orden[i];
+  pintarPregunta();
+  api.limpiar().decir(`Elegiste la opción ${CuadroComandos.letra(i)}: ${item.opciones[orden[i]]}. Puedes cambiarla o seguir.`);
+}
+
 
 function botonOpcion(item, original, elegida) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = claseOpcion(elegida);
-  b.textContent = item.opciones[original];
+  // La letra va ESCRITA en el botón, no puesta con CSS: es lo que hay que
+  // decir para contestar por el cuadro de comandos, así que quien la oye tiene
+  // que oírla de la misma lista que lee.
+  b.textContent = `Opción ${CuadroComandos.letra(item.__orden.indexOf(original))}. ${item.opciones[original]}`;
   b.addEventListener('click', () => { respuestas[item.id] = original; pintarPregunta(); });
   return b;
 }

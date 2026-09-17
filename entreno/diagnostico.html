@@ -44,6 +44,9 @@
     <script src="../js/plan-entrenamiento.js"></script>
     <script src="../js/diagnostico-items.js"></script>
     <script src="../js/adaptive-mode.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/chess-move-parser.js"></script>
+    <script src="../js/cuadro-comandos.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
@@ -170,6 +173,11 @@
 
                 <p id="q-hint" class="text-center text-xs text-brand-450 dark:text-brand-350 mb-3 min-h-[1.2em]"></p>
                 <div id="q-options" class="space-y-2"></div>
+                <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js).
+                     Va DESPUÉS de las opciones a propósito: primero se oyen las
+                     opciones o se lee la posición, y justo después está dónde
+                     escribir la respuesta. -->
+                <div id="q-comandos"></div>
 
                 <div class="flex justify-between items-center gap-3 mt-6">
                     <button type="button" id="abandon-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors">Guardar y salir</button>
@@ -476,7 +484,8 @@ function pintarItem() {
   wrap.classList.toggle('flex', conTablero);
   if (conTablero) pintarTablero(new Chess(itemActual.fen));
 
-  if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
+  const esOpcion = itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero';
+  if (esOpcion) {
     // Las opciones se barajan en cada intento: escritas siempre en el mismo orden,
     // la correcta quedaría siempre en el mismo lugar y bastaría con marcar la
     // primera para aprobar media prueba sin saber ajedrez.
@@ -486,15 +495,11 @@ function pintarItem() {
       btn.type = 'button';
       btn.dataset.original = String(original);
       btn.className = claseOpcion(false);
-      btn.textContent = itemActual.opciones[original];
-      btn.addEventListener('click', () => {
-        seleccion = original;
-        [...opciones.children].forEach((b, j) => {
-          if (b.id === 'no-se-btn') b.className = claseNoSe(false);
-          else b.className = claseOpcion(j === posicion);
-        });
-        document.getElementById('next-btn').disabled = false;
-      });
+      // La letra va ESCRITA dentro del botón, no puesta con CSS ni con un
+      // ::before: es lo que se dice para contestar por el cuadro de comandos,
+      // así que quien la oye tiene que oírla de la misma lista que lee.
+      btn.textContent = `Opción ${CuadroComandos.letra(posicion)}. ${itemActual.opciones[original]}`;
+      btn.addEventListener('click', () => elegirOpcion(posicion));
       opciones.appendChild(btn);
     });
   } else if (itemActual.tipo === 'casilla') {
@@ -507,6 +512,108 @@ function pintarItem() {
     hint.textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
   }
   opciones.appendChild(botonNoSe());
+  prepararComandos(esOpcion);
+}
+
+/* Elegir la opción que está en la POSICIÓN `posicion` de la lista barajada.
+   Lo llaman el clic en el botón y el cuadro de comandos: una sola forma de
+   quedar elegida, para que escribir "B" y tocar la segunda opción no puedan
+   terminar marcando cosas distintas. */
+function elegirOpcion(posicion) {
+  const opciones = document.getElementById('q-options');
+  seleccion = ordenOpciones[posicion];
+  [...opciones.children].forEach((b, j) => {
+    if (b.id === 'no-se-btn') b.className = claseNoSe(false);
+    else b.className = claseOpcion(j === posicion);
+  });
+  document.getElementById('next-btn').disabled = false;
+}
+
+/* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+ * Un ítem de tablero solo se podía contestar arrastrando o haciendo clic en
+ * las casillas, y uno de opción solo apretando su botón: con lector de
+ * pantalla, media prueba era incontestable — y no daba ningún error, la página
+ * se veía perfecta. Acá la respuesta también se escribe: la letra de la
+ * opción, la casilla, la jugada o "no lo sé".
+ *
+ * El cuadro se monta UNA vez y se reconfigura en cada pregunta; lo que decide
+ * si se ve es el CSS (html.adaptive-mode), no este código. Ver
+ * js/cuadro-comandos.js. */
+let comandos = null;
+
+function prepararComandos(esOpcion) {
+  if (!window.CuadroComandos) return;
+  if (!comandos) {
+    comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+      onEnviar: responderEscribiendo,
+    });
+  }
+  comandos.limpiar().decir('');
+  if (esOpcion) {
+    const cuantas = itemActual.opciones.length;
+    comandos.etiqueta('Escribe la letra de la opción');
+    comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(cuantas - 1)}. `
+      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".');
+    // En los ítems de opción CON tablero la posición también hace falta: la
+    // pregunta habla de una posición que no se puede ver.
+    comandos.posicion(itemActual.fen ? new Chess(itemActual.fen) : '');
+  } else if (itemActual.tipo === 'casilla') {
+    comandos.etiqueta('Escribe la casilla');
+    comandos.ayuda('Por ejemplo "e4" o "eva 4", como se leen las columnas. También vale "no lo sé".');
+    comandos.posicion(new Chess(itemActual.fen));
+  } else {
+    comandos.etiqueta('Escribe tu jugada');
+    comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".');
+    comandos.posicion(new Chess(itemActual.fen));
+  }
+}
+
+function responderEscribiendo(texto, api) {
+  if (CuadroComandos.esNoSe(texto)) {
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.click();
+    api.limpiar().decir('Anotado: no lo sabías.');
+    return;
+  }
+  if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
+    const i = CuadroComandos.opcionPedida(texto, itemActual.opciones.length);
+    if (i === null) {
+      api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
+      return;
+    }
+    elegirOpcion(i);
+    api.limpiar().decir(`Elegiste la opción ${CuadroComandos.letra(i)}: ${itemActual.opciones[ordenOpciones[i]]}. Puedes cambiarla o seguir.`);
+    return;
+  }
+  if (itemActual.tipo === 'casilla') {
+    const sq = CuadroComandos.casillaPedida(texto);
+    if (!sq) { api.decir(`No entendí "${texto}". Escribe una casilla, por ejemplo "e4".`); return; }
+    seleccion = sq;
+    pintarTablero(new Chess(itemActual.fen), [sq]);
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.className = claseNoSe(false);
+    document.getElementById('q-hint').textContent = `Elegiste ${sq}. Puedes cambiarla o seguir.`;
+    document.getElementById('next-btn').disabled = false;
+    api.limpiar().decir(`Elegiste ${sq}. Puedes cambiarla o seguir.`);
+    return;
+  }
+  if (itemActual.tipo === 'jugada') {
+    // El intérprete HACE la jugada sobre la partida que se le pasa, así que se
+    // le pasa una copia de usar y tirar: la respuesta es la jugada, no una
+    // posición nueva.
+    const juego = new Chess(itemActual.fen);
+    const mv = CuadroComandos.jugadaPedida(juego, texto);
+    if (!mv) { api.decir(`"${texto}" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.`); return; }
+    seleccion = { from: mv.from, to: mv.to, promotion: mv.promotion, san: mv.san };
+    origenElegido = null;
+    pintarTablero(juego, [mv.from, mv.to]);
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.className = claseNoSe(false);
+    const dicho = `Jugaste ${mv.san}: esa es tu respuesta y no hace falta jugar más. Puedes cambiarla o seguir.`;
+    document.getElementById('q-hint').textContent = dicho;
+    document.getElementById('next-btn').disabled = false;
+    api.limpiar().decir(dicho);
+  }
 }
 
 // Siempre al final y con otra pinta: no compite con las opciones de contenido,

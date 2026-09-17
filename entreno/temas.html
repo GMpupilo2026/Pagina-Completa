@@ -292,6 +292,10 @@
           <div class="board8" id="board" role="group" aria-label="Tablero del ejercicio"></div>
         </div>
         <p class="puzzle-meta" id="puzzle-meta"></p>
+        <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js):
+             la posición contada en palabras y dónde escribir la jugada. Hasta
+             acá el ejercicio SOLO se podía contestar tocando el tablero. -->
+        <div id="q-comandos"></div>
 
         <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
         <div class="round-controls">
@@ -326,6 +330,9 @@
 <script src="../js/coordenadas-tablero.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/board-drag.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
 <script>
@@ -572,6 +579,7 @@ function isLightSquare(square){
 }
 
 function drawBoard(){
+  refrescarComandos();
   const board = document.getElementById('board');
   board.innerHTML = '';
   const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
@@ -603,6 +611,41 @@ function drawBoard(){
   });
 }
 
+/* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+ * Este ejercicio solo se podía contestar tocando el tablero: con lector de
+ * pantalla era incontestable, y no daba ningún error — la página se veía
+ * perfecta y quien no podía verla simplemente no avanzaba. Acá la jugada
+ * también se escribe, y la posición va contada en palabras justo encima del
+ * cuadro donde se contesta. Ver js/cuadro-comandos.js.
+ *
+ * El tablero NO se esconde (Mates y sus hermanas sí lo hacen): quien ve poco
+ * usa las dos cosas, y quien acompaña necesita ver lo que el alumno contesta. */
+let comandos = null;
+
+function refrescarComandos(){
+  if(!window.CuadroComandos || !game) return;
+  if(!comandos){
+    comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+      etiqueta: 'Escribe tu jugada',
+      onEnviar: jugarEscribiendo,
+    });
+    comandos.ayuda('En español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D".');
+  }
+  comandos.posicion(game);
+}
+
+function jugarEscribiendo(texto, api){
+  if(locked){ api.decir('Espera: el rival está respondiendo.'); return; }
+  // El intérprete HACE la jugada sobre la partida que se le pasa, así que se le
+  // pasa una copia: quien decide si la jugada entra es playMove(), que es la
+  // misma puerta por la que pasa el clic y la que corrige contra la solución.
+  const copia = new Chess(game.fen());
+  const mv = CuadroComandos.jugadaPedida(copia, texto);
+  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.`); return; }
+  api.limpiar().decir('');
+  playMove(mv.from, mv.to, mv.promotion);
+}
+
 function flashWrong(btn){
   if(!btn) return;
   btn.classList.add('wrong-flash');
@@ -612,6 +655,9 @@ function setStatus(text, cls){
   const el = document.getElementById('round-status');
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
+  // El mismo aviso, repetido en el cuadro de comandos: quien contesta
+  // escribiendo tiene el foco ahí y el renglón del tablero le queda lejos.
+  if(comandos) comandos.decir(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
