@@ -2560,6 +2560,27 @@ público).
 - **"No lo sé" y "dejar en blanco" también se escriben**: son respuestas de
   verdad —valen cero como fallar pero se guardan aparte—, no un botón de saltar.
 
+#### Contestar por el cuadro PASA SOLA a la siguiente
+
+El Enter que contesta es el mismo que avanza: quien contesta escribiendo no
+tiene por qué ir a buscar el botón "Siguiente", que es justamente lo que este
+cuadro viene a evitar. Vale en el diagnóstico y en los dos exámenes de
+arbitraje.
+
+- **Los botones de opción NO avanzan.** Ahí se ve la pantalla, y poder cambiar
+  de idea antes de seguir es lo normal; además en los exámenes de arbitraje se
+  puede volver atrás con "Anterior". Solo avanza el cuadro.
+- **Lo que no se entiende no avanza**, y lo dice: una jugada ilegal, una casilla
+  que no existe o un "la de arriba" dejan todo como estaba.
+- **El aviso lleva el enunciado de la pregunta nueva.** Al no pasar por el
+  botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+  contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+  que se lee solo, y el foco se queda en el cuadro para contestar la siguiente
+  sin moverse.
+- **En la última, ese Enter TERMINA la prueba**, y la ayuda lo dice antes de que
+  lo aprieten ("Es la última: al responder se termina…"). Es el mismo acto que
+  el botón de "Terminar y ver el resultado", pero conviene saberlo de antemano.
+
 `concentracion.html` e `ilumina-tablero.html` **no llevan cuadro**, y no es un
 olvido: ahí la tarea ES mirar (recordar dónde estaban las piezas, encontrar la
 casilla iluminada). Un recuadro para escribir no las haría accesibles, solo
@@ -2575,7 +2596,21 @@ una página que no se puede contestar. Comprueba además que el cuadro **se vea 
 verdad** (se mide el `display` que calcula el navegador, no la clase) y que fuera
 del modo no esté. Las preguntas que se contestan con una casilla son 2 de las 301
 del banco, así que esa prueba **siembra el estado guardado** con esos dos ítems en
-vez de confiar en el sorteo: dejarlo al azar es dejar ese camino sin probar.
+vez de confiar en el sorteo: dejarlo al azar es dejar ese camino sin probar. Con
+el mismo truco se salta a la última pregunta para comprobar que ese Enter
+termina la prueba de verdad —quedarse trabado ahí dejaría a quien contesta
+escribiendo sin forma de llegar al resultado—.
+
+Que la respuesta quedó ANOTADA y no solo que la pantalla pasó de pregunta se
+comprueba con el estado que la propia página guarda en `localStorage` para poder
+retomar la prueba, y en los exámenes de arbitraje volviendo atrás con "Anterior"
+y mirando qué opción quedó marcada. Dos cosas que hacen falta para que no sea
+frágil: **el contexto va sin service worker** (`serviceWorkers: "block"`) —al
+recargar es él quien sirve los archivos, y lo que pide no pasa por las rutas del
+contexto, así que volvía el `js/supabase-client.js` de verdad y la página moría;
+es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
+contrarreloj se miran **por la posición del tablero y no por el renglón de
+resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
 
 ## Cómo se escribe en el sitio
 

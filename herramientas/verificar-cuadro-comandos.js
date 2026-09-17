@@ -21,6 +21,13 @@
 
    4. LA POSICIÓN, PEGADA AL CUADRO. Leerla y contestarla son el mismo gesto.
 
+   5. EL ENTER QUE CONTESTA TAMBIÉN AVANZA. Y eso trae dos cosas que comprobar:
+      que la respuesta quedó ANOTADA (no basta con que la pantalla haya pasado
+      de pregunta) y que el aviso lee la pregunta nueva — al no pasar por el
+      botón, ya no hay nada que anuncie el cambio. En la última, ese Enter
+      termina la prueba: quedarse trabado ahí dejaría a quien contesta
+      escribiendo sin forma de llegar al resultado.
+
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install playwright chess.js@0.10.3
          node herramientas/verificar-cuadro-comandos.js                        */
@@ -73,8 +80,16 @@ window.sb = {
   channel: () => ({ on() { return this; }, subscribe() { return this; } }),
 };`;
 
+/* Sin service worker, a propósito. Estas páginas lo registran, y al RECARGAR
+   es él quien sirve los archivos: lo que pide el service worker no pasa por las
+   rutas del contexto, así que volvía el js/supabase-client.js de verdad y la
+   página moría con "createClient de undefined". Es la misma piedra que ya
+   documentó verificar-reportes.js. Acá no se comprueba el service worker —de
+   eso se encarga verificar-pwa.js—, así que lo más honesto es apagarlo. */
+const SIN_SW = { serviceWorkers: "block" };
+
 async function abrir(browser, ruta, adaptado) {
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext(SIN_SW);
   // Ojo con el orden: playwright resuelve la ÚLTIMA ruta que encaje, así que la
   // de chess.js va después de la de su CDN. Al revés, chess.js llegaba vacío y
   // la página moría con "Chess is not defined" — que es justo lo que esta
@@ -212,6 +227,10 @@ async function tipoEnPantalla(page) {
 }
 
 async function saltarPortada(page) {
+  // Hay que esperar a que init() termine: mientras la página sigue pidiendo la
+  // sesión, "Empezar" cree que no hay cuenta y reclama nombre y correo. Se
+  // espera a que el propio #app se destape, que es lo que init() hace al final.
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   await page.click("#start-btn");
   await page.waitForSelector("#q-options button", { timeout: 15000 });
 }
@@ -244,6 +263,43 @@ async function marcada(page) {
   });
 }
 
+/* El estado que la propia página guarda en localStorage para poder retomar la
+   prueba. No es una variable interna: es lo que escribe y vuelve a leer al
+   recargar, y es la única forma de comprobar desde afuera que la respuesta
+   quedó ANOTADA y no solo que la pantalla pasó de pregunta. */
+async function respuestaGuardada(page, cuantasAtras) {
+  return page.evaluate((atras) => {
+    const crudo = JSON.parse(localStorage.getItem("diagnostico_estado_v1") || "null");
+    if (!crudo || !crudo.estado) return null;
+    const e = crudo.estado;
+    const id = e.items[e.idx - atras];
+    return id ? (e.respuestas[id] || null) : null;
+  }, cuantasAtras);
+}
+
+/* Todo lo que pasa por un renglón, no solo cómo quedó al final. Hace falta
+   porque en los ejercicios el aviso es de paso: al acertar, el ejercicio
+   siguiente se carga a los 350 ms y lo borra, así que mirar el texto "después"
+   es una carrera que se pierde de vez en cuando sin que nada esté roto. Y
+   mirarlo "a ver si no está vacío" no probaba nada: ya empieza con el "Haz clic
+   en la pieza que quieres mover". */
+async function vigilar(page, sel) {
+  await page.evaluate((s) => {
+    const el = document.querySelector(s);
+    window.__vistos = [el ? el.textContent.trim() : ""];
+    if (!el) return;
+    new MutationObserver(() => window.__vistos.push(el.textContent.trim()))
+      .observe(el, { childList: true, subtree: true, characterData: true });
+  }, sel);
+}
+async function loVisto(page) {
+  return page.evaluate(() => window.__vistos || []);
+}
+
+async function enPantalla(page, sel) {
+  return page.evaluate((s) => { const el = document.querySelector(s); return el ? el.textContent.trim() : ""; }, sel);
+}
+
 async function pruebaDiagnostico(browser) {
   console.log("\n=== El diagnóstico, en Modo Adaptado ===");
   const { page, ctx, errores } = await abrir(browser, "/entreno/diagnostico.html", true);
@@ -261,31 +317,52 @@ async function pruebaDiagnostico(browser) {
     igual("cada opción dice su letra, escrita en el botón",
       letras.length > 1 && letras.every((t, i) => t === "Opción " + "ABCDEFGH"[i] + "."), "true");
 
-    await page.fill("#q-comandos .cc-input", "B");
-    await page.press("#q-comandos .cc-input", "Enter");
-    igual('escribir "B" marca la segunda opción', await marcada(page), "1");
-    igual("y se puede pasar a la siguiente", await page.evaluate(() => !document.getElementById("next-btn").disabled), "true");
-    igual("y se dice qué quedó elegido",
-      await page.evaluate(() => /opción B/.test(document.querySelector("#q-comandos .cc-msg").textContent)), "true");
-
-    // Tocar el botón tiene que dejar lo mismo que escribir su letra.
+    // Tocar el botón NO avanza: ahí se ve la pantalla y poder cambiar de idea
+    // antes de seguir es lo normal.
+    const antesDeTocar = await enPantalla(page, "#q-counter");
     await page.evaluate(() => [...document.querySelectorAll("#q-options button")].filter((b) => b.id !== "no-se-btn")[1].click());
-    igual("y tocar esa misma opción deja lo mismo", await marcada(page), "1");
+    igual("tocar la segunda opción la marca", await marcada(page), "1");
+    igual("y NO pasa de pregunta (el botón no avanza)", await enPantalla(page, "#q-counter"), antesDeTocar);
 
-    // Lo que no se entiende se dice, no se marca cualquier cosa.
+    // Lo que no se entiende se dice, no se marca cualquier cosa ni se avanza.
     await page.fill("#q-comandos .cc-input", "la de arriba");
     await page.press("#q-comandos .cc-input", "Enter");
     igual("un texto que no se entiende no cambia la respuesta", await marcada(page), "1");
+    igual("ni pasa de pregunta", await enPantalla(page, "#q-counter"), antesDeTocar);
     igual("y lo dice",
       await page.evaluate(() => /No entendí/.test(document.querySelector("#q-comandos .cc-msg").textContent)), "true");
 
+    // Y ahora lo que de verdad importa: escribir la letra CONTESTA Y PASA SOLA.
+    // `data-original` es el número de opción del ítem que hay detrás de la
+    // letra B, y es lo que tiene que quedar anotado.
+    const segundaOriginal = await page.evaluate(() =>
+      [...document.querySelectorAll("#q-options button")].filter((b) => b.id !== "no-se-btn")[1].dataset.original);
+    const enunciadoViejo = await enPantalla(page, "#q-text");
+    await page.fill("#q-comandos .cc-input", "B");
+    await page.press("#q-comandos .cc-input", "Enter");
+    igual('escribir "B" pasa sola a la siguiente pregunta',
+      (await enPantalla(page, "#q-counter")) !== antesDeTocar, "true");
+    const anotada = await respuestaGuardada(page, 1);
+    igual("y deja anotada la opción B, no otra", anotada && String(anotada.dada), segundaOriginal);
+    igual("el cuadro queda vacío para la siguiente",
+      await page.evaluate(() => document.querySelector("#q-comandos .cc-input").value), "");
+    // Al no pasar por el botón, nada anunciaría la pregunta nueva: la dice el
+    // propio aviso, que es región viva.
+    const aviso = await enPantalla(page, "#q-comandos .cc-msg");
+    igual("el aviso dice qué quedó anotado", /Anotado: opción B/.test(aviso), "true");
+    igual("y lee la pregunta nueva, que si no nadie anunciaría",
+      aviso.includes(await enPantalla(page, "#q-text")) && !aviso.includes(enunciadoViejo), "true");
+    igual("y el foco se queda en el cuadro, listo para la siguiente",
+      await page.evaluate(() => document.activeElement === document.querySelector("#q-comandos .cc-input")), "true");
+
     // "No lo sé" es una respuesta del diagnóstico, no un saltar: se guarda
-    // aparte de un error. Tiene que poder escribirse igual que apretarse.
+    // aparte de un error. Tiene que poder escribirse, y también pasa sola.
+    const contadorNoSe = await enPantalla(page, "#q-counter");
     await page.fill("#q-comandos .cc-input", "no lo sé");
     await page.press("#q-comandos .cc-input", "Enter");
-    igual('escribir "no lo sé" hace lo mismo que su botón',
-      await page.evaluate(() => /no lo sabías/.test(document.getElementById("q-hint").textContent)), "true");
-    await page.click("#next-btn");
+    igual('escribir "no lo sé" queda anotado como tal',
+      (await respuestaGuardada(page, 1) || {}).dada, "nose");
+    igual("y también pasa sola", (await enPantalla(page, "#q-counter")) !== contadorNoSe, "true");
   }
 
   // --- una pregunta de jugada
@@ -302,25 +379,30 @@ async function pruebaDiagnostico(browser) {
     const { Chess } = require("chess.js");
     const juego = new Chess(fen);
     const mv = juego.moves({ verbose: true })[0];
-    if (!mv) mal("no se pudo leer la posición del tablero para probar una jugada (" + fen + ")");
-    else {
-      await page.fill("#q-comandos .cc-input", mv.san);
-      await page.press("#q-comandos .cc-input", "Enter");
-      igual(`una jugada escrita (${mv.san}) queda como respuesta`,
-        await page.evaluate(() => /esa es tu respuesta/.test(document.getElementById("q-hint").textContent)), "true");
-      igual("y se puede pasar a la siguiente",
-        await page.evaluate(() => !document.getElementById("next-btn").disabled), "true");
-      igual("y el tablero muestra la jugada hecha",
-        await page.evaluate((to) => {
-          const c = document.querySelector(`#q-board [data-square="${to}"]`);
-          return !!c && c.textContent.trim().length > 0;
-        }, mv.to), "true");
-    }
+
+    // Primero la ilegal: tiene que decirlo y NO pasar de pregunta.
+    const contador = await enPantalla(page, "#q-counter");
     await page.fill("#q-comandos .cc-input", "Txz9");
     await page.press("#q-comandos .cc-input", "Enter");
     igual("una jugada ilegal se rechaza diciéndolo",
       await page.evaluate(() => /no es una jugada legal/.test(document.querySelector("#q-comandos .cc-msg").textContent)), "true");
-    await page.click("#next-btn");
+    igual("y no pasa de pregunta", await enPantalla(page, "#q-counter"), contador);
+
+    if (!mv) mal("no se pudo leer la posición del tablero para probar una jugada (" + fen + ")");
+    else {
+      await page.fill("#q-comandos .cc-input", mv.san);
+      await page.press("#q-comandos .cc-input", "Enter");
+      igual(`una jugada escrita (${mv.san}) pasa sola a la siguiente`,
+        (await enPantalla(page, "#q-counter")) !== contador, "true");
+      const anotada = await respuestaGuardada(page, 1);
+      igual("y queda anotada esa jugada, no otra",
+        anotada && anotada.dada && anotada.dada.from + anotada.dada.to, mv.from + mv.to);
+      igual("y el aviso la nombra y lee la pregunta nueva",
+        await page.evaluate((san) => {
+          const t = document.querySelector("#q-comandos .cc-msg").textContent;
+          return t.includes(san) && t.includes(document.getElementById("q-text").textContent.trim());
+        }, mv.san), "true");
+    }
   }
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
@@ -334,7 +416,7 @@ async function pruebaDiagnostico(browser) {
    una puerta de pruebas. */
 async function pruebaCasilla(browser) {
   console.log("\n=== Una pregunta que se contesta con una casilla ===");
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext(SIN_SW);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
@@ -354,17 +436,58 @@ async function pruebaCasilla(browser) {
   await page.waitForSelector("#q-options button", { timeout: 15000 });
   if (!(await irHasta(page, "casilla"))) mal("la prueba sembrada no trajo ninguna pregunta de casilla");
   else {
-    await page.fill("#q-comandos .cc-input", "eva 4");
-    await page.press("#q-comandos .cc-input", "Enter");
-    igual('escribir la casilla hablada ("eva 4") responde e4',
-      await page.evaluate(() => /Elegiste e4/.test(document.getElementById("q-hint").textContent)), "true");
-    igual("y se puede pasar a la siguiente",
-      await page.evaluate(() => !document.getElementById("next-btn").disabled), "true");
+    const contador = await enPantalla(page, "#q-counter");
     await page.fill("#q-comandos .cc-input", "z9");
     await page.press("#q-comandos .cc-input", "Enter");
     igual("una casilla que no existe se rechaza diciéndolo",
       await page.evaluate(() => /No entendí/.test(document.querySelector("#q-comandos .cc-msg").textContent)), "true");
+    igual("y no pasa de pregunta", await enPantalla(page, "#q-counter"), contador);
+
+    await page.fill("#q-comandos .cc-input", "eva 4");
+    await page.press("#q-comandos .cc-input", "Enter");
+    igual('escribir la casilla hablada ("eva 4") queda anotada como e4',
+      (await respuestaGuardada(page, 1) || {}).dada, "e4");
+    igual("y pasa sola a la siguiente", (await enPantalla(page, "#q-counter")) !== contador, "true");
   }
+  await ctx.close();
+}
+
+/* La última pregunta es el caso con más filo: ahí ese Enter no pasa de
+   pregunta, TERMINA la prueba. Tiene que avisarlo antes de que lo aprieten, y
+   tiene que terminarla de verdad — quedarse trabado en la última sería dejar a
+   quien contesta escribiendo sin forma de llegar al resultado. */
+async function pruebaUltimaPregunta(browser) {
+  console.log("\n=== La última pregunta ===");
+  const ctx = await browser.newContext(SIN_SW);
+  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));
+  await ctx.addInitScript(() => localStorage.setItem("oscarBlindMode_v1", "1"));
+  const page = await ctx.newPage();
+  await page.goto(BASE + "/entreno/diagnostico.html", { waitUntil: "networkidle" });
+  await saltarPortada(page);
+
+  // Saltar a la última: se le cambia el `idx` al estado que la propia página
+  // guarda para poder retomar la prueba, y se recarga. Es su camino de siempre.
+  const total = await page.evaluate(() => {
+    const c = JSON.parse(localStorage.getItem("diagnostico_estado_v1"));
+    c.estado.idx = c.estado.items.length - 1;
+    localStorage.setItem("diagnostico_estado_v1", JSON.stringify(c));
+    return c.estado.items.length;
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await saltarPortada(page);
+  igual("se llegó a la última pregunta", await enPantalla(page, "#q-counter"), `Pregunta ${total} de ${total}`);
+  igual("y el cuadro avisa que ese Enter TERMINA la prueba",
+    await page.evaluate(() => /Es la última/.test(document.querySelector("#q-comandos .cc-ayuda").textContent)), "true");
+
+  await page.fill("#q-comandos .cc-input", "no lo sé");
+  await page.press("#q-comandos .cc-input", "Enter");
+  await page.waitForSelector("#result-view:not(.hidden)", { timeout: 15000 });
+  bien("contestar la última por el cuadro termina la prueba y muestra el resultado");
   await ctx.close();
 }
 
@@ -412,12 +535,31 @@ async function pruebaArbitraje(browser, ruta, nombre) {
     await page.evaluate(() => { const c = document.querySelector(".cc-caja"); return c ? getComputedStyle(c).display : "no se montó"; }), "block");
   await page.fill(".cc-input", "C");
   await page.press(".cc-input", "Enter");
-  igual('escribir "C" marca la tercera opción', await marcada(page), "2");
-  igual("y se dice qué quedó elegido",
-    await page.evaluate(() => /opción C/.test(document.querySelector(".cc-msg").textContent)), "true");
+  // Escribir la letra contesta Y PASA SOLA. Que quedó anotada lo prueba volver
+  // atrás con "Anterior" y verla marcada: todo desde la pantalla.
+  const contador = await enPantalla(page, "#q-counter");
+  const enunciadoViejo = await enPantalla(page, "#q-text");
+  await page.fill(".cc-input", "C");
+  await page.press(".cc-input", "Enter");
+  igual('escribir "C" pasa sola a la siguiente pregunta',
+    (await enPantalla(page, "#q-counter")) !== contador, "true");
+  const aviso = await enPantalla(page, ".cc-msg");
+  igual("el aviso dice qué quedó anotado", /Anotado: opción C/.test(aviso), "true");
+  igual("y lee la pregunta nueva, que si no nadie anunciaría",
+    aviso.includes(await enPantalla(page, "#q-text")) && !aviso.includes(enunciadoViejo), "true");
+  await page.click("#prev-btn");
+  igual("y al volver atrás la tercera opción está marcada", await marcada(page), "2");
+
+  // Lo que no se entiende ni marca ni avanza.
+  await page.fill(".cc-input", "la de arriba");
+  await page.press(".cc-input", "Enter");
+  igual("un texto que no se entiende no pasa de pregunta", await enPantalla(page, "#q-counter"), contador);
+  igual("y lo dice", await page.evaluate(() => /No entendí/.test(document.querySelector(".cc-msg").textContent)), "true");
+
   // "Dejar en blanco" también se escribe: es una respuesta, no un saltar.
   await page.fill(".cc-input", "en blanco");
   await page.press(".cc-input", "Enter");
+  await page.click("#prev-btn");
   igual('escribir "en blanco" la deja en blanco', await marcada(page), "-1");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -447,17 +589,18 @@ async function pruebaTemas(browser) {
   const mv = juego.moves({ verbose: true })[0];
   if (!mv) mal("no se pudo leer la posición del tablero (" + fen + ")");
   else {
+    // O la jugada era la de la solución (y el ejercicio avanza) o no lo era (y
+    // se dice con todas las letras); lo que NO puede pasar es que escribirla no
+    // haga nada. Se vigila el renglón de estado desde antes de escribir.
+    await vigilar(page, "#round-status");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(500);
-    // O la jugada era la de la solución (y avanza) o no lo era (y lo dice); lo
-    // que NO puede pasar es que escribirla no haga nada.
-    igual(`escribir una jugada legal (${mv.san}) hace algo`,
-      await page.evaluate(() => {
-        const est = document.getElementById("round-status").textContent.trim();
-        const msg = document.querySelector(".cc-msg").textContent.trim();
-        return (est + msg).length > 0;
-      }), "true");
+    await page.waitForTimeout(700);
+    const vistos = await loVisto(page);
+    igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
+      vistos.length > 1 && vistos.slice(1).some((t) => t !== vistos[0]), "true");
+    igual("y si no era la de la solución, lo dice",
+      vistos.some((t) => /no es la jugada de la solución/.test(t)) || vistos.length > 2, "true");
   }
   await page.fill(".cc-input", "Txz9");
   await page.press(".cc-input", "Enter");
@@ -499,14 +642,15 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   const mv = juego.moves({ verbose: true })[0];
   if (!mv) mal("no se pudo leer la posición del tablero (" + fen + ")");
   else {
+    // Igual que en Ejercicios por tema: se vigila el renglón desde antes, que al
+    // acertar lo borra el ejercicio siguiente a los 350 ms.
+    await vigilar(page, "#result-text");
     await page.fill(".cc-input", mv.san);
     await page.press(".cc-input", "Enter");
-    await page.waitForTimeout(600);
-    // Acertó o falló, da igual: lo que NO puede pasar es que escribir una
-    // jugada legal no haga nada.
-    igual(`escribir una jugada legal (${mv.san}) hace algo`,
-      await page.evaluate(() => document.getElementById("result-text").textContent.trim().length > 0
-        || document.querySelector(".cc-msg").textContent.trim().length > 0), "true");
+    await page.waitForTimeout(800);
+    const vistos = await loVisto(page);
+    igual(`escribir una jugada legal (${mv.san}) se contesta como el clic`,
+      vistos.some((t) => /Correcto|❌|✅/.test(t)), "true");
   }
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -519,6 +663,7 @@ async function pruebaContrarreloj(browser, ruta, nombre) {
   try {
     await pruebaDiagnostico(browser);
     await pruebaCasilla(browser);
+    await pruebaUltimaPregunta(browser);
     await pruebaFueraDelModo(browser);
     await pruebaArbitraje(browser, "/arbitraje.html", "Examen de arbitraje (docente)");
     await pruebaArbitraje(browser, "/nivel-de-arbitraje.html", "Examen de arbitraje (público)");

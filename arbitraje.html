@@ -322,16 +322,39 @@ function prepararComandos(item) {
     comandos = CuadroComandos.montar($('q-comandos'), { onEnviar: responderEscribiendo });
   }
   comandos.etiqueta('Escribe la letra de la opción');
+  // Al responder por el cuadro se pasa solo a la siguiente, así que hay que
+  // decir de antemano qué va a hacer ese Enter — y sobre todo cuando es el que
+  // termina el examen.
   comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. `
-    + 'Puedes escribir solo la letra ("B"), "opción B", o "en blanco".');
+    + 'Puedes escribir solo la letra ("B"), "opción B", o "en blanco".'
+    + (idx === examen.length - 1
+        ? ' Es la última: al responder se termina el examen y se muestra el resultado.'
+        : ' Al responder se pasa sola a la siguiente.'));
+}
+
+/* Contestar por el cuadro PASA SOLA a la siguiente pregunta: quien contesta
+   escribiendo no tiene por qué ir a buscar el botón "Siguiente", que es
+   justamente lo que este cuadro viene a evitar.
+ *
+ * Y por eso el aviso lleva el enunciado de la pregunta nueva: al no pasar por
+ * el botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+ * contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+ * que se lee solo. Los botones de opción NO avanzan: ahí se ve la pantalla, y
+ * además este examen deja volver atrás con "Anterior". */
+function avanzarEscribiendo(resumen) {
+  if (idx === examen.length - 1) { terminar(false); return; }
+  idx += 1;
+  pintarPregunta();
+  comandos.decir(`${resumen} Pregunta ${idx + 1} de ${examen.length}: ${examen[idx].enunciado}`);
+  comandos.enfocar();
 }
 
 function responderEscribiendo(texto, api) {
   const item = examen[idx];
   if (CuadroComandos.esNoSe(texto)) {
     respuestas[item.id] = EN_BLANCO;
-    pintarPregunta();
-    api.limpiar().decir('Anotado: en blanco.');
+    api.limpiar();
+    avanzarEscribiendo('Anotado: en blanco.');
     return;
   }
   const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
@@ -343,8 +366,8 @@ function responderEscribiendo(texto, api) {
   // del ítem es esa. Guardar la posición dejaría la respuesta atada al barajado.
   const orden = item.__orden;
   respuestas[item.id] = orden[i];
-  pintarPregunta();
-  api.limpiar().decir(`Elegiste la opción ${CuadroComandos.letra(i)}: ${item.opciones[orden[i]]}. Puedes cambiarla o seguir.`);
+  api.limpiar();
+  avanzarEscribiendo(`Anotado: opción ${CuadroComandos.letra(i)}, ${item.opciones[orden[i]]}.`);
 }
 
 
