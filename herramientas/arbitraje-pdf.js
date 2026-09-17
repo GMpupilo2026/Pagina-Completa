@@ -244,6 +244,12 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
          background: linear-gradient(158deg, #081b2e 0%, #143253 48%, #0a2138 100%); position: relative; overflow: hidden; }
 
   /* el tablero del fondo: ocho por ocho, apoyado en la esquina de abajo */
+  /* Los adornos van dentro de un recorte propio. Poner overflow:hidden en el
+     BODY no sirve: se propaga al viewport en vez de recortar el body, así que el
+     tablero del fondo —que asoma 44mm a la derecha— hacía el documento más
+     ancho que A4 y Chromium encogía la tapa entera al 79%. Se veía como un
+     lomo y un degradado que se cortan antes de llegar al borde de abajo. */
+  .fondo { position: absolute; inset: 0; overflow: hidden; }
   .tablero-fondo { position: absolute; right: -44mm; bottom: -44mm; width: 158mm; height: 158mm;
       background-image:
         linear-gradient(45deg, rgba(222,145,29,.14) 25%, transparent 25%, transparent 75%, rgba(222,145,29,.14) 75%),
@@ -285,8 +291,10 @@ const htmlPortada = `<!doctype html><html lang="es"><head><meta charset="utf-8">
       font-size: 8.5pt; color: #9fb3c8; display: flex; justify-content: space-between; gap: 6mm; }
 </style>
 </head><body>
-  <div class="tablero-fondo"></div>
-  <div class="brillo"></div>
+  <div class="fondo">
+    <div class="tablero-fondo"></div>
+    <div class="brillo"></div>
+  </div>
   <div class="lomo"></div>
   <div class="sello-uso">Uso docente</div>
 

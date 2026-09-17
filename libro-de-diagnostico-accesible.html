@@ -1,0 +1,946 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Libro del diagnóstico de nivel — versión accesible</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
+         font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; line-height: 1.8; }
+  h1 { font-size: 1.9rem; line-height: 1.25; }
+  h2 { font-size: 1.45rem; margin-top: 2.5rem; border-bottom: 2px solid #10202e; padding-bottom: .3rem; }
+  h3 { font-size: 1.2rem; margin-top: 1.8rem; }
+  h4 { font-size: 1rem; margin: 1.6rem 0 .3rem; font-family: system-ui, sans-serif; letter-spacing: .02em; }
+  article { border-top: 1px solid #c9d4de; padding-top: .3rem; }
+  .enunciado { font-weight: 700; }
+  .posicion { background: #f1f5f8; padding: .7rem .9rem; }
+  .fen { display: block; font-family: ui-monospace, monospace; font-size: .85em; word-break: break-all; }
+  .comprobado { font-size: .92em; color: #3b4d5c; }
+  ol { padding-left: 1.6rem; }
+  li { margin-bottom: .35rem; }
+  .aviso { border: 2px solid #8a5a00; padding: 1rem; }
+  footer { margin-top: 3rem; border-top: 1px solid #c9d4de; padding-top: 1rem; font-size: .95rem; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #10202e; color: #eef3f7; }
+    h2 { border-color: #eef3f7; }
+    .posicion { background: #1b3145; }
+    .comprobado { color: #b8c7d4; }
+    article, footer { border-color: #3b5165; }
+  }
+</style>
+</head><body>
+<h1>Libro del diagnóstico de nivel</h1>
+<p>El banco entero de preguntas del diagnóstico de Ajedrez Integral, con su
+respuesta y el porqué. Es el mismo contenido de <em>libro-de-diagnostico.pdf</em>,
+escrito para leerse con lector de pantalla o con la letra agrandada.</p>
+<p class="aviso"><strong>Trae las respuestas: es material de uso docente.</strong>
+No es la prueba. El diagnóstico se rinde en la página del sitio.</p>
+<p><strong>Las posiciones van contadas en palabras</strong>, pieza por pieza, y con
+su FEN por si se quieren cargar en un programa de ajedrez. No hay ninguna imagen
+en esta página: no hace falta ver nada para usarla.</p>
+<p><strong>118 preguntas</strong> repartidas en 8 áreas y
+5 escalones de dificultad. Cada diagnóstico sortea
+56 de ellas y vale 160 puntos.</p>
+<section><h2>Reglas y movimientos · 12 preguntas</h2>
+      <p><strong>Qué mide.</strong> Cómo mueve cada pieza y las reglas que más se olvidan: enroque, captura al paso, ahogado.</p>
+      <p><strong>Cuando está flojo.</strong> Todavía se le escapan reglas. Hasta que estén firmes, va a perder partidas por cosas que no tienen que ver con jugar bien.</p>
+      <h3>Escalón 1 · 3 preguntas</h3><article>
+            <h4>Pregunta reg_caballo · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Cómo se mueve el caballo?</p>
+            
+            <ol><li>En diagonal, tan lejos como quiera si el camino está libre.</li><li>En forma de L: dos casillas en una dirección y una perpendicular. <strong>(correcta)</strong></li><li>En línea recta por su fila o su columna, sin límite de casillas.</li><li>Una sola casilla por turno, en cualquiera de las ocho direcciones.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El caballo es la única pieza que salta: por eso es tan útil en posiciones cerradas.</p>
+            
+          </article><article>
+            <h4>Pregunta reg_casillas · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Cuántas casillas tiene un tablero de ajedrez?</p>
+            
+            <ol><li>60</li><li>81</li><li>72</li><li>64 <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> El tablero es una cuadrícula de 8×8 = 64 casillas: 32 claras y 32 oscuras.</p>
+            
+          </article><article>
+            <h4>Pregunta reg_torre_recorrido · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Cómo se mueve la torre?</p>
+            
+            <ol><li>En forma de L, como el caballo, saltando por encima de todo.</li><li>En línea recta por su fila o su columna, sin límite de casillas. <strong>(correcta)</strong></li><li>En diagonal, tan lejos como quiera si el camino está libre.</li><li>Una sola casilla por turno, en cualquiera de las ocho direcciones.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La torre se detiene en la primera pieza que encuentra en su camino: no puede saltar, a diferencia del caballo.</p>
+            
+          </article><h3>Escalón 2 · 3 preguntas</h3><article>
+            <h4>Pregunta reg_ahogado · dificultad 2 de 5</h4>
+            <p class="enunciado">Juegan las negras y no tienen ninguna jugada legal, pero su rey NO está en jaque. ¿Qué pasa?</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las negras.
+              Piezas blancas: rey en g6; dama en f7. Piezas negras: rey en h8.
+              <span class="fen">FEN: 7k/5Q2/6K1/8/8/8/8/8 b - - 0 1</span></p>
+            <ol><li>Es tablas por ahogado (rey ahogado). <strong>(correcta)</strong></li><li>Es jaque mate y ganan las blancas.</li><li>Se repite la jugada anterior.</li><li>Las negras pierden por no poder mover.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Sin jaque y sin jugada legal, la partida es tablas. Con dama y rey hay que vigilar siempre el ahogado.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> in_stalemate() === true</p>
+          </article><article>
+            <h4>Pregunta reg_enroque · dificultad 2 de 5</h4>
+            <p class="enunciado">Enroca corto con las blancas.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfils en c1, c4; caballos en c3, f3; peónes en a2, b2, c2, d2, e4, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfils en c5, c8; caballos en c6, f6; peónes en a7, b7, c7, d7, e5, f7, g7, h7.
+              <span class="fen">FEN: r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e1–g1.</p>
+            <p class="explica"><strong>Por qué.</strong> El enroque pone al rey a salvo y conecta las torres: en igualdad de condiciones, cuanto antes mejor.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> la jugada es legal y su bandera incluye el enroque corto (k)</p>
+          </article><article>
+            <h4>Pregunta reg_promocion · dificultad 2 de 5</h4>
+            <p class="enunciado">Un peón que llega a la última fila puede coronar en…</p>
+            
+            <ol><li>En cualquier pieza, incluido un segundo rey propio.</li><li>Solo en dama, que es la pieza más fuerte que hay en el juego.</li><li>En dama, torre, alfil o caballo: nunca en rey ni en peón. <strong>(correcta)</strong></li><li>En dama o en caballo, que son las dos que dan mate.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Coronar en dama es lo más frecuente, pero elegir torre, alfil o caballo a veces evita un ahogado o da un mate más rápido.</p>
+            
+          </article><h3>Escalón 3 · 2 preguntas</h3><article>
+            <h4>Pregunta reg_al_paso · dificultad 3 de 5</h4>
+            <p class="enunciado">Las negras acaban de jugar …d7-d5. Captura al paso.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e1; peón en e5. Piezas negras: rey en e8; peón en d5.
+              <span class="fen">FEN: 4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e5–d6.</p>
+            <p class="explica"><strong>Por qué.</strong> La captura al paso solo se puede hacer inmediatamente después del avance doble del peón rival.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> la jugada es legal y su bandera incluye la captura al paso (e)</p>
+          </article><article>
+            <h4>Pregunta reg_jaque_obligado · dificultad 3 de 5</h4>
+            <p class="enunciado">Tu rey está en jaque y tienes una jugada que gana la dama rival, pero no te saca del jaque. ¿Qué puedes hacer?</p>
+            
+            <ol><li>Ganar la dama: con material de más se gana igual de fácil.</li><li>Cualquiera de las dos, a elección del jugador.</li><li>Ganar la dama, si después puedes tapar el jaque.</li><li>Nada: en jaque solo valen las jugadas que lo resuelven. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> El jaque es obligatorio de atender: mover el rey, capturar a quien lo da o interponer algo. Cualquier otra jugada, por buena que sea, no existe.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta reg_enroque_torre_atacada · dificultad 4 de 5</h4>
+            <p class="enunciado">Enroque largo: la casilla b1, por la que pasa la torre, está atacada por un alfil negro. Las casillas del rey (e1, d1, c1) están todas libres de ataque. ¿Se puede enrocar?</p>
+            
+            <ol><li>Sí: la regla mira solo las casillas del rey. <strong>(correcta)</strong></li><li>No, salvo que la torre esté defendida por otra pieza.</li><li>Sí, si después del enroque el alfil deja de atacar b1.</li><li>No: tampoco puede estar atacada la casilla de la torre.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El reglamento habla del rey: no puede estar en jaque, ni pasar ni terminar en casilla atacada. La torre puede cruzar b1 atacada sin problema — es la diferencia que más se discute en torneos escolares.</p>
+            
+          </article><article>
+            <h4>Pregunta reg_repeticion · dificultad 4 de 5</h4>
+            <p class="enunciado">Para reclamar tablas por repetición, ¿qué es exactamente lo que tiene que repetirse tres veces?</p>
+            
+            <ol><li>El mismo jaque, tres veces seguidas en la partida.</li><li>La posición, sin importar a quién le toque mover.</li><li>La posición, con el mismo turno y los mismos derechos. <strong>(correcta)</strong></li><li>Las mismas tres jugadas de cada bando, en el mismo orden.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Son posiciones, no jugadas, y tienen que ser idénticas en todo: mismo turno, mismos enroques posibles y misma posibilidad de captura al paso. Por eso a veces "la misma posición" no cuenta.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta reg_tiempo_sin_material · dificultad 5 de 5</h4>
+            <p class="enunciado">A tu rival se le cae la bandera (se le acaba el tiempo). A ti te queda solo el rey. ¿Cuál es el resultado?</p>
+            
+            <ol><li>Gana tu rival, porque tiene más material que tú.</li><li>Tablas: sin material para dar mate no se gana por tiempo. <strong>(correcta)</strong></li><li>Se sigue jugando: la caída de bandera no cuenta en este caso.</li><li>Ganas tú: quien se queda sin tiempo pierde siempre.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es el artículo del reglamento que más partidas de torneo decide mal cuando no se conoce: sin material para dar mate ni siquiera con la peor defensa posible, la caída de bandera es empate.</p>
+            
+          </article><article>
+            <h4>Pregunta reg_enroque_toque · dificultad 5 de 5</h4>
+            <p class="enunciado">En torneo, con pieza tocada: quieres enrocar y tocas primero la torre. ¿Qué pasa?</p>
+            
+            <ol><li>Nada: la regla de pieza tocada no aplica al enroque.</li><li>Pierdes el derecho al enroque para toda la partida.</li><li>Solo puedes mover la torre: el enroque se toca del rey. <strong>(correcta)</strong></li><li>Igual puedes enrocar: se ve que la intención era esa.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El enroque es una jugada de rey. Tocar la torre primero obliga a jugarla sola, y si estaba mal ubicada se pierde el enroque de esa jugada — un detalle que solo aparece cuando se juega con árbitro.</p>
+            
+          </article></section><section><h2>Valor del material · 12 preguntas</h2>
+      <p><strong>Qué mide.</strong> El valor de las piezas, las capturas seguras y cuándo un cambio conviene.</p>
+      <p><strong>Cuando está flojo.</strong> Regala o deja de cobrar material. Es lo que más rápido cambia un resultado: una pieza colgada decide la partida sola.</p>
+      <h3>Escalón 1 · 3 preguntas</h3><article>
+            <h4>Pregunta mat_valores · dificultad 1 de 5</h4>
+            <p class="enunciado">Sin contar al rey, ¿cuál es el orden correcto de menor a mayor valor?</p>
+            
+            <ol><li>Peón, torre, caballo y alfil, dama.</li><li>Peón, alfil, dama, torre y caballo.</li><li>Peón, caballo y alfil, torre, dama. <strong>(correcta)</strong></li><li>Caballo, peón, torre, alfil, dama.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La escala de siempre: peón 1, caballo y alfil 3, torre 5, dama 9. Son guías, no leyes: la posición manda.</p>
+            
+          </article><article>
+            <h4>Pregunta mat_dama_gratis · dificultad 1 de 5</h4>
+            <p class="enunciado">Las negras dejaron algo sin defender. Cóbralo.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en d3; peónes en g2, h2. Piezas negras: rey en g8; dama en d5.
+              <span class="fen">FEN: 6k1/8/8/3q4/8/3R4/6PP/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> d3–d5.</p>
+            <p class="explica"><strong>Por qué.</strong> Antes de cada jugada, mira qué piezas rivales están sin defensa: es el error más común y el más barato de castigar.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> captura una pieza de 3 puntos o más y después no existe ninguna recaptura legal</p>
+          </article><article>
+            <h4>Pregunta mat_dama_valor · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Cuál es el valor aproximado de la dama?</p>
+            
+            <ol><li>7</li><li>5</li><li>9 <strong>(correcta)</strong></li><li>13</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La dama vale aproximadamente 9 peones: es la pieza más poderosa del tablero.</p>
+            
+          </article><h3>Escalón 2 · 3 preguntas</h3><article>
+            <h4>Pregunta mat_torre_gratis · dificultad 2 de 5</h4>
+            <p class="enunciado">Gana material con una sola jugada.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; alfil en e4; peónes en f2, g2, h2. Piezas negras: rey en g8; torre en a8; peónes en f7, g7, h7.
+              <span class="fen">FEN: r5k1/5ppp/8/8/4B3/8/5PPP/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e4–a8.</p>
+            <p class="explica"><strong>Por qué.</strong> Un alfil en una diagonal larga y abierta vigila el tablero de esquina a esquina.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> captura una pieza de 3 puntos o más y después no existe ninguna recaptura legal</p>
+          </article><article>
+            <h4>Pregunta mat_cambio · dificultad 2 de 5</h4>
+            <p class="enunciado">Puedes cambiar tu alfil por una torre rival. ¿Qué es eso y conviene?</p>
+            
+            <ol><li>Es perder la calidad, así que conviene evitarlo.</li><li>Es un cambio que el reglamento no permite hacer.</li><li>Es ganar la calidad, dos puntos de ventaja: suele convenir. <strong>(correcta)</strong></li><li>Es un cambio parejo en valor: da exactamente igual hacerlo.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Torre (5) por alfil o caballo (3) se llama "ganar la calidad". Conviene salvo que la posición diga lo contrario.</p>
+            
+          </article><article>
+            <h4>Pregunta mat_dos_torres_vs_dama · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Qué suele valer más: dos torres o una dama?</p>
+            
+            <ol><li>Da igual: diez y nueve puntos son casi lo mismo.</li><li>Dos torres, diez puntos contra nueve, según la posición. <strong>(correcta)</strong></li><li>La dama, siempre y en cualquier posición que se presente.</li><li>Dos torres nunca le ganan a una dama bien colocada.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Como referencia de valores, dos torres superan ligeramente a una dama, pero la coordinación de las piezas pesa tanto como la suma de puntos.</p>
+            
+          </article><h3>Escalón 3 · 2 preguntas</h3><article>
+            <h4>Pregunta mat_pareja_alfiles · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Por qué se considera valiosa la "pareja de alfiles" en posiciones abiertas?</p>
+            
+            <ol><li>Porque son las únicas piezas que atacan al rey de lejos.</li><li>Porque los alfiles no se pueden cambiar por piezas menores.</li><li>Porque un alfil vale más que un caballo en cualquier posición.</li><li>Porque entre los dos cubren casillas de los dos colores. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Un solo alfil solo controla casillas de un color; con los dos, un jugador puede dominar todo el tablero, sobre todo con pocos peones que bloqueen las diagonales.</p>
+            
+          </article><article>
+            <h4>Pregunta mat_cambiar_ganando · dificultad 3 de 5</h4>
+            <p class="enunciado">Vas ganando una pieza. ¿Qué criterio de cambios te conviene?</p>
+            
+            <ol><li>No cambiar nada: cada cambio le da una chance.</li><li>Cambiar piezas, no peones: la ventaja pesa más. <strong>(correcta)</strong></li><li>Cambiar peones, no piezas: así se abren líneas.</li><li>Cambiar damas solo si el rival lo propone.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es la regla práctica que convierte ventajas en puntos: con pieza de más, cada cambio de piezas acerca el final ganado; los peones, en cambio, hacen falta para coronar.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta mat_calidad_sacrificio · dificultad 4 de 5</h4>
+            <p class="enunciado">Sacrificar la calidad (dar torre por alfil o caballo). ¿Cuándo suele valer la pena?</p>
+            
+            <ol><li>Nunca: cinco puntos contra tres siempre es perder material.</li><li>Solo en los finales de torres, donde no se aprovecha.</li><li>Cuando a cambio queda algo permanente: casillas o estructura. <strong>(correcta)</strong></li><li>Siempre que se recupere al menos un peón en el camino.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La calidad se entrega por ventajas que no se van: casillas, estructura, seguridad del rey. Si lo que se obtiene se puede deshacer en tres jugadas, el sacrificio no era.</p>
+            
+          </article><article>
+            <h4>Pregunta mat_dos_menores_vs_torre · dificultad 4 de 5</h4>
+            <p class="enunciado">Dos piezas menores contra torre y peón, con damas y varias piezas todavía en el tablero. ¿Qué prefieres?</p>
+            
+            <ol><li>Las dos menores: con el tablero lleno coordinan mejor. <strong>(correcta)</strong></li><li>Da exactamente lo mismo: el conteo no engaña.</li><li>La torre y el peón: seis puntos contra seis, y es mayor.</li><li>La torre, salvo que una menor sea un alfil malo.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La tabla de valores es una guía de principiante: en el medio juego dos menores activas valen más que torre y peón, y la relación se da vuelta cuando se cambian piezas y se abren columnas.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta mat_pareja_alfiles_contra · dificultad 5 de 5</h4>
+            <p class="enunciado">Tu rival tiene la pareja de alfiles y tú alfil y caballo. ¿Cuál es el plan correcto?</p>
+            
+            <ol><li>Avanzar los peones donde él tiene el alfil bueno.</li><li>Abrir la posición para que el caballo tenga casillas.</li><li>Cerrar la posición y cambiar uno de los dos alfiles. <strong>(correcta)</strong></li><li>Cambiar damas: sin damas la pareja ya no cuenta.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La pareja vale por el trabajo conjunto en posiciones abiertas. Trabar los peones y cambiar uno de los dos la desarma: es la receta de Steinitz para el lado que no la tiene.</p>
+            
+          </article><article>
+            <h4>Pregunta mat_dos_torres_vs_dama_fuerte · dificultad 5 de 5</h4>
+            <p class="enunciado">Dos torres contra dama, con peones en los dos flancos. ¿Cuándo pelea mejor la dama?</p>
+            
+            <ol><li>Nunca: dos torres coordinadas ganan en toda posición.</li><li>Siempre: se mueve mucho más que las dos torres juntas.</li><li>Cuando hay peones sueltos que cobrar y el rey al aire. <strong>(correcta)</strong></li><li>Solo si quedan menos de cuatro peones en el tablero.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es la relación de material que menos se decide por la tabla: dos torres bien puestas y con el rey seguro valen más, pero la dama se come las posiciones con debilidades sueltas y reyes al aire.</p>
+            
+          </article></section><section><h2>Principios de apertura · 11 preguntas</h2>
+      <p><strong>Qué mide.</strong> Centro, desarrollo, seguridad del rey y los errores típicos de las primeras jugadas.</p>
+      <p><strong>Cuando está flojo.</strong> Sale de la apertura con desventaja o con el rey en el centro: después hay que defender toda la partida.</p>
+      <h3>Escalón 1 · 2 preguntas</h3><article>
+            <h4>Pregunta ap_prioridad · dificultad 1 de 5</h4>
+            <p class="enunciado">En las primeras jugadas, ¿cuál es el orden de prioridades?</p>
+            
+            <ol><li>Cambiar todas las piezas que se pueda, para ir simplificando.</li><li>Avanzar los peones de las columnas de las torres.</li><li>Ocupar el centro, desarrollar las piezas menores y enrocar. <strong>(correcta)</strong></li><li>Sacar la dama temprano para atacar lo antes posible.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Centro, desarrollo y rey seguro: con eso solo, una apertura ya está bien jugada.</p>
+            
+          </article><article>
+            <h4>Pregunta ap_espanola · dificultad 1 de 5</h4>
+            <p class="enunciado">1.e4 e5 2.Cf3 Cc6 3.Ab5 corresponde a la apertura…</p>
+            
+            <ol><li>Escocesa</li><li>Siciliana</li><li>Española <strong>(correcta)</strong></li><li>Francesa</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Esa secuencia es la Apertura Española o Ruy López, una de las más antiguas y estudiadas del ajedrez.</p>
+            
+          </article><h3>Escalón 2 · 3 preguntas</h3><article>
+            <h4>Pregunta ap_dama_temprano · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Por qué no conviene sacar la dama en las primeras jugadas?</p>
+            
+            <ol><li>Porque el rival gana tiempo atacándola mientras desarrolla. <strong>(correcta)</strong></li><li>Porque en la apertura la dama vale menos que en el final.</li><li>Porque una vez que sale ya no puede volver a su casilla.</li><li>Porque el reglamento no permite moverla antes de la jugada 10.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Cada jaque o ataque a tu dama es una jugada de desarrollo gratis para el rival.</p>
+            
+          </article><article>
+            <h4>Pregunta ap_pieza_repetida · dificultad 2 de 5</h4>
+            <p class="enunciado">En la apertura, mover varias veces la misma pieza sin necesidad…</p>
+            
+            <ol><li>Es bueno, porque esa pieza termina muy bien colocada.</li><li>Pierde tiempo: el rival saca piezas nuevas mientras repites. <strong>(correcta)</strong></li><li>Solo es un problema si la pieza que se repite es un peón suelto.</li><li>Da igual: en la apertura lo que importa es el material.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La apertura es una carrera por sacar piezas: cada repetición te deja una pieza menos en juego.</p>
+            
+          </article><article>
+            <h4>Pregunta ap_siciliana · dificultad 2 de 5</h4>
+            <p class="enunciado">1.e4 c5 corresponde a la Defensa…</p>
+            
+            <ol><li>Siciliana <strong>(correcta)</strong></li><li>Francesa</li><li>Caro-Kann</li><li>Pirc</li></ol>
+            <p class="explica"><strong>Por qué.</strong> 1.e4 c5 es la Defensa Siciliana: la respuesta más popular y combativa contra 1.e4.</p>
+            
+          </article><h3>Escalón 3 · 2 preguntas</h3><article>
+            <h4>Pregunta ap_desarrollo · dificultad 3 de 5</h4>
+            <p class="enunciado">Tu rey sigue en el centro con la posición abierta. Pon el rey a salvo.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfils en c1, c4; caballos en b1, f3; peónes en a2, b2, c2, d2, e4, f2, g2, h2. Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfils en c8, f8; caballos en c6, f6; peónes en a7, b7, c7, d7, e5, f7, g7, h7.
+              <span class="fen">FEN: r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e1–g1.</p>
+            <p class="explica"><strong>Por qué.</strong> Con las piezas menores del flanco de rey ya fuera, enrocar es casi siempre la mejor jugada disponible.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> la jugada es legal y su bandera incluye el enroque corto (k)</p>
+          </article><article>
+            <h4>Pregunta ap_gambito · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Cuál es la idea principal detrás de un gambito?</p>
+            
+            <ol><li>Sacrificar material a cambio de desarrollo o de iniciativa. <strong>(correcta)</strong></li><li>Ganar una pieza gratis, sin dar absolutamente nada a cambio.</li><li>Evitar el desarrollo de piezas hasta llegar al final.</li><li>Forzar las tablas lo antes posible a fuerza de jaques.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> En un gambito se entrega material (normalmente un peón) a cambio de más desarrollo, control del centro o iniciativa.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta ap_carlsbad · dificultad 4 de 5</h4>
+            <p class="enunciado">Estructura Carlsbad (peones blancos en c3, d4, e3 y negros en c6, d5, e6, con el cambio ya hecho en d5). ¿Cuál es el plan clásico de las blancas?</p>
+            
+            <ol><li>Avanzar e3-e4 ya mismo, aunque quede un aislado.</li><li>Enrocar largo y tirar los peones del flanco de rey.</li><li>Cambiar todo para llegar a un final de peones.</li><li>El ataque de minorías: b4-b5 y cambio en c6. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Dos peones atacando a tres: el cambio en c6 deja un peón atrasado en columna semiabierta. Es el plan más enseñado del Gambito de Dama y se juega igual en 1900 y hoy.</p>
+            
+          </article><article>
+            <h4>Pregunta ap_peon_aislado · dificultad 4 de 5</h4>
+            <p class="enunciado">Juegas contra un peón dama aislado del rival (su peón en d4, sin peones en c ni e). ¿Cuál es la estrategia correcta?</p>
+            
+            <ol><li>Cambiar piezas y bloquear la casilla de adelante. <strong>(correcta)</strong></li><li>Capturarlo cuanto antes, cueste lo que cueste.</li><li>Evitar los cambios y jugar en el flanco de dama.</li><li>Cambiar peones y dejar las piezas para atacarlo.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El peón aislado da actividad en el medio juego y es una debilidad en el final: quien lo sufre cambia piezas y bloquea; quien lo tiene evita los cambios y busca la ruptura d4-d5.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta ap_orden_jugadas · dificultad 5 de 5</h4>
+            <p class="enunciado">¿Por qué los jugadores fuertes cuidan tanto el orden de jugadas en la apertura?</p>
+            
+            <ol><li>Porque así se gana tiempo en el reloj del rival.</li><li>Porque el reglamento obliga a sacar primero los caballos.</li><li>Porque cambiar el orden hace perder el enroque.</li><li>Porque transponiendo se elige a qué variante entrar. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> La misma posición se llega por caminos distintos, y en el camino cada bando tiene desvíos. Elegir el orden es elegir qué desvíos le dejas al rival.</p>
+            
+          </article><article>
+            <h4>Pregunta ap_najdorf_a6 · dificultad 5 de 5</h4>
+            <p class="enunciado">Siciliana Najdorf (1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 Cf6 5.Cc3 a6). ¿Para qué juegan las negras ...a6?</p>
+            
+            <ol><li>Evita que las blancas jueguen el gambito.</li><li>Ataca el peón de b2 con la torre de a8.</li><li>Prepara el enroque largo de las negras.</li><li>Le quita b5 a las blancas y prepara ...e5. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es una jugada de profilaxis pura: no desarrolla nada, pero le quita una casilla clave al rival y habilita el plan que las negras quieren (...e5 y ...b5).</p>
+            
+          </article></section><section><h2>Táctica · 28 preguntas</h2>
+      <p><strong>Qué mide.</strong> Horquillas, clavadas, ataques dobles y descubiertos, y la rutina de revisar las amenazas del rival.</p>
+      <p><strong>Cuando está flojo.</strong> No ve los golpes tácticos —ni los suyos ni los del rival—. En estas edades y niveles, la táctica decide la mayoría de las partidas.</p>
+      <h3>Escalón 1 · 5 preguntas</h3><article>
+            <h4>Pregunta tac_horquilla · dificultad 1 de 5</h4>
+            <p class="enunciado">Encuentra la horquilla de caballo que ataca al rey y a la dama a la vez.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en a1; caballo en g5. Piezas negras: rey en h8; dama en d6.
+              <span class="fen">FEN: 7k/8/3q4/6N1/8/8/8/K7 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> g5–f7.</p>
+            <p class="explica"><strong>Por qué.</strong> La horquilla de caballo es el recurso táctico que más partidas decide entre principiantes: revisa siempre los saltos con jaque.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> tras la jugada el caballo ataca a la vez al rey y a la dama negros</p>
+          </article><article>
+            <h4>Pregunta tac_doble_ataque · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Cómo se llama la jugada que ataca dos piezas rivales al mismo tiempo?</p>
+            
+            <ol><li>Jugada de espera, para ganar un tiempo entero.</li><li>Ataque doble, u horquilla si es de caballo. <strong>(correcta)</strong></li><li>Clavada, que deja inmóvil a una pieza.</li><li>Enroque largo por el flanco de dama.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El ataque doble gana material porque el rival alcanza a salvar una sola de las dos piezas. Es la táctica más común de todas: vale la pena buscarla en cada jugada.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_descubierta · dificultad 1 de 5</h4>
+            <p class="enunciado">Mueves una pieza y, al quitarse de en medio, la que estaba detrás ataca algo importante. ¿Cómo se llama eso?</p>
+            
+            <ol><li>Clavada, porque la pieza de atrás queda fija.</li><li>Ataque a la descubierta: atacan dos piezas. <strong>(correcta)</strong></li><li>Ahogado del rey que no puede mover.</li><li>Captura al paso con el peón que pasa.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> En la descubierta la pieza que se mueve queda libre para hacer cualquier cosa (incluso ponerse donde la pueden capturar), porque el rival tiene que atender el ataque de la pieza de atrás.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_colgada · dificultad 1 de 5</h4>
+            <p class="enunciado">En el ajedrez de club se dice que una pieza está "colgada". ¿Qué quiere decir?</p>
+            
+            <ol><li>Que está en la última fila del tablero.</li><li>Que está clavada contra su propio rey.</li><li>Que no se ha movido en toda la partida.</li><li>Que está sin defensa: nadie la recaptura. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Antes de cada jugada conviene revisar las piezas colgadas —las tuyas y las del rival—: la mitad de las tácticas de una partida de club salen de ahí.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_clavada_tablero · dificultad 1 de 5</h4>
+            <p class="enunciado">Clava el caballo negro contra su rey: juega la jugada de alfil tras la cual ese caballo no se puede mover.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e1; alfil en f1. Piezas negras: rey en e8; caballo en c6.
+              <span class="fen">FEN: 4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> f1–b5.</p>
+            <p class="explica"><strong>Por qué.</strong> Con el alfil en b5 el caballo de c6 queda entre el alfil y su propio rey: moverlo sería dejar al rey en jaque, así que no puede. Una pieza clavada contra el rey no defiende nada.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> tras Ab5 el caballo negro no tiene ninguna jugada legal (clavada absoluta) y es la única jugada del alfil que lo consigue</p>
+          </article><h3>Escalón 2 · 10 preguntas</h3><article>
+            <h4>Pregunta tac_clavada · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Qué es una clavada?</p>
+            
+            <ol><li>Una pieza queda encerrada por sus propios peones y no sale.</li><li>Dos piezas rivales quedan atacadas a la vez por una sola.</li><li>Un peón llega a la última fila y se convierte en dama.</li><li>Una pieza no se puede mover sin dejar expuesta a otra mejor. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Contra una pieza clavada, la receta es atacarla otra vez: no se puede mover para escapar.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_revisar · dificultad 2 de 5</h4>
+            <p class="enunciado">Tu rival acaba de mover. ¿Qué es lo primero que hay que mirar?</p>
+            
+            <ol><li>Cuánto tiempo te queda a ti y cuánto le queda a él.</li><li>Si puedes cambiar alguna pieza para simplificar la posición.</li><li>Qué amenaza esa jugada: jaques, capturas y ataques dobles. <strong>(correcta)</strong></li><li>Cuál es tu plan a largo plazo, aunque él amenace algo.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Jaques, capturas y amenazas — en ese orden, primero las del rival y luego las tuyas. Es la rutina que evita casi todos los descuidos.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_horquilla2 · dificultad 2 de 5</h4>
+            <p class="enunciado">Da jaque con el caballo de manera que además ataques la torre negra.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e1; caballo en b5. Piezas negras: rey en e8; torre en a8.
+              <span class="fen">FEN: r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> b5–c7.</p>
+            <p class="explica"><strong>Por qué.</strong> Cc7+ es una horquilla familiar clásica: jaque al rey y ataque simultáneo a la torre de a8. Las negras tienen que atender el jaque moviendo el rey, y las blancas cobran la torre en la jugada siguiente.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> de las 11 jugadas legales de la posición (6 del caballo — Ca7, Cc7, Cd6, Cd4, Cc3, Ca3 — y 5 del rey), solo Cc7 y Cd6 dan jaque; de esas dos, solo Cc7 ataca además la torre de a8.</p>
+          </article><article>
+            <h4>Pregunta tac_desviacion · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Cómo se llama la táctica que obliga a una pieza defensora a abandonar la casilla que protegía?</p>
+            
+            <ol><li>Clavada sobre la pieza defensora.</li><li>Ahogado del rey en la esquina.</li><li>Promoción de un peón al llegar a la octava.</li><li>Desviación, o eliminación del defensor. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> La desviación ataca o atrae a la pieza que defiende algo importante para forzarla a moverse, dejando esa casilla o pieza sin protección.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_enfilada · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Qué es una enfilada (en inglés, skewer)?</p>
+            
+            <ol><li>Como una clavada al revés: la valiosa está adelante. <strong>(correcta)</strong></li><li>Una torre que llega a la séptima y come peones.</li><li>Dos peones propios que se defienden en la misma diagonal.</li><li>Un jaque que se repite tres veces y hace tablas.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Clavada y enfilada son la misma línea de ataque, cambiando el orden: en la clavada la pieza valiosa está atrás; en la enfilada, adelante, y se gana lo que queda detrás.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_enfilada_tablero · dificultad 2 de 5</h4>
+            <p class="enunciado">Gana la dama negra con una enfilada: da jaque de manera que, al moverse el rey, la torre se coma la dama.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en a1. Piezas negras: rey en c5; dama en h5.
+              <span class="fen">FEN: 8/8/8/2k4q/8/8/8/R5K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> a1–a5.</p>
+            <p class="explica"><strong>Por qué.</strong> Con Ta5+ el rey y la dama quedan en la misma fila: el rey tapa la única casilla por donde la dama podría interponerse, así que tiene que salirse de la fila 5 y ahí cae la dama.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> Ta5+ da jaque, las negras solo tienen jugadas de rey (la dama no puede interponerse) y tras cualquiera de ellas Txh5 es legal y la torre no queda al alcance del rey</p>
+          </article><article>
+            <h4>Pregunta tac_jaque_doble · dificultad 2 de 5</h4>
+            <p class="enunciado">El rey recibe jaque de dos piezas a la vez (jaque doble). ¿Qué puede hacer el rival?</p>
+            
+            <ol><li>Solo mover el rey: no hay forma de tapar los dos. <strong>(correcta)</strong></li><li>Capturar una de las dos piezas que dan jaque.</li><li>Interponer una pieza en las dos líneas a la vez.</li><li>Nada: el jaque doble siempre termina en mate.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Por eso el jaque doble es tan fuerte: como el rey está obligado a moverse, la pieza que lo da puede quedar atacada sin que importe.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_atraccion · dificultad 2 de 5</h4>
+            <p class="enunciado">¿En qué consiste la táctica de atracción (o señuelo)?</p>
+            
+            <ol><li>Cambiar todas las piezas para llegar rápido al final.</li><li>Mover el mismo caballo varias veces para ganar tiempo.</li><li>Retirar las piezas propias a la primera fila y esperar.</li><li>Sacrificar algo para atraer una pieza a una casilla mala. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Atracción y desviación son primas: una arrastra a la pieza adonde te conviene, la otra la saca de donde estorbaba. En las dos, el sacrificio se paga con la táctica que viene después.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_pieza_atrapada · dificultad 2 de 5</h4>
+            <p class="enunciado">Tu rival metió la dama a comer un peón lejos de sus piezas. ¿Qué idea vale la pena buscar?</p>
+            
+            <ol><li>Avanzar todos los peones del flanco de rey.</li><li>Cambiar damas cuanto antes, antes de que ella vuelva.</li><li>Dar jaques hasta que regrese sola a su campo.</li><li>Atraparla: quitarle una por una las casillas de salida. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Una pieza atrapada es material ganado aunque la captura llegue tres jugadas después: primero se le cierran las salidas y al final se cobra.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_perpetuo · dificultad 2 de 5</h4>
+            <p class="enunciado">Vas perdiendo por una pieza, pero puedes dar jaque una y otra vez sin que el rey rival se escape. ¿Qué resultado buscas?</p>
+            
+            <ol><li>Ganar por tiempo en el reloj.</li><li>Mate en tres jugadas.</li><li>Tablas por jaque perpetuo. <strong>(correcta)</strong></li><li>Que el rival quede ahogado.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El jaque perpetuo es el salvavidas de las posiciones perdidas: si el rey rival no puede salir de la red de jaques, la partida termina en tablas por repetición.</p>
+            
+          </article><h3>Escalón 3 · 9 preguntas</h3><article>
+            <h4>Pregunta tac_descubierto · dificultad 3 de 5</h4>
+            <p class="enunciado">Mueve el caballo de manera que descubras jaque y de paso ataques la dama negra.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en e1; caballo en e4. Piezas negras: rey en e8; dama en b7.
+              <span class="fen">FEN: 4k3/1q6/8/8/4N3/8/8/4R1K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e4–c5 o e4–d6.</p>
+            <p class="explica"><strong>Por qué.</strong> En el ataque descubierto la pieza que se aparta puede ir a robar donde quiera: el rival está obligado a atender el jaque. Aquí el caballo tiene dos saltos que sirven: Cc5+ y Cd6+ atacan la dama por igual (los otros seis saltos también dan jaque, pero no amenazan la dama).</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> las 8 jugadas legales del caballo descubren jaque de la torre (cualquier salto lo hace); de esas 8, se comprobó cuáles además atacan la casilla b7: solo Cc5+ y Cd6+ lo hacen (las otras seis — Cc3+, Cd2+, Cf2+, Cg3+, Cg5+, Cf6+ — dan jaque pero no atacan la dama). Verificado contra las 19 jugadas legales totales de la posición (también las de la torre y el rey), no solo las del caballo.</p>
+          </article><article>
+            <h4>Pregunta tac_rayosx · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué es un "rayo X" (o clavada relativa) en ajedrez?</p>
+            
+            <ol><li>Cuando un peón defiende a otro peón en la misma diagonal larga.</li><li>Cuando la dama y la torre atacan la misma casilla.</li><li>Cuando dos alfiles propios se cruzan en el centro.</li><li>Cuando una pieza ataca a través de otra a lo que hay detrás. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> El rayo X es una línea de ataque que atraviesa una pieza para llegar a otra detrás, parecido a la clavada pero visto desde el otro lado.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_doble_jaque_tablero · dificultad 3 de 5</h4>
+            <p class="enunciado">Da jaque doble: mueve el caballo de modo que el rey negro quede en jaque del caballo y de la torre al mismo tiempo.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en c1; caballo en c4. Piezas negras: rey en c8.
+              <span class="fen">FEN: 2k5/8/8/8/2N5/8/8/2R3K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> c4–b6 o c4–d6.</p>
+            <p class="explica"><strong>Por qué.</strong> El caballo se corre de la columna c (con lo que la torre da jaque) y desde b6 o d6 ataca él mismo al rey. Dos jaques a la vez: el rey no tiene más remedio que moverse.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> tras Cb6+ y tras Cd6+ el rey negro queda atacado por dos piezas (caballo y torre); las demás jugadas del caballo dan un solo jaque</p>
+          </article><article>
+            <h4>Pregunta tac_sobrecarga · dificultad 3 de 5</h4>
+            <p class="enunciado">Una torre rival es la única que defiende dos cosas a la vez. ¿Cómo se llama esa debilidad y cómo se aprovecha?</p>
+            
+            <ol><li>Enfilada: la torre cae por estar en línea.</li><li>Zugzwang: la torre está obligada a mover.</li><li>Sobrecarga: se ataca una cosa y suelta la otra. <strong>(correcta)</strong></li><li>Clavada: la torre no se puede mover de esa casilla.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La pregunta que la descubre es siempre la misma: "¿qué defiende esta pieza?". Si la respuesta son dos cosas, hay táctica.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_interferencia · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué es una interferencia (obstrucción)?</p>
+            
+            <ol><li>Poner dos peones en la misma columna, uno delante del otro.</li><li>Cambiar la dama por las dos torres del rival.</li><li>Bloquear un peón pasado poniendo el caballo delante.</li><li>Cortar con una pieza la línea por la que el rival defiende. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> La defensa no siempre se puede mover ni desviar: a veces basta con cortarle la línea. Por eso la interferencia suele venir con un sacrificio en la casilla justa.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_despeje · dificultad 3 de 5</h4>
+            <p class="enunciado">Tu propia pieza está tapando la línea por la que tu dama daría mate. ¿Cuál es la idea?</p>
+            
+            <ol><li>Despejar la línea: mover esa pieza con amenaza. <strong>(correcta)</strong></li><li>Dejarla ahí: nunca conviene abrir líneas propias.</li><li>Cambiarla por la pieza rival que tenga más cerca.</li><li>Retirarla a la primera fila y volver a empezar.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El despeje de línea (o de casilla) gana tiempo: la pieza que estorba se va haciendo daño, y detrás de ella ya viene la amenaza de verdad.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_molino · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué es el "molino", una de las tácticas más vistosas del ajedrez?</p>
+            
+            <ol><li>Mover el caballo en círculo alrededor del rey rival.</li><li>Repetir la misma jugada tres veces seguidas, y quedan tablas.</li><li>Girar el tablero para ver la posición del otro lado.</li><li>Jaques a la descubierta con torre y alfil, uno tras otro. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Funciona porque el rival nunca puede hacer nada: entre jaque y jaque descubierto solo alcanza a mover el rey, mientras la torre cobra todo lo que hay en su camino.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_socavar · dificultad 3 de 5</h4>
+            <p class="enunciado">Una pieza rival bien puesta está sostenida por un peón. ¿Qué significa "socavar" esa posición?</p>
+            
+            <ol><li>Cambiar las damas para llegar al final.</li><li>Atacar la pieza con otra de más valor.</li><li>Poner un peón propio justo delante de ella.</li><li>Atacar o cambiar el peón que la sostiene. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Contra una pieza bien plantada casi nunca sirve atacarla de frente: se le quita el piso, que suele ser un peón.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_desesperada · dificultad 3 de 5</h4>
+            <p class="enunciado">Tu alfil está perdido, no hay forma de salvarlo. ¿Qué conviene hacer con él?</p>
+            
+            <ol><li>Retirarlo a la primera fila y dejarlo ahí.</li><li>Venderlo caro: que se lleve algo antes de caer. <strong>(correcta)</strong></li><li>Cambiarlo por un peón cualquiera, el que sea.</li><li>Dejarlo donde está y jugar con las demás.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Una pieza que igual se va a perder no tiene nada que cuidar: que capture lo más caro que alcance, o que se meta donde obligue al rival a gastar una jugada.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta tac_sacrificio_f7 · dificultad 4 de 5</h4>
+            <p class="enunciado">Encuentra el golpe que fuerza el mate en dos. Juega solo ese golpe.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; dama en g6; torre en f5. Piezas negras: rey en g8; peónes en f7, g7, h7.
+              <span class="fen">FEN: 6k1/5ppp/6Q1/5R2/8/8/8/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> g6–f7.</p>
+            <p class="explica"><strong>Por qué.</strong> Dxf7+ arrastra al rey (o tapa con la torre) y el mate llega en la siguiente. El sacrificio en f7 es el punto flojo del enroque corto desde la primera partida que uno juega.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> Dxf7+ fuerza mate en 2 y es la única jugada que lo hace (búsqueda exhaustiva sobre todas las respuestas negras)</p>
+          </article><article>
+            <h4>Pregunta tac_orden_amenazas · dificultad 4 de 5</h4>
+            <p class="enunciado">Tu rival amenaza mate en una jugada y tú puedes ganar una torre. ¿Qué manda?</p>
+            
+            <ol><li>Ganar la torre: con material de más se defiende mejor.</li><li>Cambiar damas para simplificar la posición y respirar.</li><li>Dar jaque con cualquier pieza para ganar un tiempo.</li><li>Parar el mate, salvo que ganar la torre lo pare también. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Lo forzado va antes que lo bueno. La excepción vale la pena buscarla siempre: una jugada que gana material Y para el mate es la que hay que encontrar.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta tac_senales_combinacion · dificultad 5 de 5</h4>
+            <p class="enunciado">¿Qué señales avisan de que en una posición probablemente HAY una combinación?</p>
+            
+            <ol><li>Tener más material que el rival en ese momento justo.</li><li>Que queden menos de veinte piezas en el tablero.</li><li>Que el rival haya movido dos veces la misma pieza.</li><li>Rey con pocas casillas, piezas sin defensa o clavadas. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Las combinaciones no aparecen de la nada: viven de elementos concretos. Cuando hay dos o tres de esos elementos juntos, vale la pena gastar tiempo buscando; cuando no hay ninguno, casi nunca hay nada.</p>
+            
+          </article><article>
+            <h4>Pregunta tac_defensa_activa · dificultad 5 de 5</h4>
+            <p class="enunciado">Estás bajo ataque y aguantando. ¿Cuál es el criterio de defensa que más partidas salva?</p>
+            
+            <ol><li>Devolver material de inmediato para calmar el juego.</li><li>Buscar el contragolpe o cambiar la pieza atacante. <strong>(correcta)</strong></li><li>Dar jaques hasta que el rival se equivoque solo.</li><li>Retirar todas las piezas a la primera fila y esperar.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Defender sumando piezas pasivas pierde por acumulación: el atacante sigue trayendo gente. Cambiar a la pieza atacante clave o abrir un frente propio da vuelta muchas más partidas.</p>
+            
+          </article></section><section><h2>Mates y seguridad del rey · 17 preguntas</h2>
+      <p><strong>Qué mide.</strong> Patrones de mate en 1 y 2, el mate del pasillo y el cuidado del propio rey.</p>
+      <p><strong>Cuando está flojo.</strong> Llega a posiciones ganadas y no las remata, o cae en mates conocidos. Es el arreglo más rentable que existe.</p>
+      <h3>Escalón 1 · 3 preguntas</h3><article>
+            <h4>Pregunta mate_pasillo · dificultad 1 de 5</h4>
+            <p class="enunciado">Da jaque mate en una jugada.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en a1. Piezas negras: rey en g8; peónes en f7, g7, h7.
+              <span class="fen">FEN: 6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> a1–a8.</p>
+            <p class="explica"><strong>Por qué.</strong> El mate del pasillo: el rey se ahoga detrás de sus propios peones. Por eso conviene abrir una ventanita a tiempo.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> es mate y es el único mate en 1 de la posición</p>
+          </article><article>
+            <h4>Pregunta mate_definicion · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Qué significa exactamente "jaque mate"?</p>
+            
+            <ol><li>El rey fue capturado y sacado físicamente del tablero.</li><li>Se acabó el tiempo en el reloj y se pierde la partida.</li><li>El rey está en jaque y no hay jugada legal que lo libre. <strong>(correcta)</strong></li><li>El rey está en jaque pero todavía puede llegar a escapar.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El rey nunca llega a ser capturado: la partida termina en el instante en que un jaque no tiene ninguna respuesta legal.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_jaque_no_es_mate · dificultad 1 de 5</h4>
+            <p class="enunciado">Le das jaque al rey rival. ¿Qué tres formas tiene de salir del jaque?</p>
+            
+            <ol><li>Solo mover el rey: no hay ninguna otra salida.</li><li>Enrocar, capturar la pieza o pedir tablas.</li><li>Mover el rey, capturar a quien da jaque o tapar. <strong>(correcta)</strong></li><li>Ninguna: el jaque siempre termina en mate.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Mate es justo cuando ninguna de esas tres salidas existe. Repasarlas en orden —mover, capturar, tapar— es la forma de no cantar mate donde no lo hay.</p>
+            
+          </article><h3>Escalón 2 · 6 preguntas</h3><article>
+            <h4>Pregunta mate_dama · dificultad 2 de 5</h4>
+            <p class="enunciado">Da jaque mate en una jugada con la dama.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g6; dama en h1. Piezas negras: rey en g8.
+              <span class="fen">FEN: 6k1/8/6K1/8/8/8/8/7Q w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> h1–a8.</p>
+            <p class="explica"><strong>Por qué.</strong> Con dama y rey, el mate llega cuando el rey propio le quita al rival las casillas de escape. La dama sola no mata.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> es mate y es el único mate en 1 de la posición</p>
+          </article><article>
+            <h4>Pregunta mate_ventana · dificultad 2 de 5</h4>
+            <p class="enunciado">Tu rey está enrocado corto y tus peones f, g y h siguen en su casilla. ¿Qué medida de seguridad conviene tomar con tiempo?</p>
+            
+            <ol><li>Sacar el rey hacia el centro lo antes posible.</li><li>Avanzar los tres peones del enroque para atacar de una vez.</li><li>Cambiar la dama en cuanto haya oportunidad de hacerlo.</li><li>Hacer una ventanita, por ejemplo h2-h3, contra el pasillo. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Una casilla de escape cuesta un tiempo y evita el mate del pasillo, que es de los finales más frecuentes en torneos escolares.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_escalera · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Cómo se llama la técnica de dar jaque mate con dos torres (o dama y torre), empujando al rey rival fila a fila hacia el borde del tablero?</p>
+            
+            <ol><li>Mate del pasillo largo.</li><li>Mate de la escalera. <strong>(correcta)</strong></li><li>Mate de Boden.</li><li>Mate de la coz.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Dos piezas de largo alcance se turnan para dar jaque, empujando al rey fila a fila hasta acorralarlo en el borde.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_escalera_tablero · dificultad 2 de 5</h4>
+            <p class="enunciado">Da jaque mate en una jugada con las dos torres.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torres en a6, b7. Piezas negras: rey en h8.
+              <span class="fen">FEN: 7k/1R6/R7/8/8/8/8/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> a6–a8.</p>
+            <p class="explica"><strong>Por qué.</strong> Es el mate de la escalera: una torre le quita la fila 7 al rey y la otra da el jaque en la fila 8. Sin la torre de b7 el rey se escaparía a h7.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> Ta8 es mate y es el único mate en 1 de la posición</p>
+          </article><article>
+            <h4>Pregunta mate_tecnica_torre · dificultad 2 de 5</h4>
+            <p class="enunciado">Te queda rey y torre contra rey solo. ¿Cuál es el plan para dar mate?</p>
+            
+            <ol><li>Empujar al rey al borde con la torre y acercar el propio. <strong>(correcta)</strong></li><li>Cambiar la torre por el peón rival más avanzado.</li><li>Dar jaques con la torre lo más rápido que se pueda, sin parar.</li><li>Dejar la torre en el centro y esperar al rey rival.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La torre sola no da mate: hace falta el rey propio para quitarle las casillas de escape. Sin plan, la partida se va a tablas por las 50 jugadas.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_ahogado_cuidado · dificultad 2 de 5</h4>
+            <p class="enunciado">Vas ganando con dama de más contra rey solo. ¿Cuál es el descuido más común?</p>
+            
+            <ol><li>Dejarlo sin jaque y sin jugada legal: es ahogado. <strong>(correcta)</strong></li><li>Acercar demasiado el propio rey al del rival.</li><li>Coronar otra dama más sin ninguna necesidad.</li><li>Dar tantos jaques que se acaba el tiempo propio.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Con dama de ventaja, antes de cada jugada hay que preguntarse: "¿le queda alguna jugada legal?". Si no le queda y no está en jaque, la partida se acabó en tablas.</p>
+            
+          </article><h3>Escalón 3 · 4 preguntas</h3><article>
+            <h4>Pregunta mate_caballo · dificultad 3 de 5</h4>
+            <p class="enunciado">Da jaque mate en una jugada.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; caballo en g5. Piezas negras: rey en h8; torre en g8; peónes en g7, h7.
+              <span class="fen">FEN: 6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> g5–f7.</p>
+            <p class="explica"><strong>Por qué.</strong> El rey encerrado por sus propias piezas cae ante un solo caballo: es el patrón del "mate de la coz".</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> es mate y es el único mate en 1 de la posición</p>
+          </article><article>
+            <h4>Pregunta mate_sofocado · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Cómo se llama el mate en el que el rey está completamente rodeado por sus propias piezas y un caballo da el jaque final?</p>
+            
+            <ol><li>Mate ahogado en la esquina.</li><li>Mate de la coz (smothered mate). <strong>(correcta)</strong></li><li>Mate del pasillo o última fila.</li><li>Mate de la escalera con dos torres.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> En el mate de la coz el rey queda bloqueado por sus propias piezas y un caballo rival —que no se puede capturar ni bloquear— le da el jaque final.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_arabe · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué piezas trabajan juntas en el llamado mate árabe?</p>
+            
+            <ol><li>Dos peones ligados que llegan juntos.</li><li>Los dos alfiles, en diagonales que se cruzan.</li><li>Dama y peón, con el peón dando apoyo.</li><li>Torre y caballo, contra el rey en la esquina. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Torre y caballo se entienden muy bien alrededor del rey enrocado: vale la pena reconocer el patrón, porque aparece en cientos de finales de ataque.</p>
+            
+          </article><article>
+            <h4>Pregunta mate_anastasia · dificultad 3 de 5</h4>
+            <p class="enunciado">En el mate de Anastasia, ¿qué hace el caballo?</p>
+            
+            <ol><li>Bloquea el peón pasado que corre del otro lado.</li><li>Da él mismo el jaque final desde f7, como en la coz.</li><li>Se planta en e7 y le quita al rey las casillas de g. <strong>(correcta)</strong></li><li>Se cambia por el alfil que defiende al rey.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es un patrón de ataque al enroque: caballo en e7, sacrificio de dama en h7 si hace falta y torre a la columna h. Conocerlo hace que la combinación aparezca sola.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta mate_dos_jugadas · dificultad 4 de 5</h4>
+            <p class="enunciado">Mate en dos jugadas: juega solo la primera, la que lo fuerza. Aviso: no es jaque.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; dama en h5; caballo en f5. Piezas negras: rey en g8; peónes en f7, g7, h7.
+              <span class="fen">FEN: 6k1/5ppp/8/5N1Q/8/8/8/6K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> h5–g5.</p>
+            <p class="explica"><strong>Por qué.</strong> Dg5 es una jugada callada: amenaza Dxg7 mate y las negras no tienen forma de cubrirlo todo, porque el caballo de f5 controla las casillas de escape.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> Dg5 fuerza mate en 2, no hay mate en 1 en la posición y ninguna otra jugada fuerza mate en 2</p>
+          </article><article>
+            <h4>Pregunta mate_enroques_opuestos · dificultad 4 de 5</h4>
+            <p class="enunciado">Partida con enroques opuestos (uno enrocó corto y el otro largo). ¿Qué decide el ataque?</p>
+            
+            <ol><li>Quién deja su estructura de peones intacta.</li><li>La velocidad: gana quien abre una línea primero. <strong>(correcta)</strong></li><li>Quién consigue cambiar las damas antes que el otro.</li><li>Quién tiene más piezas menores en el ataque.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Con enroques opuestos los peones propios ya no defienden al rey: son la artillería. Contar tiempos —cuántas jugadas me faltan a mí y cuántas a él— es literalmente la evaluación de la posición.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta mate_tres_jugadas · dificultad 5 de 5</h4>
+            <p class="enunciado">Mate en tres jugadas: juega solo la primera. Tampoco es jaque.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; dama en h3; torre en e1. Piezas negras: rey en g8; peónes en f7, g6, h7.
+              <span class="fen">FEN: 6k1/5p1p/6p1/8/8/7Q/8/4R1K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> h3–h6.</p>
+            <p class="explica"><strong>Por qué.</strong> Dh6 mete la dama en la casilla desde donde amenaza mate y le quita al rey la salida por g7. Contra cualquier defensa, la torre entra por la columna e y el mate llega en tres.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> Dh6 fuerza mate en 3, no hay mate en 1 ni en 2 en la posición y ninguna otra jugada fuerza mate en 3</p>
+          </article><article>
+            <h4>Pregunta mate_boden · dificultad 5 de 5</h4>
+            <p class="enunciado">¿Qué piezas dan el mate de Boden y contra qué rey?</p>
+            
+            <ol><li>Dama y caballo, contra un rey que quedó en el centro.</li><li>Dos torres en columnas contiguas, contra el rey al borde.</li><li>Torre y peón, contra un rey tapado por sus piezas.</li><li>Dos alfiles cruzados, contra un rey que enrocó largo. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Aparece después de sacrificar en c3/c6 o a6/a3 para abrir las diagonales. Reconocer el patrón es lo que permite ver el sacrificio tres jugadas antes.</p>
+            
+          </article></section><section><h2>Finales · 11 preguntas</h2>
+      <p><strong>Qué mide.</strong> Oposición, regla del cuadrado, coronación y las posiciones de torre que hay que saber.</p>
+      <p><strong>Cuando está flojo.</strong> Los finales se le van: empata ganados y pierde empatados. Es donde más puntos se recuperan con menos horas.</p>
+      <h3>Escalón 1 · 3 preguntas</h3><article>
+            <h4>Pregunta fin_cuadrado · dificultad 1 de 5</h4>
+            <p class="enunciado">Juegan las negras. Según la regla del cuadrado, ¿alcanza el rey negro al peón blanco?</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las negras.
+              Piezas blancas: rey en h1; peón en c5. Piezas negras: rey en f1.
+              <span class="fen">FEN: 8/8/8/2P5/8/8/8/5k1K b - - 0 1</span></p>
+            <ol><li>No: el peón corona antes. <strong>(correcta)</strong></li><li>Solo si el peón avanza de a una casilla.</li><li>Sí: lo alcanza justo a tiempo.</li><li>Depende de dónde esté el rey blanco.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Dibuja el cuadrado desde el peón hasta la casilla de coronación: si el rey no entra en él jugando, no llega.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> regla del cuadrado calculada sobre la FEN (distancia del rey a la casilla de coronación contra la del peón)</p>
+          </article><article>
+            <h4>Pregunta fin_rey_activo · dificultad 1 de 5</h4>
+            <p class="enunciado">En los finales, ¿qué suele ser más importante que en la apertura?</p>
+            
+            <ol><li>Enrocar lo antes posible para ponerlo a salvo.</li><li>Adelantar cuanto antes los peones de las dos torres.</li><li>Sacar la dama cuanto antes para dar jaques.</li><li>La actividad del rey, que ya puede salir al centro. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Con menos piezas en el tablero, el rey deja de estar en peligro constante y se convierte en pieza activa clave, sobre todo en finales de peones.</p>
+            
+          </article><article>
+            <h4>Pregunta fin_peon_pasado · dificultad 1 de 5</h4>
+            <p class="enunciado">Un "peón pasado" es aquel que…</p>
+            
+            <ol><li>El que quedó clavado por un alfil enemigo.</li><li>El que no tiene peones rivales delante ni al lado. <strong>(correcta)</strong></li><li>El que avanzó dos casillas en su primer movimiento.</li><li>El que ya cruzó la mitad del tablero en su avance.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Un peón pasado no puede ser detenido por ningún peón rival en su camino a coronar, lo que lo hace muy valioso en los finales.</p>
+            
+          </article><h3>Escalón 2 · 2 preguntas</h3><article>
+            <h4>Pregunta fin_oposicion · dificultad 2 de 5</h4>
+            <p class="enunciado">Haz clic en la casilla a la que debe ir el rey blanco para tomar la oposición.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en e3. Piezas negras: rey en e6.
+              <span class="fen">FEN: 8/8/4k3/8/8/4K3/8/8 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e4.</p>
+            <p class="explica"><strong>Por qué.</strong> Oposición: los reyes enfrentados con una casilla de por medio y el turno del rival. Es la llave de los finales de peones.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> la jugada Re4 es legal y deja los reyes enfrentados a dos casillas en la misma columna, con las negras en turno</p>
+          </article><article>
+            <h4>Pregunta fin_promocion · dificultad 2 de 5</h4>
+            <p class="enunciado">Corona el peón.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en h1; peón en b7. Piezas negras: rey en f3.
+              <span class="fen">FEN: 8/1P6/8/8/8/5k2/8/7K w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> b7–b8=D.</p>
+            <p class="explica"><strong>Por qué.</strong> Coronar en dama es lo normal; solo se elige otra pieza para evitar un ahogado o para dar un mate de caballo.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> la jugada es legal, corona (bandera p) y la pieza nueva es dama</p>
+          </article><h3>Escalón 3 · 2 preguntas</h3><article>
+            <h4>Pregunta fin_torre_peon · dificultad 3 de 5</h4>
+            <p class="enunciado">En un final de torre y peón contra torre, ¿qué es la posición de Philidor?</p>
+            
+            <ol><li>El ataque: el rey se tapa de los jaques con su torre.</li><li>La regla que dice que dos torres le ganan a una sola.</li><li>La defensa: torre en la tercera fila y jaques por detrás. <strong>(correcta)</strong></li><li>Una posición en la que siempre gana el bando que tiene el peón.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Philidor defiende (tablas) y Lucena gana (el puente). Saber cuál es cuál salva y gana muchos medios puntos.</p>
+            
+          </article><article>
+            <h4>Pregunta fin_alfiles_distinto_color · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué hace especialmente difícil de ganar un final de alfiles de distinto color, incluso con material de más?</p>
+            
+            <ol><li>Que el alfil rival bloquea las casillas clave y nadie lo echa. <strong>(correcta)</strong></li><li>Que los alfiles no pueden defender peones de otro color.</li><li>Que con material de más las tablas son imposibles.</li><li>Que en ese final los alfiles valen menos que un peón suelto.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Estos finales son famosos por sus tablas "de manual": el alfil defensor puede bloquear para siempre las casillas de su color, aunque el rival tenga varios peones de más.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta fin_lucena · dificultad 4 de 5</h4>
+            <p class="enunciado">Posición de Lucena: tienes rey, torre y un peón en séptima; tu rey está delante del peón y el rey rival está cortado a dos columnas. ¿Cómo se gana?</p>
+            
+            <ol><li>Construyendo el puente: la torre a la cuarta fila. <strong>(correcta)</strong></li><li>Cambiando las torres y ganando el final de peones.</li><li>Adelantando el rey por la columna del peón, sin más.</li><li>Dando jaques con la torre hasta que el rey se aleje.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es la técnica de torres que más puntos vale: sin el puente, el mismo final es tablas. La torre en cuarta fila es la jugada que se aprende y ya no se olvida.</p>
+            
+          </article><article>
+            <h4>Pregunta fin_torre_detras_pasado · dificultad 4 de 5</h4>
+            <p class="enunciado">Final de torres con un peón pasado. ¿Dónde va la torre, según la regla de Tarrasch?</p>
+            
+            <ol><li>Al costado del peón, en su misma fila, vigilándolo.</li><li>Detrás del peón pasado, la del que empuja y la que frena. <strong>(correcta)</strong></li><li>En la columna del rey rival, sin importar el peón.</li><li>Delante del peón pasado, para bloquearlo con la propia torre.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Detrás, la torre que apoya gana casillas a medida que el peón avanza, y la que frena no pierde ninguna. Delante, el bloqueo condena a la torre a mirar la partida desde ahí.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta fin_philidor · dificultad 5 de 5</h4>
+            <p class="enunciado">Defiendes con rey y torre contra rey, torre y un peón que todavía no llegó a tu tercera fila. ¿Cuál es la defensa de Philidor?</p>
+            
+            <ol><li>Poner la torre delante del peón y dejarla quieta.</li><li>Cambiar las torres a la primera oportunidad que haya.</li><li>Dar jaques desde el costado sin parar, desde el principio.</li><li>Torre en la tercera fila y después jaques por detrás. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Son dos etapas y en ese orden: la tercera fila frena al rey, y cuando el peón avanza pierde el escudo, por eso los jaques desde atrás ya no se pueden tapar. Es la defensa que salva medio punto en cada torneo.</p>
+            
+          </article><article>
+            <h4>Pregunta fin_triangulacion · dificultad 5 de 5</h4>
+            <p class="enunciado">En un final de reyes y peones, ¿para qué sirve triangular con el rey?</p>
+            
+            <ol><li>Para perder un tiempo y devolverle el turno al rival. <strong>(correcta)</strong></li><li>Para atacar el peón rival desde el otro lado.</li><li>Para llegar antes a la casilla de coronación del peón.</li><li>Para evitar el ahogado del rey contrario.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es zugzwang fabricado: la posición no cambia, cambia de quién es el turno. Solo funciona si tu rey tiene tres casillas útiles y el del rival no.</p>
+            
+          </article></section><section><h2>Estrategia y planes · 12 preguntas</h2>
+      <p><strong>Qué mide.</strong> Centro, columnas abiertas, peones pasados, puestos avanzados: qué hacer cuando no hay táctica.</p>
+      <p><strong>Cuando está flojo.</strong> Juega jugada a jugada, sin plan. Se le nota en posiciones tranquilas, donde no sabe qué mejorar.</p>
+      <h3>Escalón 1 · 2 preguntas</h3><article>
+            <h4>Pregunta est_centro · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Por qué importa tanto el centro del tablero?</p>
+            
+            <ol><li>Porque el reglamento da puntos extra por ocuparlo.</li><li>Porque en el centro del tablero las piezas no se capturan.</li><li>Porque desde ahí las piezas llegan a muchas más casillas. <strong>(correcta)</strong></li><li>Porque el rey debe quedarse siempre en el centro.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Un caballo en el centro domina 8 casillas; en una esquina, solo 2.</p>
+            
+          </article><article>
+            <h4>Pregunta est_rey_final · dificultad 1 de 5</h4>
+            <p class="enunciado">En el final, ¿qué pasa con el rey?</p>
+            
+            <ol><li>Conviene dejarlo atrás para que no lo ataquen.</li><li>Solo sirve para dar el mate, nada más.</li><li>Se vuelve una pieza fuerte: hay que activarlo. <strong>(correcta)</strong></li><li>Sigue escondido en el enroque hasta el final.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Con pocas piezas ya no hay quien lo ataque: el rey pasa de ser el que se esconde a ser la pieza que decide, y quien lo activa primero suele ganar el final.</p>
+            
+          </article><h3>Escalón 2 · 4 preguntas</h3><article>
+            <h4>Pregunta est_columna · dificultad 2 de 5</h4>
+            <p class="enunciado">Coloca la torre en la única columna abierta del tablero.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en g1; torre en a1; peónes en a2, b2, c2, e2, f2, g2, h2. Piezas negras: rey en g8; peónes en a7, b7, c7, e7, f7, g7, h7.
+              <span class="fen">FEN: 6k1/ppp1pppp/8/8/8/8/PPP1PPPP/R5K1 w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> a1–d1.</p>
+            <p class="explica"><strong>Por qué.</strong> Las torres quieren columnas abiertas: es la puerta por donde entran al campo rival.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> tras la jugada la torre está en una columna sin ningún peón de ninguno de los dos bandos</p>
+          </article><article>
+            <h4>Pregunta est_caballo_puesto · dificultad 2 de 5</h4>
+            <p class="enunciado">Un caballo llega a una casilla avanzada donde ningún peón rival puede echarlo. ¿Qué has conseguido?</p>
+            
+            <ol><li>Nada especial: el caballo vale igual en cualquier casilla.</li><li>Una clavada sobre el rey rival que gana material.</li><li>Un puesto avanzado: pieza fuerte y estable en campo rival. <strong>(correcta)</strong></li><li>Un caballo en peligro que conviene retirar enseguida.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Un caballo bien puesto en la quinta o sexta fila, apoyado por un peón, puede valer más que una torre.</p>
+            
+          </article><article>
+            <h4>Pregunta est_peon_aislado · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Qué es un "peón aislado"?</p>
+            
+            <ol><li>Un peón que quedó solo porque capturaron a los demás.</li><li>Un peón que avanzó dos casillas en su primer salto.</li><li>Un peón que ya está a punto de coronar en la octava.</li><li>Un peón sin peones propios en las columnas vecinas. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Al no tener peones vecinos que lo respalden, el peón aislado suele necesitar protección constante de las piezas, aunque también da movilidad a cambio.</p>
+            
+          </article><article>
+            <h4>Pregunta est_alfil_malo · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Por qué se dice que un alfil es "malo" en ciertas estructuras de peones?</p>
+            
+            <ol><li>Porque sus propios peones le tapan las diagonales. <strong>(correcta)</strong></li><li>Porque en esa estructura vale menos que un peón.</li><li>Porque el alfil no puede capturar piezas rivales.</li><li>Porque no puede salir de su casilla de origen.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Un "alfil malo" queda encerrado por sus propios peones, colocados en casillas del mismo color que el alfil, lo que reduce mucho su actividad.</p>
+            
+          </article><h3>Escalón 3 · 2 preguntas</h3><article>
+            <h4>Pregunta est_pasado · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué es un peón pasado y por qué es fuerte?</p>
+            
+            <ol><li>Uno doblado en la misma columna que otro peón propio.</li><li>Uno que capturó al paso y quedó en columna abierta.</li><li>Uno que ya cruzó la mitad del tablero y sigue avanzando solo.</li><li>Uno sin peones rivales delante ni al lado: cuesta frenarlo. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> En los finales, un peón pasado y lejano suele valer más que un peón de más en el mismo flanco.</p>
+            
+          </article><article>
+            <h4>Pregunta est_mayoria_flanco · dificultad 3 de 5</h4>
+            <p class="enunciado">En estructuras de peones, ¿qué es una "mayoría de peones" en un flanco?</p>
+            
+            <ol><li>Tener más peones que el rival en ese sector. <strong>(correcta)</strong></li><li>Tener menos peones que el rival en ese sector.</li><li>Tener dos peones doblados en la misma columna.</li><li>Tener todos los peones propios en una sola fila.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Una mayoría de peones en un flanco es una ventaja a largo plazo: bien manejada, puede convertirse en un peón pasado que decida el final.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta est_profilaxis · dificultad 4 de 5</h4>
+            <p class="enunciado">¿En qué consiste jugar con profilaxis?</p>
+            
+            <ol><li>Repetir jugadas hasta que el rival se decida.</li><li>Cambiar piezas para no correr ningún riesgo.</li><li>Defender el rey antes de empezar cualquier plan.</li><li>Preguntarse qué quiere el rival y quitárselo. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> La pregunta de Petrosian: "si me tocara mover a mí dos veces, ¿qué haría él?". Quitarle esa jugada suele valer más que adelantar el propio plan una casilla.</p>
+            
+          </article><article>
+            <h4>Pregunta est_dos_debilidades · dificultad 4 de 5</h4>
+            <p class="enunciado">¿Qué dice el principio de las dos debilidades?</p>
+            
+            <ol><li>Que nunca hay que dejarse dos peones débiles en el tablero.</li><li>Que hace falta una segunda debilidad, en el otro flanco. <strong>(correcta)</strong></li><li>Que hay que atacar primero la debilidad más grande.</li><li>Que dos piezas mal puestas equivalen a un peón menos.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Es cómo se convierte una ventaja chica en punto entero: se fija la primera debilidad, se lleva el juego al otro flanco y la defensa se parte. Sin la segunda, casi todo se aguanta.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta est_espacio_cambios · dificultad 5 de 5</h4>
+            <p class="enunciado">Tienes menos espacio que tu rival. ¿Qué conviene hacer?</p>
+            
+            <ol><li>Cambiar piezas: las que quedan tienen más aire. <strong>(correcta)</strong></li><li>Enrocar al lado contrario y salir a atacar.</li><li>Evitar todos los cambios para no simplificar.</li><li>Avanzar los peones donde tienes menos espacio.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Con poco espacio el problema no son las piezas del rival: son las propias, que se estorban. El que tiene más espacio evita los cambios por la misma razón.</p>
+            
+          </article><article>
+            <h4>Pregunta est_plan_desde_estructura · dificultad 5 de 5</h4>
+            <p class="enunciado">Llegas a una posición que no conoces y no sabes qué hacer. ¿De dónde sale el plan?</p>
+            
+            <ol><li>De contar el material y elegir el flanco con más piezas.</li><li>De la estructura de peones: rupturas y casillas débiles. <strong>(correcta)</strong></li><li>De la apertura jugada, aunque la estructura haya cambiado.</li><li>De dar jaque para ver cómo responde el rival y decidir.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Los peones son lo único que casi no vuelve atrás: definen el terreno. Leer la estructura antes de mover piezas es la diferencia entre tener un plan y hacer jugadas.</p>
+            
+          </article></section><section><h2>Cálculo y visualización · 15 preguntas</h2>
+      <p><strong>Qué mide.</strong> Ver jugadas sin mover las piezas, contar capturas en orden y encontrar jugadas intermedias.</p>
+      <p><strong>Cuando está flojo.</strong> Calcula corto o se pierde a las dos jugadas: ve el primer golpe pero no la respuesta.</p>
+      <h3>Escalón 1 · 3 preguntas</h3><article>
+            <h4>Pregunta cal_casilla_color · dificultad 1 de 5</h4>
+            <p class="enunciado">Sin mirar el tablero: ¿de qué color es la casilla f5?</p>
+            
+            <ol><li>Depende del lado.</li><li>Es blanca. <strong>(correcta)</strong></li><li>Es negra.</li><li>No existe f5.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Truco: si la letra y el número son "uno par y otro impar", la casilla es blanca. Saberlo ayuda en los finales de alfiles.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> color de casilla calculado con la fórmula habitual (columna + fila)</p>
+          </article><article>
+            <h4>Pregunta cal_torre_bloqueo · dificultad 1 de 5</h4>
+            <p class="enunciado">¿Puede una torre saltar por encima de otras piezas?</p>
+            
+            <ol><li>Solo en su primera jugada de la partida.</li><li>Sí, pero solo por encima de los peones.</li><li>No: se detiene en la primera pieza del camino. <strong>(correcta)</strong></li><li>Sí, siempre y por encima de cualquier pieza.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Salvo el caballo, ninguna pieza salta por encima de otra: la torre se detiene en la primera pieza que encuentra en su línea de movimiento.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_diagonal · dificultad 1 de 5</h4>
+            <p class="enunciado">Sin mirar el tablero: ¿un alfil que está en e4 puede llegar en una jugada a a8 (si el camino está libre)?</p>
+            
+            <ol><li>No: e4 y a8 son de colores distintos.</li><li>No: un alfil no cruza tantas casillas.</li><li>Solo si es el alfil de casillas negras.</li><li>Sí: e4, d5, c6, b7 y a8 van en diagonal. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Ver las diagonales sin mover las piezas es media batalla del cálculo. El truco: de e4 hacia arriba y a la izquierda, letra que baja y número que sube.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> e4 y a8 están en la misma diagonal (misma suma de columna y fila)</p>
+          </article><h3>Escalón 2 · 5 preguntas</h3><article>
+            <h4>Pregunta cal_conteo · dificultad 2 de 5</h4>
+            <p class="enunciado">Una casilla está defendida dos veces y atacada dos veces por ti. ¿Qué hay que contar antes de capturar ahí?</p>
+            
+            <ol><li>Solo cuántos atacantes hay: si son dos, se gana.</li><li>Si el rey rival está cerca de esa casilla o no.</li><li>Nada en especial: capturar siempre conviene.</li><li>El valor de las piezas que entran, en orden. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Capturar de a poco y en orden equivocado regala material. Cuenta la secuencia completa antes de la primera captura.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_jaque_doble · dificultad 2 de 5</h4>
+            <p class="enunciado">Haz clic en la casilla desde la que tu caballo daría jaque al rey negro y atacaría la torre a la vez.</p>
+            <p class="posicion"><strong>La posición.</strong> Juegan las blancas.
+              Piezas blancas: rey en h1; caballo en d4. Piezas negras: rey en d8; torre en g7.
+              <span class="fen">FEN: 3k4/6r1/8/8/3N4/8/8/7K w - - 0 1</span></p>
+            <p class="respuesta"><strong>Respuesta correcta:</strong> e6.</p>
+            <p class="explica"><strong>Por qué.</strong> Antes de mover un caballo, mira sus 8 saltos: la horquilla casi siempre está en uno que no miraste.</p>
+            <p class="comprobado"><strong>Comprobado con chess.js:</strong> el salto es legal y desde esa casilla el caballo ataca al rey y a la torre negros</p>
+          </article><article>
+            <h4>Pregunta cal_orden_capturas · dificultad 2 de 5</h4>
+            <p class="enunciado">Al calcular una serie de capturas en una misma casilla, ¿qué principio general conviene seguir?</p>
+            
+            <ol><li>No capturar nunca con peones en esa casilla.</li><li>Capturar siempre primero con la dama, que manda.</li><li>Capturar primero con la pieza de menor valor. <strong>(correcta)</strong></li><li>Capturar siempre con la pieza más valiosa.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> La regla práctica es "capturar de menor a mayor valor": si la secuencia de cambios se corta a mitad de camino, no arriesgaste tu pieza más valiosa de entrada.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_candidatas · dificultad 2 de 5</h4>
+            <p class="enunciado">Antes de calcular a fondo, ¿qué conviene hacer primero?</p>
+            
+            <ol><li>Elegir dos o tres jugadas candidatas y calcularlas. <strong>(correcta)</strong></li><li>Cambiar piezas para simplificar la posición.</li><li>Calcular hasta el final la primera que se ocurra.</li><li>Mirar cuánto tiempo le queda al rival en el reloj.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Sin lista de candidatas se calcula mucho y se elige mal: casi siempre la buena era la que nunca se miró.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_respuesta_rival · dificultad 2 de 5</h4>
+            <p class="enunciado">¿Cuál es el error más caro al calcular una variante?</p>
+            
+            <ol><li>Contar el valor de las piezas antes de entrar en ella.</li><li>Darle al rival la respuesta que a uno le conviene. <strong>(correcta)</strong></li><li>Empezar el cálculo por los jaques posibles.</li><li>Calcular sin tocar las piezas del tablero.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> En cada jugada del rival hay que buscar su mejor defensa, no la que deja lucir la combinación. Si la variante aguanta eso, sirve.</p>
+            
+          </article><h3>Escalón 3 · 3 preguntas</h3><article>
+            <h4>Pregunta cal_intermedia · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Qué es una jugada intermedia (zwischenzug)?</p>
+            
+            <ol><li>Meter un jaque o una amenaza antes de recapturar. <strong>(correcta)</strong></li><li>Una jugada de peón a mitad de la partida.</li><li>La jugada número 20, cuando acaba la apertura.</li><li>Repetir la posición dos veces para hacer tablas.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Al calcular, pregúntate siempre: "¿puedo meter un jaque útil antes de recapturar?". Ahí aparecen medio punto y muchas piezas.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_jaques_primero · dificultad 3 de 5</h4>
+            <p class="enunciado">En el cálculo de variantes forzadas (jaques, capturas, amenazas), ¿por qué conviene analizar primero los jaques?</p>
+            
+            <ol><li>Porque un jaque casi siempre gana la partida.</li><li>Porque no se puede capturar estando en jaque.</li><li>Porque limitan mucho las respuestas del rival. <strong>(correcta)</strong></li><li>Porque el jaque solo obliga en los finales.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Los jaques son la jugada más forzada posible: reducen mucho las respuestas legales del rival, lo que hace más fácil calcular esa rama con precisión.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_posicion_tranquila · dificultad 3 de 5</h4>
+            <p class="enunciado">¿Hasta dónde hay que calcular una variante de capturas?</p>
+            
+            <ol><li>Hasta que se acabe el tiempo de pensar la jugada.</li><li>Hasta una posición tranquila, sin capturas pendientes. <strong>(correcta)</strong></li><li>Exactamente tres jugadas, siempre, en cualquier caso.</li><li>Hasta la primera captura, y ahí ya se decide.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Cortar el cálculo a mitad de una serie de cambios es la trampa clásica: la posición parecía buena justo antes de la recaptura que lo cambiaba todo.</p>
+            
+          </article><h3>Escalón 4 · 2 preguntas</h3><article>
+            <h4>Pregunta cal_posicion_critica · dificultad 4 de 5</h4>
+            <p class="enunciado">En una partida lenta, ¿dónde hay que gastar el tiempo de reflexión?</p>
+            
+            <ol><li>En las posiciones críticas, donde la partida se define. <strong>(correcta)</strong></li><li>En la apertura, para salir bien de las primeras quince.</li><li>En el final, que es cuando se puede calcular todo.</li><li>Repartido parejo entre todas las jugadas de la partida.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> Reconocer la posición crítica —una ruptura, un cambio que no vuelve atrás, el momento de atacar— y ahí pensar veinte minutos es lo que separa a quien administra bien el reloj.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_comparar_finales · dificultad 4 de 5</h4>
+            <p class="enunciado">Dos jugadas te parecen buenas y no llegas a calcularlas hasta el final. ¿Cómo decides?</p>
+            
+            <ol><li>Eligiendo la que da jaque, que siempre es más fuerte.</li><li>Eligiendo la que gana más material en la primera jugada.</li><li>Comparando las posiciones a las que llevan las dos. <strong>(correcta)</strong></li><li>Repitiendo la posición para decidir con más tiempo.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El cálculo termina en una evaluación, no en un número: cuando no se ve el final de la variante, se compara la posición que queda. Calcular sin evaluar no sirve de nada.</p>
+            
+          </article><h3>Escalón 5 · 2 preguntas</h3><article>
+            <h4>Pregunta cal_jugadas_silenciosas · dificultad 5 de 5</h4>
+            <p class="enunciado">¿Qué tipo de jugada es la que más se escapa cuando uno calcula?</p>
+            
+            <ol><li>Las silenciosas: ni jaque ni captura, y las del rival. <strong>(correcta)</strong></li><li>Los jaques, porque en cada posición hay muchos.</li><li>Las capturas de peón, que parecen todas iguales entre sí.</li><li>Las jugadas de enroque, que cambian dos piezas.</li></ol>
+            <p class="explica"><strong>Por qué.</strong> El cálculo se apoya en lo forzado, y ahí la vista funciona sola. Las combinaciones que uno no ve casi siempre terminan en una jugada callada — propia o del rival.</p>
+            
+          </article><article>
+            <h4>Pregunta cal_orden_del_arbol · dificultad 5 de 5</h4>
+            <p class="enunciado">Al calcular una variante larga, ¿qué hace un jugador fuerte para no perderse?</p>
+            
+            <ol><li>Mira la primera jugada de cada variante y elige por intuición.</li><li>Avanza siempre hacia adelante y nunca vuelve atrás.</li><li>Calcula todas las variantes a la vez para no olvidar ninguna.</li><li>Recorre una rama entera y vuelve a la posición inicial. <strong>(correcta)</strong></li></ol>
+            <p class="explica"><strong>Por qué.</strong> Saltar de rama en rama es lo que produce esas alucinaciones donde una pieza queda en dos lados. Una rama, evaluación, vuelta al inicio: es lento al principio y después es la única forma de calcular limpio.</p>
+            
+          </article></section>
+<footer>
+  <p>Ajedrez Integral · IA Oscar Angulo Cubero · 2026. Material de uso docente.</p>
+  <p>Posiciones y soluciones verificadas con chess.js.</p>
+</footer>
+</body></html>
