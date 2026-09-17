@@ -141,15 +141,15 @@
                     <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
                     <!-- Mismo diagnóstico en papel, con sus diagramas y su hoja de corrección:
                          se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js).
-                         Es material docente —trae las respuestas—, así que solo se ofrece a
-                         profesores y a quien administra: init() lo muestra si el perfil lo es. -->
+                         Trae las respuestas, así que solo se le ofrece a QUIEN ADMINISTRA —ni
+                         siquiera al resto del equipo docente—: lo destapa mostrarPdfSiEsAdmin(). -->
                     <a href="../diagnostico-de-nivel.pdf" id="pdf-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
                     <!-- El banco ENTERO, tipo libro (herramientas/diagnostico-libro.js). No es
                          lo mismo que el de al lado: aquel es UNA prueba para que el alumno la
                          conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
                     <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes, los dos con marca de agua y sin entregar al alumno. El <strong>cuadernillo</strong> es una prueba de 63 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —301 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 63 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —301 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -873,10 +873,22 @@ document.getElementById('next-btn').addEventListener('click', siguiente);
 document.getElementById('abandon-btn').addEventListener('click', () => { guardarEstado(); irA('intro-view'); });
 document.getElementById('repeat-btn').addEventListener('click', () => { borrarEstado(); pintarPerfil(); irA('intro-view'); });
 
-async function mostrarPdfSiEsDocente(userId) {
+/* SOLO administración, no todo el equipo docente.
+ *
+ * Estos dos PDF traen las respuestas y la hoja de corrección: el cuadernillo es
+ * la prueba que el alumno va a contestar y el libro es el banco entero, las 301
+ * preguntas con su respuesta marcada. Cuanta más gente los tenga bajados, más
+ * fácil es que terminen circulando y que el diagnóstico deje de medir nada.
+ * Quien dé clase y los necesite se los pide a quien administra.
+ *
+ * Como todo filtro del sitio, esto decide qué se PINTA: los archivos siguen en
+ * la raíz y quien conozca la dirección los baja igual — para eso llevan marca
+ * de agua en todas las páginas y van sin permiso de copiar ni imprimir.
+ */
+async function mostrarPdfSiEsAdmin(userId) {
   try {
-    const { data } = await sb.from('profiles').select('role, is_admin').eq('id', userId).maybeSingle();
-    if (!data || !(data.role === 'profesor' || data.is_admin === true)) return;
+    const { data } = await sb.from('profiles').select('is_admin').eq('id', userId).maybeSingle();
+    if (!data || data.is_admin !== true) return;
     document.getElementById('pdf-docente').classList.remove('hidden');
     document.getElementById('libro-docente').classList.remove('hidden');
     document.getElementById('pdf-docente-nota').classList.remove('hidden');
@@ -891,9 +903,8 @@ async function init() {
   } catch (e) { sesion = null; }
   sesionActual = sesion || null;
   if (sesion) {
-    // El cuadernillo imprimible lleva las respuestas: se ofrece solo a quien da
-    // clase (profesor o administración), nunca al alumno que va a hacer la prueba.
-    mostrarPdfSiEsDocente(sesion.user.id);
+    // El cuadernillo y el libro llevan las respuestas: solo administración.
+    mostrarPdfSiEsAdmin(sesion.user.id);
     try {
       const { data: pf } = await sb.from('profiles').select('elo, elo_tipo').eq('id', sesion.user.id).maybeSingle();
       perfilCuenta = pf || null;

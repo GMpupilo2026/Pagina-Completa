@@ -185,9 +185,12 @@ async function pruebaAlumna(browser) {
     ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "tv.html"]);
   igual("Aprender", grupos[2].tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "articulos.html"]);
-  igual("Evaluaciones: el diagnóstico abierto y los exámenes todavía no",
+  /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
+     de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
+     versión que NO enseña las respuestas al terminar. */
+  igual("Evaluaciones: los dos diagnósticos abiertos y los exámenes todavía no",
     grupos[3].tiles.map((t) => [t.enlace, t.apagado]),
-    [["entreno/diagnostico.html", false], [null, true]]);
+    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false], [null, true]]);
   igual("Tu cuenta, en su orden",
     grupos[5].tiles.map((t) => t.etiqueta),
     ["Informes", "Mis pagos", "Configuración", "Cerrar sesión"]);
@@ -219,9 +222,14 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  igual("Evaluaciones suma el diagnóstico de arbitraje, detrás del de jugadores",
+  /* A la profesora la MISMA tarjeta la manda a la página con la revisión de los
+     exámenes del público y el detalle pregunta por pregunta. Una sola tarjeta y
+     no dos, para no repetir el nombre en el panel. */
+  igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
     grupos[3].tiles.map((t) => t.enlace),
     ["entreno/diagnostico.html", "arbitraje.html", null]);
+  igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
+    grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
   igual("a ella NO se le apaga nada por mantenimiento: lo sigue necesitando",

@@ -1277,16 +1277,38 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   coincidir con la pantalla. El cuadernillo es **una** de las formas posibles
   de la prueba, sorteada con semilla fija: `SEMILLA=<número> node
   herramientas/diagnostico-pdf.js` saca otra versión, útil para aplicar dos
-  formas distintas en el mismo grupo. **Es material docente**: trae las
-  respuestas y la hoja de corrección, así que lleva marca de agua ("Ajedrez
-  Integral · uso docente", repetida en todas las páginas) y el enlace para
-  descargarlo solo aparece con perfil de profesor o de administración —en
-  `entreno/diagnostico.html` lo muestra `mostrarPdfSiEsDocente()` y en
-  `informes.html` vive dentro del bloque que solo ven ellos. Como todo en el
-  sitio, el filtro es del navegador: el archivo sigue estando en la raíz, así
-  que quien conozca la dirección exacta puede bajarlo igual (la marca de agua
-  es justamente para eso). Cerrar esa puerta del todo pediría servir el PDF
-  desde Supabase Storage con RLS.
+  formas distintas en el mismo grupo. **Trae las respuestas** y la hoja de
+  corrección, así que lleva marca de agua ("Ajedrez Integral · uso docente",
+  repetida en todas las páginas) y el enlace para descargarlo **solo aparece
+  para quien administra**.
+
+### Los tres PDF con las respuestas son SOLO de administración
+
+`diagnostico-de-nivel.pdf`, `libro-de-diagnostico.pdf` y
+`examen-de-arbitraje.pdf` traen las respuestas y la hoja de corrección. Antes se
+le ofrecían a todo el equipo docente; ahora solo a `is_admin`. La razón es
+simple: cuanta más gente los tenga bajados, más fácil es que terminen circulando
+y que las dos pruebas dejen de medir nada. Quien dé clase y los necesite se los
+pide a quien administra.
+
+Están enlazados en **cuatro** lugares y los cuatro comprueban `is_admin`:
+
+- `entreno/diagnostico.html` — `mostrarPdfSiEsAdmin()` destapa los dos y su nota;
+- `arbitraje.html` — el bloque `#banco-pdf`, que arranca oculto;
+- `informes.html` — dentro del texto de "todavía nadie ha hecho el diagnóstico",
+  detrás de un `profile.is_admin ?`. **Este es el que se escapa**: no es un
+  enlace escrito en el HTML, se arma con JavaScript dentro de un template, así
+  que buscar `href="…pdf"` a mano no lo encuentra.
+
+Como todo filtro del sitio, esto decide qué se **pinta**: los archivos siguen en
+la raíz y quien conozca la dirección los baja igual — para eso llevan marca de
+agua en todas las páginas y van sin permiso de copiar ni imprimir. Cerrar la
+puerta del todo pediría servirlos desde Supabase Storage con RLS.
+
+`verificar-admin.js` abre las páginas con las tres caras (alumna, profesora,
+administración) y **mira si el enlace se ve**, y además barre el sitio entero
+por si alguien vuelve a escribir uno suelto en otra página. Ese barrido fue el
+que encontró el de `informes.html`.
 
 ### El libro del banco
 
@@ -1818,9 +1840,22 @@ lista, y el resto se acomoda solo.
   grilla de cuatro columnas sería un cuadrito perdido a la izquierda, que es
   peor que no destacarlo.
 - **"Evaluaciones" es un grupo aparte de "Aprender"**: lo que MIDE el nivel de
-  quien lo hace no es lo mismo que lo que lo enseña. Ahí viven el diagnóstico de
-  jugadores y el de arbitraje (este último solo para el equipo docente, como
-  siempre), y ahí va a vivir "Exámenes" cuando exista.
+  quien lo hace no es lo mismo que lo que lo enseña. Ahí viven los dos
+  diagnósticos y ahí va a vivir "Exámenes" cuando exista.
+- **Los dos diagnósticos son para todo el mundo**, el de arbitraje incluido:
+  cualquiera puede medir su nivel de reglamento, no solo quien da clase. Lo que
+  cambia según quién mira es **a dónde lleva la tarjeta**, y es UNA sola tarjeta
+  (repetir el nombre en el panel ya salió mal una vez, con "Torneos"):
+  - equipo docente → `arbitraje.html`, que además trae la revisión de los
+    exámenes del público y el detalle pregunta por pregunta;
+  - todos los demás → `nivel-de-arbitraje.html`, el mismo examen y el mismo
+    criterio pero **sin enseñar las respuestas al terminar**. El banco es un
+    archivo estático y quien sepa mirar el código las ve igual; lo que se evita
+    es regalárselas en pantalla.
+  Esa página es la pública, así que pide nombre y correo — pero **se rellenan
+  solos cuando hay sesión**: a quien entra desde el panel el sitio ya se los
+  sabe, y hacerle escribir lo que ya escribió no tiene sentido. Lo que ya venía
+  escrito a mano no se toca.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
   promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
@@ -1900,7 +1935,31 @@ datos** y **Reportes**.
   resumen general, pero ahí hay que bajar a buscarlos, y son contactos para
   invitar a Academia — se consultan seguido.
 
-### Todas las cuentas: pensada para muchas
+### Las cuentas se ven por GRUPO, no todas de una
+
+Lo primero que muestra la página son **fichas de grupo**, no la lista de
+cuentas: con trescientas, una pared de filas con sus campos editables y sus
+etiquetas de profesor no se lee, y encontrar un grupo es hacer scroll. Cada
+ficha dice cuánta gente tiene, qué profesores la llevan (con cuántos alumnos de
+ese grupo tiene cada uno) y cuántos se quedaron sin profesor. Las cuentas
+aparecen solo al **abrir un grupo** o al **buscar a alguien**.
+
+- `grupoAbierto` es lo único que decide qué se ve: `null` son las fichas, y un
+  nombre de grupo son sus cuentas. Hay dos grupos que no son un `profiles.grupo`:
+  **Sin grupo** (alumnos a los que nadie se lo puso) y **Profesores y
+  administración** — el equipo docente no tiene grupo, y mezclarlo con los
+  sueltos lo escondía entre ellos.
+- **Buscar manda sobre el grupo abierto y mira TODOS los grupos.** Buscar a
+  alguien sin saber en qué grupo está es justamente para lo que se busca.
+- **Cada ficha puede sumarle un profesor a TODO su grupo de una vez.** Es la
+  operación de todos los años ("todo 7° B también al profesor nuevo") y antes
+  pedía marcar el grupo entero y bajar a la barra de lote. Va en modo
+  **`agregar`**, que suma y no reemplaza: quitarle sin querer un profesor a
+  cuatrocientos alumnos es el error caro de esta página. Manda **todos** los
+  alumnos del grupo, no los 50 que se estén pintando, y solo alumnos —a un
+  profesor no se le asigna profesor—.
+
+### La lista de cuentas, pensada para muchas
 
 - **El nombre se cortaba, y la causa era la maqueta**: nueve columnas dentro de
   un `max-w-5xl` (1024 px). Ahora la página es `max-w-7xl` y **nombre y correo
@@ -1929,7 +1988,11 @@ playwright). Las dos están detrás del login, así que `verificar-css.js` no la
 ve. Su Supabase de mentira trae **1.205 cuentas a propósito**: es el único
 número con el que se nota si la página se las pide de una sola vez. Y mide el
 ancho del campo del nombre con un nombre largo de verdad, que es con lo que
-empezó todo esto.
+empezó todo esto. Comprueba además que al entrar **no se pinte ni una fila** —si
+alguien vuelve a mostrarlas todas, la página se ve igual de bien hasta que hay
+trescientas— y qué manda de verdad la ficha a la Edge Function al sumarle un
+profesor a un grupo (los 401 ids y el modo `agregar`, no medio grupo ni un
+`reemplazar`).
 
 ## Las inscripciones a torneos en línea
 

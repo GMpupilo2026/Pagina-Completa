@@ -608,6 +608,30 @@ function mostrarResultado(detalle, resumen, porTiempo) {
 }
 
 $('tam-banco').textContent = BANCO.length;
+
+/* Esta página es la pública —se entra sin cuenta— pero también es a donde el
+ * panel de la Academia manda a quien no da clase. A esa persona el sitio ya le
+ * sabe el nombre y el correo, así que pedírselos otra vez es hacerle escribir
+ * lo que ya escribió. Se rellenan solos y se pueden cambiar; si no hay sesión
+ * —que es el caso de siempre acá— no cambia nada.
+ *
+ * El correo NO se toca si ya venía escrito: quien empezó a llenarlo a mano
+ * manda sobre lo que el sitio crea saber.
+ */
+async function rellenarSiHaySesion() {
+  try {
+    const { data } = await sb.auth.getSession();
+    const sesion = data && data.session;
+    if (!sesion) return;
+    const nombre = $('f-nombre'), correo = $('f-email');
+    if (!correo.value) correo.value = sesion.user.email || '';
+    if (!nombre.value) {
+      const { data: perfil } = await sb.from('profiles').select('full_name').eq('id', sesion.user.id).maybeSingle();
+      if (perfil && perfil.full_name) nombre.value = perfil.full_name;
+    }
+  } catch (e) { /* sin sesión o sin red se llena a mano, como siempre */ }
+}
+rellenarSiHaySesion();
     </script>
 </body>
 </html>
