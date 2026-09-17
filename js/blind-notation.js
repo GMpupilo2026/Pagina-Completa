@@ -20,7 +20,18 @@ window.BlindNotation = (function () {
     e: 'eva', f: 'felix', g: 'gustav', h: 'hector',
   };
   const PIECE_LABEL = { k: 'rey', q: 'dama', r: 'torre', b: 'alfil', n: 'caballo', p: 'peón' };
+  /* El plural va escrito, no calculado. Sumarle una "s" al nombre da "alfils" y
+     "peóns", y ponerle "es" a secas da "peónes": las tres las dice el lector de
+     pantalla tal cual, y quien escucha la posición oye una palabra que no
+     existe. Es el único lugar del sitio donde se escriben estos plurales. */
+  const PIECE_PLURAL = { k: 'reyes', q: 'damas', r: 'torres', b: 'alfiles', n: 'caballos', p: 'peones' };
   const PIECE_ORDER = ['k', 'q', 'r', 'b', 'n', 'p'];
+
+  // 'b', 1 -> "alfil"   ·   'b', 2 -> "alfiles"
+  function pieceLabel(type, count) {
+    const t = String(type || '').toLowerCase();
+    return (count > 1 ? PIECE_PLURAL[t] : PIECE_LABEL[t]) || t;
+  }
   const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
   function fileName(file) {
@@ -234,7 +245,8 @@ window.BlindNotation = (function () {
   }
 
   return {
-    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, FILE_NAMES, PIECE_LABEL, PIECE_ORDER,
+    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, pieceLabel,
+    FILE_NAMES, PIECE_LABEL, PIECE_PLURAL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
     getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,
   };

@@ -150,6 +150,79 @@ posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
 
+### Los cursos, recorridos con lector de pantalla
+
+`js/curso-adaptado.js` retoca el fragmento del curso después de que
+`curso-academia.js` lo inyecta (se engancha al evento `curso:contenido`). Hace
+tres cosas, y **una de ellas no depende del Modo Adaptado a propósito**.
+
+**1. Los encabezados, SIEMPRE.** El curso no se podía recorrer: el título de cada
+lección era un `<summary>` —que se anuncia como botón, no como encabezado— y los
+títulos de bloque eran `<h4>` colgando de un `<h2>`, saltándose el h3. Quien usa
+lector de pantalla se mueve saltando de encabezado en encabezado, así que para
+llegar a la lección 14 había que tabular por las trece anteriores con todos sus
+enlaces de material. El remapeo encaja con lo que ya estaba escrito:
+
+    h2 "Tus lecciones"  →  h3 Bloque  →  h4 Lección  →  h5 secciones
+
+Los `h5` de dentro de las lecciones ya venían así, o sea que solo hubo que bajar
+el bloque y subir la lección. **Va siempre y no solo en Modo Adaptado**: ese modo
+se enciende a mano o se adivina (por el contraste del sistema o por el primer
+Tab), así que puede estar apagado para alguien que usa lector de pantalla — la
+accesibilidad de verdad es de la semántica, no de un modo visual, como dice la
+cabecera de `js/adaptive-mode.js`. Y a quien ve la página no le cambia nada: el
+encabezado va `inline` dentro del summary, con su mismo estilo.
+
+- El encabezado va **dentro** del `<summary>` (el HTML lo permite): así se
+  anuncia como las dos cosas, encabezado para saltar y botón para abrir.
+- La marca de ✔/🔒 que pone `curso-academia.js` queda **fuera** del encabezado,
+  así que saltando de encabezado en encabezado se oye el título limpio. El
+  `aria-label` que explica por qué está bloqueada sigue en el summary.
+
+**2. Solo el material adaptado, en Modo Adaptado.** Cada lección ofrece el
+cuadernillo en PDF, el mismo material en HTML accesible, la presentación y la
+hoja de ejercicios. El PDF y la presentación son diagramas con marca de agua —
+para un lector de pantalla son lo peor que se le puede dar, que es justamente
+por lo que existe la versión accesible. Se esconden. **El video se queda**: un
+video es audio, y eso sí se oye. Y va un aviso arriba explicando qué falta y por
+qué: si no, parecería que a las lecciones les faltan cosas.
+
+**3. La posición escrita, junto al cuadro de comandos.** Los tres visores
+(`finales-100.js`, `curso-partidas.js`) ya contaban la posición en palabras y ya
+dejaban escribir la jugada en vez de arrastrarla — pero lo contado vivía en un
+párrafo `sr-only` al final del visor, lejísimos del cuadro donde se escribe. Ese
+párrafo se mueve justo encima del cuadro y, en Modo Adaptado, se hace visible:
+leer la posición y contestarla son el mismo gesto. Sigue siendo región viva
+(`aria-live`), así que cada jugada se vuelve a leer.
+
+**Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
+no el JavaScript: así encender y apagar el modo surte efecto al instante, sin
+volver a recorrer el contenido del curso.
+
+#### "alfils" y "peónes" no son palabras
+
+El plural de las piezas se calculaba sumando una letra —`alfil`+`s`,
+`peón`+`es`— y el lector de pantalla las decía tal cual. Estuvo así en **61
+materiales accesibles y en el libro del diagnóstico**, o sea justo en lo único
+que esas personas pueden leer, y nunca dio un error: solo se oía mal.
+
+Ahora el plural va **escrito**, en dos tablas que son la misma: `PIECE_PLURAL` de
+`js/blind-notation.js` (el navegador, vía `BlindNotation.pieceLabel()`) y
+`PLURAL_PIEZA` de `herramientas/lib/describir-fen.js` (los generadores). Los
+archivos que ya estaban generados se corrigieron con las dos únicas palabras que
+salían mal; las otras cuatro (damas, torres, caballos, reyes) ya salían bien.
+
+**Al tocar los cursos de Academia, `curso-adaptado.js` o los visores, correr
+`node herramientas/verificar-curso-adaptado.js`** (con el sitio en
+localhost:8777, playwright y `npm install chess.js@0.10.3`). Los cursos están
+detrás del login, así que `verificar-css.js` no ve nada de esto. Comprueba el
+árbol de encabezados (un solo h1, ningún nivel saltado, una lección = un
+encabezado, y que el summary siga abriendo), qué material se ofrece en cada modo,
+que la posición escrita esté pegada al cuadro de comandos y **se vea de verdad**
+en Modo Adaptado (se mide el `position` que calcula el navegador, no la clase), y
+que no quede ningún plural inventado ni en los generadores ni en los archivos ya
+generados.
+
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno

@@ -10,6 +10,13 @@
  * es la misma razón por la que lib/tablero-svg.js está acá y no duplicado.
  */
 const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
+/* El plural va escrito, no calculado. Sumarle una "s" da "alfils" y ponerle
+   "es" a secas da "peónes": las dos las dice el lector de pantalla tal cual, y
+   quien escucha la posición oye una palabra que no existe. Estuvo así en 61
+   materiales accesibles y en el libro del diagnóstico — justo en lo único que
+   esas personas pueden leer. La misma tabla vive en js/blind-notation.js, que
+   es la del navegador. */
+const PLURAL_PIEZA = { k: "reyes", q: "damas", r: "torres", b: "alfiles", n: "caballos", p: "peones" };
 const ORDEN = ["k", "q", "r", "b", "n", "p"];
 
 /* @returns { blancas, negras, turno } — cada lado ya escrito como texto corrido. */
@@ -29,11 +36,11 @@ function describir(fen) {
   });
   const lado = (mapa) => ORDEN.filter((t) => mapa[t]).map((t) => {
     const cs = mapa[t].sort();
-    const nombre = NOMBRE_PIEZA[t] + (cs.length > 1 ? (t === "p" ? "es" : "s") : "");
+    const nombre = cs.length > 1 ? PLURAL_PIEZA[t] : NOMBRE_PIEZA[t];
     return nombre + " en " + cs.join(", ");
   }).join("; ");
   const turno = fen.split(" ")[1] === "b" ? "Juegan las negras." : "Juegan las blancas.";
   return { blancas: lado(blancas), negras: lado(negras), turno };
 }
 
-module.exports = { describir, NOMBRE_PIEZA };
+module.exports = { describir, NOMBRE_PIEZA, PLURAL_PIEZA };
