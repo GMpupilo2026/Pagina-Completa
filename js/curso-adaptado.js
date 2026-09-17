@@ -31,8 +31,9 @@
  *    cuadernillo en PDF, el mismo material en HTML accesible, la presentación y
  *    la hoja de ejercicios. El PDF y la presentación son diagramas y marca de
  *    agua: para un lector de pantalla son lo peor que se le puede dar (por eso
- *    existe la versión accesible). Se esconden; el video se queda, porque un
- *    video es audio y eso sí se oye.
+ *    existe la versión accesible). Se esconden. (Las lecciones traían además un
+ *    enlace a un video, que se dejaba porque un video es audio; ya no hay
+ *    ninguno en los cursos, así que no hay nada que decidir sobre ellos.)
  *
  * 3. LA POSICIÓN, ESCRITA Y JUNTO AL CUADRO DE COMANDOS. Los tres visores
  *    (js/finales-100.js y js/curso-partidas.js) ya cuentan la posición en

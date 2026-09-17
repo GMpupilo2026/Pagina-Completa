@@ -304,6 +304,23 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
 </body></html>`;
 }
 
+// El camino de vuelta. El material se abre en su propia pestaña desde la
+// lección, así que sin esto queda en un callejón sin salida: no hay encabezado
+// del sitio, no hay menú y el "atrás" del navegador es lo único que queda.
+// Las direcciones son relativas a cursos/recursos/<curso>/, que es donde vive
+// este archivo.
+function volverA(curso, etiqueta) {
+  // Arriba es una región de navegación con su nombre; abajo, el mismo par de
+  // enlaces dentro del pie, ya como párrafo. Dos <nav> con el mismo nombre se
+  // anuncian como dos regiones iguales y no se sabe cuál es cuál.
+  const enlaces = `<a href="../../academia/${escapar(curso.slug)}.html">← Volver al curso ${escapar(curso.titulo)}</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>`;
+  return etiqueta
+    ? `<nav class="volver" aria-label="${escapar(etiqueta)}">\n  ${enlaces}\n</nav>`
+    : `<p class="volver">\n  ${enlaces}\n</p>`;
+}
+
 // ------------------------------------------------------- la versión accesible
 function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   const cuerpo = textoDe(leccion, partida);
@@ -339,6 +356,14 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
   .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
   footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
   @media (prefers-color-scheme: dark) {
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
@@ -349,6 +374,7 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
 </style>
 </head>
 <body>
+${volverA(curso, "Volver a la plataforma")}
 <header>
   <p>${escapar(curso.titulo)} · Lección ${leccion.n}</p>
   <h1>${escapar(leccion.titulo)}</h1>
@@ -414,6 +440,7 @@ ${lecturas.map((l) => `  <li>${escapar(l)}</li>`).join("\n")}
 <footer>
   <p>© ${ANIO} ${escapar(AUTOR)} · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
   <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+${volverA(curso)}
 </footer>
 </body>
 </html>`;
