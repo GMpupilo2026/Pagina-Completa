@@ -549,30 +549,56 @@ function prepararComandos(esOpcion) {
     });
   }
   comandos.limpiar().decir('');
+  // Al responder por el cuadro se pasa solo a la siguiente, así que hay que
+  // decir de antemano qué va a hacer ese Enter — y sobre todo cuando es el que
+  // termina la prueba.
+  const queHace = esUltima()
+    ? ' Es la última: al responder se termina la prueba y se muestra el resultado.'
+    : ' Al responder se pasa sola a la siguiente.';
   if (esOpcion) {
     const cuantas = itemActual.opciones.length;
     comandos.etiqueta('Escribe la letra de la opción');
     comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(cuantas - 1)}. `
-      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".');
+      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".' + queHace);
     // En los ítems de opción CON tablero la posición también hace falta: la
     // pregunta habla de una posición que no se puede ver.
     comandos.posicion(itemActual.fen ? new Chess(itemActual.fen) : '');
   } else if (itemActual.tipo === 'casilla') {
     comandos.etiqueta('Escribe la casilla');
-    comandos.ayuda('Por ejemplo "e4" o "eva 4", como se leen las columnas. También vale "no lo sé".');
+    comandos.ayuda('Por ejemplo "e4" o "eva 4", como se leen las columnas. También vale "no lo sé".' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   } else {
     comandos.etiqueta('Escribe tu jugada');
-    comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".');
+    comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".' + queHace);
     comandos.posicion(new Chess(itemActual.fen));
   }
+}
+
+function esUltima() { return estado.idx === ITEMS.length - 1; }
+
+/* Contestar por el cuadro PASA SOLA a la siguiente pregunta: quien contesta
+   escribiendo no tiene por qué ir a buscar el botón "Siguiente", que es
+   justamente lo que este cuadro viene a evitar.
+ *
+ * Y por eso el aviso lleva el enunciado de la pregunta nueva: al no pasar por
+ * el botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+ * contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+ * que se lee solo. Los botones de opción NO avanzan: ahí se ve la pantalla y
+ * poder cambiar de idea antes de seguir es lo normal. */
+function avanzarEscribiendo(resumen) {
+  const ultima = esUltima();
+  siguiente();
+  if (ultima) return;   // la prueba terminó: ya no hay cuadro que llenar
+  comandos.decir(`${resumen} Pregunta ${estado.idx + 1} de ${ITEMS.length}: ${itemActual.enunciado}`);
+  comandos.enfocar();
 }
 
 function responderEscribiendo(texto, api) {
   if (CuadroComandos.esNoSe(texto)) {
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.click();
-    api.limpiar().decir('Anotado: no lo sabías.');
+    api.limpiar();
+    avanzarEscribiendo('Anotado: no lo sabías.');
     return;
   }
   if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
@@ -581,8 +607,10 @@ function responderEscribiendo(texto, api) {
       api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
       return;
     }
+    const dicho = `Anotado: opción ${CuadroComandos.letra(i)}, ${itemActual.opciones[ordenOpciones[i]]}.`;
     elegirOpcion(i);
-    api.limpiar().decir(`Elegiste la opción ${CuadroComandos.letra(i)}: ${itemActual.opciones[ordenOpciones[i]]}. Puedes cambiarla o seguir.`);
+    api.limpiar();
+    avanzarEscribiendo(dicho);
     return;
   }
   if (itemActual.tipo === 'casilla') {
@@ -592,9 +620,10 @@ function responderEscribiendo(texto, api) {
     pintarTablero(new Chess(itemActual.fen), [sq]);
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.className = claseNoSe(false);
-    document.getElementById('q-hint').textContent = `Elegiste ${sq}. Puedes cambiarla o seguir.`;
+    document.getElementById('q-hint').textContent = `Elegiste ${sq}.`;
     document.getElementById('next-btn').disabled = false;
-    api.limpiar().decir(`Elegiste ${sq}. Puedes cambiarla o seguir.`);
+    api.limpiar();
+    avanzarEscribiendo(`Anotado: ${sq}.`);
     return;
   }
   if (itemActual.tipo === 'jugada') {
@@ -609,10 +638,10 @@ function responderEscribiendo(texto, api) {
     pintarTablero(juego, [mv.from, mv.to]);
     const noSe = document.getElementById('no-se-btn');
     if (noSe) noSe.className = claseNoSe(false);
-    const dicho = `Jugaste ${mv.san}: esa es tu respuesta y no hace falta jugar más. Puedes cambiarla o seguir.`;
-    document.getElementById('q-hint').textContent = dicho;
+    document.getElementById('q-hint').textContent = `Jugaste ${mv.san}: esa es tu respuesta y no hace falta jugar más.`;
     document.getElementById('next-btn').disabled = false;
-    api.limpiar().decir(dicho);
+    api.limpiar();
+    avanzarEscribiendo(`Anotado: ${mv.san}.`);
   }
 }
 
