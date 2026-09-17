@@ -95,8 +95,10 @@ window.BlindNotation = (function () {
   //   ...
   //   <h3>Negras</h3>
   //   ...
-  function groupedReadoutHTML(game, opts) {
-    opts = opts || {};
+  // Las piezas del tablero agrupadas por color y por tipo, con sus casillas
+  // ordenadas. Lo usan las dos lecturas de abajo: una copia por lectura se
+  // habría ido separando de la otra a la primera corrección.
+  function groupPieces(game) {
     const byColor = { w: {}, b: {} };
     FILES.forEach(function (file) {
       for (let rank = 1; rank <= 8; rank++) {
@@ -107,6 +109,12 @@ window.BlindNotation = (function () {
         byColor[piece.color][piece.type].push(square);
       }
     });
+    return byColor;
+  }
+
+  function groupedReadoutHTML(game, opts) {
+    opts = opts || {};
+    const byColor = groupPieces(game);
 
     let html = '';
     if (opts.includeTurn !== false) {
@@ -133,6 +141,32 @@ window.BlindNotation = (function () {
         : '<p>Sin piezas ' + (color === 'w' ? 'blancas' : 'negras') + ' en el tablero.</p>';
     });
     return html;
+  }
+
+  // La MISMA lectura, pero en una frase y sin ningún encabezado:
+  //   "Blancas: rey en eva 1, torre en anna 1. Negras: rey en gustav 8. Juegan blancas."
+  // groupedReadoutHTML() mete un <h2> "Piezas" y un <h3> por color, que sirven
+  // cuando la lectura es lo único que hay en esa zona de la página (Mates,
+  // Aprender, Desafíos, Practicar) pero rompen el árbol de encabezados de una
+  // página que ya tiene el suyo — el diagnóstico, con su <h2> por pregunta, o
+  // los ejercicios por tema. Ahí va esta.
+  function positionSentence(game, opts) {
+    opts = opts || {};
+    const byColor = groupPieces(game);
+    const out = [];
+    [['w', 'Blancas'], ['b', 'Negras']].forEach(function (par) {
+      const partes = [];
+      PIECE_ORDER.forEach(function (type) {
+        const squares = byColor[par[0]][type];
+        if (!squares || !squares.length) return;
+        partes.push(pieceLabel(type, squares.length) + ' en ' +
+          squares.slice().sort().map(squareSpoken).join(', '));
+      });
+      out.push(par[1] + ': ' + (partes.join('; ') || 'sin piezas') + '.');
+    });
+    if (opts.includeTurn === false) return out.join(' ');
+    const jaque = typeof game.in_check === 'function' && game.in_check() ? ', en jaque' : '';
+    return out.join(' ') + (game.turn() === 'w' ? ' Juegan blancas' : ' Juegan negras') + jaque + '.';
   }
 
   // ===== Modo Speech: leer los anuncios en voz alta con el propio navegador =====
@@ -245,7 +279,7 @@ window.BlindNotation = (function () {
   }
 
   return {
-    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, pieceLabel,
+    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, positionSentence, pieceLabel,
     FILE_NAMES, PIECE_LABEL, PIECE_PLURAL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
     getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,

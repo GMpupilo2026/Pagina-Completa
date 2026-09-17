@@ -2496,6 +2496,87 @@ alto contraste y los encabezados que permiten saltar directo al contenido.
   el estado. El menú móvil además cierra con Escape y devuelve el foco al botón
   —si no, el foco se queda dentro de algo que ya no está en pantalla—.
 
+### El cuadro de comandos: todo ejercicio se puede contestar escribiendo
+
+**Un ejercicio que solo se puede contestar tocando el tablero no se puede
+contestar con lector de pantalla, y eso no da ningún error**: la página carga,
+el ejercicio se pinta, y quien no puede verlo simplemente no avanza. Pasaba en
+el diagnóstico (los ítems de jugada y de casilla), en Ejercicios por tema, en
+Racha táctica y en ¡Te reto! — estas dos últimas ni siquiera cargaban
+`js/adaptive-mode.js`, o sea que no tenían Modo Adaptado en absoluto.
+
+`js/cuadro-comandos.js` es el recuadro donde se escribe la respuesta —una
+jugada, una casilla, la letra de una opción o "no lo sé"— y la página la recibe
+igual que si se hubiera hecho clic. Ya estaba escrito tres veces (el
+`#blind-panel` de Mates, Aprender, Desafíos y Practicar; el `#cmd-form` de 4×4;
+la `.f100-cmd` de los visores de los cursos); este archivo es para las páginas
+que no lo tenían y para que la siguiente no lo escriba por cuarta vez.
+
+- **No reemplaza al tablero, se suma.** En Mates y sus hermanas el Modo Adaptado
+  esconde el tablero y deja solo el recuadro; acá conviven. Quien ve poco usa las
+  dos cosas —mira el tablero ampliado y escribe la jugada, porque arrastrar una
+  pieza de 40 px con lupa es un suplicio— y quien acompaña a un alumno necesita
+  ver qué está contestando.
+- **Lo que decide si se ve es el CSS** (`html.adaptive-mode`), no el JavaScript:
+  así encender y apagar el modo surte efecto al instante, sin repintar el
+  ejercicio. El recuadro se monta SIEMPRE y el modo solo lo destapa. Fuera del
+  modo va con `display: none` y **no** con `sr-only`: un campo de texto invisible
+  pero enfocable es una parada de tabulador fantasma para quien ve la página.
+- **La posición va contada en palabras JUSTO ENCIMA del cuadro**, no al final del
+  ejercicio: leerla y contestarla son el mismo gesto (la misma decisión que en
+  `js/curso-adaptado.js`). Es región viva, así que cada jugada se vuelve a leer.
+- **El texto de la posición sale de `BlindNotation.positionSentence()`**, hermana
+  de `groupedReadoutHTML()` y con el mismo agrupado por dentro. La diferencia es
+  que no lleva encabezados: `groupedReadoutHTML()` mete un `<h2>` "Piezas" y un
+  `<h3>` por color, que sirven donde la lectura es lo único que hay en esa zona
+  (Mates, Aprender, Desafíos, Practicar) pero rompen el árbol de encabezados de
+  una página que ya tiene el suyo. El cuadro **no tiene su propia tabla de
+  nombres de pieza**: sería la cuarta copia de los plurales escritos, y se irían
+  separando.
+- **La jugada escrita la interpreta `js/chess-move-parser.js`**, que ya usaban
+  los visores de los cursos y las páginas de Juegos: entiende español, inglés y
+  los descuidos de tipeo de siempre. Ojo — ese intérprete HACE la jugada sobre la
+  partida que se le pasa, así que se le pasa siempre una copia y la jugada
+  entra por la misma puerta que el clic (`playMove`, `attemptMove`), que es la
+  que corrige contra la solución.
+- **La casilla también se escribe como se dice**: "eva 4" llega a e4, porque así
+  es como el sitio lee las columnas en voz alta. Escribir lo que uno acaba de oír
+  tiene que funcionar.
+
+#### En los ejercicios de opción, cada opción dice su letra
+
+"Opción A. …", "Opción B. …", y se contesta escribiendo la letra. Vale en el
+diagnóstico de nivel y en los dos exámenes de arbitraje (el docente y el
+público).
+
+- **La letra va ESCRITA dentro del botón**, no puesta con CSS (un `::before`, un
+  contador de lista). Con CSS se vería igual en pantalla y el lector de pantalla
+  no la diría: quien contesta por el cuadro no sabría qué letra escribir. Por eso
+  está siempre, también fuera del Modo Adaptado — es texto del botón, no del modo.
+- **Lo que se guarda es cuál opción del ítem es, no su posición.** Las opciones se
+  barajan en cada intento; guardar la posición ataría la respuesta al barajado.
+- **Lo que no se entiende se dice, no se marca cualquier cosa.** "La de arriba"
+  responde "no entendí", no la primera.
+- **"No lo sé" y "dejar en blanco" también se escriben**: son respuestas de
+  verdad —valen cero como fallar pero se guardan aparte—, no un botón de saltar.
+
+`concentracion.html` e `ilumina-tablero.html` **no llevan cuadro**, y no es un
+olvido: ahí la tarea ES mirar (recordar dónde estaban las piezas, encontrar la
+casilla iluminada). Un recuadro para escribir no las haría accesibles, solo
+daría la impresión de que lo son.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-cuadro-comandos.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Contesta de verdad, escribiendo, en
+las seis páginas, y **todo lo que mira sale de la pantalla** —qué dice el botón,
+qué dice la etiqueta del cuadro, qué piezas hay dibujadas en el tablero—, nunca
+de una variable interna: una prueba que espiara las variables daría verde sobre
+una página que no se puede contestar. Comprueba además que el cuadro **se vea de
+verdad** (se mide el `display` que calcula el navegador, no la clase) y que fuera
+del modo no esté. Las preguntas que se contestan con una casilla son 2 de las 301
+del banco, así que esa prueba **siembra el estado guardado** con esos dos ítems en
+vez de confiar en el sorteo: dejarlo al azar es dejar ese camino sin probar.
+
 ## Cómo se escribe en el sitio
 
 El español del sitio es el de acá: latinoamericano, costarricense. Se tutea
