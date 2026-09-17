@@ -34,11 +34,17 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   con el dominio y la dirección arreglados. Encadenar dos redirecciones —una
   para el dominio y otra para la dirección— es el error natural si cada arreglo
   devuelve lo suyo, y le cuesta un viaje de más a quien entra.
-- Lo único que hay que hacer **fuera del repositorio** es que el nombre exista:
-  en Cloudflare, el Worker tiene que tener `www.ajedrez-integral.com` entre sus
-  dominios (Workers → el worker → Domains & Routes → Add custom domain), que de
-  paso crea el registro de DNS y emite el certificado. Sin eso, el worker nunca
-  llega a ver esas peticiones.
+- Lo único que hay que hacer **fuera del repositorio** es que el nombre
+  exista. En Cloudflare son dos cosas, en este orden: un **CNAME `www` →
+  `ajedrez-integral.com` con el proxy encendido** (la nube naranja; en "Solo
+  DNS" el tráfico no pasa por Cloudflare y el worker nunca ve la petición) y
+  una **ruta `www.ajedrez-integral.com/*`** apuntando al worker. La ruta
+  necesita que el nombre ya exista en el DNS, por eso ese orden.
+  El camino corto es "Añadir dominio" en la pestaña Dominios del worker, que
+  hace las dos cosas de una; pero acá ese diálogo respondía "ninguna zona
+  coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
+  cuenta, así que queda escrito el de dos pasos, que no depende de esa
+  búsqueda.
 - **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
   necesita ni Cloudflare ni internet: el worker es una función que recibe una
   petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
@@ -47,6 +53,41 @@ dominio sin `www`, así que servir las dos direcciones sería contenido duplicad
   coma lo que va después del dominio manda a la portada a quien venía a un
   curso, y de eso no se entera nadie salvo quien se quedó mirando la página que
   no era.
+
+### El correo del dominio
+
+El dominio **manda y recibe por caminos distintos**, y conviven porque viven en
+nombres distintos. Confundirlos es lo único que puede romper esto:
+
+- **Sale** por Resend, con sus registros en **`send.ajedrez-integral.com`** (el
+  MX y el SPF) y la firma en `resend._domainkey`. Es por donde salen los
+  informes a la casa y los avisos de cobro.
+- **Entra** por Cloudflare Email Routing, con sus tres MX, su SPF y su DKIM
+  (`cf2024-1._domainkey`) en el **dominio raíz**. No es un buzón: reenvía a una
+  cuenta de correo de siempre.
+
+**No se borran los registros de `send.` ni el `resend._domainkey`.** Sin ellos
+el sitio deja de mandar los informes y los avisos, y —como casi todo lo de
+correo— no da ningún error: simplemente dejan de llegar.
+
+- **`informes@` es la dirección que más importa.** El sitio manda desde ahí a
+  las familias, o sea que es correo que invita a contestar. Antes de esto el
+  raíz no tenía ningún MX: la respuesta de una madre rebotaba y no se enteraba
+  nadie, ni ella ni quien daba la clase.
+- **El catch-all va en "Enviar a un correo", no en "Descartar".** "Descartar"
+  no rechaza: acepta el correo y lo tira, así que quien escribió mal la
+  dirección se queda convencido de que llegó. Es la misma clase de falla
+  callada contra la que están escritas media docena de decisiones de este
+  archivo.
+- **Un solo SPF por nombre.** Si algún día manda otro servicio desde
+  `@ajedrez-integral.com`, su `include:` va DENTRO del TXT que ya está, nunca
+  en un segundo registro: con dos, los dos se invalidan y el correo empieza a
+  caer en spam sin avisar.
+- El reenvío solo trae correo. Para **responder** desde una dirección del
+  dominio hace falta además un SMTP —Gmail → "Enviar como", con
+  `smtp.resend.com` y una API key de Resend—, y eso es de cada persona, no del
+  sitio.
+
 
 ## Cursos
 
