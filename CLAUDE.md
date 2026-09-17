@@ -2581,6 +2581,70 @@ arbitraje.
   lo aprieten ("Es la última: al responder se termina…"). Es el mismo acto que
   el botón de "Terminar y ver el resultado", pero conviene saberlo de antemano.
 
+#### En los 4×4, el orden es lo que hace usable el ejercicio
+
+`entreno/4x4.html` tiene su propio recuadro de comandos, más viejo que
+`js/cuadro-comandos.js`, y su propio interruptor de modo. Lo que se arregló ahí no
+fue el recuadro sino **el orden en que se ofrecen las cosas**, que ahora es el orden
+en que hacen falta:
+
+    Piezas → qué hay en el tablero → el tablero → dónde se contesta → los botones
+    → la ayuda, PLEGADA
+
+- **La lectura de la posición subió a la primera línea**, justo debajo del
+  encabezado "Piezas" donde cae el foco al entrar. Vivía dentro del panel de
+  comandos, o sea DESPUÉS del tablero, del recuadro y de toda la ayuda: había que
+  recorrer medio ejercicio para enterarse de qué había que resolver. La región se
+  llama con ese mismo encabezado (`aria-labelledby`) y no con un nombre propio:
+  "Piezas" y "Posición actual" se oyen como dos cosas distintas.
+- **El tablero ya no recita el manual en cada foco.** Su `aria-describedby`
+  apuntaba a un párrafo de diez líneas con las reglas enteras, que se leía cada vez
+  que el foco entraba ahí — el mismo defecto que esta página ya había arreglado
+  para el recuadro de comandos. Ahora apunta a UNA línea que señala dónde está la
+  ayuda, en vez de recitarla.
+- **La ayuda vive en un `<details>` plegado**, con el encabezado dentro del
+  `<summary>` (el HTML lo permite): se anuncia como encabezado para saltar y como
+  botón para abrir. El cuerpo lo escribe `renderHelpReadout()` desde
+  `HELP_SECTIONS`, **que es la única fuente**: lo mismo estaba escrito tres veces
+  —el párrafo del `aria-describedby`, el de atajos y `HELP_SECTIONS`— y tres copias
+  del mismo texto se van separando a la primera corrección. Se escribe al cargar
+  aunque esté plegada, o abrirla a mano mostraría una caja vacía; el comando
+  "ayuda" la abre y la vuelve a leer.
+  - Cuidado con dónde se llama `renderHelpReadout()`: `HELP_SECTIONS` es un
+    `const` declarado 600 líneas más abajo, así que llamarla junto a
+    `applyBlindModeUI()` tiraba la página entera con "Cannot access before
+    initialization" — y la página se quedaba en "Comprobando tu sesión…".
+- **La primera vez ya no se lee el manual entero.** Se decía una sola vez por
+  navegador, pero eran cuatro secciones justo cuando lo que se quiere es empezar.
+  Ahora es una línea: dónde se contesta y que "ayuda" abre el resto.
+- **La posición se dice UNA vez.** El anuncio del ejercicio y el de cada captura
+  llevaban la posición completa, y la lectura de arriba también: son dos regiones
+  vivas, así que se oía dos veces seguidas. Ahora el anuncio se queda con el
+  ejercicio o con la captura, y la posición la lleva la lectura.
+- **Pero la VOZ no se reparte igual que las regiones**, y eso es lo que tiene
+  trampa: `BlindNotation.speak()` **cancela lo anterior** al empezar lo siguiente,
+  así que dos llamadas seguidas se comen la primera. Por eso `announce(texto,
+  hablado)` lleva dos versiones — las regiones se reparten el texto y la voz lo
+  recibe todo junto en una sola frase. Lo mismo obligó a que `loadPuzzleAt()` acepte
+  un `prefijo`: al reiniciar se decía "Ejercicio reiniciado." DESPUÉS de cargar, y
+  eso cancelaba la posición entera — se oía el aviso y nunca qué había quedado en el
+  tablero, que es justo lo que hace falta para volver a empezar. `verificar-cuadro-
+  comandos.js` lo comprueba enganchándose a `BlindNotation.speak()`, que es la única
+  forma: la voz no deja rastro en el DOM.
+- Fuera del Modo Adaptado no se ve nada de esto: quien ve el tablero ya tiene la
+  posición delante. Va con `hidden` y **no** con `sr-only`, porque el `<details>`
+  recibe el foco del teclado y una parada de tabulador invisible es peor que no
+  tener el bloque.
+
+`verificar-cuadro-comandos.js` comprueba el orden con
+`compareDocumentPosition` —no con el CSS—, que la lectura diga cuántas piezas hay y
+dónde está cada una, que la ayuda arranque plegada **también la primera vez**, que
+el comando "ayuda" la abra, y que escribir una captura la haga y la lectura lo
+refleje. Para "no se ve" usa `checkVisibility()` y no el rectángulo: un `<details>`
+cerrado esconde su contenido con `content-visibility`, y ahí
+`getBoundingClientRect()` sigue devolviendo el alto de antes — daría verde sobre una
+ayuda desplegada.
+
 `concentracion.html` e `ilumina-tablero.html` **no llevan cuadro**, y no es un
 olvido: ahí la tarea ES mirar (recordar dónde estaban las piezas, encontrar la
 casilla iluminada). Un recuadro para escribir no las haría accesibles, solo
@@ -2589,7 +2653,7 @@ daría la impresión de que lo son.
 **Al tocar cualquiera de estas piezas, correr `node
 herramientas/verificar-cuadro-comandos.js`** (con el sitio en localhost:8777,
 playwright y `npm install chess.js@0.10.3`). Contesta de verdad, escribiendo, en
-las seis páginas, y **todo lo que mira sale de la pantalla** —qué dice el botón,
+las siete páginas, y **todo lo que mira sale de la pantalla** —qué dice el botón,
 qué dice la etiqueta del cuadro, qué piezas hay dibujadas en el tablero—, nunca
 de una variable interna: una prueba que espiara las variables daría verde sobre
 una página que no se puede contestar. Comprueba además que el cuadro **se vea de
