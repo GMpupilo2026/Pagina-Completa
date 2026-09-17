@@ -248,14 +248,18 @@
         });
 
         function attemptMove(from, to) {
-            // Se compara ANTES de aplicar la jugada: el UCI de la solución es siempre
-            // "origen+destino" (+ promoción, en los 2 puzzles que coronan) — alcanza con
-            // los primeros 4 caracteres porque el tablero solo permite mover una pieza
-            // legal de esa casilla a esa otra, así que no hay ambigüedad posible.
-            const isCorrect = (from + to) === currentSolution.slice(0, 4);
             const move = game.move({ from, to, promotion: "q" });
             selected = null;
             if (!move) { renderBoard(); return; } // no debería pasar: ya se validó como legal
+            // El UCI de la solución es siempre "origen+destino" (+ promoción, en los 2
+            // puzzles que coronan) — alcanza con los primeros 4 caracteres porque el
+            // tablero solo permite mover una pieza legal de esa casilla a esa otra.
+            // Además, en los puzzles de mate hay unas 140 posiciones con más de una
+            // jugada que da jaque mate: si el ejercicio es un mate y la jugada elegida
+            // también da mate (aunque no sea la guardada), también cuenta como acierto.
+            const esLaJugadaGuardada = (from + to) === currentSolution.slice(0, 4);
+            const esOtroMateValido = !esLaJugadaGuardada && currentSan.endsWith("#") && game.in_checkmate();
+            const isCorrect = esLaJugadaGuardada || esOtroMateValido;
             if (isCorrect) onCorrect(); else onFail("wrong");
         }
 
