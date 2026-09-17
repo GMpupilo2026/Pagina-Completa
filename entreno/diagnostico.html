@@ -144,8 +144,12 @@
                          Es material docente —trae las respuestas—, así que solo se ofrece a
                          profesores y a quien administra: init() lo muestra si el perfil lo es. -->
                     <a href="../diagnostico-de-nivel.pdf" id="pdf-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
+                    <!-- El banco ENTERO, tipo libro (herramientas/diagnostico-libro.js). No es
+                         lo mismo que el de al lado: aquel es UNA prueba para que el alumno la
+                         conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
+                    <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes: el cuadernillo trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla de niveles, y va con marca de agua. No se le entrega al alumno.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes, los dos con marca de agua y sin entregar al alumno. El <strong>cuadernillo</strong> es una prueba de 56 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —118 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -872,6 +876,7 @@ async function mostrarPdfSiEsDocente(userId) {
     const { data } = await sb.from('profiles').select('role, is_admin').eq('id', userId).maybeSingle();
     if (!data || !(data.role === 'profesor' || data.is_admin === true)) return;
     document.getElementById('pdf-docente').classList.remove('hidden');
+    document.getElementById('libro-docente').classList.remove('hidden');
     document.getElementById('pdf-docente-nota').classList.remove('hidden');
   } catch (e) { /* si no se puede saber, no se muestra */ }
 }

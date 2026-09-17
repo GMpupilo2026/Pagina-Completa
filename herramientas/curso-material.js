@@ -152,31 +152,8 @@ function posicionesDe(leccion, todas, prestadas) {
 }
 
 // ------------------------------------------------ describir una FEN en palabras
-const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
-const ORDEN = ["k", "q", "r", "b", "n", "p"];
-
-function describir(fen) {
-  const filas = fen.split(" ")[0].split("/");
-  const blancas = {}, negras = {};
-  filas.forEach((fila, r) => {
-    let c = 0;
-    for (const ch of fila) {
-      if (/\d/.test(ch)) { c += +ch; continue; }
-      const casilla = "abcdefgh"[c] + (8 - r);
-      const donde = ch === ch.toUpperCase() ? blancas : negras;
-      const tipo = ch.toLowerCase();
-      (donde[tipo] = donde[tipo] || []).push(casilla);
-      c += 1;
-    }
-  });
-  const lado = (mapa) => ORDEN.filter((t) => mapa[t]).map((t) => {
-    const cs = mapa[t].sort();
-    const nombre = NOMBRE_PIEZA[t] + (cs.length > 1 ? (t === "p" ? "es" : "s") : "");
-    return nombre + " en " + cs.join(", ");
-  }).join("; ");
-  const turno = fen.split(" ")[1] === "b" ? "Juegan las negras." : "Juegan las blancas.";
-  return { blancas: lado(blancas), negras: lado(negras), turno };
-}
+// Vive en lib/ porque el libro del diagnóstico describe sus posiciones igual.
+const { describir } = require("./lib/describir-fen.js");
 
 // --------------------------------------------------------- las fuentes
 function fuentesDe(curso, conceptos, hayPosiciones) {

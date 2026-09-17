@@ -180,7 +180,12 @@ async function probarCartelDeInstalar(navegador) {
         if (rel.startsWith("cursos/recursos") || rel.startsWith("cursos/protegido")) continue;
         recorrer(p);
       } else if (e.name.endsWith(".html")) {
-        if (["inscripcion.html", "formulario.html"].includes(e.name)) continue;
+        /* Las que a propósito NO son parte de la app: inscripcion.html y
+           formulario.html tienen su propio diseño, y el libro accesible es un
+           documento que se descarga y se abre suelto —incluso por correo y sin
+           red—, así que declarar un manifest que no va a poder cargar sería
+           peor que no declararlo. */
+        if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

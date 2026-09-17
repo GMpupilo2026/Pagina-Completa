@@ -1208,6 +1208,65 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   es justamente para eso). Cerrar esa puerta del todo pediría servir el PDF
   desde Supabase Storage con RLS.
 
+### El libro del banco
+
+`libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
+conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
+alumno la conteste en papel; este es el **banco entero** —las 118 preguntas, área
+por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
+comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
+no. Lo genera `herramientas/diagnostico-libro.js`.
+
+Es el hermano de `examen-de-arbitraje.pdf` y comparte **todas** sus
+características, a propósito: tapa a página completa impresa aparte y pegada con
+`pypdf`, capítulo por área, índice, escala de niveles, hoja de respuestas al
+final, opciones barajadas con semilla sacada del id, marca de agua estampada con
+`pypdf` en todas las páginas del cuerpo (recomprimiendo y clonando después, o el
+archivo se va a megabytes), firma en la tapa, en el pie, en los datos del archivo
+y protección del PDF. `CLAVE_PROPIETARIO` es `diagnostico-ai-2026`.
+
+- **Donde el de arbitraje pone la fuente del Handbook, este pone `prueba`**: qué
+  se le comprobó a la posición con chess.js ("la jugada es legal y su bandera
+  incluye la captura al paso"). Es el equivalente exacto — de dónde sale que la
+  respuesta es esa, y no de la memoria de nadie.
+- **El diagrama va al LADO de la respuesta, no encima.** Con el tablero arriba,
+  cada pregunta con posición ocupaba media página y el libro se iba a 120.
+- La hoja de respuestas lleva la letra de la opción **o la jugada**, según el
+  tipo de ítem, y con "o" cuando hay más de una jugada válida (`alternas`): dar
+  solo una dejaría a quien corrige marcando mal una respuesta correcta.
+
+**Tiene su versión accesible**, `libro-de-diagnostico-accesible.html`, por la
+misma razón que el material de estudio: un PDF con diagramas, marca de agua y
+cifrado es lo peor que se le puede dar a un lector de pantalla. Cada posición va
+contada pieza por pieza y con su FEN, y no hay ni una imagen. El describir lo
+comparten los dos generadores desde `herramientas/lib/describir-fen.js` — estaba
+dentro de `curso-material.js` y se sacó ahí, porque una segunda copia se iría
+separando de la primera a la primera corrección.
+
+Ese archivo **está exceptuado del barrido de `verificar-pwa.js`**, junto a
+`inscripcion.html` y `formulario.html`: es un documento que se descarga y se abre
+suelto —incluso por correo y sin red—, así que declarar un `manifest` que no va a
+poder cargar sería peor que no declararlo.
+
+**El libro descubrió un defecto que la tapa del de arbitraje ya tenía**, y se
+arregló en los dos: `overflow: hidden` en el `body` **no recorta el body**, se
+propaga al viewport. El tablero decorativo del fondo asoma 44 mm a la derecha, el
+documento quedaba más ancho que A4 y Chromium **encogía la tapa entera al 79%** —
+se veía como un lomo y un degradado que se cortan antes de llegar al borde de
+abajo. Ahora los adornos viven dentro de un `.fondo` con su propio recorte. Los
+dos PDF se volvieron a generar.
+
+**Al tocar el banco de ítems o este generador, correr `python3
+herramientas/verificar-libro-diagnostico.py`** (necesita `pypdf`). Lee el banco
+con Node desde el mismo archivo que usa el sitio —comprobar el libro contra una
+copia de la lista no comprobaría nada— y mira que el PDF esté cifrado y se abra
+sin contraseña, que NO deje imprimir, copiar ni modificar pero SÍ extraer texto,
+que lleve al autor, que tenga marca de agua en **todas** las páginas del cuerpo y
+no en la tapa, que estén las 118 preguntas con su respuesta marcada, y que la
+versión accesible no dependa de ninguna imagen, tenga los encabezados en orden y
+cuente en palabras **cada una** de las posiciones que el PDF dibuja.
+
+
 ## Examen de arbitraje (reglamento FIDE)
 
 `arbitraje.html` es el examen de reglas para quien arbitra: 40 preguntas del
