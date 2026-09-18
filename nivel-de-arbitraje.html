@@ -233,12 +233,47 @@
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Cómo funciona</h2>
                 <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
-                    <li><strong>40 preguntas, 50 minutos.</strong> Una por pantalla; puedes volver atrás mientras quede tiempo. Al llegar a cero se cierra y se corrige con lo respondido.</li>
+                    <li><strong>Elige qué examen rendir</strong> (abajo). Una pregunta por pantalla; puedes volver atrás mientras quede tiempo. Al llegar a cero se cierra y se corrige con lo respondido.</li>
                     <li><strong>Ocho áreas del reglamento:</strong> las leyes del juego, el reloj, las jugadas ilegales, la planilla y las tablas, la conducta, las rápidas y el relámpago, los emparejamientos y el oficio del árbitro.</li>
                     <li><strong>Se sortean cada vez</strong> de un banco de <span id="tam-banco">—</span> preguntas: repetirlo no es repetirlo de memoria.</li>
                     <li><strong>"Dejar en blanco" cuenta distinto que fallar.</strong> Vale cero igual, pero se informa aparte: un hueco se estudia, un error se corrige.</li>
                     <li><strong>El nivel sale de la dificultad, no del porcentaje.</strong> Cada pregunta tiene su escalón; el nivel es el escalón más alto que superas.</li>
                 </ul>
+            </div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Elige qué examen rendir</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Los tres miden el mismo reglamento, con el techo de dificultad de cada título. Ninguno da el título en sí — eso lo otorgan la federación y la FIDE.</p>
+                <div id="nivel-opciones" role="radiogroup" aria-label="Qué examen rendir" class="grid sm:grid-cols-2 gap-3">
+                    <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-4 cursor-pointer">
+                        <input type="radio" name="nivel-examen" value="" checked class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">Examen completo</span>
+                            <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-completo">40</span> preguntas, los cinco escalones de dificultad. El de siempre.</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-4 cursor-pointer">
+                        <input type="radio" name="nivel-examen" value="nacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">Árbitro Nacional</span>
+                            <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-nacional">24</span> preguntas, hasta el tercer escalón — el nivel que suele pedir un examen de árbitro nacional.</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-4 cursor-pointer">
+                        <input type="radio" name="nivel-examen" value="fide" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">Árbitro FIDE</span>
+                            <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-fide">32</span> preguntas, hasta el cuarto escalón — el nivel de un examen de FA.</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-4 cursor-pointer">
+                        <input type="radio" name="nivel-examen" value="internacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span>
+                            <span class="block font-semibold text-brand-800 dark:text-white">Árbitro Internacional</span>
+                            <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-internacional">40</span> preguntas, los cinco escalones — el más exigente, nivel de examen de IA.</span>
+                        </span>
+                    </label>
+                </div>
             </div>
 
             <form id="datos-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
@@ -299,7 +334,7 @@
     <!-- ============ Resultado ============ -->
     <section id="resultado-view" class="hidden py-10">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Tu nivel estimado de arbitraje</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400" id="r-titulo-examen">Tu nivel estimado de arbitraje</p>
             <h2 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-2" id="r-nivel">—</h2>
             <p class="text-brand-600 dark:text-brand-300 mb-2" id="r-descripcion">—</p>
             <p class="text-sm text-brand-500 dark:text-brand-300 mb-6" id="r-marcador">—</p>
@@ -368,7 +403,7 @@ const BANCO = window.ARBITRAJE_ITEMS;
 const PRUEBA = window.ArbitrajePrueba;
 const AN = window.ArbitrajeNivel;
 
-const MINUTOS = 50;
+let MINUTOS = 50;
 const EN_BLANCO = 'blanco';
 
 let persona = null;           // { nombre, email }
@@ -377,6 +412,7 @@ let respuestas = {};
 let idx = 0;
 let quedan = MINUTOS * 60;
 let cronometro = null;
+let nivelExamen = null;       // { clave, techo, etiqueta, minutos } del examen elegido, o null = completo
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -413,12 +449,16 @@ function avisar(caja, texto) {
 
 /* ---------------- El examen ---------------- */
 function empezar() {
-  examen = PRUEBA.armar();
+  const seleccion = document.querySelector('input[name="nivel-examen"]:checked');
+  nivelExamen = (seleccion && seleccion.value) ? PRUEBA.NIVEL_EXAMEN_POR_CLAVE[seleccion.value] : null;
+  MINUTOS = nivelExamen ? nivelExamen.minutos : 50;
+  examen = PRUEBA.armar(null, undefined, nivelExamen ? nivelExamen.techo : null);
   respuestas = {};
   idx = 0;
   quedan = MINUTOS * 60;
   irA('examen-view');
   pintarPregunta();
+  $('q-timer').textContent = reloj(quedan);
   clearInterval(cronometro);
   cronometro = setInterval(tic, 1000);
 }
@@ -582,6 +622,7 @@ function construirDetalle(porTiempo) {
     areas, dificultad,
     por_tiempo: !!porTiempo,
     minutos_usados: Math.round((MINUTOS * 60 - Math.max(quedan, 0)) / 60),
+    examen_elegido: nivelExamen ? nivelExamen.clave : 'completo',
   };
 }
 
@@ -622,6 +663,7 @@ async function guardar(detalle, resumen) {
 /* ---------------- La pantalla del resultado ---------------- */
 function mostrarResultado(detalle, resumen, porTiempo) {
   irA('resultado-view');
+  $('r-titulo-examen').textContent = nivelExamen ? `Examen de ${nivelExamen.etiqueta} · tu resultado` : 'Tu nivel estimado de arbitraje';
   $('r-nivel').textContent = resumen.nivel.etiqueta;
   $('r-descripcion').textContent = resumen.nivel.descripcion;
   $('r-marcador').textContent =
@@ -682,6 +724,10 @@ function mostrarResultado(detalle, resumen, porTiempo) {
 }
 
 $('tam-banco').textContent = BANCO.length;
+document.querySelectorAll('.total-completo').forEach((el) => { el.textContent = PRUEBA.TOTAL; });
+PRUEBA.NIVELES_EXAMEN.forEach((n) => {
+  document.querySelectorAll('.total-' + n.clave).forEach((el) => { el.textContent = PRUEBA.totalPara(n.techo); });
+});
 
 /* Esta página es la pública —se entra sin cuenta— pero también es a donde el
  * panel de la Academia manda a quien no da clase. A esa persona el sitio ya le

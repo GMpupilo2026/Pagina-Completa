@@ -131,6 +131,41 @@
                     <a href="examen-de-arbitraje.pdf" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">⬇️ Descargar el cuadernillo (PDF)</a>
                 </div>
 
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Qué examen rendir</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Los tres miden el mismo reglamento, con el techo de dificultad de cada título.</p>
+                    <div id="nivel-opciones" role="radiogroup" aria-label="Qué examen rendir" class="grid sm:grid-cols-2 gap-3">
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="" checked class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Examen completo</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-completo">40</span> preguntas, los cinco escalones.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="nacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro Nacional</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-nacional">24</span> preguntas, hasta el escalón 3.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="fide" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro FIDE</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-fide">32</span> preguntas, hasta el escalón 4.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="internacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro Internacional</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-internacional">40</span> preguntas, los cinco escalones.</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
                 <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Comenzar el examen →</button>
@@ -173,7 +208,7 @@
 
             <!-- ---------- Resultado ---------- -->
             <section id="resultado-view" class="hidden">
-                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Resultado del examen</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400" id="r-titulo-examen">Resultado del examen</p>
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-1" id="r-nivel">—</h1>
                 <p class="text-brand-600 dark:text-brand-300 mb-2" id="r-descripcion"></p>
                 <p class="text-sm text-brand-500 dark:text-brand-300 mb-1" id="r-marcador"></p>
@@ -232,18 +267,19 @@ const BANCO = window.ARBITRAJE_ITEMS;
 const PRUEBA = window.ArbitrajePrueba;
 const AN = window.ArbitrajeNivel;
 
-const MINUTOS = 50;
+let MINUTOS = 50;
 const CLAVE_RESULTADO = 'arbitraje_resultado_v1';
 const CLAVE_HISTORIAL = 'arbitraje_historial_v1';
 const EN_BLANCO = 'blanco';
 
 let perfil = null;
 let sesion = null;             // sesión de quien entra (para el token de las edge functions)
-let examen = [];              // las 40 preguntas de este intento
+let examen = [];              // las preguntas de este intento
 let respuestas = {};          // id → índice elegido, o EN_BLANCO
 let idx = 0;
 let quedan = MINUTOS * 60;
 let cronometro = null;
+let nivelExamen = null;       // { clave, techo, etiqueta, minutos } del examen elegido, o null = completo
 
 /* ---------------- Utilidades ---------------- */
 const $ = (id) => document.getElementById(id);
@@ -259,12 +295,16 @@ function irA(vista) {
 
 /* ---------------- El examen ---------------- */
 function empezar() {
-  examen = PRUEBA.armar();
+  const seleccion = document.querySelector('input[name="nivel-examen"]:checked');
+  nivelExamen = (seleccion && seleccion.value) ? PRUEBA.NIVEL_EXAMEN_POR_CLAVE[seleccion.value] : null;
+  MINUTOS = nivelExamen ? nivelExamen.minutos : 50;
+  examen = PRUEBA.armar(null, undefined, nivelExamen ? nivelExamen.techo : null);
   respuestas = {};
   idx = 0;
   quedan = MINUTOS * 60;
   irA('examen-view');
   pintarPregunta();
+  $('q-timer').textContent = reloj(quedan);
   clearInterval(cronometro);
   cronometro = setInterval(tic, 1000);
 }
@@ -418,6 +458,7 @@ function construirDetalle(porTiempo) {
     areas, dificultad,
     por_tiempo: !!porTiempo,
     minutos_usados: Math.round((MINUTOS * 60 - Math.max(quedan, 0)) / 60),
+    examen_elegido: nivelExamen ? nivelExamen.clave : 'completo',
   };
 }
 
@@ -444,6 +485,7 @@ async function guardar(detalle, resumen) {
     escalon: resumen.escalonAlcanzado, porcentaje: resumen.porcentaje,
     aciertos: resumen.aciertos, total: resumen.total, en_blanco: resumen.nosabe,
     por_tiempo: detalle.por_tiempo, minutos: detalle.minutos_usados,
+    examen_elegido: detalle.examen_elegido,
   };
   try { localStorage.setItem(CLAVE_RESULTADO, JSON.stringify({ ficha, detalle })); } catch (e) {}
   if (!perfil) return false;
@@ -473,6 +515,7 @@ async function leerEstado(id, clave) {
 
 function mostrarResultado(detalle, resumen, porTiempo) {
   irA('resultado-view');
+  $('r-titulo-examen').textContent = nivelExamen ? `Resultado del examen de ${nivelExamen.etiqueta}` : 'Resultado del examen';
   $('r-nivel').textContent = resumen.nivel.etiqueta;
   $('r-descripcion').textContent = resumen.nivel.descripcion;
   $('r-marcador').textContent =
@@ -777,6 +820,10 @@ window.addEventListener('beforeunload', (e) => {
 
 async function init() {
   $('tam-banco').textContent = BANCO.length;
+  document.querySelectorAll('.total-completo').forEach((el) => { el.textContent = PRUEBA.TOTAL; });
+  PRUEBA.NIVELES_EXAMEN.forEach((n) => {
+    document.querySelectorAll('.total-' + n.clave).forEach((el) => { el.textContent = PRUEBA.totalPara(n.techo); });
+  });
   document.querySelectorAll('.banco-total').forEach((el) => { el.textContent = BANCO.length; });
   try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
   if (!sesion) { window.location.href = 'login.html?next=' + encodeURIComponent('arbitraje.html'); return; }
