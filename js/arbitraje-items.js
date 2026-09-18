@@ -1228,7 +1228,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El comité se nombra al empezar, no cuando aparece el problema, y es independiente del árbitro. Su composición y los plazos van en el reglamento publicado.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10',
+    fuente: 'Reglamento general de competiciones (Handbook C.05), procedimiento de apelaciones',
   },
 
   /* ===== Ítems de base, para que el sorteo tenga de dónde elegir en todos
@@ -2378,7 +2378,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Ese orden inicial es el número de cada jugador y se usa toda la competición: los emparejamientos y los desempates se apoyan en él.',
-    fuente: 'Reglas básicas del sistema suizo (Handbook C.04.1)',
+    fuente: 'Reglas generales de manejo del sistema suizo, orden inicial (Handbook C.04.2)',
   },
   {
     id: 'com_rondas_anunciadas', area: 'competicion', peso: 1,
@@ -2423,14 +2423,14 @@ window.ARBITRAJE_ITEMS = [
     id: 'com_encuentro_directo', area: 'competicion', peso: 2,
     enunciado: '¿Cuándo se puede usar el encuentro directo como desempate?',
     opciones: [
-      'Cuando todos los empatados jugaron entre sí en el torneo.',
+      'Si algunos o todos los empatados se enfrentaron entre sí.',
       'Siempre: es el primer desempate en cualquier torneo suizo.',
       'Solo cuando los empatados son exactamente dos jugadores.',
       'Solo en torneos de todos contra todos, nunca en un suizo.',
     ],
     correcta: 0,
-    explica: 'Si falta alguna de esas partidas, el criterio no se puede aplicar a ese grupo y se pasa al siguiente desempate de la lista anunciada.',
-    fuente: 'Reglas de desempate (Handbook C.07)',
+    explica: 'No hace falta que se hayan enfrentado TODOS: si alguno queda claramente arriba de los demás pase lo que pase con las partidas que faltan, ya se lo puede ordenar primero. Si nada queda definido, se pasa al siguiente desempate de la lista anunciada.',
+    fuente: 'Reglas de desempate (Handbook C.07), encuentro directo',
   },
   {
     id: 'com_sonneborn_calculo', area: 'competicion', peso: 3,
@@ -2508,7 +2508,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las dos formas son válidas y cambian por completo la tabla final. Por eso tiene que estar escrito antes, junto con el orden de los desempates.',
-    fuente: 'Sistema suizo por equipos y desempates (Handbook C.04.6 y C.07)',
+    fuente: 'Sistema de emparejamiento por equipos (Handbook B.06 Anexo 1) y reglas de desempate (Handbook C.07)',
   },
 
   /* ---------- El árbitro: títulos, categorías y deberes ---------- */
@@ -2620,14 +2620,14 @@ window.ARBITRAJE_ITEMS = [
     id: 'tit_disciplinario', area: 'titulos', peso: 4,
     enunciado: 'Un árbitro comete una falta grave dirigiendo un torneo. ¿Qué puede pasarle?',
     opciones: [
-      'Ser sancionado, hasta perder la licencia o el título.',
+      'Ser sancionado, hasta quedar descalificado por un tiempo.',
       'Nada: el título es permanente y no se puede tocar.',
       'Solo que no lo vuelvan a invitar a ese mismo torneo.',
       'Una multa, que es la única sanción que existe para árbitros.',
     ],
     correcta: 0,
-    explica: 'Hay un reglamento disciplinario propio, con su procedimiento y su derecho de defensa. Perder la licencia deja al árbitro fuera de los torneos válidos para rating.',
-    fuente: 'Reglamento disciplinario de árbitros (Handbook B.06.5)',
+    explica: 'Hay un reglamento disciplinario propio, con su procedimiento y su derecho de defensa. La sanción más dura es la descalificación (hasta 18 meses la primera vez, hasta 24 si reincide): mientras dura, no se lo puede designar ni oficiar en ningún torneo válido para rating de la FIDE. El título en sí no se pierde, aunque quede inutilizable mientras la sanción esté vigente.',
+    fuente: 'Reglamento disciplinario de árbitros (Handbook B.06.5), art. 4',
   },
   {
     id: 'tit_apelacion_deposito', area: 'titulos', peso: 5,
@@ -2639,8 +2639,8 @@ window.ARBITRAJE_ITEMS = [
       'Esperar a que termine el torneo para no interrumpir las rondas.',
     ],
     correcta: 0,
-    explica: 'El plazo corto evita que una ronda quede en el aire y el depósito filtra las apelaciones de trámite: se devuelve si la apelación prospera.',
-    fuente: 'Reglamento de cada torneo: no está en el Handbook, lo fija la organización',
+    explica: 'El plazo corto evita que una ronda quede en el aire y el depósito filtra las apelaciones de trámite: se devuelve si la apelación prospera (y puede devolverse igual, en parte, si no prospera pero el comité la considera razonable). El Handbook exige las dos cosas en general; el monto exacto del depósito y el plazo en horas o días los fija el reglamento de cada torneo.',
+    fuente: 'Reglamento general de competiciones (Handbook C.05), procedimiento de apelaciones',
   },
   {
     id: 'tit_decision_se_aplica_ya', area: 'titulos', peso: 5,
@@ -2652,8 +2652,8 @@ window.ARBITRAJE_ITEMS = [
       'Se reanuda desde la posición anterior a la decisión.',
     ],
     correcta: 0,
-    explica: 'Si cada apelación congelara la ronda, el torneo se detendría. El árbitro decide, la partida sigue y el comité repara después si corresponde.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.11',
+    explica: 'Si cada apelación congelara la ronda, el torneo se detendría. El árbitro decide, la partida sigue y el comité repara después si corresponde — es lo que hace posible el propio artículo 12, que le pide al árbitro hacer cumplir sus decisiones ("enforce decisions he/she has made") mientras supervisa el resto de la competición.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.2, y Manual del árbitro (ARB)',
   },
   {
     id: 'tit_categoria_a_eventos', area: 'titulos', peso: 5,
