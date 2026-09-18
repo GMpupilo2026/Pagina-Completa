@@ -451,9 +451,17 @@ líneas de HTML.
   doble clic. Con coma, Excel mete la fila entera en la columna A.
 - `formulario.html` lleva `noindex`: es el formulario de una actividad puntual,
   con su enlace propio.
+- **El enlace que copia el armador se arma desde la CARPETA de la página, no
+  cortándole el `.html` al final.** Cloudflare sirve la misma página en dos
+  direcciones —`/formularios` y `/formularios.html`—, así que con el corte, a
+  quien la abría sin la extensión el botón le copiaba
+  `/formulariosformulario.html?f=…`: los dos nombres pegados, o sea un 404. Y no
+  daba ningún error en el armador — el enlace se copiaba igual y la página que
+  no era la veía quien lo recibía, que es el único que no puede arreglarlo.
 - **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
   sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
-  manda el armador a guardar y qué manda el formulario público al contestar.
+  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, y qué
+  manda el formulario público al contestar.
 
 ## Informes: la cuenta la hace la base, no el navegador
 

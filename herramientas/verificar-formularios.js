@@ -132,6 +132,36 @@ async function pruebaArmador(browser) {
     await page.evaluate(() => [...document.getElementById("f-grupo").options].map((o) => o.textContent)),
     ["— Sin equipo en particular —", "7A", "7B"]);
 
+  /* El enlace que copia el botón, que es el único producto de esta página que
+     sale de ella. Se mira DOS veces, con las dos direcciones en que Cloudflare
+     sirve la misma página: con ".html" y sin él. Cortarle la extensión al
+     pathname funciona en la primera y pega los dos nombres en la segunda
+     ("/formulariosformulario.html"), y eso no da ningún error acá — el enlace
+     se copia igual y el 404 lo ve quien lo recibe. */
+  const copiado = async () => {
+    await page.evaluate(() => {
+      window.__copiado = null;
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: (t) => { window.__copiado = t; return Promise.resolve(); } },
+      });
+    });
+    // El botón dice "¡Copiado!" un segundo y medio: hay que esperar a que vuelva.
+    await page.waitForFunction(() => [...document.querySelectorAll("#lista button")].some((b) => b.textContent === "Copiar enlace"));
+    await page.evaluate(() => [...document.querySelectorAll("#lista button")].find((b) => b.textContent === "Copiar enlace").click());
+    await page.waitForFunction(() => window.__copiado !== null);
+    return page.evaluate(() => window.__copiado);
+  };
+
+  igual("el enlace que se copia, abriendo la página con .html",
+    (await copiado()).replace(BASE, ""), "/formulario.html?f=torneo-sub14-ab12");
+
+  // La misma página servida sin extensión, que es como la deja Cloudflare.
+  await page.evaluate(() => history.replaceState(null, "", "/formularios"));
+  igual("el enlace que se copia, abriendo la página sin .html",
+    (await copiado()).replace(BASE, ""), "/formulario.html?f=torneo-sub14-ab12");
+  await page.evaluate(() => history.replaceState(null, "", "/formularios.html"));
+
   // Formulario nuevo con la plantilla.
   await page.click("#nuevo-btn");
   await page.waitForSelector("#vista-editor:not(.hidden)");
