@@ -37,14 +37,14 @@ window.ARBITRAJE_ITEMS = [
     id: 'ley_jugada_completada', area: 'leyes', peso: 1,
     enunciado: '¿Cuándo está completada la jugada de un jugador?',
     opciones: [
-      'Cuando suelta la pieza en la casilla de destino.',
       'Cuando presiona el reloj después de haber movido.',
+      'Cuando suelta la pieza en la casilla de destino.',
       'Cuando el rival levanta su propia pieza para responder.',
       'Cuando termina de anotar la jugada en la planilla.',
     ],
     correcta: 0,
-    explica: 'La jugada se hace al soltar la pieza; presionar el reloj es lo que la completa a efectos del control de tiempo, pero la jugada en sí ya está hecha cuando la mano suelta la pieza.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.7 y 6.2.1',
+    explica: '"Hecha" y "completada" son dos momentos distintos: la jugada está HECHA al soltar la pieza (art. 4.7), pero queda COMPLETADA recién al presionar el reloj (art. 6.2.1). Antes de presionarlo, todavía se pueden corregir otras irregularidades de esa jugada.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.1 (y art. 4.7 para cuándo queda "hecha")',
   },
   {
     id: 'ley_pieza_tocada', area: 'leyes', peso: 1,
@@ -109,7 +109,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El peón se cambia como parte de la misma jugada y la promoción queda hecha al soltar la pieza nueva. Elegida y soltada, ya no se cambia.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 3.7.3.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.7.3 y 3.7.5',
   },
   {
     id: 'ley_dead_position', area: 'leyes', peso: 3,
@@ -148,7 +148,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El derecho dura una sola jugada: si no se ejerce ahí, se pierde. Es uno de los tres datos que la posición necesita además de las piezas, junto con el turno y los enroques posibles.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1 y 3.7.4.2',
   },
   {
     id: 'ley_jugada_rival', area: 'leyes', peso: 3,
@@ -165,29 +165,29 @@ window.ARBITRAJE_ITEMS = [
   },
   {
     id: 'ley_dos_manos', area: 'leyes', peso: 4,
-    enunciado: 'Un jugador enroca usando las dos manos: una para el rey y otra para la torre. ¿Qué hace el árbitro?',
+    enunciado: 'Un jugador enroca usando las dos manos —una para el rey y otra para la torre— y presiona el reloj. ¿Qué hace el árbitro?',
     opciones: [
-      'Sanciona la conducta: se juega con una sola mano.',
-      'Nada, mientras las dos piezas terminen en su casilla.',
       'Declara la jugada ilegal y suma dos minutos al rival.',
+      'Nada, mientras las dos piezas terminen en su casilla.',
+      'Sanciona la conducta, pero deja la jugada tal como está.',
       'Obliga a deshacer el enroque y a mover solo el rey.',
     ],
     correcta: 0,
-    explica: 'Cada jugada se hace con una sola mano, y con esa misma mano se presiona el reloj. Usar las dos no vuelve ilegal la jugada: es una infracción de conducta y se sanciona según el artículo 12.9.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.1 y 6.2.3',
+    explica: 'Cada jugada se hace con una sola mano (art. 4.1). Usarlas las dos y ya haber presionado el reloj se trata y se sanciona exactamente como una jugada ilegal, con el mismo procedimiento del art. 7.5.5: se repone la posición y, la primera vez, se dan dos minutos extra al rival.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.4 y 7.5.5',
   },
   {
     id: 'ley_abandono', area: 'leyes', peso: 5,
     enunciado: 'Un jugador abandona, pero en el tablero su rival no tenía ninguna serie de jugadas legales para dar mate. ¿Cuál es el resultado?',
     opciones: [
-      'Pierde el que abandonó: el abandono cierra la partida.',
       'Tablas, porque el rival no podía dar mate de ninguna forma.',
+      'Pierde el que abandonó: el abandono cierra la partida.',
       'El árbitro anula el abandono y la partida continúa.',
       'Tablas, pero solo si el que abandonó lo reclama enseguida.',
     ],
     correcta: 0,
-    explica: 'El abandono es distinto de la caída de bandera: no tiene la salvedad del material insuficiente. El que abandona pierde, aunque el rival no hubiera podido dar mate nunca.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.2 (comparar con 6.9)',
+    explica: 'El abandono trae la misma salvedad que la caída de bandera: el propio artículo lo dice de corrido —"unless the position is such that the opponent cannot checkmate the player\'s king by any possible series of legal moves. In this case the result of the game is a draw"—. Quien abandona no elige el resultado por su cuenta: si el rival no podía dar mate de ninguna forma, son tablas igual.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.1.2',
   },
 
   /* ================= El reloj y el tiempo ================= */
@@ -273,14 +273,14 @@ window.ARBITRAJE_ITEMS = [
     id: 'rel_presionar_sin_mover', area: 'reloj', peso: 4,
     enunciado: 'Un jugador presiona el reloj sin haber hecho ninguna jugada. ¿Qué corresponde?',
     opciones: [
-      'Es infracción y se sanciona según el artículo 12.9.',
+      'Se trata y se sanciona igual que una jugada ilegal.',
       'El rival gana la partida de inmediato, sin aviso.',
       'Nada: el reloj corre y ya, es problema suyo.',
       'Se le descuentan dos minutos de forma automática.',
     ],
     correcta: 0,
-    explica: 'Presionar sin mover no está previsto como jugada ilegal, sino como conducta indebida: el árbitro elige la sanción de la lista del 12.9, que empieza por la advertencia.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.2 y 12.9',
+    explica: 'El propio artículo lo dice sin rodeos: presionar el reloj sin mover "shall be considered and penalised as if an illegal move". Se aplica el procedimiento del 7.5.5: se repone la posición y, la primera vez, se dan dos minutos extra al rival.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.3 y 7.5.5',
   },
   {
     id: 'rel_parar_reloj', area: 'reloj', peso: 3,
@@ -293,11 +293,11 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Parar el reloj es el gesto para reclamar la presencia del árbitro; por ejemplo al reclamar tablas por repetición. Fuera de esos casos, detenerlo es una infracción.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.12.1 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11 y 12.9',
   },
   {
     id: 'rel_ambas_banderas', area: 'reloj', peso: 4,
-    enunciado: 'Se advierte que cayeron las dos banderas y no se puede saber cuál cayó primero. ¿Qué resultado corresponde en ritmo clásico?',
+    enunciado: 'En una partida sin incremento, con las Guías de "Quickplay Finish" anunciadas de antemano, se advierte que cayeron las dos banderas y no se puede saber cuál cayó primero. ¿Qué resultado corresponde?',
     opciones: [
       'La partida sigue, salvo en la última fase: ahí son tablas.',
       'Gana quien tenga mejor posición a juicio del árbitro principal.',
@@ -305,8 +305,8 @@ window.ARBITRAJE_ITEMS = [
       'Gana quien lo reclame primero ante el árbitro de sala.',
     ],
     correcta: 0,
-    explica: 'Si las dos banderas cayeron y no se puede determinar el orden, la partida sigue si todavía quedan controles por delante; en la última fase del control, son tablas.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11',
+    explica: 'Si las dos banderas cayeron y no se puede determinar el orden, la partida sigue si todavía quedan controles por delante; en la última fase del control, son tablas. Ojo: esto no es del cuerpo de las Leyes, sino de sus Guías (que no aplican solas: hay que haberlas anunciado antes del torneo) y solo valen para partidas SIN incremento.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), Guidelines III.4 (Quickplay Finish)',
   },
   {
     id: 'rel_ajuste_tiempo', area: 'reloj', peso: 5,
@@ -463,8 +463,8 @@ window.ARBITRAJE_ITEMS = [
       'Conducta sancionable, aunque la jugada sea legal.',
     ],
     correcta: 0,
-    explica: 'El peón no puede quedarse en la octava: hasta que la pieza nueva no está puesta, la jugada no está hecha. Presionar el reloj así la completa como ilegal.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 7.5.1',
+    explica: 'El peón no puede quedarse en la octava: hasta que la pieza nueva no está puesta, la jugada no está hecha. Presionar el reloj así la vuelve ilegal, y el propio artículo da la solución: el peón se cambia por dama de forma automática.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.7 y 7.5.2',
   },
   {
     id: 'irr_ilegal_ambos', area: 'irregularidades', peso: 4,
@@ -544,7 +544,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo equivocado le cuesta dos minutos a quien reclama en beneficio del rival (uno en rápidas y relámpago desde 2023), y hay que jugar la jugada anunciada.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 9.5.3',
   },
   {
     id: 'tab_cincuenta', area: 'tablas', peso: 2,
@@ -1283,7 +1283,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La aceptación termina la partida de inmediato. Darse la mano sin oferta previa no es un acuerdo de tablas: cada tanto hay que aclararlo en la sala.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.1 y 9.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 5.2.3 y 9.1',
   },
   {
     id: 'tab_material_insuficiente', area: 'tablas', peso: 5,
@@ -1549,7 +1549,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Viene de los relojes analógicos, que tenían una banderita. Hoy es simplemente que el tiempo de ese jugador llegó a cero en ese período.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.8 y glosario',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.1 y glosario',
   },
   {
     id: 'rel_orden_mover_presionar', area: 'reloj', peso: 1,
@@ -1683,7 +1683,7 @@ window.ARBITRAJE_ITEMS = [
   },
   {
     id: 'rel_dos_banderas_periodo', area: 'reloj', peso: 5,
-    enunciado: 'Caen las dos banderas en el primer período de un control de varios períodos y no se sabe cuál cayó antes. ¿Qué corresponde?',
+    enunciado: 'En una partida sin incremento con las Guías de "Quickplay Finish" anunciadas, caen las dos banderas en el primer período de un control de varios períodos y no se sabe cuál cayó antes. ¿Qué corresponde?',
     opciones: [
       'La partida continúa: no es tablas si no es el último período.',
       'Tablas: siempre que caen las dos, la partida queda empatada.',
@@ -1691,8 +1691,8 @@ window.ARBITRAJE_ITEMS = [
       'Se repite la partida desde el principio en otro horario.',
     ],
     correcta: 0,
-    explica: 'Las Leyes separan los casos: en un período intermedio la partida sigue (con los tiempos que el árbitro ajuste); solo en el último período son tablas.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11',
+    explica: 'Esas Guías separan los casos: en un período intermedio la partida sigue; solo en el último período son tablas. No es una regla del cuerpo de las Leyes, y solo aplica a controles sin incremento con esas Guías anunciadas de antemano.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), Guidelines III.4 (Quickplay Finish)',
   },
 
   /* ---------- Irregularidades ---------- */
@@ -1720,7 +1720,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El cambio de peón por dama, torre, alfil o caballo del mismo color es parte de la misma jugada. Un peón no puede quedarse en la última fila.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.3 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5',
   },
   {
     id: 'irr_torre_salta', area: 'irregularidades', peso: 1,
@@ -1733,7 +1733,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Solo el caballo salta. Que una ilegal sea evidente no la hace menos ilegal: si el reloj ya se presionó, corresponde reponer y sancionar.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.3 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.5 y 7.5',
   },
   {
     id: 'irr_dos_jugadas_seguidas', area: 'irregularidades', peso: 2,
@@ -1759,7 +1759,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Si tocó una pieza que sí tiene jugada legal, con esa tiene que jugar. No se puede usar una ilegal para deshacer una pieza tocada incómoda.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.3, 4.7 y 7.5.1',
   },
   {
     id: 'irr_posicion_no_identificable', area: 'irregularidades', peso: 3,
@@ -1772,7 +1772,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes prevén el caso: se retrocede hasta donde las planillas y los dos jugadores permitan reconstruir, y desde ahí sigue la partida.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1',
   },
   {
     id: 'irr_al_paso_tardia', area: 'irregularidades', peso: 3,
@@ -1785,7 +1785,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La captura al paso caduca de inmediato: si no se hace en la respuesta al avance de dos casillas, se pierde el derecho para siempre.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.1 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1 y 7.5',
   },
   {
     id: 'irr_mate_con_jugada_ilegal', area: 'irregularidades', peso: 4,
@@ -1824,7 +1824,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El artículo 7 se aplica durante la partida. Terminada y firmada, lo que queda es la vía de la apelación contra decisiones del árbitro, no reabrir el tablero.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5, 8.7 y 11.11',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5, 8.7 y 11.10',
   },
   {
     id: 'irr_ambos_reyes_en_jaque', area: 'irregularidades', peso: 5,
@@ -1837,7 +1837,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es una posición imposible de alcanzar legalmente: alguien dejó su rey en jaque y nadie lo notó. El árbitro retrocede hasta la última posición legal.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9 y 7.5.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.9 y 7.5.1',
   },
   {
     id: 'irr_reconstruir_entre_todos', area: 'irregularidades', peso: 5,
@@ -1850,7 +1850,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes obligan a los dos jugadores a asistir al árbitro en cualquier situación que exija reconstruir la partida, incluidos los reclamos de tablas.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.12 y 12.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.11 y 12.9',
   },
 
   /* ---------- Planilla y tablas ---------- */
