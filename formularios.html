@@ -419,8 +419,16 @@ async function guardar() {
 }
 
 // ------------------------------------------------------------------ lista
+// El enlace se arma desde la CARPETA de esta página, no cortándole el ".html"
+// al final del pathname. Cloudflare sirve la misma página en dos direcciones
+// —/formularios y /formularios.html—, así que con el corte, a quien la abría
+// sin la extensión el botón le copiaba "/formulariosformulario.html?f=…": los
+// dos nombres pegados, o sea un 404. Y no daba ningún error: el enlace se
+// copiaba igual, y el que se quedaba mirando la página que no era es quien lo
+// recibía.
 function enlacePublico(slug) {
-    return location.origin + location.pathname.replace(/formularios\.html$/, "") + "formulario.html?f=" + encodeURIComponent(slug);
+    const carpeta = location.pathname.replace(/[^/]*$/, "");
+    return location.origin + carpeta + "formulario.html?f=" + encodeURIComponent(slug);
 }
 
 function pintarLista() {
