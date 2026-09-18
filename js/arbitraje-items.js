@@ -637,7 +637,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La regla es dura a propósito. El reglamento del evento puede fijar una sanción menos severa, pero si no dice nada, la consecuencia es la derrota.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
   },
   {
     id: 'con_dispositivo_encima', area: 'conducta', peso: 3,
@@ -650,7 +650,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Lo que prohíbe la regla es tener el dispositivo, no que suene: apagado cuenta igual. Por eso los torneos habilitan un lugar para dejar los teléfonos.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
   },
   {
     id: 'con_lista_sanciones', area: 'conducta', peso: 2,
@@ -688,8 +688,8 @@ window.ARBITRAJE_ITEMS = [
       'Se permite solo entre jugadores que ya terminaron su ronda.',
     ],
     correcta: 0,
-    explica: 'Analizar dentro de la sala está prohibido mientras haya partidas en curso: distrae y puede dar información. Para eso están las salas de análisis.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.1',
+    explica: 'Quien terminó su partida pasa a ser espectador, y a los espectadores no se les permite interferir con las partidas que siguen. Para eso están las salas de análisis.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.4 y 12.7',
   },
   {
     id: 'con_ayuda_externa', area: 'conducta', peso: 3,
@@ -754,7 +754,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Los espectadores y los jugadores de otras partidas no comentan ni interfieren; el árbitro puede expulsar a quien lo haga. La decisión sobre la bandera la toma el árbitro, no el público.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.8 y 12.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.7',
   },
   {
     id: 'con_no_intervenir', area: 'conducta', peso: 5,
@@ -821,7 +821,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Hasta 2022 eran dos minutos; desde 2023 las rápidas se igualaron al relámpago con un minuto. Lo mismo vale para el reclamo de tablas incorrecta.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3',
   },
   {
     id: 'rit_ilegal_blitz_reclamo', area: 'ritmos', peso: 5,
@@ -834,7 +834,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'En relámpago manda el jugador: si responde con su jugada, la posición queda validada y ya no hay reclamo posible.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.3 (y A.4 para rápidas sin supervisión)',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.3 (y A.5 para rápidas sin supervisión)',
   },
   {
     id: 'rit_anotar_rapidas', area: 'ritmos', peso: 3,
@@ -847,7 +847,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Sin obligación de anotar, la planilla deja de ser prueba: por eso en estos ritmos los reclamos dependen mucho más de lo que el árbitro observe.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 y B.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.2 y B.3',
   },
   {
     id: 'rit_arbitro_supervision', area: 'ritmos', peso: 4,
@@ -873,7 +873,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El reclamo es del jugador, y vale siempre que él mismo no haya excedido su tiempo. Un espectador nunca puede intervenir.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.4 y art. 11.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.3',
   },
   {
     id: 'rit_apendice_c', area: 'ritmos', peso: 1,
@@ -892,7 +892,7 @@ window.ARBITRAJE_ITEMS = [
     id: 'rit_quickplay', area: 'ritmos', peso: 5,
     enunciado: 'En un final sin incremento, con menos de dos minutos, un jugador reclama tablas porque su rival no hace ningún progreso. ¿Qué puede hacer el árbitro?',
     opciones: [
-      'Aplicar el apéndice G si el reglamento lo adoptó.',
+      'Aplicar la directriz III si el reglamento la adoptó.',
       'Rechazarlo siempre: ese reclamo ya no existe.',
       'Aceptarla, porque hay menos de dos minutos en el reloj.',
       'Declarar tablas solo si los dos jugadores lo piden.',
@@ -2036,7 +2036,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Está escrito como un derecho del jugador. El árbitro explica la regla; lo que no hace es aconsejar sobre la posición ni sobre qué conviene jugar.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.9',
   },
   {
     id: 'con_fumar', area: 'conducta', peso: 1,
@@ -2049,7 +2049,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El recinto de juego incluye la sala, los baños, la zona de descanso y la de fumar, y quien define cada una es el árbitro.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.3 y 11.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.4 y 11.2',
   },
   {
     id: 'con_terminaron_espectadores', area: 'conducta', peso: 2,
@@ -2062,7 +2062,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Es la base para poder sancionar al que ya jugó y anda dando vueltas: terminada su partida, pasa a ser público y no puede interferir en nada.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.4 y 12.6',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.4 y 12.7',
   },
   {
     id: 'con_apelar_tras_firmar', area: 'conducta', peso: 2,
@@ -2075,7 +2075,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes lo dicen expresamente, porque firmar es dejar constancia del resultado, no renunciar a nada. El reglamento del torneo fija plazos y forma.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.11 y 8.7',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.10 y 8.7',
   },
   {
     id: 'con_desprestigio', area: 'conducta', peso: 2,
@@ -2101,7 +2101,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La revisión se hace en privado y acompañada, no en medio de la sala. Negarse a la inspección tiene sus propias consecuencias.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.3',
   },
   {
     id: 'con_negativa_persistente', area: 'conducta', peso: 4,
@@ -2114,7 +2114,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Que el árbitro decida el puntaje del rival importa: si el rival no tenía cómo dar mate, no se le regala el punto entero.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.8',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.7',
   },
   {
     id: 'con_maximo_puntaje', area: 'conducta', peso: 4,
@@ -2140,7 +2140,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Las Leyes lo dicen con todas las letras, y es la única situación en la que una partida termina 0-0. Suele ir acompañada de sanciones del artículo 12.9.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.9',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.8',
   },
   {
     id: 'con_cuantas_jugadas', area: 'conducta', peso: 5,
@@ -2233,7 +2233,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La diferencia es grande: con supervisión adecuada rigen casi las mismas reglas del clásico; sin ella, se pasa al régimen de reclamos del apéndice.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.4',
   },
   {
     id: 'rit_un_minuto_general', area: 'ritmos', peso: 2,
@@ -2246,7 +2246,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Dos minutos en una partida de cinco sería la partida entera. Desde 2023 el minuto también se aplica en rápidas.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.2',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3 (aplicado a relámpago vía B.3)',
   },
   {
     id: 'rit_planilla_derechos', area: 'ritmos', peso: 3,
@@ -2272,7 +2272,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El criterio es el mismo del clásico, con la sanción de tiempo reducida a un minuto: la primera cuesta tiempo, la segunda cuesta la partida.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.5 y apéndice A.3',
   },
   {
     id: 'rit_mate_y_bandera_blitz', area: 'ritmos', peso: 3,
@@ -2298,7 +2298,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Un minuto en la primera, la partida en la segunda. Lo que cambia sin supervisión es quién lo hace valer: ahí depende de que el rival lo reclame.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A.4 y B.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.2',
   },
   {
     id: 'rit_reclamo_antes_de_mover', area: 'ritmos', peso: 4,
@@ -2311,7 +2311,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Sin árbitro mirando, el reclamo es del rival y hay que hacerlo antes de mover. Es la diferencia más grande con el ritmo clásico.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.4',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.3',
   },
   {
     id: 'rit_bandera_sin_mate_blitz', area: 'ritmos', peso: 4,
@@ -2337,20 +2337,20 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'Esa es la razón de ser de la supervisión adecuada: con un árbitro por pocas mesas, las rápidas se arbitran casi como el clásico.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.3',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice A.4',
   },
   {
     id: 'rit_dos_banderas_un_periodo', area: 'ritmos', peso: 5,
-    enunciado: 'En una partida de relámpago caen las dos banderas y no se sabe cuál cayó primero. ¿Resultado?',
+    enunciado: 'En una partida de rápidas SIN incremento, de un solo período, con las Guías de "Quickplay Finish" anunciadas, caen las dos banderas y no se sabe cuál cayó primero. ¿Resultado?',
     opciones: [
-      'Tablas: el relámpago es un único período, y es el último.',
+      'Tablas: con un solo período, siempre es el período final.',
       'La partida continúa hasta que alguien dé mate.',
       'Pierde quien tenía el turno cuando se advirtió la caída.',
       'Se repite la partida completa con los colores cambiados.',
     ],
     correcta: 0,
-    explica: 'La regla general distingue período intermedio de período final. En relámpago y rápidas solo hay uno, así que siempre se cae en el caso de tablas.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.11 y apéndice B.3',
+    explica: 'La regla general distingue período intermedio de período final; con un solo período, siempre se cae en el caso de tablas. Ojo: esa regla es de las Guías, no del cuerpo de las Leyes, y ellas mismas dicen con todas las letras que NO aplican al relámpago — solo a partidas clásicas y rápidas sin incremento, y con las Guías anunciadas de antemano.',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), Guidelines III.4 (Quickplay Finish)',
   },
 
   /* ---------- Competición: emparejamientos y desempates ---------- */
