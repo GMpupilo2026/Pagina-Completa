@@ -43,6 +43,12 @@
       "nombre": "Competición",
       "descripcion": "Para quien ya juega torneos.",
       "gradiente": "from-accent-600 to-accent-700"
+    },
+    {
+      "id": "formacion-docente",
+      "nombre": "Formación docente",
+      "descripcion": "Reglamento, arbitraje y normativa para quien da clase.",
+      "gradiente": "from-accent-700 to-brand-900"
     }
   ],
   "cursos": [
@@ -152,6 +158,18 @@
       "resumen": "Gestión del reloj, repertorio de aperturas, psicología y análisis post-partida.",
       "lecciones": 18,
       "alt": "Posición de repertorio con ataques en flancos opuestos: la clase de lucha que aparece en torneo.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
+    },
+    {
+      "slug": "formacion-ajedrez",
+      "titulo": "Formación Ajedrez",
+      "nivel": "formacion-docente",
+      "resumen": "Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.",
+      "lecciones": 8,
+      "unidad": "sesiones",
+      "alt": "Ahogado: el rey negro en h8 no tiene jaque pero tampoco ninguna jugada legal — tablas, no mate.",
       "precio": "",
       "duracion": "",
       "modalidad": ""

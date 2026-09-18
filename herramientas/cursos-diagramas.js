@@ -65,6 +65,9 @@ const CURSOS = [
     { slug: "preparacion-para-torneos", fen: "r1bq1rk1/pp2ppbp/2np1np1/8/2BNP3/2N1B3/PPP2PPP/R2Q1RK1 w - - 0 1",
       destacar: ["c4", "g7"],
       alt: "Posición de repertorio con ataques en flancos opuestos: la clase de lucha que aparece en torneo." },
+    { slug: "formacion-ajedrez", fen: "7k/5K2/6P1/8/8/8/8/8 b - - 0 1", ahogado: true,
+      destacar: ["h8", "f7", "g6"],
+      alt: "Ahogado: el rey negro en h8 no tiene jaque pero tampoco ninguna jugada legal — tablas, no mate." },
 ];
 
 fs.mkdirSync(SALIDA, { recursive: true });
@@ -79,7 +82,11 @@ for (const curso of CURSOS) {
     // Verificación: la FEN carga, la posición es legal y hay jugadas.
     const c = new Chess();
     if (!c.load(fen)) { console.log("FALLA " + curso.slug + ": la FEN no carga — " + fen); fallos++; continue; }
-    if (c.moves().length === 0) { console.log("FALLA " + curso.slug + ": posición sin jugadas legales"); fallos++; continue; }
+    // Sin jugadas legales solo vale si es de verdad un ahogado (el curso lo
+    // marca a propósito): cualquier otra posición sin jugadas es un error.
+    if (c.moves().length === 0 && !(curso.ahogado && c.in_stalemate())) {
+        console.log("FALLA " + curso.slug + ": posición sin jugadas legales"); fallos++; continue;
+    }
     if (curso.clave) {
         const c2 = new Chess(fen);
         const hecha = c2.move(curso.clave);

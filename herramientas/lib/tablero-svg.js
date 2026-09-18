@@ -67,6 +67,16 @@ function tablero(fen, opciones) {
     const s = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + total + " " + total +
                '" width="' + total + '" height="' + total + '" role="img" aria-labelledby="t">'];
     s.push("<title id=\"t\">" + (opciones.titulo || "Diagrama de ajedrez").replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</title>");
+    // Las piezas de js/chess-piece-svg.js pintan con var(--piece-white) y
+    // var(--piece-black), que css/styles.css define en :root para los
+    // tableros del sitio. Este SVG sale a un archivo suelto —tarjeta de
+    // cursos.html, diagrama del material de estudio— sin esa hoja de
+    // estilos cargada, así que sin esto las piezas quedaban casi invisibles
+    // (var() sin resolver cae al negro inicial, pero como también hay trazo
+    // negro por encima, apenas se distinguía el contorno). Van los mismos
+    // valores por defecto que css/styles.css, para que el dibujo se vea igual
+    // suelto que dentro del sitio.
+    s.push("<style>:root{--piece-white:#fff;--piece-black:#17202a;}</style>");
     s.push('<rect width="' + total + '" height="' + total + '" rx="4" fill="' + BORDE + '"/>');
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
         s.push('<rect x="' + (pad + c * celda) + '" y="' + (pad + r * celda) + '" width="' + celda +
