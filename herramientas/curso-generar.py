@@ -149,9 +149,20 @@ def portada(curso):
     salida = re.sub(r'<article class="pt-8 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
     salida = salida.replace("<title>Finales Prácticos — Ajedrez Integral</title>",
                             "<title>%s — Ajedrez Integral</title>" % escapar(titulo))
+    descripcion_meta = "Temario completo del curso %s: %s" % (titulo, curso["resumen"])
     salida = re.sub(r'<meta name="description" content="[^"]*">',
-                    '<meta name="description" content="Temario completo del curso %s: %s">'
-                    % (escapar(titulo), escapar(curso["resumen"])), salida, count=1)
+                    '<meta name="description" content="%s">' % escapar(descripcion_meta), salida, count=1)
+    # El molde (finales-practicos.html) trae SU PROPIO canonical/og — clonarlo
+    # sin corregirlos deja el curso nuevo compartiéndose con la miniatura y la
+    # descripción de "Finales Prácticos", sin que nada avise.
+    salida = re.sub(r'<link rel="canonical" href="[^"]*">',
+                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+    salida = re.sub(r'<meta property="og:title" content="[^"]*">',
+                    '<meta property="og:title" content="%s — Ajedrez Integral">' % escapar(titulo), salida)
+    salida = re.sub(r'<meta property="og:description" content="[^"]*">',
+                    '<meta property="og:description" content="%s">' % escapar(descripcion_meta), salida)
+    salida = re.sub(r'<meta property="og:url" content="[^"]*">',
+                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
 
     # Si el curso trae posiciones, la página carga el visor de tableros (el
     # mismo de "Los 100 finales"): chess.js para las reglas, el motor para la

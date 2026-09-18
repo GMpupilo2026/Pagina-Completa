@@ -173,6 +173,17 @@
       "precio": "",
       "duracion": "",
       "modalidad": ""
+    },
+    {
+      "slug": "arbitro-nacional",
+      "titulo": "Árbitro Nacional",
+      "nivel": "formacion-docente",
+      "resumen": "Las Leyes del Ajedrez y el Handbook de la FIDE a fondo: reloj, irregularidades, tablas, conducta, ritmos, emparejamientos y el oficio de árbitro.",
+      "lecciones": 17,
+      "alt": "Posición muerta: rey y alfil contra rey solo — con ese material, ningún bando puede dar mate con ninguna secuencia de jugadas legales.",
+      "precio": "",
+      "duracion": "",
+      "modalidad": ""
     }
   ]
 }
