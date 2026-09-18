@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+    <title>Formación Ajedrez — Ajedrez Integral</title>
+    <!-- datos estructurados: los genera herramientas/datos-estructurados.py -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","@id":"https://ajedrez-integral.com/cursos/finales-practicos.html#curso","name":"Finales Prácticos","description":"Temario completo del curso de Finales Prácticos: finales de peones, torres, alfiles de distinto color y conversión de ventaja.","url":"https://ajedrez-integral.com/cursos/finales-practicos.html","inLanguage":"es-CR","image":"https://ajedrez-integral.com/img/og-ajedrez-integral.jpg","provider":{"@type":"Organization","@id":"https://ajedrez-integral.com/#organizacion","name":"Ajedrez Integral","url":"https://ajedrez-integral.com/","logo":"https://ajedrez-integral.com/img/logo-oscar-angulo.png","image":"https://ajedrez-integral.com/img/og-ajedrez-integral.jpg","description":"Academia de ajedrez con clases en vivo, entrenamiento interactivo y seguimiento del progreso, para escuelas, colegios y familias.","areaServed":"CR","founder":{"@type":"Person","name":"Oscar Angulo Cubero","jobTitle":"Entrenador FIDE y Árbitro Internacional","url":"https://ajedrez-integral.com/sobre-oscar.html"},"sameAs":["https://wa.me/50683092291"]}}</script>
+    <meta name="description" content="Temario completo del curso Formación Ajedrez: Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.">
+    <link rel="canonical" href="https://ajedrez-integral.com/cursos/formacion-ajedrez.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Formación Ajedrez — Ajedrez Integral">
+    <meta property="og:description" content="Temario completo del curso Formación Ajedrez: Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.">
+    <meta property="og:url" content="https://ajedrez-integral.com/cursos/formacion-ajedrez.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <article class="pt-8 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
+            <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">Formación docente</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Formación Ajedrez</h1>
+            <p class="text-brand-500 dark:text-brand-400 mb-6">Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-accent-700 to-brand-900 rounded-2xl flex items-center justify-center text-7xl mb-6">⚖️</div>
+
+            <p class="text-brand-600 dark:text-brand-300 mb-8">Curso para personas docentes, asesoras regionales y árbitras de ajedrez: el reglamento de la FIDE, la normativa vigente de los Juegos Deportivos Estudiantiles (JDE) y el arbitraje práctico, con una sesión presencial de cierre en la que se organiza y arbitra un torneo real.</p>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-400"><strong class="text-brand-800 dark:text-white">8 sesiones</strong> · Formación docente</p>
+                    <p class="text-xs text-brand-400 dark:text-brand-500 mt-0.5">30 horas en total (22 horas virtuales sincrónicas por Microsoft Teams y 8 horas presenciales), con quiz, práctica y tarea en cada sesión.</p>
+                </div>
+                <div class="hidden items-center gap-2" id="course-access-cta" hidden>
+                    <a href="../login.html?next=cursos/formacion-ajedrez.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">Iniciar sesión →</a>
+                </div>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
+            <div class="space-y-8">
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · Reglamento y reglas de competición</h3>
+                    <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Encuadre del curso y reglas básicas del ajedrez<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Movimientos legales, jaque, jaque mate, ahogado y tablas, con los errores más frecuentes en el aula.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Reglas de competición<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Conducta durante la partida, uso de dispositivos electrónicos, reclamos e incidencias frecuentes.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Modalidades, normativa y sistemas de torneo</h3>
+                    <ol start="3" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Ajedrez rápido y relámpago, sistemas de desempate y normativa vigente de los Juegos Deportivos Estudiantiles.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Sistemas de emparejamiento para torneos<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Sistema suizo y todos contra todos (round robin): cómo funcionan y cuándo usar cada uno.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Uso, configuración y control del reloj de ajedrez<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia.</span></li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · Integración práctica y cierre presencial</h3>
+                    <ol start="6" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
+                        <li class="text-brand-600 dark:text-brand-300">Resolución de casos en grupos y experiencias regionales<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Talleres prácticos y simulacros de arbitraje<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial.</span></li>
+                        <li class="text-brand-600 dark:text-brand-300">Torneo real, evaluación final y certificación<span class="block text-xs text-brand-400 dark:text-brand-500 mt-0.5">Sesión presencial, 8 horas.</span></li>
+                    </ol>
+                </div>
+            </div>
+
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1 mt-12">Contenido completo del curso</h2>
+            <p class="text-brand-500 dark:text-brand-400 text-sm mb-6">Cada sesión desarrollada por completo: el contenido para ver en clase, la práctica, el quiz con su respuesta y la tarea, con su presentación y su cuadernillo de repaso. La Sesión 8 es presencial y cierra el curso con un torneo real, la evaluación final y la entrega de certificados.</p>
+
+            <div id="course-content-body" data-course="formacion-ajedrez" class="space-y-8">
+                <p class="text-sm text-brand-400 dark:text-brand-500">Cargando lecciones…</p>
+            </div>
+
+            <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
+                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
+                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las 8 sesiones completas de este curso, con sus recursos descargables.</p>
+                <a href="../login.html?next=cursos/formacion-ajedrez.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
+            </div>
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="preparacion-para-torneos.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Preparación para Torneos"><span aria-hidden="true">←</span> Preparación para Torneos</a>
+                <a href="fundamentos-del-ajedrez.html" class="text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Fundamentos del Ajedrez">Fundamentos del Ajedrez <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>

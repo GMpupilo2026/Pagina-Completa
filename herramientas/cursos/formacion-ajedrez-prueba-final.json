@@ -1,0 +1,302 @@
+[
+  {
+    "id": "ley_jadoube",
+    "area": "leyes",
+    "peso": 1,
+    "enunciado": "¿Cuándo puede un jugador acomodar sus piezas diciendo \"compongo\" (j'adoube)?",
+    "opciones": [
+      "Solo en su turno y antes de tocar la pieza.",
+      "En cualquier momento, sea o no su turno.",
+      "Solo con permiso del árbitro en cada ocasión.",
+      "En su turno, incluso después de tocarla."
+    ],
+    "correcta": 0,
+    "explica": "El aviso va antes de tocar la pieza y solo vale en el propio turno. Dicho después de tocarla, no sirve de nada: la pieza ya está tocada.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.2.1"
+  },
+  {
+    "id": "ley_jugada_completada",
+    "area": "leyes",
+    "peso": 1,
+    "enunciado": "¿Cuándo está completada la jugada de un jugador?",
+    "opciones": [
+      "Cuando suelta la pieza en la casilla de destino.",
+      "Cuando presiona el reloj después de haber movido.",
+      "Cuando el rival levanta su propia pieza para responder.",
+      "Cuando termina de anotar la jugada en la planilla."
+    ],
+    "correcta": 0,
+    "explica": "La jugada se hace al soltar la pieza; presionar el reloj es lo que la completa a efectos del control de tiempo, pero la jugada en sí ya está hecha cuando la mano suelta la pieza.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.7 y 6.2.1"
+  },
+  {
+    "id": "ley_pieza_tocada",
+    "area": "leyes",
+    "peso": 1,
+    "enunciado": "Un jugador toca una pieza propia que tiene jugada legal. ¿Qué está obligado a hacer?",
+    "opciones": [
+      "A mover esa pieza, si tiene alguna jugada legal.",
+      "A mover esa pieza solo si el rival lo reclama.",
+      "Nada: la obligación empieza al soltarla.",
+      "A mover esa pieza o cualquier otra de igual valor."
+    ],
+    "correcta": 0,
+    "explica": "Pieza tocada, pieza jugada, salvo que el jugador haya avisado \"compongo\" (j'adoube) antes de tocarla. Si no tiene jugada legal, la obligación no se aplica.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.2 y 4.3"
+  },
+  {
+    "id": "rel_orden_mover_presionar",
+    "area": "reloj",
+    "peso": 1,
+    "enunciado": "¿En qué orden se hacen las dos cosas, la jugada y el reloj?",
+    "opciones": [
+      "Primero la jugada en el tablero y después presionar el reloj.",
+      "Primero presionar el reloj y después la jugada en el tablero.",
+      "Las dos a la vez, con las dos manos, para no perder tiempo.",
+      "Da lo mismo, mientras la jugada quede hecha antes de la caída."
+    ],
+    "correcta": 0,
+    "explica": "Presionar el reloj es lo que cierra la jugada: hacerlo antes de mover es una infracción, y en apuro de tiempo es de las que más se ven.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.2.1"
+  },
+  {
+    "id": "rel_que_es_bandera",
+    "area": "reloj",
+    "peso": 1,
+    "enunciado": "En el lenguaje de las Leyes, ¿qué significa \"caída de bandera\"?",
+    "opciones": [
+      "Que a ese jugador se le agotó el tiempo de ese período.",
+      "Que el reloj llegó al final del último período del control.",
+      "Que el jugador se pasó del número de jugadas previsto.",
+      "Que el reloj se apagó o dejó de funcionar durante la partida."
+    ],
+    "correcta": 0,
+    "explica": "Viene de los relojes analógicos, que tenían una banderita. Hoy es simplemente que el tiempo de ese jugador llegó a cero en ese período.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 6.8 y glosario"
+  },
+  {
+    "id": "irr_corregir_a_tiempo",
+    "area": "irregularidades",
+    "peso": 1,
+    "enunciado": "Un jugador hace una jugada ilegal pero todavía no presionó el reloj. ¿Qué corresponde?",
+    "opciones": [
+      "Puede corregirla sin sanción: la jugada no está completada.",
+      "Ya es jugada ilegal completada y el rival recibe dos minutos.",
+      "Pierde el derecho a mover esa pieza en esa jugada.",
+      "El árbitro debe anotar la incidencia aunque la corrija."
+    ],
+    "correcta": 0,
+    "explica": "El reloj es la frontera: mientras no lo presione, la jugada se puede arreglar. Eso sí, la pieza tocada sigue obligando.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 7.5.1 y 4.3"
+  },
+  {
+    "id": "irr_peon_octava_sin_coronar",
+    "area": "irregularidades",
+    "peso": 1,
+    "enunciado": "Un peón llega a la octava fila y el jugador lo deja ahí, como peón, y presiona el reloj.",
+    "opciones": [
+      "Es jugada ilegal: el cambio va en esa misma jugada.",
+      "Es legal: el peón puede coronar en la jugada que sigue.",
+      "Es legal, y el peón queda bloqueado hasta que lo cambien.",
+      "Es legal si el jugador avisó antes en qué pieza va a coronar."
+    ],
+    "correcta": 0,
+    "explica": "El cambio de peón por dama, torre, alfil o caballo del mismo color es parte de la misma jugada. Un peón no puede quedarse en la última fila.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5"
+  },
+  {
+    "id": "tab_anotar_obligacion",
+    "area": "tablas",
+    "peso": 1,
+    "enunciado": "¿Qué está obligado a anotar cada jugador en su planilla?",
+    "opciones": [
+      "Sus jugadas y las del rival, legibles y jugada a jugada.",
+      "Solo sus propias jugadas, en la notación que prefiera.",
+      "Solo las jugadas hasta el primer control de tiempo.",
+      "Las jugadas y el tiempo del reloj después de cada una."
+    ],
+    "correcta": 0,
+    "explica": "Las dos columnas, jugada a jugada, en la notación algebraica del apéndice C y de forma legible. La planilla es documento del torneo, no una nota personal.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1.1"
+  },
+  {
+    "id": "tab_firmar_planillas",
+    "area": "tablas",
+    "peso": 1,
+    "enunciado": "Terminada la partida, ¿qué hacen los dos jugadores con las planillas?",
+    "opciones": [
+      "Firman las dos, la propia y la del rival, con el resultado.",
+      "Firma solo quien ganó, que es quien reporta el resultado.",
+      "Las entregan sin firmar: la firma la pone el árbitro.",
+      "Firma cada uno la suya y la del rival queda sin firmar."
+    ],
+    "correcta": 0,
+    "explica": "Firmar las dos es la forma de que los dos estén de acuerdo con el resultado. Aun así, firmar no impide apelar después una decisión del árbitro.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.7"
+  },
+  {
+    "id": "con_fumar",
+    "area": "conducta",
+    "peso": 1,
+    "enunciado": "¿Dónde se puede fumar durante una competición?",
+    "opciones": [
+      "Solo en la zona que el árbitro haya señalado para eso.",
+      "En cualquier lugar del recinto que no sea la sala de juego.",
+      "En ningún lugar del recinto, sin ninguna excepción posible.",
+      "Donde lo permita la ley del país, sin intervención del árbitro."
+    ],
+    "correcta": 0,
+    "explica": "El recinto de juego incluye la sala, los baños, la zona de descanso y la de fumar, y quien define cada una es el árbitro.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.3 y 11.2"
+  },
+  {
+    "id": "con_hablar_partida_en_curso",
+    "area": "conducta",
+    "peso": 1,
+    "enunciado": "Dos personas comentan en voz baja una partida que todavía se está jugando. ¿Qué dicen las Leyes?",
+    "opciones": [
+      "Está prohibido comentar una partida que está en curso.",
+      "Se puede, mientras los jugadores de esa mesa no escuchen.",
+      "Se puede si ninguno de los dos es jugador del torneo.",
+      "Se puede solo en la zona de descanso, nunca en la sala."
+    ],
+    "correcta": 0,
+    "explica": "La prohibición alcanza a todo el mundo, jugadores y público: un comentario suelto cerca de una mesa puede valer tanto como una ayuda directa.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.7"
+  },
+  {
+    "id": "con_movil_apagado_bolso",
+    "area": "conducta",
+    "peso": 1,
+    "enunciado": "¿Dónde puede dejar un jugador su celular durante la partida?",
+    "opciones": [
+      "Donde indique el reglamento, fuera de su alcance.",
+      "En el bolsillo, mientras esté en silencio y no suene.",
+      "Sobre la mesa de juego, boca abajo y completamente apagado.",
+      "En su bolso, debajo de la mesa donde está jugando."
+    ],
+    "correcta": 0,
+    "explica": "La regla prohíbe tenerlo encima en la sala; dónde se deja lo resuelve el organizador (casilleros, una mesa vigilada, fuera de la sala) y se anuncia antes de empezar.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 11.3.2"
+  },
+  {
+    "id": "rit_apendice_c",
+    "area": "ritmos",
+    "peso": 1,
+    "enunciado": "¿Qué notación es obligatoria en las competiciones FIDE?",
+    "opciones": [
+      "La algebraica, descrita en el apéndice C.",
+      "La descriptiva, por ser la tradicional.",
+      "Cualquiera, mientras el jugador la entienda.",
+      "La que fije la federación de cada jugador."
+    ],
+    "correcta": 0,
+    "explica": "Solo la algebraica. Las iniciales de las piezas pueden ser las del idioma del jugador, pero la estructura de la notación es la misma en todo el mundo.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 8.1 y apéndice C"
+  },
+  {
+    "id": "rit_donde_se_aplican",
+    "area": "ritmos",
+    "peso": 1,
+    "enunciado": "En rápidas y relámpago, ¿qué reglas se aplican?",
+    "opciones": [
+      "Las Leyes, con los cambios que fijan sus apéndices.",
+      "Solo los apéndices: las Leyes generales no rigen en esos ritmos.",
+      "Las que decida el organizador de cada torneo en su reglamento.",
+      "Las Leyes sin cambios: los apéndices son solo orientativos."
+    ],
+    "correcta": 0,
+    "explica": "Los apéndices no sustituyen a las Leyes: las modifican en lo que dicen expresamente (anotación, ilegales, reclamos) y en todo lo demás rige el texto general.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndices A y B"
+  },
+  {
+    "id": "rit_ejemplo_blitz",
+    "area": "ritmos",
+    "peso": 1,
+    "enunciado": "Un torneo se juega a 3 minutos más 2 segundos por jugada. ¿Qué ritmo es?",
+    "opciones": [
+      "Relámpago (blitz): la cuenta da 5 minutos por jugador.",
+      "Rápidas (rapid): el incremento lo saca de relámpago.",
+      "Relámpago solo si además no hay árbitro en la sala.",
+      "Un ritmo sin nombre: los incrementos chicos no se clasifican."
+    ],
+    "correcta": 0,
+    "explica": "3 + 60 × 2 segundos = 3 + 2 = 5 minutos. Diez minutos o menos es relámpago, con incremento o sin él.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.1"
+  },
+  {
+    "id": "com_lista_inicial",
+    "area": "competicion",
+    "peso": 1,
+    "enunciado": "Antes de emparejar la primera ronda de un suizo, ¿cómo se ordena la lista de jugadores?",
+    "opciones": [
+      "Por rating, de mayor a menor, con criterios para los empates.",
+      "Por orden alfabético del apellido de cada jugador inscrito.",
+      "Por orden de inscripción en el torneo, del primero al último.",
+      "Por sorteo público delante de todos los jugadores inscritos."
+    ],
+    "correcta": 0,
+    "explica": "Ese orden inicial es el número de cada jugador y se usa toda la competición: los emparejamientos y los desempates se apoyan en él.",
+    "fuente": "Reglas básicas del sistema suizo (Handbook C.04.1)"
+  },
+  {
+    "id": "com_puntos_partida",
+    "area": "competicion",
+    "peso": 1,
+    "enunciado": "Salvo que el reglamento anuncie otra cosa, ¿cuánto vale cada resultado?",
+    "opciones": [
+      "Ganar 1, empatar medio punto y perder cero.",
+      "Ganar 3, empatar 1 y perder cero, como en el fútbol.",
+      "Ganar 2, empatar 1 y perder cero puntos.",
+      "Lo que decida el árbitro principal antes de cada ronda."
+    ],
+    "correcta": 0,
+    "explica": "Es el único artículo de las Leyes dedicado al puntaje. Un torneo puede usar otro sistema, pero tiene que estar anunciado de antemano.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 10"
+  },
+  {
+    "id": "com_que_es_suizo",
+    "area": "competicion",
+    "peso": 1,
+    "enunciado": "¿En qué se diferencia un suizo de un round robin?",
+    "opciones": [
+      "En el suizo se empareja por puntuación ronda a ronda.",
+      "En el suizo se juega a dos vueltas y en el round robin a una.",
+      "En el suizo no se usan desempates y en el round robin sí.",
+      "En el suizo los colores son fijos para cada jugador."
+    ],
+    "correcta": 0,
+    "explica": "De ahí sale todo lo demás: el suizo permite torneos grandes en pocas rondas, pero obliga a cuidar los colores y a no repetir rivales.",
+    "fuente": "Reglas de emparejamiento suizo (Handbook C.04)"
+  },
+  {
+    "id": "tit_deber_principal",
+    "area": "titulos",
+    "peso": 1,
+    "enunciado": "¿Cuál es el deber central del árbitro según las Leyes?",
+    "opciones": [
+      "Que se cumplan las Leyes y cuidar la competición.",
+      "Asegurar que gane el jugador mejor clasificado del torneo.",
+      "Resolver todas las partidas que se demoren demasiado tiempo.",
+      "Enseñarles las reglas a los jugadores durante la partida."
+    ],
+    "correcta": 0,
+    "explica": "Las dos cosas a la vez, y en ese orden. El resto de los deberes —supervisar, sancionar, cuidar las condiciones de juego— salen de ahí.",
+    "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.1 y 12.2"
+  },
+  {
+    "id": "tit_edad_minima",
+    "area": "titulos",
+    "peso": 1,
+    "enunciado": "¿Hay una edad mínima para los títulos de árbitro de la FIDE?",
+    "opciones": [
+      "Sí: el reglamento fija una edad mínima para cada título.",
+      "No: cualquier persona puede pedir el título a cualquier edad.",
+      "Sí, pero solo para el título de Árbitro Internacional.",
+      "No, aunque hace falta el permiso de la federación si es menor."
+    ],
+    "correcta": 0,
+    "explica": "Se pide edad mínima y también experiencia real dirigiendo torneos. La cifra exacta la fija el reglamento vigente y conviene consultarla cada año.",
+    "fuente": "Reglamento de títulos de árbitro (Handbook B.06.1)"
+  }
+]
