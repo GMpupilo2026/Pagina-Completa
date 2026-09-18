@@ -460,8 +460,57 @@ líneas de HTML.
   no era la veía quien lo recibía, que es el único que no puede arreglarlo.
 - **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
   sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
-  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, y qué
-  manda el formulario público al contestar.
+  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, qué
+  manda el formulario público al contestar y el alta de abajo — qué dedujo de
+  cada etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+
+### De la respuesta a la cuenta, en un botón
+
+Cada respuesta tiene su botón **"Crear cuenta"**: crea la cuenta del alumno con
+su invitación por correo, lo deja asignado a quien aprieta el botón, le pone el
+equipo del formulario y **apunta a la persona encargada con su correo**, que es
+lo que después usa "📧 Informes a la casa" de `informes.html`. Antes eso era
+copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
+
+- **Es UNA Edge Function (`inscribir-alumno`), no dos llamadas del navegador.**
+  Invitar al alumno y apuntar a su encargado son un solo acto: "dar de alta a
+  esta familia". Partido en dos, si la segunda mitad falla queda un alumno con
+  cuenta y sin encargado, y eso **no da ningún error** — simplemente nunca le
+  llega el informe a la casa y nadie se entera hasta que alguien pregunta.
+- **Se puede apretar dos veces sin romper nada.** Si ya hay cuenta con ese
+  correo se reusa y **no se gasta otra invitación del cupo**; la asignación de
+  profesor y la persona encargada son upsert (`profile_teachers` y el
+  `UNIQUE (student_id, email)` de `encargados`). Así un doble clic, o reintentar
+  después de un fallo a mitad de camino, termina el alta en vez de enredarla.
+- **La marca de "ya se creó" vive en la base**, en la propia respuesta
+  (`cuenta_id`, `cuenta_creada_at`, `cuenta_creada_por`), no en una variable de
+  la pantalla: al volver mañana, la fila muestra ✅ en vez de ofrecer una
+  segunda invitación al mismo correo. Se escribe **al final**, cuando todo lo
+  demás salió bien. No confundir `cuenta_id` con `alumno_id`, que ya existía y
+  es otra cosa: quién *contestó* el formulario (casi siempre nulo, porque el
+  formulario es público).
+  `formulario_respuestas` **sigue sin política de update**: una respuesta
+  enviada no se toca desde el navegador, así que esas tres columnas solo las
+  escribe la función con la service role.
+- **El permiso no se comprueba a mano**: la fila de la respuesta se lee con el
+  JWT de quien llama, o sea pasando por la RLS. Comprobado impersonando roles en
+  SQL — quien administra coordina y ve la respuesta; una coordinadora que no
+  creó ese formulario recibe **cero filas** y se lleva un 403; un alumno no
+  coordina. Es la misma regla que ya usa `informes-encargados`.
+- **Qué pregunta es cuál se declara, y si no, se deduce.** Cada pregunta lleva
+  un `papel` (`alumno_nombre`, `alumno_correo`, `encargado_nombre`,
+  `encargado_correo`) que se elige al armarla, y la plantilla ya viene con los
+  cuatro puestos. Los formularios que ya existen no lo traen, así que
+  `papelesDe()` lo deduce de la etiqueta — "correo encargado" es de la casa,
+  "correo electrónico" es del alumno.
+- **Pero deducir no es saber, y por eso el botón NO manda de una.** Abre el
+  diálogo con los cuatro datos ya puestos y editables. Mandarle la invitación al
+  correo de la mamá en vez de al del alumno no da ningún error: simplemente
+  entra al sitio la persona que no era, y el correo ya salió. Lo que se enseña
+  antes de mandar es exactamente lo que se va a mandar.
+- El cupo sigue siendo el de siempre (`profiles.invitaciones_max`): quien
+  administra no tiene tope, un profesor sin invitaciones asignadas recibe el
+  mismo aviso que en la Academia.
 
 ## Informes: la cuenta la hace la base, no el navegador
 
