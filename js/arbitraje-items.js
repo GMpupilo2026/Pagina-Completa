@@ -2678,9 +2678,18 @@ window.ARBITRAJE_ITEMS = [
  * puntos—, para que dos exámenes del mismo árbitro (o de dos árbitros
  * distintos) se puedan comparar.
  *
- *   ArbitrajePrueba.armar()       → las 40 preguntas de un examen nuevo
- *   ArbitrajePrueba.armar(ids)    → las mismas, respetando lo ya contestado
- *   ArbitrajePrueba.porIds(ids)   → recupera un examen guardado
+ *   ArbitrajePrueba.armar()          → las 40 preguntas de un examen nuevo (todos los escalones)
+ *   ArbitrajePrueba.armar(ids)       → las mismas, respetando lo ya contestado
+ *   ArbitrajePrueba.armar(ids,sem,3) → un examen con TECHO: solo escalones 1 a 3
+ *   ArbitrajePrueba.porIds(ids)      → recupera un examen guardado
+ *
+ * El techo es lo que arma los "tres exámenes más" (Nacional, FIDE,
+ * Internacional): no son tres bancos separados, son el mismo banco cortado en
+ * el escalón que a cada título le toca — exactamente el mismo mapeo peso↔nivel
+ * que ya usa js/arbitraje-nivel.js (3=nacional, 4=FIDE, 5=internacional). Un
+ * examen con techo 3 nunca puede alcanzar el escalón 4, así que el cálculo de
+ * nivel de ArbitrajeNivel.resumir() no necesita ningún cambio: se limita solo
+ * porque no hay preguntas más difíciles para ofrecerle.
  */
 window.ArbitrajePrueba = (function () {
   "use strict";
@@ -2692,8 +2701,23 @@ window.ArbitrajePrueba = (function () {
   const porId = {};
   BANCO.forEach((i) => { porId[i.id] = i; });
 
-  const TOTAL = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w], 0);
-  const PUNTOS = AREAS.length * PESOS.reduce((t, w) => t + FORMA[w] * w, 0);
+  const pesosHasta = (techo) => (techo ? PESOS.filter((p) => p <= techo) : PESOS);
+  const totalPara = (techo) => AREAS.length * pesosHasta(techo).reduce((t, w) => t + FORMA[w], 0);
+  const puntosPara = (techo) => AREAS.length * pesosHasta(techo).reduce((t, w) => t + FORMA[w] * w, 0);
+
+  const TOTAL = totalPara(null);
+  const PUNTOS = puntosPara(null);
+
+  /* Los "tres exámenes más": mismo banco, con techo de escalón y su propio
+     tiempo (menos preguntas, menos minutos). `etiqueta` es la misma que ya usa
+     ArbitrajeNivel.NIVELES para ese escalón, para no inventar una segunda. */
+  const NIVELES_EXAMEN = [
+    { clave: 'nacional', techo: 3, etiqueta: 'Árbitro Nacional', minutos: 30 },
+    { clave: 'fide', techo: 4, etiqueta: 'Árbitro FIDE', minutos: 40 },
+    { clave: 'internacional', techo: 5, etiqueta: 'Árbitro Internacional', minutos: 50 },
+  ];
+  const NIVEL_EXAMEN_POR_CLAVE = {};
+  NIVELES_EXAMEN.forEach((n) => { NIVEL_EXAMEN_POR_CLAVE[n.clave] = n; });
 
   function azar(semilla) {
     let x = (semilla >>> 0) || 1;
@@ -2719,18 +2743,19 @@ window.ArbitrajePrueba = (function () {
     return (ids || []).map((id) => porId[id]).filter(Boolean);
   }
 
-  function armar(fijos, semilla) {
+  function armar(fijos, semilla, techo) {
     const rnd = azar(typeof semilla === "number" ? semilla : Math.floor(Math.random() * 2147483647));
-    const yaEstan = porIds(fijos);
+    const pesos = pesosHasta(techo);
+    const yaEstan = porIds(fijos).filter((i) => pesos.indexOf(i.peso) !== -1);
     const usados = {};
     yaEstan.forEach((i) => { usados[i.id] = true; });
 
     const elegidos = [];
     AREAS.forEach((area) => {
       const falta = {};
-      PESOS.forEach((w) => { falta[w] = FORMA[w]; });
+      pesos.forEach((w) => { falta[w] = FORMA[w]; });
       yaEstan.filter((i) => i.area === area).forEach((i) => { if (falta[i.peso] > 0) falta[i.peso] -= 1; });
-      PESOS.forEach((peso) => {
+      pesos.forEach((peso) => {
         const candidatos = barajar(BANCO.filter((i) => i.area === area && i.peso === peso && !usados[i.id]), rnd);
         while (falta[peso] > 0 && candidatos.length) {
           const item = candidatos.shift();
@@ -2740,10 +2765,10 @@ window.ArbitrajePrueba = (function () {
         }
       });
       // Si al área le faltan preguntas de algún escalón, se completa con las que
-      // haya, empezando por la dificultad más parecida.
-      PESOS.forEach((peso) => {
+      // haya (sin pasarse del techo), empezando por la dificultad más parecida.
+      pesos.forEach((peso) => {
         while (falta[peso] > 0) {
-          const resto = BANCO.filter((i) => i.area === area && !usados[i.id])
+          const resto = BANCO.filter((i) => i.area === area && !usados[i.id] && pesos.indexOf(i.peso) !== -1)
             .sort((a, b) => Math.abs(a.peso - peso) - Math.abs(b.peso - peso));
           if (!resto.length) break;
           usados[resto[0].id] = true;
@@ -2758,5 +2783,8 @@ window.ArbitrajePrueba = (function () {
     return yaEstan.concat(elegidos);
   }
 
-  return { FORMA, AREAS, PESOS, TOTAL, PUNTOS, armar, porIds };
+  return {
+    FORMA, AREAS, PESOS, TOTAL, PUNTOS, armar, porIds,
+    NIVELES_EXAMEN, NIVEL_EXAMEN_POR_CLAVE, totalPara, puntosPara,
+  };
 })();
