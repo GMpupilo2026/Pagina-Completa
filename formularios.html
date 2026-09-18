@@ -163,6 +163,63 @@
                     </table>
                 </div>
             </section>
+
+            <!-- ============ Dar de alta a una familia ============
+                 Se abre con el botón "Crear cuenta" de una respuesta, ya con
+                 sus datos puestos. NO manda de una: crear la cuenta le manda un
+                 correo de verdad a una persona de verdad, y quién es el alumno
+                 y quién el encargado sale de adivinar qué pregunta es cuál. Se
+                 enseña lo que va a salir antes de que salga. -->
+            <div id="alta-fondo" class="hidden fixed inset-0 z-50 bg-brand-950/60 p-4 overflow-y-auto">
+                <div id="alta-caja" role="dialog" aria-modal="true" aria-labelledby="alta-titulo"
+                     class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl max-w-lg mx-auto my-8 p-6">
+                    <h2 id="alta-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Crear la cuenta del alumno</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Se le manda un correo con el enlace para entrar a la Academia, queda asignado a tu clase y la persona encargada queda apuntada para los informes a la casa. Revisa que cada dato esté en su lugar.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label for="alta-alumno-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre del alumno</label>
+                            <input id="alta-alumno-nombre" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="alta-alumno-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo del alumno <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>
+                            <input id="alta-alumno-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega la invitación para entrar.</p>
+                        </div>
+                        <div>
+                            <label for="alta-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
+                            <input id="alta-encargado-nombre" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="alta-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la persona encargada</label>
+                            <input id="alta-encargado-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.</p>
+                        </div>
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="alta-frecuencia" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Cada cuánto el informe</label>
+                                <select id="alta-frecuencia" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="diario">Todos los días</option>
+                                    <option value="semanal" selected>Cada semana</option>
+                                    <option value="mensual">Cada mes</option>
+                                    <option value="anual">Cada año</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="alta-grupo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Equipo o grupo</label>
+                                <input id="alta-grupo" type="text" maxlength="60" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <p id="alta-msg" class="text-sm mt-4" aria-live="polite"></p>
+
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button type="button" id="alta-enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear la cuenta y enviar la invitación</button>
+                        <button type="button" id="alta-cancelar" class="text-sm text-brand-600 dark:text-brand-300 underline px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Cancelar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -209,17 +266,61 @@ const TIPOS = [
 ];
 const TIPO_VALIDO = new Set(TIPOS.map((t) => t.id));
 
+/* QUÉ ES CADA PREGUNTA, para poder crear la cuenta desde la respuesta.
+   Una etiqueta es texto libre ("Nombre y 2 apellidos", "correo encargado"), así
+   que para saber a quién invitar hace falta marcar cuál es cuál. Se declara al
+   armar el formulario y queda guardado en el campo, junto al id. */
+const PAPELES = [
+    { id: "",                 etiqueta: "— Un dato más —" },
+    { id: "alumno_nombre",    etiqueta: "Nombre del alumno" },
+    { id: "alumno_correo",    etiqueta: "Correo del alumno" },
+    { id: "encargado_nombre", etiqueta: "Nombre del encargado" },
+    { id: "encargado_correo", etiqueta: "Correo del encargado" },
+];
+const PAPEL_VALIDO = new Set(PAPELES.map((p) => p.id).filter(Boolean));
+
+const sinTildes = (t) => String(t || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/* Los formularios que ya existen no traen `papel` —se armaron antes de que
+   existiera—, así que se deduce de la etiqueta. Es una propuesta, no una
+   certeza: por eso el alta SIEMPRE enseña qué dedujo antes de mandar nada.
+   Mandarle la invitación al correo de la mamá en vez de al del alumno no da
+   ningún error; simplemente entra la persona que no era. */
+function papelesDe(campos) {
+    const mapa = {};
+    const poner = (papel, campo) => { if (papel && !mapa[papel]) mapa[papel] = campo.id; };
+
+    // Lo declarado manda, y se aplica entero antes de adivinar nada.
+    (campos || []).forEach((c) => { if (PAPEL_VALIDO.has(c.papel)) poner(c.papel, c); });
+
+    (campos || []).forEach((c) => {
+        if (PAPEL_VALIDO.has(c.papel)) return;
+        const t = sinTildes(c.etiqueta);
+        const esCorreo = c.tipo === "correo" || /correo|email|e-mail/.test(t);
+        const esNombre = /nombre|apellido/.test(t);
+        // "encargad", no "encargado": cubre encargada y encargados.
+        const deLaCasa = /encargad|madre|padre|tutor|acudiente|responsable|familia|mama|papa/.test(t);
+        if (deLaCasa) poner(esCorreo ? "encargado_correo" : esNombre ? "encargado_nombre" : "", c);
+        else if (esCorreo) poner("alumno_correo", c);
+        else if (esNombre) poner("alumno_nombre", c);
+    });
+    return mapa;
+}
+
 /* Las preguntas de una inscripción a torneo de verdad, sacadas de las que ya
    pide inscripcion.html. Es un punto de partida: se borran y se cambian. */
 const PLANTILLA = [
-    { etiqueta: "Nombre completo", tipo: "texto", requerido: true },
+    { etiqueta: "Nombre completo", tipo: "texto", requerido: true, papel: "alumno_nombre" },
+    { etiqueta: "Correo del alumno", tipo: "correo", requerido: true, papel: "alumno_correo", ayuda: "Ahí le llega la invitación para entrar a la Academia." },
     { etiqueta: "Fecha de nacimiento", tipo: "fecha", requerido: true },
     { etiqueta: "Género", tipo: "opcion", requerido: true, opciones: ["Femenino", "Masculino", "Prefiero no decirlo"] },
     { etiqueta: "Centro educativo", tipo: "texto", requerido: true },
     { etiqueta: "Grado o nivel", tipo: "texto", requerido: true },
     { etiqueta: "Provincia", tipo: "texto", requerido: true },
     { etiqueta: "Cantón", tipo: "texto", requerido: false },
-    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: true, ayuda: "Ahí se manda la confirmación." },
+    { etiqueta: "Nombre de la persona encargada", tipo: "texto", requerido: true, papel: "encargado_nombre" },
+    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: true, papel: "encargado_correo", ayuda: "Ahí se manda la confirmación y, si entra a la Academia, el informe." },
     { etiqueta: "Teléfono de contacto", tipo: "telefono", requerido: true },
     { etiqueta: "Modalidad", tipo: "opcion", requerido: true, opciones: ["Presencial", "En línea"] },
     { etiqueta: "Autorizo el uso de estos datos para organizar el torneo", tipo: "si_no", requerido: true },
@@ -309,6 +410,16 @@ function pintarCampos() {
         arriba.append(etiqueta, tipo, req, subir, bajar, quitar);
         fila.appendChild(arriba);
 
+        /* Qué es esta pregunta. Sirve para una sola cosa, pero importante: dar
+           de alta la cuenta desde la respuesta sin tener que adivinar cuál de
+           las preguntas era el correo del alumno y cuál el de la casa. */
+        const papel = document.createElement("select");
+        papel.setAttribute("aria-label", "Qué dato es la pregunta " + (i + 1));
+        papel.className = "mb-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs text-brand-600 dark:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        papel.innerHTML = PAPELES.map((x) => `<option value="${x.id}"${(c.papel || "") === x.id ? " selected" : ""}>${x.etiqueta}</option>`).join("");
+        papel.addEventListener("change", () => { c.papel = papel.value; });
+        fila.appendChild(papel);
+
         const ayuda = document.createElement("input");
         ayuda.type = "text"; ayuda.value = c.ayuda || ""; ayuda.maxLength = 300;
         ayuda.placeholder = "Aclaración debajo de la pregunta (opcional)";
@@ -336,7 +447,7 @@ function pintarCampos() {
 
 function agregarCampo(base) {
     const usados = new Set(campos.map((c) => c.id));
-    const c = Object.assign({ etiqueta: "", tipo: "texto", requerido: false, ayuda: "", opciones: [] }, base || {});
+    const c = Object.assign({ etiqueta: "", tipo: "texto", requerido: false, ayuda: "", opciones: [], papel: "" }, base || {});
     c.id = idDesde(c.etiqueta || "pregunta", usados);
     campos.push(c);
 }
@@ -373,6 +484,7 @@ async function guardar() {
             id: c.id, etiqueta: c.etiqueta.trim(), tipo: TIPO_VALIDO.has(c.tipo) ? c.tipo : "texto",
             requerido: !!c.requerido, ayuda: (c.ayuda || "").trim(),
             opciones: (c.tipo === "opcion" || c.tipo === "varias") ? (c.opciones || []) : [],
+            papel: PAPEL_VALIDO.has(c.papel) ? c.papel : "",
         }));
     if (!limpios.length) { msg.textContent = "Agrégale al menos una pregunta."; msg.className = "text-sm text-red-600 dark:text-red-400"; return; }
     const sinOpciones = limpios.find((c) => (c.tipo === "opcion" || c.tipo === "varias") && !c.opciones.length);
@@ -498,17 +610,23 @@ async function cargarFormularios() {
 async function verRespuestas(f) {
     document.getElementById("respuestas-titulo").textContent = "Respuestas · " + f.titulo;
     const { data, error } = await sb.from("formulario_respuestas")
-        .select("respuestas, created_at").eq("formulario_id", f.id)
+        .select("id, respuestas, created_at, cuenta_id, cuenta_creada_at").eq("formulario_id", f.id)
         .order("created_at", { ascending: false });
     if (error) { alert("No se pudieron cargar: " + error.message); return; }
-    respuestasActuales = { formulario: f, filas: data || [] };
+    respuestasActuales = { formulario: f, filas: data || [], papeles: papelesDe(f.campos) };
+    pintarRespuestas();
+    mostrar("vista-respuestas");
+}
 
+function pintarRespuestas() {
+    const { formulario: f, filas } = respuestasActuales;
     const cabecera = document.getElementById("respuestas-cabecera");
     const cuerpo = document.getElementById("respuestas-cuerpo");
     cabecera.innerHTML = "";
     cuerpo.innerHTML = "";
 
-    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(f.campos || []);
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(f.campos || [])
+        .concat([{ id: "__cuenta", etiqueta: "Cuenta" }]);
     columnas.forEach((c) => {
         const th = document.createElement("th");
         th.className = "py-2 pr-4 font-semibold whitespace-nowrap";
@@ -516,29 +634,146 @@ async function verRespuestas(f) {
         cabecera.appendChild(th);
     });
 
-    if (!respuestasActuales.filas.length) {
+    if (!filas.length) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
         td.colSpan = columnas.length;
         td.className = "py-4 text-brand-450 dark:text-brand-350";
         td.textContent = "Todavía no ha contestado nadie.";
         tr.appendChild(td); cuerpo.appendChild(tr);
-    } else {
-        respuestasActuales.filas.forEach((r) => {
-            const tr = document.createElement("tr");
-            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-            columnas.forEach((c) => {
-                const td = document.createElement("td");
-                td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
+        return;
+    }
+
+    filas.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+        columnas.forEach((c) => {
+            const td = document.createElement("td");
+            td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
+            if (c.id === "__cuenta") {
+                td.appendChild(celdaCuenta(r));
+            } else {
                 td.textContent = c.id === "__fecha"
                     ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
                     : valorLegible(r.respuestas[c.id]);
-                tr.appendChild(td);
-            });
-            cuerpo.appendChild(tr);
+            }
+            tr.appendChild(td);
         });
+        cuerpo.appendChild(tr);
+    });
+}
+
+/* Que ya se le creó la cuenta lo dice la BASE (cuenta_id de la propia
+   respuesta), no una variable de la pantalla: al volver a abrir las respuestas
+   mañana, el botón no vuelve a ofrecer mandar una segunda invitación al mismo
+   correo. */
+function celdaCuenta(r) {
+    if (r.cuenta_id) {
+        const listo = document.createElement("span");
+        listo.className = "whitespace-nowrap text-green-700 dark:text-green-400";
+        listo.textContent = "✅ Creada" + (r.cuenta_creada_at
+            ? " el " + new Date(r.cuenta_creada_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short" })
+            : "");
+        return listo;
     }
-    mostrar("vista-respuestas");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "Crear cuenta";
+    b.className = "whitespace-nowrap bg-accent-500 hover:bg-accent-600 text-brand-900 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    b.addEventListener("click", () => abrirAlta(r, b));
+    return b;
+}
+
+// ------------------------------------------------------------------ dar de alta
+let altaRespuesta = null;
+let altaVolverEl = null;
+
+function abrirAlta(r, boton) {
+    const { formulario: f, papeles } = respuestasActuales;
+    altaRespuesta = r;
+    altaVolverEl = boton || null;
+    const dato = (papel) => {
+        const id = papeles[papel];
+        return id ? valorLegible(r.respuestas[id]) : "";
+    };
+    document.getElementById("alta-alumno-nombre").value = dato("alumno_nombre");
+    document.getElementById("alta-alumno-correo").value = dato("alumno_correo");
+    document.getElementById("alta-encargado-nombre").value = dato("encargado_nombre");
+    document.getElementById("alta-encargado-correo").value = dato("encargado_correo");
+    document.getElementById("alta-frecuencia").value = "semanal";
+    // El equipo del formulario: si se armó para 7° B, sus alumnos son de 7° B.
+    document.getElementById("alta-grupo").value = f.grupo || "";
+    const msg = document.getElementById("alta-msg");
+    msg.textContent = "";
+    msg.className = "text-sm mt-4";
+    document.getElementById("alta-enviar").disabled = false;
+    document.getElementById("alta-fondo").classList.remove("hidden");
+    document.getElementById("alta-alumno-correo").focus();
+}
+
+function cerrarAlta() {
+    document.getElementById("alta-fondo").classList.add("hidden");
+    altaRespuesta = null;
+    // El foco vuelve al botón que abrió esto: si no, se queda dentro de algo
+    // que ya no está en pantalla.
+    if (altaVolverEl && document.body.contains(altaVolverEl)) altaVolverEl.focus();
+    altaVolverEl = null;
+}
+
+async function enviarAlta() {
+    if (!altaRespuesta) return;
+    const btn = document.getElementById("alta-enviar");
+    const msg = document.getElementById("alta-msg");
+    const v = (id) => document.getElementById(id).value.trim();
+
+    const cuerpo = {
+        respuesta_id: altaRespuesta.id,
+        alumno_nombre: v("alta-alumno-nombre"),
+        alumno_email: v("alta-alumno-correo"),
+        encargado_nombre: v("alta-encargado-nombre"),
+        encargado_email: v("alta-encargado-correo"),
+        frecuencia: document.getElementById("alta-frecuencia").value,
+        grupo: v("alta-grupo"),
+    };
+    if (!cuerpo.alumno_email) {
+        msg.textContent = "Falta el correo del alumno: es a donde va la invitación.";
+        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
+        document.getElementById("alta-alumno-correo").focus();
+        return;
+    }
+
+    btn.disabled = true;
+    msg.textContent = "Creando la cuenta…";
+    msg.className = "text-sm mt-4 text-brand-500 dark:text-brand-300";
+    try {
+        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/inscribir-alumno`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`,
+                "apikey": window.SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify(cuerpo),
+        });
+        const out = await res.json();
+        if (!res.ok || !out.ok) throw new Error(out.error || "No se pudo crear la cuenta");
+
+        // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
+        // tenía cuenta no salió ninguna invitación, y conviene saberlo.
+        altaRespuesta.cuenta_id = out.alumno_id;
+        altaRespuesta.cuenta_creada_at = new Date().toISOString();
+        pintarRespuestas();
+        cerrarAlta();
+        alert(out.ya_tenia_cuenta
+            ? `${cuerpo.alumno_email} ya tenía cuenta, así que no se mandó otra invitación. Quedó en tu clase` +
+              (out.encargado_guardado ? " y la persona encargada quedó apuntada para los informes." : ".")
+            : `Invitación enviada a ${cuerpo.alumno_email}` +
+              (out.encargado_guardado ? ", y la persona encargada quedó apuntada para los informes a la casa." : "."));
+    } catch (err) {
+        msg.textContent = err.message;
+        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
+        btn.disabled = false;
+    }
 }
 
 function valorLegible(v) {
@@ -554,12 +789,15 @@ function valorLegible(v) {
 function bajarCsv() {
     const { formulario, filas } = respuestasActuales;
     if (!formulario) return;
-    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(formulario.campos || []);
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(formulario.campos || [])
+        .concat([{ id: "__cuenta", etiqueta: "Cuenta creada" }]);
     const celda = (t) => '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"';
     const lineas = [columnas.map((c) => celda(c.etiqueta)).join(";")];
     filas.forEach((r) => {
         lineas.push(columnas.map((c) => celda(
-            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR") : valorLegible(r.respuestas[c.id])
+            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR")
+            : c.id === "__cuenta" ? (r.cuenta_id ? "Sí" : "No")
+            : valorLegible(r.respuestas[c.id])
         )).join(";"));
     });
     const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
@@ -577,6 +815,15 @@ document.getElementById("volver-btn").addEventListener("click", () => mostrar("v
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
+document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
+// Clic fuera de la caja y Escape cierran, como cualquier diálogo del sitio.
+document.getElementById("alta-fondo").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) cerrarAlta();
+});
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !document.getElementById("alta-fondo").classList.contains("hidden")) cerrarAlta();
+});
 document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
 document.getElementById("plantilla-btn").addEventListener("click", () => {
     if (campos.length && !confirm("Esto reemplaza las preguntas que ya pusiste. ¿Seguir?")) return;
