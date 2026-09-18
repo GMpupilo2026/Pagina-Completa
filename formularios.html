@@ -574,8 +574,14 @@ function pintarLista() {
             b.addEventListener("click", alPulsar);
             return b;
         };
+        // Editar y Borrar solo si es de quien mira (o administra): la RLS ya
+        // lo impide para el de un compañero de equipo, pero sin esto el botón
+        // "funcionaría" sin cambiar nada, que es peor que no mostrarlo.
+        const esDueno = f.creado_por === perfil.id || perfil.is_admin;
+        if (esDueno) {
+            acciones.append(boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)));
+        }
         acciones.append(
-            boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)),
             boton("Respuestas", "bg-accent-500 hover:bg-accent-600 text-brand-900", () => verRespuestas(f)),
             boton("Copiar enlace", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", async (e) => {
                 const b = e.currentTarget;
@@ -583,13 +589,15 @@ function pintarLista() {
                 catch (err) { window.prompt("Copia el enlace:", enlacePublico(f.slug)); }
                 setTimeout(() => { b.textContent = "Copiar enlace"; }, 1500);
             }),
-            boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
+        );
+        if (esDueno) {
+            acciones.append(boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
                 if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
                 const { error } = await sb.from("formularios").delete().eq("id", f.id);
                 if (error) { alert("No se pudo borrar: " + error.message); return; }
                 await cargarFormularios();
-            })
-        );
+            }));
+        }
         card.appendChild(acciones);
         caja.appendChild(card);
     });
@@ -849,6 +857,9 @@ async function init() {
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
+    } else {
+        document.getElementById("subtitulo").textContent =
+            "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas en Excel. También ves los formularios y las respuestas de quien coordina tu mismo equipo.";
     }
 
     // Los equipos que de verdad existen entre los alumnos que uno ve.
