@@ -68,6 +68,9 @@ const CURSOS = [
     { slug: "formacion-ajedrez", fen: "7k/5K2/6P1/8/8/8/8/8 b - - 0 1", ahogado: true,
       destacar: ["h8", "f7", "g6"],
       alt: "Ahogado: el rey negro en h8 no tiene jaque pero tampoco ninguna jugada legal — tablas, no mate." },
+    { slug: "arbitro-nacional", fen: "4k3/8/8/8/8/3B4/8/4K3 w - - 0 1",
+      destacar: ["e1", "d3", "e8"],
+      alt: "Posición muerta: rey y alfil contra rey solo — con ese material, ningún bando puede dar mate con ninguna secuencia de jugadas legales." },
 ];
 
 fs.mkdirSync(SALIDA, { recursive: true });
