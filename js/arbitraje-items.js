@@ -109,7 +109,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El peón se cambia como parte de la misma jugada y la promoción queda hecha al soltar la pieza nueva. Elegida y soltada, ya no se cambia.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 3.7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 4.6 y 3.7.3.3',
   },
   {
     id: 'ley_dead_position', area: 'leyes', peso: 3,
@@ -148,7 +148,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El derecho dura una sola jugada: si no se ejerce ahí, se pierde. Es uno de los tres datos que la posición necesita además de las piezas, junto con el turno y los enroques posibles.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.1',
   },
   {
     id: 'ley_jugada_rival', area: 'leyes', peso: 3,
@@ -1720,7 +1720,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El cambio de peón por dama, torre, alfil o caballo del mismo color es parte de la misma jugada. Un peón no puede quedarse en la última fila.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.5 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.3 y 7.5',
   },
   {
     id: 'irr_torre_salta', area: 'irregularidades', peso: 1,
@@ -1785,7 +1785,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'La captura al paso caduca de inmediato: si no se hace en la respuesta al avance de dos casillas, se pierde el derecho para siempre.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.4.1 y 7.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 3.7.3.1 y 7.5',
   },
   {
     id: 'irr_mate_con_jugada_ilegal', area: 'irregularidades', peso: 4,
@@ -2153,7 +2153,7 @@ window.ARBITRAJE_ITEMS = [
     ],
     correcta: 0,
     explica: 'El árbitro no juega. Tampoco avisa de que el rival ya movió ni de que a alguien se le olvidó presionar el reloj: solo interviene donde las Leyes lo mandan.',
-    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.5 y 8.5',
+    fuente: 'Leyes del Ajedrez 2023 (Handbook E.I.01), art. 12.6 y 8.5',
   },
   {
     id: 'con_dispositivo_sancion_menor', area: 'conducta', peso: 5,
