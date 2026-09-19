@@ -391,6 +391,78 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+## Tareas: el profesor asigna material con fecha límite
+
+`tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
+administra) elige material de la plataforma y se lo manda a uno o varios de
+sus alumnos con instrucciones y una fecha de vencimiento; el alumno ve lo que
+le mandaron y marca cuándo lo hizo. No es un curso nuevo ni un tipo de
+contenido nuevo — es una capa fina que apunta a lo que ya existe.
+
+- **El material no se copia, se referencia.** `js/material-plataforma.js`
+  arma el catálogo: los CURSOS salen leyendo
+  `herramientas/cursos/catalogo.json` en tiempo real (la misma fuente que
+  arma las tarjetas de `cursos.html`), y las HERRAMIENTAS de entrenamiento
+  están escritas a mano —las mismas ocho fichas de `entreno/index.html` más
+  los dos diagnósticos— porque no tienen un JSON propio del que leerlas. Una
+  segunda lista de cursos se habría ido separando de la primera a la primera
+  corrección, que es el error que este repositorio ya cometió más de una vez.
+- **La fila de `tareas` guarda una FOTO del material**, no solo su id
+  (`material_tipo`, `material_slug`, `material_label`, `material_href`): si
+  mañana se renombra un curso o se reordena el catálogo, una tarea ya enviada
+  sigue diciendo con qué se mandó, en vez de quedar apuntando a un enlace que
+  cambió de nombre bajo los pies del alumno.
+- **La lección es un número, no un enlace.** Las lecciones de un curso viven
+  todas en la misma página, como `<details>` sin id propio (ver "El material
+  de estudio de cada lección"), así que no hay a dónde enlazar una lección
+  suelta. El campo `leccion` es opcional y solo se le muestra al alumno como
+  texto ("→ Fundamentos del Ajedrez, lección 3"): encuentra la lección
+  buscando ese número dentro de la página, el enlace lo lleva al curso
+  completo.
+- **Aislado por profesor, igual que `class_sessions` y `game_state`.** Un
+  profesor solo ve las tareas que ÉL mandó, no las de un colega que comparte
+  el mismo alumno — la política de `select` es `profesor_id = auth.uid() or
+  alumno_id = auth.uid() or is_admin`, sin ningún `es_mi_profesor()` de por
+  medio. Es la misma decisión de aislamiento que ya toma el resto del sitio
+  para "cada profesor su propia clase", no un descuido.
+- **El insert exige `profesor_id = auth.uid()` SIEMPRE, `is_admin` incluido.**
+  La primera versión de la política dejaba pasar cualquier `profesor_id`
+  cuando quien inserta administra, así que en teoría alguien con `is_admin`
+  podía mandar una tarea a nombre de OTRO profesor. Se corrigió antes de
+  mergear: ningún otro insert del sitio deja eso suelto
+  (`class_sessions_insert` exige `created_by = auth.uid()` sin excepción).
+- **El alumno solo puede marcar y desmarcar que la hizo.** Puede "actualizar"
+  su propia fila (para eso existe `tareas_update`), pero un trigger
+  (`proteger_tareas_alumno`, mismo patrón que `protect_answer_grading`) le
+  revierte cualquier otro campo a su valor de antes si quien edita es el
+  alumno y no el profesor dueño — no puede correrse la fecha, cambiarse el
+  título ni reescribir las instrucciones. Comprobado impersonando roles en
+  SQL: un update del alumno con `titulo` y `vence_at` distintos deja esas dos
+  columnas intactas y solo `estado`/`completada_at` cambian; un profesor sin
+  ese alumno asignado recibe 0 filas al intentar leer la tarea de otro.
+- **El aviso push sale solo**, con el mismo patrón que un reto o que abrir la
+  sesión en vivo: un trigger `AFTER INSERT` (`avisar_tarea_asignada`) llama a
+  `avisar_push()`, así que no hay que acordarse de mandarlo desde el
+  navegador ni puede quedar la tarea guardada sin avisar.
+- **`estado` solo vale `pendiente` o `completada`**, nunca "vencida" — igual
+  que `cobros.estado`, que tampoco guarda "vencido". Si lo fuera, habría que
+  mantenerlo al día con un cron que revisara fechas, y podría contradecir a
+  `vence_at`. La página calcula "vencida" comparando `vence_at` contra
+  `new Date()` en el navegador, nada más que para pintarla distinto.
+
+**Al tocar `tareas.html`, `js/material-plataforma.js` o la tabla `tareas`,
+correr `node herramientas/verificar-tareas.js`** (con el sitio en
+localhost:8777 y playwright). Existe porque `tareas.html` está detrás del
+login: `verificar-css.js` no la ve nunca. Comprueba, con un Supabase de
+mentira, que el selector de material traiga cursos Y herramientas de
+verdad, que elegir un curso destape el campo de lección con su tope
+correcto, que enviar la tarea mande una fila POR CADA alumno marcado con el
+material que de verdad se eligió (no el que había antes), que al alumno le
+salgan sus tareas ordenadas por fecha con la vencida marcada, y que tildar
+"Hecha" mande el update al id correcto. Lo que se rompe acá no da error: un
+select que manda el material equivocado, o una tarea que se le manda a
+todos los alumnos en vez de a los marcados.
+
 ## Coordinación: el rol nuevo y los formularios de inscripción
 
 **Coordinar es una marca encima de "profesor", no un tercer valor de `role`**, y
