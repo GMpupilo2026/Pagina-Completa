@@ -688,6 +688,48 @@ abierta a mandarle cualquier cosa.
     se comparó tramo por tramo contra la cadena vieja sobre toda
     `platform_activity_log`.
 
+### `training_progress` tenía el mismo problema, con otro nombre
+
+Igual que las tablas de tiempo, `training_progress_insert_own` solo exige
+`student_id = auth.uid()`: el contenido de `detail` (jsonb) quedaba entero en
+manos del cliente. La diferencia es que acá no hay ninguna política de
+`update` —una fila insertada no se puede tocar—, así que alcanza con validar
+en el insert.
+
+- **No todos los campos de `detail` son igual de sensibles.** Los que
+  importan son los que `informes_resumen_alumnos()` usa como "la mejor
+  marca": `coordenadas.score` (vía `mejor_coord`) y `practicar.stars`. Un
+  `rating` de Lichess en `temas`/`tactica`, en cambio, describe la dificultad
+  del EJERCICIO, no algo que el alumno se gane — inflarlo no le sirve de
+  nada, así que no hace falta acotarlo.
+- **`public.validar_marca_training_progress()`** (trigger `BEFORE INSERT`)
+  rechaza con una excepción —no recorta el valor en silencio— un
+  `coordenadas.score`/`best_streak`/`misses` fuera de 0-300 (el más alto en
+  los datos reales es 33, en una ronda de 30s; 300 deja muchísimo margen y
+  aun así es humanamente imposible de alcanzar de verdad) o un
+  `practicar.stars` fuera de 1-3 (`entreno/practicas.html` solo asigna esos
+  tres valores). Rechazar en vez de recortar es a propósito: un score
+  recortado a 300 seguiría siendo una marca falsa, solo que más discreta.
+  Comprobado impersonando roles en SQL: las marcas legítimas (dentro de
+  rango, y cualquier otra actividad que el trigger no toca) se siguen
+  insertando igual; un `score: 999999` o `stars: 50` quedan rechazados.
+- **Lo que esto NO cierra**: los conteos basados en "cuántos ids distintos"
+  —`puzzles` (4×4), `lecciones` (Aprende), `mate1/2/3`, `tactica`,
+  `concentracion`— se pueden seguir inflando insertando muchas filas con
+  `puzzle_id`/`lesson_id` inventados. Cerrar eso de verdad pediría tener el
+  banco real de ejercicios adentro de Postgres, sincronizado con los JSON
+  que sirve el sitio, para poder validar que cada id existe — un proyecto
+  aparte, no este arreglo puntual.
+- **Hallazgo de paso, sin arreglar**: el `CHECK` de `activity` no incluye
+  `'curso'`, así que `cursos_temas` (el CTE `entreno` de
+  `informes_resumen_alumnos()` filtra por `tp.activity = 'curso'`) cuenta
+  contra cero filas siempre —confirmado, hoy no hay ninguna fila con esa
+  actividad—. No se tocó porque no se investigó de dónde debería salir ese
+  número en realidad (`training_state` es candidato, ya que el progreso de
+  cursos podría estar viviendo ahí y no en `training_progress`), pero queda
+  anotado: es el mismo síntoma de siempre, un campo que se ve en cero sin
+  que nada avise por qué.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
