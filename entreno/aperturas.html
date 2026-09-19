@@ -744,6 +744,11 @@ document.querySelectorAll(".promo-btn").forEach((b) => b.addEventListener("click
 
 /* ---------------- arranque ---------------- */
 async function init() {
+  // La tarjeta de estudio de entreno/aprender.html manda para acá con
+  // ?linea=<id> para practicarla de una, en vez de ir a buscarla en la lista.
+  const idLinea = new URLSearchParams(location.search).get("linea");
+  const rutaActual = "entreno/aperturas.html" + (idLinea ? "?linea=" + encodeURIComponent(idLinea) : "");
+
   let hay = false;
   try {
     const { data } = await sb.auth.getSession();
@@ -752,7 +757,7 @@ async function init() {
   if (!hay) {
     document.getElementById("gate-checking").textContent =
       "Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo…";
-    window.location.href = "../login.html?next=" + encodeURIComponent("entreno/aperturas.html");
+    window.location.href = "../login.html?next=" + encodeURIComponent(rutaActual);
     return;
   }
   // El avance viaja con la cuenta: se baja y se funde ANTES de pintar, para
@@ -765,6 +770,10 @@ async function init() {
   document.getElementById("btn-repaso").classList.add("active");
   pintarResumen();
   pintarLista(true);
+
+  // Si el id no existe (línea borrada o mal escrita) se cae a la lista de
+  // siempre, en vez de quedarse mostrando un tablero de mentira.
+  if (idLinea && AperturasLineas.LINEAS.some((L) => L.id === idLinea)) empezar(idLinea);
 }
 init();
 </script>

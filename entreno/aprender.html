@@ -39,6 +39,7 @@
     --movimientos:#75935a;
     --reglas:#c9a23e;
     --tacticas:#9c4148;
+    --estudiar:#6a4c93;
     --asignaciones:#3f6f8f;
     --ok:#3f8f4f;
     --bad:#c0392b;
@@ -164,9 +165,46 @@
   .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
   .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
   .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+  .lesson-controls a.bctrl{display:inline-flex; align-items:center; text-decoration:none;}
+
+  /* ---------- Para estudiar: tarjetas de aperturas y defensas ----------
+     No son ejercicios con solución: es material de lectura, por eso no hay
+     bloqueo ni marca de resuelto — el tablero es de solo consulta (recorre la
+     línea con los controles) y la clave de estudio es el texto de al lado, no
+     la imagen. */
+  .study-group-title{
+    font-size:1rem; color:var(--text); margin:22px 0 8px; padding-bottom:4px;
+    border-bottom:1px solid var(--line);
+  }
+  .study-group-title:first-child{margin-top:0;}
+  #study-view{display:none;}
+  #study-board{pointer-events:none;}
+  .study-controls{
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+    max-width:440px; margin:14px auto 0;
+  }
+  .study-moves{
+    max-width:520px; margin:16px auto 0; display:flex; flex-wrap:wrap; gap:6px 14px;
+    font-family:'Inter', sans-serif; font-size:0.95rem; justify-content:center;
+  }
+  .study-par{display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;}
+  .study-par b{color:var(--text-muted); font-weight:600; font-size:0.85em;}
+  .study-move{
+    background:transparent; border:1px solid transparent; border-radius:3px; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:0.95rem; padding:2px 6px; cursor:pointer;
+  }
+  .study-move:hover{border-color:var(--line);}
+  .study-move.actual{background:var(--brass); color:#102a43; font-weight:700;}
+  .study-notes{
+    max-width:520px; margin:20px auto 0; background:var(--bg-panel); border:1px solid var(--line);
+    padding:14px 18px;
+  }
+  .study-notes h3{font-size:0.9rem; margin:10px 0 4px;}
+  .study-notes h3:first-child{margin-top:0;}
+  .study-notes p{color:var(--text-muted); font-size:0.92rem; line-height:1.55; margin:0 0 4px;}
 
   @media (prefers-reduced-motion: reduce){
-    .tab, .lesson-item, .bctrl{transition-property: background-color, border-color, color;}
+    .tab, .lesson-item, .bctrl, .study-move{transition-property: background-color, border-color, color;}
   }
 </style>
     <script src="../js/adaptive-mode.js"></script>
@@ -283,6 +321,40 @@
         <button type="button" class="bctrl primary" id="next-btn" style="display:none;">Siguiente lección →</button>
       </div>
     </div>
+
+    <!-- ============ Para estudiar: tarjeta de una apertura o defensa ============
+         No es una lección con solución: es la línea completa para leerla y
+         memorizarla, con un tablero de solo consulta. El tablero es decorativo
+         (aria-hidden) porque la posición y las jugadas ya están contadas en
+         texto al lado — igual que el material de estudio de los cursos, no
+         depende de ver ninguna imagen. -->
+    <div id="study-view">
+      <div class="lesson-header">
+        <a href="#" id="study-back-to-list">← Todas las variantes</a>
+        <h2 id="study-title"></h2>
+        <p class="lesson-text" id="study-sub" style="margin-bottom:0;"></p>
+      </div>
+      <div class="board-wrap">
+        <div class="board8" id="study-board" aria-hidden="true"></div>
+      </div>
+      <p id="study-anuncio" class="sr-only" role="status" aria-live="polite"></p>
+      <div class="study-controls">
+        <button type="button" class="bctrl" id="study-start-btn" aria-label="Ir a la posición inicial">⏮</button>
+        <button type="button" class="bctrl" id="study-prev-btn" aria-label="Jugada anterior">◀</button>
+        <button type="button" class="bctrl" id="study-next-btn" aria-label="Jugada siguiente">▶</button>
+        <button type="button" class="bctrl" id="study-end-btn" aria-label="Ir a la última jugada">⏭</button>
+      </div>
+      <div class="study-moves" id="study-moves"></div>
+      <div class="study-notes">
+        <h3>Idea</h3>
+        <p id="study-idea"></p>
+        <h3>Lo que hay que recordar</h3>
+        <p id="study-clave"></p>
+      </div>
+      <div class="lesson-controls">
+        <a class="bctrl primary" id="study-practicar-btn" href="#">🎯 Practicarla jugándola en el tablero</a>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -294,6 +366,10 @@
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
+<!-- Mismo banco que entreno/aperturas.html: las tarjetas de "Para estudiar"
+     son las líneas tipo "apertura" de ahí (no las celadas), leídas en vez de
+     jugadas. Una sola fuente: agregar una línea ahí la suma acá sola. -->
+<script src="../js/aperturas-lineas.js"></script>
 <script>
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
@@ -409,9 +485,29 @@ const LESSONS = [
     fen:'r6n/8/4k3/8/3Q4/8/8/7K w - - 0 1', solution:{from:'d4',to:'d8'} },
 ];
 
-const CATEGORY_ORDER = ['movimientos','reglas','tacticas','asignaciones'];
-const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas', asignaciones:'Asignaciones'};
-const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas', asignaciones:'--asignaciones'};
+const CATEGORY_ORDER = ['movimientos','reglas','tacticas','estudiar','asignaciones'];
+const CATEGORY_LABEL = {movimientos:'Movimientos', reglas:'Reglas especiales', tacticas:'Tácticas básicas', estudiar:'Para estudiar', asignaciones:'Asignaciones'};
+const CATEGORY_VAR = {movimientos:'--movimientos', reglas:'--reglas', tacticas:'--tacticas', estudiar:'--estudiar', asignaciones:'--asignaciones'};
+
+/* ---------------- Para estudiar: tarjetas de aperturas y defensas ----------
+   No son lecciones con solución: son las líneas de js/aperturas-lineas.js (las
+   de tipo "apertura", no las celadas) para LEERLAS y memorizarlas, agrupadas
+   por a qué apertura o defensa pertenecen. Practicarlas jugándolas de memoria
+   sigue siendo entreno/aperturas.html — el botón de la tarjeta manda ahí. */
+const ESTUDIO_NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
+const ESTUDIO_LINEAS = (window.AperturasLineas ? window.AperturasLineas.LINEAS : [])
+  .filter((L) => L.tipo === 'apertura');
+
+// Agrupadas por L.apertura, conservando el orden en que aparecen en el banco
+// (ya vienen ordenadas por familia: españolas, sicilianas, francesas…).
+function agruparEstudio(){
+  const grupos = new Map();
+  ESTUDIO_LINEAS.forEach((L) => {
+    if(!grupos.has(L.apertura)) grupos.set(L.apertura, []);
+    grupos.get(L.apertura).push(L);
+  });
+  return grupos;
+}
 
 /* ---------------- Asignaciones ----------------
    La ficha "Asignaciones" no son lecciones: son trabajos que el alumno hace de
@@ -612,14 +708,17 @@ function buildTabs(){
   const tabs = document.getElementById('tabs');
   tabs.innerHTML = '';
   CATEGORY_ORDER.forEach((cat) => {
-    const list = lessonsFor(cat);
-    const hechas = cat === 'asignaciones' ? asignacionesHechas() : countSolved(list);
-    const total = cat === 'asignaciones' ? ASIGNACIONES.length : list.length;
+    // "Para estudiar" no tiene "resuelto": es material de consulta, así que
+    // la pestaña muestra el total nada más, sin fracción.
+    let n;
+    if(cat === 'asignaciones') n = `${asignacionesHechas()}/${ASIGNACIONES.length}`;
+    else if(cat === 'estudiar') n = String(ESTUDIO_LINEAS.length);
+    else { const list = lessonsFor(cat); n = `${countSolved(list)}/${list.length}`; }
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tab' + (cat === currentCategory ? ' active' : '');
     btn.style.setProperty('--tab-color', `var(${CATEGORY_VAR[cat]})`);
-    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${hechas}/${total}</span>`;
+    btn.innerHTML = `${CATEGORY_LABEL[cat]} <span class="n">${n}</span>`;
     btn.addEventListener('click', () => { currentCategory = cat; showList(); });
     tabs.appendChild(btn);
   });
@@ -627,11 +726,13 @@ function buildTabs(){
 
 function showList(){
   document.getElementById('lesson-view').style.display = 'none';
+  document.getElementById('study-view').style.display = 'none';
   document.getElementById('list-view').style.display = 'block';
   buildTabs();
   const box = document.getElementById('lesson-list');
   box.innerHTML = '';
   if(currentCategory === 'asignaciones'){ showAsignaciones(box); return; }
+  if(currentCategory === 'estudiar'){ showEstudiar(box); return; }
   const list = lessonsFor(currentCategory);
   list.forEach((lesson) => {
     const unlocked = isUnlocked(lesson, list);
@@ -667,6 +768,34 @@ function showAsignaciones(box){
         <span class="desc">${estado.nota}</span>
       </span>`;
     box.appendChild(enlace);
+  });
+}
+
+// Las tarjetas de estudio se ven agrupadas por apertura/defensa (un <h2> por
+// grupo, para poder saltar de grupo en grupo con lector de pantalla) y sin
+// ningún candado: todas están abiertas de entrada, porque es material de
+// consulta, no una progresión que haya que ir desbloqueando.
+function showEstudiar(box){
+  const grupos = agruparEstudio();
+  grupos.forEach((lineas, nombreGrupo) => {
+    const titulo = document.createElement('h2');
+    titulo.className = 'study-group-title';
+    titulo.textContent = nombreGrupo;
+    box.appendChild(titulo);
+    lineas.forEach((L) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lesson-item';
+      const jugadasAlumno = window.AperturasLineas.jugadasDelAlumno(L);
+      btn.innerHTML = `
+        <span class="mark">📖</span>
+        <span class="info">
+          <span class="name">${L.nombre}</span>
+          <span class="desc">${L.color === 'w' ? 'Blancas' : 'Negras'} · ${ESTUDIO_NIVEL[L.nivel]} · ${jugadasAlumno} jugada${jugadasAlumno === 1 ? '' : 's'} para memorizar</span>
+        </span>`;
+      btn.addEventListener('click', () => openStudyCard(L));
+      box.appendChild(btn);
+    });
   });
 }
 
@@ -905,6 +1034,119 @@ function answerQuiz(answer){
     setStatus('❌ No es esa — fíjate: ¿el rey está en jaque o no?', 'bad');
   }
 }
+
+/* ---------------- Para estudiar: la tarjeta abierta ----------------
+   Un visor de solo lectura: recorre la línea con los mismos controles de un
+   reproductor (⏮ ◀ ▶ ⏭) o saltando directo a una jugada de la lista. No hay
+   "correcto" ni "incorrecto" — eso es entreno/aperturas.html, no esto. */
+const PIEZAS_ES_ESTUDIO = {N:'C', B:'A', R:'T', Q:'D', K:'R'};
+function aEspanolPieza(san){ return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES_ESTUDIO[l]); }
+
+let studyLine = null;
+let studyGame = null;
+let studyIndex = 0; // cuántas jugadas de la línea ya se jugaron (0 = posición inicial)
+
+function studyPositionAt(index){
+  const g = new Chess();
+  for(let i = 0; i < index; i++) g.move(studyLine.jugadas[i], { sloppy: true });
+  return g;
+}
+
+function drawStudyBoard(){
+  const board = document.getElementById('study-board');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const cell = document.createElement('div');
+      cell.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      const piece = studyGame.get(square);
+      if(piece){
+        const span = document.createElement('span');
+        span.setAttribute('aria-hidden', 'true');
+        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
+          span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+          span.className = 'chess-piece-illustrated';
+        } else {
+          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+          span.textContent = GLYPH[piece.color][piece.type];
+        }
+        cell.appendChild(span);
+      }
+      board.appendChild(cell);
+    }
+  }
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+// La lista de jugadas se ve como en un libro: "1. e4 e5", cada jugada es un
+// botón que salta directo a la posición de después de esa jugada.
+function pintarStudyJugadas(){
+  const cont = document.getElementById('study-moves');
+  cont.innerHTML = '';
+  for(let i = 0; i < studyLine.jugadas.length; i += 2){
+    const par = document.createElement('span');
+    par.className = 'study-par';
+    const numero = document.createElement('b');
+    numero.textContent = (i / 2 + 1) + '.';
+    par.appendChild(numero);
+    [i, i + 1].forEach((idx) => {
+      if(idx >= studyLine.jugadas.length) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'study-move' + (idx === studyIndex - 1 ? ' actual' : '');
+      if(idx === studyIndex - 1) btn.setAttribute('aria-current', 'step');
+      btn.textContent = aEspanolPieza(studyLine.jugadas[idx]);
+      btn.addEventListener('click', () => studyGoTo(idx + 1));
+      par.appendChild(btn);
+    });
+    cont.appendChild(par);
+  }
+}
+
+function studyGoTo(n){
+  studyIndex = Math.max(0, Math.min(n, studyLine.jugadas.length));
+  studyGame = studyPositionAt(studyIndex);
+  drawStudyBoard();
+  pintarStudyJugadas();
+  document.getElementById('study-start-btn').disabled = studyIndex === 0;
+  document.getElementById('study-prev-btn').disabled = studyIndex === 0;
+  document.getElementById('study-next-btn').disabled = studyIndex >= studyLine.jugadas.length;
+  document.getElementById('study-end-btn').disabled = studyIndex >= studyLine.jugadas.length;
+  const anuncio = document.getElementById('study-anuncio');
+  if(studyIndex === 0){
+    anuncio.textContent = 'Posición inicial.';
+  } else {
+    const san = studyLine.jugadas[studyIndex - 1];
+    const numeroJugada = Math.floor((studyIndex - 1) / 2) + 1;
+    const esNegra = (studyIndex - 1) % 2 === 1;
+    anuncio.textContent = `Jugada ${studyIndex} de ${studyLine.jugadas.length}: ` +
+      `${numeroJugada}.${esNegra ? '..' : ''} ${aEspanolPieza(san)}.`;
+  }
+}
+
+function openStudyCard(L){
+  studyLine = L;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('study-view').style.display = 'block';
+  document.getElementById('study-title').textContent = L.nombre;
+  document.getElementById('study-sub').textContent =
+    `${L.apertura} · juegas con ${L.color === 'w' ? 'blancas' : 'negras'} · ${ESTUDIO_NIVEL[L.nivel]}`;
+  document.getElementById('study-idea').textContent = L.idea;
+  document.getElementById('study-clave').textContent = L.clave;
+  document.getElementById('study-practicar-btn').href = 'aperturas.html?linea=' + encodeURIComponent(L.id);
+  studyGoTo(0);
+  window.scrollTo({ top: 0 });
+}
+
+document.getElementById('study-back-to-list').addEventListener('click', (e) => {
+  e.preventDefault();
+  showList();
+});
+document.getElementById('study-start-btn').addEventListener('click', () => studyGoTo(0));
+document.getElementById('study-prev-btn').addEventListener('click', () => studyGoTo(studyIndex - 1));
+document.getElementById('study-next-btn').addEventListener('click', () => studyGoTo(studyIndex + 1));
+document.getElementById('study-end-btn').addEventListener('click', () => studyGoTo(studyLine.jugadas.length));
 
 /* ---------------- Arranque ---------------- */
 let appInitialized = false;
