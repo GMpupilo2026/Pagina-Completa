@@ -22,7 +22,10 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 const ESTUDIO = LINEAS.filter((L) => L.tipo === "apertura");
-const GRUPOS = new Set(ESTUDIO.map((L) => L.apertura));
+const APERTURAS = ESTUDIO.filter((L) => L.color === "w");
+const DEFENSAS = ESTUDIO.filter((L) => L.color === "b");
+const GRUPOS_APERTURAS = new Set(APERTURAS.map((L) => L.apertura));
+const GRUPOS_DEFENSAS = new Set(DEFENSAS.map((L) => L.apertura));
 const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
 const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
 
@@ -73,17 +76,42 @@ async function abrir(browser, ruta, esperar) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    console.log("=== entreno/estudio.html — la lista ===");
+    console.log("=== entreno/estudio.html — las pestañas ===");
     const { page, errores } = await abrir(browser, "/entreno/estudio.html", "#app:not(.hidden)");
 
-    igual("aparecen las 25 variantes",
+    igual("hay dos pestañas: Aperturas y Defensas",
+      await page.evaluate(() => [...document.querySelectorAll("#tabs .tab")].map((b) => b.textContent.trim().replace(/\s+/g, " "))),
+      [`Aperturas ${APERTURAS.length}`, `Defensas ${DEFENSAS.length}`]);
+    igual("arranca en Aperturas",
+      await page.evaluate(() => document.querySelector("#tabs .tab").classList.contains("active")), "true");
+    igual("por defecto se ven las de Aperturas, no las 25 juntas",
       await page.evaluate(() => document.querySelectorAll("#lesson-list .lesson-item").length),
-      ESTUDIO.length);
+      APERTURAS.length);
     igual("agrupadas en un <h2> por apertura o defensa",
       await page.evaluate(() => document.querySelectorAll("#lesson-list h2.study-group-title").length),
-      GRUPOS.size);
+      GRUPOS_APERTURAS.size);
+    igual("«Siciliana cerrada» juega con blancas, así que va en Aperturas y no en Defensas",
+      await page.evaluate(() => [...document.querySelectorAll("#lesson-list .lesson-item .name")]
+        .some((el) => el.textContent.trim() === "Siciliana cerrada")), "true");
     igual("nada queda bloqueado: es material de consulta, no una progresión",
       await page.evaluate(() => document.querySelectorAll("#lesson-list button:disabled").length), 0);
+
+    await page.click("#tabs .tab:nth-child(2)");
+    igual("al hacer clic en Defensas, esa queda activa",
+      await page.evaluate(() => document.querySelectorAll("#tabs .tab")[1].classList.contains("active")), "true");
+    igual("y se repinta con las 16 líneas de Defensas",
+      await page.evaluate(() => document.querySelectorAll("#lesson-list .lesson-item").length),
+      DEFENSAS.length);
+    igual("agrupadas por su propia apertura o defensa",
+      await page.evaluate(() => document.querySelectorAll("#lesson-list h2.study-group-title").length),
+      GRUPOS_DEFENSAS.size);
+    igual("«Siciliana cerrada» no aparece acá: la juegan las blancas",
+      await page.evaluate(() => [...document.querySelectorAll("#lesson-list .lesson-item .name")]
+        .some((el) => el.textContent.trim() === "Siciliana cerrada")), "false");
+
+    await page.click("#tabs .tab:nth-child(1)");
+    igual("volver a Aperturas la deja activa otra vez",
+      await page.evaluate(() => document.querySelector("#tabs .tab").classList.contains("active")), "true");
 
     console.log("\n=== La tarjeta de una variante ===");
     const linea = ESTUDIO.find((L) => L.id === "espanola-cerrada");
