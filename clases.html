@@ -30,6 +30,8 @@
     <script src="js/notificaciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/juego-aviso.js"></script>
+    <script src="js/logros-catalogo.js"></script>
+    <script src="js/logros.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -179,6 +181,22 @@
                 </div>
             </a>
 
+            <!-- ===== Racha de días y logros =====
+                 Mismo criterio que informes.html: la cuenta la hace la base
+                 (public.progreso_dias_y_racha, ver js/logros.js), acá solo se
+                 pinta. Un día cuenta si se resolvieron 5 ejercicios de
+                 cualquier tipo — ver logros.html para el detalle. -->
+            <a href="logros.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10 hover:shadow-lg transition-shadow">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <span class="text-4xl" aria-hidden="true">🔥</span>
+                    <div class="flex-1 min-w-[200px]">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white" id="racha-widget-title">Tu racha de días</h2>
+                        <p class="text-sm text-brand-500 dark:text-brand-300" id="racha-widget-text">Cargando…</p>
+                    </div>
+                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Ver tus logros →</span>
+                </div>
+            </a>
+
             <!-- ===== Progreso en Entrenamiento ===== -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
@@ -287,6 +305,7 @@
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
                 { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", href: "torneos.html" },
                 { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", href: "logros.html" },
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
             { title: "Aprender", tiles: [
@@ -479,6 +498,22 @@
             if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
             const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
             el.textContent = name + " tiene la racha más larga: " + data.best_streak + " aciertos seguidos.";
+        }
+
+        // ---------- Racha de días (logros.html) ----------
+        // La cuenta la hace la base (public.progreso_dias_y_racha, ver
+        // js/logros.js): acá solo se pinta un resumen de una línea.
+        async function loadRachaWidget() {
+            const { stats, error } = await window.Logros.cargar();
+            const el = document.getElementById("racha-widget-text");
+            if (error) { el.textContent = "Tu racha de días y tus medallas por progreso."; return; }
+            if (stats.racha_actual > 0) {
+                el.textContent = `Llevas ${stats.racha_actual} día${stats.racha_actual === 1 ? "" : "s"} seguidos con al menos 5 ejercicios.`;
+            } else if (stats.total_ejercicios > 0) {
+                el.textContent = "Resuelve 5 ejercicios hoy, de cualquier tipo, para empezar tu racha.";
+            } else {
+                el.textContent = "Tu racha de días y tus medallas por progreso.";
+            }
         }
 
         // ---------- Progreso en Entrenamiento (4x4, Aprender, Coordenadas) ----------
@@ -864,6 +899,7 @@
             await cargarSesiones();
             await loadEntrenoProgress();
             await loadTacticsRecord();
+            await loadRachaWidget();
             subscribeSessions();
 
             document.getElementById("loading").classList.add("hidden");

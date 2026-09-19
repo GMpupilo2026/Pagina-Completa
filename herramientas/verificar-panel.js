@@ -182,7 +182,7 @@ async function pruebaAlumna(browser) {
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);
   igual("Jugar y competir", grupos[1].tiles.map((t) => t.enlace),
-    ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "tv.html"]);
+    ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
   igual("Aprender", grupos[2].tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html", "articulos.html", "tareas.html"]);
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel

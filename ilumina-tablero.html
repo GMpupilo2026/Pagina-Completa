@@ -27,6 +27,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/acceso-admin.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="ilumina"></script>
+    <script src="js/entreno-progress.js"></script>
     <script src="js/ilumina-engine.js"></script>
     <script src="js/ilumina-niveles.js"></script>
     <script src="js/ilumina-board.js"></script>
@@ -257,6 +258,7 @@ function onBoardChange(resultado) {
     document.getElementById("solved-banner").classList.toggle("hidden", !resultado.resuelto);
     if (resultado.resuelto && !yaEstabaResuelto) {
         marcarResuelto(nivel.id);
+        if (window.EntrenoProgress) EntrenoProgress.log("ilumina", { nivel_id: nivel.id });
         actualizarPistasUI(); // resolver un nivel puede desbloquear una pista nueva
     }
 }
@@ -293,6 +295,7 @@ async function init() {
         return;
     }
     await ProgresoUsuario.init();
+    if (window.EntrenoProgress) await EntrenoProgress.init();
     if (window.AccesoAdmin) await window.AccesoAdmin.init();
 
     board = new IluminaBoard(document.getElementById("board"), document.getElementById("tray"), { onChange: onBoardChange });
