@@ -322,7 +322,7 @@ window.CartasChess = (function () {
       // devolverle el turno a quien movió, para no preguntarle a chess.js
       // por el jaque mate del bando equivocado.
       let gameOver = false, result = null;
-      if (this.inCheckmate()) { gameOver = true; result = color; } // quien está mate es el rival; gana quien acaba de mover
+      if (this.inCheckmate()) { gameOver = true; result = color === "w" ? "white" : "black"; } // quien está mate es el rival; gana quien acaba de mover
       else if (this.inDraw()) { gameOver = true; result = "draw"; }
 
       if (this.doubleTurnPending) {
