@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../img/favicon.svg">
+<title>Visualización — Entreno — Ajedrez Integral</title>
+<meta name="description" content="Entrena la visualización: encuentra la continuación completa de la jugada sin mover ni una pieza del tablero, en cinco niveles de dificultad.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="visualizacion"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    --ok:#3f8f4f;
+    --bad:#c0392b;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+
+  main{max-width:960px; margin:0 auto; padding:18px 24px 60px;}
+
+  /* ---------- Niveles ---------- */
+  .levels{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin-top:18px;}
+  .level{
+    background:var(--bg-panel); border:1px solid var(--line); border-left:4px solid var(--brass);
+    padding:14px 16px 12px; display:flex; flex-direction:column; gap:6px; min-height:150px;
+    transition:border-color .2s, transform .15s ease-out, box-shadow .2s;
+  }
+  .level:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,42,67,0.12);}
+  .level.done{border-left-color:var(--ok);}
+  .level h3{font-family:'Inter',sans-serif; font-size:1.02rem; font-weight:600; color:var(--text); display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .level h3 .n{font-size:0.75rem; font-weight:500; color:var(--text-muted); white-space:nowrap;}
+  .level p{margin:0; font-size:0.82rem; line-height:1.45; color:var(--text-muted); flex:1;}
+  .level .bar{height:4px; background:var(--line); border-radius:2px; overflow:hidden;}
+  .level .bar i{display:block; height:100%; background:var(--brass);}
+  .level.done .bar i{background:var(--ok);}
+  .level .acts{display:flex; gap:8px; align-items:center; margin-top:2px;}
+  .tbtn{
+    font-family:'Inter',sans-serif; font-size:0.82rem; font-weight:600; padding:8px 12px; min-height:38px;
+    border:1px solid var(--brass); background:var(--brass); color:#102a43; cursor:pointer; text-decoration:none;
+    transition:background .2s, transform .12s ease-out;
+  }
+  .tbtn:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+  .tbtn:active{transform:scale(0.97);}
+  .overall{background:var(--bg-panel); border:1px solid var(--line); padding:14px 16px 12px; margin-top:8px;}
+  .overall-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px;}
+  .overall-head h2{font-size:1rem; color:var(--text);}
+  .overall-pct{font-family:'Merriweather',serif; font-weight:700; font-size:1.3rem; color:var(--brass);}
+  .overall-track{height:12px; background:var(--line); border-radius:6px; overflow:hidden; margin:10px 0 8px;}
+  .overall-track i{display:block; height:100%; background:linear-gradient(90deg, var(--brass), var(--brass-bright)); border-radius:6px; transition:width .4s;}
+  .overall-nums{display:flex; flex-wrap:wrap; gap:6px 22px; font-size:0.85rem; color:var(--text-muted);}
+  .overall-nums b{color:var(--text);}
+
+  /* ---------- Reproductor ---------- */
+  .play-head{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .play-head h2{font-size:1.2rem; color:var(--text);}
+  .play-head .links{display:flex; gap:14px; font-size:0.85rem;}
+  .play-head .links a{color:var(--text-muted); text-decoration:none;}
+  .play-head .links a:hover{color:var(--brass);}
+  .level-desc{font-size:0.85rem; color:var(--text-muted); margin:0 0 12px; line-height:1.45;}
+
+  .streak-bar{
+    display:flex; align-items:center; justify-content:center; gap:8px; font-size:0.9rem; color:var(--text-muted); padding-bottom:6px;
+  }
+  .streak-bar .flame{font-size:1.15rem; transition:transform .2s;}
+  .streak-bar.pulse .flame{animation:pulse-flame .4s ease-out;}
+  @keyframes pulse-flame{0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);}}
+  .streak-count{font-weight:700; color:var(--text);}
+
+  .progress-track{max-width:420px; margin:0 auto 14px; height:6px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--brass); border-radius:3px; transition:width .3s;}
+  .progress-label{max-width:420px; margin:0 auto 10px; text-align:center; font-size:0.82rem; color:var(--text-muted);}
+
+  /* El tablero es SOLO de referencia: dibuja la posición inicial una sola vez
+     y no vuelve a tocarse mientras se resuelve el ejercicio — ni un clic, ni
+     un arrastre. Por eso no lleva casillas con botón: es un cuadro con
+     piezas, y la única forma de contestar es escribiendo. */
+  .board-wrap{max-width:380px; margin:0 auto; position:relative;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(6.5vw,30px); user-select:none;
+  }
+  .sq.light{background:var(--sq-light);}
+  .sq.dark{background:var(--sq-dark);}
+  .coords{display:flex; justify-content:space-between; max-width:380px; margin:4px auto 0; font-size:0.7rem; color:var(--text-muted); padding:0 2px;}
+  .position-readout{max-width:380px; margin:8px auto 0; font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.5;}
+
+  .turn-banner{max-width:520px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
+  .turn-banner b{color:var(--text);}
+  .puzzle-meta{max-width:520px; margin:6px auto 0; text-align:center; font-size:0.8rem; color:var(--text-muted);}
+
+  /* ---------- Bitácora de jugadas (crece a medida que se acierta) ---------- */
+  .movelog{
+    max-width:520px; margin:16px auto 0; background:var(--bg-panel-2); border:1px solid var(--line);
+    padding:12px 14px; font-size:0.95rem; line-height:1.9; color:var(--text);
+  }
+  .movelog .pending{color:var(--text-muted); font-style:italic;}
+  .movelog .reply{color:var(--text-muted);}
+
+  /* ---------- Cuadro para escribir la jugada ---------- */
+  .answer-form{max-width:520px; margin:14px auto 0; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;}
+  .answer-label{width:100%; text-align:center; font-size:0.85rem; color:var(--text-muted);}
+  .answer-input{
+    font-family:'Inter',sans-serif; font-size:1rem; padding:10px 14px; min-width:200px; flex:1; max-width:280px;
+    border:1px solid var(--line); background:var(--bg-panel); color:var(--text); min-height:44px;
+  }
+  .answer-input.wrong-flash{border-color:var(--bad); box-shadow:0 0 0 3px color-mix(in srgb, var(--bad) 25%, transparent);}
+  .answer-send{
+    font-family:'Inter',sans-serif; font-size:0.95rem; font-weight:600; padding:10px 18px; min-height:44px;
+    border:1px solid var(--brass); background:var(--brass); color:#102a43; cursor:pointer;
+  }
+  .answer-send:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  .round-status{max-width:520px; margin:12px auto 0; text-align:center; font-size:0.95rem; min-height:1.4em;}
+  .round-status.ok{color:var(--ok); font-weight:600;}
+  .round-status.bad{color:var(--bad);}
+  .round-controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  #celebration{display:none; text-align:center; padding:30px 20px;}
+  #celebration .big-emoji{font-size:3.5rem; margin-bottom:10px; display:inline-block; animation:bounce-in .5s ease-out;}
+  @keyframes bounce-in{0%{transform:scale(0.3); opacity:0;} 60%{transform:scale(1.15); opacity:1;} 100%{transform:scale(1);}}
+  #celebration .stats{color:var(--text-muted); font-size:0.9rem; margin-bottom:18px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .level, .tbtn, .bctrl{transition-property: background-color, border-color, color;}
+    .streak-bar.pulse .flame, #celebration .big-emoji{animation:none;}
+  }
+</style>
+    <script src="../js/chess-piece-svg.js"></script>
+    <script src="../js/piece-color-themes.js"></script>
+    <script src="../js/piece-style-themes.js"></script>
+    <script src="../js/board-color-themes.js"></script>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== GATE: exige sesión de Academia ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">👁️</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Visualización</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Visualización 👁️</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
+      <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
+    </div>
+  </div>
+  <p class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-brand-500 dark:text-brand-300 mt-3">
+    El tablero se queda quieto en la posición inicial durante todo el ejercicio: no se mueve ni una pieza,
+    ni con clic ni arrastrando. Hay que calcular la línea completa de memoria y escribir cada jugada, la tuya
+    y la del rival que sigue. Cinco niveles, según cuántas jugadas propias hay que encontrar sin ver el tablero moverse.
+  </p>
+
+  <main id="main-content">
+    <!-- ---------- Vista de niveles ---------- -->
+    <section id="levels-view" aria-label="Niveles">
+      <section class="overall" aria-labelledby="overall-title">
+        <div class="overall-head">
+          <h2 id="overall-title">Tu progreso en Visualización</h2>
+          <span class="overall-pct" id="overall-pct">0 %</span>
+        </div>
+        <div class="overall-track" role="progressbar" aria-labelledby="overall-title" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" id="overall-bar"><i id="overall-fill" style="width:0%"></i></div>
+        <div class="overall-nums">
+          <span><b id="total-solved">0</b> resueltos</span>
+          <span><b id="total-left">0</b> por resolver</span>
+          <span><b id="total-count">0</b> ejercicios en <b id="total-levels">5</b> niveles</span>
+        </div>
+      </section>
+      <div id="levels"></div>
+    </section>
+
+    <!-- ---------- Reproductor ---------- -->
+    <section id="play-view" style="display:none" aria-label="Ejercicio">
+      <div class="play-head">
+        <h2 id="play-title"></h2>
+        <div class="links">
+          <a href="#" id="back-levels">← Todos los niveles</a>
+        </div>
+      </div>
+      <p class="level-desc" id="play-desc"></p>
+
+      <div class="streak-bar" id="streak-bar">
+        <span class="flame" aria-hidden="true">🔥</span>
+        <span>Racha: <span class="streak-count" id="streak-count">0</span></span>
+        <span aria-hidden="true">·</span>
+        <span>Mejor: <span class="streak-count" id="streak-best">0</span></span>
+      </div>
+      <div id="progress-label" class="progress-label"></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+      <div id="play-area">
+        <p class="turn-banner" id="turn-banner"></p>
+        <div class="board-wrap" id="board-wrap">
+          <div class="board8" id="board" role="group" aria-label="Posición inicial — se queda así durante todo el ejercicio"></div>
+        </div>
+        <p class="position-readout" id="position-readout"></p>
+        <p class="puzzle-meta" id="puzzle-meta"></p>
+
+        <div class="movelog" id="movelog" aria-live="polite" aria-label="Jugadas encontradas hasta ahora"></div>
+
+        <form class="answer-form" id="answer-form">
+          <label class="answer-label" for="answer-input" id="answer-label">Escribe tu jugada (no se puede tocar el tablero)</label>
+          <input type="text" id="answer-input" class="answer-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ejemplo: Cf3, Dxh7+, e8=D">
+          <button type="submit" class="answer-send">Jugar</button>
+        </form>
+
+        <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl" id="hint-btn">💡 Pista</button>
+          <button type="button" class="bctrl" id="retry-btn">Reiniciar</button>
+          <button type="button" class="bctrl" id="skip-btn">Saltar →</button>
+        </div>
+      </div>
+
+      <div id="celebration">
+        <span class="big-emoji" aria-hidden="true">🎉</span>
+        <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">¡Nivel completo!</h2>
+        <p class="stats" id="celebration-stats"></p>
+        <div class="round-controls">
+          <button type="button" class="bctrl primary" id="celebration-replay-btn">Volver a empezar el nivel</button>
+          <button type="button" class="bctrl" id="celebration-back-btn">Elegir otro nivel</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados. Ejercicios tomados de la base abierta de Lichess (licencia CC0).</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/progreso-usuario.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/visualizacion.html';
+
+async function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  // El progreso vive en la cuenta: se baja y se funde con el de este aparato
+  // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
+  await ProgresoUsuario.init();
+  loadDataThenStart();
+}
+
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const PIECE_NAME = { p:'peón', n:'caballo', b:'alfil', r:'torre', q:'dama', k:'rey' };
+
+/* Cinco niveles según cuántas jugadas PROPIAS hay que encontrar sin ver el
+   tablero moverse. No se arma un banco nuevo: se reparte el mismo banco de
+   7.008 ejercicios ya verificados con chess.js que usa "Ejercicios por tema"
+   (entreno/data/temas.json, base abierta de Lichess) según el largo de la
+   solución — acá lo único que cambia es CÓMO se juega, no de dónde salen
+   las posiciones. "Las posiciones no se inventan nunca". */
+const NIVELES = [
+  { id:'l1', nombre:'Nivel 1', titulo:'Visualiza 1 jugada por delante', len:3,  propias:2, respuestas:1,
+    desc:'Encuentra tu jugada, calcula la respuesta del rival de memoria y encuentra la segunda. Dos jugadas tuyas en total.' },
+  { id:'l2', nombre:'Nivel 2', titulo:'Visualiza 2 jugadas por delante', len:5,  propias:3, respuestas:2,
+    desc:'Tres jugadas tuyas, con dos respuestas del rival de por medio que solo existen en tu cabeza.' },
+  { id:'l3', nombre:'Nivel 3', titulo:'Visualiza 3 jugadas por delante', len:7,  propias:4, respuestas:3,
+    desc:'Cuatro jugadas tuyas. El tablero sigue mostrando la posición del principio todo el tiempo.' },
+  { id:'l4', nombre:'Nivel 4', titulo:'Visualiza 4 jugadas por delante', len:9,  propias:5, respuestas:4,
+    desc:'Cinco jugadas tuyas: hay que sostener la posición completa en la cabeza línea abajo.' },
+  { id:'l5', nombre:'Nivel 5', titulo:'Visualiza 5 jugadas o más', lenMin:11, propias:'6 o más', respuestas:'5 o más',
+    desc:'Las líneas más largas del banco: seis jugadas tuyas o más, sin apoyarte en el tablero ni una vez.' },
+];
+function nivelInfo(id){ return NIVELES.find((n) => n.id === id); }
+
+let DATA = null;                 // temas.json: {puzzles: {id: {fen, solution, rating, mate, ...}}}
+let POOLS = {};                  // nivel.id -> [ids] (orden estable)
+
+async function loadDataThenStart(){
+  try {
+    const res = await fetch('data/temas.json');
+    if(!res.ok) throw new Error('temas.json: ' + res.status);
+    DATA = await res.json();
+    buildPools();
+  } catch (e) {
+    document.getElementById('main-content').innerHTML =
+      '<p class="text-center text-brand-450 dark:text-brand-350 py-10">No se pudo cargar la base de ejercicios. Intenta recargar la página.</p>';
+    console.error(e);
+    return;
+  }
+  initApp();
+}
+
+function buildPools(){
+  const ids = Object.keys(DATA.puzzles).sort();
+  NIVELES.forEach((n) => { POOLS[n.id] = []; });
+  ids.forEach((id) => {
+    const n = (DATA.puzzles[id].solution || []).length;
+    const nivel = NIVELES.find((x) => x.len ? x.len === n : (x.lenMin && n >= x.lenMin));
+    if(nivel) POOLS[nivel.id].push(id);
+  });
+}
+function idsOf(nivelId){ return POOLS[nivelId] || []; }
+
+/* ---------------- Progreso y racha (localStorage) ----------------
+   Una sola lista de resueltos para los cinco niveles (igual que "Ejercicios
+   por tema"): el id ya dice a qué nivel pertenece porque solo puede estar en
+   un POOL. */
+function getSolved(){
+  try{ return JSON.parse(localStorage.getItem('entreno_visualizacion_solved') || '{}'); }catch(e){ return {}; }
+}
+function markSolved(id){
+  const s = getSolved();
+  s[id] = true;
+  localStorage.setItem('entreno_visualizacion_solved', JSON.stringify(s));
+}
+function isSolved(id){ return !!getSolved()[id]; }
+function solvedCountFor(nivelId){
+  const s = getSolved();
+  return idsOf(nivelId).filter((id) => s[id]).length;
+}
+function firstUnsolvedIndex(nivelId){
+  const s = getSolved();
+  const idx = idsOf(nivelId).findIndex((id) => !s[id]);
+  return idx === -1 ? 0 : idx;
+}
+
+function getStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_visualizacion_streak') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function getBestStreak(){
+  try{ return parseInt(localStorage.getItem('entreno_visualizacion_best') || '0', 10) || 0; }catch(e){ return 0; }
+}
+function setStreak(n){
+  localStorage.setItem('entreno_visualizacion_streak', String(n));
+  const best = Math.max(getBestStreak(), n);
+  localStorage.setItem('entreno_visualizacion_best', String(best));
+  document.getElementById('streak-count').textContent = n;
+  document.getElementById('streak-best').textContent = best;
+}
+function bumpStreak(){
+  setStreak(getStreak() + 1);
+  const bar = document.getElementById('streak-bar');
+  bar.classList.remove('pulse'); void bar.offsetWidth; bar.classList.add('pulse');
+}
+function resetStreak(){ setStreak(0); }
+
+/* ---------------- Vista de niveles ---------------- */
+function buildLevels(){
+  const wrap = document.getElementById('levels');
+  wrap.innerHTML = '';
+  const solved = getSolved();
+  const grid = document.createElement('ul');
+  grid.className = 'levels list-none p-0 m-0';
+  NIVELES.forEach((n) => {
+    const ids = idsOf(n.id);
+    if(!ids.length) return;
+    const done = ids.filter((id) => solved[id]).length;
+    const card = document.createElement('li');
+    card.className = 'level' + (done >= ids.length ? ' done' : '');
+    card.innerHTML = `
+      <h3><span>${n.nombre} — ${n.titulo}</span><span class="n">${done}/${ids.length}</span></h3>
+      <p>${n.desc}</p>
+      <div class="bar" role="progressbar" aria-label="Progreso en ${n.nombre}" aria-valuemin="0" aria-valuemax="${ids.length}" aria-valuenow="${done}"><i style="width:${Math.round(100 * done / ids.length)}%"></i></div>
+      <div class="acts">
+        <button type="button" class="tbtn" data-nivel="${n.id}">${done === 0 ? 'Empezar' : (done >= ids.length ? 'Repasar' : 'Continuar')}</button>
+        <span class="left">${done >= ids.length ? 'completo ✓' : `faltan ${ids.length - done}`}</span>
+      </div>`;
+    card.querySelector('button').addEventListener('click', () => openLevel(n.id));
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+  updateOverall();
+}
+
+function updateOverall(){
+  const solved = getSolved();
+  const allIds = [];
+  NIVELES.forEach((n) => { idsOf(n.id).forEach((id) => allIds.push(id)); });
+  const total = allIds.length;
+  const done = allIds.filter((id) => solved[id]).length;
+  const pct = total ? Math.round(100 * done / total) : 0;
+  document.getElementById('total-solved').textContent = done;
+  document.getElementById('total-left').textContent = total - done;
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('overall-pct').textContent = pct + ' %';
+  document.getElementById('overall-fill').style.width = pct + '%';
+  const bar = document.getElementById('overall-bar');
+  bar.setAttribute('aria-valuemax', total);
+  bar.setAttribute('aria-valuenow', done);
+  bar.setAttribute('aria-valuetext', `${done} de ${total} ejercicios resueltos, faltan ${total - done}`);
+}
+
+function showLevels(){
+  document.getElementById('play-view').style.display = 'none';
+  document.getElementById('levels-view').style.display = 'block';
+  buildLevels();
+  try{ localStorage.removeItem('entreno_visualizacion_last'); }catch(e){}
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------------- Estado del ejercicio actual ---------------- */
+let currentLevel = null;
+let currentIndex = 0;
+let game = null;              // avanza de verdad con cada jugada, aunque el tablero no se repinte
+let solutionStep = 0;
+let missedThisPuzzle = false;
+let usedHintThisPuzzle = false;
+let locked = false;
+let logLineas = [];           // texto ya revelado de la bitácora
+
+function currentId(){ return idsOf(currentLevel)[currentIndex]; }
+function currentPuzzle(){ return DATA.puzzles[currentId()]; }
+
+function openLevel(id){
+  currentLevel = id;
+  const info = nivelInfo(id);
+  document.getElementById('play-title').textContent = `${info.nombre} — ${info.titulo}`;
+  document.getElementById('play-desc').textContent = info.desc;
+  document.getElementById('levels-view').style.display = 'none';
+  document.getElementById('play-view').style.display = 'block';
+  try{ localStorage.setItem('entreno_visualizacion_last', id); }catch(e){}
+  if(solvedCountFor(id) >= idsOf(id).length){
+    currentIndex = 0;
+    finishLevel();
+  } else {
+    currentIndex = firstUnsolvedIndex(id);
+    loadPuzzle();
+  }
+  window.scrollTo({ top: 0 });
+}
+
+function updateProgressBar(){
+  const total = idsOf(currentLevel).length;
+  const done = solvedCountFor(currentLevel);
+  document.getElementById('progress-fill').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
+  document.getElementById('progress-label').textContent = `${done}/${total} resueltos · ejercicio ${currentIndex + 1} de ${total}`;
+}
+
+/* ---------------- Tablero (se dibuja UNA vez por ejercicio) ----------------
+ * A propósito no vuelve a llamarse mientras se juega: el punto entero del
+ * ejercicio es que la imagen se quede fija en la posición inicial y toda la
+ * partida que sigue exista solo en la cabeza de quien la resuelve. El objeto
+ * `game` de chess.js sí avanza de verdad con cada jugada (así se puede
+ * validar lo que se escribe), pero nunca se vuelve a pintar sobre el
+ * tablero. */
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+
+function drawStaticBoard(fen, orientation){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  const snapshot = new Chess(fen);
+  const ranks = orientation === 'w' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+  const files = orientation === 'w' ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
+  ranks.forEach((rank) => {
+    files.forEach((f) => {
+      const square = FILES[f] + rank;
+      const cell = document.createElement('div');
+      cell.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      cell.dataset.square = square;
+      const piece = snapshot.get(square);
+      let label = square;
+      if(piece){
+        const span = document.createElement('span');
+        span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+        span.textContent = GLYPH[piece.color][piece.type];
+        span.setAttribute('aria-hidden', 'true');
+        cell.appendChild(span);
+        label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro');
+        if(piece.type === 'q' || piece.type === 'r') label = label.replace('blanco', 'blanca').replace('negro', 'negra');
+      }
+      cell.setAttribute('role', 'img');
+      cell.setAttribute('aria-label', label);
+      board.appendChild(cell);
+    });
+  });
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+  const readout = document.getElementById('position-readout');
+  readout.textContent = window.BlindNotation ? BlindNotation.positionSentence(snapshot) : '';
+}
+
+function setStatus(text, cls){
+  const el = document.getElementById('round-status');
+  el.textContent = text;
+  el.className = 'round-status' + (cls ? ' ' + cls : '');
+}
+
+function flashWrongInput(){
+  const input = document.getElementById('answer-input');
+  input.classList.add('wrong-flash');
+  setTimeout(() => input.classList.remove('wrong-flash'), 350);
+}
+
+/* ---------------- Bitácora de jugadas ---------------- */
+function renderLog(){
+  document.getElementById('movelog').innerHTML = logLineas.join(' ') ||
+    '<span class="pending">Todavía no escribiste ninguna jugada.</span>';
+}
+function logJugadaPropia(san){
+  logLineas.push(`<b>${san}</b>`);
+  renderLog();
+}
+function logRespuestaRival(san){
+  logLineas.push(`<span class="reply">${san}</span>`);
+  renderLog();
+}
+
+function loadPuzzle(){
+  const puzzle = currentPuzzle();
+  document.getElementById('play-area').style.display = 'block';
+  document.getElementById('celebration').style.display = 'none';
+  if(!puzzle){
+    finishLevel();
+    return;
+  }
+  game = new Chess(puzzle.fen);
+  const orientation = game.turn();
+  solutionStep = 0;
+  missedThisPuzzle = false;
+  usedHintThisPuzzle = false;
+  locked = false;
+  logLineas = [];
+  renderLog();
+  document.getElementById('hint-btn').disabled = false;
+  document.getElementById('hint-btn').textContent = '💡 Pista';
+  document.getElementById('answer-input').value = '';
+  document.getElementById('answer-input').disabled = false;
+  drawStaticBoard(puzzle.fen, orientation);
+  updateProgressBar();
+  const info = nivelInfo(currentLevel);
+  const turnColor = orientation === 'w' ? 'blancas' : 'negras';
+  document.getElementById('turn-banner').innerHTML =
+    `Juegan <b>${turnColor}</b> — encuentra ${typeof info.propias === 'number' ? (info.propias + (info.propias === 1 ? ' jugada tuya' : ' jugadas tuyas')) : info.propias + ' jugadas tuyas'} sin mirar el tablero moverse.`;
+  const meta = puzzle.rating ? `Dificultad ${puzzle.rating}` : '';
+  document.getElementById('puzzle-meta').textContent = meta;
+  setStatus('Escribe tu primera jugada. El tablero de arriba no se va a mover.');
+  document.getElementById('answer-input').focus();
+}
+
+function jugarEscribiendo(texto){
+  if(locked) return;
+  if(!texto.trim()){ return; }
+  const puzzle = currentPuzzle();
+  const mv = ChessMoveParser.tryParseMove(game, texto);
+  if(!mv){
+    setStatus(`"${texto}" no es una jugada legal en la posición que llevas calculada. Revísala e inténtalo de nuevo.`, 'bad');
+    flashWrongInput();
+    return;
+  }
+  const expected = puzzle.solution[solutionStep];
+  if(mv.san !== expected){
+    // Cualquier jugada que dé mate también cuenta como correcta.
+    if(!game.in_checkmate()){
+      game.undo();
+      missedThisPuzzle = true;
+      resetStreak();
+      flashWrongInput();
+      setStatus(`${mv.san} es legal, pero no es la jugada de la línea. Vuelve a calcular desde donde ibas.`, 'bad');
+      return;
+    }
+  }
+  document.getElementById('answer-input').value = '';
+  logJugadaPropia(mv.san);
+  solutionStep++;
+
+  if(solutionStep >= puzzle.solution.length || game.in_checkmate()){
+    finishPuzzle();
+    return;
+  }
+
+  locked = true;
+  document.getElementById('answer-input').disabled = true;
+  setStatus('✓ Correcto — el rival responde…', 'ok');
+  setTimeout(() => {
+    const replySan = puzzle.solution[solutionStep];
+    game.move(replySan);
+    logRespuestaRival(replySan);
+    solutionStep++;
+    locked = false;
+    document.getElementById('answer-input').disabled = false;
+    document.getElementById('answer-input').focus();
+    if(solutionStep >= puzzle.solution.length){
+      finishPuzzle();
+    } else {
+      setStatus('Sigue calculando la continuación.');
+    }
+  }, 750);
+}
+
+document.getElementById('answer-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('answer-input');
+  jugarEscribiendo(input.value);
+});
+
+function finishPuzzle(){
+  locked = true;
+  document.getElementById('answer-input').disabled = true;
+  document.getElementById('hint-btn').disabled = true;
+  const id = currentId();
+  const alreadySolved = isSolved(id);
+  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
+  setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
+  drawStaticBoard(game.fen(), game.turn() === 'w' ? 'b' : 'w');
+  if(!alreadySolved) markSolved(id);
+  updateProgressBar();
+  updateOverall();
+  setTimeout(() => {
+    if(currentIndex < idsOf(currentLevel).length - 1){
+      currentIndex++;
+      loadPuzzle();
+    } else {
+      finishLevel();
+    }
+  }, 1400);
+}
+
+function finishLevel(){
+  document.getElementById('play-area').style.display = 'none';
+  document.getElementById('celebration').style.display = 'block';
+  const total = idsOf(currentLevel).length;
+  const info = nivelInfo(currentLevel);
+  document.getElementById('celebration-stats').textContent =
+    `Resolviste los ${total} ejercicios de ${info.nombre} — ${info.titulo}.`;
+  updateProgressBar();
+}
+
+function giveHint(){
+  if(locked) return;
+  usedHintThisPuzzle = true;
+  const puzzle = currentPuzzle();
+  const expected = puzzle.solution[solutionStep];
+  setStatus(`Pista: la jugada que buscas es ${expected}.`);
+}
+document.getElementById('hint-btn').addEventListener('click', giveHint);
+document.getElementById('retry-btn').addEventListener('click', loadPuzzle);
+document.getElementById('skip-btn').addEventListener('click', () => {
+  resetStreak();
+  if(currentIndex < idsOf(currentLevel).length - 1){
+    currentIndex++;
+  } else {
+    currentIndex = 0;
+  }
+  loadPuzzle();
+});
+document.getElementById('celebration-replay-btn').addEventListener('click', () => {
+  currentIndex = 0;
+  loadPuzzle();
+});
+document.getElementById('celebration-back-btn').addEventListener('click', showLevels);
+document.getElementById('back-levels').addEventListener('click', (e) => { e.preventDefault(); showLevels(); });
+
+/* ---------------- Arranque ---------------- */
+let appInitialized = false;
+function initApp(){
+  if(appInitialized) return;
+  appInitialized = true;
+  setStreak(getStreak());
+  let last = null;
+  try{ last = localStorage.getItem('entreno_visualizacion_last'); }catch(e){}
+  const fromHash = (location.hash || '').replace('#', '');
+  const wanted = fromHash && idsOf(fromHash).length ? fromHash : (last && idsOf(last).length ? last : null);
+  if(wanted) openLevel(wanted); else showLevels();
+}
+
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar a Visualización. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  unlock();
+}
+
+requireLoginThenGate();
+
+/* Coordenadas del tablero (js/coordenadas-tablero.js): la letra de columna abajo
+   y el número de fila a la izquierda. Acá no hace falta el observador que
+   repinta solo: el tablero no vuelve a redibujarse durante el ejercicio, así
+   que drawStaticBoard() la llama a mano cada vez que dibuja. */
+</script>
+</body>
+</html>
