@@ -248,21 +248,34 @@
             }).select().single();
             if (roundError) { alert("No se pudo crear la ronda: " + roundError.message); return; }
 
+            // Los cruces son independientes entre sí (cada uno crea su propia game_room y su
+            // propia fila de tournament_pairings), así que se mandan todos a la vez en vez de
+            // uno por uno: con un torneo de varias decenas de jugadores, esperar cada ida y
+            // vuelta a Supabase por turno se sentía como que la página se había colgado.
+            // El número de tablero se reserva ANTES del primer await de cada cruce (map()
+            // llama a cada función de la lista en orden, de forma síncrona, hasta que topa
+            // con su primer await), así que sigue saliendo 1, 2, 3… en el mismo orden que
+            // pairings, aunque las esperas de red terminen en otro orden.
             let boardNumber = 1;
-            for (const p of pairings) {
+            const erroresDeSala = [];
+            await Promise.all(pairings.map(async (p) => {
+                const miTablero = boardNumber++;
                 if (p.isBye) {
                     await sb.from("tournament_pairings").insert({
-                        round_id: roundRow.id, tournament_id: tournament.id, board_number: boardNumber++,
+                        round_id: roundRow.id, tournament_id: tournament.id, board_number: miTablero,
                         white_id: p.white, black_id: null, is_bye: true, result: "white", finished_at: new Date().toISOString(),
                     });
-                    continue;
+                    return;
                 }
                 const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black)).select().single();
-                if (roomError) { console.error(roomError); alert("No se pudo crear la partida de un cruce: " + roomError.message); continue; }
+                if (roomError) { console.error(roomError); erroresDeSala.push(roomError.message); return; }
                 await sb.from("tournament_pairings").insert({
-                    round_id: roundRow.id, tournament_id: tournament.id, board_number: boardNumber++,
+                    round_id: roundRow.id, tournament_id: tournament.id, board_number: miTablero,
                     white_id: p.white, black_id: p.black, is_bye: false, game_room_id: roomRow.id,
                 });
+            }));
+            if (erroresDeSala.length) {
+                alert("No se pudo crear la partida de " + erroresDeSala.length + " cruce(s):\n" + erroresDeSala.join("\n"));
             }
 
             await sb.from("tournaments").update({ current_round: nextRoundNumber, updated_at: new Date().toISOString() }).eq("id", tournament.id);
