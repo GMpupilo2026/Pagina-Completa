@@ -1418,6 +1418,84 @@ celular.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
   volver.
 
+## Logros y racha de días
+
+`logros.html` (tarjeta "🏅 Logros" en el panel, grupo "Jugar y competir", junto a
+"Racha táctica") es la gamificación de Entrenamiento: una racha de días
+consecutivos y un catálogo de medallas, de sencillas a avanzadas, calculadas
+siempre a partir de `training_progress` — nunca de una tabla de "logros
+desbloqueados", para que un logro no pueda quedar a medias por un guardado que
+falló.
+
+- **Un día cuenta si tiene 5 o más ejercicios de CUALQUIER tipo**, agrupados
+  por fecha de **Costa Rica** (no UTC: quien entrena a las 11 p.m. no puede
+  perder el día por el huso horario del servidor). Lo calcula
+  `public.progreso_dias_y_racha(alumno uuid default auth.uid())`
+  —`SECURITY INVOKER`, mismo criterio que las funciones de informes: quién
+  puede pedir la racha de quién lo decide la RLS de `training_progress`, así
+  que ya sirve tanto para que un alumno pida la suya como para que un
+  profesor pida la de uno de sus alumnos el día que se necesite en Informes—
+  con la técnica de siempre para islas de días consecutivos (gaps and
+  islands: `dia - row_number()` agrupa un tramo sin huecos en un solo valor).
+  Devuelve `dias_activos`, `racha_actual`, `racha_record`, `total_ejercicios`,
+  `tipos_distintos`, `hoy_ejercicios`, `primer_dia` y `por_actividad` (un
+  `jsonb` con cuántas filas hay de cada actividad).
+- **La racha actual se corta si el último día activo no fue hoy ni ayer.**
+  Con datos de mentira se comprobó el caso de siempre —una racha vieja que no
+  sigue hasta hoy no cuenta como "actual" pero sí sigue contando para el
+  récord— y el caso vacío (nadie ha practicado nunca) sin que la función
+  truene.
+- **Los logros usan `racha_record`, no `racha_actual`.** Un logro ya ganado no
+  se puede perder porque un día se rompió la racha — "lo hecho, hecho está",
+  el mismo criterio que ya usa `js/progreso-usuario.js` para los ejercicios
+  resueltos.
+- **El catálogo (`js/logros-catalogo.js`) es puro**: cada logro es
+  `{ id, categoria, nivel, meta, valor(stats) }`, y `conEstado(stats)` no
+  guarda nada — recalcula conseguido/progreso cada vez a partir de los
+  números de la función de arriba. Van de sencillos a avanzados en cuatro
+  niveles (bronce, plata, oro, diamante): racha de días, ejercicios totales,
+  variedad de tipos practicados, días de práctica acumulados (no hace falta
+  que sean seguidos) y metas por cada tipo de ejercicio.
+- **`ACTIVIDADES_ALCANZABLES` es 13, no 14.** El CHECK de `training_progress`
+  tiene 14 actividades, pero `desafios` está declarada sin ningún uso real
+  (`entreno/desafios.html` registra como `'practicar'`): pedir las 14 para el
+  logro "Las probaste todas" habría dejado un logro que nadie puede conseguir
+  nunca, y eso no da ningún error —se queda gris para siempre sin que nadie
+  sepa por qué—.
+- **Cuatro actividades se sumaron al CHECK para que "cualquier tipo" sea
+  cierto de verdad**: `aperturas`, `confites`, `ilumina` y `visualizacion`
+  vivían solo en `localStorage` (con un comentario explícito en
+  `entreno/aperturas.html` de por qué no escribían en `training_progress`) y
+  no contaban para nada del lado del servidor. Ahora sus páginas cargan
+  `js/entreno-progress.js` y llaman a `EntrenoProgress.log(...)` al terminar
+  una ronda, una línea, un nivel o un ejercicio — mismo patrón que ya usaban
+  Mates, 4×4, Aprende, etc. `finales100` (Los 100 finales) y el `slug` de
+  `js/curso-partidas.js` siguen sin poder escribir en `training_progress` (no
+  están en el CHECK): **no** se tocaron acá, porque emparejarlos con
+  `curso`/`leccion` como espera `cursos_temas` de `informes_resumen_alumnos()`
+  es un cambio aparte, no de esta tanda.
+- **`logros.html` exige sesión** (mismo patrón que `entreno/estudio.html`:
+  gate → `requireLoginThenGate()` → `unlock()`), porque la racha es de la
+  cuenta, no del aparato. Pide `progreso_dias_y_racha` por RPC — nunca baja
+  `training_progress` entera — y pinta la racha, la barra de "hoy" (cuántos
+  de los 5 ya lleva) y la grilla de medallas agrupada por categoría, con el
+  conteo conseguidas/total en cada encabezado.
+- `clases.html` suma una tarjeta chica de racha (`loadRachaWidget()`, junto a
+  la de "Racha táctica — récord de la clase") que solo pinta un resumen de una
+  línea — la cuenta la sigue haciendo la misma función.
+- **Al tocar cualquiera de estas piezas, correr `node
+  herramientas/verificar-logros.js`** (con el sitio en localhost:8777,
+  playwright y `npm install chess.js@0.10.3`). Con un resultado de mentira ya
+  calculado (no vuelve a sumar días: eso ya se probó con SQL de verdad,
+  impersonando el rol del alumno, contra el proyecto de Supabase) comprueba
+  que la racha, la barra de "hoy" y cada medalla salgan EXACTAMENTE como las
+  calcula `js/logros-catalogo.js` para esos mismos números —comparando contra
+  el catálogo cargado de verdad en el navegador, no reimplementando sus
+  metas—, que sin sesión mande a iniciar sesión, que un RPC vacío se vea en
+  cero sin romper la página, y que las cuatro páginas nuevas (Confites,
+  Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
+  fila a `training_progress` al terminar un ejercicio.
+
 ## El hub de Entrenamiento y sus tres grupos
 
 `entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,

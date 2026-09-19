@@ -26,6 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="visualizacion"></script>
+<script src="../js/entreno-progress.js"></script>
 <style>
   :root{
     --bg-deep:#f0f4f8;
@@ -335,6 +336,7 @@ async function unlock(){
   // El progreso vive en la cuenta: se baja y se funde con el de este aparato
   // ANTES de pintar, para seguir donde se quedó aunque sea otro dispositivo.
   await ProgresoUsuario.init();
+  if (window.EntrenoProgress) await EntrenoProgress.init();
   loadDataThenStart();
 }
 
@@ -698,7 +700,10 @@ function finishPuzzle(){
   if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
   setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
   drawStaticBoard(game.fen(), game.turn() === 'w' ? 'b' : 'w');
-  if(!alreadySolved) markSolved(id);
+  if(!alreadySolved){
+    markSolved(id);
+    if (window.EntrenoProgress) EntrenoProgress.log("visualizacion", { puzzle_id: id });
+  }
   updateProgressBar();
   updateOverall();
   setTimeout(() => {
