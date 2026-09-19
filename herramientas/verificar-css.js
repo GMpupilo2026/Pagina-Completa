@@ -35,7 +35,7 @@ const PAGINAS = [
     "/articulos/la-clavada.html", "/cursos/fundamentos-del-ajedrez.html",
     "/cursos/el-mapa-de-los-finales.html", "/cursos/academia/index.html",
     "/entreno/index.html", "/entreno/diagnostico.html", "/entreno/mates.html", "/entreno/aperturas.html",
-    "/entreno/aprender.html", "/entreno/4x4.html",
+    "/entreno/aprender.html", "/entreno/estudio.html", "/entreno/4x4.html",
     // entreno/tactica.html ya no se abre: sus ejercicios viven dentro de
     // temas.html y esa dirección ahora solo redirige. Abrirla acá mediría el CSS
     // de temas.html dos veces.

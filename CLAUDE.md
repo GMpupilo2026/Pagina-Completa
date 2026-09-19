@@ -1540,29 +1540,32 @@ la línea se programa para más adelante.
   propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
   **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
-### "Para estudiar", dentro de Aprende: las mismas líneas, para leer y no para jugar
+### `entreno/estudio.html`: las mismas líneas, para leer y no para jugar
 
-`entreno/aprender.html` tiene una pestaña más, entre "Tácticas básicas" y
-"Asignaciones": **tarjetas de las 25 líneas de tipo "apertura"** del banco de
-arriba (las 12 celadas quedan fuera: son trucos puntuales, no repertorio),
-agrupadas por a qué apertura o defensa pertenecen —"Apertura española" con sus
-dos variantes, "Defensa india" con sus cuatro— para que el alumno la **lea y la
-memorice**, en vez de tener que jugarla a ciegas contra el entrenador desde la
-primera vez que la ve.
+Es su propia página, con acceso propio en el panel de la Academia (`clases.html`
+→ grupo "Aprender" → **"📚 Estudio"**) — **no** una pestaña dentro de
+`entreno/aprender.html`. Se probó primero ahí adentro y se sacó: mezclaba dos
+cosas de naturaleza distinta bajo un mismo encabezado —las lecciones de Aprende
+se resuelven una a una, esto se lee de punta a punta cuando se quiera— y como
+acceso propio se puede asignar en Tareas (`js/material-plataforma.js`) sin
+mandar a media página de Aprende a buscarlo.
 
-- **Es la misma fuente de datos, no una copia.** La tarjeta lee
+**Tarjetas de las 25 líneas de tipo "apertura"** del banco de
+`js/aperturas-lineas.js` (las 12 celadas quedan fuera: son trucos puntuales, no
+repertorio), agrupadas por a qué apertura o defensa pertenecen —"Apertura
+española" con sus dos variantes, "Defensa india" con sus cuatro— para que el
+alumno la **lea y la memorice**, en vez de tener que jugarla a ciegas contra el
+entrenador desde la primera vez que la ve.
+
+- **Es la misma fuente de datos, no una copia.** La página lee
   `js/aperturas-lineas.js` directo (`ESTUDIO_LINEAS`, filtrando `tipo ===
-  "apertura"`): sumar una línea ahí la suma acá sola, sin tocar
-  `entreno/aprender.html`. Si se copiaran las líneas, corregirle una jugada en
-  un lado y no en el otro es el error que separa las dos copias sin que nada
-  avise.
+  "apertura"`): sumar una línea ahí la suma acá sola. Si se copiaran las
+  líneas, corregirle una jugada en un lado y no en el otro es el error que
+  separa las dos copias sin que nada avise.
 - **No es un ejercicio, es un libro: por eso no hay bloqueo ni "resuelto".**
-  Las lecciones de Aprende se abren una a una según se resuelve la anterior;
-  acá las 25 están abiertas de entrada, porque no hay nada que "resolver" —
-  se lee, con un tablero que solo recorre la línea (⏮ ◀ ▶ ⏭ o saltando a una
-  jugada de la lista con un clic), no que reciba jugadas. La pestaña muestra
-  el total nada más, sin fracción, a propósito: una fracción prometería un
-  progreso que esto no mide.
+  Las 25 están abiertas de entrada, porque no hay nada que "resolver" — se
+  lee, con un tablero que solo recorre la línea (⏮ ◀ ▶ ⏭ o saltando a una
+  jugada de la lista con un clic), no que reciba jugadas.
 - **El tablero es decorativo (`aria-hidden`) y no hace falta un Modo Adaptado
   aparte.** La posición y la línea entera ya están contadas en texto al lado
   —la lista de jugadas, "Idea" y "Lo que hay que recordar"—, así que no
@@ -1571,22 +1574,30 @@ primera vez que la ve.
   ("Jugada 3 de 8: 2.Cf3") en vez de releer todo el texto de arriba.
 - **El botón "🎯 Practicarla jugándola en el tablero" no manda a la lista de
   `entreno/aperturas.html`: manda directo a esa línea**, con
-  `aperturas.html?linea=<id>`. Sin ese deep-link, quien lee la tarjeta y quiere
-  practicarla tendría que volver a encontrarla en una lista de 25 — el mismo
-  trabajo que la tarjeta viene a evitar. Un id que no existe (línea borrada)
-  cae a la lista de siempre en vez de dejar un tablero de mentira.
+  `aperturas.html?linea=<id>` (deep-link nuevo en esa página). Sin él, quien
+  lee la tarjeta y quiere practicarla tendría que volver a encontrarla en una
+  lista de 25 — el mismo trabajo que la tarjeta viene a evitar. Un id que no
+  existe (línea borrada) cae a la lista de siempre en vez de dejar un tablero
+  de mentira.
 - **No lleva marca de progreso ni clave en `js/progreso-usuario.js` a
   propósito.** No hay nada que sincronizar entre aparatos porque no hay ningún
   "resuelto" que guardar — la memorización de verdad, con su repaso espaciado,
-  sigue viviendo en `entreno/aperturas.html`.
-- **Al tocar esto, correr `node herramientas/verificar-aprender-estudiar.js`**
-  (con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+  sigue viviendo en `entreno/aperturas.html`. Por lo mismo, tampoco carga
+  `js/acceso-admin.js`, `js/blind-notation.js` ni `js/board-drag.js`: no hay
+  bloqueo que abrirle a quien administra ni tablero que reciba jugadas.
+- El tiempo sí se registra, como en toda página de Entreno:
+  `js/tiempo-plataforma.js data-activity="estudio"`.
+- **Al tocar esto, correr `node herramientas/verificar-estudio.js`** (con el
+  sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
   Comprueba en un navegador de verdad que las 25 variantes aparecen agrupadas
   y sin ningún candado, que el tablero de la tarjeta dibuja de verdad —pieza
   por pieza, contra chess.js— la posición que toca en cada jugada y no solo
   que la resalta en la lista, que el botón de practicarla apunta al id
   correcto, y que `aperturas.html?linea=<id>` abre esa línea de una sin pasar
   por la lista (y que un id inventado cae a la lista, no a un tablero vacío).
+  **Al tocar el panel o esta página, correr también `node
+  herramientas/verificar-panel.js`**, que comprueba que "Estudio" esté en el
+  grupo "Aprender".
 
 ## Diagnóstico y plan de entrenamiento
 

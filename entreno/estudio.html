@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estudio — Ajedrez Integral</title>
+<meta name="description" content="Tarjetas de aperturas y defensas con sus variantes principales, para leer y memorizar.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="estudio"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    min-height:100dvh;
+  }
+  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  /* ---------- Lista, agrupada por apertura o defensa ---------- */
+  .lesson-list{display:flex; flex-direction:column; gap:8px;}
+  .lesson-item{
+    display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; padding:14px 16px; cursor:pointer;
+    transition:border-color .15s, transform .12s ease-out;
+  }
+  .lesson-item:hover{border-color:var(--brass);}
+  .lesson-item:active{transform:scale(0.99);}
+  .lesson-item .mark{font-size:1.2rem; width:1.4em; text-align:center; flex-shrink:0;}
+  .lesson-item .info{flex:1;}
+  .lesson-item .info .name{font-weight:600;}
+  .lesson-item .info .desc{font-size:0.82rem; color:var(--text-muted); margin-top:2px;}
+  .study-group-title{
+    font-size:1rem; color:var(--text); margin:22px 0 8px; padding-bottom:4px;
+    border-bottom:1px solid var(--line);
+  }
+  .study-group-title:first-child{margin-top:0;}
+
+  /* ---------- La tarjeta abierta ---------- */
+  #list-view{display:block;}
+  #study-view{display:none;}
+  .lesson-header{margin-bottom:14px;}
+  .lesson-header a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
+  .lesson-header h2{font-size:1.4rem; margin-bottom:8px;}
+  .lesson-text{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:520px; margin:0 auto 18px;}
+
+  .board-wrap{max-width:440px; margin:0 auto;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+    pointer-events:none;
+  }
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,34px); user-select:none; border:none; padding:0;
+  }
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
+
+  .study-controls{
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+    max-width:440px; margin:14px auto 0;
+  }
+  .study-moves{
+    max-width:520px; margin:16px auto 0; display:flex; flex-wrap:wrap; gap:6px 14px;
+    font-family:'Inter', sans-serif; font-size:0.95rem; justify-content:center;
+  }
+  .study-par{display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;}
+  .study-par b{color:var(--text-muted); font-weight:600; font-size:0.85em;}
+  .study-move{
+    background:transparent; border:1px solid transparent; border-radius:3px; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:0.95rem; padding:2px 6px; cursor:pointer;
+  }
+  .study-move:hover{border-color:var(--line);}
+  .study-move.actual{background:var(--brass); color:#102a43; font-weight:700;}
+  .study-notes{
+    max-width:520px; margin:20px auto 0; background:var(--bg-panel); border:1px solid var(--line);
+    padding:14px 18px;
+  }
+  .study-notes h3{font-size:0.9rem; margin:10px 0 4px;}
+  .study-notes h3:first-child{margin-top:0;}
+  .study-notes p{color:var(--text-muted); font-size:0.92rem; line-height:1.55; margin:0 0 4px;}
+
+  .lesson-controls{display:flex; gap:10px; justify-content:center; margin-top:18px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+  .lesson-controls a.bctrl{display:inline-flex; align-items:center; text-decoration:none;}
+
+  @media (prefers-reduced-motion: reduce){
+    .lesson-item, .bctrl, .study-move{transition-property: background-color, border-color, color;}
+  }
+</style>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+
+<!-- ===== PASSWORD GATE ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">📚</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Estudio</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Estudio 📚</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Academia</a>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="lesson-text" style="margin:16px auto 0;">
+        Aperturas y defensas con sus variantes principales, agrupadas por familia, para leer y memorizar
+        —no es un ejercicio con solución: es un libro. Para memorizarlas jugándolas contra el
+        entrenador, con repaso espaciado, está
+        <a href="aperturas.html">🎯 Aperturas y celadas</a>.
+      </p>
+    </div>
+
+    <div id="list-view">
+      <div class="lesson-list" id="lesson-list"></div>
+    </div>
+
+    <!-- ============ La tarjeta de una apertura o defensa ============
+         El tablero es decorativo (aria-hidden) porque la posición y las
+         jugadas ya están contadas en texto al lado — igual que el material
+         de estudio de los cursos, no depende de ver ninguna imagen. -->
+    <div id="study-view">
+      <div class="lesson-header">
+        <a href="#" id="study-back-to-list">← Todas las variantes</a>
+        <h2 id="study-title"></h2>
+        <p class="lesson-text" id="study-sub" style="margin-bottom:0;"></p>
+      </div>
+      <div class="board-wrap">
+        <div class="board8" id="study-board" aria-hidden="true"></div>
+      </div>
+      <p id="study-anuncio" class="sr-only" role="status" aria-live="polite"></p>
+      <div class="study-controls">
+        <button type="button" class="bctrl" id="study-start-btn" aria-label="Ir a la posición inicial">⏮</button>
+        <button type="button" class="bctrl" id="study-prev-btn" aria-label="Jugada anterior">◀</button>
+        <button type="button" class="bctrl" id="study-next-btn" aria-label="Jugada siguiente">▶</button>
+        <button type="button" class="bctrl" id="study-end-btn" aria-label="Ir a la última jugada">⏭</button>
+      </div>
+      <div class="study-moves" id="study-moves"></div>
+      <div class="study-notes">
+        <h3>Idea</h3>
+        <p id="study-idea"></p>
+        <h3>Lo que hay que recordar</h3>
+        <p id="study-clave"></p>
+      </div>
+      <div class="lesson-controls">
+        <a class="bctrl primary" id="study-practicar-btn" href="#">🎯 Practicarla jugándola en el tablero</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<!-- Mismo banco que entreno/aperturas.html: las tarjetas de acá son las
+     líneas tipo "apertura" de ahí (no las celadas), leídas en vez de
+     jugadas. Una sola fuente: agregar una línea ahí la suma acá sola. -->
+<script src="../js/aperturas-lineas.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/estudio.html';
+
+/* ---------------- Las tarjetas: aperturas y defensas, para leer ----------
+   No son ejercicios con solución: son las líneas de js/aperturas-lineas.js
+   (las de tipo "apertura", no las celadas) agrupadas por a qué apertura o
+   defensa pertenecen. No hay bloqueo ni "resuelto" — es material de
+   consulta, no una progresión — así que todas están abiertas de entrada. */
+const ESTUDIO_NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
+const ESTUDIO_LINEAS = (window.AperturasLineas ? window.AperturasLineas.LINEAS : [])
+  .filter((L) => L.tipo === 'apertura');
+
+// Agrupadas por L.apertura, conservando el orden del banco (ya viene
+// ordenado por familia: españolas, sicilianas, francesas…).
+function agruparEstudio(){
+  const grupos = new Map();
+  ESTUDIO_LINEAS.forEach((L) => {
+    if(!grupos.has(L.apertura)) grupos.set(L.apertura, []);
+    grupos.get(L.apertura).push(L);
+  });
+  return grupos;
+}
+
+// Un <h2> por grupo, para poder saltar de grupo en grupo con lector de
+// pantalla, y una ficha por variante.
+function pintarLista(){
+  const box = document.getElementById('lesson-list');
+  box.innerHTML = '';
+  const grupos = agruparEstudio();
+  grupos.forEach((lineas, nombreGrupo) => {
+    const titulo = document.createElement('h2');
+    titulo.className = 'study-group-title';
+    titulo.textContent = nombreGrupo;
+    box.appendChild(titulo);
+    lineas.forEach((L) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lesson-item';
+      const jugadasAlumno = window.AperturasLineas.jugadasDelAlumno(L);
+      btn.innerHTML = `
+        <span class="mark">📖</span>
+        <span class="info">
+          <span class="name">${L.nombre}</span>
+          <span class="desc">${L.color === 'w' ? 'Blancas' : 'Negras'} · ${ESTUDIO_NIVEL[L.nivel]} · ${jugadasAlumno} jugada${jugadasAlumno === 1 ? '' : 's'} para memorizar</span>
+        </span>`;
+      btn.addEventListener('click', () => openStudyCard(L));
+      box.appendChild(btn);
+    });
+  });
+}
+
+function showList(){
+  document.getElementById('study-view').style.display = 'none';
+  document.getElementById('list-view').style.display = 'block';
+}
+
+/* ---------------- La tarjeta abierta ----------------
+   Un visor de solo lectura: recorre la línea con los mismos controles de un
+   reproductor (⏮ ◀ ▶ ⏭) o saltando directo a una jugada de la lista. No hay
+   "correcto" ni "incorrecto" — eso es entreno/aperturas.html, no esto. */
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const FILES = ['a','b','c','d','e','f','g','h'];
+function isLightSquare(square){
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1], 10) - 1;
+  return (file + rank) % 2 === 1;
+}
+const PIEZAS_ES_ESTUDIO = {N:'C', B:'A', R:'T', Q:'D', K:'R'};
+function aEspanolPieza(san){ return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES_ESTUDIO[l]); }
+
+let studyLine = null;
+let studyGame = null;
+let studyIndex = 0; // cuántas jugadas de la línea ya se jugaron (0 = posición inicial)
+
+function studyPositionAt(index){
+  const g = new Chess();
+  for(let i = 0; i < index; i++) g.move(studyLine.jugadas[i], { sloppy: true });
+  return g;
+}
+
+function drawStudyBoard(){
+  const board = document.getElementById('study-board');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const cell = document.createElement('div');
+      cell.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
+      const piece = studyGame.get(square);
+      if(piece){
+        const span = document.createElement('span');
+        span.setAttribute('aria-hidden', 'true');
+        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
+          span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+          span.className = 'chess-piece-illustrated';
+        } else {
+          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+          span.textContent = GLYPH[piece.color][piece.type];
+        }
+        cell.appendChild(span);
+      }
+      board.appendChild(cell);
+    }
+  }
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+// La lista de jugadas se ve como en un libro: "1. e4 e5", cada jugada es un
+// botón que salta directo a la posición de después de esa jugada.
+function pintarStudyJugadas(){
+  const cont = document.getElementById('study-moves');
+  cont.innerHTML = '';
+  for(let i = 0; i < studyLine.jugadas.length; i += 2){
+    const par = document.createElement('span');
+    par.className = 'study-par';
+    const numero = document.createElement('b');
+    numero.textContent = (i / 2 + 1) + '.';
+    par.appendChild(numero);
+    [i, i + 1].forEach((idx) => {
+      if(idx >= studyLine.jugadas.length) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'study-move' + (idx === studyIndex - 1 ? ' actual' : '');
+      if(idx === studyIndex - 1) btn.setAttribute('aria-current', 'step');
+      btn.textContent = aEspanolPieza(studyLine.jugadas[idx]);
+      btn.addEventListener('click', () => studyGoTo(idx + 1));
+      par.appendChild(btn);
+    });
+    cont.appendChild(par);
+  }
+}
+
+function studyGoTo(n){
+  studyIndex = Math.max(0, Math.min(n, studyLine.jugadas.length));
+  studyGame = studyPositionAt(studyIndex);
+  drawStudyBoard();
+  pintarStudyJugadas();
+  document.getElementById('study-start-btn').disabled = studyIndex === 0;
+  document.getElementById('study-prev-btn').disabled = studyIndex === 0;
+  document.getElementById('study-next-btn').disabled = studyIndex >= studyLine.jugadas.length;
+  document.getElementById('study-end-btn').disabled = studyIndex >= studyLine.jugadas.length;
+  const anuncio = document.getElementById('study-anuncio');
+  if(studyIndex === 0){
+    anuncio.textContent = 'Posición inicial.';
+  } else {
+    const san = studyLine.jugadas[studyIndex - 1];
+    const numeroJugada = Math.floor((studyIndex - 1) / 2) + 1;
+    const esNegra = (studyIndex - 1) % 2 === 1;
+    anuncio.textContent = `Jugada ${studyIndex} de ${studyLine.jugadas.length}: ` +
+      `${numeroJugada}.${esNegra ? '..' : ''} ${aEspanolPieza(san)}.`;
+  }
+}
+
+function openStudyCard(L){
+  studyLine = L;
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('study-view').style.display = 'block';
+  document.getElementById('study-title').textContent = L.nombre;
+  document.getElementById('study-sub').textContent =
+    `${L.apertura} · juegas con ${L.color === 'w' ? 'blancas' : 'negras'} · ${ESTUDIO_NIVEL[L.nivel]}`;
+  document.getElementById('study-idea').textContent = L.idea;
+  document.getElementById('study-clave').textContent = L.clave;
+  document.getElementById('study-practicar-btn').href = 'aperturas.html?linea=' + encodeURIComponent(L.id);
+  studyGoTo(0);
+  window.scrollTo({ top: 0 });
+}
+
+document.getElementById('study-back-to-list').addEventListener('click', (e) => {
+  e.preventDefault();
+  showList();
+});
+document.getElementById('study-start-btn').addEventListener('click', () => studyGoTo(0));
+document.getElementById('study-prev-btn').addEventListener('click', () => studyGoTo(studyIndex - 1));
+document.getElementById('study-next-btn').addEventListener('click', () => studyGoTo(studyIndex + 1));
+document.getElementById('study-end-btn').addEventListener('click', () => studyGoTo(studyLine.jugadas.length));
+
+/* ---------------- Arranque ---------------- */
+async function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  pintarLista();
+  showList();
+}
+
+// Entrenamiento exige sesión iniciada en el sitio (Academia) — así el
+// tiempo de estudio queda visible para el profesor en Informes.
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.classList.add('hidden');
+  unlock();
+}
+
+requireLoginThenGate();
+</script>
+</body>
+</html>

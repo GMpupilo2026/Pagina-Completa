@@ -1,6 +1,6 @@
-/* Comprueba "Para estudiar" — las tarjetas de aperturas y defensas dentro de
-   entreno/aprender.html — y el enlace ?linea=<id> que las lleva a practicar en
-   entreno/aperturas.html.
+/* Comprueba entreno/estudio.html — las tarjetas de aperturas y defensas, con
+   sus variantes principales, para leer y memorizar — y el enlace ?linea=<id>
+   que las lleva a practicar en entreno/aperturas.html.
 
    No es un ejercicio con solución (eso lo comprueba
    herramientas/verificar-aperturas-pagina.js, jugando la línea entera): esto
@@ -12,7 +12,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install chess.js@0.10.3
-         node herramientas/verificar-aprender-estudiar.js                */
+         node herramientas/verificar-estudio.js                */
 const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
@@ -73,19 +73,8 @@ async function abrir(browser, ruta, esperar) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    console.log("=== entreno/aprender.html — la pestaña «Para estudiar» ===");
-    const { page, errores } = await abrir(browser, "/entreno/aprender.html", "#app:not(.hidden)");
-
-    // La pestaña "Para estudiar" está entre "Tácticas básicas" y "Asignaciones",
-    // y muestra el total de variantes — sin fracción, porque no hay "resuelto".
-    igual("la pestaña existe con el total correcto",
-      await page.evaluate(() => [...document.querySelectorAll(".tab")]
-        .find((b) => b.textContent.indexOf("Para estudiar") === 0).textContent.replace(/\s+/g, " ").trim()),
-      `Para estudiar ${ESTUDIO.length}`);
-
-    await page.evaluate(() => [...document.querySelectorAll(".tab")]
-      .find((b) => b.textContent.indexOf("Para estudiar") === 0).click());
-    await page.waitForTimeout(150);
+    console.log("=== entreno/estudio.html — la lista ===");
+    const { page, errores } = await abrir(browser, "/entreno/estudio.html", "#app:not(.hidden)");
 
     igual("aparecen las 25 variantes",
       await page.evaluate(() => document.querySelectorAll("#lesson-list .lesson-item").length),
