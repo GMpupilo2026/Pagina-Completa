@@ -790,11 +790,19 @@
         let encargadoAlumno = null;   // el alumno que se está mirando
 
         async function llamarInformes(cuerpo) {
+            // El token se pide fresco en cada llamada, no del `session` que se
+            // guardó al cargar la página: ese es una foto de un solo momento y
+            // el access_token expira (una hora). sb lo renueva solo por dentro
+            // mientras la pestaña sigue abierta, pero la variable `session`
+            // nunca se entera del renuevo. Con el token viejo, la función
+            // respondía "Token inválido" sin ninguna otra pista.
+            const { data: fresca } = await sb.auth.getSession();
+            if (!fresca.session) { window.location.href = "login.html"; return; }
             const res = await fetch(FUNCION_INFORMES, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "Authorization": `Bearer ${fresca.session.access_token}`,
                     "apikey": window.SUPABASE_ANON_KEY,
                 },
                 body: JSON.stringify(cuerpo),
