@@ -35,6 +35,8 @@
     --text-muted:#627d98;
     --brass:#de911d;
     --brass-bright:#f0b429;
+    --aperturas:#c9a23e;
+    --defensas:#3f6f8f;
   }
   html.dark{
     --bg-deep:#0a1f33;
@@ -57,6 +59,18 @@
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
   main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+
+  /* ---------- Las dos pestañas: aperturas (blancas) y defensas (negras) ---------- */
+  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:18px 24px 0; flex-wrap:wrap;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
 
   /* ---------- Lista, agrupada por apertura o defensa ---------- */
   .lesson-list{display:flex; flex-direction:column; gap:8px;}
@@ -209,6 +223,13 @@
       </p>
     </div>
 
+    <!-- Las dos pestañas separan qué le toca practicar al alumno: con blancas
+         (abre él) o con negras (contesta él) — no el nombre de la familia. Por
+         eso "Siciliana cerrada" (el blanco elige NO entrar a la teoría abierta)
+         cae en Aperturas y no en Defensas, aunque su familia se llame "Defensa
+         siciliana": ahí el alumno abre, no contesta. -->
+    <nav class="tabs" id="tabs" aria-label="Aperturas o defensas"></nav>
+
     <div id="list-view">
       <div class="lesson-list" id="lesson-list"></div>
     </div>
@@ -270,23 +291,54 @@ const ESTUDIO_NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
 const ESTUDIO_LINEAS = (window.AperturasLineas ? window.AperturasLineas.LINEAS : [])
   .filter((L) => L.tipo === 'apertura');
 
+/* Las dos pestañas van por L.color, no por el nombre de la familia: es lo que
+   de verdad separa "qué le toca practicar al alumno" — abrir con blancas o
+   contestar con negras. Por eso "Siciliana cerrada" (color "w": el blanco
+   ELIGE no entrar a la teoría abierta) cae en Aperturas y no en Defensas,
+   aunque su familia se llame "Defensa siciliana"; lo mismo la Francesa
+   Tarrasch. El nombre del grupo describe la apertura completa, no de qué lado
+   la practica el alumno — por eso una misma familia puede tener variantes en
+   las dos pestañas, y es correcto que así sea. */
+const TABS = [
+  { color: 'w', id: 'aperturas', etiqueta: 'Aperturas', sub: 'blancas' },
+  { color: 'b', id: 'defensas', etiqueta: 'Defensas', sub: 'negras' },
+];
+let currentTab = TABS[0];
+
+function lineasDe(tab){ return ESTUDIO_LINEAS.filter((L) => L.color === tab.color); }
+
 // Agrupadas por L.apertura, conservando el orden del banco (ya viene
 // ordenado por familia: españolas, sicilianas, francesas…).
-function agruparEstudio(){
+function agruparEstudio(lista){
   const grupos = new Map();
-  ESTUDIO_LINEAS.forEach((L) => {
+  lista.forEach((L) => {
     if(!grupos.has(L.apertura)) grupos.set(L.apertura, []);
     grupos.get(L.apertura).push(L);
   });
   return grupos;
 }
 
+function buildTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  TABS.forEach((tab) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (tab === currentTab ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(--${tab.id})`);
+    btn.innerHTML = `${tab.etiqueta} <span class="n">${lineasDe(tab).length}</span>`;
+    btn.addEventListener('click', () => { currentTab = tab; pintarLista(); showList(); });
+    tabs.appendChild(btn);
+  });
+}
+
 // Un <h2> por grupo, para poder saltar de grupo en grupo con lector de
 // pantalla, y una ficha por variante.
 function pintarLista(){
+  buildTabs();
   const box = document.getElementById('lesson-list');
   box.innerHTML = '';
-  const grupos = agruparEstudio();
+  const grupos = agruparEstudio(lineasDe(currentTab));
   grupos.forEach((lineas, nombreGrupo) => {
     const titulo = document.createElement('h2');
     titulo.className = 'study-group-title';

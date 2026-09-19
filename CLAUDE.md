@@ -1552,7 +1552,8 @@ mandar a media página de Aprende a buscarlo.
 
 **Tarjetas de las 25 líneas de tipo "apertura"** del banco de
 `js/aperturas-lineas.js` (las 12 celadas quedan fuera: son trucos puntuales, no
-repertorio), agrupadas por a qué apertura o defensa pertenecen —"Apertura
+repertorio), repartidas en **dos pestañas —"Aperturas" y "Defensas"— y dentro
+de cada una agrupadas** por a qué apertura o defensa pertenecen —"Apertura
 española" con sus dos variantes, "Defensa india" con sus cuatro— para que el
 alumno la **lea y la memorice**, en vez de tener que jugarla a ciegas contra el
 entrenador desde la primera vez que la ve.
@@ -1562,6 +1563,15 @@ entrenador desde la primera vez que la ve.
   "apertura"`): sumar una línea ahí la suma acá sola. Si se copiaran las
   líneas, corregirle una jugada en un lado y no en el otro es el error que
   separa las dos copias sin que nada avise.
+- **La pestaña la decide `L.color`, no el nombre de la familia.** "Aperturas"
+  son las 9 líneas que el alumno juega con blancas y "Defensas" las 16 que
+  juega con negras — no "lo que empieza con 1.e4" contra "lo que responde".
+  Por nombre se rompe: "Siciliana cerrada" es 1.e4 c5 2.Cc3 **jugado por las
+  blancas**, así que por el nombre de su familia ("Defensa siciliana")
+  terminaría en Defensas, cuando lo que el alumno memoriza ahí es el plan de
+  las blancas. Mismo caso con "Francesa Tarrasch". Agrupar por color, no por
+  familia, es lo que mantiene la promesa de cada pestaña: "esto lo juegas tú".
+  9 + 16 = 25, así que ninguna línea se pierde ni se cuenta dos veces.
 - **No es un ejercicio, es un libro: por eso no hay bloqueo ni "resuelto".**
   Las 25 están abiertas de entrada, porque no hay nada que "resolver" — se
   lee, con un tablero que solo recorre la línea (⏮ ◀ ▶ ⏭ o saltando a una
@@ -1589,13 +1599,16 @@ entrenador desde la primera vez que la ve.
   `js/tiempo-plataforma.js data-activity="estudio"`.
 - **Al tocar esto, correr `node herramientas/verificar-estudio.js`** (con el
   sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
-  Comprueba en un navegador de verdad que las 25 variantes aparecen agrupadas
-  y sin ningún candado, que el tablero de la tarjeta dibuja de verdad —pieza
-  por pieza, contra chess.js— la posición que toca en cada jugada y no solo
-  que la resalta en la lista, que el botón de practicarla apunta al id
-  correcto, y que `aperturas.html?linea=<id>` abre esa línea de una sin pasar
-  por la lista (y que un id inventado cae a la lista, no a un tablero vacío).
-  **Al tocar el panel o esta página, correr también `node
+  Comprueba en un navegador de verdad que las dos pestañas existen con su
+  contador correcto (9 y 16), que arranca en "Aperturas" y que hacer clic en
+  "Defensas" repinta la lista con sus 16 líneas agrupadas, el caso de
+  "Siciliana cerrada" (aparece en Aperturas y desaparece de Defensas al
+  cambiar), que nada queda con candado, que el tablero de la tarjeta dibuja de
+  verdad —pieza por pieza, contra chess.js— la posición que toca en cada
+  jugada y no solo que la resalta en la lista, que el botón de practicarla
+  apunta al id correcto, y que `aperturas.html?linea=<id>` abre esa línea de
+  una sin pasar por la lista (y que un id inventado cae a la lista, no a un
+  tablero vacío). **Al tocar el panel o esta página, correr también `node
   herramientas/verificar-panel.js`**, que comprueba que "Estudio" esté en el
   grupo "Aprender".
 
