@@ -1,3 +1,10 @@
+# fonts.googleapis.com y fonts.gstatic.com YA NO ESTÁN, y no se vuelven a
+# poner: las fuentes se sirven desde /fonts/ (ver herramientas/fuentes-bajar.js).
+# Mientras estuvieran permitidas, una etiqueta de Google Fonts que se colara al
+# clonar la cabecera de otra página funcionaría igual y nadie se enteraría —
+# volverían las dos conexiones a terceros y el salto del texto, sin dar error.
+# Con la puerta cerrada, el navegador la bloquea y se ve enseguida.
+#
 # cdn.jsdelivr.net y huggingface.co están en connect-src por la transcripción
 # de reportes.html: el modelo de Whisper se baja de ahí UNA vez y queda en la
 # caché del navegador. Es lo único que se pide a esos dominios, y es de bajada:
@@ -5,7 +12,7 @@
 # transcribe ahí mismo. Si algún día se quita esa función, estos tres se
 # quitan también.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://bgtijpimpcokxatxxbki.supabase.co wss://bgtijpimpcokxatxxbki.supabase.co https://prcfbzvshnusisczlpxl.supabase.co wss://prcfbzvshnusisczlpxl.supabase.co https://ajedrez-inscripciones.gmpupilo.workers.dev https://api.hacienda.go.cr https://lichess.org; frame-src https://challenges.cloudflare.com https://lichess.org https://www.youtube-nocookie.com https://player.twitch.tv; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -21,6 +28,18 @@
 
 /manifest.json
   Cache-Control: no-cache
+
+# Las fuentes. Son inmutables en la práctica: el archivo solo cambia si se
+# vuelve a correr herramientas/fuentes-bajar.js, o sea cuando se cambia de
+# fuente. Un año de caché es lo que hace que la segunda visita no las pida.
+#
+# Aquí SÍ conviene el año y en el CSS no, y la diferencia importa: una hoja
+# vieja deja la página sin la mitad de sus clases, mientras que una fuente
+# vieja es la misma fuente. Si algún día se cambia de tipografía, el nombre
+# del archivo cambia con ella (lleva el peso y el subconjunto), así que el
+# navegador pide uno nuevo en vez de servir el viejo.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
 
 # Los datos del bot: el libro de aperturas de Oscar y la procedencia de cada
 # jugada. Son 7 MB entre los dos y cambian cuando se regeneran con partidas

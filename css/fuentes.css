@@ -1,0 +1,72 @@
+/* Inter y Merriweather, autoalojadas.
+ *
+ * NO SE EDITA A MANO: la genera herramientas/fuentes-bajar.js.
+ *
+ * Antes venían de fonts.googleapis.com, que son dos conexiones a terceros
+ * antes de poder pintar el texto como se debe. Acá salen del mismo origen
+ * que el resto del sitio, y la portada las precarga.
+ *
+ * Los respaldos con size-adjust de más abajo los calcula
+ * herramientas/fuentes-metricas.js: sin ellos, el texto SALTA cuando la
+ * fuente termina de llegar, que es justo lo que este cambio viene a evitar.
+ */
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/inter-variable-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/inter-variable-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin-ext */
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/merriweather-700-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin */
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/merriweather-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* respaldos: los calcula herramientas/fuentes-metricas.js */
+/* Inter sobre Arial: sin esto el texto se desviaba 5.9 % */
+@font-face {
+  font-family: 'Inter respaldo';
+  src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+  size-adjust: 106.31%;
+  ascent-override: 91.2%;
+  descent-override: 22.6%;
+  line-gap-override: 0%;
+}
+
+/* Merriweather sobre Times New Roman: sin esto el texto se desviaba 12.6 % */
+@font-face {
+  font-family: 'Merriweather respaldo';
+  src: local('Times New Roman'), local('Liberation Serif'), local('Times');
+  size-adjust: 114.37%;
+  ascent-override: 85.7%;
+  descent-override: 23.6%;
+  line-gap-override: 0%;
+}
