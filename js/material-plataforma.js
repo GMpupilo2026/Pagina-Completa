@@ -21,6 +21,7 @@ window.MaterialPlataforma = (function () {
     { slug: "temas", label: "Ejercicios por tema", href: "entreno/temas.html" },
     { slug: "practicas", label: "Practicar", href: "entreno/practicas.html" },
     { slug: "aperturas", label: "Aperturas y celadas", href: "entreno/aperturas.html" },
+    { slug: "estudio", label: "Estudio", href: "entreno/estudio.html" },
     { slug: "4x4", label: "4×4", href: "entreno/4x4.html" },
     { slug: "diagnostico", label: "Diagnóstico de nivel", href: "entreno/diagnostico.html" },
     { slug: "arbitraje", label: "Diagnóstico de arbitraje", href: "nivel-de-arbitraje.html" },
