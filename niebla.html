@@ -118,7 +118,6 @@
             <p id="spectator-hint" class="hidden mb-3 text-xs text-brand-450 dark:text-brand-350 italic">👁️ Estás mirando como profesor: ves el tablero completo, sin niebla, para poder supervisar.</p>
 
             <div id="status-banner" role="status" aria-live="polite" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
-            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex items-center justify-center gap-2 mb-2">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
@@ -143,10 +142,12 @@
                 <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
 
-            <div class="flex items-center justify-center gap-2 mt-2 mb-6">
+            <div class="flex items-center justify-center gap-2 mt-2 mb-2">
                 <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
             </div>
+            <!-- Justo debajo de tu nombre: así se ve de una que el botón es tuyo. -->
+            <button id="ready-btn" class="hidden w-full mb-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>

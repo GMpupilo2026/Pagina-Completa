@@ -101,11 +101,13 @@
             </div>
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
-            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <!-- Un panel por asiento: color, nombre, estado, puntaje (solo FFA) y reloj.
                  Se resalta el asiento a quien le toca mover. -->
-            <div id="seats-panel" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4"></div>
+            <div id="seats-panel" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2"></div>
+            <!-- Justo debajo de los nombres, con tu propio asiento marcado "(tú)" ahí
+                 arriba: así se ve de una que el botón es tuyo. -->
+            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex justify-center">
                 <div id="board" class="grid gap-0 w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none" style="grid-template-columns: repeat(14, minmax(0,1fr)); grid-template-rows: repeat(14, minmax(0,1fr));"></div>

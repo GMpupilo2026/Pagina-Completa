@@ -105,7 +105,6 @@
 
             <div id="status-banner" class="mb-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
             <p id="card-event" class="hidden mb-4 rounded-xl bg-accent-500/15 border border-accent-500/40 px-4 py-2 text-sm text-accent-700 dark:text-accent-400 font-medium"></p>
-            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex items-center justify-center gap-2 mb-1">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
@@ -117,10 +116,12 @@
                 <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
 
-            <div class="flex items-center justify-center gap-2 mt-2 mb-1">
+            <div class="flex items-center justify-center gap-2 mt-2 mb-2">
                 <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
             </div>
+            <!-- Justo debajo de tu nombre: así se ve de una que el botón es tuyo. -->
+            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2 mt-4">Tu mano</h2>
             <div id="my-hand" class="flex flex-wrap gap-2 mb-6"></div>
