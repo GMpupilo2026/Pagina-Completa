@@ -391,6 +391,66 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+### Equipos: un alumno en varios a la vez, un equipo con cualquier cantidad de entrenadores
+
+**No es lo mismo que `profiles.grupo`.** Ese campo sigue exactamente como
+estaba: texto libre, uno solo por alumno, sin ningún efecto en permisos, solo
+para ordenar la lista de `admin.html`. "Equipos" es un sistema aparte, real,
+con dos tablas puente (`equipo_alumnos`, `equipo_entrenadores`) — muchos a
+muchos en los dos sentidos — y **con efecto directo en permisos**: estar en un
+equipo con un entrenador le da a ese entrenador los mismos permisos que ya le
+da tenerlo asignado directo en `profile_teachers`, sin límite de dos ni de
+ningún otro número chico.
+
+- **`profesores_de(alumno)` y `alumnos_de(profesor)` son la ÚNICA fuente de
+  esa unión** (asignación directa ∪ la que da compartir un equipo). Se
+  agregaron en la migración `equipos_varios_por_alumno_y_entrenador` y las
+  cinco funciones que ya hacían cumplir "quién es profesor de quién"
+  (`soy_profesor_de`, `es_mi_profesor`, `soy_profesor_de_alguno`,
+  `soy_profesor_de_todos`, `es_companero`) se reescribieron sobre ellas, igual
+  que `pueden_jugar_entre_si()`, `puedo_armar_partida_con()`,
+  `alumnos_del_profesor()`, `mis_clases()` y el trigger
+  `avisar_clase_abierta()`. Ninguna política de RLS cambió: todas llaman a
+  estas funciones y no a la tabla, así que las 38 políticas que ya usaban
+  `soy_profesor_de()`/`es_mi_profesor()`/etc. quedaron con el permiso ampliado
+  sin tocarlas — el mismo principio que ya regía para `profile_teachers` sola,
+  extendido un nivel más: **al preguntar quién es profesor de quién se usa
+  `profesores_de()`/`alumnos_de()`, nunca `profile_teachers` ni `equipo_*`
+  directo.**
+  - Comprobado con datos reales antes de escribir nada nuevo encima: sin
+    ningún equipo creado, `profesores_de()` da exactamente lo mismo que
+    `profile_teachers` sola (0 diferencias en 87 alumnos). Y con un equipo de
+    prueba (creado y borrado en la misma comprobación, sin dejar rastro), el
+    entrenador del equipo aparece en `profesores_de()` del alumno y viceversa.
+  - **`es_companero()` y "compañeros de equipo" quedan cubiertos gratis.**
+    `profesores_de(alumno)` no es "el entrenador que a MÍ me asignaron dentro
+    del equipo": es TODOS los entrenadores de cada equipo al que el alumno
+    pertenece. Dos alumnos del mismo equipo comparten automáticamente esos
+    entrenadores en la intersección de `profesores_de()`, así que no hizo
+    falta una regla aparte de "somos del mismo equipo" en `es_companero()` ni
+    en `pueden_jugar_entre_si()`.
+- **`equipos`, `equipo_alumnos` y `equipo_entrenadores` no tienen política de
+  insert/update/delete**, igual que `profile_teachers`: solo se escriben desde
+  la Edge Function `admin-manage-users` con la service role, y solo quien
+  administra puede llamarlas (mismo nivel que `assign_bulk`/`set_teachers`,
+  no el de `soy_coordinador()`). Acciones nuevas: `equipo_create`,
+  `equipo_rename`, `equipo_delete`, `equipo_set_alumnos` y
+  `equipo_set_entrenadores` — estas dos últimas, igual que `set_teachers`,
+  **dejan la lista EXACTAMENTE como se mandó**: lo que no esté, se quita. El
+  único tope es de cordura (`MAX_ENTRENADORES_POR_EQUIPO = 30`,
+  `MAX_ALUMNOS_POR_EQUIPO = 300`), para atajar un error de dedo, no una regla
+  de negocio — nunca un límite de dos.
+- `equipos.nombre` tiene un índice único sobre `lower(trim(nombre))`: dos
+  equipos con el mismo nombre (o el mismo nombre con otra mayúscula) serían
+  imposibles de distinguir en la lista.
+- **En `admin.html`, la tarjeta "Equipos"** (entre "Profesores" y "Las
+  cuentas, por grupo") deja crear un equipo, renombrarlo, borrarlo, y sumarle
+  o quitarle alumnos y entrenadores con el mismo patrón de etiqueta-con-✕-y-
+  selector que ya usaban los profesores de un alumno — a propósito NO se tocó
+  `renderProfesoresCelda()` para no arriesgar ese camino ya probado por
+  `verificar-varios-profesores.js`: la de equipos es una función aparte,
+  `renderEquipoTags()`.
+
 ## Tareas: el profesor asigna material con fecha límite
 
 `tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
