@@ -498,7 +498,15 @@ function buildThemes(){
   }
   updateOverall();
 }
-document.getElementById('search').addEventListener('input', buildThemes);
+// Con un respiro: buildThemes() recorre todos los temas y, de paso,
+// updateOverall() escribe dos veces en localStorage — repetir eso en cada
+// tecla mientras se escribe la búsqueda es trabajo (y escritura en disco)
+// de sobra que no cambia nada hasta que la persona deja de teclear.
+let buscarTemaTimer = null;
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(buscarTemaTimer);
+  buscarTemaTimer = setTimeout(buildThemes, 200);
+});
 
 function updateOverall(){
   const solved = getSolved();
