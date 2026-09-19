@@ -85,7 +85,17 @@ function compilar(nombre, paleta, archivos) {
         darkMode: "class",
         content: archivos,
         theme: { extend: { colors: paleta,
-                 fontFamily: { sans: ["Inter", "sans-serif"], serif: ["Merriweather", "serif"] } } },
+                 fontFamily: {
+                     // El respaldo NO es "sans-serif" a secas: es el @font-face
+                     // ajustado de css/fuentes.css, que ocupa exactamente el
+                     // mismo espacio que Inter. Sin él, el primer cuadro se
+                     // pinta con la fuente del sistema y al llegar la buena el
+                     // texto se reacomoda un 5,9 % (12,6 % en las serif), que
+                     // es el brinco que se lee como «página barata». Los
+                     // números los mide herramientas/fuentes-metricas.js.
+                     sans: ["Inter", "Inter respaldo", "sans-serif"],
+                     serif: ["Merriweather", "Merriweather respaldo", "serif"],
+                 } } },
     }, null, 1) + ";\n");
     const salida = path.join(CSS, nombre + ".css");
     execFileSync(binario(), ["-c", cfg, "-i", path.join(__dirname, "css/entrada.css"),

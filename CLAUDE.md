@@ -2524,6 +2524,142 @@ sistema y no decían nada del curso.
 - El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
   información del curso, no decoración.
 
+## Las fuentes son del sitio, y no se precargan
+
+`css/fuentes.css` y `fonts/` los generan `herramientas/fuentes-bajar.js` (baja
+Inter y Merriweather de Google y las deja en `fonts/`) y
+`herramientas/fuentes-metricas.js` (calcula los respaldos). El
+`<link rel="stylesheet">` lo pone en cada página
+`herramientas/fuentes-cabecera.py`, con marcas, como la cabecera de la app.
+
+Antes venían de `fonts.googleapis.com`, que son **dos conexiones a terceros
+antes de poder pintar el texto como se debe**: una por la hoja y, recién cuando
+esa llega y se lee, otra a `fonts.gstatic.com` por el `.woff2`. El `preconnect`
+adelanta el saludo pero no el segundo viaje, que no se puede empezar hasta
+saber qué archivo pedir.
+
+- **Inter es una fuente variable, así que es UN archivo y no cuatro.** Google
+  sirve el mismo `.woff2` para los cuatro pesos que el sitio usa; guardarlo
+  cuatro veces eran 141 KB de más. El generador deduplica por contenido y el
+  `@font-face` declara `font-weight: 400 700`.
+- **Solo los subconjuntos `latin` y `latin-ext`.** El sitio está en español: el
+  cirílico, el griego y el vietnamita son bytes que nadie va a pintar nunca.
+  En la práctica una página pide 95 KB (los dos `latin`), una sola vez.
+- `_headers` les pone un año de caché. Se puede, y al CSS no: una hoja vieja
+  deja la página sin la mitad de sus clases, mientras que una fuente vieja es
+  la misma fuente.
+- **Al CSP se le quitaron `fonts.googleapis.com` y `fonts.gstatic.com`, y no se
+  vuelven a poner.** Mientras estuvieran permitidos, una etiqueta de Google
+  Fonts que se colara al clonar la cabecera de otra página funcionaría igual y
+  nadie se enteraría: volverían las dos conexiones y el salto del texto, sin
+  dar ningún error. Con la puerta cerrada, el navegador la bloquea y se ve.
+
+### El respaldo se calcula, no se elige
+
+El navegador pinta el primer cuadro con la fuente del sistema. Si esa ocupa
+otro ancho, **al llegar la buena se reacomoda cada línea del sitio** — y eso no
+da ningún error: simplemente se ve barato. Medido en la portada:
+
+| portada, 4G lenta | CLS |
+|---|---|
+| sin el respaldo calculado | 0,0868 |
+| con el respaldo calculado | 0,0202 |
+
+0,087 roza el 0,1 que ya se considera «necesita mejorar». Por eso
+`css/fuentes.css` lleva dos `@font-face` de respaldo con `size-adjust` y los
+override de subida y bajada: hacen que la fuente del sistema ocupe **el mismo
+espacio exacto** que la final, así que al llegar la buena cambia el dibujo de
+las letras y nada más. Desvío de Inter contra su respaldo, por peso:
+
+| peso | antes | ahora |
+|---|---|---|
+| 400 (el cuerpo) | 6,92 % | 0,62 % |
+| 500 | 6,49 % | 1,08 % |
+| 600 | 0,45 % | 0,57 % |
+| 700 | 2,09 % | 1,37 % |
+
+- Los números **se miden**, no se escriben a ojo: `fuentes-metricas.js` los
+  saca de un navegador de verdad. Al cambiar de fuente hay que correrlo.
+- Se mide contra **Arial** y **Times New Roman** y no contra otras porque son
+  las únicas cuyo respaldo se puede medir en cualquier máquina: Liberation Sans
+  y Liberation Serif —lo que hay en un Linux— se diseñaron métricamente
+  idénticas a esas dos. Georgia no tiene equivalente, así que medirla en Linux
+  daría el número de OTRA fuente.
+- **El script comprueba que el respaldo exista de verdad y falla si no**, en vez
+  de escribir un número inventado. Y la comprobación tiene su truco: no alcanza
+  con compararla contra una familia inventada, porque ante un nombre que no
+  conoce el navegador cae a SU genérica (en Chromium, la serif) — así que una
+  serif instalada mide igual que la inventada y parecería faltar. Lo que sí
+  distingue es pedirla con las tres genéricas de respaldo: si existe, gana ella
+  y las tres miden igual.
+
+### Y NO se precargan, aunque el consejo de manual diga que sí
+
+Se probó, se midió y sale peor. Portada, 4G lenta, LCP mediana de tres corridas:
+
+    precargando las dos      1488 ms
+    precargando solo Inter   1284 ms
+    sin precargar ninguna    1060 ms
+
+Acá lo más grande de la pantalla es **texto**, y lo que demora en pintarlo es
+`css/tailwind.css`, que bloquea el render. Un `preload` de fuente pide 95 KB
+con prioridad alta, y en un celular con 1,6 Mbps esos 95 KB salen del mismo
+caño que el CSS: la fuente llega antes y la página entera, después.
+
+Precargar vale la pena cuando la fuente es lo que hace esperar. Acá no lo es,
+**justamente porque el respaldo ajustado ya deja el texto en su sitio
+definitivo desde el primer cuadro**. Adelantarla no le ahorra nada a nadie.
+`verificar-rendimiento.js` falla si aparece un `preload` de fuente: es lo que
+alguien va a agregar «para optimizar», y el sitio se pondría más lento sin que
+nada avise.
+
+## Cada clic no espera: la navegación va anticipada
+
+`herramientas/anticipar-cabecera.py` pone en cada página un
+`<script type="speculationrules">` que le dice al navegador que se traiga la
+página cuando nota la intención de ir —el puntero quieto encima del enlace, el
+dedo apoyado—, así que al soltar ya la tiene. Son los ~300 ms que separan «me
+llevó» de «ya estaba ahí», en un sitio de 44 páginas sueltas.
+
+**Es `prefetch` y NO `prerender`, y esa es la decisión de fondo.** `prerender`
+es más rápido porque además EJECUTA la página. Acá no se puede: 16 páginas
+cargan `js/tiempo-plataforma.js`, que al arrancar inserta una fila en
+`platform_activity_log` con la hora de entrada. Con prerender, pasar el mouse
+por encima de «4×4» le apuntaría al alumno minutos de una página que nunca
+abrió — y esos minutos son los que el profesor ve en Informes y los que llegan
+a la casa. No daría ningún error: los números simplemente serían más altos, de
+forma creíble. Es la misma mentira silenciosa que la base ya bloquea desde el
+otro lado con `proteger_tiempos_de_presencia()`.
+
+- **Cuidado con los patrones: `href_matches` es un URLPattern, y ahí el `?` no
+  es un carácter cualquiera** — separa la dirección de sus parámetros. La
+  primera versión usaba `/*\?*` dentro de un `not` para excluir los enlaces con
+  parámetros, y ese patrón coincide con **todo** (comprobado: `/cursos.html`,
+  que no tiene ninguno, también da positivo). Resultado: excluía el sitio
+  entero y la anticipación **no se disparaba nunca**. La regla estaba ahí, bien
+  formada y con JSON válido, y el navegador la aceptaba sin aplicarla. Lo que
+  se excluye se excluye por `selector_matches`, que mira el enlace y no la
+  dirección.
+- Quedan fuera los `.pdf` y `cursos/recursos/` (pesan y llevan marca de uso
+  docente), los enlaces que salen del sitio, y los que son una acción y no una
+  página (`logout`, `mailto:`, WhatsApp).
+- `eagerness: moderate` ata la descarga a una intención de verdad. Con `eager`
+  se bajaría todo lo que hay en pantalla apenas carga: en el panel de la
+  Academia son veinte tarjetas, o sea datos de todo el mundo para acertarle a
+  una.
+
+**Al tocar las fuentes o la anticipación, correr `node
+herramientas/verificar-rendimiento.js`** (con el sitio en localhost:8777 y
+playwright). Comprueba que ninguna página le pida la fuente a Google, que el
+CSP no lo permita, que `css/fuentes.css` **cargue de verdad** en cada
+profundidad (con la ruta relativa mal en una subcarpeta es un 404 que deja esa
+página sin los respaldos, o sea peor que antes, y se ve igual de bien), que el
+cuerpo lleve el respaldo ajustado en su pila, que no haya vuelto ningún
+`preload`, y que la anticipación **se dispare**: pasa el mouse por un enlace
+interno y mira que la descarga se adelante. Esa última es la que importa — fue
+la única que atrapó el patrón roto, porque mirar que el `<script>` exista daba
+verde sobre un sitio que no anticipaba nada.
+
 ## El CSS va compilado, no por CDN
 
 `css/tailwind.css` lo genera `node herramientas/css-construir.js` (después de
