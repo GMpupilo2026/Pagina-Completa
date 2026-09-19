@@ -22,21 +22,20 @@
  *   - las posiciones, del archivo de datos del propio curso. NO se inventa
  *     ninguna posición ni ninguna cita.
  *
- * Cómo se corre (necesita Node, Chromium por Playwright y pypdf; ninguno es
- * parte del sitio, son solo para generar los archivos):
+ * Este archivo es un MÓDULO (arma el HTML del cuadernillo y de la versión
+ * accesible), no el que se ejecuta directo: `node herramientas/curso-material.js`
+ * no hace nada, no tiene punto de entrada. Quien orquesta Playwright, pypdf y
+ * el resto de los pasos es herramientas/curso-material-generar.js, que lo
+ * importa (`require("./curso-material.js")`). Para regenerar todo:
  *
  *     npm install playwright && pip install pypdf
- *     node herramientas/curso-material.js              # todos los cursos
- *     node herramientas/curso-material.js finales-practicos
+ *     node herramientas/curso-material-generar.js      # todos los cursos
+ *     node herramientas/curso-material-enlazar.js      # pone los enlaces
  */
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
-const { execFileSync } = require("child_process");
 
-const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
-const { lecciones, posiciones } = require("./lib/leer-curso.js");
 
 const AUTOR = "Oscar Angulo Cubero";
 /* La contraseña de propietario: la que levantaría las restricciones del PDF.
