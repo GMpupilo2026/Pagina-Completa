@@ -131,6 +131,10 @@ window.ProgresoUsuario = (function () {
     { clave: "confites_best_limpio",             fusion: "maxNumero" },
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
+    { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
+    { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
+    { clave: "entreno_visualizacion_streak",     fusion: "maxNumero" },
+    { clave: "entreno_visualizacion_last",       fusion: "ultimoLugar" },
   ];
 
   function fusionDe(clave) {
