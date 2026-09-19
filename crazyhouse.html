@@ -104,10 +104,6 @@
             </div>
 
             <div id="status-banner" class="mb-4 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
-            <!-- Antes de que ambos confirmen que están listos, el reloj no debe correr —
-                 así que el tablero se muestra pero solo con este botón activo, sin poder
-                 mover todavía (ver bothReady() y la condición de interactividad). -->
-            <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="flex items-center justify-center gap-2 mb-1">
                 <p id="top-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
@@ -120,10 +116,15 @@
             </div>
 
             <div id="bottom-pocket" class="flex justify-center gap-1.5 mt-2 mb-1 min-h-[3rem]" role="group" aria-label="Tu reserva"></div>
-            <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="flex items-center justify-center gap-2 mb-2">
                 <p id="bottom-player" class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
                 <span id="bottom-clock" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
             </div>
+            <!-- Antes de que ambos confirmen que están listos, el reloj no debe correr —
+                 así que el tablero se muestra pero solo con este botón activo, sin poder
+                 mover todavía (ver bothReady() y la condición de interactividad). Va justo
+                 debajo de tu nombre: así se ve de una que el botón es tuyo. -->
+            <button id="ready-btn" class="hidden w-full mb-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2">Jugadas</h2>
