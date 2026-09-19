@@ -149,7 +149,6 @@
     // crudo de chess.js, que no valida nada de esto por sí solo).
     _dropIsSafe(type, color, square) {
       const fenBefore = this.chess.fen();
-      const turnBefore = fenBefore.split(" ")[1];
       // in_check() de chess.js siempre juzga a quien tiene el turno en el FEN
       // cargado — si no es su turno todavía, se lo prestamos un momento nada
       // más para esta prueba y luego se restaura el FEN real sin tocar nada.

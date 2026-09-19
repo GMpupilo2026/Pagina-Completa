@@ -158,7 +158,6 @@
     const moves = g.moves, claves = g.claves || [];
     const claveAt = {}; claves.forEach((c) => { claveAt[c.ply] = c; });
     const state = { ply: 0, flip: g.orientacion === "b", mode: "ver", guess: null, intentos: 0, aciertos: 0, fallos: 0, pendientes: null };
-    const startTurn = parseFen(g.start_fen).turn;
     const cmdId = "cp-cmd-" + (++cmdSeq);
     el.classList.add("cp-viewer");
     el.innerHTML =
@@ -303,7 +302,7 @@
     function stopGuess() { state.mode = "ver"; setMoveInputEnabled(false); cmdForm.hidden = true; guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false; msgEl.innerHTML = ""; renderMoves(); renderView(); }
 
     // ----- práctica contra el motor desde la posición actual -----
-    let human = "w", thinking = false;
+    let human = "w";
     function levelKey() { return el.querySelector('[data-act="level"]').value; }
     function startPractice() {
       if (typeof Chess !== "function" || !window.PracticeEngine) { msgEl.textContent = "El motor no está disponible en este navegador."; return; }
