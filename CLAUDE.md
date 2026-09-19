@@ -641,6 +641,53 @@ Detalles que importan:
   desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
   `student_id`.
 
+### El tiempo conectado no se lo cree porque lo diga el navegador
+
+`class_presence_log` (clase en vivo, latido de `sesion.html`) y
+`platform_activity_log` (entrenamiento, latido de `js/tiempo-plataforma.js`)
+son las dos tablas de donde sale `minutos_clase`/`minutos_ejercicios`. Sus
+políticas de insert/update solo exigían `student_id = auth.uid()`, sin acotar
+`joined_at` ni `left_at`: un alumno podía, desde la consola del navegador,
+insertar o actualizar una fila propia con la hora que quisiera —incluida una
+de hace veinte años— e inflarse los minutos que después ve su profesor y que
+le llegan a la casa en "📧 Informes a la casa". La página nunca lo hacía —
+`abrirFila()`/`tocarFila()` y `startPresenceLog()`/`touchPresenceLog()` solo
+mandan lo que hace falta y la hora del momento—, pero la tabla en sí quedaba
+abierta a mandarle cualquier cosa.
+
+- **`public.proteger_tiempos_de_presencia()`** (trigger `BEFORE INSERT OR
+  UPDATE` en las dos tablas) ignora lo que mande el cliente y usa el reloj del
+  servidor: en el insert fuerza `joined_at := now()` y `left_at := null`
+  —nadie necesita mandar otra cosa—, y en el update hace `new := old` y
+  después `new.left_at := now()`, o sea que revierte CUALQUIER otra columna a
+  su valor de antes y solo deja avanzar `left_at`. Es el mismo patrón que
+  `protect_answer_grading`, aplicado a las dos tablas con una sola función
+  porque el problema es idéntico en las dos.
+  - De regalo, esto cierra otra puerta que no era la buscada: el update de
+    `class_presence_log` tampoco revalidaba nada más que la dueñez de la
+    fila, así que un alumno podía reasignar su propia fila de presencia a
+    OTRA `session_id` —el insert sí exige `es_mi_profesor(cs.created_by)`,
+    pero el update no volvía a mirarlo—. Con `new := old` esa columna
+    tampoco se mueve.
+  - Comprobado impersonando roles en SQL: un insert con `joined_at`/`left_at`
+    inventados los ignora y usa "ahora"; un update legítimo (mandar la hora
+    real, como hace la página) sigue funcionando igual; un intento de
+    reasignar `session_id` a otra clase queda revertido.
+- **La fórmula de "unir tramos superpuestos" ya no está copiada tres veces.**
+  Estaba pegada tal cual en `informes_resumen_alumnos()`, `informe_de_alumno()`
+  y `reporte_actividades()` — si un día hay que corregir el criterio (por
+  ejemplo, el margen de 20 s), había que acordarse de tocarla en los tres
+  lugares. Ahora vive en `public.minutos_por_tramos(tramo_crudo[])`, que recibe
+  un arreglo de `(particion, joined_at, left_at)` —`particion` es lo que sea
+  que se esté agrupando, normalmente `student_id::text`— y devuelve los
+  minutos ya sumados por partición. Las tres funciones solo arman el arreglo
+  con un `array_agg` y le pasan el resultado.
+  - Comprobado contra datos reales antes y después del cambio: los tres
+    devuelven exactamente los mismos números que devolvían con la cadena de
+    CTEs vieja (diferencia 0 en todos los alumnos), y aparte la función nueva
+    se comparó tramo por tramo contra la cadena vieja sobre toda
+    `platform_activity_log`.
+
 ## Los informes que llegan a la casa
 
 En Informes, mirando a UN alumno, está "📧 Informes a la casa": a qué correos se
