@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Tareas — Ajedrez Integral</title>
+    <meta name="description" content="El profesor elige material de la plataforma y se lo asigna a un alumno con una fecha límite.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/material-plataforma.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+        <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">📋 Tareas</h1>
+            <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mb-8"></p>
+
+            <!-- ============ Vista profesor: asignar + lo enviado ============ -->
+            <section id="vista-profesor" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Asignar una tarea</h2>
+                    <form id="form-tarea" class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Para quién <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(uno o varios)</span></span>
+                            <div id="lista-alumnos" class="max-h-40 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1"></div>
+                            <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 mt-2">Todavía no tienes alumnos asignados.</p>
+                        </div>
+
+                        <div>
+                            <label for="t-categoria" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Material</label>
+                            <select id="t-categoria" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="curso">Curso</option>
+                                <option value="herramienta">Herramienta de entrenamiento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="t-material" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuál</label>
+                            <select id="t-material" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+
+                        <div id="t-leccion-wrap" class="hidden">
+                            <label for="t-leccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lección <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <input id="t-leccion" type="number" min="1" placeholder="Ej. 5" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p id="t-leccion-nota" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                        </div>
+                        <div>
+                            <label for="t-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
+                            <input id="t-vence" type="datetime-local" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="t-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
+                            <input id="t-titulo" type="text" maxlength="200" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="t-instrucciones" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué debe hacer</label>
+                            <textarea id="t-instrucciones" rows="3" maxlength="2000" required placeholder="Ej. Resuelve los 20 ejercicios de horquillas y clavadas." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div class="sm:col-span-2 flex items-center gap-3">
+                            <button type="submit" id="enviar-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enviar tarea</button>
+                            <p id="form-status" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                    </form>
+                </div>
+
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Tareas enviadas</h2>
+                <div id="enviadas-lista" class="grid gap-3"></div>
+                <p id="enviadas-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">Todavía no le has mandado ninguna tarea a nadie.</p>
+            </section>
+
+            <!-- ============ Vista alumno: lo que le mandaron ============ -->
+            <section id="vista-alumno" class="hidden">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Pendientes</h2>
+                <div id="pendientes-lista" class="grid gap-3 mb-8"></div>
+                <p id="pendientes-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">No tienes ninguna tarea pendiente. 🎉</p>
+
+                <details id="completadas-details">
+                    <summary class="cursor-pointer font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Completadas</summary>
+                    <div id="completadas-lista" class="grid gap-3 mt-4"></div>
+                    <p id="completadas-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm mt-4">Todavía no has completado ninguna.</p>
+                </details>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script>
+/* Área de Tareas: el profesor elige material de la plataforma (un curso o
+ * una herramienta de entrenamiento, ver js/material-plataforma.js) y se lo
+ * manda a uno o varios de sus alumnos con instrucciones y una fecha límite.
+ * El alumno ve lo que le mandaron, con un enlace directo al material, y
+ * marca cuándo lo hizo.
+ *
+ * Quién ve y quién puede mandarle tarea a quién lo hace cumplir la RLS de
+ * `tareas` (soy_profesor_de), no esta página: un profesor solo ve las
+ * tareas que ÉL mandó, y un alumno solo las suyas. El aviso push al
+ * asignarla sale solo, desde un trigger de la base (avisar_tarea_asignada),
+ * igual que un reto o que abrir la sesión en vivo.
+ */
+let session = null, profile = null, puedeAsignar = false;
+let alumnosDisponibles = [];
+let categoriaActual = "curso";
+let cursosCatalogo = [];
+let materialActual = [];
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text == null ? "" : String(text);
+    return div.innerHTML;
+}
+function formatoFecha(iso) {
+    return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { window.location.href = "login.html?next=tareas.html"; return; }
+
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    profile = p;
+    puedeAsignar = !!profile && (profile.role === "profesor" || profile.is_admin);
+
+    document.getElementById("subtitulo").textContent = puedeAsignar
+        ? "Elige material de la plataforma y mándaselo a tus alumnos, con una fecha límite."
+        : "Lo que tu profesor te pidió hacer, con su fecha límite.";
+
+    if (puedeAsignar) {
+        document.getElementById("vista-profesor").classList.remove("hidden");
+        await cargarAlumnos();
+        cursosCatalogo = await MaterialPlataforma.cursos();
+        pintarMaterialSelect();
+        document.getElementById("t-categoria").addEventListener("change", (ev) => {
+            categoriaActual = ev.target.value;
+            pintarMaterialSelect();
+        });
+        document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
+        await cargarEnviadas();
+    } else {
+        document.getElementById("vista-alumno").classList.remove("hidden");
+        await cargarMisTareas();
+    }
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+}
+
+// ---------- Vista profesor ----------
+async function cargarAlumnos() {
+    const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+    alumnosDisponibles = data || [];
+    const cont = document.getElementById("lista-alumnos");
+    cont.innerHTML = "";
+    document.getElementById("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);
+    alumnosDisponibles.forEach((a) => {
+        const label = document.createElement("label");
+        label.className = "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white dark:hover:bg-brand-900 cursor-pointer";
+        label.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 alumno-check"><span>${escapeHtml(a.full_name || a.email)}</span>`;
+        cont.appendChild(label);
+    });
+}
+
+function pintarMaterialSelect() {
+    const sel = document.getElementById("t-material");
+    materialActual = categoriaActual === "curso" ? cursosCatalogo : MaterialPlataforma.HERRAMIENTAS;
+    sel.innerHTML = materialActual.map((m) => `<option value="${escapeHtml(m.slug)}">${escapeHtml(m.label)}</option>`).join("");
+    sel.onchange = actualizarSegunMaterial;
+    actualizarSegunMaterial();
+}
+
+function actualizarSegunMaterial() {
+    const sel = document.getElementById("t-material");
+    const item = materialActual.find((m) => m.slug === sel.value);
+    const wrap = document.getElementById("t-leccion-wrap");
+    const leccionInput = document.getElementById("t-leccion");
+    if (categoriaActual === "curso" && item && item.lecciones) {
+        wrap.classList.remove("hidden");
+        leccionInput.max = String(item.lecciones);
+        document.getElementById("t-leccion-nota").textContent = `Este curso tiene ${item.lecciones} lecciones.`;
+    } else {
+        wrap.classList.add("hidden");
+        leccionInput.value = "";
+    }
+    document.getElementById("t-titulo").value = item ? item.label : "";
+}
+
+async function enviarTarea(ev) {
+    ev.preventDefault();
+    const status = document.getElementById("form-status");
+    const seleccionados = [...document.querySelectorAll(".alumno-check:checked")].map((c) => c.value);
+    if (!seleccionados.length) { status.textContent = "Elige al menos un alumno."; return; }
+
+    const sel = document.getElementById("t-material");
+    const item = materialActual.find((m) => m.slug === sel.value);
+    if (!item) { status.textContent = "Elige el material."; return; }
+
+    const venceVal = document.getElementById("t-vence").value;
+    if (!venceVal) { status.textContent = "Ponle una fecha límite."; return; }
+    const venceISO = new Date(venceVal).toISOString();
+
+    const titulo = document.getElementById("t-titulo").value.trim();
+    const instrucciones = document.getElementById("t-instrucciones").value.trim();
+    if (!titulo || !instrucciones) { status.textContent = "Falta el título o qué debe hacer."; return; }
+
+    const leccionVal = document.getElementById("t-leccion").value;
+    const leccion = leccionVal ? parseInt(leccionVal, 10) : null;
+
+    const filas = seleccionados.map((alumnoId) => ({
+        profesor_id: session.user.id,
+        alumno_id: alumnoId,
+        titulo, instrucciones,
+        material_tipo: categoriaActual,
+        material_slug: item.slug,
+        material_label: item.label,
+        material_href: item.href,
+        leccion,
+        vence_at: venceISO,
+    }));
+
+    const boton = document.getElementById("enviar-btn");
+    boton.disabled = true;
+    status.textContent = "Enviando…";
+    const { error } = await sb.from("tareas").insert(filas);
+    boton.disabled = false;
+    if (error) { status.textContent = "No se pudo enviar: " + error.message; return; }
+
+    status.textContent = `Tarea enviada a ${filas.length} ${filas.length === 1 ? "alumno" : "alumnos"}.`;
+    document.getElementById("form-tarea").reset();
+    document.querySelectorAll(".alumno-check").forEach((c) => { c.checked = false; });
+    categoriaActual = "curso";
+    document.getElementById("t-categoria").value = "curso";
+    pintarMaterialSelect();
+    await cargarEnviadas();
+}
+
+async function cargarEnviadas() {
+    const { data, error } = await sb.from("tareas")
+        .select("*, alumno:profiles!tareas_alumno_id_fkey(full_name, email)")
+        .eq("profesor_id", session.user.id)
+        .order("vence_at", { ascending: true });
+    const lista = document.getElementById("enviadas-lista");
+    lista.innerHTML = "";
+    const filas = data || [];
+    const vacia = document.getElementById("enviadas-vacia");
+    vacia.classList.toggle("hidden", !!filas.length);
+    if (error) { vacia.textContent = "No se pudieron cargar: " + error.message; vacia.classList.remove("hidden"); return; }
+    filas.forEach((t) => lista.appendChild(tarjetaEnviada(t)));
+}
+
+function tarjetaEnviada(t) {
+    const div = document.createElement("div");
+    div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3";
+    const vencida = t.estado === "pendiente" && new Date(t.vence_at) < new Date();
+    const estadoTxt = t.estado === "completada" ? "✔ Completada" : (vencida ? "⏰ Vencida" : "Pendiente");
+    const estadoColor = t.estado === "completada" ? "text-green-600 dark:text-green-400" : (vencida ? "text-red-600 dark:text-red-400" : "text-brand-500 dark:text-brand-300");
+    const alumnoNombre = (t.alumno && (t.alumno.full_name || t.alumno.email)) || "—";
+    div.innerHTML = `
+        <div class="min-w-0">
+            <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350">Para ${escapeHtml(alumnoNombre)} · ${escapeHtml(t.material_label)}${t.leccion ? " · Lección " + escapeHtml(t.leccion) : ""}</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350">Vence ${formatoFecha(t.vence_at)}</p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <span class="text-xs font-semibold ${estadoColor}">${estadoTxt}</span>
+            <button type="button" class="text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded eliminar-btn">Eliminar</button>
+        </div>`;
+    div.querySelector(".eliminar-btn").addEventListener("click", () => eliminarTarea(t.id));
+    return div;
+}
+
+async function eliminarTarea(id) {
+    if (!confirm("¿Eliminar esta tarea?")) return;
+    const { error } = await sb.from("tareas").delete().eq("id", id);
+    if (error) { alert("No se pudo eliminar: " + error.message); return; }
+    await cargarEnviadas();
+}
+
+// ---------- Vista alumno ----------
+async function cargarMisTareas() {
+    const { data, error } = await sb.from("tareas")
+        .select("*, profesor:profiles!tareas_profesor_id_fkey(full_name)")
+        .eq("alumno_id", session.user.id)
+        .order("vence_at", { ascending: true });
+    const filas = data || [];
+    const pendientes = filas.filter((t) => t.estado === "pendiente");
+    const completadas = filas.filter((t) => t.estado === "completada");
+
+    const pl = document.getElementById("pendientes-lista");
+    pl.innerHTML = "";
+    const pv = document.getElementById("pendientes-vacia");
+    pv.classList.toggle("hidden", !!pendientes.length);
+    pendientes.forEach((t) => pl.appendChild(tarjetaAlumno(t)));
+
+    const cl = document.getElementById("completadas-lista");
+    cl.innerHTML = "";
+    document.getElementById("completadas-vacia").classList.toggle("hidden", !!completadas.length);
+    completadas.forEach((t) => cl.appendChild(tarjetaAlumno(t)));
+
+    if (error) { pv.textContent = "No se pudieron cargar tus tareas: " + error.message; pv.classList.remove("hidden"); }
+}
+
+function tarjetaAlumno(t) {
+    const div = document.createElement("div");
+    const vencida = t.estado === "pendiente" && new Date(t.vence_at) < new Date();
+    div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4" + (vencida ? " border-l-4 border-red-500" : "");
+    const profeNombre = (t.profesor && t.profesor.full_name) || "tu profe";
+    const vencePrefijo = vencida ? '<span class="text-red-600 dark:text-red-400 font-semibold">Venció</span>' : "Vence";
+    div.innerHTML = `
+        <div class="flex items-start justify-between gap-3 mb-1">
+            <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
+            <label class="flex items-center gap-1.5 text-xs text-brand-500 dark:text-brand-300 shrink-0 cursor-pointer">
+                <input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-check" ${t.estado === "completada" ? "checked" : ""}>
+                Hecha
+            </label>
+        </div>
+        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">De ${escapeHtml(profeNombre)} · ${vencePrefijo} ${formatoFecha(t.vence_at)}</p>
+        <p class="text-sm text-brand-600 dark:text-brand-300 mb-2">${escapeHtml(t.instrucciones)}</p>
+        <p class="text-xs"><a href="${escapeHtml(t.material_href)}" class="text-accent-600 dark:text-accent-400 hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">→ ${escapeHtml(t.material_label)}${t.leccion ? ", lección " + escapeHtml(t.leccion) : ""}</a></p>`;
+    div.querySelector(".marcar-check").addEventListener("change", (ev) => marcarHecha(t.id, ev.target.checked));
+    return div;
+}
+
+async function marcarHecha(id, hecha) {
+    const { error } = await sb.from("tareas").update({ estado: hecha ? "completada" : "pendiente" }).eq("id", id);
+    if (error) { alert("No se pudo actualizar: " + error.message); return; }
+    await cargarMisTareas();
+}
+
+init();
+    </script>
+</body>
+</html>
