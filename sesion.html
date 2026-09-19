@@ -897,7 +897,13 @@
             return lecciones;
         }
 
-        if (isTeacher) {
+        // Se llama desde init() una vez que isTeacher ya quedó resuelto (ver más abajo). Vivía
+        // como "if (isTeacher) {...}" a nivel superior del script, y por eso nunca se ejecutaba:
+        // ese código corre al analizar el <script>, antes de que init() — que es quien recién
+        // consulta la sesión y el perfil — llegue a fijar isTeacher. Con isTeacher siempre en su
+        // valor inicial (false), el botón "📚 Curso" no tenía ningún oyente de clic: no pasaba
+        // nada al presionarlo, para cualquier profesor, siempre.
+        function setupTeacherLessonTools() {
             const cursoSelect = document.getElementById("lesson-curso-select");
             const leccionSelect = document.getElementById("lesson-leccion-select");
             const panelMsg = document.getElementById("lesson-picker-msg");
@@ -3112,6 +3118,7 @@
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
                 cargarCupoInvitaciones();
+                setupTeacherLessonTools();
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
