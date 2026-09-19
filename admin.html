@@ -167,6 +167,28 @@
                 <p id="sin-profesor-aviso" class="hidden text-xs mt-3 rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200"></p>
             </div>
 
+            <!-- ===== Equipos: un alumno puede estar en varios a la vez, y un
+                 equipo puede tener cualquier cantidad de entrenadores =====
+                 No es lo mismo que "Grupo" (texto libre, uno solo, sin efecto en
+                 permisos, en la tabla de cuentas de abajo): esto es una tabla de
+                 verdad, muchos a muchos en los dos sentidos, y estar en un equipo
+                 con un entrenador le da a ese entrenador los mismos permisos que
+                 ya le da tenerlo asignado directamente. -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Equipos</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Un alumno puede estar en varios equipos a la vez, y un equipo puede tener cualquier cantidad de entrenadores — no hay límite de dos. Cada entrenador de un equipo ve y gestiona a todos sus alumnos, igual que si se los hubiera asignado uno por uno. Esto no reemplaza el campo "Grupo" de la tabla de cuentas: ese sigue siendo solo una etiqueta, sin efecto en permisos.</p>
+                <form id="equipo-create-form" class="flex flex-wrap items-end gap-3 mb-5">
+                    <div class="flex-1 min-w-[12rem]">
+                        <label for="equipo-nombre-nuevo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nuevo equipo</label>
+                        <input type="text" id="equipo-nombre-nuevo" placeholder="Ej: Selección sub-14" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">+ Crear equipo</button>
+                    <span id="equipo-create-msg" class="text-xs"></span>
+                </form>
+                <div id="equipos-lista" class="space-y-4"></div>
+                <p id="equipos-vacio" class="hidden text-xs text-brand-450 dark:text-brand-350">Todavía no hay ningún equipo.</p>
+            </div>
+
             <!-- ===== Las cuentas, por grupos =====
                  NO se muestran todas de una: con trescientas cuentas la pantalla no
                  se puede leer. Primero se ven las fichas de cada grupo —cuántos son,
@@ -1209,6 +1231,197 @@
             }
         }
 
+        /* ================= Equipos =================
+         *
+         * Igual que profesoresPorAlumno, la verdad está en dos tablas puente
+         * (equipo_alumnos, equipo_entrenadores), no en una columna. Un alumno
+         * puede estar en varios equipos y un equipo puede tener cualquier
+         * cantidad de entrenadores: por eso cada equipo guarda su propia
+         * lista de ids, como profesoresPorAlumno guarda la lista de un
+         * alumno.
+         */
+        let allEquipos = [];                       // [{id, nombre}…]
+        let alumnosPorEquipo = new Map();           // id de equipo -> [id de alumno…]
+        let entrenadoresPorEquipo = new Map();      // id de equipo -> [id de entrenador…]
+
+        // Misma idea que renderProfesoresCelda (una etiqueta por cuenta, con su
+        // ✕ para quitarla, y un selector al final para sumar otra) pero para
+        // los dos lados de un equipo — se deja aparte en vez de generalizar
+        // renderProfesoresCelda para no arriesgar ese camino ya probado.
+        function renderEquipoTags(puestos, opciones, guardar, ariaBase) {
+            const caja = document.createElement("div");
+            caja.className = "flex flex-wrap items-center gap-1";
+            const porId = new Map(opciones.map((o) => [o.id, o]));
+
+            puestos.forEach((id) => {
+                const chip = document.createElement("span");
+                chip.className = "inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-800 px-2 py-0.5 text-xs text-brand-700 dark:text-brand-200";
+                chip.append(document.createTextNode(porId.has(id) ? teacherLabel(porId.get(id)) : "?"));
+                const quitar = document.createElement("button");
+                quitar.type = "button";
+                quitar.className = "text-brand-500 dark:text-brand-300 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                quitar.textContent = "✕";
+                quitar.setAttribute("aria-label", "Quitar a " + (porId.has(id) ? teacherLabel(porId.get(id)) : "esta cuenta") + " de " + ariaBase);
+                quitar.addEventListener("click", () => guardar(puestos.filter((x) => x !== id)));
+                chip.appendChild(quitar);
+                caja.appendChild(chip);
+            });
+
+            const libres = opciones.filter((o) => !puestos.includes(o.id));
+            if (libres.length) {
+                const sel = document.createElement("select");
+                sel.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs max-w-[12rem]";
+                sel.setAttribute("aria-label", "Agregar a " + ariaBase);
+                sel.innerHTML = '<option value="">' + (puestos.length ? "＋ otro…" : "— Ninguno —") + "</option>" +
+                    libres.map((o) => `<option value="${o.id}">${escapeHtml(teacherLabel(o))}</option>`).join("");
+                sel.addEventListener("change", () => { if (sel.value) guardar(puestos.concat([sel.value])); });
+                caja.appendChild(sel);
+            } else if (!puestos.length) {
+                const vacio = document.createElement("span");
+                vacio.className = "text-xs text-brand-450 dark:text-brand-350";
+                vacio.textContent = "—";
+                caja.appendChild(vacio);
+            }
+            return caja;
+        }
+
+        function renderEquipos() {
+            const caja = document.getElementById("equipos-lista");
+            caja.innerHTML = "";
+            document.getElementById("equipos-vacio").classList.toggle("hidden", allEquipos.length > 0);
+
+            const profesores = allUsers.filter((u) => u.role === "profesor")
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            const alumnos = allUsers.filter((u) => u.role === "alumno")
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+
+            allEquipos.forEach((eq) => {
+                const card = document.createElement("div");
+                card.className = "rounded-xl border border-brand-100 dark:border-brand-800 p-4";
+
+                const encabezado = document.createElement("div");
+                encabezado.className = "flex flex-wrap items-center gap-3 mb-3";
+
+                const nombreInput = document.createElement("input");
+                nombreInput.type = "text";
+                nombreInput.value = eq.nombre;
+                nombreInput.setAttribute("aria-label", "Nombre del equipo");
+                nombreInput.className = "font-serif font-bold text-brand-800 dark:text-white bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 outline-none rounded px-2 py-1 text-sm flex-1 min-w-[10rem]";
+                nombreInput.addEventListener("change", async () => {
+                    const nuevo = nombreInput.value.trim();
+                    if (!nuevo) { nombreInput.value = eq.nombre; return; }
+                    try {
+                        await callAdmin("equipo_rename", { equipo_id: eq.id, nombre: nuevo });
+                        eq.nombre = nuevo;
+                    } catch (err) {
+                        alert("No se pudo renombrar el equipo: " + err.message);
+                        nombreInput.value = eq.nombre;
+                    }
+                });
+
+                const borrar = document.createElement("button");
+                borrar.type = "button";
+                borrar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                borrar.textContent = "Borrar equipo";
+                borrar.addEventListener("click", async () => {
+                    if (!confirm(`¿Borrar el equipo "${eq.nombre}"? No borra a sus alumnos ni a sus entrenadores, solo el equipo.`)) return;
+                    try {
+                        await callAdmin("equipo_delete", { equipo_id: eq.id });
+                        await loadEquipos();
+                    } catch (err) {
+                        alert("No se pudo borrar el equipo: " + err.message);
+                    }
+                });
+
+                encabezado.append(nombreInput, borrar);
+
+                const filaEntrenadores = document.createElement("div");
+                filaEntrenadores.className = "mb-2";
+                const etEnt = document.createElement("span");
+                etEnt.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+                etEnt.textContent = "Entrenadores";
+                filaEntrenadores.appendChild(etEnt);
+                filaEntrenadores.appendChild(renderEquipoTags(
+                    entrenadoresPorEquipo.get(eq.id) || [],
+                    profesores,
+                    async (lista) => {
+                        try {
+                            await callAdmin("equipo_set_entrenadores", { equipo_id: eq.id, teacher_ids: lista });
+                            entrenadoresPorEquipo.set(eq.id, lista);
+                            renderEquipos();
+                        } catch (err) {
+                            alert("No se pudo cambiar los entrenadores: " + err.message);
+                        }
+                    },
+                    `los entrenadores de ${eq.nombre}`,
+                ));
+
+                const filaAlumnos = document.createElement("div");
+                const etAl = document.createElement("span");
+                etAl.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+                etAl.textContent = "Alumnos";
+                filaAlumnos.appendChild(etAl);
+                filaAlumnos.appendChild(renderEquipoTags(
+                    alumnosPorEquipo.get(eq.id) || [],
+                    alumnos,
+                    async (lista) => {
+                        try {
+                            await callAdmin("equipo_set_alumnos", { equipo_id: eq.id, alumno_ids: lista });
+                            alumnosPorEquipo.set(eq.id, lista);
+                            renderEquipos();
+                        } catch (err) {
+                            alert("No se pudo cambiar los alumnos: " + err.message);
+                        }
+                    },
+                    `los alumnos de ${eq.nombre}`,
+                ));
+
+                card.append(encabezado, filaEntrenadores, filaAlumnos);
+                caja.appendChild(card);
+            });
+        }
+
+        async function loadEquipos() {
+            let equipos, filasAlumnos, filasEntrenadores;
+            try {
+                equipos = await traerTodo(() => sb.from("equipos").select("id, nombre").order("nombre", { ascending: true }));
+                filasAlumnos = await traerTodo(() => sb.from("equipo_alumnos").select("equipo_id, alumno_id"));
+                filasEntrenadores = await traerTodo(() => sb.from("equipo_entrenadores").select("equipo_id, teacher_id"));
+            } catch (err) {
+                document.getElementById("equipos-lista").innerHTML = '<p class="text-xs text-red-600 dark:text-red-400">No se pudieron cargar los equipos: ' + escapeHtml(err.message || err) + '</p>';
+                return;
+            }
+            allEquipos = equipos || [];
+            alumnosPorEquipo = new Map();
+            (filasAlumnos || []).forEach((r) => {
+                if (!alumnosPorEquipo.has(r.equipo_id)) alumnosPorEquipo.set(r.equipo_id, []);
+                alumnosPorEquipo.get(r.equipo_id).push(r.alumno_id);
+            });
+            entrenadoresPorEquipo = new Map();
+            (filasEntrenadores || []).forEach((r) => {
+                if (!entrenadoresPorEquipo.has(r.equipo_id)) entrenadoresPorEquipo.set(r.equipo_id, []);
+                entrenadoresPorEquipo.get(r.equipo_id).push(r.teacher_id);
+            });
+            renderEquipos();
+        }
+
+        document.getElementById("equipo-create-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const input = document.getElementById("equipo-nombre-nuevo");
+            const msg = document.getElementById("equipo-create-msg");
+            const nombre = input.value.trim();
+            if (!nombre) return;
+            msg.textContent = "";
+            try {
+                await callAdmin("equipo_create", { nombre });
+                input.value = "";
+                await loadEquipos();
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+            }
+        });
+
         function populateTeacherSelect(selectEl, teachers) {
             selectEl.innerHTML = '<option value="">— Sin asignar —</option>' +
                 teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
@@ -1260,6 +1473,7 @@
             const vivos = new Set(data.map((u) => u.id));
             [...marcados].forEach((id) => { if (!vivos.has(id)) marcados.delete(id); });
             renderProfesores();
+            renderEquipos();
             pintarCuentas();
             pintarBarraDeLote();
         }
@@ -1333,6 +1547,7 @@
 
             renderAtajos();
             await loadUsers();
+            await loadEquipos();
             document.getElementById("app").classList.remove("hidden");
         }
 
