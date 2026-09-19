@@ -2228,6 +2228,40 @@ verdad** (`eq`, `in`, `or`): la página pide `profiles` tres veces seguidas con
 filtros distintos, y un doble que devolviera siempre la tabla entera daría por
 buena una página rota.
 
+## El reloj de la partida no se fía del navegador
+
+`game_rooms.white_time_left`/`black_time_left` (y el `time_left` de cada
+asiento en `fourplayer_games.seats`) los escribe el propio cliente en cada
+jugada — es el navegador el que calcula "cuánto le quedaba menos lo que pasó
+más el incremento" (ver el comentario "Reloj" en `estandar.html` y
+hermanos). La política de `UPDATE` de las dos tablas solo comprueba QUIÉN
+escribe, nunca QUÉ valor manda: hasta este cambio, cualquiera de los dos
+jugadores podía, desde la consola del navegador, escribirle a su propio
+reloj el número que quisiera — el mismo tipo de fuga que ya se había cerrado
+para `class_presence_log`/`platform_activity_log` con
+`proteger_tiempos_de_presencia()`.
+
+- **`public.proteger_reloj_de_partida()`** (el mismo trigger `BEFORE INSERT
+  OR UPDATE` que ya forzaba `clock_updated_at` a la hora del servidor, ahora
+  también valida el tiempo) calcula el tiempo real transcurrido con
+  `now() - OLD.clock_updated_at` — la hora del SERVIDOR, nunca la que mande
+  el navegador — y rechaza cualquier `white_time_left`/`black_time_left` (o
+  `time_left` de asiento) que sea mayor que "lo que le quedaba menos ese
+  tiempo real, más el incremento, más 2 segundos de margen" por latencia de
+  red. Un cliente puede seguir siendo generoso consigo mismo por un par de
+  segundos; ya no puede escribirse un reloj infinito.
+- **Solo valida la columna que de verdad cambia.** Una jugada normal solo
+  toca el reloj de quien la hizo — el del rival queda igual porque no viene
+  en el `UPDATE`, así que no hay nada que comprobar ahí (compararlo contra
+  el tiempo transcurrido habría rechazado la jugada de siempre, porque el
+  reloj de quien NO mueve no tiene por qué haber bajado).
+- Es la misma función para las dos tablas: en `fourplayer_games` recorre los
+  cuatro asientos (`red`, `blue`, `yellow`, `green`) dentro de `seats`, en
+  vez de dos columnas sueltas.
+- Comprobado insertando una fila de prueba y actualizándola de las dos
+  formas: el cálculo legítimo (el mismo que hace la página) pasa igual que
+  antes; escribir un número inventado (999999) lo rechaza con
+  "Tiempo restante inválido".
 
 ## Confites del caballo
 
@@ -2607,6 +2641,45 @@ los 16 tableros lo comparten.
 **`js/variantes-board.js` no usa `enableBoardDrag`**: ahí se juega solo a
 clic-clic. No es un olvido que este arreglo tape — es que ese tablero nunca
 tuvo arrastre.
+
+### La última jugada se ve y la pieza se desliza
+
+Los tableros de partida (`js/niebla-board.js`, que también sirve a
+`estandar.html`, y `js/crazyhouse-board.js`) redibujan las 64 casillas
+ENTERAS en cada jugada — es lo más simple de mantener, pero de regalo la
+pieza rival "aparecía" de golpe en su casilla nueva, sin ninguna marca de
+cuál había sido la última jugada. Es justo lo que se nota al lado de un
+tablero como el de lichess, que sí desliza y sí resalta.
+
+- **`js/board-fluid.js` no sabe nada de ajedrez, solo lee FEN.** Compara la
+  posición anterior con la nueva y deduce de qué casilla a cuál se movió la
+  pieza (`diffMove`), y desliza la que quedó en la casilla de destino desde
+  donde estaba (`slide`, técnica FLIP: se la coloca con un `transform` en la
+  posición de "antes", sin transición, y al cuadro siguiente se suelta la
+  transición hacia 0). Sirve para cualquier tablero con notación FEN de
+  siempre, jugada normal, captura, enroque, al paso, coronación y — con
+  `from: null`, sin deslizamiento porque no hay de dónde — una pieza suelta
+  desde la reserva de Crazyhouse. Comprobado con jugadas reales de chess.js
+  para los seis casos.
+- **No sirve para `js/variantes-board.js`** (Abrazos, Camaleón): ahí una
+  pieza puede ser la fusión de varias y no hay un solo carácter por casilla,
+  así que compararlas con este método daría diffs sin sentido. Ese tablero
+  ya traía su propio `lastMove`/resalte para jugadas propias (`_apply()`);
+  quedó sin tocar.
+- **Solo se anima la jugada del RIVAL, nunca la propia.** La propia ya se
+  vio moverse arrastrando la pieza (o, si fue por toques, el usuario mismo
+  la disparó) — deslizarla otra vez de "antes" a "después" encima de eso se
+  vería como que la pieza rebota de vuelta al origen antes de llegar. Por
+  eso `loadFen()`/`load()` (que es por donde entra la posición que llega de
+  Supabase) es la única puerta con deslizamiento; `_applyMove()`/`tryMove()`
+  (el clic o el arrastre propios) solo actualizan el resalte, sin animar.
+- **El resalte SÍ es el mismo `bg-accent-400/30` que ya usaba
+  `variantes-board.js`** para su última jugada — no una clase nueva, para
+  que las dos familias de tableros se vean iguales.
+- En Niebla de Guerra, el resalte de la última jugada respeta la niebla: si
+  la casilla de destino queda cubierta, ni se marca ni se desliza nada ahí
+  — lo contrario sería delatar dónde cayó una pieza que la niebla tendría
+  que estar tapando.
 
 ### El tamaño de las casillas
 
