@@ -56,6 +56,8 @@
       this.onPromotionNeeded = opts.onPromotionNeeded || null; // (from, to, callback(piece|null))
       this.game = new Crazyhouse.Game();
       this.selected = null; // {kind:"square", square} | {kind:"pocket", piece}
+      this.lastMove = null; // {from,to} de la última jugada — para el resalte y el deslizamiento
+      this._loadedOnce = false;
       this.boardEl.style.position = "relative";
       this.boardEl.setAttribute("role", "group");
       this.boardEl.setAttribute("aria-label", "Tablero de Crazyhouse");
@@ -78,9 +80,18 @@
     }
 
     loadFen(fen) {
+      const prevFen = this._loadedOnce ? this.game.fen() : null;
       this.game.load(fen);
       this.selected = null;
+      if (prevFen && window.BoardFluid) {
+        const diff = BoardFluid.diffMove(prevFen, fen);
+        if (diff) this.lastMove = diff;
+      }
+      this._loadedOnce = true;
       this.render();
+      if (prevFen && this.lastMove && window.BoardFluid) {
+        BoardFluid.slide(this.boardEl, this.lastMove.from, this.lastMove.to, this.flipped);
+      }
     }
 
     fen() {
@@ -121,12 +132,14 @@
     _applyMove(from, to, promotion) {
       const move = this.game.move({ from: from, to: to, promotion: promotion || "q" });
       if (!move) return;
+      this.lastMove = { from: from, to: to };
       this._finishTurn(move.san, false);
     }
 
     _applyDrop(type, square) {
       const move = this.game.drop(type, square);
       if (!move) return;
+      this.lastMove = { from: null, to: square };
       this._finishTurn(move.san, true);
     }
 
@@ -223,6 +236,13 @@
         const piece = g.get(square);
         const pieceName = piece ? ((piece.color === "w" ? "Blanco" : "Negro") + " " + PIECE_NAME[piece.type]) : "vacía";
         btn.setAttribute("aria-label", "Casilla " + square + ": " + pieceName);
+
+        if (this.lastMove && (this.lastMove.from === square || this.lastMove.to === square)) {
+          const mark = document.createElement("span");
+          mark.setAttribute("aria-hidden", "true");
+          mark.className = "absolute inset-0 bg-accent-400/30 pointer-events-none";
+          btn.appendChild(mark);
+        }
 
         if (piece) {
           const span = document.createElement("span");

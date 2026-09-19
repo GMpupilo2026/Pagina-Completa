@@ -55,6 +55,8 @@
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
       this.game = new Chess();
       this.selected = null; // casilla de origen elegida
+      this.lastMove = null; // {from,to} de la última jugada — para el resalte y el deslizamiento
+      this._loadedOnce = false;
       this.boardEl.style.position = "relative";
       this.boardEl.setAttribute("role", "group");
       this.boardEl.setAttribute("aria-label", "Tablero de Niebla de Guerra");
@@ -73,9 +75,21 @@
     }
 
     loadFen(fen) {
+      // Solo se compara con lo anterior a partir de la segunda carga: la
+      // primera es la posición inicial de la partida, no una jugada — no
+      // hay nada que deslizar ni ninguna "última jugada" que resaltar ahí.
+      const prevFen = this._loadedOnce ? this.game.fen() : null;
       this.game.load(fen);
       this.selected = null;
+      if (prevFen && window.BoardFluid) {
+        const diff = BoardFluid.diffMove(prevFen, fen);
+        if (diff) this.lastMove = diff;
+      }
+      this._loadedOnce = true;
       this.render();
+      if (prevFen && this.lastMove && window.BoardFluid) {
+        BoardFluid.slide(this.boardEl, this.lastMove.from, this.lastMove.to, this.flipped);
+      }
     }
 
     fen() { return this.game.fen(); }
@@ -109,6 +123,9 @@
       const move = this.game.move({ from: from, to: to, promotion: promotion || "q" });
       if (!move) return;
       this.selected = null;
+      // La jugada propia ya se vio moverse con el arrastre o el toque —
+      // acá solo hace falta el resalte, sin deslizamiento otra vez encima.
+      this.lastMove = { from: from, to: to };
       this.render();
       this._afterMove(move);
     }
@@ -134,6 +151,7 @@
       const move = ChessMoveParser.tryParseMove(this.game, rawText);
       if (!move) return { ok: false, reason: "invalid" };
       this.selected = null;
+      this.lastMove = { from: move.from, to: move.to };
       this.render();
       this._afterMove(move);
       return { ok: true, san: move.san };
@@ -192,6 +210,13 @@
         const piece = fogged ? null : g.get(square);
         const pieceName = fogged ? "cubierta por la niebla" : (piece ? ((piece.color === "w" ? "Blanco" : "Negro") + " " + PIECE_NAME[piece.type]) : "vacía");
         btn.setAttribute("aria-label", "Casilla " + square + ": " + pieceName);
+
+        if (this.lastMove && !fogged && (this.lastMove.from === square || this.lastMove.to === square)) {
+          const mark = document.createElement("span");
+          mark.setAttribute("aria-hidden", "true");
+          mark.className = "absolute inset-0 bg-accent-400/30 pointer-events-none";
+          btn.appendChild(mark);
+        }
 
         if (fogged) {
           const fog = document.createElement("span");
