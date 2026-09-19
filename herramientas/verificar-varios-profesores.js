@@ -110,14 +110,26 @@ async function pagina(browser, ruta, script) {
 async function pruebaAdmin(browser) {
   console.log("\n=== Panel de administración ===");
   const { page, errores } = await pagina(browser, "/admin.html", clienteFalso(DATOS, "u-oscar"));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+
+  // Desde "Administración por fichas de grupo" (#217) la tabla ya no se pinta
+  // sola al entrar: primero se ven las fichas, y las cuentas aparecen recién
+  // al abrir un grupo o al buscar. Acá se busca "x.cr", que está en las seis
+  // direcciones de prueba, para traerlas todas a la vista de una vez sin
+  // depender de en qué grupo quedó cada una.
+  await page.fill("#user-search", "x.cr");
   await page.waitForFunction(() => document.querySelectorAll("#users-body tr").length > 3, { timeout: 20000 });
 
   // La celda "Profesor" de cada alumno: una etiqueta por profesor.
   // El nombre se edita en un <input>, así que las filas se buscan por el correo.
+  // Columnas de #users-body hoy: 0 marcar, 1 cuenta (nombre + correo), 2 rol,
+  // 3 grupo, 4 profesores, 5 creado, 6 acciones — el correo vive DENTRO de la
+  // celda de cuenta (el <a mailto:>), ya no en su propia columna, y "marcar"
+  // corrió un puesto a las que venían después.
   const celda = (correo) => page.evaluate((buscado) => {
     const tr = window.__filaDe(buscado);
     if (!tr) return null;
-    const celdaProfes = tr.children[5];
+    const celdaProfes = tr.children[4];
     return {
       etiquetas: [...celdaProfes.querySelectorAll("span.rounded-full")].map((e) => e.textContent.replace("✕", "").trim()),
       selector: celdaProfes.querySelector("select") ? celdaProfes.querySelector("select").options[0].textContent : null,
@@ -126,7 +138,7 @@ async function pruebaAdmin(browser) {
 
   await page.evaluate(() => {
     window.__filaDe = (correo) => [...document.querySelectorAll("#users-body tr")]
-      .find((f) => f.children[2] && f.children[2].textContent.trim() === correo);
+      .find((f) => f.children[1] && f.children[1].querySelector("a") && f.children[1].querySelector("a").textContent.trim() === correo);
   });
 
   igual("Ana: sus dos profesores", await celda("ana@x.cr"), { etiquetas: ["Karina Rojas", "Luis Mora"], selector: "＋ otro…" });
@@ -147,7 +159,7 @@ async function pruebaAdmin(browser) {
   // Quitarle Luis a Ana manda la lista COMPLETA que debe quedar.
   await page.evaluate(() => {
     const tr = window.__filaDe("ana@x.cr");
-    const chip = [...tr.children[5].querySelectorAll("span.rounded-full")].find((c) => c.textContent.indexOf("Luis") !== -1);
+    const chip = [...tr.children[4].querySelectorAll("span.rounded-full")].find((c) => c.textContent.indexOf("Luis") !== -1);
     chip.querySelector("button").click();
   });
   await page.waitForFunction(() => window.__llamadas.length > 0);
@@ -158,7 +170,7 @@ async function pruebaAdmin(browser) {
   await page.evaluate(() => {
     window.__llamadas.length = 0;
     const tr = window.__filaDe("bruno@x.cr");
-    const sel = tr.children[5].querySelector("select");
+    const sel = tr.children[4].querySelector("select");
     sel.value = "u-luis";
     sel.dispatchEvent(new Event("change"));
   });
