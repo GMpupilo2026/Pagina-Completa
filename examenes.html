@@ -58,45 +58,20 @@
                             <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 mt-2">Todavía no tienes alumnos asignados.</p>
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <label for="e-fuente" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sobre qué</label>
-                                <select id="e-fuente" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                    <option value="curso">Un curso</option>
-                                    <option value="areas">Áreas sueltas</option>
-                                    <option value="linea">Ejecutar una apertura o defensa</option>
-                                    <option value="arbitraje">Reglamento (arbitraje)</option>
-                                </select>
+                        <!-- Las preguntas se piden por BLOQUES y se suman, como los
+                             renglones de una tarea: "10 de finales + 5 de reglamento +
+                             ejecutar la italiana" es un solo examen. Antes el examen
+                             salía de una sola fuente, así que para medir dos cosas había
+                             que poner dos exámenes y el alumno recibía dos relojes. -->
+                        <div>
+                            <div class="flex items-baseline justify-between gap-3 mb-1">
+                                <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Preguntas</span>
+                                <p id="e-total" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></p>
                             </div>
-                            <div id="e-cual-wrap">
-                                <label for="e-cual" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuál</label>
-                                <select id="e-cual" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
-                            </div>
-                        </div>
-
-                        <div id="e-areas-wrap" class="hidden">
-                            <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Áreas</span>
-                            <div id="e-areas" class="border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-3 gap-1"></div>
-                        </div>
-
-                        <div class="grid gap-4 sm:grid-cols-3" id="e-medida">
-                            <div>
-                                <label for="e-cantidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Preguntas</label>
-                                <input id="e-cantidad" type="number" min="1" value="10" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                <p id="e-hay" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
-                            </div>
-                            <div>
-                                <label for="e-dif-min" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Dificultad desde</label>
-                                <select id="e-dif-min" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                    <option value="1">1 · muy fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 · muy difícil</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="e-dif-max" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">hasta</label>
-                                <select id="e-dif-max" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option>
-                                </select>
-                            </div>
+                            <div id="e-bloques" class="space-y-3"></div>
+                            <button type="button" id="e-agregar-bloque" class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
+                                + Agregar preguntas de otra cosa
+                            </button>
                         </div>
 
                         <!-- El tiempo: o lo propone el sitio sobre las preguntas que de
@@ -124,6 +99,24 @@
                             </div>
                             <p id="e-minimo" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
                         </fieldset>
+
+                        <!-- Cuántas veces puede salirse de la pantalla antes de perder el
+                             examen. Iba fijo en tres, escrito dentro de la función de la
+                             base: el mismo rigor para un quiz de práctica que para una
+                             prueba de fin de curso. El tope lo sigue haciendo cumplir el
+                             servidor; acá solo se elige. -->
+                        <div>
+                            <label for="e-salidas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Si se sale de la pantalla</label>
+                            <select id="e-salidas" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="0">Se congela a la primera</option>
+                                <option value="1">Le perdono 1 salida</option>
+                                <option value="2" selected>Le perdono 2 salidas</option>
+                                <option value="3">Le perdono 3 salidas</option>
+                                <option value="5">Le perdono 5 salidas</option>
+                                <option value="">No congelar, solo anotarlo</option>
+                            </select>
+                            <p id="e-salidas-nota" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                        </div>
 
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
@@ -240,15 +233,18 @@ async function init() {
     $("vista-profesor").classList.remove("hidden");
     await cargarAlumnos();
     cursosCatalogo = await MaterialPlataforma.cursos();
-    pintarAreas();
-    $("e-fuente").addEventListener("change", cambioFuente);
-    ["e-cual", "e-dif-min", "e-dif-max", "e-cantidad"].forEach((id) =>
-      $(id).addEventListener("change", refrescarMedida));
-    $("e-cantidad").addEventListener("input", refrescarMedida);
+    $("e-agregar-bloque").addEventListener("click", () => {
+      bloques.push(bloqueNuevo());
+      pintarBloques();
+      refrescarMedida();
+    });
     ["e-tiempo-reco", "e-tiempo-mio"].forEach((id) =>
-      $(id).addEventListener("change", () => aplicarTiempo(refrescarPrevision(opcionesDelBanco()))));
+      $(id).addEventListener("change", () => aplicarTiempo(refrescarPrevision())));
+    $("e-salidas").addEventListener("change", notaDeSalidas);
     $("form-examen").addEventListener("submit", ponerExamen);
-    cambioFuente();
+    bloques = [bloqueNuevo()];
+    pintarBloques();
+    refrescarMedida();
     await cargarPuestos();
   } else {
     $("vista-alumno").classList.remove("hidden");
@@ -278,90 +274,239 @@ async function cargarAlumnos() {
   });
 }
 
-function pintarAreas() {
-  const cont = $("e-areas");
-  cont.innerHTML = "";
-  (window.PlanEntrenamiento.AREAS || []).forEach((a) => {
-    const l = document.createElement("label");
-    l.className = "flex items-center gap-2 text-sm px-2 py-1 rounded cursor-pointer";
-    l.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 area-check"><span>${escapeHtml(a.emoji + " " + a.nombre)}</span>`;
-    l.querySelector("input").addEventListener("change", refrescarMedida);
-    cont.appendChild(l);
-  });
+/* ---------------- Los bloques de preguntas ----------------
+
+   Un examen se arma sumando bloques, como los renglones de una tarea:
+   "10 de finales + 5 de reglamento + ejecutar la italiana" es UN examen.
+   Antes salía de una sola fuente, así que para medir dos cosas había que
+   poner dos exámenes — y el alumno recibía dos relojes y dos notas de lo
+   que para el profesor era una sola prueba.
+
+   La base ya lo aguantaba: `crear_examen()` recibe las preguntas en un
+   arreglo y no le importa de dónde salió cada una. Lo que había que
+   cambiar era esta pantalla. */
+
+const FUENTES = [
+  { valor: "curso",     texto: "Un curso" },
+  { valor: "areas",     texto: "Áreas sueltas" },
+  { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
+  { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
+];
+
+let bloques = [];
+let seqBloque = 0;
+
+function bloqueNuevo() {
+  return { id: ++seqBloque, fuente: "curso", cual: "", areas: [], cantidad: 10, difMin: 1, difMax: 5 };
 }
 
-function fuente() { return $("e-fuente").value; }
-function areasElegidas() { return [...document.querySelectorAll(".area-check:checked")].map((c) => c.value); }
+const CAMPO = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+const ETIQUETA = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
 
-function cambioFuente() {
-  const f = fuente();
-  const sel = $("e-cual");
-  $("e-areas-wrap").classList.toggle("hidden", f !== "areas");
-  $("e-cual-wrap").classList.toggle("hidden", f === "areas" || f === "arbitraje");
-  // Una línea de apertura es UNA pregunta: no se le pide cantidad ni
-  // dificultad, la trae ella.
-  $("e-medida").querySelectorAll("div").forEach((d, i) => {
-    if (i < 3) d.classList.toggle("hidden", f === "linea");
-  });
-
-  sel.innerHTML = "";
-  if (f === "curso") {
-    // Solo los cursos que de verdad tienen preguntas: ofrecer uno que
-    // no las tiene daría un examen vacío sin decir por qué.
+function opcionesDeCual(b) {
+  if (b.fuente === "curso") {
     const conPreguntas = ExamenBanco.cursosConPreguntas();
-    cursosCatalogo.filter((c) => conPreguntas.includes(c.slug)).forEach((c) => {
-      const o = document.createElement("option");
-      o.value = c.slug; o.textContent = c.label;
-      sel.appendChild(o);
-    });
-  } else if (f === "linea") {
-    const L = (window.AperturasLineas && window.AperturasLineas.LINEAS) || [];
-    L.forEach((l) => {
-      const o = document.createElement("option");
-      o.value = l.id;
-      o.textContent = l.nombre + (l.apertura ? " — " + l.apertura : "") + (l.color === "w" ? " (blancas)" : " (negras)");
-      sel.appendChild(o);
-    });
+    return cursosCatalogo.filter((c) => conPreguntas.includes(c.slug))
+      .map((c) => ({ valor: c.slug, texto: c.label }));
   }
-  refrescarMedida();
+  if (b.fuente === "linea") {
+    return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
+      valor: l.id,
+      texto: l.nombre + (l.apertura ? " — " + l.apertura : "") + (l.color === "w" ? " (blancas)" : " (negras)"),
+    }));
+  }
+  return [];
 }
 
-function opcionesDelBanco() {
-  const f = fuente();
+function opcionesDelBloque(b) {
   return {
-    fuente: f,
-    curso: f === "curso" ? $("e-cual").value : null,
-    linea_id: f === "linea" ? $("e-cual").value : null,
-    areas: f === "areas" ? areasElegidas() : [],
-    cantidad: parseInt($("e-cantidad").value, 10) || 1,
-    dificultad: { min: parseInt($("e-dif-min").value, 10), max: parseInt($("e-dif-max").value, 10) },
+    fuente: b.fuente,
+    curso: b.fuente === "curso" ? b.cual : null,
+    linea_id: b.fuente === "linea" ? b.cual : null,
+    areas: b.fuente === "areas" ? b.areas.slice() : [],
+    cantidad: Math.max(1, b.cantidad || 1),
+    dificultad: { min: b.difMin, max: b.difMax },
   };
 }
 
-/* Cuántas preguntas hay de verdad, y cuántos minutos hacen falta como
-   mínimo. Las dos cosas se dicen ANTES de mandar: enterarse de que el
-   examen salió más corto de lo pedido cuando el alumno ya lo rindió es
-   tarde. */
-function refrescarMedida() {
-  const op = opcionesDelBanco();
-  if (op.dificultad.min > op.dificultad.max) {
-    $("e-dif-max").value = String(op.dificultad.min);
-    op.dificultad.max = op.dificultad.min;
-  }
-  let hay = 0;
-  try { hay = ExamenBanco.disponibles(op); } catch (e) { hay = 0; }
+function hayEnBloque(b) {
+  try { return ExamenBanco.disponibles(opcionesDelBloque(b)); } catch (e) { return 0; }
+}
 
-  const campo = $("e-cantidad");
-  if (fuente() === "linea") {
-    $("e-hay").textContent = "";
-  } else {
-    campo.max = String(Math.max(1, hay));
-    if (parseInt(campo.value, 10) > hay && hay > 0) campo.value = String(hay);
-    $("e-hay").textContent = hay ? `Hay ${hay} para elegir.` : "No hay preguntas con ese filtro.";
-    $("e-hay").className = "text-xs mt-1 " + (hay ? "text-brand-450 dark:text-brand-350" : "text-red-600 dark:text-red-400");
+/* Cómo se llama este bloque, para el título propuesto y para el aviso. */
+function nombreDeBloque(b) {
+  const op = opcionesDeCual(b).find((o) => o.valor === b.cual);
+  if (b.fuente === "curso") return op ? op.texto : "un curso";
+  if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
+  if (b.fuente === "arbitraje") return "reglamento";
+  return b.areas.length ? b.areas.join(", ") : "todas las áreas";
+}
+
+function pintarBloques() {
+  const cont = $("e-bloques");
+  cont.innerHTML = "";
+  bloques.forEach((b) => cont.appendChild(pintarBloque(b)));
+  $("e-agregar-bloque").disabled = bloques.length >= 8;
+}
+
+function pintarBloque(b) {
+  const caja = document.createElement("div");
+  caja.className = "rounded-xl border border-brand-200 dark:border-brand-700 p-3 bg-brand-50/60 dark:bg-brand-950/40";
+  caja.dataset.bloque = String(b.id);
+
+  const sel = (id, etiqueta, opciones, valor, alCambiar) => {
+    const wrap = document.createElement("div");
+    const lab = document.createElement("label");
+    lab.className = ETIQUETA; lab.setAttribute("for", id); lab.textContent = etiqueta;
+    const s = document.createElement("select");
+    s.id = id; s.className = CAMPO;
+    opciones.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.valor; opt.textContent = o.texto;
+      if (String(o.valor) === String(valor)) opt.selected = true;
+      s.appendChild(opt);
+    });
+    s.addEventListener("change", () => { alCambiar(s.value); refrescarMedida(); });
+    wrap.append(lab, s);
+    return wrap;
+  };
+
+  // Fila de arriba: sobre qué, y cuál.
+  const arriba = document.createElement("div");
+  arriba.className = "grid gap-3 sm:grid-cols-2";
+  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", FUENTES, b.fuente, (v) => {
+    b.fuente = v;
+    const ops = opcionesDeCual(b);
+    b.cual = ops.length ? ops[0].valor : "";
+    pintarBloques();
+  }));
+  const cuales = opcionesDeCual(b);
+  if (cuales.length) {
+    if (!cuales.some((o) => String(o.valor) === String(b.cual))) b.cual = cuales[0].valor;
+    arriba.appendChild(sel(`b${b.id}-cual`, "Cuál", cuales, b.cual, (v) => { b.cual = v; }));
   }
-  aplicarTiempo(refrescarPrevision(opcionesDelBanco()));
+  caja.appendChild(arriba);
+
+  // Áreas sueltas: las casillas.
+  if (b.fuente === "areas") {
+    const wrap = document.createElement("div");
+    wrap.className = "mt-3";
+    const t = document.createElement("span");
+    t.className = ETIQUETA; t.textContent = "Áreas";
+    const grid = document.createElement("div");
+    grid.className = "border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-3 gap-1";
+    (window.PlanEntrenamiento.AREAS || []).forEach((a) => {
+      const l = document.createElement("label");
+      l.className = "flex items-center gap-2 text-sm px-2 py-1 rounded cursor-pointer";
+      const c = document.createElement("input");
+      c.type = "checkbox"; c.value = a.id;
+      c.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400 area-check";
+      c.checked = b.areas.includes(a.id);
+      c.addEventListener("change", () => {
+        b.areas = c.checked ? b.areas.concat([a.id]) : b.areas.filter((x) => x !== a.id);
+        refrescarMedida();
+      });
+      const sp = document.createElement("span");
+      sp.textContent = a.emoji + " " + a.nombre;
+      l.append(c, sp);
+      grid.appendChild(l);
+    });
+    wrap.append(t, grid);
+    caja.appendChild(wrap);
+  }
+
+  // Cuántas y de qué dificultad. Una línea de apertura es UNA pregunta y
+  // trae su propia dificultad, así que no se le pide ninguna de las dos.
+  const abajo = document.createElement("div");
+  abajo.className = "grid gap-3 sm:grid-cols-3 mt-3";
+  if (b.fuente !== "linea") {
+    const wrapC = document.createElement("div");
+    const labC = document.createElement("label");
+    labC.className = ETIQUETA; labC.setAttribute("for", `b${b.id}-cantidad`); labC.textContent = "Preguntas";
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "1"; inp.id = `b${b.id}-cantidad`;
+    inp.value = String(b.cantidad); inp.className = CAMPO;
+    inp.addEventListener("input", () => { b.cantidad = parseInt(inp.value, 10) || 1; refrescarMedida(); });
+    const hay = document.createElement("p");
+    hay.id = `b${b.id}-hay`; hay.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
+    wrapC.append(labC, inp, hay);
+    abajo.appendChild(wrapC);
+
+    const nums = [1, 2, 3, 4, 5].map((n) => ({
+      valor: String(n),
+      texto: n === 1 ? "1 · muy fácil" : n === 5 ? "5 · muy difícil" : String(n),
+    }));
+    abajo.appendChild(sel(`b${b.id}-dif-min`, "Dificultad desde", nums, b.difMin, (v) => { b.difMin = parseInt(v, 10); }));
+    abajo.appendChild(sel(`b${b.id}-dif-max`, "hasta", nums, b.difMax, (v) => { b.difMax = parseInt(v, 10); }));
+  } else {
+    const p = document.createElement("p");
+    p.className = "text-xs text-brand-450 dark:text-brand-350 sm:col-span-3";
+    p.textContent = "Una línea es una sola pregunta: la da entera, sin pistas y sin deshacer.";
+    abajo.appendChild(p);
+  }
+  caja.appendChild(abajo);
+
+  // Quitar. Con un solo bloque no se ofrece: un examen sin preguntas no
+  // existe, y un botón que va a fallar es peor que no tenerlo.
+  if (bloques.length > 1) {
+    const fila = document.createElement("div");
+    fila.className = "mt-2 text-right";
+    const quitar = document.createElement("button");
+    quitar.type = "button";
+    quitar.className = "quitar-bloque text-xs font-semibold text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1";
+    quitar.textContent = "✕ Quitar estas preguntas";
+    quitar.addEventListener("click", () => {
+      bloques = bloques.filter((x) => x.id !== b.id);
+      pintarBloques();
+      refrescarMedida();
+    });
+    fila.appendChild(quitar);
+    caja.appendChild(fila);
+  }
+  return caja;
+}
+
+/* Cuántas preguntas hay de verdad en cada bloque, y cuántos minutos hacen
+   falta como mínimo. Las dos cosas se dicen ANTES de mandar: enterarse de
+   que el examen salió más corto de lo pedido cuando el alumno ya lo rindió
+   es tarde. */
+function refrescarMedida() {
+  bloques.forEach((b) => {
+    if (b.difMin > b.difMax) {
+      b.difMax = b.difMin;
+      const s = document.getElementById(`b${b.id}-dif-max`);
+      if (s) s.value = String(b.difMax);
+    }
+    if (b.fuente === "linea") return;
+    const hay = hayEnBloque(b);
+    if (b.cantidad > hay && hay > 0) {
+      b.cantidad = hay;
+      const c = document.getElementById(`b${b.id}-cantidad`);
+      if (c) c.value = String(hay);
+    }
+    const c = document.getElementById(`b${b.id}-cantidad`);
+    if (c) c.max = String(Math.max(1, hay));
+    const avisoHay = document.getElementById(`b${b.id}-hay`);
+    if (avisoHay) {
+      avisoHay.textContent = hay ? `Hay ${hay} para elegir.` : "No hay preguntas con ese filtro.";
+      avisoHay.className = "text-xs mt-1 " + (hay ? "text-brand-450 dark:text-brand-350" : "text-red-600 dark:text-red-400");
+    }
+  });
+  const prev = refrescarPrevision();
+  const n = prev.items.length;
+  $("e-total").textContent = n ? `${n} ${n === 1 ? "pregunta" : "preguntas"} en total` : "";
+  aplicarTiempo(prev);
+  notaDeSalidas();
   proponerTitulo();
+}
+
+function notaDeSalidas() {
+  const v = $("e-salidas").value;
+  $("e-salidas-nota").textContent = v === ""
+    ? "Las salidas se cuentan y salen en el informe, pero el examen no se cierra solo."
+    : v === "0"
+      ? "A la primera salida el examen se congela y se califica con lo que llevaba."
+      : `A la salida número ${parseInt(v, 10) + 1} el examen se congela y se califica con lo que llevaba.`;
 }
 
 /* ---------------- El tiempo ---------------- */
@@ -377,18 +522,37 @@ function refrescarMedida() {
    falla nada, no avisa nadie, y el tiempo simplemente no corresponde. La
    previsión se rehace sola en cuanto cambia cualquier parámetro, porque
    su clave es el propio objeto de opciones. */
-let prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {} };
+let prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {}, repetidas: 0 };
 
-function refrescarPrevision(op) {
-  const clave = JSON.stringify(op);
+function refrescarPrevision() {
+  const clave = JSON.stringify(bloques);
   if (prevision.clave === clave) return prevision;
-  let items = [], error = null;
-  try {
-    items = ExamenBanco.armar(Object.assign({}, op, { semilla: Math.floor(Math.random() * 1e9) }));
-  } catch (e) { error = e.message; }
+
+  const items = [];
+  const vistas = new Set();
+  let repetidas = 0, error = null;
+  bloques.forEach((b) => {
+    let salieron = [];
+    try {
+      salieron = ExamenBanco.armar(Object.assign({}, opcionesDelBloque(b),
+        { semilla: Math.floor(Math.random() * 1e9) }));
+    } catch (e) { if (!error) error = e.message; }
+    salieron.forEach((it) => {
+      // DOS BLOQUES PUEDEN PEDIR DEL MISMO BANCO. "10 de finales" y "5 de
+      // finales" son dos bloques legítimos, y sin esto el examen podría
+      // llevar la misma pregunta dos veces: el alumno la contestaría dos
+      // veces y valdría doble en la nota, sin que nada fallara.
+      const llave = it.banco + "/" + it.item_id;
+      if (vistas.has(llave)) { repetidas += 1; return; }
+      vistas.add(llave);
+      items.push(it);
+    });
+  });
+
   const r = items.length ? ExamenBanco.minutosRecomendados(items)
                          : { minutos: 0, minimo: 1, porTipo: {} };
-  prevision = { clave, items, error, minutos: r.minutos, minimo: r.minimo, porTipo: r.porTipo };
+  prevision = { clave, items, error, repetidas,
+                minutos: r.minutos, minimo: r.minimo, porTipo: r.porTipo };
   return prevision;
 }
 
@@ -426,25 +590,34 @@ function aplicarTiempo(prev) {
 
   const n = prev.items.length;
   const cuantas = `${n} ${n === 1 ? "pregunta" : "preguntas"}`;
-  $("e-minimo").textContent = reco
+  // Si dos bloques pidieron la misma pregunta se dice, en vez de dejar que
+  // el examen salga más corto de lo que el profesor pidió sin explicación.
+  const repes = prev.repetidas
+    ? ` ${prev.repetidas} ${prev.repetidas === 1 ? "pregunta repetida se quitó" : "preguntas repetidas se quitaron"}.`
+    : "";
+  $("e-minimo").textContent = (reco
     ? `${prev.minutos} min para estas ${cuantas} (${desgloseDe(prev.porTipo)}). El mínimo es ${prev.minimo}.`
-    : `Mínimo ${prev.minimo} (un minuto por pregunta). Lo recomendado para estas ${cuantas} son ${prev.minutos}.`;
+    : `Mínimo ${prev.minimo} (un minuto por pregunta). Lo recomendado para estas ${cuantas} son ${prev.minutos}.`) + repes;
 }
 
 let tituloTocado = false;
 document.addEventListener("input", (ev) => { if (ev.target && ev.target.id === "e-titulo") tituloTocado = true; });
 function proponerTitulo() {
   if (tituloTocado) return;
-  const f = fuente();
-  const sel = $("e-cual");
-  const texto = sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : "";
-  if (f === "curso") $("e-titulo").value = "Examen de " + texto;
-  else if (f === "linea") $("e-titulo").value = "Ejecutar: " + texto.split(" — ")[0];
-  else if (f === "arbitraje") $("e-titulo").value = "Examen de reglamento";
-  else {
-    const as = areasElegidas();
-    $("e-titulo").value = as.length ? "Examen de " + as.join(", ") : "Examen";
+  if (!bloques.length) { $("e-titulo").value = "Examen"; return; }
+  if (bloques.length === 1) {
+    const b = bloques[0];
+    $("e-titulo").value = b.fuente === "linea"
+      ? "Ejecutar: " + nombreDeBloque(b)
+      : "Examen de " + nombreDeBloque(b);
+    return;
   }
+  // Con varios bloques se nombran los dos primeros y se cuenta el resto: un
+  // título con cinco cosas encadenadas no se lee en la lista del alumno.
+  const nombres = bloques.map(nombreDeBloque);
+  const resto = nombres.length - 2;
+  $("e-titulo").value = "Examen de " + nombres.slice(0, 2).join(" y ") +
+    (resto > 0 ? ` y ${resto} ${resto === 1 ? "cosa más" : "cosas más"}` : "");
 }
 
 async function ponerExamen(ev) {
@@ -456,7 +629,7 @@ async function ponerExamen(ev) {
   // Las preguntas ya están sorteadas: son las mismas sobre las que se
   // calculó el tiempo que el profesor tiene delante. Volver a sortearlas
   // acá mandaría un examen distinto del que se midió.
-  const prev = refrescarPrevision(opcionesDelBanco());
+  const prev = refrescarPrevision();
   if (prev.error) { status.textContent = prev.error; return; }
   const items = prev.items;
   if (!items.length) { status.textContent = "Con ese filtro no sale ninguna pregunta."; return; }
@@ -481,6 +654,10 @@ async function ponerExamen(ev) {
     p_minutos: minutos,
     p_vence: new Date(vence).toISOString(),
     p_items: items,
+    // "" es "no congelar nunca". Va como null y no como 0: cero significa
+    // lo contrario —congela a la primera— y confundirlos le cerraría el
+    // examen en la cara al primer despiste.
+    p_salidas_permitidas: $("e-salidas").value === "" ? null : parseInt($("e-salidas").value, 10),
   });
   btn.disabled = false;
   if (error) { status.textContent = "No se pudo poner: " + error.message; return; }
@@ -491,7 +668,7 @@ async function ponerExamen(ev) {
   // Se tira la previsión para que el examen siguiente vuelva a sortear.
   // Sin esto, poner el mismo examen dos veces seguidas —al grupo de la
   // mañana y al de la tarde— mandaría exactamente las mismas preguntas.
-  prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {} };
+  prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {}, repetidas: 0 };
   refrescarMedida();
   await cargarPuestos();
 }
@@ -553,7 +730,7 @@ function tarjetaPuesto(e) {
 
 /* Volver a abrir un examen congelado es del profesor, y reinicia las dos
    cosas: el reloj —el tiempo se le fue mientras estaba trabado— y el
-   contador de salidas. Lo segundo no es un olvido: dejándolo en tres, el
+   contador de salidas. Lo segundo no es un olvido: dejándolo donde estaba, el
    examen se volvería a congelar en cuanto parpadeara, o sea que reabrirlo
    no serviría de nada. Las respuestas que ya había dado SÍ se conservan,
    así que sigue desde donde quedó y no vuelve a contestar lo mismo — y el
@@ -621,8 +798,14 @@ function informeHtml(d) {
     </li>`;
   }).join("");
 
+  // Cuántas salidas se le permitían va junto al número: tres salidas en un
+  // examen que perdonaba cinco no es lo mismo que tres en uno que perdonaba
+  // dos, y el número solo no lo dice.
+  const tope = d.salidas_permitidas == null
+    ? " Este examen no congelaba por salir."
+    : ` Se le permitían ${d.salidas_permitidas}.`;
   const salidas = d.salidas > 0
-    ? `<p style="color:#dc2626"><strong>Salió de la ventana ${d.salidas} ${d.salidas === 1 ? "vez" : "veces"}</strong> (${d.segundos_fuera} segundos fuera en total).</p>`
+    ? `<p style="color:#dc2626"><strong>Salió de la ventana ${d.salidas} ${d.salidas === 1 ? "vez" : "veces"}</strong> (${d.segundos_fuera} segundos fuera en total).${tope}</p>`
     : `<p style="opacity:.8">No salió de la ventana en ningún momento.</p>`;
 
   return `

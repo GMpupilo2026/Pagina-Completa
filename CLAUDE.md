@@ -781,6 +781,70 @@ Y `clave.correcta` se guarda como **texto**, no como número: en la base se
 compara con `->>'opcion'`, que también es texto. Un número contra un texto en
 jsonb da `false` siempre.
 
+### Un examen se arma sumando bloques, como los renglones de una tarea
+
+"10 de finales + 5 de reglamento + ejecutar la italiana" es **un** examen. Antes
+salía de una sola fuente, así que para medir dos cosas había que poner dos
+exámenes — y el alumno recibía dos relojes y dos notas de lo que para el
+profesor era una sola prueba.
+
+**La base ya lo aguantaba**: `crear_examen()` recibe las preguntas en un arreglo
+y no le importa de dónde salió cada una. Lo único que había que cambiar era la
+pantalla, que es la que armaba de una sola fuente.
+
+- Cada bloque tiene su fuente, su recorte, su cantidad y su rango de dificultad,
+  y dice cuántas preguntas hay para elegir. Los controles llevan el número del
+  bloque en el id (`b1-fuente`, `b2-cantidad`), que es por donde los agarra el
+  verificador.
+- **Dos bloques pueden pedir del mismo banco**, y ahí está el error fácil: "10
+  de finales" y "5 de finales" son dos bloques legítimos, y sin quitar las
+  repetidas el examen llevaría la misma pregunta dos veces. El alumno la
+  contestaría dos veces y **valdría doble en la nota**, con el examen viéndose
+  perfecto. Se descartan por `banco/item_id` **y se dice cuántas se quitaron**,
+  en vez de dejar el examen más corto de lo que el profesor pidió sin
+  explicación.
+- **Con un solo bloque no se ofrece quitarlo.** Un examen sin preguntas no
+  existe, y un botón que va a fallar es peor que no tenerlo.
+- El título propuesto nombra los dos primeros bloques y cuenta el resto
+  ("Examen de Finales y reglamento y 2 cosas más"): encadenar cinco no se lee en
+  la lista del alumno.
+- El tiempo recomendado se calcula sobre **el examen entero ya armado**, con las
+  repetidas fuera.
+
+### Cuántas veces puede salirse de la pantalla lo decide el profesor
+
+Eran tres siempre, escritas como una constante DENTRO de
+`registrar_salida_examen()`: el mismo rigor para un quiz de práctica que para
+una prueba de fin de curso. Ahora es `examenes.salidas_permitidas`, que elige
+quien pone el examen.
+
+- **La columna guarda cuántas salidas se PERDONAN, no el tope al que congela.**
+  Es lo que el profesor está decidiendo ("le permito dos") y lo que la pantalla
+  le dice al alumno ("te quedan dos"). El 2 por omisión es el comportamiento de
+  siempre: perdona la primera y la segunda, y a la tercera congela.
+- **NULL es "no congelar nunca"**: las salidas se siguen contando y van igual en
+  el informe, pero el examen no se cierra solo. Es para un examen en el aula,
+  con el profesor al lado, donde cerrarle la pantalla a un chico porque le entró
+  una notificación es peor que anotarlo. En el formulario, `""` viaja como
+  `null` y **no** como 0 — cero significa lo contrario, congela a la primera, y
+  confundirlos le cerraría el examen en la cara al primer despiste.
+- **El tope lo sigue haciendo cumplir el servidor**, igual que el mínimo de
+  tiempo: `crear_examen()` valida el rango y `registrar_salida_examen()` lee el
+  del examen. La pantalla solo elige.
+- **La antesala y el aviso dicen el tope de ESE examen**, no un "a la tercera"
+  escrito a mano: avisar de un margen que no se tiene es peor que no avisar. Y
+  si el campo **no llega** (una versión vieja de `examen_para_alumno()`), la
+  página asume el tope de siempre en vez de "no congela" — equivocarse hacia el
+  aviso de más no le cuesta nada al alumno, hacia el de menos le cuesta el
+  examen.
+- **El informe del profesor dice el número Y el tope**: tres salidas en un
+  examen que perdonaba cinco no es lo mismo que tres en uno que perdonaba dos, y
+  el número solo no lo dice.
+- Comprobado impersonando al alumno en una transacción revertida, los tres
+  casos: con 0 la primera salida congela; con 2 quedan 2 avisos, después 1, y la
+  tercera congela (idéntico a lo de antes); sin tope, cuatro salidas no congelan
+  y **las cuatro quedan contadas**.
+
 ### El tiempo: recomendado o a mano, pero siempre el que se enseñó
 
 El profesor elige entre **"Recomendado"** —lo calcula el sitio— y **"Lo elijo
@@ -953,7 +1017,12 @@ las páginas que no lo tenían.
 (con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
 Comprueba, sin navegador, que la clave siga apuntando a la respuesta correcta
 después de barajar (sobre 1.600 preguntas) y que lo visible no la filtre; y en
-un navegador de verdad, que el tiempo recomendado nunca quede por debajo del
+un navegador de verdad, que dos bloques de fuentes distintas viajen en el MISMO
+examen y que dos del mismo banco no cuelen una pregunta repetida (se mide sobre
+las llaves de verdad, no sobre el conteo), que el total y el botón de quitar
+sigan a los bloques, que el tope de salidas que se eligió sea el que se manda y
+que su nota diga lo que de verdad va a pasar, que el tiempo recomendado nunca
+quede por debajo del
 mínimo que exige el servidor (sobre más de 400 exámenes) y que de verdad mire
 las preguntas en vez de ser una constante disfrazada, que lo que se manda sean
 **el mismo tiempo y las mismas preguntas** que la pantalla tenía delante, que el

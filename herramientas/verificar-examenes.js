@@ -313,7 +313,12 @@ async function main() {
     // una sola oportunidad después de contestar es tarde.
     const reglas = (await p.textContent("#antesala")).replace(/\s+/g, " ");
     ok(/una sola oportunidad/i.test(reglas), "la antesala no avisa que es una sola oportunidad");
-    ok(/tercera vez|tres veces/i.test(reglas), "la antesala no avisa qué pasa si sale de la ventana");
+    // El aviso dice el tope de ESTE examen, no un "a la tercera" escrito a
+    // mano: el profesor lo elige examen por examen. Este doble no trae el
+    // campo a propósito —es lo que devolvería una versión vieja de la
+    // función— y ahí se asume el tope de siempre, que es el lado seguro:
+    // avisar de más no cuesta nada, avisar de menos le cuesta el examen.
+    ok(/vez número 3/i.test(reglas), "la antesala no avisa qué pasa si sale de la ventana: " + reglas.slice(0, 200));
     ok(/3 preguntas y 3 minutos/i.test(reglas), `la antesala no dice cuántas preguntas y cuánto tiempo: ${reglas.slice(0, 200)}`);
 
     await p.click("#empezar-btn");
@@ -457,14 +462,14 @@ async function main() {
     ok(await p.isVisible("#vista-profesor"), "no se muestra la vista de profesor");
 
     // El mínimo de un minuto por pregunta se propone antes de mandar.
-    await p.selectOption("#e-fuente", "curso");
+    await p.selectOption("#b1-fuente", "curso");
     await p.waitForTimeout(400);
-    await p.fill("#e-cantidad", "12");
-    await p.dispatchEvent("#e-cantidad", "input");
+    await p.fill("#b1-cantidad", "12");
+    await p.dispatchEvent("#b1-cantidad", "input");
     await p.waitForTimeout(200);
     const minMinutos = await p.getAttribute("#e-minutos", "min");
     ok(minMinutos === "12", `con 12 preguntas el mínimo debería ser 12 minutos, es ${minMinutos}`);
-    const hay = await p.textContent("#e-hay");
+    const hay = await p.textContent("#b1-hay");
     ok(/Hay \d+/.test(hay), `no dice cuántas preguntas hay para elegir: ${hay}`);
 
     // ---- El tiempo ----
@@ -487,17 +492,17 @@ async function main() {
     // puede quedarse corto y recortar la cantidad.
     const porPregunta = async () => {
       const m = parseInt(await p.inputValue("#e-minutos"), 10);
-      const n = parseInt(await p.inputValue("#e-cantidad"), 10);
+      const n = parseInt(await p.inputValue("#b1-cantidad"), 10);
       return n > 0 ? m / n : 0;
     };
-    await p.selectOption("#e-fuente", "areas");
+    await p.selectOption("#b1-fuente", "areas");
     await p.waitForTimeout(300);
-    await p.fill("#e-cantidad", "12");
-    await p.dispatchEvent("#e-cantidad", "input");
-    await p.selectOption("#e-dif-min", "1"); await p.selectOption("#e-dif-max", "1");
+    await p.fill("#b1-cantidad", "12");
+    await p.dispatchEvent("#b1-cantidad", "input");
+    await p.selectOption("#b1-dif-min", "1"); await p.selectOption("#b1-dif-max", "1");
     await p.waitForTimeout(300);
     const ritmoFacil = await porPregunta();
-    await p.selectOption("#e-dif-min", "5"); await p.selectOption("#e-dif-max", "5");
+    await p.selectOption("#b1-dif-min", "5"); await p.selectOption("#b1-dif-max", "5");
     await p.waitForTimeout(300);
     const ritmoDuro = await porPregunta();
     ok(ritmoDuro > ritmoFacil,
@@ -519,12 +524,97 @@ async function main() {
     // Se deja el formulario como estaba para el envío de abajo —la
     // dificultad incluida: con el 5-5 puesto, del curso salen cuatro
     // preguntas y no doce.
-    await p.selectOption("#e-dif-min", "1"); await p.selectOption("#e-dif-max", "5");
-    await p.selectOption("#e-fuente", "curso");
+    await p.selectOption("#b1-dif-min", "1"); await p.selectOption("#b1-dif-max", "5");
+    await p.selectOption("#b1-fuente", "curso");
     await p.waitForTimeout(400);
-    await p.fill("#e-cantidad", "12");
-    await p.dispatchEvent("#e-cantidad", "input");
+    await p.fill("#b1-cantidad", "12");
+    await p.dispatchEvent("#b1-cantidad", "input");
     await p.waitForTimeout(300);
+
+    // ---- Varios bloques que se suman ----
+    // Un examen se arma sumando bloques, como los renglones de una tarea.
+    // Con un solo bloque no se ofrece quitarlo: un examen sin preguntas no
+    // existe y un botón que va a fallar es peor que no tenerlo.
+    ok((await p.$$(".quitar-bloque")).length === 0,
+      "con un solo bloque no debería ofrecerse quitarlo");
+    const soloUno = parseInt(await p.inputValue("#b1-cantidad"), 10);
+    await p.click("#e-agregar-bloque");
+    await p.waitForSelector("#b2-fuente", { timeout: 4000 });
+    await p.selectOption("#b2-fuente", "arbitraje");
+    await p.waitForTimeout(300);
+    await p.fill("#b2-cantidad", "4");
+    await p.dispatchEvent("#b2-cantidad", "input");
+    await p.waitForTimeout(300);
+    ok((await p.$$(".quitar-bloque")).length === 2,
+      "con dos bloques cada uno debería poder quitarse");
+    const total = await p.textContent("#e-total");
+    ok(total.includes(String(soloUno + 4)),
+      `el total debería ser ${soloUno + 4} y dice "${total}"`);
+    // Las preguntas de los dos bloques viajan en el MISMO examen, cada una
+    // de su banco. Antes esto pedía dos exámenes, o sea dos relojes y dos
+    // notas de lo que para el profesor era una sola prueba.
+    const bancos = await p.evaluate(() => [...new Set(prevision.items.map((i) => i.banco))].sort());
+    ok(bancos.length === 2 && bancos.includes("arbitraje"),
+      `esperaba preguntas de dos bancos, salieron de ${JSON.stringify(bancos)}`);
+
+    // Quitar un bloque lo quita de verdad: el total baja.
+    await p.click("#b2-fuente");
+    await p.evaluate(() => {
+      const caja = document.querySelector('[data-bloque="2"]');
+      caja.querySelector(".quitar-bloque").click();
+    });
+    await p.waitForTimeout(300);
+    ok((await p.textContent("#e-total")).includes(String(soloUno)),
+      "al quitar el segundo bloque el total no volvió a lo que era");
+
+    // DOS BLOQUES DEL MISMO BANCO NO PUEDEN REPETIR PREGUNTA. Sin esto el
+    // alumno la contestaría dos veces y valdría doble en la nota, y el
+    // examen se vería perfecto.
+    await p.click("#e-agregar-bloque");
+    await p.waitForSelector("#b3-fuente", { timeout: 4000 });
+    await p.selectOption("#b3-fuente", "areas");
+    await p.waitForTimeout(300);
+    await p.fill("#b3-cantidad", "30");
+    await p.dispatchEvent("#b3-cantidad", "input");
+    await p.selectOption("#b1-fuente", "areas");
+    await p.waitForTimeout(300);
+    await p.fill("#b1-cantidad", "30");
+    await p.dispatchEvent("#b1-cantidad", "input");
+    await p.waitForTimeout(400);
+    const llaves = await p.evaluate(() => prevision.items.map((i) => i.banco + "/" + i.item_id));
+    ok(llaves.length === new Set(llaves).size,
+      `el examen lleva ${llaves.length - new Set(llaves).size} pregunta(s) repetida(s)`);
+    ok(await p.evaluate(() => prevision.repetidas > 0),
+      "pidiendo 60 preguntas de las mismas áreas deberían haberse descartado repetidas");
+    ok(/repetida/.test(await p.textContent("#e-minimo")),
+      "cuando se quitan repetidas hay que decirlo, no dejar el examen más corto en silencio");
+
+    // Se deja un solo bloque para el envío de abajo.
+    await p.evaluate(() => {
+      document.querySelector('[data-bloque="3"] .quitar-bloque').click();
+    });
+    await p.waitForTimeout(200);
+    await p.selectOption("#b1-dif-min", "1"); await p.selectOption("#b1-dif-max", "5");
+    await p.selectOption("#b1-fuente", "curso");
+    await p.waitForTimeout(400);
+    await p.fill("#b1-cantidad", "12");
+    await p.dispatchEvent("#b1-cantidad", "input");
+    await p.waitForTimeout(300);
+
+    // ---- Cuántas salidas se perdonan ----
+    ok(await p.isVisible("#e-salidas"), "no se puede elegir cuántas salidas se perdonan");
+    await p.selectOption("#e-salidas", "0");
+    await p.waitForTimeout(150);
+    ok(/primera/.test(await p.textContent("#e-salidas-nota")),
+      "con cero perdonadas la nota debería decir que se congela a la primera");
+    await p.selectOption("#e-salidas", "");
+    await p.waitForTimeout(150);
+    ok(/no se cierra|no congela/i.test(await p.textContent("#e-salidas-nota")),
+      "sin tope la nota debería decir que el examen no se cierra solo");
+    await p.selectOption("#e-salidas", "3");
+    await p.waitForTimeout(150);
+    ok(/4/.test(await p.textContent("#e-salidas-nota")),
+      "perdonando 3, la nota debería decir que se congela en la cuarta");
 
     // Lo que la pantalla ENSEÑA justo antes de apretar el botón.
     const enPantalla = parseInt(await p.inputValue("#e-minutos"), 10);
@@ -556,6 +646,10 @@ async function main() {
         "alguna pregunta va sin clave, sin enunciado o sin dificultad");
       ok(a.p_items.every((i) => !/"correcta"|"casillas"/.test(JSON.stringify(i.visible))),
         "alguna pregunta lleva la respuesta dentro de lo visible");
+      // El tope de salidas viaja con el examen: es lo que el profesor acaba
+      // de elegir, no la constante que había antes dentro de la función.
+      ok(a.p_salidas_permitidas === 3,
+        `mandó ${a.p_salidas_permitidas} salidas permitidas y en pantalla había 3`);
     }
 
     // El informe: el profesor SÍ ve pregunta por pregunta.

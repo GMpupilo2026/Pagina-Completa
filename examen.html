@@ -51,7 +51,7 @@
                     <li><strong id="ex-resumen"></strong></li>
                     <li><strong>Una sola oportunidad por pregunta.</strong> Lo que contestes queda: no se puede cambiar ni volver atrás.</li>
                     <li><strong>El reloj no se detiene.</strong> Si cierras la página sigue corriendo, y al acabarse se entrega solo con lo que lleves hecho.</li>
-                    <li><strong>No salgas de la ventana.</strong> A la tercera vez el examen se congela y solo tu profe puede volver a abrirlo.</li>
+                    <li><strong>No salgas de la ventana.</strong> <span id="ante-salidas">A la tercera vez el examen se congela y solo tu profe puede volver a abrirlo.</span></li>
                     <li>Se abre en pantalla completa. Si tu navegador no lo permite, el examen se hace igual.</li>
                 </ul>
             </div>
@@ -181,6 +181,20 @@ function mostrarAntesala() {
   const n = (examen.items || []).length;
   $("ex-resumen").textContent = `${n} ${n === 1 ? "pregunta" : "preguntas"} y ${examen.minutos} minutos en total.`;
 
+  // Cuántas salidas perdona ESTE examen. Decir "a la tercera" cuando el
+  // profesor puso otra cosa es peor que no decir nada: el alumno se confía
+  // con un margen que no tiene, o se cuida de más.
+  // Si el campo no viene (una versión vieja de examen_para_alumno), se asume
+  // el tope de siempre en vez de "no congela". Equivocarse hacia el aviso de
+  // más no le cuesta nada al alumno; equivocarse hacia el de menos le dice
+  // que puede salir tranquilo y le cuesta el examen.
+  const perdona = examen.salidas_permitidas === undefined ? 2 : examen.salidas_permitidas;
+  $("ante-salidas").textContent = perdona == null
+    ? "Cada vez que salgas queda anotado y tu profe lo va a ver."
+    : perdona === 0
+      ? "A la primera vez el examen se congela y solo tu profe puede volver a abrirlo."
+      : `A la vez número ${perdona + 1} el examen se congela y solo tu profe puede volver a abrirlo.`;
+
   if (new Date(examen.vence_at).getTime() < ahora()) {
     const aviso = $("ex-aviso-vencido");
     aviso.textContent = "Se pasó la fecha para hacer este examen. Habla con tu profe.";
@@ -284,8 +298,18 @@ async function volvio() {
   });
   if (error || !data) return;
   if (data.congelado) { await cerrar("congelado"); return; }
+  const veces = `${data.salidas} ${data.salidas === 1 ? "vez" : "veces"}`;
+  // `avisos_restantes` viene en null cuando este examen no congela. Ahí el
+  // aviso dice la verdad —queda anotado— en vez de amenazar con algo que no
+  // va a pasar: una advertencia que nunca se cumple deja de leerse.
   const quedan = data.avisos_restantes;
-  $("q-avisos").textContent = `⚠️ Saliste ${data.salidas} ${data.salidas === 1 ? "vez" : "veces"} · ${quedan} más y se congela`;
+  if (quedan == null) {
+    $("q-avisos").textContent = `⚠️ Saliste ${veces} · queda anotado`;
+    $("q-avisos").className = "text-xs font-semibold text-red-600 dark:text-red-400";
+    alert("Saliste del examen. Esto queda anotado y tu profe lo va a ver en el informe.");
+    return;
+  }
+  $("q-avisos").textContent = `⚠️ Saliste ${veces} · ${quedan} más y se congela`;
   $("q-avisos").className = "text-xs font-semibold text-red-600 dark:text-red-400";
   alert(`Saliste del examen. Esto queda anotado.\n\nSi sales ${quedan} ${quedan === 1 ? "vez" : "veces"} más, el examen se congela y solo tu profe podrá volver a abrirlo.`);
 }
