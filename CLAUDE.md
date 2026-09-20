@@ -2988,6 +2988,59 @@ ocupa su espacio solo, se pega al hacer scroll y no hay nada que descontar.
   padding: `min-h-[calc(100vh-5rem)]`, no `pt-20 min-h-screen` (que daba una
   página más alta que la pantalla).
 
+## Dentro de la Academia no hay encabezado de marketing
+
+Decisión: quien ya inició sesión no vuelve a ver el encabezado ni el pie del
+sitio público. Hasta este cambio los compartían las 76 páginas del sitio por
+igual — la portada, un artículo, **y también** el panel de Clases, un
+ejercicio de Entrenamiento o la partida en vivo con el profesor: Inicio,
+Cursos, Artículos, Jugar contra el profe, el botón "💬 Inscríbete" (que invita
+a inscribirse a quien ya está inscrito) y la barra de arriba con "🏆 ¡Te
+reto!" y "TV en vivo". Nada de eso rompía nada — es exactamente la clase de
+falla que no truena: un alumno resolviendo un ejercicio o mirando su registro
+de clases tenía ahí arriba seis destinos que no tienen nada que ver con lo
+que estaba haciendo, y de ahí a irse por donde no corresponde hay un clic.
+
+- **El criterio es "exige sesión", no la carpeta ni el nombre.** Una página
+  cae en esto si redirige a `login.html` sin sesión (`location.href =
+  "login.html"`) o si la pide con `requireLoginThenGate()`. Por eso
+  `entreno/diagnostico.html` y `nivel-de-arbitraje.html` **quedan afuera** a
+  propósito: se pueden hacer sin cuenta, están pensadas para llegar desde un
+  buscador, y ahí el encabezado público —con su enlace a "Cursos" y su
+  "Inscríbete"— es lo que corresponde mostrarle a quien todavía no es alumno.
+  `cobros.html` **sí** entra aunque no redirija (muestra un aviso de "inicia
+  sesión" en vez de mandar a otra página): es una página que solo tiene
+  sentido con cuenta, igual que el resto.
+- **Aplica a todo el mundo con sesión, profesor y administración incluidos.**
+  No es una regla solo para alumnos: dentro de la Academia nadie necesita el
+  menú de marketing, y tenerlo iba a la deriva por página según quién la
+  escribió — algunas ya traían un encabezado reducido a mano (`entreno/*` sin
+  "Cursos" ni la barra de arriba), otras el completo. Ahora es una sola forma.
+- **El encabezado queda en dos elementos: el logo y el interruptor de
+  tema.** El logo lleva de vuelta a `clases.html` (el panel, no `index.html`)
+  — es la puerta de salida de cualquier página de la Academia, con un
+  `sr-only` ("— panel de la Academia") para quien no lo intuye por el nombre.
+  Sin menú no hace falta el botón de hamburguesa ni el `#mobile-menu`:
+  `js/main.js` ya los busca con `if (menuToggle && mobileMenu)` antes de
+  engancharlos, así que su ausencia no rompe nada.
+- **El pie queda en una sola línea** (`&copy; 2026 Ajedrez Integral…`), la
+  misma que ya traían de antes los `entreno/*` y algunas páginas de
+  `cursos/academia/`: se pareja el resto en vez de inventar una tercera
+  forma.
+- **`herramientas/academia-cabecera.py`** hace el cambio y se puede correr
+  todas las veces que se quiera: reemplaza el único
+  `<header id="header">…</header>` y el único `<footer>…</footer>` de cada
+  página de su lista, así que una corrida encima de otra da lo mismo. **Al
+  agregar una página nueva que exige sesión, sumarla a la lista `PAGINAS` del
+  script y correrlo** — copiar el encabezado de otra página de la Academia a
+  mano es exactamente como esas 76 páginas terminaron todas con el mismo
+  encabezado de marketing.
+- Las páginas públicas (`index.html`, `cursos.html`, `cursos/<curso>.html`,
+  `tv.html`, `te-reto.html`, `bot.html`, `tablero.html`, los dos
+  diagnósticos públicos, etc.) **no se tocan**: siguen con el encabezado y el
+  pie completos, porque ahí sí hace falta poder llegar a cualquier parte del
+  sitio y la invitación a inscribirse tiene sentido.
+
 ## Contraste: el color nunca se elige a ojo
 
 Todo texto llega al mínimo de WCAG AA (4.5 para texto normal, 3 para el
