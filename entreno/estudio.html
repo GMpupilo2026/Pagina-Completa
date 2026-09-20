@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Estudio — Ajedrez Integral</title>
-<meta name="description" content="Tarjetas de aperturas y defensas con sus variantes principales, para leer y memorizar.">
+<meta name="description" content="Fichas de aperturas y defensas de una pantalla, con su mapa de ideas y su posición, para leer y memorizar.">
 <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -33,10 +33,21 @@
     --line:#d9e2ec;
     --text:#102a43;
     --text-muted:#627d98;
+    --text-cuerpo:#334e68;
     --brass:#de911d;
     --brass-bright:#f0b429;
-    --aperturas:#c9a23e;
-    --defensas:#3f6f8f;
+    /* Un color por categoría y otro por bloque del mapa. El color NUNCA dice
+       nada solo: cada bloque lleva su título escrito y cada ficha su etiqueta
+       de categoría, así que quien no distingue verde de ámbar no se pierde
+       nada (la misma regla que los gráficos de Informes). Son los mismos
+       tonos que entreno/fichas.html, de donde salen estas fichas. */
+    --cat-apertura:#a1670f;
+    --cat-defensa:#2c5f7f;
+    --b-idea:#486581;
+    --b-1:#2c6b4f;
+    --b-2:#a8371a;
+    --b-3:#2c5f7f;
+    --b-4:#8c2f3f;
   }
   html.dark{
     --bg-deep:#0a1f33;
@@ -45,113 +56,150 @@
     --line:#243b53;
     --text:#f0f4f8;
     --text-muted:#9fb3c8;
+    --text-cuerpo:#d9e2ec;
+    --cat-apertura:#e5b567;
+    --cat-defensa:#7fb3d3;
+    --b-idea:#9fb3c8;
+    --b-1:#7fc4a0;
+    --b-2:#e8926b;
+    --b-3:#7fb3d3;
+    --b-4:#e08a9a;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{
-    font-family:'Inter', sans-serif;
-    min-height:100vh;
-    min-height:100dvh;
-  }
-  h1,h2,h3{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3,h4{font-family:'Merriweather', serif; font-weight:700; margin:0;}
   a{color:var(--brass-bright);}
   *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
-  main{max-width:900px; margin:0 auto; padding:22px 24px 60px;}
+  main{max-width:1000px; margin:0 auto; padding:18px 24px 60px;}
+  .intro{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:620px; margin:16px auto 0;}
 
-  /* ---------- Las dos pestañas: aperturas (blancas) y defensas (negras) ---------- */
-  nav.tabs{display:flex; gap:6px; max-width:900px; margin:0 auto; padding:18px 24px 0; flex-wrap:wrap;}
-  .tab{
-    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
-    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
-    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
-  }
-  .tab:hover{color:var(--text);}
-  .tab:active{transform:scale(0.97);}
-  .tab.active{background:var(--bg-panel-2); color:var(--text);}
-  .tab .n{color:var(--text-muted); font-size:0.8em;}
-
-  /* ---------- Lista, agrupada por apertura o defensa ---------- */
-  .lesson-list{display:flex; flex-direction:column; gap:8px;}
-  .lesson-item{
-    display:flex; align-items:center; gap:12px; text-align:left; width:100%;
-    background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
-    font-family:'Inter', sans-serif; padding:14px 16px; cursor:pointer;
-    transition:border-color .15s, transform .12s ease-out;
-  }
-  .lesson-item:hover{border-color:var(--brass);}
-  .lesson-item:active{transform:scale(0.99);}
-  .lesson-item .mark{font-size:1.2rem; width:1.4em; text-align:center; flex-shrink:0;}
-  .lesson-item .info{flex:1;}
-  .lesson-item .info .name{font-weight:600;}
-  .lesson-item .info .desc{font-size:0.82rem; color:var(--text-muted); margin-top:2px;}
+  /* ---------- La lista, agrupada en Aperturas y Defensas ---------- */
   .study-group-title{
-    font-size:1rem; color:var(--text); margin:22px 0 8px; padding-bottom:4px;
+    font-size:1.1rem; color:var(--text); margin:26px 0 10px; padding-bottom:4px;
     border-bottom:1px solid var(--line);
   }
-  .study-group-title:first-child{margin-top:0;}
+  .study-group-title:first-of-type{margin-top:16px;}
+  .ficha-lista{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px;}
+  .ficha-item{
+    display:flex; align-items:flex-start; gap:12px; text-align:left; width:100%;
+    background:var(--bg-panel); border:1px solid var(--line); border-left:4px solid var(--cat-color, var(--line));
+    color:var(--text); font-family:'Inter', sans-serif; padding:14px 16px; cursor:pointer;
+    transition:border-color .15s, transform .12s ease-out;
+  }
+  .ficha-item:hover{border-color:var(--brass);}
+  .ficha-item:active{transform:scale(0.99);}
+  .ficha-item .mark{font-size:1.6rem; line-height:1; flex-shrink:0;}
+  .ficha-item .name{font-weight:600; display:block;}
+  .ficha-item .desc{font-size:0.82rem; color:var(--text-muted); margin-top:3px; display:block;}
 
-  /* ---------- La tarjeta abierta ---------- */
-  #list-view{display:block;}
-  #study-view{display:none;}
-  .lesson-header{margin-bottom:14px;}
-  .lesson-header a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
-  .lesson-header h2{font-size:1.4rem; margin-bottom:8px;}
-  .lesson-text{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:520px; margin:0 auto 18px;}
+  /* ---------- La ficha abierta ---------- */
+  #lista-vista{display:block;}
+  #ficha-vista{display:none;}
+  .ficha-cabeza{margin-bottom:6px;}
+  .ficha-cabeza a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
+  .ficha-cabeza h2{font-size:1.5rem;}
+  .ficha-cabeza .sub{color:var(--text-muted); font-size:0.95rem; margin-top:4px;}
+  .etiqueta{
+    display:inline-block; border:1px solid var(--cat-color, var(--line)); color:var(--cat-color, var(--text-muted));
+    font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; margin-right:6px;
+  }
 
-  .board-wrap{max-width:440px; margin:0 auto;}
+  /* ---------- El mapa: la idea arriba, cuatro bloques alrededor ----------
+     En pantalla ancha va como el mapa dibujado a mano: la idea principal
+     arriba, el nodo de la pieza en el medio y los cuatro bloques en las
+     esquinas. En pantalla angosta se apila en una columna y las líneas se
+     esconden — una línea diagonal entre dos cajas apiladas no une nada. */
+  .mapa{position:relative; display:grid; gap:14px; margin-top:18px;}
+  .mapa-lineas{display:none;}
+  .caja{
+    position:relative; z-index:1; background:var(--bg-panel);
+    border:1px solid var(--line); border-top:3px solid var(--c, var(--line));
+    padding:14px 16px;
+  }
+  .caja h3{font-size:0.95rem; color:var(--text); margin-bottom:8px;}
+  .caja ul{margin:0; padding-left:1.1em; list-style:disc;}
+  .caja li{color:var(--text-cuerpo); font-size:0.9rem; line-height:1.5; margin-bottom:5px;}
+  .caja li::marker{color:var(--c, var(--text-muted));}
+  .nodo{
+    display:none; align-items:center; justify-content:center; justify-self:center; align-self:center;
+    width:104px; height:104px; border-radius:50%;
+    background:var(--bg-panel); border:2px solid var(--line); font-size:3rem; line-height:1; color:var(--text);
+    z-index:1;
+  }
+  .nodo svg{width:64px; height:64px;}
+  @media (min-width:880px){
+    .mapa{
+      grid-template-columns:1fr minmax(230px,1fr) 1fr;
+      grid-template-areas:". idea ." "b1 nodo b2" "b3 hueco b4";
+      align-items:start;
+    }
+    .mapa-lineas{display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;}
+    .caja-idea{grid-area:idea;} .caja-1{grid-area:b1;} .caja-2{grid-area:b2;}
+    .caja-3{grid-area:b3;} .caja-4{grid-area:b4;}
+    .nodo{grid-area:nodo; display:flex;}
+  }
+
+  /* ---------- El diagrama ---------- */
+  .diagrama{max-width:400px; margin:26px auto 0;}
   .board8{
     display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
     width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
     pointer-events:none;
   }
-  .sq{
-    position:relative; display:flex; align-items:center; justify-content:center;
-    font-size:min(7vw,34px); user-select:none; border:none; padding:0;
-  }
+  .sq{position:relative; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); user-select:none;}
   .sq.light{background:#f0f4f8;}
   .sq.dark{background:#486581;}
+  .pie{color:var(--text-muted); font-size:0.85rem; line-height:1.5; margin:10px auto 0; max-width:440px; text-align:center;}
+  .controles{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; max-width:400px; margin:12px auto 0;}
+  .jugadas{max-width:520px; margin:14px auto 0; display:flex; flex-wrap:wrap; gap:6px 14px; font-size:0.95rem; justify-content:center;}
+  .par{display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;}
+  .par b{color:var(--text-muted); font-weight:600; font-size:0.85em;}
+  .jugada{background:transparent; border:1px solid transparent; color:var(--text); font-family:'Inter',sans-serif; font-size:0.95rem; padding:2px 6px; cursor:pointer;}
+  .jugada:hover{border-color:var(--line);}
+  .jugada.actual{background:var(--brass); color:#102a43; font-weight:700;}
+  .en-palabras{max-width:520px; margin:12px auto 0; border:1px solid var(--line); background:var(--bg-panel); padding:10px 14px;}
+  .en-palabras summary{cursor:pointer; font-size:0.88rem; color:var(--text-muted);}
+  .en-palabras p{color:var(--text-muted); font-size:0.9rem; line-height:1.55; margin:8px 0 0;}
 
-  .study-controls{
-    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
-    max-width:440px; margin:14px auto 0;
-  }
-  .study-moves{
-    max-width:520px; margin:16px auto 0; display:flex; flex-wrap:wrap; gap:6px 14px;
-    font-family:'Inter', sans-serif; font-size:0.95rem; justify-content:center;
-  }
-  .study-par{display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;}
-  .study-par b{color:var(--text-muted); font-weight:600; font-size:0.85em;}
-  .study-move{
-    background:transparent; border:1px solid transparent; border-radius:3px; color:var(--text);
-    font-family:'Inter', sans-serif; font-size:0.95rem; padding:2px 6px; cursor:pointer;
-  }
-  .study-move:hover{border-color:var(--line);}
-  .study-move.actual{background:var(--brass); color:#102a43; font-weight:700;}
-  .study-notes{
-    max-width:520px; margin:20px auto 0; background:var(--bg-panel); border:1px solid var(--line);
-    padding:14px 18px;
-  }
-  .study-notes h3{font-size:0.9rem; margin:10px 0 4px;}
-  .study-notes h3:first-child{margin-top:0;}
-  .study-notes p{color:var(--text-muted); font-size:0.92rem; line-height:1.55; margin:0 0 4px;}
-
-  .lesson-controls{display:flex; gap:10px; justify-content:center; margin-top:18px; flex-wrap:wrap;}
+  .ficha-pie{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap;}
   .bctrl{
     background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
     font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
-    min-height:44px;
+    min-height:44px; display:inline-flex; align-items:center; text-decoration:none;
   }
   .bctrl:hover{border-color:var(--brass);}
   .bctrl:active:not(:disabled){transform:scale(0.97);}
   .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
   .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
   .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
-  .lesson-controls a.bctrl{display:inline-flex; align-items:center; text-decoration:none;}
+
+  /* En Modo Adaptado la posición contada en palabras se ve sola: quien lo usa
+     no tiene que ir a abrir un <details> en cada jugada. Lo decide el CSS y no
+     el JavaScript, así encender el modo surte efecto al instante. */
+  html.adaptive-mode .en-palabras{border-color:var(--brass);}
+  html.adaptive-mode .en-palabras p{color:var(--text); font-size:1rem;}
+
+  /* La ficha se imprime: es de lo que más sentido tiene pegar en el cuaderno.
+     Se va todo lo que no es la ficha —el encabezado, la lista, los botones— y
+     el mapa se acomoda a una hoja. */
+  @media print{
+    header, footer, .intro, #lista-vista, .controles, .ficha-pie, .ficha-cabeza a, #app > div:first-child{display:none !important;}
+    body, .caja, .nodo, .diagrama{background:#fff !important; color:#000 !important;}
+    .caja{border:1px solid #888 !important; break-inside:avoid;}
+    .caja li, .pie, .ficha-cabeza .sub{color:#333 !important;}
+    .mapa{grid-template-columns:1fr 1fr; grid-template-areas:"idea idea" "b1 b2" "b3 b4";}
+    .mapa-lineas, .nodo{display:none !important;}
+    .diagrama{max-width:260px;}
+    .sq{print-color-adjust:exact; -webkit-print-color-adjust:exact;}
+    .en-palabras{display:none;}
+    main{padding:0;}
+  }
 
   @media (prefers-reduced-motion: reduce){
-    .lesson-item, .bctrl, .study-move{transition-property: background-color, border-color, color;}
+    .ficha-item, .bctrl{transition-property: background-color, border-color, color;}
   }
 </style>
     <script src="../js/adaptive-mode.js"></script>
@@ -173,7 +221,7 @@
 
 <!-- ===== MAIN APP ===== -->
 <div id="app" class="hidden pt-20 pb-16">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
     <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Estudio 📚</h1>
     <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
       <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Academia</a>
@@ -181,55 +229,72 @@
   </div>
 
   <main id="main-content">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p class="lesson-text" style="margin:16px auto 0;">
-        Aperturas y defensas con sus variantes principales, agrupadas por familia, para leer y memorizar
-        —no es un ejercicio con solución: es un libro. Para memorizarlas jugándolas contra el
-        entrenador, con repaso espaciado, está
-        <a href="aperturas.html">🎯 Aperturas y celadas</a>.
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="intro">
+        Fichas de aperturas y defensas: la idea principal, cuatro bloques alrededor y la posición que lo
+        explica abajo, para leer y memorizar —no es un ejercicio con solución: es un libro. Para memorizarlas
+        jugándolas contra el entrenador, con repaso espaciado, está
+        <a href="aperturas.html">🎯 Aperturas y celadas</a>, y para las fichas de táctica y de conceptos está
+        <a href="fichas.html">🗂️ Fichas</a>.
       </p>
     </div>
 
-    <!-- Las dos pestañas separan qué le toca practicar al alumno: con blancas
-         (abre él) o con negras (contesta él) — no el nombre de la familia. Por
-         eso "Siciliana cerrada" (el blanco elige NO entrar a la teoría abierta)
-         cae en Aperturas y no en Defensas, aunque su familia se llame "Defensa
-         siciliana": ahí el alumno abre, no contesta. -->
-    <nav class="tabs" id="tabs" aria-label="Aperturas o defensas"></nav>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div id="lista-vista">
+        <div id="ficha-lista"></div>
+      </div>
 
-    <div id="list-view">
-      <div class="lesson-list" id="lesson-list"></div>
-    </div>
+      <!-- ====== Una ficha abierta ======
+           El tablero es decorativo (aria-hidden): la posición va contada en
+           palabras justo debajo y el pie dice qué se ve, igual que el material
+           de estudio de los cursos. Nada de esto depende de ver una imagen. -->
+      <div id="ficha-vista">
+        <div class="ficha-cabeza">
+          <a href="#" id="volver">← Todas las fichas</a>
+          <p><span class="etiqueta" id="ficha-etiqueta"></span><span class="etiqueta" id="ficha-nivel"></span></p>
+          <h2 id="ficha-titulo"></h2>
+          <p class="sub" id="ficha-sub"></p>
+        </div>
 
-    <!-- ============ La tarjeta de una apertura o defensa ============
-         El tablero es decorativo (aria-hidden) porque la posición y las
-         jugadas ya están contadas en texto al lado — igual que el material
-         de estudio de los cursos, no depende de ver ninguna imagen. -->
-    <div id="study-view">
-      <div class="lesson-header">
-        <a href="#" id="study-back-to-list">← Todas las variantes</a>
-        <h2 id="study-title"></h2>
-        <p class="lesson-text" id="study-sub" style="margin-bottom:0;"></p>
-      </div>
-      <div class="board-wrap">
-        <div class="board8" id="study-board" aria-hidden="true"></div>
-      </div>
-      <p id="study-anuncio" class="sr-only" role="status" aria-live="polite"></p>
-      <div class="study-controls">
-        <button type="button" class="bctrl" id="study-start-btn" aria-label="Ir a la posición inicial">⏮</button>
-        <button type="button" class="bctrl" id="study-prev-btn" aria-label="Jugada anterior">◀</button>
-        <button type="button" class="bctrl" id="study-next-btn" aria-label="Jugada siguiente">▶</button>
-        <button type="button" class="bctrl" id="study-end-btn" aria-label="Ir a la última jugada">⏭</button>
-      </div>
-      <div class="study-moves" id="study-moves"></div>
-      <div class="study-notes">
-        <h3>Idea</h3>
-        <p id="study-idea"></p>
-        <h3>Lo que hay que recordar</h3>
-        <p id="study-clave"></p>
-      </div>
-      <div class="lesson-controls">
-        <a class="bctrl primary" id="study-practicar-btn" href="#">🎯 Practicarla jugándola en el tablero</a>
+        <div class="mapa" id="mapa">
+          <svg class="mapa-lineas" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <g fill="none" stroke-width="1.5">
+              <line x1="50" y1="50" x2="50" y2="14" stroke="var(--b-idea)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="16" y2="44" stroke="var(--b-1)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="84" y2="44" stroke="var(--b-2)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="16" y2="86" stroke="var(--b-3)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="84" y2="86" stroke="var(--b-4)" vector-effect="non-scaling-stroke"></line>
+            </g>
+          </svg>
+          <section class="caja caja-idea" style="--c:var(--b-idea)"><h3 id="t-idea"></h3><ul id="l-idea"></ul></section>
+          <section class="caja caja-1" style="--c:var(--b-1)"><h3 id="t-1"></h3><ul id="l-1"></ul></section>
+          <section class="caja caja-2" style="--c:var(--b-2)"><h3 id="t-2"></h3><ul id="l-2"></ul></section>
+          <section class="caja caja-3" style="--c:var(--b-3)"><h3 id="t-3"></h3><ul id="l-3"></ul></section>
+          <section class="caja caja-4" style="--c:var(--b-4)"><h3 id="t-4"></h3><ul id="l-4"></ul></section>
+          <div class="nodo" id="nodo" aria-hidden="true"></div>
+        </div>
+
+        <div class="diagrama">
+          <div class="board8" id="tablero" aria-hidden="true"></div>
+        </div>
+        <p class="sr-only" role="status" aria-live="polite" id="anuncio"></p>
+        <div class="controles" id="controles">
+          <button type="button" class="bctrl" id="b-inicio" aria-label="Ir a la posición inicial">⏮</button>
+          <button type="button" class="bctrl" id="b-atras" aria-label="Jugada anterior">◀</button>
+          <button type="button" class="bctrl" id="b-adelante" aria-label="Jugada siguiente">▶</button>
+          <button type="button" class="bctrl" id="b-final" aria-label="Ir a la última jugada">⏭</button>
+        </div>
+        <div class="jugadas" id="jugadas"></div>
+        <p class="pie" id="pie-diagrama"></p>
+        <details class="en-palabras" id="en-palabras">
+          <summary>Leer la posición en palabras</summary>
+          <p id="posicion-escrita"></p>
+        </details>
+
+        <div class="ficha-pie">
+          <a class="bctrl primary" id="b-practicar" href="#">🎯 Practicarla en el tablero</a>
+          <button type="button" class="bctrl" id="b-imprimir">🖨️ Imprimir esta ficha</button>
+        </div>
       </div>
     </div>
   </main>
@@ -238,230 +303,113 @@
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 <script src="../js/main.js"></script>
 <script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/piece-style-themes.js"></script>
+<script src="../js/chess-piece-svg.js"></script>
+<script src="../js/blind-notation.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-<!-- Mismo banco que entreno/aperturas.html: las tarjetas de acá son las
-     líneas tipo "apertura" de ahí (no las celadas), leídas en vez de
-     jugadas. Una sola fuente: agregar una línea ahí la suma acá sola. -->
+<!-- Las líneas de apertura NO se copian acá: la ficha guarda el id y las
+     jugadas se leen de este banco, que es donde viven. -->
 <script src="../js/aperturas-lineas.js"></script>
+<script src="../js/fichas-estudio.js"></script>
+<!-- El mapa y el tablero de una ficha abierta son los mismos que usa
+     entreno/fichas.html: viven en un solo archivo para no ir separándose. -->
+<script src="../js/ficha-render.js"></script>
 <script>
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
 const NEXT_PATH = 'entreno/estudio.html';
 
-/* ---------------- Las tarjetas: aperturas y defensas, para leer ----------
-   No son ejercicios con solución: son las líneas de js/aperturas-lineas.js
-   (las de tipo "apertura", no las celadas) agrupadas por a qué apertura o
-   defensa pertenecen. No hay bloqueo ni "resuelto" — es material de
-   consulta, no una progresión — así que todas están abiertas de entrada. */
-const ESTUDIO_NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
-const ESTUDIO_LINEAS = (window.AperturasLineas ? window.AperturasLineas.LINEAS : [])
-  .filter((L) => L.tipo === 'apertura');
+/* ---------------- Las fichas: solo aperturas y defensas ----------------
+   Estudio es la puerta chica de entreno/fichas.html: las mismas fichas de
+   esas dos categorías (12 de las 28), sin pestañas ni buscador — para eso ya
+   está Fichas. Antes esta página tenía sus PROPIAS tarjetas simples (nombre +
+   tablero, sin mapa de ideas) leídas directo de js/aperturas-lineas.js; se
+   reemplazaron por las fichas de verdad, que traen mucho más: planes,
+   ideas tácticas, medio juego y final. */
+const { FICHAS, CATEGORIAS } = window.FichasEstudio;
+const ESTUDIO_FICHAS = FICHAS.filter((F) => F.categoria === 'apertura' || F.categoria === 'defensa');
+const GLYPH_B = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' };
+const NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
+const visor = FichaRender.crear();
 
-/* Las dos pestañas van por L.color, no por el nombre de la familia: es lo que
-   de verdad separa "qué le toca practicar al alumno" — abrir con blancas o
-   contestar con negras. Por eso "Siciliana cerrada" (color "w": el blanco
-   ELIGE no entrar a la teoría abierta) cae en Aperturas y no en Defensas,
-   aunque su familia se llame "Defensa siciliana"; lo mismo la Francesa
-   Tarrasch. El nombre del grupo describe la apertura completa, no de qué lado
-   la practica el alumno — por eso una misma familia puede tener variantes en
-   las dos pestañas, y es correcto que así sea. */
-const TABS = [
-  { color: 'w', id: 'aperturas', etiqueta: 'Aperturas', sub: 'blancas' },
-  { color: 'b', id: 'defensas', etiqueta: 'Defensas', sub: 'negras' },
-];
-let currentTab = TABS[0];
-
-function lineasDe(tab){ return ESTUDIO_LINEAS.filter((L) => L.color === tab.color); }
-
-// Agrupadas por L.apertura, conservando el orden del banco (ya viene
-// ordenado por familia: españolas, sicilianas, francesas…).
-function agruparEstudio(lista){
-  const grupos = new Map();
-  lista.forEach((L) => {
-    if(!grupos.has(L.apertura)) grupos.set(L.apertura, []);
-    grupos.get(L.apertura).push(L);
-  });
-  return grupos;
-}
-
-function buildTabs(){
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = '';
-  TABS.forEach((tab) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'tab' + (tab === currentTab ? ' active' : '');
-    btn.style.setProperty('--tab-color', `var(--${tab.id})`);
-    btn.innerHTML = `${tab.etiqueta} <span class="n">${lineasDe(tab).length}</span>`;
-    btn.addEventListener('click', () => { currentTab = tab; pintarLista(); showList(); });
-    tabs.appendChild(btn);
-  });
-}
-
-// Un <h2> por grupo, para poder saltar de grupo en grupo con lector de
-// pantalla, y una ficha por variante.
 function pintarLista(){
-  buildTabs();
-  const box = document.getElementById('lesson-list');
+  const box = document.getElementById('ficha-lista');
   box.innerHTML = '';
-  const grupos = agruparEstudio(lineasDe(currentTab));
-  grupos.forEach((lineas, nombreGrupo) => {
+  // Un <h2> por categoría (Aperturas, luego Defensas) para poder saltar de
+  // grupo en grupo con lector de pantalla — antes eran dos pestañas; elegir
+  // una antes de poder ver nada era un paso de más para 12 fichas en total.
+  ['apertura', 'defensa'].forEach((catId) => {
+    const cat = CATEGORIAS.find((c) => c.id === catId);
+    const fichas = ESTUDIO_FICHAS.filter((F) => F.categoria === catId);
+    if(!fichas.length) return;
     const titulo = document.createElement('h2');
     titulo.className = 'study-group-title';
-    titulo.textContent = nombreGrupo;
+    titulo.textContent = cat.etiqueta;
     box.appendChild(titulo);
-    lineas.forEach((L) => {
+    const grid = document.createElement('div');
+    grid.className = 'ficha-lista';
+    fichas.forEach((F) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'lesson-item';
-      const jugadasAlumno = window.AperturasLineas.jugadasDelAlumno(L);
+      btn.className = 'ficha-item';
+      btn.style.setProperty('--cat-color', `var(--cat-${F.categoria})`);
       btn.innerHTML = `
-        <span class="mark">📖</span>
-        <span class="info">
-          <span class="name">${L.nombre}</span>
-          <span class="desc">${L.color === 'w' ? 'Blancas' : 'Negras'} · ${ESTUDIO_NIVEL[L.nivel]} · ${jugadasAlumno} jugada${jugadasAlumno === 1 ? '' : 's'} para memorizar</span>
+        <span class="mark" aria-hidden="true">${GLYPH_B[F.pieza]}</span>
+        <span>
+          <span class="name">${F.titulo}</span>
+          <span class="desc">${cat.sub} · ${NIVEL[F.nivel]} · ${F.subtitulo}</span>
+          <span class="desc">${F.resumen}</span>
         </span>`;
-      btn.addEventListener('click', () => openStudyCard(L));
-      box.appendChild(btn);
+      btn.addEventListener('click', () => abrirFicha(F));
+      grid.appendChild(btn);
     });
+    box.appendChild(grid);
   });
 }
 
-function showList(){
-  document.getElementById('study-view').style.display = 'none';
-  document.getElementById('list-view').style.display = 'block';
+function mostrarLista(){
+  document.getElementById('ficha-vista').style.display = 'none';
+  document.getElementById('lista-vista').style.display = 'block';
 }
 
-/* ---------------- La tarjeta abierta ----------------
-   Un visor de solo lectura: recorre la línea con los mismos controles de un
-   reproductor (⏮ ◀ ▶ ⏭) o saltando directo a una jugada de la lista. No hay
-   "correcto" ni "incorrecto" — eso es entreno/aperturas.html, no esto. */
-const GLYPH = {
-  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
-  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
-};
-const FILES = ['a','b','c','d','e','f','g','h'];
-function isLightSquare(square){
-  const file = square.charCodeAt(0) - 97;
-  const rank = parseInt(square[1], 10) - 1;
-  return (file + rank) % 2 === 1;
-}
-const PIEZAS_ES_ESTUDIO = {N:'C', B:'A', R:'T', Q:'D', K:'R'};
-function aEspanolPieza(san){ return String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES_ESTUDIO[l]); }
+function abrirFicha(F){
+  document.getElementById('lista-vista').style.display = 'none';
+  document.getElementById('ficha-vista').style.display = 'block';
+  const cat = CATEGORIAS.find((c) => c.id === F.categoria);
+  const etiqueta = document.getElementById('ficha-etiqueta');
+  etiqueta.textContent = cat.etiqueta;
+  etiqueta.style.setProperty('--cat-color', `var(--cat-${F.categoria})`);
+  document.getElementById('ficha-nivel').textContent = NIVEL[F.nivel];
+  document.getElementById('ficha-titulo').textContent = F.titulo;
+  document.getElementById('ficha-sub').textContent = F.subtitulo + ' — ' + F.resumen;
 
-let studyLine = null;
-let studyGame = null;
-let studyIndex = 0; // cuántas jugadas de la línea ya se jugaron (0 = posición inicial)
-
-function studyPositionAt(index){
-  const g = new Chess();
-  for(let i = 0; i < index; i++) g.move(studyLine.jugadas[i], { sloppy: true });
-  return g;
-}
-
-function drawStudyBoard(){
-  const board = document.getElementById('study-board');
-  board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const cell = document.createElement('div');
-      cell.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
-      const piece = studyGame.get(square);
-      if(piece){
-        const span = document.createElement('span');
-        span.setAttribute('aria-hidden', 'true');
-        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
-          span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
-          span.className = 'chess-piece-illustrated';
-        } else {
-          span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-          span.textContent = GLYPH[piece.color][piece.type];
-        }
-        cell.appendChild(span);
-      }
-      board.appendChild(cell);
-    }
-  }
-  if (window.Coordenadas) Coordenadas.aplicar(board);
-}
-
-// La lista de jugadas se ve como en un libro: "1. e4 e5", cada jugada es un
-// botón que salta directo a la posición de después de esa jugada.
-function pintarStudyJugadas(){
-  const cont = document.getElementById('study-moves');
-  cont.innerHTML = '';
-  for(let i = 0; i < studyLine.jugadas.length; i += 2){
-    const par = document.createElement('span');
-    par.className = 'study-par';
-    const numero = document.createElement('b');
-    numero.textContent = (i / 2 + 1) + '.';
-    par.appendChild(numero);
-    [i, i + 1].forEach((idx) => {
-      if(idx >= studyLine.jugadas.length) return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'study-move' + (idx === studyIndex - 1 ? ' actual' : '');
-      if(idx === studyIndex - 1) btn.setAttribute('aria-current', 'step');
-      btn.textContent = aEspanolPieza(studyLine.jugadas[idx]);
-      btn.addEventListener('click', () => studyGoTo(idx + 1));
-      par.appendChild(btn);
-    });
-    cont.appendChild(par);
-  }
-}
-
-function studyGoTo(n){
-  studyIndex = Math.max(0, Math.min(n, studyLine.jugadas.length));
-  studyGame = studyPositionAt(studyIndex);
-  drawStudyBoard();
-  pintarStudyJugadas();
-  document.getElementById('study-start-btn').disabled = studyIndex === 0;
-  document.getElementById('study-prev-btn').disabled = studyIndex === 0;
-  document.getElementById('study-next-btn').disabled = studyIndex >= studyLine.jugadas.length;
-  document.getElementById('study-end-btn').disabled = studyIndex >= studyLine.jugadas.length;
-  const anuncio = document.getElementById('study-anuncio');
-  if(studyIndex === 0){
-    anuncio.textContent = 'Posición inicial.';
+  // Las 12 fichas de esta página siempre vienen de una línea del banco de
+  // aperturas.html (a diferencia de táctica/conceptos, que pueden partir de
+  // una FEN de estudio), así que acá el botón de practicar siempre aparece.
+  const practicar = document.getElementById('b-practicar');
+  const linea = visor.lineaDe(F);
+  if(linea){
+    practicar.style.display = '';
+    practicar.href = 'aperturas.html?linea=' + encodeURIComponent(linea.id);
+    practicar.textContent = `🎯 Practicarla con ${linea.color === 'w' ? 'blancas' : 'negras'}`;
   } else {
-    const san = studyLine.jugadas[studyIndex - 1];
-    const numeroJugada = Math.floor((studyIndex - 1) / 2) + 1;
-    const esNegra = (studyIndex - 1) % 2 === 1;
-    anuncio.textContent = `Jugada ${studyIndex} de ${studyLine.jugadas.length}: ` +
-      `${numeroJugada}.${esNegra ? '..' : ''} ${aEspanolPieza(san)}.`;
+    practicar.style.display = 'none';
   }
-}
 
-function openStudyCard(L){
-  studyLine = L;
-  document.getElementById('list-view').style.display = 'none';
-  document.getElementById('study-view').style.display = 'block';
-  document.getElementById('study-title').textContent = L.nombre;
-  document.getElementById('study-sub').textContent =
-    `${L.apertura} · juegas con ${L.color === 'w' ? 'blancas' : 'negras'} · ${ESTUDIO_NIVEL[L.nivel]}`;
-  document.getElementById('study-idea').textContent = L.idea;
-  document.getElementById('study-clave').textContent = L.clave;
-  document.getElementById('study-practicar-btn').href = 'aperturas.html?linea=' + encodeURIComponent(L.id);
-  studyGoTo(0);
+  visor.abrir(F);
   window.scrollTo({ top: 0 });
 }
 
-document.getElementById('study-back-to-list').addEventListener('click', (e) => {
-  e.preventDefault();
-  showList();
-});
-document.getElementById('study-start-btn').addEventListener('click', () => studyGoTo(0));
-document.getElementById('study-prev-btn').addEventListener('click', () => studyGoTo(studyIndex - 1));
-document.getElementById('study-next-btn').addEventListener('click', () => studyGoTo(studyIndex + 1));
-document.getElementById('study-end-btn').addEventListener('click', () => studyGoTo(studyLine.jugadas.length));
+document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); });
+document.getElementById('b-imprimir').addEventListener('click', () => window.print());
 
 /* ---------------- Arranque ---------------- */
 async function unlock(){
   gate.classList.add('hidden');
   app.classList.remove('hidden');
   pintarLista();
-  showList();
+  mostrarLista();
 }
 
 // Entrenamiento exige sesión iniciada en el sitio (Academia) — así el

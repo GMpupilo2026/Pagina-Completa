@@ -1856,7 +1856,7 @@ la línea se programa para más adelante.
   propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
   **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
-### `entreno/estudio.html`: las mismas líneas, para leer y no para jugar
+### `entreno/estudio.html`: la puerta chica de Fichas, solo aperturas y defensas
 
 Es su propia página, con acceso propio en el panel de la Academia (`clases.html`
 → grupo "Aprender" → **"📚 Estudio"**) — **no** una pestaña dentro de
@@ -1866,67 +1866,66 @@ se resuelven una a una, esto se lee de punta a punta cuando se quiera— y como
 acceso propio se puede asignar en Tareas (`js/material-plataforma.js`) sin
 mandar a media página de Aprende a buscarlo.
 
-**Tarjetas de las 25 líneas de tipo "apertura"** del banco de
-`js/aperturas-lineas.js` (las 12 celadas quedan fuera: son trucos puntuales, no
-repertorio), repartidas en **dos pestañas —"Aperturas" y "Defensas"— y dentro
-de cada una agrupadas** por a qué apertura o defensa pertenecen —"Apertura
-española" con sus dos variantes, "Defensa india" con sus cuatro— para que el
-alumno la **lea y la memorice**, en vez de tener que jugarla a ciegas contra el
-entrenador desde la primera vez que la ve.
+**Muestra las 12 FICHAS de categoría "apertura" o "defensa"** de
+`js/fichas-estudio.js` (ver "Fichas" más abajo) —las mismas 12 de las 28 que
+tiene `entreno/fichas.html`—, **todas juntas en una sola lista**, agrupadas en
+dos secciones con su propio `<h2>` ("Aperturas", "Defensas") para poder saltar
+de una a otra con lector de pantalla.
 
-- **Es la misma fuente de datos, no una copia.** La página lee
-  `js/aperturas-lineas.js` directo (`ESTUDIO_LINEAS`, filtrando `tipo ===
-  "apertura"`): sumar una línea ahí la suma acá sola. Si se copiaran las
-  líneas, corregirle una jugada en un lado y no en el otro es el error que
-  separa las dos copias sin que nada avise.
-- **La pestaña la decide `L.color`, no el nombre de la familia.** "Aperturas"
-  son las 9 líneas que el alumno juega con blancas y "Defensas" las 16 que
-  juega con negras — no "lo que empieza con 1.e4" contra "lo que responde".
-  Por nombre se rompe: "Siciliana cerrada" es 1.e4 c5 2.Cc3 **jugado por las
-  blancas**, así que por el nombre de su familia ("Defensa siciliana")
-  terminaría en Defensas, cuando lo que el alumno memoriza ahí es el plan de
-  las blancas. Mismo caso con "Francesa Tarrasch". Agrupar por color, no por
-  familia, es lo que mantiene la promesa de cada pestaña: "esto lo juegas tú".
-  9 + 16 = 25, así que ninguna línea se pierde ni se cuenta dos veces.
+- **Antes tenía sus PROPIAS tarjetas**, mucho más simples (nombre y tablero
+  nada más), leídas directo de `js/aperturas-lineas.js` en dos pestañas
+  interactivas —"Aperturas" y "Defensas", según `L.color`— con las 25 líneas
+  de tipo "apertura" del banco (las 12 celadas quedaban fuera). Se reemplazó
+  por las fichas de verdad, que traen mucho más —planes, ideas tácticas,
+  medio juego y final, con su mapa— y de paso se quitaron las pestañas: eran
+  un paso de más para elegir entre 12 fichas en total. La lista bajó de 25 a
+  12 porque no todas las líneas tienen su ficha todavía: de las 25 de tipo
+  "apertura", 12 tienen ficha de categoría "apertura" o "defensa" (las que
+  se ven acá); las demás se siguen memorizando en `entreno/aperturas.html`,
+  simplemente sin una ficha propia que leer.
+- **Una familia con líneas de los dos colores queda junta, bajo un solo
+  grupo.** La Defensa siciliana tiene tanto "Siciliana cerrada" (ficha de
+  categoría "apertura": la juegan las blancas) como respuestas con negras
+  (categoría "defensa"): antes, agrupar por `L.color` en pestañas separaba
+  eso; ahora cada ficha va en su sección según su propia categoría, y dice
+  "juegas con blancas/negras" en su descripción — no hace falta una pestaña
+  para saber de qué lado se juega cada una.
+- **El mapa de ideas y el tablero recorrible los pinta `js/ficha-render.js`**,
+  el mismo módulo que usa `entreno/fichas.html` — antes esa lógica solo vivía
+  ahí, y escribirla de nuevo acá habría sido la segunda copia que se va
+  separando de la primera a la primera corrección. Ver "Fichas" para el
+  detalle de qué hace ese módulo.
 - **No es un ejercicio, es un libro: por eso no hay bloqueo ni "resuelto".**
-  Las 25 están abiertas de entrada, porque no hay nada que "resolver" — se
+  Las 12 están abiertas de entrada, porque no hay nada que "resolver" — se
   lee, con un tablero que solo recorre la línea (⏮ ◀ ▶ ⏭ o saltando a una
   jugada de la lista con un clic), no que reciba jugadas.
-- **El tablero es decorativo (`aria-hidden`) y no hace falta un Modo Adaptado
-  aparte.** La posición y la línea entera ya están contadas en texto al lado
-  —la lista de jugadas, "Idea" y "Lo que hay que recordar"—, así que no
-  depende de ver ninguna imagen: es la misma decisión que el material de
-  estudio de los cursos. Cada salto de jugada avisa por una región viva chica
-  ("Jugada 3 de 8: 2.Cf3") en vez de releer todo el texto de arriba.
-- **El botón "🎯 Practicarla jugándola en el tablero" no manda a la lista de
-  `entreno/aperturas.html`: manda directo a esa línea**, con
-  `aperturas.html?linea=<id>` (deep-link nuevo en esa página). Sin él, quien
-  lee la tarjeta y quiere practicarla tendría que volver a encontrarla en una
-  lista de 25 — el mismo trabajo que la tarjeta viene a evitar. Un id que no
-  existe (línea borrada) cae a la lista de siempre en vez de dejar un tablero
-  de mentira.
+- **El botón "🎯 Practicarla en el tablero" manda directo a esa línea**, con
+  `aperturas.html?linea=<id>` — las 12 fichas de acá siempre tienen su
+  `lineaId` (a diferencia de las de táctica y conceptos, que pueden partir de
+  una FEN de estudio sin línea), así que el botón siempre aparece.
 - **No lleva marca de progreso ni clave en `js/progreso-usuario.js` a
   propósito.** No hay nada que sincronizar entre aparatos porque no hay ningún
   "resuelto" que guardar — la memorización de verdad, con su repaso espaciado,
   sigue viviendo en `entreno/aperturas.html`. Por lo mismo, tampoco carga
-  `js/acceso-admin.js`, `js/blind-notation.js` ni `js/board-drag.js`: no hay
-  bloqueo que abrirle a quien administra ni tablero que reciba jugadas.
+  `js/acceso-admin.js`, `js/blind-notation.js` (más allá de lo que ya usa
+  `ficha-render.js`) ni `js/board-drag.js`: no hay bloqueo que abrirle a quien
+  administra ni tablero que reciba jugadas.
 - El tiempo sí se registra, como en toda página de Entreno:
   `js/tiempo-plataforma.js data-activity="estudio"`.
 - **Al tocar esto, correr `node herramientas/verificar-estudio.js`** (con el
   sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
-  Comprueba en un navegador de verdad que las dos pestañas existen con su
-  contador correcto (9 y 16), que arranca en "Aperturas" y que hacer clic en
-  "Defensas" repinta la lista con sus 16 líneas agrupadas, el caso de
-  "Siciliana cerrada" (aparece en Aperturas y desaparece de Defensas al
-  cambiar), que nada queda con candado, que el tablero de la tarjeta dibuja de
-  verdad —pieza por pieza, contra chess.js— la posición que toca en cada
-  jugada y no solo que la resalta en la lista, que el botón de practicarla
-  apunta al id correcto, y que `aperturas.html?linea=<id>` abre esa línea de
-  una sin pasar por la lista (y que un id inventado cae a la lista, no a un
-  tablero vacío). **Al tocar el panel o esta página, correr también `node
-  herramientas/verificar-panel.js`**, que comprueba que "Estudio" esté en el
-  grupo "Aprender".
+  Comprueba en un navegador de verdad que no queda ninguna pestaña ni
+  buscador, que se ven las 12 fichas juntas agrupadas en sus dos `<h2>`, que
+  una familia con líneas de los dos colores queda bien repartida entre las
+  dos secciones, que el mapa y el tablero de una ficha dibujan de verdad lo
+  que prometen, que el botón de practicar lleva a la línea correcta, y que la
+  página se ve (sin CSS impreso como texto, con una sola hoja de estilos) y
+  se imprime bien. La lógica de `ficha-render.js` en sí —cada bloque con SUS
+  renglones, el tablero pieza por pieza contra chess.js, la accesibilidad— ya
+  la comprueba a fondo `herramientas/verificar-fichas-pagina.js`; esto solo
+  repite lo mínimo para confirmar que Estudio lo usa bien. **Al tocar el panel
+  o esta página, correr también `node herramientas/verificar-panel.js`**, que
+  comprueba que "Estudio" esté en el grupo "Aprender".
 
 ## Fichas: una pantalla por idea, con su mapa y su posición
 
@@ -1941,7 +1940,23 @@ eso son tres páginas y no una: Aperturas y celadas se **juega** de memoria con
 repaso espaciado, Estudio se **lee** jugada por jugada, y una ficha se **mira de
 un vistazo** — es lo que uno repasa cinco minutos antes de jugar, o imprime y
 pega en el cuaderno. Las tres comparten el banco de líneas, así que no hay tres
-versiones de la misma apertura.
+versiones de la misma apertura. Estudio, además, **muestra las fichas de
+verdad** (solo las de categoría "apertura"/"defensa", sin pestañas): el mapa y
+el tablero recorrible de una ficha abierta son exactamente los mismos en las
+dos páginas, porque los pinta el mismo módulo (ver abajo).
+
+- **`js/ficha-render.js` es el módulo que pinta una ficha abierta** —el mapa de
+  los cinco bloques con su nodo, el tablero recorrible, la lista de jugadas y
+  la posición en palabras—, compartido entre esta página y
+  `entreno/estudio.html`. Antes esa lógica (unas 130 líneas) solo vivía dentro
+  de `fichas.html`; escribirla otra vez en Estudio habría sido la segunda copia
+  que se separa de la primera a la primera corrección, así que se sacó a su
+  propio archivo. Cada página sigue manejando su propia lista y su propia
+  cabecera de ficha (etiqueta, nivel, título) — lo único que el módulo pinta es
+  el cuerpo de la ficha, y para eso solo pide que el HTML traiga los ids de
+  siempre (`t-idea`/`l-idea`… `nodo`, `tablero`, `jugadas`, `controles`…).
+  `FichaRender.crear()` devuelve un visor con `abrir(F)` y `lineaDe(F)`; se usa
+  uno por página, no uno por ficha.
 
 - **Los cinco bloques están SIEMPRE y en el mismo lugar de la pantalla.** Sus
   títulos salen de `TITULOS[categoria]` (una apertura tiene Planes, Ideas
@@ -2030,7 +2045,10 @@ que el tablero dibuje **pieza por pieza** la posición que toca en cada jugada
 (contra chess.js, no contra lo que diga la página), que el botón de practicar
 lleve a una línea que de verdad abre esa línea allá, que al imprimir salga la
 ficha y no la lista, y que la página **se vea**: sin CSS impreso como texto, con
-una sola hoja, y en oscuro cuando el tema está en oscuro.
+una sola hoja, y en oscuro cuando el tema está en oscuro. Como esa comprobación
+ya prueba `js/ficha-render.js` a fondo, `node herramientas/verificar-estudio.js`
+(la de `entreno/estudio.html`) no repite todo eso: solo confirma que Estudio
+elige bien sus 12 fichas y las agrupa sin pestañas.
 
 - De paso se le quitó la fecha fija a `herramientas/verificar-panel.js`: sus
   clases de mentira colgaban de un día escrito a mano y el filtro de "últimos 3

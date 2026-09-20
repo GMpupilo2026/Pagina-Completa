@@ -1,33 +1,32 @@
-/* Comprueba entreno/estudio.html — las tarjetas de aperturas y defensas, con
-   sus variantes principales, para leer y memorizar — y el enlace ?linea=<id>
-   que las lleva a practicar en entreno/aperturas.html.
-
-   No es un ejercicio con solución (eso lo comprueba
-   herramientas/verificar-aperturas-pagina.js, jugando la línea entera): esto
-   es material de lectura, así que lo que hay que comprobar es otra cosa —que
-   el tablero de la tarjeta muestre de verdad la posición que toca en cada
-   jugada, y que el botón "Practicarla" lleve a la línea correcta y no a la
-   lista. Un id mal armado en el enlace no daría ningún error: el botón se ve
-   igual y lleva a otra parte, o a ninguna.
-
-   Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
-         npm install chess.js@0.10.3
-         node herramientas/verificar-estudio.js                */
+/* Comprueba entreno/estudio.html en un navegador de verdad.
+ *
+ * Estudio es la puerta chica de entreno/fichas.html: las mismas 12 fichas de
+ * apertura y defensa (de las 28 que tiene Fichas), sin pestañas ni buscador
+ * — antes tenía sus propias tarjetas simples (nombre + tablero, sin mapa de
+ * ideas), repartidas en dos pestañas "Aperturas"/"Defensas"; ahora usa las
+ * fichas de verdad y las pinta juntas, agrupadas en dos secciones con su
+ * propio <h2>. El mapa y el tablero los pinta js/ficha-render.js, compartido
+ * con Fichas — herramientas/verificar-fichas-pagina.js ya comprueba esa
+ * lógica a fondo (bloques, tablero jugada por jugada, impresión,
+ * accesibilidad); esto es lo que le toca solo a Estudio: que sean las 12
+ * fichas correctas, agrupadas bien, sin pestañas, y que el enlace de
+ * practicar siga funcionando desde acá.
+ *
+ * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
+ *       npm install chess.js@0.10.3 playwright
+ *       node herramientas/verificar-estudio.js                */
 const path = require("path");
 const fs = require("fs");
 const { chromium } = require("playwright");
+const { FICHAS } = require(path.join(__dirname, "..", "js", "fichas-estudio.js"));
 const { LINEAS } = require(path.join(__dirname, "..", "js", "aperturas-lineas.js"));
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
-
-const ESTUDIO = LINEAS.filter((L) => L.tipo === "apertura");
-const APERTURAS = ESTUDIO.filter((L) => L.color === "w");
-const DEFENSAS = ESTUDIO.filter((L) => L.color === "b");
-const GRUPOS_APERTURAS = new Set(APERTURAS.map((L) => L.apertura));
-const GRUPOS_DEFENSAS = new Set(DEFENSAS.map((L) => L.apertura));
-const PIEZAS_ES = { N: "C", B: "A", R: "T", Q: "D", K: "R" };
-const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
+const POR_ID = new Map(LINEAS.map((L) => [L.id, L]));
+const ESTUDIO = FICHAS.filter((F) => F.categoria === "apertura" || F.categoria === "defensa");
+const APERTURAS = ESTUDIO.filter((F) => F.categoria === "apertura");
+const DEFENSAS = ESTUDIO.filter((F) => F.categoria === "defensa");
 
 let CHESSJS = "";
 for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
@@ -36,173 +35,181 @@ for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).fil
   if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
 }
 if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
-const { Chess } = require("chess.js").Chess ? require("chess.js") : { Chess: require("chess.js") };
+const CJS = require("chess.js");
+const Chess = CJS.Chess || CJS;
 
-const CLIENTE_FALSO = `
+const GLYPH = { w: { p:"♙", n:"♘", b:"♗", r:"♖", q:"♕", k:"♔" }, b: { p:"♟", n:"♞", b:"♝", r:"♜", q:"♛", k:"♚" } };
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+const CON_SESION = `
 (function () {
-  window.sb = {
-    auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }) },
-    from: () => ({ select() { return this; }, eq() { return this; }, in() { return this; },
-                   upsert() { return this; }, maybeSingle() { return this; },
-                   then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
-    rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
-  };
+  window.sb = { auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" } } } }) } };
 })();
 `;
+const SIN_SESION = CON_SESION.replace("session: { user: { id: \"u-ana\" } }", "session: null");
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
   const a = typeof hallado === "object" ? JSON.stringify(hallado) : String(hallado);
   const b = typeof esperado === "object" ? JSON.stringify(esperado) : String(esperado);
   if (a !== b) { console.log("  ✗ " + nombre + "\n      esperaba: " + b + "\n      salió:    " + a); fallos += 1; }
-  else console.log("  ✓ " + nombre + ": " + a);
+  else console.log("  ✓ " + nombre + ": " + (a.length > 90 ? a.slice(0, 90) + "…" : a));
 }
 
-async function abrir(browser, ruta, esperar) {
-  const page = await browser.newPage();
+async function abrir(browser, ruta, cliente) {
+  const ctx = await browser.newContext({ serviceWorkers: "block" });
+  await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
+  await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: cliente || CON_SESION }));
+  const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
-  await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-  await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
-  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CLIENTE_FALSO }));
   await page.goto(BASE + ruta, { waitUntil: "networkidle" });
-  await page.waitForSelector(esperar, { timeout: 20000 });
-  return { page, errores };
+  return { page, ctx, errores };
 }
+
+const LEER_TABLERO = () => {
+  const piezas = {};
+  document.querySelectorAll("#tablero .sq").forEach((c) => {
+    const s = c.querySelector("span:not(.coord-etiqueta)");
+    if (s && s.textContent.trim()) piezas[c.dataset.square] = s.textContent.trim();
+  });
+  return piezas;
+};
+const ordenado = (piezas) => Object.keys(piezas).sort().map((k) => k + piezas[k]).join(" ");
+function tableroEsperado(jugadas, hasta) {
+  const g = new Chess();
+  for (let i = 0; i < hasta; i++) g.move(jugadas[i], { sloppy: true });
+  const piezas = {};
+  for (let r = 1; r <= 8; r++) FILES.forEach((f) => {
+    const p = g.get(f + r);
+    if (p) piezas[f + r] = GLYPH[p.color][p.type];
+  });
+  return piezas;
+}
+function jugadasDe(F) { return POR_ID.get(F.lineaId).jugadas; }
 
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
-    console.log("=== entreno/estudio.html — las pestañas ===");
-    const { page, errores } = await abrir(browser, "/entreno/estudio.html", "#app:not(.hidden)");
-
-    igual("hay dos pestañas: Aperturas y Defensas",
-      await page.evaluate(() => [...document.querySelectorAll("#tabs .tab")].map((b) => b.textContent.trim().replace(/\s+/g, " "))),
-      [`Aperturas ${APERTURAS.length}`, `Defensas ${DEFENSAS.length}`]);
-    igual("arranca en Aperturas",
-      await page.evaluate(() => document.querySelector("#tabs .tab").classList.contains("active")), "true");
-    igual("por defecto se ven las de Aperturas, no las 25 juntas",
-      await page.evaluate(() => document.querySelectorAll("#lesson-list .lesson-item").length),
-      APERTURAS.length);
-    igual("agrupadas en un <h2> por apertura o defensa",
-      await page.evaluate(() => document.querySelectorAll("#lesson-list h2.study-group-title").length),
-      GRUPOS_APERTURAS.size);
-    igual("«Siciliana cerrada» juega con blancas, así que va en Aperturas y no en Defensas",
-      await page.evaluate(() => [...document.querySelectorAll("#lesson-list .lesson-item .name")]
-        .some((el) => el.textContent.trim() === "Siciliana cerrada")), "true");
-    igual("nada queda bloqueado: es material de consulta, no una progresión",
-      await page.evaluate(() => document.querySelectorAll("#lesson-list button:disabled").length), 0);
-
-    await page.click("#tabs .tab:nth-child(2)");
-    igual("al hacer clic en Defensas, esa queda activa",
-      await page.evaluate(() => document.querySelectorAll("#tabs .tab")[1].classList.contains("active")), "true");
-    igual("y se repinta con las 16 líneas de Defensas",
-      await page.evaluate(() => document.querySelectorAll("#lesson-list .lesson-item").length),
-      DEFENSAS.length);
-    igual("agrupadas por su propia apertura o defensa",
-      await page.evaluate(() => document.querySelectorAll("#lesson-list h2.study-group-title").length),
-      GRUPOS_DEFENSAS.size);
-    igual("«Siciliana cerrada» no aparece acá: la juegan las blancas",
-      await page.evaluate(() => [...document.querySelectorAll("#lesson-list .lesson-item .name")]
-        .some((el) => el.textContent.trim() === "Siciliana cerrada")), "false");
-
-    await page.click("#tabs .tab:nth-child(1)");
-    igual("volver a Aperturas la deja activa otra vez",
-      await page.evaluate(() => document.querySelector("#tabs .tab").classList.contains("active")), "true");
-
-    console.log("\n=== La tarjeta de una variante ===");
-    const linea = ESTUDIO.find((L) => L.id === "espanola-cerrada");
-    await page.evaluate((nombre) => {
-      [...document.querySelectorAll("#lesson-list .lesson-item")]
-        .find((b) => b.textContent.indexOf(nombre) !== -1).click();
-    }, linea.nombre);
-    await page.waitForSelector("#study-view", { state: "visible", timeout: 5000 });
-
-    igual("el título es el de la línea", await page.evaluate(() => document.getElementById("study-title").textContent), linea.nombre);
-    igual("el tablero se ve pero es decorativo (la posición ya está en el texto)",
-      await page.evaluate(() => document.getElementById("study-board").getAttribute("aria-hidden")), "true");
-    igual("arranca en la posición inicial: 64 casillas, ninguna con pieza negra movida",
-      await page.evaluate(() => document.querySelectorAll("#study-board .sq").length), 64);
-    igual("al empezar, no se puede ir más atrás", await page.evaluate(() => document.getElementById("study-prev-btn").disabled), "true");
-    igual("pero sí adelante", await page.evaluate(() => document.getElementById("study-next-btn").disabled), "false");
-    igual("el botón de practicarla apunta a la línea, no a la lista",
-      await page.evaluate(() => new URL(document.getElementById("study-practicar-btn").href).search),
-      "?linea=" + linea.id);
-
-    // Avanza jugada por jugada y compara el tablero de verdad contra chess.js,
-    // no contra lo que la propia página cree que hizo.
-    const juego = new Chess();
-    for (let i = 0; i < linea.jugadas.length; i++) {
-      await page.click("#study-next-btn");
-      juego.move(linea.jugadas[i], { sloppy: true });
-      const jugadaResaltada = await page.evaluate(() => {
-        const b = document.querySelector(".study-move.actual");
-        return b ? b.textContent : null;
-      });
-      igual(`jugada ${i + 1} (${aEspanol(linea.jugadas[i])}) queda resaltada en la lista`,
-        jugadaResaltada, aEspanol(linea.jugadas[i]));
+    console.log("=== Sin sesión no se entra ===");
+    {
+      const { page, ctx } = await abrir(browser, "/entreno/estudio.html", SIN_SESION);
+      await page.waitForURL(/login\.html/, { timeout: 15000 }).catch(() => {});
+      igual("manda a iniciar sesión, con el volver puesto",
+        /login\.html\?next=entreno%2Festudio\.html/.test(page.url()), "true");
+      await ctx.close();
     }
-    // No solo que la jugada se resalte en la lista: que el TABLERO de verdad
-    // dibuje la posición final, pieza por pieza — un bug de drawStudyBoard() no
-    // se notaría mirando solo el texto resaltado de arriba.
-    const GLYPH_A_LETRA = { "♙": "P", "♘": "N", "♗": "B", "♖": "R", "♕": "Q", "♔": "K",
-                             "♟": "p", "♞": "n", "♝": "b", "♜": "r", "♛": "q", "♚": "k" };
-    const piezasPagina = await page.evaluate((tabla) => {
-      const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-      const out = {};
-      const celdas = document.querySelectorAll("#study-board .sq");
-      let i = 0;
-      for (let rank = 8; rank >= 1; rank--) {
-        for (const f of FILES) {
-          const span = celdas[i].querySelector("span");
-          if (span) out[f + rank] = tabla[span.textContent] || span.textContent;
-          i++;
-        }
-      }
-      return out;
-    }, GLYPH_A_LETRA);
-    const piezasEsperadas = {};
-    juego.board().forEach((fila, r) => fila.forEach((p, c) => {
-      if (p) piezasEsperadas["abcdefgh"[c] + (8 - r)] = p.color === "w" ? p.type.toUpperCase() : p.type;
-    }));
-    igual("el tablero dibuja de verdad la posición final, pieza por pieza", piezasPagina, piezasEsperadas);
 
-    igual("al llegar al final, no se puede seguir adelante",
-      await page.evaluate(() => document.getElementById("study-next-btn").disabled), "true");
-    igual("y sí se puede volver atrás", await page.evaluate(() => document.getElementById("study-prev-btn").disabled), "false");
+    console.log("\n=== Las 12 fichas juntas, sin pestañas ===");
+    const { page, ctx, errores } = await abrir(browser, "/entreno/estudio.html");
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
 
-    await page.click("#study-start-btn");
-    igual("«ir al inicio» vuelve a la posición de salida",
-      await page.evaluate(() => document.getElementById("study-prev-btn").disabled), "true");
+    igual("no queda ninguna pestaña en la página",
+      await page.evaluate(() => document.querySelectorAll("nav.tabs, .tab").length), 0);
+    igual("ni buscador: para eso está Fichas",
+      await page.evaluate(() => document.querySelectorAll("#buscar").length), 0);
+    igual("se ven las 12 fichas de una", await page.evaluate(() => document.querySelectorAll(".ficha-item").length), ESTUDIO.length);
+    igual("agrupadas en dos <h2>: Aperturas y Defensas",
+      await page.evaluate(() => [...document.querySelectorAll("h2.study-group-title")].map((h) => h.textContent)),
+      ["Aperturas", "Defensas"]);
+    igual("bajo «Aperturas» van exactamente las 6 de esa categoría, en orden",
+      await page.evaluate(() => {
+        const h2 = [...document.querySelectorAll("h2.study-group-title")].find((h) => h.textContent === "Aperturas");
+        return [...h2.nextElementSibling.querySelectorAll(".ficha-item .name")].map((n) => n.textContent);
+      }), APERTURAS.map((F) => F.titulo));
+    igual("bajo «Defensas» van las 6 suyas",
+      await page.evaluate(() => {
+        const h2 = [...document.querySelectorAll("h2.study-group-title")].find((h) => h.textContent === "Defensas");
+        return [...h2.nextElementSibling.querySelectorAll(".ficha-item .name")].map((n) => n.textContent);
+      }), DEFENSAS.map((F) => F.titulo));
 
-    await page.click("#study-back-to-list");
-    igual("«volver» regresa a la lista de variantes",
-      await page.evaluate(() => getComputedStyle(document.getElementById("list-view")).display), "block");
+    console.log("\n=== Una ficha: el mapa completo y el tablero ===");
+    const F1 = ESTUDIO.find((F) => F.id === "espanola");
+    await page.evaluate((nombre) => {
+      [...document.querySelectorAll(".ficha-item")].find((b) => b.textContent.indexOf(nombre) !== -1).click();
+    }, F1.titulo);
+    await page.waitForSelector("#ficha-vista", { state: "visible", timeout: 5000 });
 
-    errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
-    await page.close();
+    igual("el título y la etiqueta de categoría son los de la ficha",
+      await page.evaluate(() => [document.getElementById("ficha-titulo").textContent, document.getElementById("ficha-etiqueta").textContent]),
+      [F1.titulo, "Aperturas"]);
+    igual("los cinco bloques traen sus propios renglones",
+      await page.evaluate(() => ["idea", "1", "2", "3", "4"].map((s) =>
+        [...document.querySelectorAll("#l-" + s + " li")].map((li) => li.textContent))),
+      [F1.centro].concat(F1.bloques));
 
-    console.log("\n=== entreno/aperturas.html — abrir directo con ?linea=<id> ===");
-    const { page: page2, errores: errores2 } = await abrir(
-      browser, "/entreno/aperturas.html?linea=" + encodeURIComponent(linea.id), "#app:not(.hidden)");
-    await page2.waitForSelector("#vista-tablero:not(.hidden)", { timeout: 5000 });
-    igual("abre el tablero de esa línea de una, sin pasar por la lista",
-      await page2.evaluate(() => document.getElementById("linea-nombre").textContent), linea.nombre);
+    const jugadas1 = jugadasDe(F1);
+    igual("el tablero arranca en la posición de salida de la línea",
+      ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(jugadas1, 0)));
+    await page.click("#b-final");
+    igual("y llega hasta la posición final, pieza por pieza",
+      ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(jugadas1, jugadas1.length)));
+    igual("la posición contada en palabras dice lo que hay",
+      await page.evaluate(() => { document.getElementById("en-palabras").open = true; return /Blancas:.*Negras:/.test(document.getElementById("posicion-escrita").textContent); }),
+      "true");
 
-    const { page: page3, errores: errores3 } = await abrir(
-      browser, "/entreno/aperturas.html?linea=no-existe-esta-linea", "#app:not(.hidden)");
-    igual("un id que no existe cae a la lista de siempre, no a un tablero vacío",
-      await page3.evaluate(() => getComputedStyle(document.getElementById("vista-lista")).display), "block");
+    const enlace = await page.getAttribute("#b-practicar", "href");
+    igual("el botón de practicar apunta a la línea del banco, no a la lista",
+      enlace, "aperturas.html?linea=" + F1.lineaId);
+    igual("y esa línea existe de verdad", POR_ID.has(F1.lineaId), "true");
+    const destino = await abrir(browser, "/entreno/" + enlace);
+    await destino.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 }).catch(() => {});
+    igual("al abrirlo, esa página abre esa línea y no la lista",
+      await destino.page.evaluate(() => (document.getElementById("lesson-title") || document.querySelector("h2") || {}).textContent || ""),
+      POR_ID.get(F1.lineaId).nombre);
+    await destino.ctx.close();
 
-    errores2.concat(errores3).forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
-    await page2.close(); await page3.close();
+    await page.click("#volver");
+    igual("«volver» regresa a la lista de fichas",
+      await page.evaluate(() => getComputedStyle(document.getElementById("lista-vista")).display), "block");
+
+    console.log("\n=== Una familia con líneas de los dos colores queda junta, cada una con su color ===");
+    // La Defensa siciliana trae tanto "Siciliana cerrada" (blancas, en el
+    // grupo Aperturas) como esta ficha (negras, en Defensas): no se pierde
+    // ninguna y cada una dice con qué color se juega.
+    igual("«Defensa siciliana» aparece en Defensas y dice que se juega con negras",
+      await page.evaluate(() => {
+        const btn = [...document.querySelectorAll(".ficha-item")].find((b) => b.querySelector(".name").textContent === "Defensa siciliana");
+        return btn ? btn.querySelector(".desc").textContent : null;
+      }),
+      "juegas con negras · " + { 1: "Principiante", 2: "Intermedio", 3: "Avanzado" }[ESTUDIO.find((F) => F.id === "siciliana").nivel] +
+        " · " + ESTUDIO.find((F) => F.id === "siciliana").subtitulo);
+
+    console.log("\n=== Que la página SE VEA ===");
+    igual("no hay CSS impreso como texto arriba de la página",
+      await page.evaluate(() => /[{;]\s*[a-z-]+\s*:/.test(document.body.innerText.slice(0, 600))), "false");
+    const fuente = await (await page.request.get(BASE + "/entreno/estudio.html")).text();
+    igual("una sola hoja de estilos en el HTML de la página", (fuente.match(/<style/g) || []).length, 1);
+    igual("y se cierra una sola vez", (fuente.match(/<\/style>/g) || []).length, 1);
+    igual("las clases propias pintan algo de verdad",
+      await page.evaluate(() => {
+        const c = document.querySelector(".caja");
+        return getComputedStyle(c).borderTopWidth !== "0px" && getComputedStyle(c).padding !== "0px";
+      }), "true");
+
+    console.log("\n=== Al imprimir sale la ficha, no la lista ===");
+    await page.evaluate((nombre) => {
+      [...document.querySelectorAll(".ficha-item")].find((b) => b.textContent.indexOf(nombre) !== -1).click();
+    }, F1.titulo);
+    await page.waitForSelector("#ficha-vista", { state: "visible", timeout: 5000 });
+    await page.emulateMedia({ media: "print" });
+    igual("la lista, el encabezado y el pie se van del papel",
+      await page.evaluate(() => ["#lista-vista", "header", "footer"].map((s) => document.querySelector(s).checkVisibility())),
+      [false, false, false]);
+    igual("los cinco bloques y el diagrama sí se imprimen",
+      await page.evaluate(() => [...document.querySelectorAll(".caja")].every((c) => c.checkVisibility())
+        && document.querySelector(".diagrama").checkVisibility()), "true");
+    await page.emulateMedia({ media: "screen" });
+
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
   } finally {
     await browser.close();
   }
-
-  console.log(fallos ? `\n${fallos} comprobación(es) fallaron` : "\nTodo bien: las tarjetas de estudio muestran lo que prometen.");
+  console.log(fallos ? `\n✗ ${fallos} problema(s).` : "\n✓ Todo bien.");
   process.exit(fallos ? 1 : 0);
 })();

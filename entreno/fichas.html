@@ -337,34 +337,25 @@
      jugadas se leen de este banco, que es donde viven. -->
 <script src="../js/aperturas-lineas.js"></script>
 <script src="../js/fichas-estudio.js"></script>
+<!-- El mapa y el tablero de una ficha abierta son los mismos que usa
+     entreno/estudio.html: viven en un solo archivo para no ir separándose. -->
+<script src="../js/ficha-render.js"></script>
 <script>
 const gate = document.getElementById('gate');
 const app = document.getElementById('app');
 const gateChecking = document.getElementById('gate-checking');
 const NEXT_PATH = 'entreno/fichas.html';
 
-const { FICHAS, TITULOS, CATEGORIAS } = window.FichasEstudio;
-const LINEAS_POR_ID = new Map((window.AperturasLineas ? window.AperturasLineas.LINEAS : []).map((L) => [L.id, L]));
+const { FICHAS, CATEGORIAS } = window.FichasEstudio;
 
 const GLYPH = {
   w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
   b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
 };
-const FILES = ['a','b','c','d','e','f','g','h'];
 const NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
-const PIEZAS_ES = {N:'C', B:'A', R:'T', Q:'D', K:'R'};
-const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
-const esClara = (sq) => ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1;
 const sinTildes = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const visor = FichaRender.crear();
 
-// De dónde sale la posición de cada ficha: de su propia línea, de una del
-// banco de aperturas, o de una FEN de estudio. Nunca de dos a la vez.
-function jugadasDe(F){
-  if(F.fen) return F.linea || [];
-  if(F.jugadas) return F.jugadas;
-  const L = LINEAS_POR_ID.get(F.lineaId);
-  return L ? L.jugadas : [];
-}
 function textoDe(F){
   return [F.titulo, F.subtitulo, F.resumen, F.diagrama, F.centro.join(' '), F.bloques.map((b) => b.join(' ')).join(' ')].join(' ');
 }
@@ -449,116 +440,10 @@ function mostrarLista(){
 }
 
 /* ---------------- La ficha abierta ---------------- */
-let fichaActual = null;
-let partida = null;
-let indice = 0;   // cuántas jugadas de la línea se jugaron (0 = la posición de salida)
-
-function posicionEn(n){
-  const g = new Chess();
-  if(fichaActual.fen) g.load(fichaActual.fen);
-  const jugadas = jugadasDe(fichaActual);
-  for(let i = 0; i < n; i++) g.move(jugadas[i], { sloppy: true });
-  return g;
-}
-
-function dibujarPieza(cont, piece){
-  const span = document.createElement('span');
-  span.setAttribute('aria-hidden', 'true');
-  if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
-    span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
-    span.className = 'chess-piece-illustrated';
-  } else {
-    span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
-    span.textContent = GLYPH[piece.color][piece.type];
-  }
-  cont.appendChild(span);
-}
-
-function dibujarTablero(){
-  const board = document.getElementById('tablero');
-  board.innerHTML = '';
-  for(let rank = 8; rank >= 1; rank--){
-    for(let f = 0; f < 8; f++){
-      const square = FILES[f] + rank;
-      const cell = document.createElement('div');
-      cell.className = 'sq ' + (esClara(square) ? 'light' : 'dark');
-      cell.dataset.square = square;
-      const piece = partida.get(square);
-      if(piece) dibujarPieza(cell, piece);
-      board.appendChild(cell);
-    }
-  }
-  if (window.Coordenadas) Coordenadas.aplicar(board);
-}
-
-function pintarJugadas(){
-  const cont = document.getElementById('jugadas');
-  const jugadas = jugadasDe(fichaActual);
-  cont.innerHTML = '';
-  // Una FEN de estudio no empieza en la jugada 1 de las blancas, así que su
-  // línea se numera desde 1 pero sin prometer que sea la jugada 1 de la partida.
-  const desdeElInicio = !fichaActual.fen;
-  for(let i = 0; i < jugadas.length; i += (desdeElInicio ? 2 : 1)){
-    const par = document.createElement('span');
-    par.className = 'par';
-    const numero = document.createElement('b');
-    numero.textContent = (desdeElInicio ? (i / 2 + 1) : (i + 1)) + '.';
-    par.appendChild(numero);
-    const cuales = desdeElInicio ? [i, i + 1] : [i];
-    cuales.forEach((idx) => {
-      if(idx >= jugadas.length) return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'jugada' + (idx === indice - 1 ? ' actual' : '');
-      if(idx === indice - 1) btn.setAttribute('aria-current', 'step');
-      btn.textContent = aEspanol(jugadas[idx]);
-      btn.addEventListener('click', () => irA(idx + 1));
-      par.appendChild(btn);
-    });
-    cont.appendChild(par);
-  }
-}
-
-function irA(n){
-  const jugadas = jugadasDe(fichaActual);
-  indice = Math.max(0, Math.min(n, jugadas.length));
-  partida = posicionEn(indice);
-  dibujarTablero();
-  pintarJugadas();
-  document.getElementById('b-inicio').disabled = indice === 0;
-  document.getElementById('b-atras').disabled = indice === 0;
-  document.getElementById('b-adelante').disabled = indice >= jugadas.length;
-  document.getElementById('b-final').disabled = indice >= jugadas.length;
-  const anuncio = document.getElementById('anuncio');
-  if(indice === 0){
-    anuncio.textContent = jugadas.length ? 'Posición de salida.' : '';
-  } else {
-    anuncio.textContent = `Jugada ${indice} de ${jugadas.length}: ${aEspanol(jugadas[indice - 1])}.`;
-  }
-  // La posición contada pieza por pieza sale de BlindNotation, que es la única
-  // tabla de nombres y plurales del sitio: escribirla acá otra vez sería la
-  // quinta copia y se iría separando de las demás.
-  document.getElementById('posicion-escrita').textContent =
-    window.BlindNotation ? window.BlindNotation.positionSentence(partida) : '';
-}
-
-function pintarMapa(F){
-  const titulos = TITULOS[F.categoria];
-  const bloques = [F.centro].concat(F.bloques);
-  ['idea','1','2','3','4'].forEach((slot, i) => {
-    document.getElementById('t-' + slot).textContent = titulos[i];
-    const ul = document.getElementById('l-' + slot);
-    ul.innerHTML = '';
-    bloques[i].forEach((texto) => {
-      const li = document.createElement('li');
-      li.textContent = texto;
-      ul.appendChild(li);
-    });
-  });
-  const nodo = document.getElementById('nodo');
-  nodo.innerHTML = '';
-  dibujarPieza(nodo, { type: F.pieza, color: 'b' });
-}
+// El mapa de ideas y el tablero recorrible los pinta FichaRender (js/ficha-render.js),
+// compartido con entreno/estudio.html — acá solo queda la cabecera de la
+// ficha (etiqueta, nivel, título) y el botón de practicar, que son propios
+// de esta página.
 
 // El enlace de la ficha abierta: se puede mandar por WhatsApp y abre esa ficha,
 // no la lista. Un id que ya no existe cae a la lista en vez de dejar la página
@@ -584,11 +469,6 @@ function abrirFicha(F){
   document.getElementById('ficha-nivel').textContent = NIVEL[F.nivel];
   document.getElementById('ficha-titulo').textContent = F.titulo;
   document.getElementById('ficha-sub').textContent = F.subtitulo + ' — ' + F.resumen;
-  document.getElementById('pie-diagrama').textContent = F.diagrama;
-  pintarMapa(F);
-
-  const jugadas = jugadasDe(F);
-  document.getElementById('controles').style.display = jugadas.length ? '' : 'none';
 
   /* El botón de practicar solo sale cuando esa línea existe de verdad en el
      banco de entreno/aperturas.html. Un botón que promete practicar algo que no
@@ -596,7 +476,7 @@ function abrirFicha(F){
      por qué. Dice de qué color se juega porque la misma línea se practica de un
      lado solo. */
   const practicar = document.getElementById('b-practicar');
-  const linea = F.lineaId ? LINEAS_POR_ID.get(F.lineaId) : null;
+  const linea = visor.lineaDe(F);
   if(linea){
     practicar.style.display = '';
     practicar.href = 'aperturas.html?linea=' + encodeURIComponent(linea.id);
@@ -605,16 +485,12 @@ function abrirFicha(F){
     practicar.style.display = 'none';
   }
 
-  irA(0);
+  visor.abrir(F);
   ponerEnLaDireccion(F.id);
   window.scrollTo({ top: 0 });
 }
 
 document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); });
-document.getElementById('b-inicio').addEventListener('click', () => irA(0));
-document.getElementById('b-atras').addEventListener('click', () => irA(indice - 1));
-document.getElementById('b-adelante').addEventListener('click', () => irA(indice + 1));
-document.getElementById('b-final').addEventListener('click', () => irA(jugadasDe(fichaActual).length));
 document.getElementById('b-imprimir').addEventListener('click', () => window.print());
 document.getElementById('buscar').addEventListener('input', (e) => {
   busqueda = e.target.value.trim();
