@@ -187,11 +187,14 @@ async function probarCartelDeInstalar(navegador) {
         recorrer(p);
       } else if (e.name.endsWith(".html")) {
         /* Las que a propósito NO son parte de la app: inscripcion.html y
-           formulario.html tienen su propio diseño, y el libro accesible es un
-           documento que se descarga y se abre suelto —incluso por correo y sin
-           red—, así que declarar un manifest que no va a poder cargar sería
-           peor que no declararlo. */
-        if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html"].includes(e.name)) continue;
+           formulario.html tienen su propio diseño, y el libro accesible y la
+           guía del profesor accesible son documentos que se descargan y se
+           abren sueltos —incluso por correo y sin red—, así que declarar un
+           manifest que no va a poder cargar sería peor que no declararlo.
+           Esta lista tiene que decir lo mismo que la FUERA de
+           herramientas/pwa-cabecera.py. */
+        if (["inscripcion.html", "formulario.html", "libro-de-diagnostico-accesible.html",
+             "guia-del-profesor-accesible.html"].includes(e.name)) continue;
         paginas.push(rel);
       }
     }

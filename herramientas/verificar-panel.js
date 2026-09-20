@@ -287,7 +287,8 @@ async function pruebaProfesora(browser) {
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
   igual("las herramientas le quedan abiertas",
-    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html", "planes.html"]);
+    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
+    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html"]);
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
@@ -369,7 +370,8 @@ async function pruebaAdmin(browser) {
     ["Cobros de la Academia"]);
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "formularios.html", "cobros.html"]);
+    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html",
+     "formularios.html", "cobros.html"]);
   await ctx.close();
 }
 
