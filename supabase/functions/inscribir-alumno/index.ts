@@ -12,12 +12,28 @@
 // nunca le llega el informe a la casa y nadie se entera hasta que alguien
 // pregunta. Acá o pasan las dos o se dice cuál falló.
 //
-// SE PUEDE APRETAR DOS VECES
-// Ninguno de los pasos duplica nada al repetirse: si ya hay cuenta con ese
-// correo se reusa (y NO se gasta otra invitación del cupo), la asignación de
-// profesor y la persona encargada son upsert, y la marca se vuelve a escribir
-// igual. Así un doble clic, o reintentar después de un fallo a mitad de camino,
-// termina de completar el alta en vez de crear un enredo.
+// SE PUEDE APRETAR DOS VECES — PERO "OTRA VEZ" NO ES "OTRO ALUMNO"
+// Reintentar la MISMA respuesta no duplica nada: se reusa la cuenta que esa
+// respuesta ya creó (sin gastar otra invitación), la asignación de profesor y
+// la persona encargada son upsert, y la marca se vuelve a escribir igual.
+//
+// Lo que sí cambió: antes eso se decidía buscando el CORREO en profiles, no
+// mirando esta respuesta. O sea que dar de alta a un segundo alumno con un
+// correo ya usado reusaba la cuenta del primero y le escribía encima el nombre
+// y el equipo — el primer hermano desaparecía con todo su progreso, sus tareas
+// y su asistencia adentro de la cuenta del segundo, y la pantalla decía "listo"
+// sin un solo error. Es el caso de todos los días: una familia con dos hijos
+// pequeños y un solo correo.
+//
+// Ahora el reuso se decide por `respuesta.cuenta_id` —esta respuesta, esta
+// cuenta— y un correo que ya es de otra cuenta se rechaza diciendo qué hacer:
+// darle un usuario propio, que es para lo que existe `sin_correo`.
+//
+// EL ALUMNO QUE NO TIENE CORREO
+// Con `sin_correo: true` no se le pide buzón: se le arma un usuario del dominio
+// de la academia (ver `usuario-alumno.ts`) y su correo de bienvenida sale hacia
+// la persona encargada. Así los dos hermanos tienen cuentas separadas y la mamá
+// recibe las dos en su único correo.
 //
 // EL PERMISO NO SE COMPRUEBA A MANO
 // La fila de la respuesta se lee con un cliente que lleva el JWT de quien
@@ -34,6 +50,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { invitarConBienvenida } from "./invitacion-email.ts";
+import { esCorreoInterno, usuarioLibre } from "./usuario-alumno.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -88,14 +105,46 @@ Deno.serve(async (req) => {
   const encargadoEmail = (texto(body.encargado_email, 200) || "").toLowerCase();
   const encargadoNombre = texto(body.encargado_nombre, 120);
   const grupo = texto(body.grupo, 60);
+  const sinCorreo = body.sin_correo === true;
+  // El usuario se puede venir propuesto desde la pantalla (que lo enseña y deja
+  // corregirlo): cuál pedazo del nombre es el apellido se adivina, y quien da
+  // de alta tiene el nombre completo delante.
+  const usuarioPedido = texto(body.usuario, 60);
   const frecuencia = FRECUENCIAS.has(String(body.frecuencia)) ? String(body.frecuencia) : "semanal";
 
   if (!respuestaId) return json({ error: "Falta la respuesta del formulario" }, 400);
-  if (!CORREO.test(alumnoEmail)) {
+
+  // Un alumno sin correo propio no trae buzón: entra con un usuario y su correo
+  // sale hacia la casa. Entonces el de la persona encargada deja de ser
+  // opcional — sin él la cuenta quedaría creada y el enlace para poner la
+  // contraseña no llegaría a ninguna parte, que es una cuenta muda de las que
+  // nadie se entera hasta que el alumno no aparece.
+  if (sinCorreo) {
+    if (!alumnoNombre) {
+      return json({ error: "Para armarle un usuario hace falta el nombre del alumno" }, 400);
+    }
+    if (!CORREO.test(encargadoEmail)) {
+      return json({
+        error: "Sin correo propio, el de la persona encargada es obligatorio: " +
+               "es a donde va el enlace para crear la contraseña.",
+      }, 400);
+    }
+  } else if (!CORREO.test(alumnoEmail)) {
     return json({ error: "El correo del alumno no parece un correo" }, 400);
+  } else if (esCorreoInterno(alumnoEmail)) {
+    // Escribirlo a mano saltaría el desempate de usuarioLibre() y podría chocar
+    // con el de otro alumno; además el alta tiene que saber que no hay buzón.
+    return json({
+      error: "Ese es un usuario de la academia, no un correo. " +
+             "Para darle un usuario, marca «No tiene correo propio».",
+    }, 400);
   }
+
   if (encargadoEmail && !CORREO.test(encargadoEmail)) {
     return json({ error: "El correo de la persona encargada no parece un correo" }, 400);
+  }
+  if (esCorreoInterno(encargadoEmail)) {
+    return json({ error: "El correo de la persona encargada tiene que ser uno que reciba correo" }, 400);
   }
 
   // Quien usa el armador de formularios es quien coordina o quien administra.
@@ -117,17 +166,52 @@ Deno.serve(async (req) => {
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   // ---- 1. La cuenta del alumno ----
-  // Si ya existe con ese correo se reusa y NO se gasta cupo: apretar el botón
-  // dos veces no puede costar dos invitaciones.
-  const { data: yaEsta } = await adminClient
-    .from("profiles").select("id").ilike("email", alumnoEmail).maybeSingle();
-
-  let alumnoId = yaEsta?.id ?? null;
+  // SOLO se reusa la cuenta que ESTA MISMA respuesta ya creó: eso es apretar el
+  // botón dos veces, o reintentar un alta que falló a mitad de camino, y no
+  // tiene por qué costar otra invitación del cupo.
+  //
+  // Antes esto se decidía buscando el correo en profiles, y por ahí se colaba
+  // el caso de todos los días: dos hermanos pequeños con el único correo de la
+  // mamá. El segundo alta encontraba la cuenta del primero, la reusaba, y más
+  // abajo le escribía encima el nombre y el equipo — el primer hijo dejaba de
+  // existir, con su progreso adentro de la cuenta del otro, sin un solo error
+  // en pantalla.
+  let alumnoId: string | null = respuesta.cuenta_id ?? null;
   let restantes: number | null = null;
   let ilimitado = false;
   // Quien ya tenía cuenta no recibe correo: ya tiene su contraseña puesta.
   let correoEnviado = false;
+  let correoDestino: string | null = null;
   const yaTeniaCuenta = !!alumnoId;
+  // Con qué entra: su correo, o el usuario que se le arma acá abajo.
+  let usuarioFinal = alumnoEmail;
+
+  // Al reintentar, con qué entra esa cuenta hay que ir a buscarlo: un alumno
+  // sin buzón no manda ningún correo en el cuerpo, así que sin esto la pantalla
+  // enseñaría un usuario vacío — y el usuario es justamente el dato que la
+  // familia no puede adivinar.
+  if (alumnoId) {
+    const { data: yaEsta } = await adminClient
+      .from("profiles").select("email").eq("id", alumnoId).maybeSingle();
+    if (yaEsta?.email) usuarioFinal = yaEsta.email;
+  }
+
+  // Un correo que ya es de OTRA cuenta no se reusa ni se pisa: se dice, y se
+  // dice qué hacer. `auth.users` lo rechazaría igual, pero con un mensaje en
+  // inglés que no explica la salida.
+  if (!alumnoId && !sinCorreo) {
+    const { data: deOtro } = await adminClient
+      .from("profiles").select("id, full_name").ilike("email", alumnoEmail).maybeSingle();
+    if (deOtro) {
+      return json({
+        error: `Ese correo ya es de la cuenta de ${deOtro.full_name || alumnoEmail}. ` +
+               "Si son hermanos y comparten el correo de la casa, marca " +
+               "«No tiene correo propio»: se le arma un usuario aparte y el correo " +
+               "le sigue llegando a la misma dirección.",
+        correo_de_otra_cuenta: true,
+      }, 409);
+    }
+  }
 
   if (!alumnoId) {
     const { data: cupo, error: cupoError } = await adminClient
@@ -148,7 +232,31 @@ Deno.serve(async (req) => {
     restantes = cupo.ilimitado ? null : cupo.restantes;
     ilimitado = !!cupo.ilimitado;
 
-    const invitacion = await invitarConBienvenida(adminClient, alumnoEmail, alumnoNombre);
+    // Sin correo propio: se le arma un usuario libre. El que venga propuesto
+    // desde la pantalla se respeta, pero igual pasa por el desempate — entre
+    // que se propuso y que se apretó el botón pudo entrar otro alumno con ese
+    // mismo nombre, y dos cuentas con el mismo usuario es imposible.
+    if (sinCorreo) {
+      const tomado = async (correo: string) => {
+        const { data } = await adminClient
+          .from("profiles").select("id").ilike("email", correo).maybeSingle();
+        return !!data;
+      };
+      const usuario = await usuarioLibre(usuarioPedido || alumnoNombre, tomado);
+      if (!usuario) {
+        await adminClient.rpc("devolver_invitacion", { p_profesor: quienInvita });
+        return json({
+          error: "No se pudo armar un usuario con ese nombre. Escribe uno a mano.",
+        }, 400);
+      }
+      usuarioFinal = usuario;
+    }
+
+    const invitacion = await invitarConBienvenida(
+      adminClient, usuarioFinal, alumnoNombre,
+      // El alumno sin buzón recibe su bienvenida en la casa.
+      sinCorreo ? { destino: encargadoEmail, nombre: encargadoNombre } : null,
+    );
 
     if (invitacion.error || !invitacion.user) {
       // No se invitó a nadie: la invitación gastada se devuelve.
@@ -157,6 +265,7 @@ Deno.serve(async (req) => {
     }
     alumnoId = invitacion.user.id;
     correoEnviado = invitacion.correoEnviado;
+    correoDestino = invitacion.destino;
   }
 
   // ---- 2. El nombre y el equipo ----
@@ -212,7 +321,17 @@ Deno.serve(async (req) => {
   return json({
     ok: true,
     alumno_id: alumnoId,
-    email: alumnoEmail,
+    // Con qué entra el alumno de verdad: su correo, o el usuario que se le armó.
+    // La pantalla tiene que poder enseñárselo a quien dio de alta — si no, nadie
+    // sabe cuál es y la familia llama a preguntarlo.
+    email: usuarioFinal,
+    usuario: usuarioFinal,
+    // Se deduce de la cuenta que QUEDÓ, no de lo que pidió el cliente: en un
+    // reintento el cuerpo puede venir sin la marca y la cuenta ser igual de
+    // interna. La verdad es el correo que tiene la cuenta.
+    sin_correo: esCorreoInterno(usuarioFinal),
+    // A qué bandeja salió el correo: con un alumno sin buzón no es la suya.
+    correo_destino: correoDestino,
     ya_tenia_cuenta: yaTeniaCuenta,
     encargado_guardado: encargadoGuardado,
     // La cuenta pudo quedar creada y el correo no salir: se dice, en vez de

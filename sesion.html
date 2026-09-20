@@ -458,8 +458,43 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
                             <form id="create-student-form" class="space-y-3">
+                                <label for="student-name" class="sr-only">Nombre del alumno</label>
                                 <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <label for="student-email" class="sr-only">Correo del alumno</label>
                                 <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+
+                                <!-- Una familia con dos hijos pequeños tiene UN correo, y
+                                     no se puede repetir: es la llave con la que se inicia
+                                     sesión. En vez de pedirle un buzón al niño se le arma
+                                     un usuario, y el enlace sale hacia la casa. -->
+                                <label class="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" id="student-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
+                                    <span class="text-xs text-brand-600 dark:text-brand-300">
+                                        <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
+                                        — se le arma un usuario y el correo va a la casa.
+                                    </span>
+                                </label>
+
+                                <div id="student-casa" class="hidden space-y-3">
+                                    <div>
+                                        <label for="student-usuario" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Usuario con el que va a entrar</label>
+                                        <div class="flex items-center gap-1">
+                                            <input id="student-usuario" type="text" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <span id="student-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
+                                        </div>
+                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si hace falta.</p>
+                                    </div>
+                                    <div>
+                                        <label for="student-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
+                                        <input id="student-encargado-nombre" type="text" maxlength="120" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    </div>
+                                    <div>
+                                        <label for="student-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la casa</label>
+                                        <input id="student-encargado-correo" type="email" maxlength="200" placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.</p>
+                                    </div>
+                                </div>
+
                                 <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
                                 <p id="create-student-cupo" class="text-xs text-brand-450 dark:text-brand-350"></p>
                                 <p id="create-student-msg" class="text-xs"></p>
@@ -561,6 +596,7 @@
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 
     <script src="js/main.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script src="js/clase-elegida.js"></script>
     <script>
         const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
@@ -3477,6 +3513,46 @@
             } catch (e) { /* si no se puede leer, el servidor igual lo hace cumplir */ }
         }
 
+        /* Qué se ve y qué se pide según haya correo propio o no. El campo del
+           correo se apaga en vez de esconderse: así se ve que sigue ahí y que
+           lo que cambió es que ya no hace falta. */
+        function pintarModoAlumno() {
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const correo = document.getElementById("student-email");
+            const usuario = document.getElementById("student-usuario");
+            correo.disabled = sinCorreo;
+            correo.required = !sinCorreo;
+            correo.classList.toggle("opacity-50", sinCorreo);
+            document.getElementById("student-casa").classList.toggle("hidden", !sinCorreo);
+            document.getElementById("student-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+            // Se propone desde el nombre, pero lo escrito a mano no se pisa.
+            if (sinCorreo && !usuario.dataset.tocado) {
+                usuario.value = baseDeUsuarioEnPantalla(document.getElementById("student-name").value);
+            }
+        }
+
+        /* La misma regla que `baseDeUsuario()` de la Edge Function: primer
+           nombre y primer apellido, sin tildes. Acá solo PROPONE lo que se ve;
+           quien decide es el servidor, que además desempata si ya está tomado.
+           Que las dos coincidan lo comprueba verificar-alumno-sin-correo.js. */
+        function baseDeUsuarioEnPantalla(nombre) {
+            const pedazos = String(nombre || "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+                .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+            if (!pedazos.length) return "";
+            const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+            return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+        }
+
+        document.getElementById("student-sin-correo").addEventListener("change", pintarModoAlumno);
+        document.getElementById("student-name").addEventListener("input", () => {
+            if (!document.getElementById("student-usuario").dataset.tocado) pintarModoAlumno();
+        });
+        document.getElementById("student-usuario").addEventListener("input", (e) => {
+            e.target.dataset.tocado = "1";
+        });
+        pintarModoAlumno();
+
         document.getElementById("create-student-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const msg = document.getElementById("create-student-msg");
@@ -3486,6 +3562,22 @@
 
             const email = document.getElementById("student-email").value.trim();
             const full_name = document.getElementById("student-name").value.trim();
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const encargadoEmail = document.getElementById("student-encargado-correo").value.trim();
+            const encargadoNombre = document.getElementById("student-encargado-nombre").value.trim();
+            const usuario = document.getElementById("student-usuario").value.trim();
+
+            // Sin buzón propio, el correo de la casa es la ÚNICA forma de
+            // mandar el enlace: sin él la cuenta queda creada y muda.
+            if (sinCorreo && (!full_name || !encargadoEmail || !usuario)) {
+                msg.textContent = !full_name
+                    ? "Para armarle un usuario hace falta el nombre del alumno."
+                    : (!usuario ? "Falta el usuario con el que va a entrar."
+                                : "Falta el correo de la casa: es a donde va el enlace para crear la contraseña.");
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+                btn.disabled = false; btn.textContent = "Enviar invitación";
+                return;
+            }
 
             try {
                 const res = await fetch(EDGE_FUNCTION_URL, {
@@ -3495,19 +3587,42 @@
                         "Authorization": `Bearer ${session.access_token}`,
                         "apikey": window.SUPABASE_ANON_KEY,
                     },
-                    body: JSON.stringify({ email, full_name }),
+                    body: JSON.stringify({
+                        email: sinCorreo ? "" : email,
+                        full_name,
+                        sin_correo: sinCorreo,
+                        usuario: sinCorreo ? usuario : "",
+                        encargado_email: sinCorreo ? encargadoEmail : "",
+                        encargado_nombre: sinCorreo ? encargadoNombre : "",
+                    }),
                 });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error || "Error desconocido");
+                // Con qué entra lo dice el servidor: el usuario pudo salir con
+                // un número al final si ya estaba tomado.
+                const entra = result.usuario || result.email;
                 if (result.correo_enviado === false) {
-                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo NO salió. ` +
+                    msg.textContent = `La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
                         "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
                     msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                } else if (result.sin_correo) {
+                    // El usuario es el dato nuevo y hay que enseñarlo: no es un
+                    // correo y nadie lo adivina. Y el correo salió a la casa, no
+                    // al alumno — quien invitó tiene que poder decírselo.
+                    msg.textContent = `Listo: entra con ${entra}. El enlace para crear la contraseña salió a ` +
+                        `${result.correo_destino || encargadoEmail}, no al alumno — ese usuario no recibe correo.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
                 } else {
-                    msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
+                    msg.textContent = `Invitación enviada a ${entra}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
                     msg.className = "text-xs text-green-600 dark:text-green-400";
                 }
                 document.getElementById("create-student-form").reset();
+                // reset() limpia los campos pero no la marca de "lo escribí a
+                // mano" ni vuelve a pintar el modo: sin esto, la invitación
+                // siguiente arranca con los bloques abiertos de la anterior y
+                // el usuario del alumno de antes todavía escrito.
+                delete document.getElementById("student-usuario").dataset.tocado;
+                pintarModoAlumno();
                 // El servidor devuelve cuántas quedan: así el número de la pantalla
                 // es el que de verdad tiene la base, no una cuenta del navegador.
                 if (!result.ilimitado && typeof result.restantes === "number") {

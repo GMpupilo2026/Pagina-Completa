@@ -35,6 +35,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300 min-h-screen flex flex-col">
@@ -72,8 +73,11 @@
                      lector de pantalla al entrar al campo. -->
                 <form id="form-clave" class="space-y-4" novalidate>
                     <div>
-                        <label for="correo" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo</label>
-                        <input id="correo" type="email" readonly autocomplete="username"
+                        <label for="correo" id="correo-etiqueta" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo</label>
+                        <!-- type="text": un usuario de la academia no es un correo, y con
+                             type="email" el navegador lo pinta como inválido aunque esté
+                             bien. Sigue siendo readonly — es el dato con el que se entra. -->
+                        <input id="correo" type="text" readonly autocomplete="username"
                             class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">
                         <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Es con el que vas a iniciar sesión.</p>
                     </div>
@@ -105,7 +109,7 @@
             <div id="paso-listo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 md:p-8 text-center">
                 <p class="text-4xl mb-3" aria-hidden="true">✅</p>
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Tu contraseña quedó guardada</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">De aquí en adelante entras con tu correo y esta contraseña. Abajo te explicamos cómo, por si se te olvida.</p>
+                <p id="listo-como-entrar" class="text-sm text-brand-500 dark:text-brand-300 mb-5">De aquí en adelante entras con tu correo y esta contraseña. Abajo te explicamos cómo, por si se te olvida.</p>
                 <a href="clases.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg transition-colors">Entrar a la Academia →</a>
             </div>
 
@@ -120,10 +124,16 @@
 
                 <form id="form-otro" class="space-y-3">
                     <div>
-                        <label for="correo-otro" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo</label>
-                        <input id="correo-otro" type="email" required autocomplete="username"
+                        <label for="correo-otro" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo o usuario</label>
+                        <!-- type="text" por lo mismo que login.html: quien entra con
+                             usuario ("sofia.munoz") no escribe un correo, y el navegador
+                             lo rechazaría con su propio aviso antes de que la página
+                             pueda decir nada. El formulario ya va con novalidate. -->
+                        <input id="correo-otro" type="text" required autocomplete="username"
+                            autocapitalize="none" autocorrect="off" spellcheck="false"
                             class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
                             placeholder="tucorreo@ejemplo.com">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Si entras con un usuario, el enlace le llega al correo de tu casa.</p>
                     </div>
                     <p id="otro-msg" class="text-sm hidden" aria-live="polite"></p>
                     <button type="submit" id="pedir-otro" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Mandarme un enlace nuevo</button>
@@ -153,7 +163,7 @@
                     </li>
                     <li class="flex gap-3">
                         <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">3</span>
-                        <span>Escribe <strong class="text-brand-800 dark:text-white">tu correo</strong> y <strong class="text-brand-800 dark:text-white">la contraseña que acabas de crear</strong>. Eso es todo: no hay otro código ni otro paso.</span>
+                        <span>Escribe <strong id="paso-escribe-correo" class="text-brand-800 dark:text-white">tu correo</strong> y <strong class="text-brand-800 dark:text-white">la contraseña que acabas de crear</strong>. Eso es todo: no hay otro código ni otro paso.</span>
                     </li>
                     <li class="flex gap-3">
                         <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">4</span>
@@ -162,7 +172,7 @@
                 </ol>
 
                 <div class="mt-6 pt-5 border-t border-brand-100 dark:border-brand-800 space-y-2 text-sm text-brand-600 dark:text-brand-200">
-                    <p><strong class="text-brand-800 dark:text-white">¿Se te olvidó la contraseña?</strong> En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?» y te llega un correo para poner una nueva.</p>
+                    <p id="listo-olvido"><strong class="text-brand-800 dark:text-white">¿Se te olvidó la contraseña?</strong> En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?» y te llega un correo para poner una nueva.</p>
                     <p><strong class="text-brand-800 dark:text-white">Déjala instalada en el celular.</strong> Desde el panel de la Academia el celular te ofrece agregar Ajedrez Integral a la pantalla de inicio, y entras de un toque.</p>
                     <p><strong class="text-brand-800 dark:text-white">¿Algo no funciona?</strong> Escríbenos por WhatsApp al <a href="https://wa.me/50683092291" class="text-accent-700 dark:text-accent-400 underline">+506 8309-2291</a>.</p>
                 </div>
@@ -221,6 +231,31 @@
             if (h2) h2.textContent = "Tu contraseña nueva";
         }
 
+        /* Los alumnos sin correo propio entran con un usuario, así que donde la
+           página dice "tu correo" tiene que decir "tu usuario" — si no, los
+           cuatro pasos del ingreso le explican a un niño cómo entrar con algo
+           que no tiene. Se cambian las palabras y nada más: lo que hace la
+           página debajo es exactamente lo mismo. */
+        function ponerPalabraUsuario() {
+            const etiqueta = document.getElementById("correo-etiqueta");
+            if (etiqueta) etiqueta.textContent = "Tu usuario";
+            const paso = document.getElementById("paso-escribe-correo");
+            if (paso) paso.textContent = "tu usuario";
+            const entrar = document.getElementById("listo-como-entrar");
+            if (entrar) {
+                entrar.textContent =
+                    "De aquí en adelante entras con tu usuario y esta contraseña. " +
+                    "Abajo te explicamos cómo, por si se te olvida.";
+            }
+            const olvido = document.getElementById("listo-olvido");
+            if (olvido) {
+                olvido.innerHTML =
+                    '<strong class="text-brand-800 dark:text-white">¿Se te olvidó la contraseña?</strong> ' +
+                    "En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?», escribe tu " +
+                    "usuario y el enlace para poner una nueva le llega al correo de tu casa.";
+            }
+        }
+
         /* login.html manda aquí con ?recuperar=1 cuando alguien olvidó su
            contraseña: es el mismo formulario del enlace vencido, así que no se
            escribe dos veces — solo cambia lo que dice. */
@@ -257,7 +292,16 @@
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { mostrar("sinEnlace"); return; }
 
-            document.getElementById("correo").value = session.user.email || "";
+            /* Quien no tiene correo propio entra con un usuario, y la página
+               tiene que llamarlo por su nombre: enseñarle
+               "sofia.munoz@alumno.ajedrez-integral.com" debajo de la palabra
+               "Tu correo" es decirle que le escriban ahí, y ahí no llega nada.
+               Se le enseña el usuario pelado, que es lo que va a escribir. */
+            const entra = session.user.email || "";
+            const esUsuario = UsuarioAlumno.esInterno(entra);
+            document.getElementById("correo").value =
+                esUsuario ? UsuarioAlumno.soloUsuario(entra) : entra;
+            if (esUsuario) ponerPalabraUsuario();
             mostrar("crear");
             document.getElementById("clave").focus();
         })();
@@ -312,16 +356,41 @@
             e.preventDefault();
             const msg = document.getElementById("otro-msg");
             const btn = document.getElementById("pedir-otro");
-            const correo = document.getElementById("correo-otro").value.trim();
+            const correo = UsuarioAlumno.completar(document.getElementById("correo-otro").value);
 
             btn.disabled = true;
             btn.textContent = "Enviando…";
 
             /* Se responde lo mismo exista o no la cuenta: decir "ese correo no
-               está registrado" le contaría a cualquiera quién tiene cuenta. */
-            await sb.auth.resetPasswordForEmail(correo, {
-                redirectTo: window.location.origin + "/bienvenida.html",
-            });
+               está registrado" le contaría a cualquiera quién tiene cuenta.
+
+               DOS CAMINOS, PORQUE SON DOS COSAS DISTINTAS. Un correo de verdad
+               sigue por el de siempre, que está probado y no necesita nada más.
+               Un alumno con usuario de la academia no tiene buzón: mandarle el
+               enlace ahí sería mandarlo a la nada, y la pantalla diría igual
+               que salió — el niño se quedaría fuera para siempre sin que nadie
+               se entere. Para ese caso, `recuperar-acceso` lo manda a donde de
+               verdad se le puede escribir a esa familia. */
+            try {
+                if (UsuarioAlumno.esInterno(correo)) {
+                    await fetch(`${window.SUPABASE_URL}/functions/v1/recuperar-acceso`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "apikey": window.SUPABASE_ANON_KEY,
+                        },
+                        body: JSON.stringify({ usuario: correo }),
+                    });
+                } else {
+                    await sb.auth.resetPasswordForEmail(correo, {
+                        redirectTo: window.location.origin + "/bienvenida.html",
+                    });
+                }
+            } catch (_) {
+                /* Ni el fallo se cuenta: decir "esa cuenta no existe" y decir
+                   "algo falló" son dos respuestas distintas, y con dos
+                   respuestas distintas se puede averiguar quién tiene cuenta. */
+            }
 
             msg.textContent = "Si esa cuenta existe, ya salió un correo con el enlace nuevo. Revisa también la carpeta de spam.";
             msg.className = "text-sm text-green-600 dark:text-green-400";

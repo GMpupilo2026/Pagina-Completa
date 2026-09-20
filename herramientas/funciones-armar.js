@@ -34,8 +34,9 @@ const COMPARTIDO = path.join(RAIZ, "_compartido");
  * adivina leyendo los imports: si mañana una función importa algo que no está
  * declarado, es mejor que falle el armado a que se despliegue a medias. */
 const FUNCIONES = {
-  "create-student": ["invitacion-email.ts"],
-  "inscribir-alumno": ["invitacion-email.ts"],
+  "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
+  "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
+  "recuperar-acceso": ["usuario-alumno.ts"],
 };
 
 function armar(nombre) {
