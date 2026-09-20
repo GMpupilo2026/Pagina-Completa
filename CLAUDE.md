@@ -788,6 +788,72 @@ los dos** que se movieron. Sirve chess.js desde `node_modules`: sin él
 `PosicionValida.motivo()` revienta y el armador deja de validar — que es justo lo
 que la prueba viene a comprobar.
 
+### Los 53 planes de arranque
+
+`planes.html` nacía vacía, y una página vacía no se usa: el profesor entra, no
+ve nada y se vuelve a la forma de siempre. Los planes de arranque son **53
+clases listas para dar** —12 de finales, 5 de estrategia, 10 de apertura, 3 de
+celadas, 16 de táctica, 5 de mates con nombre y 3 de mates en 1, 2 y 3—, con 303
+renglones y 262 posiciones.
+
+**NINGUNA POSICIÓN SE INVENTA.** Todas salen de bancos que este repositorio ya
+verificó, y `herramientas/planes-semilla.js` es lo único que las arma:
+
+| de dónde | qué sale |
+|---|---|
+| `cursos/protegido/data/el-mapa-de-los-finales.json` | 240 diagramas, 12 capítulos |
+| `cursos/protegido/data/estrategia-en-el-final.json` | 6 diagramas |
+| `js/aperturas-lineas.js` | las 40 líneas |
+| `entreno/data/temas.json` | los ejercicios de Lichess |
+| `entreno/data/mates.json` | mate en 1, 2 y 3 |
+
+Inventar una posición es el error que este repositorio ya cometió una vez, con
+una «Lucena» que no era Lucena. Y cada FEN vuelve a pasar por la **misma**
+validación que hace la clase en vivo (`js/posicion-valida.js`) antes de entrar a
+un plan: enterarse al sembrar cuesta una corrección; enterarse en clase cuesta la
+clase.
+
+- **Qué temas de táctica se siembran es una decisión editorial ESCRITA**
+  (`TEMAS_QUE_SE_ENSENAN`), como `AREAS_DEL_CURSO` en los exámenes. `temas.json`
+  trae 79 temas y sembrarlos todos daría 79 planes; elegirlos por «el que tenga
+  más ejercicios» tampoco sirve, porque casi todos tienen 100 y tener muchos no
+  hace a un tema didáctico.
+- **La chuleta de cada renglón lleva la solución**, y eso está bien: el panel del
+  plan solo lo ve el profesor, como el PDF y la lección de curso. No hay ningún
+  lugar donde el alumno la lea.
+- **La chuleta de un final se arma con `jugadas[].san`, NO con el campo
+  `linea_es` del banco.** Ese campo es texto suelto y tiene capturas escritas sin
+  la x: en «Retrasando la captura» dice `Ra5` donde la jugada de verdad es
+  `Rxa5`. Como nunca fue más que texto, no falló nada en meses — pero puesto en
+  la chuleta es lo que el profesor lee en voz alta delante de la clase, y no se
+  puede jugar.
+- **Una celada que termina en mate se siembra UNA JUGADA ANTES**, con la chuleta
+  diciendo cuál remata. Dos razones: la posición final no tiene jugadas legales y
+  no entra al tablero de la clase, y sembrarla sería enseñarles el mate ya
+  puesto en vez de darles algo que encontrar.
+- Los planes llevan la marca `· AI` en el título, y el SQL que genera el script
+  los borra por ahí antes de sembrar: **se puede volver a correr sin duplicar** y
+  sin tocar los que el profesor armó a mano.
+- La salida (`herramientas/planes/`) **no se commitea**: se regenera con el
+  script. Lo que vive en el repositorio es cómo se arman.
+
+**Al tocar el generador o cualquiera de esos bancos, correr `node
+herramientas/planes-semilla.js && node
+herramientas/verificar-planes-semilla.js`** (necesita `npm install
+chess.js@0.10.3`; no hace falta navegador ni red). Comprueba las cuatro cosas que
+se rompen calladas: que ninguna posición sembrada la rechace la regla de la clase
+en vivo —corriendo **la del propio `js/posicion-valida.js`**, no una copia—, que
+**la solución escrita en cada chuleta se pueda jugar de verdad** (1.224 jugadas
+con chess.js), que lo que promete mate sea mate, y que cada posición de apertura
+salga de jugar su línea (o la de justo antes del mate, con su remate
+comprobado). Un plan vacío, repetido o con el orden con huecos también salta.
+
+**Hoy son del profesor que los tiene sembrados**, porque un plan es de quien lo
+escribió y no hay forma de compartirlo. Para que otro profesor los tenga hay que
+volver a sembrarlos con su `PROFESOR_ID`, que es la variable de entorno del
+script. Un «plan de la Academia» visible para todo el equipo docente sería otro
+cambio.
+
 ## La bitácora: lo que el profesor observa, donde lo observa
 
 Hasta ahora lo único que el profesor podía escribir de un alumno era
