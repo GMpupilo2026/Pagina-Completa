@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Crea tu contraseña — Ajedrez Integral</title>
+    <meta name="description" content="Crea tu contraseña de la Academia de Ajedrez Integral y aprende cómo entrar a la plataforma.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script>
+        /* El enlace del correo llega con el token —o con el error— en el hash
+           (#access_token=… / #error=…&error_code=otp_expired). El cliente de
+           Supabase lo procesa y LIMPIA el hash al arrancar, así que hay que
+           copiarlo antes de que eso pase: sin esto, un enlace vencido se vería
+           como "no hay sesión" a secas y la página no podría decir por qué. */
+        window.__entrada = { hash: window.location.hash || "", busqueda: window.location.search || "" };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300 min-h-screen flex flex-col">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header class="bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <span id="theme-icon" aria-hidden="true">☀️</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="flex-1 px-4 py-10">
+        <div class="w-full max-w-lg mx-auto">
+
+            <h1 id="titulo" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-2 text-center">¡Te damos la bienvenida!</h1>
+            <p id="subtitulo" class="text-brand-500 dark:text-brand-300 text-sm text-center mb-6">Ya casi estás dentro. Solo falta que elijas tu contraseña.</p>
+
+            <!-- ===== Mientras se comprueba el enlace ===== -->
+            <div id="paso-cargando" class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8 text-center">
+                <p class="text-sm text-brand-500 dark:text-brand-300">Comprobando tu enlace…</p>
+            </div>
+
+            <!-- ===== Crear la contraseña ===== -->
+            <div id="paso-crear" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Crea tu contraseña</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Con esta contraseña vas a entrar de aquí en adelante. Elígela tú: nadie más la ve, ni tu profesor.</p>
+
+                <!-- novalidate: si no, el navegador corta el envío con SU propio aviso
+                     —en su idioma, no en el de la página— y el de aquí abajo no
+                     sale nunca. required y minlength se quedan: los anuncia el
+                     lector de pantalla al entrar al campo. -->
+                <form id="form-clave" class="space-y-4" novalidate>
+                    <div>
+                        <label for="correo" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo</label>
+                        <input id="correo" type="email" readonly autocomplete="username"
+                            class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Es con el que vas a iniciar sesión.</p>
+                    </div>
+                    <div>
+                        <label for="clave" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Contraseña nueva</label>
+                        <input id="clave" type="password" required autocomplete="new-password" minlength="8"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="Al menos 8 caracteres">
+                    </div>
+                    <div>
+                        <label for="clave2" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Repite la contraseña</label>
+                        <input id="clave2" type="password" required autocomplete="new-password" minlength="8"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="La misma de arriba">
+                    </div>
+
+                    <!-- Poder verla es lo que evita el error más común: escribirla
+                         mal dos veces y no entender por qué no coincide. -->
+                    <button type="button" id="ver-clave" aria-pressed="false"
+                        class="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver la contraseña</button>
+
+                    <p id="clave-msg" class="text-sm text-red-600 dark:text-red-400 hidden" aria-live="polite"></p>
+
+                    <button type="submit" id="guardar-clave" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Guardar mi contraseña y entrar</button>
+                </form>
+            </div>
+
+            <!-- ===== Quedó lista ===== -->
+            <div id="paso-listo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 md:p-8 text-center">
+                <p class="text-4xl mb-3" aria-hidden="true">✅</p>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Tu contraseña quedó guardada</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">De aquí en adelante entras con tu correo y esta contraseña. Abajo te explicamos cómo, por si se te olvida.</p>
+                <a href="clases.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-lg transition-colors">Entrar a la Academia →</a>
+            </div>
+
+            <!-- ===== Pedir un enlace =====
+                 Sirve para los dos casos, que piden lo mismo: el enlace del
+                 correo ya no sirve, y "se me olvidó la contraseña" (a donde
+                 manda login.html con ?recuperar=1). El encabezado cambia; el
+                 formulario es el mismo, escrito una sola vez. -->
+            <div id="paso-sin-enlace" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 id="sin-enlace-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Este enlace ya no sirve</h2>
+                <p id="sin-enlace-motivo" class="text-sm text-brand-500 dark:text-brand-300 mb-4">Los enlaces del correo duran poco tiempo y se usan una sola vez. Escribe tu correo y te mandamos uno nuevo.</p>
+
+                <form id="form-otro" class="space-y-3">
+                    <div>
+                        <label for="correo-otro" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Tu correo</label>
+                        <input id="correo-otro" type="email" required autocomplete="username"
+                            class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <p id="otro-msg" class="text-sm hidden" aria-live="polite"></p>
+                    <button type="submit" id="pedir-otro" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Mandarme un enlace nuevo</button>
+                </form>
+
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4">
+                    ¿Ya tienes contraseña? <a href="login.html" class="underline hover:text-accent-500">Inicia sesión aquí</a>.
+                </p>
+            </div>
+
+            <!-- ===== Cómo se entra: va SIEMPRE, no solo al final =====
+                 Esto es la mitad del encargo, y la mitad que de verdad se
+                 olvida: quien acaba de poner su contraseña se va de la página
+                 y al día siguiente no sabe por dónde volver. Por eso está a la
+                 vista desde el primer momento, en vez de aparecer recién
+                 cuando la contraseña ya quedó guardada. -->
+            <section id="como-entrar" class="mt-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 md:p-8">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Cómo entras a la plataforma</h2>
+                <ol class="space-y-4 text-sm text-brand-600 dark:text-brand-200">
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">1</span>
+                        <span><strong class="text-brand-800 dark:text-white">Entra a <a href="https://ajedrez-integral.com" class="text-accent-700 dark:text-accent-400 underline">ajedrez-integral.com</a></strong> desde el celular o la computadora.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">2</span>
+                        <span>Toca <strong class="text-brand-800 dark:text-white">«Academia»</strong> en el menú de arriba.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">3</span>
+                        <span>Escribe <strong class="text-brand-800 dark:text-white">tu correo</strong> y <strong class="text-brand-800 dark:text-white">la contraseña que acabas de crear</strong>. Eso es todo: no hay otro código ni otro paso.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center" aria-hidden="true">4</span>
+                        <span>Ahí está tu panel: las clases en vivo, los cursos, el entrenamiento y tus tareas.</span>
+                    </li>
+                </ol>
+
+                <div class="mt-6 pt-5 border-t border-brand-100 dark:border-brand-800 space-y-2 text-sm text-brand-600 dark:text-brand-200">
+                    <p><strong class="text-brand-800 dark:text-white">¿Se te olvidó la contraseña?</strong> En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?» y te llega un correo para poner una nueva.</p>
+                    <p><strong class="text-brand-800 dark:text-white">Déjala instalada en el celular.</strong> Desde el panel de la Academia el celular te ofrece agregar Ajedrez Integral a la pantalla de inicio, y entras de un toque.</p>
+                    <p><strong class="text-brand-800 dark:text-white">¿Algo no funciona?</strong> Escríbenos por WhatsApp al <a href="https://wa.me/50683092291" class="text-accent-700 dark:text-accent-400 underline">+506 8309-2291</a>.</p>
+                </div>
+            </section>
+
+            <p class="text-center mt-6">
+                <a href="index.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">← Volver al inicio</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        const pasos = {
+            cargando: document.getElementById("paso-cargando"),
+            crear: document.getElementById("paso-crear"),
+            listo: document.getElementById("paso-listo"),
+            sinEnlace: document.getElementById("paso-sin-enlace"),
+        };
+
+        function mostrar(cual) {
+            for (const [nombre, el] of Object.entries(pasos)) {
+                el.classList.toggle("hidden", nombre !== cual);
+            }
+        }
+
+        /* El enlace del correo puede ser de dos clases y la página lo dice con
+           las palabras de cada una: una invitación es "crea tu contraseña" y una
+           recuperación es "elige una nueva". Lo que hace debajo es lo mismo. */
+        function claseDeEnlace() {
+            const entrada = window.__entrada || { hash: "", busqueda: "" };
+            const texto = entrada.hash + entrada.busqueda;
+            if (/type=recovery/.test(texto)) return "recuperacion";
+            return "invitacion";
+        }
+
+        function errorDelEnlace() {
+            const entrada = window.__entrada || { hash: "", busqueda: "" };
+            const p = new URLSearchParams((entrada.hash || "").replace(/^#/, ""));
+            const q = new URLSearchParams(entrada.busqueda || "");
+            const codigo = p.get("error_code") || q.get("error_code");
+            const descripcion = p.get("error_description") || q.get("error_description");
+            if (!codigo && !descripcion && !p.get("error") && !q.get("error")) return null;
+            if (codigo === "otp_expired") {
+                return "El enlace se venció. Los del correo duran poco tiempo y se usan una sola vez.";
+            }
+            return "El enlace no se pudo usar. Puede que ya lo hayas abierto antes o que se haya vencido.";
+        }
+
+        function tituloSegunClase() {
+            if (claseDeEnlace() !== "recuperacion") return;
+            document.getElementById("titulo").textContent = "Elige una contraseña nueva";
+            document.getElementById("subtitulo").textContent =
+                "Pon la contraseña con la que vas a entrar de ahora en adelante.";
+            const h2 = pasos.crear.querySelector("h2");
+            if (h2) h2.textContent = "Tu contraseña nueva";
+        }
+
+        /* login.html manda aquí con ?recuperar=1 cuando alguien olvidó su
+           contraseña: es el mismo formulario del enlace vencido, así que no se
+           escribe dos veces — solo cambia lo que dice. */
+        function vienePorOlvido() {
+            return new URLSearchParams(window.location.search).get("recuperar") === "1";
+        }
+
+        (async () => {
+            tituloSegunClase();
+
+            if (vienePorOlvido()) {
+                document.getElementById("titulo").textContent = "¿Olvidaste tu contraseña?";
+                document.getElementById("subtitulo").textContent =
+                    "Te mandamos un correo para que pongas una nueva.";
+                document.getElementById("sin-enlace-titulo").textContent = "Pide un enlace";
+                document.getElementById("sin-enlace-motivo").textContent =
+                    "Escribe el correo con el que entras a la Academia y te mandamos un enlace para poner una contraseña nueva.";
+                mostrar("sinEnlace");
+                document.getElementById("correo-otro").focus();
+                return;
+            }
+
+            const fallo = errorDelEnlace();
+            if (fallo) {
+                document.getElementById("sin-enlace-motivo").textContent =
+                    fallo + " Escribe tu correo y te mandamos uno nuevo.";
+                mostrar("sinEnlace");
+                return;
+            }
+
+            /* getSession() espera a que el cliente termine de procesar el enlace,
+               así que no hace falta ningún temporizador: o hay sesión o el enlace
+               no servía. */
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { mostrar("sinEnlace"); return; }
+
+            document.getElementById("correo").value = session.user.email || "";
+            mostrar("crear");
+            document.getElementById("clave").focus();
+        })();
+
+        // Ver la contraseña: los dos campos a la vez, porque el error que
+        // esto evita es justamente que no coincidan.
+        const verBtn = document.getElementById("ver-clave");
+        verBtn.addEventListener("click", () => {
+            const mostrando = verBtn.getAttribute("aria-pressed") === "true";
+            const tipo = mostrando ? "password" : "text";
+            document.getElementById("clave").type = tipo;
+            document.getElementById("clave2").type = tipo;
+            verBtn.setAttribute("aria-pressed", String(!mostrando));
+            verBtn.textContent = mostrando ? "Ver la contraseña" : "Ocultar la contraseña";
+        });
+
+        document.getElementById("form-clave").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("clave-msg");
+            const btn = document.getElementById("guardar-clave");
+            const clave = document.getElementById("clave").value;
+            const clave2 = document.getElementById("clave2").value;
+
+            const decir = (texto) => {
+                msg.textContent = texto;
+                msg.classList.remove("hidden");
+            };
+            msg.classList.add("hidden");
+
+            if (clave.length < 8) { decir("La contraseña debe tener al menos 8 caracteres."); return; }
+            if (clave !== clave2) { decir("Las dos contraseñas no son iguales. Revísalas."); return; }
+
+            btn.disabled = true;
+            btn.textContent = "Guardando…";
+
+            const { error } = await sb.auth.updateUser({ password: clave });
+
+            if (error) {
+                decir(error.message);
+                btn.disabled = false;
+                btn.textContent = "Guardar mi contraseña y entrar";
+                return;
+            }
+
+            mostrar("listo");
+            document.getElementById("titulo").textContent = "¡Listo!";
+            document.getElementById("subtitulo").textContent = "Ya puedes entrar a la Academia cuando quieras.";
+            document.getElementById("paso-listo").querySelector("a").focus();
+        });
+
+        document.getElementById("form-otro").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById("otro-msg");
+            const btn = document.getElementById("pedir-otro");
+            const correo = document.getElementById("correo-otro").value.trim();
+
+            btn.disabled = true;
+            btn.textContent = "Enviando…";
+
+            /* Se responde lo mismo exista o no la cuenta: decir "ese correo no
+               está registrado" le contaría a cualquiera quién tiene cuenta. */
+            await sb.auth.resetPasswordForEmail(correo, {
+                redirectTo: window.location.origin + "/bienvenida.html",
+            });
+
+            msg.textContent = "Si esa cuenta existe, ya salió un correo con el enlace nuevo. Revisa también la carpeta de spam.";
+            msg.className = "text-sm text-green-600 dark:text-green-400";
+            msg.classList.remove("hidden");
+            btn.disabled = false;
+            btn.textContent = "Mandarme un enlace nuevo";
+        });
+    </script>
+</body>
+</html>

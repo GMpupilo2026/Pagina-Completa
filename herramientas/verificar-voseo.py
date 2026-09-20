@@ -105,7 +105,7 @@ def es_futuro(b):
 BLANCA = set("""
 más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés
-demás porqué comité josé café caché también según razón bebé qué holandés
+demás porqué comité subcomité josé café caché también según razón bebé qué holandés
 aperturasmás
 elistá andrés valdés josué prevé noé
 empecé aprendí entendí tomé repasé jugué estudié
