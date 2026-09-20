@@ -28,6 +28,7 @@
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
+    <script src="js/evolucion-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -98,6 +99,18 @@
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <!-- Cómo viene EN EL TIEMPO, que es lo que las tarjetas de arriba no
+                 pueden decir: son totales acumulados y solo suben, así que un
+                 alumno que lleva un mes sin entrar se ve igual de bien que ayer.
+                 Va antes de la bitácora a propósito: primero se mira cómo viene
+                 y después se anota lo que se ve. Arranca oculto y solo se
+                 destapa si de verdad hay semanas con algo. -->
+            <div id="evolucion-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="evolucion-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📈 Cómo viene</h2>
+                <p id="evolucion-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Las últimas 12 semanas, para ver si sube o si se frenó.</p>
+                <div id="evolucion-body"></div>
             </div>
 
             <!-- La bitácora: lo que el profesor observa de este alumno.
@@ -515,6 +528,7 @@
             );
 
             renderCursosReport(entreno, true);
+            renderEvolucion(profile.id, true, "");
             renderDeberes(profile.id, true);
             renderNotasDelAlumno(profile.id);
             renderDiagnosticoAlumno(entreno, planCompartido);
@@ -619,6 +633,7 @@
             document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
+            document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
             document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
@@ -747,6 +762,7 @@
             );
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
+            renderEvolucion(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderAcceso(studentId, name);
@@ -833,6 +849,49 @@
            `notas_alumno`, no estas funciones. El profesor ve las que él escribió
            (un colega que comparta el alumno no las ve); el alumno, solo las que
            tienen compartida = true. */
+
+        /* "Cómo viene": la curva semanal y, si hizo el diagnóstico más de una
+           vez, en qué áreas mejoró. Lo pinta js/evolucion-alumno.js, que lo
+           comparten las dos vistas — escrito acá dentro, la del alumno y la del
+           profesor se irían separando a la primera corrección.
+
+           El bloque se esconde entero cuando no hay semanas con nada: un panel
+           que diga "todavía no hay datos" es ruido en todas las visitas menos
+           una, la misma decisión que la bitácora. */
+        async function renderEvolucion(studentId, propio, nombre) {
+            const panel = document.getElementById("evolucion-report");
+            document.getElementById("evolucion-title").textContent = propio ? "📈 Cómo vienes" : "📈 Cómo viene " + nombre;
+            document.getElementById("evolucion-sub").textContent = propio
+                ? "Tus últimas 12 semanas, para ver si vas subiendo o si te frenaste."
+                : "Las últimas 12 semanas. Las tarjetas de arriba son totales de siempre: solo suben, así que no dicen si se frenó.";
+            panel.classList.remove("hidden");
+
+            const comparacion = await comparacionDeDiagnosticos(studentId);
+            const semanas = await EvolucionAlumno.montar(sb, "evolucion-body", studentId, { propio, comparacion });
+            // Sin curva y sin dos diagnósticos no hay nada que mirar acá.
+            if (!semanas && !comparacion) panel.classList.add("hidden");
+        }
+
+        /* Los diagnósticos anteriores salen de `training_progress` y no del
+           espejo `training_state`: el espejo guarda SOLO el último, así que con
+           él no hay con qué comparar. Son pocas filas por alumno y la RLS ya
+           decide de quién se pueden pedir. */
+        async function comparacionDeDiagnosticos(studentId) {
+            const { data, error } = await sb.from("training_progress")
+                .select("created_at, detail")
+                .eq("student_id", studentId).eq("activity", "diagnostico")
+                .order("created_at", { ascending: false }).limit(5);
+            if (error || !data || data.length < 2) return "";
+            const ultimo = data[0], anterior = data[1];
+            // El resumen lo hace PlanEntrenamiento, que es quien sabe de áreas y
+            // porcentajes: una segunda cuenta acá podría decir otro nivel que el
+            // resto del informe. Sin el Elo, que no afecta a las áreas.
+            const lista = EvolucionAlumno.compararDiagnosticos(
+                PE.resumir(anterior.detail), PE.resumir(ultimo.detail));
+            return '<div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">'
+                + EvolucionAlumno.comparacionHTML(lista, fmtFecha(anterior.created_at), fmtFecha(ultimo.created_at))
+                + "</div>";
+        }
 
         function renderNotas(studentId) {
             document.getElementById("notas-report").classList.remove("hidden");
@@ -1393,7 +1452,7 @@
             if (e.declarado) {
                 return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ≈${e.estimado} · nivel calculado con ambos (≈${e.combinado}). ${e.lectura.texto}</p>`;
             }
-            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agregá tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
+            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agrega tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
         }
 
         // Elo del alumno, editable por su profesor o un administrador (función
