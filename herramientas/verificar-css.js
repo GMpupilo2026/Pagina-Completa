@@ -56,6 +56,13 @@ const SIN_ESTILO = new Set([
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "lesson-send-btn",
     "ficha-btn",
+    /* Los cuatro exámenes de arbitraje (arbitraje.html y nivel-de-arbitraje.html):
+       cada uno lleva su <span> con cuántas preguntas trae, y ese número NO se
+       escribe a mano — lo rellena el propio banco con `totalPara(techo)`, así
+       que la página no puede prometer 24 preguntas y armar otra cantidad. La
+       clase se arma concatenando (`'.total-' + n.clave`) sobre NIVELES_EXAMEN,
+       que es por lo que buscar el literal en el código no las encuentra. */
+    "total-completo", "total-nacional", "total-fide", "total-internacional",
     // Clases descriptivas del set SVG de piezas (js/chess-piece-svg.js): vienen
     // en el <g class="white king"> de cada pieza tal como las trae el arte
     // original — nadie las usa para dar estilo, solo identifican qué es cada

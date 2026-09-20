@@ -212,12 +212,22 @@ async function pruebaAlumna(browser) {
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
      de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
      versión que NO enseña las respuestas al terminar. */
-  igual("Evaluaciones: los dos diagnósticos abiertos y los exámenes todavía no",
+  /* Los "Exámenes · Próximamente" se fueron: un "próximamente" sin fecha deja
+     de leerse y ocupaba un lugar en la grilla. El día que existan, vuelve la
+     tarjeta. */
+  igual("Evaluaciones: los dos diagnósticos, y ninguna tarjeta apagada esperando",
     grupos[3].tiles.map((t) => [t.enlace, t.apagado]),
-    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false], [null, true]]);
+    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
+  /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
+     busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
+     destino repetido en el panel ya había dado problemas con "Torneos". */
   igual("Tu cuenta, en su orden",
     grupos[5].tiles.map((t) => t.etiqueta),
-    ["Informes", "Mis pagos", "Configuración", "Cerrar sesión"]);
+    ["Informes", "Mis pagos", "Configuración"]);
+  igual("«Cerrar sesión» no está dos veces: en el grid ya no",
+    grupos.flatMap((g) => g.tiles).filter((t) => /Cerrar sesión/.test(t.etiqueta2)).length, "0");
+  igual("y sigue estando en la cabecera, que es de donde no se movió",
+    await page.evaluate(() => !!document.getElementById("logout-btn")), "true");
 
   // Lo apagado, que es lo que se pidió: apagado para ELLA.
   const apagados = await page.evaluate(() =>
@@ -227,13 +237,13 @@ async function pruebaAlumna(browser) {
       tag: el.tagName,
       texto: el.textContent,
     })));
-  igual("a la alumna se le apagan los tres de mantenimiento, más los exámenes",
+  igual("a la alumna se le apagan los tres de mantenimiento, y nada más",
     apagados.map((a) => a.etiqueta).sort(),
-    ["Archivos", "Exámenes", "Lector de planilla", "Mis pagos"]);
+    ["Archivos", "Lector de planilla", "Mis pagos"]);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
   } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");
-  if (apagados.filter((a) => a.etiqueta !== "Exámenes").every((a) => /En mantenimiento/.test(a.texto))) {
+  if (apagados.every((a) => /En mantenimiento/.test(a.texto))) {
     bien("cada uno dice POR QUÉ está apagado, en la propia tarjeta");
   } else mal("un acceso apagado no dice por qué: un cuadro gris sin explicación se lee como una página rota");
 
@@ -251,13 +261,13 @@ async function pruebaProfesora(browser) {
      no dos, para no repetir el nombre en el panel. */
   igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
     grupos[3].tiles.map((t) => t.enlace),
-    ["entreno/diagnostico.html", "arbitraje.html", null]);
+    ["entreno/diagnostico.html", "arbitraje.html"]);
   igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
     grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
-  igual("a ella NO se le apaga nada por mantenimiento: lo sigue necesitando",
-    apagados, ["Exámenes"]);
+  igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
+    apagados, []);
   igual("las herramientas le quedan abiertas",
     grupos[4].tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
