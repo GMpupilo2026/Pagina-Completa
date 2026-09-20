@@ -781,6 +781,50 @@ Y `clave.correcta` se guarda como **texto**, no como número: en la base se
 compara con `->>'opcion'`, que también es texto. Un número contra un texto en
 jsonb da `false` siempre.
 
+### El tiempo: recomendado o a mano, pero siempre el que se enseñó
+
+El profesor elige entre **"Recomendado"** —lo calcula el sitio— y **"Lo elijo
+yo"**. El mínimo de un minuto por pregunta lo sigue haciendo cumplir
+`crear_examen()` en los dos casos.
+
+**No hay ninguna IA detrás de la recomendación, y no la habría aunque se
+quisiera**: este sitio no usa ningún modelo de lenguaje (la misma decisión que
+`js/reporte-textos.js`, que ordena pero no resume). Es
+`ExamenBanco.minutosRecomendados()`, una cuenta sobre lo que hay que HACER en
+cada pregunta: leer cuatro frases (60 s), leer además una posición (90 s),
+señalar una casilla (75 s) o calcular una jugada (120 s), estirado o encogido
+por la dificultad (×0,7 en peso 1, ×1,3 en peso 5). Una línea de apertura se
+mide por las jugadas que le tocan al alumno, a 30 s cada una — y **ahí no se
+multiplica por el peso**, porque el peso de una línea ya se calcula a partir de
+esa misma longitud en `deLinea()` y sería contar lo mismo dos veces.
+
+- **Que una pregunta de opción media dé justo 60 s no es casualidad ni se puede
+  bajar sin pensarlo**: es el mismo minuto por pregunta que exige el servidor.
+  La primera versión usaba bases más cortas y el mínimo tapaba el cálculo casi
+  siempre — el "recomendado" devolvía la cantidad de preguntas y nada más, o
+  sea que no recomendaba nada, y en pantalla se veía perfecto. Lo encontró el
+  verificador, no la vista.
+- **El `Math.max` contra el mínimo no es una precaución de adorno.** Sin él, un
+  examen de diez opciones fáciles recomendaría 7 minutos contra un mínimo de
+  10: el sitio le propondría al profesor un número que su propio servidor
+  rechaza. El verificador lo mide sobre más de 400 exámenes armados.
+
+**Y lo que se enseña es lo que se manda, en las dos mitades.** Las preguntas se
+sortean UNA vez, al cambiar cualquier parámetro del formulario (`prevision`), y
+son las mismas que viajan al apretar el botón. Antes se volvían a sortear al
+mandar, que es lo natural de escribir y deja el defecto de siempre: el número
+que el profesor leyó estaría calculado sobre unas preguntas y el examen
+llevaría otras. No falla nada y el tiempo simplemente no corresponde. Después
+de mandar, la previsión se tira, o poner el mismo examen al grupo de la mañana
+y al de la tarde mandaría exactamente las mismas preguntas.
+
+**El campo de minutos se ve SIEMPRE**, también en "Recomendado", y ahí va de
+solo lectura — no desactivado: un campo desactivado sale del recorrido del
+teclado y quien no ve la pantalla no se enteraría de cuánto dura el examen que
+está por mandar. Debajo va escrito de dónde salió el número ("18 min para estas
+12 preguntas (9 de opción, 3 con tablero). El mínimo es 12."), y en modo manual
+se sigue diciendo cuánto era lo recomendado.
+
 ### El antitrampa: dos avisos y al tercero se congela
 
 **Ninguna página web puede impedir que alguien cambie de pestaña** — eso solo
@@ -909,8 +953,12 @@ las páginas que no lo tenían.
 (con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
 Comprueba, sin navegador, que la clave siga apuntando a la respuesta correcta
 después de barajar (sobre 1.600 preguntas) y que lo visible no la filtre; y en
-un navegador de verdad, que el ejecutor no pinte ninguna respuesta, que mande
-la opción que se tocó, que no deje volver atrás, que el reloj salga de la hora
+un navegador de verdad, que el tiempo recomendado nunca quede por debajo del
+mínimo que exige el servidor (sobre más de 400 exámenes) y que de verdad mire
+las preguntas en vez de ser una constante disfrazada, que lo que se manda sean
+**el mismo tiempo y las mismas preguntas** que la pantalla tenía delante, que el
+ejecutor no pinte ninguna respuesta, que mande la opción que se tocó, que no
+deje volver atrás, que el reloj salga de la hora
 del SERVIDOR (se le corre la de la computadora una hora y la cuenta atrás no se
 mueve), que salir de la ventana se le cuente al servidor dos veces y a la
 tercera cierre, que el alumno vea nota y áreas pero no las preguntas, y que el
