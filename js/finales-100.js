@@ -169,6 +169,14 @@
     return out.join(" ") + (turn === "w" ? " Juegan blancas." : " Juegan negras.");
   }
 
+  /* La posición que el visor tiene AHORA en pantalla, publicada en el propio
+     elemento. Quien lo envuelve puede así ofrecer algo con ella sin volver a
+     leer el archivo de datos ni rehacer la cuenta de jugadas: sesion.html le
+     pone a cada diagrama un botón que la transmite al tablero de la clase en
+     vivo, y lo que transmite es lo que el profesor está viendo — la posición
+     inicial o la jugada de la línea a la que llegó, no siempre la primera. */
+  function publicarFen(el, fen) { el.dataset.fenActual = fen; }
+
   function makeViewer(el, d) {
     const startFen = d.fenInicio || d.fen;
     const moves = d.jugadas || [];
@@ -211,6 +219,7 @@
     }
     function renderView() {
       const fen = currentFen();
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, marks: state.ply === 0 ? d.marcas : [], last: lastSquares(), label: describe(fen) });
       descEl.textContent = describe(fen);
       plyEl.textContent = moves.length ? state.ply + "/" + moves.length : "";
@@ -282,6 +291,7 @@
     }
     function renderPractice(extra) {
       const fen = game.fen();
+      publicarFen(el, fen);
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       const h = game.history({ verbose: true }); const lm = h.length ? h[h.length - 1] : null;
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });

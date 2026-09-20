@@ -115,4 +115,13 @@
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".example-card[data-fen]").forEach(setupCard);
   });
+
+  // El diagrama en sí (tablero de 8x8, con el tamaño de pieza MEDIDO sobre la
+  // casilla ya renderizada) sirve fuera de los artículos: la vista previa de
+  // Táctica de sesion.html lo usa para enseñar la posición de un ejercicio antes
+  // de mandársela a la clase. Se exporta en vez de copiarlo allá — la copia que
+  // había ya se había separado de este original: dibujaba las piezas con un
+  // font-size fijo de 24px dentro de casillas de 22, así que se salían de su
+  // casilla, y no entendía el juego de piezas ilustrado.
+  window.ExampleBoard = { render: renderBoard, sizePieces: sizePieces };
 })();
