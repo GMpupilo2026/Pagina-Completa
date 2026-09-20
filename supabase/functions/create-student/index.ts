@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
   let body: {
     email?: string; full_name?: string;
     sin_correo?: boolean; encargado_email?: string; encargado_nombre?: string;
-    usuario?: string;
+    usuario?: string; grupo?: string; frecuencia?: string;
   };
   try {
     body = await req.json();
@@ -102,8 +102,11 @@ Deno.serve(async (req) => {
   const sinCorreo = body.sin_correo === true;
   const encargadoEmail = (body.encargado_email || "").trim().toLowerCase();
   const encargadoNombre = (body.encargado_nombre || "").trim() || null;
+  const grupo = (body.grupo || "").trim().slice(0, 60) || null;
   // La misma forma que exige el CHECK de encargados.email en la base.
   const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  const FRECUENCIAS = new Set(["diario", "semanal", "mensual", "anual"]);
+  const frecuencia = FRECUENCIAS.has(String(body.frecuencia)) ? String(body.frecuencia) : "semanal";
 
   if (sinCorreo) {
     // Sin buzón propio, el de la casa NO es opcional: es a donde va el enlace
@@ -118,9 +121,6 @@ Deno.serve(async (req) => {
                "es a donde llega el enlace para crear la contraseña.",
       }, 400);
     }
-    if (esCorreoInterno(encargadoEmail)) {
-      return json({ error: "El correo de la casa tiene que ser uno que reciba correo" }, 400);
-    }
   } else {
     if (!email) {
       return json({ error: "email es requerido" }, 400);
@@ -133,6 +133,17 @@ Deno.serve(async (req) => {
                "Para darle un usuario, marca «No tiene correo propio».",
       }, 400);
     }
+  }
+
+  // El correo de la persona encargada, cuando viene, tiene que servir para
+  // avisarle de verdad — sin correo propio ya se validó arriba como
+  // obligatorio; acá se valida el mismo formato para cuando viene puesto
+  // aparte, igual que ya hace inscribir-alumno.
+  if (encargadoEmail && !CORREO.test(encargadoEmail)) {
+    return json({ error: "El correo de la persona encargada no parece un correo" }, 400);
+  }
+  if (encargadoEmail && esCorreoInterno(encargadoEmail)) {
+    return json({ error: "El correo de la persona encargada tiene que ser uno que reciba correo" }, 400);
   }
 
   // Cliente admin (service role) para gastar el cupo e invitar al usuario.
@@ -189,8 +200,13 @@ Deno.serve(async (req) => {
     return json({ error: invitacion.error ?? "No se pudo invitar al alumno" }, 400);
   }
 
-  if (full_name) {
-    await adminClient.from("profiles").update({ full_name }).eq("id", invitacion.user.id);
+  // Solo se escribe lo que vino: no invitar con un grupo no le borra el que ya
+  // tuviera. role, email, is_admin y compañía no se tocan acá.
+  const cambiosPerfil: Record<string, string> = {};
+  if (full_name) cambiosPerfil.full_name = full_name;
+  if (grupo) cambiosPerfil.grupo = grupo;
+  if (Object.keys(cambiosPerfil).length) {
+    await adminClient.from("profiles").update(cambiosPerfil).eq("id", invitacion.user.id);
   }
   // Queda asignado a quien lo invitó. El profesor principal lo pone solo el
   // trigger de profile_teachers.
@@ -199,21 +215,24 @@ Deno.serve(async (req) => {
             { onConflict: "student_id,teacher_id" });
 
   // Con un alumno sin buzón, la persona encargada no es un extra: es la ÚNICA
-  // forma de escribirle a esa familia. Queda apuntada acá mismo y no en una
-  // segunda llamada del navegador — partido en dos, si la segunda mitad falla
-  // queda una cuenta a la que nunca se le puede escribir, y eso no da ningún
-  // error. Es la misma decisión que ya toma inscribir-alumno.
+  // forma de escribirle a esa familia, y ya se validó arriba como obligatoria.
+  // Con un alumno que sí tiene correo propio, apuntar a la persona encargada
+  // es opcional, pero si se manda queda guardada de una vez — es la misma
+  // función que después usa "Informes a la casa", así que no hace falta una
+  // segunda vuelta a esa pantalla solo para dejarla apuntada. Es la misma
+  // decisión que ya toma inscribir-alumno.
   let encargadoGuardado = false;
-  if (sinCorreo) {
+  if (encargadoEmail) {
     const { error: encargadoError } = await adminClient.from("encargados")
       .upsert({
         student_id: invitacion.user.id, nombre: encargadoNombre, email: encargadoEmail,
-        frecuencia: "semanal", activo: true, creado_por: userData.user.id,
+        frecuencia, activo: true, creado_por: userData.user.id,
       }, { onConflict: "student_id,email" });
     if (encargadoError) {
       return json({
         error: "La cuenta quedó creada, pero no se pudo apuntar el correo de la casa: " +
-          encargadoError.message + " — sin eso no hay forma de escribirle a esta familia.",
+          encargadoError.message +
+          (sinCorreo ? " — sin eso no hay forma de escribirle a esta familia." : ""),
         user_id: invitacion.user.id, usuario: usuarioFinal,
       }, 500);
     }

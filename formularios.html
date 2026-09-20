@@ -48,7 +48,13 @@
                     <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">📋 Formularios de inscripción</h1>
                     <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mt-1">Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas en Excel.</p>
                 </div>
-                <button type="button" id="nuevo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Formulario nuevo</button>
+                <div class="flex flex-wrap gap-2">
+                    <!-- Crear una cuenta sin pasar por un formulario: el mismo diálogo de
+                         "Crear cuenta" de una respuesta, solo que en blanco. Es para el
+                         alumno que se inscribe por WhatsApp o en persona, no por el enlace. -->
+                    <button type="button" id="alumno-nuevo-btn" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Alumno nuevo</button>
+                    <button type="button" id="nuevo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Formulario nuevo</button>
+                </div>
             </div>
 
             <!-- ============ Lista ============ -->
@@ -445,6 +451,7 @@ function mostrar(cual) {
         document.getElementById(v).classList.toggle("hidden", v !== cual);
     });
     document.getElementById("nuevo-btn").classList.toggle("hidden", cual !== "vista-lista");
+    document.getElementById("alumno-nuevo-btn").classList.toggle("hidden", cual !== "vista-lista");
 }
 
 async function guardar() {
@@ -670,11 +677,19 @@ function celdaCuenta(r) {
 // ------------------------------------------------------------------ dar de alta
 let altaRespuesta = null;
 let altaVolverEl = null;
+// Cierto cuando el diálogo se abrió con "＋ Alumno nuevo" y no con el botón
+// "Crear cuenta" de una respuesta: no hay `formulario_respuestas` de la que
+// partir, así que se manda a create-student (la misma que usa la invitación
+// directa desde la clase en vivo) en vez de a inscribir-alumno, que exige un
+// respuesta_id.
+let altaManual = false;
 
 function abrirAlta(r, boton) {
     const { formulario: f, papeles } = respuestasActuales;
     altaRespuesta = r;
+    altaManual = false;
     altaVolverEl = boton || null;
+    document.getElementById("alta-titulo").textContent = "Crear la cuenta del alumno";
     const dato = (papel) => {
         const id = papeles[papel];
         return id ? valorLegible(r.respuestas[id]) : "";
@@ -706,6 +721,35 @@ function abrirAlta(r, boton) {
     document.getElementById("alta-enviar").disabled = false;
     document.getElementById("alta-fondo").classList.remove("hidden");
     document.getElementById("alta-alumno-correo").focus();
+}
+
+/* La misma caja, en blanco: para el alumno que se inscribe por WhatsApp o en
+   persona, sin pasar por el enlace del formulario. Manda a create-student
+   (ver enviarAlta) en vez de inscribir-alumno. */
+function abrirAltaManual() {
+    altaRespuesta = null;
+    altaManual = true;
+    altaVolverEl = document.getElementById("alumno-nuevo-btn");
+    document.getElementById("alta-titulo").textContent = "Crear una cuenta de alumno";
+    document.getElementById("alta-alumno-nombre").value = "";
+    document.getElementById("alta-alumno-correo").value = "";
+    document.getElementById("alta-encargado-nombre").value = "";
+    document.getElementById("alta-encargado-correo").value = "";
+    document.getElementById("alta-frecuencia").value = "semanal";
+    document.getElementById("alta-grupo").value = "";
+
+    const campoUsuario = document.getElementById("alta-usuario");
+    delete campoUsuario.dataset.tocado;
+    campoUsuario.value = "";
+    document.getElementById("alta-sin-correo").checked = false;
+    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+    pintarModoAlta();
+    const msg = document.getElementById("alta-msg");
+    msg.textContent = "";
+    msg.className = "text-sm mt-4";
+    document.getElementById("alta-enviar").disabled = false;
+    document.getElementById("alta-fondo").classList.remove("hidden");
+    document.getElementById("alta-alumno-nombre").focus();
 }
 
 /* Qué se ve y qué se pide según haya correo propio o no. Es UNA sola función
@@ -752,6 +796,7 @@ function baseDeUsuarioEnPantalla(nombre) {
 function cerrarAlta() {
     document.getElementById("alta-fondo").classList.add("hidden");
     altaRespuesta = null;
+    altaManual = false;
     // El foco vuelve al botón que abrió esto: si no, se queda dentro de algo
     // que ya no está en pantalla.
     if (altaVolverEl && document.body.contains(altaVolverEl)) altaVolverEl.focus();
@@ -759,22 +804,42 @@ function cerrarAlta() {
 }
 
 async function enviarAlta() {
-    if (!altaRespuesta) return;
+    if (!altaRespuesta && !altaManual) return;
     const btn = document.getElementById("alta-enviar");
     const msg = document.getElementById("alta-msg");
     const v = (id) => document.getElementById(id).value.trim();
 
     const sinCorreo = document.getElementById("alta-sin-correo").checked;
-    const cuerpo = {
-        respuesta_id: altaRespuesta.id,
-        alumno_nombre: v("alta-alumno-nombre"),
-        alumno_email: sinCorreo ? "" : v("alta-alumno-correo"),
+    const alumnoNombre = v("alta-alumno-nombre");
+    const alumnoCorreo = sinCorreo ? "" : v("alta-alumno-correo");
+    const usuario = sinCorreo ? v("alta-usuario") : "";
+    const encargadoNombre = v("alta-encargado-nombre");
+    const encargadoCorreo = v("alta-encargado-correo");
+    const frecuencia = document.getElementById("alta-frecuencia").value;
+    const grupo = v("alta-grupo");
+
+    // Las dos puertas —"Crear cuenta" de una respuesta e "＋ Alumno nuevo"—
+    // validan y avisan igual; lo único que cambia es a qué función se manda
+    // y con qué nombres de campo la espera cada una.
+    const cuerpo = altaManual ? {
+        email: alumnoCorreo,
+        full_name: alumnoNombre,
         sin_correo: sinCorreo,
-        usuario: sinCorreo ? v("alta-usuario") : "",
-        encargado_nombre: v("alta-encargado-nombre"),
-        encargado_email: v("alta-encargado-correo"),
-        frecuencia: document.getElementById("alta-frecuencia").value,
-        grupo: v("alta-grupo"),
+        usuario,
+        encargado_nombre: encargadoNombre,
+        encargado_email: encargadoCorreo,
+        frecuencia,
+        grupo,
+    } : {
+        respuesta_id: altaRespuesta.id,
+        alumno_nombre: alumnoNombre,
+        alumno_email: alumnoCorreo,
+        sin_correo: sinCorreo,
+        usuario,
+        encargado_nombre: encargadoNombre,
+        encargado_email: encargadoCorreo,
+        frecuencia,
+        grupo,
     };
 
     const fallar = (texto, campo) => {
@@ -787,16 +852,16 @@ async function enviarAlta() {
         // Sin buzón propio, el de la casa es la ÚNICA forma de mandarle el
         // enlace: sin él la cuenta queda creada y muda, y de eso nadie se
         // entera hasta que el alumno nunca aparece.
-        if (!cuerpo.alumno_nombre) {
+        if (!alumnoNombre) {
             return fallar("Para armarle un usuario hace falta el nombre del alumno.", "alta-alumno-nombre");
         }
-        if (!cuerpo.encargado_email) {
+        if (!encargadoCorreo) {
             return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña.", "alta-encargado-correo");
         }
-        if (!cuerpo.usuario) {
+        if (!usuario) {
             return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
         }
-    } else if (!cuerpo.alumno_email) {
+    } else if (!alumnoCorreo) {
         return fallar("Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio».", "alta-alumno-correo");
     }
 
@@ -804,7 +869,8 @@ async function enviarAlta() {
     msg.textContent = "Creando la cuenta…";
     msg.className = "text-sm mt-4 text-brand-500 dark:text-brand-300";
     try {
-        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/inscribir-alumno`, {
+        const funcion = altaManual ? "create-student" : "inscribir-alumno";
+        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/${funcion}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -817,10 +883,14 @@ async function enviarAlta() {
         if (!res.ok || !out.ok) throw new Error(out.error || "No se pudo crear la cuenta");
 
         // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
-        // tenía cuenta no salió ninguna invitación, y conviene saberlo.
-        altaRespuesta.cuenta_id = out.alumno_id;
-        altaRespuesta.cuenta_creada_at = new Date().toISOString();
-        pintarRespuestas();
+        // tenía cuenta no salió ninguna invitación, y conviene saberlo. Solo
+        // aplica a una respuesta de formulario: "＋ Alumno nuevo" siempre crea
+        // una cuenta nueva, y no hay fila de respuesta que marcar.
+        if (!altaManual) {
+            altaRespuesta.cuenta_id = out.alumno_id;
+            altaRespuesta.cuenta_creada_at = new Date().toISOString();
+            pintarRespuestas();
+        }
         cerrarAlta();
         const encargado = out.encargado_guardado
             ? " La persona encargada quedó apuntada para los informes a la casa." : "";
@@ -841,8 +911,8 @@ async function enviarAlta() {
             // El dato nuevo es el usuario, y hay que enseñarlo: no es un correo
             // y nadie lo adivina. El correo salió hacia la casa, no hacia el
             // alumno, y quien da de alta tiene que saberlo para poder decírselo.
-            alert(`Listo. ${cuerpo.alumno_nombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
-                  `El enlace para crear la contraseña salió a ${out.correo_destino || cuerpo.encargado_email}, ` +
+            alert(`Listo. ${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
+                  `El enlace para crear la contraseña salió a ${out.correo_destino || encargadoCorreo}, ` +
                   `no al alumno — ese usuario no recibe correo.${encargado}`);
         } else {
             alert(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
@@ -890,6 +960,7 @@ function bajarCsv() {
 
 // ------------------------------------------------------------------ arranque
 document.getElementById("nuevo-btn").addEventListener("click", () => abrirEditor(null));
+document.getElementById("alumno-nuevo-btn").addEventListener("click", abrirAltaManual);
 document.getElementById("volver-btn").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);

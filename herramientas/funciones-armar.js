@@ -36,7 +36,8 @@ const COMPARTIDO = path.join(RAIZ, "_compartido");
 const FUNCIONES = {
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
-  "recuperar-acceso": ["usuario-alumno.ts"],
+  "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
+  "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   // No comparte nada: su examen-html.ts es suyo y vive en su carpeta.
   "informe-examen": [],
 };

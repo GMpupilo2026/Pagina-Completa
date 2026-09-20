@@ -27,12 +27,12 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { DOMINIO_ALUMNO, esCorreoInterno } from "./usuario-alumno.ts";
+import { cuerpoRecuperacion } from "./recuperacion-email.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SITE_URL = "https://ajedrez-integral.com";
 const DESTINO = `${SITE_URL}/bienvenida.html`;
-const WHATSAPP = "https://wa.me/50683092291";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": SITE_URL,
@@ -49,12 +49,6 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-function escapar(texto: string) {
-  return texto
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 Deno.serve(async (req) => {
@@ -135,58 +129,11 @@ async function mandar(
         from,
         to: [destino],
         subject: "Una contraseña nueva para entrar a Ajedrez Integral",
-        html: cuerpo(enlace, usuario, nombre),
+        html: cuerpoRecuperacion(enlace, usuario, nombre),
       }),
     });
     if (!res.ok) console.error("Resend rechazó el enlace de recuperación:", res.status, await res.text());
   } catch (err) {
     console.error("Error mandando el enlace de recuperación:", err);
   }
-}
-
-/* Los estilos van a mano en cada etiqueta: Gmail descarta el <style> del
-   <head>. Misma decisión que invitacion-email.ts e informe-html.ts. */
-function cuerpo(enlace: string, usuario: string, nombre?: string | null) {
-  const alumno = nombre ? nombre.trim().split(/\s+/)[0] : "";
-  const deQuien = alumno ? `de ${escapar(alumno)}` : "de tu hijo o hija";
-  const u = escapar(usuario);
-
-  return (
-    `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#334e68;">` +
-
-    `<h1 style="font-size:22px;color:#102a43;margin:0 0 6px;">Una contraseña nueva</h1>` +
-    `<p style="font-size:16px;line-height:1.6;margin:0 0 18px;">` +
-    `Pidieron una contraseña nueva para la cuenta ${deQuien} en la ` +
-    `<strong>Academia de Ajedrez Integral</strong>. Te la mandamos a ti porque ese usuario ` +
-    `no recibe correo.</p>` +
-
-    `<table role="presentation" cellpadding="0" cellspacing="0" ` +
-    `style="width:100%;background:#f0f4f8;border-radius:10px;margin:0 0 18px;">` +
-    `<tr><td style="padding:16px 18px;">` +
-    `<p style="font-size:13px;color:#627d98;margin:0 0 4px;">El usuario sigue siendo:</p>` +
-    `<p style="font-size:19px;color:#102a43;font-weight:bold;margin:0;word-break:break-all;">${u}</p>` +
-    `</td></tr></table>` +
-
-    `<p style="margin:0 0 8px;">` +
-    `<a href="${enlace}" style="display:inline-block;background:#f0b429;color:#102a43;` +
-    `font-weight:bold;font-size:16px;text-decoration:none;padding:14px 26px;border-radius:10px;">` +
-    `Poner una contraseña nueva</a></p>` +
-    `<p style="font-size:13px;color:#627d98;margin:0 0 22px;">` +
-    `El enlace se usa una sola vez y dura poco, así que conviene abrirlo hoy mismo. ` +
-    `Si se vence, puedes pedir otro desde la misma pantalla de acceso.</p>` +
-
-    `<p style="font-size:14px;line-height:1.6;margin:0 0 18px;">` +
-    `<strong style="color:#102a43;">¿No fuiste tú?</strong> ` +
-    `Entonces no hay nada que hacer: mientras nadie abra ese enlace, la contraseña de antes ` +
-    `sigue funcionando igual.</p>` +
-
-    `<p style="font-size:14px;line-height:1.6;margin:0 0 6px;">` +
-    `Cualquier duda, escríbenos por WhatsApp al ` +
-    `<a href="${WHATSAPP}" style="color:#b44d12;">+506 8309-2291</a>.</p>` +
-
-    `<p style="font-size:12px;color:#829ab1;margin:22px 0 0;border-top:1px solid #d9e2ec;padding-top:12px;">` +
-    `Academia de Ajedrez Integral · Oscar Angulo Cubero</p>` +
-
-    `</div>`
-  );
 }
