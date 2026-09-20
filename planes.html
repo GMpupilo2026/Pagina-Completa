@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Planes de clase — Ajedrez Integral</title>
+    <meta name="description" content="El profesor prepara la clase antes de darla: las posiciones, las lecciones y sus notas, en orden.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/posicion-valida.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">📋 Planes de clase</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Prepara la clase antes de darla. En la sesión en vivo cada renglón trae su botón para mandarlo al tablero, y el mismo plan se vuelve a dar con otro grupo.</p>
+
+            <!-- Quien no da clase no tiene nada que hacer acá. La base lo impide
+                 igual (no puede insertar un plan); esto solo evita enseñarle una
+                 página que no le sirve. -->
+            <div id="sin-permiso" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-brand-500 dark:text-brand-300">Los planes de clase son para quien da clase. Si crees que deberías verlos, pídele a la persona administradora que revise tu cuenta.</p>
+            </div>
+
+            <div id="cuerpo" class="hidden grid gap-6 lg:grid-cols-[20rem_1fr] items-start">
+                <!-- Los planes que ya tiene -->
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus planes</h2>
+                    <ul id="lista-planes" class="grid gap-1.5 mb-4"></ul>
+                    <p id="sin-planes" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Todavía no has armado ninguno.</p>
+                    <form id="form-plan" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-2">
+                        <label for="p-titulo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Plan nuevo</label>
+                        <input id="p-titulo" type="text" maxlength="200" required placeholder="Ej. Finales de rey y peón" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear</button>
+                        <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <!-- El plan abierto -->
+                <section id="detalle" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <div class="flex items-start justify-between gap-3 flex-wrap mb-1">
+                        <h2 id="detalle-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" id="duplicar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" title="Copiarlo entero para darlo a otro grupo">⧉ Duplicar</button>
+                            <button type="button" id="borrar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar plan</button>
+                        </div>
+                    </div>
+                    <label for="p-notas" class="sr-only">Notas del plan</label>
+                    <textarea id="p-notas" rows="2" maxlength="4000" placeholder="Cómo quieres dar esta clase (solo lo ves tú)." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm mb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                    <p id="detalle-msg" class="text-xs text-brand-500 dark:text-brand-300 mb-4" aria-live="polite"></p>
+
+                    <h3 class="font-semibold text-brand-700 dark:text-brand-200 mb-2">Qué vas a dar, en orden</h3>
+                    <ol id="lista-items" class="grid gap-2 mb-4"></ol>
+                    <p id="sin-items" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Este plan todavía está vacío. Agrega la primera posición abajo.</p>
+
+                    <form id="form-item" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-3">
+                        <div class="grid gap-3 sm:grid-cols-[10rem_1fr]">
+                            <div>
+                                <label for="i-tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué es</label>
+                                <select id="i-tipo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            </div>
+                            <div>
+                                <label for="i-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo lo llamas</label>
+                                <input id="i-titulo" type="text" maxlength="200" required placeholder="Ej. La oposición" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <p id="i-ayuda" class="text-xs text-brand-450 dark:text-brand-350"></p>
+
+                        <div id="campo-posicion" class="grid gap-3">
+                            <div>
+                                <label for="i-fen" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Posición (FEN)</label>
+                                <input id="i-fen" type="text" maxlength="120" placeholder="8/8/8/4k3/8/4K3/4P3/8 w - - 0 1" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">La copias del editor de la clase en vivo, o de donde la tengas.</p>
+                            </div>
+                            <div>
+                                <label for="i-pregunta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Pregunta <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                                <input id="i-pregunta" type="text" maxlength="500" placeholder="Ej. ¿Cómo gana el blanco?" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Te la recuerda en la clase y el renglón trae el botón para abrir la pregunta en el tablero. El enunciado se lo dices tú: los alumnos contestan moviendo, como en Táctica.</p>
+                            </div>
+                        </div>
+
+                        <div id="campo-leccion" class="hidden grid gap-3 sm:grid-cols-[1fr_8rem]">
+                            <div>
+                                <label for="i-curso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Curso</label>
+                                <select id="i-curso" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            </div>
+                            <div>
+                                <label for="i-leccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lección n.º</label>
+                                <input id="i-leccion" type="number" min="1" max="200" value="1" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+
+                        <div id="campo-nota" class="hidden">
+                            <label for="i-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tu nota</label>
+                            <textarea id="i-nota" rows="2" maxlength="2000" placeholder="Ej. No pasar de aquí si no entendieron la oposición." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar al plan</button>
+                            <p id="item-msg" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+/* El armador de planes de clase.
+ *
+ * Lo que se arma acá se da en `sesion.html`: cada renglón lleva su botón para
+ * mandarlo al tablero. Por eso la POSICIÓN se valida al guardarla y no al
+ * usarla — con la misma función que usa la clase en vivo
+ * (`js/posicion-valida.js`): una posición rota guardada en el plan no da ningún
+ * error hasta que el profesor la manda al tablero, delante de todos.
+ */
+let session = null, profile = null, planes = [], planAbierto = null, items = [];
+
+const $ = (id) => document.getElementById(id);
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { window.location.href = "login.html"; return; }
+    const { data: perfil } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    if (!perfil) { $("loading").textContent = "No se pudo cargar tu perfil."; return; }
+    profile = perfil;
+
+    $("loading").classList.add("hidden");
+    $("app").classList.remove("hidden");
+
+    // Como en el resto del sitio, is_admin va con los profesores.
+    if (!(profile.role === "profesor" || profile.is_admin === true)) {
+        $("sin-permiso").classList.remove("hidden");
+        return;
+    }
+    $("cuerpo").classList.remove("hidden");
+
+    PlanClase.TIPOS.forEach((t) => {
+        const o = document.createElement("option");
+        o.value = t.id;
+        o.textContent = t.icono + " " + t.etiqueta;
+        $("i-tipo").appendChild(o);
+    });
+    $("i-tipo").addEventListener("change", pintarCamposDelTipo);
+    pintarCamposDelTipo();
+    await cargarCursos();
+
+    $("form-plan").addEventListener("submit", crearPlan);
+    $("form-item").addEventListener("submit", agregarItem);
+    $("duplicar-plan").addEventListener("click", duplicar);
+    $("borrar-plan").addEventListener("click", borrarPlan);
+    // Las notas del plan se guardan al salir del campo, no con un botón: es un
+    // campo que se toca de pasada mientras se arma el resto.
+    $("p-notas").addEventListener("blur", guardarNotas);
+
+    await cargarPlanes();
+}
+
+/* Los cursos salen del mismo catálogo que las tarjetas de cursos.html, para no
+   tener una segunda lista que se vaya quedando vieja. */
+async function cargarCursos() {
+    const sel = $("i-curso");
+    try {
+        const res = await fetch("herramientas/cursos/catalogo.json");
+        const catalogo = await res.json();
+        (catalogo.cursos || catalogo || []).forEach((c) => {
+            const o = document.createElement("option");
+            o.value = c.slug;
+            o.textContent = c.titulo || c.slug;
+            sel.appendChild(o);
+        });
+    } catch (e) {
+        // Sin catálogo se sigue pudiendo armar el plan con posiciones y notas:
+        // lo que no se puede es inventar una lista de cursos.
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = "(no se pudo cargar la lista de cursos)";
+        sel.appendChild(o);
+    }
+}
+
+function pintarCamposDelTipo() {
+    const tipo = $("i-tipo").value;
+    $("campo-posicion").classList.toggle("hidden", tipo !== "posicion");
+    $("campo-leccion").classList.toggle("hidden", tipo !== "leccion");
+    $("campo-nota").classList.toggle("hidden", tipo !== "nota");
+    $("i-ayuda").textContent = PlanClase.tipoDe(tipo).ayuda;
+}
+
+async function cargarPlanes() {
+    try {
+        planes = await PlanClase.listarPlanes(sb, profile.id);
+    } catch (e) {
+        $("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
+        return;
+    }
+    const lista = $("lista-planes");
+    lista.innerHTML = "";
+    $("sin-planes").classList.toggle("hidden", planes.length > 0);
+    planes.forEach((p) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.plan = p.id;
+        const activo = planAbierto && planAbierto.id === p.id;
+        b.className = "w-full text-left text-sm px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
+            (activo ? "bg-accent-500 text-brand-900 font-semibold"
+                    : "bg-brand-50 dark:bg-brand-950 hover:bg-brand-100 dark:hover:bg-brand-800 text-brand-700 dark:text-brand-200");
+        b.textContent = p.titulo;
+        b.addEventListener("click", () => abrirPlan(p.id));
+        li.appendChild(b);
+        lista.appendChild(li);
+    });
+    if (planAbierto && !planes.some((p) => p.id === planAbierto.id)) cerrarPlan();
+}
+
+function cerrarPlan() {
+    planAbierto = null;
+    items = [];
+    $("detalle").classList.add("hidden");
+}
+
+async function abrirPlan(id) {
+    planAbierto = planes.find((p) => p.id === id) || null;
+    if (!planAbierto) return;
+    $("detalle").classList.remove("hidden");
+    $("detalle-titulo").textContent = planAbierto.titulo;
+    $("p-notas").value = planAbierto.notas || "";
+    $("detalle-msg").textContent = "";
+    $("item-msg").textContent = "";
+    try {
+        items = await PlanClase.itemsDe(sb, id);
+    } catch (e) {
+        $("detalle-msg").textContent = "No se pudieron cargar los renglones: " + e.message;
+        items = [];
+    }
+    pintarItems();
+    await cargarPlanes();
+}
+
+function pintarItems() {
+    const lista = $("lista-items");
+    lista.innerHTML = "";
+    $("sin-items").classList.toggle("hidden", items.length > 0);
+    items.forEach((it, i) => {
+        const li = document.createElement("li");
+        li.dataset.itemId = it.id;
+        li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 flex items-start justify-between gap-2 flex-wrap";
+
+        const izq = document.createElement("div");
+        izq.className = "min-w-0 flex-1";
+        const t = document.createElement("p");
+        t.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 break-words";
+        t.textContent = PlanClase.resumen(it);
+        izq.appendChild(t);
+        const detalle = it.pregunta || it.nota || it.fen;
+        if (detalle) {
+            const d = document.createElement("p");
+            d.className = "text-xs text-brand-450 dark:text-brand-350 break-words" + (it.fen && !it.pregunta && !it.nota ? " font-mono" : "");
+            d.textContent = detalle;
+            izq.appendChild(d);
+        }
+        li.appendChild(izq);
+
+        const acciones = document.createElement("div");
+        acciones.className = "flex items-center gap-1 shrink-0";
+        const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40";
+
+        const subir = document.createElement("button");
+        subir.type = "button"; subir.className = clases; subir.textContent = "↑";
+        subir.title = "Subir este renglón";
+        subir.setAttribute("aria-label", "Subir: " + it.titulo);
+        subir.disabled = i === 0;
+        subir.addEventListener("click", () => mover(it.id, -1));
+
+        const bajar = document.createElement("button");
+        bajar.type = "button"; bajar.className = clases; bajar.textContent = "↓";
+        bajar.title = "Bajar este renglón";
+        bajar.setAttribute("aria-label", "Bajar: " + it.titulo);
+        bajar.disabled = i === items.length - 1;
+        bajar.addEventListener("click", () => mover(it.id, 1));
+
+        const quitar = document.createElement("button");
+        quitar.type = "button"; quitar.className = clases; quitar.textContent = "✖";
+        quitar.title = "Quitar del plan";
+        quitar.setAttribute("aria-label", "Quitar: " + it.titulo);
+        quitar.addEventListener("click", () => quitarItem(it.id));
+
+        acciones.append(subir, bajar, quitar);
+        li.appendChild(acciones);
+        lista.appendChild(li);
+    });
+}
+
+async function crearPlan(e) {
+    e.preventDefault();
+    const titulo = $("p-titulo").value.trim();
+    if (!titulo) return;
+    $("plan-msg").textContent = "Creando…";
+    try {
+        const nuevo = await PlanClase.crearPlan(sb, profile.id, titulo, null);
+        $("p-titulo").value = "";
+        $("plan-msg").textContent = "";
+        planes.unshift(nuevo);
+        await abrirPlan(nuevo.id);
+    } catch (err) {
+        $("plan-msg").textContent = "No se pudo crear: " + err.message;
+    }
+}
+
+async function guardarNotas() {
+    if (!planAbierto) return;
+    const notas = $("p-notas").value.trim();
+    if ((planAbierto.notas || "") === notas) return;
+    try {
+        planAbierto = await PlanClase.actualizarPlan(sb, planAbierto.id, { notas: notas || null });
+        planes = planes.map((p) => (p.id === planAbierto.id ? planAbierto : p));
+        $("detalle-msg").textContent = "Notas guardadas.";
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudieron guardar las notas: " + err.message;
+    }
+}
+
+async function agregarItem(e) {
+    e.preventDefault();
+    if (!planAbierto) return;
+    const tipo = $("i-tipo").value;
+    const titulo = $("i-titulo").value.trim();
+    if (!titulo) { $("item-msg").textContent = "Ponle un nombre al renglón."; return; }
+
+    const item = { tipo, titulo, orden: items.length };
+    if (tipo === "posicion") {
+        const fen = $("i-fen").value.trim();
+        if (!fen) { $("item-msg").textContent = "Pega la posición en FEN."; return; }
+        // La misma pregunta que hace la clase en vivo, pero AHORA: enterarse
+        // aquí cuesta una corrección; enterarse allá cuesta la clase.
+        const motivo = PosicionValida.motivo(fen);
+        if (motivo) { $("item-msg").textContent = motivo; return; }
+        item.fen = fen;
+        item.pregunta = $("i-pregunta").value.trim() || null;
+    } else if (tipo === "leccion") {
+        const curso = $("i-curso").value;
+        if (!curso) { $("item-msg").textContent = "Elige el curso."; return; }
+        item.curso = curso;
+        // En la base y en los visores la primera lección es la 0; en pantalla se
+        // numera desde 1, que es como la nombra el profesor.
+        item.leccion = Math.max(1, parseInt($("i-leccion").value, 10) || 1) - 1;
+    } else {
+        item.nota = $("i-nota").value.trim() || null;
+    }
+
+    $("item-msg").textContent = "Guardando…";
+    try {
+        const nuevo = await PlanClase.agregarItem(sb, planAbierto.id, item);
+        items.push(nuevo);
+        pintarItems();
+        $("i-titulo").value = "";
+        $("i-fen").value = "";
+        $("i-pregunta").value = "";
+        $("i-nota").value = "";
+        $("item-msg").textContent = "Agregado.";
+    } catch (err) {
+        $("item-msg").textContent = "No se pudo agregar: " + err.message;
+    }
+}
+
+async function mover(id, direccion) {
+    try {
+        items = await PlanClase.moverItem(sb, items, id, direccion);
+        pintarItems();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo reordenar: " + err.message;
+    }
+}
+
+async function quitarItem(id) {
+    try {
+        await PlanClase.borrarItem(sb, id);
+        items = items.filter((x) => x.id !== id);
+        pintarItems();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo quitar: " + err.message;
+    }
+}
+
+async function duplicar() {
+    if (!planAbierto) return;
+    $("detalle-msg").textContent = "Duplicando…";
+    try {
+        const copia = await PlanClase.duplicarPlan(sb, profile.id, planAbierto);
+        planes.unshift(copia);
+        await abrirPlan(copia.id);
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo duplicar: " + err.message;
+    }
+}
+
+/* Borrar un plan se lleva sus renglones, así que el paso de confirmación va en
+   el propio botón y no en un diálogo del navegador, que en el celular tapa la
+   pantalla. Mismo patrón que la bitácora. */
+async function borrarPlan() {
+    if (!planAbierto) return;
+    const btn = $("borrar-plan");
+    if (btn.dataset.confirmando !== "1") {
+        btn.dataset.confirmando = "1";
+        btn.textContent = "¿Seguro? Borrar plan";
+        setTimeout(() => {
+            if (btn.dataset.confirmando === "1") { btn.dataset.confirmando = ""; btn.textContent = "Borrar plan"; }
+        }, 4000);
+        return;
+    }
+    btn.dataset.confirmando = "";
+    btn.textContent = "Borrar plan";
+    try {
+        await PlanClase.borrarPlan(sb, planAbierto.id);
+        planes = planes.filter((p) => p.id !== planAbierto.id);
+        cerrarPlan();
+        await cargarPlanes();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo borrar: " + err.message;
+    }
+}
+
+init();
+    </script>
+</body>
+</html>

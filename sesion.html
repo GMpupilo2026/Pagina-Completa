@@ -41,6 +41,8 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/posicion-valida.js"></script>
+    <script src="js/plan-clase.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
@@ -449,6 +451,7 @@
                             <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
                             <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
                             <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
+                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Plan</button>
                             <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
                         </div>
 
@@ -554,6 +557,19 @@
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad. Con <strong>Preguntar</strong> el ejercicio se transmite a todos como una pregunta nueva; con <strong>Al tablero</strong>, solo la posición, para explicarla tú.</p>
                             <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
+                        </div>
+
+                        <!-- El plan de clase (solo profesor): lo que preparó en
+                             planes.html, con el botón para mandar cada posición al
+                             tablero de la clase. -->
+                        <div id="plan-panel" data-tab-panel="plan" role="tabpanel" aria-labelledby="teacher-tab-plan" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Tu plan de clase</h2>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">🔒 Solo lo ves tú. Lo armas en <a href="planes.html" class="underline">Planes de clase</a>; acá cada renglón trae su botón.</p>
+                            <label for="plan-select" class="sr-only">Qué plan estás dando</label>
+                            <select id="plan-select" class="w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            <p id="plan-notas" class="hidden text-xs text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 mb-3 whitespace-pre-wrap break-words"></p>
+                            <ol id="plan-items" class="grid gap-2 text-sm"></ol>
+                            <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                         </div>
 
                         <!-- Alumnos conectados (solo profesor) -->
@@ -665,7 +681,7 @@
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
-        const TEACHER_TABS = ["controles", "preguntar", "practicar", "tactica", "alumnos"];
+        const TEACHER_TABS = ["controles", "preguntar", "practicar", "tactica", "plan", "alumnos"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 
@@ -1330,31 +1346,15 @@
         // y algunas de ellas rompen a Stockfish para el resto de la sesión (ver la nota en
         // js/shared-engine.js). Devuelve el motivo por el que no se puede transmitir, o
         // null si la posición está bien.
-        function motivoPosicionInvalida(fen) {
-            const parts = String(fen || "").split(" ");
-            const filas = (parts[0] || "").split("/");
-            if (filas.length !== 8) return "Esa posición no se pudo leer.";
-            // chess.js no exige reyes al cargar un FEN (los acepta igual, sin avisar).
-            if ((parts[0].match(/K/g) || []).length !== 1 || (parts[0].match(/k/g) || []).length !== 1) {
-                return "Debe haber exactamente un rey blanco y un rey negro en el tablero.";
-            }
-            // Un peón en la primera o en la última fila ya habría coronado: imposible en una
-            // partida real, y es justo la posición con la que Stockfish falla con un error de
-            // memoria del que no se recupera solo — a partir de ahí Analizar, Preguntar y
-            // Practicar dejan de responder hasta recargar la página.
-            if (/[pP]/.test(filas[0]) || /[pP]/.test(filas[7])) {
-                return "Posición inválida: no puede haber peones en la primera ni en la última fila.";
-            }
-            // El rey del bando que NO le toca mover no puede estar en jaque (ese bando ya
-            // habría tenido que responder): para el motor esa posición no significa nada, y
-            // analizarla da evaluaciones y jugadas sin sentido.
-            const turnoContrario = parts[1] === "b" ? "w" : "b";
-            const prueba = new Chess(filas.join("/") + " " + turnoContrario + " " + (parts[2] || "-") + " - 0 1");
-            if (prueba.in_check && prueba.in_check()) {
-                return "Posición inválida: el rey que NO le toca mover está en jaque (revisa el turno o quita la pieza que lo ataca).";
-            }
-            return null;
-        }
+        /* La validación vive en js/posicion-valida.js: la comparte el armador de
+           planes, que hace la misma pregunta ANTES de guardar. Acá queda el
+           nombre de siempre, que usan las cuatro puertas de esta página.
+
+           Va como `function` y no como `const`: la primera de esas puertas está
+           escrita más ARRIBA en el archivo, y un `const` no existe hasta que se
+           evalúa su línea — es el mismo "Cannot access before initialization"
+           que dejó a 4x4.html colgada en "Comprobando tu sesión…". */
+        function motivoPosicionInvalida(fen) { return PosicionValida.motivo(fen); }
 
         async function aplicarPosicionEnClase(fen, aviso) {
             const motivo = motivoPosicionInvalida(fen);
@@ -1926,6 +1926,161 @@
                 listEl.appendChild(li);
             }
         }
+
+        /* ---------- El plan de clase ----------
+
+           Lo que el profesor preparó en planes.html, aquí al lado del tablero.
+           Ningún renglón hace nada nuevo: cada uno entra por la puerta que esta
+           página ya tenía —`aplicarPosicionEnClase()` para las posiciones y
+           `abrirLeccionLocal()` para las lecciones—, que es lo que garantiza que
+           una posición del plan y una del editor dejen la clase exactamente
+           igual. Si cada botón armara su propio `update`, el que se olvidara de
+           limpiar las variantes dejaría un resto de la posición anterior, y eso
+           no da ningún error.
+
+           Las NOTAS del plan no se transmiten: son su chuleta, como el PDF. */
+        let planesDelProfesor = [];
+        let itemsDelPlan = [];
+
+        async function cargarPlanesEnClase() {
+            if (!isTeacher) return;
+            const select = document.getElementById("plan-select");
+            try {
+                planesDelProfesor = await PlanClase.listarPlanes(sb, session.user.id);
+            } catch (e) {
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
+                return;
+            }
+            select.innerHTML = "";
+            const vacio = document.createElement("option");
+            vacio.value = "";
+            vacio.textContent = planesDelProfesor.length ? "— Elige un plan —" : "Todavía no has armado ninguno";
+            select.appendChild(vacio);
+            planesDelProfesor.forEach((pl) => {
+                const o = document.createElement("option");
+                o.value = pl.id;
+                o.textContent = pl.titulo;
+                select.appendChild(o);
+            });
+            /* Cuál estaba dando se recuerda en ESTE aparato, como el tema o la
+               clase elegida: si se recarga la página en medio de la clase —que
+               pasa— no hay que volver a buscarlo en la lista. */
+            const recordado = localStorage.getItem("plan_en_clase");
+            if (recordado && planesDelProfesor.some((pl) => pl.id === recordado)) {
+                select.value = recordado;
+                await abrirPlanEnClase(recordado);
+            }
+        }
+
+        async function abrirPlanEnClase(planId) {
+            const lista = document.getElementById("plan-items");
+            const notasEl = document.getElementById("plan-notas");
+            const msg = document.getElementById("plan-msg");
+            lista.innerHTML = "";
+            notasEl.classList.add("hidden");
+            msg.textContent = "";
+            itemsDelPlan = [];
+            if (!planId) { localStorage.removeItem("plan_en_clase"); return; }
+            localStorage.setItem("plan_en_clase", planId);
+
+            const plan = planesDelProfesor.find((pl) => pl.id === planId);
+            if (plan && plan.notas) {
+                notasEl.textContent = plan.notas;
+                notasEl.classList.remove("hidden");
+            }
+            try {
+                itemsDelPlan = await PlanClase.itemsDe(sb, planId);
+            } catch (e) {
+                msg.textContent = "No se pudieron cargar los renglones: " + e.message;
+                return;
+            }
+            if (!itemsDelPlan.length) {
+                msg.textContent = "Este plan todavía está vacío.";
+                return;
+            }
+            itemsDelPlan.forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+        }
+
+        function pintarRenglonDelPlan(item) {
+            const li = document.createElement("li");
+            li.dataset.planItem = item.id;
+            li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+
+            const titulo = document.createElement("p");
+            titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
+            titulo.textContent = PlanClase.resumen(item);
+            li.appendChild(titulo);
+
+            const detalle = item.pregunta || item.nota;
+            if (detalle) {
+                const d = document.createElement("p");
+                d.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5 break-words whitespace-pre-wrap";
+                d.textContent = detalle;
+                li.appendChild(d);
+            }
+
+            const acciones = document.createElement("div");
+            acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
+            const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+            if (item.tipo === "posicion") {
+                const alTablero = document.createElement("button");
+                alTablero.type = "button";
+                alTablero.className = clases;
+                alTablero.textContent = "📥 Al tablero";
+                alTablero.title = "Transmitir esta posición a toda la clase";
+                alTablero.addEventListener("click", async () => {
+                    await aplicarPosicionEnClase(item.fen, "Posición del plan enviada: ya la ven todos los alumnos.");
+                });
+                acciones.appendChild(alTablero);
+
+                if (item.pregunta) {
+                    const preguntar = document.createElement("button");
+                    preguntar.type = "button";
+                    preguntar.className = clases;
+                    preguntar.textContent = "❓ Preguntar";
+                    preguntar.title = "Abrir la pregunta con esta posición (el enunciado se lo dices tú)";
+                    preguntar.addEventListener("click", () => preguntarDelPlan(item));
+                    acciones.appendChild(preguntar);
+                }
+            } else if (item.tipo === "leccion") {
+                const abrir = document.createElement("button");
+                abrir.type = "button";
+                abrir.className = clases;
+                abrir.textContent = "📖 Abrir la lección";
+                abrir.title = "Abrirla solo en tu pantalla, como el PDF";
+                abrir.addEventListener("click", () => abrirLeccionLocal(item.curso, item.leccion));
+                acciones.appendChild(abrir);
+            }
+
+            if (acciones.childElementCount) li.appendChild(acciones);
+            return li;
+        }
+
+        /* Mismo mecanismo que Táctica y que los archivos PGN: se aplica la
+           posición y se abre una pregunta sobre ella.
+
+           `expected_plies` va en 1 y no sale del plan a propósito: el caso de
+           todos los días es "¿cuál es la jugada?", y un campo más que llenar al
+           armar el plan se queda sin llenar. Si hace falta otra cantidad, el
+           panel de Preguntar la cambia como siempre. */
+        async function preguntarDelPlan(item) {
+            if (!(await aplicarPosicionEnClase(item.fen))) return;
+            document.getElementById("question-plies-input").value = 1;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() })
+                .eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions")
+                .insert({ fen: item.fen, created_by: session.user.id, expected_plies: 1 })
+                .select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            activateTeacherTab("preguntar");
+            setStatus("Pregunta abierta desde el plan: " + item.titulo);
+            computeEngineAnswer(data.id, item.fen, 1); // en segundo plano
+        }
+
+        document.getElementById("plan-select").addEventListener("change", (e) => {
+            abrirPlanEnClase(e.target.value);
+        });
 
         /* La bitácora, abierta desde el renglón del alumno. El panel se monta
            entero cada vez: son pocas notas (las últimas cinco) y así no hay que
@@ -3467,6 +3622,7 @@
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
                 cargarCupoInvitaciones();
+                cargarPlanesEnClase();
                 setupTeacherLessonTools();
                 setupArchivosTools();
             } else {
