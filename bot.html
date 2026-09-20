@@ -236,8 +236,114 @@
  * directamente, así que ahí NO hay que volver a aplicar la jugada, solo
  * anotarla — aplicarla de nuevo fallaría (la pieza ya no está en el origen).
  */
-const VALOR = { p: 1, n: 3, b: 3.2, r: 5, q: 9, k: 0 };
+const VALOR = { p: 1, n: 3.05, b: 3.33, r: 5.1, q: 9.5, k: 0 };
 const CENTRO = { d4: .12, d5: .12, e4: .12, e5: .12, c4: .05, c5: .05, f4: .05, f5: .05 };
+
+/* ---------------- Tablas de posición (PST) ----------------
+   No alcanza con contar material: un caballo en el borde vale menos que uno
+   en el centro, y una torre en la séptima fila vale más que en la primera.
+   Son las tablas clásicas de Tomasz Michniewski (de dominio público, las usan
+   decenas de motores educativos), en centipeones — se dividen entre 100 para
+   la escala en peones que ya usa el sitio. Están escritas para blancas mirando
+   "hacia adelante" (índice 0 = a8): `indicePst()` hace el espejo para negras. */
+const PST = {
+    p: [
+         0,  0,  0,  0,  0,  0,  0,  0,
+        50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+         5,  5, 10, 25, 25, 10,  5,  5,
+         0,  0,  0, 20, 20,  0,  0,  0,
+         5, -5,-10,  0,  0,-10, -5,  5,
+         5, 10, 10,-20,-20, 10, 10,  5,
+         0,  0,  0,  0,  0,  0,  0,  0,
+    ],
+    n: [
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50,
+    ],
+    b: [
+        -20,-10,-10,-10,-10,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  5,  5, 10, 10,  5,  5,-10,
+        -10,  0, 10, 10, 10, 10,  0,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+        -10,  5,  0,  0,  0,  0,  5,-10,
+        -20,-10,-10,-10,-10,-10,-10,-20,
+    ],
+    r: [
+          0,  0,  0,  0,  0,  0,  0,  0,
+          5, 10, 10, 10, 10, 10, 10,  5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+          0,  0,  0,  5,  5,  0,  0,  0,
+    ],
+    q: [
+        -20,-10,-10, -5, -5,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5,  5,  5,  5,  0,-10,
+         -5,  0,  5,  5,  5,  5,  0, -5,
+          0,  0,  5,  5,  5,  5,  0, -5,
+        -10,  5,  5,  5,  5,  5,  0,-10,
+        -10,  0,  5,  0,  0,  0,  0,-10,
+        -20,-10,-10, -5, -5,-10,-10,-20,
+    ],
+};
+// El rey quiere estar escondido en la esquina mientras hay damas y torres en
+// el tablero, y activo en el centro cuando ya no queda con qué darle mate de
+// un zarpazo — por eso son dos tablas, mezcladas según qué tan avanzada está
+// la partida (ver `faseDePartida`).
+const PST_REY_MEDIO = [
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+     20, 20,  0,  0,  0,  0, 20, 20,
+     20, 30, 10,  0,  0, 10, 30, 20,
+];
+const PST_REY_FINAL = [
+    -50,-40,-30,-20,-20,-30,-40,-50,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -50,-30,-30,-30,-30,-30,-30,-50,
+];
+const FILES_PST = "abcdefgh";
+function indicePst(casilla, color) {
+    const file = FILES_PST.indexOf(casilla[0]);
+    const rank = parseInt(casilla[1], 10);
+    // Blancas: a8 es el índice 0 (avanzan "hacia abajo" en la tabla). Negras
+    // miran la partida al revés, así que se refleja verticalmente.
+    return color === "w" ? (8 - rank) * 8 + file : (rank - 1) * 8 + file;
+}
+
+// Cuánto material "mayor" (sin peones ni reyes) queda en el tablero, entre 0
+// (final, cambiaron todas las piezas de peso) y 1 (recién empezada la
+// partida). Lo que trae cada bando al inicio: 2 caballos + 2 alfiles + 2
+// torres + 1 dama, con los valores de VALOR (unos 31.66 en esta escala).
+const MATERIAL_INICIAL_SIN_PEONES = 2 * VALOR.n + 2 * VALOR.b + 2 * VALOR.r + VALOR.q;
+function faseDePartida(piezas) {
+    let total = 0;
+    piezas.forEach((p) => {
+        if (p.types || p.type === "p" || p.type === "k") return;
+        total += VALOR[p.type] || 0;
+    });
+    return Math.min(1, total / (MATERIAL_INICIAL_SIN_PEONES * 2));
+}
 
 const MODALIDADES = {
     estandar: {
@@ -294,16 +400,44 @@ const MODALIDADES = {
    devuelve otro adaptador con la jugada hecha, sin tocar el original: por eso
    todos saben clonarse desde su propia posición serializada. */
 
-function materialDeTablero(leer, casillas) {
-    let total = 0;
+/* La evaluación de la posición para las blancas, en peones: no solo material,
+   también dónde está parada cada pieza (PST) y, en Crazyhouse, lo que hay en
+   la reserva de cada quien — una torre en la mano vale lo mismo que una en el
+   tablero, y el bot que no la contara jugaría como si no la tuviera. */
+function materialDeTablero(leer, casillas, pockets) {
+    const piezas = [];
     casillas.forEach((s) => {
         const p = leer(s);
-        if (!p) return;
+        if (p) piezas.push(Object.assign({ casilla: s }, p));
+    });
+    const fase = faseDePartida(piezas);
+    let total = 0, alfilesW = 0, alfilesB = 0;
+    piezas.forEach((p) => {
         const tipos = p.types || [p.type];
         let v = 0;
         tipos.forEach((t) => { v += VALOR[t] || 0; });
-        total += (p.color === "w" ? 1 : -1) * (v + (CENTRO[s] || 0));
+        if (p.types) {
+            // Pieza fusionada (Abrazos): no tiene una tabla de posición
+            // propia (no es "de siempre" un caballo o un alfil), así que se
+            // queda con el bono de centro genérico.
+            v += (CENTRO[p.casilla] || 0);
+        } else if (p.type === "k") {
+            const idx = indicePst(p.casilla, p.color);
+            v += (fase * PST_REY_MEDIO[idx] + (1 - fase) * PST_REY_FINAL[idx]) / 100;
+        } else if (PST[p.type]) {
+            v += PST[p.type][indicePst(p.casilla, p.color)] / 100;
+            if (p.type === "b") { if (p.color === "w") alfilesW++; else alfilesB++; }
+        }
+        total += (p.color === "w" ? 1 : -1) * v;
     });
+    if (alfilesW >= 2) total += 0.3;
+    if (alfilesB >= 2) total -= 0.3;
+    if (pockets) {
+        Crazyhouse.POCKET_TYPES.forEach((t) => {
+            total += (pockets.w[t] || 0) * VALOR[t];
+            total -= (pockets.b[t] || 0) * VALOR[t];
+        });
+    }
     return total;
 }
 
@@ -323,6 +457,10 @@ function adaptadorChess(juego) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorChess(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        // Sin esto el bot no distinguía "no tengo jugadas porque me dieron
+        // mate" de "no tengo jugadas porque es ahogado": las dos son "sin
+        // jugadas", pero una es pésima y la otra son tablas.
+        enJaque: () => juego.in_check(),
         jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => juego.game_over(),
         desenlace() {
@@ -335,17 +473,34 @@ function adaptadorChess(juego) {
     };
 }
 
+/* juego.moves() de Crazyhouse.Game delega sin más en chess.js: por su cuenta
+   NUNCA ofrece soltar una pieza de la reserva. Sin esto el bot "no sabía" que
+   podía hacer drops — la mitad de lo que hace especial a esta modalidad — y
+   jugaba como si tuviera menos piezas de las que en realidad tiene en mano. */
+function jugadasCrazyhouse(juego) {
+    const normales = juego.moves({ verbose: true });
+    const color = juego.turn();
+    const drops = [];
+    Crazyhouse.POCKET_TYPES.forEach((tipo) => {
+        if (!juego.pocket(color)[tipo]) return;
+        juego.dropSquares(tipo, color).forEach((sq) => drops.push({ drop: true, piece: tipo, to: sq }));
+    });
+    return normales.concat(drops);
+}
+
 function adaptadorCrazyhouse(juego) {
     return {
         motor: juego,
         turno: () => juego.turn(),
-        jugadas: () => juego.moves({ verbose: true }),
+        jugadas: () => jugadasCrazyhouse(juego),
         probar(j) {
             const copia = new Crazyhouse.Game(juego.fen());
-            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCrazyhouse(copia) : null;
+            const hecho = j.drop ? copia.drop(j.piece, j.to) : copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+            return hecho ? adaptadorCrazyhouse(copia) : null;
         },
-        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
-        jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS, juego.pockets),
+        enJaque: () => juego.in_check(),
+        jugar(j) { return j.drop ? juego.drop(j.piece, j.to) : juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => juego.in_checkmate() || juego.in_stalemate() || juego.in_draw(),
         desenlace() {
             if (juego.in_checkmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
@@ -370,6 +525,7 @@ function adaptadorVariante(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorVariante(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => typeof motor.inCheck === "function" && motor.inCheck(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada() { return !motor.allMoves().length || !!motor.terminado; },
         desenlace() {
@@ -396,6 +552,7 @@ function adaptadorCiegas(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCiegas(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => motor.game.in_check(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => motor.game.game_over(),
         desenlace() {
@@ -426,6 +583,7 @@ function adaptadorCartas(juego) {
             return r.ok ? adaptadorCartas(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => juego.inCheck(),
         jugar(j) {
             const r = juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
             return r.ok ? r : null;
@@ -500,10 +658,18 @@ function jugarCartaBot(motor, color) {
         if (motor.playCard(color, "salto", {}).ok) return;
     }
 
-    if (mano.indexOf("doble") !== -1 && Math.random() < 0.3) {
-        if (motor.playCard(color, "doble", {}).ok) return;
+    // Doble turno vale la pena cuando hay algo grueso que capturar YA: la
+    // jugada obligada de esta ronda se come una pieza de peso y la siguiente
+    // (gracias a la carta) puede rematar o defender lo que quedó flojo. Se
+    // mira `motor.legalMoves()` en vez de tirar una moneda: es información
+    // que el motor ya tiene calculada, no hace falta simular nada.
+    if (mano.indexOf("doble") !== -1) {
+        const hayCapturaValiosa = motor.legalMoves().some((m) => m.captured && (VALOR[m.captured] || 0) >= 3);
+        if (hayCapturaValiosa && motor.playCard(color, "doble", {}).ok) return;
     }
-    if (mano.indexOf("vision") !== -1 && Math.random() < 0.3) {
+    // Visión no toca el tablero, así que no hay ningún motivo para guardarla
+    // "por si acaso" — es la única carta que nunca puede salir mal jugarla ya.
+    if (mano.indexOf("vision") !== -1) {
         motor.playCard(color, "vision", {});
     }
 }
