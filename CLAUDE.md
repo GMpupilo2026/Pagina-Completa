@@ -549,77 +549,148 @@ ningún otro número chico.
   `verificar-varios-profesores.js`: la de equipos es una función aparte,
   `renderEquipoTags()`.
 
-## Tareas: el profesor asigna material con fecha límite
+## Tareas: el profesor pide cantidades y la tarea se llena sola
 
 `tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
-administra) elige material de la plataforma y se lo manda a uno o varios de
-sus alumnos con instrucciones y una fecha de vencimiento; el alumno ve lo que
-le mandaron y marca cuándo lo hizo. No es un curso nuevo ni un tipo de
-contenido nuevo — es una capa fina que apunta a lo que ya existe.
+administra) arma una tarea con **varios renglones** y se la manda a uno o
+varios de sus alumnos con una fecha de vencimiento; el alumno la ve en un solo
+lugar y **no tiene que marcar casi nada**, porque cada renglón se va llenando
+con lo que entrena.
 
-- **El material no se copia, se referencia.** `js/material-plataforma.js`
-  arma el catálogo: los CURSOS salen leyendo
-  `herramientas/cursos/catalogo.json` en tiempo real (la misma fuente que
-  arma las tarjetas de `cursos.html`), y las HERRAMIENTAS de entrenamiento
-  están escritas a mano —las mismas ocho fichas de `entreno/index.html` más
-  los dos diagnósticos— porque no tienen un JSON propio del que leerlas. Una
-  segunda lista de cursos se habría ido separando de la primera a la primera
-  corrección, que es el error que este repositorio ya cometió más de una vez.
-- **La fila de `tareas` guarda una FOTO del material**, no solo su id
-  (`material_tipo`, `material_slug`, `material_label`, `material_href`): si
-  mañana se renombra un curso o se reordena el catálogo, una tarea ya enviada
-  sigue diciendo con qué se mandó, en vez de quedar apuntando a un enlace que
-  cambió de nombre bajo los pies del alumno.
-- **La lección es un número, no un enlace.** Las lecciones de un curso viven
-  todas en la misma página, como `<details>` sin id propio (ver "El material
-  de estudio de cada lección"), así que no hay a dónde enlazar una lección
-  suelta. El campo `leccion` es opcional y solo se le muestra al alumno como
-  texto ("→ Fundamentos del Ajedrez, lección 3"): encuentra la lección
-  buscando ese número dentro de la página, el enlace lo lleva al curso
-  completo.
-- **Aislado por profesor, igual que `class_sessions` y `game_state`.** Un
-  profesor solo ve las tareas que ÉL mandó, no las de un colega que comparte
-  el mismo alumno — la política de `select` es `profesor_id = auth.uid() or
-  alumno_id = auth.uid() or is_admin`, sin ningún `es_mi_profesor()` de por
-  medio. Es la misma decisión de aislamiento que ya toma el resto del sitio
-  para "cada profesor su propia clase", no un descuido.
-- **El insert exige `profesor_id = auth.uid()` SIEMPRE, `is_admin` incluido.**
-  La primera versión de la política dejaba pasar cualquier `profesor_id`
-  cuando quien inserta administra, así que en teoría alguien con `is_admin`
-  podía mandar una tarea a nombre de OTRO profesor. Se corrigió antes de
-  mergear: ningún otro insert del sitio deja eso suelto
-  (`class_sessions_insert` exige `created_by = auth.uid()` sin excepción).
-- **El alumno solo puede marcar y desmarcar que la hizo.** Puede "actualizar"
-  su propia fila (para eso existe `tareas_update`), pero un trigger
-  (`proteger_tareas_alumno`, mismo patrón que `protect_answer_grading`) le
-  revierte cualquier otro campo a su valor de antes si quien edita es el
-  alumno y no el profesor dueño — no puede correrse la fecha, cambiarse el
-  título ni reescribir las instrucciones. Comprobado impersonando roles en
-  SQL: un update del alumno con `titulo` y `vence_at` distintos deja esas dos
-  columnas intactas y solo `estado`/`completada_at` cambian; un profesor sin
-  ese alumno asignado recibe 0 filas al intentar leer la tarea de otro.
-- **El aviso push sale solo**, con el mismo patrón que un reto o que abrir la
-  sesión en vivo: un trigger `AFTER INSERT` (`avisar_tarea_asignada`) llama a
-  `avisar_push()`, así que no hay que acordarse de mandarlo desde el
-  navegador ni puede quedar la tarea guardada sin avisar.
-- **`estado` solo vale `pendiente` o `completada`**, nunca "vencida" — igual
-  que `cobros.estado`, que tampoco guarda "vencido". Si lo fuera, habría que
-  mantenerlo al día con un cron que revisara fechas, y podría contradecir a
-  `vence_at`. La página calcula "vencida" comparando `vence_at` contra
-  `new Date()` en el navegador, nada más que para pintarla distinto.
+    Resolver 10 ejercicios de ataque doble
+    Resolver 20 ejercicios de 4×4
+    Hacer 10 minutos de coordenadas
+    Hacer 25 mates en 1
+    Aprender la apertura italiana
 
-**Al tocar `tareas.html`, `js/material-plataforma.js` o la tabla `tareas`,
-correr `node herramientas/verificar-tareas.js`** (con el sitio en
-localhost:8777 y playwright). Existe porque `tareas.html` está detrás del
-login: `verificar-css.js` no la ve nunca. Comprueba, con un Supabase de
-mentira, que el selector de material traiga cursos Y herramientas de
-verdad, que elegir un curso destape el campo de lección con su tope
-correcto, que enviar la tarea mande una fila POR CADA alumno marcado con el
-material que de verdad se eligió (no el que había antes), que al alumno le
-salgan sus tareas ordenadas por fecha con la vencida marcada, y que tildar
-"Hecha" mande el update al id correcto. Lo que se rompe acá no da error: un
-select que manda el material equivocado, o una tarea que se le manda a
-todos los alumnos en vez de a los marcados.
+No es un curso nuevo ni un tipo de contenido nuevo — es una capa fina que
+apunta a lo que ya existe y **cuenta lo que ya se guardaba**.
+
+### Lo que se guarda es lo que pasó; el avance se calcula
+
+`tareas` es el encabezado (a quién, con qué fecha) y **`tarea_items` son los
+renglones**: uno por cosa que hacer, con su material, su recorte y su meta.
+Cuánto lleva de cada uno **no es una columna**: lo cuenta
+`public.tareas_con_avance()` a partir de `training_progress` y
+`platform_activity_log`, que son las filas que el alumno ya venía dejando al
+entrenar. Es la misma decisión de `cobros.estado`, que no guarda "pagado": un
+contador aparte habría que mantenerlo al día con un trigger por cada ejercicio
+resuelto y podría contradecir a las filas que lo respaldan.
+
+**Y eso es exactamente lo que hace que la tarea "se rellene sola" y que el
+alumno no repita ejercicios.** Entra por el enlace del renglón, la página de
+entreno arranca en el primero SIN resolver (`firstUnsolvedIndex`, que ya
+existía), y cada uno que resuelve cuenta para la tarea **y** queda marcado
+como resuelto. Son el mismo acto, no dos contadores que puedan separarse.
+
+- **Tres metas, y elegir mal la meta no da ningún error**: `cantidad`
+  (ejercicios distintos), `minutos` (rato de verdad en la página) y
+  `completar` (lo único que el alumno marca a mano). Una herramienta que **no**
+  escribe en `training_progress` —Estudio, a propósito— no puede ofrecer
+  `cantidad`: la barra se quedaría clavada en cero para siempre y la página se
+  vería perfecta. Por eso `js/material-plataforma.js` declara qué metas admite
+  cada cosa y `verificar-tareas.js` lo comprueba.
+- **`tarea_items.actividades` es un ARREGLO, y ahí está el error fácil.** Con
+  qué nombre apunta una página en `training_progress` no siempre es su slug:
+  Practicar y Desafíos apuntan las dos como `'practicar'`, y un tema del grupo
+  de táctica apunta como `'tactica'` mientras el resto de los temas apunta como
+  `'temas'` (ver `temasDeTactica()`). Deducirlo del slug dejaría esos diez
+  ejercicios contando contra cero sin que nada fallara. Desafíos por eso **no
+  ofrece `cantidad`**: sus series no se pueden distinguir de las de Practicar.
+- **El avance se cuenta desde `tareas.created_at`**, no desde siempre: lo que
+  se pide son diez ejercicios **nuevos**, no diez que ya tenía hechos. Está
+  comprobado en la base con datos reales (una tarea fechada hace 30 días cuenta
+  los 395 ejercicios de ese alumno; la misma tarea fechada ahora cuenta 0).
+- **Los minutos se cuentan con `minutos_por_tramos()`**, la misma función que
+  los informes: una tarea que dijera otro número que Informes sería peor que no
+  tenerla.
+- `tareas_con_avance(alumno, profesor, solo_pendientes, limite)` la usan las
+  tres pantallas: la del alumno, la del profesor y la franja de `clases.html`
+  (que pasa `p_limite: 50`, porque solo pinta la más próxima y el conteo — no
+  tiene por qué bajarse los renglones de cien tareas). Escribirla tres veces
+  sería tres cuentas que pueden decir cosas distintas del mismo alumno.
+- **`tareas.estado` y `tareas.completada_at` quedaron SIN USO.** La situación
+  (`pendiente`/`vencida`/`completada`) la calcula la función a partir de los
+  renglones, igual que `cobros_vista`. No se borraron de la tabla — quitarlas
+  obligaría a una migración para nada, la misma decisión que con
+  `game_state.shown_curso`. Las 17 tareas que ya existían se migraron a un
+  renglón `completar` cada una, así que hay **una sola forma de leer una
+  tarea** y ninguna página tiene que distinguir "de las de antes".
+
+### El enlace deja al alumno DENTRO del ejercicio
+
+Era la otra mitad del problema: una tarea que dice "10 de ataque doble" y un
+enlace que cae en la lista de ochenta temas le deja el trabajo de buscar al
+alumno, que es justo lo que la tarea viene a evitar.
+
+- `entreno/temas.html?tema=<key>` y `entreno/mates.html?cat=<categoria>` son
+  nuevos; `estudio.html?ficha=` y `aperturas.html?linea=` ya existían. El
+  `material_href` que queda guardado en el renglón **ya trae el recorte**.
+- Los recortes (los 80 temas, las 3 categorías de Mates, las 40 líneas de
+  Aperturas, las 56 fichas de Estudio) salen de `entreno/data/metas.json`, que
+  **genera `python3 herramientas/metas-indice.py`** leyendo los bancos de
+  verdad. No se bajan los bancos enteros en `tareas.html`: `temas.json` ya pesa
+  1,8 MB, y esa página es para elegir ejercicios, no para resolverlos — sería
+  la piedra de la portada con el libro de aperturas otra vez. **Al agregar un
+  tema, una categoría o una línea, correrlo**; el verificador compara el índice
+  contra las fuentes, porque un índice viejo le ofrece al profesor un tema que
+  ya no existe y eso solo lo descubre el alumno al abrir el enlace.
+
+### La franja de la tarea vive dentro del ejercicio
+
+`js/tarea-en-curso.js` (cargado en las 14 páginas que el catálogo puede mandar)
+pinta arriba qué le pidieron y cuánto lleva — "Coordenadas · 7 de 10 minutos"—
+y avisa al llegar. Sin `?tarea=` en la dirección no hace absolutamente nada,
+así que ponerlo en una página de más no cuesta.
+
+Existe porque el alumno está **ahí**, resolviendo: sin la franja tendría que
+volver a Tareas para saber si ya hizo los diez, y lo más probable es que no
+vuelva — haría siete, o veinte. **No lleva su propia cuenta**: el número sale
+de la misma `tareas_con_avance()` que pinta `tareas.html` y el panel. Se
+refresca envolviendo `EntrenoProgress.log()`, así sube al resolver y no le pide
+nada a la base mientras el alumno piensa.
+
+### Lo que el alumno no puede tocar
+
+- El insert exige `profesor_id = auth.uid()` SIEMPRE, `is_admin` incluido, y
+  las tareas siguen **aisladas por profesor**: un profesor solo ve las que ÉL
+  mandó, no las de un colega que comparte el mismo alumno. Es la misma decisión
+  de aislamiento que `class_sessions` y `game_state`.
+- **`proteger_tarea_items_alumno()`** (mismo patrón que
+  `proteger_tiempos_de_presencia()`: `new := old` y después solo la columna que
+  puede moverse) deja al alumno marcar `completada_at` **y solo en los
+  renglones `completar`**. Comprobado impersonando roles en SQL: un update del
+  alumno bajándose la meta de 25 mates a 1, quitando el filtro y marcándose el
+  renglón medible deja las tres cosas como estaban; el renglón de curso sí
+  queda marcado. Una profesora que no tiene a ese alumno recibe **cero filas**.
+- **Mandar la tarea es UNA llamada** (`public.crear_tarea()`, `SECURITY
+  INVOKER`, así que los dos inserts pasan por la RLS como si los hiciera el
+  navegador). Partido en dos —el encabezado y después los renglones— si la
+  segunda mitad falla queda una tarea vacía en la lista del alumno y eso no da
+  ningún error. Es la decisión que ya tomaron `inscribir-alumno` y
+  `create-student`.
+- El aviso push sale solo, del trigger `avisar_tarea_asignada`.
+- `estado` nunca vale "vencida", igual que `cobros.estado`: eso se calcula
+  contra `vence_at`.
+
+**Al tocar `tareas.html`, `js/material-plataforma.js`, `js/tarea-en-curso.js`,
+los deep links o la tabla `tareas`, correr `node
+herramientas/verificar-tareas.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Existe porque `tareas.html` está
+detrás del login: `verificar-css.js` no la ve nunca. Comprueba que el índice de
+metas siga coincidiendo con los bancos, que ninguna herramienta ofrezca una
+meta que no puede medir, que el profesor arme dos renglones y se mande **la
+actividad correcta** (`tactica` y no `temas` para un tema de táctica — con la
+equivocada la barra no subiría nunca), que el enlace lleve el recorte y la
+tarea, que el alumno vea su avance con una barra por renglón y **solo pueda
+marcar el que no se mide**, que marcar uno de tres no dé la tarea por hecha,
+que la franja se vea de verdad dentro del ejercicio (se mide el `display` que
+calcula el navegador) y que sin `?tarea=` no aparezca, y que `?tema=` y `?cat=`
+abran de verdad lo que piden.
+
+Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada,
+un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
+vez de a los marcados.
 
 ## Coordinación: el rol nuevo y los formularios de inscripción
 

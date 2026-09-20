@@ -1,0 +1,1609 @@
+{
+ "_generado_por": "herramientas/metas-indice.py",
+ "temas": [
+  {
+   "clave": "ultima-linea",
+   "label": "Ataque a la última línea",
+   "grupo": "Táctica de ataque",
+   "total": 53,
+   "actividades": [
+    "tactica"
+   ]
+  },
+  {
+   "clave": "enroque-corto",
+   "label": "Ataque al enroque corto",
+   "grupo": "Táctica de ataque",
+   "total": 18,
+   "actividades": [
+    "tactica"
+   ]
+  },
+  {
+   "clave": "enroque-largo",
+   "label": "Ataque al enroque largo",
+   "grupo": "Táctica de ataque",
+   "total": 18,
+   "actividades": [
+    "tactica"
+   ]
+  },
+  {
+   "clave": "columnas-diagonales",
+   "label": "Ataque por columnas y diagonales",
+   "grupo": "Táctica de ataque",
+   "total": 17,
+   "actividades": [
+    "tactica"
+   ]
+  },
+  {
+   "clave": "ataque-doble",
+   "label": "Ataque doble",
+   "grupo": "Táctica de ataque",
+   "total": 42,
+   "actividades": [
+    "tactica"
+   ]
+  },
+  {
+   "clave": "mix",
+   "label": "Mezcla equilibrada",
+   "grupo": "Recomendado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "opening",
+   "label": "Apertura",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "middlegame",
+   "label": "Medio juego",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "endgame",
+   "label": "Final",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "rookEndgame",
+   "label": "Final de torres",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "bishopEndgame",
+   "label": "Final de alfiles",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "pawnEndgame",
+   "label": "Final de peones",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "knightEndgame",
+   "label": "Final de caballos",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "queenEndgame",
+   "label": "Final de damas",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "queenRookEndgame",
+   "label": "Final de dama y torre",
+   "grupo": "Fases",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "advancedPawn",
+   "label": "Peón avanzado",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "attackingF2F7",
+   "label": "Atacando f2 o f7",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "capturingDefender",
+   "label": "Capturar al defensor",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "discoveredAttack",
+   "label": "Ataque a la descubierta",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "doubleCheck",
+   "label": "Jaque doble",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "exposedKing",
+   "label": "Rey expuesto",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "fork",
+   "label": "Ataque doble",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "hangingPiece",
+   "label": "Pieza colgada",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "kingsideAttack",
+   "label": "Ataque en el flanco de rey",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "pin",
+   "label": "Clavada",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "queensideAttack",
+   "label": "Ataque en el flanco de dama",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "sacrifice",
+   "label": "Sacrificio",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "skewer",
+   "label": "Pincho",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "trappedPiece",
+   "label": "Pieza atrapada",
+   "grupo": "Temas",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "attraction",
+   "label": "Atracción",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "clearance",
+   "label": "Despeje",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "collinearMove",
+   "label": "Movimiento colinear",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "discoveredCheck",
+   "label": "Jaque a la descubierta",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "defensiveMove",
+   "label": "Movimiento defensivo",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "deflection",
+   "label": "Desviación",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "interference",
+   "label": "Interferencia",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "intermezzo",
+   "label": "Jugada intermedia",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "quietMove",
+   "label": "Jugada tranquila",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "xRayAttack",
+   "label": "Ataque por rayos X",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "zugzwang",
+   "label": "Zugzwang",
+   "grupo": "Avanzado",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mate",
+   "label": "Jaque mate",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mateIn1",
+   "label": "Mate en 1",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mateIn2",
+   "label": "Mate en 2",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mateIn3",
+   "label": "Mate en 3",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mateIn4",
+   "label": "Mate en 4",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mateIn5",
+   "label": "Mate en 5 o más",
+   "grupo": "Mates",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "anastasiaMate",
+   "label": "Mate de Anastasia",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "arabianMate",
+   "label": "Mate árabe",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "backRankMate",
+   "label": "Mate del pasillo",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "balestraMate",
+   "label": "Mate de alfil y dama",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "blindSwineMate",
+   "label": "Mate del cerdo ciego",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "bodenMate",
+   "label": "Mate de Boden",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "cornerMate",
+   "label": "Mate de la esquina",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "doubleBishopMate",
+   "label": "Mate de los dos alfiles",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "dovetailMate",
+   "label": "Mate de Cozio",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "epauletteMate",
+   "label": "Mate de las hombreras",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "hookMate",
+   "label": "Mate del gancho",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "killBoxMate",
+   "label": "Mate del recuadro mortal",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "pillsburysMate",
+   "label": "Mate de Pillsbury",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "morphysMate",
+   "label": "Mate de Morphy",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "operaMate",
+   "label": "Mate de la Ópera",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "swallowstailMate",
+   "label": "Mate cola de golondrina",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "triangleMate",
+   "label": "Mate del triángulo",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "vukovicMate",
+   "label": "Mate de Vukovic",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "smotheredMate",
+   "label": "Mate de la coz",
+   "grupo": "Temas de mate",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "castling",
+   "label": "Enroque",
+   "grupo": "Movimientos especiales",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "enPassant",
+   "label": "Al paso",
+   "grupo": "Movimientos especiales",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "promotion",
+   "label": "Promoción",
+   "grupo": "Movimientos especiales",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "underPromotion",
+   "label": "Subpromoción",
+   "grupo": "Movimientos especiales",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "equality",
+   "label": "Igualdad",
+   "grupo": "Objetivos",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "advantage",
+   "label": "Ventaja",
+   "grupo": "Objetivos",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "crushing",
+   "label": "Aplastante",
+   "grupo": "Objetivos",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "mate",
+   "label": "Jaque mate",
+   "grupo": "Objetivos",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "oneMove",
+   "label": "Ejercicio de un solo movimiento",
+   "grupo": "Duración",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "short",
+   "label": "Ejercicio corto",
+   "grupo": "Duración",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "long",
+   "label": "Ejercicio largo",
+   "grupo": "Duración",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "veryLong",
+   "label": "Ejercicio muy largo",
+   "grupo": "Duración",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "master",
+   "label": "Partidas de maestros",
+   "grupo": "Origen",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "masterVsMaster",
+   "label": "Partidas entre maestros",
+   "grupo": "Origen",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  },
+  {
+   "clave": "superGM",
+   "label": "Partidas de súper grandes maestros",
+   "grupo": "Origen",
+   "total": 100,
+   "actividades": [
+    "temas"
+   ]
+  }
+ ],
+ "mates": [
+  {
+   "clave": "mate2",
+   "label": "Mate en 2",
+   "total": 1434,
+   "actividades": [
+    "mates"
+   ]
+  },
+  {
+   "clave": "mate3",
+   "label": "Mate en 3",
+   "total": 715,
+   "actividades": [
+    "mates"
+   ]
+  },
+  {
+   "clave": "mate1",
+   "label": "Mate en 1",
+   "total": 306,
+   "actividades": [
+    "mates"
+   ]
+  }
+ ],
+ "4x4": [
+  {
+   "clave": "FACIL",
+   "label": "Fácil",
+   "total": 200,
+   "actividades": [
+    "4x4"
+   ]
+  },
+  {
+   "clave": "INTERMEDIO",
+   "label": "Intermedio",
+   "total": 200,
+   "actividades": [
+    "4x4"
+   ]
+  },
+  {
+   "clave": "AVANZADO",
+   "label": "Avanzado",
+   "total": 200,
+   "actividades": [
+    "4x4"
+   ]
+  },
+  {
+   "clave": "ESPECIALISTA",
+   "label": "Especialista",
+   "total": 200,
+   "actividades": [
+    "4x4"
+   ]
+  },
+  {
+   "clave": "MAESTRO",
+   "label": "Maestro",
+   "total": 100,
+   "actividades": [
+    "4x4"
+   ]
+  },
+  {
+   "clave": "GRANMAESTRO",
+   "label": "Gran Maestro",
+   "total": 100,
+   "actividades": [
+    "4x4"
+   ]
+  }
+ ],
+ "aprender": [
+  {
+   "clave": "movimientos",
+   "label": "Cómo mueve cada pieza",
+   "total": 12,
+   "actividades": [
+    "aprender"
+   ]
+  },
+  {
+   "clave": "reglas",
+   "label": "Las reglas",
+   "total": 5,
+   "actividades": [
+    "aprender"
+   ]
+  },
+  {
+   "clave": "tacticas",
+   "label": "Primeras tácticas",
+   "total": 4,
+   "actividades": [
+    "aprender"
+   ]
+  }
+ ],
+ "practicas": [
+  {
+   "clave": "tacticas",
+   "label": "Tácticas",
+   "total": 4,
+   "actividades": [
+    "practicar"
+   ]
+  },
+  {
+   "clave": "mates",
+   "label": "Mates",
+   "total": 3,
+   "actividades": [
+    "practicar"
+   ]
+  },
+  {
+   "clave": "finales",
+   "label": "Finales",
+   "total": 2,
+   "actividades": [
+    "practicar"
+   ]
+  }
+ ],
+ "aperturas": [
+  {
+   "clave": "pastor-mate",
+   "label": "Mate del pastor",
+   "grupo": "Apertura italiana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "pastor-refutacion",
+   "label": "Cómo parar el mate del pastor",
+   "grupo": "Apertura italiana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "damiano",
+   "label": "El castigo de la defensa Damiano",
+   "grupo": "Defensa Damiano",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "celada-legal",
+   "label": "Celada de Légal",
+   "grupo": "Defensa Philidor",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "blackburne",
+   "label": "Celada Blackburne",
+   "grupo": "Apertura italiana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "arca-de-noe",
+   "label": "Trampa del Arca de Noé",
+   "grupo": "Apertura española",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "fegatello",
+   "label": "Ataque Fegatello (hígado frito)",
+   "grupo": "Defensa de los dos caballos",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "dos-caballos-bien",
+   "label": "Contra el hígado frito: la jugada de Polerio",
+   "grupo": "Defensa de los dos caballos",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "cambridge-springs",
+   "label": "Trampa de Cambridge Springs",
+   "grupo": "Gambito de dama declinado",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "albin-lasker",
+   "label": "Trampa de Lasker en la Albin",
+   "grupo": "Contragambito Albin",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-dama-b5",
+   "label": "Aferrarse al peón del gambito",
+   "grupo": "Gambito de dama aceptado",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "englund",
+   "label": "Trampa del gambito Englund",
+   "grupo": "Gambito Englund",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "espanola-cerrada",
+   "label": "Española, variante cerrada",
+   "grupo": "Apertura española",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "espanola-cambio",
+   "label": "Española, variante del cambio",
+   "grupo": "Apertura española",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "italiana-giuoco",
+   "label": "Italiana, Giuoco Piano",
+   "grupo": "Apertura italiana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "escocesa",
+   "label": "Apertura escocesa",
+   "grupo": "Apertura escocesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "petrov",
+   "label": "Defensa rusa (Petrov)",
+   "grupo": "Defensa Petrov",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-de-rey",
+   "label": "Gambito de rey aceptado",
+   "grupo": "Gambito de rey",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-najdorf",
+   "label": "Siciliana Najdorf",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-dragon",
+   "label": "Siciliana, variante del dragón",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "siciliana-cerrada",
+   "label": "Siciliana cerrada",
+   "grupo": "Defensa siciliana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "francesa-avance",
+   "label": "Francesa, variante del avance",
+   "grupo": "Defensa francesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "francesa-tarrasch",
+   "label": "Francesa, variante Tarrasch",
+   "grupo": "Defensa francesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "caro-kann-clasica",
+   "label": "Caro-Kann clásica",
+   "grupo": "Defensa Caro-Kann",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "caro-kann-avance",
+   "label": "Caro-Kann, avance",
+   "grupo": "Defensa Caro-Kann",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "escandinava",
+   "label": "Defensa escandinava",
+   "grupo": "Defensa escandinava",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "pirc",
+   "label": "Defensa Pirc",
+   "grupo": "Defensa Pirc",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "alekhine",
+   "label": "Defensa Alekhine",
+   "grupo": "Defensa Alekhine",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-dama-declinado",
+   "label": "Gambito de dama declinado",
+   "grupo": "Gambito de dama",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "eslava",
+   "label": "Defensa eslava",
+   "grupo": "Defensa eslava",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "nimzoindia",
+   "label": "Defensa Nimzoindia",
+   "grupo": "Defensa india",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "india-de-rey",
+   "label": "India de rey",
+   "grupo": "Defensa india",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "grunfeld",
+   "label": "Defensa Grünfeld",
+   "grupo": "Defensa india",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "india-de-dama",
+   "label": "India de dama",
+   "grupo": "Defensa india",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "sistema-londres",
+   "label": "Sistema Londres",
+   "grupo": "Sistema Londres",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "holandesa",
+   "label": "Defensa holandesa",
+   "grupo": "Defensa holandesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "inglesa",
+   "label": "Apertura inglesa",
+   "grupo": "Apertura inglesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "vienesa",
+   "label": "Apertura vienesa con f4",
+   "grupo": "Apertura vienesa",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "gambito-evans",
+   "label": "Gambito Evans",
+   "grupo": "Apertura italiana",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  },
+  {
+   "clave": "ataque-indio-de-rey",
+   "label": "Ataque indio de rey",
+   "grupo": "Ataque indio de rey",
+   "total": 1,
+   "actividades": [
+    "aperturas"
+   ]
+  }
+ ],
+ "estudio": [
+  {
+   "clave": "italiana",
+   "label": "Apertura italiana",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "espanola",
+   "label": "Apertura española",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-de-dama",
+   "label": "Gambito de dama",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "inglesa",
+   "label": "Apertura inglesa",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "londres",
+   "label": "Sistema Londres",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "escocesa",
+   "label": "Apertura escocesa",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-de-rey",
+   "label": "Gambito de rey",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "vienesa",
+   "label": "Apertura vienesa",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "gambito-evans",
+   "label": "Gambito Evans",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-cerrada",
+   "label": "Siciliana cerrada",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "francesa-tarrasch",
+   "label": "Francesa Tarrasch",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ataque-indio-de-rey",
+   "label": "Ataque indio de rey",
+   "grupo": "Aperturas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana",
+   "label": "Defensa siciliana",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "francesa",
+   "label": "Defensa francesa",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "caro-kann",
+   "label": "Defensa Caro-Kann",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "india-de-rey",
+   "label": "Defensa india de rey",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "escandinava",
+   "label": "Defensa escandinava",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "eslava",
+   "label": "Defensa eslava",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "nimzoindia",
+   "label": "Defensa Nimzoindia",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "grunfeld",
+   "label": "Defensa Grünfeld",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "india-de-dama",
+   "label": "India de dama",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "petrov",
+   "label": "Defensa rusa",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "pirc",
+   "label": "Defensa Pirc",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "siciliana-dragon",
+   "label": "Siciliana dragón",
+   "grupo": "Defensas",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "horquilla",
+   "label": "La horquilla",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "clavada",
+   "label": "La clavada",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "enfilada",
+   "label": "La enfilada",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "descubierto",
+   "label": "El ataque descubierto",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "desviacion",
+   "label": "La desviación",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-pasillo",
+   "label": "El mate del pasillo",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-coz",
+   "label": "El mate de la coz",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "ataque-doble",
+   "label": "El ataque doble de la dama",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "sobrecarga",
+   "label": "La sobrecarga",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "atraccion",
+   "label": "La atracción",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "jaque-doble",
+   "label": "El jaque doble",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "bateria",
+   "label": "La batería",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "mate-anastasia",
+   "label": "El mate de Anastasia",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "pieza-atrapada",
+   "label": "La pieza atrapada",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "jaque-perpetuo",
+   "label": "El jaque perpetuo",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "subpromocion",
+   "label": "Coronar caballo",
+   "grupo": "Táctica",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "el-centro",
+   "label": "El centro",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "desarrollo",
+   "label": "Desarrollo y seguridad del rey",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peones-doblados",
+   "label": "Estructura de peones",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-pasado",
+   "label": "El peón pasado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "columna-abierta",
+   "label": "La columna abierta",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "par-de-alfiles",
+   "label": "El par de alfiles",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "rey-activo",
+   "label": "El rey activo",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "casilla-fuerte",
+   "label": "La casilla fuerte",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "zugzwang",
+   "label": "El zugzwang",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "oposicion",
+   "label": "La oposición",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "torre-detras-del-peon",
+   "label": "La torre va detrás del peón",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "regla-del-cuadrado",
+   "label": "La regla del cuadrado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "alfil-malo",
+   "label": "El alfil malo",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "peon-dama-aislado",
+   "label": "El peón dama aislado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "rey-ahogado",
+   "label": "El rey ahogado",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  },
+  {
+   "clave": "cadena-de-peones",
+   "label": "La cadena de peones",
+   "grupo": "Conceptos",
+   "total": 1,
+   "actividades": []
+  }
+ ]
+}

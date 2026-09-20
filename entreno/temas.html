@@ -26,6 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="temas"></script>
+<script src="../js/tarea-en-curso.js" defer></script>
 <style>
   :root{
     --bg-deep:#f0f4f8;
@@ -879,8 +880,18 @@ function initApp(){
   setStreak(getStreak());
   let last = null;
   try{ last = localStorage.getItem('entreno_temas_last'); }catch(e){}
+  // ?tema=<key> es el enlace que manda una tarea ("resuelve 10 de ataque
+  // doble"): tiene que caer DENTRO del tema, no en la lista de ochenta, que
+  // es justo lo que esa tarea viene a evitar. Manda sobre el hash y sobre lo
+  // último que se estuvo haciendo — lo pidió el profe hoy.
+  const pedido = new URLSearchParams(location.search).get('tema');
   const fromHash = (location.hash || '').replace('#', '');
-  const wanted = fromHash && DATA.themes[fromHash] ? fromHash : (last && DATA.themes[last] ? last : null);
+  const wanted = (pedido && DATA.themes[pedido] ? pedido : null)
+    || (fromHash && DATA.themes[fromHash] ? fromHash : null)
+    || (last && DATA.themes[last] ? last : null);
+  // openTheme() arranca en el primer ejercicio SIN resolver (firstUnsolvedIndex),
+  // así que los diez que pide la tarea son diez nuevos: lo que ya hizo no se
+  // le vuelve a poner delante.
   if(wanted) openTheme(wanted); else showThemes();
 }
 
