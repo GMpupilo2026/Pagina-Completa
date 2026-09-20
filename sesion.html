@@ -235,6 +235,21 @@
                         </div>
                     </div>
 
+                    <!-- Jalar al tablero un PGN ya subido en "Archivos" (solo el profesor): se
+                         carga como historial jugada a jugada (board.loadMoves), no solo la
+                         posición final, para poder recorrerlo con la clase igual que cualquier
+                         otra partida jugada en vivo. -->
+                    <div id="archivos-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📂 Jalar un archivo a la clase</h2>
+                            <button type="button" id="archivos-panel-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los PGN que subiste en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>. Al elegir uno se carga jugada a jugada: recórrelo con la clase con la navegación de jugadas de abajo del tablero.</p>
+                        <p id="archivos-panel-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                        <p id="archivos-panel-empty" class="hidden text-xs text-brand-450 dark:text-brand-350 py-4 text-center">Todavía no has subido ningún PGN — súbelos en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>.</p>
+                        <div id="archivos-panel-list" class="space-y-2"></div>
+                    </div>
+
                     <div class="flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
@@ -393,6 +408,7 @@
                             <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
                             <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
                             <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
+                            <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
                         </div>
                     </div>
 
@@ -440,6 +456,7 @@
                             <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar) están arriba de las pestañas; "✏️ Editar" abre el editor visual justo debajo del tablero.</p>
 
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
                             <form id="create-student-form" class="space-y-3">
                                 <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                                 <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -909,6 +926,8 @@
                 const active = panel.classList.contains("hidden");
                 panel.classList.toggle("hidden", !active);
                 document.getElementById("board-edit-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
                 if (active && leccionSelect.options.length === 0) refreshLeccionOptions();
             });
             document.getElementById("lesson-picker-close-btn").addEventListener("click", () => {
@@ -943,6 +962,111 @@
                     },
                 });
             }
+        }
+
+        // ---------- Jalar al tablero un PGN subido en Archivos (solo el profesor) ----------
+        // Misma tabla "archivos_pgn" de partidas.html: se listan solo las del propio
+        // profesor (la RLS ya aísla por profesor_id, pero acá además no tiene sentido
+        // ofrecer el archivo de otro). Al elegir uno se reproduce como historial jugada a
+        // jugada con board.loadMoves() —igual que applyGameStateRow() hace con cualquier
+        // game_state— y se transmite con pushBoardState(), sin ningún camino nuevo de
+        // sincronización: la clase lo ve exactamente como vería cualquier partida jugada
+        // en vivo, y se recorre con la navegación de jugadas de siempre.
+        let archivosPanelCargados = false;
+
+        function renderArchivoPanelItem(a) {
+            const li = document.createElement("li");
+            li.className = "flex items-center justify-between gap-2 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+            const title = document.createElement("p");
+            title.className = "text-sm font-semibold text-brand-800 dark:text-white truncate";
+            title.textContent = a.titulo;
+            const meta = document.createElement("p");
+            meta.className = "text-xs text-brand-450 dark:text-brand-350";
+            meta.textContent = a.move_count + " jugadas · " + a.nombre_archivo;
+            info.append(title, meta);
+            const loadBtn = document.createElement("button");
+            loadBtn.type = "button";
+            loadBtn.className = "shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            loadBtn.textContent = "Cargar";
+            loadBtn.addEventListener("click", () => cargarArchivoEnClase(a));
+            li.append(info, loadBtn);
+            return li;
+        }
+
+        function renderArchivoPanelGrupo(nombre, lista) {
+            const det = document.createElement("details");
+            det.className = "border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden";
+            det.open = !nombre; // "Sin carpeta" arranca abierta; las que tienen nombre, cerradas
+            const summary = document.createElement("summary");
+            summary.className = "cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 px-3 py-2 marker:text-accent-600";
+            summary.textContent = (nombre ? "📁 " + nombre : "🗂️ Sin carpeta") + " (" + lista.length + ")";
+            det.appendChild(summary);
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2 px-2 pb-2";
+            lista.forEach((a) => ul.appendChild(renderArchivoPanelItem(a)));
+            det.appendChild(ul);
+            return det;
+        }
+
+        // Las carpetas se ordenan en partidas.html; acá solo se agrupa lo que ya
+        // quedó puesto, para que la lista se pueda recorrer aunque sean muchos PGN.
+        async function refreshArchivosPanel() {
+            const wrap = document.getElementById("archivos-panel-list");
+            const emptyEl = document.getElementById("archivos-panel-empty");
+            const msgEl = document.getElementById("archivos-panel-msg");
+            msgEl.textContent = "";
+            wrap.innerHTML = "";
+            const { data, error } = await sb.from("archivos_pgn").select("*")
+                .eq("profesor_id", session.user.id).order("created_at", { ascending: false });
+            if (error) { msgEl.textContent = "No se pudo cargar tu lista de archivos."; return; }
+            const archivos = data || [];
+            emptyEl.classList.toggle("hidden", archivos.length > 0);
+
+            const porCarpeta = new Map(); // "" = sin carpeta
+            archivos.forEach((a) => {
+                const clave = a.carpeta || "";
+                if (!porCarpeta.has(clave)) porCarpeta.set(clave, []);
+                porCarpeta.get(clave).push(a);
+            });
+            const nombresCarpetas = [...porCarpeta.keys()].filter((c) => c !== "").sort((a, b) => a.localeCompare(b, "es"));
+            nombresCarpetas.forEach((nombre) => wrap.appendChild(renderArchivoPanelGrupo(nombre, porCarpeta.get(nombre))));
+            if (porCarpeta.has("")) wrap.appendChild(renderArchivoPanelGrupo(null, porCarpeta.get("")));
+
+            archivosPanelCargados = true;
+        }
+
+        async function cargarArchivoEnClase(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const game = new Chess();
+            if (!game.load_pgn(a.pgn, { sloppy: true })) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const moves = game.history();
+            const headers = typeof game.header === "function" ? game.header() : {};
+            board.loadMoves(moves, headers.FEN || null);
+            board.setMarks([], []);
+            document.getElementById("archivos-panel").classList.add("hidden");
+            await pushBoardState();
+            await clearVariantTree(); // las variantes de la línea anterior no tienen sentido con esta partida
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+            setStatus("Se cargó \"" + a.titulo + "\" en el tablero — recórrela con la clase usando la navegación de jugadas.");
+        }
+
+        function setupArchivosTools() {
+            document.getElementById("toggle-archivos-btn").addEventListener("click", () => {
+                const panel = document.getElementById("archivos-panel");
+                const active = panel.classList.contains("hidden");
+                panel.classList.toggle("hidden", !active);
+                document.getElementById("board-edit-panel").classList.add("hidden");
+                document.getElementById("lesson-picker-panel").classList.add("hidden");
+                document.getElementById("pdf-panel").classList.add("hidden");
+                if (active && !archivosPanelCargados) refreshArchivosPanel();
+            });
+            document.getElementById("archivos-panel-close-btn").addEventListener("click", () => {
+                document.getElementById("archivos-panel").classList.add("hidden");
+            });
         }
 
         // Abre la lección en la pantalla del profesor y en ninguna otra: no toca Supabase,
@@ -1475,7 +1599,11 @@
             setEditTool(null);
             if (active) resetBoardEditPanelPosition();
             document.getElementById("board-edit-panel").classList.toggle("hidden", !active);
-            if (active) document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
+            if (active) {
+                document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
+            }
             document.getElementById("free-mode-load-msg").textContent = "";
             const freeModeBtn = document.getElementById("toggle-free-mode-btn");
             freeModeBtn.textContent = active ? "🔒 Editando…" : "✏️ Editar";
@@ -3162,6 +3290,7 @@
                 activateTeacherTab(savedTab);
                 cargarCupoInvitaciones();
                 setupTeacherLessonTools();
+                setupArchivosTools();
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
@@ -3271,8 +3400,14 @@
                 });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error || "Error desconocido");
-                msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo con un enlace para entrar.`;
-                msg.className = "text-xs text-green-600 dark:text-green-400";
+                if (result.correo_enviado === false) {
+                    msg.textContent = `La cuenta de ${result.email} quedó creada, pero el correo NO salió. ` +
+                        "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
+                    msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                } else {
+                    msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                }
                 document.getElementById("create-student-form").reset();
                 // El servidor devuelve cuántas quedan: así el número de la pantalla
                 // es el que de verdad tiene la base, no una cuenta del navegador.
