@@ -211,6 +211,7 @@ async function init() {
         document.getElementById("agregar-renglon").addEventListener("click", () => agregarRenglon());
         agregarRenglon();
         document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
+        await desdeLaBitacora();
         await cargarEnviadas();
     } else {
         document.getElementById("vista-alumno").classList.remove("hidden");
@@ -234,6 +235,42 @@ async function cargarAlumnos() {
         label.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 alumno-check"><span>${escapeHtml(a.full_name || a.email)}</span>`;
         cont.appendChild(label);
     });
+}
+
+/* ---------- Venir desde una nota de la bitácora ----------
+
+   "Convertir en tarea" (informes.html y la clase en vivo) manda acá con el
+   alumno y el id de la nota. Se marca ese alumno y la nota queda puesta como
+   nota para él, que es lo que el profesor ya escribió — no hay que volver a
+   teclearla.
+
+   El TEXTO no viaja en la dirección: se lee de la base, que ya se la deja leer
+   a quien la escribió. Una dirección con lo que el profesor anotó de un alumno
+   queda en el historial del navegador, y esa nota puede ser privada.
+
+   Si la nota ya no está (la borró), se marca igual el alumno y no se dice
+   nada: el profesor venía a ponerle una tarea, no a leer la nota.
+
+   El TÍTULO no se toca: lo propone la página desde el renglón elegido, y
+   pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
+   campo que antes salía bien. */
+async function desdeLaBitacora() {
+    const params = new URLSearchParams(location.search);
+    const alumnoId = params.get("alumno");
+    if (!alumnoId) return;
+
+    const check = document.querySelector('.alumno-check[value="' + CSS.escape(alumnoId) + '"]');
+    if (check) {
+        check.checked = true;
+        check.closest("label").scrollIntoView({ block: "nearest" });
+    }
+
+    const notaId = params.get("nota");
+    if (!notaId) return;
+    const { data } = await sb.from("notas_alumno").select("texto, etiqueta").eq("id", notaId).maybeSingle();
+    if (!data) return;
+    const campo = document.getElementById("t-instrucciones");
+    if (!campo.value) campo.value = data.texto;
 }
 
 // ---------- Vista profesor: los renglones ----------

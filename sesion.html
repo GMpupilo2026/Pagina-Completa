@@ -41,6 +41,7 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/notas-alumno.js"></script>
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
     <script src="js/article-example-board.js"></script>
@@ -562,6 +563,17 @@
                             <ul id="students-list" class="space-y-2 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
+                            <!-- La bitácora del alumno que se esté mirando. Se abre con el
+                                 botón 📝 de su renglón: acá, en medio de la clase, es CUANDO
+                                 se ve lo que hay que anotar. Solo lo ve el profesor, como el
+                                 PDF y la lección de curso. -->
+                            <div id="notas-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h3 id="notas-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
+                                    <button type="button" id="notas-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
+                                </div>
+                                <div id="notas-en-clase-body"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -1874,6 +1886,16 @@
                     lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
                     actions.appendChild(lowerBtn);
                 }
+                // La bitácora de ESTE alumno, sin salir de la clase.
+                const notasBtn = document.createElement("button");
+                notasBtn.type = "button";
+                notasBtn.className = "shrink-0 text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                notasBtn.textContent = "📝";
+                notasBtn.title = "Anotar algo de este alumno (solo lo ves tú)";
+                notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
+                notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
+                actions.appendChild(notasBtn);
+
                 // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
                 // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
                 // (por ejemplo, para pasar de "solo blancas" a "ambos colores" a mitad de la
@@ -1904,6 +1926,27 @@
                 listEl.appendChild(li);
             }
         }
+
+        /* La bitácora, abierta desde el renglón del alumno. El panel se monta
+           entero cada vez: son pocas notas (las últimas cinco) y así no hay que
+           acordarse de limpiar lo del alumno anterior — que es justo el descuido
+           que dejaría al profesor escribiendo sobre quien no era. */
+        function abrirNotasEnClase(studentId, nombre) {
+            if (!isTeacher) return;
+            const caja = document.getElementById("notas-en-clase");
+            document.getElementById("notas-en-clase-titulo").textContent = "📝 Bitácora de " + nombre;
+            caja.classList.remove("hidden");
+            NotasAlumno.montarPanel(document.getElementById("notas-en-clase-body"), {
+                sb,
+                alumnoId: studentId,
+                profesorId: profile.id,
+                compacto: true,
+            });
+        }
+
+        document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
+            document.getElementById("notas-en-clase").classList.add("hidden");
+        });
 
         async function setActivePlayer(studentId, color) {
             const { error } = await sb.from("game_state").update({
