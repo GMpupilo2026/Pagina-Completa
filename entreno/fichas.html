@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fichas — Ajedrez Integral</title>
+<meta name="description" content="Fichas de estudio de una pantalla: aperturas, defensas, temas tácticos y conceptos, con su mapa de ideas y su posición.">
+<meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js. -->
+    <link rel="stylesheet" href="../css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<script>
+    (function () {
+        try {
+            var t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        } catch (e) {}
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/tiempo-plataforma.js" data-activity="fichas"></script>
+<style>
+  :root{
+    --bg-deep:#f0f4f8;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f0f4f8;
+    --line:#d9e2ec;
+    --text:#102a43;
+    --text-muted:#627d98;
+    --text-cuerpo:#334e68;
+    --brass:#de911d;
+    --brass-bright:#f0b429;
+    /* Un color por pestaña y otro por bloque del mapa. El color NUNCA dice
+       nada solo: cada bloque lleva su título escrito y cada ficha su etiqueta
+       de categoría, así que quien no distingue verde de ámbar no se pierde
+       nada (la misma regla que los gráficos de Informes). */
+    --cat-apertura:#a1670f;
+    --cat-defensa:#2c5f7f;
+    --cat-tactica:#a8371a;
+    --cat-concepto:#2c6b4f;
+    --b-idea:#486581;
+    --b-1:#2c6b4f;
+    --b-2:#a8371a;
+    --b-3:#2c5f7f;
+    --b-4:#8c2f3f;
+  }
+  html.dark{
+    --bg-deep:#0a1f33;
+    --bg-panel:#102a43;
+    --bg-panel-2:#0a1f33;
+    --line:#243b53;
+    --text:#f0f4f8;
+    --text-muted:#9fb3c8;
+    --text-cuerpo:#d9e2ec;
+    --cat-apertura:#e5b567;
+    --cat-defensa:#7fb3d3;
+    --cat-tactica:#e8926b;
+    --cat-concepto:#7fc4a0;
+    --b-idea:#9fb3c8;
+    --b-1:#7fc4a0;
+    --b-2:#e8926b;
+    --b-3:#7fb3d3;
+    --b-4:#e08a9a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter', sans-serif; min-height:100vh; min-height:100dvh;}
+  h1,h2,h3,h4{font-family:'Merriweather', serif; font-weight:700; margin:0;}
+  a{color:var(--brass-bright);}
+  *:focus-visible{outline:3px solid var(--brass-bright); outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  main{max-width:1000px; margin:0 auto; padding:18px 24px 60px;}
+  .intro{color:var(--text-muted); line-height:1.6; font-size:0.95rem; max-width:620px; margin:16px auto 0;}
+
+  /* ---------- Las cuatro pestañas ---------- */
+  nav.tabs{display:flex; gap:6px; max-width:1000px; margin:0 auto; padding:18px 24px 0; flex-wrap:wrap;}
+  .tab{
+    background:var(--bg-panel); border:1px solid var(--line); border-bottom:3px solid var(--tab-color, var(--line));
+    color:var(--text-muted); font-family:'Inter', sans-serif; font-size:0.88rem; font-weight:500;
+    padding:10px 16px; cursor:pointer; transition:background .2s, color .2s, transform .12s ease-out;
+    min-height:44px;
+  }
+  .tab:hover{color:var(--text);}
+  .tab:active{transform:scale(0.97);}
+  .tab.active{background:var(--bg-panel-2); color:var(--text);}
+  .tab .n{color:var(--text-muted); font-size:0.8em;}
+
+  .buscador{max-width:1000px; margin:14px auto 0; padding:0 24px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .buscador input{
+    flex:1; min-width:220px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; font-size:0.92rem; padding:11px 14px; min-height:44px;
+  }
+  .buscador .cuantas{color:var(--text-muted); font-size:0.85rem;}
+
+  /* ---------- La lista de fichas ---------- */
+  .ficha-lista{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; margin-top:16px;}
+  .ficha-item{
+    display:flex; align-items:flex-start; gap:12px; text-align:left; width:100%;
+    background:var(--bg-panel); border:1px solid var(--line); border-left:4px solid var(--cat-color, var(--line));
+    color:var(--text); font-family:'Inter', sans-serif; padding:14px 16px; cursor:pointer;
+    transition:border-color .15s, transform .12s ease-out;
+  }
+  .ficha-item:hover{border-color:var(--brass);}
+  .ficha-item:active{transform:scale(0.99);}
+  .ficha-item .mark{font-size:1.6rem; line-height:1; flex-shrink:0;}
+  .ficha-item .name{font-weight:600; display:block;}
+  .ficha-item .desc{font-size:0.82rem; color:var(--text-muted); margin-top:3px; display:block;}
+  .vacio{color:var(--text-muted); text-align:center; padding:30px 0;}
+
+  /* ---------- La ficha abierta ---------- */
+  #lista-vista{display:block;}
+  #ficha-vista{display:none;}
+  .ficha-cabeza{margin-bottom:6px;}
+  .ficha-cabeza a{font-size:0.85rem; color:var(--text-muted); display:inline-block; margin-bottom:10px;}
+  .ficha-cabeza h2{font-size:1.5rem;}
+  .ficha-cabeza .sub{color:var(--text-muted); font-size:0.95rem; margin-top:4px;}
+  .etiqueta{
+    display:inline-block; border:1px solid var(--cat-color, var(--line)); color:var(--cat-color, var(--text-muted));
+    font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; margin-right:6px;
+  }
+
+  /* ---------- El mapa: la idea arriba, cuatro bloques alrededor ----------
+     En pantalla ancha va como el mapa dibujado a mano: la idea principal
+     arriba, el nodo de la pieza en el medio y los cuatro bloques en las
+     esquinas. En pantalla angosta se apila en una columna y las líneas se
+     esconden — una línea diagonal entre dos cajas apiladas no une nada. */
+  .mapa{position:relative; display:grid; gap:14px; margin-top:18px;}
+  .mapa-lineas{display:none;}
+  .caja{
+    position:relative; z-index:1; background:var(--bg-panel);
+    border:1px solid var(--line); border-top:3px solid var(--c, var(--line));
+    padding:14px 16px;
+  }
+  .caja h3{font-size:0.95rem; color:var(--text); margin-bottom:8px;}
+  .caja ul{margin:0; padding-left:1.1em; list-style:disc;}
+  .caja li{color:var(--text-cuerpo); font-size:0.9rem; line-height:1.5; margin-bottom:5px;}
+  .caja li::marker{color:var(--c, var(--text-muted));}
+  .nodo{
+    display:none; align-items:center; justify-content:center; justify-self:center; align-self:center;
+    width:104px; height:104px; border-radius:50%;
+    background:var(--bg-panel); border:2px solid var(--line); font-size:3rem; line-height:1; color:var(--text);
+    z-index:1;
+  }
+  .nodo svg{width:64px; height:64px;}
+  @media (min-width:880px){
+    .mapa{
+      grid-template-columns:1fr minmax(230px,1fr) 1fr;
+      grid-template-areas:". idea ." "b1 nodo b2" "b3 hueco b4";
+      align-items:start;
+    }
+    .mapa-lineas{display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:0;}
+    .caja-idea{grid-area:idea;} .caja-1{grid-area:b1;} .caja-2{grid-area:b2;}
+    .caja-3{grid-area:b3;} .caja-4{grid-area:b4;}
+    .nodo{grid-area:nodo; display:flex;}
+  }
+
+  /* ---------- El diagrama ---------- */
+  .diagrama{max-width:400px; margin:26px auto 0;}
+  .board8{
+    display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+    width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+    pointer-events:none;
+  }
+  .sq{position:relative; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); user-select:none;}
+  .sq.light{background:#f0f4f8;}
+  .sq.dark{background:#486581;}
+  .pie{color:var(--text-muted); font-size:0.85rem; line-height:1.5; margin:10px auto 0; max-width:440px; text-align:center;}
+  .controles{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; max-width:400px; margin:12px auto 0;}
+  .jugadas{max-width:520px; margin:14px auto 0; display:flex; flex-wrap:wrap; gap:6px 14px; font-size:0.95rem; justify-content:center;}
+  .par{display:inline-flex; align-items:baseline; gap:4px; white-space:nowrap;}
+  .par b{color:var(--text-muted); font-weight:600; font-size:0.85em;}
+  .jugada{background:transparent; border:1px solid transparent; color:var(--text); font-family:'Inter',sans-serif; font-size:0.95rem; padding:2px 6px; cursor:pointer;}
+  .jugada:hover{border-color:var(--line);}
+  .jugada.actual{background:var(--brass); color:#102a43; font-weight:700;}
+  .en-palabras{max-width:520px; margin:12px auto 0; border:1px solid var(--line); background:var(--bg-panel); padding:10px 14px;}
+  .en-palabras summary{cursor:pointer; font-size:0.88rem; color:var(--text-muted);}
+  .en-palabras p{color:var(--text-muted); font-size:0.9rem; line-height:1.55; margin:8px 0 0;}
+
+  .ficha-pie{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap;}
+  .bctrl{
+    background:transparent; border:1px solid var(--line); color:var(--text); font-family:'Inter',sans-serif;
+    font-size:0.9rem; padding:11px 18px; cursor:pointer; transition:border-color .2s, transform .12s ease-out, background .2s;
+    min-height:44px; display:inline-flex; align-items:center; text-decoration:none;
+  }
+  .bctrl:hover{border-color:var(--brass);}
+  .bctrl:active:not(:disabled){transform:scale(0.97);}
+  .bctrl:disabled{opacity:0.35; cursor:not-allowed;}
+  .bctrl.primary{background:var(--brass); color:#102a43; border-color:var(--brass); font-weight:600;}
+  .bctrl.primary:hover{background:var(--brass-bright); border-color:var(--brass-bright);}
+
+  /* En Modo Adaptado la posición contada en palabras se ve sola: quien lo usa
+     no tiene que ir a abrir un <details> en cada jugada. Lo decide el CSS y no
+     el JavaScript, así encender el modo surte efecto al instante. */
+  html.adaptive-mode .en-palabras{border-color:var(--brass);}
+  html.adaptive-mode .en-palabras p{color:var(--text); font-size:1rem;}
+
+  /* La ficha se imprime: es de lo que más sentido tiene pegar en el cuaderno.
+     Se va todo lo que no es la ficha —el encabezado, la lista, los botones— y
+     el mapa se acomoda a una hoja. */
+  @media print{
+    header, footer, nav.tabs, .buscador, .intro, #lista-vista, .controles, .ficha-pie, .ficha-cabeza a, #app > div:first-child{display:none !important;}
+    body, .caja, .nodo, .diagrama{background:#fff !important; color:#000 !important;}
+    .caja{border:1px solid #888 !important; break-inside:avoid;}
+    .caja li, .pie, .ficha-cabeza .sub{color:#333 !important;}
+    .mapa{grid-template-columns:1fr 1fr; grid-template-areas:"idea idea" "b1 b2" "b3 b4";}
+    .mapa-lineas, .nodo{display:none !important;}
+    .diagrama{max-width:260px;}
+    .sq{print-color-adjust:exact; -webkit-print-color-adjust:exact;}
+    .en-palabras{display:none;}
+    main{padding:0;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ficha-item, .bctrl, .tab{transition-property: background-color, border-color, color;}
+  }
+</style>
+    <script src="../js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="../clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+<!-- ===== PUERTA: la ficha es de la Academia, así que pide sesión ===== -->
+<div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm text-center">
+        <p class="text-5xl mb-4" aria-hidden="true">🗂️</p>
+        <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Fichas</h1>
+        <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+    </div>
+</div>
+
+<!-- ===== LA PÁGINA ===== -->
+<div id="app" class="hidden pt-20 pb-16">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Fichas 🗂️</h1>
+    <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
+      <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Academia</a>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="intro">
+        Cada ficha es una pantalla: la idea principal arriba, cuatro bloques alrededor y la posición que lo
+        explica abajo. Sirve para repasar antes de jugar y para imprimirla y pegarla en el cuaderno. Para
+        memorizar una línea jugándola contra el entrenador está
+        <a href="aperturas.html">🎯 Aperturas y celadas</a>, y para leerla jugada por jugada,
+        <a href="estudio.html">📚 Estudio</a>.
+      </p>
+    </div>
+
+    <nav class="tabs" id="tabs" aria-label="Tipo de ficha"></nav>
+
+    <div class="buscador">
+      <label for="buscar" class="sr-only">Buscar una ficha por su nombre o por lo que dice</label>
+      <input id="buscar" type="search" placeholder="🔍 Buscar: horquilla, siciliana, peón pasado…" autocomplete="off">
+      <span class="cuantas" id="cuantas" role="status"></span>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div id="lista-vista">
+        <h2 id="lista-titulo" class="sr-only">Fichas</h2>
+        <div class="ficha-lista" id="ficha-lista"></div>
+      </div>
+
+      <!-- ====== Una ficha abierta ======
+           El tablero es decorativo (aria-hidden): la posición va contada en
+           palabras justo debajo y el pie dice qué se ve, igual que el material
+           de estudio de los cursos. Nada de esto depende de ver una imagen. -->
+      <div id="ficha-vista">
+        <div class="ficha-cabeza">
+          <a href="#" id="volver">← Todas las fichas</a>
+          <p><span class="etiqueta" id="ficha-etiqueta"></span><span class="etiqueta" id="ficha-nivel"></span></p>
+          <h2 id="ficha-titulo"></h2>
+          <p class="sub" id="ficha-sub"></p>
+        </div>
+
+        <div class="mapa" id="mapa">
+          <svg class="mapa-lineas" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <g fill="none" stroke-width="1.5">
+              <line x1="50" y1="50" x2="50" y2="14" stroke="var(--b-idea)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="16" y2="44" stroke="var(--b-1)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="84" y2="44" stroke="var(--b-2)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="16" y2="86" stroke="var(--b-3)" vector-effect="non-scaling-stroke"></line>
+              <line x1="50" y1="50" x2="84" y2="86" stroke="var(--b-4)" vector-effect="non-scaling-stroke"></line>
+            </g>
+          </svg>
+          <section class="caja caja-idea" style="--c:var(--b-idea)"><h3 id="t-idea"></h3><ul id="l-idea"></ul></section>
+          <section class="caja caja-1" style="--c:var(--b-1)"><h3 id="t-1"></h3><ul id="l-1"></ul></section>
+          <section class="caja caja-2" style="--c:var(--b-2)"><h3 id="t-2"></h3><ul id="l-2"></ul></section>
+          <section class="caja caja-3" style="--c:var(--b-3)"><h3 id="t-3"></h3><ul id="l-3"></ul></section>
+          <section class="caja caja-4" style="--c:var(--b-4)"><h3 id="t-4"></h3><ul id="l-4"></ul></section>
+          <div class="nodo" id="nodo" aria-hidden="true"></div>
+        </div>
+
+        <div class="diagrama">
+          <div class="board8" id="tablero" aria-hidden="true"></div>
+        </div>
+        <p class="sr-only" role="status" aria-live="polite" id="anuncio"></p>
+        <div class="controles" id="controles">
+          <button type="button" class="bctrl" id="b-inicio" aria-label="Ir a la posición inicial">⏮</button>
+          <button type="button" class="bctrl" id="b-atras" aria-label="Jugada anterior">◀</button>
+          <button type="button" class="bctrl" id="b-adelante" aria-label="Jugada siguiente">▶</button>
+          <button type="button" class="bctrl" id="b-final" aria-label="Ir a la última jugada">⏭</button>
+        </div>
+        <div class="jugadas" id="jugadas"></div>
+        <p class="pie" id="pie-diagrama"></p>
+        <details class="en-palabras" id="en-palabras">
+          <summary>Leer la posición en palabras</summary>
+          <p id="posicion-escrita"></p>
+        </details>
+
+        <div class="ficha-pie">
+          <a class="bctrl primary" id="b-practicar" href="#">🎯 Practicarla en el tablero</a>
+          <button type="button" class="bctrl" id="b-imprimir">🖨️ Imprimir esta ficha</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+<script src="../js/main.js"></script>
+<script src="../js/coordenadas-tablero.js"></script>
+<script src="../js/piece-style-themes.js"></script>
+<script src="../js/chess-piece-svg.js"></script>
+<script src="../js/blind-notation.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<!-- Las líneas de apertura NO se copian acá: la ficha guarda el id y las
+     jugadas se leen de este banco, que es donde viven. -->
+<script src="../js/aperturas-lineas.js"></script>
+<script src="../js/fichas-estudio.js"></script>
+<script>
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateChecking = document.getElementById('gate-checking');
+const NEXT_PATH = 'entreno/fichas.html';
+
+const { FICHAS, TITULOS, CATEGORIAS } = window.FichasEstudio;
+const LINEAS_POR_ID = new Map((window.AperturasLineas ? window.AperturasLineas.LINEAS : []).map((L) => [L.id, L]));
+
+const GLYPH = {
+  w: { p:'♙', n:'♘', b:'♗', r:'♖', q:'♕', k:'♔' },
+  b: { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' },
+};
+const FILES = ['a','b','c','d','e','f','g','h'];
+const NIVEL = {1:'Principiante', 2:'Intermedio', 3:'Avanzado'};
+const PIEZAS_ES = {N:'C', B:'A', R:'T', Q:'D', K:'R'};
+const aEspanol = (san) => String(san).replace(/[NBRQK]/g, (l) => PIEZAS_ES[l]);
+const esClara = (sq) => ((sq.charCodeAt(0) - 97) + (parseInt(sq[1], 10) - 1)) % 2 === 1;
+const sinTildes = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// De dónde sale la posición de cada ficha: de su propia línea, de una del
+// banco de aperturas, o de una FEN de estudio. Nunca de dos a la vez.
+function jugadasDe(F){
+  if(F.fen) return F.linea || [];
+  if(F.jugadas) return F.jugadas;
+  const L = LINEAS_POR_ID.get(F.lineaId);
+  return L ? L.jugadas : [];
+}
+function textoDe(F){
+  return [F.titulo, F.subtitulo, F.resumen, F.diagrama, F.centro.join(' '), F.bloques.map((b) => b.join(' ')).join(' ')].join(' ');
+}
+
+let categoria = CATEGORIAS[0];
+let busqueda = '';
+
+function fichasDe(cat){ return FICHAS.filter((F) => F.categoria === cat.id); }
+
+/* Buscar manda sobre la pestaña y mira TODAS las categorías: buscar "horquilla"
+   sin saber si es táctica o concepto es justamente para lo que se busca. Es la
+   misma decisión que la lista de cuentas de admin.html. */
+function loQueSeVe(){
+  const base = busqueda ? FICHAS : fichasDe(categoria);
+  if(!busqueda) return base;
+  const q = sinTildes(busqueda);
+  return base.filter((F) => sinTildes(textoDe(F)).includes(q));
+}
+
+function pintarTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  CATEGORIAS.forEach((cat) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tab' + (cat === categoria && !busqueda ? ' active' : '');
+    btn.style.setProperty('--tab-color', `var(--cat-${cat.id})`);
+    btn.innerHTML = `${cat.etiqueta} <span class="n">${fichasDe(cat).length}</span>`;
+    btn.addEventListener('click', () => {
+      categoria = cat;
+      busqueda = '';
+      document.getElementById('buscar').value = '';
+      pintarLista();
+      mostrarLista();
+    });
+    tabs.appendChild(btn);
+  });
+}
+
+function pintarLista(){
+  pintarTabs();
+  const lista = loQueSeVe();
+  const box = document.getElementById('ficha-lista');
+  box.innerHTML = '';
+  document.getElementById('lista-titulo').textContent = busqueda ? 'Resultados de la búsqueda' : categoria.etiqueta;
+  document.getElementById('cuantas').textContent = busqueda
+    ? `${lista.length} ficha${lista.length === 1 ? '' : 's'} con «${busqueda}»`
+    : `${lista.length} fichas · ${categoria.sub}`;
+  if(!lista.length){
+    const p = document.createElement('p');
+    p.className = 'vacio';
+    p.textContent = 'Ninguna ficha dice eso. Prueba con otra palabra.';
+    box.appendChild(p);
+    return;
+  }
+  lista.forEach((F) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ficha-item';
+    btn.dataset.ficha = F.id;
+    btn.style.setProperty('--cat-color', `var(--cat-${F.categoria})`);
+    const cat = CATEGORIAS.find((c) => c.id === F.categoria);
+    btn.innerHTML = `
+      <span class="mark" aria-hidden="true">${GLYPH.b[F.pieza]}</span>
+      <span>
+        <span class="name">${F.titulo}</span>
+        <span class="desc">${cat.etiqueta} · ${NIVEL[F.nivel]} · ${F.subtitulo}</span>
+        <span class="desc">${F.resumen}</span>
+      </span>`;
+    btn.addEventListener('click', () => abrirFicha(F));
+    box.appendChild(btn);
+  });
+}
+
+function mostrarLista(){
+  document.getElementById('ficha-vista').style.display = 'none';
+  document.getElementById('lista-vista').style.display = 'block';
+  document.getElementById('tabs').style.display = '';
+  document.querySelector('.buscador').style.display = '';
+  document.querySelector('.intro').style.display = '';
+  ponerEnLaDireccion(null);
+}
+
+/* ---------------- La ficha abierta ---------------- */
+let fichaActual = null;
+let partida = null;
+let indice = 0;   // cuántas jugadas de la línea se jugaron (0 = la posición de salida)
+
+function posicionEn(n){
+  const g = new Chess();
+  if(fichaActual.fen) g.load(fichaActual.fen);
+  const jugadas = jugadasDe(fichaActual);
+  for(let i = 0; i < n; i++) g.move(jugadas[i], { sloppy: true });
+  return g;
+}
+
+function dibujarPieza(cont, piece){
+  const span = document.createElement('span');
+  span.setAttribute('aria-hidden', 'true');
+  if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === 'ilustrado' && window.ChessPieceSVG) {
+    span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
+    span.className = 'chess-piece-illustrated';
+  } else {
+    span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
+    span.textContent = GLYPH[piece.color][piece.type];
+  }
+  cont.appendChild(span);
+}
+
+function dibujarTablero(){
+  const board = document.getElementById('tablero');
+  board.innerHTML = '';
+  for(let rank = 8; rank >= 1; rank--){
+    for(let f = 0; f < 8; f++){
+      const square = FILES[f] + rank;
+      const cell = document.createElement('div');
+      cell.className = 'sq ' + (esClara(square) ? 'light' : 'dark');
+      cell.dataset.square = square;
+      const piece = partida.get(square);
+      if(piece) dibujarPieza(cell, piece);
+      board.appendChild(cell);
+    }
+  }
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+function pintarJugadas(){
+  const cont = document.getElementById('jugadas');
+  const jugadas = jugadasDe(fichaActual);
+  cont.innerHTML = '';
+  // Una FEN de estudio no empieza en la jugada 1 de las blancas, así que su
+  // línea se numera desde 1 pero sin prometer que sea la jugada 1 de la partida.
+  const desdeElInicio = !fichaActual.fen;
+  for(let i = 0; i < jugadas.length; i += (desdeElInicio ? 2 : 1)){
+    const par = document.createElement('span');
+    par.className = 'par';
+    const numero = document.createElement('b');
+    numero.textContent = (desdeElInicio ? (i / 2 + 1) : (i + 1)) + '.';
+    par.appendChild(numero);
+    const cuales = desdeElInicio ? [i, i + 1] : [i];
+    cuales.forEach((idx) => {
+      if(idx >= jugadas.length) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'jugada' + (idx === indice - 1 ? ' actual' : '');
+      if(idx === indice - 1) btn.setAttribute('aria-current', 'step');
+      btn.textContent = aEspanol(jugadas[idx]);
+      btn.addEventListener('click', () => irA(idx + 1));
+      par.appendChild(btn);
+    });
+    cont.appendChild(par);
+  }
+}
+
+function irA(n){
+  const jugadas = jugadasDe(fichaActual);
+  indice = Math.max(0, Math.min(n, jugadas.length));
+  partida = posicionEn(indice);
+  dibujarTablero();
+  pintarJugadas();
+  document.getElementById('b-inicio').disabled = indice === 0;
+  document.getElementById('b-atras').disabled = indice === 0;
+  document.getElementById('b-adelante').disabled = indice >= jugadas.length;
+  document.getElementById('b-final').disabled = indice >= jugadas.length;
+  const anuncio = document.getElementById('anuncio');
+  if(indice === 0){
+    anuncio.textContent = jugadas.length ? 'Posición de salida.' : '';
+  } else {
+    anuncio.textContent = `Jugada ${indice} de ${jugadas.length}: ${aEspanol(jugadas[indice - 1])}.`;
+  }
+  // La posición contada pieza por pieza sale de BlindNotation, que es la única
+  // tabla de nombres y plurales del sitio: escribirla acá otra vez sería la
+  // quinta copia y se iría separando de las demás.
+  document.getElementById('posicion-escrita').textContent =
+    window.BlindNotation ? window.BlindNotation.positionSentence(partida) : '';
+}
+
+function pintarMapa(F){
+  const titulos = TITULOS[F.categoria];
+  const bloques = [F.centro].concat(F.bloques);
+  ['idea','1','2','3','4'].forEach((slot, i) => {
+    document.getElementById('t-' + slot).textContent = titulos[i];
+    const ul = document.getElementById('l-' + slot);
+    ul.innerHTML = '';
+    bloques[i].forEach((texto) => {
+      const li = document.createElement('li');
+      li.textContent = texto;
+      ul.appendChild(li);
+    });
+  });
+  const nodo = document.getElementById('nodo');
+  nodo.innerHTML = '';
+  dibujarPieza(nodo, { type: F.pieza, color: 'b' });
+}
+
+// El enlace de la ficha abierta: se puede mandar por WhatsApp y abre esa ficha,
+// no la lista. Un id que ya no existe cae a la lista en vez de dejar la página
+// a medio pintar.
+function ponerEnLaDireccion(id){
+  if(!window.history || !window.history.replaceState) return;
+  const url = new URL(window.location.href);
+  if(id) url.searchParams.set('ficha', id); else url.searchParams.delete('ficha');
+  window.history.replaceState({}, '', url);
+}
+
+function abrirFicha(F){
+  fichaActual = F;
+  document.getElementById('lista-vista').style.display = 'none';
+  document.getElementById('ficha-vista').style.display = 'block';
+  document.getElementById('tabs').style.display = 'none';
+  document.querySelector('.buscador').style.display = 'none';
+  document.querySelector('.intro').style.display = 'none';
+  const cat = CATEGORIAS.find((c) => c.id === F.categoria);
+  const etiqueta = document.getElementById('ficha-etiqueta');
+  etiqueta.textContent = cat.etiqueta;
+  etiqueta.style.setProperty('--cat-color', `var(--cat-${F.categoria})`);
+  document.getElementById('ficha-nivel').textContent = NIVEL[F.nivel];
+  document.getElementById('ficha-titulo').textContent = F.titulo;
+  document.getElementById('ficha-sub').textContent = F.subtitulo + ' — ' + F.resumen;
+  document.getElementById('pie-diagrama').textContent = F.diagrama;
+  pintarMapa(F);
+
+  const jugadas = jugadasDe(F);
+  document.getElementById('controles').style.display = jugadas.length ? '' : 'none';
+
+  /* El botón de practicar solo sale cuando esa línea existe de verdad en el
+     banco de entreno/aperturas.html. Un botón que promete practicar algo que no
+     está no da ningún error: lleva a la lista y quien lo aprieta no entiende
+     por qué. Dice de qué color se juega porque la misma línea se practica de un
+     lado solo. */
+  const practicar = document.getElementById('b-practicar');
+  const linea = F.lineaId ? LINEAS_POR_ID.get(F.lineaId) : null;
+  if(linea){
+    practicar.style.display = '';
+    practicar.href = 'aperturas.html?linea=' + encodeURIComponent(linea.id);
+    practicar.textContent = `🎯 Practicarla con ${linea.color === 'w' ? 'blancas' : 'negras'}`;
+  } else {
+    practicar.style.display = 'none';
+  }
+
+  irA(0);
+  ponerEnLaDireccion(F.id);
+  window.scrollTo({ top: 0 });
+}
+
+document.getElementById('volver').addEventListener('click', (e) => { e.preventDefault(); mostrarLista(); });
+document.getElementById('b-inicio').addEventListener('click', () => irA(0));
+document.getElementById('b-atras').addEventListener('click', () => irA(indice - 1));
+document.getElementById('b-adelante').addEventListener('click', () => irA(indice + 1));
+document.getElementById('b-final').addEventListener('click', () => irA(jugadasDe(fichaActual).length));
+document.getElementById('b-imprimir').addEventListener('click', () => window.print());
+document.getElementById('buscar').addEventListener('input', (e) => {
+  busqueda = e.target.value.trim();
+  pintarLista();
+  mostrarLista();
+});
+
+/* ---------------- Arranque ---------------- */
+function unlock(){
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+  pintarLista();
+  const pedida = new URLSearchParams(window.location.search).get('ficha');
+  const F = pedida ? FICHAS.find((x) => x.id === pedida) : null;
+  if(F){ categoria = CATEGORIAS.find((c) => c.id === F.categoria); pintarLista(); abrirFicha(F); }
+  else mostrarLista();
+}
+
+async function requireLoginThenGate(){
+  let hasSession = false;
+  try {
+    const { data } = await sb.auth.getSession();
+    hasSession = !!(data && data.session);
+  } catch (e) {
+    hasSession = false;
+  }
+  if(!hasSession){
+    gateChecking.textContent = 'Necesitas iniciar sesión en el sitio para entrar. Redirigiendo a iniciar sesión…';
+    window.location.href = '../login.html?next=' + encodeURIComponent(NEXT_PATH);
+    return;
+  }
+  gateChecking.classList.add('hidden');
+  unlock();
+}
+
+requireLoginThenGate();
+</script>
+</body>
+</html>

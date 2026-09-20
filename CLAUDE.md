@@ -1905,6 +1905,116 @@ entrenador desde la primera vez que la ve.
   herramientas/verificar-panel.js`**, que comprueba que "Estudio" esté en el
   grupo "Aprender".
 
+## Fichas: una pantalla por idea, con su mapa y su posición
+
+`entreno/fichas.html` (tarjeta **"🗂️ Fichas"** en `clases.html` → grupo
+"Aprender", al lado de Estudio) son 28 fichas de estudio: 6 aperturas, 6
+defensas, 8 temas tácticos y 8 conceptos. Cada una es **una sola pantalla**: la
+idea principal arriba, cuatro bloques alrededor de un nodo con la pieza, y
+abajo la posición que lo explica, recorrible jugada por jugada.
+
+No es otra forma de `entreno/estudio.html` ni de `entreno/aperturas.html`, y por
+eso son tres páginas y no una: Aperturas y celadas se **juega** de memoria con
+repaso espaciado, Estudio se **lee** jugada por jugada, y una ficha se **mira de
+un vistazo** — es lo que uno repasa cinco minutos antes de jugar, o imprime y
+pega en el cuaderno. Las tres comparten el banco de líneas, así que no hay tres
+versiones de la misma apertura.
+
+- **Los cinco bloques están SIEMPRE y en el mismo lugar de la pantalla.** Sus
+  títulos salen de `TITULOS[categoria]` (una apertura tiene Planes, Ideas
+  tácticas, Medio juego y Final; un tema táctico tiene Cómo se reconoce, Quién
+  la hace, Errores frecuentes y Cómo practicarla), así que dos fichas distintas
+  se leen igual y el ojo ya sabe dónde buscar cada cosa. El verificador falla si
+  una ficha trae tres bloques o seis.
+- **El color no dice nada solo.** Cada bloque tiene el suyo —y las líneas que
+  salen del nodo, también— pero el título va escrito y la categoría va en una
+  etiqueta de texto: es la misma regla de los gráficos de Informes. Los
+  renglones usan `--text-cuerpo` y no el gris de los textos secundarios, que
+  contra el blanco de la caja se queda justo en el borde de 4.5.
+- **Las líneas del mapa son un SVG con `preserveAspectRatio="none"`, y por eso
+  cada una lleva `vector-effect="non-scaling-stroke"`.** Ese atributo **no se
+  hereda del `<g>`**: puesto en el grupo, el navegador escala el grosor junto
+  con el viewBox y las cinco líneas salen como cuñas de 15 px. Se ve raro pero
+  no falla nada, así que solo se descubre mirando la pantalla.
+- **La posición no se inventa nunca**, y sale de **una sola** de estas tres
+  fuentes: `lineaId` (una línea de `js/aperturas-lineas.js` — las jugadas NO se
+  copian: se leen de ahí, que es donde viven), `jugadas` propias desde el
+  principio, o una `fen` de estudio con su `linea`. El verificador falla si una
+  ficha trae dos.
+
+### El motivo que promete la ficha se comprueba con el motor, no a ojo
+
+Cada ficha declara en `comprueba` qué tiene que cumplirse en el tablero —que la
+jugada dé jaque, que la línea termine en mate, que la pieza clavada no tenga
+ninguna jugada legal, que el peón esté pasado de verdad, que la columna no tenga
+un solo peón, que los dos alfiles sean de distinto color de casilla—, y
+`herramientas/verificar-fichas.js` lo juega con chess.js. Es el mismo criterio
+del material de los cursos y del banco del diagnóstico, y encontró dos errores
+que en pantalla no se veían:
+
+- El jaque descubierto ganaba una dama con `Cd7+`… solo que **el rey se comía el
+  caballo**: estaba sin defender. El caballo se mudó a g6, donde no lo alcanza
+  nadie.
+- La clavada de la española **no es una clavada** mientras el peón negro siga en
+  d7: la diagonal b5-e8 está tapada por él. La ficha ahora muestra la posición
+  después de `3…d6`, y ese mismo hallazgo quedó escrito como error frecuente
+  dentro de la ficha.
+
+La comprobación fuerte es `ganaSiempre`: no alcanza con que la pieza **ataque**
+dos cosas, se juegan **todas** las respuestas legales del rival y ninguna puede
+salvar lo prometido. Una horquilla que se para con una jugada no es una
+horquilla, y en el diagrama se ve igual de bien.
+
+**Cuando una ficha dice «el tema X», ese X existe.** Los nombres salen de
+`entreno/data/temas.json` —el mismo archivo que arma Ejercicios por tema— y el
+verificador los compara contra él. Así se corrigieron cuatro: el tema de la
+horquilla se llama ahí **«Pincho»**, el del descubierto **«Ataque a la
+descubierta»** y el de la enfilada, **«Ataque por rayos X»**. Mandar a un alumno
+a un tema que no está no da ningún error: lo busca, no lo encuentra y se queda
+pensando que se equivocó él.
+
+### Lo demás que hace la página
+
+- **Buscar manda sobre la pestaña abierta y mira las cuatro**, sin tildes
+  ("peon pasado" encuentra las siete fichas que hablan de él, sean de la
+  categoría que sean). Es la misma decisión que la lista de cuentas de
+  `admin.html`.
+- **Cada ficha tiene su enlace** (`fichas.html?ficha=<id>`), para mandarla por
+  WhatsApp. Un id que ya no existe cae a la lista, no a una ficha en blanco.
+- **Se imprime.** Una hoja de estilos de impresión deja solo la ficha —sin
+  encabezado, sin lista, sin botones— y acomoda el mapa a dos columnas.
+- **El tablero es decorativo** (`aria-hidden`): el pie cuenta qué se ve y la
+  posición va contada pieza por pieza con `BlindNotation.positionSentence()`,
+  que es la única tabla de nombres y plurales del sitio — escribirla otra vez
+  acá sería la quinta copia. En Modo Adaptado esa lectura se agranda, y lo
+  decide el CSS, no el JavaScript.
+- El botón de practicar **solo sale cuando esa línea existe** en el banco de
+  `entreno/aperturas.html`, y dice de qué color se juega: la misma línea se
+  practica de un lado solo (el gambito de dama está en el banco desde el lado
+  del negro, aunque la ficha sea de aperturas).
+- Se puede asignar desde Tareas: está en `js/material-plataforma.js`.
+
+**Al tocar el banco o la página, correr las dos comprobaciones**:
+
+    node herramientas/verificar-fichas.js          # el banco, con chess.js
+    node herramientas/verificar-fichas-pagina.js   # la página, en un navegador
+
+La primera no necesita más que `npm install chess.js@0.10.3`. La segunda pide
+además playwright y el sitio en localhost:8777, y existe porque esta página está
+detrás del login: `verificar-css.js` abre las páginas sin cuenta y no ve nada de
+esto. Comprueba que cada bloque traiga SUS renglones y no los del de al lado,
+que el tablero dibuje **pieza por pieza** la posición que toca en cada jugada
+(contra chess.js, no contra lo que diga la página), que el botón de practicar
+lleve a una línea que de verdad abre esa línea allá, que al imprimir salga la
+ficha y no la lista, y que la página **se vea**: sin CSS impreso como texto, con
+una sola hoja, y en oscuro cuando el tema está en oscuro.
+
+- De paso se le quitó la fecha fija a `herramientas/verificar-panel.js`: sus
+  clases de mentira colgaban de un día escrito a mano y el filtro de "últimos 3
+  meses" se mide contra hoy, así que la prueba se iba pudriendo sola —fallaba
+  por el almanaque, no por el código—. Ahora cuelgan de hoy y los meses
+  esperados se calculan de las mismas filas.
+
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
