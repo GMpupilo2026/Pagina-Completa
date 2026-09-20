@@ -1393,6 +1393,13 @@ Detalles que importan:
   el texto tal cual lo escribió `localStorage`: el JSON de dentro puede estar
   roto y una fecha puede no ser una fecha. Devuelven NULL en vez de tumbar el
   informe entero.
+- **Tareas y exámenes tienen su bloque**, mirando a UN alumno y también en la
+  página del propio alumno — la misma función los pinta para los dos públicos,
+  con los mismos números—. Los da `public.resumen_tareas_examenes()`, la misma
+  que usa el correo a la casa: si esta página los sumara por su cuenta, el
+  correo y la pantalla podrían decir cosas distintas del mismo alumno. Lo
+  vencido va arriba, en rojo **y escrito con todas las letras**: es la única
+  línea del bloque que pide hacer algo hoy, y un color solo no se lee.
 - **Al tocar informes.html, correr `node herramientas/verificar-informes.js`**
   (con el sitio en localhost:8777 y playwright instalado). Abre la página en un
   navegador de verdad con un cliente de Supabase de mentira y comprueba número
@@ -1541,6 +1548,86 @@ de arbitraje).
 - Comprobado de punta a punta contra Resend con `delivered@resend.dev` (su
   dirección de pruebas, que no llega a ninguna bandeja real): la primera corrida
   mandó 1 y la segunda saltó 1, que es exactamente lo que tiene que pasar.
+- **La función vive en el repositorio**, en `supabase/functions/informes-encargados/`.
+  Antes solo existía desplegada en Supabase: para cambiarle una línea había que
+  bajarla, editarla a ciegas y volver a subirla, sin que quedara rastro de qué
+  cambió ni cuándo.
+
+### Lo que la casa de verdad quiere saber: si está trabajando o no
+
+Ninguna de las cifras que el informe traía contestaba eso. Media hora puede ser
+una sola tarde y veinte ejercicios también, así que el correo podía verse lleno
+de números y no decir lo único que una madre pregunta.
+
+- **Arriba de todo va una franja con el veredicto**, y es lo primero —y muchas
+  veces lo único— que se lee: «Va bien · Practicó 5 días de 7», «Practicó poco»,
+  «Sofía no entró a practicar» o «Se le pasó la fecha de 2 tareas y 1 examen».
+- **Los días son la medida**, no los minutos: `informe_de_alumno()` devuelve
+  `dias_activos`, los días distintos con actividad contados **en hora de Costa
+  Rica** —mismo criterio que `progreso_dias_y_racha()`, para que quien entrena a
+  las once de la noche no pierda el día por el huso del servidor—.
+- **Cuántos días son "suficiente" vive en `PERIODOS`**, junto a la frecuencia
+  (1 al día, 3 a la semana, 8 al mes, 60 al año). No es una nota ni una regla de
+  la Academia: es el umbral con el que el correo decide el tono.
+- **El orden de las reglas importa y está escrito**: lo VENCIDO manda sobre todo
+  lo demás —se puede haber practicado los siete días y tener una tarea sin
+  entregar—, y quedarse en cero manda sobre "practicó poco".
+- **Ninguno de los textos regaña.** El de "no entró" ofrece ayuda, porque quien
+  lo lee puede ser una familia a la que se le complicó el mes.
+- Debajo van **Sus tareas** y **Sus exámenes**: cuántas le pusieron, cuántas
+  terminó, qué se le venció, cuándo vence la próxima, cuántos exámenes rindió y
+  con qué nota.
+
+### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
+
+`tareas` y `examenes` están aisladas por profesor a propósito (un profesor solo
+ve las que ÉL mandó), y eso choca de frente con un informe que es del ALUMNO.
+Son dos problemas, y el segundo es el que no se ve:
+
+1. A la madre no le sirve leer "hizo 2 de 2 tareas" cuando en realidad le
+   pusieron cinco entre sus dos profesores.
+2. **`informe_de_alumno()` es `SECURITY INVOKER`**, así que la tanda de
+   `pg_cron` (service role) y la vista previa del profesor pasarían por reglas
+   distintas: el profesor vería un informe y a la casa llegaría otro, sin que
+   nada fallara.
+
+Por eso esa parte la da **`public.resumen_tareas_examenes(alumno, desde, hasta)`,
+que es `SECURITY DEFINER`** y lleva escrito arriba quién puede preguntar por
+quién (el propio alumno, quien administra, o `soy_profesor_de()`; `auth.uid()`
+nulo es la tanda, y a `anon` se le revoca el `execute`).
+
+- **Devuelve números y fechas, nunca títulos ni quién puso la tarea.** La
+  familia necesita el conteo; el trabajo del colega sigue siendo suyo.
+- **Las tareas las cuenta `tareas_con_avance()`**, la misma función que pintan
+  `tareas.html` y el panel — dentro de la `SECURITY DEFINER` la RLS no filtra,
+  así que vienen las de todos sus profesores. Escribir la cuenta de nuevo sería
+  una tercera versión de "cuánto lleva hecho" que puede decir otra cosa.
+- **Lo que quedó sin hacer se cuenta HOY, no dentro del periodo**
+  (`sin_hacer_hoy`): una tarea que venció hace tres semanas no sale en el
+  informe semanal y es justo la que hay que decir.
+- Comprobado impersonando roles en SQL, con datos reales: el cron, el profesor
+  del alumno y el propio alumno reciben **exactamente los mismos números**; una
+  profesora que no lo tiene se lleva una excepción. Y la prueba que lo justifica:
+  a una profesora que sí tiene al alumno pero no puso esas tareas, **su RLS le
+  deja ver 0 tareas y 0 exámenes** mientras el informe cuenta 1 y 1.
+- **Ojo al probar el aislamiento: Profe Angulo es `is_admin`**, así que ve todo y
+  con él la prueba no prueba nada. Hay que impersonar a un profesor que no
+  administre.
+
+**Al tocar el informe de la casa, correr `node
+herramientas/verificar-informe-casa.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que las cuatro situaciones se distingan y que el orden
+de prioridad se respete —practicar los siete días no tapa una entrega vencida—,
+que los números de tareas y exámenes lleguen al HTML con los nombres que de
+verdad usa la base (una clave mal escrita no rompe nada: la sección simplemente
+no aparece), que el informe diario no diga "practicó 1 día de 1", y que un
+alumno sin nada no vea secciones vacías. Está probado que falla de verdad:
+cambiándole `puestas` por `asignadas` al HTML, salta.
+
+Lleva un ayudante, `herramientas/casos-informe-casa.mts`, porque
+`informe-html.ts` es TypeScript —se despliega a Deno— y se corre con
+`--experimental-strip-types`; el verificador lo lanza como subproceso para poder
+seguir siendo un `.js` como el resto de `herramientas/`.
 
 ## Para quien administra, el contenido está todo abierto
 
