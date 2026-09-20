@@ -42,10 +42,17 @@ const ADMIN  = { id: "u-admin", role: "profesor", is_admin: true,  es_coordinado
 
 /* 47 clases repartidas en cinco meses: más de una página (van de 20 en 20) y
    más de un mes, que es lo que hace falta para probar el agrupado. */
+/* Las clases de mentira se cuelgan de HOY, no de una fecha escrita a mano.
+   Con la fecha fija esta prueba se pudría sola: el filtro de "últimos 3 meses"
+   se mide contra el día en que se corre, así que cuando el calendario pasaba
+   de esa fecha las clases se iban cayendo del filtro de a una y la prueba
+   fallaba por el almanaque y no por el código. Con 30 clases cada 3 días entran
+   87 días, que siempre caben en los 90 del filtro. */
+const HOY = (() => { const d = new Date(); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); })();
 function clasesDeMentira() {
   const filas = [];
   for (let i = 0; i < 47; i += 1) {
-    const dia = new Date(Date.UTC(2026, 8, 16) - i * 3 * 86400000);
+    const dia = new Date(HOY - i * 3 * 86400000);
     const fin = new Date(dia.getTime() + 60 * 60000);
     filas.push({
       id: "c-" + i,
@@ -184,7 +191,8 @@ async function pruebaAlumna(browser) {
   igual("Jugar y competir", grupos[1].tiles.map((t) => t.enlace),
     ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
   igual("Aprender", grupos[2].tiles.map((t) => t.enlace),
-    ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html", "articulos.html", "tareas.html"]);
+    ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html", "entreno/fichas.html",
+     "articulos.html", "tareas.html"]);
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
      de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
      versión que NO enseña las respuestas al terminar. */
@@ -272,10 +280,16 @@ async function pruebaRegistro(browser) {
     abierto: d.open,
     filas: d.querySelectorAll("tbody tr").length,
   })));
-  igual("las clases salen agrupadas por mes", meses.map((m) => m.titulo),
-    ["Septiembre de 2026", "Agosto de 2026", "Julio de 2026"]);
+  const mesesEsperados = [];
+  clasesDeMentira().slice(0, 20).forEach((c) => {
+    const d = new Date(c.started_at);
+    const t = d.toLocaleDateString("es-CR", { month: "long", year: "numeric", timeZone: "UTC" });
+    const titulo = t.charAt(0).toUpperCase() + t.slice(1).replace(" de ", " de ");
+    if (!mesesEsperados.includes(titulo)) mesesEsperados.push(titulo);
+  });
+  igual("las clases salen agrupadas por mes", meses.map((m) => m.titulo), mesesEsperados);
   igual("solo el mes más reciente arranca abierto — es lo que hace legibles 100 clases",
-    meses.map((m) => m.abierto), [true, false, false]);
+    meses.map((m) => m.abierto), mesesEsperados.map((_, i) => i === 0));
   igual("y no se pierde ninguna fila por el camino",
     meses.reduce((a, m) => a + m.filas, 0), 20);
 
