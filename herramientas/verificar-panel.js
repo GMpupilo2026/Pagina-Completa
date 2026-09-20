@@ -195,6 +195,7 @@ const LEER_GRILLA = () => Array.from(document.querySelectorAll("#tile-grid secti
   tiles: Array.from(s.querySelectorAll("div.grid > *")).map((el) => ({
     etiqueta: el.querySelector("span > span") ? el.querySelector("span > span").textContent : "",
     etiqueta2: el.textContent,
+    desc: (() => { const s = el.querySelectorAll("span > span"); return s[1] ? s[1].textContent : ""; })(),
     enlace: el.tagName === "A" ? el.getAttribute("href") : null,
     apagado: el.getAttribute("aria-disabled") === "true",
   })),
@@ -290,6 +291,63 @@ async function pruebaProfesora(browser) {
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
+}
+
+/* El panel estaba escrito para el alumno de punta a punta, y a quien da clase
+   le decía cosas que no son: que "tu profesor te asigna el rival", que los
+   torneos "los arma tu profesor", que Informes es "tu progreso". Tareas tenía
+   el defecto al revés y al alumno le ofrecía asignarle material a unos alumnos
+   que no tiene. Nada de eso rompe nada —por eso nunca saltó—, así que lo mira
+   una prueba.
+
+   La comprobación fuerte no es la lista de textos uno por uno, que envejece:
+   es que a quien da clase NINGUNA tarjeta le hable de "tu profesor" ni le
+   prometa que algo es "tuyo" cuando es de sus alumnos. Un tile nuevo copiado
+   de otro cae ahí solo. */
+async function pruebaTextosPorRol(browser) {
+  console.log("\n=== A cada quien, el texto que le toca ===");
+
+  const descripciones = (grupos) => {
+    const d = {};
+    grupos.forEach((g) => g.tiles.forEach((t) => { d[t.etiqueta] = t.desc; }));
+    return d;
+  };
+
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+  const alumna = descripciones(await r.page.evaluate(LEER_GRILLA));
+  await r.ctx.close();
+
+  r = await panel(browser, [PROFE], "u-profe", {}, {
+    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2, clases_30d: 8 }] },
+  });
+  const profe = descripciones(await r.page.evaluate(LEER_GRILLA));
+  await r.ctx.close();
+
+  // A la alumna, lo suyo.
+  igual("a la alumna, Tareas le habla de lo que le mandaron",
+    alumna["Tareas"], "Lo que te mandó tu profesor, con su fecha límite");
+  igual("y no le ofrece asignarle material a unos alumnos que no tiene",
+    /tus alumnos/i.test(alumna["Tareas"]), "false");
+  igual("a la alumna, Informes es lo suyo", alumna["Informes"], "Tu progreso y estadísticas");
+
+  // A quien da clase, lo suyo.
+  igual("a la profesora, Tareas le habla de asignar",
+    profe["Tareas"], "Asigna material a tus alumnos, con su fecha límite");
+  igual("Informes es el de sus alumnos", profe["Informes"], "El progreso de tus alumnos y los informes a la casa");
+  igual("los torneos los arma ella", profe["Torneos de la Academia"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
+  igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
+  igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
+  igual("y el diagnóstico de arbitraje le habla de revisar los del público",
+    profe["Diagnóstico de arbitraje"], "Reglamento FIDE: hazlo, revisa los del público y responde");
+
+  /* La regla general, que es la que atrapa al tile que todavía no existe. */
+  const conTuProfesor = Object.entries(profe).filter(([, d]) => /tu profesor/i.test(d)).map(([k]) => k);
+  igual("a quien da clase, NINGUNA tarjeta le habla de «tu profesor»", conTuProfesor, []);
+
+  /* Y lo que NO cambia: un texto que sirve igual para los dos no se duplica
+     porque sí — dos versiones de la misma frase se van separando sola. */
+  igual("lo que vale para los dos se queda igual", alumna["Configuración"], profe["Configuración"]);
+  igual("y también lo neutral de Entrenamiento", alumna["Entrenamiento"], profe["Entrenamiento"]);
 }
 
 async function pruebaAdmin(browser) {
@@ -697,6 +755,7 @@ async function pruebaPantalla(browser) {
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
+    await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
     await pruebaRegistro(browser);
     await pruebaPantalla(browser);

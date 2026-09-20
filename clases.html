@@ -347,7 +347,7 @@
                que la pinta ancha y en una línea en vez de como un cuadrito
                más. */
             { title: "Clase en vivo", destacado: true, tiles: [
-                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", href: "sesion.html", primary: true },
+                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", descProfe: "El tablero que ve tu clase, en vivo", href: "sesion.html", primary: true },
             ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
@@ -357,18 +357,18 @@
                grilla (administración, coordinación, el equipo docente) busca su
                grupo POR NOMBRE, nunca por la posición. */
             { title: "Aprender", tiles: [
-                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
                 { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
-                { emoji: "📋", label: "Tareas", desc: "Asigna material a tus alumnos y revisa lo que te asignaron, con su fecha límite", href: "tareas.html" },
+                { emoji: "📋", label: "Tareas", desc: "Lo que te mandó tu profesor, con su fecha límite", descProfe: "Asigna material a tus alumnos, con su fecha límite", href: "tareas.html" },
             ] },
             { title: "Jugar y competir", tiles: [
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
-                { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
-                { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", href: "torneos.html" },
+                { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
+                { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
                 { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
-                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", href: "logros.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
             /* Evaluaciones: lo que MIDE el nivel de quien lo hace, aparte de lo
@@ -387,14 +387,14 @@
                repetir el nombre en el panel — ya pasó una vez con "Torneos". */
             { title: "Evaluaciones", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
-                { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "nivel-de-arbitraje.html" },
+                { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
             ] },
             { title: "Herramientas", tiles: [
                 { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", mantenimientoAlumno: true },
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             { title: "Tu cuenta", tiles: [
-                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
+                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
             ] },
         ];
@@ -412,6 +412,30 @@
                 t.disabled = true;
                 t.nota = "En mantenimiento";
                 delete t.href;
+            }));
+        }
+
+        /* El panel estaba escrito para el alumno de punta a punta, y a quien da
+           clase le decía cosas que no son: que "tu profesor te asigna el rival"
+           (lo asigna ella), que los torneos "los arma tu profesor" (los arma
+           ella), que Informes es "tu progreso" (es el de sus 29 alumnos) o que
+           la sesión en vivo es "el tablero con tu profesor". Tareas tenía el
+           defecto al revés: su texto era el del profesor, así que al alumno le
+           ofrecía asignarle material a unos alumnos que no tiene.
+
+           No rompía nada —por eso nunca saltó—, que es justamente por lo que
+           conviene que lo mire una prueba. El texto de cada rol vive junto al
+           tile (`desc` y `descProfe`) y no repartido en `if`s por init(): así
+           se ven los dos de un vistazo al leer la lista, y un tile nuevo que
+           solo sirva para uno de los dos se nota enseguida.
+
+           Se aplica sobre la lista ya armada y en un solo lugar, igual que
+           apagarEnMantenimiento(). Vale para quien administra, como todo lo
+           que se hace para los profesores. */
+        function textosDelEquipoDocente() {
+            if (!isTeacher && !profile.is_admin) return;
+            TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
+                if (t.descProfe) t.desc = t.descProfe;
             }));
         }
 
@@ -1035,10 +1059,7 @@
                    grupo no la deje sin cambiar. */
                 const evaluaciones = TILE_GROUPS.find((g) => g.title === "Evaluaciones");
                 const arbitraje = evaluaciones.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
-                if (arbitraje) {
-                    arbitraje.href = "arbitraje.html";
-                    arbitraje.desc = "Reglamento FIDE: hazlo, revisa los del público y responde";
-                }
+                if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
             }
 
             // Coordinación: armar formularios de inscripción a torneos. La
@@ -1059,6 +1080,7 @@
             // Después de armar la lista y antes de pintarla: apaga para el
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo
             // docente.
+            textosDelEquipoDocente();
             apagarEnMantenimiento();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
