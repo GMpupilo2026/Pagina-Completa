@@ -2909,6 +2909,17 @@ quedarse sin saltos; 64 es el recorrido completo.
 `TILE_GROUPS`, un solo lugar: mover un acceso de grupo es cambiarle el objeto de
 lista, y el resto se acomoda solo.
 
+- **"Aprender" va antes que "Jugar y competir".** Esto es una academia: lo
+  primero que se ofrece al entrar es lo que se viene a hacer. Jugar queda
+  justo debajo, a un golpe de vista — no se esconde, se ordena.
+- **Mover un grupo de lugar es mover su objeto dentro de `TILE_GROUPS`, y
+  nada más.** Todo lo que después retoca la grilla —administración,
+  coordinación, el equipo docente— busca su grupo **por nombre**
+  (`TILE_GROUPS.find((g) => g.title === …)`), nunca por la posición. Por eso
+  `verificar-panel.js` también pregunta por nombre: con índices, un cambio de
+  orden rompía media docena de comprobaciones que no tienen nada que ver con
+  el orden y había que renumerarlas a mano. El orden se comprueba aparte y
+  una sola vez, que es donde importa.
 - **"Sesión en vivo" va sola y de primera**, en su propio grupo ("Clase en
   vivo") y con `destacado: true`, que la pinta ancha y en una línea. Es lo único
   del panel que pasa AHORA MISMO; mezclada entre Juegos y Torneos había que

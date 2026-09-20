@@ -195,18 +195,31 @@ const LEER_GRILLA = () => Array.from(document.querySelectorAll("#tile-grid secti
   })),
 }));
 
+/* El contenido de cada grupo se pide POR NOMBRE y no por su posición. Con
+   índices, mover un grupo de lugar —que es una sola línea en clases.html y algo
+   que se hace por criterio editorial— rompía media docena de comprobaciones que
+   no tienen nada que ver con el orden, y había que renumerarlas a mano. El
+   orden se comprueba aparte y una sola vez, que es donde de verdad importa. */
+function grupo(grupos, titulo) {
+  const g = grupos.find((x) => x.titulo === titulo);
+  if (!g) { mal(`no está el grupo «${titulo}»`); return { titulo: titulo, tiles: [] }; }
+  return g;
+}
+
 async function pruebaAlumna(browser) {
   console.log("\n=== La grilla, vista por una alumna ===");
   const { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana");
   const grupos = await page.evaluate(LEER_GRILLA);
 
+  /* "Aprender" va antes que "Jugar y competir": esto es una academia, y lo
+     primero que se ofrece al entrar es lo que se viene a hacer. */
   igual("los grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Clase en vivo", "Jugar y competir", "Aprender", "Evaluaciones", "Herramientas", "Tu cuenta"]);
+    ["Clase en vivo", "Aprender", "Jugar y competir", "Evaluaciones", "Herramientas", "Tu cuenta"]);
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
-    grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);
-  igual("Jugar y competir", grupos[1].tiles.map((t) => t.enlace),
+    grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);   // por índice a propósito: que vaya PRIMERA es el punto
+  igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
     ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
-  igual("Aprender", grupos[2].tiles.map((t) => t.enlace),
+  igual("Aprender", grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
      "articulos.html", "tareas.html"]);
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
@@ -216,13 +229,13 @@ async function pruebaAlumna(browser) {
      de leerse y ocupaba un lugar en la grilla. El día que existan, vuelve la
      tarjeta. */
   igual("Evaluaciones: los dos diagnósticos, y ninguna tarjeta apagada esperando",
-    grupos[3].tiles.map((t) => [t.enlace, t.apagado]),
+    grupo(grupos, "Evaluaciones").tiles.map((t) => [t.enlace, t.apagado]),
     [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
   igual("Tu cuenta, en su orden",
-    grupos[5].tiles.map((t) => t.etiqueta),
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
     ["Informes", "Mis pagos", "Configuración"]);
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => /Cerrar sesión/.test(t.etiqueta2)).length, "0");
@@ -260,7 +273,7 @@ async function pruebaProfesora(browser) {
      exámenes del público y el detalle pregunta por pregunta. Una sola tarjeta y
      no dos, para no repetir el nombre en el panel. */
   igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
-    grupos[3].tiles.map((t) => t.enlace),
+    grupo(grupos, "Evaluaciones").tiles.map((t) => t.enlace),
     ["entreno/diagnostico.html", "arbitraje.html"]);
   igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
     grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
@@ -269,7 +282,7 @@ async function pruebaProfesora(browser) {
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
   igual("las herramientas le quedan abiertas",
-    grupos[4].tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html"]);
+    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html"]);
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -278,9 +291,9 @@ async function pruebaAdmin(browser) {
   console.log("\n=== La grilla, vista por administración ===");
   const { page, ctx } = await panel(browser, [ADMIN], "u-admin");
   const grupos = await page.evaluate(LEER_GRILLA);
-  igual("Administración encabeza «Tu cuenta»", grupos[5].tiles[0].enlace, "admin.html");
+  igual("Administración encabeza «Tu cuenta»", grupo(grupos, "Tu cuenta").tiles[0].enlace, "admin.html");
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
-    grupos[4].tiles.map((t) => t.enlace),
+    grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
     ["lector-planilla.html", "partidas.html", "formularios.html", "cobros.html"]);
   await ctx.close();
 }
