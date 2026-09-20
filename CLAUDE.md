@@ -692,6 +692,102 @@ Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.
 
+## El plan de clase: preparar la clase antes de darla
+
+`sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,
+Táctica, archivos PGN, preguntar, practicar— pero todo hay que ir a buscarlo
+sobre la marcha, con la clase mirando. `planes.html` es donde se arma antes.
+
+**Lo que de verdad compra es REUSARLO**: el mismo plan se da al grupo de la
+mañana y al de la tarde, y ahí es donde una clase suelta se vuelve un programa.
+Por eso el plan **no está atado a una clase ni a un grupo**, y por eso tiene
+"⧉ Duplicar": se copia entero y se le cambia lo que haga falta sin tocar el
+original.
+
+- `planes_clase` es el encabezado (título y las notas del profesor) y
+  **`plan_items` son los renglones**, en orden.
+- **`js/plan-clase.js` es lo único que sabe leer y escribir un plan**, porque lo
+  usan el armador y la clase en vivo. Escrito dos veces, se separarían a la
+  primera corrección.
+
+### Los tres tipos existen porque la clase en vivo YA tiene su puerta
+
+| tipo | qué hace | por dónde entra |
+|---|---|---|
+| `posicion` | la transmite a toda la clase | `aplicarPosicionEnClase()` |
+| `leccion` | la abre **solo en su pantalla** | `abrirLeccionLocal()` |
+| `nota` | no toca el tablero: es su chuleta | — |
+
+**Un tipo nuevo sin su puerta deja un renglón que no hace nada al tocarlo**, en
+medio de la clase y delante de todos, sin dar ningún error. Y ninguno arma su
+propio `update`: si lo hiciera, el que se olvidara de limpiar las variantes o de
+quitarle el control al alumno dejaría la clase con un resto de la posición
+anterior — la misma razón por la que las tres puertas de antes pasan todas por
+`aplicarPosicionEnClase()`.
+
+- **El `CHECK plan_items_coherente` es lo que impide guardar un renglón sin lo
+  que su tipo necesita** (una posición sin FEN, una lección sin número). Sin él
+  el renglón se ve perfecto en el armador y no hace nada en la clase.
+- **La `pregunta` de un renglón NO le llega al alumno.** `questions` no tiene
+  enunciado: el alumno contesta moviendo, como en Táctica. Es la chuleta del
+  profesor para no tener que acordarse de qué iba a preguntar, y el armador lo
+  dice con todas las letras — prometer que el alumno la lee sería mentirle.
+- **`expected_plies` va en 1 y no se guarda en el plan**, a propósito: el caso de
+  todos los días es "¿cuál es la jugada?", y un campo más que llenar al armar se
+  queda sin llenar. Si hace falta otra cantidad, el panel de Preguntar la cambia
+  como siempre.
+- **En pantalla las lecciones se numeran desde 1 y en la base desde 0**, que es
+  como las cuenta `abrirLeccionLocal()`. Separarlos abre la lección de al lado, y
+  eso no da ningún error: simplemente se da la clase que no era.
+
+### La validación de la posición se mudó a `js/posicion-valida.js`
+
+`motivoPosicionInvalida()` vivía dentro de `sesion.html`. El armador necesita la
+**misma** pregunta y la necesita ANTES: una posición que rompe a Stockfish
+guardada en el plan no da ningún error hasta que el profesor la manda al
+tablero, delante de todos. Enterarse al guardarla cuesta una corrección;
+enterarse allá cuesta la clase.
+
+- En `sesion.html` queda el nombre de siempre, que usan sus cuatro puertas, y va
+  como **`function` y no como `const`**: la primera de esas puertas está escrita
+  más ARRIBA en el archivo, y un `const` no existe hasta que se evalúa su línea
+  — el mismo "Cannot access before initialization" que dejó a `4x4.html` colgada
+  en "Comprobando tu sesión…".
+
+### Detalles del armador
+
+- **Reordenar manda el `orden` de CADA renglón que se movió**, no solo del que
+  cambió: con dos renglones en el mismo número, el orden que sale depende de cómo
+  resuelva el empate la base, o sea que el plan se ve distinto cada vez sin que
+  nada falle.
+- **Los cursos salen de `herramientas/cursos/catalogo.json`**, la misma fuente que
+  las tarjetas de `cursos.html`: una segunda lista se iría quedando vieja y le
+  ofrecería al profesor un curso que ya no existe.
+- **Cuál plan está dando se recuerda en `localStorage`** (`plan_en_clase`), como
+  el tema o la clase elegida: si se recarga la página en medio de la clase —que
+  pasa— no hay que volver a buscarlo en la lista.
+- Las notas del plan **se guardan al salir del campo**, sin botón: es un campo
+  que se toca de pasada mientras se arma el resto.
+
+### Quién puede qué
+
+Un plan es **del profesor que lo escribió**: una colega no lo ve. Quien
+administra los ve todos (la regla permanente de siempre) pero **no los edita** —
+el material de un colega no es de nadie más. El insert exige
+`profesor_id = auth.uid()` y `role = 'profesor'` o `is_admin`, así que un alumno
+no puede crear ninguno, y a `anon` se le revocan los permisos de tabla.
+Comprobado impersonando roles en SQL, 12 casos.
+
+**Al tocar `planes.html`, `js/plan-clase.js`, `js/posicion-valida.js` o el panel
+del plan de la clase en vivo, correr `node herramientas/verificar-planes.js`**
+(con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba que una posición que rompe a Stockfish **se rechace al guardarla y no
+se mande nada a la base**, que la buena entre con su tipo, su FEN, su pregunta y
+su orden, que la lección 5 se guarde como 4, y que subir un renglón **renumere
+los dos** que se movieron. Sirve chess.js desde `node_modules`: sin él
+`PosicionValida.motivo()` revienta y el armador deja de validar — que es justo lo
+que la prueba viene a comprobar.
+
 ## La bitácora: lo que el profesor observa, donde lo observa
 
 Hasta ahora lo único que el profesor podía escribir de un alumno era
