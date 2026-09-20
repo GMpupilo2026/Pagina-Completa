@@ -620,20 +620,22 @@
         // decirla en el panel. Un alumno abría esto, no veía nada que hacer, y
         // la tarea vencía sin que nada avisara.
         //
-        // Se piden solo las pendientes y solo las columnas que se muestran: son
-        // pocas por alumno, y el `limit` es para que siga siendo así el día que
-        // alguien mande cincuenta de una.
+        // Desde que una tarea tiene renglones con cantidad, lo pendiente NO es
+        // una columna: `tareas.estado` quedó sin uso y la situación la calcula
+        // public.tareas_con_avance() a partir de lo que el alumno lleva
+        // entrenado —la misma función que pinta tareas.html, para que las dos
+        // pantallas no puedan decir cosas distintas de lo mismo—. Con
+        // p_pendientes la base ya descarta las cumplidas, así que acá no se
+        // baja lo que no se va a mostrar.
         async function cargarTareasPendientes() {
-            const { data, error } = await sb.from("tareas")
-                .select("id, titulo, vence_at")
-                .eq("alumno_id", profile.id)
-                .eq("estado", "pendiente")
-                .order("vence_at", { ascending: true })
-                .limit(50);
+            const { data, error } = await sb.rpc("tareas_con_avance", {
+                p_alumno: profile.id,
+                p_pendientes: true,
+                p_limite: 50,
+            });
             if (error || !data || !data.length) return;   // sin tareas, la franja no se destapa
 
-            const ahora = new Date();
-            const vencidas = data.filter((t) => new Date(t.vence_at) < ahora);
+            const vencidas = data.filter((t) => t.situacion === "vencida");
             const caja = document.getElementById("tareas-aviso");
             const titulo = document.getElementById("tareas-aviso-titulo");
             const texto = document.getElementById("tareas-aviso-texto");
@@ -659,7 +661,12 @@
                     ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
                     : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
             } else {
-                texto.textContent = `La más próxima es «${data[0].titulo}», vence ${venceEnPalabras(data[0].vence_at)}.`;
+                // Cuánto lleva de la más próxima: con renglones, "2 de 5" dice
+                // mucho más que el título solo — y es lo que hace que valga la
+                // pena entrar a terminarla.
+                const t0 = data[0];
+                const avance = t0.renglones > 1 ? ` Llevas ${t0.cumplidos} de ${t0.renglones}.` : "";
+                texto.textContent = `La más próxima es «${t0.titulo}», vence ${venceEnPalabras(t0.vence_at)}.${avance}`;
             }
             caja.hidden = false;
         }

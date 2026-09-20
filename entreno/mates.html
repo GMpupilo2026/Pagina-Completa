@@ -26,6 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="mates"></script>
+<script src="../js/tarea-en-curso.js" defer></script>
 <style>
   :root{
     --bg-deep:#f0f4f8;
@@ -746,7 +747,12 @@ function initApp(){
   appInitialized = true;
   setStreak(getStreak());
   applyBlindModeUI();
-  const startCategory = CATEGORY_ORDER.find((c) => solvedCountFor(c) < PUZZLES[c].length) || 'mate1';
+  // ?cat=<categoria> es el enlace que manda una tarea ("25 mates en 1"): cae
+  // en esa categoría y no en la que tocaba por progreso. openCategory() ya
+  // arranca en el primero sin resolver, así que los 25 son 25 nuevos.
+  const pedida = new URLSearchParams(location.search).get('cat');
+  const startCategory = (pedida && PUZZLES[pedida] && PUZZLES[pedida].length) ? pedida
+    : (CATEGORY_ORDER.find((c) => solvedCountFor(c) < PUZZLES[c].length) || 'mate1');
   openCategory(startCategory);
 }
 

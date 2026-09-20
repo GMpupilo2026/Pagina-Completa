@@ -81,8 +81,8 @@ window.__consultas = [];
   /* Un constructor que de verdad FILTRA y de verdad CORTA, y que además deja
      anotado lo que se le pidió. Un doble que devolviera siempre la tabla entera
      daría por buena una página que no filtra nada. */
-  function constructor(tabla, filas) {
-    const anotado = { tabla: tabla, eq: {}, gte: null, or: null, range: null, limit: null, count: false };
+  function constructor(tabla, filas, args) {
+    const anotado = { tabla: tabla, eq: {}, gte: null, or: null, range: null, limit: null, count: false, args: args || null };
     window.__consultas.push(anotado);
     let filas2 = (filas || []).slice(), unica = false;
     const cmp = (a, b) => String(a) === String(b);
@@ -135,7 +135,6 @@ window.__consultas = [];
       : []).concat(CLASES),
     puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
     training_progress: [],
-    tareas: DATOS.tareas || [],
   };
 
   window.sb = {
@@ -152,9 +151,9 @@ window.__consultas = [];
 
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
-    rpc: (n) => constructor(n, n === "mis_clases"
+    rpc: (n, args) => constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
-      : (DATOS.rpc && DATOS.rpc[n]) || []),
+      : (DATOS.rpc && DATOS.rpc[n]) || [], args),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -462,15 +461,26 @@ async function pruebaRegistro(browser) {
    3. Que quien da clase vuelva a ver el panel del alumno: sus propios
       ejercicios 4×4 en cero en vez de a quién hay que perseguir. */
 
-// Tres tareas: dos por vencer y una cuya fecha ya pasó.
+/* Lo que devuelve public.tareas_con_avance(p_pendientes => true): las que NO
+   están cumplidas, ya con su situación calculada. El panel no vuelve a
+   decidir qué está pendiente —`tareas.estado` quedó sin uso— así que la
+   completada ni siquiera llega: filtrarla acá sería bajarse la tabla entera
+   con otro nombre. */
 function tareasDeMentira(conVencida) {
   const dia = (n) => new Date(Date.now() + n * 86400000).toISOString();
   const filas = [
-    { id: "t1", alumno_id: "u-ana", estado: "pendiente", titulo: "Finales de rey y peón", vence_at: dia(1) },
-    { id: "t2", alumno_id: "u-ana", estado: "pendiente", titulo: "Mates en dos", vence_at: dia(5) },
-    { id: "t3", alumno_id: "u-ana", estado: "completada", titulo: "Ya hecha", vence_at: dia(-9) },
+    { id: "t1", alumno_id: "u-ana", situacion: "pendiente", titulo: "Finales de rey y peón",
+      vence_at: dia(1), renglones: 1, cumplidos: 0 },
+    { id: "t2", alumno_id: "u-ana", situacion: "pendiente", titulo: "Mates en dos",
+      vence_at: dia(5), renglones: 1, cumplidos: 0 },
   ];
-  if (conVencida) filas.push({ id: "t0", alumno_id: "u-ana", estado: "pendiente", titulo: "Aperturas", vence_at: dia(-2) });
+  if (conVencida) {
+    filas.unshift({ id: "t0", alumno_id: "u-ana", situacion: "vencida", titulo: "Aperturas",
+      vence_at: dia(-2), renglones: 1, cumplidos: 0 });
+  } else {
+    filas.push({ id: "t3", alumno_id: "u-ana", situacion: "pendiente", titulo: "Repaso largo",
+      vence_at: dia(8), renglones: 1, cumplidos: 0 });
+  }
   return filas;
 }
 
@@ -493,9 +503,9 @@ const RACHA_ANA = [{ dias_activos: 12, racha_actual: 4, racha_record: 9, total_e
 
 function datosAlumna(conVencida) {
   return {
-    tareas: tareasDeMentira(conVencida),
     puzzle_rush_scores: [{ best_streak: 14, profiles: { full_name: "Bruno Mora", email: "b@x.cr", grupo: "7B" } }],
     rpc: {
+      tareas_con_avance: tareasDeMentira(conVencida),
       informes_resumen_alumnos: RESUMEN_ANA,
       informes_cursos_alumnos: CURSOS_ANA,
       progreso_dias_y_racha: RACHA_ANA,
@@ -542,10 +552,20 @@ async function pruebaTareasAlumna(browser) {
   });
   igual("lo que vence va primero, después el progreso y al final los accesos", orden, "true");
 
-  const pedido = await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "tareas").pop());
-  igual("las pendientes las filtra la BASE, por alumno y por estado",
-    [pedido.eq.alumno_id, pedido.eq.estado], ["u-ana", "pendiente"]);
-  igual("y se acota cuántas se piden", pedido.limit, 50);
+  /* Las pendientes las decide la BASE, no el navegador: lo pendiente dejó de
+     ser una columna cuando una tarea pasó a tener renglones con cantidad, y
+     es la misma función que pinta tareas.html — dos cuentas separadas podrían
+     decir cosas distintas del mismo alumno. Por eso se exige el RPC con sus
+     argumentos y que NADIE pida la tabla `tareas`. */
+  const rpcTareas = await r.page.evaluate(() =>
+    window.__consultas.filter((c) => c.tabla === "tareas_con_avance").pop());
+  igual("las pendientes las pide por RPC, no bajando la tabla",
+    [rpcTareas && rpcTareas.args && rpcTareas.args.p_alumno,
+     rpcTareas && rpcTareas.args && rpcTareas.args.p_pendientes], ["u-ana", true]);
+  igual("y se acota cuántas se piden: el panel solo pinta la más próxima",
+    rpcTareas && rpcTareas.args && rpcTareas.args.p_limite, 50);
+  igual("y nadie se baja la tabla `tareas` a mano",
+    await r.page.evaluate(() => window.__consultas.some((c) => c.tabla === "tareas")), "false");
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
 
