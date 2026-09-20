@@ -27,6 +27,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
+    <script src="js/notas-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -97,6 +98,24 @@
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
+            </div>
+
+            <!-- La bitácora: lo que el profesor observa de este alumno.
+                 Mirando a UN alumno y solo para quien da clase; el alumno ve
+                 aparte las que le compartieron (#notas-alumno-report). -->
+            <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Bitácora</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
+                <div id="notas-body"></div>
+            </div>
+
+            <!-- Lo que su profesor decidió compartirle. Arranca oculto y solo
+                 se destapa si hay alguna: un bloque que diga "tu profesor no te
+                 ha escrito nada" es ruido en todas las visitas menos una. -->
+            <div id="notas-alumno-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Notas de tu profesor</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que te dejó anotado para que lo tengas presente.</p>
+                <div id="notas-alumno-body"></div>
             </div>
 
             <!-- Lo que se le pidió y lo que entregó: tareas y exámenes.
@@ -497,6 +516,7 @@
 
             renderCursosReport(entreno, true);
             renderDeberes(profile.id, true);
+            renderNotasDelAlumno(profile.id);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
@@ -599,6 +619,8 @@
             document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
+            document.getElementById("notas-report").classList.add("hidden");
+            document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
         }
@@ -728,6 +750,7 @@
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
             renderAcceso(studentId, name);
+            renderNotas(studentId);
             renderEncargados(studentId, name);
 
             const historyEl = document.getElementById("student-history");
@@ -801,6 +824,30 @@
 
         function fechaCortaES(iso) {
             return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
+        }
+
+        /* ---------------- La bitácora ----------------
+
+           Las dos caras de siempre, pero acá NO son la misma vista: el profesor
+           escribe y el alumno lee, y lo que ve cada uno lo decide la RLS de
+           `notas_alumno`, no estas funciones. El profesor ve las que él escribió
+           (un colega que comparta el alumno no las ve); el alumno, solo las que
+           tienen compartida = true. */
+
+        function renderNotas(studentId) {
+            document.getElementById("notas-report").classList.remove("hidden");
+            NotasAlumno.montarPanel(document.getElementById("notas-body"), {
+                sb,
+                alumnoId: studentId,
+                profesorId: profile.id,
+            });
+        }
+
+        async function renderNotasDelAlumno(studentId) {
+            const cuantas = await NotasAlumno.montarLectura(
+                document.getElementById("notas-alumno-body"), { sb, alumnoId: studentId });
+            // Sin ninguna nota compartida el bloque ni aparece.
+            document.getElementById("notas-alumno-report").classList.toggle("hidden", cuantas === 0);
         }
 
         async function renderDeberes(studentId, propio) {

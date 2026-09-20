@@ -692,6 +692,201 @@ Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.
 
+## El plan de clase: preparar la clase antes de darla
+
+`sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,
+Táctica, archivos PGN, preguntar, practicar— pero todo hay que ir a buscarlo
+sobre la marcha, con la clase mirando. `planes.html` es donde se arma antes.
+
+**Lo que de verdad compra es REUSARLO**: el mismo plan se da al grupo de la
+mañana y al de la tarde, y ahí es donde una clase suelta se vuelve un programa.
+Por eso el plan **no está atado a una clase ni a un grupo**, y por eso tiene
+"⧉ Duplicar": se copia entero y se le cambia lo que haga falta sin tocar el
+original.
+
+- `planes_clase` es el encabezado (título y las notas del profesor) y
+  **`plan_items` son los renglones**, en orden.
+- **`js/plan-clase.js` es lo único que sabe leer y escribir un plan**, porque lo
+  usan el armador y la clase en vivo. Escrito dos veces, se separarían a la
+  primera corrección.
+
+### Los tres tipos existen porque la clase en vivo YA tiene su puerta
+
+| tipo | qué hace | por dónde entra |
+|---|---|---|
+| `posicion` | la transmite a toda la clase | `aplicarPosicionEnClase()` |
+| `leccion` | la abre **solo en su pantalla** | `abrirLeccionLocal()` |
+| `nota` | no toca el tablero: es su chuleta | — |
+
+**Un tipo nuevo sin su puerta deja un renglón que no hace nada al tocarlo**, en
+medio de la clase y delante de todos, sin dar ningún error. Y ninguno arma su
+propio `update`: si lo hiciera, el que se olvidara de limpiar las variantes o de
+quitarle el control al alumno dejaría la clase con un resto de la posición
+anterior — la misma razón por la que las tres puertas de antes pasan todas por
+`aplicarPosicionEnClase()`.
+
+- **El `CHECK plan_items_coherente` es lo que impide guardar un renglón sin lo
+  que su tipo necesita** (una posición sin FEN, una lección sin número). Sin él
+  el renglón se ve perfecto en el armador y no hace nada en la clase.
+- **La `pregunta` de un renglón NO le llega al alumno.** `questions` no tiene
+  enunciado: el alumno contesta moviendo, como en Táctica. Es la chuleta del
+  profesor para no tener que acordarse de qué iba a preguntar, y el armador lo
+  dice con todas las letras — prometer que el alumno la lee sería mentirle.
+- **`expected_plies` va en 1 y no se guarda en el plan**, a propósito: el caso de
+  todos los días es "¿cuál es la jugada?", y un campo más que llenar al armar se
+  queda sin llenar. Si hace falta otra cantidad, el panel de Preguntar la cambia
+  como siempre.
+- **En pantalla las lecciones se numeran desde 1 y en la base desde 0**, que es
+  como las cuenta `abrirLeccionLocal()`. Separarlos abre la lección de al lado, y
+  eso no da ningún error: simplemente se da la clase que no era.
+
+### La validación de la posición se mudó a `js/posicion-valida.js`
+
+`motivoPosicionInvalida()` vivía dentro de `sesion.html`. El armador necesita la
+**misma** pregunta y la necesita ANTES: una posición que rompe a Stockfish
+guardada en el plan no da ningún error hasta que el profesor la manda al
+tablero, delante de todos. Enterarse al guardarla cuesta una corrección;
+enterarse allá cuesta la clase.
+
+- En `sesion.html` queda el nombre de siempre, que usan sus cuatro puertas, y va
+  como **`function` y no como `const`**: la primera de esas puertas está escrita
+  más ARRIBA en el archivo, y un `const` no existe hasta que se evalúa su línea
+  — el mismo "Cannot access before initialization" que dejó a `4x4.html` colgada
+  en "Comprobando tu sesión…".
+
+### Detalles del armador
+
+- **Reordenar manda el `orden` de CADA renglón que se movió**, no solo del que
+  cambió: con dos renglones en el mismo número, el orden que sale depende de cómo
+  resuelva el empate la base, o sea que el plan se ve distinto cada vez sin que
+  nada falle.
+- **Los cursos salen de `herramientas/cursos/catalogo.json`**, la misma fuente que
+  las tarjetas de `cursos.html`: una segunda lista se iría quedando vieja y le
+  ofrecería al profesor un curso que ya no existe.
+- **Cuál plan está dando se recuerda en `localStorage`** (`plan_en_clase`), como
+  el tema o la clase elegida: si se recarga la página en medio de la clase —que
+  pasa— no hay que volver a buscarlo en la lista.
+- Las notas del plan **se guardan al salir del campo**, sin botón: es un campo
+  que se toca de pasada mientras se arma el resto.
+
+### Quién puede qué
+
+Un plan es **del profesor que lo escribió**: una colega no lo ve. Quien
+administra los ve todos (la regla permanente de siempre) pero **no los edita** —
+el material de un colega no es de nadie más. El insert exige
+`profesor_id = auth.uid()` y `role = 'profesor'` o `is_admin`, así que un alumno
+no puede crear ninguno, y a `anon` se le revocan los permisos de tabla.
+Comprobado impersonando roles en SQL, 12 casos.
+
+**Al tocar `planes.html`, `js/plan-clase.js`, `js/posicion-valida.js` o el panel
+del plan de la clase en vivo, correr `node herramientas/verificar-planes.js`**
+(con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba que una posición que rompe a Stockfish **se rechace al guardarla y no
+se mande nada a la base**, que la buena entre con su tipo, su FEN, su pregunta y
+su orden, que la lección 5 se guarde como 4, y que subir un renglón **renumere
+los dos** que se movieron. Sirve chess.js desde `node_modules`: sin él
+`PosicionValida.motivo()` revienta y el armador deja de validar — que es justo lo
+que la prueba viene a comprobar.
+
+## La bitácora: lo que el profesor observa, donde lo observa
+
+Hasta ahora lo único que el profesor podía escribir de un alumno era
+`class_sessions.notes`: **un `<input>` de una sola línea, por clase entera y sin
+alumno**. No había dónde poner "a Sofía le cuesta el final de torre, revisarlo en
+dos semanas", que es la materia prima del seguimiento — y sin eso, ni el plan de
+la clase siguiente sabe qué repasar ni el informe a la casa tiene qué explicar.
+
+`public.notas_alumno` es una fila por observación (alumno, profesor, texto,
+etiqueta, `compartida`). Se escribe desde dos lugares y se lee desde tres, así
+que la lógica vive en **`js/notas-alumno.js`** y no en ninguna de las páginas:
+
+- **`sesion.html`**, con el botón **📝** de cada alumno conectado. Va ahí porque
+  ese es **el momento en que se ve lo que hay que anotar**: si hay que esperar a
+  volver a Informes, no se anota. En modo compacto (las últimas 5), colgando del
+  panel de Alumnos, y solo lo ve el profesor — como el PDF y la lección de curso.
+- **`informes.html`**, bloque "📝 Bitácora" del informe individual, que es cuando
+  se repasa.
+- Y de solo lectura, el **propio alumno**, en su página de Informes.
+
+### Quién ve qué lo decide la base
+
+- **Aislada por profesor, igual que `tareas` y `class_sessions`**: un profesor ve
+  las notas que ÉL escribió, no las de un colega que comparte el mismo alumno.
+  Quien administra ve todas, como en `tareas` — la regla permanente de que todo
+  lo de los profesores vale para quien administra, con su alcance.
+- **El alumno solo ve las que tienen `compartida = true`** (misma idea que
+  `training_plans.shared`) y **no puede escribir ninguna**: no tiene política de
+  insert, update ni delete. Por eso su vista **no le pinta ni un botón**:
+  ofrecerle "compartir" o "borrar" no rompería nada — la base los rechaza— pero
+  el fallo lo descubriría él.
+- **El insert exige `profesor_id = auth.uid()` SIEMPRE**, `is_admin` incluido:
+  nadie firma una nota con el nombre de otro.
+- **`proteger_notas_alumno()`** (mismo patrón que `proteger_tiempos_de_presencia()`:
+  `new := old` y después solo lo que puede moverse) revierte `alumno_id`,
+  `profesor_id` y `created_at`, y pone `updated_at` con el reloj del servidor.
+  Sin eso, una nota se podía mudar de alumno con un update.
+- A `anon` se le revocan los permisos de tabla, como en `formularios`.
+
+Comprobado impersonando roles en SQL, 15 casos: el profesor escribe sobre su
+alumno y no sobre uno ajeno, no firma como otro; **una colega que comparte el
+mismo alumno recibe cero filas**; el alumno no ve la privada, sí la compartida,
+y sus intentos de editarla o borrarla cambian **0 filas**; el trigger revierte la
+mudanza de alumno y la fecha regalada.
+
+### El bloque del alumno solo aparece si hay algo
+
+`montarLectura()` devuelve cuántas pintó y la página esconde el bloque entero
+cuando son cero. Un bloque que diga "tu profesor no te ha escrito nada" es ruido
+en todas las visitas menos una — la misma lección del cartel de instalar la app.
+Y si la consulta **falla**, se dice: una bitácora vacía y una que no se pudo leer
+se ven igual y son cosas muy distintas.
+
+### De la nota a la tarea, sin copiar nada
+
+Cada nota trae **"📋 Convertir en tarea"**, que lleva a
+`tareas.html?alumno=<id>&nota=<id>`: marca ese alumno y pone el texto en "Nota
+para el alumno". Observo, asigno. Dos detalles que no son de estilo:
+
+- **El texto NO viaja en la dirección, solo el id.** `tareas.html` lo lee de la
+  base, que ya se lo deja leer a quien la escribió. Una dirección con lo que el
+  profesor anotó de un alumno queda en el historial del navegador, y esa nota
+  puede ser privada.
+- **El título no se toca.** Lo propone la página desde el renglón elegido;
+  pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
+  campo que antes salía bien.
+
+### Detalles que ya costaron una vez
+
+- **Que la nota esté compartida va ESCRITO** ("👁️ La ve el alumno"), no solo con
+  otro color: la misma regla de los gráficos de Informes y de las barras del
+  diagnóstico.
+- **Borrar pide confirmación en el propio botón**, no con un diálogo del
+  navegador: una nota se escribe en medio de una clase, desde el celular, y ahí
+  el diálogo tapa la pantalla.
+- **Las clases de CSS van escritas enteras**, nunca armadas con una expresión
+  regular sobre `className`: el CSS se compila leyendo el código, así que una
+  clase a medias no se escribe en la hoja y no pinta nada, sin dar ningún error.
+- **El panel se monta entero al cambiar de alumno**, en vez de ir actualizando la
+  lista: así no hay que acordarse de limpiar lo del anterior, que es justo el
+  descuido que dejaría al profesor escribiendo sobre quien no era.
+- El texto de una nota y el nombre de un alumno **los escribe una persona**, así
+  que van siempre por `textContent` — la misma regla que ya sigue
+  `renderStudentsList()`.
+
+**Al tocar `js/notas-alumno.js`, el bloque de Informes, el botón de la clase en
+vivo o el enlace a Tareas, correr `node herramientas/verificar-notas.js`** (con
+el sitio en localhost:8777 y playwright). Existe porque todo lo que se rompe acá
+se rompe callado: una nota mandada con el `alumno_id` equivocado queda en la
+ficha de otro y la pantalla se ve perfecta. Comprueba qué se MANDA al guardar
+(alumno, autor, texto, etiqueta y la marca de compartir), que compartir lo diga
+con todas las letras, que el enlace a Tareas lleve el id y **no el texto**, que
+cambiar de alumno traiga su bitácora y suelte la del anterior, que al alumno no
+se le pinte ningún botón, y que su bloque **se vea de verdad** con una nota
+compartida y **no se destape** sin ninguna (se mide el `display` que calcula el
+navegador, no la clase). Su Supabase de mentira **filtra de verdad por `eq`**:
+uno que devolviera siempre la tabla entera daría por buena una página que mezcla
+las notas de dos alumnos.
+
 ## Exámenes: acá se ejecuta y se demuestra, no se practica
 
 `examenes.html` (armar y ver) y `examen.html?id=…` (rendir) son la otra mitad

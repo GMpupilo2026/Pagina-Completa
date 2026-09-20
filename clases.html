@@ -1071,6 +1071,13 @@
                 const evaluaciones = TILE_GROUPS.find((g) => g.title === "Evaluaciones");
                 const arbitraje = evaluaciones.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
                 if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
+
+                /* Preparar la clase antes de darla. Es solo del equipo docente,
+                   así que no lleva `desc` de alumno: se suma acá en vez de vivir
+                   en la lista con un descProfe. */
+                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" }
+                );
             }
 
             // Coordinación: armar formularios de inscripción a torneos. La
