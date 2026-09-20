@@ -104,7 +104,7 @@
                 <div class="flex flex-wrap gap-2">
                     <button type="button" id="copy-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">📋 Copiar</button>
                     <button type="button" id="download-pgn-btn" class="bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">⬇️ Descargar .pgn</button>
-                    <button type="button" id="save-shared-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">💾 Guardar en Caja de Compartir</button>
+                    <button type="button" id="save-shared-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors">💾 Guardar en Archivos</button>
                     <button type="button" id="restart-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors px-2 py-2">Leer otra planilla</button>
                 </div>
                 <p id="save-status" class="text-xs mt-2" role="status" aria-live="polite"></p>
@@ -531,7 +531,7 @@
                 return;
             }
             statusEl.className = "text-xs mt-2 text-green-600 dark:text-green-400";
-            statusEl.textContent = "Guardado en la Caja de Compartir.";
+            statusEl.textContent = "Guardado en Archivos.";
         });
 
         document.getElementById("restart-btn").addEventListener("click", () => {

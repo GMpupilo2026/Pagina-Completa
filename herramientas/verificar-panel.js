@@ -205,7 +205,7 @@ async function pruebaAlumna(browser) {
     })));
   igual("a la alumna se le apagan los tres de mantenimiento, más los exámenes",
     apagados.map((a) => a.etiqueta).sort(),
-    ["Caja de Compartir", "Exámenes", "Lector de planilla", "Mis pagos"]);
+    ["Archivos", "Exámenes", "Lector de planilla", "Mis pagos"]);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
   } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");

@@ -387,6 +387,7 @@
       panel.classList.toggle("hidden");
       $("lesson-picker-panel").classList.add("hidden");
       document.getElementById("board-edit-panel").classList.add("hidden");
+      document.getElementById("archivos-panel").classList.add("hidden");
     });
     $("pdf-panel-close-btn").addEventListener("click", () => $("pdf-panel").classList.add("hidden"));
     $("pdf-file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
