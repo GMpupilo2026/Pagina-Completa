@@ -182,9 +182,10 @@
  *  - El mínimo de "un minuto por pregunta" se avisa acá pero lo hace
  *    cumplir crear_examen(): un mínimo que solo comprueba el navegador
  *    se salta desde la consola.
- *  - El aviso al celular no lo manda esta página: sale del trigger
- *    avisar_examen_asignado, igual que el de las tareas. Mandarlo desde
- *    acá lo dejaría atado a que la pestaña siga abierta.
+ *  - El aviso al celular no lo manda esta página: sale de dos triggers
+ *    (avisar_examen_asignado al mandarlo, avisar_examen_reabierto al
+ *    volver a abrirlo), igual que el de las tareas. Mandarlo desde acá
+ *    lo dejaría atado a que la pestaña siga abierta.
  */
 let session = null, profile = null, puedeExaminar = false;
 let alumnosDisponibles = [];
@@ -463,9 +464,10 @@ function tarjetaPuesto(e) {
    cosas: el reloj —el tiempo se le fue mientras estaba trabado— y el
    contador de salidas. Lo segundo no es un olvido: dejándolo en tres, el
    examen se volvería a congelar en cuanto parpadeara, o sea que reabrirlo
-   no serviría de nada. Lo que pasó queda en la conversación con el alumno;
-   las respuestas que ya había dado SÍ se conservan, así que sigue desde
-   donde quedó y no vuelve a contestar lo mismo. */
+   no serviría de nada. Las respuestas que ya había dado SÍ se conservan,
+   así que sigue desde donde quedó y no vuelve a contestar lo mismo — y el
+   trigger avisar_examen_reabierto le avisa al celular, que es lo único que
+   le dice que ya puede volver a entrar. */
 async function reabrir(id) {
   if (!confirm("¿Volver a abrir este examen?\n\nSigue desde donde quedó —lo que ya contestó no se repite— con el tiempo completo otra vez, y el contador de salidas vuelve a cero.")) return;
   const { error } = await sb.from("examenes").update({
