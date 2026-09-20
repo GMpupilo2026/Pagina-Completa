@@ -347,8 +347,11 @@ async function pruebaBuscarEntreGrupos(browser) {
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   bien("filtrar por «Sin profesor asignado» deja los 3 que no tienen — esos no salen en los informes de nadie");
 
-  // El aviso de arriba los deja a la vista de un clic.
+  // El aviso de arriba los deja a la vista de un clic. Vive dentro de la
+  // tarjeta "Profesores", que ahora arranca cerrada (<details>): hay que
+  // abrirla antes de poder hacerle clic al botón.
   await page.selectOption("#role-filter", "");
+  await page.evaluate(() => { document.getElementById("sin-profesor-aviso").closest("details").open = true; });
   await page.click("#sin-profesor-aviso button");
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
   igual("y el aviso de «alumnos sin profesor» los deja a la vista de un clic",
