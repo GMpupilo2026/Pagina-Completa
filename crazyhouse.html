@@ -299,8 +299,9 @@
             const secondsLeft = liveTimeLeft(turnColor);
             if (secondsLeft === null || secondsLeft > 0) return;
             const winner = turnColor === "w" ? "black" : "white";
+            const timeKey = turnColor === "w" ? "white_time_left" : "black_time_left";
             const { error } = await sb.from("game_rooms")
-                .update({ status: "finished", result: winner, updated_at: new Date().toISOString() })
+                .update({ status: "finished", result: winner, [timeKey]: 0, updated_at: new Date().toISOString() })
                 .eq("id", ROOM_ID).eq("status", "playing");
             if (error) console.error(error);
         }
