@@ -692,6 +692,182 @@ Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.
 
+## Exámenes: acá se ejecuta y se demuestra, no se practica
+
+`examenes.html` (armar y ver) y `examen.html?id=…` (rendir) son la otra mitad
+de Tareas, y la diferencia no es de grado:
+
+| | Tareas | Exámenes |
+|---|---|---|
+| qué mide | que lo haga | que lo sepa |
+| intentos | los que quiera | **uno por pregunta** |
+| ayuda | pistas, deshacer, repaso espaciado | ninguna |
+| avance | se llena solo con lo que entrena | se rinde de una vez, con reloj |
+| resultado | una barra | **una nota**, ponderada por dificultad |
+
+Una tarea dice "resuelve 10 de ataque doble" y el alumno los hace cuando
+quiera, con las pistas que quiera. Un examen le pone 10 preguntas delante, con
+reloj, y cada una se contesta una sola vez.
+
+### Lo que NO puede pasar, y dónde se impide
+
+Todo lo que sostiene un examen se rompería callado si viviera en el navegador,
+así que nada de esto vive ahí:
+
+- **La respuesta correcta no llega nunca al alumno.** Vive en
+  `examen_items.clave`, y esa tabla **no tiene política de select para él** —
+  ni siquiera para sus propias preguntas, porque la clave viaja en la misma
+  fila. Lo que ve se lo sirve `examen_para_alumno()`, que arma el JSON
+  **columna por columna**: un `select *` de ahí se llevaría la clave, y es
+  justo el descuido que esa función existe para hacer imposible. Comprobado
+  impersonando roles en SQL: leer `examen_items` directo le da **0 filas**, y
+  el JSON de su examen no contiene ni `clave`, ni `correcta`, ni `casillas`,
+  ni `jugadas`.
+- **El ejecutor tampoco carga el banco.** Las preguntas se COPIAN al examen al
+  crearlo, así que `examen.html` no necesita `diagnostico-items.js` — si lo
+  cargara, el alumno se bajaría las 301 respuestas junto con su examen.
+- **Una sola oportunidad la hace cumplir el UNIQUE de `examen_respuestas`**, no
+  un `if`: dos pestañas mandando a la vez no pueden colar dos. Y esa tabla no
+  tiene política de insert ni de update — solo escribe `responder_examen()`.
+- **El reloj es del servidor.** `termina_at` lo fija `iniciar_examen()` con
+  `now()`, y `responder_examen()` rechaza lo que llegue tarde. El alumno no
+  puede escribir en `examenes` (no tiene política de update): comprobado, su
+  intento de regalarse tiempo cambia **0 filas**. Volver a entrar **no
+  reinicia** el reloj: cerrar y abrir la pestaña regalaría el tiempo entero.
+- **El mínimo de un minuto por pregunta lo valida `crear_examen()`**, no la
+  pantalla. Un mínimo que solo comprueba el navegador se salta desde la
+  consola.
+- **La nota se guarda, no se recalcula.** Es el acta del examen: recalcularla
+  mañana, con un banco que cambió, daría otro número. Es la excepción a la
+  regla de `cobros`/`tareas` —donde lo que se calcula no se guarda— y la razón
+  es distinta: ahí el estado deriva de filas que siguen vivas; acá deriva de un
+  banco que cambia.
+
+### La nota pondera por dificultad
+
+Cada pregunta vale su `peso` (1 a 5, que es la dificultad que ya traía el banco
+del diagnóstico). `nota = 10 × puntos / puntos_posibles`. Acertar cinco fáciles
+no es lo mismo que acertar dos difíciles, y se nota: en la comprobación, un
+alumno que acierta la de peso 1 y la de peso 5 y falla la de peso 2 saca
+**7,50**; por aciertos a secas habría sacado 6,67.
+
+Lo que **no** alcanzó a contestar vale cero — eso es lo que significa que se le
+acabó el tiempo— pero **cuántas de cuántas respondió se guarda aparte**
+(`respondidas`/`total_items`) y el informe lo dice por separado: no es lo mismo
+fallar diez que no llegar a verlas.
+
+### Las preguntas no se inventan
+
+Salen de bancos que ya estaban verificados, vía `js/examen-banco.js`:
+
+- **`js/diagnostico-items.js`** — 301 preguntas, 9 áreas, peso 1-5, cuatro
+  tipos (opción, opción con tablero, jugada, casilla). De acá salen las
+  preguntas "sobre un tema de un curso": `AREAS_DEL_CURSO` dice qué áreas cubre
+  cada curso, y es una decisión editorial escrita, no deducida. Un curso que no
+  esté ahí **lo dice** en vez de devolver un examen vacío.
+- **`js/arbitraje-items.js`** — 200 de reglamento.
+- **`js/aperturas-lineas.js`** — las 40 líneas, para "ejecuta la italiana de
+  una vez": el rival contesta solo y el alumno da sus jugadas **sin pistas y
+  sin deshacer**. Es la misma línea que en `entreno/aperturas.html` se practica
+  con ayuda y repaso espaciado; acá se demuestra.
+
+**Las opciones se barajan al armar el examen** y la clave guarda el índice ya
+barajado, así que el número que queda en la base no dice nada por sí solo. Eso
+tiene una trampa que el verificador vigila sobre 1.600 preguntas: si el
+barajado mueve el texto y no el índice, **se califica mal el examen entero** y
+nadie se entera — los alumnos reprueban y no hay ningún error.
+
+Y `clave.correcta` se guarda como **texto**, no como número: en la base se
+compara con `->>'opcion'`, que también es texto. Un número contra un texto en
+jsonb da `false` siempre.
+
+### El antitrampa: dos avisos y al tercero se congela
+
+**Ninguna página web puede impedir que alguien cambie de pestaña** — eso solo
+lo puede una app instalada con permisos del sistema. Prometer más que eso sería
+mentirle al profesor. Lo que sí se hace:
+
+- se pide **pantalla completa** al empezar (si el navegador la niega, el examen
+  se hace igual: negarle rendir por la configuración de su navegador sería
+  castigarlo por otra cosa);
+- se detecta cada salida (`visibilitychange`, `blur` y salirse de pantalla
+  completa, que es la forma más cómoda de poner otra ventana al lado);
+- **el conteo lo lleva `registrar_salida_examen()`, no la página**: un contador
+  del cliente se pone en cero desde la consola;
+- los **dos primeros avisos perdonan** —una notificación del celular no puede
+  costar el examen entero— y **al tercero se congela** y se califica con lo que
+  llevaba. Solo el profesor lo reabre.
+- **Las salidas van SIEMPRE en el informe**, aunque no se haya congelado: tres
+  salidas cortas siguen siendo un dato que quien lee tiene que tener.
+
+Volver a abrir un examen congelado reinicia **el reloj y el contador de
+salidas**. Lo segundo no es un olvido: dejándolo en tres, se volvería a
+congelar en cuanto el alumno parpadeara, o sea que reabrirlo no serviría de
+nada. Las respuestas que ya dio **sí se conservan** —`examen_respuestas` no se
+toca— así que sigue desde donde quedó y no vuelve a contestar lo mismo.
+
+Y un examen congelado **sí tiene informe para el alumno**: `examen_informe()`
+acepta los dos estados terminados (`entregado` y `congelado`). Exigir solo
+`entregado` le dejaba un error en pantalla justo a quien más falta le hace
+entender qué pasó.
+
+### El informe, y qué ve cada quien
+
+`examen_informe()` es **una sola función para los dos públicos**, y lo que
+cambia es cuánto devuelve: al profesor le da la respuesta correcta y la
+explicación de cada pregunta; **al alumno no**. Dos funciones se habrían
+separado a la primera corrección, y la del alumno es justo la que no puede
+equivocarse: enseñarle las respuestas convierte el banco en un juego de memoria
+para el examen siguiente. Es la misma decisión de `nivel-de-arbitraje.html`.
+
+Al terminar, el alumno ve **su nota y cómo le fue por área**, nunca las
+respuestas. El profesor ve pregunta por pregunta, con qué contestó, cuánto
+tardó y si no llegó a verla.
+
+**El correo a la casa lo manda `informe-examen`, una Edge Function APARTE de
+`informes-encargados`.** Podría haber sido una acción más de aquella, pero esa
+es la que `pg_cron` dispara todos los días para todas las familias: meterle
+mano por un botón nuevo habría puesto en riesgo el camino que ya funciona, y si
+se rompiera no daría ningún error — simplemente dejarían de llegar los
+informes. Quién puede mandarlo lo decide la RLS (lee el informe con el JWT de
+quien llama), y `informe_enviado_at` se marca **después** de que Resend acepte.
+El correo a la casa lleva en qué se equivocó, **no las respuestas correctas**.
+
+**Esto pide desplegar la Edge Function `informe-examen`** (ya desplegada desde
+esta tanda; se arma con `node herramientas/funciones-armar.js`). Si algún día
+queda sin subir, el botón lo dice en pantalla en vez de dejar creer que salió.
+
+### Lo que este diseño NO cierra
+
+`js/diagnostico-items.js` y `js/arbitraje-items.js` **siguen siendo archivos
+estáticos que cualquiera con sesión puede leer**, porque los usan el
+diagnóstico y el examen de arbitraje. Un alumno decidido puede buscar ahí la
+pregunta que tiene delante. Lo que este diseño quita es lo fácil: su examen no
+trae las respuestas, el ejecutor no carga el banco, y con pantalla completa y
+un minuto por pregunta buscar entre 301 no sale gratis. Cerrarlo del todo
+pediría servir los bancos desde una función con RLS, y eso es otro cambio.
+
+`js/tablero-pregunta.js` es el tablero de una pregunta con respuesta, sacado
+aparte para esta página. **`entreno/diagnostico.html` sigue con el suyo**, que
+es el mismo dibujo acoplado a su `itemActual` y a su cuadro de comandos:
+moverlo ahora arriesgaría `verificar-diagnostico.js` y
+`verificar-cuadro-comandos.js` por un cambio que no se pidió. Unificarlos queda
+anotado — es el mismo camino que siguió `js/cuadro-comandos.js`, que nació para
+las páginas que no lo tenían.
+
+**Al tocar los exámenes, correr `node herramientas/verificar-examenes.js`**
+(con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba, sin navegador, que la clave siga apuntando a la respuesta correcta
+después de barajar (sobre 1.600 preguntas) y que lo visible no la filtre; y en
+un navegador de verdad, que el ejecutor no pinte ninguna respuesta, que mande
+la opción que se tocó, que no deje volver atrás, que el reloj salga de la hora
+del SERVIDOR (se le corre la de la computadora una hora y la cuenta atrás no se
+mueve), que salir de la ventana se le cuente al servidor dos veces y a la
+tercera cierre, que el alumno vea nota y áreas pero no las preguntas, y que el
+profesor sí las vea. Lo que hace cumplir la base se comprobó impersonando roles
+en SQL, como está dicho arriba.
+
+
 ## Coordinación: el rol nuevo y los formularios de inscripción
 
 **Coordinar es una marca encima de "profesor", no un tercer valor de `role`**, y

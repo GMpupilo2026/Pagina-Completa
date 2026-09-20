@@ -37,6 +37,8 @@ const FUNCIONES = {
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
   "recuperar-acceso": ["usuario-alumno.ts"],
+  // No comparte nada: su examen-html.ts es suyo y vive en su carpeta.
+  "informe-examen": [],
 };
 
 function armar(nombre) {
