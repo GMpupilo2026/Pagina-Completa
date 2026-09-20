@@ -120,6 +120,16 @@ window.__funcion = [];
 `;
 }
 
+/* Tareas y exámenes, tal como los devuelve public.resumen_tareas_examenes().
+   Lleva una vencida de cada cosa a propósito: es el único renglón de ese bloque
+   que pide hacer algo hoy, y el que se pinta en rojo. */
+const DEBERES = {
+  tareas:   { puestas: 4, completadas: 2, vencidas: 1, sin_hacer_hoy: 1, pendientes: 1,
+              proxima_vence: "2026-09-25T18:00:00Z", renglones: 9, cumplidos: 5 },
+  examenes: { rendidos: 3, nota_media: 7.5, mejor_nota: 9.25, sin_hacer_hoy: 1,
+              pendientes: 1, proximo_vence: "2026-09-27T18:00:00Z" },
+};
+
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
   if (String(hallado) !== String(esperado)) {
@@ -174,6 +184,7 @@ async function pruebaProfesor(browser) {
         { student_id: "a-2", detalle: null, fecha: null, a_medias_pregunta: 13, a_medias_fecha: "2026-09-11T12:00:00Z" },
       ],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      resumen_tareas_examenes: DEBERES,
     },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
@@ -231,6 +242,31 @@ async function pruebaProfesor(browser) {
     ].join(",");
   }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
+
+  console.log("-- Tareas y exámenes");
+  await page.waitForFunction(() => !document.getElementById("deberes-report").classList.contains("hidden"));
+  igual("tareas del alumno", await page.evaluate(() => {
+    const c = [...document.querySelectorAll("#deberes-body > div > div")].find((d) => d.querySelector("h3").textContent === "Tareas");
+    return [...c.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()).join(" // ");
+  }), "Le pusieron4 tareas // Terminadas2 de 4 // Renglones cumplidos5 de 9 // Se le pasó la fecha de1 tarea // Por hacer1 tarea · la próxima vence el 25 de septiembre");
+  igual("exámenes del alumno", await page.evaluate(() => {
+    const c = [...document.querySelectorAll("#deberes-body > div > div")].find((d) => d.querySelector("h3").textContent === "Exámenes");
+    return [...c.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()).join(" // ");
+  }), "Rendidos3 exámenes // Nota promedio7,50 de 10 // Mejor nota9,25 de 10 // Se le pasó la fecha de1 examen // Por rendir1 examen · hasta el 27 de septiembre");
+  // Lo vencido se dice arriba y con todas las letras: si solo fuera un color,
+  // quien no distingue el rojo no se entera de lo único urgente del bloque.
+  igual("el aviso de lo vencido va primero", await page.evaluate(() => {
+    const p = document.querySelector("#deberes-body > p");
+    return p ? p.textContent.trim() : null;
+  }), "Tiene 2 entregas vencidas sin hacer.");
+  // LO QUE DE VERDAD IMPORTA: los números salen del RPC, no se cuentan acá.
+  // Contándolos en la página, un profesor que comparte alumno con un colega
+  // vería "0 tareas" sobre un alumno que tiene cuatro, y la página se vería
+  // igual de bien.
+  igual("los pide al RPC y no a las tablas", await page.evaluate(() =>
+    [window.__consultas.filter((c) => c === "rpc:resumen_tareas_examenes").length,
+     window.__consultas.filter((c) => c === "from:tareas" || c === "from:examenes" || c === "from:tarea_items").length].join(",")),
+    "1,0");
 
   console.log("-- Informes a la casa");
   igual("el encargado aparece con su frecuencia y su último envío", await page.evaluate(() => {
@@ -295,6 +331,7 @@ async function pruebaAlumno(browser) {
       informes_cursos_alumnos: [CURSOS_ANA[0]],
       informes_diagnosticos_alumnos: [{ student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null }],
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      resumen_tareas_examenes: DEBERES,
     },
     tablas: {
       profiles: [{ id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" }],
@@ -316,6 +353,18 @@ async function pruebaAlumno(browser) {
   igual("historial", await page.evaluate(() => document.querySelectorAll("#student-history li").length), 2);
   igual("filtros de profesor escondidos",
     await page.evaluate(() => document.getElementById("teacher-filters").classList.contains("hidden")), "true");
+  // El alumno ve sus tareas y sus exámenes con los MISMOS números que su
+  // profesor —es el mismo RPC y la misma función que los pinta—, y el texto le
+  // habla a él: "Tienes", no "Tiene".
+  await page.waitForFunction(() => !document.getElementById("deberes-report").classList.contains("hidden"));
+  igual("el alumno ve sus tareas", await page.evaluate(() => {
+    const c = [...document.querySelectorAll("#deberes-body > div > div")].find((d) => d.querySelector("h3").textContent === "Tareas");
+    return [...c.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()).join(" // ");
+  }), "Le pusieron4 tareas // Terminadas2 de 4 // Renglones cumplidos5 de 9 // Se le pasó la fecha de1 tarea // Por hacer1 tarea · la próxima vence el 25 de septiembre");
+  igual("al alumno se le habla de tú", await page.evaluate(() => {
+    const p = document.querySelector("#deberes-body > p");
+    return p ? p.textContent.trim() : null;
+  }), "Tienes 2 entregas vencidas sin hacer.");
   // Lo que este cambio vino a quitar: ninguna de las tablas de actividad se baja
   // ya desde la página, ni entera ni por alumno.
   igual("no pide ninguna tabla de actividad", await page.evaluate(() =>
