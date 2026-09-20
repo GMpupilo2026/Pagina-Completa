@@ -50,9 +50,22 @@
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">📤 Tus PGN subidos</h2>
                 <p id="archivos-upload-desc" class="text-sm text-brand-500 dark:text-brand-300 mb-3">Partidas ya montadas que quieras usar en clase — un archivo puede traer varias partidas seguidas, cada una se guarda por separado.</p>
                 <div id="archivos-upload-wrap" class="hidden mb-4">
+                    <div class="mb-2">
+                        <label for="archivo-carpeta-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Carpeta (opcional, para ordenarlos)</label>
+                        <input id="archivo-carpeta-input" type="text" list="archivo-carpetas-datalist" placeholder="Ej. Aperturas" class="w-full sm:w-72 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <datalist id="archivo-carpetas-datalist"></datalist>
+                    </div>
                     <label for="archivo-pgn-input" class="sr-only">Elegir uno o más archivos PGN</label>
                     <input id="archivo-pgn-input" type="file" accept=".pgn,application/x-chess-pgn,text/plain" multiple class="block w-full text-xs text-brand-600 dark:text-brand-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-100 dark:file:bg-brand-800 file:text-brand-700 dark:file:text-brand-200 hover:file:bg-brand-200 dark:hover:file:bg-brand-700">
                     <p id="archivo-pgn-msg" role="status" aria-live="polite" class="text-xs text-brand-500 dark:text-brand-300 mt-2 min-h-[1em]"></p>
+                </div>
+
+                <div id="archivos-bulk-bar" class="hidden flex flex-wrap items-center gap-2 bg-brand-100 dark:bg-brand-800 rounded-lg px-3 py-2 mb-3 text-sm">
+                    <span id="archivos-bulk-count" class="font-semibold text-brand-700 dark:text-white"></span>
+                    <label for="archivos-bulk-carpeta" class="sr-only">Mover la selección a esta carpeta</label>
+                    <select id="archivos-bulk-carpeta" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                    <button id="archivos-bulk-mover-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Mover selección</button>
+                    <button id="archivos-bulk-cancelar-btn" type="button" class="text-xs text-brand-500 dark:text-brand-300 hover:underline">Cancelar</button>
                 </div>
 
                 <div id="archivos-empty-state" class="hidden text-center py-12 text-brand-450 dark:text-brand-350">
@@ -60,7 +73,7 @@
                     <p>Todavía no hay ningún PGN subido.</p>
                 </div>
 
-                <ul id="archivos-list" class="space-y-3"></ul>
+                <div id="archivos-list" class="space-y-3"></div>
             </section>
 
             <section>
@@ -196,56 +209,153 @@
             openViewer({ title: a.titulo, created_at: a.created_at, move_count: a.move_count, pgn: a.pgn });
         }
 
+        // ---------- Carpetas: puro texto (como profiles.grupo), sin tabla aparte ----------
+        // Ordenan la lista cuando ya hay muchos PGN subidos; no cambian ningún permiso.
+        let archivosSeleccionados = new Set(); // ids marcados para mover en lote
+        let archivosCarpetasConocidas = []; // nombres ya usados, para los selectores y el datalist
+
+        function nombresDeCarpetas(archivos) {
+            return [...new Set(archivos.map((a) => a.carpeta).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+        }
+
+        function llenarSelectorCarpetas(select, carpetas, valorActual) {
+            select.innerHTML = "";
+            const optSin = document.createElement("option"); optSin.value = ""; optSin.textContent = "Sin carpeta";
+            select.appendChild(optSin);
+            carpetas.forEach((n) => { const o = document.createElement("option"); o.value = n; o.textContent = n; select.appendChild(o); });
+            const optNueva = document.createElement("option"); optNueva.value = "__nueva__"; optNueva.textContent = "+ Nueva carpeta…";
+            select.appendChild(optNueva);
+            select.value = valorActual || "";
+        }
+
+        async function pedirNombreDeCarpetaNueva() {
+            const nombre = (prompt("Nombre de la carpeta nueva:") || "").trim();
+            return nombre || null;
+        }
+
+        async function moverArchivos(ids, carpeta) {
+            const { error } = await sb.from("archivos_pgn").update({ carpeta: carpeta || null }).in("id", ids);
+            if (error) { alert("No se pudo mover: " + error.message); return false; }
+            return true;
+        }
+
+        function actualizarBarraSeleccion() {
+            const bar = document.getElementById("archivos-bulk-bar");
+            const n = archivosSeleccionados.size;
+            bar.classList.toggle("hidden", n === 0);
+            if (n === 0) return;
+            document.getElementById("archivos-bulk-count").textContent = n === 1 ? "1 seleccionado" : n + " seleccionados";
+            llenarSelectorCarpetas(document.getElementById("archivos-bulk-carpeta"), archivosCarpetasConocidas, "");
+        }
+
+        function renderArchivoItem(a, carpetas) {
+            const li = document.createElement("li");
+            li.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
+            const puedeGestionar = isAdmin || a.profesor_id === session.user.id;
+
+            if (puedeGestionar) {
+                const check = document.createElement("input");
+                check.type = "checkbox";
+                check.className = "shrink-0";
+                check.setAttribute("aria-label", "Seleccionar " + a.titulo);
+                check.checked = archivosSeleccionados.has(a.id);
+                check.addEventListener("change", () => {
+                    if (check.checked) archivosSeleccionados.add(a.id); else archivosSeleccionados.delete(a.id);
+                    actualizarBarraSeleccion();
+                });
+                li.appendChild(check);
+            }
+
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+            const title = document.createElement("h3");
+            title.className = "font-semibold text-brand-800 dark:text-white";
+            title.textContent = a.titulo;
+            const meta = document.createElement("p");
+            meta.className = "text-xs text-brand-450 dark:text-brand-350";
+            let metaTxt = a.move_count + " jugadas · de " + a.nombre_archivo;
+            if (a.profesor_id !== session.user.id && archivosProfesores[a.profesor_id]) {
+                metaTxt += " · subido por " + archivosProfesores[a.profesor_id];
+            }
+            meta.textContent = metaTxt;
+            info.append(title, meta);
+
+            const actions = document.createElement("div");
+            actions.className = "flex items-center gap-2 shrink-0 flex-wrap";
+            const viewBtn = document.createElement("button");
+            viewBtn.type = "button";
+            viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            viewBtn.textContent = "Ver tablero";
+            viewBtn.addEventListener("click", () => openArchivoViewer(a));
+            const dlBtn = document.createElement("button");
+            dlBtn.type = "button";
+            dlBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            dlBtn.textContent = "Descargar PGN";
+            dlBtn.addEventListener("click", () => downloadText(a.nombre_archivo, a.pgn));
+            actions.append(viewBtn, dlBtn);
+
+            if (puedeGestionar) {
+                const moveSel = document.createElement("select");
+                moveSel.className = "text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500";
+                moveSel.setAttribute("aria-label", "Mover \"" + a.titulo + "\" a otra carpeta");
+                llenarSelectorCarpetas(moveSel, carpetas, a.carpeta);
+                moveSel.addEventListener("change", async () => {
+                    let destino = moveSel.value;
+                    if (destino === "__nueva__") {
+                        destino = await pedirNombreDeCarpetaNueva();
+                        if (!destino) { moveSel.value = a.carpeta || ""; return; }
+                    }
+                    const ok = await moverArchivos([a.id], destino);
+                    if (ok) await loadArchivos(); else moveSel.value = a.carpeta || "";
+                });
+                actions.appendChild(moveSel);
+
+                const delBtn = document.createElement("button");
+                delBtn.type = "button";
+                delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+                delBtn.textContent = "Eliminar";
+                delBtn.addEventListener("click", async () => {
+                    if (!confirm("¿Eliminar este PGN?")) return;
+                    await sb.from("archivos_pgn").delete().eq("id", a.id);
+                    loadArchivos();
+                });
+                actions.appendChild(delBtn);
+            }
+
+            li.append(info, actions);
+            return li;
+        }
+
+        function renderCarpeta(nombre, lista, carpetas) {
+            const det = document.createElement("details");
+            det.className = "bg-brand-50 dark:bg-brand-800 rounded-xl overflow-hidden";
+            det.open = !nombre; // "Sin carpeta" arranca abierta; las que tienen nombre, cerradas
+            const summary = document.createElement("summary");
+            summary.className = "cursor-pointer font-semibold text-brand-800 dark:text-white px-4 py-3 marker:text-accent-600";
+            summary.textContent = (nombre ? "📁 " + nombre : "🗂️ Sin carpeta") + " (" + lista.length + ")";
+            det.appendChild(summary);
+            const ul = document.createElement("ul");
+            ul.className = "space-y-3 px-4 pb-4";
+            lista.forEach((a) => ul.appendChild(renderArchivoItem(a, carpetas)));
+            det.appendChild(ul);
+            return det;
+        }
+
         function renderArchivos(archivos) {
-            const list = document.getElementById("archivos-list");
-            list.innerHTML = "";
+            const wrap = document.getElementById("archivos-list");
+            wrap.innerHTML = "";
             document.getElementById("archivos-empty-state").classList.toggle("hidden", archivos.length > 0);
+
+            const porCarpeta = new Map(); // "" = sin carpeta
             archivos.forEach((a) => {
-                const li = document.createElement("li");
-                li.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4 flex items-center justify-between gap-3 flex-wrap";
-                const info = document.createElement("div");
-                const title = document.createElement("h3");
-                title.className = "font-semibold text-brand-800 dark:text-white";
-                title.textContent = a.titulo;
-                const meta = document.createElement("p");
-                meta.className = "text-xs text-brand-450 dark:text-brand-350";
-                let metaTxt = a.move_count + " jugadas · de " + a.nombre_archivo;
-                if (a.profesor_id !== session.user.id && archivosProfesores[a.profesor_id]) {
-                    metaTxt += " · subido por " + archivosProfesores[a.profesor_id];
-                }
-                meta.textContent = metaTxt;
-                info.append(title, meta);
-
-                const actions = document.createElement("div");
-                actions.className = "flex items-center gap-2 shrink-0";
-                const viewBtn = document.createElement("button");
-                viewBtn.type = "button";
-                viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-                viewBtn.textContent = "Ver tablero";
-                viewBtn.addEventListener("click", () => openArchivoViewer(a));
-                const dlBtn = document.createElement("button");
-                dlBtn.type = "button";
-                dlBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
-                dlBtn.textContent = "Descargar PGN";
-                dlBtn.addEventListener("click", () => downloadText(a.nombre_archivo, a.pgn));
-                actions.append(viewBtn, dlBtn);
-
-                if (isAdmin || a.profesor_id === session.user.id) {
-                    const delBtn = document.createElement("button");
-                    delBtn.type = "button";
-                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
-                    delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", async () => {
-                        if (!confirm("¿Eliminar este PGN?")) return;
-                        await sb.from("archivos_pgn").delete().eq("id", a.id);
-                        loadArchivos();
-                    });
-                    actions.appendChild(delBtn);
-                }
-
-                li.append(info, actions);
-                list.appendChild(li);
+                const clave = a.carpeta || "";
+                if (!porCarpeta.has(clave)) porCarpeta.set(clave, []);
+                porCarpeta.get(clave).push(a);
             });
+            archivosCarpetasConocidas.forEach((nombre) => {
+                if (porCarpeta.has(nombre)) wrap.appendChild(renderCarpeta(nombre, porCarpeta.get(nombre), archivosCarpetasConocidas));
+            });
+            if (porCarpeta.has("")) wrap.appendChild(renderCarpeta(null, porCarpeta.get(""), archivosCarpetasConocidas));
         }
 
         async function loadArchivos() {
@@ -260,7 +370,12 @@
                 const { data: perfiles } = await sb.from("profiles").select("id, full_name").in("id", otrosIds);
                 (perfiles || []).forEach((p) => { archivosProfesores[p.id] = p.full_name || "otro profesor"; });
             }
+            archivosCarpetasConocidas = nombresDeCarpetas(archivos);
+            const datalist = document.getElementById("archivo-carpetas-datalist");
+            datalist.innerHTML = "";
+            archivosCarpetasConocidas.forEach((n) => { const opt = document.createElement("option"); opt.value = n; datalist.appendChild(opt); });
             renderArchivos(archivos);
+            actualizarBarraSeleccion();
         }
 
         function subscribeArchivos() {
@@ -269,11 +384,29 @@
                 .subscribe();
         }
 
+        document.getElementById("archivos-bulk-mover-btn").addEventListener("click", async () => {
+            const select = document.getElementById("archivos-bulk-carpeta");
+            let destino = select.value;
+            if (destino === "__nueva__") {
+                destino = await pedirNombreDeCarpetaNueva();
+                if (!destino) return;
+            }
+            const ids = [...archivosSeleccionados];
+            if (!ids.length) return;
+            const ok = await moverArchivos(ids, destino);
+            if (ok) { archivosSeleccionados.clear(); await loadArchivos(); }
+        });
+        document.getElementById("archivos-bulk-cancelar-btn").addEventListener("click", async () => {
+            archivosSeleccionados.clear();
+            await loadArchivos();
+        });
+
         document.getElementById("archivo-pgn-input").addEventListener("change", async (e) => {
             const files = Array.from(e.target.files || []);
             e.target.value = ""; // para poder volver a elegir el mismo archivo si algo falla
             if (!files.length) return;
             const msg = document.getElementById("archivo-pgn-msg");
+            const carpeta = document.getElementById("archivo-carpeta-input").value.trim() || null;
             msg.textContent = "Subiendo…";
             const filas = [];
             let invalidas = 0;
@@ -290,6 +423,7 @@
                         pgn: parsed.pgn,
                         move_count: parsed.move_count,
                         fen_final: parsed.fen_final,
+                        carpeta,
                     });
                 });
             }
