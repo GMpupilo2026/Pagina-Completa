@@ -2292,6 +2292,17 @@ arrancar una entre ellos.
   (necesitan cuatro personas y otro reparto) y las que están "Próximamente"
   tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
   la lista le ofrece el bot de Oscar mientras tanto.
+- **Rechazar puede llevar un motivo** (`desafios.motivo_rechazo`, opcional, 140
+  caracteres), que quien reta ve en vez del genérico "Tu reto no fue aceptado
+  esta vez.". La política de `update` de `desafios` no restringe qué columnas
+  toca cada verbo más allá de `estado`/`room_id`, así que esta columna se
+  suma sin tocar la política.
+- **El botón "Retar" ya no espera los 20 segundos completos si ya hay
+  respuesta.** Se libera con el timeout de siempre (por si no contestan) o,
+  antes, en cuanto llega por Realtime un "rechazado" o un "aceptado" —
+  `reactivarBoton()`, indexado por el id del reto. Antes, rechazar de
+  inmediato igual dejaba a quien retó viendo "Esperando…" el resto de los 20
+  segundos, sin ninguna razón para seguir esperando.
 
 ## El profesor también se sienta a jugar
 

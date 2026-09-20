@@ -720,6 +720,7 @@
         let canalPresencia = null, canalDesafios = null;
         let gente = [];              // quién está conectado, sin contarme
         let retosPendientes = [];    // los que me llegaron y no he respondido
+        let retosEnviados = {};      // id de reto -> {boton, timeoutId}: los míos, mientras espero respuesta
 
         const nombreVisible = (p) => p.full_name || p.email || "Alguien";
 
@@ -819,17 +820,35 @@
             const tc = TIME_CONTROLS.find((t) => t.id === document.getElementById("reto-tiempo").value) || TIME_CONTROLS[0];
             boton.disabled = true;
             boton.textContent = "Enviado…";
-            const { error } = await sb.from("desafios").insert({
+            const { data, error } = await sb.from("desafios").insert({
                 de_id: profile.id, para_id: quien.id, modalidad: modalidad,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
-            });
-            if (error) {
+            }).select("id").single();
+            if (error || !data) {
                 boton.disabled = false; boton.textContent = "Retar";
-                alert("No se pudo enviar el reto: " + error.message);
+                alert("No se pudo enviar el reto: " + (error ? error.message : "intenta de nuevo"));
                 return;
             }
             boton.textContent = "Esperando…";
-            setTimeout(() => { boton.disabled = false; boton.textContent = "Retar"; }, 20000);
+            // Si tarda en contestar, el botón se libera solo a los 20s; si
+            // contesta antes (sobre todo si rechaza), reactivarBoton() de
+            // escucharDesafios() ya lo habrá liberado y este timeout no
+            // encuentra nada que hacer.
+            const timeoutId = setTimeout(() => { reactivarBoton(data.id); }, 20000);
+            retosEnviados[data.id] = { boton: boton, timeoutId: timeoutId };
+        }
+
+        // Libera el botón "Retar" de un reto mío, sea porque contestaron o
+        // porque se cumplió el plazo de espera. Sin esto, rechazar un reto
+        // de inmediato igual dejaba a quien retó viendo "Esperando…" el
+        // resto de los 20 segundos, sin ninguna razón para seguir esperando.
+        function reactivarBoton(retoId) {
+            const pendiente = retosEnviados[retoId];
+            if (!pendiente) return;
+            clearTimeout(pendiente.timeoutId);
+            pendiente.boton.disabled = false;
+            pendiente.boton.textContent = "Retar";
+            delete retosEnviados[retoId];
         }
 
         /* Los retos que me llegan y la respuesta al mío: las dos cosas por Realtime. */
@@ -842,8 +861,13 @@
                     { event: "UPDATE", schema: "public", table: "desafios", filter: "de_id=eq." + profile.id },
                     (msg) => {
                         if (!msg.new) return;
-                        if (msg.new.estado === "aceptado" && msg.new.room_id) irALaPartida(msg.new);
-                        if (msg.new.estado === "rechazado") avisoArriba("Tu reto no fue aceptado esta vez.");
+                        if (msg.new.estado === "aceptado" && msg.new.room_id) { reactivarBoton(msg.new.id); irALaPartida(msg.new); }
+                        if (msg.new.estado === "rechazado") {
+                            reactivarBoton(msg.new.id);
+                            avisoArriba(msg.new.motivo_rechazo
+                                ? "Por ahora no — " + msg.new.motivo_rechazo
+                                : "Tu reto no fue aceptado esta vez.");
+                        }
                     })
                 .subscribe();
             // Por si llegó uno mientras la página estaba cerrada.
@@ -870,10 +894,14 @@
             const caja = document.createElement("div");
             caja.dataset.reto = reto.id;
             caja.className = "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3";
+            const motivoId = "motivo-reto-" + reto.id;
             caja.innerHTML =
                 '<p class="font-serif font-bold text-brand-800 dark:text-white mb-1">⚔️ ' + escapeHtml(nombre) + ' te reta</p>' +
                 '<p class="text-sm text-brand-700 dark:text-brand-200 mb-3">' + escapeHtml(variantLabel(reto.modalidad)) +
                 (tc ? " · " + escapeHtml(tc.label) : "") + '</p>' +
+                '<label for="' + motivoId + '" class="block text-xs text-brand-450 dark:text-brand-350 mb-1">Si dices que no, puedes contarle por qué (opcional)</label>' +
+                '<input type="text" id="' + motivoId + '" maxlength="140" placeholder="Ej. Estoy estudiando" ' +
+                'class="w-full mb-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-3 py-1.5 text-sm text-brand-700 dark:text-brand-200" />' +
                 '<div class="flex flex-wrap gap-2">' +
                 '<button type="button" data-aceptar="' + reto.id + '" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors">Aceptar y jugar</button>' +
                 '<button type="button" data-rechazar="' + reto.id + '" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-1.5 rounded-lg text-sm hover:border-red-400 transition-colors">Ahora no</button>' +
@@ -902,7 +930,13 @@
         }
 
         async function rechazar(reto, caja) {
-            await sb.from("desafios").update({ estado: "rechazado", respondido_at: new Date().toISOString() }).eq("id", reto.id);
+            const inputMotivo = caja.querySelector("input[id^='motivo-reto-']");
+            const motivo = inputMotivo ? inputMotivo.value.trim().slice(0, 140) : "";
+            await sb.from("desafios").update({
+                estado: "rechazado",
+                motivo_rechazo: motivo || null,
+                respondido_at: new Date().toISOString(),
+            }).eq("id", reto.id);
             retosPendientes = retosPendientes.filter((r) => r.id !== reto.id);
             caja.remove();
         }
