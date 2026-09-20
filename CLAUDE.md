@@ -811,6 +811,36 @@ acepta los dos estados terminados (`entregado` y `congelado`). Exigir solo
 `entregado` le dejaba un error en pantalla justo a quien más falta le hace
 entender qué pasó.
 
+### El aviso al celular, y las dos trampas que tenía
+
+Al asignar un examen sale solo un aviso push, igual que con las tareas
+(`avisar_tarea_asignada`). El trigger es `avisar_examen_asignado` y ninguna de
+las dos cosas que tiene distintas es un capricho:
+
+- **Es un `CONSTRAINT TRIGGER ... DEFERRABLE INITIALLY DEFERRED`, no un `AFTER
+  INSERT` de siempre**, porque `crear_examen()` inserta la fila de `examenes`
+  **antes** que sus preguntas. Un trigger normal corre ahí en medio y contaría
+  `examen_items` cuando todavía no hay ninguna: el aviso diría **«0 preguntas»**
+  sin que nada fallara. Diferido corre al COMMIT, con las preguntas ya puestas.
+  Está comprobado en una transacción revertida, de las dos formas: diferido dice
+  «7 preguntas en 7 minutos», y disparándolo a mano antes de los items dice «0
+  preguntas en 7 minutos», que es exactamente el fallo que se evita.
+- **La etiqueta lleva el id del examen** (`'examen:' || new.id`), no es
+  `'examen'` a secas. `sw.js` la usa como `tag`, y el `tag` hace que un aviso
+  REEMPLACE al anterior de la misma etiqueta. En tareas eso no cuesta nada
+  porque el aviso lleva a `/tareas.html`, donde están todas; acá lleva a
+  `/examen.html?id=<uno>`, así que un segundo examen taparía el aviso del
+  primero **y con él su único enlace**. El examen seguiría asignado y el alumno
+  no se enteraría de ese: el fallo callado de siempre.
+
+El enlace va **directo a rendirlo** y no a una lista, que es la otra diferencia
+con las tareas: un examen tiene reloj y una sola oportunidad, así que buscarlo
+entre otros es un paso de más.
+
+Lo que **no** avisa es reabrir un examen congelado, que es justo cuando el
+alumno está trabado esperando. No está puesto porque no se pidió, pero es el
+mismo trigger sobre el `update`.
+
 ### El informe, y qué ve cada quien
 
 `examen_informe()` es **una sola función para los dos públicos**, y lo que

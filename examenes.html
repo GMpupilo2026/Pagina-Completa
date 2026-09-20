@@ -182,6 +182,9 @@
  *  - El mínimo de "un minuto por pregunta" se avisa acá pero lo hace
  *    cumplir crear_examen(): un mínimo que solo comprueba el navegador
  *    se salta desde la consola.
+ *  - El aviso al celular no lo manda esta página: sale del trigger
+ *    avisar_examen_asignado, igual que el de las tareas. Mandarlo desde
+ *    acá lo dejaría atado a que la pestaña siga abierta.
  */
 let session = null, profile = null, puedeExaminar = false;
 let alumnosDisponibles = [];
