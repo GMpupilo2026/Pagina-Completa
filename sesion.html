@@ -1945,23 +1945,47 @@
         async function cargarPlanesEnClase() {
             if (!isTeacher) return;
             const select = document.getElementById("plan-select");
+            /* Los propios y los que le comparten sus colegas. Van en la MISMA
+               lista porque a la hora de dar la clase los dos se dan igual —
+               lo que cambia es quién los puede editar, y eso es en el armador.
+               Se piden por separado: un plan compartido no sale del `select`
+               por profesor_id, y su autor no se puede leer de `profiles`. */
+            let compartidos = [];
             try {
                 planesDelProfesor = await PlanClase.listarPlanes(sb, session.user.id);
             } catch (e) {
                 document.getElementById("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
                 return;
             }
+            try {
+                compartidos = await PlanClase.planesCompartidosConmigo(sb);
+            } catch (e) {
+                // Que no lleguen los compartidos no puede dejar sin plan a quien
+                // sí tiene los suyos, en medio de la clase.
+                compartidos = [];
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar los planes compartidos: " + e.message;
+            }
+            planesDelProfesor = planesDelProfesor.concat(compartidos);
+
             select.innerHTML = "";
             const vacio = document.createElement("option");
             vacio.value = "";
             vacio.textContent = planesDelProfesor.length ? "— Elige un plan —" : "Todavía no has armado ninguno";
             select.appendChild(vacio);
-            planesDelProfesor.forEach((pl) => {
-                const o = document.createElement("option");
-                o.value = pl.id;
-                o.textContent = pl.titulo;
-                select.appendChild(o);
-            });
+            const grupo = (nombre, lista) => {
+                if (!lista.length) return;
+                const g = document.createElement("optgroup");
+                g.label = nombre;
+                lista.forEach((pl) => {
+                    const o = document.createElement("option");
+                    o.value = pl.id;
+                    o.textContent = pl.titulo + (pl.autor ? " · " + pl.autor : "");
+                    g.appendChild(o);
+                });
+                select.appendChild(g);
+            };
+            grupo("Tus planes", planesDelProfesor.filter((pl) => pl.profesor_id === session.user.id));
+            grupo("Compartidos contigo", compartidos);
             /* Cuál estaba dando se recuerda en ESTE aparato, como el tema o la
                clase elegida: si se recarga la página en medio de la clase —que
                pasa— no hay que volver a buscarlo en la lista. */

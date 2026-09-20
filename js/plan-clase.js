@@ -25,7 +25,7 @@
  * medio de la clase y delante de todos, sin dar ningún error.
  */
 window.PlanClase = (function () {
-    const CAMPOS_PLAN = "id, profesor_id, titulo, notas, created_at, updated_at";
+    const CAMPOS_PLAN = "id, profesor_id, titulo, notas, compartido_todos, created_at, updated_at";
     const CAMPOS_ITEM = "id, plan_id, orden, tipo, titulo, fen, pregunta, curso, leccion, nota";
 
     const TIPOS = [
@@ -130,6 +130,68 @@ window.PlanClase = (function () {
         return copia;
     }
 
+    /* ---- Compartir ------------------------------------------------------
+     *
+     * Un plan es DE quien lo escribió, y compartirlo no cambia eso: el colega lo
+     * ve y lo duplica; editarlo y borrarlo siguen siendo del dueño. Eso no lo
+     * decide esta página — lo hace cumplir la base, que solo amplió el `select`.
+     *
+     * Hay dos formas, y no son la misma:
+     *
+     *   compartido_todos      -> todo el equipo docente, sin ir nombrando a
+     *                            nadie. Es lo que sirve para los planes de
+     *                            arranque y para el material de la Academia.
+     *   plan_compartidos      -> una fila por profesor elegido. Es "esto es para
+     *                            ti", que es lo que se pidió.
+     *
+     * Las dos se leen en la MISMA lista de "compartidos conmigo": a quien lo
+     * recibe le da igual por cuál de las dos le llegó.
+     */
+
+    /* Quién hay en el equipo docente, para ofrecérselo en el selector. Va por
+       RPC y no por un `select` sobre `profiles` porque la RLS no le deja a un
+       profesor ver a sus colegas: solo ve a sus alumnos y a sí mismo. */
+    async function equipoDocente(sb) {
+        const { data, error } = await sb.rpc("equipo_docente");
+        if (error) throw error;
+        return data || [];
+    }
+
+    /* Los planes que OTROS comparten conmigo, con el nombre de quien los
+       escribió — que es el dato que dice si vale la pena abrirlo, y que un
+       `select` sobre planes_clase no puede traer por lo mismo de arriba. */
+    async function planesCompartidosConmigo(sb) {
+        const { data, error } = await sb.rpc("planes_compartidos_conmigo");
+        if (error) throw error;
+        return data || [];
+    }
+
+    /* Con quién está compartido ESTE plan (solo lo puede preguntar su dueño). */
+    async function compartidosDe(sb, planId) {
+        const { data, error } = await sb.from("plan_compartidos")
+            .select("profesor_id").eq("plan_id", planId);
+        if (error) throw error;
+        return (data || []).map((f) => f.profesor_id);
+    }
+
+    async function compartirCon(sb, planId, profesorId) {
+        // Compartir dos veces con la misma persona no es un error: es el mismo
+        // estado. La llave primaria (plan_id, profesor_id) lo garantiza y el
+        // upsert lo deja pasar sin ruido.
+        const { error } = await sb.from("plan_compartidos")
+            .upsert({ plan_id: planId, profesor_id: profesorId },
+                    { onConflict: "plan_id,profesor_id" });
+        if (error) throw error;
+    }
+
+    async function dejarDeCompartir(sb, planId, profesorId) {
+        const { error } = await sb.from("plan_compartidos").delete()
+            .eq("plan_id", planId).eq("profesor_id", profesorId);
+        if (error) throw error;
+    }
+
+    const esMio = (plan, profesorId) => plan.profesor_id === profesorId;
+
     /* Lo que se lee de un renglón en una línea. Es lo único que el profesor va a
        mirar de reojo mientras da la clase, así que dice el tipo y el título y no
        el FEN, que no se lee de un vistazo. */
@@ -143,5 +205,7 @@ window.PlanClase = (function () {
         TIPOS, tipoDe, resumen,
         listarPlanes, itemsDe, crearPlan, actualizarPlan, borrarPlan,
         agregarItem, borrarItem, moverItem, duplicarPlan,
+        equipoDocente, planesCompartidosConmigo, compartidosDe,
+        compartirCon, dejarDeCompartir, esMio,
     };
 })();

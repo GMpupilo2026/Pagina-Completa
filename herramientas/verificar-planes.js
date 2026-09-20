@@ -45,7 +45,26 @@ const PROFE = { id: "prof-1", role: "profesor", is_admin: false, full_name: "Seb
 const ALUMNA = { id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" };
 
 const PLAN = { id: "pl-1", profesor_id: "prof-1", titulo: "Finales de rey y peón",
-               notas: "Empezar por la oposición.", created_at: "2026-09-18T12:00:00Z", updated_at: null };
+               notas: "Empezar por la oposición.", compartido_todos: false,
+               created_at: "2026-09-18T12:00:00Z", updated_at: null };
+
+/* Un plan de una colega, de los que llegan por `planes_compartidos_conmigo()`.
+   Trae `autor` porque esa función lo resuelve: la RLS de `profiles` no le deja a
+   un profesor leer el nombre de otro. */
+const PLAN_AJENO = { id: "pl-2", profesor_id: "prof-2", autor: "Karina Rojas",
+                     titulo: "Mates en dos", notas: "Empezar por el del pasillo.",
+                     compartido_todos: true,
+                     created_at: "2026-09-19T12:00:00Z", updated_at: "2026-09-19T12:00:00Z" };
+
+const ITEMS_AJENOS = [
+  { id: "it-9", plan_id: "pl-2", orden: 0, tipo: "posicion", titulo: "Mate del pasillo",
+    fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", pregunta: null, curso: null, leccion: null, nota: null },
+];
+
+const EQUIPO = [
+  { id: "prof-2", nombre: "Karina Rojas", email: "k@x.cr", es_admin: false },
+  { id: "prof-3", nombre: "Profe Angulo", email: "o@x.cr", es_admin: true },
+];
 
 // La oposición: legal, con sus dos reyes y sin peones en la fila 1 ni en la 8.
 const FEN_BUENA = "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1";
@@ -80,6 +99,12 @@ window.__escrituras = [];
         filas.push(pendiente);
         return b;
       },
+      upsert(fila) {
+        window.__escrituras.push({ tabla: etiqueta, accion: "upsert", fila: fila });
+        pendiente = Object.assign({}, fila);
+        filas.push(pendiente);
+        return b;
+      },
       // El filtro se apunta al RESOLVER y no acá: .update(x).eq("id", y)
       // encadena, así que en este momento condiciones todavía está vacío.
       update(campos) {
@@ -96,8 +121,8 @@ window.__escrituras = [];
           return Promise.resolve({ data: f || null, error: null }).then(res, rej);
         }
         if (pendiente && pendiente.__delete) {
-          const id = (condiciones.find((c) => c[0] === "id") || [])[1];
-          const i = filas.findIndex((x) => x.id === id);
+          window.__escrituras[window.__escrituras.length - 1].donde = condiciones.slice();
+          const i = filas.findIndex((x) => condiciones.every(([c, v]) => x[c] === v));
           if (i >= 0) filas.splice(i, 1);
           return Promise.resolve({ data: null, error: null }).then(res, rej);
         }
@@ -154,11 +179,18 @@ async function abrir(browser, pagina, datos, usuarioId) {
   return { page, errores };
 }
 
-const datosProfe = () => ({
+const copia = (x) => JSON.parse(JSON.stringify(x));
+
+const datosProfe = (compartidos) => ({
   tablas: {
     profiles: [PROFE, ALUMNA],
-    planes_clase: [JSON.parse(JSON.stringify(PLAN))],
-    plan_items: JSON.parse(JSON.stringify(ITEMS)),
+    planes_clase: [copia(PLAN)],
+    plan_items: copia(ITEMS).concat(copia(ITEMS_AJENOS)),
+    plan_compartidos: [],
+  },
+  rpc: {
+    equipo_docente: copia(EQUIPO),
+    planes_compartidos_conmigo: compartidos ? [copia(PLAN_AJENO)] : [],
   },
 });
 
@@ -240,6 +272,116 @@ async function pruebaAlumna(browser) {
   await page.close();
 }
 
+/* Compartir es lo que convierte un plan en material del equipo: sin esto, los 53
+   planes de arranque hay que volver a sembrarlos por cada profesor. Lo que se
+   rompe acá se rompe callado — un plan compartido con quien no era, o una
+   casilla que dice "lo ve todo el equipo" sobre un plan que no se guardó. */
+async function pruebaCompartir(browser) {
+  console.log("\n=== Compartir un plan tuyo ===");
+  const { page, errores } = await abrir(browser, "/planes.html", datosProfe(false), "prof-1");
+  await page.waitForSelector("#cuerpo:not(.hidden)", { timeout: 10000 });
+
+  igual("sin nada compartido contigo, el apartado no se destapa",
+    await page.evaluate(() => getComputedStyle(document.getElementById("bloque-compartidos")).display === "none" ? "no" : "sí"), "no");
+
+  await page.click('#lista-planes button[data-plan="pl-1"]');
+  await page.waitForSelector("#detalle:not(.hidden)");
+  igual("en tu plan se ve el apartado de compartir",
+    await page.evaluate(() => getComputedStyle(document.getElementById("bloque-compartir")).display === "none" ? "no" : "sí"), "sí");
+  igual("y todavía no lo compartes con nadie",
+    await page.evaluate(() => getComputedStyle(document.getElementById("c-nadie")).display === "none" ? "no lo dice" : "lo dice"), "lo dice");
+  igual("el selector ofrece a los colegas y no a ti",
+    await page.evaluate(() => [...document.querySelectorAll("#c-agregar option")].map((o) => o.textContent).join(" / ")),
+    "Karina Rojas / Profe Angulo 👑");
+
+  // ---- Compartir con una colega concreta ----
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.selectOption("#c-agregar", "prof-2");
+  await page.click("#c-sumar");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "plan_compartidos"));
+  const alta = await page.evaluate(() => window.__escrituras.find((e) => e.tabla === "plan_compartidos"));
+  igual("se manda el plan que está abierto", alta.fila.plan_id, "pl-1");
+  igual("y el profesor que se eligió", alta.fila.profesor_id, "prof-2");
+  igual("la etiqueta lo dice con su nombre",
+    await page.evaluate(() => [...document.querySelectorAll("#c-etiquetas li span:first-child")].map((n) => n.textContent).join(", ")),
+    "Karina Rojas");
+  igual("y ya no se ofrece a quien ya lo tiene",
+    await page.evaluate(() => [...document.querySelectorAll("#c-agregar option")].map((o) => o.value).join(",")), "prof-3");
+
+  // ---- Quitarlo manda las DOS condiciones ----
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click('#c-etiquetas li button[aria-label^="Dejar de compartir"]');
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.accion === "delete" && e.donde));
+  const baja = await page.evaluate(() => window.__escrituras.find((e) => e.accion === "delete" && e.donde));
+  igual("quitar filtra por el plan Y por el profesor",
+    baja.donde.map((c) => c[0] + "=" + c[1]).sort().join(", "), "plan_id=pl-1, profesor_id=prof-2");
+
+  // ---- Con todo el equipo docente ----
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.check("#c-todos");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "planes_clase" && e.accion === "update"));
+  const up = await page.evaluate(() => window.__escrituras.find((e) => e.tabla === "planes_clase" && e.accion === "update"));
+  igual("marca compartido_todos en el plan abierto", up.fila.compartido_todos, true);
+  igual("sobre ese plan y no otro", (up.donde.find((c) => c[0] === "id") || [])[1], "pl-1");
+  igual("y entonces elegir de a uno se esconde, porque ya no agrega nada",
+    await page.evaluate(() => getComputedStyle(document.getElementById("c-elegidos-bloque")).display === "none" ? "sí" : "no"), "sí");
+
+  igual("sin errores en la consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+}
+
+/* Un plan compartido se DA y se duplica; no se edita ni se borra. La base lo
+   hace cumplir (está comprobado impersonando roles en SQL), así que lo que se
+   mira acá es que no se le ofrezcan botones que van a fallar sobre el material
+   de una colega. */
+async function pruebaPlanAjeno(browser) {
+  console.log("\n=== Un plan que te comparten ===");
+  const { page, errores } = await abrir(browser, "/planes.html", datosProfe(true), "prof-1");
+  await page.waitForSelector("#cuerpo:not(.hidden)", { timeout: 10000 });
+
+  await page.waitForFunction(() => document.querySelectorAll("#lista-compartidos li").length === 1);
+  igual("se ve el apartado de compartidos",
+    await page.evaluate(() => getComputedStyle(document.getElementById("bloque-compartidos")).display === "none" ? "no" : "sí"), "sí");
+  // Los dos renglones se leen por separado: son dos <span> en bloque y
+  // textContent los pega sin espacio, que en pantalla no pasa.
+  igual("y dice de quién es",
+    await page.evaluate(() => [...document.querySelectorAll("#lista-compartidos li button span")].map((x) => x.textContent).join(" — ")),
+    "Mates en dos — de Karina Rojas");
+  igual("el plan ajeno no se cuela entre los tuyos",
+    await page.evaluate(() => [...document.querySelectorAll("#lista-planes button")].map((b) => b.dataset.plan).join(",")), "pl-1");
+
+  await page.click('#lista-compartidos button[data-plan="pl-2"]');
+  await page.waitForSelector("#detalle:not(.hidden)");
+  await page.waitForFunction(() => document.querySelectorAll("#lista-items li").length === 1);
+  igual("se le ve el contenido", await page.textContent("#lista-items li p:first-child"), "♟️ Mate del pasillo");
+  igual("con el autor a la vista", await page.textContent("#detalle-autor"), "Lo escribió Karina Rojas");
+
+  const oculto = (id) => page.evaluate((i) => getComputedStyle(document.getElementById(i)).display === "none" ? "oculto" : "a la vista", id);
+  igual("no se ofrece borrar el plan de otra persona", await oculto("borrar-plan"), "oculto");
+  igual("ni agregarle renglones", await oculto("form-item"), "oculto");
+  igual("ni repartirlo por tu cuenta", await oculto("bloque-compartir"), "oculto");
+  igual("los renglones no traen botones",
+    await page.evaluate(() => document.querySelectorAll("#lista-items li button").length), 0);
+  igual("sus notas se leen pero no se escriben",
+    await page.evaluate(() => document.getElementById("p-notas").readOnly ? "solo lectura" : "editable"), "solo lectura");
+  igual("y se explica por qué", await oculto("solo-lectura"), "a la vista");
+
+  // ---- Duplicar es lo que SÍ puede: la copia es suya ----
+  await page.evaluate(() => { window.__escrituras.length = 0; });
+  await page.click("#duplicar-plan");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "planes_clase" && e.accion === "insert"));
+  const cop = await page.evaluate(() => window.__escrituras.find((e) => e.tabla === "planes_clase" && e.accion === "insert"));
+  igual("la copia queda a tu nombre", cop.fila.profesor_id, "prof-1");
+  igual("con el título dicho", cop.fila.titulo, "Copia de Mates en dos");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "plan_items" && e.accion === "insert"));
+  igual("y se lleva sus renglones",
+    await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "plan_items" && e.accion === "insert").length), 1);
+  igual("la copia ya se edita", await oculto("form-item"), "a la vista");
+
+  igual("sin errores en la consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+}
+
 /* Que el módulo y el armador cuenten las lecciones igual es lo que hace que el
    renglón abra la que el profesor quiso: `abrirLeccionLocal()` cuenta desde 0 y
    la pantalla desde 1. Si se separan, el plan abre la lección de al lado — y
@@ -261,6 +403,8 @@ async function pruebaResumen(browser) {
   try {
     await pruebaArmador(browser);
     await pruebaAlumna(browser);
+    await pruebaCompartir(browser);
+    await pruebaPlanAjeno(browser);
     await pruebaResumen(browser);
   } finally {
     await browser.close();
