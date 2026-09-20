@@ -771,12 +771,67 @@ enterarse allá cuesta la clase.
 
 ### Quién puede qué
 
-Un plan es **del profesor que lo escribió**: una colega no lo ve. Quien
-administra los ve todos (la regla permanente de siempre) pero **no los edita** —
-el material de un colega no es de nadie más. El insert exige
-`profesor_id = auth.uid()` y `role = 'profesor'` o `is_admin`, así que un alumno
-no puede crear ninguno, y a `anon` se le revocan los permisos de tabla.
-Comprobado impersonando roles en SQL, 12 casos.
+Un plan es **del profesor que lo escribió**: una colega no lo ve hasta que él se
+lo comparte (ver abajo). Quien administra los ve todos (la regla permanente de
+siempre) pero **no los edita** — el material de un colega no es de nadie más. El
+insert exige `profesor_id = auth.uid()` y `role = 'profesor'` o `is_admin`, así
+que un alumno no puede crear ninguno, y a `anon` se le revocan los permisos de
+tabla. Comprobado impersonando roles en SQL, 12 casos.
+
+### Compartir un plan: se ve y se duplica, NO se edita
+
+El dueño elige con quién. Son dos formas, y conviven porque contestan preguntas
+distintas: `planes_clase.compartido_todos` es "con todo el equipo docente" —el
+caso de los planes de arranque y del material de la Academia, que alcanza además
+a quien entre después— y `public.plan_compartidos (plan_id, profesor_id)` es
+"esto es para ti". **A quien lo recibe le da igual por cuál de las dos le
+llegó**, así que las dos se leen en la misma lista de "Compartidos contigo".
+
+- **Lo único que se amplió es el `select` del plan.** El `update` y el `delete`
+  siguen exigiendo `profesor_id = auth.uid()`, así que el colega lo da en su
+  clase y lo duplica, pero no lo toca. Los renglones se ampliaron **solos**: la
+  política de `plan_items` cuelga del select de `planes_clase` y no de la
+  columna — el mismo principio que ya regía para `profesores_de()`.
+- **Las dos preguntas van en funciones `SECURITY DEFINER`**
+  (`soy_dueno_del_plan()`, `plan_compartido_conmigo()`) y no escritas dentro de
+  la política. No es estilo: la política de `planes_clase` mira
+  `plan_compartidos` y las de `plan_compartidos` miran `planes_clase` — una RLS
+  llamando a la otra es **recursión infinita**, y el error salta en la cara de
+  quien abre la página, no al escribirla.
+- **"Todo el equipo docente" es el equipo docente.** La política lleva el filtro
+  de rol escrito; sin él, un alumno que preguntara por `planes_clase` se llevaría
+  todos los planes marcados así —con las soluciones de sus propios ejercicios en
+  la chuleta de cada renglón— y no daría ningún error.
+- **Y compartir de a uno también.** `plan_compartidos_insert` exige, además de
+  ser el dueño, que el destinatario sea del equipo (`es_del_equipo_docente()`):
+  sin eso, nada impedía poner ahí el id de un alumno.
+- **`equipo_docente()` y `planes_compartidos_conmigo()` existen por lo mismo:**
+  la RLS de `profiles` no le deja a un profesor ver a sus colegas (solo sus
+  alumnos y a sí mismo — comprobado: uno ve 46 perfiles y **un solo profesor, él
+  mismo**). Sin esas dos funciones, el selector saldría vacío y los planes
+  compartidos, sin autor — que es justo el dato que dice si vale la pena abrirlo.
+- **En pantalla, lo que no se puede hacer no se ofrece.** Sobre un plan ajeno no
+  se pintan "Borrar plan", el formulario de renglones, los ↑ ↓ ✖ ni el apartado
+  de compartir; las notas van `readOnly` **y no `disabled`** (un campo
+  desactivado sale del recorrido del teclado y quien no ve la pantalla no se
+  enteraría de que están ahí). La base los rechazaría igual, pero el fallo lo
+  descubriría la colega. El modo **se pinta entero al abrir cada plan**, no
+  prendiendo y apagando lo que cambió: es el mismo descuido que dejaría el botón
+  de borrar encima del material de otra persona.
+- **Con "todo el equipo" marcado, elegir de a uno se esconde**: ya lo ven todos,
+  así que sería un control que no cambia nada.
+- **En la clase en vivo los dos grupos van en el MISMO selector**, con su
+  `<optgroup>`: a la hora de dar la clase un plan compartido se da igual que uno
+  propio — lo que cambia es quién lo edita, y eso es en el armador. Si los
+  compartidos no llegan, se dice y **los propios se siguen ofreciendo**: quedarse
+  sin plan en medio de la clase por eso sería peor.
+
+Comprobado impersonando roles en SQL, 16 casos: el colega no ve nada antes de
+que se lo compartan; después ve el plan y sus renglones pero editarlo, borrarlo,
+borrarle un renglón y quitarse el compartido cambian **0 filas**; otra profesora
+no lo ve hasta que se marca "todo el equipo"; un alumno no lo ve ni con eso;
+compartirlo con un alumno se rechaza; `equipo_docente()` le da 3 a un profesor
+(sin él) y **0 a un alumno**; y el colega sí puede duplicarlo entero.
 
 **Al tocar `planes.html`, `js/plan-clase.js`, `js/posicion-valida.js` o el panel
 del plan de la clase en vivo, correr `node herramientas/verificar-planes.js`**
@@ -784,7 +839,11 @@ del plan de la clase en vivo, correr `node herramientas/verificar-planes.js`**
 Comprueba que una posición que rompe a Stockfish **se rechace al guardarla y no
 se mande nada a la base**, que la buena entre con su tipo, su FEN, su pregunta y
 su orden, que la lección 5 se guarde como 4, y que subir un renglón **renumere
-los dos** que se movieron. Sirve chess.js desde `node_modules`: sin él
+los dos** que se movieron. De compartir comprueba qué se MANDA (el plan abierto y
+el profesor elegido, y que quitar filtre por **las dos** columnas), que sin nada
+compartido el apartado no se destape, y que sobre un plan ajeno no se pinte ni un
+botón que vaya a fallar —pero sí el de duplicar, y que la copia quede a nombre de
+quien la hizo—. Sirve chess.js desde `node_modules`: sin él
 `PosicionValida.motivo()` revienta y el armador deja de validar — que es justo lo
 que la prueba viene a comprobar.
 
@@ -848,11 +907,11 @@ con chess.js), que lo que promete mate sea mate, y que cada posición de apertur
 salga de jugar su línea (o la de justo antes del mate, con su remate
 comprobado). Un plan vacío, repetido o con el orden con huecos también salta.
 
-**Hoy son del profesor que los tiene sembrados**, porque un plan es de quien lo
-escribió y no hay forma de compartirlo. Para que otro profesor los tenga hay que
-volver a sembrarlos con su `PROFESOR_ID`, que es la variable de entorno del
-script. Un «plan de la Academia» visible para todo el equipo docente sería otro
-cambio.
+**Se siembran a nombre de un profesor** (`PROFESOR_ID`, la variable de entorno
+del script) y desde ahí se reparten: marcándolos «con todo el equipo docente» en
+`planes.html` los ve el equipo entero, incluido quien entre después. Resembrarlos
+por profesor ya no hace falta, y no conviene: serían 53 copias que se van
+separando a la primera corrección.
 
 ## La bitácora: lo que el profesor observa, donde lo observa
 

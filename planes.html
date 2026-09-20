@@ -51,6 +51,17 @@
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus planes</h2>
                     <ul id="lista-planes" class="grid gap-1.5 mb-4"></ul>
                     <p id="sin-planes" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Todavía no has armado ninguno.</p>
+
+                    <!-- Los que otros profesores te comparten. Arranca oculta y
+                         solo se destapa si hay alguno: un apartado que diga
+                         "nadie te ha compartido nada" es ruido en todas las
+                         visitas menos una. -->
+                    <div id="bloque-compartidos" class="hidden border-t border-brand-100 dark:border-brand-800 pt-4 mb-4">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Compartidos contigo</h2>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los puedes dar y duplicar. Editarlos es de quien los escribió.</p>
+                        <ul id="lista-compartidos" class="grid gap-1.5"></ul>
+                    </div>
+
                     <form id="form-plan" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-2">
                         <label for="p-titulo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Plan nuevo</label>
                         <input id="p-titulo" type="text" maxlength="200" required placeholder="Ej. Finales de rey y peón" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -62,7 +73,10 @@
                 <!-- El plan abierto -->
                 <section id="detalle" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <div class="flex items-start justify-between gap-3 flex-wrap mb-1">
-                        <h2 id="detalle-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+                        <div class="min-w-0">
+                            <h2 id="detalle-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+                            <p id="detalle-autor" class="hidden text-xs text-brand-450 dark:text-brand-350"></p>
+                        </div>
                         <div class="flex items-center gap-1.5">
                             <button type="button" id="duplicar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" title="Copiarlo entero para darlo a otro grupo">⧉ Duplicar</button>
                             <button type="button" id="borrar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar plan</button>
@@ -72,9 +86,35 @@
                     <textarea id="p-notas" rows="2" maxlength="4000" placeholder="Cómo quieres dar esta clase (solo lo ves tú)." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm mb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
                     <p id="detalle-msg" class="text-xs text-brand-500 dark:text-brand-300 mb-4" aria-live="polite"></p>
 
+                    <!-- Compartir. Solo aparece en un plan tuyo: el material de
+                         un colega no es tuyo para repartirlo. -->
+                    <div id="bloque-compartir" class="hidden bg-brand-50 dark:bg-brand-950 rounded-xl p-4 mb-4">
+                        <h3 class="font-semibold text-brand-700 dark:text-brand-200 mb-1">🤝 Compartir este plan</h3>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Quien lo reciba lo puede dar en su clase y duplicarlo. Editarlo y borrarlo siguen siendo tuyos.</p>
+
+                        <label class="flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200 mb-3 cursor-pointer">
+                            <input type="checkbox" id="c-todos" class="mt-0.5 w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Con <strong>todo el equipo docente</strong><span class="block text-xs font-normal text-brand-450 dark:text-brand-350">También con quien entre después. Si lo marcas, no hace falta ir nombrando a nadie.</span></span>
+                        </label>
+
+                        <div id="c-elegidos-bloque">
+                            <p class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">O con quien elijas</p>
+                            <ul id="c-etiquetas" class="flex flex-wrap gap-1.5 mb-2"></ul>
+                            <p id="c-nadie" class="hidden text-xs text-brand-450 dark:text-brand-350 mb-2">Todavía no lo compartes con nadie.</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <label for="c-agregar" class="sr-only">Sumar un profesor</label>
+                                <select id="c-agregar" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                                <button type="button" id="c-sumar" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir</button>
+                            </div>
+                        </div>
+                        <p id="c-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                    </div>
+
                     <h3 class="font-semibold text-brand-700 dark:text-brand-200 mb-2">Qué vas a dar, en orden</h3>
                     <ol id="lista-items" class="grid gap-2 mb-4"></ol>
                     <p id="sin-items" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Este plan todavía está vacío. Agrega la primera posición abajo.</p>
+
+                    <p id="solo-lectura" class="hidden text-sm text-brand-450 dark:text-brand-350 border-t border-brand-100 dark:border-brand-800 pt-4">Este plan lo escribió otra persona: lo puedes dar tal cual o duplicarlo para cambiarlo a tu gusto.</p>
 
                     <form id="form-item" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-3">
                         <div class="grid gap-3 sm:grid-cols-[10rem_1fr]">
@@ -139,6 +179,11 @@
  * error hasta que el profesor la manda al tablero, delante de todos.
  */
 let session = null, profile = null, planes = [], planAbierto = null, items = [];
+/* Los que otros comparten conmigo y a quién se lo comparto yo. Van aparte de
+   `planes` a propósito: lo que se puede hacer con cada uno es distinto, y
+   mezclarlos en una sola lista era ofrecerle "Borrar plan" sobre el material de
+   una colega — la base lo rechazaría, pero el fallo lo descubriría ella. */
+let compartidosConmigo = [], equipo = [], compartidoCon = [];
 
 const $ = (id) => document.getElementById(id);
 
@@ -177,9 +222,65 @@ async function init() {
     // Las notas del plan se guardan al salir del campo, no con un botón: es un
     // campo que se toca de pasada mientras se arma el resto.
     $("p-notas").addEventListener("blur", guardarNotas);
+    $("c-todos").addEventListener("change", cambiarCompartidoTodos);
+    $("c-sumar").addEventListener("click", sumarProfesor);
 
+    await cargarEquipo();
     await cargarPlanes();
+    await cargarCompartidosConmigo();
 }
+
+/* El equipo docente sale de una función de la base y no de `profiles`: la RLS no
+   le deja a un profesor ver a sus colegas. Si falla, se dice y el resto de la
+   página sigue funcionando — lo que no se puede es ofrecer una lista vacía como
+   si de verdad no hubiera nadie. */
+async function cargarEquipo() {
+    try {
+        equipo = await PlanClase.equipoDocente(sb);
+    } catch (e) {
+        equipo = [];
+        $("c-msg").textContent = "No se pudo cargar el equipo docente: " + e.message;
+    }
+}
+
+async function cargarCompartidosConmigo() {
+    try {
+        compartidosConmigo = await PlanClase.planesCompartidosConmigo(sb);
+    } catch (e) {
+        compartidosConmigo = [];
+        $("plan-msg").textContent = "No se pudieron cargar los planes compartidos: " + e.message;
+    }
+    pintarCompartidosConmigo();
+}
+
+function pintarCompartidosConmigo() {
+    const lista = $("lista-compartidos");
+    lista.innerHTML = "";
+    $("bloque-compartidos").classList.toggle("hidden", compartidosConmigo.length === 0);
+    compartidosConmigo.forEach((p) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.plan = p.id;
+        b.className = claseDeBotonDePlan(planAbierto && planAbierto.id === p.id);
+        const t = document.createElement("span");
+        t.className = "block";
+        t.textContent = p.titulo;
+        const a = document.createElement("span");
+        a.className = "block text-xs font-normal opacity-80";
+        // El nombre lo escribió una persona: siempre por textContent.
+        a.textContent = "de " + (p.autor || "otro profesor");
+        b.append(t, a);
+        b.addEventListener("click", () => abrirPlan(p.id));
+        li.appendChild(b);
+        lista.appendChild(li);
+    });
+}
+
+const claseDeBotonDePlan = (activo) =>
+    "w-full text-left text-sm px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
+    (activo ? "bg-accent-500 text-brand-900 font-semibold"
+            : "bg-brand-50 dark:bg-brand-950 hover:bg-brand-100 dark:hover:bg-brand-800 text-brand-700 dark:text-brand-200");
 
 /* Los cursos salen del mismo catálogo que las tarjetas de cursos.html, para no
    tener una segunda lista que se vaya quedando vieja. */
@@ -227,16 +328,18 @@ async function cargarPlanes() {
         const b = document.createElement("button");
         b.type = "button";
         b.dataset.plan = p.id;
-        const activo = planAbierto && planAbierto.id === p.id;
-        b.className = "w-full text-left text-sm px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
-            (activo ? "bg-accent-500 text-brand-900 font-semibold"
-                    : "bg-brand-50 dark:bg-brand-950 hover:bg-brand-100 dark:hover:bg-brand-800 text-brand-700 dark:text-brand-200");
+        b.className = claseDeBotonDePlan(planAbierto && planAbierto.id === p.id);
         b.textContent = p.titulo;
         b.addEventListener("click", () => abrirPlan(p.id));
         li.appendChild(b);
         lista.appendChild(li);
     });
-    if (planAbierto && !planes.some((p) => p.id === planAbierto.id)) cerrarPlan();
+    // Un plan compartido también se puede tener abierto: no se cierra por no
+    // estar en la lista propia.
+    const abiertoSigue = planAbierto && (planes.some((p) => p.id === planAbierto.id)
+        || compartidosConmigo.some((p) => p.id === planAbierto.id));
+    if (planAbierto && !abiertoSigue) cerrarPlan();
+    pintarCompartidosConmigo();
 }
 
 function cerrarPlan() {
@@ -246,13 +349,17 @@ function cerrarPlan() {
 }
 
 async function abrirPlan(id) {
-    planAbierto = planes.find((p) => p.id === id) || null;
+    planAbierto = planes.find((p) => p.id === id)
+        || compartidosConmigo.find((p) => p.id === id) || null;
     if (!planAbierto) return;
+    const mio = PlanClase.esMio(planAbierto, profile.id);
     $("detalle").classList.remove("hidden");
     $("detalle-titulo").textContent = planAbierto.titulo;
     $("p-notas").value = planAbierto.notas || "";
     $("detalle-msg").textContent = "";
     $("item-msg").textContent = "";
+    pintarModoDelPlan(mio);
+    if (mio) await cargarCompartidoCon(planAbierto.id);
     try {
         items = await PlanClase.itemsDe(sb, id);
     } catch (e) {
@@ -265,6 +372,7 @@ async function abrirPlan(id) {
 
 function pintarItems() {
     const lista = $("lista-items");
+    const mio = planAbierto ? PlanClase.esMio(planAbierto, profile.id) : true;
     lista.innerHTML = "";
     $("sin-items").classList.toggle("hidden", items.length > 0);
     items.forEach((it, i) => {
@@ -286,6 +394,10 @@ function pintarItems() {
             izq.appendChild(d);
         }
         li.appendChild(izq);
+
+        // En el plan de una colega no se pintan reordenar ni quitar. La base los
+        // rechazaría igual, pero un botón que va a fallar es peor que no tenerlo.
+        if (!mio) { lista.appendChild(li); return; }
 
         const acciones = document.createElement("div");
         acciones.className = "flex items-center gap-1 shrink-0";
@@ -317,6 +429,131 @@ function pintarItems() {
     });
 }
 
+/* Qué se ve del plan abierto según de quién sea. Se pinta ENTERO cada vez que se
+   abre uno, en vez de ir prendiendo y apagando lo que cambió: así no hay que
+   acordarse de limpiar lo del anterior, que es justo el descuido que dejaría el
+   botón de borrar encima del material de una colega. */
+function pintarModoDelPlan(mio) {
+    $("detalle-autor").classList.toggle("hidden", mio);
+    if (!mio) {
+        $("detalle-autor").textContent = "Lo escribió " + (planAbierto.autor || "otro profesor");
+    }
+    $("borrar-plan").classList.toggle("hidden", !mio);
+    $("bloque-compartir").classList.toggle("hidden", !mio);
+    $("form-item").classList.toggle("hidden", !mio);
+    $("solo-lectura").classList.toggle("hidden", mio);
+    // Las notas del plan de una colega se leen —explican cómo darlo— pero no se
+    // escriben. Va `readOnly` y no `disabled`: un campo desactivado sale del
+    // recorrido del teclado y quien no ve la pantalla no se enteraría de que
+    // están ahí.
+    $("p-notas").readOnly = !mio;
+    $("p-notas").classList.toggle("opacity-70", !mio);
+}
+
+async function cargarCompartidoCon(planId) {
+    try {
+        compartidoCon = await PlanClase.compartidosDe(sb, planId);
+        $("c-msg").textContent = "";
+    } catch (e) {
+        compartidoCon = [];
+        $("c-msg").textContent = "No se pudo leer con quién lo compartes: " + e.message;
+    }
+    pintarCompartir();
+}
+
+function pintarCompartir() {
+    const todos = planAbierto ? planAbierto.compartido_todos === true : false;
+    $("c-todos").checked = todos;
+    // Con "todo el equipo" puesto, elegir de a uno no agrega nada: ya lo ven
+    // todos. Se esconde en vez de dejar un control que no cambia nada.
+    $("c-elegidos-bloque").classList.toggle("hidden", todos);
+
+    const ul = $("c-etiquetas");
+    ul.innerHTML = "";
+    $("c-nadie").classList.toggle("hidden", todos || compartidoCon.length > 0);
+    compartidoCon.forEach((id) => {
+        const quien = equipo.find((p) => p.id === id);
+        const li = document.createElement("li");
+        li.className = "inline-flex items-center gap-1 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-full pl-3 pr-1 py-1 text-xs text-brand-700 dark:text-brand-200";
+        const n = document.createElement("span");
+        n.textContent = quien ? quien.nombre : "Profesor";
+        const x = document.createElement("button");
+        x.type = "button";
+        x.className = "w-5 h-5 flex items-center justify-center rounded-full hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        x.textContent = "✕";
+        x.setAttribute("aria-label", "Dejar de compartir con " + (quien ? quien.nombre : "este profesor"));
+        x.addEventListener("click", () => quitarProfesor(id));
+        li.append(n, x);
+        ul.appendChild(li);
+    });
+
+    const sel = $("c-agregar");
+    sel.innerHTML = "";
+    const libres = equipo.filter((p) => !compartidoCon.includes(p.id));
+    if (!libres.length) {
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = equipo.length ? "Ya lo compartes con todos" : "No hay otros profesores";
+        sel.appendChild(o);
+        $("c-sumar").disabled = true;
+        return;
+    }
+    $("c-sumar").disabled = false;
+    libres.forEach((pr) => {
+        const o = document.createElement("option");
+        o.value = pr.id;
+        o.textContent = pr.nombre + (pr.es_admin ? " 👑" : "");
+        sel.appendChild(o);
+    });
+}
+
+async function cambiarCompartidoTodos() {
+    if (!planAbierto) return;
+    const valor = $("c-todos").checked;
+    $("c-msg").textContent = "Guardando…";
+    try {
+        planAbierto = Object.assign({}, planAbierto,
+            await PlanClase.actualizarPlan(sb, planAbierto.id, { compartido_todos: valor }));
+        planes = planes.map((p) => (p.id === planAbierto.id ? planAbierto : p));
+        $("c-msg").textContent = valor
+            ? "Lo ve todo el equipo docente."
+            : "Ya no lo ve todo el equipo. Sigue compartido con quien elegiste.";
+        pintarCompartir();
+    } catch (err) {
+        // Si no se guardó, la casilla tiene que volver a decir la verdad.
+        $("c-todos").checked = !valor;
+        $("c-msg").textContent = "No se pudo guardar: " + err.message;
+    }
+}
+
+async function sumarProfesor() {
+    if (!planAbierto) return;
+    const id = $("c-agregar").value;
+    if (!id) return;
+    $("c-msg").textContent = "Compartiendo…";
+    try {
+        await PlanClase.compartirCon(sb, planAbierto.id, id);
+        compartidoCon = compartidoCon.concat([id]);
+        pintarCompartir();
+        const quien = equipo.find((p) => p.id === id);
+        $("c-msg").textContent = "Compartido con " + (quien ? quien.nombre : "ese profesor") + ".";
+    } catch (err) {
+        $("c-msg").textContent = "No se pudo compartir: " + err.message;
+    }
+}
+
+async function quitarProfesor(id) {
+    if (!planAbierto) return;
+    try {
+        await PlanClase.dejarDeCompartir(sb, planAbierto.id, id);
+        compartidoCon = compartidoCon.filter((x) => x !== id);
+        pintarCompartir();
+        $("c-msg").textContent = "Ya no lo comparte.";
+    } catch (err) {
+        $("c-msg").textContent = "No se pudo quitar: " + err.message;
+    }
+}
+
 async function crearPlan(e) {
     e.preventDefault();
     const titulo = $("p-titulo").value.trim();
@@ -334,7 +571,7 @@ async function crearPlan(e) {
 }
 
 async function guardarNotas() {
-    if (!planAbierto) return;
+    if (!planAbierto || !PlanClase.esMio(planAbierto, profile.id)) return;
     const notas = $("p-notas").value.trim();
     if ((planAbierto.notas || "") === notas) return;
     try {
@@ -415,6 +652,7 @@ async function duplicar() {
         const copia = await PlanClase.duplicarPlan(sb, profile.id, planAbierto);
         planes.unshift(copia);
         await abrirPlan(copia.id);
+        $("detalle-msg").textContent = "Listo: la copia es tuya y la puedes cambiar.";
     } catch (err) {
         $("detalle-msg").textContent = "No se pudo duplicar: " + err.message;
     }
