@@ -1076,7 +1076,15 @@
                    así que no lleva `desc` de alumno: se suma acá en vez de vivir
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" }
+                    { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* La guía apunta a la versión accesible y no al PDF a
+                       propósito: es una página que abre en cualquier aparato,
+                       trae el contenido completo y desde ahí se bajan el manual
+                       y la presentación. Con el PDF de destino, quien entra
+                       desde el celular se baja un archivo para leer lo que
+                       podía leer ahí mismo, y la versión accesible quedaría de
+                       repuesto en vez de ser la puerta. */
+                    { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma te deja hacer y cómo se hace — en página, en manual y en diapositivas", href: "guia-del-profesor-accesible.html" }
                 );
             }
 

@@ -2480,6 +2480,95 @@ verificadas es casi todo de finales y de desequilibrios, y no hay de dónde
 prestarles. Cuando esos cursos tengan su archivo de posiciones, la corrida se
 repite y las toman solas.
 
+## La guía del profesor
+
+`herramientas/guia-profesores.js` arma, desde UN solo contenido
+(`herramientas/guia/contenido.json`), tres archivos que dicen exactamente lo
+mismo:
+
+| archivo | para qué |
+|---|---|
+| `guia-del-profesor-presentacion.pdf` | diapositivas 16:9, para proyectar en una capacitación |
+| `guia-del-profesor.pdf` | manual A4, para leer y tener al lado del teclado |
+| `guia-del-profesor-accesible.html` | el mismo contenido sin una sola imagen |
+
+Son tres salidas y **no tres documentos**: escritas aparte se irían separando a
+la primera corrección y media capacitación quedaría explicando algo que el
+manual ya no dice. Es la misma decisión de `js/reporte-armar.js` (una estructura
+neutral, tres generadores) y del `informe-html.ts` del correo a la casa. El
+generador **exporta sus tres maquetas** (`module.exports` detrás de
+`require.main`) para que el verificador las arme él mismo: comprobar una copia
+de la maqueta no comprobaría nada.
+
+- **La puerta de entrada es la versión accesible, no el PDF.** La tarjeta
+  «📘 Guía del profesor» del panel (grupo Herramientas, solo equipo docente,
+  junto a «Planes de clase») apunta ahí: es una página que abre en cualquier
+  aparato, trae el contenido completo y desde ella se bajan el manual y la
+  presentación. Con el PDF de destino, quien entra desde el celular se baja un
+  archivo para leer lo que podía leer ahí mismo, y la versión accesible quedaría
+  de repuesto en vez de ser la puerta. Lleva el enlace de vuelta al panel arriba
+  **y** en el pie, como el material de estudio: el documento es largo y quien
+  termina de leerlo no tendría que subir de nuevo para salir.
+- **La marca de agua es la MISMA de los libros** (el logo de Oscar Angulo
+  Cubero, rotado y al 11%), estampada con pypdf y no con CSS, por la razón de
+  siempre: con `position: fixed` Chromium la repite pero al paginar no respeta
+  el centrado. **Cada formato lleva su propia hoja de sello**, del tamaño exacto
+  de SU página — una hoja A4 estampada sobre una diapositiva apaisada dejaría la
+  marca en una esquina. Después de estampar hay que recomprimir y clonar, o el
+  archivo se va a megabytes.
+- **Acá SÍ se puede imprimir, al revés que los tres libros.** Aquellos bloquean
+  la impresión porque traen las respuestas de una prueba y cuanto menos
+  circulen, mejor. Esta guía es lo contrario: es material de trabajo que se
+  lleva en papel y se proyecta. Lo que queda bloqueado es **modificarla** y
+  reordenarle las páginas. La extracción de texto se deja habilitada por lo de
+  siempre: sin ella el archivo queda fuera del alcance de quien lo lee con
+  lector de pantalla. `CLAVE_PROPIETARIO` es `guia-profesores-ai-2026`.
+- **Cuánto texto lleva una diapositiva decide su tamaño de letra**
+  (`densidad()`: holgada, justa, apretada). Sin eso, la lámina con seis pasos y
+  tres advertencias se sale de la página, y el desborde **no da ningún error**:
+  se imprime cortada y de eso se entera quien está proyectando, delante de todo
+  el equipo.
+- `--solo-accesible` rehace únicamente el HTML y no toca ningún PDF (ni necesita
+  playwright ni pypdf): los PDF salen distintos byte por byte en cada corrida
+  porque llevan la fecha adentro. Sin esa puerta, la tentación es editar el HTML
+  a mano y que el generador y lo generado se vayan separando — la misma decisión
+  de `curso-material-generar.js`.
+- **La guía accesible está en las dos listas de páginas exceptuadas de la app**,
+  `verificar-pwa.js` y `pwa-cabecera.py`, junto a
+  `libro-de-diagnostico-accesible.html`: es un documento que se abre suelto,
+  hasta por correo y sin red, así que declarar un `manifest` que no va a poder
+  cargar es peor que no declararlo. **Las dos listas tienen que decir lo mismo**
+  — ya pasó una vez que no lo decían y el generador le ponía la cabecera en cada
+  corrida sin que el verificador se quejara.
+
+**Al tocar el contenido o el generador, correr las dos comprobaciones**:
+
+    node herramientas/guia-profesores.js
+    node herramientas/verificar-guia-profesores.js    # las maquetas, en un navegador
+    python3 herramientas/verificar-guia-profesores.py # los dos PDF, con pypdf
+
+La primera necesita playwright y mide **el desborde de cada diapositiva en un
+navegador de verdad** —no se fía del cálculo de densidad, que es justamente lo
+que hay que comprobar—, que los 78 apartados estén en las tres salidas, que la
+portada tenga fondo propio (si no, sería letra blanca sobre blanco, invisible y
+sin ningún error) y que la versión accesible no dependa de ninguna imagen, no
+salte ningún nivel de encabezado y no tenga anclas rotas en su índice. La
+segunda necesita pypdf y mira lo que no se ve: que los dos PDF abran sin
+contraseña pero estén cifrados, que SÍ dejen imprimir y extraer texto y NO
+modificar, que lleven al autor, y que tengan **marca de agua en todas las
+páginas del cuerpo** —el error clásico es estamparla solo en la portada—.
+
+- **Dos trampas que esa comprobación ya se comió**, las dos del verificador y no
+  de los archivos: `merge_page` no pega la imagen al primer nivel de los
+  recursos de la página, la envuelve en un XObject de tipo `/Form`, así que
+  buscarla solo arriba daba «no hay marca» sobre un archivo que sí la tiene; y
+  `user_access_permissions` es un `IntFlag`, donde `permisos.MODIFY` devuelve
+  **siempre** el miembro del enum —que es truthy— en vez de decir si ese bit
+  está puesto: preguntado así, las cuatro líneas de permisos daban lo mismo para
+  cualquier archivo y la comprobación se veía perfecta sin comprobar nada. Se
+  pregunta con `in`. Está probado que discrimina de verdad: sobre el PDF sin
+  sellar da 0 de 39 páginas con marca, y sobre el sellado, 39 de 39.
+
 ## El sitio se instala como app (PWA)
 
 `manifest.json`, `sw.js`, `js/pwa.js` y los iconos de `img/app/` hacen que el
