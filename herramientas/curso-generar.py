@@ -122,8 +122,8 @@ def portada(curso):
             </div>
 
             <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
-                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
-                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las {total} lecciones completas de este curso, con sus recursos descargables.</p>
+                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Ajedrez Integral</p>
+                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Ajedrez Integral para ver las {total} lecciones completas de este curso, con sus recursos descargables.</p>
                 <a href="../login.html?next=cursos/{slug}.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
             </div>
 
