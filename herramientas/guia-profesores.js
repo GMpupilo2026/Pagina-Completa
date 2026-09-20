@@ -70,6 +70,31 @@ function incrustar(relativo) {
 const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
 const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
 
+/* ---------- las capturas de pantalla ----------
+   Las hace `herramientas/guia-capturas.js` y viven en `img/guia/<slug>.jpg`.
+   Van incrustadas como data URI por lo mismo que el logo: la maqueta se imprime
+   desde /tmp y desde ahí no alcanzaría img/.
+
+   Si una captura declarada en el contenido NO está, se dice y se sigue: mejor
+   una guía sin esa pantalla que una guía que no se genera. Lo que no puede
+   pasar es que se cuele en silencio, porque un hueco en una diapositiva solo se
+   descubre proyectando. */
+const capturasQueFaltan = [];
+const _cacheCapturas = {};
+function captura(slug) {
+  if (!slug) return null;
+  if (slug in _cacheCapturas) return _cacheCapturas[slug];
+  const archivo = path.join(RAIZ, "img/guia", slug + ".jpg");
+  let dato = null;
+  if (fs.existsSync(archivo)) {
+    dato = "data:image/jpeg;base64," + fs.readFileSync(archivo).toString("base64");
+  } else {
+    capturasQueFaltan.push(slug);
+  }
+  _cacheCapturas[slug] = dato;
+  return dato;
+}
+
 function esc(t) {
   return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -115,6 +140,22 @@ function laminaHTML(lamina, cap, numero) {
 </section>`;
 }
 
+/* La captura va en su PROPIA diapositiva y no metida al lado del texto, a
+   propósito: al proyectar, lo que sirve es verla grande —los botones de los que
+   habla el apartado tienen que leerse desde el fondo del aula— y apretujada en
+   media lámina junto a seis pasos no se lee ninguna de las dos cosas. Lleva el
+   mismo número que su apartado para que se vea que son la misma cosa. */
+function capturaHTML(lamina, cap, numero) {
+  const dato = captura(lamina.captura);
+  if (!dato) return "";
+  return `<section class="diapo pantalla">
+  <header class="cinta"><span class="cap">${esc(cap.titulo)}</span><span class="num">${numero}</span></header>
+  <h2>Así se ve: ${esc(lamina.titulo)}</h2>
+  ${lamina.donde ? `<p class="donde">${esc(lamina.donde)}</p>` : ""}
+  <div class="marco"><img src="${dato}" alt="Captura de pantalla de ${esc(lamina.titulo)}"></div>
+</section>`;
+}
+
 function separadorHTML(cap, indice) {
   return `<section class="diapo separador">
   <p class="capnum">Capítulo ${indice}</p>
@@ -128,7 +169,10 @@ function separadorHTML(cap, indice) {
 function presentacionHTML() {
   let n = 0;
   const cuerpo = CAPITULOS.map((cap, i) =>
-    separadorHTML(cap, i + 1) + cap.laminas.map((l) => laminaHTML(l, cap, ++n)).join("")
+    separadorHTML(cap, i + 1) + cap.laminas.map((l) => {
+      const numero = ++n;
+      return laminaHTML(l, cap, numero) + capturaHTML(l, cap, numero);
+    }).join("")
   ).join("");
 
   const indice = CAPITULOS.map((c, i) =>
@@ -234,6 +278,23 @@ function presentacionHTML() {
   .apretada ol.pasos li::before { width: 6.4mm; height: 6.4mm; font-size: 8.5pt; }
   .apretada ol.pasos li { padding-left: 9.5mm; }
 
+  /* ---- la diapositiva de la captura ---- */
+  .pantalla { background: #f0f4f8; padding: 9mm 12mm 9mm; }
+  /* Cabecera al mínimo: cada milímetro que se le quite al título es un
+     milímetro más de captura, y lo que hay que poder leer desde el fondo del
+     aula son los botones de la pantalla, no el rótulo. */
+  .pantalla .cinta { margin-bottom: 3mm; padding-bottom: 1.8mm; }
+  .pantalla h2 { font-size: 17pt; margin-bottom: 1mm; }
+  .pantalla .donde { margin-bottom: 0; }
+  .pantalla .marco { flex: 1; min-height: 0; margin-top: 2.5mm; display: flex;
+      align-items: center; justify-content: center; }
+  /* El tope de alto en la imagen y el min-height cero en su caja son las dos
+     mitades del mismo arreglo: sin ellas la imagen empuja el flex y se sale de
+     la diapositiva por abajo, cortada, sin dar ningún error. */
+  .pantalla .marco img { max-width: 100%; max-height: 100%; width: auto; height: auto;
+      border: .4mm solid #bcccdc; border-radius: 1.5mm; box-shadow: 0 1mm 4mm rgba(16,42,67,.14);
+      background: #ffffff; }
+
   .pie { margin-top: auto; padding-top: 3.5mm; border-top: .3mm solid #e4ebf2;
       display: flex; justify-content: space-between; font-size: 8pt; color: #9fb3c8; }
 </style>
@@ -284,6 +345,10 @@ function manualHTML() {
       ${(l.pasos || []).length ? `<ol class="pasos">${l.pasos.map((p) => `<li>${esc(p)}</li>`).join("")}</ol>` : ""}
       ${(l.ojo || []).length ? `<div class="ojo"><p class="ojo-t">Ojo con esto</p><ul>${
         l.ojo.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>` : ""}
+      ${captura(l.captura) ? `<figure class="pantalla">
+        <img src="${captura(l.captura)}" alt="Captura de pantalla de ${esc(l.titulo)}">
+        <figcaption>Así se ve: ${esc(l.titulo)}</figcaption>
+      </figure>` : ""}
     </div>`).join("");
     return `<section class="capitulo">
       <p class="capnum">Capítulo ${i + 1}</p>
@@ -323,6 +388,19 @@ function manualHTML() {
       text-transform: uppercase; color: #8a5a00; margin: 0 0 1.5mm; font-weight: 700; }
   .ojo ul { margin: 0; padding-left: 4.5mm; }
   .ojo li { font-size: 9.2pt; margin-bottom: 1.4mm; color: #243b53; }
+  /* La captura va a la mitad del ancho de la página y con tope de alto: a
+     tamaño completo, cada apartado con pantalla ocupaba una hoja entera y el
+     manual se iba a ochenta páginas. */
+  figure.pantalla { margin: 3.5mm 0 0; page-break-inside: avoid; }
+  figure.pantalla img { display: block; width: 100%; max-height: 96mm;
+      border: .3mm solid #bcccdc; border-radius: 1mm; background: #fff; }
+  /* Un apartado con captura NO se mantiene entero en una página: con la imagen
+     dentro del bloque que no se puede partir, cada uno que no cabía saltaba a
+     la hoja siguiente y dejaba media página en blanco. La figura sí se mantiene
+     entera —una captura cortada por la mitad no se entiende—, el apartado no. */
+  .apartado:has(figure.pantalla) { page-break-inside: auto; }
+  figure.pantalla figcaption { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 7.5pt;
+      color: #627d98; margin-top: 1.2mm; }
 
   /* ---- la primera página, que no es un capítulo ---- */
   .frente h1 { font-size: 24pt; margin: 0 0 2mm; line-height: 1.1; }
@@ -456,6 +534,11 @@ agrandada. No hay ninguna imagen: no hace falta ver nada para usarla.</p>
 </div>
 <p class="aviso"><strong>Material de uso docente.</strong> Explica la plataforma
 desde el lado de quien da clase.</p>
+<p><strong>Sobre las capturas de pantalla.</strong> Las dos versiones en PDF
+llevan además una foto de cada pantalla. Acá no están, a propósito: una captura
+es una imagen y esta página no depende de ninguna. No se pierde nada — lo que
+esas fotos muestran está contado paso a paso en cada apartado, que es lo que
+hace falta para usar la plataforma.</p>
 <p><strong>${CAPITULOS.length} capítulos</strong> y ${TOTAL_LAMINAS} apartados.
 Cada apartado dice qué es, dónde está en el sitio, cómo se hace paso a paso y
 qué conviene no olvidar.</p>
@@ -485,6 +568,13 @@ const destinoAccesible = path.join(RAIZ, "guia-del-profesor-accesible.html");
 fs.writeFileSync(destinoAccesible, accesibleHTML());
 console.log(`${CAPITULOS.length} capítulos · ${TOTAL_LAMINAS} apartados`);
 console.log("Accesible:", destinoAccesible);
+
+const conCaptura = CAPITULOS.flatMap((c) => c.laminas).filter((l) => l.captura).length;
+console.log(`${conCaptura} apartados enseñan su pantalla`);
+if (capturasQueFaltan.length) {
+  console.log("SIN captura (corre: node herramientas/guia-capturas.js): " +
+    [...new Set(capturasQueFaltan)].join(", "));
+}
 
 if (SOLO_ACCESIBLE) {
   console.log("--solo-accesible: no se tocó ningún PDF.");

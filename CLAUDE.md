@@ -2541,8 +2541,75 @@ de la maqueta no comprobaría nada.
   — ya pasó una vez que no lo decían y el generador le ponía la cabecera en cada
   corrida sin que el verificador se quejara.
 
+### Las capturas de pantalla
+
+`herramientas/guia-capturas.js` fotografía 25 páginas de la plataforma y deja
+los archivos en `img/guia/<slug>.jpg`. Cada apartado del contenido puede
+declarar `"captura": "<slug>"`, y entonces:
+
+- en la **presentación** se agrega una diapositiva propia con la pantalla en
+  grande, justo después del apartado. No va metida al lado del texto a
+  propósito: al proyectar, lo que sirve es verla grande —los botones de los que
+  habla el apartado tienen que leerse desde el fondo del aula— y apretujada en
+  media lámina no se lee ninguna de las dos cosas;
+- en el **manual** va debajo del apartado, a ancho de columna;
+- en la **versión accesible** no va ninguna, y se dice una vez arriba por qué:
+  una captura es una imagen, esa página no depende de ninguna y lo que las
+  fotos enseñan está contado paso a paso en cada apartado.
+
+**Casi todas esas páginas están detrás del login**, así que no se pueden abrir y
+fotografiar sin más: sin sesión redirigen a `login.html` y la foto saldría del
+formulario de acceso una y otra vez, sin que nada fallara. Se usa el mismo truco
+que los verificadores: se intercepta `js/supabase-client.js` y se sirve un
+cliente de mentira con sesión de profesora y datos de demostración.
+
+- **Los datos son inventados, y eso no es un detalle.** Ahí no puede salir el
+  nombre de un alumno real, ni su correo, ni su progreso: la guía se imprime, se
+  proyecta delante de todo el equipo y se manda por correo. Las cuentas de
+  mentira viven todas en `DEMO`, en un solo lugar, para que se vea de un vistazo
+  que ninguna es de verdad.
+- **Los nombres de los campos de `DEMO` son los que lee cada página, uno por
+  uno.** Con otro nombre la pantalla se pinta igual y escribe «undefined» en su
+  lugar: así salió la primera captura de Informes, con tres tarjetas diciendo
+  undefined, y la de Tareas con «undefined/undefined». Por eso el capturador
+  **rechaza la foto si encuentra `undefined`, `NaN` o `[object Object]` en la
+  pantalla** —en todo el texto, no en el principio—, además de rechazar el gate
+  («Comprobando tu sesión…»), los avisos de acceso denegado y la página que se
+  fue al login.
+- **Una captura rechazada borra la que hubiera de antes.** Dejarla sería lo peor
+  de los dos mundos: la corrida avisa de que falló y el generador encuentra el
+  archivo igual, así que la guía sale con la pantalla vieja —la que tenía el
+  undefined— y nadie se entera.
+- **`reporte_actividades()` devuelve un OBJETO y no filas**, así que va en
+  `rpcObjeto` y no en `rpc`: pasado por el mismo camino que los demás llegaría
+  como arreglo y el informe saldría «del undefined al undefined». Su periodo se
+  calcula desde HOY y no está escrito: con una fecha fija la captura envejece
+  sola, que es el problema de almanaque que ya tuvo `verificar-panel.js`.
+- **chess.js se sirve DE VERDAD desde `node_modules`**, y su ruta se registra
+  DESPUÉS de las de los CDN: playwright resuelve la última que se registró, así
+  que puesta antes la tapaba la de cdnjs y la clase en vivo se quedaba en
+  «Cargando…» para siempre, sin dar ningún error.
+- Algunas páginas necesitan un gesto antes de la foto (`antes`): Reportes abre
+  con la vista previa vacía, así que se le aprieta «Traer los datos» — una
+  captura del formulario en blanco no enseña lo que el apartado cuenta.
+- La foto va en **16:9, la misma proporción que la diapositiva** que la va a
+  enseñar: con otra forma entra por el lado que le sobra y deja dos franjas en
+  blanco a los costados.
+- Se corre con el sitio en localhost:8777 y playwright:
+  `node herramientas/guia-capturas.js`, o `SOLO=panel,tareas` para rehacer unas
+  pocas. Las 25 pesan 2,6 MB y **se commitean**, como `img/cursos/`.
+
+El verificador comprueba las dos direcciones —que cada captura declarada tenga
+su archivo y que no sobre ninguna en `img/guia/`—, que haya una diapositiva de
+pantalla por cada una, que lleven texto alternativo, que vayan incrustadas y que
+**ninguna se salga de su diapositiva ni quede aplastada** (se miden los dos
+rectángulos en el navegador). El de Python cuenta, dentro de cada PDF, las
+páginas con más de una imagen: desde que hay capturas, «¿tiene alguna imagen?»
+ya no distingue si la marca de agua se estampó — lo que distingue es el número.
+
 **Al tocar el contenido o el generador, correr las dos comprobaciones**:
 
+    node herramientas/guia-capturas.js                # las pantallas (sitio en localhost:8777)
     node herramientas/guia-profesores.js
     node herramientas/verificar-guia-profesores.js    # las maquetas, en un navegador
     python3 herramientas/verificar-guia-profesores.py # los dos PDF, con pypdf
