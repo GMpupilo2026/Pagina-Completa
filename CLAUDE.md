@@ -2943,6 +2943,83 @@ lista, y el resto se acomoda solo.
   acceso es borrar esa palabra. Como todo filtro del sitio esto decide qué se
   PINTA: la dirección sigue existiendo y quien la conozca entra igual.
 
+### Arriba va lo que vence, no otro directorio de lugares
+
+El panel era una lista de sitios a los que ir: todo lo que es "esto te toca
+AHORA" vivía detrás de un clic, y quien no lo buscaba no se enteraba. Dos
+franjas, las dos arriba del grid y **antes** de los accesos:
+
+- **Tareas pendientes.** La fecha límite ya vivía en `tareas.vence_at` desde que
+  existe `tareas.html`; lo que faltaba era decirla acá. Un alumno abría el
+  panel, no veía nada que hacer, y la tarea vencía **sin que nada avisara** —
+  el aviso push sale al asignarla y después no vuelve nunca.
+  - **Una tarea vencida pinta la franja en rojo**, con el emoji cambiado. Es la
+    diferencia entre "tienes algo que hacer" y "se te pasó", y en el gris del
+    resto del panel esas dos cosas se leen igual.
+  - **"vence mañana", no una fecha.** Una fecha hay que compararla con el
+    almanaque; se cuenta por **días de calendario** y no por horas, así que una
+    tarea de mañana a las 8 a. m. vence mañana aunque falten menos de 24 horas.
+  - **Las pendientes las filtra la base** (`eq` de alumno y de estado), no se
+    bajan todas para descartar las hechas acá.
+- **Continúa donde ibas.** El curso a medias cuya última lección marcada es la
+  más reciente, con su barra. Los datos ya los cuenta
+  `informes_cursos_alumnos()` (un renglón por alumno y curso empezado, con el
+  total, lo hecho y el último tema): acá solo se elige cuál mostrar. Un curso
+  terminado no se ofrece — no hay nada que continuar ahí.
+
+**Las dos arrancan con `hidden` y solo se destapan cuando de verdad hay algo que
+decir.** Una franja que diga "no tienes tareas" es ruido en todas las visitas
+menos una, y un cartel que se repite deja de leerse — la misma lección que dejó
+el aviso de instalar la app.
+
+### Los tres números de Entrenamiento los contaba el navegador
+
+Es la misma piedra de `informes.html` y de `admin.html`, y estaba acá desde
+siempre: "Tu progreso en Entrenamiento" hacía
+`from("training_progress").select("*").eq("student_id", …)` y sumaba en el
+navegador. **PostgREST corta la respuesta a partir de cierta cantidad de filas
+sin dar ningún error**, y `training_progress` crece unas 5 filas por alumno y
+por día: a un alumno con bastante entrenamiento encima el panel le pintaba un
+número **que ya no subía**, sin que nada fallara.
+
+Los tres números ya los devuelve `informes_resumen_alumnos()` —`puzzles`,
+`lecciones`, `mejor_coord`— y, siendo `SECURITY INVOKER`, a un alumno le
+devuelve **solo su propio renglón**: la misma función que usa `informes.html`,
+así que la cuenta tampoco queda escrita dos veces.
+
+De paso, **las tres tarjetas anchas apiladas** —récord de racha táctica, racha
+de días y los tres números— quedaron en **una sola franja "Tu progreso"**, cada
+número con su enlace. Eran mucho scroll para tres datos y para llegar al
+registro de clases.
+
+### Quien da clase no entra al panel del alumno
+
+Al profesor el panel le mostraba **sus** ejercicios 4×4 (en cero, porque no es
+alumno), **su** racha de días y el récord de racha táctica de la clase. Nada de
+eso le sirve: lo que necesita al entrar es **a quién hay que perseguir**. Ahora
+ve "Tu semana" — sus alumnos, cuántos no entrenaron en 7 días, las tareas que
+ÉL mandó y siguen sin hacerse, cuántas ya vencieron y las clases del mes. Es la
+misma decisión de "una página, dos públicos" que ya toman `informes.html`,
+`cobros.html` y `tareas.html`, y **vale igual para quien administra**, como todo
+lo que se hace para los profesores.
+
+- **La cuenta la hace `public.panel_profesor()`**, no el navegador: contar
+  "alumnos distintos que entrenaron" desde el cliente pide bajarse
+  `training_progress` y cruzar el mismo techo de arriba en silencio.
+- Es **`SECURITY INVOKER`**, como las funciones de informes: **quién es alumno
+  de quién lo decide la RLS** y no hay un solo filtro de profesor escrito, ni en
+  la función ni en la página. Comprobado impersonando roles en SQL — una
+  profesora recibe exactamente sus 29 alumnos, los mismos que `alumnos_de()`, y
+  quien administra los 89.
+- **Las tareas sí llevan `profesor_id = auth.uid()` escrito dentro de la
+  función**: la política de `tareas` deja ver también las de quien administra, y
+  lo que el panel dice es "las tareas que TÚ mandaste", no las de toda la
+  plataforma.
+- **"Sin entrenar" es una resta** (`alumnos - activos_7d`), no un número aparte
+  que pueda contradecir a los otros dos.
+- **El rojo solo aparece cuando el número no es cero.** En rojo permanente se
+  deja de ver, que es lo mismo que no ponerlo.
+
 ### El registro de clases no se baja entero
 
 Es la misma piedra de `informes.html`: con 100 clases, bajarlas todas y
@@ -2980,6 +3057,22 @@ consulta, así que si algún día alguien vuelve a bajarse la tabla entera se
 nota— y **que la página se vea**: que el cartel de instalar arranque invisible
 de verdad, que no haya CSS impreso como texto y que con el tema en oscuro el
 fondo salga oscuro.
+
+Comprueba además lo de arriba, que es lo que se rompe callado: que la franja de
+tareas **se vea de verdad** (se mide el `display` que calcula el navegador, no
+el atributo — la lección que dejó el cartel de instalar), que cuente las
+pendientes y no las hechas, que una vencida la pinte en rojo y ninguna vencida
+no, que **sin tareas y sin cursos a medias las dos franjas no se destapen**, que
+"Continúa donde ibas" ofrezca el curso a medias más reciente y no el terminado,
+y —lo que de verdad importa— que los tres números **salgan del RPC y que nadie
+pida `training_progress`**: si alguien vuelve a sumarlos acá la página se ve
+igual de bien hasta que un alumno cruza el techo de PostgREST. Y que a quien da
+clase se le pinte "Tu semana" y **no** el panel del alumno.
+
+- Su Supabase de mentira **resuelve las columnas de tabla relacionada**
+  (`profiles.grupo`, que es como PostgREST las nombra). Sin eso ese filtro no
+  encontraba nunca nada, así que el récord de racha táctica salía siempre en
+  "todavía nadie" y la prueba daba verde porque no lo miraba.
 
 ## El panel de Administración
 

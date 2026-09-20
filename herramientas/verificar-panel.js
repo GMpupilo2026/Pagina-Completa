@@ -66,12 +66,17 @@ function clasesDeMentira() {
   return filas;
 }
 
-function clienteFalso(perfiles, usuarioId, clases) {
+/* `datos` trae lo que cada prueba quiere que la base conteste: las tareas del
+   alumno y lo que devuelve cada RPC. Sin eso no se puede probar lo que el panel
+   AHORA hace, que es pedirle a la base los números ya contados en vez de
+   bajarse las tablas y sumarlas acá. */
+function clienteFalso(perfiles, usuarioId, clases, datos) {
   return `
 window.__consultas = [];
 (function () {
   const PERFILES = ${JSON.stringify(perfiles)};
   const CLASES = ${JSON.stringify(clases)};
+  const DATOS = ${JSON.stringify(datos || {})};
 
   /* Un constructor que de verdad FILTRA y de verdad CORTA, y que además deja
      anotado lo que se le pidió. Un doble que devolviera siempre la tabla entera
@@ -81,10 +86,14 @@ window.__consultas = [];
     window.__consultas.push(anotado);
     let filas2 = (filas || []).slice(), unica = false;
     const cmp = (a, b) => String(a) === String(b);
+    // "profiles.grupo" es como PostgREST nombra una columna de la tabla
+    // relacionada; sin resolver el punto, ese filtro no encuentra nunca nada.
+    const valor = (fila, col) => String(col).split(".").reduce((o, k) => (o == null ? o : o[k]), fila);
     const b = {
       select(_cols, opts) { if (opts && opts.count) anotado.count = true; return b; },
-      eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(r[col], val)); return b; },
-      gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(r[col]) >= String(val)); return b; },
+      eq(col, val) { anotado.eq[col] = val; filas2 = filas2.filter((r) => cmp(valor(r, col), val)); return b; },
+      gte(col, val) { anotado.gte = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) >= String(val)); return b; },
+      lt(col, val) { anotado.lt = { col: col, val: val }; filas2 = filas2.filter((r) => String(valor(r, col)) < String(val)); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
       or(expr) {
         anotado.or = expr;
@@ -119,8 +128,9 @@ window.__consultas = [];
   const TABLAS = {
     profiles: PERFILES,
     class_sessions: CLASES,
-    puzzle_rush_scores: [],
+    puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
     training_progress: [],
+    tareas: DATOS.tareas || [],
   };
 
   window.sb = {
@@ -130,10 +140,16 @@ window.__consultas = [];
       updateUser: () => Promise.resolve({ error: null }),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    // Un solo profesor: el selector de clase no aparece, que es lo correcto.
+    /* Los RPC contestan lo que la prueba les puso, y pasan por el MISMO
+       constructor que las tablas: así quedan anotados en window.__consultas y
+       se puede exigir, por ejemplo, que los tres números de Entrenamiento
+       salgan de informes_resumen_alumnos() y no de bajarse training_progress.
+
+       Un solo profesor en mis_clases: el selector de clase no aparece, que es
+       lo correcto. */
     rpc: (n) => constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
-      : []),
+      : (DATOS.rpc && DATOS.rpc[n]) || []),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -151,14 +167,14 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-async function panel(browser, perfiles, quien, opciones) {
+async function panel(browser, perfiles, quien, opciones, datos) {
   const ctx = await browser.newContext(opciones || {});
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien, clasesDeMentira()) }));
+    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien, clasesDeMentira(), datos) }));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -329,6 +345,212 @@ async function pruebaRegistro(browser) {
   await ctx.close();
 }
 
+/* ===== Lo que te toca hacer, y de dónde salen los números =====
+
+   Tres peligros distintos, y ninguno da error en pantalla:
+
+   1. Que la franja de tareas no aparezca, o aparezca cuando no hay nada que
+      hacer. La fecha límite ya vivía en la base; si el panel no la dice, el
+      alumno abre esto, no ve nada y la tarea vence.
+
+   2. Que los tres números de Entrenamiento vuelvan a contarse en el navegador.
+      Bajarse training_progress entera tiene el techo de PostgREST: pasado
+      cierto número de filas la respuesta llega cortada SIN ningún error, y el
+      panel pinta un número que ya no sube. Por eso no alcanza con mirar que
+      los números estén bien — hay que exigir que salgan del RPC y que NADIE
+      haya pedido esa tabla.
+
+   3. Que quien da clase vuelva a ver el panel del alumno: sus propios
+      ejercicios 4×4 en cero en vez de a quién hay que perseguir. */
+
+// Tres tareas: dos por vencer y una cuya fecha ya pasó.
+function tareasDeMentira(conVencida) {
+  const dia = (n) => new Date(Date.now() + n * 86400000).toISOString();
+  const filas = [
+    { id: "t1", alumno_id: "u-ana", estado: "pendiente", titulo: "Finales de rey y peón", vence_at: dia(1) },
+    { id: "t2", alumno_id: "u-ana", estado: "pendiente", titulo: "Mates en dos", vence_at: dia(5) },
+    { id: "t3", alumno_id: "u-ana", estado: "completada", titulo: "Ya hecha", vence_at: dia(-9) },
+  ];
+  if (conVencida) filas.push({ id: "t0", alumno_id: "u-ana", estado: "pendiente", titulo: "Aperturas", vence_at: dia(-2) });
+  return filas;
+}
+
+const RESUMEN_ANA = [{
+  id: "u-ana", full_name: "Ana Rojas", grupo: "7B",
+  puzzles: 37, lecciones: 9, mejor_coord: 24,
+}];
+const CURSOS_ANA = [
+  // El más reciente de los dos a medias es el que hay que ofrecer, y el
+  // terminado no se ofrece nunca: no hay nada que continuar ahí.
+  { student_id: "u-ana", slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez", total: 20, hechos: 7,
+    ultimo_titulo: "La clavada", ultima_fecha: new Date(Date.now() - 2 * 86400000).toISOString() },
+  { student_id: "u-ana", slug: "finales-practicos", titulo: "Finales prácticos", total: 15, hechos: 3,
+    ultimo_titulo: "Oposición", ultima_fecha: new Date(Date.now() - 30 * 86400000).toISOString() },
+  { student_id: "u-ana", slug: "estrategia-y-tactica", titulo: "Estrategia y táctica", total: 12, hechos: 12,
+    ultimo_titulo: "Final", ultima_fecha: new Date().toISOString() },
+];
+const RACHA_ANA = [{ dias_activos: 12, racha_actual: 4, racha_record: 9, total_ejercicios: 80,
+                     tipos_distintos: 5, hoy_ejercicios: 2, primer_dia: "2026-01-01", por_actividad: {} }];
+
+function datosAlumna(conVencida) {
+  return {
+    tareas: tareasDeMentira(conVencida),
+    puzzle_rush_scores: [{ best_streak: 14, profiles: { full_name: "Bruno Mora", email: "b@x.cr", grupo: "7B" } }],
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA,
+      informes_cursos_alumnos: CURSOS_ANA,
+      progreso_dias_y_racha: RACHA_ANA,
+    },
+  };
+}
+
+async function pruebaTareasAlumna(browser) {
+  console.log("\n=== Lo que le toca a la alumna ===");
+
+  // --- Con una tarea ya vencida ---
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(true));
+  let visto = await r.page.evaluate(() => {
+    const a = document.getElementById("tareas-aviso");
+    return {
+      display: getComputedStyle(a).display,
+      titulo: document.getElementById("tareas-aviso-titulo").textContent,
+      texto: document.getElementById("tareas-aviso-texto").textContent,
+      rojo: /ring-red-500/.test(a.className),
+      enlace: a.getAttribute("href"),
+    };
+  });
+  // Se mide el display que calcula el navegador y no el atributo: la lección
+  // que dejó el cartel de instalar, que llevaba `hidden` puesto y salía igual.
+  igual("la franja de tareas SE VE de verdad", visto.display !== "none", "true");
+  igual("cuenta las pendientes y no las hechas", visto.titulo, "Tienes 3 tareas pendientes");
+  igual("con una vencida, lo dice y no lo disimula", visto.texto,
+    "Se te pasó la fecha de «Aperturas». Todavía puedes hacerla.");
+  igual("y la franja se pinta en rojo", visto.rojo, "true");
+  igual("lleva a Tareas", visto.enlace, "tareas.html");
+
+  // Que la base filtre: pedir las completadas también y descartarlas acá sería
+  // bajarse la tabla entera con otro nombre.
+  const pedido = await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "tareas").pop());
+  igual("las pendientes las filtra la BASE, por alumno y por estado",
+    [pedido.eq.alumno_id, pedido.eq.estado], ["u-ana", "pendiente"]);
+  igual("y se acota cuántas se piden", pedido.limit, 50);
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // --- Sin ninguna vencida ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+  visto = await r.page.evaluate(() => ({
+    titulo: document.getElementById("tareas-aviso-titulo").textContent,
+    texto: document.getElementById("tareas-aviso-texto").textContent,
+    rojo: /ring-red-500/.test(document.getElementById("tareas-aviso").className),
+  }));
+  igual("sin vencidas, anuncia la más próxima", visto.texto,
+    "La más próxima es «Finales de rey y peón», vence mañana.");
+  igual("y no se pinta en rojo: en rojo permanente se deja de ver", visto.rojo, "false");
+  await r.ctx.close();
+
+  // --- Sin ninguna tarea: la franja no existe en pantalla ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { informes_resumen_alumnos: RESUMEN_ANA } });
+  igual("sin tareas, la franja NO se destapa (una franja vacía es ruido)",
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("tareas-aviso")).display), "none");
+  igual("y sin ningún curso a medias, tampoco «Continúa donde ibas»",
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("seguir-curso")).display), "none");
+  await r.ctx.close();
+}
+
+async function pruebaProgresoAlumna(browser) {
+  console.log("\n=== Tu progreso, y de dónde salen los números ===");
+  const { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+
+  const visto = await page.evaluate(() => ({
+    alumno: getComputedStyle(document.getElementById("progreso-alumno")).display,
+    profe: getComputedStyle(document.getElementById("progreso-profe")).display,
+    racha: document.getElementById("progreso-racha").textContent,
+    puzzles: document.getElementById("entreno-puzzles").textContent,
+    lecciones: document.getElementById("entreno-lessons").textContent,
+    coord: document.getElementById("entreno-coord").textContent,
+    record: document.getElementById("tactics-record-text").textContent,
+    tituloRecord: document.getElementById("tactics-record-title").textContent,
+  }));
+  igual("a la alumna se le muestra «Tu progreso»", visto.alumno !== "none", "true");
+  igual("y no el panel del equipo docente", visto.profe, "none");
+  igual("los tres números salen tal cual los contó la base",
+    [visto.puzzles, visto.lecciones, visto.coord], ["37", "9", "24"]);
+  igual("y la racha de días también", visto.racha, "4");
+  igual("el récord de racha táctica se compara dentro de su grupo",
+    visto.tituloRecord, "Racha táctica del grupo 7B");
+  igual("con quién lo tiene", visto.record, "Bruno Mora lleva el récord con 14 aciertos seguidos.");
+
+  /* Lo que de verdad importa de este cambio: que los números vengan CONTADOS.
+     Si alguien vuelve a sumar en el navegador, la página se ve igual de bien
+     hasta que un alumno pasa las mil filas de training_progress, y ahí empieza
+     a mostrar un número que ya no sube, sin que nada falle. */
+  const consultas = await page.evaluate(() => window.__consultas.map((c) => c.tabla));
+  igual("los números se le piden contados a informes_resumen_alumnos()",
+    consultas.includes("informes_resumen_alumnos"), "true");
+  igual("y NADIE se baja training_progress para sumarla acá",
+    consultas.includes("training_progress"), "false");
+
+  // Continúa donde ibas: el curso a medias más reciente, no el terminado.
+  const seguir = await page.evaluate(() => ({
+    display: getComputedStyle(document.getElementById("seguir-curso")).display,
+    href: document.getElementById("seguir-curso").getAttribute("href"),
+    texto: document.getElementById("seguir-curso-texto").textContent,
+    barra: document.getElementById("seguir-curso-barra").style.width,
+  }));
+  igual("«Continúa donde ibas» se ve", seguir.display !== "none", "true");
+  igual("y ofrece el curso a medias más reciente, no el terminado ni el viejo",
+    seguir.href, "cursos/academia/fundamentos-del-ajedrez.html");
+  igual("diciendo por dónde iba", seguir.texto, "Fundamentos del Ajedrez — 7 de 20 temas. Lo último: La clavada.");
+  igual("y la barra mide lo que dice", seguir.barra, "35%");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+async function pruebaSemanaProfesora(browser) {
+  console.log("\n=== Tu semana, vista por una profesora ===");
+  const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
+    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2, clases_30d: 8 }] },
+  });
+
+  const visto = await page.evaluate(() => ({
+    profe: getComputedStyle(document.getElementById("progreso-profe")).display,
+    alumno: getComputedStyle(document.getElementById("progreso-alumno")).display,
+    alumnos: document.getElementById("profe-alumnos").textContent,
+    inactivos: document.getElementById("profe-inactivos").textContent,
+    inactivosRojo: /text-red-600/.test(document.getElementById("profe-inactivos").className),
+    tareas: document.getElementById("profe-tareas").textContent,
+    vencidas: document.getElementById("profe-vencidas").textContent,
+    clases: document.getElementById("profe-clases").textContent,
+  }));
+  igual("a quien da clase se le muestra «Tu semana»", visto.profe !== "none", "true");
+  igual("y NO el panel del alumno con sus ejercicios 4×4 en cero", visto.alumno, "none");
+  igual("sus alumnos, los que le da la RLS", visto.alumnos, "29");
+  igual("«sin entrenar» es la resta, no otro número que se pueda contradecir", visto.inactivos, "18");
+  igual("y se pinta en rojo, porque hay a quién perseguir", visto.inactivosRojo, "true");
+  igual("las tareas que ÉL mandó y siguen sin hacerse", visto.tareas, "6");
+  igual("y cuántas de esas ya vencieron", visto.vencidas, "2");
+  igual("más las clases del mes", visto.clases, "Llevas 8 clases dadas en los últimos 30 días.");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // Con todo en cero no hay nada que perseguir: el rojo se va.
+  const r = await panel(browser, [PROFE], "u-profe", {}, {
+    rpc: { panel_profesor: [{ alumnos: 4, activos_7d: 4, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 1 }] },
+  });
+  const limpio = await r.page.evaluate(() => ({
+    inactivos: document.getElementById("profe-inactivos").textContent,
+    rojo: /text-red-600/.test(document.getElementById("profe-inactivos").className)
+       || /text-red-600/.test(document.getElementById("profe-vencidas").className),
+    clases: document.getElementById("profe-clases").textContent,
+  }));
+  igual("con todos al día, ningún número se pinta en rojo", limpio.rojo, "false");
+  igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
+  await r.ctx.close();
+}
+
 /* Que la página SE VEA, no solo que funcione. Es lo que verificar-css.js no
    puede mirar acá, porque todo esto solo existe con la sesión iniciada. */
 async function pruebaPantalla(browser) {
@@ -379,6 +601,9 @@ async function pruebaPantalla(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAlumna(browser);
+    await pruebaTareasAlumna(browser);
+    await pruebaProgresoAlumna(browser);
+    await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
     await pruebaAdmin(browser);
     await pruebaRegistro(browser);

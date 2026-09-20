@@ -143,57 +143,127 @@
                 </div>
             </div>
 
+            <!-- ===== Lo que te toca hacer =====
+                 El panel era un directorio de LUGARES: todo lo que es "esto te
+                 toca ahora" estaba detrás de un clic, y quien no lo buscaba no
+                 se enteraba. Estas dos franjas van arriba del grid a propósito,
+                 porque son lo único de esta página que vence.
+
+                 Las dos arrancan con `hidden` y solo se destapan cuando de
+                 verdad hay algo que decir: una franja vacía que diga "no tienes
+                 tareas" es ruido en todas las visitas menos una. -->
+
+            <!-- Tareas pendientes. La fecha límite ya vive en tareas.vence_at;
+                 lo que faltaba era decirla acá. Una tarea vencida pinta la
+                 franja en rojo: es la diferencia entre "tienes algo que hacer"
+                 y "se te pasó". -->
+            <a id="tareas-aviso" hidden href="tareas.html" class="mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <span class="text-4xl" aria-hidden="true" id="tareas-aviso-emoji">📋</span>
+                <div class="flex-1 min-w-[200px]">
+                    <h2 class="font-serif text-lg font-bold" id="tareas-aviso-titulo"></h2>
+                    <p class="text-sm" id="tareas-aviso-texto"></p>
+                </div>
+                <span class="text-sm font-semibold whitespace-nowrap" id="tareas-aviso-cta">Ver tus tareas →</span>
+            </a>
+
+            <!-- Continúa donde ibas. El curso a medias con la fecha más
+                 reciente, para no tener que acordarse de por dónde iba ni
+                 recorrer el temario entero para encontrarlo. -->
+            <a id="seguir-curso" hidden href="#" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <span class="text-4xl" aria-hidden="true">📖</span>
+                <div class="flex-1 min-w-[200px]">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Continúa donde ibas</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300" id="seguir-curso-texto"></p>
+                    <div class="mt-2 h-1.5 w-full max-w-xs rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden">
+                        <div id="seguir-curso-barra" class="h-full bg-accent-500 rounded-full" style="width:0%"></div>
+                    </div>
+                </div>
+                <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
+            </a>
+
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
             <div id="tile-grid" class="space-y-8 mb-10"></div>
 
-            <!-- ===== Logro: racha más larga de "Racha táctica" (Juegos), visible para toda la clase ===== -->
-            <a href="racha-tactica.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10 hover:shadow-lg transition-shadow">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <span class="text-4xl" aria-hidden="true">🏆</span>
-                    <div class="flex-1 min-w-[200px]">
-                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica — récord de la clase</h2>
-                        <p class="text-sm text-brand-500 dark:text-brand-300" id="tactics-record-text">Cargando…</p>
-                    </div>
-                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
-                </div>
-            </a>
+            <!-- ===== Tu progreso (alumno) =====
+                 Antes esto eran TRES tarjetas anchas apiladas —récord de racha
+                 táctica, racha de días y los tres números de Entrenamiento—,
+                 o sea mucho scroll para tres datos y para llegar al registro de
+                 clases. Van juntas en una franja, cada número con su enlace.
 
-            <!-- ===== Racha de días y logros =====
-                 Mismo criterio que informes.html: la cuenta la hace la base
-                 (public.progreso_dias_y_racha, ver js/logros.js), acá solo se
-                 pinta. Un día cuenta si se resolvieron 5 ejercicios de
-                 cualquier tipo — ver logros.html para el detalle. -->
-            <a href="logros.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10 hover:shadow-lg transition-shadow">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <span class="text-4xl" aria-hidden="true">🔥</span>
-                    <div class="flex-1 min-w-[200px]">
-                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white" id="racha-widget-title">Tu racha de días</h2>
-                        <p class="text-sm text-brand-500 dark:text-brand-300" id="racha-widget-text">Cargando…</p>
-                    </div>
-                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Ver tus logros →</span>
-                </div>
-            </a>
-
-            <!-- ===== Progreso en Entrenamiento ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                 Los números NO se cuentan acá: los da informes_resumen_alumnos(),
+                 que es SECURITY INVOKER y a un alumno le devuelve solo su propio
+                 renglón. Antes esta página se bajaba training_progress entera y
+                 sumaba en el navegador, y eso tenía el techo invisible de
+                 siempre: PostgREST corta la respuesta a partir de cierta
+                 cantidad de filas sin dar ningún error, así que a un alumno con
+                 un año de entrenamiento encima el panel le mostraba un número
+                 que ya no subía. -->
+            <div id="progreso-alumno" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso en Entrenamiento</h2>
-                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline">Ver informes completos →</a>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso</h2>
+                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
                 </div>
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <a href="logros.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="progreso-racha">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🔥 Racha de días</div>
+                    </a>
+                    <a href="entreno/4x4.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">0</div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🧩 Ejercicios 4×4</div>
-                    </div>
-                    <div>
+                    </a>
+                    <a href="entreno/aprender.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">0</div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🎓 Lecciones</div>
-                    </div>
-                    <div>
+                    </a>
+                    <a href="entreno/coordenadas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⚡ Mejor Coordenadas</div>
-                    </div>
+                    </a>
                 </div>
+                <a href="racha-tactica.html" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 flex items-center gap-3 flex-wrap hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
+                    <span class="text-2xl" aria-hidden="true">🏆</span>
+                    <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> — <span id="tactics-record-text">Cargando…</span></p>
+                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
+                </a>
+            </div>
+
+            <!-- ===== Tu semana (equipo docente) =====
+                 Quien da clase entraba y veía "Tu progreso en Entrenamiento"
+                 con SUS ejercicios 4×4 en cero, su racha de días y el récord de
+                 racha táctica de la clase. Nada de eso le sirve: lo que
+                 necesita al entrar es a quién hay que perseguir.
+
+                 La cuenta la hace public.panel_profesor() —SECURITY INVOKER,
+                 así que la RLS es la que decide qué alumnos son los suyos, sin
+                 un solo filtro de profesor escrito acá— por lo de siempre:
+                 contar "alumnos distintos con actividad" desde el navegador
+                 pide bajarse training_progress y cruzar el techo de PostgREST
+                 sin que nada avise. -->
+            <div id="progreso-profe" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu semana</h2>
+                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-alumnos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">👥 Tus alumnos</div>
+                    </a>
+                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold" id="profe-inactivos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">😴 Sin entrenar (7 días)</div>
+                    </a>
+                    <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-tareas">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">📋 Tareas sin hacer</div>
+                    </a>
+                    <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold" id="profe-vencidas">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⏰ Tareas vencidas</div>
+                    </a>
+                </div>
+                <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
 
             <!-- ===== Registro de clases =====
@@ -453,52 +523,162 @@
             const el = document.getElementById("tactics-record-text");
             const scopedToGroup = !isTeacher && profile.grupo;
             document.getElementById("tactics-record-title").textContent = scopedToGroup
-                ? `Racha táctica — récord del grupo ${profile.grupo}`
-                : "Racha táctica — récord de la clase";
+                ? `Racha táctica del grupo ${profile.grupo}`
+                : "Racha táctica de la clase";
             let query = sb.from("puzzle_rush_scores")
                 .select("best_streak, profiles!inner(full_name, email, grupo)")
                 .order("best_streak", { ascending: false })
                 .limit(1);
             if (scopedToGroup) query = query.eq("profiles.grupo", profile.grupo);
             const { data, error } = await query.maybeSingle();
-            if (error) { el.textContent = "Encuentra la jugada correcta en 10 segundos y suma tu racha."; return; }
-            if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
+            if (error) { el.textContent = "encuentra la jugada correcta en 10 segundos."; return; }
+            if (!data || !data.best_streak) { el.textContent = "todavía nadie tiene una racha registrada. ¡Sé el primero!"; return; }
             const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
-            el.textContent = name + " tiene la racha más larga: " + data.best_streak + " aciertos seguidos.";
+            el.textContent = name + " lleva el récord con " + data.best_streak + " aciertos seguidos.";
         }
 
-        // ---------- Racha de días (logros.html) ----------
-        // La cuenta la hace la base (public.progreso_dias_y_racha, ver
-        // js/logros.js): acá solo se pinta un resumen de una línea.
-        async function loadRachaWidget() {
-            const { stats, error } = await window.Logros.cargar();
-            const el = document.getElementById("racha-widget-text");
-            if (error) { el.textContent = "Tu racha de días y tus medallas por progreso."; return; }
-            if (stats.racha_actual > 0) {
-                el.textContent = `Llevas ${stats.racha_actual} día${stats.racha_actual === 1 ? "" : "s"} seguidos con al menos 5 ejercicios.`;
-            } else if (stats.total_ejercicios > 0) {
-                el.textContent = "Resuelve 5 ejercicios hoy, de cualquier tipo, para empezar tu racha.";
-            } else {
-                el.textContent = "Tu racha de días y tus medallas por progreso.";
-            }
-        }
-
-        // ---------- Progreso en Entrenamiento (4x4, Aprender, Coordenadas) ----------
+        // ---------- Tu progreso: los tres números y la racha de días ----------
+        // Los números NO se cuentan acá. Esta página se bajaba training_progress
+        // ENTERA (select * where student_id = …) y sumaba en el navegador, y eso
+        // tenía el techo invisible de siempre: PostgREST corta la respuesta a
+        // partir de cierta cantidad de filas y no da ningún error, así que a un
+        // alumno con bastante entrenamiento encima el panel le pintaba un número
+        // que ya no subía. informes_resumen_alumnos() ya trae esos tres contados
+        // por la base y, siendo SECURITY INVOKER, a un alumno le devuelve
+        // únicamente su propio renglón — la misma función que usa informes.html,
+        // así que la cuenta tampoco queda escrita dos veces.
         async function loadEntrenoProgress() {
-            const { data, error } = await sb.from("training_progress").select("*").eq("student_id", profile.id);
-            if (error) return; // deja los ceros por defecto en vez de romper el resto del panel
-            const rows = data || [];
-            const puzzles = new Set(), lessons = new Set();
-            let bestCoord = 0;
-            rows.forEach((r) => {
-                const d = r.detail || {};
-                if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
-                else if (r.activity === "aprender" && d.lesson_id) lessons.add(d.lesson_id);
-                else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
-            });
-            document.getElementById("entreno-puzzles").textContent = String(puzzles.size);
-            document.getElementById("entreno-lessons").textContent = String(lessons.size);
-            document.getElementById("entreno-coord").textContent = bestCoord || "—";
+            const { data, error } = await sb.rpc("informes_resumen_alumnos");
+            if (error) return;   // deja los guiones en vez de romper el resto del panel
+            const fila = (data || []).find((f) => f.id === profile.id) || (data || [])[0];
+            if (!fila) return;
+            document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
+            document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
+            document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
+        }
+
+        // La racha de días la cuenta la base (public.progreso_dias_y_racha, ver
+        // js/logros.js): acá solo se pone el número en su lugar.
+        async function loadRachaWidget() {
+            const el = document.getElementById("progreso-racha");
+            const { stats, error } = await window.Logros.cargar();
+            if (error || !stats) { el.textContent = "—"; return; }
+            el.textContent = String(stats.racha_actual || 0);
+        }
+
+        // ---------- Lo que te toca: tareas pendientes ----------
+        // La fecha límite ya vivía en tareas.vence_at; lo que faltaba era
+        // decirla en el panel. Un alumno abría esto, no veía nada que hacer, y
+        // la tarea vencía sin que nada avisara.
+        //
+        // Se piden solo las pendientes y solo las columnas que se muestran: son
+        // pocas por alumno, y el `limit` es para que siga siendo así el día que
+        // alguien mande cincuenta de una.
+        async function cargarTareasPendientes() {
+            const { data, error } = await sb.from("tareas")
+                .select("id, titulo, vence_at")
+                .eq("alumno_id", profile.id)
+                .eq("estado", "pendiente")
+                .order("vence_at", { ascending: true })
+                .limit(50);
+            if (error || !data || !data.length) return;   // sin tareas, la franja no se destapa
+
+            const ahora = new Date();
+            const vencidas = data.filter((t) => new Date(t.vence_at) < ahora);
+            const caja = document.getElementById("tareas-aviso");
+            const titulo = document.getElementById("tareas-aviso-titulo");
+            const texto = document.getElementById("tareas-aviso-texto");
+
+            // Una tarea vencida pinta la franja en rojo: es la diferencia entre
+            // "tienes algo que hacer" y "se te pasó", y en gris se lee igual que
+            // el resto del panel.
+            const urgente = vencidas.length > 0;
+            caja.className = "mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                + (urgente
+                    ? "bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500"
+                    : "bg-white dark:bg-brand-900");
+            document.getElementById("tareas-aviso-emoji").textContent = urgente ? "⏰" : "📋";
+            titulo.className = "font-serif text-lg font-bold " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-800 dark:text-white");
+            texto.className = "text-sm " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-500 dark:text-brand-300");
+            document.getElementById("tareas-aviso-cta").className = "text-sm font-semibold whitespace-nowrap "
+                + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
+
+            const n = data.length;
+            titulo.textContent = n === 1 ? "Tienes 1 tarea pendiente" : `Tienes ${n} tareas pendientes`;
+            if (urgente) {
+                texto.textContent = vencidas.length === 1
+                    ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
+                    : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
+            } else {
+                texto.textContent = `La más próxima es «${data[0].titulo}», vence ${venceEnPalabras(data[0].vence_at)}.`;
+            }
+            caja.hidden = false;
+        }
+
+        // "vence hoy" / "vence mañana" se entienden de un vistazo; una fecha
+        // hay que compararla con el almanaque. Se cuenta por días de calendario
+        // y no por horas: una tarea de mañana a las 8 a. m. vence mañana,
+        // aunque falten menos de 24 horas.
+        function venceEnPalabras(iso) {
+            const dia = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+            const dias = Math.round((dia(new Date(iso)) - dia(new Date())) / 86400000);
+            if (dias <= 0) return "hoy";
+            if (dias === 1) return "mañana";
+            if (dias < 7) return `en ${dias} días`;
+            return "el " + fmtDate(iso);
+        }
+
+        // ---------- Lo que te toca: continúa donde ibas ----------
+        // El curso a medias cuya última lección marcada es la más reciente. Los
+        // datos ya los cuenta informes_cursos_alumnos() (un renglón por alumno y
+        // curso empezado, con el total, lo hecho y el último tema): acá solo se
+        // elige cuál mostrar.
+        async function cargarSeguirCurso() {
+            const { data, error } = await sb.rpc("informes_cursos_alumnos");
+            if (error || !data || !data.length) return;
+            const mios = data.filter((c) => (!c.student_id || c.student_id === profile.id) && c.hechos > 0 && c.hechos < c.total);
+            if (!mios.length) return;   // sin ningún curso a medias no hay nada que retomar
+            mios.sort((a, b) => new Date(b.ultima_fecha || 0) - new Date(a.ultima_fecha || 0));
+            const c = mios[0];
+
+            document.getElementById("seguir-curso").href = `cursos/academia/${c.slug}.html`;
+            document.getElementById("seguir-curso-texto").textContent =
+                `${c.titulo} — ${c.hechos} de ${c.total} temas`
+                + (c.ultimo_titulo ? `. Lo último: ${c.ultimo_titulo}.` : ".");
+            document.getElementById("seguir-curso-barra").style.width =
+                Math.round((c.hechos / c.total) * 100) + "%";
+            document.getElementById("seguir-curso").hidden = false;
+        }
+
+        // ---------- Tu semana (equipo docente) ----------
+        // Los cinco números los cuenta public.panel_profesor(), que es
+        // SECURITY INVOKER: quién es alumno de quién lo decide la RLS y no hay
+        // ni un filtro de profesor escrito acá ni allá. Contar "alumnos
+        // distintos que entrenaron" desde el navegador pediría bajarse
+        // training_progress y cruzar el techo de PostgREST en silencio.
+        async function cargarPanelProfe() {
+            const { data, error } = await sb.rpc("panel_profesor");
+            const fila = (data && data[0]) || null;
+            if (error || !fila) return;   // deja los guiones puestos
+
+            const alumnos = fila.alumnos || 0;
+            const inactivos = Math.max(0, alumnos - (fila.activos_7d || 0));
+            document.getElementById("profe-alumnos").textContent = String(alumnos);
+            document.getElementById("profe-tareas").textContent = String(fila.tareas_pendientes || 0);
+
+            // Los dos números que piden hacer algo se pintan en rojo solo cuando
+            // no son cero: en rojo permanente se dejan de ver.
+            const inact = document.getElementById("profe-inactivos");
+            inact.textContent = String(inactivos);
+            inact.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+            const venc = document.getElementById("profe-vencidas");
+            venc.textContent = String(fila.tareas_vencidas || 0);
+            venc.className = "text-2xl font-bold " + (fila.tareas_vencidas > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+
+            const clases = fila.clases_30d || 0;
+            document.getElementById("profe-clases").textContent = clases === 1
+                ? "Llevas 1 clase dada en los últimos 30 días."
+                : `Llevas ${clases} clases dadas en los últimos 30 días.`;
         }
 
         // ---------- Registro de clases ----------
@@ -864,9 +1044,31 @@
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
             await refreshSessionStatus();
             await cargarSesiones();
-            await loadEntrenoProgress();
-            await loadTacticsRecord();
-            await loadRachaWidget();
+
+            /* Dos resúmenes distintos, no uno solo con los números del alumno
+               para todo el mundo. Quien da clase veía acá SUS ejercicios 4×4
+               (en cero, porque no es alumno) y su racha de días; lo que
+               necesita al entrar es a quién hay que perseguir. Es la misma
+               decisión de "una página, dos públicos" que ya toman
+               informes.html, cobros.html y tareas.html.
+
+               Y vale igual para quien administra, como todo lo que se hace
+               para los profesores. */
+            if (isTeacher || profile.is_admin) {
+                document.getElementById("progreso-profe").hidden = false;
+                await cargarPanelProfe();
+            } else {
+                document.getElementById("progreso-alumno").hidden = false;
+                // Van en paralelo: son cinco consultas independientes y en
+                // serie se nota al abrir el panel desde el celular.
+                await Promise.all([
+                    cargarTareasPendientes(),
+                    cargarSeguirCurso(),
+                    loadEntrenoProgress(),
+                    loadTacticsRecord(),
+                    loadRachaWidget(),
+                ]);
+            }
             subscribeSessions();
 
             document.getElementById("loading").classList.add("hidden");
