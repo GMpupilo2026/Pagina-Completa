@@ -692,6 +692,105 @@ Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada
 un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
 vez de a los marcados.
 
+## La bitácora: lo que el profesor observa, donde lo observa
+
+Hasta ahora lo único que el profesor podía escribir de un alumno era
+`class_sessions.notes`: **un `<input>` de una sola línea, por clase entera y sin
+alumno**. No había dónde poner "a Sofía le cuesta el final de torre, revisarlo en
+dos semanas", que es la materia prima del seguimiento — y sin eso, ni el plan de
+la clase siguiente sabe qué repasar ni el informe a la casa tiene qué explicar.
+
+`public.notas_alumno` es una fila por observación (alumno, profesor, texto,
+etiqueta, `compartida`). Se escribe desde dos lugares y se lee desde tres, así
+que la lógica vive en **`js/notas-alumno.js`** y no en ninguna de las páginas:
+
+- **`sesion.html`**, con el botón **📝** de cada alumno conectado. Va ahí porque
+  ese es **el momento en que se ve lo que hay que anotar**: si hay que esperar a
+  volver a Informes, no se anota. En modo compacto (las últimas 5), colgando del
+  panel de Alumnos, y solo lo ve el profesor — como el PDF y la lección de curso.
+- **`informes.html`**, bloque "📝 Bitácora" del informe individual, que es cuando
+  se repasa.
+- Y de solo lectura, el **propio alumno**, en su página de Informes.
+
+### Quién ve qué lo decide la base
+
+- **Aislada por profesor, igual que `tareas` y `class_sessions`**: un profesor ve
+  las notas que ÉL escribió, no las de un colega que comparte el mismo alumno.
+  Quien administra ve todas, como en `tareas` — la regla permanente de que todo
+  lo de los profesores vale para quien administra, con su alcance.
+- **El alumno solo ve las que tienen `compartida = true`** (misma idea que
+  `training_plans.shared`) y **no puede escribir ninguna**: no tiene política de
+  insert, update ni delete. Por eso su vista **no le pinta ni un botón**:
+  ofrecerle "compartir" o "borrar" no rompería nada — la base los rechaza— pero
+  el fallo lo descubriría él.
+- **El insert exige `profesor_id = auth.uid()` SIEMPRE**, `is_admin` incluido:
+  nadie firma una nota con el nombre de otro.
+- **`proteger_notas_alumno()`** (mismo patrón que `proteger_tiempos_de_presencia()`:
+  `new := old` y después solo lo que puede moverse) revierte `alumno_id`,
+  `profesor_id` y `created_at`, y pone `updated_at` con el reloj del servidor.
+  Sin eso, una nota se podía mudar de alumno con un update.
+- A `anon` se le revocan los permisos de tabla, como en `formularios`.
+
+Comprobado impersonando roles en SQL, 15 casos: el profesor escribe sobre su
+alumno y no sobre uno ajeno, no firma como otro; **una colega que comparte el
+mismo alumno recibe cero filas**; el alumno no ve la privada, sí la compartida,
+y sus intentos de editarla o borrarla cambian **0 filas**; el trigger revierte la
+mudanza de alumno y la fecha regalada.
+
+### El bloque del alumno solo aparece si hay algo
+
+`montarLectura()` devuelve cuántas pintó y la página esconde el bloque entero
+cuando son cero. Un bloque que diga "tu profesor no te ha escrito nada" es ruido
+en todas las visitas menos una — la misma lección del cartel de instalar la app.
+Y si la consulta **falla**, se dice: una bitácora vacía y una que no se pudo leer
+se ven igual y son cosas muy distintas.
+
+### De la nota a la tarea, sin copiar nada
+
+Cada nota trae **"📋 Convertir en tarea"**, que lleva a
+`tareas.html?alumno=<id>&nota=<id>`: marca ese alumno y pone el texto en "Nota
+para el alumno". Observo, asigno. Dos detalles que no son de estilo:
+
+- **El texto NO viaja en la dirección, solo el id.** `tareas.html` lo lee de la
+  base, que ya se lo deja leer a quien la escribió. Una dirección con lo que el
+  profesor anotó de un alumno queda en el historial del navegador, y esa nota
+  puede ser privada.
+- **El título no se toca.** Lo propone la página desde el renglón elegido;
+  pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
+  campo que antes salía bien.
+
+### Detalles que ya costaron una vez
+
+- **Que la nota esté compartida va ESCRITO** ("👁️ La ve el alumno"), no solo con
+  otro color: la misma regla de los gráficos de Informes y de las barras del
+  diagnóstico.
+- **Borrar pide confirmación en el propio botón**, no con un diálogo del
+  navegador: una nota se escribe en medio de una clase, desde el celular, y ahí
+  el diálogo tapa la pantalla.
+- **Las clases de CSS van escritas enteras**, nunca armadas con una expresión
+  regular sobre `className`: el CSS se compila leyendo el código, así que una
+  clase a medias no se escribe en la hoja y no pinta nada, sin dar ningún error.
+- **El panel se monta entero al cambiar de alumno**, en vez de ir actualizando la
+  lista: así no hay que acordarse de limpiar lo del anterior, que es justo el
+  descuido que dejaría al profesor escribiendo sobre quien no era.
+- El texto de una nota y el nombre de un alumno **los escribe una persona**, así
+  que van siempre por `textContent` — la misma regla que ya sigue
+  `renderStudentsList()`.
+
+**Al tocar `js/notas-alumno.js`, el bloque de Informes, el botón de la clase en
+vivo o el enlace a Tareas, correr `node herramientas/verificar-notas.js`** (con
+el sitio en localhost:8777 y playwright). Existe porque todo lo que se rompe acá
+se rompe callado: una nota mandada con el `alumno_id` equivocado queda en la
+ficha de otro y la pantalla se ve perfecta. Comprueba qué se MANDA al guardar
+(alumno, autor, texto, etiqueta y la marca de compartir), que compartir lo diga
+con todas las letras, que el enlace a Tareas lleve el id y **no el texto**, que
+cambiar de alumno traiga su bitácora y suelte la del anterior, que al alumno no
+se le pinte ningún botón, y que su bloque **se vea de verdad** con una nota
+compartida y **no se destape** sin ninguna (se mide el `display` que calcula el
+navegador, no la clase). Su Supabase de mentira **filtra de verdad por `eq`**:
+uno que devolviera siempre la tabla entera daría por buena una página que mezcla
+las notas de dos alumnos.
+
 ## Exámenes: acá se ejecuta y se demuestra, no se practica
 
 `examenes.html` (armar y ver) y `examen.html?id=…` (rendir) son la otra mitad
