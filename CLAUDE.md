@@ -308,6 +308,66 @@ que traen material a la clase la respetan igual.
   para el resto de la sesión** (sin rey, con peones en la primera o la última
   fila, con el rey que no le toca mover en jaque).
 
+### La clase se registra sola, porque el botón vivía en la página que no era
+
+Todo lo que el sitio sabe de una clase —la asistencia, los minutos en clase, el
+«asistió a 4 de 5» del informe a la casa, el reporte de actividades y el «clases
+este mes» del panel del profesor— cuelga de que exista una fila **abierta** en
+`class_sessions`. Y esa fila la abría un botón que vive en **`clases.html`**,
+mientras que la clase se da en **`sesion.html`**.
+
+Al tablero se entra **directo desde el grid del panel**, sin pasar por esa
+franja — que además solo aparece cuando tiene algo que decir. O sea: un
+entrenador nuevo da su clase entera, con la pizarra, las preguntas y los
+alumnos conectados, y **no queda registrada ninguna**. No da ningún error: esa
+clase simplemente no existió, y eso no se puede reconstruir después.
+
+- **La clase se abre SOLA, y no al entrar** sino al primer acto de clase de
+  verdad: que **se conecte un alumno** (el `sync` del canal de presencia) o que
+  el profesor **transmita una posición** (`aplicarPosicionEnClase()`, por donde
+  pasan las tres puertas). Abrirla con solo entrar llenaría el registro de
+  clases de dos minutos que nadie dio cada vez que se asoma a preparar algo, y
+  los informes contarían de más.
+- **Se engancha DESPUÉS de que la posición se haya transmitido**, no antes:
+  abrir la clase por un intento que falló —una posición que la validación
+  rechaza— dejaría registrada una clase que no se dio.
+- **Que no se abran dos lo impide un índice único parcial**, no la bandera del
+  navegador: `class_sessions_una_abierta_por_profesor` sobre `(created_by) where
+  ended_at is null`. Los dos disparadores pueden caer juntos, y dos pestañas del
+  mismo profesor, peor. Con dos filas abiertas la asistencia se reparte entre
+  las dos y **cada informe cuenta la mitad**, sin que nada falle. Es el mismo
+  patrón que el UNIQUE de `examen_respuestas` y el de `avisos_cobro`: lo que no
+  puede pasar dos veces lo garantiza un índice, no un `if` que dos pestañas se
+  saltan. El insert atiende el `23505` y se queda con la que ya hay, porque eso
+  no es un fallo — es el índice haciendo su trabajo.
+- **La franja de `sesion.html` dice con todas las letras si se está registrando
+  o no**, no con un color: «🔴 Clase en curso: se está registrando la asistencia
+  y el tiempo de tus alumnos» o «⚪ Todavía no hay clase abierta. Se abre sola
+  en cuanto entre un alumno o mandes una posición al tablero». Un punto gris no
+  le dice a un entrenador nuevo que la asistencia se está perdiendo.
+- **Cerrar pide el nombre y la nota ahí mismo**, en dos toques: el primero
+  destapa los campos, el segundo cierra. Así no se cierra de un clic accidental
+  en medio de la clase, y se recoge lo único que hace falta para que el registro
+  sirva después — mandarlo al panel a escribirlo es mandarlo a otra página justo
+  cuando terminó y se va.
+- **El botón del panel se queda**, como atajo para abrirla ANTES de entrar, pero
+  ahora dice que no hace falta apretarlo. Dos botones que parecen obligatorios
+  confunden más que uno que se explica.
+- Al alumno no le cambia nada: `markAttendance()` y `startPresenceLog()` ya se
+  disparaban con el INSERT que llega por Realtime, así que **la clase se puede
+  abrir en cualquier momento** y el que ya estaba conectado queda marcado igual.
+
+**Al tocar esto, correr `node herramientas/verificar-clase-registrada.js`** (con
+el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba que entrar solo **no invente ninguna clase**, que entre un alumno la
+abra y quede a nombre de quien la da, que mandar una posición también la abra y
+que una **rechazada** no, que un segundo aviso de presencia no abra otra, que
+cerrar mande el título, la nota y la hora **sobre la clase que estaba abierta**,
+y que a la alumna no se le pinte la franja pero su asistencia sí se marque sola.
+Su Supabase de mentira **apunta el filtro al RESOLVER y no en el `update()`**:
+`.update(x).eq("id", y)` encadena, así que uno que lo capturara antes daría por
+bueno un cierre sobre la clase que no era.
+
 ### Táctica por tema: la vista previa y su botón
 
 - **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los

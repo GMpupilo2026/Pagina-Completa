@@ -140,6 +140,13 @@
                         <div class="flex items-center gap-3">
                             <span class="w-3 h-3 rounded-full bg-brand-300 dark:bg-brand-700"></span>
                             <p class="text-brand-500 dark:text-brand-300 text-sm" id="closed-status-text">No hay ninguna clase en curso ahora mismo.</p>
+                            <!-- Desde que la clase se abre sola en sesion.html —al
+                                 entrar un alumno o al mandar una posición—, este
+                                 botón es solo un atajo para abrirla ANTES de entrar.
+                                 Decirlo evita que un entrenador nuevo crea que sin
+                                 tocarlo no se le registra nada, que es justo lo que
+                                 pasaba de verdad hasta ahora. -->
+                            <p class="text-brand-450 dark:text-brand-350 text-xs" id="closed-status-hint"></p>
                         </div>
                         <div id="start-session-controls" class="hidden flex items-center gap-2 flex-wrap">
                             <input id="new-session-title" type="text" placeholder="Título de la clase (opcional)" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -540,6 +547,9 @@
 
             document.getElementById("session-status-open").classList.toggle("hidden", !openSession);
             document.getElementById("session-status-closed").classList.toggle("hidden", !!openSession);
+            document.getElementById("closed-status-hint").textContent = isTeacher
+                ? "No hace falta apretar nada: la clase se abre sola al entrar a Sesión en vivo, en cuanto llegue un alumno o mandes una posición."
+                : "";
 
             /* La tarjeta entera solo aparece cuando tiene algo que decir: hay
                clase en curso —eso lo ve todo el mundo— o quien mira da clase y
