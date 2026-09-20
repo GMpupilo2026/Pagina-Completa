@@ -369,7 +369,6 @@
             { title: "Evaluaciones", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
                 { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "nivel-de-arbitraje.html" },
-                { emoji: "📄", label: "Exámenes", desc: "Pruebas de cada curso, con su nota", nota: "Próximamente", disabled: true },
             ] },
             { title: "Herramientas", tiles: [
                 { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", mantenimientoAlumno: true },
@@ -378,7 +377,6 @@
             { title: "Tu cuenta", tiles: [
                 { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
-                { emoji: "🚪", label: "Cerrar sesión", desc: "Salir de tu cuenta", action: "logout" },
             ] },
         ];
 
@@ -410,11 +408,6 @@
                 el = document.createElement("div");
                 el.className = base + " bg-white/60 dark:bg-brand-900/60 opacity-60 cursor-not-allowed";
                 el.setAttribute("aria-disabled", "true");
-            } else if (t.action === "logout") {
-                el = document.createElement("button");
-                el.type = "button";
-                el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5";
-                el.addEventListener("click", doLogout);
             } else {
                 el = document.createElement("a");
                 el.href = t.href;

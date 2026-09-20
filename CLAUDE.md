@@ -2937,6 +2937,16 @@ lista, y el resto se acomoda solo.
   promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
   ("En mantenimiento", "Próximamente") en la propia tarjeta — un cuadro gris sin
   explicación se lee como una página rota.
+- **En el grid van LUGARES, no acciones.** "Cerrar sesión" estaba ahí *y*
+  como botón de la cabecera: el mismo destino dos veces —lo que ya había
+  pasado con "Torneos"— y la única acción entre un grid de sitios a los que
+  ir. Se queda solo en la cabecera, que es donde se busca. Con él se fue el
+  camino `action === "logout"` de `renderTileCard()`, que no usaba nadie más.
+- **Un "Próximamente" sin fecha no se queda.** "Exámenes" llevaba meses
+  apagado esperando unos exámenes de curso que todavía no existen, ocupando
+  un lugar de la grilla. Una tarjeta que nunca cambia deja de leerse; el día
+  que los exámenes existan, vuelve. No es lo mismo que "En mantenimiento",
+  que sí dice algo cierto sobre un acceso que existe y va a volver.
 - **Lo de mantenimiento se apaga SOLO para el alumnado**, en
   `apagarEnMantenimiento()`, sobre la lista ya armada y en un solo lugar. Se
   marca con `mantenimientoAlumno: true` en el tile, así que volver a prender un
@@ -3313,6 +3323,14 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
 - Las clases que **a propósito** no definen ningún estilo —marcadores de estado
   y ganchos para `querySelectorAll`, como `filter-btn` o `color-opt`— están
   listadas en `SIN_ESTILO`. Si aparece una nueva que no hace nada, va ahí.
+  - **Que una clase no tenga CSS no quiere decir que esté muerta.** Los cuatro
+    `total-*` de los exámenes de arbitraje parecían restos: no los encuentra
+    ningún grep, porque el nombre se **arma concatenando** (`'.total-' +
+    n.clave` sobre `NIVELES_EXAMEN`). Son ganchos vivos, y de los que importan:
+    cada `<span>` dice cuántas preguntas trae ese examen y el número lo rellena
+    el propio banco con `totalPara(techo)`, así que la página no puede prometer
+    24 preguntas y armar otra cantidad. Antes de dar una clase por muerta, hay
+    que buscarla también por pedazos.
 - La primera corrida encontró **huecos de la paleta que ya estaban muertos con
   el CDN**: `bg-accent-50` y `hover:text-accent-300` no pintaban nada porque el
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
