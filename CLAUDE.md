@@ -2948,6 +2948,26 @@ lista, y el resto se acomoda solo.
   promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
   ("En mantenimiento", "Próximamente") en la propia tarjeta — un cuadro gris sin
   explicación se lee como una página rota.
+- **Cada tarjeta lleva el texto de los dos públicos: `desc` y `descProfe`.**
+  El panel estaba escrito para el alumno de punta a punta, así que a quien da
+  clase le decía cosas que no son: que "tu profesor te asigna el rival" (lo
+  asigna ella), que los torneos "los arma tu profesor" (los arma ella), que
+  Informes es "tu progreso" (es el de sus alumnos) o que la sesión en vivo es
+  "el tablero con tu profesor". **Tareas tenía el defecto al revés**: su texto
+  era el del profesor, así que al alumno le ofrecía asignarle material a unos
+  alumnos que no tiene.
+  - Los dos textos viven **junto al tile** y no repartidos en `if`s por
+    `init()`: así se ven de un vistazo al leer la lista, y un tile nuevo que
+    solo sirva para uno de los dos se nota enseguida. Lo aplica
+    `textosDelEquipoDocente()` sobre la lista ya armada, en un solo lugar,
+    igual que `apagarEnMantenimiento()` — y vale para quien administra, como
+    todo lo que se hace para los profesores.
+  - **Un texto que sirve igual para los dos NO se duplica.** Dos versiones de
+    la misma frase se van separando a la primera corrección; sin `descProfe`,
+    el tile usa el suyo y ya.
+  - **La comprobación que importa no es la lista de textos uno por uno**, que
+    envejece con cada corrección: es que a quien da clase **ninguna** tarjeta
+    le hable de "tu profesor". Un tile nuevo copiado de otro cae ahí solo.
 - **En el grid van LUGARES, no acciones.** "Cerrar sesión" estaba ahí *y*
   como botón de la cabecera: el mismo destino dos veces —lo que ya había
   pasado con "Torneos"— y la única acción entre un grid de sitios a los que
