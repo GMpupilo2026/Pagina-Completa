@@ -26,6 +26,7 @@ const BASE = process.env.BASE || "http://localhost:8777";
 const PAGINAS = [
     "/index.html", "/cursos.html", "/articulos.html", "/sobre-oscar.html", "/tablero.html",
     "/te-reto.html", "/campeones.html", "/tv.html", "/nivel-de-arbitraje.html", "/login.html",
+    "/bienvenida.html",
     "/juegos.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",
     "/formularios.html", "/formulario.html", "/cobros.html", "/offline.html",

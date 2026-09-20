@@ -584,6 +584,86 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
   administra no tiene tope, un profesor sin invitaciones asignadas recibe el
   mismo aviso que en la Academia.
 
+## La invitación pide la contraseña y explica cómo se entra
+
+Las dos puertas de alta —el formulario de inscripción (`inscribir-alumno`) y la
+invitación directa del profesor desde la clase en vivo (`create-student`)—
+mandan **el mismo correo**, y ese correo hace dos cosas que antes no hacía:
+pedirle al alumno que **cree su contraseña** y explicarle **cómo entra a partir
+de ahora**.
+
+Antes no era así, y fallaba callado: Supabase mandaba su correo de invitación,
+el alumno abría el enlace, entraba **ya autenticado** y su contraseña quedaba
+sin poner. Al día siguiente no tenía con qué volver — el enlace se usa una sola
+vez— y nada en el sitio le había dicho que existía un botón "Contraseña" dentro
+del panel. No daba ningún error: simplemente ese alumno no volvía, y quien lo
+invitó se enteraba cuando preguntaba por qué nunca entró.
+
+- **`bienvenida.html` es a donde lleva el enlace** (`redirectTo` de las dos
+  funciones). Lo primero y único que pide es la contraseña, con el correo del
+  alumno a la vista —de solo lectura: es el dato con el que va a entrar— y los
+  dos campos para escribirla y repetirla.
+- **La explicación de cómo se entra va desde el primer momento, no al final.**
+  Quien pone su contraseña se va de la página enseguida; si los cuatro pasos
+  aparecieran recién después de guardarla, no los leería nadie. Están arriba
+  del pliegue desde que la página abre, y siguen ahí después.
+- **"Ver la contraseña" destapa los DOS campos a la vez**, porque el error que
+  evita es justamente que no coincidan.
+- **El formulario va con `novalidate`.** Sin eso el navegador corta el envío
+  con SU propio aviso, en el idioma del navegador y no en el de la página, y el
+  aviso en español no sale nunca. `required` y `minlength` se quedan puestos:
+  los anuncia el lector de pantalla al entrar al campo.
+- **La misma página atiende el enlace vencido y el "se me olvidó".** Los dos
+  piden lo mismo —un enlace nuevo—, así que el formulario está escrito una sola
+  vez y lo que cambia es el encabezado. `login.html` manda ahí con
+  `?recuperar=1`, y ese enlace **tiene que existir**: la explicación de la
+  página lo nombra, y una explicación que manda a un botón que no está es peor
+  que no explicar.
+- Ese aviso de "si esa cuenta existe, ya salió el correo" es a propósito: decir
+  "ese correo no está registrado" le contaría a cualquiera quién tiene cuenta.
+
+### El correo lo manda el sitio, no Supabase
+
+- **Sale UNO solo, no dos.** Antes salían el de Supabase (con el enlace, sin
+  explicar nada) y otro nuestro con el PDF de instrucciones adaptadas. Ahora el
+  enlace lo genera `generateLink` —que crea la cuenta pero **no** manda ningún
+  correo— y viaja dentro del correo nuestro, junto con los cuatro pasos del
+  ingreso y el PDF adjunto.
+- **`supabase/functions/_compartido/invitacion-email.ts` es la única copia de
+  ese texto.** Cada Edge Function se despliega con SUS archivos y no puede
+  importar de una carpeta hermana, así que `node herramientas/funciones-armar.js`
+  copia el compartido dentro de cada función al armar el despliegue: se escribe
+  en un lugar y se genera en los que hagan falta, como el resto de
+  `herramientas/`. Escrito dos veces, se iría separando a la primera corrección
+  y la mitad de las familias recibiría la versión vieja sin que nada falle.
+- **Sin `RESEND_API_KEY` no se usa `generateLink`**: se invita como siempre con
+  `inviteUserByEmail` y el correo lo manda Supabase. Un proyecto sin Resend
+  configurado tiene que seguir dando de alta alumnos, no crear cuentas a las que
+  no les llega nada.
+- **Si la cuenta queda creada y el correo NO sale, se dice.** `correo_enviado:
+  false` sube hasta la pantalla de quien invitó —en la clase en vivo y en el
+  armador de formularios—, con qué hacer ("que entre con «¿Olvidaste tu
+  contraseña?»"). Es el fallo callado de siempre: una cuenta muda de la que
+  nadie se entera hasta que alguien pregunta.
+- **El alumno del formulario ahora también recibe el PDF de instrucciones
+  adaptadas.** Antes solo lo recibía el invitado por el profesor: esa puerta no
+  mandaba ningún correo propio.
+- Los estilos del correo van **a mano en cada etiqueta**, no en una hoja
+  aparte: Gmail descarta el `<style>` del `<head>`. Misma decisión que
+  `informe-html.ts`.
+
+**Al tocar `bienvenida.html`, `login.html` o cualquiera de las dos funciones,
+correr `node herramientas/verificar-bienvenida.js`** (con el sitio en
+localhost:8777 y playwright). Existe porque esta página vive **detrás de un
+correo**: no se llega a ella desde ningún enlace del sitio, así que
+`verificar-css.js` no la abre nunca. Comprueba que lo que manda a guardar sea
+la contraseña que se escribió y no otra cosa, que una corta o dos distintas no
+manden nada y lo digan, que los cuatro pasos del ingreso **se vean de verdad**
+(se mide con `checkVisibility()`, no con la clase — la lección que dejó
+`verificar-pwa.js`) ya antes de guardar, que el enlace vencido ofrezca otro y
+que `login.html` tenga de verdad el «¿Olvidaste tu contraseña?» que la página
+promete.
+
 ## Informes: la cuenta la hace la base, no el navegador
 
 `informes.html` **no se baja las tablas de actividad**. Antes sí: pedía
