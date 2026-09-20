@@ -31,7 +31,7 @@ IMPERATIVOS = {
     # donde el verbo lo pide (contá→cuenta, jugá→juega, pensá→piensa).
     "acercá": "acerca", "activá": "activa", "actuá": "actúa", "agotá": "agota",
     "aguantá": "aguanta", "alcanzá": "alcanza", "amenazá": "amenaza",
-    "analizá": "analiza", "anotá": "anota", "aplicá": "aplica",
+    "agregá": "agrega", "analizá": "analiza", "anotá": "anota", "aplicá": "aplica",
     "aprovechá": "aprovecha", "armá": "arma", "atacá": "ataca", "avanzá": "avanza",
     "bloqueá": "bloquea", "buscá": "busca", "calculá": "calcula", "cambiá": "cambia",
     "centralizá": "centraliza", "cerrá": "cierra", "clavá": "clava",

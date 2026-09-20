@@ -1800,6 +1800,114 @@ Detalles que importan:
   desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
   `student_id`.
 
+### Un total solo sube: «Cómo viene» es lo que dice si mejora
+
+Todos los números de Informes eran **acumulados desde siempre**, y eso no
+contesta la pregunta del entrenador —«¿está mejor que hace tres meses?»— ni la
+de la casa. Peor: un alumno que lleva un mes sin entrar se ve **exactamente
+igual de bien** que el día que paró, porque el número de ayer sigue ahí. No da
+ningún error; simplemente nadie se entera.
+
+El bloque **«📈 Cómo viene»** va en el informe individual —y en la página del
+propio alumno— entre los cursos y la bitácora: primero se mira cómo viene y
+después se anota lo que se ve.
+
+- **`public.evolucion_alumno(alumno, semanas)`** devuelve una fila por semana:
+  ejercicios, días, minutos y respuestas de pizarra. Es **`SECURITY INVOKER`**
+  como el resto de las de informes, así que quién puede pedir la curva de quién
+  lo decide la RLS y un alumno recibe solo la suya — la misma función pinta las
+  dos pantallas y la cuenta no queda escrita dos veces.
+- **La rejilla de semanas viene COMPLETA, con las vacías en cero**, y esa es
+  media función. Si las semanas sin nada no vinieran, el gráfico pegaría dos
+  semanas separadas por un mes en blanco y dibujaría una línea que **sube**,
+  cuando lo que pasó fue que el alumno no entró. Se ve perfecto y dice lo
+  contrario de lo que pasó.
+- **Las semanas se cuentan en hora de Costa Rica**, igual que los días de la
+  racha y los del informe a la casa: quien entrena a las once de la noche no
+  puede caer en la semana siguiente por el huso del servidor.
+- **Los minutos salen de `minutos_por_tramos()`**, la misma de Informes, Tareas
+  y el reporte de actividades, con la semana como partición. Comprobado contra
+  los datos reales: los minutos de la curva y los de la tarjeta de arriba dan
+  **el mismo número** (472 y 472 en el alumno con más actividad).
+
+#### El veredicto escrito manda sobre el gráfico
+
+Arriba de todo va una franja con la frase —«Va subiendo · 40 ejercicios este
+último mes contra 4 el anterior»—, que es lo primero y muchas veces lo único
+que se lee. Misma decisión que la franja del informe a la casa: el gráfico es el
+respaldo, no el mensaje.
+
+- **Compara las últimas 4 semanas contra las 4 anteriores**, no contra siempre.
+- **Un porcentaje a secas no sabe decir dos casos**, y los dos importan: de 0 a
+  40 no es «+∞ %» sino **«Empezó a entrenar»**, y caer a cero es **«Dejó de
+  entrenar»**, que es lo único del bloque que pide hacer algo hoy.
+- **Un vaivén de ±15 % no es una tendencia.** Sin ese margen, el profesor
+  recibiría «va bajando» todos los meses sin ningún motivo y dejaría de leerlo.
+- El color de la franja **nunca va solo**: al lado está el título escrito y
+  debajo los dos números.
+
+#### Las barras, y lo que solo se descubre mirando la pantalla
+
+- **Una sola serie, un solo color.** Pintar cada barra más oscura cuanto más
+  alta sería codificar el alto dos veces y gastar el color en algo que la barra
+  ya dice.
+- **Una semana en cero se queda en CERO**, sin mínimo visible: darle uno la
+  haría parecer una semana con algo, que es justo lo contrario.
+- **Las columnas NO llevan pista de fondo.** La primera versión sí, y al mirar
+  la captura se vio el problema: con doce bloques grises de la altura del
+  gráfico, **cuatro semanas con algo se leen como un gráfico casi lleno**. Lo
+  que marca el suelo es una línea de base hairline. Ninguna comprobación iba a
+  encontrar eso — **hay que renderizarlo y mirarlo**.
+- **El valor va en dos barras, no en las doce**: la más alta y la última. Doce
+  números pegados no los lee nadie.
+- **La tabla de abajo no es un extra: es la versión accesible**, y por eso el
+  gráfico va `aria-hidden`. Doce columnas enfocables serían doce paradas de
+  tabulador para leer lo que la tabla dice mejor.
+
+#### Comparar dos diagnósticos mide si SABE más, no si trabajó más
+
+Se pueden resolver trescientos ejercicios de lo que uno ya sabía. Cuando el
+alumno tiene dos diagnósticos, debajo de la curva va la comparación área por
+área, con la barra divergente, la flecha y **los puntos escritos** (`+40 puntos
+(30% → 70%)`): con daltonismo el verde y el ámbar no se distinguen, y eso ya
+está medido en el diagnóstico de clase.
+
+- **Menos de 5 puntos no se pinta.** Son dos pruebas distintas —las preguntas se
+  sortean— y llamar «mejoró» a tres puntos es ruido.
+- **Los diagnósticos anteriores salen de `training_progress`, no del espejo
+  `training_state`**: el espejo guarda SOLO el último, así que con él no hay con
+  qué comparar. Van con `.limit(5)` y su `.eq()` de alumno.
+- **El resumen lo hace `PlanEntrenamiento.resumir()`**, que es quien sabe de
+  áreas y porcentajes: una segunda cuenta acá podría decir otro nivel que el
+  resto del informe.
+- Hoy **solo 2 alumnos de 97 tienen más de un diagnóstico**, y es justamente
+  porque repetirlo no servía de nada: no había dónde comparar. Esto es lo que
+  rompe ese círculo.
+
+#### El bloque se esconde entero si no hay nada
+
+Sin semanas con algo y sin dos diagnósticos no se destapa: un panel que diga
+«todavía no hay datos» es ruido en todas las visitas menos una, la misma
+decisión que la bitácora. Y si la consulta **falla**, se dice — una curva vacía
+y una que no se pudo leer se ven igual y son cosas muy distintas.
+
+**Al tocar `js/evolucion-alumno.js`, la función `evolucion_alumno()` o el bloque
+de Informes, correr `node herramientas/verificar-informes.js`.** Comprueba sin
+navegador los seis casos del veredicto (incluidos «empezó» y «dejó de
+entrenar», que son los que un porcentaje no sabe decir), y en un navegador de
+verdad que las 12 semanas se pinten con las vacías incluidas, que **una semana
+en cero no dibuje barra** —se mide el alto que calcula el navegador, no la
+clase—, que la tabla diga los mismos números que la base mandó, que la
+comparación de diagnósticos salga con los puntos escritos, que **no se cuele el
+diagnóstico de otro alumno** y que sin nada el bloque no se destape.
+
+- **Su Supabase de mentira ahora FILTRA Y ORDENA de verdad** (`eq`, `in`,
+  `order`, `limit`). Antes devolvía siempre la tabla entera: habría dado por
+  buena una página que mezcla los diagnósticos de dos alumnos, y una que se
+  quedara con la fila que no era al pedir «el anterior». Al arreglarlo saltaron
+  los datos de prueba, a los que les faltaba el `student_id` — era el doble el
+  que estaba incompleto, no la página.
+
 ### El tiempo conectado no se lo cree porque lo diga el navegador
 
 `class_presence_log` (clase en vivo, latido de `sesion.html`) y
@@ -4903,6 +5011,9 @@ lee Google.
   voseo no lleva tilde ("dejalo") y el tuteo sí ("déjalo"). Por eso la
   conversión es una tabla escrita verbo por verbo dentro del script, no una
   regla.
+- **La tabla se completa cuando algo se escapa.** «Agregá» no estaba y llevaba
+  meses dentro de `informes.html` sin que el verificador dijera nada: al
+  corregir el texto se sumó el verbo, o el siguiente entra por la misma puerta.
 - Lo que **no** es voseo y por eso está en la lista blanca: los futuros
   ("quedará", "tendrás", "podrá"), los pretéritos de primera persona
   ("empecé", "aprendí", "entendí", "tomé") y los nombres propios ("Elistá",
