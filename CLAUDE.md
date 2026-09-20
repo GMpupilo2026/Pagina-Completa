@@ -2968,6 +2968,12 @@ lista, y el resto se acomoda solo.
   - **La comprobación que importa no es la lista de textos uno por uno**, que
     envejece con cada corrección: es que a quien da clase **ninguna** tarjeta
     le hable de "tu profesor". Un tile nuevo copiado de otro cae ahí solo.
+- **"Mis pagos" es del alumnado, no del equipo docente.** Las mensualidades
+  son de las familias, así que a una profesora esa tarjeta le ofrecía "lo que
+  se te ha cobrado" sobre una cuenta a la que no se le cobra nada. Quien
+  coordina sí llega a los cobros, pero por **"Cobros de la Academia"** en
+  Herramientas, que es la página entera y no el recibo propio — y por eso
+  nunca aparecen las dos, que serían el mismo destino repetido.
 - **En el grid van LUGARES, no acciones.** "Cerrar sesión" estaba ahí *y*
   como botón de la cabecera: el mismo destino dos veces —lo que ya había
   pasado con "Torneos"— y la única acción entre un grid de sitios a los que
