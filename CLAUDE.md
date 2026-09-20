@@ -337,6 +337,29 @@ pantalla —contra el archivo de datos del curso, leído aparte— antes y despu
 avanzar una jugada, y que en la vista previa **la pieza quepa en su casilla**
 (se miden los dos en el navegador, no la clase ni el CSS).
 
+### "Jalar un archivo a la clase" tiene las mismas tres acciones que Táctica
+
+El panel de Archivos (`toggle-archivos-btn` en `sesion.html`) lista los PGN que
+el profesor subió en `partidas.html` —cada partida de un `.pgn` con varias
+queda en su propia fila de `archivos_pgn`, así que un archivo con varios
+ejercicios ("Position 2, 1 Move", "Position 3, 1 Move"…) ya llega separado uno
+por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
+`board.loadMoves`); ahora cada fila suma lo mismo que ya tenía Táctica:
+
+- **👁 Vista previa**, con el mismo `renderTacticsPreviewBoard()` de Táctica —no
+  una segunda copia— dibujando la posición de **salida** del PGN (la de
+  `archivoStartFen()`, sacada del propio PGN en memoria: el header `FEN` si lo
+  trae, o el inicio de siempre). No la posición final (`fen_final`, que sí vive
+  en la base): la de salida es la que identifica al ejercicio y la que tiene
+  sentido preguntar o practicar.
+- **❓ Preguntar** y **🎯 Practicar**, las dos pasando primero por
+  `aplicarPosicionEnClase()` como cualquier otra puerta que pone una posición en
+  el tablero. `Preguntar` calcula `expected_plies` del propio `move_count` del
+  archivo (con el mismo tope de 6 que usa Táctica); `Practicar` inserta en
+  `practice_sessions` con el nivel que esté elegido en la pestaña Practicar —el
+  mismo insert que `start-practice-btn`, solo que con el fen del archivo en vez
+  de `board.fen()`.
+
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
