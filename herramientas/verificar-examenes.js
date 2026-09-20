@@ -231,6 +231,73 @@ async function main() {
     // La dificultad se respeta: es lo que después vale cada pregunta.
     const duras = B.armar({ fuente: "areas", areas: [], cantidad: 10, dificultad: { min: 4, max: 5 }, semilla: 3 });
     ok(duras.every((d) => d.peso >= 4), `pidiendo dificultad 4-5 salieron pesos ${duras.map((d) => d.peso).join(",")}`);
+
+    // ---- El tiempo recomendado ----
+    // LO QUE MÁS IMPORTA: nunca puede quedar por debajo del minuto por
+    // pregunta que exige crear_examen(). Si quedara, el sitio le estaría
+    // proponiendo al profesor un número que su propio servidor rechaza —y
+    // no es hipotético: diez preguntas de opción fáciles suman 5 minutos
+    // de cálculo contra un mínimo de 10.
+    let bajoElMinimo = 0, sinNumero = 0, medidos = 0;
+    for (let s2 = 1; s2 <= 30; s2++) {
+      for (const cuantas of [1, 5, 10, 25, 40]) {
+        for (const dif of [{ min: 1, max: 1 }, { min: 1, max: 5 }, { min: 5, max: 5 }]) {
+          const ex = B.armar({ fuente: "areas", areas: [], cantidad: cuantas, dificultad: dif, semilla: s2 });
+          const r = B.minutosRecomendados(ex);
+          medidos++;
+          if (r.minutos < ex.length) bajoElMinimo++;
+          if (!Number.isFinite(r.minutos) || r.minutos < 1) sinNumero++;
+        }
+      }
+    }
+    ok(medidos > 400, `esperaba medir más de 400 exámenes, medí ${medidos}`);
+    ok(bajoElMinimo === 0,
+      `${bajoElMinimo} exámenes recomiendan MENOS del minuto por pregunta que exige crear_examen()`);
+    ok(sinNumero === 0, `${sinNumero} exámenes no devolvieron un número de minutos usable`);
+
+    // El cálculo tiene que MIRAR las preguntas, no ser una constante
+    // disfrazada: diez de jugada difíciles no duran lo mismo que diez de
+    // opción fáciles. Si diera lo mismo, el "recomendado" no recomendaría
+    // nada y nadie se enteraría.
+    // (a) Sobre exámenes REALES del banco: 20 de lo más fácil contra 20
+    // de lo más difícil. La fórmula tiene que separarlos de verdad, no
+    // quedarse las dos veces en el mínimo.
+    const tFacil = B.minutosRecomendados(
+      B.armar({ fuente: "areas", areas: [], cantidad: 20, dificultad: { min: 1, max: 1 }, semilla: 11 })).minutos;
+    const tDuro = B.minutosRecomendados(
+      B.armar({ fuente: "areas", areas: [], cantidad: 20, dificultad: { min: 5, max: 5 }, semilla: 11 })).minutos;
+    ok(tDuro > tFacil,
+      `20 preguntas difíciles (${tDuro} min) deberían pedir más que 20 fáciles (${tFacil} min)`);
+
+    // (b) Sobre la fórmula sola, con preguntas de mentira, porque el
+    // banco no tiene de todos los tipos en todas las dificultades y una
+    // prueba que dependa de eso falla el día que se agregue una pregunta.
+    const falsa = (tipo, peso) => ({ tipo, peso });
+    const min5 = (lista) => B.minutosRecomendados(lista).minutos;
+    const cinco = (tipo, peso) => [0, 0, 0, 0, 0].map(() => falsa(tipo, peso));
+    ok(min5(cinco("jugada", 3)) > min5(cinco("opcion", 3)),
+      "calcular una jugada debería pedir más tiempo que elegir entre cuatro frases");
+    ok(min5(cinco("opcion_tablero", 3)) > min5(cinco("opcion", 3)),
+      "una pregunta con tablero debería pedir más que una de solo texto");
+    ok(min5(cinco("jugada", 5)) > min5(cinco("jugada", 1)),
+      "la misma pregunta en dificultad 5 debería pedir más que en dificultad 1");
+
+    // Una línea de apertura se mide por las jugadas que le tocan al
+    // alumno, no por el largo entero de la línea (que incluye las del
+    // rival) ni por un número fijo.
+    const linea = B.armar({ fuente: "linea", linea_id: win.AperturasLineas.LINEAS[0].id });
+    const rl = B.minutosRecomendados(linea);
+    ok(linea.length === 1 && rl.minutos >= 2,
+      `una línea de apertura debería pedir al menos 2 minutos, pidió ${rl.minutos}`);
+    ok(rl.minimo === 1, `el mínimo de un examen de una sola pregunta debería ser 1, fue ${rl.minimo}`);
+
+    // El desglose por tipo tiene que cuadrar con las preguntas: es lo que
+    // la pantalla le enseña al profesor para explicarle el número.
+    const mezcla = B.armar({ fuente: "areas", areas: [], cantidad: 20, dificultad: { min: 1, max: 5 }, semilla: 5 });
+    const rm = B.minutosRecomendados(mezcla);
+    const sumaTipos = Object.values(rm.porTipo).reduce((a, b) => a + b, 0);
+    ok(sumaTipos === mezcla.length,
+      `el desglose suma ${sumaTipos} y el examen tiene ${mezcla.length} preguntas`);
   }
 
   const navegador = await chromium.launch({ executablePath: CHROME });
@@ -400,6 +467,69 @@ async function main() {
     const hay = await p.textContent("#e-hay");
     ok(/Hay \d+/.test(hay), `no dice cuántas preguntas hay para elegir: ${hay}`);
 
+    // ---- El tiempo ----
+    // Arranca en "Recomendado" y el campo SE VE, de solo lectura: el
+    // profesor tiene que poder leer el número que se va a mandar, no
+    // confiar en que hay uno.
+    ok(await p.isChecked("#e-tiempo-reco"), "el tiempo no arranca en Recomendado");
+    ok(await p.isVisible("#e-minutos"), "en modo Recomendado el campo de minutos no se ve");
+    ok(await p.evaluate(() => document.getElementById("e-minutos").readOnly),
+      "en modo Recomendado el campo de minutos debería ser de solo lectura");
+    const recoVal = parseInt(await p.inputValue("#e-minutos"), 10);
+    const recoTxt = await p.textContent("#e-minimo");
+    ok(recoVal >= 12, `el recomendado para 12 preguntas (${recoVal}) no llega al mínimo de 12`);
+    ok(recoTxt.includes(String(recoVal)),
+      `la explicación no dice el número que se va a mandar (${recoVal}): "${recoTxt}"`);
+
+    // El número sale de las PREGUNTAS y no de cuántas son: las mismas
+    // doce en dificultad 5 tienen que pedir más rato que en la 1. Se
+    // compara por pregunta, porque al filtrar por dificultad el banco
+    // puede quedarse corto y recortar la cantidad.
+    const porPregunta = async () => {
+      const m = parseInt(await p.inputValue("#e-minutos"), 10);
+      const n = parseInt(await p.inputValue("#e-cantidad"), 10);
+      return n > 0 ? m / n : 0;
+    };
+    await p.selectOption("#e-fuente", "areas");
+    await p.waitForTimeout(300);
+    await p.fill("#e-cantidad", "12");
+    await p.dispatchEvent("#e-cantidad", "input");
+    await p.selectOption("#e-dif-min", "1"); await p.selectOption("#e-dif-max", "1");
+    await p.waitForTimeout(300);
+    const ritmoFacil = await porPregunta();
+    await p.selectOption("#e-dif-min", "5"); await p.selectOption("#e-dif-max", "5");
+    await p.waitForTimeout(300);
+    const ritmoDuro = await porPregunta();
+    ok(ritmoDuro > ritmoFacil,
+      `en pantalla, las preguntas difíciles (${ritmoDuro.toFixed(2)} min c/u) deberían pedir más que las fáciles (${ritmoFacil.toFixed(2)})`);
+
+    // "Lo elijo yo" devuelve el campo, y volver a "Recomendado" lo
+    // vuelve a poner en el número calculado: el profesor no se queda con
+    // un número suyo escondido detrás de una etiqueta que dice otra cosa.
+    await p.check("#e-tiempo-mio");
+    await p.waitForTimeout(200);
+    ok(!(await p.evaluate(() => document.getElementById("e-minutos").readOnly)),
+      "con «Lo elijo yo» el campo de minutos debería quedar editable");
+    await p.fill("#e-minutos", "99");
+    await p.check("#e-tiempo-reco");
+    await p.waitForTimeout(200);
+    const vuelta = parseInt(await p.inputValue("#e-minutos"), 10);
+    ok(vuelta !== 99, "al volver a Recomendado el campo se quedó con el número escrito a mano");
+
+    // Se deja el formulario como estaba para el envío de abajo —la
+    // dificultad incluida: con el 5-5 puesto, del curso salen cuatro
+    // preguntas y no doce.
+    await p.selectOption("#e-dif-min", "1"); await p.selectOption("#e-dif-max", "5");
+    await p.selectOption("#e-fuente", "curso");
+    await p.waitForTimeout(400);
+    await p.fill("#e-cantidad", "12");
+    await p.dispatchEvent("#e-cantidad", "input");
+    await p.waitForTimeout(300);
+
+    // Lo que la pantalla ENSEÑA justo antes de apretar el botón.
+    const enPantalla = parseInt(await p.inputValue("#e-minutos"), 10);
+    const previstas = await p.evaluate(() => prevision.items.map((i) => i.item_id));
+
     // Manda el examen y se comprueba QUÉ manda.
     await p.check(".alumno-check >> nth=0");
     await p.fill("#e-vence", new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 16));
@@ -411,6 +541,15 @@ async function main() {
       const a = creados[0].args;
       ok(a.p_items.length === 12, `mandó ${a.p_items.length} preguntas en vez de 12`);
       ok(a.p_minutos >= a.p_items.length, "mandó menos minutos que preguntas");
+      // LO QUE SE ENSEÑA ES LO QUE SE MANDA, en las dos mitades: el
+      // tiempo que el profesor leyó y las preguntas sobre las que ese
+      // tiempo se calculó. Si al apretar el botón se volvieran a sortear
+      // las preguntas, el número seguiría viéndose bien en pantalla y
+      // estaría medido sobre un examen que nadie va a rendir.
+      ok(a.p_minutos === enPantalla,
+        `mandó ${a.p_minutos} minutos y la pantalla decía ${enPantalla}`);
+      ok(JSON.stringify(a.p_items.map((i) => i.item_id)) === JSON.stringify(previstas),
+        "mandó preguntas distintas de las que se usaron para calcular el tiempo");
       // CADA pregunta viaja con su clave separada de lo visible: es lo
       // que permite que el alumno reciba una sin la otra.
       ok(a.p_items.every((i) => i.clave && i.visible && i.peso >= 1 && i.peso <= 5),

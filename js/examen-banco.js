@@ -291,5 +291,85 @@ window.ExamenBanco = (function () {
     return Object.keys(AREAS_DEL_CURSO);
   }
 
-  return { AREAS_DEL_CURSO, armar, disponibles, cursosConPreguntas, _barajar: barajar, _azar: azar };
+  /* ---------- Cuánto tiempo pedir ---------- */
+
+  /* Cuánto lleva cada tipo de pregunta, en segundos y a dificultad media.
+     No son números inventados al aire: salen de lo que hay que HACER en
+     cada una. Leer un enunciado y elegir entre cuatro frases no es lo
+     mismo que mirar una posición, y mirarla no es lo mismo que calcular
+     la jugada que la resuelve. */
+  const SEGUNDOS_BASE = {
+    opcion: 60,          // se lee y se elige
+    opcion_tablero: 90,  // + hay que leer la posición
+    casilla: 75,         // mirar el tablero y señalar una casilla
+    jugada: 120,         // hay que calcular, no reconocer
+  };
+  const SEGUNDOS_POR_JUGADA_DE_LINEA = 30;
+  const MINIMO_DE_UNA_LINEA = 90;
+
+  /* Que una pregunta de opción de dificultad media dé justo 60 s no es
+     casualidad ni se puede bajar sin pensarlo: es el mismo minuto por
+     pregunta que exige crear_examen(). Con bases más cortas el mínimo
+     tapaba el cálculo casi siempre y el "recomendado" devolvía la
+     cantidad de preguntas y nada más — o sea, no recomendaba nada, y se
+     veía igual de bien en pantalla. */
+
+  /* La dificultad estira o encoge ese rato, centrada en el peso 3: una
+     de peso 1 se contesta en el 70 % del tiempo y una de peso 5 pide un
+     30 % más. */
+  function factorDePeso(peso) {
+    const p = Math.max(1, Math.min(5, peso || 3));
+    return 1 + 0.15 * (p - 3);
+  }
+
+  /* Cuántas jugadas le tocan DE VERDAD al alumno en esa línea. La línea
+     guardada incluye las del rival, así que contarlas todas doblaría el
+     tiempo. Se lee de AperturasLineas, que es donde vive esa cuenta. */
+  function jugadasDelAlumnoDe(item) {
+    const clave = (item.clave && item.clave.jugadas) || [];
+    const l = lineas().find((x) => x.id === item.item_id);
+    if (!l) return Math.max(1, Math.ceil(clave.length / 2));
+    const A = window.AperturasLineas;
+    const mias = A && A.jugadasDelAlumno ? A.jugadasDelAlumno(l) : [];
+    return mias.length || Math.max(1, Math.ceil((l.jugadas || []).length / 2));
+  }
+
+  /* El tiempo que se le recomienda al profesor, calculado sobre las
+     preguntas que de verdad le tocaron al examen — no sobre "cuántas
+     pidió". Diez de opción fáciles y diez de jugada difíciles no duran
+     lo mismo, y proponer el mismo número para las dos sería proponer
+     cualquier cosa.
+
+     El `Math.max` contra `minimo` NO es una precaución de más: es lo que
+     impide que el sitio le proponga al profesor un número que su propio
+     servidor va a rechazar. `crear_examen()` exige un minuto por
+     pregunta, y diez preguntas de opción fáciles suman 5 minutos de
+     cálculo — o sea que sin ese tope el botón fallaría con el número que
+     la misma pantalla acababa de recomendar. */
+  function minutosRecomendados(items) {
+    const lista = items || [];
+    const porTipo = {};
+    let segundos = 0;
+    lista.forEach((it) => {
+      porTipo[it.tipo] = (porTipo[it.tipo] || 0) + 1;
+      if (it.tipo === "linea") {
+        // Acá NO se multiplica por el peso: el peso de una línea ya se
+        // calcula a partir de cuántas jugadas tiene (ver deLinea), así
+        // que aplicarlo otra vez sería contar lo mismo dos veces.
+        segundos += Math.max(MINIMO_DE_UNA_LINEA,
+          jugadasDelAlumnoDe(it) * SEGUNDOS_POR_JUGADA_DE_LINEA);
+      } else {
+        segundos += (SEGUNDOS_BASE[it.tipo] || SEGUNDOS_BASE.opcion) * factorDePeso(it.peso);
+      }
+    });
+    const minimo = Math.max(1, lista.length);
+    return {
+      minutos: Math.max(minimo, Math.ceil(segundos / 60), 1),
+      minimo: minimo,
+      porTipo: porTipo,
+    };
+  }
+
+  return { AREAS_DEL_CURSO, armar, disponibles, cursosConPreguntas, minutosRecomendados,
+           _barajar: barajar, _azar: azar };
 })();

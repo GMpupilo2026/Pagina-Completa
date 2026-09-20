@@ -79,7 +79,7 @@
                             <div id="e-areas" class="border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-3 gap-1"></div>
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-4" id="e-medida">
+                        <div class="grid gap-4 sm:grid-cols-3" id="e-medida">
                             <div>
                                 <label for="e-cantidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Preguntas</label>
                                 <input id="e-cantidad" type="number" min="1" value="10" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -97,12 +97,33 @@
                                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option>
                                 </select>
                             </div>
-                            <div>
-                                <label for="e-minutos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Minutos</label>
-                                <input id="e-minutos" type="number" min="1" value="10" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                                <p id="e-minimo" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
-                            </div>
                         </div>
+
+                        <!-- El tiempo: o lo propone el sitio sobre las preguntas que de
+                             verdad salieron, o lo pone el profesor. El campo se ve SIEMPRE,
+                             también en "Recomendado" —de solo lectura, no escondido—: así
+                             se ve el número que se va a mandar, en vez de tener que confiar
+                             en que hay uno. Misma decisión que la casilla "No tiene correo
+                             propio", que apaga el campo del correo en vez de quitarlo. -->
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tiempo</legend>
+                            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                                <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-100 cursor-pointer">
+                                    <input type="radio" name="e-tiempo-modo" id="e-tiempo-reco" value="reco" checked class="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span>Recomendado</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-100 cursor-pointer">
+                                    <input type="radio" name="e-tiempo-modo" id="e-tiempo-mio" value="mio" class="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span>Lo elijo yo</span>
+                                </label>
+                                <span class="flex items-center gap-2">
+                                    <label for="e-minutos" class="sr-only">Minutos del examen</label>
+                                    <input id="e-minutos" type="number" min="1" value="10" readonly class="w-24 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span class="text-sm text-brand-600 dark:text-brand-100">minutos</span>
+                                </span>
+                            </div>
+                            <p id="e-minimo" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
+                        </fieldset>
 
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
@@ -182,6 +203,10 @@
  *  - El mínimo de "un minuto por pregunta" se avisa acá pero lo hace
  *    cumplir crear_examen(): un mínimo que solo comprueba el navegador
  *    se salta desde la consola.
+ *  - El tiempo recomendado no lo inventa esta página ni lo pide a
+ *    ninguna IA —este sitio no usa ninguna—: lo calcula
+ *    ExamenBanco.minutosRecomendados() sobre las preguntas que de
+ *    verdad le tocaron al examen, que son las mismas que se mandan.
  *  - El aviso al celular no lo manda esta página: sale de dos triggers
  *    (avisar_examen_asignado al mandarlo, avisar_examen_reabierto al
  *    volver a abrirlo), igual que el de las tareas. Mandarlo desde acá
@@ -220,6 +245,8 @@ async function init() {
     ["e-cual", "e-dif-min", "e-dif-max", "e-cantidad"].forEach((id) =>
       $(id).addEventListener("change", refrescarMedida));
     $("e-cantidad").addEventListener("input", refrescarMedida);
+    ["e-tiempo-reco", "e-tiempo-mio"].forEach((id) =>
+      $(id).addEventListener("change", () => aplicarTiempo(refrescarPrevision(opcionesDelBanco()))));
     $("form-examen").addEventListener("submit", ponerExamen);
     cambioFuente();
     await cargarPuestos();
@@ -327,21 +354,81 @@ function refrescarMedida() {
   const campo = $("e-cantidad");
   if (fuente() === "linea") {
     $("e-hay").textContent = "";
-    $("e-minimo").textContent = "Mínimo 1 minuto.";
-    $("e-minutos").min = "1";
-    proponerTitulo();
+  } else {
+    campo.max = String(Math.max(1, hay));
+    if (parseInt(campo.value, 10) > hay && hay > 0) campo.value = String(hay);
+    $("e-hay").textContent = hay ? `Hay ${hay} para elegir.` : "No hay preguntas con ese filtro.";
+    $("e-hay").className = "text-xs mt-1 " + (hay ? "text-brand-450 dark:text-brand-350" : "text-red-600 dark:text-red-400");
+  }
+  aplicarTiempo(refrescarPrevision(opcionesDelBanco()));
+  proponerTitulo();
+}
+
+/* ---------------- El tiempo ---------------- */
+
+/* La previsión: las preguntas que le van a tocar al examen, sorteadas
+   UNA vez y guardadas. El tiempo recomendado se calcula sobre ELLAS y
+   son las mismas que después se mandan.
+
+   Sortear otra vez al apretar el botón habría sido lo natural —es lo que
+   hacía antes— y habría dejado el peor defecto de los que este
+   repositorio persigue: el número que el profesor leyó en pantalla
+   estaría calculado sobre unas preguntas y el examen llevaría otras. No
+   falla nada, no avisa nadie, y el tiempo simplemente no corresponde. La
+   previsión se rehace sola en cuanto cambia cualquier parámetro, porque
+   su clave es el propio objeto de opciones. */
+let prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {} };
+
+function refrescarPrevision(op) {
+  const clave = JSON.stringify(op);
+  if (prevision.clave === clave) return prevision;
+  let items = [], error = null;
+  try {
+    items = ExamenBanco.armar(Object.assign({}, op, { semilla: Math.floor(Math.random() * 1e9) }));
+  } catch (e) { error = e.message; }
+  const r = items.length ? ExamenBanco.minutosRecomendados(items)
+                         : { minutos: 0, minimo: 1, porTipo: {} };
+  prevision = { clave, items, error, minutos: r.minutos, minimo: r.minimo, porTipo: r.porTipo };
+  return prevision;
+}
+
+const NOMBRE_TIPO = {
+  opcion: "de opción", opcion_tablero: "con tablero", jugada: "de jugada",
+  casilla: "de casilla", linea: "de línea entera",
+};
+
+function desgloseDe(porTipo) {
+  return Object.keys(porTipo)
+    .map((t) => `${porTipo[t]} ${NOMBRE_TIPO[t] || t}`)
+    .join(", ");
+}
+
+function modoRecomendado() { return $("e-tiempo-reco").checked; }
+
+/* Pone el número y explica de dónde salió. El campo queda de SOLO
+   LECTURA en modo recomendado, no desactivado: así el lector de pantalla
+   lo sigue anunciando y el número se puede copiar; un campo desactivado
+   desaparece del recorrido y quien no ve la pantalla no se entera de
+   cuánto tiempo lleva el examen que está por mandar. */
+function aplicarTiempo(prev) {
+  const reco = modoRecomendado();
+  const campo = $("e-minutos");
+  campo.readOnly = reco;
+  campo.classList.toggle("opacity-70", reco);
+  campo.min = String(Math.max(1, prev.minimo));
+
+  if (!prev.items.length) {
+    $("e-minimo").textContent = prev.error || "Todavía no hay preguntas con ese filtro.";
     return;
   }
-  campo.max = String(Math.max(1, hay));
-  if (parseInt(campo.value, 10) > hay && hay > 0) campo.value = String(hay);
-  $("e-hay").textContent = hay ? `Hay ${hay} para elegir.` : "No hay preguntas con ese filtro.";
-  $("e-hay").className = "text-xs mt-1 " + (hay ? "text-brand-450 dark:text-brand-350" : "text-red-600 dark:text-red-400");
+  if (reco) campo.value = String(prev.minutos);
+  else if ((parseInt(campo.value, 10) || 0) < prev.minimo) campo.value = String(prev.minimo);
 
-  const n = Math.min(parseInt(campo.value, 10) || 1, Math.max(1, hay));
-  $("e-minutos").min = String(n);
-  if ((parseInt($("e-minutos").value, 10) || 0) < n) $("e-minutos").value = String(n);
-  $("e-minimo").textContent = `Mínimo ${n} (un minuto por pregunta).`;
-  proponerTitulo();
+  const n = prev.items.length;
+  const cuantas = `${n} ${n === 1 ? "pregunta" : "preguntas"}`;
+  $("e-minimo").textContent = reco
+    ? `${prev.minutos} min para estas ${cuantas} (${desgloseDe(prev.porTipo)}). El mínimo es ${prev.minimo}.`
+    : `Mínimo ${prev.minimo} (un minuto por pregunta). Lo recomendado para estas ${cuantas} son ${prev.minutos}.`;
 }
 
 let tituloTocado = false;
@@ -366,16 +453,15 @@ async function ponerExamen(ev) {
   const alumnos = [...document.querySelectorAll(".alumno-check:checked")].map((c) => c.value);
   if (!alumnos.length) { status.textContent = "Elige al menos un alumno."; return; }
 
-  let items = [];
-  try {
-    items = ExamenBanco.armar(opcionesDelBanco());
-  } catch (e) {
-    status.textContent = e.message;
-    return;
-  }
+  // Las preguntas ya están sorteadas: son las mismas sobre las que se
+  // calculó el tiempo que el profesor tiene delante. Volver a sortearlas
+  // acá mandaría un examen distinto del que se midió.
+  const prev = refrescarPrevision(opcionesDelBanco());
+  if (prev.error) { status.textContent = prev.error; return; }
+  const items = prev.items;
   if (!items.length) { status.textContent = "Con ese filtro no sale ninguna pregunta."; return; }
 
-  const minutos = parseInt($("e-minutos").value, 10) || 0;
+  const minutos = modoRecomendado() ? prev.minutos : (parseInt($("e-minutos").value, 10) || 0);
   if (minutos < items.length) {
     status.textContent = `Con ${items.length} preguntas hacen falta al menos ${items.length} minutos.`;
     return;
@@ -400,8 +486,13 @@ async function ponerExamen(ev) {
   if (error) { status.textContent = "No se pudo poner: " + error.message; return; }
 
   const n = typeof data === "number" ? data : alumnos.length;
-  status.textContent = `Examen de ${items.length} preguntas puesto a ${n} ${n === 1 ? "alumno" : "alumnos"}.`;
+  status.textContent = `Examen de ${items.length} preguntas puesto a ${n} ${n === 1 ? "alumno" : "alumnos"} · ${minutos} min.`;
   document.querySelectorAll(".alumno-check").forEach((c) => { c.checked = false; });
+  // Se tira la previsión para que el examen siguiente vuelva a sortear.
+  // Sin esto, poner el mismo examen dos veces seguidas —al grupo de la
+  // mañana y al de la tarde— mandaría exactamente las mismas preguntas.
+  prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {} };
+  refrescarMedida();
   await cargarPuestos();
 }
 
