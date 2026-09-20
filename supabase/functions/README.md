@@ -18,9 +18,20 @@ hermana, así que lo compartido se copia al armar:
     node herramientas/funciones-armar.js          # deja los archivos listos
     node herramientas/funciones-armar.js --json   # lo que hay que subir
 
-`_compartido/` es la única copia de lo que usan varias funciones. Hoy es el
-correo de bienvenida (`invitacion-email.ts`), que mandan las dos puertas de
-alta: el formulario de inscripción y la invitación directa del profesor.
+`_compartido/` es la única copia de lo que usan varias funciones. Hoy son dos:
+
+- `invitacion-email.ts` — el correo de bienvenida que mandan las dos puertas de
+  alta: el formulario de inscripción y la invitación directa del profesor.
+- `usuario-alumno.ts` — el usuario de un alumno sin correo propio y el dominio
+  interno. Lo usan las dos puertas de alta y `recuperar-acceso`.
+
+## `recuperar-acceso` va con `verify_jwt` en **false**
+
+Quien olvidó su contraseña, por definición, no tiene sesión. A cambio la
+función no dice nunca si la cuenta existe: contesta lo mismo en todos los
+casos. Al desplegarla hay que dejar esa casilla desmarcada — con `verify_jwt`
+en true, el olvido de contraseña de los alumnos sin buzón deja de funcionar y
+la página no lo nota: sigue diciendo que el correo salió.
 
 ## Los secretos
 

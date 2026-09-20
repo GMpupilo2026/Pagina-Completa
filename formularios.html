@@ -140,9 +140,35 @@
                             <input id="alta-alumno-nombre" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         </div>
                         <div>
-                            <label for="alta-alumno-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo del alumno <span class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>
+                            <label for="alta-alumno-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo del alumno <span id="alta-correo-obligatorio" class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>
                             <input id="alta-alumno-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el correo para crear su contraseña y entrar.</p>
+
+                            <!-- El caso de todos los días: una familia con dos hijos
+                                 pequeños y UN solo correo. No se puede repetir —el correo
+                                 es la llave con la que se inicia sesión—, así que en vez
+                                 de pedirle un buzón al niño se le arma un usuario. -->
+                            <label class="flex items-start gap-2 mt-3 cursor-pointer">
+                                <input type="checkbox" id="alta-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
+                                <span class="text-xs text-brand-600 dark:text-brand-300">
+                                    <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
+                                    — es pequeño, o comparte el de la casa con un hermano.
+                                    Se le arma un usuario y todo le llega a la persona encargada.
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Se propone, se enseña y se puede corregir: cuál pedazo del
+                             nombre es el apellido se adivina, y quien da de alta tiene el
+                             nombre completo delante. El usuario es lo que el niño va a
+                             escribir todos los días. -->
+                        <div id="alta-usuario-fila" class="hidden">
+                            <label for="alta-usuario" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Usuario con el que va a entrar</label>
+                            <div class="flex items-center gap-1">
+                                <input id="alta-usuario" type="text" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span id="alta-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
+                            </div>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si el apellido no quedó bien. Si ya lo tiene otro alumno, se le pone un número al final.</p>
                         </div>
                         <div>
                             <label for="alta-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
@@ -151,7 +177,7 @@
                         <div>
                             <label for="alta-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la persona encargada</label>
                             <input id="alta-encargado-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.</p>
+                            <p id="alta-encargado-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.</p>
                         </div>
                         <div class="grid sm:grid-cols-2 gap-3">
                             <div>
@@ -183,6 +209,7 @@
 
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script>
 /* Formularios de inscripción a torneos.
  *
@@ -659,12 +686,67 @@ function abrirAlta(r, boton) {
     document.getElementById("alta-frecuencia").value = "semanal";
     // El equipo del formulario: si se armó para 7° B, sus alumnos son de 7° B.
     document.getElementById("alta-grupo").value = f.grupo || "";
+
+    /* La casilla arranca marcada cuando el formulario no trajo correo del
+       alumno: es lo que de verdad pasa con los pequeños — la familia escribe
+       el suyo y deja ese campo vacío. Se propone, no se decide: queda a la
+       vista y se puede desmarcar. */
+    // La marca de "lo escribí a mano" se borra al abrir OTRA respuesta: si no,
+    // el usuario que se corrigió para un alumno se le quedaría puesto al
+    // siguiente, y ese es el usuario con el que va a entrar.
+    const campoUsuario = document.getElementById("alta-usuario");
+    delete campoUsuario.dataset.tocado;
+    campoUsuario.value = "";
+    document.getElementById("alta-sin-correo").checked = !dato("alumno_correo");
+    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+    pintarModoAlta();
     const msg = document.getElementById("alta-msg");
     msg.textContent = "";
     msg.className = "text-sm mt-4";
     document.getElementById("alta-enviar").disabled = false;
     document.getElementById("alta-fondo").classList.remove("hidden");
     document.getElementById("alta-alumno-correo").focus();
+}
+
+/* Qué se ve y qué se pide según haya correo propio o no. Es UNA sola función
+   y la llaman el abrir y la casilla: si cada uno pintara lo suyo, marcar la
+   casilla y volver a abrir el diálogo dejarían la pantalla en dos estados
+   distintos. */
+function pintarModoAlta() {
+    const sinCorreo = document.getElementById("alta-sin-correo").checked;
+    const correo = document.getElementById("alta-alumno-correo");
+    const fila = document.getElementById("alta-usuario-fila");
+    const usuario = document.getElementById("alta-usuario");
+
+    correo.disabled = sinCorreo;
+    correo.classList.toggle("opacity-50", sinCorreo);
+    // El asterisco se muda: sin correo propio, el obligatorio es el de la casa.
+    document.getElementById("alta-correo-obligatorio").classList.toggle("hidden", sinCorreo);
+    fila.classList.toggle("hidden", !sinCorreo);
+
+    document.getElementById("alta-encargado-ayuda").textContent = sinCorreo
+        ? "Ahí llega el enlace para crear la contraseña Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
+        : "Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.";
+
+    // Se propone desde el nombre, pero lo escrito a mano no se pisa: quien lo
+    // corrigió no quiere que se le deshaga al volver a tocar la casilla.
+    if (sinCorreo && !usuario.dataset.tocado) {
+        usuario.value = baseDeUsuarioEnPantalla(document.getElementById("alta-alumno-nombre").value);
+    }
+}
+
+/* La misma regla que `baseDeUsuario()` de la Edge Function: primer nombre y
+   primer apellido, sin tildes. Acá es solo para PROPONER lo que se ve en
+   pantalla — quien decide de verdad es el servidor, que además desempata si el
+   usuario ya está tomado. Que las dos coincidan lo comprueba
+   verificar-alumno-sin-correo.js. */
+function baseDeUsuarioEnPantalla(nombre) {
+    const pedazos = String(nombre || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+        .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+    if (!pedazos.length) return "";
+    const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+    return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
 }
 
 function cerrarAlta() {
@@ -682,20 +764,40 @@ async function enviarAlta() {
     const msg = document.getElementById("alta-msg");
     const v = (id) => document.getElementById(id).value.trim();
 
+    const sinCorreo = document.getElementById("alta-sin-correo").checked;
     const cuerpo = {
         respuesta_id: altaRespuesta.id,
         alumno_nombre: v("alta-alumno-nombre"),
-        alumno_email: v("alta-alumno-correo"),
+        alumno_email: sinCorreo ? "" : v("alta-alumno-correo"),
+        sin_correo: sinCorreo,
+        usuario: sinCorreo ? v("alta-usuario") : "",
         encargado_nombre: v("alta-encargado-nombre"),
         encargado_email: v("alta-encargado-correo"),
         frecuencia: document.getElementById("alta-frecuencia").value,
         grupo: v("alta-grupo"),
     };
-    if (!cuerpo.alumno_email) {
-        msg.textContent = "Falta el correo del alumno: es a donde va la invitación.";
+
+    const fallar = (texto, campo) => {
+        msg.textContent = texto;
         msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
-        document.getElementById("alta-alumno-correo").focus();
-        return;
+        document.getElementById(campo).focus();
+    };
+
+    if (sinCorreo) {
+        // Sin buzón propio, el de la casa es la ÚNICA forma de mandarle el
+        // enlace: sin él la cuenta queda creada y muda, y de eso nadie se
+        // entera hasta que el alumno nunca aparece.
+        if (!cuerpo.alumno_nombre) {
+            return fallar("Para armarle un usuario hace falta el nombre del alumno.", "alta-alumno-nombre");
+        }
+        if (!cuerpo.encargado_email) {
+            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña.", "alta-encargado-correo");
+        }
+        if (!cuerpo.usuario) {
+            return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
+        }
+    } else if (!cuerpo.alumno_email) {
+        return fallar("Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio».", "alta-alumno-correo");
     }
 
     btn.disabled = true;
@@ -722,16 +824,28 @@ async function enviarAlta() {
         cerrarAlta();
         const encargado = out.encargado_guardado
             ? " La persona encargada quedó apuntada para los informes a la casa." : "";
+        // Con qué entra de verdad lo dice el servidor, no la pantalla: el
+        // usuario pudo salir con un número al final si ya estaba tomado, y
+        // quien da de alta tiene que ver el que de verdad quedó.
+        const entra = out.usuario || out.email;
+
         if (out.ya_tenia_cuenta) {
-            alert(`${cuerpo.alumno_email} ya tenía cuenta, así que no se mandó otra invitación. ` +
-                  `Quedó en tu clase.${encargado}`);
+            alert(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
+                  `Entra con ${entra}.${encargado}`);
         } else if (out.correo_enviado === false) {
             // La cuenta quedó creada y el correo no salió: se dice, o el alumno
             // nunca aparece y nadie sabe por qué.
-            alert(`La cuenta de ${cuerpo.alumno_email} quedó creada, pero el correo NO salió. ` +
+            alert(`La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
                   `Dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.${encargado}`);
+        } else if (out.sin_correo) {
+            // El dato nuevo es el usuario, y hay que enseñarlo: no es un correo
+            // y nadie lo adivina. El correo salió hacia la casa, no hacia el
+            // alumno, y quien da de alta tiene que saberlo para poder decírselo.
+            alert(`Listo. ${cuerpo.alumno_nombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
+                  `El enlace para crear la contraseña salió a ${out.correo_destino || cuerpo.encargado_email}, ` +
+                  `no al alumno — ese usuario no recibe correo.${encargado}`);
         } else {
-            alert(`Invitación enviada a ${cuerpo.alumno_email}: le llega un correo para crear su ` +
+            alert(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
                   `contraseña, con los pasos para entrar.${encargado}`);
         }
     } catch (err) {
@@ -782,6 +896,18 @@ document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
 document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
 document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
+document.getElementById("alta-sin-correo").addEventListener("change", pintarModoAlta);
+// Corregir el nombre vuelve a proponer el usuario, mientras nadie lo haya
+// escrito a mano: arreglar una tilde del nombre no tiene por qué dejar el
+// usuario apuntando al nombre viejo.
+document.getElementById("alta-alumno-nombre").addEventListener("input", () => {
+    const usuario = document.getElementById("alta-usuario");
+    if (!usuario.dataset.tocado) pintarModoAlta();
+});
+// Lo escrito a mano manda: desde acá, el nombre ya no lo pisa.
+document.getElementById("alta-usuario").addEventListener("input", (e) => {
+    e.target.dataset.tocado = "1";
+});
 // Clic fuera de la caja y Escape cierran, como cualquier diálogo del sitio.
 document.getElementById("alta-fondo").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) cerrarAlta();

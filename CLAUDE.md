@@ -742,6 +742,186 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
   administra no tiene tope, un profesor sin invitaciones asignadas recibe el
   mismo aviso que en la Academia.
 
+## El alumno que no tiene correo propio
+
+Una familia con dos hijos pequeños tiene **un solo correo** —el de la mamá o el
+papá— y quiere inscribir a los dos con él. No se puede, y no es una regla del
+sitio que se pueda aflojar: el correo es la llave con la que se inicia sesión y
+Supabase Auth lo exige único (`users_email_partial_key`). Repetirlo sería que
+los dos hermanos entren a la misma cuenta.
+
+La salida no es darle un buzón a un niño de siete años, es **dejar de
+pedírselo**: entra con un **usuario** del dominio `alumno.ajedrez-integral.com`,
+que no recibe correo, y todo lo que el sitio le escribe a esa familia va al
+correo de la persona encargada. Así los dos hermanos tienen cuentas separadas
+—con su progreso, sus tareas y sus cobros aparte— y la mamá recibe las dos
+bienvenidas y los dos informes en su único correo.
+
+Eso separa dos cosas que hasta ahora el sitio confundía en una sola columna:
+
+- **con qué entra el alumno** → `profiles.email`, que puede ser un usuario;
+- **a dónde se le escribe** → `public.correo_de_contacto()`, de aquí en adelante.
+
+### Antes de esto, el segundo hermano se comía al primero
+
+`inscribir-alumno` decidía si reusar una cuenta **buscando el correo en
+`profiles`**, no mirando la respuesta que se estaba dando de alta. Así que
+inscribir a un segundo alumno con un correo ya usado encontraba la cuenta del
+primero, la reusaba, y más abajo le escribía encima el nombre y el equipo: **el
+primer hijo dejaba de existir**, con su progreso, su asistencia y sus tareas
+adentro de la cuenta del segundo. Y la pantalla decía ✅ "cuenta creada", sin un
+solo error.
+
+El reuso existe por una razón buena —apretar el botón dos veces, o reintentar un
+alta que falló a mitad de camino, no debe costar otra invitación del cupo— pero
+"otra vez" y "otro alumno" no son lo mismo. Ahora se decide por
+**`respuesta.cuenta_id`**: esta respuesta, esta cuenta. Un correo que ya es de
+otra cuenta se rechaza con un 409 que dice qué hacer en vez de pisarla.
+
+### La regla de a dónde se le escribe vive en la base
+
+**El peligro de todo esto es mandarle correo a ese buzón que no existe**, y no
+daría ningún error: Resend acepta el envío, el correo rebota y la reputación del
+dominio se va deteriorando sin que nadie mire. Por eso la pregunta se hace en un
+solo lugar:
+
+- `public.es_correo_interno(text)` — si eso es un usuario y no una dirección.
+- `public.correo_de_contacto(alumno)` — el correo de su cuenta si es de verdad,
+  y si no el de su encargado activo. **NULL quiere decir "no hay forma de
+  escribirle"**, y quien llame tiene que decirlo, no callarlo. Es
+  `SECURITY INVOKER` como las de informes: quién puede preguntar por quién lo
+  sigue decidiendo la RLS.
+- `cobros_morosos()` devolvía `p.email` tal cual, así que le habría mandado el
+  aviso de morosidad a la dirección muerta. Ahora devuelve `correo_de_contacto()`.
+- `profiles` ganó un índice único sobre `lower(email)`: `auth.users` ya lo
+  impedía para las cuentas, pero era sobre `profiles` que el alta buscaba a quién
+  reusar.
+
+Comprobado con los datos reales antes y después: en los 93 perfiles de hoy
+—ninguno con usuario interno— `correo_de_contacto()` devuelve **exactamente** el
+mismo correo que antes, 93 de 93. Y en una transacción revertida, dos hermanos
+con usuario interno y el mismo encargado resuelven los dos a ese correo, y un
+alumno sin encargado da NULL en vez de inventar un destino.
+
+### El dominio está escrito tres veces, a la fuerza
+
+En `js/usuario-alumno.js` (el navegador), en
+`supabase/functions/_compartido/usuario-alumno.ts` (las Edge Functions) y en
+`public.es_correo_interno()` (la base). Son tres tiempos de ejecución que no
+pueden leerse entre sí, así que no hay forma de tener una sola copia — lo que sí
+hay es una comprobación que falla si se separan. Separadas, el sitio crearía
+usuarios en un dominio que la base no reconoce como interno y volvería a
+mandarles correo a la nada.
+
+**Y no es el dominio del sitio a propósito.** `alumno.ajedrez-integral.com` no
+tiene MX y no debe tenerlo: su razón de ser es que nada le llegue nunca. Un
+usuario en el dominio raíz recibiría correo de verdad y se perdería la
+separación entera.
+
+### El usuario se propone, se enseña y se puede corregir
+
+`baseDeUsuario()` arma `nombre.apellido` sin tildes ni eñes —"Sofía Muñoz Pérez"
+es `sofia.munoz`—, y **cuál pedazo es el apellido se adivina**: acá se nombra
+completo (Nombre1 [Nombre2] Apellido1 Apellido2), así que con cuatro pedazos el
+apellido es el tercero y con dos o tres es el segundo. Acierta casi siempre y
+falla con "María José Vargas", que da `maria.jose`.
+
+Por eso **las dos pantallas de alta lo muestran y dejan corregirlo antes de
+crear la cuenta**, con la misma regla que ya usa el diálogo de inscripción:
+deducir no es saber. El usuario es lo que el niño va a escribir todos los días y
+después no se cambia solo.
+
+- El choque se resuelve **numerando** (`jose.rodriguez2`, `jose.rodriguez3`) y no
+  con un id al azar: `jose.rodriguez.a7f3` no se lo aprende nadie. Dos "José
+  Rodríguez" en la misma academia no son ninguna rareza.
+- El desempate lo hace **siempre el servidor**, aunque el usuario venga propuesto
+  desde la pantalla: entre que se propuso y que se apretó el botón pudo entrar
+  otro alumno con ese nombre. **Lo que la pantalla enseña al final es el usuario
+  que devolvió el servidor**, no el que ella propuso — enseñar el propuesto
+  dejaría a la familia intentando entrar con uno que no es.
+- El plural de las tildes se quita del USUARIO, no del nombre: el nombre se
+  guarda como la familia lo escribió. Un usuario con tilde se puede escribir de
+  dos formas y el niño no sabría cuál le toca.
+
+### El niño escribe `sofia.munoz`, no el correo entero
+
+`login.html` acepta el usuario pelado y le pega el dominio
+(`UsuarioAlumno.completar()`). Pedirle a un niño que escriba
+`sofia.munoz@alumno.ajedrez-integral.com` cada vez que entra es pedirle justo lo
+que esto vino a evitar — y dictárselo por teléfono a la mamá, peor. Escribirlo
+entero sigue funcionando, porque es lo que dice el correo que recibió la casa.
+
+- **El campo pasó a `type="text"`.** Con `type="email"` el navegador rechaza
+  `sofia.munoz` con SU aviso, en su idioma, antes de que la página pueda decir
+  nada: el usuario no se podría ni mandar. Misma razón por la que el formulario
+  de `bienvenida.html` va con `novalidate`.
+- `autocapitalize="none"` y `autocorrect="off"`: en el celular, "Sofia.Munoz" no
+  entra.
+- En `bienvenida.html`, donde la página dice "tu correo" dice **"tu usuario"**
+  cuando lo es. Si no, los cuatro pasos del ingreso le explican a un niño cómo
+  entrar con algo que no tiene. Y se le enseña el usuario **sin el dominio**:
+  enseñárselo entero debajo de la palabra "Tu correo" es decirle que le escriban
+  ahí, y ahí no llega nada.
+
+### El olvido de contraseña, que es donde esto se podía romper callado
+
+`sb.auth.resetPasswordForEmail()` manda el enlace **a la dirección de la
+cuenta**. Para un alumno con usuario esa dirección no existe: el correo sale, no
+llega a ninguna parte, y la página dice igual "si esa cuenta existe, ya salió el
+correo". El niño se queda fuera para siempre y nadie se entera. Dejar eso abierto
+habría sido cambiar un agujero por otro.
+
+La Edge Function **`recuperar-acceso`** atiende ese caso: genera el enlace con la
+service role y lo manda a donde de verdad se le puede escribir a esa familia,
+que lo dice `correo_de_contacto()` — la misma regla de los informes a la casa y
+los avisos de cobro.
+
+- **Los correos de verdad siguen por el camino de siempre.** `bienvenida.html`
+  elige por `UsuarioAlumno.esInterno()`: lo que ya estaba probado no se toca.
+- `verify_jwt` va en **false**, porque quien olvidó su contraseña no tiene
+  sesión. A cambio **no dice nunca si la cuenta existe**: contesta lo mismo en
+  todos los casos, exista o no, salga el correo o no, y hasta si algo falla.
+  Decir "ese usuario no está registrado" le contaría a cualquiera quién tiene
+  cuenta acá, y son menores de edad. **Tampoco dice a qué correo lo mandó**: ese
+  dato es de la familia.
+
+### Las dos puertas de alta
+
+Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
+(invitar desde la clase en vivo)— traen la casilla **"No tiene correo propio"**:
+
+- el campo del correo del alumno se **apaga**, no se esconde: así se ve que
+  sigue ahí y que lo que cambió es que ya no hace falta;
+- el **correo de la persona encargada pasa a ser obligatorio** — es la única
+  forma de mandar el enlace, y sin él la cuenta queda creada y muda;
+- en el formulario, la casilla **arranca marcada cuando la respuesta no trajo
+  correo del alumno**, que es lo que de verdad pasa con los pequeños: la familia
+  escribe el suyo y deja ese campo vacío. Se propone, no se decide;
+- `create-student` apunta al encargado **en la misma llamada**, no en una
+  segunda del navegador: partido en dos, si la segunda mitad falla queda una
+  cuenta a la que nunca se le puede escribir. Es la decisión que ya tomaba
+  `inscribir-alumno`;
+- el aviso del final **enseña el usuario y dice a qué bandeja salió el correo**.
+  Con un alumno sin buzón no salió a la suya, y quien dio de alta tiene que
+  poder decírselo a la familia: ese dato no lo adivina nadie.
+
+**Esto pide desplegar tres Edge Functions**, que no se suben solas al mergear:
+`create-student`, `inscribir-alumno` y la nueva `recuperar-acceso` —esta última
+con **`verify_jwt` en false**, como los informes a la casa—. Se arman con `node
+herramientas/funciones-armar.js`. La migración de la base ya está aplicada. Si
+las funciones quedan sin subir, la casilla «No tiene correo propio» contesta que
+el correo del alumno no parece un correo: se ve el error, no se pierde nada.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-alumno-sin-correo.js`** (con el sitio en localhost:8777 y
+playwright). Todo lo que se rompe acá se rompe callado, así que se mira desde
+afuera: que el dominio diga lo mismo en sus tres copias, que la regla del usuario
+de la pantalla dé lo mismo que la del servidor (si se separan, lo enseñado no es
+lo guardado), que el login le pegue el dominio, que el olvido de un usuario NO
+pase por `resetPasswordForEmail` y que los dos caminos contesten **exactamente**
+lo mismo, y que dar de alta a dos hermanos con un solo correo mande dos usuarios
+distintos con el mismo correo de la casa.
+
 ## La invitación pide la contraseña y explica cómo se entra
 
 Las dos puertas de alta —el formulario de inscripción (`inscribir-alumno`) y la

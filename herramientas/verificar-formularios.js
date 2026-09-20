@@ -310,12 +310,15 @@ async function pruebaAlta(page) {
     ]),
     ["Ana Rojas", "ana@x.cr", "Gina Rojas", "mama@x.cr", "7A"]);
 
-  // Sin correo del alumno no se manda nada: la invitación no tendría a dónde ir.
+  /* Sin correo del alumno no se manda nada: la invitación no tendría a dónde
+     ir. El aviso además dice la salida —marcar «No tiene correo propio»—,
+     porque este caso es justamente el de una familia que comparte el correo
+     entre hermanos (ver verificar-alumno-sin-correo.js). */
   await page.fill("#alta-alumno-correo", "");
   await page.click("#alta-enviar");
   igual("sin el correo del alumno, avisa y no manda nada",
     await page.evaluate(() => document.getElementById("alta-msg").textContent + " · llamadas: " + window.__edge.length),
-    "Falta el correo del alumno: es a donde va la invitación. · llamadas: 0");
+    "Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio». · llamadas: 0");
 
   await page.fill("#alta-alumno-correo", "ana@x.cr");
   await page.click("#alta-enviar");
@@ -324,8 +327,11 @@ async function pruebaAlta(page) {
   const envio = await page.evaluate(() => window.__edge[0]);
   igual("llama a la función que da de alta", envio.url.replace(/^.*\/functions/, "/functions"),
     "/functions/v1/inscribir-alumno");
+  /* `sin_correo: false` y `usuario: ""` van SIEMPRE, también en el alta normal:
+     el servidor decide por ese campo y no por la ausencia del otro. */
   igual("manda el alumno, el encargado y de qué respuesta sale", envio.cuerpo,
     { respuesta_id: "resp-1", alumno_nombre: "Ana Rojas", alumno_email: "ana@x.cr",
+      sin_correo: false, usuario: "",
       encargado_nombre: "Gina Rojas", encargado_email: "mama@x.cr",
       frecuencia: "semanal", grupo: "7A" });
   igual("va firmada con la sesión de quien lo hace", envio.auth, "Bearer t");
