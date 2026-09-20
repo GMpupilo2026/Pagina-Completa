@@ -72,6 +72,32 @@
 
             <div id="status-banner" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
 
+            <!-- Si la clase está quedando registrada o no. Va ACÁ y no en el
+                 panel porque acá es donde se da la clase: el profesor entra
+                 directo a esta página desde el grid y no pasa por el panel, así
+                 que un control que vive allá es un control que no existe. Solo
+                 para quien da clase. -->
+            <div id="clase-estado" class="hidden mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+                <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" id="clase-abrir-btn" class="hidden bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir la clase</button>
+                    <button type="button" id="clase-cerrar-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la clase</button>
+                </div>
+                <!-- Ponerle nombre y dejar la nota se hace acá mismo al cerrar:
+                     mandarlo al panel a escribirlas es mandarlo a otra página
+                     justo cuando acaba de terminar y se va. -->
+                <div id="clase-cerrar-campos" class="hidden w-full grid sm:grid-cols-2 gap-2">
+                    <div>
+                        <label for="clase-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Cómo se llamó esta clase <span class="font-normal normal-case">(opcional)</span></label>
+                        <input id="clase-titulo" type="text" maxlength="200" placeholder="Ej. Finales de rey y peón" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="clase-notas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Qué se trabajó <span class="font-normal normal-case">(opcional)</span></label>
+                        <input id="clase-notas" type="text" maxlength="500" placeholder="Ej. Se trabó la oposición; repasar el jueves." class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                </div>
+            </div>
+
             <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div>
                     <!-- Editor visual del tablero (solo profesor): se abre con "✏️ Editar" de la
@@ -1366,6 +1392,12 @@
                 updated_by: session.user.id, updated_at: new Date().toISOString(),
             }).eq("id", myGameStateId);
             if (error) { console.error(error); setStatus("No se pudo transmitir la posición: " + error.message); return false; }
+            /* Segundo disparador de "esto ya es una clase": el profesor mandó una
+               posición al tablero de todos. Va DESPUÉS de que la posición se haya
+               transmitido de verdad — abrir la clase por un intento que falló
+               dejaría una clase registrada que nadie dio. Las tres puertas del
+               sitio pasan por esta función, así que alcanza con engancharlo acá. */
+            abrirClaseSiHaceFalta();
             await clearVariantTree();
             // No hay que esperar a que llegue el eco de Realtime del propio cambio para
             // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
@@ -1468,6 +1500,108 @@
             }
         }
 
+        /* ---- Que la clase quede registrada sin acordarse de nada -----------
+         *
+         * La asistencia, los minutos en clase, el informe a la casa y el reporte
+         * de actividades cuelgan TODOS de que exista una fila abierta en
+         * `class_sessions`. Y esa fila la abría un botón que vive en el panel
+         * (`clases.html`), mientras que la clase se da acá: el profesor entra
+         * directo desde el grid, da su clase entera con la pizarra y las
+         * preguntas, y sin esa fila no se registró nada. No da ningún error —
+         * simplemente esa clase no existió, y eso no se puede reconstruir
+         * después.
+         *
+         * Así que se abre SOLA, y no al entrar sino al primer acto de clase de
+         * verdad: que se conecte un alumno, o que el profesor transmita una
+         * posición. Abrirla con solo entrar dejaría una clase fantasma cada vez
+         * que se asoma a preparar algo; con estos dos disparadores no hay que
+         * acordarse de nada y tampoco se inventan clases que no pasaron.
+         *
+         * Que no se abran dos lo impide un índice único parcial de la base
+         * (`class_sessions_una_abierta_por_profesor`), no la bandera de acá: dos
+         * pestañas, o los dos disparadores a la vez, se saltan cualquier
+         * comprobación previa. La bandera solo evita el pedido de más.
+         */
+        let abriendoClase = false;
+
+        async function abrirClaseSiHaceFalta() {
+            if (!isTeacher || currentOpenSessionId || abriendoClase) return;
+            abriendoClase = true;
+            const { data, error } = await sb.from("class_sessions")
+                .insert({ created_by: profile.id }).select().maybeSingle();
+            abriendoClase = false;
+            if (error) {
+                // 23505 es el índice único: alguien más (la otra pestaña, el otro
+                // disparador) ya la abrió. No es un fallo — es justo lo que el
+                // índice tiene que hacer. Se busca la que quedó.
+                if (error.code === "23505") { await checkOpenClassSession(); return; }
+                setStatus("No se pudo abrir la clase: " + error.message
+                    + " — la asistencia de tus alumnos no se está registrando.");
+                return;
+            }
+            if (data) currentOpenSessionId = data.id;
+            pintarEstadoDeClase();
+        }
+
+        async function cerrarClaseDesdeAqui() {
+            if (!isTeacher || !currentOpenSessionId) return;
+            const btn = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            // El primer toque destapa el título y la nota; el segundo cierra. Así
+            // no se cierra de un clic accidental en medio de la clase y, de paso,
+            // se le pide lo único que hace falta para que el registro sirva.
+            if (campos.classList.contains("hidden")) {
+                campos.classList.remove("hidden");
+                btn.textContent = "Confirmar y cerrar";
+                document.getElementById("clase-titulo").focus();
+                return;
+            }
+            const titulo = document.getElementById("clase-titulo").value.trim();
+            const notas = document.getElementById("clase-notas").value.trim();
+            btn.disabled = true;
+            const { error } = await sb.from("class_sessions").update({
+                ended_at: new Date().toISOString(),
+                title: titulo || null,
+                notes: notas || null,
+            }).eq("id", currentOpenSessionId);
+            btn.disabled = false;
+            if (error) { setStatus("No se pudo cerrar la clase: " + error.message); return; }
+            currentOpenSessionId = null;
+            document.getElementById("clase-titulo").value = "";
+            document.getElementById("clase-notas").value = "";
+            pintarEstadoDeClase();
+        }
+
+        /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
+           con todas las letras y no solo con un color: un punto gris no le dice
+           a un entrenador nuevo que la asistencia de sus alumnos se está
+           perdiendo. */
+        function pintarEstadoDeClase() {
+            if (!isTeacher) return;
+            const caja = document.getElementById("clase-estado");
+            const texto = document.getElementById("clase-estado-texto");
+            const abrir = document.getElementById("clase-abrir-btn");
+            const cerrar = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            caja.classList.remove("hidden");
+
+            if (currentOpenSessionId) {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
+                texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
+                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
+                abrir.classList.add("hidden");
+                cerrar.classList.remove("hidden");
+            } else {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
+                texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
+                texto.textContent = "⚪ Todavía no hay clase abierta. Se abre sola en cuanto entre un alumno o mandes una posición al tablero.";
+                abrir.classList.remove("hidden");
+                cerrar.classList.add("hidden");
+                campos.classList.add("hidden");
+                cerrar.textContent = "Cerrar la clase";
+            }
+        }
+
         async function checkOpenClassSession() {
             const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
@@ -1476,6 +1610,13 @@
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
             }
+            pintarEstadoDeClase();
+        }
+
+        function conectarControlesDeClase() {
+            if (!isTeacher) return;
+            document.getElementById("clase-abrir-btn").addEventListener("click", abrirClaseSiHaceFalta);
+            document.getElementById("clase-cerrar-btn").addEventListener("click", cerrarClaseDesdeAqui);
         }
 
         function subscribeClassSessions() {
@@ -1485,11 +1626,17 @@
                         currentOpenSessionId = payload.new.id;
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
+                        pintarEstadoDeClase();
                     } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
                         // El profesor cerró la clase: registramos el último instante conectado
                         // y devolvemos al alumno al panel.
                         if (!isTeacher) {
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
+                        } else {
+                            // La pudo cerrar desde el panel, o desde otra pestaña:
+                            // la franja de acá tiene que decir la verdad igual.
+                            currentOpenSessionId = null;
+                            pintarEstadoDeClase();
                         }
                     }
                 })
@@ -2198,6 +2345,10 @@
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
                 if (isTeacher) renderChatStudentOptions();
+                // Primer disparador de "esto ya es una clase": hay alguien del
+                // otro lado. Sin esto, la asistencia del que acaba de entrar no
+                // se registra en ninguna parte.
+                if (isTeacher && onlineStudents.size > 0) abrirClaseSiHaceFalta();
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -3663,6 +3814,7 @@
             subscribePresence();
             await checkOpenClassSession();
             subscribeClassSessions();
+            conectarControlesDeClase();
             await loadVariantTree();
             subscribeVariants();
             await loadCurrentQuestion();
