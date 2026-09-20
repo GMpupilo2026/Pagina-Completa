@@ -333,6 +333,13 @@ async function pruebaAlumna(browser) {
   await ctx.close();
 }
 
+/* El Supabase de mentira y el arranque de la página los reusa
+   verificar-sesion-orden.js: dos copias del mismo doble se irían separando a la
+   primera corrección, igual que las tres maquetas de la guía del profesor. */
+module.exports = { clienteFalso, abrir, igual, PROFE, ALUMNA, CHROME, BASE, fallos: () => fallos };
+
+if (require.main !== module) return;
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
