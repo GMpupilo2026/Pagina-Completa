@@ -3,16 +3,17 @@
  * mapa de una sola pantalla (idea + cuatro bloques alrededor de la pieza) y,
  * abajo, el tablero que la explica, recorrible jugada por jugada.
  *
- * Lo usan entreno/fichas.html (las 28 fichas, en sus cuatro categorías) y
+ * Lo usa entreno/estudio.html (las 56 fichas, en sus cuatro categorías) y
  * entreno/estudio.html (solo las de aperturas y defensas, sin pestañas): las
  * dos pintan el mismo mapa y el mismo tablero, así que vive en un solo lugar
- * — antes estaba escrito dentro de fichas.html y corregirle algo ahí no
+ * — antes estaba escrito dentro de entreno/fichas.html (la página que se
+ * fusionó con Estudio) y corregirle algo ahí no
  * lo habría corregido en la otra página.
  *
  * Requiere que la página ya tenga cargado chess.js, js/aperturas-lineas.js,
  * js/fichas-estudio.js, js/blind-notation.js, js/chess-piece-svg.js,
  * js/piece-style-themes.js y js/coordenadas-tablero.js, y que su HTML traiga
- * estos ids (los mismos que ya usaba fichas.html):
+ * estos ids:
  *
  *   t-idea/l-idea, t-1/l-1, t-2/l-2, t-3/l-3, t-4/l-4  — los cinco bloques
  *   nodo            — el círculo con la pieza, en el centro del mapa

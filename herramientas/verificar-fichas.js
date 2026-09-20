@@ -1,4 +1,5 @@
-/* Comprueba el banco de fichas de estudio (js/fichas-estudio.js).
+/* Comprueba el banco de fichas de estudio (js/fichas-estudio.js), que es lo
+ * que muestra entreno/estudio.html.
  *
  * Lo que se rompe acá no da ningún error en pantalla: una FEN mal escrita
  * dibuja un tablero cualquiera, una jugada que no existe deja el diagrama

@@ -9,7 +9,7 @@
  *
  * Campos de cada ficha:
  *   id         identificador estable. NO se cambia: es lo que viaja en la
- *              dirección (fichas.html?ficha=<id>) y lo que se comparte.
+ *              dirección (estudio.html?ficha=<id>) y lo que se comparte.
  *   categoria  "apertura", "defensa", "tactica" o "concepto". Decide en qué
  *              pestaña sale y con qué títulos se pintan los cinco bloques
  *              (ver TITULOS más abajo).
@@ -52,7 +52,8 @@
  * alumno a buscar un tema que no está no da ningún error —lo busca, no lo
  * encuentra y se queda pensando que se equivocó él—.
  *
- * AL TOCAR ESTE ARCHIVO, CORRER herramientas/verificar-fichas.js.
+ * AL TOCAR ESTE ARCHIVO, CORRER herramientas/verificar-fichas.js (el banco) y
+ * herramientas/verificar-estudio.js (la página que las muestra).
  */
 (function () {
   "use strict";

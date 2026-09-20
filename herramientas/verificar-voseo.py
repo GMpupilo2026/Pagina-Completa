@@ -109,6 +109,7 @@ demás porqué comité subcomité josé café caché también según razón beb�
 aperturasmás
 elistá andrés valdés josué prevé noé
 empecé aprendí entendí tomé repasé jugué estudié
+mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
 """.split())
