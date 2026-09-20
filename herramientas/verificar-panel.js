@@ -289,6 +289,14 @@ async function pruebaProfesora(browser) {
     apagados, []);
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace), ["lector-planilla.html", "partidas.html"]);
+
+  /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
+     ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
+     nada. Y como no coordina, tampoco le toca la página entera de Cobros. */
+  igual("a quien da clase no se le ofrece su propio recibo",
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Informes", "Configuración"]);
+  igual("y sin coordinar, cobros.html no le aparece por ningún lado",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").length, "0");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 }
@@ -355,6 +363,11 @@ async function pruebaAdmin(browser) {
   const { page, ctx } = await panel(browser, [ADMIN], "u-admin");
   const grupos = await page.evaluate(LEER_GRILLA);
   igual("Administración encabeza «Tu cuenta»", grupo(grupos, "Tu cuenta").tiles[0].enlace, "admin.html");
+  igual("quien coordina no ve «Mis pagos» en Tu cuenta",
+    grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta), ["Administración", "Informes", "Configuración"]);
+  igual("y llega a los cobros una sola vez, por la página entera",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").map((t) => t.etiqueta),
+    ["Cobros de la Academia"]);
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
     ["lector-planilla.html", "partidas.html", "formularios.html", "cobros.html"]);

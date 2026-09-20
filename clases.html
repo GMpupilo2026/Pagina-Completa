@@ -1069,9 +1069,16 @@
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );
-            } else {
-                // La misma página, pero quien no coordina solo ve lo suyo.
-                // No se le pone a quien coordina para no repetir el destino.
+            } else if (!isTeacher) {
+                /* La misma página, pero quien no coordina solo ve lo suyo.
+                   No se le pone a quien coordina para no repetir el destino.
+
+                   Y tampoco a quien da clase: las mensualidades son de las
+                   familias del alumnado, así que a una profesora esa tarjeta
+                   le ofrecía "lo que se te ha cobrado" sobre una cuenta a la
+                   que no se le cobra nada. Quien coordina sí llega a los
+                   cobros, pero por "Cobros de la Academia" en Herramientas,
+                   que es la página entera y no el recibo propio. */
                 TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
                     { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html", mantenimientoAlumno: true }
                 );
