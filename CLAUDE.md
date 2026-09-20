@@ -837,9 +837,29 @@ El enlace va **directo a rendirlo** y no a una lista, que es la otra diferencia
 con las tareas: un examen tiene reloj y una sola oportunidad, así que buscarlo
 entre otros es un paso de más.
 
-Lo que **no** avisa es reabrir un examen congelado, que es justo cuando el
-alumno está trabado esperando. No está puesto porque no se pidió, pero es el
-mismo trigger sobre el `update`.
+**Reabrir también avisa**, con `avisar_examen_reabierto`, y es el momento en
+que más falta hace: el alumno se quedó congelado a mitad del examen y no tiene
+forma de enterarse de que ya puede volver a entrar — sin aviso tendría que ir
+probando la página cada tanto.
+
+- **Ese va como `AFTER UPDATE` normal, no diferido**, al revés que el de
+  asignar: acá las preguntas existen desde hace rato, no se están insertando en
+  la misma transacción.
+- **Su `WHEN` es lo único que lo separa del ruido**: `old.estado is distinct
+  from 'asignado' and new.estado = 'asignado'`. Sin él saltaría también cuando
+  el alumno empieza su examen, cuando se le cuenta una salida y cuando lo
+  entrega — un aviso en el celular por cada cosa que él mismo acaba de hacer.
+  Comprobado en una transacción revertida: esos cuatro updates no disparan
+  nada, y el quinto —el de reabrir, el mismo que manda `examenes.html`— sí.
+- **Dice cuántas le faltan, y ese número NO sale de `examenes.total_items`**:
+  al reabrir, esa columna se pone en null junto con la nota (es del cierre
+  anterior), así que leerla daría siempre null y el aviso no diría nada. Se
+  cuentan `examen_items` menos `examen_respuestas`. Comprobado: con 6 preguntas
+  y 2 contestadas dice «te faltan 4 preguntas y tienes 12 minutos», y con una
+  sola, «te falta 1 pregunta y tienes 1 minuto».
+- **Lleva la MISMA etiqueta que el aviso de asignación** (`examen:<id>`), a
+  propósito: así reemplaza al anterior en la bandeja en vez de dejar dos avisos
+  del mismo examen, y el que se queda es el que dice la verdad.
 
 ### El informe, y qué ve cada quien
 
