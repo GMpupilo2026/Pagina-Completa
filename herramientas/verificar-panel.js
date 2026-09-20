@@ -231,11 +231,11 @@ async function pruebaAlumna(browser) {
      de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
      versión que NO enseña las respuestas al terminar. */
   /* Los "Exámenes · Próximamente" se fueron: un "próximamente" sin fecha deja
-     de leerse y ocupaba un lugar en la grilla. El día que existan, vuelve la
-     tarjeta. */
-  igual("Evaluaciones: los dos diagnósticos, y ninguna tarjeta apagada esperando",
+     de leerse y ocupaba un lugar en la grilla. Ya existen —examenes.html, con
+     nota y reloj— así que la tarjeta volvió, ahora sí con algo detrás. */
+  igual("Evaluaciones: los exámenes y los dos diagnósticos, ninguno apagado",
     grupo(grupos, "Evaluaciones").tiles.map((t) => [t.enlace, t.apagado]),
-    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
+    [["examenes.html", false], ["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
@@ -279,7 +279,7 @@ async function pruebaProfesora(browser) {
      no dos, para no repetir el nombre en el panel. */
   igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
     grupo(grupos, "Evaluaciones").tiles.map((t) => t.enlace),
-    ["entreno/diagnostico.html", "arbitraje.html"]);
+    ["examenes.html", "entreno/diagnostico.html", "arbitraje.html"]);
   igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
     grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>

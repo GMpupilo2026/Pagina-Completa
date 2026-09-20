@@ -386,6 +386,10 @@
                banco es material docente). Una sola tarjeta y no dos, para no
                repetir el nombre en el panel — ya pasó una vez con "Torneos". */
             { title: "Evaluaciones", tiles: [
+                /* "Exámenes" vuelve al panel, ahora que existe. Estuvo meses
+                   apagado con un "Próximamente" sin fecha y se quitó por eso
+                   mismo: una tarjeta que nunca cambia deja de leerse. */
+                { emoji: "📝", label: "Exámenes", desc: "Lo que tu profe te pone con nota y reloj: una sola oportunidad por pregunta", descProfe: "Ponle un examen con nota a tus alumnos y mira el informe de cada uno", href: "examenes.html" },
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
                 { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
             ] },

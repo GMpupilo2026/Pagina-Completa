@@ -47,6 +47,7 @@ PAGINAS = [
     "duelo.html", "estandar.html", "formularios.html", "ilumina-tablero.html",
     "informes.html", "inscripciones.html", "juegos.html",
     "lector-planilla.html", "logros.html", "niebla.html", "partidas.html",
+    "examen.html", "examenes.html",
     "racha-tactica.html", "reportes.html", "sesion.html", "tareas.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",
