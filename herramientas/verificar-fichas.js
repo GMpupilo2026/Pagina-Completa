@@ -223,6 +223,211 @@ const COMPRUEBAN = {
     }
     return n >= 2 ? null : `en la columna ${opt.columna} hay ${n} peón(es): no están doblados`;
   },
+  // ---- de acá para abajo, los que trajo la segunda tanda de fichas ----
+
+  // Material ganado por un bando al terminar la línea, en peones. Es lo que
+  // convierte "esto es una sobrecarga" en algo que se puede comprobar: la
+  // combinación tiene que TERMINAR con el material prometido, no empezar bien.
+  materialGanado(F, g0, opt) {
+    const VALE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+    const cuenta = (g) => {
+      let n = 0;
+      g.SQUARES.forEach((sq) => {
+        const p = g.get(sq);
+        if (p) n += VALE[p.type] * (p.color === opt.color ? 1 : -1);
+      });
+      return n;
+    };
+    const g = new Chess(g0.fen());
+    const antes = cuenta(g);
+    F.linea.forEach((san) => g.move(san, { sloppy: true }));
+    const gana = cuenta(g) - antes;
+    return gana >= opt.al_menos ? null : `la línea deja ${gana} peones de ventaja, no ${opt.al_menos}`;
+  },
+
+  // La sobrecarga, comprobada: esa pieza defiende de verdad las dos casillas.
+  defiendeDos(F, g0, opt) {
+    const defensor = g0.get(opt.pieza);
+    if (!defensor) return `no hay ninguna pieza en ${opt.pieza}`;
+    const faltan = opt.casillas.filter((casilla) => {
+      // Se cambia de color lo que hay en la casilla y se pregunta si el
+      // defensor lo podría comer: eso es defenderlo.
+      const g = new Chess(g0.fen());
+      const p = g.get(casilla);
+      if (!p) return true;
+      g.remove(casilla);
+      g.put({ type: p.type, color: p.color === "w" ? "b" : "w" }, casilla);
+      const fen = g.fen().split(" ");
+      fen[1] = defensor.color; fen[3] = "-";
+      const h = new Chess(fen.join(" "));
+      return !h.moves({ verbose: true }).some((m) => m.from === opt.pieza && m.to === casilla);
+    });
+    return faltan.length ? `la pieza de ${opt.pieza} no defiende ${faltan.join(" ni ")}` : null;
+  },
+
+  // Jaque doble: la prueba es que al rival NO le quede otra que mover el rey.
+  dobleJaque(F, g0) {
+    const g = new Chess(g0.fen());
+    g.move(F.linea[0], { sloppy: true });
+    if (!g.in_check()) return "no da jaque";
+    const respuestas = g.moves({ verbose: true });
+    const noRey = respuestas.filter((m) => m.piece !== "k");
+    return noRey.length ? `se puede contestar sin mover el rey (${noRey[0].san}): es jaque simple` : null;
+  },
+
+  // Batería: las dos piezas en la misma línea, sin nada en medio, y la de
+  // adelante atacando el objetivo.
+  bateria(F, g0, opt) {
+    const col = (sq) => sq.charCodeAt(0) - 97, fila = (sq) => +sq[1];
+    const puntos = [opt.atras, opt.adelante, opt.objetivo];
+    const dc = col(puntos[1]) - col(puntos[0]), df = fila(puntos[1]) - fila(puntos[0]);
+    const dc2 = col(puntos[2]) - col(puntos[1]), df2 = fila(puntos[2]) - fila(puntos[1]);
+    const mismaDir = (a, b, c, d) => a * d - b * c === 0 && (a * c > 0 || b * d > 0 || (a === 0 && c === 0) || (b === 0 && d === 0));
+    if (!mismaDir(dc, df, dc2, df2)) return "las tres casillas no están en la misma línea";
+    const atras = g0.get(opt.atras), adelante = g0.get(opt.adelante);
+    if (!atras || !adelante) return "falta una de las dos piezas";
+    if (atras.color !== adelante.color) return "las dos piezas no son del mismo bando";
+    // La de adelante ataca el objetivo, y la de atrás la respalda.
+    const fen = g0.fen().split(" ");
+    fen[1] = atras.color; fen[3] = "-";
+    const g = new Chess(fen.join(" "));
+    const ataca = g.moves({ verbose: true }).some((m) => m.from === opt.adelante && m.to === opt.objetivo);
+    return ataca ? null : `la pieza de ${opt.adelante} no llega a ${opt.objetivo}`;
+  },
+
+  // Pieza atrapada: tras la línea, todas sus jugadas la dejan donde el rival
+  // la come (o no tiene ninguna).
+  atrapada(F, g0, casilla) {
+    const g = new Chess(g0.fen());
+    (F.linea || []).forEach((san) => g.move(san, { sloppy: true }));
+    const pieza = g.get(casilla);
+    if (!pieza) return `no quedó ninguna pieza en ${casilla}`;
+    const fen = g.fen().split(" ");
+    fen[1] = pieza.color; fen[3] = "-";
+    const suyo = new Chess(fen.join(" "));
+    const salidas = suyo.moves({ verbose: true }).filter((m) => m.from === casilla);
+    const seguras = salidas.filter((m) => {
+      const h = new Chess(suyo.fen());
+      h.move(m.san, { sloppy: true });
+      return !h.moves({ verbose: true }).some((x) => x.to === m.to && x.flags.includes("c"));
+    });
+    return seguras.length ? `todavía puede escaparse a ${seguras[0].to}` : null;
+  },
+
+  // Jaque perpetuo: la línea repite la misma posición tres veces.
+  repeticion(F, g0) {
+    const g = new Chess(g0.fen());
+    F.linea.forEach((san) => g.move(san, { sloppy: true }));
+    return g.in_threefold_repetition() ? null : "la línea no llega a repetir tres veces la posición";
+  },
+
+  // Zugzwang: sin estar en jaque, el rival no tiene ninguna captura ahora y
+  // TODA jugada legal le regala una. O sea: el problema es tener que mover.
+  zugzwang(F, g0) {
+    if (g0.in_check()) return "está en jaque: eso no es zugzwang, es una obligación normal";
+    const jugadas = g0.moves({ verbose: true });
+    if (!jugadas.length) return "no tiene jugadas: eso es mate o ahogado, no zugzwang";
+    const fen = g0.fen().split(" ");
+    fen[1] = g0.turn() === "w" ? "b" : "w"; fen[3] = "-";
+    const rival = new Chess(fen.join(" "));
+    if (rival.moves({ verbose: true }).some((m) => m.flags.includes("c")))
+      return "el rival ya podía capturar antes de mover: la posición no se sostenía sola";
+    const salvan = jugadas.filter((m) => {
+      const g = new Chess(g0.fen());
+      g.move(m.san, { sloppy: true });
+      return !g.moves({ verbose: true }).some((x) => x.flags.includes("c") || x.flags.includes("e"));
+    });
+    return salvan.length ? `${salvan[0].san} no pierde nada: no está en zugzwang` : null;
+  },
+
+  // Oposición: los dos reyes en la misma línea con una cantidad impar de
+  // casillas en medio, y el turno es del OTRO.
+  oposicion(F, g0, color) {
+    const donde = {};
+    g0.SQUARES.forEach((sq) => { const p = g0.get(sq); if (p && p.type === "k") donde[p.color] = sq; });
+    const dc = Math.abs(donde.w.charCodeAt(0) - donde.b.charCodeAt(0));
+    const df = Math.abs(+donde.w[1] - +donde.b[1]);
+    const enLinea = (dc === 0 && df % 2 === 0) || (df === 0 && dc % 2 === 0) || (dc === df && dc % 2 === 0);
+    if (!enLinea) return `los reyes (${donde.w} y ${donde.b}) no están en oposición`;
+    return g0.turn() === color ? "la tiene quien NO mueve: acá le toca mover a ese mismo" : null;
+  },
+
+  // La torre, detrás de su peón pasado.
+  torreDetras(F, g0, opt) {
+    const torre = g0.get(opt.torre), peon = g0.get(opt.peon);
+    if (!torre || torre.type !== "r") return `en ${opt.torre} no hay una torre`;
+    if (!peon || peon.type !== "p") return `en ${opt.peon} no hay un peón`;
+    if (torre.color !== peon.color) return "la torre y el peón no son del mismo bando";
+    if (opt.torre[0] !== opt.peon[0]) return "no están en la misma columna";
+    const detras = peon.color === "w" ? +opt.torre[1] < +opt.peon[1] : +opt.torre[1] > +opt.peon[1];
+    return detras ? null : "la torre está DELANTE del peón, que es justo lo que la ficha dice que no";
+  },
+
+  // La regla del cuadrado, con la cuenta de verdad: el rey llega si su
+  // distancia a la casilla de coronar no supera lo que le falta al peón.
+  cuadrado(F, g0, opt) {
+    const peon = g0.get(opt.peon), rey = g0.get(opt.rey);
+    if (!peon || peon.type !== "p") return `en ${opt.peon} no hay un peón`;
+    if (!rey || rey.type !== "k") return `en ${opt.rey} no hay un rey`;
+    const filaCorona = peon.color === "w" ? 8 : 1;
+    let pasos = Math.abs(filaCorona - +opt.peon[1]);
+    const salida = peon.color === "w" ? 2 : 7;
+    if (+opt.peon[1] === salida) pasos -= 1;           // el salto doble cuenta
+    const distancia = Math.max(
+      Math.abs(opt.rey.charCodeAt(0) - opt.peon.charCodeAt(0)),
+      Math.abs(+opt.rey[1] - filaCorona));
+    const alcanza = distancia <= pasos + (g0.turn() === rey.color ? 0 : -1) + 1;
+    if (alcanza !== !!opt.dentro) return `la cuenta no da: el rey necesita ${distancia} y el peón ${pasos}`;
+    return null;
+  },
+
+  // Alfil malo: un solo alfil, y sus peones en el mismo color de casilla.
+  alfilMalo(F, g0, color) {
+    const claro = (sq) => ((sq.charCodeAt(0) - 97) + (+sq[1] - 1)) % 2 === 1;
+    const alfiles = [], peones = [];
+    g0.SQUARES.forEach((sq) => {
+      const p = g0.get(sq);
+      if (!p || p.color !== color) return;
+      if (p.type === "b") alfiles.push(sq);
+      if (p.type === "p") peones.push(sq);
+    });
+    if (alfiles.length !== 1) return `tiene ${alfiles.length} alfiles: el caso no es ese`;
+    const mismos = peones.filter((sq) => claro(sq) === claro(alfiles[0]));
+    return mismos.length >= peones.length * 0.6
+      ? null
+      : `solo ${mismos.length} de ${peones.length} peones están en el color del alfil: no está encerrado`;
+  },
+
+  // Peón aislado: sin peones propios en las columnas de al lado.
+  aislado(F, g0, opt) {
+    const peon = g0.get(opt.casilla);
+    if (!peon || peon.type !== "p" || peon.color !== opt.color) return `en ${opt.casilla} no hay un peón suyo`;
+    const col = opt.casilla.charCodeAt(0) - 97;
+    for (const c of [col - 1, col + 1]) {
+      if (c < 0 || c > 7) continue;
+      for (let f = 1; f <= 8; f++) {
+        const p = g0.get(String.fromCharCode(97 + c) + f);
+        if (p && p.type === "p" && p.color === opt.color) return `no está aislado: tiene un peón vecino en ${String.fromCharCode(97 + c) + f}`;
+      }
+    }
+    return null;
+  },
+
+  // Ahogado: sin jaque y sin una sola jugada legal.
+  ahogado(F, g0) {
+    if (g0.in_check()) return "está en jaque: eso sería mate, no ahogado";
+    return g0.in_stalemate() ? null : "el rival todavía tiene jugadas: no está ahogado";
+  },
+
+  // Los peones de la cadena están donde la ficha dice.
+  peonesEn(F, g0, opt) {
+    const faltan = opt.casillas.filter((sq) => {
+      const p = g0.get(sq);
+      return !p || p.type !== "p" || p.color !== opt.color;
+    });
+    return faltan.length ? `no hay peón suyo en ${faltan.join(", ")}` : null;
+  },
+
   // Los dos reyes enrocados, que es de lo que habla la ficha.
   enrocados(F, g0) {
     const b = g0.get("g1"), n = g0.get("g8");

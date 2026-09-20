@@ -104,7 +104,7 @@ function jugadasDe(F) { return POR_ID.get(F.lineaId).jugadas; }
       await ctx.close();
     }
 
-    console.log("\n=== Las 12 fichas juntas, sin pestañas ===");
+    console.log("\n=== Las fichas de aperturas y defensas, juntas y sin pestañas ===");
     const { page, ctx, errores } = await abrir(browser, "/entreno/estudio.html");
     await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
 
@@ -112,7 +112,7 @@ function jugadasDe(F) { return POR_ID.get(F.lineaId).jugadas; }
       await page.evaluate(() => document.querySelectorAll("nav.tabs, .tab").length), 0);
     igual("ni buscador: para eso está Fichas",
       await page.evaluate(() => document.querySelectorAll("#buscar").length), 0);
-    igual("se ven las 12 fichas de una", await page.evaluate(() => document.querySelectorAll(".ficha-item").length), ESTUDIO.length);
+    igual("se ven todas las fichas de aperturas y defensas de una", await page.evaluate(() => document.querySelectorAll(".ficha-item").length), ESTUDIO.length);
     igual("agrupadas en dos <h2>: Aperturas y Defensas",
       await page.evaluate(() => [...document.querySelectorAll("h2.study-group-title")].map((h) => h.textContent)),
       ["Aperturas", "Defensas"]);
