@@ -3,3 +3,9 @@
 /cursos/protegido/los-100-finales.html /cursos/protegido/el-mapa-de-los-finales.html 301
 /cursos/protegido/data/los-100-finales.json /cursos/protegido/data/el-mapa-de-los-finales.json 301
 /cursos/recursos/los-100-finales/* /cursos/recursos/el-mapa-de-los-finales/:splat 301
+
+# "Fichas" se fusionó con Estudio (sept. 2026): eran la misma página dos veces
+# —el mismo banco, el mismo mapa, el mismo tablero— y ahora las 56 fichas
+# viven en entreno/estudio.html. La dirección vieja se compartía con su
+# ?ficha=<id>, que Cloudflare conserva al redirigir.
+/entreno/fichas.html /entreno/estudio.html 301

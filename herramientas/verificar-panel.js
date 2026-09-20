@@ -191,7 +191,7 @@ async function pruebaAlumna(browser) {
   igual("Jugar y competir", grupos[1].tiles.map((t) => t.enlace),
     ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
   igual("Aprender", grupos[2].tiles.map((t) => t.enlace),
-    ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html", "entreno/fichas.html",
+    ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
      "articulos.html", "tareas.html"]);
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
      de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
