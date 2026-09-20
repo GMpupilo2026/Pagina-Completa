@@ -82,6 +82,30 @@ def comprobar(bien, que, detalle=""):
         fallos.append(que)
 
 
+# Cuántas imágenes referencia una página, contadas en profundidad. Desde que
+# los apartados llevan captura de pantalla, "¿tiene alguna imagen?" ya no sirve
+# para saber si está la marca de agua: una página con captura la tendría igual
+# aunque el sello no se hubiera estampado. Lo que distingue es el NÚMERO.
+def cuantas_imagenes(objeto, visitados=None) -> int:
+    if visitados is None:
+        visitados = set()
+    recursos = objeto.get("/Resources")
+    if recursos is None:
+        return 0
+    xobjetos = recursos.get_object().get("/XObject")
+    if xobjetos is None:
+        return 0
+    total = 0
+    for ref in xobjetos.get_object().values():
+        hijo = ref.get_object()
+        if hijo.get("/Subtype") == "/Image":
+            total += 1
+        elif hijo.get("/Subtype") == "/Form" and id(hijo) not in visitados:
+            visitados.add(id(hijo))
+            total += cuantas_imagenes(hijo, visitados)
+    return total
+
+
 def revisar_pdf(nombre, primera_con_marca, titulo_esperado):
     archivo = RAIZ / nombre
     print(f"\n{nombre}")
@@ -134,6 +158,16 @@ def revisar_pdf(nombre, primera_con_marca, titulo_esperado):
         # hay imagen: lo que se comprueba es que exista, no que falte.
         comprobar(tiene_marca(lector.pages[0]),
                   "la portada lleva el logo en grande")
+
+    # Las capturas de pantalla: que hayan llegado al archivo. Una que se quede
+    # fuera no rompe nada —el PDF se abre igual— y deja el apartado hablando de
+    # una pantalla que no se ve por ninguna parte.
+    contenido = json.loads((RAIZ / "herramientas/guia/contenido.json").read_text(encoding="utf-8"))
+    cuantas = sum(1 for c in contenido["capitulos"] for l in c["laminas"] if l.get("captura"))
+    con_captura = sum(1 for p in lector.pages if cuantas_imagenes(p) > 1)
+    comprobar(con_captura == cuantas,
+              f"las {cuantas} capturas de pantalla llegaron al archivo",
+              f"encontré {con_captura} páginas con más de una imagen")
 
     texto = "".join((lector.pages[n].extract_text() or "") for n in range(min(6, paginas)))
     comprobar("Guía del profesor" in texto or "Guia del profesor" in texto,

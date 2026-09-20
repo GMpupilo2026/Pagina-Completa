@@ -19,7 +19,8 @@
           "ojo": [
             "Los alumnos pequeños no siempre entran con un correo: muchos entran con un usuario del tipo sofia.munoz, que no recibe correo. Ellos escriben solo el usuario, sin el arroba.",
             "Todo lo que el sitio le escribe a esa familia va al correo de la persona encargada, no al del niño."
-          ]
+          ],
+          "captura": "login"
         },
         {
           "titulo": "Tu panel al entrar",
@@ -34,7 +35,8 @@
           "ojo": [
             "El número rojo solo aparece cuando no es cero. Si está en rojo, es algo de hoy.",
             "El registro de clases no se baja entero: filtra por periodo y busca por texto, y se va cargando de 20 en 20."
-          ]
+          ],
+          "captura": "panel"
         },
         {
           "titulo": "Los tres roles, y qué abre cada uno",
@@ -75,7 +77,8 @@
           "ojo": [
             "El aviso de instalar se muestra una sola vez. Si dijiste «Ahora no», vuelve a aparecer una semana después.",
             "El permiso de notificaciones el navegador lo pregunta UNA vez por aparato: por eso solo se pide al tocar el interruptor, nunca al entrar."
-          ]
+          ],
+          "captura": "configuracion"
         }
       ]
     },
@@ -96,7 +99,8 @@
           "ojo": [
             "Cada profesor tiene SU propio tablero. Puedes dar clase al mismo tiempo que otro colega sin pisarte.",
             "Un alumno con dos profesores elige en qué clase entra; si solo tiene uno, entra directo."
-          ]
+          ],
+          "captura": "sesion"
         },
         {
           "titulo": "Lo que la clase ve y lo que no",
@@ -240,7 +244,8 @@
           "ojo": [
             "El plan NO está atado a una clase ni a un grupo: el mismo plan se da al grupo de la mañana y al de la tarde.",
             "«⧉ Duplicar» copia el plan entero para cambiarle lo que haga falta sin tocar el original. Ahí es donde una clase suelta se vuelve un programa."
-          ]
+          ],
+          "captura": "planes"
         },
         {
           "titulo": "Los tres tipos de renglón",
@@ -302,7 +307,8 @@
           "ojo": [
             "Revisa que estén marcados los alumnos que quieres: mandarla a todos en vez de a los marcados no da ningún error.",
             "Un profesor solo ve las tareas que ÉL mandó, aunque comparta el alumno con un colega."
-          ]
+          ],
+          "captura": "tareas"
         },
         {
           "titulo": "Las tres metas",
@@ -376,7 +382,8 @@
           "ojo": [
             "Si dos bloques piden del mismo banco, las repetidas se quitan y el sitio te dice cuántas quitó: una pregunta repetida valdría doble en la nota.",
             "Las preguntas que te enseña la previsión son EXACTAMENTE las que se mandan."
-          ]
+          ],
+          "captura": "examenes"
         },
         {
           "titulo": "El tiempo: recomendado o el tuyo",
@@ -452,7 +459,8 @@
           "ojo": [
             "Los minutos no son sumar filas: dos pestañas abiertas a la vez no cuentan doble, y una ventana que se cerró sin avisar no cuenta un día entero.",
             "Si alguna consulta falla, te lo dice en pantalla en vez de pintar ceros."
-          ]
+          ],
+          "captura": "informes"
         },
         {
           "titulo": "El informe de un alumno",
@@ -549,7 +557,8 @@
           "ojo": [
             "Para el alumno las lecciones se abren de a poco, según va avanzando.",
             "Si necesitas abrirle un curso a un alumno concreto, es «Desbloquear hasta el tema» en Informes, y queda el rastro."
-          ]
+          ],
+          "captura": "cursos-academia"
         },
         {
           "titulo": "El material de cada lección",
@@ -608,7 +617,8 @@
           "ojo": [
             "Coordenadas se manda por minutos; Mates, por cantidad.",
             "Desafíos no se puede mandar por cantidad: sus series no se distinguen de las de Practicar."
-          ]
+          ],
+          "captura": "entreno"
         },
         {
           "titulo": "Practicar",
@@ -619,7 +629,8 @@
           ],
           "ojo": [
             "Al mandar un tema de táctica, el enlace de la tarea lleva el recorte: el alumno cae DENTRO del tema, no en la lista de ochenta."
-          ]
+          ],
+          "captura": "temas"
         },
         {
           "titulo": "Entreno",
@@ -630,7 +641,8 @@
           ],
           "ojo": [
             "En Aperturas la coronación se elige y no se asume dama: la trampa de Lasker en la Albin solo funciona coronando caballo."
-          ]
+          ],
+          "captura": "aperturas"
         },
         {
           "titulo": "Estudio: una ficha por idea",
@@ -644,7 +656,8 @@
           "ojo": [
             "No es otra forma de Aperturas: allá se memoriza jugando, acá se mira de un vistazo cinco minutos antes de jugar.",
             "Lo que cada ficha promete está comprobado con motor: que la clavada clave de verdad, que la horquilla no se pare con ninguna respuesta, que el zugzwang sea zugzwang."
-          ]
+          ],
+          "captura": "estudio"
         },
         {
           "titulo": "Los otros juegos de entrenamiento",
@@ -672,7 +685,8 @@
           ],
           "ojo": [
             "Las medallas usan el RÉCORD de racha, no la actual: un logro ganado no se pierde porque un día se rompa la racha."
-          ]
+          ],
+          "captura": "logros"
         }
       ]
     },
@@ -694,7 +708,8 @@
             "El nivel NO sale del porcentaje: sale del escalón de dificultad más alto que superó. Con el porcentaje, un jugador de 1400 y uno de 2300 sacaban los dos «Experto».",
             "Cada pregunta ofrece «🤔 No lo sé todavía», que vale cero pero se guarda aparte: un hueco que enseñar no es lo mismo que algo mal aprendido.",
             "También se puede hacer sin cuenta, desde la portada. Esos resultados te llegan como contactos."
-          ]
+          ],
+          "captura": "diagnostico"
         },
         {
           "titulo": "El examen de arbitraje",
@@ -708,7 +723,8 @@
           "ojo": [
             "Es una estimación de conocimiento del reglamento, NO un título: los títulos los da la FIDE.",
             "La respuesta al público la manda una persona, desde su propio correo: el borrador se arma solo con el resultado."
-          ]
+          ],
+          "captura": "arbitraje"
         },
         {
           "titulo": "Los tres libros en papel",
@@ -742,7 +758,8 @@
           "ojo": [
             "Tú también puedes jugar: apareces al final de los selectores, en tu propio grupo, para que el caso de todos los días —dos alumnos— siga saliendo de una.",
             "Tu propia partida sale en la lista con «♟️ Jugar» y no con «👀 Ver»."
-          ]
+          ],
+          "captura": "juegos"
         },
         {
           "titulo": "Las modalidades",
@@ -783,7 +800,8 @@
           "ojo": [
             "Los cruces y los resultados quedan a la vista de todos los inscritos: ese es el control que corresponde a esta escala.",
             "En «📺 TV en vivo» se siguen las partidas en directo con su tabla."
-          ]
+          ],
+          "captura": "torneos"
         },
         {
           "titulo": "El bot de Oscar",
@@ -796,7 +814,8 @@
           "ojo": [
             "En el nivel difícil juega con el repertorio de Oscar, sacado de sus propias partidas.",
             "Faltan dos modalidades: Ajedrez de cartas y Duelo simultáneo."
-          ]
+          ],
+          "captura": "bot"
         }
       ]
     },
@@ -816,7 +835,8 @@
           ],
           "ojo": [
             "Un archivo con varios ejercicios («Position 2, 1 Move», «Position 3, 1 Move»…) llega separado uno por uno, que es como se usa en clase."
-          ]
+          ],
+          "captura": "partidas"
         },
         {
           "titulo": "Las partidas guardadas en clase",
@@ -838,7 +858,8 @@
           ],
           "ojo": [
             "Es una ayuda, no un dictado perfecto: una planilla escrita a mano siempre hay que repasarla."
-          ]
+          ],
+          "captura": "lector-planilla"
         }
       ]
     },
@@ -917,7 +938,8 @@
             "El enlace da acceso al formulario, nunca a las respuestas.",
             "El CSV sale con punto y coma y BOM: es lo que Excel en español abre de un doble clic.",
             "El identificador de cada pregunta se fija al crearla: corregirle una tilde a la etiqueta no rompe las respuestas ya recibidas."
-          ]
+          ],
+          "captura": "formularios"
         },
         {
           "titulo": "De la respuesta a la cuenta, en un botón",
@@ -965,7 +987,8 @@
             "Los avisos de morosidad salen solos: tres días antes, al día siguiente del vencimiento y a los 15 días. Un correo por alumno, no uno por cobro.",
             "Ningún aviso amenaza. Ni el de los 15 días habla de sacar a nadie de clase.",
             "No hay pasarela de pago ni factura electrónica de Hacienda: el consecutivo de hoy es el del recibo interno."
-          ]
+          ],
+          "captura": "cobros"
         },
         {
           "titulo": "Reportes de actividades",
@@ -979,7 +1002,8 @@
           "ojo": [
             "Los archivos que subes NO se suben a ningún lado: se leen en tu navegador, entran al documento y ahí termina. No quedan fotos de menores guardadas en ningún servidor.",
             "Hay dos modos: clases de la Academia (los datos los pone la plataforma) y clases dadas por fuera (la asistencia sale de tu Excel y el contenido, de tus documentos)."
-          ]
+          ],
+          "captura": "reportes"
         },
         {
           "titulo": "Las hojas de asistencia hechas a mano",
@@ -1028,7 +1052,8 @@
           "ojo": [
             "Buscar manda sobre el grupo abierto y mira TODOS los grupos: buscar a alguien sin saber en qué grupo está es justamente para lo que se busca.",
             "La búsqueda no distingue tildes: «ramirez» encuentra a «Ramírez»."
-          ]
+          ],
+          "captura": "admin"
         },
         {
           "titulo": "Asignar alumnos a profesores",

@@ -26,6 +26,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const guia = require("./guia-profesores.js");
+const RAIZ = path.join(__dirname, "..");
 
 let fallos = 0;
 function comprobar(bien, que, detalle) {
@@ -64,14 +65,74 @@ function comprobar(bien, que, detalle) {
       clase: d.className,
     })));
 
-  comprobar(diapos.length === titulos.length + guia.CAPITULOS.length + 2,
-    `hay una diapositiva por apartado, por capítulo, la portada y el índice (${diapos.length})`,
-    `esperaba ${titulos.length + guia.CAPITULOS.length + 2}`);
+  /* Portada, índice, un separador por capítulo, un apartado por lámina y una
+     diapositiva más por cada apartado que enseña su pantalla. */
+  const conCaptura = guia.CAPITULOS.flatMap((c) => c.laminas).filter((l) => l.captura).length;
+  const esperadas = titulos.length + guia.CAPITULOS.length + 2 + conCaptura;
+  comprobar(diapos.length === esperadas,
+    `hay una diapositiva por apartado, por capítulo, por captura, la portada y el índice (${diapos.length})`,
+    `esperaba ${esperadas}`);
 
   const desbordadas = diapos.filter((d) => d.desborde > 1);
   comprobar(desbordadas.length === 0,
     "ninguna diapositiva se sale de su página",
     desbordadas.slice(0, 5).map((d) => `#${d.i} «${d.titulo.trim()}» se pasa ${d.desborde}px (${d.clase})`).join("\n         "));
+
+  /* ---------------------------------------------- las capturas de pantalla */
+  console.log("\nLas capturas de pantalla");
+  const declaradas = [];
+  guia.CAPITULOS.forEach((c) => c.laminas.forEach((l) => { if (l.captura) declaradas.push(l); }));
+
+  const sinArchivo = declaradas
+    .map((l) => l.captura)
+    .filter((slug) => !fs.existsSync(path.join(RAIZ, "img/guia", slug + ".jpg")));
+  comprobar(sinArchivo.length === 0,
+    `los ${declaradas.length} apartados que enseñan su pantalla tienen su archivo`,
+    "falta img/guia/" + sinArchivo.join(".jpg, img/guia/") + ".jpg — corre node herramientas/guia-capturas.js");
+
+  /* Y al revés: una captura que ya no usa ningún apartado es peso muerto en el
+     repositorio y nadie la vuelve a mirar, así que tampoco se entera de que se
+     quedó vieja. */
+  const enDisco = fs.existsSync(path.join(RAIZ, "img/guia"))
+    ? fs.readdirSync(path.join(RAIZ, "img/guia")).filter((f) => f.endsWith(".jpg")).map((f) => f.slice(0, -4))
+    : [];
+  const usadas = new Set(declaradas.map((l) => l.captura));
+  const sobran = enDisco.filter((slug) => !usadas.has(slug));
+  comprobar(sobran.length === 0, "no sobra ninguna captura en img/guia/", sobran.join(", "));
+
+  /* Una captura declarada que no se pinta no da ningún error: la diapositiva
+     simplemente no está y el apartado se queda contando una pantalla que nadie
+     ve. Se cuentan las que de verdad quedaron en el documento. */
+  const pantallas = await pPres.evaluate(() =>
+    [...document.querySelectorAll(".diapo.pantalla")].map((d) => ({
+      titulo: (d.querySelector("h2") || {}).textContent || "",
+      alt: (d.querySelector("img") || {}).alt || "",
+      src: ((d.querySelector("img") || {}).getAttribute ? d.querySelector("img").getAttribute("src") : "") || "",
+    })));
+  comprobar(pantallas.length === declaradas.length - sinArchivo.length,
+    `hay una diapositiva de pantalla por cada captura (${pantallas.length})`,
+    `esperaba ${declaradas.length - sinArchivo.length}`);
+
+  comprobar(pantallas.every((p) => p.alt && p.alt.length > 10),
+    "cada captura lleva su texto alternativo",
+    pantallas.filter((p) => !p.alt || p.alt.length <= 10).map((p) => p.titulo).join(" · "));
+
+  comprobar(pantallas.every((p) => p.src.startsWith("data:image/jpeg")),
+    "las capturas van incrustadas y no enlazadas (la maqueta se imprime desde /tmp)");
+
+  /* Que la imagen quepa en su diapositiva se MIDE, no se deduce del CSS: una
+     captura que se sale por abajo se imprime cortada y se ve perfecta en el
+     código. */
+  const capturasQueSeSalen = await pPres.evaluate(() =>
+    [...document.querySelectorAll(".diapo.pantalla")].filter((d) => {
+      const img = d.querySelector("img");
+      if (!img) return false;
+      const caja = d.getBoundingClientRect(), foto = img.getBoundingClientRect();
+      return foto.bottom > caja.bottom + 1 || foto.right > caja.right + 1 || foto.height < 50;
+    }).map((d) => (d.querySelector("h2") || {}).textContent));
+  comprobar(capturasQueSeSalen.length === 0,
+    "ninguna captura se sale de su diapositiva ni queda aplastada",
+    capturasQueSeSalen.join(" · "));
 
   /* El fondo de la portada tiene que pintarse de verdad: si se imprimiera sin
      `printBackground`, o si la clase no existiera, la portada saldría en
@@ -102,6 +163,12 @@ function comprobar(bien, que, detalle) {
   comprobar(indiceMan.length === guia.CAPITULOS.length,
     `el índice del manual nombra los ${guia.CAPITULOS.length} capítulos`,
     `nombra ${indiceMan.length}`);
+
+  const figuras = await pMan.evaluate(() => document.querySelectorAll("figure.pantalla img").length);
+  const cuantasCapturas = guia.CAPITULOS.flatMap((c) => c.laminas).filter((l) => l.captura).length;
+  comprobar(figuras === cuantasCapturas,
+    `el manual enseña las mismas ${cuantasCapturas} pantallas que la presentación`,
+    `enseña ${figuras}`);
 
   /* ------------------------------------------------- la versión accesible */
   console.log("\nLa versión accesible");
