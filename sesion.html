@@ -425,19 +425,33 @@
                 </div>
 
                 <aside class="space-y-4">
-                    <!-- Acciones rápidas del profesor: fila compacta, siempre visible sin
-                         importar qué pestaña esté abierta abajo (evita tener que cambiar de
-                         pestaña para lo que se usa todo el tiempo durante la clase). -->
-                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
-                        <div class="flex flex-wrap gap-1.5">
-                            <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
-                            <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
-                            <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
-                            <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
-                            <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
-                            <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
-                            <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
-                            <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
+                    <!-- Las ocho acciones rápidas estaban en una sola rejilla sin ningún
+                         criterio, y el panel de abajo tenía que explicar con un párrafo dónde
+                         encontrarlas. Van en DOS grupos con su rótulo, y el rótulo no describe
+                         la herramienta sino QUIÉN LO VE — que es la línea de toda la clase en
+                         vivo y lo único que de verdad hay que entender acá: los cuatro de arriba
+                         abren un panel que es solo del profesor (de ahí se manda al tablero lo
+                         que él elija); los cuatro de abajo tocan el tablero que está viendo la
+                         clase entera. Sin ese rótulo son ocho botones iguales y ninguna pista de
+                         cuál se puede apretar con la clase mirando. -->
+                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 space-y-3">
+                        <div>
+                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">Tu material — solo lo ves tú</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
+                                <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
+                                <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
+                                <button id="toggle-free-mode-btn" type="button" title="Armar una posición a mano, o cargarla desde un FEN o un PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Armar posición</button>
+                            </div>
+                        </div>
+                        <div class="border-t border-brand-100 dark:border-brand-800 pt-3">
+                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
+                                <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
+                                <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
+                                <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
+                            </div>
                         </div>
                     </div>
 
@@ -470,22 +484,30 @@
                     </div>
 
                     <!-- Pestañas del profesor: un solo panel visible a la vez, sin scroll para
-                         cambiar de herramienta. Se recuerda la última pestaña abierta. -->
+                         cambiar de herramienta.
+
+                         VAN EN EL ORDEN DE LA CLASE, que es el orden en que se usan: qué voy a
+                         dar, qué le pongo delante, qué le pido, a quién se lo estoy dando. Antes
+                         abría "Controles" —una pestaña cuyo contenido era un párrafo explicando
+                         dónde estaban los otros botones, más el formulario de invitar a un alumno,
+                         que no es algo que se haga dando clase— y el PLAN, que es justamente lo
+                         que ordena la clase entera, estaba quinto. -->
                     <div id="teacher-tabs-wrap" class="hidden">
                         <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
-                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">🎛️ Controles</button>
+                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Mi plan</button>
+                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
                             <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
                             <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
-                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
-                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Plan</button>
                             <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
+                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">➕ Invitar</button>
                         </div>
 
                         <div id="teacher-panel" data-tab-panel="controles" role="tabpanel" aria-labelledby="teacher-tab-controles" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
-                            <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar) están arriba de las pestañas; "✏️ Editar" abre el editor visual justo debajo del tablero.</p>
-
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
+                            <!-- Acá vivía un párrafo explicando dónde estaban los otros
+                                 botones. Una pantalla que necesita explicarse es una
+                                 pantalla mal ordenada: ahora los botones llevan su rótulo
+                                 y el párrafo sobra. -->
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">➕ Invitar a un alumno</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
                             <form id="create-student-form" class="space-y-3">
                                 <label for="student-name" class="sr-only">Nombre del alumno</label>
@@ -707,7 +729,10 @@
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
-        const TEACHER_TABS = ["controles", "preguntar", "practicar", "tactica", "plan", "alumnos"];
+        /* El orden manda dos cosas: el de los botones de arriba y, sobre todo, CUÁL SE
+           ABRE la primera vez (TEACHER_TABS[0]). Para quien entra por primera vez eso
+           es "Mi plan": lo que va a dar. Después se recuerda la última que usó. */
+        const TEACHER_TABS = ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 

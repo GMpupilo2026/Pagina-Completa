@@ -308,6 +308,51 @@ que traen material a la clase la respetan igual.
   para el resto de la sesión** (sin rey, con peones en la primera o la última
   fila, con el rey que no le toca mover en jaque).
 
+### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
+
+`sesion.html` es la pantalla más cargada del sitio: catorce controles del
+profesor entre la barra de arriba y las pestañas. Estaban puestos sin ningún
+criterio —una rejilla de ocho botones idénticos y seis pestañas en el orden en
+que se fueron escribiendo—, y eso **no da ningún error**: la pantalla se ve
+bien, funciona, y quien la abre por primera vez no sabe por dónde empezar. Para
+un entrenador nuevo, con la clase mirando, ese es el momento exacto en que se
+pierde.
+
+- **Los ocho botones van en dos grupos, y el rótulo dice QUIÉN LO VE**: «Tu
+  material — solo lo ves tú» (Curso, Archivos, PDF, Armar posición) y «El
+  tablero — lo ve toda la clase» (Reiniciar, Flechas, Ocultar, Guardar PGN). No
+  es una agrupación estética: es **la misma línea que ordena toda la clase en
+  vivo** —el material del profesor no es el de la clase— puesta donde de verdad
+  hace falta saberla, que es antes de apretar. Sin ese rótulo son ocho botones
+  iguales y ninguna pista de cuál se puede tocar con la clase delante.
+- **Las pestañas van en el orden de la clase**, que es el orden en que se usan:
+  qué voy a dar (Mi plan) → qué le pongo delante (Táctica) → qué le pido
+  (Preguntar, Practicar) → a quién se lo estoy dando (Alumnos) → y al final lo
+  que no se hace dando clase (Invitar).
+- **La que abre sola la primera vez es «Mi plan»**, o sea `TEACHER_TABS[0]`:
+  es lo único que contesta «¿qué voy a dar?» y estaba quinta. Abría
+  «Controles», cuyo contenido era **un párrafo explicando dónde estaban los
+  otros ocho botones** — una pantalla que necesita explicarse es una pantalla
+  mal ordenada. Ese párrafo se fue con el rótulo que lo reemplaza, y la pestaña
+  quedó en lo único que de verdad hacía: «➕ Invitar».
+- «✏️ Editar» pasó a **«✏️ Armar posición»**: lo que hace no es editar nada que
+  ya exista, es poner una posición en el tablero a mano.
+- Después de la primera vez **se recuerda la última pestaña abierta**, como
+  antes: el orden decide dónde se entra, no dónde se vuelve.
+
+**Al tocar la barra de herramientas o las pestañas, correr `node
+herramientas/verificar-sesion-orden.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Reusa el Supabase de mentira de
+`verificar-clase-registrada.js` —dos copias del mismo doble se irían separando a
+la primera corrección—. Comprueba que los ocho botones estén en sus dos grupos y
+**que no quede ninguno fuera** (un botón suelto es el principio de la rejilla sin
+criterio de antes), que cada rótulo diga quién lo ve, que el orden de las
+pestañas sea el de la clase y que la que abre sola sea «Mi plan», que cada
+pestaña apunte a **su** panel (un `aria-controls` al de al lado manda a quien usa
+lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
+escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
+tú»— y que a la alumna no se le pinte nada de esto.
+
 ### La clase se registra sola, porque el botón vivía en la página que no era
 
 Todo lo que el sitio sabe de una clase —la asistencia, los minutos en clase, el
