@@ -127,7 +127,12 @@ window.__consultas = [];
 
   const TABLAS = {
     profiles: PERFILES,
-    class_sessions: CLASES,
+    /* Una clase EN CURSO es una fila sin ended_at: la página la busca con
+       .is("ended_at", null). Va primera para que el .limit(1) la encuentre. */
+    class_sessions: (DATOS.clase_abierta
+      ? [{ id: "c-viva", created_by: "u-profe", title: "Finales de torre", notes: null,
+           started_at: new Date(Date.now() - 20 * 60000).toISOString(), ended_at: null }]
+      : []).concat(CLASES),
     puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
     training_progress: [],
     tareas: DATOS.tareas || [],
@@ -453,6 +458,19 @@ async function pruebaTareasAlumna(browser) {
 
   // Que la base filtre: pedir las completadas también y descartarlas acá sería
   // bajarse la tabla entera con otro nombre.
+  /* El orden de la página es el de las preguntas que uno se hace al entrar:
+     qué me toca, por dónde iba, cómo voy, y recién entonces a dónde ir. Se
+     comprueba con compareDocumentPosition y no con el CSS: lo que importa es
+     el orden del documento, que es también el que recorre un lector de
+     pantalla. */
+  const orden = await r.page.evaluate(() => {
+    const ids = ["tareas-aviso", "seguir-curso", "progreso-alumno", "tile-grid"];
+    const nodos = ids.map((id) => document.getElementById(id));
+    return nodos.every((n, i) => i === 0
+      || (nodos[i - 1].compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0);
+  });
+  igual("lo que vence va primero, después el progreso y al final los accesos", orden, "true");
+
   const pedido = await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "tareas").pop());
   igual("las pendientes las filtra la BASE, por alumno y por estado",
     [pedido.eq.alumno_id, pedido.eq.estado], ["u-ana", "pendiente"]);
@@ -478,6 +496,56 @@ async function pruebaTareasAlumna(browser) {
     await r.page.evaluate(() => getComputedStyle(document.getElementById("tareas-aviso")).display), "none");
   igual("y sin ningún curso a medias, tampoco «Continúa donde ibas»",
     await r.page.evaluate(() => getComputedStyle(document.getElementById("seguir-curso")).display), "none");
+  await r.ctx.close();
+}
+
+/* La franja de "Estado de la clase" ocupaba el primer lugar de la página para
+   decirle a un alumno fuera del horario —casi siempre— que NO pasa nada, y le
+   empujaba las tareas hacia abajo. Ahora solo sale cuando tiene algo que decir.
+   Las dos mitades de la condición importan: esconderla de más le quitaría a
+   quien da clase el botón de iniciarla. */
+async function pruebaFranjaDeClase(browser) {
+  console.log("\n=== La franja de la clase solo habla cuando tiene algo que decir ===");
+
+  const vista = (page) => page.evaluate(() => {
+    const c = document.getElementById("session-status-card");
+    return {
+      card: getComputedStyle(c).display,
+      abierta: getComputedStyle(document.getElementById("session-status-open")).display,
+      iniciar: getComputedStyle(document.getElementById("start-session-controls")).display,
+      texto: c.textContent.replace(/\s+/g, " ").trim().slice(0, 40),
+    };
+  });
+
+  // Sin clase en curso, a la alumna no se le dice nada.
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+  let v = await vista(r.page);
+  igual("sin clase en curso, a la alumna la franja NO le ocupa el primer lugar", v.card, "none");
+  // Y lo que sí tiene que hacer queda arriba del todo.
+  const primero = await r.page.evaluate(() => {
+    const visible = (el) => el && getComputedStyle(el).display !== "none";
+    const orden = ["session-status-card", "tareas-aviso", "seguir-curso"].map((id) => document.getElementById(id));
+    return orden.filter(visible).map((el) => el.id)[0];
+  });
+  igual("lo primero que ve es su tarea, no un aviso de que no pasa nada", primero, "tareas-aviso");
+  await r.ctx.close();
+
+  // A quien da clase sí: es desde donde la inicia.
+  r = await panel(browser, [PROFE], "u-profe", {}, {
+    rpc: { panel_profesor: [{ alumnos: 3, activos_7d: 3, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 2 }] },
+  });
+  v = await vista(r.page);
+  igual("pero a quien da clase sí se le muestra, aunque no haya clase", v.card !== "none", "true");
+  igual("porque es desde donde la inicia", v.iniciar !== "none", "true");
+  await r.ctx.close();
+
+  // Con clase en curso la ve todo el mundo, alumna incluida.
+  const conClase = datosAlumna(false);
+  conClase.clase_abierta = true;
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, conClase);
+  v = await vista(r.page);
+  igual("y con clase en curso la ve la alumna también", v.card !== "none", "true");
+  igual("con el aviso de que está en curso", v.abierta !== "none", "true");
   await r.ctx.close();
 }
 
@@ -625,6 +693,7 @@ async function pruebaPantalla(browser) {
   try {
     await pruebaAlumna(browser);
     await pruebaTareasAlumna(browser);
+    await pruebaFranjaDeClase(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);

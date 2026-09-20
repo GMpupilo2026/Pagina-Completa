@@ -103,8 +103,14 @@
                 </div>
             </div>
 
-            <!-- ===== Estado de la clase ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+            <!-- ===== Estado de la clase =====
+                 Solo aparece cuando tiene algo que decir: si hay clase en curso
+                 (para todo el mundo) o si quien mira da clase y puede iniciar
+                 una. A un alumno fuera del horario —que es casi siempre— le
+                 ocupaba el lugar más visible de la página para avisarle de que
+                 NO pasa nada, empujando hacia abajo lo que sí tiene que hacer.
+                 El acceso a la sesión en vivo sigue estando en el grid. -->
+            <div id="session-status-card" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <div id="session-status-open" class="hidden">
                     <div class="flex items-center justify-between flex-wrap gap-4">
                         <div class="flex items-center gap-3">
@@ -181,9 +187,12 @@
                 <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
             </a>
 
-            <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
-            <div id="tile-grid" class="space-y-8 mb-10"></div>
-
+            <!-- El resumen va ARRIBA del grid, no al final. Estaba después de las
+                 seis secciones de accesos, o sea que la racha y los números
+                 —que son lo que da ganas de volver— solo los veía quien hacía
+                 scroll hasta el fondo. El orden de la página es el de las
+                 preguntas que uno se hace al entrar: qué me toca, por dónde
+                 iba, cómo voy, y recién entonces a dónde puedo ir. -->
             <!-- ===== Tu progreso (alumno) =====
                  Antes esto eran TRES tarjetas anchas apiladas —récord de racha
                  táctica, racha de días y los tres números de Entrenamiento—,
@@ -265,6 +274,9 @@
                 </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
+
+            <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
+            <div id="tile-grid" class="space-y-8 mb-10"></div>
 
             <!-- ===== Registro de clases =====
                  Con 100 clases una tabla corrida no se puede leer, así que el
@@ -500,6 +512,19 @@
 
             document.getElementById("session-status-open").classList.toggle("hidden", !openSession);
             document.getElementById("session-status-closed").classList.toggle("hidden", !!openSession);
+
+            /* La tarjeta entera solo aparece cuando tiene algo que decir: hay
+               clase en curso —eso lo ve todo el mundo— o quien mira da clase y
+               puede iniciar una. A un alumno fuera del horario, que es casi
+               siempre, le ocupaba el primer lugar de la página para avisarle de
+               que NO pasa nada, empujando hacia abajo sus tareas.
+
+               Se esconde la TARJETA y no solo sus dos mitades: con las dos
+               ocultas quedaba la caja blanca vacía con su relleno, que se lee
+               como algo que no cargó. Es la misma condición que ya decide el
+               botón de iniciar clase, así que no se le esconde a nadie un
+               control que sí podría usar. */
+            document.getElementById("session-status-card").hidden = !openSession && !isTeacher;
 
             if (openSession) {
                 document.getElementById("open-session-title").textContent = openSession.title ? `— ${openSession.title}` : "";
