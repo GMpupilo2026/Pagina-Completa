@@ -2993,6 +2993,32 @@ decir.** Una franja que diga "no tienes tareas" es ruido en todas las visitas
 menos una, y un cartel que se repite deja de leerse — la misma lección que dejó
 el aviso de instalar la app.
 
+### El orden de la página es el de las preguntas que uno se hace al entrar
+
+    qué me toca  →  por dónde iba  →  cómo voy  →  y recién entonces a dónde ir
+
+O sea: tareas, "Continúa donde ibas", "Tu progreso" y después el grid de
+accesos. El resumen estaba **al final**, después de las seis secciones de
+tarjetas: la racha y los números —que son lo que da ganas de volver— solo los
+veía quien hacía scroll hasta el fondo.
+
+- **La franja de "Estado de la clase" solo aparece cuando tiene algo que
+  decir**: si hay clase en curso (eso lo ve todo el mundo) o si quien mira da
+  clase y puede iniciar una. A un alumno fuera del horario —que es casi
+  siempre— le ocupaba el **primer lugar de la página** para avisarle de que NO
+  pasa nada, empujando hacia abajo sus tareas. El acceso a la sesión en vivo
+  sigue estando en el grid, que es donde se busca.
+  - **Se esconde la tarjeta entera** (`#session-status-card`), no solo sus dos
+    mitades: con las dos ocultas quedaba la caja blanca vacía con su relleno,
+    que se lee como algo que no cargó.
+  - **La condición es la misma que ya decide el botón de iniciar clase**, así
+    que no se le esconde a nadie un control que sí podría usar. Esconderla de
+    más le quitaría a quien da clase la única forma de empezarla, y eso no
+    daría ningún error: simplemente no podría.
+- **El orden se comprueba con `compareDocumentPosition`**, no con el CSS: lo
+  que importa es el orden del documento, que es también el que recorre un
+  lector de pantalla.
+
 ### Los tres números de Entrenamiento los contaba el navegador
 
 Es la misma piedra de `informes.html` y de `admin.html`, y estaba acá desde
