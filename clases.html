@@ -337,6 +337,20 @@
             { title: "Clase en vivo", destacado: true, tiles: [
                 { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", href: "sesion.html", primary: true },
             ] },
+            /* "Aprender" va antes que "Jugar y competir": esto es una academia,
+               y lo primero que se ofrece al entrar es lo que se viene a hacer.
+               Jugar sigue estando a un golpe de vista, justo debajo — no se
+               esconde, se ordena. Mover un grupo de lugar es mover su objeto
+               dentro de esta lista y nada más: todo lo que después retoca la
+               grilla (administración, coordinación, el equipo docente) busca su
+               grupo POR NOMBRE, nunca por la posición. */
+            { title: "Aprender", tiles: [
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
+                { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
+                { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
+                { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
+                { emoji: "📋", label: "Tareas", desc: "Asigna material a tus alumnos y revisa lo que te asignaron, con su fecha límite", href: "tareas.html" },
+            ] },
             { title: "Jugar y competir", tiles: [
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
@@ -344,13 +358,6 @@
                 { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", href: "logros.html" },
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
-            ] },
-            { title: "Aprender", tiles: [
-                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
-                { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
-                { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
-                { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
-                { emoji: "📋", label: "Tareas", desc: "Asigna material a tus alumnos y revisa lo que te asignaron, con su fecha límite", href: "tareas.html" },
             ] },
             /* Evaluaciones: lo que MIDE el nivel de quien lo hace, aparte de lo
                que lo enseña. El diagnóstico estaba en Aprender y el de arbitraje
