@@ -60,11 +60,17 @@
                     <p id="archivo-pgn-msg" role="status" aria-live="polite" class="text-xs text-brand-500 dark:text-brand-300 mt-2 min-h-[1em]"></p>
                 </div>
 
+                <div id="archivos-select-all-wrap" class="hidden mb-2">
+                    <button id="archivos-select-all-btn" type="button" class="text-xs font-semibold text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline transition-colors">☑️ Seleccionar todas</button>
+                </div>
+
                 <div id="archivos-bulk-bar" class="hidden flex flex-wrap items-center gap-2 bg-brand-100 dark:bg-brand-800 rounded-lg px-3 py-2 mb-3 text-sm">
                     <span id="archivos-bulk-count" class="font-semibold text-brand-700 dark:text-white"></span>
                     <label for="archivos-bulk-carpeta" class="sr-only">Mover la selección a esta carpeta</label>
                     <select id="archivos-bulk-carpeta" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
                     <button id="archivos-bulk-mover-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Mover selección</button>
+                    <button id="archivos-bulk-descargar-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Descargar selección</button>
+                    <button id="archivos-bulk-eliminar-btn" type="button" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">Eliminar selección</button>
                     <button id="archivos-bulk-cancelar-btn" type="button" class="text-xs text-brand-500 dark:text-brand-300 hover:underline">Cancelar</button>
                 </div>
 
@@ -127,8 +133,12 @@
             document.getElementById("view-modal").classList.remove("hidden");
             if (!viewBoard) viewBoard = new ClasesBoard(document.getElementById("view-board"), { interactive: false });
             const game = new Chess();
-            game.load_pgn(g.pgn);
-            viewBoard.loadMoves(game.history());
+            game.load_pgn(g.pgn, { sloppy: true });
+            // Un ejercicio suelto (como los que trae un PGN de posiciones) arranca de
+            // un FEN propio, no del inicial: sin pasarlo, el tablero repetía las jugadas
+            // desde la posición de siempre y mostraba un ejercicio que no era el que dice.
+            const headers = typeof game.header === "function" ? game.header() : {};
+            viewBoard.loadMoves(game.history(), headers.FEN || null);
         }
         document.getElementById("view-close-btn").addEventListener("click", () => document.getElementById("view-modal").classList.add("hidden"));
 
@@ -211,8 +221,9 @@
 
         // ---------- Carpetas: puro texto (como profiles.grupo), sin tabla aparte ----------
         // Ordenan la lista cuando ya hay muchos PGN subidos; no cambian ningún permiso.
-        let archivosSeleccionados = new Set(); // ids marcados para mover en lote
+        let archivosSeleccionados = new Set(); // ids marcados para mover, descargar o borrar en lote
         let archivosCarpetasConocidas = []; // nombres ya usados, para los selectores y el datalist
+        let ultimosArchivosCargados = []; // última lista traída, para "Seleccionar todas" y armar la descarga en lote
 
         function nombresDeCarpetas(archivos) {
             return [...new Set(archivos.map((a) => a.carpeta).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
@@ -237,6 +248,25 @@
             const { error } = await sb.from("archivos_pgn").update({ carpeta: carpeta || null }).in("id", ids);
             if (error) { alert("No se pudo mover: " + error.message); return false; }
             return true;
+        }
+
+        // Un solo archivo .pgn con todas las partidas elegidas, para bajarlas de una
+        // sola vez en vez de un clic por cada una.
+        function descargarSeleccionArchivos() {
+            const elegidos = ultimosArchivosCargados.filter((a) => archivosSeleccionados.has(a.id));
+            if (!elegidos.length) return;
+            const texto = elegidos.map((a) => a.pgn.trim()).join("\n\n");
+            downloadText("archivos-pgn-" + new Date().toISOString().slice(0, 10) + ".pgn", texto);
+        }
+
+        async function eliminarSeleccionArchivos() {
+            const ids = [...archivosSeleccionados];
+            if (!ids.length) return;
+            if (!confirm(ids.length === 1 ? "¿Eliminar este PGN?" : "¿Eliminar estos " + ids.length + " PGN?")) return;
+            const { error } = await sb.from("archivos_pgn").delete().in("id", ids);
+            if (error) { alert("No se pudo eliminar: " + error.message); return; }
+            archivosSeleccionados.clear();
+            await loadArchivos();
         }
 
         function actualizarBarraSeleccion() {
@@ -374,6 +404,8 @@
             const datalist = document.getElementById("archivo-carpetas-datalist");
             datalist.innerHTML = "";
             archivosCarpetasConocidas.forEach((n) => { const opt = document.createElement("option"); opt.value = n; datalist.appendChild(opt); });
+            ultimosArchivosCargados = archivos;
+            document.getElementById("archivos-select-all-wrap").classList.toggle("hidden", archivos.length === 0);
             renderArchivos(archivos);
             actualizarBarraSeleccion();
         }
@@ -396,9 +428,22 @@
             const ok = await moverArchivos(ids, destino);
             if (ok) { archivosSeleccionados.clear(); await loadArchivos(); }
         });
+        document.getElementById("archivos-bulk-descargar-btn").addEventListener("click", () => {
+            descargarSeleccionArchivos();
+        });
+        document.getElementById("archivos-bulk-eliminar-btn").addEventListener("click", async () => {
+            await eliminarSeleccionArchivos();
+        });
         document.getElementById("archivos-bulk-cancelar-btn").addEventListener("click", async () => {
             archivosSeleccionados.clear();
             await loadArchivos();
+        });
+        document.getElementById("archivos-select-all-btn").addEventListener("click", () => {
+            ultimosArchivosCargados.forEach((a) => {
+                if (isAdmin || a.profesor_id === session.user.id) archivosSeleccionados.add(a.id);
+            });
+            renderArchivos(ultimosArchivosCargados);
+            actualizarBarraSeleccion();
         });
 
         document.getElementById("archivo-pgn-input").addEventListener("change", async (e) => {
