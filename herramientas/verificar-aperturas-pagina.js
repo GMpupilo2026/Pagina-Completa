@@ -31,8 +31,12 @@ window.__guardado = {};
 (function () {
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u-ana" }, access_token: "t" } } }) },
+    /* insert() hace falta desde que la página apunta la línea terminada en
+       training_progress (js/entreno-progress.js): sin él, terminar una línea
+       tiraba un TypeError en la consola y el verificador lo contaba como
+       fallo — un doble incompleto marcando en rojo una página que está bien. */
     from: () => ({ select() { return this; }, eq() { return this; }, in() { return this; },
-                   upsert() { return this; }, maybeSingle() { return this; },
+                   insert() { return this; }, upsert() { return this; }, maybeSingle() { return this; },
                    then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
     rpc: () => ({ then(r) { return Promise.resolve({ data: [], error: null }).then(r); } }),
   };

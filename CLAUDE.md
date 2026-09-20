@@ -1801,7 +1801,7 @@ táctica se apunte como `tactica`.
 
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
-`entreno/aperturas.html` es un banco de 37 líneas —12 celadas y 25 aperturas—
+`entreno/aperturas.html` es un banco de 40 líneas —12 celadas y 28 aperturas—
 que el alumno memoriza **jugándolas en el tablero**: el entrenador mueve por el
 rival y él tiene que dar todas las jugadas de su color, de memoria. Al terminar,
 la línea se programa para más adelante.
@@ -1831,7 +1831,7 @@ la línea se programa para más adelante.
   `js/tiempo-plataforma.js data-activity="aperturas"`.
 - **Al tocar el banco o el SRS, correr `node herramientas/verificar-aperturas.js`**
   (necesita `npm install chess.js@0.10.3`). Comprueba con chess.js que **cada
-  jugada exista de verdad en su posición** —431 jugadas—, que el mate prometido
+  jugada exista de verdad en su posición** —466 jugadas—, que el mate prometido
   sea mate, que los ids no se repitan, que al alumno le toquen al menos tres
   jugadas, y de paso corre las pruebas del algoritmo de repaso. Una jugada mal
   escrita no da error en pantalla: el alumno no puede terminar la línea nunca y
@@ -1866,9 +1866,9 @@ se resuelven una a una, esto se lee de punta a punta cuando se quiera— y como
 acceso propio se puede asignar en Tareas (`js/material-plataforma.js`) sin
 mandar a media página de Aprende a buscarlo.
 
-**Muestra las 12 FICHAS de categoría "apertura" o "defensa"** de
-`js/fichas-estudio.js` (ver "Fichas" más abajo) —las mismas 12 de las 28 que
-tiene `entreno/fichas.html`—, **todas juntas en una sola lista**, agrupadas en
+**Muestra las FICHAS de categoría "apertura" o "defensa"** de
+`js/fichas-estudio.js` (ver "Fichas" más abajo) —24 de las 56 que tiene
+`entreno/fichas.html`—, **todas juntas en una sola lista**, agrupadas en
 dos secciones con su propio `<h2>` ("Aperturas", "Defensas") para poder saltar
 de una a otra con lector de pantalla.
 
@@ -1878,11 +1878,10 @@ de una a otra con lector de pantalla.
   de tipo "apertura" del banco (las 12 celadas quedaban fuera). Se reemplazó
   por las fichas de verdad, que traen mucho más —planes, ideas tácticas,
   medio juego y final, con su mapa— y de paso se quitaron las pestañas: eran
-  un paso de más para elegir entre 12 fichas en total. La lista bajó de 25 a
-  12 porque no todas las líneas tienen su ficha todavía: de las 25 de tipo
-  "apertura", 12 tienen ficha de categoría "apertura" o "defensa" (las que
-  se ven acá); las demás se siguen memorizando en `entreno/aperturas.html`,
-  simplemente sin una ficha propia que leer.
+  un paso de más. No todas las líneas del banco tienen su ficha: de las 28 de
+  tipo "apertura", 24 tienen ficha de categoría "apertura" o "defensa" (las
+  que se ven acá); las demás se siguen memorizando en
+  `entreno/aperturas.html`, simplemente sin una ficha propia que leer.
 - **Una familia con líneas de los dos colores queda junta, bajo un solo
   grupo.** La Defensa siciliana tiene tanto "Siciliana cerrada" (ficha de
   categoría "apertura": la juegan las blancas) como respuestas con negras
@@ -1896,11 +1895,11 @@ de una a otra con lector de pantalla.
   separando de la primera a la primera corrección. Ver "Fichas" para el
   detalle de qué hace ese módulo.
 - **No es un ejercicio, es un libro: por eso no hay bloqueo ni "resuelto".**
-  Las 12 están abiertas de entrada, porque no hay nada que "resolver" — se
+  Están todas abiertas de entrada, porque no hay nada que "resolver" — se
   lee, con un tablero que solo recorre la línea (⏮ ◀ ▶ ⏭ o saltando a una
   jugada de la lista con un clic), no que reciba jugadas.
 - **El botón "🎯 Practicarla en el tablero" manda directo a esa línea**, con
-  `aperturas.html?linea=<id>` — las 12 fichas de acá siempre tienen su
+  `aperturas.html?linea=<id>` — las fichas de acá siempre tienen su
   `lineaId` (a diferencia de las de táctica y conceptos, que pueden partir de
   una FEN de estudio sin línea), así que el botón siempre aparece.
 - **No lleva marca de progreso ni clave en `js/progreso-usuario.js` a
@@ -1915,7 +1914,7 @@ de una a otra con lector de pantalla.
 - **Al tocar esto, correr `node herramientas/verificar-estudio.js`** (con el
   sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
   Comprueba en un navegador de verdad que no queda ninguna pestaña ni
-  buscador, que se ven las 12 fichas juntas agrupadas en sus dos `<h2>`, que
+  buscador, que se ven todas juntas agrupadas en sus dos `<h2>`, que
   una familia con líneas de los dos colores queda bien repartida entre las
   dos secciones, que el mapa y el tablero de una ficha dibujan de verdad lo
   que prometen, que el botón de practicar lleva a la línea correcta, y que la
@@ -1930,8 +1929,8 @@ de una a otra con lector de pantalla.
 ## Fichas: una pantalla por idea, con su mapa y su posición
 
 `entreno/fichas.html` (tarjeta **"🗂️ Fichas"** en `clases.html` → grupo
-"Aprender", al lado de Estudio) son 28 fichas de estudio: 6 aperturas, 6
-defensas, 8 temas tácticos y 8 conceptos. Cada una es **una sola pantalla**: la
+"Aprender", al lado de Estudio) son 56 fichas de estudio: 12 aperturas, 12
+defensas, 16 temas tácticos y 16 conceptos. Cada una es **una sola pantalla**: la
 idea principal arriba, cuatro bloques alrededor de un nodo con la pieza, y
 abajo la posición que lo explica, recorrible jugada por jugada.
 
@@ -2011,11 +2010,47 @@ descubierta»** y el de la enfilada, **«Ataque por rayos X»**. Mandar a un alu
 a un tema que no está no da ningún error: lo busca, no lo encuentra y se queda
 pensando que se equivocó él.
 
+### La segunda tanda: de 28 a 56 fichas
+
+Se duplicaron las cuatro pestañas (12 aperturas, 12 defensas, 16 temas tácticos
+y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
+
+- **Tres aperturas nuevas entraron ANTES al banco de líneas.** La vienesa, el
+  gambito Evans y el ataque indio de rey no estaban en
+  `js/aperturas-lineas.js`, así que sus fichas nacieron con `jugadas` propias
+  — y eso las dejaba sin el botón de practicar, que solo sale cuando la línea
+  existe allá. En vez de dejar el botón afuera, las tres líneas se sumaron al
+  banco (40 líneas ahora) y las fichas las leen de ahí: una sola fuente, y de
+  paso tres líneas más para memorizar jugando. **Toda ficha de apertura o
+  defensa tiene su `lineaId`**; las de táctica y conceptos pueden partir de
+  una FEN de estudio.
+- **El verificador volvió a atajar tres posiciones mal armadas**, las tres
+  invisibles en pantalla:
+  - el jaque doble salía con `Ch6+`… y desde g5 **un caballo no llega a h6**;
+  - en la pieza atrapada, el alfil se comía el peón que venía a encerrarlo,
+    porque ese peón no estaba defendido;
+  - y el zugzwang no era zugzwang: al rey le quedaba una casilla de espera,
+    así que mover no le costaba nada.
+- **Los predicados nuevos de `comprueba`** siguen la misma idea —el motivo se
+  juega, no se declara—: `materialGanado` (la combinación TERMINA con el
+  material prometido), `defiendeDos` (la sobrecarga: esa pieza defiende de
+  verdad las dos casillas), `dobleJaque` (al rival no le queda otra que mover
+  el rey), `bateria`, `atrapada` (todas sus salidas la dejan donde la comen),
+  `repeticion` (el perpetuo repite tres veces), `zugzwang` (no está en jaque,
+  el rival no tiene ninguna captura y CUALQUIER jugada le regala una),
+  `oposicion`, `torreDetras`, `cuadrado` (la cuenta de la regla, con el salto
+  doble incluido), `alfilMalo`, `aislado`, `ahogado` y `peonesEn`.
+- De paso, `herramientas/verificar-aperturas-pagina.js` tenía su doble de
+  Supabase sin `insert()`: desde que esa página apunta la línea terminada en
+  `training_progress`, terminar una línea tiraba un TypeError en la consola y
+  el verificador lo contaba como fallo. Era el doble el que estaba incompleto,
+  no la página.
+
 ### Lo demás que hace la página
 
 - **Buscar manda sobre la pestaña abierta y mira las cuatro**, sin tildes
-  ("peon pasado" encuentra las siete fichas que hablan de él, sean de la
-  categoría que sean). Es la misma decisión que la lista de cuentas de
+  ("peon pasado" encuentra todas las que hablan de él, sean de la categoría
+  que sean). Es la misma decisión que la lista de cuentas de
   `admin.html`.
 - **Cada ficha tiene su enlace** (`fichas.html?ficha=<id>`), para mandarla por
   WhatsApp. Un id que ya no existe cae a la lista, no a una ficha en blanco.

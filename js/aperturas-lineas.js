@@ -374,6 +374,33 @@
       idea: "Es una siciliana con los colores cambiados, y con un tiempo de más.",
       clave: "Se juega el centro desde los flancos: el alfil de g2 va a mirar toda la diagonal larga.",
     },
+    {
+      id: "vienesa",
+      nombre: "Apertura vienesa con f4",
+      apertura: "Apertura vienesa",
+      tipo: "apertura", color: "w", nivel: 2,
+      jugadas: ["e4", "e5", "Nc3", "Nf6", "f4", "d5", "fxe5", "Nxe4", "Nf3", "Be7", "d3"],
+      idea: "Es el gambito de rey con el caballo ya puesto en c3: el mismo ataque con una pieza más lista.",
+      clave: "d3 echa al caballo de e4; hasta que no salga de ahí, el centro no es de nadie.",
+    },
+    {
+      id: "gambito-evans",
+      nombre: "Gambito Evans",
+      apertura: "Apertura italiana",
+      tipo: "apertura", color: "w", nivel: 3,
+      jugadas: ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "b4", "Bxb4", "c3", "Ba5", "d4"],
+      idea: "Un peón de flanco a cambio de dos tiempos: c3 y d4 arman el centro grande de una.",
+      clave: "No se juega por el peón: se juega por el tiempo. Si el ataque se apaga, el final está perdido.",
+    },
+    {
+      id: "ataque-indio-de-rey",
+      nombre: "Ataque indio de rey",
+      apertura: "Ataque indio de rey",
+      tipo: "apertura", color: "w", nivel: 2,
+      jugadas: ["Nf3", "d5", "g3", "Nf6", "Bg2", "e6", "O-O", "Be7", "d3", "O-O", "Nbd2", "c5", "e4"],
+      idea: "La misma formación contra casi cualquier respuesta: Cf3, g3, Ag2, enroque, d3, Cbd2 y e4.",
+      clave: "Después de e4 viene e5, y todas las piezas van al rey. Es un plan, no una variante.",
+    },
   ];
 
   // Cuántas jugadas tiene que dar el alumno en una línea.
