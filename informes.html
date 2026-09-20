@@ -137,6 +137,16 @@
                 <div id="diagnostico-body"></div>
             </div>
 
+            <!-- Reenviar el enlace para crear o cambiar la contraseña. Solo para quien
+                 coordina o administra (se muestra u oculta desde el script, según
+                 profile.es_coordinador/is_admin) y solo mirando a UN alumno: es de él. -->
+            <div id="acceso-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🔑 Acceso a la cuenta</h2>
+                <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+                <button type="button" id="acceso-reenviar" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-200 dark:hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Reenviar enlace para restablecer la contraseña</button>
+                <p id="acceso-msg" class="text-sm mt-3" aria-live="polite"></p>
+            </div>
+
             <!-- A quién de la casa se le manda el informe de este alumno y cada cuánto.
                  Solo aparece mirando a UN alumno: es de él. -->
             <div id="encargados-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -606,6 +616,7 @@
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
+            document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
@@ -738,6 +749,7 @@
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
+            renderAcceso(studentId, name);
             renderNotas(studentId);
             renderEncargados(studentId, name);
 
@@ -919,6 +931,71 @@
                 cuerpo.insertBefore(aviso, grid);
             }
             document.getElementById("deberes-report").classList.remove("hidden");
+        }
+
+        /* ---------------- Acceso a la cuenta ----------------
+           Reenviar a UN alumno el enlace para crear o cambiar su contraseña,
+           a pedido de quien coordina o administra — no del propio alumno, que
+           ya tiene su "¿Olvidaste tu contraseña?" en login.html. Existe para
+           cuando una familia dice que el correo de bienvenida nunca llegó o
+           que ya no encuentra la contraseña: sin esto, la única salida era
+           pedirle a alguien de sistemas que la reseteara a mano.
+
+           La Edge Function reenviar-acceso decide a quién se le puede mandar
+           (soy_coordinador() y que ese alumno sea suyo) y a dónde sale el
+           correo (correo_de_contacto(), la misma regla que usan los informes
+           a la casa): acá solo se pinta el botón y se dice qué contestó. */
+        const FUNCION_ACCESO = `${window.SUPABASE_URL}/functions/v1/reenviar-acceso`;
+
+        function esCoordinadorOAdmin() {
+            return !!(profile && (profile.es_coordinador || profile.is_admin));
+        }
+
+        function renderAcceso(studentId, nombreAlumno) {
+            const card = document.getElementById("acceso-report");
+            if (!esCoordinadorOAdmin()) { card.classList.add("hidden"); return; }
+            card.classList.remove("hidden");
+            document.getElementById("acceso-info").textContent =
+                `Por si la familia dice que el correo de bienvenida nunca llegó o que ya no encuentra ` +
+                `la contraseña: le vuelve a mandar el enlace para crear una nueva.`;
+
+            const btn = document.getElementById("acceso-reenviar");
+            const msg = document.getElementById("acceso-msg");
+            msg.textContent = "";
+            btn.disabled = false;
+            btn.textContent = "Reenviar enlace para restablecer la contraseña";
+            btn.onclick = async () => {
+                if (!confirm(`¿Mandarle a ${nombreAlumno} un enlace nuevo para restablecer su contraseña?`)) return;
+                btn.disabled = true;
+                btn.textContent = "Enviando…";
+                msg.textContent = "";
+                try {
+                    // El token se pide fresco, no del `session` guardado al cargar la
+                    // página: ese es una foto de un solo momento y el access_token
+                    // expira. Misma razón que llamarInformes() más abajo.
+                    const { data: fresca } = await sb.auth.getSession();
+                    if (!fresca.session) { window.location.href = "login.html"; return; }
+                    const res = await fetch(FUNCION_ACCESO, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${fresca.session.access_token}`,
+                            "apikey": window.SUPABASE_ANON_KEY,
+                        },
+                        body: JSON.stringify({ alumno_id: studentId }),
+                    });
+                    const r = await res.json().catch(() => ({}));
+                    if (!res.ok || r.error) throw new Error(r.error || "No se pudo enviar");
+                    msg.textContent = `Enviado a ${r.correo_destino}.`;
+                    msg.className = "text-sm mt-3 text-green-700 dark:text-green-400";
+                } catch (err) {
+                    msg.textContent = err.message;
+                    msg.className = "text-sm mt-3 text-red-600 dark:text-red-400";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Reenviar enlace para restablecer la contraseña";
+                }
+            };
         }
 
         /* ---------------- Informes a la casa ----------------
