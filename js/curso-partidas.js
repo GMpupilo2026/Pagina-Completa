@@ -153,6 +153,13 @@
     return { enable(v) { enabled = v; sel = null; pendingPromo = null; promoEl.hidden = true; }, get sel() { return sel; } };
   }
 
+  /* La posición que el visor tiene AHORA en pantalla, publicada en el propio
+     elemento — igual que en js/finales-100.js, y por la misma razón: sesion.html
+     le pone a cada partida y a cada ejercicio un botón que transmite al tablero
+     de la clase en vivo lo que el profesor está viendo, que casi nunca es la
+     posición inicial sino la jugada a la que llegó recorriendo la partida. */
+  function publicarFen(el, fen) { el.dataset.fenActual = fen; }
+
   // ---------- 1. partida comentada ----------
   function makeGame(el, g) {
     const moves = g.moves, claves = g.claves || [];
@@ -196,6 +203,7 @@
     }
     function renderView(extra) {
       const fen = fenAt(state.ply);
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last: lastSquares(state.ply), label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);
       plyEl.textContent = state.ply + "/" + moves.length;
@@ -316,6 +324,7 @@
     }
     function renderPractice(txt) {
       const fen = game.fen(), h = game.history({ verbose: true }), lm = h.length ? h[h.length - 1] : null;
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
       movesEl.innerHTML = h.map((m, i) => '<span class="cp-h">' + esSan(m.san) + "</span>").join(" ");
@@ -394,6 +403,7 @@
     function fenAt(p) { return p === 0 ? x.fen : sol[p - 1].fen; }
     function render(extra) {
       const fen = state.solved ? fenAt(state.ply) : (game ? game.fen() : x.fen);
+      publicarFen(el, fen);
       const last = state.solved && state.ply ? [sol[state.ply - 1].uci.slice(0, 2), sol[state.ply - 1].uci.slice(2, 4)] : [];
       boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last, label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);

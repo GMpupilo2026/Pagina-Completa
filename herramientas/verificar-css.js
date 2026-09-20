@@ -53,6 +53,7 @@ const SIN_ESTILO = new Set([
     "example-card", "example-board-wrap",
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
+    "lesson-send-btn",
     "ficha-btn",
     // Clases descriptivas del set SVG de piezas (js/chess-piece-svg.js): vienen
     // en el <g class="white king"> de cada pieza tal como las trae el arte

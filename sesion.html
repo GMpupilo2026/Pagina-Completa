@@ -43,6 +43,7 @@
     <script src="js/adaptive-mode.js"></script>
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
+    <script src="js/article-example-board.js"></script>
     <script src="js/pdf.min.js"></script>
     <script src="js/pdf-diagramas.js"></script>
 
@@ -158,15 +159,17 @@
                         </div>
                     </div>
 
-                    <!-- Elegir un curso para darlo como lección en vivo (solo profesor): se abre con
-                         "📚 Curso" de la barra de abajo. El contenido elegido se muestra a toda la
-                         clase en #class-lesson-panel, más abajo (ver applyShownLesson). -->
+                    <!-- Elegir un curso para tenerlo a mano mientras se da la clase (solo profesor):
+                         se abre con "📚 Curso" de la barra de abajo. La lección elegida se abre SOLO
+                         en la pantalla del profesor, en #class-lesson-panel más abajo (ver
+                         abrirLeccionLocal): lo que la clase recibe son las posiciones que él decide
+                         mandar al tablero, una por una. -->
                     <div id="lesson-picker-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Dar un curso como lección</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Tener un curso a mano</h2>
                             <button type="button" id="lesson-picker-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: se muestra debajo del tablero, igual para ti y para los alumnos conectados.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: la lección se abre debajo del tablero y <strong>solo tú la ves</strong>. Cada posición del curso trae su botón para pasarla al tablero de la clase.</p>
                         <div class="mb-2">
                             <label for="lesson-curso-select" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Curso</label>
                             <select id="lesson-curso-select" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
@@ -177,8 +180,8 @@
                         </div>
                         <p id="lesson-picker-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
                         <div class="flex gap-2">
-                            <button id="lesson-show-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">👁️ Mostrar a la clase</button>
-                            <button id="lesson-hide-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">🙈 Ocultar</button>
+                            <button id="lesson-show-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">📖 Abrir la lección</button>
+                            <button id="lesson-hide-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cerrar</button>
                         </div>
                     </div>
 
@@ -253,14 +256,17 @@
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
 
-                    <!-- Lección de un curso que el profesor eligió mostrar a la clase (ver
-                         #lesson-picker-panel). Visible igual para el profesor y los alumnos: se
-                         sincroniza vía game_state.shown_curso/shown_leccion (ver applyShownLesson). -->
+                    <!-- Lección de un curso que el profesor abrió para darla (ver
+                         #lesson-picker-panel). SOLO la ve él, como el PDF: nunca se sincroniza por
+                         game_state, y el alumno no tiene forma de llegar a ella (ver
+                         abrirLeccionLocal). Lo que la clase recibe son las posiciones sueltas que
+                         el profesor manda al tablero con el botón de cada diagrama. -->
                     <section id="class-lesson-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
-                        <div class="flex items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 id="class-lesson-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Lección</h2>
-                            <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Dejar de mostrar esta lección a la clase">🙈 Ocultar</button>
+                            <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Cerrar la lección">✖ Cerrar</button>
                         </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">🔒 Solo tú ves esta lección — los alumnos siguen viendo únicamente el tablero. Usa el botón <strong>📥 Al tablero de la clase</strong> de cada posición para enseñarles la que estés explicando.</p>
                         <p id="class-lesson-msg" class="text-xs text-brand-450 dark:text-brand-350"></p>
                         <div id="class-lesson-body"></div>
                     </section>
@@ -385,7 +391,7 @@
                             <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
                             <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
                             <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
-                            <button id="toggle-lesson-btn" type="button" title="Mostrar a la clase una lección de cualquier curso, como si la estuvieras dando ahí mismo" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
+                            <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
                             <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
                         </div>
                     </div>
@@ -493,7 +499,7 @@
                              mecanismo de la pestaña Preguntar: transmite la posición y crea la pregunta. -->
                         <div id="tactics-panel" data-tab-panel="tactica" role="tabpanel" aria-labelledby="teacher-tab-tactica" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
-                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad para preguntarle un ejercicio a la clase — la posición se transmite a todos como una pregunta nueva.</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad. Con <strong>Preguntar</strong> el ejercicio se transmite a todos como una pregunta nueva; con <strong>Al tablero</strong>, solo la posición, para explicarla tú.</p>
                             <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
                         </div>
 
@@ -785,7 +791,20 @@
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
-            applyShownLesson(row.shown_curso || null, row.shown_leccion || null);
+            // La lección del curso ya NO viaja por game_state: es del profesor y solo él la
+            // ve (ver abrirLeccionLocal). Lo único que queda por hacer con esas dos columnas
+            // es dejarlas en null la primera vez, para que a nadie que siga con la página
+            // anterior cargada le quede una lección abierta de cuando sí se compartían.
+            if (isTeacher && (row.shown_curso || row.shown_leccion)) limpiarLeccionCompartida();
+        }
+
+        // Se llama como mucho una vez por carga: el update dispara su propio eco de Realtime,
+        // y sin la marca ese eco volvería a entrar aquí con la fila vieja en el camino.
+        let limpiandoLeccionCompartida = false;
+        async function limpiarLeccionCompartida() {
+            if (limpiandoLeccionCompartida) return;
+            limpiandoLeccionCompartida = true;
+            await sb.from("game_state").update({ shown_curso: null, shown_leccion: null }).eq("id", myGameStateId);
         }
 
         function updateAccessForRole() {
@@ -803,11 +822,19 @@
             setStatus(text);
         }
 
-        // ---------- Dar un curso como lección en vivo (solo el profesor lo elige; se ve
-        // igual para el profesor y los alumnos, sincronizado vía game_state.shown_curso/
-        // shown_leccion — ver applyGameStateRow). El contenido en sí no viaja por Supabase:
-        // cada cliente lo pide directo a cursos/protegido/<curso>.html, igual que hace
-        // js/curso-academia.js con el panel de Academia. ----------
+        // ---------- Tener un curso a mano mientras se da la clase (solo el profesor) ----------
+        // La lección se abre SOLO en la pantalla del profesor — es material suyo para dar la
+        // clase, como el PDF, no algo que la clase reciba: el temario entero delante lo
+        // adelanta al alumno y le regala las respuestas de los ejercicios de la lección. Lo
+        // que la clase sí recibe es cada posición que el profesor decide mandarle al tablero
+        // con el botón de su diagrama (ver vigilarPosicionesDeLaLeccion).
+        //
+        // Antes esto se sincronizaba por game_state.shown_curso/shown_leccion y lo veían
+        // todos; esas dos columnas quedaron sin uso (no se borran de la tabla: una columna
+        // de más no molesta a nadie y quitarla obligaría a una migración para nada).
+        //
+        // El contenido no viaja por Supabase: se pide directo a cursos/protegido/<curso>.html,
+        // igual que hace js/curso-academia.js con el panel de Academia. ----------
         const CLASS_LESSON_CATALOG = [
             { slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez" },
             { slug: "aperturas-y-defensas", titulo: "Aperturas y Defensas" },
@@ -821,7 +848,6 @@
             { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
         ];
         const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
-        let lastShownCurso = null, lastShownLeccion = null; // para no volver a pedir lo mismo en cada eco de Realtime
 
         // Un <details> de nivel superior (con su propio <summary>) es una lección; se
         // ignoran los que están anidados dentro de otro <details> (por ejemplo, alguna
@@ -889,26 +915,14 @@
                 document.getElementById("lesson-picker-panel").classList.add("hidden");
             });
 
-            document.getElementById("lesson-show-btn").addEventListener("click", async () => {
+            document.getElementById("lesson-show-btn").addEventListener("click", () => {
                 const slug = cursoSelect.value, n = parseInt(leccionSelect.value, 10);
                 if (!slug || !n) { panelMsg.textContent = "Elige un curso y un tema."; return; }
-                const { error } = await sb.from("game_state").update({
-                    shown_curso: slug, shown_leccion: n,
-                    updated_by: session.user.id, updated_at: new Date().toISOString(),
-                }).eq("id", myGameStateId);
-                if (error) { panelMsg.textContent = "No se pudo mostrar la lección: " + error.message; return; }
                 panelMsg.textContent = "";
+                abrirLeccionLocal(slug, n);
             });
-            document.getElementById("lesson-hide-btn").addEventListener("click", async () => {
-                const { error } = await sb.from("game_state").update({
-                    shown_curso: null, shown_leccion: null,
-                    updated_by: session.user.id, updated_at: new Date().toISOString(),
-                }).eq("id", myGameStateId);
-                if (error) panelMsg.textContent = "No se pudo ocultar la lección: " + error.message;
-            });
-            document.getElementById("class-lesson-hide-btn").addEventListener("click", () => {
-                document.getElementById("lesson-hide-btn").click();
-            });
+            document.getElementById("lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
+            document.getElementById("class-lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
 
             // ---------- Leer un PDF en clase + reconocer sus diagramas (ver js/pdf-diagramas.js) ----------
             // El módulo hace todo el trabajo de PDF/reconocimiento; acá solo se le indica qué
@@ -931,23 +945,31 @@
             }
         }
 
-        // Se llama desde applyGameStateRow cada vez que llega una fila nueva (propia o por
-        // Realtime) — para el profesor y para cada alumno conectado por igual. Compara con
-        // lo último mostrado para no volver a pedir el mismo archivo en cada jugada.
-        async function applyShownLesson(slug, n) {
+        // Abre la lección en la pantalla del profesor y en ninguna otra: no toca Supabase,
+        // así que no hay nada que un alumno pueda recibir. Solo el profesor tiene el botón
+        // que llega hasta aquí, y el panel vive dentro de su columna del tablero.
+        function cerrarLeccionLocal() {
+            if (observadorDeLeccion) { observadorDeLeccion.disconnect(); observadorDeLeccion = null; }
+            const bodyEl = document.getElementById("class-lesson-body");
+            bodyEl.innerHTML = "";
+            delete bodyEl.dataset.course;
+            document.getElementById("class-lesson-msg").textContent = "";
+            document.getElementById("class-lesson-panel").classList.add("hidden");
+        }
+
+        let observadorDeLeccion = null;
+        async function abrirLeccionLocal(slug, n) {
+            if (!isTeacher) return;
+            cerrarLeccionLocal();
             const panel = document.getElementById("class-lesson-panel");
-            if (slug === lastShownCurso && n === lastShownLeccion) return;
-            lastShownCurso = slug; lastShownLeccion = n;
-            if (!slug || !n) { panel.classList.add("hidden"); return; }
             const titleEl = document.getElementById("class-lesson-title");
             const msgEl = document.getElementById("class-lesson-msg");
             const bodyEl = document.getElementById("class-lesson-body");
             const catalogEntry = CLASS_LESSON_CATALOG.find((c) => c.slug === slug);
             panel.classList.remove("hidden");
-            document.getElementById("class-lesson-hide-btn").classList.toggle("hidden", !isTeacher);
+            document.getElementById("class-lesson-hide-btn").classList.remove("hidden");
             titleEl.textContent = "📚 " + (catalogEntry ? catalogEntry.titulo : slug);
             msgEl.textContent = "Cargando…";
-            bodyEl.innerHTML = "";
             try {
                 const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
                 if (!r.ok) throw new Error("no_content");
@@ -963,10 +985,126 @@
                 if (window.Finales100) window.Finales100.init(bodyEl);
                 if (window.CursoPartidas) window.CursoPartidas.init(bodyEl);
                 document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: bodyEl, curso: slug } }));
+                vigilarPosicionesDeLaLeccion(bodyEl);
                 msgEl.textContent = "";
             } catch (e) {
                 msgEl.textContent = "No se pudo cargar esta lección.";
             }
+        }
+
+        // ---------- El botón que lleva una posición del curso al tablero de la clase ----------
+        // Los visores del curso se construyen cuando se ven (los <details> cerrados esperan a
+        // abrirse: el curso tiene más de 300 diagramas y construirlos todos de golpe frenaría
+        // el celular), así que no alcanza con recorrer la lección una vez al inyectarla — el
+        // botón se pone sobre lo que vaya apareciendo. Es el mismo patrón que ya usan
+        // js/coordenadas-tablero.js y js/board-drag.js.
+        //
+        // El FEN NO se vuelve a sacar del archivo de datos: se lee del data-fen-actual que el
+        // propio visor publica (ver publicarFen en js/finales-100.js y js/curso-partidas.js),
+        // que es la posición que el profesor tiene delante — recorriendo la línea casi nunca
+        // está en la primera, y mandar la inicial cuando él está explicando la jugada 12 es
+        // exactamente el fallo que no avisa: se transmite una posición, solo que la que no era.
+        const VISORES_CON_POSICION = ".f100-viewer, .cp-viewer";
+        function ponerBotonDePosicion(visor) {
+            const head = visor.querySelector(".f100-head, .cp-head");
+            if (!head || head.querySelector(".lesson-send-btn")) return;
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "lesson-send-btn text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            btn.textContent = "📥 Al tablero de la clase";
+            btn.title = "Transmitir a todos los alumnos la posición que estás viendo en este diagrama";
+            btn.addEventListener("click", async () => {
+                // El aviso va en el propio panel de la lección y no solo en la franja de
+                // estado de arriba: para llegar a este botón hay que estar con la lección
+                // delante, o sea con la franja fuera de la pantalla. Hay posiciones de curso
+                // que son ilustraciones y no partidas —una tiene un peón y un solo rey— y no
+                // se pueden poner en un tablero en vivo: decir por qué es lo único que evita
+                // que parezca que el botón no hace nada.
+                const leccionMsg = document.getElementById("class-lesson-msg");
+                const fen = visor.dataset.fenActual;
+                leccionMsg.textContent = "";
+                if (!fen) { leccionMsg.textContent = "Este diagrama todavía no tiene una posición que mandar."; return; }
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { leccionMsg.textContent = "No se puede llevar al tablero: " + motivo; return; }
+                const ok = await aplicarPosicionEnClase(fen, "Posición del curso enviada: ya la ven todos los alumnos.");
+                if (ok) { btn.textContent = "✅ Enviada"; setTimeout(() => { btn.textContent = "📥 Al tablero de la clase"; }, 2000); }
+            });
+            head.appendChild(btn);
+        }
+        function vigilarPosicionesDeLaLeccion(bodyEl) {
+            const repasar = () => bodyEl.querySelectorAll(VISORES_CON_POSICION).forEach(ponerBotonDePosicion);
+            repasar();
+            // Recorrer la línea de un diagrama reescribe su tablero entero en cada jugada, o
+            // sea decenas de mutaciones por clic: el repaso se agrupa en un solo cuadro de
+            // animación en vez de correr una vez por mutación.
+            let pendiente = false;
+            observadorDeLeccion = new MutationObserver(() => {
+                if (pendiente) return;
+                pendiente = true;
+                requestAnimationFrame(() => { pendiente = false; repasar(); });
+            });
+            observadorDeLeccion.observe(bodyEl, { childList: true, subtree: true });
+        }
+
+        // ---------- Poner una posición en el tablero de la clase ----------
+        // Tres puertas distintas llegan aquí: "✅ Aplicar posición" del editor, el botón
+        // de cada diagrama del curso que el profesor tiene abierto y el de la vista previa
+        // de Táctica. Las tres tienen que escribir EXACTAMENTE lo mismo — si cada una
+        // armara su propio update, la que se olvidara de limpiar las variantes o de
+        // quitarle el control al alumno dejaría la clase con un resto de la posición
+        // anterior, y eso no da ningún error: simplemente el tablero no se comporta igual
+        // según por dónde entró la posición.
+
+        // chess.js carga sin quejarse posiciones que no pueden existir en una partida real,
+        // y algunas de ellas rompen a Stockfish para el resto de la sesión (ver la nota en
+        // js/shared-engine.js). Devuelve el motivo por el que no se puede transmitir, o
+        // null si la posición está bien.
+        function motivoPosicionInvalida(fen) {
+            const parts = String(fen || "").split(" ");
+            const filas = (parts[0] || "").split("/");
+            if (filas.length !== 8) return "Esa posición no se pudo leer.";
+            // chess.js no exige reyes al cargar un FEN (los acepta igual, sin avisar).
+            if ((parts[0].match(/K/g) || []).length !== 1 || (parts[0].match(/k/g) || []).length !== 1) {
+                return "Debe haber exactamente un rey blanco y un rey negro en el tablero.";
+            }
+            // Un peón en la primera o en la última fila ya habría coronado: imposible en una
+            // partida real, y es justo la posición con la que Stockfish falla con un error de
+            // memoria del que no se recupera solo — a partir de ahí Analizar, Preguntar y
+            // Practicar dejan de responder hasta recargar la página.
+            if (/[pP]/.test(filas[0]) || /[pP]/.test(filas[7])) {
+                return "Posición inválida: no puede haber peones en la primera ni en la última fila.";
+            }
+            // El rey del bando que NO le toca mover no puede estar en jaque (ese bando ya
+            // habría tenido que responder): para el motor esa posición no significa nada, y
+            // analizarla da evaluaciones y jugadas sin sentido.
+            const turnoContrario = parts[1] === "b" ? "w" : "b";
+            const prueba = new Chess(filas.join("/") + " " + turnoContrario + " " + (parts[2] || "-") + " - 0 1");
+            if (prueba.in_check && prueba.in_check()) {
+                return "Posición inválida: el rey que NO le toca mover está en jaque (revisa el turno o quita la pieza que lo ataca).";
+            }
+            return null;
+        }
+
+        async function aplicarPosicionEnClase(fen, aviso) {
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return false; }
+            board.loadMoves([], fen);
+            const { error } = await sb.from("game_state").update({
+                fen, moves: [], start_fen: fen, last_move: null,
+                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo transmitir la posición: " + error.message); return false; }
+            await clearVariantTree();
+            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
+            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
+            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página, en una
+            // red de aula puede tardar o perderse) y mientras tanto el panel se quedaba
+            // mostrando la evaluación de la posición anterior. El tablero del profesor ya
+            // tiene la posición nueva aplicada localmente, así que se le pide aquí.
+            if (isTeacher) updateEngineEval();
+            if (aviso) setStatus(aviso);
+            return true;
         }
 
         async function pushBoardState(extraFields) {
@@ -1382,42 +1520,12 @@
             parts[3] = "-"; // sin al paso: no tiene sentido conservarlo en una posición armada a mano
             const candidateFen = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
             const msg = document.getElementById("free-mode-load-msg");
-            // chess.js no exige reyes al cargar un FEN (los acepta igual, sin avisar), así que
-            // se valida aparte: sin esto, la paleta permite borrar el único rey sin darse cuenta
-            // y transmitir a toda la clase un tablero roto.
-            const whiteKings = (parts[0].match(/K/g) || []).length;
-            const blackKings = (parts[0].match(/k/g) || []).length;
-            if (whiteKings !== 1 || blackKings !== 1) {
-                msg.textContent = "Debe haber exactamente un rey blanco y un rey negro en el tablero.";
-                return;
-            }
-            // Un peón en la primera o la última fila es imposible en una partida real (ya
-            // habría coronado) — chess.js lo carga sin quejarse, pero se confirmó que
-            // mandarle esa posición a Stockfish lo hace fallar con un error de memoria del
-            // que después no se recupera solo (ver la nota en js/shared-engine.js): a
-            // partir de ahí, Analizar, Preguntar y Practicar dejan de responder para
-            // siempre, hasta recargar la página. Se ataja acá, antes de que la posición
-            // llegue a transmitirse.
-            const boardRanks = parts[0].split("/");
-            if (boardRanks.length === 8 && (/[pP]/.test(boardRanks[0]) || /[pP]/.test(boardRanks[7]))) {
-                msg.textContent = "Posición inválida: no puede haber peones en la primera ni en la última fila.";
-                return;
-            }
-            // chess.js tampoco avisa si el rey del bando QUE NO LE TOCA MOVER queda en
-            // jaque — algo imposible en una partida real (ese bando ya habría tenido que
-            // responder antes), pero muy fácil de armar sin querer con la paleta (por
-            // ejemplo, dejando una pieza atacando al rey contrario y eligiendo el turno
-            // equivocado). El motor no está preparado para una posición así: analizarla da
-            // evaluaciones y jugadas sin sentido, porque para Stockfish esa "jugada
-            // pendiente de responder" ya se considera imposible. En vez de dejar que eso
-            // pase en silencio, se valida acá.
-            const oppositeTurn = editTurn === "w" ? "b" : "w";
-            const oppositeCheckFen = parts[0] + " " + oppositeTurn + " " + parts[2] + " " + parts[3] + " 0 1";
-            const oppositeCheckGame = new Chess(oppositeCheckFen);
-            if (oppositeCheckGame.in_check && oppositeCheckGame.in_check()) {
-                msg.textContent = "Posición inválida: el rey que NO le toca mover está en jaque (revisa el turno o quita la pieza que lo ataca).";
-                return;
-            }
+            // Las tres posiciones imposibles que chess.js carga igual, sin avisar, y que aquí
+            // son fáciles de armar sin querer con la paleta — sin rey, con peones coronados
+            // en la última fila, o con el rey que no le toca mover en jaque: se responden en
+            // el propio panel del editor, que es donde está mirando quien las armó.
+            const motivo = motivoPosicionInvalida(candidateFen);
+            if (motivo) { msg.textContent = motivo; return; }
             if (!board.loadFreeModeFen(candidateFen)) {
                 msg.textContent = "Esa posición no es válida (revisa que haya un solo rey de cada color, por ejemplo).";
                 return;
@@ -1429,22 +1537,7 @@
             document.getElementById("board-edit-panel").classList.add("hidden");
             document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
             document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
-            const { error: applyError } = await sb.from("game_state").update({
-                fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
-                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
-                updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", myGameStateId);
-            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir la posición: " + applyError.message); return; }
-            await clearVariantTree();
-            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
-            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
-            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página,
-            // en una red de aula puede tardar o perderse) y mientras tanto el panel se
-            // quedaba mostrando la evaluación de la posición anterior. El tablero del
-            // profesor ya tiene la posición nueva aplicada localmente, así que se le pide
-            // la evaluación directamente aquí.
-            if (isTeacher) updateEngineEval();
-            setStatus("Posición aplicada: ya se transmitió a todos los alumnos.");
+            await aplicarPosicionEnClase(finalFen, "Posición aplicada: ya se transmitió a todos los alumnos.");
         });
 
         document.getElementById("free-mode-cancel-btn").addEventListener("click", async () => {
@@ -2306,29 +2399,45 @@
                     label.className = "text-sm text-brand-700 dark:text-brand-200";
                     label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
                     const actions = document.createElement("div");
-                    actions.className = "flex items-center gap-1.5 shrink-0";
+                    actions.className = "flex items-center justify-end flex-wrap gap-1.5 shrink-0";
                     const previewBtn = document.createElement("button");
                     previewBtn.type = "button";
                     previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
                     previewBtn.textContent = "👁 Vista previa";
+                    // "Al tablero" transmite SOLO la posición, sin abrir ninguna pregunta: es para
+                    // explicar el ejercicio en el tablero de todos, que no es lo mismo que
+                    // ponérselo a resolver. Con un solo botón había que preguntar para poder
+                    // enseñarlo, y entonces el alumno ya está contestando mientras se explica.
+                    const sendBtn = document.createElement("button");
+                    sendBtn.type = "button";
+                    sendBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+                    sendBtn.textContent = "📥 Al tablero";
+                    sendBtn.title = "Poner esta posición en el tablero de la clase, sin preguntar nada";
                     const askBtn = document.createElement("button");
                     askBtn.type = "button";
                     askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
                     askBtn.textContent = "❓ Preguntar";
-                    actions.append(previewBtn, askBtn);
+                    actions.append(previewBtn, sendBtn, askBtn);
                     row.append(label, actions);
                     li.appendChild(row);
                     const previewWrap = document.createElement("div");
-                    previewWrap.className = "hidden mt-2 max-w-[180px]";
+                    previewWrap.className = "hidden mt-2";
                     li.appendChild(previewWrap);
                     previewBtn.addEventListener("click", () => {
                         const opening = previewWrap.classList.contains("hidden");
                         previewWrap.classList.toggle("hidden");
                         previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
+                        // El tablero se dibuja con el recuadro YA destapado: el tamaño de la
+                        // pieza se mide sobre la casilla renderizada, y dentro de algo oculto
+                        // esa medida es cero.
                         if (opening && !previewWrap.dataset.rendered) {
                             previewWrap.dataset.rendered = "1";
                             renderTacticsPreviewBoard(previewWrap, ex.fen);
                         }
+                    });
+                    sendBtn.addEventListener("click", async () => {
+                        const ok = await aplicarPosicionEnClase(ex.fen, "Posición del ejercicio enviada: ya la ven todos los alumnos.");
+                        if (ok) { sendBtn.textContent = "✅ Enviada"; setTimeout(() => { sendBtn.textContent = "📥 Al tablero"; }, 2000); }
                     });
                     askBtn.addEventListener("click", () => askTacticsExercise(ex));
                     list.appendChild(li);
@@ -2338,35 +2447,29 @@
             }
         }
 
-        // Mini-tablero estático de solo lectura para la vista previa (mismas clases .example-*
-        // que ya usan los diagramas de ejemplo de los artículos, para que se vea igual en todo
-        // el sitio — ver js/article-example-board.js).
-        const TACTICS_GLYPH = { p: { w: "♙", b: "♟" }, n: { w: "♘", b: "♞" }, b: { w: "♗", b: "♝" }, r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" } };
+        // Mini-tablero de solo lectura para la vista previa. Lo dibuja el MISMO diagrama de
+        // ejemplo que usan los artículos (js/article-example-board.js): acá estaba copiado, y
+        // la copia ya se había separado del original por donde se separan siempre — dibujaba
+        // las piezas con el font-size fijo de 24px del CSS, pensado para un tablero grande,
+        // dentro de casillas de 22px, así que la pieza se salía de su casilla y el tablero
+        // "no se veía bien"; y no entendía el juego de piezas ilustrado, así que a quien lo
+        // tuviera elegido le salían aquí las de texto. El original mide la casilla ya
+        // renderizada y ajusta la pieza a ella, de modo que se ve igual a cualquier ancho.
         function renderTacticsPreviewBoard(container, fen) {
-            let previewGame;
-            try { previewGame = new Chess(fen); } catch (e) { container.textContent = "No se pudo mostrar la posición."; return; }
-            const boardEl = document.createElement("div");
-            boardEl.className = "example-board";
-            const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-            for (let rank = 8; rank >= 1; rank--) {
-                for (let f = 0; f < 8; f++) {
-                    const square = FILES[f] + rank;
-                    const light = (f + (rank - 1)) % 2 === 1; // h1 debe quedar clara, ver article-example-board.js
-                    const sq = document.createElement("div");
-                    sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
-                    const piece = previewGame.get(square);
-                    if (piece) {
-                        const span = document.createElement("span");
-                        span.className = piece.color === "w" ? "piece-white" : "piece-black";
-                        span.setAttribute("aria-hidden", "true");
-                        span.textContent = TACTICS_GLYPH[piece.type][piece.color];
-                        sq.appendChild(span);
-                    }
-                    boardEl.appendChild(sq);
-                }
-            }
             container.innerHTML = "";
+            let previewGame;
+            try { previewGame = new Chess(fen); } catch (e) { previewGame = null; }
+            if (!previewGame || !window.ExampleBoard) { container.textContent = "No se pudo mostrar la posición."; return; }
+            const boardEl = document.createElement("div");
+            boardEl.className = "example-board max-w-[260px]";
             container.appendChild(boardEl);
+            window.ExampleBoard.render(boardEl, previewGame);
+            // De quién es la jugada: sin esto hay que deducirlo de la posición, y el ejercicio
+            // no se entiende hasta que ya se mandó a la clase.
+            const turno = document.createElement("p");
+            turno.className = "text-xs text-brand-450 dark:text-brand-350 mt-2 max-w-[260px] text-center";
+            turno.textContent = previewGame.turn() === "w" ? "Juegan blancas" : "Juegan negras";
+            container.appendChild(turno);
         }
 
         // Transmite la posición del ejercicio elegido a toda la clase y la pregunta de
@@ -2378,19 +2481,11 @@
         async function askTacticsExercise(ex) {
             const fen = ex.fen;
             const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
-            board.loadMoves([], fen);
-            const { error: applyError } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null,
-                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
-                updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", myGameStateId);
-            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir el ejercicio: " + applyError.message); return; }
-            await clearVariantTree();
+            if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = expectedPlies;
             await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
             const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
-            if (isTeacher) updateEngineEval();
             activateTeacherTab("preguntar");
             setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
             computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta

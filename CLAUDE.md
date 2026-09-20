@@ -262,6 +262,81 @@ Dos cosas que se quitaron de los cursos, por razones distintas:
   lección de verdad. **Las portadas públicas de `cursos/` lo conservan**: ahí el
   temario es lo único que hay, y es lo que se mira antes de inscribirse.
 
+## La clase en vivo: el material del profesor no es el de la clase
+
+En `sesion.html` el profesor tiene delante cosas que la clase NO ve —el PDF que
+está leyendo, la lección del curso que está dando— y una sola cosa que la clase
+sí recibe: **la posición del tablero**. Esa es la línea, y las dos herramientas
+que traen material a la clase la respetan igual.
+
+- **La lección del curso es suya, no de la clase.** "📚 Curso" abre una lección
+  de `cursos/protegido/<curso>.html` debajo del tablero **solo en su pantalla**
+  (`abrirLeccionLocal`), como el PDF. Antes se sincronizaba por
+  `game_state.shown_curso`/`shown_leccion` y la veían todos: el alumno tenía
+  delante el temario entero de la lección, **con las respuestas de sus
+  ejercicios**, mientras el profesor apenas iba por el primer diagrama. Las dos
+  columnas quedaron **sin uso** (no se borraron de la tabla: quitarlas obligaría
+  a una migración para nada) y lo único que se sigue haciendo con ellas es
+  **dejarlas en null la primera vez** que se abre la clase, para que a nadie con
+  la página anterior cargada le quede una lección abierta de antes.
+- **Lo que sí viaja es cada posición, una por una.** Cada diagrama de la lección
+  —y cada partida y cada ejercicio— trae un botón **"📥 Al tablero de la clase"**
+  que transmite **la posición que el profesor está viendo en ese momento**, no
+  la inicial del diagrama: `js/finales-100.js` y `js/curso-partidas.js` publican
+  en `data-fen-actual` la posición de cada repintado (`publicarFen`), así que
+  recorrer la línea y pulsar el botón manda la jugada 12 y no la 0. Mandar
+  siempre la inicial no da ningún error — se transmite una posición, solo que la
+  que no era.
+  - El botón se pone con un `MutationObserver`, no recorriendo la lección una
+    vez: los visores del curso se construyen **cuando se ven** (los `<details>`
+    cerrados esperan a abrirse), así que el que aparezca después se quedaría sin
+    él. Mismo patrón que `js/coordenadas-tablero.js`.
+  - Hay posiciones de curso que son **ilustraciones y no partidas** (una del
+    mapa de los finales tiene un peón y un solo rey, sin rey negro): no se
+    pueden poner en un tablero en vivo, y el aviso de por qué va **dentro del
+    panel de la lección**, no solo en la franja de estado de arriba — para
+    llegar a ese botón hay que tener la lección delante, o sea la franja fuera
+    de la pantalla.
+- **Las tres puertas que ponen una posición en el tablero escriben por la misma
+  función**, `aplicarPosicionEnClase()`: "✅ Aplicar posición" del editor, el
+  botón de cada diagrama del curso y el de Táctica. Si cada una armara su propio
+  `update`, la que se olvidara de limpiar las variantes o de quitarle el control
+  al alumno dejaría la clase con un resto de la posición anterior — y eso no da
+  ningún error, el tablero simplemente no se comporta igual según por dónde
+  entró la posición. La validación va aparte, en `motivoPosicionInvalida()`: son
+  las tres posiciones que chess.js carga sin quejarse y que **rompen a Stockfish
+  para el resto de la sesión** (sin rey, con peones en la primera o la última
+  fila, con el rey que no le toca mover en jaque).
+
+### Táctica por tema: la vista previa y su botón
+
+- **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los
+  artículos** (`js/article-example-board.js`, que ahora exporta
+  `window.ExampleBoard`). Estaba copiado dentro de `sesion.html`, y la copia ya
+  se había separado del original por donde se separan siempre: dibujaba las
+  piezas con el `font-size` fijo de 24 px del CSS —pensado para un tablero
+  grande— dentro de casillas de 22 px, así que **la pieza era más grande que su
+  casilla**; y no entendía el juego de piezas ilustrado, así que a quien lo
+  tuviera elegido le salían aquí las de texto. El original **mide la casilla ya
+  renderizada** y ajusta la pieza a ella. La vista previa dice además de quién
+  es la jugada, que antes había que deducir de la posición.
+- **"📥 Al tablero" y "❓ Preguntar" no son lo mismo, por eso son dos botones.**
+  El primero transmite solo la posición, para explicarla; el segundo además abre
+  la pregunta. Con un solo botón había que preguntar para poder enseñar el
+  ejercicio, y entonces el alumno ya está contestando mientras se explica.
+
+**Al tocar la lección de curso de la clase, los visores o la vista previa de
+Táctica, correr `node herramientas/verificar-sesion-curso.js`** (con el sitio en
+localhost:8777, playwright y `npm install chess.js@0.10.3`). Existe porque
+`sesion.html` está detrás del login **y** detrás del rol: `verificar-css.js` abre
+las páginas sin cuenta y no ve nada de esto. Comprueba, en un navegador de
+verdad, que al alumno no se le pinte ni un carácter de la lección **aunque su
+fila de `game_state` traiga `shown_curso` puesta** (el resto de antes), que abrir
+la lección no mande ni un `update`, que el botón mande la posición que está en
+pantalla —contra el archivo de datos del curso, leído aparte— antes y después de
+avanzar una jugada, y que en la vista previa **la pieza quepa en su casilla**
+(se miden los dos en el navegador, no la clase ni el CSS).
+
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
