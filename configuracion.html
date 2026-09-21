@@ -33,6 +33,7 @@
     <script src="js/board-color-themes.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/videollamada.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -80,6 +81,24 @@
                 <label class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Correo</label>
                 <p id="email-display" class="text-sm text-brand-700 dark:text-brand-300 mb-1"></p>
                 <p class="text-xs text-brand-450 dark:text-brand-350">Por seguridad, el correo y el rol de la cuenta no se pueden cambiar desde aquí.</p>
+            </div>
+
+            <!-- Solo para quien da clase: el alumno no tiene sala que poner, y
+                 una tarjeta que no le sirve es una tarjeta que estorba. Nace
+                 `hidden` y la destapa init() con el perfil ya cargado — al
+                 revés, la vería un instante cualquiera que entre. La RLS es la
+                 que de verdad manda: a un alumno el insert se le rechaza. -->
+            <div id="videollamada" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Videollamada de tus clases</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">El enlace de tu sala de Meet, Zoom o Teams. Tus alumnos ven el botón para entrar en el panel, <strong>solo mientras tengas una clase abierta</strong> — el resto del tiempo les sale con candado.</p>
+                <label for="videollamada-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Enlace de tu sala</label>
+                <div class="flex gap-2 mb-1 flex-wrap">
+                    <input id="videollamada-input" type="url" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://meet.google.com/abc-defg-hij" class="flex-1 min-w-[16rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                    <button id="videollamada-save" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
+                    <button id="videollamada-quitar" hidden class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Quitar</button>
+                </div>
+                <p id="videollamada-msg" class="text-xs mb-1" role="status" aria-live="polite"></p>
+                <p class="text-xs text-brand-450 dark:text-brand-350">Usa una sala que no caduque: la de siempre en Meet, tu sala personal de Zoom o el enlace de tu canal de Teams. Si cada clase generas un enlace nuevo, hay que volver a pegarlo aquí antes de empezar.</p>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -203,6 +222,67 @@
             profile.elo = elo; profile.elo_tipo = elo ? tipo : null;
             msg.textContent = elo ? `Elo guardado: ${elo}. El próximo diagnóstico lo tendrá en cuenta.` : "Elo borrado.";
             msg.className = "text-xs text-green-600 dark:text-green-400 mb-1";
+        });
+
+        /* ---------------- Videollamada de tus clases ----------------
+           Dónde vive: `profesor_videollamada`, una fila por profesor. Es la
+           SALA y no la clase porque la clase se abre sola —al entrar un alumno
+           o al mandarse una posición—, así que un enlace que hubiera que
+           escribir en cada clase se quedaría sin escribir y el botón del
+           alumno no se desbloquearía nunca, sin dar ningún error.
+
+           La forma del enlace se comprueba con la MISMA regla que el panel
+           (`js/videollamada.js`), y otra vez en el CHECK de la tabla. Acá se
+           comprueba para poder explicar qué está mal; en la base, para que no
+           se pueda saltar. */
+        const vllInput = document.getElementById("videollamada-input");
+        const vllMsg = document.getElementById("videollamada-msg");
+        const vllQuitar = document.getElementById("videollamada-quitar");
+
+        function decirVll(texto, malo) {
+            vllMsg.textContent = texto;
+            vllMsg.className = "text-xs mb-1 " + (malo
+                ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400");
+        }
+
+        // Lo que se enseña es lo que quedó GUARDADO, no lo que se escribió: el
+        // servidor le quita los espacios, y enseñar lo propuesto dejaría a
+        // quien guarda creyendo que guardó otra cosa.
+        function pintarVll(enlace) {
+            vllInput.value = enlace || "";
+            vllQuitar.hidden = !enlace;
+        }
+
+        async function cargarVll() {
+            const { data, error } = await sb.from("profesor_videollamada")
+                .select("enlace").eq("profesor_id", profile.id).maybeSingle();
+            // Una sala vacía y una que no se pudo leer se ven igual y son cosas
+            // muy distintas: la segunda se dice.
+            if (error) { decirVll("No se pudo leer tu enlace: " + error.message, true); return; }
+            pintarVll(data && data.enlace);
+        }
+
+        document.getElementById("videollamada-save").addEventListener("click", async () => {
+            const enlace = Videollamada.normalizar(vllInput.value);
+            if (!enlace) { decirVll("Escribe el enlace de tu sala, o usa «Quitar» para dejar de ofrecerla.", true); return; }
+            if (!Videollamada.esSeguro(enlace)) {
+                decirVll("Ese enlace no sirve: tiene que empezar con https:// y ser la dirección completa de la sala (por ejemplo https://meet.google.com/abc-defg-hij).", true);
+                return;
+            }
+            const { data, error } = await sb.from("profesor_videollamada")
+                .upsert({ profesor_id: profile.id, enlace }, { onConflict: "profesor_id" })
+                .select("enlace").single();
+            if (error) { decirVll("No se pudo guardar: " + error.message, true); return; }
+            pintarVll(data && data.enlace);
+            decirVll("Guardado. A tus alumnos les saldrá «" + Videollamada.etiqueta(data.enlace)
+                + "» (" + Videollamada.host(data.enlace) + ") mientras tengas una clase abierta.");
+        });
+
+        vllQuitar.addEventListener("click", async () => {
+            const { error } = await sb.from("profesor_videollamada").delete().eq("profesor_id", profile.id);
+            if (error) { decirVll("No se pudo quitar: " + error.message, true); return; }
+            pintarVll(null);
+            decirVll("Quitado. A tus alumnos ya no les aparece el botón de la videollamada.");
         });
 
         document.getElementById("pw-save-btn").addEventListener("click", async () => {
@@ -472,6 +552,13 @@
             document.getElementById("elo-input").value = profile.elo || "";
             if (profile.elo_tipo) document.getElementById("elo-tipo").value = profile.elo_tipo;
             document.getElementById("email-display").textContent = profile.email;
+            /* Quien da clase pone su sala de videollamada; quien administra
+               también, que la cuenta master también da clase — la regla
+               permanente. */
+            if (profile.role === "profesor" || profile.is_admin) {
+                document.getElementById("videollamada").hidden = false;
+                cargarVll();
+            }
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             pintarAvisos();

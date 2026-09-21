@@ -35,6 +35,7 @@ tabla  planes_cobro  rls=true
 tabla  platform_activity_log  rls=true
 tabla  practice_games  rls=true
 tabla  practice_sessions  rls=true
+tabla  profesor_videollamada  rls=true
 tabla  profile_teachers  rls=true
 tabla  profiles  rls=true
 tabla  public_streak_leaderboard  rls=true
@@ -404,6 +405,9 @@ columna  practice_sessions.ended_at  timestamp with time zone
 columna  practice_sessions.fen  text  not null
 columna  practice_sessions.id  uuid  not null
 columna  practice_sessions.level  text  not null
+columna  profesor_videollamada.actualizado_at  timestamp with time zone  not null
+columna  profesor_videollamada.enlace  text  not null
+columna  profesor_videollamada.profesor_id  uuid  not null
 columna  profile_teachers.created_at  timestamp with time zone  not null
 columna  profile_teachers.student_id  uuid  not null
 columna  profile_teachers.teacher_id  uuid  not null
@@ -412,6 +416,7 @@ columna  profiles.elo  integer
 columna  profiles.elo_actualizado  timestamp with time zone
 columna  profiles.elo_tipo  text
 columna  profiles.email  text  not null
+columna  profiles.enlace_llamada  text
 columna  profiles.es_coordinador  boolean  not null
 columna  profiles.full_name  text
 columna  profiles.grupo  text
@@ -613,6 +618,7 @@ funcion  avisar_tarea_asignada()  definer  anon=false  auth=false
 funcion  bajo_mi_coordinacion(p_persona uuid)  definer  anon=true  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=true  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=true  auth=true
+funcion  clase_abierta_de(p_profesor uuid)  definer  anon=false  auth=true
 funcion  cobros_morosos()  invoker  anon=true  auth=true
 funcion  cobros_resumen()  invoker  anon=true  auth=true
 funcion  consumir_invitacion(p_profesor uuid)  definer  anon=false  auth=false
@@ -678,6 +684,7 @@ funcion  proteger_ajustes_academia()  definer  anon=false  auth=false
 funcion  proteger_cobros_contacto()  definer  anon=false  auth=false
 funcion  proteger_notas_alumno()  definer  anon=false  auth=false
 funcion  proteger_planes_clase()  definer  anon=false  auth=false
+funcion  proteger_profesor_videollamada()  invoker  anon=false  auth=false
 funcion  proteger_reloj_de_partida()  invoker  anon=false  auth=false
 funcion  proteger_tarea_items_alumno()  definer  anon=false  auth=false
 funcion  proteger_tareas_alumno()  definer  anon=false  auth=false
@@ -812,6 +819,10 @@ politica  practice_games  practice_games_update  UPDATE
 politica  practice_sessions  practice_sessions_insert  INSERT
 politica  practice_sessions  practice_sessions_select  SELECT
 politica  practice_sessions  practice_sessions_update  UPDATE
+politica  profesor_videollamada  profesor_videollamada_delete  DELETE
+politica  profesor_videollamada  profesor_videollamada_insert  INSERT
+politica  profesor_videollamada  profesor_videollamada_select  SELECT
+politica  profesor_videollamada  profesor_videollamada_update  UPDATE
 politica  profile_teachers  profile_teachers_select  SELECT
 politica  profiles  profiles_select  SELECT
 politica  profiles  profiles_update_own  UPDATE
@@ -899,6 +910,7 @@ trigger  game_state  protect_game_state_teacher_columns_trigger
 trigger  notas_alumno  notas_alumno_proteger
 trigger  planes_clase  planes_clase_proteger
 trigger  platform_activity_log  platform_activity_log_protege_tiempos
+trigger  profesor_videollamada  profesor_videollamada_protege
 trigger  profile_teachers  profile_teachers_sincroniza_principal
 trigger  profiles  protect_profiles_identity_columns_trigger
 trigger  question_answers  protect_answer_grading_trigger
@@ -984,6 +996,7 @@ indice  practice_games  practice_games_pkey
 indice  practice_games  practice_games_session_id_idx
 indice  practice_games  practice_games_session_id_student_id_key
 indice  practice_sessions  practice_sessions_pkey
+indice  profesor_videollamada  profesor_videollamada_pkey
 indice  profile_teachers  profile_teachers_pkey
 indice  profile_teachers  profile_teachers_teacher_idx
 indice  profiles  profiles_email_sin_repetir
@@ -1480,6 +1493,13 @@ grant  practice_sessions  authenticated  SELECT
 grant  practice_sessions  authenticated  TRIGGER
 grant  practice_sessions  authenticated  TRUNCATE
 grant  practice_sessions  authenticated  UPDATE
+grant  profesor_videollamada  authenticated  DELETE
+grant  profesor_videollamada  authenticated  INSERT
+grant  profesor_videollamada  authenticated  REFERENCES
+grant  profesor_videollamada  authenticated  SELECT
+grant  profesor_videollamada  authenticated  TRIGGER
+grant  profesor_videollamada  authenticated  TRUNCATE
+grant  profesor_videollamada  authenticated  UPDATE
 grant  profile_teachers  authenticated  DELETE
 grant  profile_teachers  authenticated  INSERT
 grant  profile_teachers  authenticated  REFERENCES

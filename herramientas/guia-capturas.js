@@ -99,7 +99,10 @@ const DEMO = {
      captura es peor que no tener captura. */
   rpc: {
     panel_profesor: [{ alumnos: 6, activos_7d: 4, tareas_pendientes: 3, tareas_vencidas: 1, clases_30d: 6 }],
-    mis_clases: [{ profesor_id: PROFE.id, profesor_nombre: PROFE.full_name, es_principal: true, clase_abierta: false }],
+    // La columna se llama `profesor`, no `profesor_nombre`: con el nombre
+    // equivocado la captura enseñaría "tu profe" donde va el nombre.
+    mis_clases: [{ profesor_id: PROFE.id, profesor: PROFE.full_name, es_principal: true,
+                   clase_abierta: false, titulo_clase: null, videollamada: null }],
     progreso_dias_y_racha: [{
       dias_activos: 34, racha_actual: 5, racha_record: 12, total_ejercicios: 418,
       tipos_distintos: 7, hoy_ejercicios: 3, primer_dia: hace(90),
@@ -185,6 +188,10 @@ const DEMO = {
   tablas: {
     profiles: null,          // se rellena con los perfiles
     class_sessions: null,    // idem
+    // La sala de videollamada de la profesora de mentira: sin ella, el panel
+    // enseñaría el botón de "pon tu videollamada" en vez del que de verdad se
+    // usa. Es una sala inventada, como todo lo demás de DEMO.
+    profesor_videollamada: [{ profesor_id: PROFE.id, enlace: "https://meet.google.com/abc-defg-hij" }],
     planes_clase: [
       { id: "demo-p1", profesor_id: PROFE.id, titulo: "Finales de torre · clase 1",
         notas: "Arrancar con la posición de Lucena.", compartido_todos: false, created_at: hace(4) },
