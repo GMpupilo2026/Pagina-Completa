@@ -316,6 +316,24 @@ async function pruebaTactica(browser) {
   await page.click("#tactics-body div.space-y-1\\.5 button >> nth=0");     // una dificultad
   await page.waitForSelector("#tactics-body li");
 
+  /* Que los botones de cada ejercicio QUEPAN en el panel. La columna del
+     profesor mide 320px fijos y los tres botones no caben en una fila: estaban
+     escritos como un grupo con shrink-0, que crece hasta su ancho de contenido
+     en vez de envolverse —el flex-wrap no llega a aplicarse nunca—, así que
+     «❓ Preguntar» quedaba 40px fuera del panel, cortado contra el borde y sin
+     forma de apretarlo. No da ningún error: la lista se pinta entera. Se mide el
+     rectángulo que calcula el navegador, no la clase. */
+  const desborde = await page.evaluate(() => {
+    const caja = document.getElementById("tactics-panel").getBoundingClientRect();
+    const fuera = Array.from(document.querySelectorAll("#tactics-body li button"))
+      .filter((b) => b.getBoundingClientRect().right > caja.right + 0.5);
+    return { total: document.querySelectorAll("#tactics-body li button").length,
+             fuera: fuera.length,
+             cual: fuera.length ? (fuera[0].textContent || "").trim() : "" };
+  });
+  if (desborde.fuera) mal("se salen del panel " + desborde.fuera + " de " + desborde.total + " botones (el primero, «" + desborde.cual + "»): no se pueden ni apretar");
+  else bien("los " + desborde.total + " botones de la lista caben dentro del panel");
+
   const primero = page.locator("#tactics-body li").first();
   await primero.getByRole("button", { name: "Vista previa" }).click();
   await page.waitForSelector("#tactics-body li .example-board");
