@@ -869,7 +869,10 @@ async function pruebaClaseGrande(browser) {
     rpc: {
       informes_resumen_alumnos: alumnos,
       informes_cursos_alumnos: [],
-      informes_diagnosticos_alumnos: [],
+      // Cinco con diagnóstico: los suficientes para que «Nivel por alumno» tenga
+      // que cortar en tres y ofrecer el resto.
+      informes_diagnosticos_alumnos: ["g1", "g2", "g3", "g4", "g5"].map((id) => (
+        { student_id: id, detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null })),
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       // Tres que llevan tiempo sin entrenar, el de en medio hace más que el resto.
       informes_inactivos: [
@@ -889,8 +892,8 @@ async function pruebaClaseGrande(browser) {
   const primera = () => page.evaluate(() =>
     document.querySelector("#alumnos-tbody tr button[data-abrir]").textContent);
 
-  igual("el índice corta de veinte en veinte", await filas("alumnos-tbody"), 20);
-  igual("y lo dice, con el total de verdad", await page.textContent("#alumnos-cuenta"), "Mostrando 20 de 45");
+  igual("el índice corta en tres, que es lo que se ve sin bajar", await filas("alumnos-tbody"), 3);
+  igual("y lo dice, con el total de verdad", await page.textContent("#alumnos-cuenta"), "Mostrando 3 de 45");
   igual("por nombre, y el orden lo pone la página", await primera(), "Alumna 01");
   /* Las tablas completas viven dentro de un <details> cerrado: no cuestan
      pantalla, así que se pintan enteras. Son las que sirven para comparar
@@ -898,8 +901,8 @@ async function pruebaClaseGrande(browser) {
   igual("las tablas completas siguen trayendo a todos", await filas("attendance-table-body"), 45);
 
   await page.click("#alumnos-mas");
-  igual("«ver más» trae los siguientes veinte", await filas("alumnos-tbody"), 40);
-  igual("y dice cuántos faltan", await page.textContent("#alumnos-mas"), "Ver más alumnos (faltan 5)");
+  igual("«ver más» trae los siguientes tres", await filas("alumnos-tbody"), 6);
+  igual("y dice cuántos faltan", await page.textContent("#alumnos-mas"), "Ver más alumnos (faltan 39)");
 
   /* Buscar "nunez" tiene que encontrar a "Núñez": nadie escribe las tildes en un
      buscador, y quedarse sin resultados se lee como "esa alumna no está". */
@@ -907,7 +910,7 @@ async function pruebaClaseGrande(browser) {
   await page.waitForFunction(() => document.querySelectorAll("#alumnos-tbody tr").length === 1);
   igual("el buscador no se pierde con las tildes", await primera(), "Sofía Núñez");
   igual("y filtra TAMBIÉN las tablas de abajo", await filas("attendance-table-body"), 1);
-  igual("y el corte vuelve a empezar, no se queda en los cuarenta de antes",
+  igual("y el corte vuelve a empezar, no se queda en los seis de antes",
     await page.textContent("#alumnos-cuenta"), "1 alumno");
 
   await page.fill("#alumnos-buscar", "no existe nadie así");
@@ -916,7 +919,7 @@ async function pruebaClaseGrande(browser) {
     (await page.textContent("#alumnos-tbody")).trim(), "Ningún alumno con ese nombre.");
 
   await page.fill("#alumnos-buscar", "");
-  await page.waitForFunction(() => document.querySelectorAll("#alumnos-tbody tr").length === 20);
+  await page.waitForFunction(() => document.querySelectorAll("#alumnos-tbody tr").length === 3);
   await page.selectOption("#alumnos-orden", "inactivos");
   igual("ordenando por quien lleva más sin entrenar, «nunca» va antes que «hace mes y medio»",
     await page.evaluate(() => [...document.querySelectorAll("#alumnos-tbody tr")].slice(0, 3)
@@ -929,7 +932,55 @@ async function pruebaClaseGrande(browser) {
 
   igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
     [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["😴 3 sin entrenar hace una semana", "🧭 45 sin diagnóstico"]);
+    ["😴 3 sin entrenar hace una semana", "🧭 40 sin diagnóstico", "📤 5 planes sin compartir"]);
+
+  /* «Nivel por alumno» corta igual que el índice: con cuarenta diagnósticos era
+     una pared de barras antes de llegar a lo que de verdad se mira, que es el
+     promedio del grupo. Se mide el display que CALCULA el navegador. */
+  console.log("-- Nivel por alumno: los tres primeros");
+  const nivelesALaVista = () => page.evaluate(() =>
+    [...document.querySelectorAll("#diagnosticos-clase [data-nivel-fila]")]
+      .filter((d) => getComputedStyle(d).display !== "none").length);
+  igual("se ven tres de los cinco", await nivelesALaVista(), 3);
+  igual("y el botón dice cuántos faltan", await page.textContent("#niveles-mas"), "Ver más alumnos (faltan 2)");
+  await page.click("#niveles-mas");
+  igual("tocarlo los destapa", await nivelesALaVista(), 5);
+  igual("y con todos a la vista el botón se va, no se queda sin hacer nada",
+    await page.evaluate(() => !!document.getElementById("niveles-mas")), false);
+
+  /* Las nueve áreas NO se cortan ni se pliegan: son nueve renglones fijos y es
+     lo que contesta "¿qué doy la clase que viene?". */
+  igual("el promedio del grupo va completo y con su nombre nuevo", await page.evaluate(() => {
+    const h = [...document.querySelectorAll("#diagnosticos-clase h3")]
+      .find((x) => x.textContent.trim() === "Dónde se debe mejorar");
+    if (!h) return "no está";
+    let n = 0;
+    for (let e = h.nextElementSibling; e; e = e.nextElementSibling) {
+      if (e.tagName === "DIV") { n = e.children.length; break; }
+    }
+    return n;
+  }), 9);
+  igual("y ya no se llama «Dónde está floja la clase»",
+    (await page.textContent("#diagnosticos-clase")).includes("floja la clase"), false);
+
+  /* Lo que se hace FUERA de la plataforma es de administración: son visitantes
+     del sitio, no alumnos de nadie, y lo que dejan son contactos. A un profesor
+     no se le pinta —y se QUITA, no se esconde: un <details> escondido sigue
+     recibiendo el foco— ni se le baja. */
+  console.log("-- Lo de fuera de la plataforma es de administración");
+  igual("a un profesor no se le pintan los dos paneles del público", await page.evaluate(() =>
+    [!!document.getElementById("arbitrajes-publicos"), !!document.getElementById("diagnosticos-visitantes")]), [false, false]);
+  igual("ni le quedan sus dos temas en el filtro", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-filter option")].map((o) => o.value)
+      .filter((v) => v === "arbitraje" || v === "diagnostico-publico")), []);
+  igual("y tampoco se le bajan: son dos páginas de mil filas que no va a mirar",
+    await page.evaluate(() => window.__consultas
+      .filter((c) => c.etiqueta === "from:arbitrajes_publicos" || c.etiqueta === "from:diagnosticos_publicos").length), 0);
+  igual("dentro del tema «Diagnóstico» tampoco salen los visitantes", await (async () => {
+    await page.selectOption("#topic-filter", "diagnostico");
+    await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
+    return (await page.textContent("#topic-report-body")).includes("Visitantes");
+  })(), false);
 
   if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
   await page.close();
