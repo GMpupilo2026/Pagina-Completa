@@ -90,15 +90,14 @@
                  que de verdad manda: a un alumno el insert se le rechaza. -->
             <div id="videollamada" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Videollamada de tus clases</h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">El enlace de tu sala de Meet, Zoom o Teams. Tus alumnos ven el botón para entrar en el panel, <strong>solo mientras tengas una clase abierta</strong> — el resto del tiempo les sale con candado.</p>
-                <label for="videollamada-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Enlace de tu sala</label>
-                <div class="flex gap-2 mb-1 flex-wrap">
-                    <input id="videollamada-input" type="url" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="https://meet.google.com/abc-defg-hij" class="flex-1 min-w-[16rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
-                    <button id="videollamada-save" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Guardar</button>
-                    <button id="videollamada-quitar" hidden class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">Quitar</button>
-                </div>
-                <p id="videollamada-msg" class="text-xs mb-1" role="status" aria-live="polite"></p>
-                <p class="text-xs text-brand-450 dark:text-brand-350">Usa una sala que no caduque: la de siempre en Meet, tu sala personal de Zoom o el enlace de tu canal de Teams. Si cada clase generas un enlace nuevo, hay que volver a pegarlo aquí antes de empezar.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Los enlaces de tus salas de Meet, Zoom o Teams. Tus alumnos ven el botón para entrar en el panel, <strong>solo mientras tengas una clase abierta</strong> — el resto del tiempo les sale con candado. Si das clase en varias sedes, ponle su sala a cada grupo: a cada alumno le llega la de su grupo y a nadie la de otro.</p>
+                <!-- Una fila por sala: la general y una por cada grupo que tenga
+                     alumnos suyos. Se arman con lo que devuelve la base
+                     (`grupos_de_mis_alumnos()`) y no con una lista escrita acá:
+                     un enlace guardado para un grupo que no existe no le llega
+                     a nadie nunca, y eso no da ningún error. -->
+                <div id="videollamada-lista" class="space-y-4 mb-1"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350">Usa salas que no caduquen: la de siempre en Meet, tu sala personal de Zoom o el enlace de tu canal de Teams. Si cada clase generas un enlace nuevo, hay que volver a pegarlo aquí antes de empezar.</p>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -225,65 +224,155 @@
         });
 
         /* ---------------- Videollamada de tus clases ----------------
-           Dónde vive: `profesor_videollamada`, una fila por profesor. Es la
-           SALA y no la clase porque la clase se abre sola —al entrar un alumno
-           o al mandarse una posición—, así que un enlace que hubiera que
-           escribir en cada clase se quedaría sin escribir y el botón del
-           alumno no se desbloquearía nunca, sin dar ningún error.
+           Dónde vive: `profesor_videollamada`, una fila por (profesor, grupo).
+           Es la SALA y no la clase porque la clase se abre sola —al entrar un
+           alumno o al mandarse una posición—, así que un enlace que hubiera que
+           escribir en cada clase se quedaría sin escribir y el botón del alumno
+           no se desbloquearía nunca, sin dar ningún error.
+
+           UNA SALA POR GRUPO, porque un profesor da clase en varias sedes y
+           cada una tiene la suya. El reparto lo hace la base: a cada alumno le
+           llega la de su grupo, y la general solo si su grupo no tiene una
+           propia. Acá no se decide nada de eso — solo se escriben los enlaces.
 
            La forma del enlace se comprueba con la MISMA regla que el panel
            (`js/videollamada.js`), y otra vez en el CHECK de la tabla. Acá se
            comprueba para poder explicar qué está mal; en la base, para que no
            se pueda saltar. */
-        const vllInput = document.getElementById("videollamada-input");
-        const vllMsg = document.getElementById("videollamada-msg");
-        const vllQuitar = document.getElementById("videollamada-quitar");
+        const vllLista = document.getElementById("videollamada-lista");
+        let vllSalas = {};      // grupo -> enlace guardado ("" es la general)
+        let vllGrupos = [];     // los grupos con alumnos suyos, con su conteo
 
-        function decirVll(texto, malo) {
-            vllMsg.textContent = texto;
-            vllMsg.className = "text-xs mb-1 " + (malo
+        function decirVll(grupo, texto, malo) {
+            const msg = vllLista.querySelector(`[data-msg="${CSS.escape(grupo)}"]`);
+            if (!msg) return;
+            msg.textContent = texto;
+            msg.className = "text-xs mt-1 " + (malo
                 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400");
         }
 
-        // Lo que se enseña es lo que quedó GUARDADO, no lo que se escribió: el
-        // servidor le quita los espacios, y enseñar lo propuesto dejaría a
-        // quien guarda creyendo que guardó otra cosa.
-        function pintarVll(enlace) {
-            vllInput.value = enlace || "";
-            vllQuitar.hidden = !enlace;
+        /* Cada fila se arma entera y no se va prendiendo y apagando: así no hay
+           que acordarse de limpiar el mensaje ni el botón de quitar de la
+           anterior, que es el descuido que dejaría «Guardado» encima de una
+           sala que ya no es esa. */
+        function filaVll(grupo, titulo, nota) {
+            const fila = document.createElement("div");
+            fila.dataset.fila = grupo;
+
+            const etiqueta = document.createElement("label");
+            etiqueta.className = "block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1";
+            etiqueta.setAttribute("for", "vll-" + (grupo || "general"));
+            etiqueta.textContent = titulo;
+            if (nota) {
+                const chica = document.createElement("span");
+                chica.className = "font-normal text-brand-450 dark:text-brand-350";
+                chica.textContent = " · " + nota;
+                etiqueta.appendChild(chica);
+            }
+
+            const caja = document.createElement("div");
+            caja.className = "flex gap-2 flex-wrap";
+            const input = document.createElement("input");
+            input.id = "vll-" + (grupo || "general");
+            input.type = "url";
+            input.inputMode = "url";
+            input.autocapitalize = "none";
+            input.setAttribute("autocorrect", "off");
+            input.spellcheck = false;
+            input.placeholder = "https://meet.google.com/abc-defg-hij";
+            input.className = "flex-1 min-w-[16rem] px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500";
+            input.value = vllSalas[grupo] || "";
+            input.dataset.input = grupo;
+
+            const guardar = document.createElement("button");
+            guardar.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap";
+            guardar.textContent = "Guardar";
+            guardar.dataset.guardar = grupo;
+            guardar.addEventListener("click", () => guardarVll(grupo));
+
+            caja.append(input, guardar);
+            if (vllSalas[grupo]) {
+                const quitar = document.createElement("button");
+                quitar.className = "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap";
+                quitar.textContent = "Quitar";
+                quitar.dataset.quitar = grupo;
+                quitar.addEventListener("click", () => quitarVll(grupo));
+                caja.appendChild(quitar);
+            }
+
+            const msg = document.createElement("p");
+            msg.className = "text-xs mt-1";
+            msg.dataset.msg = grupo;
+            msg.setAttribute("role", "status");
+            msg.setAttribute("aria-live", "polite");
+
+            fila.append(etiqueta, caja, msg);
+            return fila;
         }
 
-        async function cargarVll() {
-            const { data, error } = await sb.from("profesor_videollamada")
-                .select("enlace").eq("profesor_id", profile.id).maybeSingle();
-            // Una sala vacía y una que no se pudo leer se ven igual y son cosas
+        function pintarVll(mensajes) {
+            vllLista.innerHTML = "";
+            /* Los grupos van primero y la general al final: la general es el
+               respaldo —la reciben los alumnos cuyo grupo no tenga sala
+               propia—, y ponerla arriba haría pensar que es la que manda. */
+            vllGrupos.forEach((g) => vllLista.appendChild(
+                filaVll(g.grupo, "Clase de " + g.grupo,
+                    g.alumnos === 1 ? "1 alumno" : g.alumnos + " alumnos")));
+            vllLista.appendChild(filaVll("", "Para todas tus clases",
+                vllGrupos.length ? "la reciben los grupos que no tengan sala propia" : ""));
+            // El aviso de lo que acaba de pasar se vuelve a poner DESPUÉS de
+            // repintar: escrito antes se muere con la fila que lo llevaba y no
+            // lo lee nadie.
+            Object.keys(mensajes || {}).forEach((g) => decirVll(g, mensajes[g].texto, mensajes[g].malo));
+        }
+
+        async function cargarVll(mensajes) {
+            const [salas, grupos] = await Promise.all([
+                sb.from("profesor_videollamada").select("grupo, enlace").eq("profesor_id", profile.id),
+                sb.rpc("grupos_de_mis_alumnos"),
+            ]);
+            // Una lista vacía y una que no se pudo leer se ven igual y son cosas
             // muy distintas: la segunda se dice.
-            if (error) { decirVll("No se pudo leer tu enlace: " + error.message, true); return; }
-            pintarVll(data && data.enlace);
+            vllSalas = {};
+            (salas.data || []).forEach((f) => { vllSalas[f.grupo || ""] = f.enlace; });
+            vllGrupos = grupos.data || [];
+            pintarVll(salas.error ? { "": { texto: "No se pudieron leer tus enlaces: " + salas.error.message, malo: true } } : mensajes);
         }
 
-        document.getElementById("videollamada-save").addEventListener("click", async () => {
-            const enlace = Videollamada.normalizar(vllInput.value);
-            if (!enlace) { decirVll("Escribe el enlace de tu sala, o usa «Quitar» para dejar de ofrecerla.", true); return; }
+        async function guardarVll(grupo) {
+            const input = vllLista.querySelector(`[data-input="${CSS.escape(grupo)}"]`);
+            const enlace = Videollamada.normalizar(input.value);
+            if (!enlace) { decirVll(grupo, "Escribe el enlace de la sala, o usa «Quitar» para dejar de ofrecerla.", true); return; }
             if (!Videollamada.esSeguro(enlace)) {
-                decirVll("Ese enlace no sirve: tiene que empezar con https:// y ser la dirección completa de la sala (por ejemplo https://meet.google.com/abc-defg-hij).", true);
+                decirVll(grupo, "Ese enlace no sirve: tiene que empezar con https:// y ser la dirección completa de la sala (por ejemplo https://meet.google.com/abc-defg-hij).", true);
                 return;
             }
             const { data, error } = await sb.from("profesor_videollamada")
-                .upsert({ profesor_id: profile.id, enlace }, { onConflict: "profesor_id" })
-                .select("enlace").single();
-            if (error) { decirVll("No se pudo guardar: " + error.message, true); return; }
-            pintarVll(data && data.enlace);
-            decirVll("Guardado. A tus alumnos les saldrá «" + Videollamada.etiqueta(data.enlace)
-                + "» (" + Videollamada.host(data.enlace) + ") mientras tengas una clase abierta.");
-        });
+                .upsert({ profesor_id: profile.id, grupo: grupo, enlace: enlace },
+                        { onConflict: "profesor_id,grupo" })
+                .select("grupo, enlace").single();
+            if (error) { decirVll(grupo, "No se pudo guardar: " + error.message, true); return; }
+            // Lo que se enseña es lo que quedó GUARDADO, no lo que se escribió:
+            // el servidor le quita los espacios, y enseñar lo propuesto deja a
+            // quien guarda creyendo que guardó otra cosa.
+            vllSalas[grupo] = data.enlace;
+            pintarVll({ [grupo]: { texto: "Guardado. " + (grupo ? "A los alumnos de " + grupo : "A los alumnos sin sala de grupo")
+                + " les saldrá «" + Videollamada.etiqueta(data.enlace) + "» (" + Videollamada.host(data.enlace)
+                + ") mientras tengas una clase abierta." } });
+        }
 
-        vllQuitar.addEventListener("click", async () => {
-            const { error } = await sb.from("profesor_videollamada").delete().eq("profesor_id", profile.id);
-            if (error) { decirVll("No se pudo quitar: " + error.message, true); return; }
-            pintarVll(null);
-            decirVll("Quitado. A tus alumnos ya no les aparece el botón de la videollamada.");
-        });
+        async function quitarVll(grupo) {
+            const { error } = await sb.from("profesor_videollamada").delete()
+                .eq("profesor_id", profile.id).eq("grupo", grupo);
+            if (error) { decirVll(grupo, "No se pudo quitar: " + error.message, true); return; }
+            /* Se vuelve a LEER en vez de tachar la fila de la pantalla: lo que
+               se enseña tiene que ser lo que quedó en la base. Si el borrado se
+               llevara por delante otra sala —un filtro de menos—, con el estado
+               local la pantalla seguiría enseñándola como si estuviera. */
+            await cargarVll({ [grupo]: { texto: grupo
+                ? "Quitado. Los alumnos de " + grupo + " pasan a ver la sala de todas tus clases, si tienes una."
+                : "Quitado. Los alumnos sin sala de grupo ya no ven el botón de la videollamada." } });
+        }
 
         document.getElementById("pw-save-btn").addEventListener("click", async () => {
             const msg = document.getElementById("pw-msg");

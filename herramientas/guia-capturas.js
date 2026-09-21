@@ -191,7 +191,7 @@ const DEMO = {
     // La sala de videollamada de la profesora de mentira: sin ella, el panel
     // enseñaría el botón de "pon tu videollamada" en vez del que de verdad se
     // usa. Es una sala inventada, como todo lo demás de DEMO.
-    profesor_videollamada: [{ profesor_id: PROFE.id, enlace: "https://meet.google.com/abc-defg-hij" }],
+    profesor_videollamada: [{ profesor_id: PROFE.id, grupo: "", enlace: "https://meet.google.com/abc-defg-hij" }],
     planes_clase: [
       { id: "demo-p1", profesor_id: PROFE.id, titulo: "Finales de torre · clase 1",
         notas: "Arrancar con la posición de Lucena.", compartido_todos: false, created_at: hace(4) },
