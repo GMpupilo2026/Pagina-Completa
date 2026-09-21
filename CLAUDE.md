@@ -2557,12 +2557,51 @@ genera solo desde el diagnóstico, se enseña entero en Informes y tiene su bot�
 de compartir — y nadie lo había usado nunca, porque eso vive dos clics adentro
 de Informes y **nada avisaba**.
 
+Y no era que faltara el botón: **el de compartir vivía dentro del informe de
+CADA alumno**, o sea veintitantas visitas para publicar veintitantos planes que
+ya estaban armados. Ahora el panel de grupo —«🧭 Diagnósticos de nivel»— trae
+**«Compartir los N planes que faltan»**, que lo hace de una.
+
+- **A quien ya tiene un plan guardado sin compartir solo se le cambia la
+  marca.** Regenerarlo le borraría al profesor la nota y los ajustes que hizo a
+  mano, y eso no daría ningún error — simplemente perdería su trabajo. Por eso
+  son dos escrituras y no una: un `update` para los borradores y un `upsert` con
+  **`ignoreDuplicates`** para los que no tienen ninguno (si entre que se pintó
+  la pantalla y se apretó el botón alguien le guardó un plan a alguno, se salta
+  en vez de pisárselo).
+- **Se confirma en el propio botón**, no con un diálogo del navegador — la misma
+  decisión que borrar una nota de la bitácora, y acá pesa más: esto publica
+  material de veintitantos alumnos de una vez, así que el segundo toque tiene
+  que caer sobre un texto que diga exactamente qué va a pasar («Sí, compartir
+  con los 3» · «sus planes entrarán en los informes que llegan a sus casas»).
+- **Con todos al día no se ofrece el botón**, solo una línea. Un control que no
+  cambia nada es peor que no tenerlo.
+- **Compartir no dispara ningún aviso** (`training_plans` no tiene triggers):
+  el plan aparece en la página del alumno y en el próximo informe a la casa, y
+  nada más. Comprobado antes de escribir el botón — con un trigger, esto habría
+  mandado veintitantos push de golpe.
+
 Por eso `panel_profesor()` devuelve ahora `con_diagnostico` y `con_plan`, y «Tu
 semana» lo dice en una línea. Se dice **una sola cosa**, la que toca antes: sin
 diagnóstico no hay plan que armar, así que ese es el primer cuello; y un plan
 sin compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
 existe. Con todo al día no se dice nada. Va en **ámbar y no en rojo**: esto no
 se venció, está por hacer.
+
+**Al tocar el lote, correr `node herramientas/verificar-informes.js`.** Su
+Supabase de mentira tuvo que aprender dos cosas para esto, y las dos son de las
+que dan verde sobre una página rota: **`upsert()`**, que no tenía —sin él,
+compartir en lote tiraba un TypeError y el verificador lo contaba como fallo de
+la página, que es el mismo tropiezo que ya se llevó
+`verificar-aperturas-pagina.js`—, y **anotar la escritura en el RESOLVER y no en
+el `update()`**: `.update(x).in("student_id", y)` encadena, así que un doble que
+la apuntara antes se quedaría sin saber SOBRE QUIÉN se escribió y daría por
+bueno un lote que comparte el plan del alumno que no era. Es la misma trampa que
+ya documentó `verificar-clase-registrada.js`.
+
+Está probado que falla de verdad: haciendo que el lote regenere el plan de quien
+ya lo tenía ajustado, saltan cinco comprobaciones; y si el botón mandara sin
+confirmar, salta la del primer toque.
 
 **Esto pidió desplegar `informes-encargados`** (se arma con `node
 herramientas/funciones-armar.js`). Comprobado después de subirla: con una firma
