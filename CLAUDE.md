@@ -402,16 +402,116 @@ clase simplemente no existió, y eso no se puede reconstruir después.
   disparaban con el INSERT que llega por Realtime, así que **la clase se puede
   abrir en cualquier momento** y el que ya estaba conectado queda marcado igual.
 
+#### Cerrar la clase tiene que SIGNIFICAR cerrarla
+
+El disparador de "hay alguien del otro lado" se vuelve a evaluar en **cada** aviso
+de presencia, y los alumnos no cierran su pestaña en el mismo segundo en que el
+profesor confirma el cierre. Así que el aviso siguiente encontraba alumnos
+conectados y abría una clase NUEVA, uno o dos minutos después de la que se
+acababa de cerrar. La franja volvía sola a verde, y el profesor —que ya terminó y
+se va— dejaba esa fila abierta para siempre.
+
+**Lo caro viene al día siguiente, y es lo que se ve como "la clase no queda
+registrada":** el índice `class_sessions_una_abierta_por_profesor` impide una
+segunda fila abierta, así que la clase de mañana no abre ninguna — se cuelga de la
+fantasma que quedó, con su fecha y su hora de hace un día. En el registro no
+aparece ninguna clase nueva y la duración de la vieja crece sola. Ningún error en
+ninguna parte.
+
+- **Quiénes estaban conectados al cerrar se guarda** (`alumnosAlCerrar`). Mientras
+  solo estén ESOS, el aviso de presencia no reabre nada: son los que todavía no
+  cerraron la pestaña, no una clase nueva. Un alumno que entre después **sí** la
+  reabre —eso ya es otra clase, y su asistencia tiene que quedar—, y las dos
+  puertas deliberadas del profesor (mandar una posición, el botón «Abrir la
+  clase») también, siempre.
+- Vale igual **si la cerró desde el panel o desde otra pestaña**: lo que llega por
+  Realtime es un cierre igual de deliberado.
+- **El cierre se pide de vuelta con `.select()`**, y se mira si volvió alguna fila.
+  Sin eso, un update que no toca ninguna fila —el id quedó viejo porque la cerraron
+  desde otro lado— devuelve `error: null` y la pantalla decía "cerrada" con el
+  título y la nota tirados a la basura: justo lo que el registro necesita para
+  servir después. Ahora se dice y se manda a escribirlos al registro del panel.
+- Y cuando sí se cerró, **se dice con todas las letras y con su nombre** («✅ Clase
+  cerrada y guardada en el registro como "Finales de rey y peón"»). Cerrar es el
+  momento en que uno quiere saber que quedó guardado.
+
 **Al tocar esto, correr `node herramientas/verificar-clase-registrada.js`** (con
 el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
 Comprueba que entrar solo **no invente ninguna clase**, que entre un alumno la
 abra y quede a nombre de quien la da, que mandar una posición también la abra y
 que una **rechazada** no, que un segundo aviso de presencia no abra otra, que
 cerrar mande el título, la nota y la hora **sobre la clase que estaba abierta**,
-y que a la alumna no se le pinte la franja pero su asistencia sí se marque sola.
+que después de cerrar **ningún aviso de presencia la vuelva a abrir** —ni el del
+mismo alumno que ya estaba— **pero que uno que entra después sí**, y que a la
+alumna no se le pinte la franja pero su asistencia sí se marque sola. Está probado
+que falla de verdad: con el disparador de antes (`onlineStudents.size > 0`), las
+dos comprobaciones del cierre saltan.
 Su Supabase de mentira **apunta el filtro al RESOLVER y no en el `update()`**:
 `.update(x).eq("id", y)` encadena, así que uno que lo capturara antes daría por
-bueno un cierre sobre la clase que no era.
+bueno un cierre sobre la clase que no era. Su `delete()` hace lo mismo y además
+**borra de verdad de la tabla**, para que una consulta posterior no encuentre lo
+que ya no existe. Lo reusan `verificar-sesion-orden.js` y
+`verificar-chat-clase.js`, y acepta **filas de arranque** para sembrar una tabla
+(los mensajes de una conversación, por ejemplo).
+
+### Vaciar el chat: la base siempre lo permitió, lo que fallaba era la pantalla
+
+«Vaciar esta conversación» parecía no funcionar: el profesor apretaba, confirmaba,
+y los mensajes seguían ahí. La RLS no tenía nada que ver —`class_chat_messages_delete`
+deja borrar el hilo entero del alumno a quien es su profesor, y el borrado SÍ
+ocurría—. Lo que no ocurría era el repintado.
+
+- **El DELETE llegaba sin `student_id`.** Con la replica identity por omisión, el
+  payload de un borrado solo trae la clave primaria, y `subscribeChat()` decide a
+  qué conversación pertenece cada cambio justamente por esa columna. El evento no
+  coincidía con ningún hilo, no se recargaba nada, y la lectura natural de eso es
+  "no me deja vaciarlos". Al alumno, peor: le quedaban a la vista mensajes que ya
+  no existían hasta que recargara. Se arregló con `replica identity full` sobre
+  `class_chat_messages` —9 filas de 500 caracteres: replicar la fila entera acá no
+  cuesta nada—, que es lo que vacía **la pantalla del alumno**.
+- **Y la pantalla de quien apretó el botón no espera ese aviso**: recarga ahí mismo
+  y lo dice. Depender de que un aviso dé la vuelta por la red para confirmar algo
+  que uno acaba de hacer es la misma apuesta que ya se perdió una vez.
+- El aviso de confirmación dice que **se borran también los mensajes del alumno**:
+  es lo que pasa, y un «vaciar» que dejara los suyos no vaciaría nada.
+
+**Al tocar el chat, correr `node herramientas/verificar-chat-clase.js`** (con el
+sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`). Su doble
+**no dispara ningún aviso de Realtime**, igual que la base cuando el DELETE va sin
+su fila: si la página volviera a depender del aviso, la prueba falla. Comprueba
+que el borrado vaya filtrado por `student_id` y no por `sender_id` —con el filtro
+equivocado quedaría media conversación—, que sea **un solo filtro**, que la lista
+quede vacía en pantalla, y que a la alumna no se le pinte ni el botón de vaciar ni
+el selector de con quién hablar. Está probado que falla de verdad: sin el
+`loadChatMessages()` del final, los tres mensajes siguen en pantalla.
+
+### Los dos tableros del alumno llevan coordenadas
+
+`question-board` (la pregunta) y `practice-board` (la práctica contra el motor) son
+overlays a pantalla completa con un tablero tan grande como el principal, y eran
+los únicos tableros del sitio sin las coordenadas de afuera. Ahí el alumno está
+**solo**: el profesor no le está señalando la casilla y no tiene al lado el cuadro
+de comandos. Y en el resto del sitio —Mates, Ejercicios por tema, 4×4, el
+diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
+
+- Es el mismo `externalCoords` del tablero principal (`_setupExternalCoords` de
+  `js/clases-board.js`), no un dibujo aparte. Se giran solas con el tablero, que es
+  lo que hace uno de verdad cuando al alumno le tocan las negras.
+- **El tope de ancho se lee tal cual esté escrito, no como un número de píxeles.**
+  El patrón entendía solo `max-w-[560px]`, que es lo que traía `#chessboard`; los
+  dos overlays usan `max-w-[min(92vw,560px)]` y se habrían quedado sin tope — el
+  tablero en sus 560 px y la fila de letras estirada a todo el ancho de la tarjeta,
+  o sea **las coordenadas señalando la columna que no era**, que se ve igual de
+  bien y es peor que no tenerlas.
+- Las **miniaturas de supervisión** del profesor siguen sin ellas a propósito: son
+  de mirar de lejos y a ese tamaño las letras no se leerían.
+
+`verificar-sesion-curso.js` lo comprueba midiendo en el navegador: que cada letra
+caiga sobre su columna y cada número sobre su fila —contra las casillas de verdad,
+por su `data-square`, no contra lo que diga la página—, que las etiquetas se giren
+con el tablero y que el tablero siga cuadrado. Su doble acepta **filas de
+arranque** para sembrar una pregunta abierta o una ronda de práctica: sin eso los
+dos overlays del alumno no se pueden ni ver.
 
 ### Táctica por tema: la vista previa y su botón
 

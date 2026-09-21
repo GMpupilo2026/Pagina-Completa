@@ -1549,8 +1549,33 @@
          */
         let abriendoClase = false;
 
+        /* Cerrar la clase tiene que SIGNIFICAR cerrarla.
+         *
+         * El primer disparador de arriba —"hay alguien del otro lado"— se vuelve a
+         * evaluar en cada aviso de presencia, y los alumnos no cierran su pestaña en
+         * el mismo segundo en que el profesor confirma el cierre. Así que el aviso
+         * siguiente encontraba alumnos conectados y abría una clase NUEVA, uno o dos
+         * minutos después de la que se acababa de cerrar. Y no da ningún error: la
+         * franja vuelve a verde sola, y el profesor —que ya terminó y se va— deja esa
+         * fila abierta para siempre.
+         *
+         * Lo caro viene después, y es lo que hace que la clase de mañana "no quede
+         * registrada": el índice `class_sessions_una_abierta_por_profesor` impide una
+         * segunda fila abierta, así que la clase del día siguiente no abre ninguna —
+         * se cuelga de la fantasma que quedó de antes. En el registro no aparece
+         * ninguna clase nueva, y la duración de la vieja crece sola.
+         *
+         * Quiénes estaban conectados al cerrar se guarda acá. Mientras solo estén
+         * ESOS, el aviso de presencia no reabre nada: son los que todavía no cerraron
+         * la pestaña, no una clase nueva. Un alumno que entre después SÍ la reabre
+         * —eso ya es otra clase—, y las dos puertas deliberadas del profesor (mandar
+         * una posición, o el botón "Abrir la clase") también, siempre: son un acto
+         * suyo, no el rastro del anterior. */
+        const alumnosAlCerrar = new Set();
+
         async function abrirClaseSiHaceFalta() {
             if (!isTeacher || currentOpenSessionId || abriendoClase) return;
+            alumnosAlCerrar.clear();
             abriendoClase = true;
             const { data, error } = await sb.from("class_sessions")
                 .insert({ created_by: profile.id }).select().maybeSingle();
@@ -1584,17 +1609,36 @@
             const titulo = document.getElementById("clase-titulo").value.trim();
             const notas = document.getElementById("clase-notas").value.trim();
             btn.disabled = true;
-            const { error } = await sb.from("class_sessions").update({
+            // Se pide de vuelta la fila para saber si el cierre PASÓ de verdad. Sin el
+            // select, un update que no toca ninguna fila —el id quedó viejo porque la
+            // cerraron desde el panel o desde otra pestaña— devuelve `error: null` y la
+            // pantalla decía "cerrada" con el título y la nota tirados a la basura. Es la
+            // falla callada de siempre, y acá se lleva justo lo que el registro necesita
+            // para servir después.
+            const { data, error } = await sb.from("class_sessions").update({
                 ended_at: new Date().toISOString(),
                 title: titulo || null,
                 notes: notas || null,
-            }).eq("id", currentOpenSessionId);
+            }).eq("id", currentOpenSessionId).select();
             btn.disabled = false;
             if (error) { setStatus("No se pudo cerrar la clase: " + error.message); return; }
+            if (!data || !data.length) {
+                setStatus("Esta clase ya estaba cerrada, así que el nombre y la nota no se guardaron."
+                    + " Puedes escribirlos en el registro de clases del panel.");
+                currentOpenSessionId = null;
+                pintarEstadoDeClase();
+                return;
+            }
+            // A partir de acá el aviso de presencia no vuelve a abrir una clase por los
+            // alumnos que ya estaban conectados: el profesor dijo que terminó.
+            alumnosAlCerrar.clear();
+            for (const id of onlineStudents.keys()) alumnosAlCerrar.add(id);
             currentOpenSessionId = null;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
             pintarEstadoDeClase();
+            setStatus("✅ Clase cerrada y guardada en el registro"
+                + (titulo ? ' como "' + titulo + '"' : "") + ".");
         }
 
         /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
@@ -1659,8 +1703,14 @@
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
                         } else {
                             // La pudo cerrar desde el panel, o desde otra pestaña:
-                            // la franja de acá tiene que decir la verdad igual.
+                            // la franja de acá tiene que decir la verdad igual, y el
+                            // aviso de presencia tampoco tiene que reabrirla por los
+                            // alumnos que todavía no cerraron su pestaña (ver
+                            // alumnosAlCerrar) — cerrarla desde allá es igual de
+                            // deliberado que cerrarla desde acá.
                             currentOpenSessionId = null;
+                            alumnosAlCerrar.clear();
+                            for (const id of onlineStudents.keys()) alumnosAlCerrar.add(id);
                             pintarEstadoDeClase();
                         }
                     }
@@ -2372,8 +2422,11 @@
                 if (isTeacher) renderChatStudentOptions();
                 // Primer disparador de "esto ya es una clase": hay alguien del
                 // otro lado. Sin esto, la asistencia del que acaba de entrar no
-                // se registra en ninguna parte.
-                if (isTeacher && onlineStudents.size > 0) abrirClaseSiHaceFalta();
+                // se registra en ninguna parte. Pero los que quedaron de la clase
+                // que el profesor acaba de cerrar no cuentan: ver alumnosAlCerrar.
+                if (isTeacher && [...onlineStudents.keys()].some((id) => !alumnosAlCerrar.has(id))) {
+                    abrirClaseSiHaceFalta();
+                }
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -2680,12 +2733,29 @@
             if (error) { console.error(error); setStatus("No se pudo enviar el mensaje: " + error.message); }
         });
 
+        // Vaciar borra el hilo ENTERO de ese alumno, sus mensajes incluidos: eso es lo que
+        // la RLS le permite al profesor (class_chat_messages_delete) y es lo que hace falta
+        // — un "vaciar" que dejara los mensajes del alumno no vaciaría nada.
+        //
+        // La lista se vuelve a cargar acá mismo y no se espera al aviso de Realtime. Durante
+        // un tiempo eso fue justamente lo que falló: el DELETE llegaba sin `student_id` (la
+        // replica identity por omisión solo manda la clave primaria), así que no coincidía
+        // con ningún hilo y la pantalla se quedaba igual — el profesor confirmaba y los
+        // mensajes seguían ahí, como si no se le permitiera. Ya se arregló en la base
+        // (replica identity full, que es lo que vacía también la pantalla del ALUMNO), pero
+        // la pantalla de quien acaba de apretar el botón no tiene por qué depender de que
+        // un aviso dé la vuelta: se recarga y se dice con todas las letras que se vació.
         document.getElementById("clear-chat-btn").addEventListener("click", async () => {
             const threadId = currentChatThreadId();
             if (!threadId) return;
-            if (!window.confirm("¿Vaciar esta conversación? Esto no se puede deshacer.")) return;
+            if (!window.confirm("¿Vaciar esta conversación? Se borran también los mensajes del alumno y no se puede deshacer.")) return;
+            const btn = document.getElementById("clear-chat-btn");
+            btn.disabled = true;
             const { error } = await sb.from("class_chat_messages").delete().eq("student_id", threadId);
-            if (error) { console.error(error); setStatus("No se pudo vaciar la conversación: " + error.message); }
+            btn.disabled = false;
+            if (error) { console.error(error); setStatus("No se pudo vaciar la conversación: " + error.message); return; }
+            await loadChatMessages();
+            setStatus("💬 Conversación vaciada.");
         });
 
         // Un solo botón hace las dos cosas: guarda la partida (queda también en la página
@@ -3303,6 +3373,9 @@
                 questionBoard = new ClasesBoard(document.getElementById("question-board"), {
                     interactive: false,
                     allowArrows: false,
+                    // Las coordenadas de afuera, igual que en el tablero principal: acá el
+                    // alumno está buscando la jugada solo, sin nadie señalándole la casilla.
+                    externalCoords: true,
                     onMove: () => onQuestionStudentMove(),
                 });
             }
@@ -3625,6 +3698,7 @@
                 practiceBoard = new ClasesBoard(document.getElementById("practice-board"), {
                     interactive: false,
                     allowArrows: false,
+                    externalCoords: true,
                     onMove: (fen, san, moves) => onPracticeStudentMove(fen, moves),
                 });
             }

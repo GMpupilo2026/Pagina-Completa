@@ -73,13 +73,17 @@ function filaDeTablero() {
   };
 }
 
-function clienteFalso(perfiles, usuarioId) {
+function clienteFalso(perfiles, usuarioId, semilla) {
   return `
 window.__updates = [];   // { tabla, campos }
 window.__inserts = [];   // { tabla, fila }
 (function () {
   const PERFILES = ${JSON.stringify(perfiles)};
   const GAME_STATE = [${JSON.stringify(filaDeTablero())}];
+  // Filas de arranque para las tablas que se quieran sembrar (una pregunta
+  // abierta, una ronda de práctica en curso). Sin esto no hay forma de ver los
+  // dos overlays del alumno, que es justo donde vive lo que se comprueba.
+  const SEMILLA = ${JSON.stringify(semilla || {})};
 
   function constructor(tabla, filas) {
     let filas2 = (filas || []).slice(), unica = false, pend = null;
@@ -112,6 +116,7 @@ window.__inserts = [];   // { tabla, fila }
     class_sessions: [], class_attendance: [], class_presence_log: [],
     practice_sessions: [], practice_games: [], class_chat_messages: [], saved_games: [],
   };
+  for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
 
   window.sb = {
     auth: {
@@ -140,14 +145,14 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-async function abrir(browser, perfiles, quien) {
+async function abrir(browser, perfiles, quien, semilla) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien) }));
+    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien, semilla) }));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -378,12 +383,115 @@ async function pruebaTactica(browser) {
   await ctx.close();
 }
 
+/* Se mide en el navegador, sobre las casillas de verdad (por su data-square) y
+   no contra lo que diga la página: una etiqueta puesta sobre la columna que no
+   era se ve igual de bien y es peor que no tener ninguna. */
+async function medirCoordenadas(page, id) {
+  return page.evaluate((idTablero) => {
+    const tablero = document.getElementById(idTablero);
+    if (!tablero) return { hay: false };
+    const outer = tablero.closest(".board-coords-outer");
+    if (!outer) return { hay: false };
+    const letras = [...outer.querySelectorAll(".board-coords-files span")].map((s) => s.textContent);
+    const numeros = [...outer.querySelectorAll(".board-coords-ranks span")].map((s) => s.textContent);
+    const centro = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    // Cada letra tiene que caer sobre la columna que nombra, y cada número sobre
+    // su fila. Se comparan contra la casilla de verdad, por su data-square.
+    let peorLetra = 0, peorNumero = 0;
+    const lado = tablero.getBoundingClientRect().width / 8;
+    [...outer.querySelectorAll(".board-coords-files span")].forEach((span, i) => {
+      const casilla = tablero.querySelector('[data-square="' + letras[i] + numeros[0] + '"]');
+      if (!casilla) { peorLetra = Infinity; return; }
+      peorLetra = Math.max(peorLetra, Math.abs(centro(span).x - centro(casilla).x));
+    });
+    [...outer.querySelectorAll(".board-coords-ranks span")].forEach((span, i) => {
+      const casilla = tablero.querySelector('[data-square="' + letras[0] + numeros[i] + '"]');
+      if (!casilla) { peorNumero = Infinity; return; }
+      peorNumero = Math.max(peorNumero, Math.abs(centro(span).y - centro(casilla).y));
+    });
+    const r = tablero.getBoundingClientRect();
+    return {
+      hay: true, letras, numeros, peorLetra, peorNumero, lado,
+      ancho: Math.round(r.width), alto: Math.round(r.height),
+      seVe: outer.checkVisibility ? outer.checkVisibility() : true,
+    };
+  }, id);
+}
+
+/* ------------------------------------------------ 4. las coordenadas del alumno
+   Los dos overlays del alumno —la pregunta y la práctica contra el motor— son
+   los únicos tableros de la clase donde está SOLO: el profesor no le está
+   señalando la casilla y no tiene al lado el cuadro de comandos. Sin las
+   coordenadas de afuera hay que contar las filas con el dedo para leer una
+   jugada, y en el resto del sitio (Mates, Temas, 4×4, el diagnóstico) ya las
+   tiene siempre.
+
+   Lo que se mide es la PANTALLA y no la clase ni la opción que se le pasó: que
+   estén las 8 letras y los 8 números, que cada letra caiga sobre su columna
+   —las coordenadas señalando la columna que no era son peores que no tenerlas,
+   y se ven igual de bien— y que el tablero siga cuadrado. Girado (el alumno con
+   negras) el orden se invierte, que es lo que hace un tablero de verdad. */
+async function pruebaCoordenadasDelAlumno(browser) {
+  console.log("\n=== Las coordenadas en los tableros del alumno ===");
+  // Una posición en la que le toca mover a las NEGRAS: así el tablero le queda
+  // girado y de paso se comprueba que las etiquetas se giran con él.
+  const FEN_PREGUNTA = "6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 1";
+  const semilla = {
+    questions: [{ id: "q-1", fen: FEN_PREGUNTA, created_by: "u-profe", expected_plies: 1,
+                  closed_at: null, created_at: new Date().toISOString() }],
+  };
+  const { page, ctx, errores } = await abrir(browser, [ALUMNA, PROFE], "u-ana", semilla);
+  await page.waitForSelector("#question-card:not(.hidden)", { timeout: 15000 });
+  await page.waitForFunction(() =>
+    document.querySelectorAll("#question-board [data-square]").length === 64, null, { timeout: 15000 });
+
+  const medida = await medirCoordenadas(page, "question-board");
+
+  igual("el tablero de la pregunta trae las coordenadas de afuera", medida.hay ? "sí" : "no", "sí");
+  igual("y se ven de verdad", medida.seVe ? "sí" : "no", "sí");
+  // Juegan negras: el tablero se gira, así que las letras van de la h a la a.
+  igual("giradas con el tablero, como uno de verdad", (medida.letras || []).join(""), "hgfedcba");
+  igual("y los números también", (medida.numeros || []).join(""), "12345678");
+  if (medida.peorLetra <= medida.lado / 4) bien("cada letra cae sobre su columna (" + Math.round(medida.peorLetra) + "px de " + Math.round(medida.lado) + ")");
+  else mal("una letra no cae sobre su columna: " + Math.round(medida.peorLetra) + "px de desvío en casillas de " + Math.round(medida.lado));
+  if (medida.peorNumero <= medida.lado / 4) bien("cada número cae sobre su fila (" + Math.round(medida.peorNumero) + "px)");
+  else mal("un número no cae sobre su fila: " + Math.round(medida.peorNumero) + "px de desvío");
+  // El tope de ancho se muda al envoltorio: si se perdiera, el tablero se
+  // estiraría a lo ancho de la tarjeta y dejaría de ser cuadrado.
+  if (Math.abs(medida.ancho - medida.alto) <= 2) bien("el tablero sigue cuadrado: " + medida.ancho + "×" + medida.alto);
+  else mal("el tablero dejó de ser cuadrado: " + medida.ancho + "×" + medida.alto);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+
+  // El otro overlay del alumno: la práctica contra el motor. Es un tablero
+  // aparte (practiceBoard), así que rotularlo en la pregunta no lo rotula acá.
+  const FEN_PRACTICA = "8/8/4k3/8/8/4K3/4P3/8 w - - 0 1";
+  const semilla2 = {
+    practice_sessions: [{ id: "p-1", fen: FEN_PRACTICA, level: 1500, created_by: "u-profe",
+                          ended_at: null, created_at: new Date().toISOString() }],
+  };
+  const dos = await abrir(browser, [ALUMNA, PROFE], "u-ana", semilla2);
+  await dos.page.waitForSelector("#practice-card:not(.hidden)", { timeout: 15000 });
+  await dos.page.waitForFunction(() =>
+    document.querySelectorAll("#practice-board [data-square]").length === 64, null, { timeout: 15000 });
+  const m2 = await medirCoordenadas(dos.page, "practice-board");
+  igual("el tablero de la práctica también las trae", m2.hay ? "sí" : "no", "sí");
+  igual("y se ven de verdad", m2.seVe ? "sí" : "no", "sí");
+  if (m2.hay && m2.peorLetra <= m2.lado / 4) bien("cada letra cae sobre su columna (" + Math.round(m2.peorLetra) + "px de " + Math.round(m2.lado) + ")");
+  else mal("una letra no cae sobre su columna: " + Math.round(m2.peorLetra) + "px");
+  if (m2.hay && Math.abs(m2.ancho - m2.alto) <= 2) bien("y sigue cuadrado: " + m2.ancho + "×" + m2.alto);
+  else mal("el tablero de la práctica dejó de ser cuadrado: " + m2.ancho + "×" + m2.alto);
+  await dos.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAlumna(browser);
     await pruebaLeccionDelProfesor(browser);
     await pruebaTactica(browser);
+    await pruebaCoordenadasDelAlumno(browser);
   } finally {
     await browser.close();
   }
