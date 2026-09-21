@@ -13,6 +13,8 @@
 // "filas", "registros" ni nombres de tabla; y cuando la semana viene vacía se
 // dice sin regañar a nadie.
 
+import type { Contacto } from "./contacto-academia.ts";
+
 export type Frecuencia = "diario" | "semanal" | "mensual" | "anual";
 
 // `esperados` es en cuántos días del periodo se considera que el alumno
@@ -120,7 +122,9 @@ function comoVa(d: Record<string, any>, frecuencia: Frecuencia) {
   };
 }
 
-export function informeHtml(d: Record<string, any>, frecuencia: Frecuencia, sitio: string) {
+export function informeHtml(
+  d: Record<string, any>, frecuencia: Frecuencia, sitio: string, contacto?: Contacto | null,
+) {
   const periodo = PERIODOS[frecuencia] ?? PERIODOS.semanal;
   const minutos = (Number(d.minutos_clase) || 0) + (Number(d.minutos_ejercicios) || 0);
   const entreno = (d.entreno ?? {}) as Record<string, { cuantos: number; mejor: number | null }>;
@@ -248,10 +252,14 @@ export function informeHtml(d: Record<string, any>, frecuencia: Frecuencia, siti
       ${d.diagnostico.fecha ? `<br><span style="color:#55708a">Medido el ${fecha(d.diagnostico.fecha)}.</span>` : ""}
     </p>` : ""}
 
+    ${contacto ? `
     <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
       Cualquier consulta, respondemos por WhatsApp al
-      <a href="https://wa.me/50683092291" style="color:#a85a0d">+506 8309-2291</a>.
-    </p>
+      <a href="${contacto.enlace}" style="color:#a85a0d">${escapar(contacto.texto)}</a>.
+    </p>` : `
+    <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
+      Cualquier consulta, respóndenos este mismo correo.
+    </p>`}
   </td></tr>
 
   <tr><td style="background:#f0f4f8;padding:16px 24px;font-size:11px;color:#55708a;line-height:1.6">

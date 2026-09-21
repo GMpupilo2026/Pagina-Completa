@@ -10,6 +10,8 @@
 // se congeló por salirse de la ventana se dice lo que pasó, sin acusar —
 // quien lo lee decide qué hacer con eso.
 
+import type { Contacto } from "./contacto-academia.ts";
+
 const AREAS: Record<string, string> = {
   reglas: "Reglas y movimientos",
   material: "Valor de las piezas",
@@ -33,7 +35,7 @@ function fecha(iso: string | null) {
   return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function informeExamenHtml(d: Record<string, any>, sitio: string) {
+export function informeExamenHtml(d: Record<string, any>, sitio: string, contacto?: Contacto | null) {
   const nota = d.nota != null ? Number(d.nota).toFixed(2) : "—";
   const pct = Number(d.porcentaje) || 0;
   const color = pct >= 70 ? "#16a34a" : pct >= 50 ? "#de911d" : "#dc2626";
@@ -139,8 +141,10 @@ export function informeExamenHtml(d: Record<string, any>, sitio: string) {
     ${listaSin}
 
     <p style="margin:20px 0 0;font-size:13px;color:#55708a;line-height:1.6">
-      Cualquier consulta, respondemos por WhatsApp al
-      <a href="https://wa.me/50683092291" style="color:#a85a0d">+506 8309-2291</a>.
+      ${contacto
+        ? `Cualquier consulta, respondemos por WhatsApp al
+           <a href="${contacto.enlace}" style="color:#a85a0d">${escapar(contacto.texto)}</a>.`
+        : "Cualquier consulta, respóndenos este mismo correo."}
     </p>
   </td></tr>
 

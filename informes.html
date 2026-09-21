@@ -573,7 +573,7 @@
         let teacherData = null;
 
         async function fetchTeacherData() {
-            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno }, totalesRes, planes, visitantes, arbitrajes] = await Promise.all([
+            const [{ alumnos, cursosPorAlumno, diagnosticoPorAlumno }, totalesRes, planes, visitantes, arbitrajes, subgruposRes] = await Promise.all([
                 cargarResumen(),
                 sb.rpc("informes_totales").maybeSingle(),
                 traerTodo(() => sb.from("training_plans").select("*").order("student_id")),
@@ -583,6 +583,10 @@
                 traerTodo(() => sb.from("arbitrajes_publicos")
                     .select("id, created_at, nombre, email, porcentaje, nivel, revisado, revisado_at, detalle")
                     .order("created_at", { ascending: false })),
+                // Los subgrupos de quien mira: sus propias listas de alumnos.
+                // Si fallan, el filtro se queda con los grupos de siempre en
+                // vez de tumbar el informe entero — son un extra, no el dato.
+                sb.rpc("mis_subgrupos"),
             ]);
             if (totalesRes.error) throw totalesRes.error;
             const totales = totalesRes.data || { clases_cerradas: 0, preguntas: 0, partidas: 0 };
@@ -593,6 +597,7 @@
                 totales, closedSessions: totales.clases_cerradas,
                 students: alumnos, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno,
                 plansByStudent, visitantes, arbitrajes,
+                subgrupos: subgruposRes?.data || [],
             };
         }
 
@@ -628,6 +633,24 @@
                 opt.textContent = g;
                 select.appendChild(opt);
             });
+
+            /* Los subgrupos propios van en el MISMO selector, con su <optgroup>:
+               a la hora de mirar el informe, "los del martes" se elige igual que
+               "7° B" — lo que cambia es quién lo armó, y eso se lee en el rótulo
+               del grupo. Es la misma decisión que los planes compartidos en la
+               clase en vivo. El valor lleva el prefijo `sub:` porque un grupo es
+               un texto libre y podría llamarse igual que un subgrupo. */
+            const subgrupos = (teacherData.subgrupos || []).filter((s) => s.cuantos > 0);
+            if (!subgrupos.length) return;
+            const caja = document.createElement("optgroup");
+            caja.label = "Mis subgrupos";
+            subgrupos.forEach((s) => {
+                const opt = document.createElement("option");
+                opt.value = "sub:" + s.id;
+                opt.textContent = s.nombre + " (" + s.cuantos + ")";
+                caja.appendChild(opt);
+            });
+            select.appendChild(caja);
         }
 
         // Alumnos que corresponden al grupo elegido en el filtro (o todos, sin filtro).
@@ -636,6 +659,14 @@
         function filteredStudents() {
             const grupo = document.getElementById("group-filter").value;
             if (!grupo) return teacherData.students;
+            if (grupo.startsWith("sub:")) {
+                const sub = (teacherData.subgrupos || []).find((s) => "sub:" + s.id === grupo);
+                // Un subgrupo que ya no existe (se borró en otra pestaña) no
+                // puede dejar el informe mostrando a todo el mundo como si no
+                // hubiera filtro: sin él, la lista va vacía y se ve.
+                const dentro = new Set(sub ? sub.alumnos : []);
+                return teacherData.students.filter((s) => dentro.has(s.id));
+            }
             return teacherData.students.filter((s) => s.grupo === grupo);
         }
 

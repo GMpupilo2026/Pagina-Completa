@@ -38,8 +38,12 @@ const FUNCIONES = {
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
-  // No comparte nada: su examen-html.ts es suyo y vive en su carpeta.
-  "informe-examen": [],
+  "correos-alumno": ["usuario-alumno.ts"],
+  // Su examen-html.ts es suyo y vive en su carpeta; lo único compartido es el
+  // número al que la casa escribe, que es el mismo en los tres correos.
+  "informe-examen": ["contacto-academia.ts"],
+  "informes-encargados": ["contacto-academia.ts"],
+  "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts"],
 };
 
 function armar(nombre) {

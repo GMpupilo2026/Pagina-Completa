@@ -57,6 +57,9 @@ const SIN_ESTILO = new Set([
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "lesson-send-btn",
     "ficha-btn", "plan-btn",
+    // Cada cobro de la lista, para que la prueba pueda contarlos sin depender
+    // de cómo estén anidados dentro del bloque de su mes.
+    "cobro-fila",
     /* Los cuatro exámenes de arbitraje (arbitraje.html y nivel-de-arbitraje.html):
        cada uno lleva su <span> con cuántas preguntas trae, y ese número NO se
        escribe a mano — lo rellena el propio banco con `totalPara(techo)`, así

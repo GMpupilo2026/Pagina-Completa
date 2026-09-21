@@ -1236,6 +1236,11 @@
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
                     { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* Tus propias listas de alumnos. No son los "equipos" de
+                       Administración —esos dan permisos— ni el grupo de cada
+                       alumno: son de quien las arma y solo sirven para filtrar
+                       y para mandar una tarea a varios de una vez. */
+                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" },
                     /* La guía apunta a la versión accesible y no al PDF a
                        propósito: es una página que abre en cualquier aparato,
                        trae el contenido completo y desde ahí se bajan el manual
@@ -1255,20 +1260,19 @@
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );
-            } else if (!isTeacher) {
-                /* La misma página, pero quien no coordina solo ve lo suyo.
-                   No se le pone a quien coordina para no repetir el destino.
-
-                   Y tampoco a quien da clase: las mensualidades son de las
-                   familias del alumnado, así que a una profesora esa tarjeta
-                   le ofrecía "lo que se te ha cobrado" sobre una cuenta a la
-                   que no se le cobra nada. Quien coordina sí llega a los
-                   cobros, pero por "Cobros de la Academia" en Herramientas,
-                   que es la página entera y no el recibo propio. */
-                TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
-                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html", mantenimientoAlumno: true }
-                );
             }
+            /* LOS COBROS NO SE LE OFRECEN A NADIE MÁS QUE A COORDINACIÓN.
+               Aquí vivía «Mis pagos» para el alumnado. Se fue del panel entero,
+               y no por mantenimiento: las mensualidades son cosa de la casa,
+               no del alumno —a quien entra a entrenar no le toca resolver un
+               pago— y a quien da clase esa tarjeta le ofrecía «lo que se te ha
+               cobrado» sobre una cuenta a la que no se le cobra nada. Quien
+               coordina llega por «Cobros de la Academia», en Herramientas.
+
+               La página sigue existiendo y sigue enseñándole a cada quien sus
+               propios recibos si entra por la dirección: lo que se quitó es el
+               camino, no el derecho a ver lo suyo. Volver a ofrecerla es
+               agregar la tarjeta otra vez acá. */
 
             // Después de armar la lista y antes de pintarla: apaga para el
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo

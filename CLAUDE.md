@@ -763,6 +763,76 @@ ningún otro número chico.
   `verificar-varios-profesores.js`: la de equipos es una función aparte,
   `renderEquipoTags()`.
 
+### Subgrupos: las listas que cada profesor arma para sí mismo
+
+Son la TERCERA forma de agrupar alumnos que tiene el sitio, y confundirla con
+las otras dos es el error caro:
+
+| | quién la pone | cuántas por alumno | ¿da permisos? |
+|---|---|---|---|
+| `profiles.grupo` | quien administra | una | no |
+| **equipos** | quien administra | varias | **SÍ** |
+| **subgrupos** | **cada profesor, solo** | varias | **no** |
+
+Un subgrupo se define por lo que NO hace: **no da ni un permiso**. Ninguna de
+las funciones que deciden quién es profesor de quién —`profesores_de()`,
+`alumnos_de()` y las cinco que cuelgan de ellas— lo mira. Por eso un profesor
+puede armarlos solo, sin pedirle nada a quien administra: es una etiqueta para
+filtrar («los del martes», «los que van al torneo»), no una llave. Un equipo
+sí es una llave, y por eso los equipos siguen siendo de administración.
+
+- **Solo puede contener a quien YA es suyo**: la política de insert de
+  `subgrupo_alumnos` exige `soy_profesor_de()`. No es por los permisos —no da
+  ninguno— sino porque no hay razón para que sirva de libreta de ids ajenos.
+- **Es del profesor que lo armó.** Quien administra los ve todos —la regla
+  permanente— pero **no los edita**: la forma en que una colega ordena a sus
+  alumnos es suya, igual que sus planes de clase. Comprobado impersonando roles
+  en SQL: otra profesora no lo ve (0 filas), no ve sus renglones y renombrarlo
+  le cambia **0 filas**; un alumno no puede crear ninguno ni ve ninguno.
+- **Dos subgrupos con el mismo nombre serían imposibles de distinguir** en el
+  selector, que es para lo único que existen: lo impide un índice único sobre
+  `(profesor_id, lower(btrim(nombre)))`. Es por profesor, así que que una colega
+  tenga su propio «Grupo de la tarde» no estorba.
+- `public.mis_subgrupos()` devuelve **el arreglo de ids** de cada uno, no las
+  filas sueltas: quien la llama ya tiene cargada su lista de alumnos, así que
+  con los ids le basta para cruzar sin una segunda consulta por subgrupo.
+
+#### Dónde se usan
+
+- **`subgrupos.html`** (tarjeta «👥 Mis subgrupos» en Herramientas): crear,
+  renombrar, borrar y marcar quiénes están. **Al guardar se manda SOLO lo que
+  cambió**, no la lista entera: borrar todo y volver a insertarlo dejaría el
+  subgrupo vacío un instante y, si el insert fallara a la mitad, se quedaría
+  vacío sin que nadie lo hubiera pedido.
+- **El filtro de `informes.html`**: van en el MISMO selector que los grupos,
+  con su `<optgroup>` —a la hora de mirar el informe, «los del martes» se elige
+  igual que «7° B»—. El valor lleva el prefijo `sub:` porque un grupo es texto
+  libre y podría llamarse igual que un subgrupo. Un subgrupo **sin nadie no se
+  ofrece**: sería un control que no hace nada.
+- **`js/subgrupos-marcar.js`** en Tareas y en Exámenes: elegir un subgrupo
+  marca a los suyos **y desmarca al resto**. Es lo que quiere decir «mándasela
+  a los del martes», y deja la lista en un estado que se lee de un vistazo;
+  sumar sobre lo que ya estaba marcado sería más flexible y mucho menos
+  predecible, porque nadie revisa sesenta casillas antes de apretar el botón.
+  Está escrito UNA vez para las dos pantallas: son justo las dos donde
+  equivocarse cuesta caro —una tarea mandada a toda la Academia en vez de a los
+  seis del martes no da ningún error—.
+  - **Cuántos quedaron marcados puede no ser cuántos tiene el subgrupo**: si a
+    uno de sus alumnos lo reasignaron, ya no está en la lista de esa pantalla.
+    Se dice el número de verdad, el de las casillas, y se avisa de la
+    diferencia. Dar por bueno el del subgrupo dejaría una tarea con un alumno
+    menos sin que nada fallara.
+
+**Al tocar los subgrupos, el filtro de Informes o el selector de Tareas y
+Exámenes, correr `node herramientas/verificar-subgrupos.js`** (con el sitio en
+localhost:8777 y playwright). Comprueba qué manda la página al crear y al
+renombrar, que guardar quiénes están mande **solo la diferencia**, que el
+buscador no se pierda con las tildes, que a un alumno no se le pinte nada, que
+el subgrupo salga en el selector de Informes y —lo que de verdad importa— que
+**filtre**: un filtro que no filtra enseña el informe de la Academia entera y
+se ve exactamente igual de bien. Está probado que falla de verdad: quitándole
+el filtro a `filteredStudents()`, salta.
+
 ## Tareas: el profesor pide cantidades y la tarea se llena sola
 
 `tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
@@ -2434,6 +2504,101 @@ salgan los avisos.
   clase: dice que se hable. Quien lee puede ser una familia a la que se le
   complicó el mes.
 
+### Los correos de una familia se corrigen en un solo lugar
+
+Son TRES cosas distintas, y hasta ahora se tocaban en tres pantallas o en
+ninguna:
+
+| qué | dónde vive | quién podía tocarlo antes |
+|---|---|---|
+| con qué entra el alumno | `profiles.email` + `auth.users.email` | nadie desde el navegador |
+| a dónde va el informe de la casa | `encargados` | solo un profesor SUYO |
+| a dónde va el cobro | `cobros_contacto` (nuevo) | no existía |
+
+La pregunta de quien está corrigiendo es UNA —«¿a dónde le estamos escribiendo
+a esta familia?»—, así que los tres se manejan juntos, en la ficha «✉️
+Contacto» de `cobros.html`, y los escribe la Edge Function **`correos-alumno`**.
+
+- **Por qué hace falta una función y no alcanza con la RLS**, que es lo que hay
+  que entender antes de tocarlo: `profiles.email` lo revierte el trigger
+  `protect_profiles_identity_columns` —el correo es la llave con la que se
+  inicia sesión— y además hay que cambiarlo en `auth.users`, que desde el
+  navegador no se toca; `encargados` pide `soy_profesor_de()`, así que quien
+  coordina sin ser profesor de ese alumno no podía corregir ni una letra.
+- **Cuidado con el trigger, que es el fallo callado de siempre**: solo revierte
+  cuando `auth.uid()` no es nulo. Escribir con la service role funciona;
+  hacerlo con el cliente que lleva el JWT "funciona" también —y el valor queda
+  como estaba, sin dar ningún error—. Por eso la función **vuelve a leer la
+  fila** y falla si el correo no quedó, como ya hacía `marcar_coordinador()`.
+- **Quién puede**: `soy_coordinador()` primero, y después la fila del alumno se
+  lee con el JWT de quien llama. Si la RLS de `profiles` no se la devuelve, ese
+  alumno no es suyo. La misma regla de `reenviar-acceso`, escrita una sola vez.
+- **Un correo que ya es de otra cuenta se rechaza con un 409 que dice qué
+  hacer**, en vez de pisarla: si son hermanos, la salida es «No tiene correo
+  propio», que le arma un usuario de la Academia.
+- **Corregir el correo de quien ya estaba apuntado es un UPDATE sobre su fila,
+  no un alta.** De otra forma quedarían los dos —el bueno y el que tenía la
+  letra mal— y a ese le seguirían saliendo los informes.
+
+#### `cobros_contacto`: el correo del cobro, cuando hay que decirlo a mano
+
+`correo_cobro()` miraba los encargados y, si no había, la cuenta del alumno.
+Los dos son datos de OTRA cosa, así que corregir a dónde va el recibo obligaba
+a cambiar algo que no era — y el caso de todos los días es tan tonto como una
+letra mal escrita en el correo de la mamá, o un papá que paga pero no recibe
+el informe.
+
+- Una fila ahí **manda sobre todo lo demás y es la ÚNICA dirección** a la que
+  se le avisa de ese cobro. No se suma a los encargados: si se sumara,
+  corregir un correo equivocado seguiría mandándole el aviso al equivocado.
+- **No acepta un usuario interno.** Ese dominio no tiene MX a propósito, así
+  que fijarlo ahí sería mandar los avisos a un buzón que no existe: Resend
+  acepta el envío, el correo rebota y no falla nada.
+- El alumno **lee el suyo y no lo escribe**: tiene que poder ver a qué correo
+  le llegan los avisos, pero si pudiera cambiarlo bastaría con eso para dejar
+  de recibirlos.
+- Comprobado impersonando roles en SQL: el correo se guarda en minúscula y sin
+  espacios, manda sobre el encargado, el usuario interno se rechaza, y los
+  intentos del alumno de editarlo o borrarlo cambian **0 filas**.
+
+### El teléfono de las familias ya no está escrito en el código
+
+El número al que la casa escribe salía a mano en **cuatro archivos** —el
+informe de la casa, el informe de un examen, el aviso de cobro y «Mis pagos»—,
+así que cambiarlo era una tanda de ediciones y un despliegue, y quien coordina
+la Academia —que es justamente quien atiende esas consultas— no tenía forma de
+tocarlo.
+
+Ahora vive en **`public.ajustes_academia`** (clave/valor, clave
+`whatsapp_consultas`) y se cambia desde la ficha «✉️ Contacto» de `cobros.html`.
+
+- **Es clave/valor y no una columna por cosa** a propósito: lo que venga
+  después (una dirección, un horario de atención) entra sin migrar la tabla.
+- **Lo lee cualquiera con sesión** —es lo que la página le enseña al alumno
+  cuando le dice a dónde escribir— y lo escribe `soy_coordinador()`.
+  Comprobado: un alumno lee 1 fila y sus updates cambian **0**.
+- **Si no hay número, no se inventa ninguno**: los correos salen pidiendo que
+  respondan ese mismo correo. Un correo sin número al que escribir es peor que
+  uno con el número de siempre, pero MUCHO mejor que uno con un número que ya
+  no atiende nadie. Por eso tampoco hay un valor de respaldo escrito en el
+  código: la fila se sembró con el número que había.
+- **`wa.me` quiere los dígitos CON código de país.** Sin él, el enlace abre un
+  chat con un número que no existe y eso se ve como un enlace perfecto: un
+  número de ocho dígitos es de Costa Rica y se le pone el 506 delante. La regla
+  está en `_compartido/contacto-academia.ts` y, a la fuerza, otra vez en
+  `cobros.html` — son dos tiempos de ejecución que no pueden leerse entre sí.
+- Las páginas **públicas** (la portada, `sobre-oscar.html`, el pie del sitio)
+  siguen con el número escrito: son HTML estático que tiene que poder
+  indexarse y leerse sin JavaScript, y ahí el número es el de la Academia de
+  siempre. Lo que se movió es lo que sale POR CORREO.
+
+**Esto pide desplegar cuatro Edge Functions**, ya desplegadas desde esta tanda:
+`correos-alumno` (nueva), `cobros-recordatorios` (que además ahora respeta el
+correo fijado a mano), `informes-encargados` e `informe-examen`. Se arman con
+`node herramientas/funciones-armar.js`. `cobros-recordatorios` **entró al
+repositorio en esta tanda**: antes vivía solo desplegada, así que cambiarle una
+línea era bajarla, editarla a ciegas y volver a subirla.
+
 ### Pasarela y factura electrónica
 
 **No hay pasarela de pago, por decisión explícita**: el cobro se registra a mano
@@ -2454,6 +2619,60 @@ sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad las
 dos caras de la página, que no recalcule situaciones, qué manda al crear un
 plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
 el CSV salga con punto y coma y BOM.
+
+### Cobros no es de profesores, y la lista ya no se baja entera
+
+Dos cosas que cambiaron en esta pantalla, por dos razones distintas:
+
+- **Quien da clase y no coordina no ve NADA de cobros.** Antes caía en «Mis
+  pagos» y veía una lista vacía —a una cuenta de profesora no se le cobra—, que
+  se lee como una página rota en vez de como «esto no es tuyo»; ahora se le
+  dice con todas las letras de quién es la página. La tarjeta **«Mis pagos» se
+  fue del panel entero**, también para el alumnado: las mensualidades son cosa
+  de la casa, no de quien entra a entrenar. La página sigue enseñándole a cada
+  quien sus propios recibos si entra por la dirección —lo que se quitó es el
+  camino, no el derecho a ver lo suyo—. Comprobado impersonando roles en SQL:
+  un profesor sin coordinación recibe **0 filas** de `cobros`, `cobros_vista`,
+  `planes_cobro`, `suscripciones` y `cobros_contacto`.
+- **El filtro y el corte los hace la base.** Esta página se bajaba los cobros
+  con un `.limit(1000)` y filtraba en el navegador: es la misma piedra de
+  `informes.html` y del registro de clases —PostgREST corta la respuesta a
+  partir de cierta cantidad de filas SIN DAR NINGÚN ERROR—, y con una
+  mensualidad por alumno y por mes ese techo se cruza en un par de años de
+  academia. A partir de ahí la página habría empezado a esconder cobros en
+  silencio, y los totales de arriba (que sí salen de la base) habrían dejado de
+  cuadrar con la lista sin que nadie supiera por qué.
+  - Ahora vienen de treinta en treinta, con su cuenta total (`count: "exact"`),
+    su búsqueda por concepto o número de recibo y su «Ver más».
+  - Y **agrupados por mes**, con el más nuevo abierto y los de atrás cerrados:
+    con trescientos recibos de corrido no se encuentra ninguno. Es el mismo
+    patrón del registro de clases del panel. El encabezado de cada mes dice
+    cuántos hay y cuánto queda sin pagar, **por moneda** — sumar colones con
+    dólares daría un número que no significa nada.
+  - El **CSV baja lo que cumple el filtro, no lo que se alcanzó a pintar**, y
+    lo pide de mil en mil: quien filtró por «vencidos» quiere los vencidos, no
+    los treinta primeros.
+  - El texto de búsqueda se limpia antes de mandarlo: PostgREST arma el `or=(…)`
+    con comas y paréntesis, así que un concepto con una coma rompería la
+    consulta entera. Y cada consulta lleva su marca, para que una respuesta que
+    llega tarde no pinte el resultado de un filtro que ya no está.
+- **La ficha que quedó abierta se recuerda**, como las pestañas de la clase en
+  vivo: registrar un pago recarga la página entera y volver siempre a «Cobros»
+  obliga a buscar otra vez dónde se estaba.
+- **Desde Morosidad se llega a corregir el correo**, con el alumno ya elegido:
+  el momento de darse cuenta de que el correo está mal es justo ese, viendo que
+  alguien lleva 40 días de atraso al lado de la dirección a la que le estuvimos
+  escribiendo. Y la fila dice **a qué correo se le avisa**, o avisa de que no
+  hay ninguno.
+
+**Al tocar `cobros.html`, correr `node herramientas/verificar-cobros.js`.**
+Comprueba además de lo de siempre: que los cobros se pidan con su cuenta y con
+un rango (si alguien vuelve a bajárselos todos, la página se ve igual de bien
+hasta que hay más de mil), que se agrupen por mes con solo el primero abierto,
+que buscar pregunte a la base, que una profesora no reciba **ni un cobro**, que
+el número de las familias salga de los ajustes y no escrito en la página, que
+un número de tres dígitos no se guarde, y qué manda la ficha de contacto al
+corregir cada uno de los tres correos.
 
 ## Reportes de actividades para presentar
 
