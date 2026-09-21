@@ -457,13 +457,22 @@ por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
   trae, o el inicio de siempre). No la posición final (`fen_final`, que sí vive
   en la base): la de salida es la que identifica al ejercicio y la que tiene
   sentido preguntar o practicar.
-- **❓ Preguntar** y **🎯 Practicar**, las dos pasando primero por
-  `aplicarPosicionEnClase()` como cualquier otra puerta que pone una posición en
-  el tablero. `Preguntar` calcula `expected_plies` del propio `move_count` del
-  archivo (con el mismo tope de 6 que usa Táctica); `Practicar` inserta en
-  `practice_sessions` con el nivel que esté elegido en la pestaña Practicar —el
-  mismo insert que `start-practice-btn`, solo que con el fen del archivo en vez
-  de `board.fen()`.
+- **📥 Cargar**, **❓ Preguntar** y **🎯 Practicar** pasan las tres por
+  `aplicarPosicionEnClase()`, como cualquier otra puerta que pone una posición
+  en el tablero. `Cargar` **mandaba antes la línea entera reproducida con
+  `board.loadMoves()`**, o sea la posición FINAL del PGN —jaque mate incluido
+  cuando lo traía—, así que la clase veía el desenlace del ejercicio apenas se
+  elegía el archivo, sin que se hubiera jugado ni una jugada delante de nadie.
+  Ahora manda la misma posición de SALIDA que Vista previa: la clase arranca
+  limpia, sin las variantes de la línea anterior colgando (eso ya lo hace
+  `aplicarPosicionEnClase()` con `clearVariantTree()`), y la línea se juega en
+  vivo desde ahí, jugada por jugada, con el mismo mecanismo de cualquier
+  partida (`onMove` → `pushBoardState()`) — no con una reproducción instantánea
+  que el resto de la clase no llega a ver. `Preguntar` calcula `expected_plies`
+  del propio `move_count` del archivo (con el mismo tope de 6 que usa Táctica);
+  `Practicar` inserta en `practice_sessions` con el nivel que esté elegido en
+  la pestaña Practicar —el mismo insert que `start-practice-btn`, solo que con
+  el fen del archivo en vez de `board.fen()`.
 
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 

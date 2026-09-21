@@ -1082,18 +1082,22 @@
         // ---------- Jalar al tablero un PGN subido en Archivos (solo el profesor) ----------
         // Misma tabla "archivos_pgn" de partidas.html: se listan solo las del propio
         // profesor (la RLS ya aísla por profesor_id, pero acá además no tiene sentido
-        // ofrecer el archivo de otro). Al elegir uno se reproduce como historial jugada a
-        // jugada con board.loadMoves() —igual que applyGameStateRow() hace con cualquier
-        // game_state— y se transmite con pushBoardState(), sin ningún camino nuevo de
-        // sincronización: la clase lo ve exactamente como vería cualquier partida jugada
-        // en vivo, y se recorre con la navegación de jugadas de siempre.
+        // ofrecer el archivo de otro). Las tres acciones —Cargar, Preguntar, Practicar—
+        // mandan la posición de SALIDA del PGN, nunca la final: "Cargar" pasaba antes por
+        // board.loadMoves() con la línea entera, y eso dejaba a la clase viendo de una
+        // el desenlace del ejercicio (jaque mate incluido) apenas se elegía el archivo, sin
+        // haber jugado ni una jugada delante de nadie. Ahora las tres pasan por
+        // aplicarPosicionEnClase(), como cualquier otra puerta que pone una posición en el
+        // tablero: la clase arranca de la posición inicial, sin variantes de una línea
+        // anterior colgando, y la línea se juega en vivo desde ahí, jugada por jugada, con
+        // el mismo mecanismo de cualquier partida (onMove → pushBoardState()).
         let archivosPanelCargados = false;
 
         // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
-        // identifica al ejercicio ("de qué posición se trata") y la que tiene sentido
-        // preguntar o practicar — cargarArchivoEnClase() ya recorre las jugadas a partir
-        // de acá con board.loadMoves(). No se guarda en la fila (solo fen_final vive en
-        // la base, ver partidas.html): sale del propio PGN, que ya se tiene en memoria.
+        // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
+        // acciones —Cargar, Preguntar, Practicar— para mandar la clase a la misma línea de
+        // salida. No se guarda en la fila (solo fen_final vive en la base, ver
+        // partidas.html): sale del propio PGN, que ya se tiene en memoria.
         function archivoStartFen(a) {
             const game = new Chess();
             if (!game.load_pgn(a.pgn, { sloppy: true })) return null;
@@ -1129,7 +1133,7 @@
             loadBtn.type = "button";
             loadBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
             loadBtn.textContent = "📥 Cargar";
-            loadBtn.title = "Cargar la línea completa en el tablero, jugada a jugada";
+            loadBtn.title = "Cargar la posición inicial de esta línea en el tablero, para jugarla en vivo con la clase";
             const askBtn = document.createElement("button");
             askBtn.type = "button";
             askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
@@ -1211,19 +1215,11 @@
 
         async function cargarArchivoEnClase(a) {
             const msgEl = document.getElementById("archivos-panel-msg");
-            const game = new Chess();
-            if (!game.load_pgn(a.pgn, { sloppy: true })) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
-            const moves = game.history();
-            const headers = typeof game.header === "function" ? game.header() : {};
-            board.loadMoves(moves, headers.FEN || null);
-            board.setMarks([], []);
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const aviso = "Se cargó \"" + a.titulo + "\" en el tablero, desde su posición inicial — juega la línea en vivo con la clase.";
+            if (!(await aplicarPosicionEnClase(fen, aviso))) return;
             document.getElementById("archivos-panel").classList.add("hidden");
-            await pushBoardState();
-            await clearVariantTree(); // las variantes de la línea anterior no tienen sentido con esta partida
-            updateTurnIndicator();
-            renderMoveList();
-            if (isTeacher) updateEngineEval();
-            setStatus("Se cargó \"" + a.titulo + "\" en el tablero — recórrela con la clase usando la navegación de jugadas.");
         }
 
         // Envía la posición de SALIDA del PGN como pregunta — mismo mecanismo que
