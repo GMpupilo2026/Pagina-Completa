@@ -1,0 +1,1 @@
+revoke execute on function public.protect_game_state_teacher_columns() from public, anon, authenticated;

@@ -1,0 +1,2 @@
+alter table public.game_rooms add column if not exists duelo_state jsonb;
+comment on column public.game_rooms.duelo_state is 'Estado completo del Duelo Simultáneo (fen, compromisos/revelados de la ronda, número de ronda, resumen de la última ronda) cuando variant=''duelo''. NULL para las demás variantes. Ver js/duelo-engine.js.';

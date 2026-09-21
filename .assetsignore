@@ -3,3 +3,21 @@
 wrangler.jsonc
 .assetsignore
 worker.js
+
+# Lo que el worker sirve es TODO el directorio, así que lo que no se excluya
+# acá queda publicado en el sitio. `supabase/` es el punto de restauración de
+# la base: las 184 migraciones son el modelo de permisos entero —las políticas
+# de RLS, las funciones SECURITY DEFINER, qué comprueba cada una— y el
+# inventario del esquema es su índice. Nada de eso lo pide ninguna página; lo
+# único que conseguiría publicarlo es darle a cualquiera el mapa de por dónde
+# buscarle la vuelta. No da ningún error tenerlo abierto: solo se nota el día
+# que alguien lo usa.
+supabase
+RESTAURAR.md
+
+# Los volcados de la base (herramientas/respaldo-datos.sh). Están en
+# .gitignore, así que no deberían llegar nunca a un despliegue — pero el
+# despliegue sube la carpeta de trabajo, no lo que hay en git, así que quien
+# corra el respaldo y despliegue después publicaría cédulas y correos de
+# menores de edad sin enterarse. Dos candados para el mismo descuido.
+respaldos

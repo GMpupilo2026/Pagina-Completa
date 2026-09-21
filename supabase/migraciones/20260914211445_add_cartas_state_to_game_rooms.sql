@@ -1,0 +1,2 @@
+alter table public.game_rooms add column if not exists cartas_state jsonb;
+comment on column public.game_rooms.cartas_state is 'Estado completo del Ajedrez de Cartas (fen, manos, mazo, descarte, banderas de congelar/escudo/salto/doble) cuando variant=''cartas''. NULL para las demás variantes. Ver js/cartas-engine.js.';
