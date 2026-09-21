@@ -4890,12 +4890,52 @@ siguiente que sí lo tenga**.
   sería mentira.
 - **Ni el área ni el enlace se escriben acá.** Las áreas flojas las calcula
   `PlanEntrenamiento.resumir()` —la misma que pinta Informes y el resultado del
-  diagnóstico— y a dónde va cada una está en su propio `recursos`, que ya estaba
-  escrito y hasta ahora no lo leía nadie desde el panel.
-- De paso se le agregó **`entreno/aperturas.html` a los recursos de «Principios
-  de apertura»**, que no lo tenía: era la única área cuyo plan no ofrecía ni un
-  ejercicio que resolver, solo un curso y un artículo. Es una omisión del plan,
-  no un parche del panel — también la arrastraba Informes.
+  diagnóstico— y a dónde va cada una está en su propio `recursos`.
+- **Se compara la PÁGINA, no la dirección entera** (`r.href.split("?")[0]`):
+  los recursos del plan llevan su recorte puesto y el catálogo de Tareas guarda
+  la página pelada. Comparando la dirección completa no coincidiría ni uno solo
+  y el paso caería siempre al genérico, sin que nada fallara.
+- **Y se manda la dirección CON el recorte.** Es lo que separa «haz ejercicios
+  de clavada» de «ahí tienes ochenta temas, busca» — la misma decisión que el
+  enlace de una tarea.
+
+### Los recursos del plan: específicos, y comprobados contra el banco
+
+`AREAS[].recursos` decía «Ejercicios por tema» y «Curso: Estrategia y Táctica»,
+o sea el nombre de la página y nada más. Eso se escribió cuando el sitio tenía
+mucho menos material; hoy hay **80 temas, 3 categorías de mates, 40 líneas de
+apertura y 56 fichas de estudio**, todos con su enlace directo, y el plan no
+conocía ninguno. Quien tenía flojos los finales recibía «Ejercicios por tema»
+y ochenta temas por delante para encontrar los de final.
+
+Ahora cada área ofrece **de 5 a 7 recursos con su recorte puesto**, y en un
+orden que no es casual: **primero lo que se HACE** (ejercicios que cuentan),
+después la ficha de Estudio para mirarlo de un vistazo, y al final el curso o el
+artículo para leerlo a fondo. Son 57 enlaces, 35 de ellos recortados.
+
+- **Las nueve áreas tienen ahora dónde practicar.** Antes, cinco mandaban a la
+  portada de un curso y el primer paso del panel se las tenía que saltar;
+  `finales` ya tiene `pawnEndgame` y `rookEndgame`, `estrategia` tiene
+  `quietMove` y `middlegame`, y `maestria`, las partidas de maestros.
+- **`entreno/aperturas.html` entró en «Principios de apertura»**, que era la
+  única área cuyo plan no ofrecía ni un ejercicio que resolver.
+- **El desequilibrio de material tiene su propio curso** y ahí se manda ahora
+  «Valor del material», que apuntaba a Fundamentos.
+
+**Al tocar `recursos`, los bancos o `js/material-plataforma.js`, correr `node
+herramientas/verificar-plan-recursos.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que cada enlace exista como archivo, que cada recorte
+esté **en el banco de verdad** —`entreno/data/metas.json`, el mismo que genera
+`metas-indice.py` leyendo las fuentes—, que ninguna área repita un recurso, y
+—lo que sostiene el primer paso del panel— **que ninguna se quede sin un solo
+recurso donde el trabajo cuente**. Con qué parámetro recorta cada página se le
+pregunta a su propio `hrefRecorte` y no a una tabla escrita en el verificador:
+el día que cambie, una tabla copiada seguiría dando verde sobre enlaces rotos.
+
+Todo lo que se rompe acá se rompe callado y lo descubre el alumno, que es el
+único que no puede arreglarlo: un `?tema=` con una clave que ya no está abre la
+lista vacía, sin error y sin aviso. Está probado que falla de verdad —con un
+tema inventado y con un archivo renombrado, salta—.
 
 #### Detalles que ya costaron una vez
 

@@ -885,7 +885,10 @@
                         titulo: "Por dónde empezar",
                         texto: `Tu diagnóstico señala un hueco en ${paso.area.nombre.toLowerCase()}`
                              + ` (${paso.area.porcentaje}%). Empieza por ahí.`,
-                        destino: paso.href, cta: `Ir a ${paso.label} →`,
+                        // El botón dice A DÓNDE VA y no "Ir a X": con los
+                        // nombres del plan puestos ("Ejercicios de final de
+                        // peones") el verbo delante no se lee.
+                        destino: paso.href, cta: `${paso.label} →`,
                         icono: paso.emoji, urgente: false,
                     });
                 } else {
@@ -964,9 +967,19 @@
                 const ficha = PE.AREA_POR_ID[area.id];
                 if (!ficha) continue;
                 for (const r of ficha.recursos || []) {
+                    /* Se compara la PÁGINA, no la dirección entera: los recursos
+                       del plan llevan su recorte puesto
+                       (`entreno/temas.html?tema=pin`) y el catálogo de Tareas
+                       guarda la página pelada. Comparando la dirección completa
+                       no coincidiría ni uno solo y el paso caería siempre al
+                       genérico, sin que nada fallara. */
+                    const pagina = r.href.split("?")[0];
                     const h = (MP.HERRAMIENTAS || []).find(
-                        (t) => t.href === r.href && (t.metas || []).includes("cantidad"));
-                    if (h) return { area, href: r.href, label: h.label, emoji: ficha.emoji };
+                        (t) => t.href === pagina && (t.metas || []).includes("cantidad"));
+                    /* Y se manda la dirección CON el recorte: es lo que separa
+                       "haz ejercicios de clavada" de "ahí tienes ochenta temas,
+                       busca". La misma decisión que el enlace de una tarea. */
+                    if (h) return { area, href: r.href, label: r.texto, emoji: ficha.emoji };
                 }
             }
             return null;
