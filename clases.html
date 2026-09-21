@@ -166,17 +166,22 @@
                  verdad hay algo que decir: una franja vacía que diga "no tienes
                  tareas" es ruido en todas las visitas menos una. -->
 
-            <!-- Tareas pendientes. La fecha límite ya vive en tareas.vence_at;
-                 lo que faltaba era decirla acá. Una tarea vencida pinta la
-                 franja en rojo: es la diferencia entre "tienes algo que hacer"
-                 y "se te pasó". -->
-            <a id="tareas-aviso" hidden href="tareas.html" class="mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                <span class="text-4xl" aria-hidden="true" id="tareas-aviso-emoji">📋</span>
+            <!-- Lo que le pusieron con fecha: tareas Y exámenes. Las dos
+                 cosas vencen y las dos las pone otra persona, así que van en la
+                 misma franja — y el id lo dice, que por eso dejó de llamarse
+                 "tareas-aviso": un examen contado dentro de algo que se llama
+                 tareas es como empiezan los malentendidos.
+
+                 Lo que pinta la franja en rojo es lo que ya no se puede
+                 arreglar solo: es la diferencia entre "tienes algo que hacer" y
+                 "se te pasó". -->
+            <a id="pendientes-aviso" hidden href="tareas.html" class="mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <span class="text-4xl" aria-hidden="true" id="pendientes-aviso-emoji">📋</span>
                 <div class="flex-1 min-w-[200px]">
-                    <h2 class="font-serif text-lg font-bold" id="tareas-aviso-titulo"></h2>
-                    <p class="text-sm" id="tareas-aviso-texto"></p>
+                    <h2 class="font-serif text-lg font-bold" id="pendientes-aviso-titulo"></h2>
+                    <p class="text-sm" id="pendientes-aviso-texto"></p>
                 </div>
-                <span class="text-sm font-semibold whitespace-nowrap" id="tareas-aviso-cta">Ver tus tareas →</span>
+                <span class="text-sm font-semibold whitespace-nowrap" id="pendientes-aviso-cta">Ver tus tareas →</span>
             </a>
 
             <!-- Continúa donde ibas. El curso a medias con la fecha más
@@ -671,60 +676,162 @@
             el.textContent = String(stats.racha_actual || 0);
         }
 
-        // ---------- Lo que te toca: tareas pendientes ----------
-        // La fecha límite ya vivía en tareas.vence_at; lo que faltaba era
-        // decirla en el panel. Un alumno abría esto, no veía nada que hacer, y
-        // la tarea vencía sin que nada avisara.
-        //
-        // Desde que una tarea tiene renglones con cantidad, lo pendiente NO es
-        // una columna: `tareas.estado` quedó sin uso y la situación la calcula
-        // public.tareas_con_avance() a partir de lo que el alumno lleva
-        // entrenado —la misma función que pinta tareas.html, para que las dos
-        // pantallas no puedan decir cosas distintas de lo mismo—. Con
-        // p_pendientes la base ya descarta las cumplidas, así que acá no se
-        // baja lo que no se va a mostrar.
-        async function cargarTareasPendientes() {
-            const { data, error } = await sb.rpc("tareas_con_avance", {
-                p_alumno: profile.id,
-                p_pendientes: true,
-                p_limite: 50,
-            });
-            if (error || !data || !data.length) return;   // sin tareas, la franja no se destapa
+        /* ---------- Lo que te toca: tareas Y exámenes ----------
+           La fecha límite ya vivía en `tareas.vence_at` y en `examenes.vence_at`;
+           lo que faltaba era decirla en el panel. Un alumno abría esto, no veía
+           nada que hacer, y la entrega vencía sin que nada avisara — del examen
+           el único aviso es el push del momento en que se lo asignan, así que
+           quien no lo vio no se entera nunca.
 
-            const vencidas = data.filter((t) => t.situacion === "vencida");
-            const caja = document.getElementById("tareas-aviso");
-            const titulo = document.getElementById("tareas-aviso-titulo");
-            const texto = document.getElementById("tareas-aviso-texto");
+           Ninguna de las dos cuentas se hace acá:
+           - `tareas_con_avance()` es la misma función que pinta `tareas.html`
+             (desde que una tarea tiene renglones con cantidad, lo pendiente NO
+             es una columna: `tareas.estado` quedó sin uso);
+           - `examenes_con_nota()` es la misma que pinta la lista del alumno en
+             `examenes.html`.
+           Dos pantallas que cuenten lo mismo por su cuenta terminan diciendo
+           cosas distintas del mismo alumno. */
 
-            // Una tarea vencida pinta la franja en rojo: es la diferencia entre
-            // "tienes algo que hacer" y "se te pasó", y en gris se lee igual que
-            // el resto del panel.
-            const urgente = vencidas.length > 0;
+        /* Un examen NO es una tarea vencida, y confundirlos sería mentirle.
+           `iniciar_examen()` rechaza con "Se pasó la fecha para hacer este
+           examen" el que sigue en `asignado` después de su `vence_at`: ahí se
+           acabó, mientras que una tarea vencida se sigue pudiendo hacer. Y un
+           `congelado` solo lo reabre el profesor. Así que de los cuatro estados
+           solo dos son "puedes hacer algo ahora". */
+        function estadoDeExamen(e, ahora) {
+            if (e.estado === "entregado") return "hecho";
+            if (e.estado === "congelado") return "congelado";
+            if (e.estado === "en_curso") {
+                // Volver a entrar no reinicia el reloj, así que un en_curso con
+                // su termina_at pasado ya no da para nada.
+                return new Date(e.termina_at) > ahora ? "corriendo" : "sin_tiempo";
+            }
+            return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
+        }
+
+        async function cargarPendientes() {
+            const [t, x] = await Promise.all([
+                sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
+                sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
+            ]);
+            const tareas = (t.error ? [] : t.data) || [];
+            /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
+               sin franja por la mitad que falló sería perder también la que sí
+               se pudo leer. */
+            const examenes = (x.error ? [] : x.data) || [];
+
+            const ahora = new Date();
+            const conEstado = examenes.map((e) => ({ ...e, situacion: estadoDeExamen(e, ahora) }));
+            const porHacer   = conEstado.filter((e) => e.situacion === "por_hacer")
+                                        .sort((a, b) => new Date(a.vence_at) - new Date(b.vence_at));
+            const corriendo  = conEstado.filter((e) => e.situacion === "corriendo");
+            const perdidos   = conEstado.filter((e) => e.situacion === "perdido" || e.situacion === "sin_tiempo");
+            const congelados = conEstado.filter((e) => e.situacion === "congelado");
+            const vencidas   = tareas.filter((t) => t.situacion === "vencida");
+
+            // Los que se le pasaron se cuentan como cosas que decir, no como
+            // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
+            // pendientes" le ofrecería algo que no va a poder abrir.
+            const hacibles = tareas.length + porHacer.length + corriendo.length;
+            if (!hacibles && !perdidos.length && !congelados.length) return;   // nada que decir: la franja no se destapa
+
+            /* EL ORDEN DE LAS REGLAS IMPORTA Y ESTÁ ESCRITO, como el del informe
+               a la casa: el texto se queda con UNA cosa, la que pide actuar
+               antes. Primero lo que corre ahora mismo, después lo que ya se
+               perdió, y al final lo que viene. */
+            let msg, destino = "tareas.html", cta = "Ver tus tareas →";
+            /* El icono acompaña a la LÍNEA, no a la franja: si el texto habla
+               de un examen, el 📋 de la tarjeta Tareas estaría señalando otra
+               cosa. Es decorativo (`aria-hidden`), así que lo que dice va
+               escrito igual. */
+            let icono = "📋";
+            const urgente = !!(corriendo.length || perdidos.length || vencidas.length || congelados.length);
+
+            if (corriendo.length) {
+                const e = corriendo[0];
+                /* NO se dicen los minutos que quedan. El reloj del examen sale
+                   de la hora del SERVIDOR (`termina_at` contra `now()`), y acá
+                   solo está la del navegador: un número calculado con el reloj
+                   de la computadora podría decirle que le quedan diez minutos
+                   cuando ya se le acabaron. Que el número lo dé `examen.html`,
+                   que lo pide a la base. Decidir "corre o no corre" con el reloj
+                   local sí es tolerable: en el peor caso lo manda a la pantalla
+                   del examen, que le dice la verdad. */
+                msg = `El examen «${e.titulo}» lo tienes a medias y el reloj corre. Entra a terminarlo.`;
+                destino = `examen.html?id=${encodeURIComponent(e.id)}`;   // directo a rendirlo, como el aviso al celular
+                cta = "Seguir el examen →"; icono = "⏰";
+            } else if (perdidos.length) {
+                const e = perdidos[0];
+                // Acá NO se dice "todavía puedes": no puede, y prometérselo es
+                // peor que no decir nada.
+                msg = perdidos.length === 1
+                    ? `Se te pasó la fecha del examen «${e.titulo}» y ya no se puede rendir. Habla con tu profe.`
+                    : `Se te pasó la fecha de ${perdidos.length} exámenes y ya no se pueden rendir. Habla con tu profe.`;
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "⏰";
+            } else if (vencidas.length) {
+                // Una tarea vencida sí se sigue pudiendo hacer, y se dice.
+                msg = vencidas.length === 1
+                    ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
+                    : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
+                icono = "⏰";
+            } else if (congelados.length) {
+                const e = congelados[0];
+                msg = `El examen «${e.titulo}» quedó congelado a la mitad. Tu profe tiene que volver a abrirlo.`;
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "📝";
+            } else {
+                /* Nada urgente: se nombra lo que vence antes, sea tarea o
+                   examen. Un examen tiene reloj y una sola oportunidad, así que
+                   cuando los dos caen el mismo día manda el examen. */
+                const t0 = tareas[0], e0 = porHacer[0];
+                const antesElExamen = e0 && (!t0 || new Date(e0.vence_at) <= new Date(t0.vence_at));
+                if (antesElExamen) {
+                    msg = `El examen «${e0.titulo}» vence ${venceEnPalabras(e0.vence_at)}`
+                        + ` · ${e0.preguntas} preguntas en ${e0.minutos} minutos.`;
+                    destino = `examen.html?id=${encodeURIComponent(e0.id)}`;
+                    cta = "Empezar el examen →"; icono = "📝";
+                } else {
+                    // Cuánto lleva de la más próxima: con renglones, "2 de 5"
+                    // dice mucho más que el título solo.
+                    const avance = t0.renglones > 1 ? ` Llevas ${t0.cumplidos} de ${t0.renglones}.` : "";
+                    msg = `La más próxima es «${t0.titulo}», vence ${venceEnPalabras(t0.vence_at)}.${avance}`;
+                }
+            }
+
+            const caja = document.getElementById("pendientes-aviso");
+            const titulo = document.getElementById("pendientes-aviso-titulo");
+            const texto = document.getElementById("pendientes-aviso-texto");
+
+            caja.href = destino;
             caja.className = "mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                 + (urgente
                     ? "bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500"
                     : "bg-white dark:bg-brand-900");
-            document.getElementById("tareas-aviso-emoji").textContent = urgente ? "⏰" : "📋";
+            document.getElementById("pendientes-aviso-emoji").textContent = urgente && icono === "📋" ? "⏰" : icono;
             titulo.className = "font-serif text-lg font-bold " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-800 dark:text-white");
             texto.className = "text-sm " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-500 dark:text-brand-300");
-            document.getElementById("tareas-aviso-cta").className = "text-sm font-semibold whitespace-nowrap "
+            const cajaCta = document.getElementById("pendientes-aviso-cta");
+            cajaCta.textContent = cta;
+            cajaCta.className = "text-sm font-semibold whitespace-nowrap "
                 + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
 
-            const n = data.length;
-            titulo.textContent = n === 1 ? "Tienes 1 tarea pendiente" : `Tienes ${n} tareas pendientes`;
-            if (urgente) {
-                texto.textContent = vencidas.length === 1
-                    ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
-                    : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
-            } else {
-                // Cuánto lleva de la más próxima: con renglones, "2 de 5" dice
-                // mucho más que el título solo — y es lo que hace que valga la
-                // pena entrar a terminarla.
-                const t0 = data[0];
-                const avance = t0.renglones > 1 ? ` Llevas ${t0.cumplidos} de ${t0.renglones}.` : "";
-                texto.textContent = `La más próxima es «${t0.titulo}», vence ${venceEnPalabras(t0.vence_at)}.${avance}`;
-            }
+            titulo.textContent = tituloPendientes(tareas.length, porHacer.length + corriendo.length);
+            texto.textContent = msg;
             caja.hidden = false;
+        }
+
+        /* "Tienes 3 tareas y 1 examen pendientes". Con una sola clase de cosa se
+           dice solo esa: nombrar las dos siempre obligaría a escribir "y 0
+           exámenes", que es ruido. */
+        function tituloPendientes(nTareas, nExamenes) {
+            const trozo = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+            if (nTareas && nExamenes) {
+                return `Tienes ${trozo(nTareas, "tarea", "tareas")} y ${trozo(nExamenes, "examen", "exámenes")} pendientes`;
+            }
+            if (nExamenes) return `Tienes ${trozo(nExamenes, "examen pendiente", "exámenes pendientes")}`;
+            if (nTareas)  return `Tienes ${trozo(nTareas, "tarea pendiente", "tareas pendientes")}`;
+            // Sin nada que hacer pero con algo que decir (se le pasó uno, o le
+            // quedó congelado): el título no puede prometer pendientes.
+            return "Hay algo que tienes que saber";
         }
 
         // "vence hoy" / "vence mañana" se entienden de un vistazo; una fecha
@@ -1194,7 +1301,7 @@
                 // Van en paralelo: son cinco consultas independientes y en
                 // serie se nota al abrir el panel desde el celular.
                 await Promise.all([
-                    cargarTareasPendientes(),
+                    cargarPendientes(),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),

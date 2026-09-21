@@ -4216,17 +4216,59 @@ El panel era una lista de sitios a los que ir: todo lo que es "esto te toca
 AHORA" vivía detrás de un clic, y quien no lo buscaba no se enteraba. Dos
 franjas, las dos arriba del grid y **antes** de los accesos:
 
-- **Tareas pendientes.** La fecha límite ya vivía en `tareas.vence_at` desde que
-  existe `tareas.html`; lo que faltaba era decirla acá. Un alumno abría el
-  panel, no veía nada que hacer, y la tarea vencía **sin que nada avisara** —
-  el aviso push sale al asignarla y después no vuelve nunca.
+- **Lo que te pusieron con fecha: tareas Y exámenes** (`#pendientes-aviso`, que
+  por eso dejó de llamarse `tareas-aviso` — un examen contado dentro de algo
+  que se llama "tareas" es como empiezan los malentendidos). La fecha límite ya
+  vivía en `tareas.vence_at` y en `examenes.vence_at`; lo que faltaba era
+  decirla acá. Un alumno abría el panel, no veía nada que hacer, y la entrega
+  vencía **sin que nada avisara** — el aviso push sale al asignarla y después
+  no vuelve nunca, y del examen ese push es el **único** aviso que existe.
+  - **Ninguna de las dos cuentas se hace acá**: `tareas_con_avance()` es la
+    misma función que pinta `tareas.html` y `examenes_con_nota()` la misma que
+    pinta la lista del alumno en `examenes.html`. Dos pantallas que cuenten lo
+    mismo por su cuenta terminan diciendo cosas distintas del mismo alumno.
+  - **Un examen vencido NO es una tarea vencida, y confundirlos sería
+    mentirle.** `iniciar_examen()` rechaza con «Se pasó la fecha para hacer
+    este examen» el que sigue en `asignado` después de su `vence_at`: ahí se
+    acabó. Una tarea vencida, en cambio, se sigue pudiendo hacer, y por eso su
+    texto dice "todavía puedes" y el del examen **no**. Lo mismo el
+    `congelado`, que solo reabre el profesor, y el `en_curso` al que ya se le
+    pasó el `termina_at`. De los cuatro estados, solo **asignado con fecha por
+    delante** y **en curso con reloj corriendo** son "puedes hacer algo ahora":
+    lo decide `estadoDeExamen()`, en un solo lugar.
+  - **Lo que ya no se puede hacer se dice pero no se cuenta.** Sumarlo al
+    "tienes N pendientes" le ofrecería algo que no va a poder abrir; callarlo
+    sería el fallo de siempre. El título pasa a "Hay algo que tienes que
+    saber".
+  - **El orden de las reglas importa y está escrito**, como el del informe a la
+    casa: el texto se queda con UNA cosa, la que pide actuar antes — primero el
+    examen con **el reloj corriendo** (que es lo más urgente que hay en el
+    panel: el tiempo se está yendo ahora), después lo que ya se perdió, después
+    la tarea vencida, y al final lo que viene, donde entre dos que vencen el
+    mismo día manda el examen porque tiene una sola oportunidad.
+  - **Los minutos que quedan NO se dicen acá.** El reloj del examen sale de la
+    hora del **servidor** (`termina_at` contra `now()`) y en el panel solo está
+    la del navegador: un número sacado del reloj de la computadora podría
+    decirle que le quedan diez minutos cuando ya se le acabaron. Ese número lo
+    da `examen.html`, que lo pide a la base. Decidir "corre o no corre" con el
+    reloj local sí es tolerable — en el peor caso lo manda a la pantalla del
+    examen, que le dice la verdad.
+  - **El enlace lleva a lo que el texto acaba de nombrar**, y cuando es un
+    examen rendible va **directo a rendirlo** (`examen.html?id=…`), la misma
+    decisión que el aviso al celular: tiene reloj y una sola oportunidad, así
+    que buscarlo en una lista es un paso de más. Uno vencido o congelado va a
+    `examenes.html` — mandarlo a la pantalla que lo va a rechazar sería peor.
+  - **Si los exámenes no llegan, las tareas se siguen mostrando**: quedarse sin
+    franja por la mitad que falló sería perder también la que sí se pudo leer.
   - **Una tarea vencida pinta la franja en rojo**, con el emoji cambiado. Es la
     diferencia entre "tienes algo que hacer" y "se te pasó", y en el gris del
-    resto del panel esas dos cosas se leen igual.
+    resto del panel esas dos cosas se leen igual. El emoji acompaña a la
+    **línea** y no a la franja: con el 📋 de Tareas sobre un texto que habla de
+    un examen, el icono estaría señalando otra cosa.
   - **"vence mañana", no una fecha.** Una fecha hay que compararla con el
     almanaque; se cuenta por **días de calendario** y no por horas, así que una
     tarea de mañana a las 8 a. m. vence mañana aunque falten menos de 24 horas.
-  - **Las pendientes las filtra la base** (`eq` de alumno y de estado), no se
+  - **Las pendientes las filtra la base** (`p_pendientes` de la función), no se
     bajan todas para descartar las hechas acá.
 - **Continúa donde ibas.** El curso a medias cuya última lección marcada es la
   más reciente, con su barra. Los datos ya los cuenta
@@ -4361,6 +4403,17 @@ y —lo que de verdad importa— que los tres números **salgan del RPC y que na
 pida `training_progress`**: si alguien vuelve a sumarlos acá la página se ve
 igual de bien hasta que un alumno cruza el techo de PostgREST. Y que a quien da
 clase se le pinte "Tu semana" y **no** el panel del alumno.
+
+De los exámenes en la franja comprueba los seis estados en que se puede estar,
+que son justamente los que se distinguen mal: que uno entregado no la destape,
+que uno con el reloj corriendo **mande sobre una tarea vencida** y lleve directo
+a terminarlo, que al que se le pasó la fecha **no se le diga «todavía puedes»**
+—el texto de la tarea, que ahí sería mentira— ni se le ofrezca la pantalla que
+lo va a rechazar, que al congelado se le diga quién tiene que reabrirlo, que el
+título cuente las dos clases de cosa ("3 tareas y 1 examen") y **que no se
+inventen los minutos que quedan**, que eso lo sabe el servidor. Sus exámenes de
+mentira se cuelgan de HOY y no de una fecha escrita, como las clases: con fechas
+fijas la prueba se pudre sola con el almanaque.
 
 - Su Supabase de mentira **resuelve las columnas de tabla relacionada**
   (`profiles.grupo`, que es como PostgREST las nombra). Sin eso ese filtro no
