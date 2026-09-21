@@ -6630,3 +6630,15 @@ tres formas de voseo («Avisá al profesor», «Probá con una foto»). Se
 corrigieron en el repositorio, así que hasta que se vuelva a desplegar, lo que
 el alumno ve en pantalla sigue diciendo lo de antes. Es el mismo caso que
 `admin-manage-users` con su «elegí un plan».
+
+### La etiqueta del punto de restauración se pone a mano
+
+`RESTAURAR.md` nombra el **commit** del estado bueno, no una etiqueta, y es a
+propósito: las credenciales de una sesión de Claude Code en la web empujan
+ramas pero reciben un **403 con `refs/tags`**, así que la etiqueta no se crea
+sola por más que el commit sí quede en `main`. Un documento que mandara a
+`git checkout restauracion-…` con esa etiqueta sin existir sería justo el fallo
+callado de siempre: se lee bien, y el día que hace falta no está.
+
+El comando queda escrito en `RESTAURAR.md` para correrlo desde una máquina con
+permiso de escribir etiquetas.
