@@ -4833,6 +4833,91 @@ decir.** Una franja que diga "no tienes tareas" es ruido en todas las visitas
 menos una, y un cartel que se repite deja de leerse — la misma lección que dejó
 el aviso de instalar la app.
 
+### Por dónde empezar: sin nada que vencer, la franja la ocupa el primer paso
+
+Un alumno recién invitado no tiene ninguna tarea ni ningún examen —nadie se los
+puso todavía—, así que la franja se le quedaba en blanco y el panel era un
+directorio de veintitantos lugares sin ninguna pista de por cuál empezar. En los
+datos se veía exactamente así: **de los alumnos que llegaron a entrar, la mayoría
+no había resuelto ni un ejercicio**, y buena parte de ellos **sí había hecho el
+diagnóstico** — o sea que no es que no arranquen, es que **el camino se corta
+justo después**.
+
+Lo confirma el otro número: `training_plans` tiene **cero filas** desde que
+existe. El diagnóstico se rinde, da un resultado, y no hay nada que lo convierta
+en «ahora haz esto».
+
+**Por eso no es UN primer paso, es EL SIGUIENTE**, y son tres peldaños que se
+calculan de lo que ya hay. El panel pinta el primero que no esté cumplido:
+
+| si… | se le ofrece |
+|---|---|
+| ya rindió el diagnóstico y no ha resuelto nada | **su** área floja, con dónde practicarla |
+| lo dejó a medias | seguir el diagnóstico, diciendo por qué pregunta iba |
+| no lo empezó nunca | hacer el diagnóstico |
+
+- **Se apaga solo.** Al resolver el primer ejercicio el peldaño deja de
+  cumplirse. No hay nada que marcar ni ningún «ya lo vi» en `localStorage` que se
+  pueda quedar desincronizado.
+- **Va en la MISMA franja** (`#pendientes-aviso`), no en una nueva: contesta la
+  misma pregunta —«¿qué hago ahora?»— y dos franjas peleando por el primer lugar
+  es el problema que este panel ya tuvo con «Estado de la clase». Por eso el
+  pintado se sacó a **`pintarFranja()`**: con dos, el que se olvidara de quitar
+  el rojo dejaría una sugerencia con pinta de entrega vencida.
+- **Lo que vence MANDA.** El primer paso solo llega hasta donde
+  `cargarPendientes()` hoy se rendía sin pintar nada: una fecha le gana siempre a
+  un consejo. Sin eso, a un alumno nuevo con una tarea ya puesta el panel le
+  escondería la tarea detrás de la sugerencia.
+- **Nunca se pinta en rojo** y tiene su propio título («Empieza por acá»): decir
+  «tienes 1 pendiente» sobre una sugerencia sería mentir.
+
+#### El destino tiene que ser una página cuyo trabajo CUENTE
+
+Es lo único de todo esto que se rompe callado. **Cinco de las nueve áreas tienen
+como primer recurso la PORTADA de un curso**, que es un temario: mandar ahí a
+quien quiere *hacer* algo lo deja leyendo un índice, no escribe ni una fila en
+`training_progress`, y **mañana la franja le dice exactamente lo mismo** — el
+peldaño no se apaga nunca y no se entera nadie.
+
+Así que el destino se cruza contra `MaterialPlataforma.HERRAMIENTAS` y solo vale
+el que ofrece la meta `cantidad`, que es lo mismo que decir «escribe en
+`training_progress`». Si el área más floja no tiene ninguno, **se baja a la
+siguiente que sí lo tenga**.
+
+- **Y por eso el texto NO dice «lo más flojo».** Se ofrece la más floja *de las
+  que tienen dónde practicar*, que no siempre es la peor de todas; «señala un
+  hueco en X» es cierto para cualquiera por debajo del 60 %, y el superlativo
+  sería mentira.
+- **Ni el área ni el enlace se escriben acá.** Las áreas flojas las calcula
+  `PlanEntrenamiento.resumir()` —la misma que pinta Informes y el resultado del
+  diagnóstico— y a dónde va cada una está en su propio `recursos`, que ya estaba
+  escrito y hasta ahora no lo leía nadie desde el panel.
+- De paso se le agregó **`entreno/aperturas.html` a los recursos de «Principios
+  de apertura»**, que no lo tenía: era la única área cuyo plan no ofrecía ni un
+  ejercicio que resolver, solo un curso y un artículo. Es una omisión del plan,
+  no un parche del panel — también la arrastraba Informes.
+
+#### Detalles que ya costaron una vez
+
+- **Haber rendido el diagnóstico NO es haber entrenado.** Es una fila de
+  `training_progress` como cualquier otra, así que «no ha hecho un solo
+  ejercicio» **no** es `total_ejercicios === 0`: hay que descontarlo de
+  `por_actividad`. Sin eso, a quien acaba de rendirlo el panel lo daría por
+  arrancado y no le diría nunca qué hacer con el resultado — que es justo el caso
+  que más abunda.
+- **No se le promete que el diagnóstico se retoma donde lo dejó.** Una prueba
+  empezada con una `VERSION` anterior se descarta a propósito, así que
+  prometerlo sería mentirle justo a quien vuelve confiando en eso. Se dice por
+  qué pregunta iba, y nada más.
+- **`js/plan-entrenamiento.js` y `js/material-plataforma.js` se bajan cuando
+  hacen falta**, no en cada carga: son 39 KB que solo usa quien ya tiene un
+  diagnóstico rendido, y por el panel entra todo el mundo —incluidos los que
+  todavía no lo hicieron, que son justamente los que más van a ver esta franja—.
+  Mismo criterio que el libro de aperturas del bot.
+- **`Logros.cargar()` se pide UNA vez y la promesa se reparte** entre el número
+  de «Tu progreso» y el primer paso: dos llamadas serían dos veces la misma
+  consulta para pintar el mismo dato.
+
 ### El orden de la página es el de las preguntas que uno se hace al entrar
 
     qué me toca  →  por dónde iba  →  cómo voy  →  y recién entonces a dónde ir

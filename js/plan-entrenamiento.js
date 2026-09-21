@@ -76,6 +76,10 @@ window.PlanEntrenamiento = (function () {
         'Anotar en cada partida la jugada en la que terminó el desarrollo: la meta es bajar ese número.',
       ],
       recursos: [
+        // Va primero porque es lo único de esta lista que se HACE: las otras dos
+        // se leen. El plan que solo ofrecía el curso dejaba a quien tiene floja
+        // el área sin un solo ejercicio que resolver.
+        { texto: 'Aperturas y celadas', href: 'entreno/aperturas.html' },
         { texto: 'Curso: Aperturas y Defensas', href: 'cursos/aperturas-y-defensas.html' },
         { texto: 'Artículo: el centro del tablero', href: 'articulos/el-centro-del-tablero.html' },
       ],

@@ -669,9 +669,9 @@
 
         // La racha de días la cuenta la base (public.progreso_dias_y_racha, ver
         // js/logros.js): acá solo se pone el número en su lugar.
-        async function loadRachaWidget() {
+        async function loadRachaWidget(rachaP) {
             const el = document.getElementById("progreso-racha");
-            const { stats, error } = await window.Logros.cargar();
+            const { stats, error } = await rachaP;
             if (error || !stats) { el.textContent = "—"; return; }
             el.textContent = String(stats.racha_actual || 0);
         }
@@ -709,7 +709,7 @@
             return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
         }
 
-        async function cargarPendientes() {
+        async function cargarPendientes(rachaP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
                 sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
@@ -733,7 +733,11 @@
             // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
             // pendientes" le ofrecería algo que no va a poder abrir.
             const hacibles = tareas.length + porHacer.length + corriendo.length;
-            if (!hacibles && !perdidos.length && !congelados.length) return;   // nada que decir: la franja no se destapa
+            /* Sin nada que vence, la franja NO se queda vacía: la ocupa el
+               siguiente paso de quien todavía no arrancó (ver abajo). Lo que
+               vence manda siempre —una fecha le gana a una sugerencia—, así que
+               el primer paso solo llega hasta acá. */
+            if (!hacibles && !perdidos.length && !congelados.length) return mostrarPrimerPaso(rachaP);
 
             /* EL ORDEN DE LAS REGLAS IMPORTA Y ESTÁ ESCRITO, como el del informe
                a la casa: el texto se queda con UNA cosa, la que pide actuar
@@ -797,6 +801,17 @@
                 }
             }
 
+            pintarFranja({
+                titulo: tituloPendientes(tareas.length, porHacer.length + corriendo.length),
+                texto: msg, destino, cta, icono, urgente,
+            });
+        }
+
+        /* La franja se pinta en UN solo lugar porque la usan dos cosas: lo que
+           vence (arriba) y el primer paso de quien todavía no tiene nada (abajo).
+           Con dos pintados, el que se olvidara de quitar el rojo dejaría una
+           sugerencia con pinta de entrega vencida — y no daría ningún error. */
+        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente }) {
             const caja = document.getElementById("pendientes-aviso");
             const titulo = document.getElementById("pendientes-aviso-titulo");
             const texto = document.getElementById("pendientes-aviso-texto");
@@ -814,9 +829,166 @@
             cajaCta.className = "text-sm font-semibold whitespace-nowrap "
                 + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
 
-            titulo.textContent = tituloPendientes(tareas.length, porHacer.length + corriendo.length);
+            titulo.textContent = tit;
             texto.textContent = msg;
             caja.hidden = false;
+        }
+
+        /* ---------- Por dónde empezar: el siguiente paso ----------
+           Un alumno recién invitado abre esto, no tiene ninguna tarea ni ningún
+           examen —nadie se los puso todavía— y se encuentra un directorio de
+           veintitantos lugares sin ninguna pista de por cuál empezar. En los
+           datos se ve exactamente así: de los que entraron alguna vez, buena
+           parte no ha resuelto ni un ejercicio.
+
+           No es UN primer paso, es EL SIGUIENTE, y son tres peldaños que se
+           calculan de lo que ya hay. El panel pinta el primero que no esté
+           cumplido y se apaga solo: al resolver el primer ejercicio, el peldaño
+           deja de cumplirse. No hay nada que marcar ni ningún "ya lo vi" en
+           localStorage que se pueda quedar desincronizado.
+
+           Y NO se pinta "no tienes nada que hacer" cuando ya arrancó: un cartel
+           que se repite deja de leerse, la misma lección del aviso de instalar
+           la app. */
+        async function mostrarPrimerPaso(rachaP) {
+            let stats;
+            try {
+                const r = await rachaP;
+                if (!r || r.error) return;   // no se pudo leer: callar es mejor que adivinar
+                stats = r.stats || {};
+            } catch (e) { return; }
+
+            /* El diagnóstico TAMBIÉN es una fila de training_progress, así que
+               "no ha hecho un solo ejercicio" no es `total_ejercicios === 0`:
+               hay que descontarlo. Sin eso, a quien acaba de rendir el
+               diagnóstico el panel lo daría por arrancado y no le diría nunca
+               qué hacer con el resultado — que es justo el caso que más
+               abunda. */
+            const porActividad = stats.por_actividad || {};
+            const ejercicios = Object.keys(porActividad)
+                .filter((a) => a !== "diagnostico")
+                .reduce((n, a) => n + (porActividad[a] || 0), 0);
+            if (ejercicios > 0) return;   // ya arrancó: acá no hay nada que guiar
+
+            const { data, error } = await sb.rpc("informes_diagnosticos_alumnos");
+            if (error) return;
+            // SECURITY INVOKER: a un alumno la RLS le devuelve solo su renglón,
+            // pero se busca el suyo igual — es la misma precaución que en
+            // loadEntrenoProgress().
+            const mio = (data || []).find((f) => f.student_id === profile.id) || null;
+
+            // 1. Ya lo rindió: lo que falta es qué hacer con el resultado.
+            if (mio && mio.detalle) {
+                const paso = await areaParaEmpezar(mio.detalle);
+                if (paso) {
+                    pintarFranja({
+                        titulo: "Por dónde empezar",
+                        texto: `Tu diagnóstico señala un hueco en ${paso.area.nombre.toLowerCase()}`
+                             + ` (${paso.area.porcentaje}%). Empieza por ahí.`,
+                        destino: paso.href, cta: `Ir a ${paso.label} →`,
+                        icono: paso.emoji, urgente: false,
+                    });
+                } else {
+                    // Diagnóstico sin ningún hueco marcado: no se le inventa uno.
+                    pintarFranja({
+                        titulo: "Por dónde empezar",
+                        texto: "Ya sabes en qué nivel estás. Lo que falta es entrenar: escoge lo que quieras y empieza.",
+                        destino: "entreno/index.html", cta: "Ir a Entrenamiento →",
+                        icono: "🎯", urgente: false,
+                    });
+                }
+                return;
+            }
+
+            // 2. Lo empezó y lo dejó. NO se le promete que se retoma donde iba:
+            //    una prueba de una versión anterior se descarta a propósito (ver
+            //    VERSION en entreno/diagnostico.html), así que prometerlo sería
+            //    mentir justo a quien vuelve confiando en eso.
+            if (mio && mio.a_medias_pregunta) {
+                pintarFranja({
+                    titulo: "Tienes el diagnóstico a medias",
+                    texto: `Lo dejaste en la pregunta ${mio.a_medias_pregunta}. Terminarlo es lo que le dice a tu profe qué ponerte.`,
+                    destino: "entreno/diagnostico.html", cta: "Seguir el diagnóstico →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 3. No lo empezó nunca: es lo primero que conviene hacer.
+            pintarFranja({
+                titulo: "Empieza por acá",
+                texto: "El diagnóstico dice en qué estás bien y en qué no, y con eso tu profe sabe qué ponerte. No hay que estudiar nada antes.",
+                destino: "entreno/diagnostico.html", cta: "Hacer el diagnóstico →",
+                icono: "🧭", urgente: false,
+            });
+        }
+
+        /* Qué área se le ofrece, y a dónde se le manda.
+
+           Las dos cosas salen de donde ya viven y no se escriben otra vez: las
+           áreas flojas las calcula `PlanEntrenamiento.resumir()` —la misma que
+           pinta Informes y el resultado del diagnóstico— y a dónde va cada área
+           está en su propio `recursos`, que ya estaba escrito y hasta ahora no
+           lo leía el panel.
+
+           Dos decisiones que no son de estilo:
+
+           - EL DESTINO TIENE QUE SER UNA PÁGINA CUYO TRABAJO CUENTE, o sea una
+             que ofrezca la meta `cantidad` en el catálogo de Tareas — que es lo
+             mismo que decir "escribe en training_progress". Cinco de las nueve
+             áreas tienen como primer recurso la PORTADA de un curso, que es un
+             temario: mandarlo ahí lo deja leyendo un índice, y mañana el panel
+             le diría exactamente lo mismo porque el peldaño no se apagaría
+             nunca. Eso no da ningún error y no lo ve nadie.
+           - POR ESO EL TEXTO NO DICE "LO MÁS FLOJO". Se ofrece la más floja de
+             las que tienen dónde practicar, que no siempre es la peor de todas;
+             "señala un hueco en X" es cierto para cualquiera por debajo del
+             60%, y el superlativo sería mentira. */
+        async function areaParaEmpezar(detalle) {
+            try {
+                await Promise.all([
+                    traerScript("js/plan-entrenamiento.js"),
+                    traerScript("js/material-plataforma.js"),
+                ]);
+            } catch (e) { return null; }
+            const PE = window.PlanEntrenamiento, MP = window.MaterialPlataforma;
+            if (!PE || !MP) return null;
+
+            let resumen;
+            try { resumen = PE.resumir(detalle || {}); } catch (e) { return null; }
+            const flojas = (resumen.porArea || [])
+                .filter((a) => a.porcentaje < 60)
+                .sort((a, b) => a.porcentaje - b.porcentaje);
+
+            for (const area of flojas) {
+                const ficha = PE.AREA_POR_ID[area.id];
+                if (!ficha) continue;
+                for (const r of ficha.recursos || []) {
+                    const h = (MP.HERRAMIENTAS || []).find(
+                        (t) => t.href === r.href && (t.metas || []).includes("cantidad"));
+                    if (h) return { area, href: r.href, label: h.label, emoji: ficha.emoji };
+                }
+            }
+            return null;
+        }
+
+        /* Los dos archivos de arriba se bajan CUANDO hacen falta y no en cada
+           carga del panel: son 39 KB que solo usa quien ya tiene un diagnóstico
+           rendido, y por acá entra todo el mundo —incluidos los que todavía no
+           lo hicieron, que son justamente los que más van a ver esta franja—.
+           Mismo criterio que el libro de aperturas del bot. */
+        const scriptsPedidos = {};
+        function traerScript(src) {
+            if (!scriptsPedidos[src]) {
+                scriptsPedidos[src] = new Promise((listo, falla) => {
+                    const s = document.createElement("script");
+                    s.src = src;
+                    s.onload = listo;
+                    s.onerror = () => falla(new Error("No se pudo cargar " + src));
+                    document.head.appendChild(s);
+                });
+            }
+            return scriptsPedidos[src];
         }
 
         /* "Tienes 3 tareas y 1 examen pendientes". Con una sola clase de cosa se
@@ -1310,12 +1482,17 @@
                 document.getElementById("progreso-alumno").hidden = false;
                 // Van en paralelo: son cinco consultas independientes y en
                 // serie se nota al abrir el panel desde el celular.
+                /* La racha se pide UNA vez y la promesa se reparte: la usan
+                   el número de "Tu progreso" y el primer paso, que necesita
+                   saber si ya resolvió algo. Dos llamadas serían dos veces la
+                   misma consulta para pintar el mismo dato. */
+                const rachaP = window.Logros.cargar();
                 await Promise.all([
-                    cargarPendientes(),
+                    cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
-                    loadRachaWidget(),
+                    loadRachaWidget(rachaP),
                 ]);
             }
             subscribeSessions();

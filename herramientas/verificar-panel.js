@@ -543,8 +543,13 @@ const CURSOS_ANA = [
   { student_id: "u-ana", slug: "estrategia-y-tactica", titulo: "Estrategia y táctica", total: 12, hechos: 12,
     ultimo_titulo: "Final", ultima_fecha: new Date().toISOString() },
 ];
+/* `por_actividad` iba en {} con 80 ejercicios al lado, que es imposible: el
+   doble estaba incompleto. Importa desde que el panel lo usa para saber si el
+   alumno ya arrancó — con el {} de antes, a Ana la habría tratado como recién
+   llegada teniendo 80 ejercicios hechos. Suman los 80. */
 const RACHA_ANA = [{ dias_activos: 12, racha_actual: 4, racha_record: 9, total_ejercicios: 80,
-                     tipos_distintos: 5, hoy_ejercicios: 2, primer_dia: "2026-01-01", por_actividad: {} }];
+                     tipos_distintos: 5, hoy_ejercicios: 2, primer_dia: "2026-01-01",
+                     por_actividad: { "4x4": 40, mates: 25, temas: 15 } }];
 
 function datosAlumna(conVencida) {
   return {
@@ -627,8 +632,10 @@ async function pruebaTareasAlumna(browser) {
   await r.ctx.close();
 
   // --- Sin ninguna tarea: la franja no existe en pantalla ---
-  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { informes_resumen_alumnos: RESUMEN_ANA } });
-  igual("sin tareas, la franja NO se destapa (una franja vacía es ruido)",
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {},
+    { rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA } });
+  igual("sin tareas y con el entrenamiento ya empezado, la franja NO se destapa",
+
     await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
   igual("y sin ningún curso a medias, tampoco «Continúa donde ibas»",
     await r.page.evaluate(() => getComputedStyle(document.getElementById("seguir-curso")).display), "none");
@@ -760,6 +767,155 @@ async function pruebaExamenesEnLaFranja(browser) {
   igual("sin exámenes, la franja de siempre sigue igual",
     await r.page.evaluate(() => document.getElementById("pendientes-aviso-titulo").textContent),
     "Tienes 3 tareas pendientes");
+  await r.ctx.close();
+}
+
+/* ---------- Por dónde empezar ----------
+   Un alumno recién invitado no tiene ninguna tarea ni ningún examen —nadie se
+   los puso todavía— así que la franja se le quedaba vacía y el panel era un
+   directorio de veintitantos lugares sin ninguna pista. Ahí va ahora el
+   siguiente paso.
+
+   Todo lo que se rompe acá se rompe callado: el paso se ve perfecto mandando
+   a una página donde el alumno no puede hacer nada que cuente, y entonces no
+   se apaga nunca y al día siguiente le dice exactamente lo mismo. */
+
+// Racha de quien todavía no ha resuelto NADA. El diagnóstico sí es una fila de
+// training_progress, así que va en por_actividad: es justo lo que hay que
+// descontar para saber si arrancó o no.
+function rachaSinEjercicios(conDiagnostico) {
+  return [{ dias_activos: 0, racha_actual: 0, racha_record: 0,
+            total_ejercicios: conDiagnostico ? 1 : 0, tipos_distintos: conDiagnostico ? 1 : 0,
+            hoy_ejercicios: 0, primer_dia: null,
+            por_actividad: conDiagnostico ? { diagnostico: 1 } : {} }];
+}
+
+/* Un detalle de diagnóstico con las áreas en el porcentaje que se pida.
+   `resumir()` calcula el porcentaje como logrado/peso, así que con peso 100 el
+   número que se pasa ES el porcentaje.
+
+   LAS NUEVE ÁREAS SE DECLARAN SIEMPRE, y salen del propio banco y no de una
+   lista escrita acá. La primera versión de esta prueba nombraba cuatro y dejaba
+   las otras cinco fuera: `resumir()` le pone peso 0 a la que no está, o sea 0%,
+   así que quedaban MÁS flojas que las que la prueba ponía flojas a propósito y
+   el panel —con razón— ofrecía una de ellas. La prueba fallaba sobre una página
+   que estaba bien. Leyéndolas de PlanEntrenamiento, una décima área tampoco
+   podría colarse en cero sin que nadie lo note. */
+const AREAS_DEL_BANCO = (() => {
+  const g = { window: {} };
+  const fn = new Function("window", require("fs").readFileSync(
+    require("path").join(__dirname, "..", "js", "plan-entrenamiento.js"), "utf8"));
+  fn(g.window);
+  return g.window.PlanEntrenamiento.AREAS.map((a) => a.id);
+})();
+
+function diagnosticoCon(porcentajes) {
+  const areas = {};
+  for (const id of AREAS_DEL_BANCO) {
+    const pct = porcentajes[id] === undefined ? 100 : porcentajes[id];
+    areas[id] = { peso: 100, logrado: pct, aciertos: 0, total: 7, nosabe: 0 };
+  }
+  return { areas: areas, perfil: {} };
+}
+
+async function pruebaPrimerPaso(browser) {
+  console.log("\n=== Por dónde empezar: el siguiente paso ===");
+
+  const leer = (page) => page.evaluate(() => {
+    const a = document.getElementById("pendientes-aviso");
+    return {
+      display: getComputedStyle(a).display,
+      titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+      texto: document.getElementById("pendientes-aviso-texto").textContent,
+      cta: document.getElementById("pendientes-aviso-cta").textContent,
+      enlace: a.getAttribute("href"),
+      rojo: /ring-red-500/.test(a.className),
+    };
+  });
+
+  // --- Recién llegado: sin tareas, sin exámenes y sin diagnóstico ---
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: rachaSinEjercicios(false) },
+  });
+  let v = await leer(r.page);
+  // Se mide el display que calcula el navegador, no el atributo: la lección que
+  // dejó el cartel de instalar la app.
+  igual("a quien recién llega la franja SE LE VE de verdad", v.display !== "none", "true");
+  igual("y le ofrece el diagnóstico", v.enlace, "entreno/diagnostico.html");
+  igual("con su propio título, que no promete pendientes que no tiene", v.titulo, "Empieza por acá");
+  igual("no se pinta en rojo: una sugerencia no es una entrega vencida", v.rojo, "false");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // --- Lo empezó y lo dejó a medias ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(false),
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", detalle: null, fecha: null,
+                                        a_medias_pregunta: 23, a_medias_fecha: new Date().toISOString() }],
+    },
+  });
+  v = await leer(r.page);
+  igual("si lo dejó a medias, le dice por dónde iba", v.texto.includes("pregunta 23"), "true");
+  /* Y NO le promete que se retoma donde iba: una prueba de una versión anterior
+     se descarta a propósito (VERSION en entreno/diagnostico.html), así que
+     prometerlo sería mentirle justo a quien vuelve confiando en eso. */
+  igual("pero no le promete que lo retoma donde lo dejó",
+    /retoma|donde ibas|no hay que empezar/i.test(v.texto), "false");
+  await r.ctx.close();
+
+  /* --- Ya lo rindió: LA COMPROBACIÓN QUE IMPORTA ---
+     `finales` está peor (10%) que `mate` (30%), pero los recursos de finales son
+     la PORTADA de un curso y un artículo: dos páginas donde no se resuelve nada
+     que cuente. Si el panel lo mandara ahí, el alumno leería un temario, no
+     escribiría ni una fila en training_progress, y mañana la franja le diría
+     exactamente lo mismo — el paso no se apagaría NUNCA y nadie se enteraría.
+     Así que se salta finales y ofrece mates. */
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(true),
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
+        detalle: diagnosticoCon({ finales: 10, mate: 30, tactica: 90, reglas: 95 }),
+        a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+  });
+  v = await leer(r.page);
+  igual("haber rendido el diagnóstico NO cuenta como haber entrenado", v.display !== "none", "true");
+  igual("se salta el área sin dónde practicar y ofrece la que sí lo tiene", v.enlace, "entreno/mates.html");
+  igual("y nombra ESA área, no la que se saltó", v.texto.toLowerCase().includes("mates y seguridad del rey"), "true");
+  igual("no dice «lo más flojo»: sería mentira, y por eso dice «señala un hueco»",
+    /m[áa]s flojo|lo peor|tu punto m[áa]s/i.test(v.texto), "false");
+  igual("el botón nombra a dónde va", v.cta, "Ir a Mates →");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // --- Ya arrancó: no hay nada que guiar, y el panel se calla ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
+        detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+  });
+  igual("a quien ya resolvió ejercicios no se le repite el paso uno",
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
+  await r.ctx.close();
+
+  /* --- Y lo que VENCE manda sobre la sugerencia ---
+     Una fecha le gana siempre a un consejo. Sin esto, a un alumno nuevo con una
+     tarea ya puesta el panel le escondería la tarea detrás del primer paso. */
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      tareas_con_avance: tareasDeMentira(false),
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(false),
+    },
+  });
+  v = await leer(r.page);
+  igual("con una tarea puesta, manda la tarea y no el primer paso", v.enlace, "tareas.html");
+  igual("y el título es el de siempre", v.titulo, "Tienes 3 tareas pendientes");
   await r.ctx.close();
 }
 
@@ -959,6 +1115,7 @@ if (require.main !== module) return;
     await pruebaAlumna(browser);
     await pruebaTareasAlumna(browser);
     await pruebaExamenesEnLaFranja(browser);
+    await pruebaPrimerPaso(browser);
     await pruebaFranjaDeClase(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
