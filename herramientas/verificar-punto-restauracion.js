@@ -124,7 +124,7 @@ inventarios();
 cloudflare();
 
 console.log(`
-Para comprobar que la base sigue coinciendo con esto, correr en Supabase:
+Para comprobar que la base sigue coincidiendo con esto, correr en Supabase:
 
   select md5(string_agg(version || ':' || md5(array_to_string(statements, E'\\n\\n')),
                         E'\\n' order by version)) as huella,
