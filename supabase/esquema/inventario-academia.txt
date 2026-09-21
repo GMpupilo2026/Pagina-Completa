@@ -9,6 +9,7 @@ tabla  class_presence_log  rls=true
 tabla  class_sessions  rls=true
 tabla  cobros  rls=true
 tabla  cobros_contacto  rls=true
+tabla  cobros_recordatorios_programados  rls=true
 tabla  coordinador_profesores  rls=true
 tabla  course_unlocks  rls=true
 tabla  datos_facturacion  rls=true
@@ -147,6 +148,14 @@ columna  cobros_contacto.email  text  not null
 columna  cobros_contacto.nombre  text
 columna  cobros_contacto.nota  text
 columna  cobros_contacto.student_id  uuid  not null
+columna  cobros_recordatorios_programados.correos  text[]
+columna  cobros_recordatorios_programados.creado_por  uuid
+columna  cobros_recordatorios_programados.created_at  timestamp with time zone  not null
+columna  cobros_recordatorios_programados.enviado_at  timestamp with time zone
+columna  cobros_recordatorios_programados.estado  text  not null
+columna  cobros_recordatorios_programados.id  uuid  not null
+columna  cobros_recordatorios_programados.programado_para  timestamp with time zone  not null
+columna  cobros_recordatorios_programados.student_id  uuid  not null
 columna  cobros_vista.anulado_motivo  text
 columna  cobros_vista.concepto  text
 columna  cobros_vista.consecutivo  text
@@ -416,7 +425,6 @@ columna  profiles.elo  integer
 columna  profiles.elo_actualizado  timestamp with time zone
 columna  profiles.elo_tipo  text
 columna  profiles.email  text  not null
-columna  profiles.enlace_llamada  text
 columna  profiles.es_coordinador  boolean  not null
 columna  profiles.full_name  text
 columna  profiles.grupo  text
@@ -636,6 +644,7 @@ funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_ve
 funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
+funcion  disparar_recordatorios_programados()  definer  anon=true  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text)  definer  anon=true  auth=true
 funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
 funcion  equipo_docente()  definer  anon=true  auth=true
@@ -744,6 +753,7 @@ politica  cobros  cobros_coordinacion  ALL
 politica  cobros  cobros_lee_alumno  SELECT
 politica  cobros_contacto  cobros_contacto_coordinacion  ALL
 politica  cobros_contacto  cobros_contacto_lee_alumno  SELECT
+politica  cobros_recordatorios_programados  cobros_recordatorios_programados_coordinacion  ALL
 politica  coordinador_profesores  coordinador_profesores_select  SELECT
 politica  course_unlocks  course_unlocks_delete  DELETE
 politica  course_unlocks  course_unlocks_insert  INSERT
@@ -941,6 +951,8 @@ indice  cobros  cobros_por_alumno
 indice  cobros  cobros_por_vencimiento
 indice  cobros  cobros_un_periodo_por_suscripcion
 indice  cobros_contacto  cobros_contacto_pkey
+indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pendientes_idx
+indice  cobros_recordatorios_programados  cobros_recordatorios_programados_pkey
 indice  coordinador_profesores  coordinador_profesores_pkey
 indice  coordinador_profesores  coordinador_profesores_por_profesor
 indice  course_unlocks  course_unlocks_pkey
@@ -1072,7 +1084,8 @@ realtime  tv_settings
 realtime  variant_nodes
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
-cron  informes-a-encargados  0 13 * * *
+cron  cobros-recordatorios-programados  */5 * * * *
+cron  informes-a-encargados  0 * * * *
 grant  Ejercicios Lichess  anon  DELETE
 grant  Ejercicios Lichess  anon  INSERT
 grant  Ejercicios Lichess  anon  REFERENCES
@@ -1199,6 +1212,20 @@ grant  cobros_contacto  authenticated  SELECT
 grant  cobros_contacto  authenticated  TRIGGER
 grant  cobros_contacto  authenticated  TRUNCATE
 grant  cobros_contacto  authenticated  UPDATE
+grant  cobros_recordatorios_programados  anon  DELETE
+grant  cobros_recordatorios_programados  anon  INSERT
+grant  cobros_recordatorios_programados  anon  REFERENCES
+grant  cobros_recordatorios_programados  anon  SELECT
+grant  cobros_recordatorios_programados  anon  TRIGGER
+grant  cobros_recordatorios_programados  anon  TRUNCATE
+grant  cobros_recordatorios_programados  anon  UPDATE
+grant  cobros_recordatorios_programados  authenticated  DELETE
+grant  cobros_recordatorios_programados  authenticated  INSERT
+grant  cobros_recordatorios_programados  authenticated  REFERENCES
+grant  cobros_recordatorios_programados  authenticated  SELECT
+grant  cobros_recordatorios_programados  authenticated  TRIGGER
+grant  cobros_recordatorios_programados  authenticated  TRUNCATE
+grant  cobros_recordatorios_programados  authenticated  UPDATE
 grant  cobros_vista  authenticated  DELETE
 grant  cobros_vista  authenticated  INSERT
 grant  cobros_vista  authenticated  REFERENCES
