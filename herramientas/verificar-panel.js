@@ -256,9 +256,14 @@ async function pruebaAlumna(browser) {
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
+  /* «Mis pagos» ya no está en el panel de nadie: las mensualidades son cosa de
+     la casa, no de quien entra a entrenar. La página sigue enseñándole sus
+     recibos a quien entre por la dirección — lo que se quitó es el camino. */
   igual("Tu cuenta, en su orden",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Informes", "Mis pagos", "Configuración"]);
+    ["Informes", "Configuración"]);
+  igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
+    grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => /Cerrar sesión/.test(t.etiqueta2)).length, "0");
   igual("y sigue estando en la cabecera, que es de donde no se movió",
@@ -272,11 +277,12 @@ async function pruebaAlumna(browser) {
       tag: el.tagName,
       texto: el.textContent,
     })));
-  /* Queda uno solo a la vista: los otros dos en mantenimiento se fueron con su
-     grupo. Un apagado ENTRE accesos que funcionan sí se queda —ahí uno vino por
-     otra cosa y de paso se entera de que eso vuelve—, y con su razón escrita. */
-  igual("el apagado que queda es el que convive con accesos que sí funcionan",
-    apagados.map((a) => a.etiqueta).sort(), ["Mis pagos"]);
+  /* Ya no queda ninguno a la vista: los dos en mantenimiento se fueron con su
+     grupo, y el tercero —«Mis pagos»— se fue del panel entero. Si mañana vuelve
+     a haber uno, tiene que seguir cumpliendo las dos reglas de abajo: ni enlace
+     ni botón, y con su razón escrita. */
+  igual("no le queda ningún acceso apagado a la vista",
+    apagados.map((a) => a.etiqueta).sort(), []);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
   } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");
@@ -313,7 +319,7 @@ async function pruebaProfesora(browser) {
     apagados, []);
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html"]);
+    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html", "guia-del-profesor-accesible.html"]);
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
@@ -403,8 +409,9 @@ async function pruebaAdmin(browser) {
     ["Cobros de la Academia"]);
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html",
-     "formularios.html", "cobros.html"]);
+    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",
+     "guia-del-profesor-accesible.html",
+     "solicitudes.html", "formularios.html", "cobros.html"]);
   await ctx.close();
 }
 

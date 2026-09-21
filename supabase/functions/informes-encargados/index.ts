@@ -24,6 +24,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
+import { contactoDeConsultas } from "./contacto-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -55,6 +56,10 @@ function desdeDe(frecuencia: Frecuencia): Date {
 }
 
 async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin) {
+  // El número al que la casa escribe sale de `ajustes_academia` y lo pone
+  // quien coordina; se lee siempre con la service role, porque el informe se
+  // arma igual para la tanda de pg_cron que para la vista previa.
+  const contacto = await contactoDeConsultas(admin);
   const desde = desdeDe(frecuencia);
   const hasta = new Date();
   const { data, error } = await cliente.rpc("informe_de_alumno", {
@@ -64,7 +69,7 @@ async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin)
   });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("No se encontró ese alumno");
-  return { datos: data, html: informeHtml(data, frecuencia, SITE_URL) };
+  return { datos: data, html: informeHtml(data, frecuencia, SITE_URL, contacto) };
 }
 
 async function mandar(para: string, asunto: string, html: string) {
