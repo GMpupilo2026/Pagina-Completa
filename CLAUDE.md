@@ -5310,6 +5310,45 @@ primera tarea ese peldaño deja de cumplirse. No hay nada que marcar ni ningún
 - Reemplazó al renglón `#profe-planes`, que decía solo lo de los planes: dos
   lugares decidiendo qué se le dice al profesor terminan diciendo dos cosas.
 
+#### El camino del entrenador, recorrido entero
+
+Cada pieza tiene su verificador —tareas, planes, la clase en vivo, la
+bitácora, informes— y todos comprueban SU pantalla. Lo que no comprobaba
+ninguno es la **costura**: que un entrenador pueda recorrer el camino entero
+sin encontrarse una puerta cerrada. `herramientas/verificar-camino-entrenador.js`
+abre las 13 pantallas del camino, una detrás de otra, en un navegador de
+verdad.
+
+- **Con una profesora que NO administra**, que es la cara que ningún
+  verificador miraba: los dobles suelen ponerle `is_admin` —el de las capturas
+  de la guía lo hace a propósito, porque la guía tiene que enseñar todas las
+  pantallas— y con eso los permisos no se prueban, porque quien administra pasa
+  por todas partes.
+- **Reusa el doble de `guia-capturas.js`**, que ya sabe servir 25 pantallas con
+  sesión y datos de mentira. `clienteFalso()` acepta ahora `{ perfiles, yo,
+  rpc, tablas }` y sin nada hace exactamente lo de siempre. Un doble escrito
+  aparte se iría separando de este a la primera corrección.
+  - Ahí mismo saltó la trampa de siempre: `tablas.profiles` **no es una tabla
+    suelta**, se rellena con `DEMO.perfiles`, así que cambiar las cuentas sin
+    cambiarla deja a la página sin encontrar a quien dice ser — y eso se ve
+    como «No se pudo cargar tu perfil», que parece un fallo de la página y es
+    del doble. Ya pasó con `verificar-aperturas-pagina.js` y con
+    `verificar-informes.js`.
+- Lo que mide es lo que se rompe callado: que ninguna pantalla **se vaya al
+  login**, se quede en «Comprobando tu sesión…», le diga acceso denegado o
+  pinte `undefined`; que desde todas se pueda **volver al panel** (un enlace a
+  `clases.html` que se vea de verdad, medido con `checkVisibility()`) — una
+  pantalla sin vuelta es un callejón del que solo se sale con el botón de
+  atrás; y **que el destino que el panel PROPONE en cada uno de sus seis
+  peldaños abra para ese mismo perfil**. Un peldaño que mande a una pantalla
+  que le rebota no da ningún error: la franja se ve perfecta y el clic termina
+  en el aviso de acceso denegado.
+- El destino se lee **de la propia franja**, no de una lista copiada en el
+  verificador: una lista escrita a mano se queda vieja y daría verde sobre
+  enlaces que ya no son esos.
+- Está probado que falla de verdad: apuntando el peldaño de los planes a
+  `cobros.html` —que a quien no coordina le niega— salta.
+
 ### El registro de clases no se baja entero
 
 Es la misma piedra de `informes.html`: con 100 clases, bajarlas todas y
