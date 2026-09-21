@@ -2584,6 +2584,21 @@ bien, y el profesor simplemente no usaba Informes.
 - **«El perfil de cada alumno»** (la rejilla con las nueve áreas de cada
   diagnóstico) sí se pliega: es una tarjeta por alumno y el resumen del grupo
   está justo encima.
+- **«Sin diagnóstico todavía» dice CUÁNTOS son y nombra a tres.** Con cuarenta
+  era media pantalla de nombres de corrido, y quedó siendo lo más largo del
+  panel justo después de acortar todo lo demás. Los dos textos —el corto y la
+  lista entera— se pintan de una y el botón cambia cuál se ve: son cuarenta
+  nombres, no cuesta nada, y así no hay que repintar el panel. **El botón no
+  desaparece al abrir**, al revés que el de «Nivel por alumno»: ahí el foco pasa
+  al último nombre destapado y acá no hay ningún nombre enfocable al que
+  pasarlo, así que se quedaría en el aire.
+  - **Ahí el nombre del alumno se pintaba CRUDO.** Era el único sitio de
+    `renderDiagnosticosClase()` sin `escVis` —ver «El nombre de un alumno es
+    texto ajeno»— y no saltaba en ninguna prueba porque el nombre atacante se le
+    ponía solo a una alumna que SÍ tenía diagnóstico, o sea que nunca caía en
+    esta lista. Comprobado que era real: sin el escape, el código del nombre **se
+    ejecuta** en la pantalla de su profesor. Ahora el fixture se lo pone a las
+    dos, con diagnóstico y sin él.
 
 #### Lo que se hace FUERA de la plataforma es de administración
 
@@ -2636,7 +2651,10 @@ cincuenta»— existe porque **con tres alumnos todo esto se ve bien**: el
 problema empieza a los cincuenta. Comprueba que el índice corte de tres en
 tres y lo diga con el total de verdad, que «Ver más» traiga los siguientes,
 que «Nivel por alumno» corte igual y su botón se vaya cuando ya no queda
-nadie, que las nueve áreas de «Dónde se debe mejorar» vayan completas,
+nadie, que las nueve áreas de «Dónde se debe mejorar» vayan completas, que
+«Sin diagnóstico todavía» diga cuántos son y nombre a tres —medido con
+`innerText` y no con `textContent`, que trae también la lista escondida y
+daría por buena una línea que no se cortó—,
 que el buscador filtre **también** las tablas de abajo y no se pierda con las
 tildes, que ordenar por «sin entrenar» ponga «nunca» antes que «hace mes y
 medio», que la franja se vea **de verdad** (el `display` que calcula el

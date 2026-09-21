@@ -804,7 +804,11 @@ async function pruebaNombreAjeno(browser) {
   const conNombre = (a) => ({ ...a, full_name: NOMBRE });
   const { page, errores } = await abrir(browser, {
     rpc: {
-      informes_resumen_alumnos: [conNombre(ANA), BRUNO, CARLA],
+      /* A las DOS: una con diagnóstico y otra sin él. Carla cae en la lista de
+         «Sin diagnóstico todavía», que es el único sitio de esa función que se
+         había quedado sin escapar — y no saltaba porque el nombre atacante se le
+         ponía solo a una alumna que SÍ lo tenía. */
+      informes_resumen_alumnos: [conNombre(ANA), BRUNO, conNombre(CARLA)],
       informes_cursos_alumnos: CURSOS_ANA,
       informes_diagnosticos_alumnos: [
         { student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
@@ -833,6 +837,9 @@ async function pruebaNombreAjeno(browser) {
   igual("ni nació ningún elemento del nombre", general.inyectados, 0);
   igual("y el nombre se sigue leyendo entero", await page.evaluate(() =>
     document.querySelector("#attendance-table-body tr").children[0].textContent), NOMBRE);
+  igual("y en «Sin diagnóstico todavía» también se lee entero", await page.evaluate(() =>
+    document.querySelector("#diagnosticos-clase [data-pend-todos], #diagnosticos-clase [data-pend-corto]")
+      .textContent.includes('onmouseover="window.__xss=1"')), true);
 
   await page.selectOption("#student-filter", "a-1");
   await page.waitForTimeout(400);
@@ -929,6 +936,27 @@ async function pruebaClaseGrande(browser) {
     const td = document.querySelector("#alumnos-tbody tr:nth-child(2) td:last-child");
     return [td.textContent.trim().startsWith("⚠️ Hace"), /rgb\(220|rgb\(248|rgb\(185/.test(getComputedStyle(td).color)].join(",");
   }), "true,true");
+
+  /* Los cuarenta que no lo hicieron eran media pantalla de nombres de corrido
+     —lo más largo del panel, justo después de acortar todo lo demás—. Lo que
+     hace falta saber es CUÁNTOS son; los nombres se destapan a pedido. */
+  console.log("-- Los que todavía no lo hicieron");
+  const lineaPend = () => page.evaluate(() =>
+    [...document.querySelectorAll("#diagnosticos-clase p")]
+      .find((x) => x.textContent.includes("Sin diagnóstico todavía"))
+      .innerText.replace(/\s+/g, " ").trim());
+  igual("se dice cuántos son y se nombran tres", await lineaPend(),
+    "Sin diagnóstico todavía (40): Alumna 44, Alumna 43, Alumna 42 y 37 más. Ver los 40");
+  await page.click("#pendientes-mas");
+  igual("tocarlo los destapa todos", await page.evaluate(() =>
+    document.querySelector("#diagnosticos-clase [data-pend-todos]").textContent.split(",").length), 40);
+  igual("y el botón vuelve a guardarlos, no desaparece dejando el foco en el aire",
+    await page.evaluate(() => {
+      const b = document.getElementById("pendientes-mas");
+      if (!b || b.textContent !== "Ver solo los primeros") return "no";
+      b.click();
+      return document.querySelector("#diagnosticos-clase [data-pend-corto]").classList.contains("hidden") ? "no" : "sí";
+    }), "sí");
 
   igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
     [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
