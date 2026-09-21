@@ -87,7 +87,27 @@
                 </div>
             </div>
 
-            <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+            <!-- Lo que pide actuar HOY, arriba de todo y antes de los números:
+                 quién lleva una semana sin entrenar, a quién le falta el
+                 diagnóstico y cuántos planes están sin compartir. Los tres datos
+                 ya estaban cargados y no se decían en ninguna parte — había que
+                 ir a buscarlos al filtro. Arranca oculta y solo se destapa si de
+                 verdad hay algo que decir: una franja que diga "todo al día" es
+                 ruido en todas las visitas menos una. -->
+            <div id="atencion" class="hidden mb-6 rounded-2xl border border-accent-400/40 bg-accent-50 dark:bg-brand-900 dark:border-accent-400/30 p-4">
+                <p class="text-sm font-semibold text-brand-800 dark:text-white mb-2">⚠️ Qué pide atención</p>
+                <div id="atencion-botones" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3"></div>
+            <!-- Las tarjetas secundarias nacen escondidas (ver statCard): dieciséis
+                 números de golpe no los lee nadie, y las ocho que importan quedan
+                 tapadas por las que se miran una vez al año. No se sacan del DOM:
+                 no son enfocables, así que esconderlas no deja ninguna parada de
+                 tabulador fantasma. -->
+            <div id="stat-cards-mas" class="hidden mb-8">
+                <button type="button" id="stat-cards-ver" aria-expanded="false" class="text-xs font-semibold text-brand-500 dark:text-brand-300 hover:text-accent-600 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver todos los números ▾</button>
+            </div>
 
             <!-- Avance en los cursos de Academia (cursos/academia/*.html): temas marcados
                  como estudiados, en orden, por curso. Filas activity "curso" de training_progress. -->
@@ -95,11 +115,6 @@
                 <h2 id="cursos-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Cursos</h2>
                 <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-300 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
                 <div id="cursos-report-body" class="space-y-4"></div>
-            </div>
-
-            <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Tus últimas asignaciones</h2>
-                <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
             <!-- Cómo viene EN EL TIEMPO, que es lo que las tarjetas de arriba no
@@ -145,27 +160,41 @@
                 <div id="deberes-body"></div>
             </div>
 
-            <!-- Diagnóstico de nivel y plan de entrenamiento (entreno/diagnostico.html) -->
-            <div id="diagnostico-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 id="diagnostico-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Diagnóstico y plan de entrenamiento</h2>
-                <div id="diagnostico-body"></div>
+            <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">🚩 Tus últimas asignaciones</h2>
+                <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
+
+            <!-- Diagnóstico de nivel y plan de entrenamiento (entreno/diagnostico.html) -->
+            <details id="diagnostico-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 id="diagnostico-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">Diagnóstico y plan de entrenamiento</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <div id="diagnostico-body" class="mt-4"></div>
+            </details>
 
             <!-- Reenviar el enlace para crear o cambiar la contraseña. Solo para quien
                  coordina o administra (se muestra u oculta desde el script, según
                  profile.es_coordinador/is_admin) y solo mirando a UN alumno: es de él. -->
-            <div id="acceso-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🔑 Acceso a la cuenta</h2>
-                <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+            <details id="acceso-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">🔑 Acceso a la cuenta</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mt-4 mb-4"></p>
                 <button type="button" id="acceso-reenviar" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-200 dark:hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Reenviar enlace para restablecer la contraseña</button>
                 <p id="acceso-msg" class="text-sm mt-3" aria-live="polite"></p>
-            </div>
+            </details>
 
             <!-- A quién de la casa se le manda el informe de este alumno y cada cuánto.
                  Solo aparece mirando a UN alumno: es de él. -->
-            <div id="encargados-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📧 Informes a la casa</h2>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">El informe sale solo, a la hora que toque, al correo de quien esté encargado. No hace falta que tenga cuenta en el sitio.</p>
+            <details id="encargados-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">📧 Informes a la casa</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4 mb-4">El informe sale solo, a la hora que toque, al correo de quien esté encargado. No hace falta que tenga cuenta en el sitio.</p>
                 <div id="encargados-lista" class="space-y-2 mb-4"></div>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Se puede apuntar a más de una persona por alumno — cada una con su propia hora, y la mamá y el papá no tienen por qué recibirlo al mismo tiempo.</p>
                 <div class="flex flex-wrap items-end gap-2 border-t border-brand-100 dark:border-brand-800 pt-4">
@@ -209,7 +238,7 @@
                     <button type="button" id="enc-descargar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Descargar</button>
                     <span id="enc-ver-msg" class="text-xs" aria-live="polite"></span>
                 </div>
-            </div>
+            </details>
 
             <div id="topic-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="topic-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"></h2>
@@ -217,77 +246,156 @@
             </div>
 
             <div id="teacher-report" class="hidden space-y-6">
-                <!-- Exámenes de arbitraje que deja el público en nivel-de-arbitraje.html.
-                     No son alumnos: son visitantes del sitio, así que no los tocan los
-                     filtros de alumno ni de grupo. Su filtro propio es el de estado.
-                     Lo pinta renderArbitrajesPublicos() y se reutiliza en el filtro por tema. -->
+                <!-- EL ÍNDICE DE LA CLASE. Antes acá iban TRES listas de los
+                     mismos alumnos —precisión, asistencia y entrenamiento—, o sea
+                     3N filas de corrido sin buscador ni corte: con cien alumnos no
+                     se encuentra a nadie, y para juntar los datos de uno había que
+                     cruzar tres tablas a ojo. Ahora es UNA fila por alumno con lo
+                     que contesta "¿a quién hay que mirar?", y el resto se abre
+                     tocando su nombre. Las tres tablas de antes no se perdieron:
+                     están abajo, plegadas, para comparar columna a columna. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">⚖️ Exámenes de arbitraje</h2>
-                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Quienes midieron su nivel de arbitraje desde <a href="nivel-de-arbitraje.html" class="underline">la página abierta</a>. La retroalimentación se escribe en <a href="arbitraje.html" class="underline">la herramienta de arbitraje</a>.</p>
-                    <div id="arbitrajes-publicos"></div>
+                    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">👥 Tus alumnos</h2>
+                        <p id="alumnos-cuenta" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></p>
+                    </div>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Toca a un alumno para abrir su informe completo. Para ver a toda la clase en una actividad puntual, usa el filtro «Tema o actividad» de arriba.</p>
+
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <div class="flex-1 min-w-[12rem]">
+                            <label for="alumnos-buscar" class="sr-only">Buscar alumno</label>
+                            <input id="alumnos-buscar" type="search" autocomplete="off" placeholder="🔎 Buscar por nombre, correo o grupo" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                        <div>
+                            <label for="alumnos-orden" class="sr-only">Ordenar la lista</label>
+                            <select id="alumnos-orden" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <option value="nombre">Por nombre</option>
+                                <option value="inactivos">Los que llevan más sin entrenar</option>
+                                <option value="tiempo">Más tiempo en la plataforma</option>
+                                <option value="precision">Mejor precisión</option>
+                                <option value="asistencia">Menos asistencia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                    <th class="py-2 pr-4 font-semibold">Alumno</th>
+                                    <th class="py-2 pr-4 font-semibold">🏫 Asistencia</th>
+                                    <th class="py-2 pr-4 font-semibold">⏱️ En la plataforma</th>
+                                    <th class="py-2 pr-4 font-semibold">🎯 Precisión</th>
+                                    <th class="py-2 pr-4 font-semibold">🧭 Nivel</th>
+                                    <th class="py-2 font-semibold">Última práctica</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alumnos-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <button type="button" id="alumnos-mas" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más alumnos</button>
+                    </div>
+
+                    <!-- Lo que antes ocupaba la pantalla entera, ahora a un toque de
+                         distancia: sirve para comparar columna a columna, que es
+                         justo lo que un índice de una fila por alumno no puede dar. -->
+                    <details class="group mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
+                        <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                            <h3 class="font-serif font-bold text-brand-800 dark:text-white inline">Las tablas completas, columna a columna</h3>
+                            <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                        </summary>
+                        <div class="mt-5 space-y-8">
+                            <div>
+                                <h4 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Precisión por alumno</h4>
+                                <div id="leaderboard" class="space-y-3"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Asistencia y tiempo en la plataforma</h4>
+                                <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Asistencia a partir de las clases cerradas por el profesor. El tiempo en ejercicios cuenta solo mientras el alumno realmente interactúa con la página (sin contar ratos con la pestaña abierta sin hacer nada).</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                                <th class="py-2 pr-4 font-semibold">Alumno</th>
+                                                <th class="py-2 pr-4 font-semibold">Grupo</th>
+                                                <th class="py-2 pr-4 font-semibold">Asistencia</th>
+                                                <th class="py-2 pr-4 font-semibold">⏱️ En clase</th>
+                                                <th class="py-2 pr-4 font-semibold">⏱️ En ejercicios</th>
+                                                <th class="py-2 font-semibold">⏱️ Total en la plataforma</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="attendance-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h4>
+                                <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                                <th class="py-2 pr-4 font-semibold">Alumno</th>
+                                                <th class="py-2 pr-4 font-semibold">🧩 4×4</th>
+                                                <th class="py-2 pr-4 font-semibold">🎓 Lecciones</th>
+                                                <th class="py-2 pr-4 font-semibold">⚡ Mejor Coordenadas</th>
+                                                <th class="py-2 pr-4 font-semibold">🏆 Practicar</th>
+                                                <th class="py-2 pr-4 font-semibold">♚ Mates</th>
+                                                <th class="py-2 pr-4 font-semibold">⚔️ Táctica</th>
+                                                <th class="py-2 font-semibold">🧠 Concentración</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="entreno-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- Diagnósticos de nivel de todos los alumnos asignados: resumen y gráficos.
-                     Lo pinta renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
+                     Queda ABIERTO, al contrario que los dos de abajo: son sus alumnos, y acá
+                     vive el botón que comparte los planes que faltan. Lo pinta
+                     renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel — alumnos registrados</h2>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
                     <div id="diagnosticos-clase"></div>
                 </div>
 
-                <!-- Diagnósticos hechos desde fuera del panel (la prueba es pública): quedan en
-                     la tabla diagnosticos_publicos y se muestran aparte de los alumnos, sin
-                     mezclarse con los promedios de la clase. -->
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🌐 Diagnósticos de visitantes (fuera del panel)</h2>
-                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Personas sin cuenta que hicieron el diagnóstico público desde el sitio. No entran en los promedios de la clase. Cada uno deja nombre y correo: son contactos para invitar a Academia.</p>
-                    <div id="diagnosticos-visitantes"></div>
-                </div>
+                <!-- Los dos de abajo NO son de sus alumnos: son gente de fuera que hizo
+                     la prueba pública. Ocupaban el primer lugar de la página, o sea que
+                     lo primero que veía un profesor al entrar no era su clase. Van
+                     plegados, con el conteo a la vista para no tener que abrirlos
+                     solo para saber si hay algo nuevo. -->
+                <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                        <div>
+                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">⚖️ Exámenes de arbitraje</h2>
+                            <p id="arbitrajes-resumen" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Del público, desde la página abierta.</p>
+                        </div>
+                        <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                    </summary>
+                    <div class="mt-4">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Quienes midieron su nivel de arbitraje desde <a href="nivel-de-arbitraje.html" class="underline">la página abierta</a>. La retroalimentación se escribe en <a href="arbitraje.html" class="underline">la herramienta de arbitraje</a>.</p>
+                        <div id="arbitrajes-publicos"></div>
+                    </div>
+                </details>
 
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Precisión por alumno</h2>
-                    <div id="leaderboard" class="space-y-3"></div>
-                </div>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asistencia y tiempo en la plataforma</h2>
-                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Asistencia a partir de las clases cerradas por el profesor. El tiempo en ejercicios cuenta solo mientras el alumno realmente interactúa con la página (sin contar ratos con la pestaña abierta sin hacer nada).</p>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
-                                    <th class="py-2 pr-4 font-semibold">Alumno</th>
-                                    <th class="py-2 pr-4 font-semibold">Grupo</th>
-                                    <th class="py-2 pr-4 font-semibold">Asistencia</th>
-                                    <th class="py-2 pr-4 font-semibold">⏱️ En clase</th>
-                                    <th class="py-2 pr-4 font-semibold">⏱️ En ejercicios</th>
-                                    <th class="py-2 font-semibold">⏱️ Total en la plataforma</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendance-table-body"></tbody>
-                        </table>
+                <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                        <div>
+                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">🌐 Diagnósticos de visitantes</h2>
+                            <p id="visitantes-resumen" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Personas sin cuenta, fuera del panel.</p>
+                        </div>
+                        <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                    </summary>
+                    <div class="mt-4">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Personas sin cuenta que hicieron el diagnóstico público desde el sitio. No entran en los promedios de la clase. Cada uno deja nombre y correo: son contactos para invitar a Academia.</p>
+                        <div id="diagnosticos-visitantes"></div>
                     </div>
-                </div>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Entrenamiento</h2>
-                    <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Ejercicios 4×4, lecciones de Aprender, Coordenadas, series de Practicar, Mates, Táctica y Concentración, por alumno.</p>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
-                                    <th class="py-2 pr-4 font-semibold">Alumno</th>
-                                    <th class="py-2 pr-4 font-semibold">🧩 4×4</th>
-                                    <th class="py-2 pr-4 font-semibold">🎓 Lecciones</th>
-                                    <th class="py-2 pr-4 font-semibold">⚡ Mejor Coordenadas</th>
-                                    <th class="py-2 pr-4 font-semibold">🏆 Practicar</th>
-                                    <th class="py-2 pr-4 font-semibold">♚ Mates</th>
-                                    <th class="py-2 pr-4 font-semibold">⚔️ Táctica</th>
-                                    <th class="py-2 font-semibold">🧠 Concentración</th>
-                                </tr>
-                            </thead>
-                            <tbody id="entreno-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+                </details>
             </div>
         </div>
     </div>
@@ -350,9 +458,15 @@
         // en un atributo (el `title=` de barraHTML).
         function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
-        function statCard(emoji, value, label) {
+        /* `extra` marca los números de segunda fila: se pintan igual pero nacen
+           escondidos detrás de "Ver todos los números". Dieciséis tarjetas de golpe
+           no las lee nadie y tapan las ocho que se miran de verdad. No se sacan del
+           DOM —no son enfocables, así que no dejan ninguna parada de tabulador
+           fantasma— y por eso siguen siendo hijas directas de #stat-cards. */
+        function statCard(emoji, value, label, extra) {
             const div = document.createElement("div");
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
+            if (extra) { div.dataset.extra = "1"; div.classList.add("hidden"); }
             div.innerHTML = `<div class="text-3xl mb-1">${emoji}</div><div class="text-2xl font-bold text-brand-800 dark:text-white">${value}</div><div class="text-xs text-brand-450 dark:text-brand-350 mt-1">${label}</div>`;
             return div;
         }
@@ -370,6 +484,19 @@
         // CHECK de training_progress), así que hay pruebas terminadas que solo existen
         // en esa copia. informes_diagnosticos_alumnos mira los dos lados y se queda con
         // la más reciente: ninguna se pierde y ninguna se cuenta dos veces.
+        /* El botón solo aparece donde de verdad hay tarjetas escondidas (el informe
+           de un alumno), no en el resumen del grupo, que tiene cuatro. Y vuelve a
+           su estado cerrado cada vez: dejarlo abierto de la visita anterior con el
+           rótulo al revés es peor que no tenerlo. */
+        function mostrarBotonDeNumeros() {
+            const extras = document.querySelectorAll("#stat-cards [data-extra]");
+            const caja = document.getElementById("stat-cards-mas");
+            const btn = document.getElementById("stat-cards-ver");
+            caja.classList.toggle("hidden", !extras.length);
+            btn.setAttribute("aria-expanded", "false");
+            btn.textContent = "Ver todos los números ▾";
+        }
+
         function entrenoDeFila(fila, cursos, diagnostico) {
             const f = fila || {};
             return {
@@ -534,23 +661,24 @@
 
             const cards = document.getElementById("stat-cards");
             cards.append(
-                statCard("🚩", respondidas, "Asignaciones respondidas"),
-                statCard("✅", correct, "Correctas"),
                 statCard("🎯", accuracy + "%", "Precisión"),
-                statCard("⏳", Math.max(respondidas - calificadas, 0), "Pendientes de revisar"),
                 statCard("🏫", `${attendedClosed}/${closedCount}`, `Asistencia (${attendanceRate}%)`),
-                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase"),
-                statCard("⏱️", fmtDuration(exerciseMinutesStudent), "Tiempo en ejercicios"),
                 statCard("⏱️", fmtDuration(totalMinutes + exerciseMinutesStudent), "Tiempo total en la plataforma"),
                 statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
-                statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
-                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
-                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados"),
+                statCard("🚩", respondidas, "Asignaciones respondidas", true),
+                statCard("✅", correct, "Correctas", true),
+                statCard("⏳", Math.max(respondidas - calificadas, 0), "Pendientes de revisar", true),
+                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase", true),
+                statCard("⏱️", fmtDuration(exerciseMinutesStudent), "Tiempo en ejercicios", true),
+                statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true)
             );
+            mostrarBotonDeNumeros();
 
             renderCursosReport(entreno, true);
             renderEvolucion(profile.id, true, "");
@@ -559,7 +687,7 @@
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
-            if (!respondidas) {
+            if (!list.length) {
                 historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no has respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
@@ -684,9 +812,183 @@
             return teacherData.students.filter((s) => s.grupo === grupo);
         }
 
+        /* ---------------- El índice de la clase ----------------
+
+           Una fila por alumno con lo que contesta "¿a quién hay que mirar?", y
+           el resto a un toque. Antes esta misma gente salía TRES veces seguidas
+           —precisión, asistencia y entrenamiento— sin buscador ni corte: con
+           cien alumnos eran trescientas filas de corrido, y encontrar a uno era
+           abrir un <select> de cien nombres. Nada de esto daba ningún error: la
+           página se veía perfecta y el profesor simplemente no usaba Informes.
+
+           El corte no es cosmético. `alumnos-tbody` se pinta de veinte en
+           veinte; las tablas completas de abajo siguen pintándose enteras
+           porque viven dentro de un <details> cerrado, así que no cuestan
+           pantalla — y son las que sirven para comparar columna a columna, que
+           es lo único que un índice de una fila por alumno no puede dar. */
+        const PASO_ALUMNOS = 20;
+        const panelAlumnos = { busqueda: "", orden: "nombre", mostrados: PASO_ALUMNOS };
+
+        // Buscar "ramirez" tiene que encontrar a "Ramírez": nadie escribe las
+        // tildes en un buscador. Misma regla que la lista de cuentas de admin.html.
+        function sinTildes(t) {
+            return String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+
+        // Quién lleva 7 días o más sin entrenar, por id. Sale de informes_inactivos(),
+        // la misma lista que cuenta panel_profesor() en "Tu semana" de clases.html:
+        // un segundo criterio escrito acá podría decir otra cosa del mismo alumno.
+        function inactivosPorId() {
+            const mapa = new Map();
+            (teacherData.inactivos || []).forEach((i) => mapa.set(i.id, i));
+            return mapa;
+        }
+
+        function diasSin(iso) {
+            if (!iso) return null;
+            return Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 86400000));
+        }
+
+        // El nivel que ya calculó el diagnóstico, para no volver a resumirlo en cada
+        // fila. Null cuando ese alumno todavía no lo hizo.
+        function nivelDeAlumno(s) {
+            const diag = teacherData.diagnosticoPorAlumno[s.id];
+            if (!diag || !diag.detalle) return null;
+            try { return PE.resumir(conEloActual(diag.detalle, s)); } catch (e) { return null; }
+        }
+
+        /* Los alumnos que le tocan a ESTE panel: los del grupo o subgrupo elegido
+           arriba, más lo que se haya escrito en el buscador. Lo usan el índice Y
+           las tres tablas completas de abajo: buscar "Ana" y que las tablas
+           siguieran enseñando a los cien sería exactamente la clase de sorpresa
+           que este cambio viene a quitar. */
+        function alumnosDelPanel() {
+            const q = sinTildes(panelAlumnos.busqueda).trim();
+            const base = filteredStudents();
+            if (!q) return base;
+            return base.filter((s) => sinTildes((s.full_name || "") + " " + (s.email || "") + " " + (s.grupo || "")).includes(q));
+        }
+
+        function alumnosOrdenados() {
+            const lista = alumnosDelPanel().slice();
+            const inact = inactivosPorId();
+            const nombre = (s) => s.full_name || s.email || "";
+            const pct = (s) => (s.respuestas ? s.correctas / s.respuestas : -1);
+            const porNombre = (a, b) => nombre(a).localeCompare(nombre(b), "es");
+            if (panelAlumnos.orden === "inactivos") {
+                // Primero quien lleva más tiempo sin entrenar; "nunca entrenó" va
+                // antes que "hace 40 días", que es el orden en que hay que llamarlos.
+                const peso = (s) => {
+                    const i = inact.get(s.id);
+                    if (!i) return Infinity;
+                    return i.ultima_actividad ? new Date(i.ultima_actividad).getTime() : -Infinity;
+                };
+                return lista.sort((a, b) => peso(a) - peso(b) || porNombre(a, b));
+            }
+            if (panelAlumnos.orden === "tiempo") {
+                const min = (s) => (s.minutos_clase || 0) + (s.minutos_ejercicios || 0);
+                return lista.sort((a, b) => min(b) - min(a) || porNombre(a, b));
+            }
+            if (panelAlumnos.orden === "precision") return lista.sort((a, b) => pct(b) - pct(a) || porNombre(a, b));
+            if (panelAlumnos.orden === "asistencia") return lista.sort((a, b) => (a.clases_asistidas || 0) - (b.clases_asistidas || 0) || porNombre(a, b));
+            return lista.sort(porNombre);
+        }
+
+        function abrirInformeDe(studentId) {
+            document.getElementById("student-filter").value = studentId;
+            applyTeacherFilters();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function renderIndiceAlumnos() {
+            const cuerpo = document.getElementById("alumnos-tbody");
+            const lista = alumnosOrdenados();
+            const inact = inactivosPorId();
+            cuerpo.innerHTML = "";
+            if (!lista.length) {
+                cuerpo.innerHTML = `<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">${panelAlumnos.busqueda.trim() ? "Ningún alumno con ese nombre." : "Todavía no hay alumnos registrados."}</td></tr>`;
+                document.getElementById("alumnos-cuenta").textContent = "";
+                document.getElementById("alumnos-mas").classList.add("hidden");
+                return;
+            }
+            lista.slice(0, panelAlumnos.mostrados).forEach((s) => {
+                const nombre = s.full_name || s.email;
+                const resumen = nivelDeAlumno(s);
+                const i = inact.get(s.id);
+                const dias = i ? diasSin(i.ultima_actividad) : null;
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0 hover:bg-brand-50 dark:hover:bg-brand-800/40 transition-colors cursor-pointer";
+                const pct = s.respuestas ? Math.round((s.correctas / s.respuestas) * 100) : null;
+                tr.innerHTML = `
+                    <td class="py-2 pr-4">
+                        <button type="button" data-abrir="${escVis(s.id)}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${escVis(nombre)}</button>
+                        ${s.grupo ? `<span class="block text-xs text-brand-450 dark:text-brand-350">${escVis(s.grupo)}</span>` : ""}
+                    </td>
+                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${s.clases_asistidas}/${teacherData.closedSessions}</td>
+                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${fmtDuration((s.minutos_clase || 0) + (s.minutos_ejercicios || 0))}</td>
+                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${pct === null ? "—" : `${s.correctas}/${s.respuestas} · ${pct}%`}</td>
+                    <td class="py-2 pr-4 text-brand-500 dark:text-brand-300">${resumen ? escVis(resumen.nivel.etiqueta) : "<span class=\"text-brand-450 dark:text-brand-350\">Sin diagnóstico</span>"}</td>
+                    <td class="py-2 ${i ? "text-red-600 dark:text-red-400" : "text-brand-500 dark:text-brand-300"}">${i ? (dias ? `⚠️ Hace ${dias} ${dias === 1 ? "día" : "días"}` : "⚠️ Nunca entrenó") : "✅ Esta semana"}</td>`;
+                tr.querySelector("[data-abrir]").addEventListener("click", (ev) => { ev.stopPropagation(); abrirInformeDe(s.id); });
+                // La fila entera lleva al informe; el botón de arriba es lo que
+                // la hace alcanzable con el teclado, así que no hay dos paradas
+                // de tabulador para el mismo destino.
+                tr.addEventListener("click", () => abrirInformeDe(s.id));
+                cuerpo.appendChild(tr);
+            });
+            const vistos = Math.min(panelAlumnos.mostrados, lista.length);
+            document.getElementById("alumnos-cuenta").textContent = vistos < lista.length
+                ? `Mostrando ${vistos} de ${lista.length}`
+                : `${lista.length} ${lista.length === 1 ? "alumno" : "alumnos"}`;
+            const mas = document.getElementById("alumnos-mas");
+            mas.classList.toggle("hidden", vistos >= lista.length);
+            mas.textContent = `Ver más alumnos (faltan ${lista.length - vistos})`;
+        }
+
+        /* ---------------- Qué pide atención ----------------
+
+           Los tres datos ya estaban cargados y no se decían en ninguna parte:
+           había que acordarse de ir a buscarlos al filtro de tema. Cada uno es un
+           botón que deja el filtro puesto, así que enterarse y actuar son el
+           mismo gesto. Con todo al día la franja NO se pinta: un cartel que se
+           repite deja de leerse. */
+        function renderAtencion() {
+            const caja = document.getElementById("atencion");
+            const botones = document.getElementById("atencion-botones");
+            botones.innerHTML = "";
+            const dentro = new Set(filteredStudents().map((s) => s.id));
+            const inactivos = (teacherData.inactivos || []).filter((i) => dentro.has(i.id));
+            const { conDiagnostico, pendientes } = diagnosticosDeClase();
+            const faltanPlan = planesQueFaltan(conDiagnostico).total;
+
+            const boton = (texto, alFinal) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "bg-white dark:bg-brand-800 border border-accent-400/50 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.textContent = texto;
+                b.addEventListener("click", alFinal);
+                botones.appendChild(b);
+            };
+            const conFiltro = (tema) => () => {
+                document.getElementById("topic-filter").value = tema;
+                applyTeacherFilters();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            };
+
+            if (inactivos.length) boton(`😴 ${inactivos.length} sin entrenar hace una semana`, conFiltro("inactivos"));
+            if (pendientes.length) boton(`🧭 ${pendientes.length} sin diagnóstico`, conFiltro("diagnostico"));
+            // Un plan sin compartir no lo ve ni el alumno ni su casa, o sea que
+            // cuenta como que no existe: es lo mismo que dice "Tu semana".
+            if (faltanPlan) boton(`📤 ${faltanPlan} ${faltanPlan === 1 ? "plan sin compartir" : "planes sin compartir"}`, conFiltro("diagnostico"));
+
+            caja.classList.toggle("hidden", !botones.children.length);
+        }
+
         function hideAllReportPanels() {
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
+            document.getElementById("stat-cards-mas").classList.add("hidden");
+            document.getElementById("atencion").classList.add("hidden");
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
@@ -700,17 +1002,15 @@
             document.getElementById("teacher-report").classList.add("hidden");
         }
 
-        function renderAggregateReport() {
-            const { totales, closedSessions } = teacherData;
-            const students = filteredStudents();
-            document.getElementById("stat-cards").classList.remove("hidden");
-            const cards = document.getElementById("stat-cards");
-            cards.append(
-                statCard("🏫", closedSessions, "Clases cerradas"),
-                statCard("🚩", totales.preguntas, "Preguntas planteadas"),
-                statCard("📥", totales.partidas, "Partidas guardadas"),
-                statCard("🧑‍🎓", students.length, "Alumnos")
-            );
+        /* Las tres tablas completas y el índice miran a los MISMOS alumnos
+           (alumnosDelPanel): el grupo o subgrupo de arriba más el buscador del
+           panel. Se pintan juntas y aparte del resto para que escribir en el
+           buscador no obligue a rehacer los diagnósticos ni los conteos de
+           arriba, que no dependen de lo que se escriba. */
+        function renderPanelAlumnos() {
+            const students = alumnosDelPanel();
+            const { closedSessions } = teacherData;
+            renderIndiceAlumnos();
 
             const leaderboard = document.getElementById("leaderboard");
             leaderboard.innerHTML = "";
@@ -763,10 +1063,45 @@
                     entrenoBody.appendChild(tr);
                 });
             }
+        }
+
+        function renderAggregateReport() {
+            const { totales, closedSessions } = teacherData;
+            const students = filteredStudents();
+            document.getElementById("stat-cards").classList.remove("hidden");
+            const cards = document.getElementById("stat-cards");
+            cards.append(
+                statCard("🧑‍🎓", students.length, "Alumnos"),
+                statCard("🏫", closedSessions, "Clases cerradas"),
+                statCard("🚩", totales.preguntas, "Preguntas planteadas"),
+                statCard("📥", totales.partidas, "Partidas guardadas")
+            );
+
+            renderAtencion();
+            // Al volver al resumen se arranca otra vez por el principio: dejar el
+            // corte donde estaba haría que cambiar de grupo enseñara ochenta filas
+            // del grupo nuevo sin que nadie lo hubiera pedido.
+            panelAlumnos.mostrados = PASO_ALUMNOS;
+            renderPanelAlumnos();
 
             renderArbitrajesPublicos(document.getElementById("arbitrajes-publicos"));
             renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
             renderDiagnosticosVisitantes(document.getElementById("diagnosticos-visitantes"));
+
+            /* Los dos paneles del público van plegados, así que su conteo tiene
+               que leerse SIN abrirlos: si no, hay que abrir los dos en cada
+               visita solo para saber si llegó algo nuevo, que es justo el paso
+               que el plegado viene a quitar. */
+            const arb = (teacherData.arbitrajes || []).length;
+            const sinRevisar = (teacherData.arbitrajes || []).filter((a) => !a.revisado).length;
+            document.getElementById("arbitrajes-resumen").textContent = arb
+                ? `${arb} ${arb === 1 ? "examen recibido" : "exámenes recibidos"}${sinRevisar ? ` · ${sinRevisar} sin responder` : " · todos respondidos"}`
+                : "Todavía no llegó ninguno.";
+            const vis = (teacherData.visitantes || []).length;
+            document.getElementById("visitantes-resumen").textContent = vis
+                ? `${vis} ${vis === 1 ? "persona sin cuenta" : "personas sin cuenta"} hicieron el diagnóstico público`
+                : "Todavía no lo hizo nadie de fuera.";
+
             document.getElementById("teacher-report").classList.remove("hidden");
         }
 
@@ -778,7 +1113,7 @@
         async function renderStudentDetail(studentId) {
             const student = teacherData.resumenPorAlumno[studentId];
             const name = student ? (student.full_name || student.email) : "el alumno";
-            document.getElementById("student-report-title").textContent = "Informe de " + name;
+            document.getElementById("student-report-title").textContent = "🚩 Últimas asignaciones de " + name;
 
             const fila = student || {};
             const respondidas = fila.respuestas || 0;
@@ -803,23 +1138,24 @@
             const cards = document.getElementById("stat-cards");
             cards.classList.remove("hidden");
             cards.append(
-                statCard("🚩", respondidas, "Asignaciones respondidas"),
-                statCard("✅", correct, "Correctas"),
                 statCard("🎯", accuracy + "%", "Precisión"),
-                statCard("⏳", Math.max(respondidas - calificadas, 0), "Pendientes de revisar"),
                 statCard("🏫", `${attendedClosed}/${teacherData.closedSessions}`, `Asistencia (${attendanceRate}%)`),
-                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase"),
-                statCard("⏱️", fmtDuration(exerciseMinutesDetail), "Tiempo en ejercicios"),
                 statCard("⏱️", fmtDuration(totalMinutes + exerciseMinutesDetail), "Tiempo total en la plataforma"),
                 statCard("🧩", entreno.puzzles, "Ejercicios 4×4 resueltos"),
                 statCard("🎓", entreno.lessons, "Lecciones de Aprender completadas"),
-                statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas"),
-                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas"),
                 statCard("♚", entreno.matesTotal, `Mates resueltos (${entreno.mate1}·${entreno.mate2}·${entreno.mate3} en 1/2/3)`),
                 statCard("⚔️", entreno.tacticaTotal, "Posiciones de Táctica resueltas"),
-                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos"),
-                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados")
+                statCard("🏛️", entreno.cursosTemas, "Temas de cursos estudiados"),
+                statCard("🚩", respondidas, "Asignaciones respondidas", true),
+                statCard("✅", correct, "Correctas", true),
+                statCard("⏳", Math.max(respondidas - calificadas, 0), "Pendientes de revisar", true),
+                statCard("⏱️", fmtDuration(totalMinutes), "Tiempo en clase", true),
+                statCard("⏱️", fmtDuration(exerciseMinutesDetail), "Tiempo en ejercicios", true),
+                statCard("⚡", entreno.bestCoord, "Mejor puntuación en Coordenadas", true),
+                statCard("🏆", `${entreno.practiceCompleted} (${entreno.practiceStars}⭐)`, "Series de Practicar completadas", true),
+                statCard("🧠", entreno.concentracionTotal, "Ejercicios de Concentración resueltos", true)
             );
+            mostrarBotonDeNumeros();
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
             renderEvolucion(studentId, false, name);
@@ -831,7 +1167,7 @@
 
             const historyEl = document.getElementById("student-history");
             historyEl.innerHTML = "";
-            if (!respondidas) {
+            if (!list.length) {
                 historyEl.innerHTML = '<li class="text-brand-450 dark:text-brand-350">Todavía no ha respondido ninguna asignación.</li>';
             } else {
                 list.slice(0, 15).forEach((a) => {
@@ -1566,6 +1902,38 @@
         document.getElementById("topic-filter").addEventListener("change", applyTeacherFilters);
         document.getElementById("group-filter").addEventListener("change", applyTeacherFilters);
 
+        /* El buscador y el orden del panel de alumnos NO pasan por
+           applyTeacherFilters: repintarían los diagnósticos, los conteos de
+           arriba y los dos paneles del público, que no dependen de lo que se
+           escriba. Solo se vuelve a pintar el panel. */
+        document.getElementById("alumnos-buscar").addEventListener("input", (ev) => {
+            panelAlumnos.busqueda = ev.target.value;
+            panelAlumnos.mostrados = PASO_ALUMNOS;
+            renderPanelAlumnos();
+        });
+        document.getElementById("alumnos-orden").addEventListener("change", (ev) => {
+            panelAlumnos.orden = ev.target.value;
+            renderPanelAlumnos();
+        });
+        document.getElementById("alumnos-mas").addEventListener("click", () => {
+            panelAlumnos.mostrados += PASO_ALUMNOS;
+            renderIndiceAlumnos();
+            // El foco se queda en el botón mientras quede gente por ver; cuando
+            // ya no queda, el botón se esconde y sin esto el foco se perdería
+            // al principio de la página.
+            const mas = document.getElementById("alumnos-mas");
+            if (mas.classList.contains("hidden")) document.getElementById("alumnos-buscar").focus();
+        });
+
+        // Los ocho números de segunda fila (ver statCard).
+        document.getElementById("stat-cards-ver").addEventListener("click", (ev) => {
+            const extras = [...document.querySelectorAll("#stat-cards [data-extra]")];
+            const abrir = extras.some((d) => d.classList.contains("hidden"));
+            extras.forEach((d) => d.classList.toggle("hidden", !abrir));
+            ev.currentTarget.setAttribute("aria-expanded", abrir ? "true" : "false");
+            ev.currentTarget.textContent = abrir ? "Ver solo lo principal ▴" : "Ver todos los números ▾";
+        });
+
 
         /* ---------------- Diagnóstico de nivel y plan de entrenamiento ----------------
            El diagnóstico lo hace el alumno en entreno/diagnostico.html y queda en
@@ -1850,8 +2218,13 @@
         function renderDiagnosticoProfesor(studentId, nombre, entreno) {
             const panel = document.getElementById("diagnostico-report");
             const body = document.getElementById("diagnostico-body");
-            document.getElementById("diagnostico-title").textContent = "Diagnóstico y plan de entrenamiento — " + nombre;
+            document.getElementById("diagnostico-title").textContent = "🧭 Diagnóstico y plan de entrenamiento — " + nombre;
             panel.classList.remove("hidden");
+            /* Plegado cuando lo mira quien da clase: es el bloque más largo del
+               informe y casi nunca es a lo que se venía —el nivel ya se lee en el
+               índice de la clase—. Para el propio alumno se abre (más abajo, en
+               renderDiagnosticoAlumno): su plan es justamente a lo que viene. */
+            panel.open = false;
 
             const student = teacherData.resumenPorAlumno[studentId] || { id: studentId };
             if (!entreno.diagnostico) { body.innerHTML = eloEditorHTML(student) + sinDiagnosticoHTML(nombre, true); conectarEloEditor(student); return; }
@@ -1958,8 +2331,10 @@
         function renderDiagnosticoAlumno(entreno, planCompartido) {
             const panel = document.getElementById("diagnostico-report");
             const body = document.getElementById("diagnostico-body");
-            document.getElementById("diagnostico-title").textContent = "Tu nivel y tu plan de entrenamiento";
+            document.getElementById("diagnostico-title").textContent = "🧭 Tu nivel y tu plan de entrenamiento";
             panel.classList.remove("hidden");
+            // Para el alumno va ABIERTO: su plan es a lo que viene a esta página.
+            panel.open = true;
 
             if (!entreno.diagnostico) { body.innerHTML = sinDiagnosticoHTML("", false); return; }
             const resumen = PE.resumir(conEloActual(entreno.diagnostico.detail, profile));
@@ -2427,8 +2802,12 @@ function areasFlojasArbitraje(fila) {
                         </div>`).join("")}
                 </div>
 
-                <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">El perfil de cada alumno</h3>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Las nueve áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
+                <details class="group mt-7">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white inline">El perfil de cada alumno</h3>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 mb-3">Las nueve áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     ${conDiagnostico.map((d) => `
                         <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-3">
@@ -2445,6 +2824,7 @@ function areasFlojasArbitraje(fila) {
                             <p class="text-[11px] text-brand-450 dark:text-brand-350 mt-2">Más floja: ${d.resumen.porArea.slice().sort((x, y) => x.porcentaje - y.porcentaje)[0].nombre.toLowerCase()}.</p>
                         </div>`).join("")}
                 </div>
+                </details>
 
                 ${pendientes.length ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-6"><strong class="text-brand-500 dark:text-brand-300">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "")).join(", ")}.</p>` : ""}`;
 

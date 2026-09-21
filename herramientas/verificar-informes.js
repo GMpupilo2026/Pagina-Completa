@@ -252,6 +252,13 @@ const fila = (page, tbody, n) => page.evaluate(([t, i]) => {
   return tr ? [...tr.children].map((c) => c.textContent.trim()).join(" | ") : null;
 }, [tbody, n]);
 
+// Igual, pero juntando los espacios: en el índice de la clase el grupo va en su
+// propio renglón dentro de la celda del nombre.
+const filaLimpia = (page, tbody, n) => page.evaluate(([t, i]) => {
+  const tr = document.querySelectorAll("#" + t + " tr")[i];
+  return tr ? [...tr.children].map((c) => c.textContent.replace(/\s+/g, " ").trim()).join(" | ") : null;
+}, [tbody, n]);
+
 /* El veredicto es la línea que de verdad se lee, y es lógica pura: se prueba sin
    navegador, con las cuatro situaciones que tiene que distinguir. Lo que se
    rompe acá no da ningún error — el gráfico se dibuja igual de bien y la frase
@@ -320,6 +327,69 @@ async function pruebaProfesor(browser) {
   igual("entreno · Bruno", await fila(page, "entreno-table-body", 1), "Bruno Mena | 3 | 0 | — | — | — | — | —");
   igual("ranking · primera fila", await page.textContent("#leaderboard > div:first-child"), "Ana Rojas7/10 · 70%");
 
+  /* EL ÍNDICE DE LA CLASE. Antes acá salían tres listas de los mismos alumnos
+     —precisión, asistencia y entrenamiento— una detrás de otra y sin corte: con
+     cien alumnos son trescientas filas y no se encuentra a nadie. Lo que se
+     comprueba es que el índice diga lo de cada quien y que se pueda entrar
+     tocándolo, que es lo que reemplaza al <select> de cien nombres. */
+  console.log("-- El índice de la clase");
+  igual("una fila por alumno, con su nivel y si está entrenando",
+    await filaLimpia(page, "alumnos-tbody", 0), "Ana Rojas 7A | 3/4 | 1 h 35 min | 7/10 · 70% | Intermedio | ✅ Esta semana");
+  igual("y a quien no hizo el diagnóstico se le dice, no se le pinta un hueco",
+    await filaLimpia(page, "alumnos-tbody", 1), "Bruno Mena 7B | 1/4 | 10 min | 1/4 · 25% | Sin diagnóstico | ✅ Esta semana");
+  igual("con todos a la vista, el conteo no habla de corte",
+    await page.textContent("#alumnos-cuenta"), "3 alumnos");
+
+  /* Los dos paneles del público van plegados —no son sus alumnos y ocupaban el
+     primer lugar de la página—, así que su conteo TIENE que leerse sin abrirlos:
+     si no, hay que abrir los dos en cada visita solo para saber si llegó algo. */
+  console.log("-- Lo que no es de sus alumnos, plegado");
+  igual("el panel de arbitraje arranca cerrado",
+    await page.evaluate(() => document.getElementById("arbitrajes-publicos").closest("details").open), false);
+  igual("pero dice cuántos hay y cuántos faltan por responder sin abrirlo",
+    await page.textContent("#arbitrajes-resumen"), "1005 exámenes recibidos · 502 sin responder");
+  igual("y el de visitantes también arranca cerrado",
+    await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").open), false);
+
+  /* La franja de lo que pide actuar: los datos ya estaban cargados y no se
+     decían en ninguna parte. Se mide el display que CALCULA el navegador, no la
+     clase — la lección que dejó el cartel de instalar la app. */
+  console.log("-- Qué pide atención");
+  igual("la franja se ve de verdad", await page.evaluate(() =>
+    getComputedStyle(document.getElementById("atencion")).display === "none" ? "no" : "sí"), "sí");
+  igual("y dice qué falta, con su número", await page.evaluate(() =>
+    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
+    ["🧭 2 sin diagnóstico", "📤 1 plan sin compartir"]);
+  await page.click("#atencion-botones button");
+  await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
+  igual("y tocarla deja el filtro puesto, no solo avisa",
+    await page.inputValue("#topic-filter"), "diagnostico");
+  await page.selectOption("#topic-filter", "");
+  await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
+
+  // Tocar a un alumno es lo que reemplaza a buscarlo dentro del <select>.
+  console.log("-- Entrar a un alumno desde el índice");
+  await page.click("#alumnos-tbody button[data-abrir]");
+  await page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"));
+  igual("abre SU informe y deja el filtro donde corresponde",
+    [await page.inputValue("#student-filter"), await page.textContent("#student-report-title")].join(" | "),
+    "a-1 | 🚩 Últimas asignaciones de Ana Rojas");
+
+  /* Dieciséis números de golpe no los lee nadie: las ocho de segunda fila nacen
+     escondidas. Se mide el display que calcula el navegador, no la clase. */
+  const escondidas = () => page.evaluate(() =>
+    [...document.querySelectorAll("#stat-cards [data-extra]")]
+      .filter((d) => getComputedStyle(d).display === "none").length);
+  igual("las ocho secundarias nacen escondidas", await escondidas(), 8);
+  igual("y las que se miran siguen a la vista", await page.evaluate(() =>
+    [...document.querySelectorAll("#stat-cards > div")].filter((d) => getComputedStyle(d).display !== "none").length), 8);
+  await page.click("#stat-cards-ver");
+  igual("el botón las destapa todas", await escondidas(), 0);
+  await page.click("#stat-cards-ver");
+  igual("y las vuelve a guardar", await escondidas(), 8);
+  await page.selectOption("#student-filter", "");
+  await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
+
   console.log("-- Pedido por páginas");
   igual("exámenes recibidos (1005, no 1000)", await page.evaluate(() => {
     const c = [...document.querySelectorAll("#arbitrajes-publicos p")].find((p) => p.textContent.trim() === "exámenes recibidos");
@@ -329,6 +399,10 @@ async function pruebaProfesor(browser) {
     window.__consultas.filter((c) => c.etiqueta === "from:arbitrajes_publicos").length), 2);
 
   console.log("-- Un alumno puntual");
+  /* Se vuelve a cero antes de entrar: más arriba ya se entró a este mismo
+     alumno desde el índice, y lo que se mira abajo es cuántas consultas cuesta
+     UNA visita — no cuántas van en toda la corrida. */
+  await page.evaluate(() => { window.__consultas.length = 0; });
   await page.selectOption("#student-filter", "a-1");
   await page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"));
   igual("Asignaciones respondidas", await tarjeta(page, "Asignaciones respondidas"), "10");
@@ -446,6 +520,18 @@ async function pruebaProfesor(browser) {
     "1,0");
 
   console.log("-- Informes a la casa");
+  /* Este panel y el de «Acceso a la cuenta» van PLEGADOS: son de administración
+     y se usan una vez cada tanto, así que abiertos en cada informe de alumno son
+     media pantalla de formulario que no se venía a ver. Se abren como los abre
+     una persona —tocando el encabezado—, y eso comprueba de paso que se pueda
+     llegar a ellos: un panel plegado que no abre se ve igual que uno que no
+     está. */
+  await page.click("#encargados-report > summary");
+  await page.waitForSelector("#enc-nombre", { state: "visible" });
+  igual("y el de acceso a la cuenta también abre", await (async () => {
+    await page.click("#acceso-report > summary");
+    return page.isVisible("#acceso-reenviar");
+  })(), true);
   igual("el encargado aparece con su frecuencia y su último envío", await page.evaluate(() => {
     const f = document.querySelector("#encargados-lista > div");
     return [f.children[0].textContent.replace(/\s+/g, " ").trim(), f.querySelector("select").value].join(" | ");
@@ -758,11 +844,103 @@ async function pruebaNombreAjeno(browser) {
   await page.close();
 }
 
+/* UNA CLASE DE VERDAD, que es donde esta página se rompía callada: con tres
+   alumnos todo se ve bien, y el problema empieza a los cincuenta. Lo que se
+   comprueba es lo que no se nota mirando una clase chica — que el índice corte,
+   que el buscador filtre de verdad (uno que no filtra enseña la clase entera y
+   se ve igual de bien) y que las tildes no lo dejen sin encontrar a nadie. */
+async function pruebaClaseGrande(browser) {
+  console.log("\n=== Una clase de cincuenta ===");
+  const alumno = (i, nombre) => ({
+    id: "g" + i, full_name: nombre, email: "g" + i + "@x.cr", grupo: i % 2 ? "7A" : "7B",
+    elo: null, elo_tipo: null, elo_actualizado: null,
+    respuestas: i, correctas: Math.floor(i / 2), calificadas: i, clases_asistidas: i % 5,
+    minutos_clase: i, minutos_ejercicios: i,
+    puzzles: i, lecciones: 0, mejor_coord: 0, practicar_series: 0, practicar_estrellas: 0,
+    mate1: 0, mate2: 0, mate3: 0, tactica: 0, concentracion: 0, cursos_temas: 0,
+  });
+  // Se mandan desordenados a propósito: el orden por nombre lo tiene que poner
+  // la página, no venir regalado por la base.
+  const nombres = Array.from({ length: 44 }, (_, i) => "Alumna " + String(i + 1).padStart(2, "0"));
+  const alumnos = nombres.map((n, i) => alumno(i + 1, n)).reverse();
+  alumnos.push(alumno(45, "Sofía Núñez"));
+
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: alumnos,
+      informes_cursos_alumnos: [],
+      informes_diagnosticos_alumnos: [],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      // Tres que llevan tiempo sin entrenar, el de en medio hace más que el resto.
+      informes_inactivos: [
+        { id: "g45", full_name: "Sofía Núñez", email: "g45@x.cr", grupo: "7A", ultima_actividad: null },
+        { id: "g2", full_name: "Alumna 02", email: "g2@x.cr", grupo: "7B", ultima_actividad: "2026-08-01T10:00:00Z" },
+        { id: "g3", full_name: "Alumna 03", email: "g3@x.cr", grupo: "7A", ultima_actividad: "2026-09-10T10:00:00Z" },
+      ],
+    },
+    tablas: {
+      profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Oscar", email: "o@x.cr" }],
+      training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [],
+      question_answers: [], training_progress: [], encargados: [],
+    },
+  }, "prof-1");
+
+  const filas = (t) => page.evaluate((x) => document.querySelectorAll("#" + x + " tr").length, t);
+  const primera = () => page.evaluate(() =>
+    document.querySelector("#alumnos-tbody tr button[data-abrir]").textContent);
+
+  igual("el índice corta de veinte en veinte", await filas("alumnos-tbody"), 20);
+  igual("y lo dice, con el total de verdad", await page.textContent("#alumnos-cuenta"), "Mostrando 20 de 45");
+  igual("por nombre, y el orden lo pone la página", await primera(), "Alumna 01");
+  /* Las tablas completas viven dentro de un <details> cerrado: no cuestan
+     pantalla, así que se pintan enteras. Son las que sirven para comparar
+     columna a columna, que es lo único que un índice de una fila no da. */
+  igual("las tablas completas siguen trayendo a todos", await filas("attendance-table-body"), 45);
+
+  await page.click("#alumnos-mas");
+  igual("«ver más» trae los siguientes veinte", await filas("alumnos-tbody"), 40);
+  igual("y dice cuántos faltan", await page.textContent("#alumnos-mas"), "Ver más alumnos (faltan 5)");
+
+  /* Buscar "nunez" tiene que encontrar a "Núñez": nadie escribe las tildes en un
+     buscador, y quedarse sin resultados se lee como "esa alumna no está". */
+  await page.fill("#alumnos-buscar", "nunez");
+  await page.waitForFunction(() => document.querySelectorAll("#alumnos-tbody tr").length === 1);
+  igual("el buscador no se pierde con las tildes", await primera(), "Sofía Núñez");
+  igual("y filtra TAMBIÉN las tablas de abajo", await filas("attendance-table-body"), 1);
+  igual("y el corte vuelve a empezar, no se queda en los cuarenta de antes",
+    await page.textContent("#alumnos-cuenta"), "1 alumno");
+
+  await page.fill("#alumnos-buscar", "no existe nadie así");
+  await page.waitForFunction(() => document.getElementById("alumnos-tbody").textContent.includes("Ningún"));
+  igual("y sin resultados lo dice en vez de quedarse en blanco",
+    (await page.textContent("#alumnos-tbody")).trim(), "Ningún alumno con ese nombre.");
+
+  await page.fill("#alumnos-buscar", "");
+  await page.waitForFunction(() => document.querySelectorAll("#alumnos-tbody tr").length === 20);
+  await page.selectOption("#alumnos-orden", "inactivos");
+  igual("ordenando por quien lleva más sin entrenar, «nunca» va antes que «hace mes y medio»",
+    await page.evaluate(() => [...document.querySelectorAll("#alumnos-tbody tr")].slice(0, 3)
+      .map((tr) => tr.querySelector("button[data-abrir]").textContent)),
+    ["Sofía Núñez", "Alumna 02", "Alumna 03"]);
+  igual("y se dice desde cuándo, en rojo", await page.evaluate(() => {
+    const td = document.querySelector("#alumnos-tbody tr:nth-child(2) td:last-child");
+    return [td.textContent.trim().startsWith("⚠️ Hace"), /rgb\(220|rgb\(248|rgb\(185/.test(getComputedStyle(td).color)].join(",");
+  }), "true,true");
+
+  igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
+    [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
+    ["😴 3 sin entrenar hace una semana", "🧭 45 sin diagnóstico"]);
+
+  if (errores.length) { console.log("  ✗ errores en la página: " + errores.join(" | ")); fallos += 1; }
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     pruebaVeredicto();
     await pruebaProfesor(browser);
+    await pruebaClaseGrande(browser);
     await pruebaAlumno(browser);
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
