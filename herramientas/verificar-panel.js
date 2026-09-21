@@ -801,6 +801,28 @@ function rachaSinEjercicios(conDiagnostico) {
    el panel —con razón— ofrecía una de ellas. La prueba fallaba sobre una página
    que estaba bien. Leyéndolas de PlanEntrenamiento, una décima área tampoco
    podría colarse en cero sin que nadie lo note. */
+/* El primer recurso que CUENTA de cada área, leído del plan de verdad y del
+   catálogo de Tareas. La prueba no puede escribir el enlace esperado a mano:
+   al cambiar el plan —que es una decisión editorial— fallaría sobre una página
+   que está bien, y renumerar expectativas a mano es como se dejan de correr las
+   pruebas. Que ese enlace lleve a algo que existe lo comprueba
+   verificar-plan-recursos.js, que es su trabajo. */
+const PRIMER_RECURSO = (() => {
+  const g = { window: {} };
+  const leer = (f) => new Function("window", require("fs").readFileSync(
+    require("path").join(__dirname, "..", f), "utf8"))(g.window);
+  leer("js/plan-entrenamiento.js"); leer("js/material-plataforma.js");
+  const PE = g.window.PlanEntrenamiento, MP = g.window.MaterialPlataforma;
+  const out = {};
+  for (const a of PE.AREAS) {
+    out[a.id] = (a.recursos || []).find((r) => {
+      const h = MP.HERRAMIENTAS.find((t) => t.href === r.href.split("?")[0]);
+      return h && (h.metas || []).includes("cantidad");
+    }) || null;
+  }
+  return out;
+})();
+
 const AREAS_DEL_BANCO = (() => {
   const g = { window: {} };
   const fn = new Function("window", require("fs").readFileSync(
@@ -866,12 +888,11 @@ async function pruebaPrimerPaso(browser) {
   await r.ctx.close();
 
   /* --- Ya lo rindió: LA COMPROBACIÓN QUE IMPORTA ---
-     `finales` está peor (10%) que `mate` (30%), pero los recursos de finales son
-     la PORTADA de un curso y un artículo: dos páginas donde no se resuelve nada
-     que cuente. Si el panel lo mandara ahí, el alumno leería un temario, no
-     escribiría ni una fila en training_progress, y mañana la franja le diría
-     exactamente lo mismo — el paso no se apagaría NUNCA y nadie se enteraría.
-     Así que se salta finales y ofrece mates. */
+     El destino tiene que ser una página donde el trabajo CUENTE y, si la página
+     sabe recortar, con su recorte puesto. Mandarlo a la portada de un curso lo
+     dejaría leyendo un temario, sin escribir una fila en training_progress, y
+     mañana la franja le diría exactamente lo mismo — el paso no se apagaría
+     NUNCA y nadie se enteraría. */
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
     rpc: {
       informes_resumen_alumnos: RESUMEN_ANA,
@@ -883,11 +904,21 @@ async function pruebaPrimerPaso(browser) {
   });
   v = await leer(r.page);
   igual("haber rendido el diagnóstico NO cuenta como haber entrenado", v.display !== "none", "true");
-  igual("se salta el área sin dónde practicar y ofrece la que sí lo tiene", v.enlace, "entreno/mates.html");
-  igual("y nombra ESA área, no la que se saltó", v.texto.toLowerCase().includes("mates y seguridad del rey"), "true");
+  /* LO QUE MÁS IMPORTA: el enlace lleva su RECORTE. Sin él cae en la lista de
+     ochenta temas y le deja al alumno el trabajo de buscar, que es justo lo que
+     este paso viene a evitar — la misma razón por la que el enlace de una tarea
+     lleva el suyo. Y el recorte no se escribe acá: es el que el plan tenga
+     puesto para esa área, comprobado aparte contra el banco por
+     verificar-plan-recursos.js. */
+  igual("ofrece el área más floja de las que tienen dónde practicar",
+    v.enlace, PRIMER_RECURSO.finales.href);
+  igual("y el enlace lleva su recorte, no la lista entera",
+    v.enlace.includes("?"), "true");
+  igual("y nombra ESA área", v.texto.toLowerCase().includes("finales"), "true");
   igual("no dice «lo más flojo»: sería mentira, y por eso dice «señala un hueco»",
     /m[áa]s flojo|lo peor|tu punto m[áa]s/i.test(v.texto), "false");
-  igual("el botón nombra a dónde va", v.cta, "Ir a Mates →");
+  igual("el botón nombra lo que va a abrir, no la página pelada",
+    v.cta, PRIMER_RECURSO.finales.texto + " →");
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
 
