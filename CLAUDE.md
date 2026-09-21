@@ -6559,3 +6559,74 @@ exactamente por donde entraron las 1.900 formas de septiembre.
 
 Los nombres de archivo, las clases de CSS, los identificadores y los comandos
 se quedan como están: son código, no texto.
+
+## El punto de restauración: la base no vivía en ninguna parte
+
+`RESTAURAR.md` es el documento operativo —qué hacer si algo falla— y esto es
+por qué existe. El sitio siempre estuvo respaldado: es un repositorio de git,
+se vuelve atrás con una etiqueta. Lo que no estaba respaldado era **todo lo
+demás**, y no daba ningún error porque la plataforma funcionaba igual.
+
+- **Las 179 migraciones de la Academia vivían SOLO en Supabase.** Ahí están las
+  62 tablas, las 110 funciones, las 176 políticas de RLS y los 20 triggers: o
+  sea, quién ve a quién, quién puede escribir qué y todas las decisiones que
+  este archivo explica. Si ese proyecto se perdiera o alguien borrara de más,
+  no había de dónde reconstruirlo. Ahora están en `supabase/migraciones/`
+  (y las 5 del proyecto de inscripciones en `supabase/migraciones-colegios/`),
+  bajadas de `supabase_migrations.schema_migrations` **y comprobadas una por
+  una con su md5**: una migración transcrita a medias se ve igual de bien que
+  una entera, y la diferencia solo aparece el día que hay que restaurar.
+- **Cinco Edge Functions estaban desplegadas y no estaban en el repositorio**:
+  `notificar` (el VAPID y el cifrado `aes128gcm` escritos a mano, o sea lo más
+  difícil de rehacer de todo el sitio), `chess-results-proxy`, `ocr-scoresheet`,
+  `enviar-resultado-arbitraje` y `bootstrap-admin`. Es el mismo agujero que ya
+  se había tapado de a una con `cobros-recordatorios`, `informes-encargados` y
+  `admin-manage-users`; ahora están las 14.
+- **El retrato del esquema** (`supabase/esquema/`) no restaura nada: sirve para
+  comprobar, DESPUÉS de restaurar, que no falte ninguna política ni ningún
+  trigger. Un esquema al que le falta una política se ve perfecto y deja
+  abierto —o cerrado— algo que no era.
+
+### Lo que sigue sin red, y es lo caro
+
+**Los datos de la gente no están respaldados en ninguna parte.** El esquema se
+reconstruye en minutos; los 105 perfiles, las 3.976 filas de progreso, los 80
+encargados a los que llegan los informes y los 53 planes de clase, no. Y la
+organización de Supabase está en el plan **gratuito**, que no hace copias
+automáticas de la base — igual que no deja encender la protección contra
+contraseñas filtradas, que este archivo ya tenía anotada por lo mismo.
+
+`herramientas/respaldo-datos.sh` es la salida mientras tanto: `pg_dump` con la
+cadena de conexión por variable de entorno (nunca escrita en el repositorio) y
+la salida en `respaldos/`, que está en `.gitignore` **y** en `.assetsignore`.
+Los dos candados son para el mismo descuido: ahí adentro van cédulas y correos
+de menores, de git no se borra nada, y el despliegue sube la carpeta de
+trabajo, no lo que hay en git.
+
+- **`.assetsignore` ahora excluye `supabase/` entero.** El worker sirve TODO el
+  directorio, así que lo que no se excluya queda publicado: las migraciones son
+  el modelo de permisos completo, y publicarlas es regalarle a cualquiera el
+  mapa de por dónde buscarle la vuelta. Ninguna página las pide.
+- **Un respaldo que depende de que alguien se acuerde de correrlo, tarde o
+  temprano no se corre.** La salida de verdad es el plan Pro, con sus copias
+  diarias. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+  alguien no existe.
+
+### Al aplicar una migración o desplegar una función, actualizar el respaldo
+
+**Correr `node herramientas/verificar-punto-restauracion.js`** (no necesita
+red, ni navegador, ni el sitio servido). Comprueba que no falte ninguna pieza
+—las migraciones, las 14 funciones con su código, los inventarios, los cuatro
+archivos de Cloudflare— e imprime la **huella** md5 de las migraciones, que se
+compara contra la base con la consulta que el propio script deja escrita. Si no
+coincide, hay migraciones aplicadas que no están respaldadas. Está probado que
+falla de verdad: quitando una migración y una función, saltan las dos.
+
+Un respaldo a medias no da ningún error —la carpeta está, los archivos se
+ven— y eso solo se descubre en el peor momento posible.
+
+**Pendiente de desplegar:** `ocr-scoresheet` se bajó tal cual estaba y traía
+tres formas de voseo («Avisá al profesor», «Probá con una foto»). Se
+corrigieron en el repositorio, así que hasta que se vuelva a desplegar, lo que
+el alumno ve en pantalla sigue diciendo lo de antes. Es el mismo caso que
+`admin-manage-users` con su «elegí un plan».
