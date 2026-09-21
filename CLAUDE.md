@@ -629,6 +629,18 @@ dos overlays del alumno no se pueden ni ver.
   El primero transmite solo la posición, para explicarla; el segundo además abre
   la pregunta. Con un solo botón había que preguntar para poder enseñar el
   ejercicio, y entonces el alumno ya está contestando mientras se explica.
+- **El rótulo de cada ejercicio va ARRIBA y sus botones DEBAJO**, como en el
+  panel de Archivos y en el del plan de clase. Estaban en una misma fila, con el
+  grupo de botones en `shrink-0`, y ahí está la trampa: **`shrink-0` y
+  `flex-wrap` se contradicen** — el grupo crece hasta su ancho de contenido en
+  vez de envolverse, así que el `flex-wrap` no llega a aplicarse nunca. La
+  columna del profesor mide 320px fijos y los tres botones no caben: «❓
+  Preguntar» quedaba 40 px FUERA del panel, cortado contra el borde y sin forma
+  de apretarlo, y «ELO 1397» se partía en tres renglones para hacerle sitio. No
+  daba ningún error — la lista se pintaba entera —, así que solo se descubre
+  mirando la pantalla. `verificar-sesion-curso.js` mide ahora el rectángulo que
+  calcula el navegador, no la clase; está probado que falla de verdad: con la
+  fila de antes salta con 18 de 54 botones fuera.
 
 **Al tocar la lección de curso de la clase, los visores o la vista previa de
 Táctica, correr `node herramientas/verificar-sesion-curso.js`** (con el sitio en

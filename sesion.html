@@ -3147,13 +3147,21 @@
                     const ex = tacticsData.puzzles[id];
                     const li = document.createElement("li");
                     li.className = "bg-brand-50 dark:bg-brand-800 rounded-lg p-2.5";
-                    const row = document.createElement("div");
-                    row.className = "flex items-center justify-between gap-2";
-                    const label = document.createElement("span");
-                    label.className = "text-sm text-brand-700 dark:text-brand-200";
+                    // El rótulo ARRIBA y los botones DEBAJO, como en el panel de Archivos y
+                    // en el del plan de clase. Estaban en una misma fila (justify-between,
+                    // con el grupo de botones en shrink-0), y en esta columna de 320px los
+                    // tres botones no caben: con shrink-0 el grupo crece hasta su
+                    // ancho de contenido en vez de envolverse —el flex-wrap no llega a
+                    // aplicarse nunca—, así que el último quedaba cortado contra el borde del
+                    // panel y "ELO 1397" se partía en tres renglones para hacerle sitio. No
+                    // daba ningún error: la lista se pinta entera y no se puede apretar el
+                    // botón que se salió.
+                    const label = document.createElement("p");
+                    label.className = "text-sm font-semibold text-brand-700 dark:text-brand-200";
                     label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
+                    li.appendChild(label);
                     const actions = document.createElement("div");
-                    actions.className = "flex items-center justify-end flex-wrap gap-1.5 shrink-0";
+                    actions.className = "flex items-center flex-wrap gap-1.5 mt-2";
                     const previewBtn = document.createElement("button");
                     previewBtn.type = "button";
                     previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
@@ -3172,8 +3180,7 @@
                     askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
                     askBtn.textContent = "❓ Preguntar";
                     actions.append(previewBtn, sendBtn, askBtn);
-                    row.append(label, actions);
-                    li.appendChild(row);
+                    li.appendChild(actions);
                     const previewWrap = document.createElement("div");
                     previewWrap.className = "hidden mt-2";
                     li.appendChild(previewWrap);
