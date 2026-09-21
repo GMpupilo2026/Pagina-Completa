@@ -1958,6 +1958,138 @@ function areasFlojasArbitraje(fila) {
             });
         }
 
+        /* ---------------- Compartir los planes de una vez ----------------
+           El plan se genera solo desde el diagnóstico y ya tenía su botón de
+           compartir — pero uno por alumno, dentro del informe individual. Con
+           veintitantos alumnos eso son veintitantas visitas, así que
+           `training_plans` estuvo en CERO desde que la tabla existe: nadie lo
+           hizo nunca, ni una vez.
+
+           Y sin plan compartido no lo ve ni el alumno en su página ni su casa
+           en el informe, o sea que el plan cuenta como que no existe.
+
+           El botón NO aparece cuando ya están todos: un control que no cambia
+           nada es peor que no tenerlo. */
+        function planesQueFaltan(conDiagnostico) {
+            const guardados = teacherData.plansByStudent || {};
+            const nuevos = [], soloCompartir = [];
+            for (const d of conDiagnostico) {
+                const g = guardados[d.id];
+                if (g && g.shared) continue;                    // ya está: no se toca
+                if (g) soloCompartir.push(d);                   // tiene borrador guardado
+                else nuevos.push(d);
+            }
+            return { nuevos, soloCompartir, total: nuevos.length + soloCompartir.length };
+        }
+
+        function bloqueCompartirPlanes(conDiagnostico) {
+            const { total } = planesQueFaltan(conDiagnostico);
+            const compartidos = conDiagnostico.length - total;
+            if (!total) {
+                // Todos al día: se dice en una línea y sin botón.
+                return `<p class="mb-5 text-sm text-brand-500 dark:text-brand-300">
+                    ✅ Los ${conDiagnostico.length} alumnos con diagnóstico tienen su plan compartido:
+                    lo ven en su página y va en el informe que llega a su casa.</p>`;
+            }
+            return `
+                <div class="mb-6 rounded-xl border border-accent-500/40 bg-accent-50 dark:bg-brand-800 p-4">
+                    <p class="text-sm font-semibold text-brand-800 dark:text-white mb-1">
+                        ${compartidos} de ${conDiagnostico.length} tienen su plan compartido
+                    </p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300 mb-3">
+                        A ${total === 1 ? "el que falta no lo ve" : `los ${total} que faltan no los ven`}
+                        ni ellos ni su casa. El plan ya está armado a partir de su diagnóstico:
+                        esto solo lo publica.
+                    </p>
+                    <button type="button" id="compartir-planes"
+                        class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        Compartir ${total === 1 ? "el plan que falta" : `los ${total} planes que faltan`}
+                    </button>
+                    <p id="compartir-planes-estado" class="text-xs text-brand-500 dark:text-brand-300 mt-2"></p>
+                </div>`;
+        }
+
+        /* Se confirma EN EL PROPIO BOTÓN y no con un diálogo del navegador, la
+           misma decisión que borrar una nota de la bitácora. Acá pesa más
+           todavía: esto publica material de veintitantos alumnos de una vez, y
+           el segundo toque tiene que caer sobre un texto que diga exactamente
+           qué va a pasar. */
+        function conectarCompartirPlanes(contenedor) {
+            const boton = contenedor.querySelector("#compartir-planes");
+            if (!boton) return;
+            const estado = contenedor.querySelector("#compartir-planes-estado");
+            let confirmando = false;
+
+            boton.addEventListener("click", async () => {
+                const { conDiagnostico } = diagnosticosDeClase();
+                const { nuevos, soloCompartir, total } = planesQueFaltan(conDiagnostico);
+                if (!total) return;
+
+                if (!confirmando) {
+                    confirmando = true;
+                    boton.textContent = `Sí, compartir con ${total === 1 ? "1 alumno" : `los ${total}`}`;
+                    estado.textContent = total === 1
+                        ? "Lo va a ver en su página, y su plan entrará en el informe que llega a su casa."
+                        : `Los van a ver en su página, y sus planes entrarán en los informes que llegan a sus casas.`;
+                    return;
+                }
+
+                boton.disabled = true;
+                estado.textContent = "Compartiendo…";
+                const ahora = new Date().toISOString();
+                const fallos = [];
+                let hechos = 0;
+
+                /* A quien YA tiene un plan guardado sin compartir solo se le
+                   cambia la marca: su plan y su nota se dejan como están.
+                   Regenerarlo pisaría lo que el profesor ajustó a mano, y eso
+                   no daría ningún error — simplemente perdería su trabajo. */
+                if (soloCompartir.length) {
+                    const { data, error } = await sb.from("training_plans")
+                        .update({ shared: true, updated_at: ahora })
+                        .in("student_id", soloCompartir.map((d) => d.id))
+                        .select();
+                    if (error) fallos.push(error.message);
+                    else { (data || []).forEach((f) => { teacherData.plansByStudent[f.student_id] = f; }); hechos += (data || []).length; }
+                }
+
+                /* Y a quien no tiene ninguno se le arma el suyo. Va con
+                   `ignoreDuplicates`: si entre que se pintó la pantalla y se
+                   apretó el botón alguien le guardó un plan, se salta en vez de
+                   pisárselo. */
+                if (nuevos.length) {
+                    const filas = nuevos.map((d) => ({
+                        student_id: d.id,
+                        teacher_id: profile.id,
+                        plan: { generado: PE.generarPlan(d.resumen), diagnostico_fecha: d.fecha },
+                        nota: null,
+                        shared: true,
+                        updated_at: ahora,
+                    }));
+                    const { data, error } = await sb.from("training_plans")
+                        .upsert(filas, { onConflict: "student_id", ignoreDuplicates: true })
+                        .select();
+                    if (error) fallos.push(error.message);
+                    else { (data || []).forEach((f) => { teacherData.plansByStudent[f.student_id] = f; }); hechos += (data || []).length; }
+                }
+
+                if (fallos.length) {
+                    // Se dice lo que sí se hizo Y lo que falló: decir solo el
+                    // error dejaría creer que no se compartió ninguno.
+                    boton.disabled = false;
+                    confirmando = false;
+                    estado.textContent = `Se compartieron ${hechos} de ${total}. No se pudo con el resto: ${fallos[0]}`;
+                    return;
+                }
+                estado.textContent = hechos === 1
+                    ? "Listo: ya lo ve en su página, y entra en el próximo informe a su casa."
+                    : `Listo: los ${hechos} ya lo ven en su página, y entran en el próximo informe a sus casas.`;
+                // Se repinta desde los datos ya actualizados, así el bloque pasa
+                // solo a la línea de "todos al día".
+                applyTeacherFilters();
+            });
+        }
+
         function renderDiagnosticosClase(contenedor) {
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
             const total = conDiagnostico.length + pendientes.length;
@@ -1995,6 +2127,8 @@ function areasFlojasArbitraje(fila) {
                     ${tile(`${promedioGeneral}%`, "promedio del grupo", `nivel medio: ${nivelPromedio.etiqueta}`)}
                     ${tile(`${masFloja.emoji} ${masFloja.promedio}%`, "área más floja del grupo", masFloja.nombre)}
                 </div>
+
+                ${bloqueCompartirPlanes(conDiagnostico)}
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Nivel por alumno</h3>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
@@ -2051,6 +2185,7 @@ function areasFlojasArbitraje(fila) {
                     applyTeacherFilters();
                 });
             });
+            conectarCompartirPlanes(contenedor);
         }
 
         async function init() {
