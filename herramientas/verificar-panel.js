@@ -128,6 +128,19 @@ window.__consultas = [];
     return b;
   }
 
+  /* Un renglón de mis_clases() como lo devuelve la base, con los nombres de
+     columna DE VERDAD (la columna se llama profesor, no profesor_nombre: con
+     el nombre equivocado el botón diría "tu profe" y la prueba daría por bueno
+     algo que en producción no se ve así).
+
+     Y la videollamada SOLO llega con la clase abierta, porque así lo hace
+     cumplir la RLS de profesor_videollamada. Un doble que la mandara siempre
+     daría por buena una página que ofrece entrar a una llamada que no está
+     pasando. */
+  const MI_CLASE = { profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
+                     clase_abierta: !!DATOS.clase_abierta, titulo_clase: null,
+                     videollamada: DATOS.clase_abierta ? (DATOS.videollamada || null) : null };
+
   const TABLAS = {
     profiles: PERFILES,
     /* Una clase EN CURSO es una fila sin ended_at: la página la busca con
@@ -138,6 +151,10 @@ window.__consultas = [];
       : []).concat(CLASES),
     puzzle_rush_scores: DATOS.puzzle_rush_scores || [],
     training_progress: [],
+    /* La sala de videollamada del profesor. Al equipo docente se la sirve esta
+       tabla (es SUYA); al alumnado le llega por mis_clases(), que es donde la
+       RLS decide si se la entrega. */
+    profesor_videollamada: DATOS.profesor_videollamada || [],
   };
 
   window.sb = {
@@ -155,7 +172,7 @@ window.__consultas = [];
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
     rpc: (n, args) => constructor(n, n === "mis_clases"
-      ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
+      ? (DATOS.mis_clases || [MI_CLASE])
       : (DATOS.rpc && DATOS.rpc[n]) || [], args),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
@@ -194,7 +211,12 @@ async function panel(browser, perfiles, quien, opciones, datos) {
 // Lo que quedó pintado en la grilla, grupo por grupo.
 const LEER_GRILLA = () => Array.from(document.querySelectorAll("#tile-grid section")).map((s) => ({
   titulo: s.querySelector("h2").textContent,
-  tiles: Array.from(s.querySelectorAll("div.grid > *")).map((el) => ({
+  /* El botón de la videollamada es hijo del mismo contenedor —comparte la
+     rejilla con la tarjeta de «Sesión en vivo»— pero NO es un acceso de la
+     grilla: tiene sus propias reglas y su propia prueba, más abajo. */
+  tiles: Array.from(s.querySelectorAll("div.grid > *"))
+    .filter((el) => el.id !== "videollamada-wrap")
+    .map((el) => ({
     etiqueta: el.querySelector("span > span") ? el.querySelector("span > span").textContent : "",
     etiqueta2: el.textContent,
     desc: (() => { const s = el.querySelectorAll("span > span"); return s[1] ? s[1].textContent : ""; })(),
@@ -297,7 +319,9 @@ async function pruebaAlumna(browser) {
 
   // Lo apagado, que es lo que se pidió: apagado para ELLA.
   const apagados = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => ({
+    Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
+      .filter((el) => !el.closest("#videollamada-wrap"))
+      .map((el) => ({
       etiqueta: el.querySelector("span > span").textContent,
       enlace: el.getAttribute("href"),
       tag: el.tagName,
@@ -339,7 +363,9 @@ async function pruebaProfesora(browser) {
   igual("a ella «Herramientas» sí se le pinta: sus accesos funcionan",
     grupos.map((g) => g.titulo).includes("Herramientas"), "true");
   const apagados = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
+    Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
+      .filter((el) => !el.closest("#videollamada-wrap"))
+      .map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
   /* El lector de planilla TODAVÍA NO FUNCIONA, y a ella le salía como un acceso
@@ -1313,6 +1339,138 @@ async function pruebaPantalla(browser) {
   await ctx.close();
 }
 
+
+/* ---------------------------------------------------------------- videollamada
+   El botón que va al lado de «Sesión en vivo» y lleva a la llamada del profe.
+
+   Todo lo que se rompe acá se rompe callado, y siempre del mismo lado: el
+   alumno. Un botón que se queda con el candado puesto cuando su profe ya está
+   en clase se ve igual de bien que uno que funciona — y el alumno no tiene a
+   quién preguntarle si es él o es la página. Al revés, un botón abierto sin
+   clase lo manda a una llamada vacía.
+
+   Por eso se miran los cuatro estados uno por uno y, sobre todo, el enlace que
+   NO se debe abrir: el enlace lo escribe una persona, así que un `javascript:`
+   guardado en la base no puede terminar en un href — es la misma regla que el
+   nombre de un alumno en Informes. */
+const LEER_BOTON = () => {
+  const caja = document.getElementById("videollamada-wrap");
+  if (!caja) return { hay: false };
+  const el = caja.firstElementChild;
+  if (!el) return { hay: false, vacio: true };
+  const tarjeta = document.querySelector("#tile-grid a[href='sesion.html']");
+  const a = tarjeta && tarjeta.getBoundingClientRect(), b = el.getBoundingClientRect();
+  return {
+    hay: true,
+    tag: el.tagName,
+    href: el.getAttribute("href"),
+    target: el.getAttribute("target"),
+    rel: el.getAttribute("rel"),
+    bloqueado: el.getAttribute("aria-disabled") === "true",
+    texto: el.innerText.replace(/\s+/g, " ").trim(),
+    // Se mide lo que calcula el navegador, no la clase.
+    seVe: el.checkVisibility(),
+    // Y que de verdad esté AL LADO DERECHO, que es donde se pidió.
+    aLaDerecha: a ? b.left >= a.right - 1 && Math.abs(b.top - a.top) < 40 : null,
+    // Ningún href colado en ninguna parte del botón.
+    hrefs: Array.from(caja.querySelectorAll("[href]")).map((x) => x.getAttribute("href")),
+  };
+};
+
+// El botón del profesor se pinta después de una consulta, así que se espera a
+// que deje de decir "Cargando…" en vez de leerlo a medio camino.
+async function botonListo(page) {
+  await page.waitForFunction(() => {
+    const c = document.getElementById("videollamada-wrap");
+    return !c || !c.firstElementChild || !/Cargando|Viendo si/.test(c.firstElementChild.innerText);
+  }, null, { timeout: 15000 });
+  return page.evaluate(LEER_BOTON);
+}
+
+async function pruebaVideollamada(browser) {
+  console.log("\n=== La videollamada de la clase ===");
+
+  // 1. Sin clase abierta: con candado, y diciendo cuándo se abre.
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false));
+  let b = await botonListo(r.page);
+  igual("sin clase abierta, el botón está y se ve", b.hay && b.seVe, "true");
+  igual("…y va al lado derecho de «Sesión en vivo»", b.aLaDerecha, "true");
+  /* Bloqueado no es un enlace gris: sin href no recibe el foco del teclado ni
+     promete un destino que no va a abrir. La misma regla de los accesos
+     apagados de la grilla. */
+  igual("…bloqueado, sin enlace y sin prometer destino", [b.tag, b.href, b.bloqueado], ["DIV", null, true]);
+  igual("…y dice cuándo se abre, en vez de un candado sin explicación",
+    /Se abre cuando tu profe empiece la clase/.test(b.texto), "true");
+  await r.ctx.close();
+
+  // 2. Con clase abierta y sala puesta: el enlace, y de quién es.
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } },
+    Object.assign(datosAlumna(false), { clase_abierta: true, videollamada: "https://meet.google.com/abc-defg-hij" }));
+  b = await botonListo(r.page);
+  igual("con clase abierta, el botón lleva a la sala", [b.tag, b.href], ["A", "https://meet.google.com/abc-defg-hij"]);
+  /* En otra pestaña y con rel: la clase sigue abierta detrás. Sin
+     `noopener`, la página de la llamada puede tocar la que la abrió. */
+  igual("…en otra pestaña y sin darle acceso a esta", [b.target, b.rel], ["_blank", "noopener noreferrer"]);
+  igual("…diciendo a qué servicio entra", /Entrar a Meet/.test(b.texto), "true");
+  /* Con varios profesores el botón puede llevar a la clase de otro, y eso no
+     se adivina mirándolo. */
+  igual("…y de quién es la llamada", /Con Karina Rojas/.test(b.texto), "true");
+  await r.ctx.close();
+
+  // 3. Hay clase, pero el profe no puso su enlace. NO es lo mismo que el caso
+  //    1, y decir lo mismo dejaría al alumno esperando un botón que hoy no va
+  //    a abrirse solo.
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {},
+    Object.assign(datosAlumna(false), { clase_abierta: true, videollamada: null }));
+  b = await botonListo(r.page);
+  igual("hay clase pero sin enlace: sigue bloqueado", [b.tag, b.href, b.bloqueado], ["DIV", null, true]);
+  igual("…y lo dice con todas las letras", /todavía no puso el enlace/.test(b.texto), "true");
+  await r.ctx.close();
+
+  // 4. Un enlace que no se debe abrir. Lo escribe una persona, así que la
+  //    página no puede confiar en que sea un enlace.
+  for (const malo of ["javascript:window.__colado=1", "http://meet.google.com/sin-cifrar", "  "]) {
+    r = await panel(browser, [ALUMNA, PROFE], "u-ana", {},
+      Object.assign(datosAlumna(false), { clase_abierta: true, videollamada: malo }));
+    b = await botonListo(r.page);
+    igual(`un enlace «${malo.trim() || "(vacío)"}» no se pinta en ningún href`,
+      [b.bloqueado, b.hrefs.length], [true, 0]);
+    await r.ctx.close();
+  }
+
+  // 5. A quien da clase no se le bloquea nada: él entra a la llamada ANTES de
+  //    que la clase exista —se abre sola cuando llega alguien—, así que un
+  //    candado ahí le cerraría la puerta por la que tiene que entrar primero.
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", {}, { profesor_videollamada: [] });
+  b = await botonListo(r.page);
+  igual("la profesora sin sala: se le ofrece ponerla", [b.tag, b.href], ["A", "configuracion.html#videollamada"]);
+  await r.ctx.close();
+
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", {},
+    { profesor_videollamada: [{ profesor_id: "u-profe", enlace: "https://zoom.us/j/123456789" }] });
+  b = await botonListo(r.page);
+  igual("la profesora con su sala: entra sin esperar a nadie",
+    [b.tag, b.href, b.bloqueado], ["A", "https://zoom.us/j/123456789", false]);
+  igual("…y se le nombra el servicio", /Entrar a Zoom/.test(b.texto), "true");
+  await r.ctx.close();
+
+  // 6. A un alumno sin ningún profesor no se le pinta: no hay clase que
+  //    esperar, y el panel ya le dice que pida que le asignen uno.
+  r = await panel(browser, [ALUMNA], "u-ana", {}, Object.assign(datosAlumna(false), { mis_clases: [] }));
+  b = await page_vacio(r.page);
+  igual("sin ningún profesor asignado, no se le pinta ningún botón", b, "true");
+  await r.ctx.close();
+}
+
+// Que la caja quede VACÍA, no que el botón esté escondido con una clase.
+async function page_vacio(page) {
+  await page.waitForTimeout(300);
+  return page.evaluate(() => {
+    const c = document.getElementById("videollamada-wrap");
+    return !!c && c.children.length === 0;
+  });
+}
+
 /* Se exporta para que otro verificador reuse este Supabase de mentira en vez de
    escribir una segunda copia: dos dobles del mismo panel se irían separando a la
    primera corrección. Al importarlo, las pruebas de abajo no corren. */
@@ -1327,6 +1485,7 @@ if (require.main !== module) return;
     await pruebaExamenesEnLaFranja(browser);
     await pruebaPrimerPaso(browser);
     await pruebaFranjaDeClase(browser);
+    await pruebaVideollamada(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);

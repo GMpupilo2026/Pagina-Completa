@@ -341,6 +341,7 @@
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
+    <script src="js/videollamada.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false, openSession = null;
         // A qué profesor pertenece la clase que se muestra aquí: uno mismo si es
@@ -358,8 +359,15 @@
                encontrarla justo cuando hay clase. Su grupo lleva `destacado`,
                que la pinta ancha y en una línea en vez de como un cuadrito
                más. */
+            /* Y al lado va la VIDEOLLAMADA, porque el tablero es la pizarra y
+               no la clase: la voz va por Meet, Zoom o Teams, y ese enlace
+               viajaba por WhatsApp cada vez. `videollamada: true` es lo único
+               que lo pide — el botón lo arma renderTiles() al lado de la
+               tarjeta, y NO dentro: un enlace dentro de otro enlace no es HTML
+               válido, y el lector de pantalla anunciaría dos destinos donde se
+               ve uno. */
             { title: "Clase en vivo", destacado: true, tiles: [
-                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", descProfe: "El tablero que ve tu clase, en vivo", href: "sesion.html", primary: true },
+                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", descProfe: "El tablero que ve tu clase, en vivo", href: "sesion.html", primary: true, videollamada: true },
             ] },
             /* Lo segundo que se ve, y antes de cualquier lugar a donde ir: lo
                que OTRA PERSONA te puso, con fecha. Tareas vivía en "Aprender" y
@@ -605,6 +613,137 @@
             return el;
         }
 
+        /* ---------- La videollamada de la clase ----------
+           El botón que va al lado de «Sesión en vivo». Está SIEMPRE y arranca
+           con candado: así el alumno sabe que existe antes de necesitarlo, en
+           vez de descubrirlo el día que alguien se acuerda de mandarle el
+           enlace. Se abre cuando alguno de sus profes tiene clase abierta.
+
+           QUIÉN VE EL ENLACE NO LO DECIDE ESTA PÁGINA. La RLS de
+           `profesor_videollamada` solo se lo entrega al alumno mientras ese
+           profesor tenga una clase abierta, así que sin clase la columna
+           `videollamada` de mis_clases() llega en null y acá no hay nada que
+           esconder. El candado que se dibuja es el mismo que ya hizo cumplir
+           la base — no una pantalla que tape un dato que igual viajó. */
+        /* La pinta del botón apagado, en un solo lugar: se usa en los tres
+           estados en que no hay a dónde entrar. Va con fondo gris y borde y no
+           con `opacity`, que al lado del blanco de la tarjeta dejaba la nota
+           casi ilegible — y esa nota es justamente la que explica el candado. */
+        const VLL_APAGADO = {
+            clases: "bg-brand-100 dark:bg-brand-900 border border-brand-200 dark:border-brand-700",
+            tituloClases: "text-brand-700 dark:text-brand-200",
+            notaClases: "text-brand-600 dark:text-brand-300",
+        };
+
+        let misClases = [];          // lo que devolvió mis_clases(): un renglón por profesor
+        let miVideollamada = null;   // la sala propia, para el equipo docente
+        let videollamadaLista = false;
+
+        function cajaVideollamada(boton) {
+            const el = document.createElement(boton.href ? "a" : "div");
+            el.className = "group flex flex-col items-center justify-center text-center gap-1 rounded-2xl p-5 shadow-md transition-all duration-200 sm:min-w-[13rem] "
+                + boton.clases;
+            if (boton.href) {
+                el.href = boton.href;
+                if (boton.fuera) { el.target = "_blank"; el.rel = "noopener noreferrer"; }
+            } else {
+                // Igual que un acceso apagado: ni <a> ni <button>. No recibe el
+                // foco del teclado ni promete un destino que no va a abrir.
+                el.setAttribute("aria-disabled", "true");
+            }
+            const icono = document.createElement("span");
+            icono.className = "text-2xl leading-none";
+            icono.setAttribute("aria-hidden", "true");
+            icono.textContent = boton.emoji;
+            const titulo = document.createElement("span");
+            titulo.className = "font-semibold text-sm " + (boton.tituloClases || "text-brand-800 dark:text-white");
+            titulo.textContent = boton.titulo;
+            const nota = document.createElement("span");
+            nota.className = "text-xs " + (boton.notaClases || "text-brand-450 dark:text-brand-350");
+            nota.textContent = boton.nota;
+            el.append(icono, titulo, nota);
+            return el;
+        }
+
+        function botonVideollamadaAlumno() {
+            if (!videollamadaLista) {
+                return cajaVideollamada({ emoji: "📹", titulo: "Videollamada", nota: "Viendo si hay clase…",
+                    ...VLL_APAGADO });
+            }
+            const clase = Videollamada.claseConLlamada(misClases, boardOwnerId);
+            /* Tres estados, y los tres dicen POR QUÉ. Un candado sin
+               explicación se lee como una página rota, y "hay clase pero tu
+               profe no puso el enlace" es lo único que separa un botón que
+               todavía no toca de uno que nunca va a funcionar. */
+            if (!clase) {
+                return cajaVideollamada({ emoji: "🔒", titulo: "Videollamada",
+                    nota: "Se abre cuando tu profe empiece la clase",
+                    ...VLL_APAGADO, clases: VLL_APAGADO.clases + " cursor-not-allowed" });
+            }
+            if (!Videollamada.esSeguro(clase.videollamada)) {
+                return cajaVideollamada({ emoji: "🔒", titulo: "Videollamada",
+                    nota: "Hay clase, pero tu profe todavía no puso el enlace",
+                    ...VLL_APAGADO, clases: VLL_APAGADO.clases + " cursor-not-allowed" });
+            }
+            return cajaVideollamada({ emoji: "📹", titulo: Videollamada.etiqueta(clase.videollamada),
+                // De quién es la llamada va escrito: con varios profesores, el
+                // botón podría llevar a la clase de otro y eso no se adivina.
+                nota: "Con " + (clase.profesor || "tu profe"),
+                href: clase.videollamada, fuera: true,
+                clases: "bg-accent-500 hover:bg-accent-600 hover:shadow-xl hover:-translate-y-0.5",
+                tituloClases: "text-brand-900", notaClases: "text-brand-900/80" });
+        }
+
+        function botonVideollamadaProfesor() {
+            if (!videollamadaLista) {
+                return cajaVideollamada({ emoji: "📹", titulo: "Videollamada", nota: "Cargando…",
+                    ...VLL_APAGADO });
+            }
+            /* Al profesor NO se le bloquea: él entra a la llamada ANTES de que
+               haya clase abierta —la clase se abre sola cuando llega alguien—,
+               así que un candado ahí le cerraría la puerta por la que tiene
+               que entrar primero. El candado es del alumno, que es quien no
+               debe entrar a una llamada que no está pasando. */
+            if (!Videollamada.esSeguro(miVideollamada)) {
+                return cajaVideollamada({ emoji: "📹", titulo: "Pon tu videollamada",
+                    nota: "Tus alumnos la verán cuando abras la clase",
+                    href: "configuracion.html#videollamada",
+                    clases: "bg-white dark:bg-brand-900 border-2 border-dashed border-accent-400 hover:shadow-xl hover:-translate-y-0.5" });
+            }
+            return cajaVideollamada({ emoji: "📹", titulo: Videollamada.etiqueta(miVideollamada),
+                nota: "Tu sala — se cambia en Configuración",
+                href: miVideollamada, fuera: true,
+                clases: "bg-accent-500 hover:bg-accent-600 hover:shadow-xl hover:-translate-y-0.5",
+                tituloClases: "text-brand-900", notaClases: "text-brand-900/80" });
+        }
+
+        function pintarVideollamada() {
+            const caja = document.getElementById("videollamada-wrap");
+            if (!caja) return;
+            caja.innerHTML = "";
+            /* A un alumno sin ningún profesor no se le pinta: no hay clase que
+               esperar, y el panel ya le dice con todas las letras que pida que
+               le asignen uno. Un candado más ahí sería una promesa de algo que
+               no va a llegar solo. */
+            if (!esEquipoDocente() && videollamadaLista && !misClases.length) return;
+            caja.appendChild(esEquipoDocente() ? botonVideollamadaProfesor() : botonVideollamadaAlumno());
+        }
+
+        /* Se vuelve a preguntar entera en vez de mirar solo el evento que
+           llegó: el alumno puede tener varios profesores y la clase la puede
+           abrir cualquiera de ellos. */
+        async function refrescarVideollamada() {
+            if (esEquipoDocente()) {
+                const { data } = await sb.from("profesor_videollamada").select("enlace").eq("profesor_id", profile.id).maybeSingle();
+                miVideollamada = (data && data.enlace) || null;
+            } else {
+                const { data } = await sb.rpc("mis_clases");
+                misClases = data || [];
+            }
+            videollamadaLista = true;
+            pintarVideollamada();
+        }
+
         function renderTiles() {
             const grid = document.getElementById("tile-grid");
             grid.innerHTML = "";
@@ -635,13 +774,26 @@
                 // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
                 // columnas quedaría un cuadrito perdido a la izquierda, así que
                 // ocupa el ancho entero.
+                // Un grupo destacado lleva la tarjeta ancha y, a su derecha, el
+                // botón de la videollamada: 1fr para la tarjeta y lo que pida el
+                // botón. En el celular se apilan, que es donde un botón al lado
+                // dejaría las dos cosas ilegibles.
                 tilesGrid.className = group.destacado
-                    ? "grid grid-cols-1 gap-4 md:gap-5"
+                    ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
-                group.tiles.forEach((t) => tilesGrid.appendChild(renderTileCard(t, !!group.destacado)));
+                group.tiles.forEach((t) => {
+                    tilesGrid.appendChild(renderTileCard(t, !!group.destacado));
+                    if (t.videollamada) {
+                        const caja = document.createElement("div");
+                        caja.id = "videollamada-wrap";
+                        caja.className = "contents";
+                        tilesGrid.appendChild(caja);
+                    }
+                });
                 section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
+            pintarVideollamada();
         }
 
         async function doLogout() {
@@ -1539,8 +1691,22 @@
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, () => {
                     refreshSessionStatus();
                     cargarSesiones();
+                    refrescarVideollamada();
                 })
                 .subscribe();
+
+            /* Y el botón de la videollamada se desbloquea con la clase de
+               CUALQUIERA de sus profesores, no solo la del que está mirando:
+               el canal de arriba va filtrado por `boardOwnerId`, así que a los
+               demás hay que escucharlos aparte. Sin esto, a un alumno con dos
+               profesores el botón se le quedaría con el candado puesto hasta
+               que recargara la página, sin que nada fallara. */
+            misClases.filter((c) => c.profesor_id && c.profesor_id !== boardOwnerId).forEach((c) => {
+                sb.channel("videollamada_panel:" + c.profesor_id)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + c.profesor_id },
+                        () => refrescarVideollamada())
+                    .subscribe();
+            });
         }
 
         // Modal de cambio de contraseña
@@ -1593,6 +1759,10 @@
                 // Con más de un profesor, el alumno elige a cuál clase entra.
                 const { clases, elegida } = await ClaseElegida.resolver();
                 boardOwnerId = elegida;
+                // La misma consulta trae el enlace de la videollamada de quien
+                // tenga clase abierta: se guarda en vez de volver a pedirla.
+                misClases = clases;
+                videollamadaLista = true;
                 ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clases, elegida);
             }
 
@@ -1679,6 +1849,9 @@
             soloParaAdministracion();
             diagnosticosSoloParaAdministracion();
             renderTiles();
+            // El equipo docente no pasa por mis_clases() —esos son SUS
+            // profesores, no sus alumnos—, así que su sala se pide aparte.
+            if (esEquipoDocente()) refrescarVideollamada();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
             // se vuelve a guardar sola; si no, el aparato deja de recibir sin
             // que nadie se entere.

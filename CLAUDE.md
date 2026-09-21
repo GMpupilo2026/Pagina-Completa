@@ -308,6 +308,71 @@ que traen material a la clase la respetan igual.
   para el resto de la sesión** (sin rey, con peones en la primera o la última
   fila, con el rey que no le toca mover en jaque).
 
+### La videollamada: el tablero es la pizarra, no la clase
+
+En `sesion.html` se ve la posición, pero la voz va por Meet, Zoom o Teams, y ese
+enlace viajaba por WhatsApp antes de cada clase. El panel (`clases.html`) lleva
+el botón **al lado de «Sesión en vivo»**, dentro del mismo grupo «Clase en vivo»
+y no dentro de la tarjeta: un `<a>` dentro de otro `<a>` no es HTML válido y el
+lector de pantalla anunciaría dos destinos donde se ve uno.
+
+- **El enlace es del PROFESOR, no de la clase**, y eso no es comodidad:
+  `class_sessions` se crea SOLA —al entrar un alumno o al mandarse una
+  posición—, sin pasar por ningún formulario, así que un `enlace_video` por
+  clase se quedaría en null casi siempre y el botón no se desbloquearía nunca.
+  No daría ningún error: un candado para siempre y nadie sabría por qué. Vive en
+  `public.profesor_videollamada` (una fila por profesor) y se pone una vez, en
+  **`configuracion.html` → «Videollamada de tus clases»**, que es la única
+  pantalla que lo escribe.
+- **El candado lo hace cumplir la RLS, no la pantalla.** La política de select
+  solo le entrega el enlace al alumno **mientras ese profesor tenga una clase
+  abierta** (`es_mi_profesor(profesor_id) and clase_abierta_de(profesor_id)`).
+  Por eso `mis_clases()` pudo ganar la columna `videollamada` sin repetir la
+  condición: es `SECURITY INVOKER`, así que el left join pasa por esa política y
+  sin clase la columna llega en null. La regla se escribe UNA vez y no se puede
+  saltar desde la consola.
+- **El enlace es texto ajeno que se va a ABRIR.** Un `javascript:` en un href se
+  ejecuta con la sesión de quien lo toca — la misma regla que el nombre de un
+  alumno en Informes. Se comprueba en `js/videollamada.js` con `new URL()` (solo
+  `https:`, sin espacios) y otra vez en el CHECK de la tabla: la del navegador
+  explica qué está mal, la de la base es la que no se puede saltar. Ese módulo
+  está escrito una sola vez porque lo usan las dos pantallas.
+- **Los cuatro estados dicen POR QUÉ.** «Se abre cuando tu profe empiece la
+  clase» y «Hay clase, pero tu profe todavía no puso el enlace» no son lo mismo:
+  el primero se arregla solo y el segundo no, y decir lo mismo dejaría al alumno
+  esperando algo que hoy no va a pasar. Bloqueado va sin `href` y con
+  `aria-disabled`, como los accesos apagados de la grilla: ni foco de teclado ni
+  destino prometido. Y va con fondo gris y borde en vez de `opacity`, que sobre
+  el blanco de la tarjeta de al lado dejaba la nota casi ilegible.
+- **De quién es la llamada va escrito** («Con Karina Rojas»): con varios
+  profesores el botón puede llevar a la clase de otro, y eso no se adivina.
+  `claseConLlamada()` prefiere **la clase que el alumno está mirando** (la del
+  selector) aunque no traiga enlace — mandarlo a la llamada de otro profesor
+  porque esa sí lo traía es meterlo en la clase que no era, y se ve perfecto.
+- **Al profesor no se le bloquea nada**: él entra a la llamada ANTES de que la
+  clase exista, así que un candado ahí le cerraría la puerta por la que tiene
+  que entrar primero. Sin sala puesta, su botón lleva a Configuración.
+- **El botón se desbloquea con la clase de CUALQUIERA de sus profesores**, así
+  que hay un canal de Realtime por profesor: el de siempre va filtrado por
+  `boardOwnerId` y con dos profesores el candado se quedaría puesto hasta
+  recargar, sin que nada fallara.
+
+**Al tocar el botón, `js/videollamada.js` o la tarjeta de Configuración, correr
+las dos**: `node herramientas/verificar-panel.js` (el botón, sus cuatro estados
+y que un enlace que no se debe abrir no llegue a ningún href) y `node
+herramientas/verificar-videollamada.js` (que la tarjeta sea de quien da clase,
+que un enlace malo no viaje y que se guarde con el id de quien guarda). Las dos
+con el sitio en localhost:8777 y playwright. Está probado que fallan de verdad:
+quitando la comprobación del enlace saltan tres comprobaciones en una y ocho en
+la otra.
+
+Comprobado impersonando roles en SQL: la profesora guarda su sala y se le
+quitan los espacios; su alumno **no ve ninguna fila** sin clase abierta y
+`mis_clases()` le da `videollamada` en null; con la clase abierta la ve; su
+update sobre la sala ajena cambia **0 filas**; otro profesor que no es su
+profesor recibe **0 filas**; y `javascript:`, `http://` y un enlace con espacios
+los rechaza el CHECK.
+
 ### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
 
 `sesion.html` es la pantalla más cargada del sitio: catorce controles del
