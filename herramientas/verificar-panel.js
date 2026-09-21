@@ -216,26 +216,43 @@ async function pruebaAlumna(browser) {
   const { page, ctx, errores } = await panel(browser, [ALUMNA, PROFE], "u-ana");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* "Aprender" va antes que "Jugar y competir": esto es una academia, y lo
-     primero que se ofrece al entrar es lo que se viene a hacer. */
+  /* El orden es el de las preguntas que uno se hace al entrar: qué pasa AHORA,
+     qué me pusieron con fecha, qué hago por mi cuenta, dónde juego, dónde me
+     mido, y al final mi cuenta. "Aprender" va antes que "Jugar y competir"
+     porque esto es una academia.
+
+     Y "Herramientas" NO está: a la alumna sus dos accesos le salen en
+     mantenimiento, así que el grupo entero era un encabezado con dos cuadros
+     grises. Un grupo del que no queda ni un acceso utilizable no se pinta. */
   igual("los grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Clase en vivo", "Aprender", "Jugar y competir", "Evaluaciones", "Herramientas", "Tu cuenta"]);
+    ["Clase en vivo", "Lo que te pone tu profesor", "Aprender", "Jugar y competir",
+     "Mide tu nivel", "Tu cuenta"]);
+  /* Que no se pinte es que NO ESTÁ, no que esté escondido con una clase: un
+     enlace invisible pero presente sigue siendo una parada de tabulador. */
+  igual("y los accesos de ese grupo no quedaron escondidos en la página",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='partidas.html']").length), "0");
+  /* Lo que tiene FECHA va junto y arriba: tareas y exámenes son lo mismo desde
+     el lado del alumno —te lo pone otra persona y vence—, y estaban partidos
+     entre "Aprender" y "Evaluaciones". El rótulo dice lo que las dos tienen en
+     común, que es lo que no se deduce de sus nombres. */
+  igual("lo que te ponen con fecha va junto, y de segundo",
+    grupo(grupos, "Lo que te pone tu profesor").tiles.map((t) => t.enlace),
+    ["tareas.html", "examenes.html"]);
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);   // por índice a propósito: que vaya PRIMERA es el punto
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
     ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
-  igual("Aprender", grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
+  igual("Aprender: lo que uno hace por su cuenta, ya sin Tareas",
+    grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
-     "articulos.html", "tareas.html"]);
+     "articulos.html"]);
   /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
      de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
      versión que NO enseña las respuestas al terminar. */
-  /* Los "Exámenes · Próximamente" se fueron: un "próximamente" sin fecha deja
-     de leerse y ocupaba un lugar en la grilla. Ya existen —examenes.html, con
-     nota y reloj— así que la tarjeta volvió, ahora sí con algo detrás. */
-  igual("Evaluaciones: los exámenes y los dos diagnósticos, ninguno apagado",
-    grupo(grupos, "Evaluaciones").tiles.map((t) => [t.enlace, t.apagado]),
-    [["examenes.html", false], ["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
+  igual("«Mide tu nivel» queda en lo que uno hace cuando quiere: los dos diagnósticos",
+    grupo(grupos, "Mide tu nivel").tiles.map((t) => [t.enlace, t.apagado]),
+    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
@@ -255,9 +272,11 @@ async function pruebaAlumna(browser) {
       tag: el.tagName,
       texto: el.textContent,
     })));
-  igual("a la alumna se le apagan los tres de mantenimiento, y nada más",
-    apagados.map((a) => a.etiqueta).sort(),
-    ["Archivos", "Lector de planilla", "Mis pagos"]);
+  /* Queda uno solo a la vista: los otros dos en mantenimiento se fueron con su
+     grupo. Un apagado ENTRE accesos que funcionan sí se queda —ahí uno vino por
+     otra cosa y de paso se entera de que eso vuelve—, y con su razón escrita. */
+  igual("el apagado que queda es el que convive con accesos que sí funcionan",
+    apagados.map((a) => a.etiqueta).sort(), ["Mis pagos"]);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
   } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");
@@ -278,8 +297,14 @@ async function pruebaProfesora(browser) {
      exámenes del público y el detalle pregunta por pregunta. Una sola tarjeta y
      no dos, para no repetir el nombre en el panel. */
   igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
-    grupo(grupos, "Evaluaciones").tiles.map((t) => t.enlace),
-    ["examenes.html", "entreno/diagnostico.html", "arbitraje.html"]);
+    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
+    ["entreno/diagnostico.html", "arbitraje.html"]);
+  /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
+     tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
+  igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
+    grupos.map((g) => g.titulo).filter((x) => /Lo que/.test(x)), ["Lo que le pones a tus alumnos"]);
+  igual("a ella «Herramientas» sí se le pinta: sus accesos funcionan",
+    grupos.map((g) => g.titulo).includes("Herramientas"), "true");
   igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
     grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>
@@ -328,19 +353,21 @@ async function pruebaTextosPorRol(browser) {
   r = await panel(browser, [PROFE], "u-profe", {}, {
     rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2, clases_30d: 8 }] },
   });
-  const profe = descripciones(await r.page.evaluate(LEER_GRILLA));
+  const gruposProfe = await r.page.evaluate(LEER_GRILLA);
+  const profe = descripciones(gruposProfe);
+  const rotulosProfe = gruposProfe.map((g) => g.titulo);
   await r.ctx.close();
 
   // A la alumna, lo suyo.
   igual("a la alumna, Tareas le habla de lo que le mandaron",
-    alumna["Tareas"], "Lo que te mandó tu profesor, con su fecha límite");
+    alumna["Tareas"], "Con fecha límite, y se llenan solas con lo que entrenas");
   igual("y no le ofrece asignarle material a unos alumnos que no tiene",
     /tus alumnos/i.test(alumna["Tareas"]), "false");
   igual("a la alumna, Informes es lo suyo", alumna["Informes"], "Tu progreso y estadísticas");
 
   // A quien da clase, lo suyo.
   igual("a la profesora, Tareas le habla de asignar",
-    profe["Tareas"], "Asigna material a tus alumnos, con su fecha límite");
+    profe["Tareas"], "Pide cantidades y la tarea se llena sola con lo que entrenan");
   igual("Informes es el de sus alumnos", profe["Informes"], "El progreso de tus alumnos y los informes a la casa");
   igual("los torneos los arma ella", profe["Torneos de la Academia"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
@@ -351,6 +378,12 @@ async function pruebaTextosPorRol(browser) {
   /* La regla general, que es la que atrapa al tile que todavía no existe. */
   const conTuProfesor = Object.entries(profe).filter(([, d]) => /tu profesor/i.test(d)).map(([k]) => k);
   igual("a quien da clase, NINGUNA tarjeta le habla de «tu profesor»", conTuProfesor, []);
+  /* Y tampoco ningún RÓTULO de grupo, que es texto de pantalla igual que la
+     descripción de un tile — desde que uno de ellos nombra a quien da la clase,
+     olvidarle el `titleProfe` al siguiente pondría en el panel de la profesora
+     un encabezado que habla de SU profesor. */
+  igual("ni ningún rótulo de grupo",
+    rotulosProfe.filter((x) => /tu profesor/i.test(x)), []);
 
   /* Y lo que NO cambia: un texto que sirve igual para los dos no se duplica
      porque sí — dos versiones de la misma frase se van separando sola. */
@@ -780,6 +813,12 @@ async function pruebaPantalla(browser) {
 
   await ctx.close();
 }
+
+/* Se exporta para que otro verificador reuse este Supabase de mentira en vez de
+   escribir una segunda copia: dos dobles del mismo panel se irían separando a la
+   primera corrección. Al importarlo, las pruebas de abajo no corren. */
+module.exports = { panel, igual, mal, bien, datosAlumna, ALUMNA, PROFE, ADMIN, CHROME, BASE, fallos: () => fallos };
+if (require.main !== module) return;
 
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });

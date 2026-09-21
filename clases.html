@@ -356,6 +356,24 @@
             { title: "Clase en vivo", destacado: true, tiles: [
                 { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", descProfe: "El tablero que ve tu clase, en vivo", href: "sesion.html", primary: true },
             ] },
+            /* Lo segundo que se ve, y antes de cualquier lugar a donde ir: lo
+               que OTRA PERSONA te puso, con fecha. Tareas vivía en "Aprender" y
+               Exámenes en "Evaluaciones", o sea que lo único del panel que
+               tiene fecha estaba partido en dos grupos y cada mitad enterrada
+               entre cosas que se hacen cuando uno quiere. La franja de arriba
+               solo aparece cuando hay tareas pendientes —y nunca por un
+               examen—, así que fuera de ese momento no había dónde mirar.
+
+               El rótulo NO repite los nombres de las dos tarjetas: dice lo que
+               las dos tienen en común y que no se deduce de ellas —que te las
+               pone alguien más y traen fecha—, que es lo que las separa de
+               "Mide tu nivel", ahí abajo, que uno hace cuando le parece. Por
+               eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
+               del otro lado del escritorio la misma pareja es lo que MANDAS. */
+            { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
+                { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
+                { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
+            ] },
             /* "Aprender" va antes que "Jugar y competir": esto es una academia,
                y lo primero que se ofrece al entrar es lo que se viene a hacer.
                Jugar sigue estando a un golpe de vista, justo debajo — no se
@@ -368,7 +386,6 @@
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
                 { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
-                { emoji: "📋", label: "Tareas", desc: "Lo que te mandó tu profesor, con su fecha límite", descProfe: "Asigna material a tus alumnos, con su fecha límite", href: "tareas.html" },
             ] },
             { title: "Jugar y competir", tiles: [
                 { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
@@ -378,10 +395,13 @@
                 { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
             ] },
-            /* Evaluaciones: lo que MIDE el nivel de quien lo hace, aparte de lo
-               que lo enseña. El diagnóstico estaba en Aprender y el de arbitraje
-               detrás de él; son otra cosa que un curso, y con su propio grupo se
-               encuentran de una.
+            /* Acá viven los dos diagnósticos y nada más: lo que uno hace por
+               su cuenta, cuando quiere, para saber dónde está parado. Se
+               llamaba "Evaluaciones" y tenía dentro los exámenes — pero un
+               examen te lo pone otra persona, con fecha y con nota, así que
+               se fue arriba con las tareas, que es lo que de verdad se le
+               parece. El rótulo lo dice en dos palabras y sin repetir el
+               nombre de sus dos tarjetas, que ya se llaman "Diagnóstico".
 
                Los DOS diagnósticos son para todo el mundo: cualquiera puede medir
                su nivel de arbitraje, no solo quien da clase. Lo que cambia según
@@ -392,11 +412,7 @@
                el mismo criterio pero SIN enseñar las respuestas al terminar (el
                banco es material docente). Una sola tarjeta y no dos, para no
                repetir el nombre en el panel — ya pasó una vez con "Torneos". */
-            { title: "Evaluaciones", tiles: [
-                /* "Exámenes" vuelve al panel, ahora que existe. Estuvo meses
-                   apagado con un "Próximamente" sin fecha y se quitó por eso
-                   mismo: una tarjeta que nunca cambia deja de leerse. */
-                { emoji: "📝", label: "Exámenes", desc: "Lo que tu profe te pone con nota y reloj: una sola oportunidad por pregunta", descProfe: "Ponle un examen con nota a tus alumnos y mira el informe de cada uno", href: "examenes.html" },
+            { title: "Mide tu nivel", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
                 { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
             ] },
@@ -416,8 +432,16 @@
            tile — así prender de nuevo un acceso es borrar una línea. Como todo
            filtro del sitio, esto decide qué se PINTA: la dirección sigue
            existiendo y quien la conozca entra igual. */
+        /* Quien da clase y quien administra ven lo mismo: la regla permanente
+           de que todo lo que se hace para los profesores vale también para
+           quien administra, con el alcance que ya le da la base. Las tres
+           funciones que reparten el panel entre sus dos públicos preguntan por
+           acá, en vez de repetir el `||` y que a la cuarta se le olvide la
+           mitad. */
+        function esEquipoDocente() { return isTeacher || profile.is_admin; }
+
         function apagarEnMantenimiento() {
-            if (isTeacher || profile.is_admin) return;
+            if (esEquipoDocente()) return;
             TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
                 if (!t.mantenimientoAlumno) return;
                 t.disabled = true;
@@ -444,7 +468,7 @@
            apagarEnMantenimiento(). Vale para quien administra, como todo lo
            que se hace para los profesores. */
         function textosDelEquipoDocente() {
-            if (!isTeacher && !profile.is_admin) return;
+            if (!esEquipoDocente()) return;
             TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
                 if (t.descProfe) t.desc = t.descProfe;
             }));
@@ -504,10 +528,28 @@
             const grid = document.getElementById("tile-grid");
             grid.innerHTML = "";
             TILE_GROUPS.forEach((group) => {
+                /* Un grupo del que no queda ni un acceso utilizable no se
+                   pinta. A la alumna, "Herramientas" le salía como un
+                   encabezado y dos cuadros grises —sus dos accesos están en
+                   mantenimiento—: una sección entera de la página que no lleva
+                   a ninguna parte, que es la misma razón por la que se fue el
+                   "Próximamente" sin fecha. Un acceso apagado ENTRE otros que
+                   funcionan sí se queda, y con su razón escrita: ahí uno vino
+                   por otra cosa y de paso se entera de que eso vuelve. */
+                if (group.tiles.length === 0 || group.tiles.every((t) => t.disabled)) return;
                 const section = document.createElement("section");
                 const heading = document.createElement("h2");
                 heading.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-3";
-                heading.textContent = group.title;
+                /* El rótulo tiene los mismos dos públicos que la descripción de
+                   un tile: "Lo que te pone tu profesor" es, del otro lado del
+                   escritorio, lo que ELLA le pone a sus alumnos. Pero al revés
+                   que `descProfe`, se ELIGE al pintar y no se escribe encima de
+                   `group.title`: todo lo que retoca la grilla busca su grupo por
+                   ese nombre, y un título mutado dejaría esas búsquedas sin
+                   encontrarlo. Al alumnado no le fallaría nunca —el rótulo solo
+                   cambia para el equipo docente—, así que se descubriría en el
+                   panel de otra persona. */
+                heading.textContent = (esEquipoDocente() && group.titleProfe) || group.title;
                 const tilesGrid = document.createElement("div");
                 // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
                 // columnas quedaría un cuadrito perdido a la izquierda, así que
@@ -1078,8 +1120,8 @@
                    con la revisión y el detalle pregunta por pregunta. Se busca
                    por su destino y no por su posición, para que reordenar el
                    grupo no la deje sin cambiar. */
-                const evaluaciones = TILE_GROUPS.find((g) => g.title === "Evaluaciones");
-                const arbitraje = evaluaciones.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
+                const medirNivel = TILE_GROUPS.find((g) => g.title === "Mide tu nivel");
+                const arbitraje = medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
                 if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
 
                 /* Preparar la clase antes de darla. Es solo del equipo docente,
