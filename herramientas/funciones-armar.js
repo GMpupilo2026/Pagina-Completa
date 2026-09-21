@@ -40,6 +40,7 @@ const FUNCIONES = {
   "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   // No comparte nada: su examen-html.ts es suyo y vive en su carpeta.
   "informe-examen": [],
+  "cobros-recordatorios": ["usuario-alumno.ts"],
 };
 
 function armar(nombre) {

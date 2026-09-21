@@ -1640,7 +1640,9 @@ solo lugar:
   `SECURITY INVOKER` como las de informes: quién puede preguntar por quién lo
   sigue decidiendo la RLS.
 - `cobros_morosos()` devolvía `p.email` tal cual, así que le habría mandado el
-  aviso de morosidad a la dirección muerta. Ahora devuelve `correo_de_contacto()`.
+  aviso de morosidad a la dirección muerta. Pasó a devolver `correo_de_contacto()`
+  y, más tarde, a `correo_cobro()` — misma idea, prioridad al revés: ver "Los
+  avisos de morosidad" más abajo.
 - `profiles` ganó un índice único sobre `lower(email)`: `auth.users` ya lo
   impedía para las cuentas, pero era sobre `profiles` que el alta buscaba a quién
   reusar.
@@ -2314,11 +2316,25 @@ Mismo circuito que los informes a la casa: `pg_cron` → `pg_net` → Edge Funct
 `cobros-recordatorios` → Resend, desde el dominio verificado. Dos tareas
 diarias: `cobros-generar` a las 11:30 UTC (5:30 de la mañana en Costa Rica) y
 `cobros-recordatorios` a las 12:30 — los cobros quedan emitidos **antes** de que
-salgan los avisos.
+salgan los avisos. Su código, antes solo en Supabase, ya vive en
+`supabase/functions/cobros-recordatorios/`.
 
 - Tres avisos: **tres días antes** de vencer, **al día siguiente** del
-  vencimiento y **a los 15 días**. Van a los encargados apuntados en Informes y
-  a la propia cuenta del alumno.
+  vencimiento y **a los 15 días**.
+- **A quién le llega: el encargado, no el alumno — salvo que no tenga
+  encargado.** `destinatariosDe()` manda a los encargados activos de ese
+  alumno; solo si no tiene ninguno le escribe a su propia cuenta, y solo si ese
+  correo es de verdad (`esCorreoInterno()` descarta el usuario del dominio
+  interno). Antes se mandaba a los dos siempre, y el alumno terminaba viendo el
+  estado de cuenta de su propia familia aunque no le tocara resolverlo a él.
+  Mismo criterio en `recordar_ahora` (el botón «Recordar ahora» de
+  `cobros.html`) y en la tanda diaria — es la misma función.
+- El texto que se le muestra a quien coordina en la lista de morosidad
+  (`cobros_morosos()`) usa `correo_cobro()`, no `correo_de_contacto()`: la
+  misma prioridad de encargado-primero, para que lo que se lee ahí coincida con
+  a dónde de verdad sale el correo. `correo_de_contacto()` sigue como estaba
+  (el correo propio primero) porque además la usa `recuperar-acceso`, donde la
+  pregunta es otra: a quién se le puede probar que la cuenta es suya.
 - **Un correo por alumno, no uno por cobro**: a nadie le sirve recibir tres el
   mismo día. Se manda el estado de cuenta entero con el tono del aviso más
   urgente que tenga.
