@@ -554,11 +554,11 @@ async function pruebaTareasAlumna(browser) {
   // --- Con una tarea ya vencida ---
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(true));
   let visto = await r.page.evaluate(() => {
-    const a = document.getElementById("tareas-aviso");
+    const a = document.getElementById("pendientes-aviso");
     return {
       display: getComputedStyle(a).display,
-      titulo: document.getElementById("tareas-aviso-titulo").textContent,
-      texto: document.getElementById("tareas-aviso-texto").textContent,
+      titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+      texto: document.getElementById("pendientes-aviso-texto").textContent,
       rojo: /ring-red-500/.test(a.className),
       enlace: a.getAttribute("href"),
     };
@@ -580,7 +580,7 @@ async function pruebaTareasAlumna(browser) {
      el orden del documento, que es también el que recorre un lector de
      pantalla. */
   const orden = await r.page.evaluate(() => {
-    const ids = ["tareas-aviso", "seguir-curso", "progreso-alumno", "tile-grid"];
+    const ids = ["pendientes-aviso", "seguir-curso", "progreso-alumno", "tile-grid"];
     const nodos = ids.map((id) => document.getElementById(id));
     return nodos.every((n, i) => i === 0
       || (nodos[i - 1].compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0);
@@ -607,9 +607,9 @@ async function pruebaTareasAlumna(browser) {
   // --- Sin ninguna vencida ---
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
   visto = await r.page.evaluate(() => ({
-    titulo: document.getElementById("tareas-aviso-titulo").textContent,
-    texto: document.getElementById("tareas-aviso-texto").textContent,
-    rojo: /ring-red-500/.test(document.getElementById("tareas-aviso").className),
+    titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+    texto: document.getElementById("pendientes-aviso-texto").textContent,
+    rojo: /ring-red-500/.test(document.getElementById("pendientes-aviso").className),
   }));
   igual("sin vencidas, anuncia la más próxima", visto.texto,
     "La más próxima es «Finales de rey y peón», vence mañana.");
@@ -619,7 +619,7 @@ async function pruebaTareasAlumna(browser) {
   // --- Sin ninguna tarea: la franja no existe en pantalla ---
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { informes_resumen_alumnos: RESUMEN_ANA } });
   igual("sin tareas, la franja NO se destapa (una franja vacía es ruido)",
-    await r.page.evaluate(() => getComputedStyle(document.getElementById("tareas-aviso")).display), "none");
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
   igual("y sin ningún curso a medias, tampoco «Continúa donde ibas»",
     await r.page.evaluate(() => getComputedStyle(document.getElementById("seguir-curso")).display), "none");
   await r.ctx.close();
@@ -630,6 +630,129 @@ async function pruebaTareasAlumna(browser) {
    empujaba las tareas hacia abajo. Ahora solo sale cuando tiene algo que decir.
    Las dos mitades de la condición importan: esconderla de más le quitaría a
    quien da clase el botón de iniciarla. */
+/* Un examen de mentira en el estado que se quiera. `vence` y `termina` van en
+   días desde hoy, para que la prueba no se pudra con el almanaque. */
+function examen(id, titulo, estado, vence, termina) {
+  const dia = (n) => new Date(Date.now() + n * 86400000).toISOString();
+  return {
+    id: id, alumno_id: "u-ana", titulo: titulo, estado: estado,
+    vence_at: dia(vence), termina_at: termina === undefined ? null : dia(termina),
+    minutos: 20, preguntas: 10, nota: null, profesor_nombre: "Karina Rojas",
+  };
+}
+const MIN = 1 / 1440;   // un minuto, en días
+
+async function franja(browser, tareas, examenes) {
+  const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      tareas_con_avance: tareas,
+      examenes_con_nota: examenes,
+      informes_resumen_alumnos: RESUMEN_ANA,
+      informes_cursos_alumnos: CURSOS_ANA,
+      progreso_dias_y_racha: RACHA_ANA,
+    },
+  });
+  const visto = await r.page.evaluate(() => {
+    const a = document.getElementById("pendientes-aviso");
+    return {
+      display: getComputedStyle(a).display,
+      titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+      texto: document.getElementById("pendientes-aviso-texto").textContent,
+      cta: document.getElementById("pendientes-aviso-cta").textContent,
+      rojo: /ring-red-500/.test(a.className),
+      enlace: a.getAttribute("href"),
+      icono: document.getElementById("pendientes-aviso-emoji").textContent,
+    };
+  });
+  const errores = r.errores;
+  await r.ctx.close();
+  return { visto, errores };
+}
+
+/* Un examen asignado tiene reloj y UNA sola oportunidad, y el único aviso que
+   sale es el push del momento en que se lo ponen: quien no lo vio no se entera
+   nunca. Acá se comprueba que la franja lo diga, y sobre todo que NO lo trate
+   como una tarea — `iniciar_examen()` rechaza el que se pasó de fecha, así que
+   prometerle "todavía puedes" sería mentirle. */
+async function pruebaExamenesEnLaFranja(browser) {
+  console.log("\n=== Los exámenes también vencen, y la franja lo dice ===");
+
+  // --- Solo exámenes por hacer: el título no habla de tareas que no tiene ---
+  let { visto, errores } = await franja(browser, [], [examen("x1", "Finales", "asignado", 3), examen("x2", "Táctica", "asignado", 1)]);
+  igual("con exámenes y sin tareas, la franja SE VE", visto.display !== "none", "true");
+  igual("y cuenta exámenes, no tareas", visto.titulo, "Tienes 2 exámenes pendientes");
+  igual("nombra el que vence antes, con lo que le espera dentro",
+    visto.texto, "El examen «Táctica» vence mañana · 10 preguntas en 20 minutos.");
+  /* Directo a rendirlo y no a una lista: es la misma decisión del aviso al
+     celular — un examen tiene reloj y una sola oportunidad, así que buscarlo
+     entre otros es un paso de más. */
+  igual("y lleva DIRECTO a rendir ese, no a una lista", visto.enlace, "examen.html?id=x2");
+  igual("con su propio botón", visto.cta, "Empezar el examen →");
+  igual("y el icono acompaña a la línea: habla de un examen", visto.icono, "📝");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+
+  // --- Las dos cosas a la vez ---
+  ({ visto } = await franja(browser, tareasDeMentira(false), [examen("x1", "Finales", "asignado", 3)]));
+  igual("con las dos, el título las cuenta a las dos", visto.titulo, "Tienes 3 tareas y 1 examen pendientes");
+  igual("y manda la que vence antes, que acá es la tarea",
+    visto.texto, "La más próxima es «Finales de rey y peón», vence mañana.");
+  igual("y ahí el icono vuelve a ser el de tareas", visto.icono, "📋");
+
+  // --- Un examen entregado no es un pendiente ---
+  ({ visto } = await franja(browser, [], [examen("x9", "Ya lo hice", "entregado", -3)]));
+  igual("un examen ya entregado no destapa la franja", visto.display, "none");
+
+  // --- El que se pasó de fecha: ya NO se puede rendir ---
+  ({ visto } = await franja(browser, [], [examen("x3", "Aperturas", "asignado", -2)]));
+  igual("un examen que se pasó de fecha pinta la franja en rojo", visto.rojo, "true");
+  igual("y dice que ya no se puede, sin prometer lo que no es",
+    visto.texto, "Se te pasó la fecha del examen «Aperturas» y ya no se puede rendir. Habla con tu profe.");
+  igual("NO le dice «todavía puedes», que es lo que sí vale para una tarea",
+    /todavía puedes/i.test(visto.texto), "false");
+  /* Y no lo manda a rendirlo: esa pantalla lo va a rechazar. El enlace lleva a
+     donde el texto acaba de nombrar. */
+  igual("y no lo manda a una pantalla que lo va a rechazar", visto.enlace, "examenes.html");
+  igual("ni se cuenta como algo que pueda hacer", visto.titulo, "Hay algo que tienes que saber");
+
+  // --- Con el reloj corriendo: es lo más urgente que hay en el panel ---
+  ({ visto } = await franja(browser, tareasDeMentira(true),
+    [examen("x4", "Medio juego", "en_curso", -1, 10 * MIN)]));
+  igual("un examen a medias con el reloj corriendo manda sobre una tarea vencida",
+    visto.texto, "El examen «Medio juego» lo tienes a medias y el reloj corre. Entra a terminarlo.");
+  igual("y lleva directo a terminarlo", visto.enlace, "examen.html?id=x4");
+  igual("con su botón", visto.cta, "Seguir el examen →");
+  /* Los minutos que quedan NO se dicen acá: el reloj del examen sale de la hora
+     del SERVIDOR y en esta página solo está la del navegador. Un número sacado
+     del reloj de la computadora podría decirle que le quedan diez minutos
+     cuando ya se le acabaron. */
+  igual("y no se inventa cuántos minutos quedan, que eso lo sabe el servidor",
+    /minutos? (te )?qued|quedan \d/i.test(visto.texto), "false");
+
+  // --- Al que se le acabó el tiempo tampoco se le ofrece seguir ---
+  ({ visto } = await franja(browser, [], [examen("x5", "Cálculo", "en_curso", -1, -1 * MIN)]));
+  igual("si el reloj ya se acabó, no se le ofrece seguir",
+    visto.enlace, "examenes.html");
+  igual("ni se cuenta como pendiente", visto.titulo, "Hay algo que tienes que saber");
+
+  // --- Congelado: no depende de él ---
+  ({ visto } = await franja(browser, [], [examen("x6", "Estrategia", "congelado", 2)]));
+  igual("un examen congelado lo dice y no lo manda a intentarlo",
+    visto.texto, "El examen «Estrategia» quedó congelado a la mitad. Tu profe tiene que volver a abrirlo.");
+  igual("y lo lleva a su lista", visto.enlace, "examenes.html");
+
+  /* Si la mitad de los exámenes falla, las tareas se siguen mostrando: quedarse
+     sin franja por la consulta que falló sería perder también la que sí se
+     pudo leer. */
+  const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: { tareas_con_avance: tareasDeMentira(false), informes_resumen_alumnos: RESUMEN_ANA,
+           informes_cursos_alumnos: CURSOS_ANA, progreso_dias_y_racha: RACHA_ANA },
+  });
+  igual("sin exámenes, la franja de siempre sigue igual",
+    await r.page.evaluate(() => document.getElementById("pendientes-aviso-titulo").textContent),
+    "Tienes 3 tareas pendientes");
+  await r.ctx.close();
+}
+
 async function pruebaFranjaDeClase(browser) {
   console.log("\n=== La franja de la clase solo habla cuando tiene algo que decir ===");
 
@@ -650,10 +773,10 @@ async function pruebaFranjaDeClase(browser) {
   // Y lo que sí tiene que hacer queda arriba del todo.
   const primero = await r.page.evaluate(() => {
     const visible = (el) => el && getComputedStyle(el).display !== "none";
-    const orden = ["session-status-card", "tareas-aviso", "seguir-curso"].map((id) => document.getElementById(id));
+    const orden = ["session-status-card", "pendientes-aviso", "seguir-curso"].map((id) => document.getElementById(id));
     return orden.filter(visible).map((el) => el.id)[0];
   });
-  igual("lo primero que ve es su tarea, no un aviso de que no pasa nada", primero, "tareas-aviso");
+  igual("lo primero que ve es su tarea, no un aviso de que no pasa nada", primero, "pendientes-aviso");
   await r.ctx.close();
 
   // A quien da clase sí: es desde donde la inicia.
@@ -825,6 +948,7 @@ if (require.main !== module) return;
   try {
     await pruebaAlumna(browser);
     await pruebaTareasAlumna(browser);
+    await pruebaExamenesEnLaFranja(browser);
     await pruebaFranjaDeClase(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
