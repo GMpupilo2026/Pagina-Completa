@@ -166,6 +166,7 @@
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📧 Informes a la casa</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">El informe sale solo, a la hora que toque, al correo de quien esté encargado. No hace falta que tenga cuenta en el sitio.</p>
                 <div id="encargados-lista" class="space-y-2 mb-4"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Se puede apuntar a más de una persona por alumno — cada una con su propia hora, y la mamá y el papá no tienen por qué recibirlo al mismo tiempo.</p>
                 <div class="flex flex-wrap items-end gap-2 border-t border-brand-100 dark:border-brand-800 pt-4">
                     <div class="flex-1 min-w-[10rem]">
                         <label for="enc-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
@@ -183,6 +184,14 @@
                             <option value="mensual">Cada mes</option>
                             <option value="anual">Cada año</option>
                         </select>
+                    </div>
+                    <div>
+                        <label for="enc-hora" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">A qué hora</label>
+                        <select id="enc-hora" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                    <div id="enc-dia-caja" class="hidden">
+                        <label for="enc-dia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué día</label>
+                        <select id="enc-dia" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     </div>
                     <button type="button" id="enc-agregar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
                     <span id="enc-msg" class="text-xs w-full" aria-live="polite"></span>
@@ -1104,11 +1113,12 @@
         }
 
         /* ---------------- Informes a la casa ----------------
-           A quién se le manda el informe de este alumno y cada cuánto. El envío
-           automático lo hace pg_cron una vez al día llamando a la Edge Function
-           informes-encargados, que arma el correo y lo manda por Resend; acá
-           solo se decide a quién y con qué frecuencia, más los dos botones de
-           "ahora mismo".
+           A quién se le manda el informe de este alumno, cada cuánto y a qué
+           hora. El envío automático lo hace pg_cron, cada hora, llamando a la
+           Edge Function informes-encargados: cada encargado recibe el suyo
+           solo en SU hora (y, si es semanal, en SU día), no todos a las 7 de
+           la mañana. Acá solo se decide eso, más los dos botones de "ahora
+           mismo".
 
            El HTML del informe NO se arma en esta página: lo devuelve la misma
            función que manda el correo (acción "vista_previa"). Así lo que se ve
@@ -1117,7 +1127,27 @@
            separando. */
         const FUNCION_INFORMES = `${window.SUPABASE_URL}/functions/v1/informes-encargados`;
         const FRECUENCIAS = { diario: "todos los días", semanal: "cada semana", mensual: "cada mes", anual: "cada año" };
+        const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
         let encargadoAlumno = null;   // el alumno que se está mirando
+
+        // "7:00 a. m.", "1:00 p. m." — la hora es siempre la de Costa Rica,
+        // que es la que usa la Edge Function para decidir a quién le toca.
+        function horaLabel(h) {
+            const h12 = h % 12 === 0 ? 12 : h % 12;
+            return `${h12}:00 ${h < 12 ? "a. m." : "p. m."}`;
+        }
+        function horasOptionsHTML(seleccionada) {
+            return Array.from({ length: 24 }, (_, h) =>
+                `<option value="${h}"${h === seleccionada ? " selected" : ""}>${horaLabel(h)}</option>`).join("");
+        }
+        // NULL (el valor "") sigue siendo "el día que caiga", como se comportaba
+        // esto antes de que existiera la columna: no todo el mundo necesita fijar
+        // uno.
+        function diasOptionsHTML(seleccionado) {
+            const suelto = `<option value=""${seleccionado == null ? " selected" : ""}>El día que caiga</option>`;
+            return suelto + DIAS_SEMANA.map((d, i) =>
+                `<option value="${i}"${i === seleccionado ? " selected" : ""}>${d.charAt(0).toUpperCase() + d.slice(1)}</option>`).join("");
+        }
 
         async function llamarInformes(cuerpo) {
             // El token se pide fresco en cada llamada, no del `session` que se
@@ -1185,11 +1215,40 @@
                 frec.setAttribute("aria-label", "Cada cuánto se le manda a " + (e.nombre || e.email));
                 frec.innerHTML = Object.keys(FRECUENCIAS).map((f) =>
                     `<option value="${f}"${e.frecuencia === f ? " selected" : ""}>${FRECUENCIAS[f]}</option>`).join("");
+                // Cambiar la frecuencia puede sumar o quitar el selector de día (solo
+                // aplica a "semanal"), así que la fila se vuelve a pintar entera en vez
+                // de parchar un pedazo del DOM.
                 frec.addEventListener("change", async () => {
                     const { error } = await sb.from("encargados").update({ frecuencia: frec.value }).eq("id", e.id);
                     if (error) { alert("No se pudo cambiar: " + error.message); frec.value = e.frecuencia; return; }
-                    e.frecuencia = frec.value;
+                    renderEncargados(studentId, nombreAlumno);
                 });
+
+                const hora = document.createElement("select");
+                hora.className = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                hora.setAttribute("aria-label", "A qué hora se le manda a " + (e.nombre || e.email));
+                hora.innerHTML = horasOptionsHTML(e.hora_envio ?? 7);
+                hora.addEventListener("change", async () => {
+                    const { error } = await sb.from("encargados").update({ hora_envio: Number(hora.value) }).eq("id", e.id);
+                    if (error) { alert("No se pudo cambiar: " + error.message); hora.value = e.hora_envio ?? 7; return; }
+                    e.hora_envio = Number(hora.value);
+                });
+
+                // El día solo importa con frecuencia semanal: con las demás sería un
+                // control que no hace nada.
+                let dia = null;
+                if (e.frecuencia === "semanal") {
+                    dia = document.createElement("select");
+                    dia.className = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    dia.setAttribute("aria-label", "Qué día se le manda a " + (e.nombre || e.email));
+                    dia.innerHTML = diasOptionsHTML(e.dia_semana ?? null);
+                    dia.addEventListener("change", async () => {
+                        const valor = dia.value === "" ? null : Number(dia.value);
+                        const { error } = await sb.from("encargados").update({ dia_semana: valor }).eq("id", e.id);
+                        if (error) { alert("No se pudo cambiar: " + error.message); dia.value = e.dia_semana ?? ""; return; }
+                        e.dia_semana = valor;
+                    });
+                }
 
                 const activo = document.createElement("label");
                 activo.className = "flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-300";
@@ -1229,10 +1288,26 @@
                     renderEncargados(studentId, nombreAlumno);
                 });
 
-                fila.append(quien, frec, activo, ahora, quitar);
+                const partes = [quien, frec, hora];
+                if (dia) partes.push(dia);
+                partes.push(activo, ahora, quitar);
+                fila.append(...partes);
                 caja.appendChild(fila);
             });
         }
+
+        // La hora y el día del formulario de "agregar" se arman una sola vez; el
+        // día solo tiene sentido con frecuencia semanal, así que se esconde con
+        // cualquier otra (mismo criterio que la fila de cada encargado ya
+        // guardado).
+        document.getElementById("enc-hora").innerHTML = horasOptionsHTML(7);
+        document.getElementById("enc-dia").innerHTML = diasOptionsHTML(null);
+        function actualizarCajaDia() {
+            const esSemanal = document.getElementById("enc-frecuencia").value === "semanal";
+            document.getElementById("enc-dia-caja").classList.toggle("hidden", !esSemanal);
+        }
+        document.getElementById("enc-frecuencia").addEventListener("change", actualizarCajaDia);
+        actualizarCajaDia();
 
         document.getElementById("enc-agregar").addEventListener("click", async () => {
             if (!encargadoAlumno) return;
@@ -1243,11 +1318,15 @@
             if (!email) { msg.textContent = "Escribe el correo."; msg.className = "text-xs w-full text-red-600 dark:text-red-400"; return; }
             btn.disabled = true;
             msg.textContent = "Guardando…"; msg.className = "text-xs w-full text-brand-500 dark:text-brand-300";
+            const frecuencia = document.getElementById("enc-frecuencia").value;
+            const diaValor = document.getElementById("enc-dia").value;
             const { error } = await sb.from("encargados").insert({
                 student_id: encargadoAlumno.id,
                 nombre: nombre || null,
                 email,
-                frecuencia: document.getElementById("enc-frecuencia").value,
+                frecuencia,
+                hora_envio: Number(document.getElementById("enc-hora").value),
+                dia_semana: frecuencia === "semanal" && diaValor !== "" ? Number(diaValor) : null,
                 creado_por: profile.id,
             });
             btn.disabled = false;
@@ -1577,19 +1656,156 @@
             </div>`;
         }
 
+        // Los campos de acá abajo (rutina, prioridad, meta de Elo, cada semana y
+        // la medición) ya no salen siempre del repositorio: el profesor los puede
+        // reescribir a mano (ver planEditorHTML). Por eso se escapan como
+        // cualquier texto que escribe una persona — la misma regla que ya sigue
+        // el nombre del alumno en esta página. Los recursos (título y enlace de
+        // cada semana) NO se editan a mano y siguen saliendo tal cual del
+        // repositorio, verificados contra el material real.
         function planHTML(plan) {
-            return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${plan.rutina}.</p>
-                <p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Prioridad:</strong> ${plan.prioridad.join(" → ")}.</p>
-                ${plan.metaElo ? `<p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Meta de Elo:</strong> ${plan.metaElo.texto}</p>` : '<p class="mb-3"></p>'}
+            return `<p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Rutina sugerida:</strong> ${escVis(plan.rutina)}.</p>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-1"><strong>Prioridad:</strong> ${plan.prioridad.map(escVis).join(" → ")}.</p>
+                ${plan.metaElo ? `<p class="text-sm text-brand-600 dark:text-brand-300 mb-4"><strong>Meta de Elo:</strong> ${escVis(plan.metaElo.texto)}</p>` : '<p class="mb-3"></p>'}
                 <div class="space-y-3">${plan.semanas.map((s) => `
                     <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4">
-                        <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${s.titulo}</p>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">${s.porque}</p>
-                        <p class="text-xs text-brand-500 dark:text-brand-300 mb-2"><strong>Meta:</strong> ${s.objetivo}</p>
-                        <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${x}</li>`).join("")}</ul>
-                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-700 dark:text-accent-400 hover:underline">${r.texto}</a>`).join(" · ")}</p>
+                        <p class="font-serif font-bold text-brand-800 dark:text-white mb-1">${escVis(s.titulo)}</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">${escVis(s.porque)}</p>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mb-2"><strong>Meta:</strong> ${escVis(s.objetivo)}</p>
+                        <ul class="list-disc pl-5 space-y-1 text-sm text-brand-600 dark:text-brand-300">${s.tareas.map((x) => `<li>${escVis(x)}</li>`).join("")}</ul>
+                        <p class="text-xs mt-2">${s.recursos.map((r) => `<a href="${r.href}" class="text-accent-700 dark:text-accent-400 hover:underline">${escVis(r.texto)}</a>`).join(" · ")}</p>
                     </div>`).join("")}</div>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${plan.medicion}</p>`;
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">${escVis(plan.medicion)}</p>`;
+        }
+
+        /* El plan que arma el diagnóstico es un punto de partida, no una
+           sentencia: el profesor conoce al alumno mejor que cualquier fórmula, y
+           a veces lo que hace falta decir no es lo que el cálculo produjo. Acá
+           se edita a mano la rutina, la prioridad, la meta de Elo, cada semana
+           (título, por qué, meta y tareas) y cómo se mide — los RECURSOS de cada
+           semana quedan fuera a propósito: son enlaces verificados contra el
+           material real del sitio, y dejar que se escriban a mano abriría la
+           puerta a un enlace roto que solo descubre el alumno.
+
+           Lo editado se guarda en `training_plans.plan.editado`, aparte de
+           `plan.generado` (que es lo que de verdad ve el alumno y lo que
+           lee el correo a la casa — ver informe_de_alumno() en la base). Al
+           volver a abrir esta página, `editado` se reaplica ENCIMA de un plan
+           recién calculado del diagnóstico (aplicarEdicionManual): así, si el
+           Elo cambia, lo que depende de él se recalcula solo, y lo que el
+           profesor escribió a mano sigue ahí. */
+        function planEditorHTML(plan) {
+            const campo = "w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500";
+            const etiqueta = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1 mt-3";
+            return `
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">Esto es lo mismo que calculó el diagnóstico: se puede ajustar a mano. Los enlaces de cada semana no se tocan acá.</p>
+                <label class="${etiqueta} mt-0" for="pe-rutina">Rutina sugerida</label>
+                <input type="text" id="pe-rutina" value="${escVis(plan.rutina)}" class="${campo}">
+                <label class="${etiqueta}" for="pe-prioridad">Prioridad (una por línea)</label>
+                <textarea id="pe-prioridad" rows="${Math.min(6, Math.max(2, plan.prioridad.length))}" class="${campo}">${escVis(plan.prioridad.join("\n"))}</textarea>
+                ${plan.metaElo ? `
+                <label class="${etiqueta}" for="pe-meta-elo">Meta de Elo</label>
+                <input type="text" id="pe-meta-elo" value="${escVis(plan.metaElo.texto)}" class="${campo}">` : ""}
+                <div class="space-y-3 mt-3">${plan.semanas.map((s) => `
+                    <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-4" data-semana="${s.numero}">
+                        <label class="${etiqueta} mt-0" for="pe-titulo-${s.numero}">Título de la semana ${s.numero}</label>
+                        <input type="text" id="pe-titulo-${s.numero}" class="pe-sem-titulo ${campo}" value="${escVis(s.titulo)}">
+                        <label class="${etiqueta}" for="pe-porque-${s.numero}">Por qué</label>
+                        <textarea id="pe-porque-${s.numero}" rows="2" class="pe-sem-porque ${campo}">${escVis(s.porque)}</textarea>
+                        <label class="${etiqueta}" for="pe-objetivo-${s.numero}">Meta</label>
+                        <input type="text" id="pe-objetivo-${s.numero}" class="pe-sem-objetivo ${campo}" value="${escVis(s.objetivo)}">
+                        <label class="${etiqueta}" for="pe-tareas-${s.numero}">Tareas (una por línea)</label>
+                        <textarea id="pe-tareas-${s.numero}" rows="${Math.min(6, Math.max(2, s.tareas.length))}" class="pe-sem-tareas ${campo}">${escVis(s.tareas.join("\n"))}</textarea>
+                    </div>`).join("")}</div>
+                <label class="${etiqueta}" for="pe-medicion">Cómo se mide</label>
+                <input type="text" id="pe-medicion" value="${escVis(plan.medicion)}" class="${campo}">
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button type="button" id="pe-aplicar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Aplicar los cambios</button>
+                    <button type="button" id="pe-cancelar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors">Cancelar</button>
+                </div>`;
+        }
+
+        // Reaplica encima de un plan RECIÉN CALCULADO lo que el profesor escribió
+        // a mano la última vez (si algo): lo hecho a mano no se pierde con solo
+        // recargar la página, pero lo que depende del Elo (metaElo cuando no se
+        // tocó, el nivel, los recursos) sigue viniendo fresco del diagnóstico.
+        // Empareja las semanas por NÚMERO, no por posición a ciegas: si el plan
+        // recalculado trae menos semanas que las editadas, las que sobran del
+        // guardado simplemente no tienen dónde aplicarse.
+        function aplicarEdicionManual(plan, ed) {
+            if (!ed) return plan;
+            if (ed.rutina) plan.rutina = ed.rutina;
+            if (Array.isArray(ed.prioridad) && ed.prioridad.length) plan.prioridad = ed.prioridad.slice();
+            if (ed.medicion) plan.medicion = ed.medicion;
+            if (ed.metaElo && plan.metaElo) plan.metaElo.texto = ed.metaElo;
+            if (ed.semanas) {
+                plan.semanas.forEach((s) => {
+                    const e = ed.semanas[String(s.numero)];
+                    if (!e) return;
+                    if (e.titulo) s.titulo = e.titulo;
+                    if (e.porque) s.porque = e.porque;
+                    if (e.objetivo) s.objetivo = e.objetivo;
+                    if (Array.isArray(e.tareas) && e.tareas.length) s.tareas = e.tareas.slice();
+                });
+            }
+            plan.editado = ed;   // se conserva la marca: guardar sin volver a editar no la pierde
+            return plan;
+        }
+
+        // Lee lo que el profesor escribió en planEditorHTML(), lo aplica sobre
+        // `plan` (mutándolo: es el mismo objeto que ya capturaron los botones de
+        // Guardar/Compartir) y arma el resumen que se guarda como
+        // `training_plans.plan.editado`.
+        function leerEdicionPlan(plan) {
+            const rutina = document.getElementById("pe-rutina").value.trim();
+            if (rutina) plan.rutina = rutina;
+            const prioridad = document.getElementById("pe-prioridad").value.split("\n").map((l) => l.trim()).filter(Boolean);
+            if (prioridad.length) plan.prioridad = prioridad;
+            if (plan.metaElo) {
+                const metaTxt = document.getElementById("pe-meta-elo").value.trim();
+                if (metaTxt) plan.metaElo.texto = metaTxt;
+            }
+            document.querySelectorAll("#plan-cuerpo [data-semana]").forEach((div) => {
+                const s = plan.semanas.find((x) => String(x.numero) === div.dataset.semana);
+                if (!s) return;
+                const titulo = div.querySelector(".pe-sem-titulo").value.trim();
+                const porque = div.querySelector(".pe-sem-porque").value.trim();
+                const objetivo = div.querySelector(".pe-sem-objetivo").value.trim();
+                const tareas = div.querySelector(".pe-sem-tareas").value.split("\n").map((l) => l.trim()).filter(Boolean);
+                if (titulo) s.titulo = titulo;
+                if (porque) s.porque = porque;
+                if (objetivo) s.objetivo = objetivo;
+                if (tareas.length) s.tareas = tareas;
+            });
+            const medicion = document.getElementById("pe-medicion").value.trim();
+            if (medicion) plan.medicion = medicion;
+            plan.editado = {
+                rutina: plan.rutina,
+                prioridad: plan.prioridad.slice(),
+                medicion: plan.medicion,
+                metaElo: plan.metaElo ? plan.metaElo.texto : null,
+                semanas: Object.fromEntries(plan.semanas.map((s) => [String(s.numero), {
+                    titulo: s.titulo, porque: s.porque, objetivo: s.objetivo, tareas: s.tareas.slice(),
+                }])),
+            };
+        }
+
+        function activarEdicionPlan(plan) {
+            document.getElementById("plan-cuerpo").innerHTML = planEditorHTML(plan);
+            document.getElementById("plan-editar").classList.add("hidden");
+            document.getElementById("plan-recalcular").classList.add("hidden");
+            document.getElementById("pe-cancelar").addEventListener("click", () => {
+                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                document.getElementById("plan-editar").classList.remove("hidden");
+                document.getElementById("plan-recalcular").classList.remove("hidden");
+            });
+            document.getElementById("pe-aplicar").addEventListener("click", () => {
+                leerEdicionPlan(plan);
+                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                document.getElementById("plan-editar").classList.remove("hidden");
+                document.getElementById("plan-recalcular").classList.remove("hidden");
+                document.getElementById("plan-estado").textContent = "Cambios aplicados: falta guardar o compartir para que queden.";
+            });
         }
 
         function sinDiagnosticoHTML(nombre, esProfesor) {
@@ -1612,11 +1828,15 @@
             const resumen = PE.resumir(conEloActual(entreno.diagnostico.detail, student));
             const plan = PE.generarPlan(resumen);
             const guardado = (teacherData.plansByStudent || {})[studentId];
+            // Lo que el profesor escribió a mano la última vez se reaplica encima
+            // del plan recién calculado (ver el comentario de aplicarEdicionManual).
+            if (guardado && guardado.plan && guardado.plan.editado) aplicarEdicionManual(plan, guardado.plan.editado);
+            const editadoNota = guardado && guardado.plan && guardado.plan.editado ? " · con ajustes a mano" : "";
             const estado = !guardado
                 ? "Sin guardar todavía."
                 : guardado.shared
-                    ? `Compartido con el alumno el ${fmtFecha(guardado.updated_at)}: lo ve en su propia página de Informes.`
-                    : `Guardado el ${fmtFecha(guardado.updated_at)}, sin compartir: el alumno no lo ve.`;
+                    ? `Compartido con el alumno el ${fmtFecha(guardado.updated_at)}${editadoNota}: lo ve en su propia página de Informes.`
+                    : `Guardado el ${fmtFecha(guardado.updated_at)}${editadoNota}, sin compartir: el alumno no lo ve.`;
 
             body.innerHTML = `
                 ${cabeceraDiagnosticoHTML(resumen, entreno.diagnostico.created_at, false)}
@@ -1639,11 +1859,17 @@
                                 : "<li>Todavía ninguna área por encima del 80%: conviene consolidar antes de ampliar temario.</li>"}</ul>
                     </div>
                 </div>
-                <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Plan de entrenamiento · 4 semanas</h3>
-                ${planHTML(plan)}
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <h3 class="font-serif font-bold text-brand-800 dark:text-white">Plan de entrenamiento · 4 semanas</h3>
+                    <div class="flex gap-2">
+                        <button type="button" id="plan-editar" class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✏️ Editar a mano</button>
+                        <button type="button" id="plan-recalcular" class="text-xs border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🔄 Recalcular</button>
+                    </div>
+                </div>
+                <div id="plan-cuerpo">${planHTML(plan)}</div>
                 <div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">
                     <label for="plan-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nota para el alumno (opcional)</label>
-                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empieza por los finales; el jueves los repasamos juntos.">${guardado && guardado.nota ? guardado.nota : ""}</textarea>
+                    <textarea id="plan-nota" rows="2" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500" placeholder="Ej.: Empieza por los finales; el jueves los repasamos juntos.">${escVis(guardado && guardado.nota ? guardado.nota : "")}</textarea>
                     <p id="plan-estado" class="text-xs text-brand-450 dark:text-brand-350 mt-2">${estado}</p>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <button type="button" id="plan-compartir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">${guardado && guardado.shared ? "Actualizar lo compartido" : "Compartir con el alumno"}</button>
@@ -1653,6 +1879,14 @@
                 </div>`;
 
             conectarEloEditor(student);
+            document.getElementById("plan-editar").addEventListener("click", () => activarEdicionPlan(plan));
+            document.getElementById("plan-recalcular").addEventListener("click", () => {
+                if (!confirm("¿Descartar los ajustes a mano y volver al plan que calcula el diagnóstico?")) return;
+                Object.assign(plan, PE.generarPlan(resumen));
+                plan.editado = null;
+                document.getElementById("plan-cuerpo").innerHTML = planHTML(plan);
+                document.getElementById("plan-estado").textContent = "Recalculado desde el diagnóstico: falta guardar o compartir para que quede así.";
+            });
             const guardar = (compartir) => guardarPlan(studentId, plan, entreno.diagnostico, compartir);
             document.getElementById("plan-compartir").addEventListener("click", () => guardar(true));
             document.getElementById("plan-guardar").addEventListener("click", () => guardar(false));
@@ -1667,7 +1901,12 @@
             const fila = {
                 student_id: studentId,
                 teacher_id: profile.id,
-                plan: { generado: plan, diagnostico_fecha: diagnostico.created_at },
+                // `generado` es lo que de verdad ve el alumno y lo que lee el
+                // correo a la casa (informe_de_alumno() en la base). `editado` es
+                // aparte: solo lo usa esta misma página, para reaplicar los
+                // ajustes a mano encima de un plan recién calculado la próxima
+                // vez que se abra (ver aplicarEdicionManual).
+                plan: { generado: plan, diagnostico_fecha: diagnostico.created_at, editado: plan.editado || null },
                 nota: nota || null,
                 shared: compartir,
                 updated_at: new Date().toISOString(),
