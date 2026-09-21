@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Elegí tu plan — Ajedrez Integral</title>
+    <meta name="description" content="Elegí un plan pago para seguir entrenando en Ajedrez Integral.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300 min-h-screen flex flex-col">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header class="bg-brand-800 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                    <span id="theme-icon" aria-hidden="true">☀️</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="flex-1 px-4 py-12">
+        <div class="w-full max-w-4xl mx-auto">
+
+            <div id="cargando" class="text-center text-brand-500 dark:text-brand-300 py-16">Cargando…</div>
+
+            <div id="invalido" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8 text-center max-w-lg mx-auto">
+                <p class="text-4xl mb-3" aria-hidden="true">🔗</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Este enlace ya no es válido</h1>
+                <p id="invalido-detalle" class="text-brand-500 dark:text-brand-300 text-sm"></p>
+                <p class="mt-4"><a href="index.html" class="text-accent-500 hover:text-accent-600 font-semibold">← Volver al inicio</a></p>
+            </div>
+
+            <div id="ya-elegido" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-8 text-center max-w-lg mx-auto">
+                <p class="text-4xl mb-3" aria-hidden="true">✅</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">¡Ya elegiste tu plan!</h1>
+                <p id="ya-elegido-detalle" class="text-brand-500 dark:text-brand-300 text-sm">Te vamos a contactar para coordinar el pago.</p>
+            </div>
+
+            <div id="elegir" class="hidden">
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1 text-center">Elegí tu plan, <span id="saludo-nombre"></span></h1>
+                <p class="text-brand-500 dark:text-brand-300 text-sm text-center mb-8">Elegí un plan y te contactamos para coordinar el pago y arrancar. Todavía no se cobra nada acá.</p>
+
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-lg p-6 flex flex-col">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Acceso a la plataforma</h2>
+                        <p class="text-2xl font-bold text-accent-500 mb-2">₡6.900<span class="text-sm font-medium text-brand-450 dark:text-brand-350">/mes</span></p>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 flex-1 mb-4">Cursos, tableros interactivos, entrenamiento táctico y Modo Adaptado. Sin clases en vivo.</p>
+                        <button type="button" data-plan="plataforma" class="plan-btn w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Elegir este plan</button>
+                    </div>
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-lg p-6 flex flex-col">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Clase grupal</h2>
+                        <p class="text-2xl font-bold text-accent-500 mb-2">₡5.500<span class="text-sm font-medium text-brand-450 dark:text-brand-350">/sesión</span></p>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 flex-1 mb-4">Plan mensual, grupos de hasta 6 alumnos, 60 minutos por clase.</p>
+                        <button type="button" data-plan="grupal" class="plan-btn w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Elegir este plan</button>
+                    </div>
+                    <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-lg p-6 flex flex-col">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Clase individual</h2>
+                        <p class="text-2xl font-bold text-accent-500 mb-2">₡18.000<span class="text-sm font-medium text-brand-450 dark:text-brand-350">/hora</span></p>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 flex-1 mb-4">Clase de 60 minutos, uno a uno, con Oscar Angulo Cubero.</p>
+                        <button type="button" data-plan="individual" class="plan-btn w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Elegir este plan</button>
+                    </div>
+                </div>
+
+                <p id="elegir-error" class="text-sm text-red-600 dark:text-red-400 text-center hidden"></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        const solicitudId = new URLSearchParams(window.location.search).get("s");
+
+        function mostrar(id) {
+            ["cargando", "invalido", "ya-elegido", "elegir"].forEach((otro) => {
+                document.getElementById(otro).classList.toggle("hidden", otro !== id);
+            });
+        }
+
+        const NOMBRE_PLAN = { plataforma: "Acceso a la plataforma", grupal: "Clase grupal", individual: "Clase individual" };
+
+        async function cargar() {
+            if (!solicitudId) {
+                document.getElementById("invalido-detalle").textContent = "Falta el enlace completo que te mandamos por correo.";
+                mostrar("invalido");
+                return;
+            }
+
+            const { data, error } = await sb.rpc("solicitud_para_elegir_plan", { p_id: solicitudId });
+            const fila = Array.isArray(data) ? data[0] : data;
+
+            if (error || !fila || !fila.estado) {
+                document.getElementById("invalido-detalle").textContent = "No encontramos esa solicitud.";
+                mostrar("invalido");
+                return;
+            }
+            if (fila.estado === "pendiente") {
+                document.getElementById("invalido-detalle").textContent = "Tu solicitud todavía se está revisando — todavía no hay un plan que elegir.";
+                mostrar("invalido");
+                return;
+            }
+            if (fila.estado === "aprobada") {
+                document.getElementById("invalido-detalle").textContent = "¡Tu solicitud ya fue aprobada! Revisá tu correo para entrar a la Academia.";
+                mostrar("invalido");
+                return;
+            }
+            if (fila.plan_elegido) {
+                document.getElementById("ya-elegido-detalle").textContent =
+                    `Ya elegiste "${NOMBRE_PLAN[fila.plan_elegido] || fila.plan_elegido}". Te vamos a contactar para coordinar el pago.`;
+                mostrar("ya-elegido");
+                return;
+            }
+
+            document.getElementById("saludo-nombre").textContent = (fila.nombre || "").split(" ")[0] || "";
+            mostrar("elegir");
+        }
+
+        document.querySelectorAll(".plan-btn").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+                document.getElementById("elegir-error").classList.add("hidden");
+                document.querySelectorAll(".plan-btn").forEach((b) => (b.disabled = true));
+                btn.textContent = "Guardando…";
+
+                const { data, error } = await sb.rpc("elegir_plan", { p_id: solicitudId, p_plan: btn.dataset.plan });
+
+                if (error || !data?.ok) {
+                    document.getElementById("elegir-error").textContent = data?.error || "No se pudo guardar tu elección. Intenta de nuevo.";
+                    document.getElementById("elegir-error").classList.remove("hidden");
+                    document.querySelectorAll(".plan-btn").forEach((b) => (b.disabled = false));
+                    btn.textContent = "Elegir este plan";
+                    return;
+                }
+
+                document.getElementById("ya-elegido-detalle").textContent =
+                    `Elegiste "${NOMBRE_PLAN[btn.dataset.plan]}". Te vamos a contactar para coordinar el pago.`;
+                mostrar("ya-elegido");
+            });
+        });
+
+        cargar();
+    </script>
+</body>
+</html>

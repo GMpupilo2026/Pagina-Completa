@@ -30,6 +30,7 @@ const PAGINAS = [
     "/juegos.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",
     "/formularios.html", "/formulario.html", "/cobros.html", "/offline.html",
+    "/unirse.html", "/elegir-plan.html", "/solicitudes.html",
     "/crazyhouse.html", "/cartas.html", "/duelo.html", "/niebla.html", "/estandar.html",
     "/variante.html", "/cuatro-jugadores.html", "/partidas.html", "/torneo.html", "/torneos.html",
     "/lector-planilla.html", "/racha-tactica.html", "/concentracion.html", "/ciegos.html",
@@ -55,7 +56,7 @@ const SIN_ESTILO = new Set([
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "lesson-send-btn",
-    "ficha-btn",
+    "ficha-btn", "plan-btn",
     /* Los cuatro exámenes de arbitraje (arbitraje.html y nivel-de-arbitraje.html):
        cada uno lleva su <span> con cuántas preguntas trae, y ese número NO se
        escribe a mano — lo rellena el propio banco con `totalPara(techo)`, así
