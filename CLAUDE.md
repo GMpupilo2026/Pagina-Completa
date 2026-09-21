@@ -4747,6 +4747,94 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
   `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
 
+## La librería de Supabase tampoco viene de un CDN
+
+Por la misma razón que el CSS, y con más consecuencias: `js/vendor/supabase.js`
+está **en el repositorio**, no pedido a jsDelivr. Estaba escrito así en las 77
+páginas que lo cargan:
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+Eso es un **rango**, no una versión, y sin `integrity`. O sea que cada visita
+ejecutaba lo que hubiera publicado ahí en ese momento, con la sesión de quien
+entrara —un alumno, un profesor, quien administra—, y con acceso al cliente que
+guarda el token. No es un peligro teórico: es lo que pasó con polyfill.io en
+2024. Y **no habría dado ningún error**: las páginas se seguirían viendo igual
+mientras las sesiones se van, que es el fallo callado de siempre pero con todo
+el sitio adentro.
+
+- **Vive al lado de Stockfish**, en `js/vendor/`, que ya estaba servido así.
+- Se trae con `node herramientas/vendor-supabase.js`, después de
+  `npm install @supabase/supabase-js@2`. Queda **byte a byte como viene de
+  npm** —sin cabecera de comentario— para que se pueda comparar contra el
+  paquete; la versión no se anota aparte porque el bundle la lleva dentro
+  (`supabase-js/2.116.0`).
+- **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
+  transcripción** de `reportes.html`, que importa `@huggingface/transformers`
+  desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va
+  de las dos directivas.
+- **`js/supabase-client.js` no pisa un `window.sb` que ya exista.** Dos clientes
+  en la misma página son dos suscripciones de auth y dos juegos de canales de
+  Realtime sobre la misma sesión: no falla, las cosas llegan dos veces. Y de
+  paso los verificadores pueden poner el suyo con `addInitScript` sin depender
+  —como hasta ahora— de que esa línea **reventara** por no encontrar la
+  librería. Eso último no es un detalle: media docena de verificadores pasaban
+  gracias a ese accidente, y al traer la librería al repositorio se cayeron
+  todos a la vez. `verificar-planes.js` necesitó además su doble en
+  `pruebaResumen`, que abría la página a pelo: con el cliente funcionando de
+  verdad, `planes.html` hace lo que tiene que hacer —mandar al login sin
+  sesión— y se lleva `PlanClase` con ella.
+
+**Al agregar una página que use el cliente, o al actualizar la librería, correr
+`node herramientas/verificar-vendor.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que ninguna página la pida a un CDN, que la ruta
+relativa de cada una **llegue de verdad al archivo** —`js/vendor/…` escrito
+desde `entreno/`, que está un piso abajo, da un 404 que tampoco avisa: la
+página se queda en «Comprobando tu sesión…» para siempre—, que toda página que
+use `js/supabase-client.js` cargue antes la librería, y que el archivo siga
+siendo el de npm sin editar a mano.
+
+## El nombre de un alumno es texto ajeno
+
+`profiles_update_own` deja a cada quien editar su propia fila y el trigger de
+identidad revierte `role`, `email`, `is_admin`, `es_coordinador` y el cupo de
+invitaciones — **pero no `full_name`**. O sea que el nombre que se ve en toda la
+plataforma lo escribe el alumno, y hay que tratarlo como lo que es.
+
+La regla ya estaba escrita para la bitácora y para `renderStudentsList()` —el
+nombre va por `textContent`— y `informes.html` no la cumplía: pintaba el nombre
+con `innerHTML` en una docena de sitios, dos de ellos **dentro de un atributo**
+(el `title=` de una barra y el `aria-label=` del perfil por área), y no tenía
+ninguna función de escape a mano. Tenía una, `escVis`, pero declarada dentro del
+bloque de visitantes, como si el único texto ajeno de la página fuera el de un
+formulario público.
+
+Un `full_name` con una etiqueta adentro se ejecutaba **en la pantalla de su
+profesor**, con la sesión del profesor puesta — o la de quien administra, que lo
+ve todo: los 90 perfiles, la bitácora, los cobros y las inscripciones con
+cédulas y fechas de nacimiento de menores. Y la CSP del sitio lleva
+`'unsafe-inline'`, así que no había nada que lo frenara. La página se veía
+perfecta.
+
+- `escVis` subió al principio del script, que es donde se ve que es del archivo
+  entero, y **escapa también la comilla** por los dos atributos.
+- Se escapa **dentro de `barRow()` y `barraHTML()`**, no en cada llamada: las
+  dos reciben a veces un título del catálogo (seguro) y a veces un nombre de
+  alumno, y acordarse en cada sitio es cuestión de tiempo.
+- Lo que **no** se escapa, a propósito, son los nombres de las nueve áreas del
+  diagnóstico y los títulos del plan: salen de `js/plan-entrenamiento.js`, o sea
+  del repositorio, y escaparlos sería sugerir que algo de eso es ajeno.
+
+**Al tocar `informes.html`, correr `node herramientas/verificar-informes.js`**,
+que ahora abre la página con un alumno cuyo nombre ataca las dos formas a la vez
+—una etiqueta para el cuerpo, una comilla para el atributo— y mira lo que pasó
+DE VERDAD en el navegador: si algo se ejecutó, si nació algún elemento que no
+estaba en la página. **Y comprueba que el nombre se siga viendo, literal**:
+borrarlo también quitaría el ataque, y dejaría al profesor sin saber de quién es
+esa fila. Está probado que falla de verdad: contra el archivo de antes,
+`window.__xss` queda puesto y nacen cinco elementos que nadie pintó.
+
+
 ## El dedo y el scroll: arrastrar piezas en el celular
 
 Un navegador de celular, ante un dedo que se desliza, asume que quiere

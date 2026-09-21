@@ -390,6 +390,14 @@ async function pruebaResumen(browser) {
   console.log("\n=== Cómo se lee un renglón ===");
   const page = await browser.newPage();
   await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
+  // Aquí solo se lee `PlanClase.resumen()`, que es lógica pura y no toca la
+  // base — pero la página sí: sin sesión se va a login.html y se lleva
+  // `PlanClase` con ella. Antes esto no pasaba por un accidente (la librería
+  // de Supabase venía de un CDN, no cargaba en la corrida y `supabase-client`
+  // reventaba antes de crear el cliente, así que la página se quedaba quieta).
+  // Desde que la librería se sirve del repositorio, el cliente se crea de
+  // verdad y la redirección ocurre: se le pone el mismo doble que al resto.
+  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(datosProfe(), "prof-1") }));
   await page.goto(BASE + "/planes.html", { waitUntil: "domcontentloaded" });
   const r = await page.evaluate((items) => items.map((i) => PlanClase.resumen(i)), ITEMS);
   igual("posición", r[0], "♟️ La oposición");

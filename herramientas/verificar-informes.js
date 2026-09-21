@@ -545,12 +545,74 @@ async function pruebaAlumno(browser) {
   await page.close();
 }
 
+/* El nombre de un alumno lo escribe él: `profiles_update_own` le deja editar su
+   propia fila y el trigger de identidad solo revierte role, email, is_admin y
+   compañía — `full_name` no. Así que es texto ajeno, y esta página lo pinta con
+   innerHTML en una docena de sitios, incluidos dos atributos (el `title=` de una
+   barra y el `aria-label=` del perfil por área).
+
+   Lo que se rompe acá NO da ningún error: la página se ve perfecta y el código
+   del alumno corre en la pantalla de SU PROFESOR, con la sesión del profesor
+   puesta — o la de quien administra, que lo ve todo. Por eso se prueba con un
+   nombre que ataca las dos formas a la vez (una etiqueta para el cuerpo, una
+   comilla para el atributo) y se mira lo que pasó DE VERDAD en el navegador:
+   si algo se ejecutó, si nació algún elemento que no estaba en la página.
+
+   Y se comprueba además que el nombre SE SIGA VIENDO, literal. Borrarlo también
+   quitaría el ataque, y dejaría al profesor sin saber de quién es esa fila. */
+async function pruebaNombreAjeno(browser) {
+  console.log("\n=== Un nombre con una etiqueta adentro ===");
+  const NOMBRE = 'Eva" onmouseover="window.__xss=1" z="<img src=x onerror="window.__xss=1">';
+  const conNombre = (a) => ({ ...a, full_name: NOMBRE });
+  const { page, errores } = await abrir(browser, {
+    rpc: {
+      informes_resumen_alumnos: [conNombre(ANA), BRUNO, CARLA],
+      informes_cursos_alumnos: CURSOS_ANA,
+      informes_diagnosticos_alumnos: [
+        { student_id: "a-1", detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z", a_medias_pregunta: null, a_medias_fecha: null },
+      ],
+      informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
+      resumen_tareas_examenes: DEBERES,
+      evolucion_alumno: CURVA,
+    },
+    tablas: {
+      profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
+      training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [],
+      question_answers: RESPUESTAS, training_progress: DIAGNOSTICOS, encargados: [],
+    },
+  }, "prof-1");
+
+  // Lo que el nombre trae adentro no puede haber corrido ni haber nacido como
+  // elemento. Se mira en las dos vistas: la del grupo y la de ese alumno, que
+  // es donde se pintan los cursos, el diagnóstico y el perfil por área.
+  const sucio = () => page.evaluate(() => ({
+    ejecutado: window.__xss === undefined ? "no" : "SÍ",
+    inyectados: document.querySelectorAll('img[src="x"], [onmouseover], [z]').length,
+  }));
+
+  const general = await sucio();
+  igual("en la vista del grupo no se ejecutó nada", general.ejecutado, "no");
+  igual("ni nació ningún elemento del nombre", general.inyectados, 0);
+  igual("y el nombre se sigue leyendo entero", await page.evaluate(() =>
+    document.querySelector("#attendance-table-body tr").children[0].textContent), NOMBRE);
+
+  await page.selectOption("#student-filter", "a-1");
+  await page.waitForTimeout(400);
+  const alumno = await sucio();
+  igual("en el informe de ese alumno tampoco se ejecutó nada", alumno.ejecutado, "no");
+  igual("ni nació ningún elemento del nombre", alumno.inyectados, 0);
+
+  errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     pruebaVeredicto();
     await pruebaProfesor(browser);
     await pruebaAlumno(browser);
+    await pruebaNombreAjeno(browser);
   } finally {
     await browser.close();
   }
