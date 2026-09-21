@@ -402,16 +402,116 @@ clase simplemente no existió, y eso no se puede reconstruir después.
   disparaban con el INSERT que llega por Realtime, así que **la clase se puede
   abrir en cualquier momento** y el que ya estaba conectado queda marcado igual.
 
+#### Cerrar la clase tiene que SIGNIFICAR cerrarla
+
+El disparador de "hay alguien del otro lado" se vuelve a evaluar en **cada** aviso
+de presencia, y los alumnos no cierran su pestaña en el mismo segundo en que el
+profesor confirma el cierre. Así que el aviso siguiente encontraba alumnos
+conectados y abría una clase NUEVA, uno o dos minutos después de la que se
+acababa de cerrar. La franja volvía sola a verde, y el profesor —que ya terminó y
+se va— dejaba esa fila abierta para siempre.
+
+**Lo caro viene al día siguiente, y es lo que se ve como "la clase no queda
+registrada":** el índice `class_sessions_una_abierta_por_profesor` impide una
+segunda fila abierta, así que la clase de mañana no abre ninguna — se cuelga de la
+fantasma que quedó, con su fecha y su hora de hace un día. En el registro no
+aparece ninguna clase nueva y la duración de la vieja crece sola. Ningún error en
+ninguna parte.
+
+- **Quiénes estaban conectados al cerrar se guarda** (`alumnosAlCerrar`). Mientras
+  solo estén ESOS, el aviso de presencia no reabre nada: son los que todavía no
+  cerraron la pestaña, no una clase nueva. Un alumno que entre después **sí** la
+  reabre —eso ya es otra clase, y su asistencia tiene que quedar—, y las dos
+  puertas deliberadas del profesor (mandar una posición, el botón «Abrir la
+  clase») también, siempre.
+- Vale igual **si la cerró desde el panel o desde otra pestaña**: lo que llega por
+  Realtime es un cierre igual de deliberado.
+- **El cierre se pide de vuelta con `.select()`**, y se mira si volvió alguna fila.
+  Sin eso, un update que no toca ninguna fila —el id quedó viejo porque la cerraron
+  desde otro lado— devuelve `error: null` y la pantalla decía "cerrada" con el
+  título y la nota tirados a la basura: justo lo que el registro necesita para
+  servir después. Ahora se dice y se manda a escribirlos al registro del panel.
+- Y cuando sí se cerró, **se dice con todas las letras y con su nombre** («✅ Clase
+  cerrada y guardada en el registro como "Finales de rey y peón"»). Cerrar es el
+  momento en que uno quiere saber que quedó guardado.
+
 **Al tocar esto, correr `node herramientas/verificar-clase-registrada.js`** (con
 el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
 Comprueba que entrar solo **no invente ninguna clase**, que entre un alumno la
 abra y quede a nombre de quien la da, que mandar una posición también la abra y
 que una **rechazada** no, que un segundo aviso de presencia no abra otra, que
 cerrar mande el título, la nota y la hora **sobre la clase que estaba abierta**,
-y que a la alumna no se le pinte la franja pero su asistencia sí se marque sola.
+que después de cerrar **ningún aviso de presencia la vuelva a abrir** —ni el del
+mismo alumno que ya estaba— **pero que uno que entra después sí**, y que a la
+alumna no se le pinte la franja pero su asistencia sí se marque sola. Está probado
+que falla de verdad: con el disparador de antes (`onlineStudents.size > 0`), las
+dos comprobaciones del cierre saltan.
 Su Supabase de mentira **apunta el filtro al RESOLVER y no en el `update()`**:
 `.update(x).eq("id", y)` encadena, así que uno que lo capturara antes daría por
-bueno un cierre sobre la clase que no era.
+bueno un cierre sobre la clase que no era. Su `delete()` hace lo mismo y además
+**borra de verdad de la tabla**, para que una consulta posterior no encuentre lo
+que ya no existe. Lo reusan `verificar-sesion-orden.js` y
+`verificar-chat-clase.js`, y acepta **filas de arranque** para sembrar una tabla
+(los mensajes de una conversación, por ejemplo).
+
+### Vaciar el chat: la base siempre lo permitió, lo que fallaba era la pantalla
+
+«Vaciar esta conversación» parecía no funcionar: el profesor apretaba, confirmaba,
+y los mensajes seguían ahí. La RLS no tenía nada que ver —`class_chat_messages_delete`
+deja borrar el hilo entero del alumno a quien es su profesor, y el borrado SÍ
+ocurría—. Lo que no ocurría era el repintado.
+
+- **El DELETE llegaba sin `student_id`.** Con la replica identity por omisión, el
+  payload de un borrado solo trae la clave primaria, y `subscribeChat()` decide a
+  qué conversación pertenece cada cambio justamente por esa columna. El evento no
+  coincidía con ningún hilo, no se recargaba nada, y la lectura natural de eso es
+  "no me deja vaciarlos". Al alumno, peor: le quedaban a la vista mensajes que ya
+  no existían hasta que recargara. Se arregló con `replica identity full` sobre
+  `class_chat_messages` —9 filas de 500 caracteres: replicar la fila entera acá no
+  cuesta nada—, que es lo que vacía **la pantalla del alumno**.
+- **Y la pantalla de quien apretó el botón no espera ese aviso**: recarga ahí mismo
+  y lo dice. Depender de que un aviso dé la vuelta por la red para confirmar algo
+  que uno acaba de hacer es la misma apuesta que ya se perdió una vez.
+- El aviso de confirmación dice que **se borran también los mensajes del alumno**:
+  es lo que pasa, y un «vaciar» que dejara los suyos no vaciaría nada.
+
+**Al tocar el chat, correr `node herramientas/verificar-chat-clase.js`** (con el
+sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`). Su doble
+**no dispara ningún aviso de Realtime**, igual que la base cuando el DELETE va sin
+su fila: si la página volviera a depender del aviso, la prueba falla. Comprueba
+que el borrado vaya filtrado por `student_id` y no por `sender_id` —con el filtro
+equivocado quedaría media conversación—, que sea **un solo filtro**, que la lista
+quede vacía en pantalla, y que a la alumna no se le pinte ni el botón de vaciar ni
+el selector de con quién hablar. Está probado que falla de verdad: sin el
+`loadChatMessages()` del final, los tres mensajes siguen en pantalla.
+
+### Los dos tableros del alumno llevan coordenadas
+
+`question-board` (la pregunta) y `practice-board` (la práctica contra el motor) son
+overlays a pantalla completa con un tablero tan grande como el principal, y eran
+los únicos tableros del sitio sin las coordenadas de afuera. Ahí el alumno está
+**solo**: el profesor no le está señalando la casilla y no tiene al lado el cuadro
+de comandos. Y en el resto del sitio —Mates, Ejercicios por tema, 4×4, el
+diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
+
+- Es el mismo `externalCoords` del tablero principal (`_setupExternalCoords` de
+  `js/clases-board.js`), no un dibujo aparte. Se giran solas con el tablero, que es
+  lo que hace uno de verdad cuando al alumno le tocan las negras.
+- **El tope de ancho se lee tal cual esté escrito, no como un número de píxeles.**
+  El patrón entendía solo `max-w-[560px]`, que es lo que traía `#chessboard`; los
+  dos overlays usan `max-w-[min(92vw,560px)]` y se habrían quedado sin tope — el
+  tablero en sus 560 px y la fila de letras estirada a todo el ancho de la tarjeta,
+  o sea **las coordenadas señalando la columna que no era**, que se ve igual de
+  bien y es peor que no tenerlas.
+- Las **miniaturas de supervisión** del profesor siguen sin ellas a propósito: son
+  de mirar de lejos y a ese tamaño las letras no se leerían.
+
+`verificar-sesion-curso.js` lo comprueba midiendo en el navegador: que cada letra
+caiga sobre su columna y cada número sobre su fila —contra las casillas de verdad,
+por su `data-square`, no contra lo que diga la página—, que las etiquetas se giren
+con el tablero y que el tablero siga cuadrado. Su doble acepta **filas de
+arranque** para sembrar una pregunta abierta o una ronda de práctica: sin eso los
+dos overlays del alumno no se pueden ni ver.
 
 ### Táctica por tema: la vista previa y su botón
 
@@ -662,6 +762,453 @@ ningún otro número chico.
   `renderProfesoresCelda()` para no arriesgar ese camino ya probado por
   `verificar-varios-profesores.js`: la de equipos es una función aparte,
   `renderEquipoTags()`.
+
+#### Llenar un equipo de una vez, que es lo que evita el uno por uno
+
+Un equipo hace exactamente lo que se pide cuando alguien dice «asignarle
+profesores a un grupo», y lo hace **vivo**: quien entre después al equipo
+hereda a sus entrenadores sin que nadie vuelva a tocar nada. Lo que faltaba no
+era el modelo, era poder llenarlo: el selector ofrecía los alumnos de a uno
+entre mil doscientos nombres, así que armar un equipo costaba una tarde y los
+permisos se terminaban repartiendo alumno por alumno.
+
+**`js/equipo-volcar.js` es esa pieza**, y está escrito una sola vez para las
+dos pantallas —`admin.html` y `coordinacion.html`—, como
+`js/subgrupos-marcar.js` lo está para Tareas y Exámenes. Ofrece, en un solo
+selector con sus dos `<optgroup>`, **los grupos** (`profiles.grupo`) y **los
+subgrupos**.
+
+- **SE MANDA LA UNIÓN, NUNCA SOLO EL GRUPO.** Las dos puertas que escriben los
+  alumnos de un equipo —`equipo_set_alumnos` de la Edge Function y
+  `coord_equipo_set_alumnos()` en la base— dejan la lista EXACTAMENTE como
+  llega, igual que `set_teachers`. Mandar solo los del grupo **vaciaría el
+  equipo de todo lo anterior**: se vería perfecto con sus 23 nombres nuevos y
+  los 40 de antes habrían perdido a sus entrenadores sin que nadie lo pidiera.
+  Por eso este módulo no ofrece «dejar solo estos».
+- **El tope se mira ANTES de mandar.** Un equipo aguanta 300 alumnos y un grupo
+  de colegio puede tener 400: si viajara, volvería con el error del servidor
+  justo cuando quien lo apretó ya no sabe qué arreglar. Se dice el número y se
+  propone partirlo en dos.
+- **Un id que la pantalla no reconoce se cuenta y se dice** («2 no están en tu
+  lista»): es un alumno que se fue de su alcance o un subgrupo de otro
+  profesor. Dar por bueno el número del grupo dejaría el equipo con menos gente
+  de la que se pidió sin que nada fallara — la misma regla que el selector de
+  subgrupos de Tareas.
+- **De quién es cada subgrupo va escrito en su opción.** Dos profesores pueden
+  tener cada uno su «Los del martes», y son listas distintas.
+- **El aviso de qué pasó sobrevive al repintado.** Guardar vuelve a pintar la
+  tarjeta entera —es la única forma de que las etiquetas y el selector de
+  «sumar otro» queden al día sin olvidos—, así que el renglón donde se escribió
+  «Entraron 23» se muere en el acto y no lo lee nadie. Por eso `guardar` recibe
+  la frase y quien repinta se la devuelve al control nuevo en `mensaje`.
+- **Los subgrupos los sirve `public.subgrupos_a_la_vista()`**, `SECURITY
+  INVOKER`: quién ve los de quién lo sigue decidiendo la RLS de `subgrupos`
+  (los propios, los de su coordinación, todos si administra). Devuelve el
+  arreglo de ids de cada uno, como `mis_subgrupos()`. **Volcarlo no convierte
+  al subgrupo en una llave**: lo que queda guardado es la lista del equipo, y
+  el subgrupo sigue sin dar ni un permiso.
+
+#### Los equipos también se manejan desde coordinación
+
+Estaban solo en `admin.html` y solo los escribía la Edge Function
+`admin-manage-users`, o sea solo quien administra. Ahora `coordinacion.html`
+tiene su tarjeta «👥 Equipos», acotada con el patrón de siempre:
+`soy_coordinador()` dice quién entra, `bajo_mi_coordinacion()` dice sobre
+quién. Son cinco funciones `SECURITY DEFINER` —`coord_equipo_create`,
+`_rename`, `_delete`, `_set_alumnos`, `_set_entrenadores`— con el `execute`
+revocado de `public` y `anon`.
+
+- **La fuga propia de los equipos, que no existe en `coord_set_profesores()`:**
+  meter a un alumno suyo en un equipo con entrenadores AJENOS le daría a esos
+  entrenadores acceso a ese alumno — o sea, repartir permisos fuera de su
+  coordinación sin que nada fallara. Por eso tocar la gente de un equipo pide
+  que **toda** la gente del equipo esté bajo su coordinación, en los dos lados,
+  y eso lo contesta `equipo_bajo_mi_coordinacion()`.
+- **Repartir no es lo mismo que renombrar o borrar.** Un equipo que armó
+  administración puede tener un sentido que no es el de quien coordina, así que
+  esos dos verbos se quedan con **lo que ella misma creó**
+  (`equipo_lo_cree_yo()`, sobre `equipos.created_by`); repartirle su propia
+  gente sí lo puede hacer en cualquier equipo que cumpla lo de arriba. En
+  pantalla, sobre un equipo que no puede repartir **no se pinta ni el ✕, ni el
+  selector, ni el volcado**, y se dice por qué: la base lo rechazaría igual,
+  pero el fallo lo descubriría quien apretó.
+- **Lo que ya estaba y no coordina se conserva** al escribir, igual que en
+  `coord_set_profesores()`. Hoy no puede pasar —el equipo entero tiene que ser
+  suyo— pero la regla se escribe igual: el día que se afloje esa condición, el
+  borrado callado ya no estaría esperando.
+- **Borrar pide dos toques en el propio botón**, con lo que va a pasar escrito
+  encima («sus entrenadores pierden a estos alumnos»), no un diálogo del
+  navegador: esto se toca desde el celular.
+- **Los alumnos del selector se piden hasta el final**, no con un límite a ojo:
+  `mi_gente` viene paginada porque PostgREST corta sin avisar, y un límite
+  dejaría fuera del selector a alumnos que sí puede repartir.
+
+Comprobado impersonando roles en SQL, 13 casos: quien coordina crea el equipo,
+le mete a su alumno, **un alumno ajeno se rechaza**, pone a su profesor de
+entrenador y con eso el entrenador **ya sale en `profesores_de()` de ese
+alumno**; sobre un equipo con gente ajena no puede sumar, ni renombrar, ni
+borrar; un alumno no crea ninguno, no se pone de entrenador y ve **0**
+subgrupos.
+
+### Subgrupos: las listas que cada profesor arma para sí mismo
+
+Son la TERCERA forma de agrupar alumnos que tiene el sitio, y confundirla con
+las otras dos es el error caro:
+
+| | quién la pone | cuántas por alumno | ¿da permisos? |
+|---|---|---|---|
+| `profiles.grupo` | quien administra | una | no |
+| **equipos** | quien administra **o quien coordina, sobre su gente** | varias | **SÍ** |
+| **subgrupos** | **cada profesor, solo** | varias | **no** |
+
+**Cuando alguien pide «asignarle profesores a un subgrupo» está pidiendo un
+equipo.** Un subgrupo no da permisos por diseño, y eso es lo que permite que
+cada profesor arme los suyos sin pedirle nada a nadie; lo que sí reparte acceso
+—de una vez y para los que entren después— es un equipo. Lo que hacía falta no
+era convertir el subgrupo en llave, sino poder **volcar** un subgrupo entero
+dentro de un equipo, que es lo de abajo.
+
+Un subgrupo se define por lo que NO hace: **no da ni un permiso**. Ninguna de
+las funciones que deciden quién es profesor de quién —`profesores_de()`,
+`alumnos_de()` y las cinco que cuelgan de ellas— lo mira. Por eso un profesor
+puede armarlos solo, sin pedirle nada a quien administra: es una etiqueta para
+filtrar («los del martes», «los que van al torneo»), no una llave. Un equipo
+sí es una llave, y por eso los equipos siguen siendo de administración.
+
+- **Solo puede contener a quien YA es suyo**: la política de insert de
+  `subgrupo_alumnos` exige `soy_profesor_de()`. No es por los permisos —no da
+  ninguno— sino porque no hay razón para que sirva de libreta de ids ajenos.
+- **Es del profesor que lo armó.** Quien administra los ve todos —la regla
+  permanente— pero **no los edita**: la forma en que una colega ordena a sus
+  alumnos es suya, igual que sus planes de clase. Comprobado impersonando roles
+  en SQL: otra profesora no lo ve (0 filas), no ve sus renglones y renombrarlo
+  le cambia **0 filas**; un alumno no puede crear ninguno ni ve ninguno.
+- **Dos subgrupos con el mismo nombre serían imposibles de distinguir** en el
+  selector, que es para lo único que existen: lo impide un índice único sobre
+  `(profesor_id, lower(btrim(nombre)))`. Es por profesor, así que que una colega
+  tenga su propio «Grupo de la tarde» no estorba.
+- `public.mis_subgrupos()` devuelve **el arreglo de ids** de cada uno, no las
+  filas sueltas: quien la llama ya tiene cargada su lista de alumnos, así que
+  con los ids le basta para cruzar sin una segunda consulta por subgrupo.
+
+#### Dónde se usan
+
+- **`subgrupos.html`** (tarjeta «👥 Mis subgrupos» en Herramientas): crear,
+  renombrar, borrar y marcar quiénes están. **Al guardar se manda SOLO lo que
+  cambió**, no la lista entera: borrar todo y volver a insertarlo dejaría el
+  subgrupo vacío un instante y, si el insert fallara a la mitad, se quedaría
+  vacío sin que nadie lo hubiera pedido.
+- **El filtro de `informes.html`**: van en el MISMO selector que los grupos,
+  con su `<optgroup>` —a la hora de mirar el informe, «los del martes» se elige
+  igual que «7° B»—. El valor lleva el prefijo `sub:` porque un grupo es texto
+  libre y podría llamarse igual que un subgrupo. Un subgrupo **sin nadie no se
+  ofrece**: sería un control que no hace nada.
+- **`js/subgrupos-marcar.js`** en Tareas y en Exámenes: elegir un subgrupo
+  marca a los suyos **y desmarca al resto**. Es lo que quiere decir «mándasela
+  a los del martes», y deja la lista en un estado que se lee de un vistazo;
+  sumar sobre lo que ya estaba marcado sería más flexible y mucho menos
+  predecible, porque nadie revisa sesenta casillas antes de apretar el botón.
+  Está escrito UNA vez para las dos pantallas: son justo las dos donde
+  equivocarse cuesta caro —una tarea mandada a toda la Academia en vez de a los
+  seis del martes no da ningún error—.
+  - **Cuántos quedaron marcados puede no ser cuántos tiene el subgrupo**: si a
+    uno de sus alumnos lo reasignaron, ya no está en la lista de esa pantalla.
+    Se dice el número de verdad, el de las casillas, y se avisa de la
+    diferencia. Dar por bueno el del subgrupo dejaría una tarea con un alumno
+    menos sin que nada fallara.
+
+**Al tocar los subgrupos, el filtro de Informes o el selector de Tareas y
+Exámenes, correr `node herramientas/verificar-subgrupos.js`** (con el sitio en
+localhost:8777 y playwright). Comprueba qué manda la página al crear y al
+renombrar, que guardar quiénes están mande **solo la diferencia**, que el
+buscador no se pierda con las tildes, que a un alumno no se le pinte nada, que
+el subgrupo salga en el selector de Informes y —lo que de verdad importa— que
+**filtre**: un filtro que no filtra enseña el informe de la Academia entera y
+se ve exactamente igual de bien. Está probado que falla de verdad: quitándole
+el filtro a `filteredStudents()`, salta.
+
+## Coordinar es un alcance, no una llave maestra
+
+`soy_coordinador()` contestaba una sola pregunta —«¿coordina o administra?»— y
+con eso se abría TODO: los cobros de la Academia entera, las inscripciones, los
+formularios. Con miles de alumnos y varios coordinadores eso no es coordinar,
+es administrar, y quien coordina un colegio no tiene por qué ver las
+mensualidades de otro.
+
+Lo que faltaba era el ALCANCE, y se arma como todo lo demás acá: una tabla
+puente que solo escribe quien administra, y una función que contesta la
+pregunta.
+
+- **`soy_coordinador()` dice QUIÉN entra a una pantalla;
+  `bajo_mi_coordinacion(persona)` dice SOBRE QUIÉN.** Al escribir una política
+  o una función de coordinación se pregunta por la segunda, nunca por la tabla
+  — el mismo principio que `profesores_de()` para "quién es profesor de quién".
+- **`public.coordinador_profesores` NO tiene política de insert/update/delete**,
+  igual que `profile_teachers` y `equipos`: darse a sí mismo un profesor sería
+  darse sus alumnos. La escribe `set_profesores_del_coordinador()`, que exige
+  `is_admin` y **deja la lista EXACTAMENTE como se mandó** — lo que no esté, se
+  quita, igual que `set_teachers` y `equipo_set_alumnos`.
+- **Quien coordina alcanza a tres clases de gente**, y las tres hacen falta:
+  sus profesores, los alumnos de esos profesores y sus propios alumnos.
+  Coordinar no quita dar clase.
+- **Quien administra da `true` siempre.** Por eso las políticas no llevan una
+  segunda rama para él: `bajo_mi_coordinacion()` ya la trae.
+- **Los cobros quedaron acotados con eso** (`cobros`, `pagos`, `suscripciones`,
+  `cobros_contacto`). Los **planes** no: son las tarifas de la Academia, no de
+  un alumno, y no hay a quién atarlos.
+  - **Cuidado con `pagos`**, que fue el error de esta tanda y se atajó en el
+    momento: colgarlo solo del cobro visible abre la puerta que se quería
+    cerrar, porque un alumno VE su propio cobro y podría insertar un pago sobre
+    él y darse por pagado. El `soy_coordinador()` va escrito; lo que cuelga del
+    cobro es el alcance, no el permiso. Comprobado impersonando a un alumno: ve
+    su cobro y su insert de 999.999 queda **rechazado**.
+- **Un coordinador sin profesores vinculados ve casi nada**, y eso no puede ser
+  callado: el panel se lo dice con todas las letras y nombra quién se los
+  vincula. Es la primera cosa que pasa al marcar a alguien como coordinador.
+
+### El acotamiento se quedó a medio hacer en cuatro tablas más
+
+La ronda de arriba dejó acotados `cobros`, `cobros_contacto`, `pagos` y
+`suscripciones`, pero **no** tocó todo lo demás que también cuelga de
+`soy_coordinador()`. Con datos reales (dos cuentas coordinadoras, ambas con
+`grupo = 'SJ'`) quedó comprobado que la fuga era real, no teórica:
+
+- **`formularios` / `formulario_respuestas`** filtraban por `grupo =
+  mi_grupo()`, no por `bajo_mi_coordinacion()`. `grupo` es un texto de sede
+  (SJ, Santa Ana, ADAPZ) que **dos coordinadoras distintas pueden compartir**
+  —y de hecho comparten—, así que una veía los formularios y las respuestas
+  de la otra sin ser su coordinación en absoluto. Se cambió a
+  `bajo_mi_coordinacion(creado_por)`, igual que el resto. Como
+  `formularios_insert` exige `soy_coordinador()`, `creado_por` siempre es una
+  coordinadora o quien administra, así que la función de siempre alcanza sin
+  agregar ninguna columna.
+  - **Efecto secundario a propósito, no un bug**: un formulario que arme
+    quien administra (no una coordinadora) deja de aparecerle a las
+    coordinadoras aunque comparta su `grupo` — antes sí les aparecía, por la
+    misma fuga. Si hace falta que quien administra reparta un formulario a
+    una coordinadora puntual, hoy no hay botón para eso; es una función
+    aparte si se pide.
+- **`avisos_cobro`** y **`datos_facturacion`** solo tenían `soy_coordinador()`
+  a secas — cualquier coordinadora veía los avisos de pago y los datos
+  fiscales de cualquier alumno de la Academia. Se acotaron exactamente como
+  `cobros` (uniendo a `cobros.student_id` en el caso de `avisos_cobro`, que no
+  tiene alumno propio).
+- **`equipos` / `equipo_alumnos` / `equipo_entrenadores`** (los equipos que
+  arma cada coordinadora en `coordinacion.html` con sus propios profesores y
+  alumnos) también solo pedían `soy_coordinador()`: cualquier coordinadora
+  veía los equipos de las demás. Ya existía
+  `public.equipo_bajo_mi_coordinacion(equipo)` —comprueba que CADA alumno y
+  CADA entrenador del equipo estén bajo la coordinación de quien pregunta—
+  pero **no estaba conectada a ninguna política todavía**. Conectarla tal
+  cual disparaba `42P17: infinite recursion detected in policy`: la política
+  de `equipos` consulta a `equipo_entrenadores`/`equipo_alumnos`, cuyas
+  políticas volvían a consultar `equipos` (a través de la función) dentro del
+  mismo plan. Se resolvió con `set row_security to off` **dentro de la
+  función** —tanto en `equipo_bajo_mi_coordinacion()` como en la nueva
+  `public.puede_ver_equipo(equipo)`, que junta las tres condiciones (bajo mi
+  coordinación, soy su entrenador, soy su alumno) en un solo lugar para que
+  ninguna política tenga que hacer un `EXISTS` crudo contra otra tabla con
+  RLS— así que las tres políticas (`equipos_select`, `equipo_alumnos_select`,
+  `equipo_entrenadores_select`) llaman a `puede_ver_equipo()` y nada más.
+  Ser `SECURITY DEFINER` con el dueño teniendo `BYPASSRLS` **no alcanzó por sí
+  solo**: hace falta el `set row_security to off` explícito en la función
+  para que sus propias consultas no vuelvan a disparar la política de la
+  tabla que las llamó.
+- **`solicitudes_academia` se dejó afuera, a propósito.** Quien llena
+  `unirse.html` todavía no es alumna de nadie —no hay profesor, ni grupo, ni
+  ningún dato para decidir de qué coordinadora es la solicitud—, así que no
+  hay con qué acotarla sin agregar un campo nuevo (una sede que la persona
+  elija, o una asignación manual). El dueño del proyecto decidió dejarla
+  como bandeja compartida entre todas las coordinadoras y quien administra,
+  por ahora. Si se pide acotarla más adelante, hace falta decidir primero
+  cómo se liga cada solicitud a una coordinadora concreta — no alcanza con
+  repetir el patrón de `bajo_mi_coordinacion()`.
+- Comprobado impersonando a las dos coordinadoras reales de `grupo='SJ'`
+  (cuentas ya existentes, no de prueba): antes de este cambio ambas verían
+  las mismas filas; después, cada una ve solo lo suyo y ninguna ve lo de la
+  otra, mientras quien administra sigue viendo todo.
+
+### `role = 'admin'`: la cuenta master no es alumna de nadie
+
+`role` solo valía 'profesor' o 'alumno', así que quien administra estaba
+guardado como ALUMNO con `is_admin` encima. No rompía ningún permiso —`is_admin`
+va escrito aparte en todas las políticas que le importan— pero la metía donde no
+pinta nada: salía en la lista de «para quién» al mandar una tarea o un examen,
+contaba como alumna en los conteos y podía ser «compañera de clase» de
+cualquiera.
+
+**Por qué esto NO es el tercer valor contra el que avisa este archivo.** Aquel
+aviso era por `es_coordinador`: hacer de "coordinar" un tercer rol habría
+obligado a revisar las 23 comprobaciones de `role === 'profesor'` del navegador
+y las 13 de la base, porque quien coordina SÍ tiene que poder todo lo de un
+profesor. Acá es al revés — la cuenta master ya no cumplía ninguna de esas
+comprobaciones, porque era 'alumno'. Pasar a 'admin' no le quita ni un permiso
+de los que tenía; lo único que cambia es de qué listas desaparece.
+
+- **La cuenta master también da clase**, y eso hubo que arreglarlo aparte:
+  cinco políticas pedían `role = 'profesor'` A SECAS —`class_sessions_insert`,
+  `questions_insert`, `practice_sessions_insert`, `saved_games_insert` y
+  `archivos_pgn_insert`, más `tv_settings_update_profesor`— así que al pasar a
+  'admin' no podía abrir una clase en vivo, plantear una pregunta, abrir una
+  ronda de práctica, guardar una partida ni subir un PGN. Ahora las seis
+  preguntan `is_admin or role = 'profesor'`, que es la regla permanente de la
+  casa. En el navegador, `isTeacher` hacía la misma comprobación a secas en
+  diez páginas (`sesion.html`, las siete de partida, `partidas.html`,
+  `clases.html`, `tv.html`) y las diez pasaron a `|| profile.is_admin`.
+  Comprobado impersonando roles en SQL: la cuenta master abre la clase y un
+  alumno sigue sin poder.
+  - **Quien coordina nunca dejó de poder**, y por eso no hizo falta tocar nada
+    para eso: coordinar es una marca ENCIMA de `role = 'profesor'`, no un
+    tercer valor — es justamente lo que esa decisión compra.
+  - En el chat de la clase en vivo, `isFromTeacher` miraba lo mismo, así que
+    los mensajes de quien administra se pintaban del lado del alumno. Va con
+    `is_admin` también, y la consulta trae esa columna.
+- El CHECK de `es_coordinador` acepta ahora 'profesor' o 'admin'.
+
+### Cambiar el rol de una cuenta, desde coordinación
+
+`public.cambiar_rol(persona, rol)` sube a un alumno a profesor o baja a un
+profesor a alumno. Es lo que pasa en una academia de verdad: el alumno grande
+empieza a dar clase a los pequeños.
+
+- **Va por una función `SECURITY DEFINER` con la marca local
+  `ajedrez.cambiando_rol`**, porque el trigger de identidad revierte `role` —el
+  rol no lo decide quien lo tiene—. Y **vuelve a leer la fila y falla si no
+  quedó**: es exactamente la trampa que ya se comió `marcar_coordinador()`, que
+  devolvía "listo" con el valor revertido detrás.
+- **Bajar a alumno a alguien que todavía tiene alumnos asignados se rechaza,
+  CON EL NÚMERO**: esos alumnos se quedarían sin profesor y sus informes
+  dejarían de salirle a nadie, sin que nada fallara.
+- **Nunca deja poner 'admin'**: la cuenta master es una decisión de quien ya
+  administra y se da con su interruptor.
+- **Y lo que más se rompe callado: que la persona DESAPAREZCA de la vista de
+  quien la cambió.** Subir a un alumno a profesor lo saca de `profile_teachers`
+  en la práctica, así que quien coordina lo perdería de vista en el mismo acto
+  de ascenderlo. Por eso queda bajo su coordinación; y al revés, quien baja a un
+  profesor a alumno se queda con él como alumno suyo.
+- Comprobado impersonando roles en SQL: un alumno ajeno se rechaza, el suyo sube
+  y queda coordinado, vuelve a bajar y deja de estarlo, la cuenta master se
+  rechaza y un alumno no puede ascenderse solo.
+
+### `coordinacion.html`: por dónde se entra a la gente que uno coordina
+
+Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más». Por
+cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
+
+- **La lista la filtra y la corta `mi_gente()`, en la base.** Nace pensando en
+  miles: bajarse las cuentas para filtrarlas en el navegador es la piedra con la
+  que ya tropezaron Informes, el registro de clases y Cobros — PostgREST corta
+  la respuesta a partir de cierta cantidad de filas sin dar ningún error.
+  La búsqueda va **sin tildes** en el propio SQL, para no tener que bajarlas.
+- **No se ofrece lo que la base va a rechazar**: ni cambiarle el rol a la cuenta
+  master ni a la propia. Un botón que va a fallar es peor que ninguno.
+- **Cambiar el rol pide dos toques en el propio botón**, no un diálogo del
+  navegador: esto se toca desde el celular. Y cuando la base dice que no, se
+  enseña SU mensaje —«todavía tiene 12 alumnos asignados»—, porque un «no se
+  pudo» a secas deja a quien coordina sin saber qué arreglar.
+- **Reenviar el acceso dice a qué bandeja salió.** Con un alumno sin buzón no
+  salió a la suya, y ese es justo el dato que hace falta para avisarle a la
+  familia. `reenviar-acceso` vale ahora también para un PROFESOR bajo
+  coordinación —quien coordina da de alta al equipo y es quien recibe el «no me
+  llegó nada»—; lo único que no se toca desde ahí es la cuenta master.
+
+### La ficha de una cuenta: coordinar es también corregir
+
+Quien coordina veía a su gente y no podía tocar nada: un correo mal escrito, un
+nombre con una letra de más o un alumno sin grupo había que pedírselos a quien
+administra. Cada cuenta tiene ahora su **«✏️ Su ficha»** —que se despliega
+debajo, sin salir de la lista— con el nombre, el grupo, el correo con el que
+entra y sus profesores.
+
+- **Lo escriben dos funciones de la base, NO la Edge Function del panel de
+  administración.** El alcance de la coordinación ya vive en SQL
+  —`bajo_mi_coordinacion()`, `cambiar_rol()`,
+  `set_profesores_del_coordinador()`— y partirlo entre la base y una función
+  que tendría que volver a preguntar lo mismo es exactamente cómo se separan
+  dos versiones de la misma regla. Son `public.coord_guardar_cuenta()` (nombre
+  y grupo) y `public.coord_set_profesores()`, las dos `SECURITY DEFINER`, las
+  dos exigiendo `soy_coordinador()` **y** `bajo_mi_coordinacion()` de la cuenta
+  que se toca, con el `execute` revocado de `public` y `anon`.
+- **`coord_guardar_cuenta()` vuelve a leer la fila y falla si no quedó**: es la
+  trampa que ya se comieron `marcar_coordinador()` y `cambiar_rol()` —el
+  trigger de identidad revierte por detrás y la función devuelve «listo» con el
+  valor viejo—. Acá el trigger no toca `full_name` ni `grupo`, pero la relectura
+  se escribe igual: el día que alguien le sume una columna protegida, el fallo
+  ya no puede ser callado.
+- **Lo que no puede mover no se ofrece**: el rol va por su propio botón (con
+  sus dos toques), el cupo de invitaciones es de quien administra, y la cuenta
+  master no se toca desde acá. Su firma solo acepta persona, nombre y grupo, así
+  que no hay por dónde colar el rol ni `is_admin`.
+- **`coord_set_profesores()` conserva a los profesores fuera de su alcance.**
+  «Lo que no esté, se quita» es la regla de `set_teachers` y de
+  `equipo_set_alumnos`, y acá sola sería un desastre callado: la lista que la
+  pantalla tiene delante son los profesores **que esa coordinación ve**, y
+  mandarla entera le borraría a la alumna el profesor de otra coordinación sin
+  que nada fallara. La función une lo pedido con lo que ya tiene y no coordina.
+  En pantalla, esa etiqueta se pinta **sin su ✕**: un botón que va a fallar es
+  peor que ninguno.
+- **Por eso `mi_gente()` devuelve una columna `profesores`** (un arreglo de
+  `{id, nombre}` de `profesores_de()`), y no se resuelven en el navegador: el
+  join con `profiles` pasa por la RLS, así que un profesor que esa coordinación
+  no ve **saldría como un hueco** y la lista se mandaría sin él.
+- **El correo lo sigue cambiando `correos-alumno`**, que es donde ya vivía esa
+  regla —el 409 cuando el correo ya es de otra cuenta, el usuario de la Academia
+  para quien no tiene buzón, y la relectura de la fila porque el trigger de
+  identidad revierte `email`—. Escribirlo otra vez acá sería una segunda versión
+  de la misma decisión. La casilla **«No tiene correo propio»** apaga el campo
+  en vez de esconderlo, y lo que la pantalla enseña al final es **el usuario que
+  devolvió el servidor**, no el que ella propuso: el desempate (`ana.rojas2`) lo
+  hace el servidor, y enseñar el propuesto dejaría a la familia intentando
+  entrar con uno que no es.
+- **Guardar no repinta la lista.** Se actualiza el encabezado de esa tarjeta y
+  nada más: repintar cerraría la ficha en la cara de quien acaba de guardar.
+
+### Armarle los subgrupos a un profesor
+
+`subgrupos.html?profesor=<id>` abre los de otra persona. Un profesor nuevo con
+cuarenta alumnos no se pone a ordenarlos solo: parte del trabajo de coordinar es
+dejarle los grupos hechos.
+
+- **El dueño no cambia.** Quien coordina entra a los suyos, no se los queda, y
+  la página lo dice arriba con todas las letras. **El fallo callado de esta
+  pantalla es crear con el id de quien coordina en vez del de su profesor**: se
+  vería exactamente igual, y los subgrupos que creía estar armándole a otro
+  serían suyos. El verificador lo mide, y está probado que falla de verdad.
+- Los propios salen de `mis_subgrupos()` —la de todos los días, la que usan el
+  filtro de Informes y el selector de Tareas— y los de otra persona de
+  `subgrupos_de()`. Dos nombres para dos preguntas distintas.
+
+**Al tocar la coordinación, correr `node herramientas/verificar-coordinacion.js`**
+(con el sitio en localhost:8777 y playwright). Comprueba que la lista se le pida
+a la base con su filtro y su rango —y que nadie se baje la tabla de cuentas—,
+que no se ofrezca cambiar el rol de la cuenta master, que cambiar el rol mande a
+quién y a qué rol, que reenviar el acceso diga a qué bandeja salió, que a quien
+todavía no tiene profesores vinculados se le diga por qué no ve a nadie (se mide
+el `display` que calcula el navegador) y que crear un subgrupo ajeno lo deje a
+nombre del profesor. De la ficha comprueba qué MANDA —que guardar vaya por
+`coord_guardar_cuenta` con esa cuenta y solo con el nombre y el grupo, que
+quitarle un profesor mande la lista sin él por `coord_set_profesores` y que **no
+se llame a la Edge Function del panel de administración**—, que se vean todos
+sus profesores pero solo se pueda quitar al que coordina, y que al cambiar el
+correo se enseñe el que devolvió el servidor. Está probado que falla de verdad:
+mandando el id de quien coordina en vez del de la alumna, salta.
+
+De los equipos comprueba que sobre uno con gente ajena **no se pinte ni un
+control**, que volcar un grupo mande la UNIÓN —con el que ya estaba dentro— y
+que volcar algo que ya está no mande nada, que crear, sumar entrenadores y
+borrar vayan por sus funciones de la base, y que el «Entraron 2 alumnos» se lea
+**en la tarjeta que se ve** y no en la que se acaba de repintar. Está probado
+que falla de verdad: haciendo que el volcado reemplace en vez de sumar, salta.
+
+- **Sus filas se buscan por el correo, nunca por su posición.** Sumar una
+  cuenta a los datos de prueba corre los índices y deja media docena de
+  comprobaciones fallando por algo que no tiene nada que ver con lo que miran
+  — la misma razón por la que el panel de la Academia busca sus grupos por
+  nombre.
+- **Y los handles se vuelven a pedir después de cada guardado.** Guardar
+  repinta la lista entera, así que un handle tomado antes apunta a un nodo
+  huérfano —con su mensaje escrito y su estado viejo—: mirándolo a él, la
+  prueba daría verde sobre una pantalla donde no se ve nada.
 
 ## Tareas: el profesor pide cantidades y la tarea se llena sola
 
@@ -1493,7 +2040,9 @@ ya seguía `is_admin`.
   columna — **y además la función vuelve a leer la fila y falla si no quedó**,
   para que no pueda mentir otra vez.
 - `public.soy_coordinador()` (`es_coordinador or is_admin`) es lo que preguntan
-  las políticas nuevas.
+  las políticas nuevas para saber QUIÉN entra. **Sobre quién lo dice
+  `bajo_mi_coordinacion()`** — ver «Coordinar es un alcance, no una llave
+  maestra»: coordinar dejó de abrir la Academia entera.
 
 ### Los formularios
 
@@ -1538,9 +2087,65 @@ líneas de HTML.
   no era la veía quien lo recibía, que es el único que no puede arreglarlo.
 - **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
   sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
-  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, qué
-  manda el formulario público al contestar y el alta de abajo — qué dedujo de
-  cada etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, que
+  compartir un formulario mande lo correcto (ver abajo), qué manda el
+  formulario público al contestar y el alta de abajo — qué dedujo de cada
+  etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+
+### Compartir un formulario con otro coordinador
+
+Un formulario ya lo veía quien lo coordinaba (`bajo_mi_coordinacion(creado_por)`,
+ver «Coordinar es un alcance, no una llave maestra»), pero eso deja un hueco:
+`bajo_mi_coordinacion()` nunca es cierto para la cuenta master, porque
+administrar no es "estar bajo" ningún coordinador. Un formulario que arma quien
+administra queda invisible para todo el equipo de coordinación, sin que nada lo
+avise — y aunque lo hubiera armado otra coordinadora, no había forma de dárselo
+a UNA colega puntual, solo a quien ya la coordinaba a ella.
+
+La salida es la misma que ya se usó para los planes de clase: el dueño elige,
+uno por uno, con qué coordinador comparte el formulario. **Sigue siendo DE
+quien lo armó** — compartirlo da ver el formulario, leer sus respuestas y dar
+de alta las cuentas desde ellas (es lo mismo que ya hace `inscribir-alumno`:
+lee la respuesta con el JWT de quien llama, así que a quien se le comparte
+puede usar "Crear cuenta" igual que el dueño), pero **no** editarlo ni
+borrarlo, y tampoco borrar sus respuestas — eso sigue siendo del dueño o de
+quien administra.
+
+- `public.formulario_compartidos (formulario_id, coordinador_id)` es la tabla
+  puente, igual que `plan_compartidos`. **No hay política de update**: una fila
+  de "compartido" se pone o se quita.
+- **Las dos preguntas de siempre van en funciones `SECURITY DEFINER`**
+  (`soy_dueno_del_formulario()`, `formulario_compartido_conmigo()`), por lo de
+  siempre: la política de `formularios` mira `formulario_compartidos` y la de
+  `formulario_compartidos` mira `formularios` — una RLS llamando a la otra es
+  recursión infinita.
+- **Solo se puede compartir con alguien que YA coordina** (`es_coordinador_de()`
+  exige `es_coordinador` o `is_admin` en la cuenta destino): sin eso nada
+  impediría poner ahí el id de un profesor cualquiera o de un alumno, y
+  `formulario_respuestas` trae cédulas y fechas de nacimiento de menores.
+- **`coordinadores_disponibles()`** es la que llena el selector, con nombre —
+  hace falta una función porque la RLS de `profiles` no le deja a un
+  coordinador ver a sus colegas (solo a sus alumnos y a sí mismo), igual que
+  `equipo_docente()` para los planes.
+- **Las cuatro funciones nacen con EXECUTE de PUBLIC**, como toda función
+  nueva de Postgres, y revocarlo solo de `anon` no alcanza: `anon` lo hereda
+  igual de PUBLIC si no se le revoca a PUBLIC directamente. Comprobado con
+  datos reales antes de escribir la migración de cierre: `bajo_mi_coordinacion()`
+  y `equipo_docente()` —que solo revocan de `anon`— siguen dando
+  `has_function_privilege('anon', …) = true` hoy; `soy_coordinador()` —que
+  revoca de `public, anon`— da `false`. Las cuatro funciones nuevas se
+  revocaron de PUBLIC y se les volvió a dar el execute a `authenticated`, que
+  es quien de verdad las necesita para las políticas de RLS.
+- **En `formularios.html`, "Compartir con otro coordinador" solo aparece en un
+  formulario propio y YA GUARDADO** (uno nuevo todavía no tiene id con qué
+  compartir): la sección vive dentro del editor y se destapa en `abrirEditor()`
+  solo cuando `esDueno(form)`. El selector **excluye a quien ya lo tiene**, la
+  misma regla que "O con quien elijas" de los planes.
+- Comprobado impersonando cuentas reales en SQL, revertido: antes de
+  compartir, otra coordinadora no lo ve (0 filas); al compartirlo, la cuenta
+  elegida lo ve y puede leer sus respuestas, pero un intento de editarlo,
+  borrarlo o volver a compartirlo con un tercero queda rechazado; una TERCERA
+  coordinadora, sin compartir, sigue sin verlo.
 
 ### De la respuesta a la cuenta, en un botón
 
@@ -2191,6 +2796,106 @@ de números y no decir lo único que una madre pregunta.
   terminó, qué se le venció, cuándo vence la próxima, cuántos exámenes rindió y
   con qué nota.
 
+### Lo que la familia no veía: el plan
+
+El correo contaba minutos, clases y ejercicios, y no decía **una palabra** del
+plan. Detrás de esos números hay un diagnóstico de 63 preguntas por nueve áreas
+y un plan de cuatro semanas con el objetivo medible de cada una — y la casa no
+tenía forma de saberlo. El trabajo estaba hecho y era invisible.
+
+El bloque **«🧭 Dónde está X y a dónde va»** va **arriba, pegado al veredicto y
+antes de los números**, porque es el marco de todo lo que sigue: primero qué se
+está haciendo y por qué, después cuánto. Lleva el nivel medido, **cuánto se
+espera que practique** —que es lo más accionable que puede leer una madre—, las
+áreas con su objetivo, la meta de Elo si la hay, y la nota del profesor.
+
+- **El nivel medido se subió acá.** Estaba suelto al final del correo, que es
+  donde no lo lee nadie.
+- **La nota del profesor va destacada y rotulada «De su profe»**, porque es lo
+  ÚNICO escrito a mano: todo lo demás lo propone el sitio a partir del
+  diagnóstico.
+- **No se le atribuye al profesor un trabajo que nadie midió.** El correo dice
+  lo que de verdad pasó —«este plan se lo armó su profe a partir del
+  diagnóstico»— y el verificador falla si aparece «horas», «dedicó» o
+  «esfuerzo». Exagerar lo que hay se nota, y una vez que se nota ya no se cree
+  nada de lo que el correo diga.
+- **No se inventa ningún vínculo entre el plan y lo que hizo esta semana.** El
+  correo ya trae «En qué trabajó» con la actividad real; cruzarlos pediría medir
+  una correspondencia que nadie calcula. Se enseñan los dos y la familia los lee
+  juntos.
+
+#### Solo el plan COMPARTIDO, y por eso la función sigue siendo INVOKER
+
+Un plan guardado sin compartir es el borrador del profesor: enseñárselo a la
+casa antes que al alumno sería enseñar algo que todavía se está pensando. Con
+ese filtro escrito dentro de `informe_de_alumno()`, los tres caminos que la
+leen —la tanda de `pg_cron` con la service role, la vista previa del profesor y
+el propio alumno— devuelven **exactamente lo mismo**, así que no hizo falta
+volverla `SECURITY DEFINER` como `resumen_tareas_examenes()`.
+
+Y si no hay plan compartido, el bloque **no aparece**: una sección que diga
+«todavía no tiene plan» es ruido en todas las visitas menos una —la misma
+decisión que la bitácora— y prometer un plan que no existe es peor que no
+nombrarlo.
+
+#### El cero que nadie veía
+
+`training_plans` tenía **cero filas desde que la tabla existe**. El plan se
+genera solo desde el diagnóstico, se enseña entero en Informes y tiene su botón
+de compartir — y nadie lo había usado nunca, porque eso vive dos clics adentro
+de Informes y **nada avisaba**.
+
+Y no era que faltara el botón: **el de compartir vivía dentro del informe de
+CADA alumno**, o sea veintitantas visitas para publicar veintitantos planes que
+ya estaban armados. Ahora el panel de grupo —«🧭 Diagnósticos de nivel»— trae
+**«Compartir los N planes que faltan»**, que lo hace de una.
+
+- **A quien ya tiene un plan guardado sin compartir solo se le cambia la
+  marca.** Regenerarlo le borraría al profesor la nota y los ajustes que hizo a
+  mano, y eso no daría ningún error — simplemente perdería su trabajo. Por eso
+  son dos escrituras y no una: un `update` para los borradores y un `upsert` con
+  **`ignoreDuplicates`** para los que no tienen ninguno (si entre que se pintó
+  la pantalla y se apretó el botón alguien le guardó un plan a alguno, se salta
+  en vez de pisárselo).
+- **Se confirma en el propio botón**, no con un diálogo del navegador — la misma
+  decisión que borrar una nota de la bitácora, y acá pesa más: esto publica
+  material de veintitantos alumnos de una vez, así que el segundo toque tiene
+  que caer sobre un texto que diga exactamente qué va a pasar («Sí, compartir
+  con los 3» · «sus planes entrarán en los informes que llegan a sus casas»).
+- **Con todos al día no se ofrece el botón**, solo una línea. Un control que no
+  cambia nada es peor que no tenerlo.
+- **Compartir no dispara ningún aviso** (`training_plans` no tiene triggers):
+  el plan aparece en la página del alumno y en el próximo informe a la casa, y
+  nada más. Comprobado antes de escribir el botón — con un trigger, esto habría
+  mandado veintitantos push de golpe.
+
+Por eso `panel_profesor()` devuelve ahora `con_diagnostico` y `con_plan`, y «Tu
+semana» lo dice en una línea. Se dice **una sola cosa**, la que toca antes: sin
+diagnóstico no hay plan que armar, así que ese es el primer cuello; y un plan
+sin compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
+existe. Con todo al día no se dice nada. Va en **ámbar y no en rojo**: esto no
+se venció, está por hacer.
+
+**Al tocar el lote, correr `node herramientas/verificar-informes.js`.** Su
+Supabase de mentira tuvo que aprender dos cosas para esto, y las dos son de las
+que dan verde sobre una página rota: **`upsert()`**, que no tenía —sin él,
+compartir en lote tiraba un TypeError y el verificador lo contaba como fallo de
+la página, que es el mismo tropiezo que ya se llevó
+`verificar-aperturas-pagina.js`—, y **anotar la escritura en el RESOLVER y no en
+el `update()`**: `.update(x).in("student_id", y)` encadena, así que un doble que
+la apuntara antes se quedaría sin saber SOBRE QUIÉN se escribió y daría por
+bueno un lote que comparte el plan del alumno que no era. Es la misma trampa que
+ya documentó `verificar-clase-registrada.js`.
+
+Está probado que falla de verdad: haciendo que el lote regenere el plan de quien
+ya lo tenía ajustado, saltan cinco comprobaciones; y si el botón mandara sin
+confirmar, salta la del primer toque.
+
+**Esto pidió desplegar `informes-encargados`** (se arma con `node
+herramientas/funciones-armar.js`). Comprobado después de subirla: con una firma
+inventada la tanda responde **401** sin mandar un solo correo, que es la prueba
+de que el módulo nuevo carga.
+
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 
 `tareas` y `examenes` están aisladas por profesor a propósito (un profesor solo
@@ -2383,6 +3088,101 @@ con una llamada o un acuerdo de pago. `cobros.html` tiene un botón
   clase: dice que se hable. Quien lee puede ser una familia a la que se le
   complicó el mes.
 
+### Los correos de una familia se corrigen en un solo lugar
+
+Son TRES cosas distintas, y hasta ahora se tocaban en tres pantallas o en
+ninguna:
+
+| qué | dónde vive | quién podía tocarlo antes |
+|---|---|---|
+| con qué entra el alumno | `profiles.email` + `auth.users.email` | nadie desde el navegador |
+| a dónde va el informe de la casa | `encargados` | solo un profesor SUYO |
+| a dónde va el cobro | `cobros_contacto` (nuevo) | no existía |
+
+La pregunta de quien está corrigiendo es UNA —«¿a dónde le estamos escribiendo
+a esta familia?»—, así que los tres se manejan juntos, en la ficha «✉️
+Contacto» de `cobros.html`, y los escribe la Edge Function **`correos-alumno`**.
+
+- **Por qué hace falta una función y no alcanza con la RLS**, que es lo que hay
+  que entender antes de tocarlo: `profiles.email` lo revierte el trigger
+  `protect_profiles_identity_columns` —el correo es la llave con la que se
+  inicia sesión— y además hay que cambiarlo en `auth.users`, que desde el
+  navegador no se toca; `encargados` pide `soy_profesor_de()`, así que quien
+  coordina sin ser profesor de ese alumno no podía corregir ni una letra.
+- **Cuidado con el trigger, que es el fallo callado de siempre**: solo revierte
+  cuando `auth.uid()` no es nulo. Escribir con la service role funciona;
+  hacerlo con el cliente que lleva el JWT "funciona" también —y el valor queda
+  como estaba, sin dar ningún error—. Por eso la función **vuelve a leer la
+  fila** y falla si el correo no quedó, como ya hacía `marcar_coordinador()`.
+- **Quién puede**: `soy_coordinador()` primero, y después la fila del alumno se
+  lee con el JWT de quien llama. Si la RLS de `profiles` no se la devuelve, ese
+  alumno no es suyo. La misma regla de `reenviar-acceso`, escrita una sola vez.
+- **Un correo que ya es de otra cuenta se rechaza con un 409 que dice qué
+  hacer**, en vez de pisarla: si son hermanos, la salida es «No tiene correo
+  propio», que le arma un usuario de la Academia.
+- **Corregir el correo de quien ya estaba apuntado es un UPDATE sobre su fila,
+  no un alta.** De otra forma quedarían los dos —el bueno y el que tenía la
+  letra mal— y a ese le seguirían saliendo los informes.
+
+#### `cobros_contacto`: el correo del cobro, cuando hay que decirlo a mano
+
+`correo_cobro()` miraba los encargados y, si no había, la cuenta del alumno.
+Los dos son datos de OTRA cosa, así que corregir a dónde va el recibo obligaba
+a cambiar algo que no era — y el caso de todos los días es tan tonto como una
+letra mal escrita en el correo de la mamá, o un papá que paga pero no recibe
+el informe.
+
+- Una fila ahí **manda sobre todo lo demás y es la ÚNICA dirección** a la que
+  se le avisa de ese cobro. No se suma a los encargados: si se sumara,
+  corregir un correo equivocado seguiría mandándole el aviso al equivocado.
+- **No acepta un usuario interno.** Ese dominio no tiene MX a propósito, así
+  que fijarlo ahí sería mandar los avisos a un buzón que no existe: Resend
+  acepta el envío, el correo rebota y no falla nada.
+- El alumno **lee el suyo y no lo escribe**: tiene que poder ver a qué correo
+  le llegan los avisos, pero si pudiera cambiarlo bastaría con eso para dejar
+  de recibirlos.
+- Comprobado impersonando roles en SQL: el correo se guarda en minúscula y sin
+  espacios, manda sobre el encargado, el usuario interno se rechaza, y los
+  intentos del alumno de editarlo o borrarlo cambian **0 filas**.
+
+### El teléfono de las familias ya no está escrito en el código
+
+El número al que la casa escribe salía a mano en **cuatro archivos** —el
+informe de la casa, el informe de un examen, el aviso de cobro y «Mis pagos»—,
+así que cambiarlo era una tanda de ediciones y un despliegue, y quien coordina
+la Academia —que es justamente quien atiende esas consultas— no tenía forma de
+tocarlo.
+
+Ahora vive en **`public.ajustes_academia`** (clave/valor, clave
+`whatsapp_consultas`) y se cambia desde la ficha «✉️ Contacto» de `cobros.html`.
+
+- **Es clave/valor y no una columna por cosa** a propósito: lo que venga
+  después (una dirección, un horario de atención) entra sin migrar la tabla.
+- **Lo lee cualquiera con sesión** —es lo que la página le enseña al alumno
+  cuando le dice a dónde escribir— y lo escribe `soy_coordinador()`.
+  Comprobado: un alumno lee 1 fila y sus updates cambian **0**.
+- **Si no hay número, no se inventa ninguno**: los correos salen pidiendo que
+  respondan ese mismo correo. Un correo sin número al que escribir es peor que
+  uno con el número de siempre, pero MUCHO mejor que uno con un número que ya
+  no atiende nadie. Por eso tampoco hay un valor de respaldo escrito en el
+  código: la fila se sembró con el número que había.
+- **`wa.me` quiere los dígitos CON código de país.** Sin él, el enlace abre un
+  chat con un número que no existe y eso se ve como un enlace perfecto: un
+  número de ocho dígitos es de Costa Rica y se le pone el 506 delante. La regla
+  está en `_compartido/contacto-academia.ts` y, a la fuerza, otra vez en
+  `cobros.html` — son dos tiempos de ejecución que no pueden leerse entre sí.
+- Las páginas **públicas** (la portada, `sobre-oscar.html`, el pie del sitio)
+  siguen con el número escrito: son HTML estático que tiene que poder
+  indexarse y leerse sin JavaScript, y ahí el número es el de la Academia de
+  siempre. Lo que se movió es lo que sale POR CORREO.
+
+**Esto pide desplegar cuatro Edge Functions**, ya desplegadas desde esta tanda:
+`correos-alumno` (nueva), `cobros-recordatorios` (que además ahora respeta el
+correo fijado a mano), `informes-encargados` e `informe-examen`. Se arman con
+`node herramientas/funciones-armar.js`. `cobros-recordatorios` **entró al
+repositorio en esta tanda**: antes vivía solo desplegada, así que cambiarle una
+línea era bajarla, editarla a ciegas y volver a subirla.
+
 ### Pasarela y factura electrónica
 
 **No hay pasarela de pago, por decisión explícita**: el cobro se registra a mano
@@ -2403,6 +3203,60 @@ sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad las
 dos caras de la página, que no recalcule situaciones, qué manda al crear un
 plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
 el CSV salga con punto y coma y BOM.
+
+### Cobros no es de profesores, y la lista ya no se baja entera
+
+Dos cosas que cambiaron en esta pantalla, por dos razones distintas:
+
+- **Quien da clase y no coordina no ve NADA de cobros.** Antes caía en «Mis
+  pagos» y veía una lista vacía —a una cuenta de profesora no se le cobra—, que
+  se lee como una página rota en vez de como «esto no es tuyo»; ahora se le
+  dice con todas las letras de quién es la página. La tarjeta **«Mis pagos» se
+  fue del panel entero**, también para el alumnado: las mensualidades son cosa
+  de la casa, no de quien entra a entrenar. La página sigue enseñándole a cada
+  quien sus propios recibos si entra por la dirección —lo que se quitó es el
+  camino, no el derecho a ver lo suyo—. Comprobado impersonando roles en SQL:
+  un profesor sin coordinación recibe **0 filas** de `cobros`, `cobros_vista`,
+  `planes_cobro`, `suscripciones` y `cobros_contacto`.
+- **El filtro y el corte los hace la base.** Esta página se bajaba los cobros
+  con un `.limit(1000)` y filtraba en el navegador: es la misma piedra de
+  `informes.html` y del registro de clases —PostgREST corta la respuesta a
+  partir de cierta cantidad de filas SIN DAR NINGÚN ERROR—, y con una
+  mensualidad por alumno y por mes ese techo se cruza en un par de años de
+  academia. A partir de ahí la página habría empezado a esconder cobros en
+  silencio, y los totales de arriba (que sí salen de la base) habrían dejado de
+  cuadrar con la lista sin que nadie supiera por qué.
+  - Ahora vienen de treinta en treinta, con su cuenta total (`count: "exact"`),
+    su búsqueda por concepto o número de recibo y su «Ver más».
+  - Y **agrupados por mes**, con el más nuevo abierto y los de atrás cerrados:
+    con trescientos recibos de corrido no se encuentra ninguno. Es el mismo
+    patrón del registro de clases del panel. El encabezado de cada mes dice
+    cuántos hay y cuánto queda sin pagar, **por moneda** — sumar colones con
+    dólares daría un número que no significa nada.
+  - El **CSV baja lo que cumple el filtro, no lo que se alcanzó a pintar**, y
+    lo pide de mil en mil: quien filtró por «vencidos» quiere los vencidos, no
+    los treinta primeros.
+  - El texto de búsqueda se limpia antes de mandarlo: PostgREST arma el `or=(…)`
+    con comas y paréntesis, así que un concepto con una coma rompería la
+    consulta entera. Y cada consulta lleva su marca, para que una respuesta que
+    llega tarde no pinte el resultado de un filtro que ya no está.
+- **La ficha que quedó abierta se recuerda**, como las pestañas de la clase en
+  vivo: registrar un pago recarga la página entera y volver siempre a «Cobros»
+  obliga a buscar otra vez dónde se estaba.
+- **Desde Morosidad se llega a corregir el correo**, con el alumno ya elegido:
+  el momento de darse cuenta de que el correo está mal es justo ese, viendo que
+  alguien lleva 40 días de atraso al lado de la dirección a la que le estuvimos
+  escribiendo. Y la fila dice **a qué correo se le avisa**, o avisa de que no
+  hay ninguno.
+
+**Al tocar `cobros.html`, correr `node herramientas/verificar-cobros.js`.**
+Comprueba además de lo de siempre: que los cobros se pidan con su cuenta y con
+un rango (si alguien vuelve a bajárselos todos, la página se ve igual de bien
+hasta que hay más de mil), que se agrupen por mes con solo el primero abierto,
+que buscar pregunte a la base, que una profesora no reciba **ni un cobro**, que
+el número de las familias salga de los ajustes y no escrito en la página, que
+un número de tres dígitos no se guarde, y qué manda la ficha de contacto al
+corregir cada uno de los tres correos.
 
 ## Reportes de actividades para presentar
 
@@ -2906,6 +3760,66 @@ páginas del cuerpo** —el error clásico es estamparla solo en la portada—.
   cualquier archivo y la comprobación se veía perfecta sin comprobar nada. Se
   pregunta con `in`. Está probado que discrimina de verdad: sobre el PDF sin
   sellar da 0 de 39 páginas con marca, y sobre el sellado, 39 de 39.
+
+## El video promocional
+
+`node herramientas/video-promo.js` arma el video que se manda por enlace (un
+minuto escaso, 1080p, unos 5 MB). El texto vive en
+`herramientas/video/guion.json` y el generador solo lo monta, así que corregir
+una frase es corregir una línea y volver a correrlo — la misma decisión que el
+catálogo de cursos y la guía del profesor. Solo pide `ffmpeg`: ni el sitio
+servido, ni red, ni navegador.
+
+**Las pantallas salen de `img/guia/`, y eso NO es por comodidad.** Esas
+capturas las hace `guia-capturas.js` contra un Supabase de mentira, con cuentas
+inventadas. Grabar la pantalla de verdad —con el celular, con OBS, o abriendo
+la sesión de quien da clase— metería en un video que va a circular por WhatsApp
+los nombres, los correos y el progreso de **menores de edad**, y eso no se
+arregla después: el video ya salió. Por eso el generador **no sabe abrir el
+sitio**; solo sabe leer esa carpeta.
+
+- **La salida no se commitea.** `promo/` está en `.gitignore` **y** en
+  `.assetsignore`: el worker sirve todo el directorio, así que un mp4 suelto
+  quedaría publicado en el sitio sin que nadie lo pidiera. Es el mismo par de
+  candados que `respaldos/`, y por la misma razón — de git no se borra nada.
+- **Falla si le falta algo, en vez de apañarse.** Sin Inter usaría la fuente
+  que hubiera en la máquina: el video saldría con otra letra, se vería perfecto
+  y se vería de otra empresa. Sin una captura, dejaría una escena en negro que
+  nadie mira hasta que está publicada. Por eso la tipografía **está en el
+  repositorio** (`herramientas/video/fuentes/`, con su licencia SIL OFL) y el
+  generador se planta si no la encuentra — lo mismo que hace `arbitraje-pdf.js`
+  cuando le falta pypdf.
+- **El texto va sobre el fondo de marca y la captura debajo, nunca encima de
+  ella.** Con el texto sobre la pantalla habría que garantizar el contraste
+  contra una imagen que cambia en cada escena, y la mitad de las capturas
+  tienen fondo claro: se lee en el monitor de quien lo montó y no se lee en un
+  teléfono. Es la misma regla que el resto del sitio — el color no se elige a
+  ojo.
+- **Nada de Ken Burns.** El zoom continuo de `zoompan` se calcula en enteros y
+  da un temblor que a 1080p se nota; sobre una imagen fija, además, delata el
+  pixelado. Lo que hay es una entrada de seis píxeles en el primer medio
+  segundo y un encadenado limpio entre escenas.
+- **El guion no promete lo que la pantalla no enseña.** La primera versión
+  decía «cada alumno sabe qué le toca hoy» sobre el panel de la **profesora**
+  (el doble entra como docente, a propósito, para que la guía enseñe todo) y
+  «se puede estudiar sin ver la pantalla» sobre una captura donde no se ve nada
+  de eso. No falla nada: se ve muy bien y dice algo que no es. Lo que no tiene
+  captura que lo respalde —hoy, la accesibilidad— va en una placa de texto, que
+  no promete ilustrar nada.
+
+**Las capturas envejecen y eso es lo que se rompe callado.** Se hicieron en el
+PR #294 y `sesion.html` cambió en el #310, así que el primer montaje enseñaba
+una pestaña «Controles» que ya no existe: el video se ve perfecto y promociona
+una pantalla que nadie va a encontrar. **Antes de armar el video, rehacer las
+capturas** (`node herramientas/guia-capturas.js`, con el sitio en
+localhost:8777 y playwright) y después **mirarlas**, que es lo único que
+descubre un desajuste entre lo que el texto dice y lo que la pantalla enseña.
+Y correr `node herramientas/verificar-guia-profesores.js`: esas mismas 25
+capturas son las de la guía, que se imprime y se proyecta.
+
+Lo que este camino **no** da es locución ni música: la voz hay que grabarla
+—vale más la del profesor para una academia que vende «un profesor real»— y la
+música tiene que ser de librería con licencia.
 
 ## El sitio se instala como app (PWA)
 
@@ -3760,7 +4674,8 @@ profesor o de administración.
 
 #### Dónde vive en el panel de la Academia
 
-En `clases.html` el diagnóstico tiene **tarjeta propia** en el grupo "Aprender".
+En `clases.html` el diagnóstico tiene **tarjeta propia**, hoy en el grupo "Mide
+tu nivel" y **solo para administración** (ver «El panel de la Academia»).
 Estaba enterrado en Entrenamiento › Aprende › Asignaciones, que son tres clics
 para lo primero que conviene hacer al entrar. El **examen de arbitraje** se mudó
 de "Herramientas" a la par del diagnóstico: las dos son pruebas que ubican el
@@ -3954,10 +4869,13 @@ de práctica no tiene por qué ocupar una fila ni salir en los informes—.
   tampoco. Por eso no hizo falta tocar las seis páginas de partida.
 - `js/bot-oscar.js` **no conoce ninguna variante**: cada modalidad le pasa un
   adaptador con cuatro cosas —`turno()`, `jugadas()`, `probar(jugada)` (que
-  devuelve otro adaptador con la jugada hecha) y `material()`—. Tres niveles:
-  al azar con gusto por las capturas, una jugada mirando la respuesta, y dos
-  jugadas con poda alfa-beta. Está comprobado que el nivel 3 termina con ventaja
-  sobre el nivel 1.
+  devuelve otro adaptador con la jugada hecha) y `material()`— más dos
+  opcionales que si faltan no rompen nada: `enJaque()`, para distinguir el mate
+  del ahogado, y `valorJugada(j)`, para ordenar las jugadas sin clonarlas (ver
+  abajo). Cuatro niveles: al azar con gusto por las capturas, una jugada
+  mirando la respuesta, tres jugadas con poda alfa-beta, y el Maestro, que es
+  el mismo buscador con más tiempo y más profundidad. Está comprobado que el
+  nivel 3 termina con ventaja sobre el nivel 1.
 - No usa Stockfish a propósito: solo sabría jugar el ajedrez normal, y acá vale
   más un rival que entienda abrazos, camaleón y crazyhouse.
 - **A ciegas lleva su propio adaptador**: su motor delega en chess.js y no tiene
@@ -3967,6 +4885,94 @@ de práctica no tiene por qué ocupar una fila ni salir en los informes—.
   tablero desde un estado serializado (`loadState`) que hoy solo arma la página
   de partida, y Duelo Simultáneo no tiene turnos —los dos mueven a la vez contra
   reloj—, así que no hay "turno del bot" que atender y pide otro diseño.
+
+### El nivel 3 decía "tres jugadas" y estaba haciendo dos
+
+Todo el costo del bot está en `probar()`, y no se parece en nada a "hacer una
+jugada": cada adaptador se **clona desde su posición serializada** —chess.js
+vuelve a leer una FEN entera, Cartas rehace su JSON—, así que una llamada
+cuesta ~123 µs contra los ~7 µs de evaluar la posición ya hecha. Mil veces más.
+
+Y para ORDENAR las jugadas de un nodo se clonaban **todas**, solo para mirarle
+el `material()` a cada una. Después la poda alfa-beta hacía su trabajo y se
+exploraban dos o tres: **el 97% de los clones se construían para tirarlos**, y
+se tiraban después de haberlos pagado, así que el corte de la poda no ahorraba
+nada. Eso no da ningún error — el bot juega bien, solo que se le va el
+presupuesto en posiciones que nadie iba a mirar. Lo que sí se veía, si uno
+medía: **el nivel 3, que la pantalla describe como "busca tres jugadas
+adelante", se quedaba en DOS** en cuatro de seis posiciones normales, gastando
+sus 400 ms enteros. Un nivel que promete una profundidad y entrega otra.
+
+- **El orden se decide ahora sin jugar nada**, con `valorJugada(j)`, el quinto
+  método del adaptador: primero las capturas, y entre ellas la que se queda con
+  la pieza más gorda usando la más barata; sin capturas, cuánto mejora de
+  casilla la pieza que se mueve. Sale de leer dos casillas del tablero que ya
+  está delante. `probar()` se paga **una por una, al entrar en la rama**, así
+  que lo que la poda no explora tampoco se clona.
+- **`valorJugada` es opcional a propósito.** Un adaptador que no la tenga vuelve
+  solo al orden de antes y da exactamente el mismo resultado, más lento — nunca
+  peor. Pero al que se le olvide nadie se lo dice, y por eso el verificador
+  mira que los seis la tengan.
+- **Y un historial de cortes**, porque el orden barato se queda ciego donde no
+  hay capturas —un final de peones, que es justo donde más falta hace buscar
+  hondo—: cada jugada que provoca un corte suma un punto y se prueba antes la
+  próxima vez que aparezca. El bono está acotado (`h / (h + 50)`) para que no
+  se cuele delante de una captura buena, y la tabla se vacía en cada jugada.
+- **La raíz clona sus jugadas UNA vez** y las reordena con lo que aprendió la
+  profundidad anterior. Antes cada vuelta de la profundización iterativa
+  volvía a clonarlas todas y redescubría el orden desde cero, que es tirar
+  justamente lo que la profundización iterativa viene a comprar.
+- **A una jugada del fondo no se baja un nivel más.** `negamax(hijo, 0)`
+  devolvía `lado * material()`, que es el número que el orden **ya había
+  calculado**: era una llamada y una segunda evaluación de la misma posición
+  por cada hoja.
+- **`materialDeTablero()` ya no arma una lista de piezas.** Construía ~32
+  objetos por evaluación (`Object.assign({casilla}, p)`) y recorría tres veces;
+  ahora es una pasada por las 64 casillas sin una sola asignación. Lo único que
+  obligaba a las dos pasadas era el rey —su tabla se mezcla según la fase de la
+  partida, y la fase no se sabe hasta ver el tablero entero—: se anota en qué
+  casilla está cada rey y se suma su parte al final. El número que sale es
+  **exactamente** el mismo, comprobado sobre 120 posiciones al azar y dos
+  tableros raros (piezas fusionadas de Abrazos, reserva de Crazyhouse).
+
+Medido a profundidad fija 3, con el mismo trabajo: de 1.200 ms a 230 ms en una
+posición abierta (10 veces menos clones), de 780 a 198 en un mediojuego, y el
+pico de memoria de ~22 MB a ~11 MB. Con el presupuesto real, el nivel 3 llega a
+las tres jugadas que promete y le sobra la mitad del tiempo. Y jugando de
+verdad, 30 partidas del bot nuevo contra el viejo al nivel 3: **10 ganadas, 3
+perdidas, 17 tablas**.
+
+**Lo que esto NO arregla**, y conviene tenerlo escrito: el último nivel de la
+búsqueda es una evaluación estática —se mira el material de la posición que
+queda, no si el rival se quedó sin jugadas—, así que un mate que cae justo ahí
+se cuenta como "una posición con una torre de más". O sea que el **nivel 3 no
+ve un mate en 2**; el nivel 4, que llega hasta seis, sí. Viene siendo así desde
+siempre y arreglarlo costaría pedirle las jugadas legales a cada hoja, que es
+lo más caro que hay acá (~1,6 ms por llamada).
+
+**Al tocar `js/bot-oscar.js`, el evaluador de `bot.html` o cualquiera de los
+seis adaptadores, correr `node herramientas/verificar-bot-oscar.js`**
+(necesita `npm install chess.js@0.10.3`; no hace falta navegador, ni red, ni el
+sitio servido). Comprueba que la jugada elegida sea una de las que elegiría un
+**minimax puro** —sin poda, sin recortes, sin atajos— a la misma profundidad,
+que el camino de repuesto (sin `valorJugada`) dé lo mismo, que encuentre el
+mate y no busque el ahogado con la partida ganada, que el evaluador sea
+simétrico (la misma posición con los colores cambiados vale lo mismo con el
+signo al revés, que es lo que caza una tabla de posición mal reflejada), que
+ninguna jugada sea ilegal en los cuatro niveles, que no se pase del
+presupuesto —es tiempo del hilo principal, o sea la pantalla congelada— y
+**cuántas posiciones clona para decidir una jugada**. Esa última es la rara y
+es la que de verdad hace falta: volver a ordenar clonándolas todas funciona
+igual de bien y cuesta diez veces más, y no lo delata nada salvo contar los
+clones. Está probado que falla de verdad: con el orden de antes saltan las tres
+comprobaciones de costo, y rompiendo el atajo del último nivel saltan cuatro de
+las de equivalencia.
+
+- Su espejo arma los enroques en el orden `KQkq` y **comprueba que la FEN
+  vuelva a salir igual**: chess.js los valida con una expresión regular y, si
+  los rechaza, deja el tablero **vacío** en vez de dar un error — la prueba
+  pasaría a comparar el evaluador contra la nada y daría verde sin comprobar
+  nada. Es la misma trampa que ya documentaron los dobles de Supabase.
 
 ## Retar a quien está en línea
 
@@ -3986,13 +4992,37 @@ arrancar una entre ellos.
   sobrevivir el rato que el otro tarda en contestar, y así le llega aunque en
   ese momento no estuviera mirando la página. La tabla está en la publicación
   `supabase_realtime`: sin eso los retos no llegan solos, que es todo el punto.
-- **Solo se ve y se puede retar a gente de la propia clase.** La regla es
-  `public.pueden_jugar_entre_si(a, b)` (`SECURITY DEFINER`): mismo profesor, o
-  alumno con su propio profesor, o alguien que administra. La página filtra la
-  lista con la misma regla, pero solo para no mostrar botones que van a fallar
-  — quien manda es la política de la base.
+- **Retarse es lo ÚNICO que comparte toda la Academia.** `public.pueden_jugar_entre_si(a, b)`
+  (`SECURITY DEFINER`) dice hoy "son dos cuentas distintas de la Academia" y
+  nada más. La página filtra con la misma regla, pero solo para no mostrar un
+  botón que va a fallar — quien manda es la política de la base.
+  - Antes había que **compartir profesor**, y eso dejaba la lista vacía casi
+    siempre: un alumno que quiere jugar AHORA no tiene por qué esperar a que
+    alguien de su propia clase esté conectado. Y la lista vacía se lee igual
+    que "no hay nadie", así que el filtro de más **no daba ningún error** —
+    solo lo dejaba sin con quién jugar.
+  - **Lo que NO se abrió**: `puedo_armar_partida_con()` (el profesor sigue
+    armando partidas solo con los suyos, desde el formulario) ni
+    `profiles_select` (ver y gestionar a alguien sigue siendo otra cosa que
+    jugar con él). Ver alumnos ajenos sigue cerrado para profesores y para
+    quien coordina.
+  - **El nombre del rival sale de `public.nombres_de_jugadores(uuid[])`**, no
+    de `profiles`. Las ocho páginas de partida pedían
+    `select("id, full_name, email")`, y con la lista abierta eso era doble
+    problema: el rival de otra clase no está en `profiles_select` —la tarjeta
+    habría dicho "tu rival" sin que nada fallara— y aquel select repartía el
+    correo de un montón de menores de edad. La función devuelve el nombre ya
+    resuelto (nunca el correo entero: solo lo de antes de la @ cuando no hay
+    nombre escrito) y **solo de quien comparte conmigo una partida o un reto**,
+    más lo que alcanza quien supervisa esa partida — el mismo alcance de
+    `game_rooms_select`, escrito con las mismas funciones de la casa
+    (`soy_profesor_de_alguno`), menos `es_companero`. No es un directorio.
+  - **El canal de presencia dejó de anunciar los profesores de cada quien.**
+    Servía para decidir si eran compañeros; ahora no hace falta y, de paso, era
+    repartirle a toda la página con quién estudia cada alumno.
 - **Aceptar no crea la partida con un insert**: un alumno no puede insertar en
-  `game_rooms` (esa política sigue exigiendo profesor, y así se queda). La crea
+  `game_rooms` (esa política sigue colgando de `puedo_armar_partida_con()`, que
+  NO se abrió, y así se queda). La crea
   `public.aceptar_desafio()`, `SECURITY DEFINER`, que comprueba que el reto
   existe, que sigue pendiente y que quien acepta es quien lo recibió, sortea los
   colores, arma la sala y de paso cancela los otros retos pendientes entre esos
@@ -4009,8 +5039,8 @@ arrancar una entre ellos.
   el otro podrían arrancar distinto.
 - Se retan las modalidades de a dos que ya existen; las de 4 jugadores no
   (necesitan cuatro personas y otro reparto) y las que están "Próximamente"
-  tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
-  la lista le ofrece el bot de Oscar mientras tanto.
+  tampoco. Cuando de verdad no hay nadie conectado, la lista ofrece el bot de
+  Oscar mientras tanto.
 - **Rechazar puede llevar un motivo** (`desafios.motivo_rechazo`, opcional, 140
   caracteres), que quien reta ve en vez del genérico "Tu reto no fue aceptado
   esta vez.". La política de `update` de `desafios` no restringe qué columnas
@@ -4155,13 +5185,24 @@ linter bajó a **61**.
 `protect_game_state_teacher_columns`) llevaban revocadas desde siempre. Se fue
 olvidando en las diez que se escribieron después.
 
-- **Se revoca de `PUBLIC`, NUNCA de `anon, authenticated`.** La primera
-  migración hizo `revoke ... from anon, authenticated`, **devolvió éxito y no
-  revocó nada**: ellos no tenían ningún grant propio que quitar. Es el fallo
-  callado de siempre, esta vez en el SQL — el comando "pasa" y todo queda igual.
-  Se ve en el ACL: una función bien revocada es
-  `{postgres=X/postgres,service_role=X/postgres}`, y una expuesta tiene además
-  la entrada **`=X/postgres`**, que es el grant a PUBLIC.
+- **Se revoca de los TRES: `public, anon, authenticated`.** Acá estuvo escrito
+  lo contrario —que bastaba con `PUBLIC` porque los otros dos no tenían ningún
+  grant propio que quitar— y **hoy no es cierto**: Supabase les da el suyo con
+  `alter default privileges`, así que una función nueva nace con los tres.
+  Revocar solo de `PUBLIC` "pasa" y la función **sigue publicada**, que es el
+  mismo fallo callado en el SQL, ahora al revés. Lo que manda es el ACL, no lo
+  que devuelva el comando: una función bien revocada es
+  `{postgres=X/postgres,service_role=X/postgres}` y nada más; cada entrada
+  `anon=X/...`, `authenticated=X/...` o **`=X/postgres`** (ése es PUBLIC) es una
+  puerta abierta. Y lo que de verdad contesta es
+  `has_function_privilege('anon', oid, 'execute')`, que es lo que pregunta la
+  consulta de abajo.
+- **A `authenticated` NO se le quita el execute de una función que llame una
+  política de RLS.** Una política se evalúa con los privilegios de quien
+  escribe, así que sin ese execute la política rechaza a todo el mundo — y ahí
+  sí se rompe algo de verdad. Solo se le quita a `anon`, que no tiene nada que
+  hacer ahí. Es la diferencia con las de trigger, que el motor dispara sin
+  pedirle `EXECUTE` a nadie.
 - **`service_role` conserva el suyo**, que es el que usan las Edge Functions.
 - **Revocar NO afecta a los triggers.** El motor los dispara con los privilegios
   del trigger y no le pide `EXECUTE` a quien hace el insert. Está comprobado
@@ -4193,7 +5234,7 @@ where pronamespace = 'public'::regnamespace
     or has_function_privilege('authenticated', oid, 'execute')
     or proconfig is null);
 
-revoke execute on function public.<la_nueva>() from public;
+revoke execute on function public.<la_nueva>() from public, anon, authenticated;
 ```
 
 ### Lo que queda pendiente y NO se puede hacer desde acá
@@ -4287,7 +5328,8 @@ lista, y el resto se acomoda solo.
 - **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
   "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
   con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
-  dónde está parado. Ahí quedan los dos diagnósticos y nada más.
+  dónde está parado. Ahí quedan los dos diagnósticos y nada más — y **el grupo
+  entero es SOLO de administración**, ver abajo.
 - **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
   alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
   dos accesos están en mantenimiento—: una sección entera de la página que no
@@ -4296,20 +5338,31 @@ lista, y el resto se acomoda solo.
   queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
   entera de que eso vuelve. No se esconde con una clase: no se pinta — un
   enlace invisible pero presente sigue siendo una parada de tabulador.
-- **Los dos diagnósticos son para todo el mundo**, el de arbitraje incluido:
-  cualquiera puede medir su nivel de reglamento, no solo quien da clase. Lo que
-  cambia según quién mira es **a dónde lleva la tarjeta**, y es UNA sola tarjeta
-  (repetir el nombre en el panel ya salió mal una vez, con "Torneos"):
-  - equipo docente → `arbitraje.html`, que además trae la revisión de los
-    exámenes del público y el detalle pregunta por pregunta;
-  - todos los demás → `nivel-de-arbitraje.html`, el mismo examen y el mismo
-    criterio pero **sin enseñar las respuestas al terminar**. El banco es un
-    archivo estático y quien sepa mirar el código las ve igual; lo que se evita
-    es regalárselas en pantalla.
-  Esa página es la pública, así que pide nombre y correo — pero **se rellenan
-  solos cuando hay sesión**: a quien entra desde el panel el sitio ya se los
-  sabe, y hacerle escribir lo que ya escribió no tiene sentido. Lo que ya venía
-  escrito a mano no se toca.
+- **Los dos diagnósticos son SOLO de administración.** Estaban para todo el
+  mundo, y eso era regalar las dos pruebas con las que el sitio ubica el nivel
+  de alguien: los bancos —301 preguntas y 200 de reglamento— son archivos
+  estáticos, así que cuanta más gente las resuelve por su cuenta, menos miden.
+  Un diagnóstico se APLICA, no se practica.
+  - Lo quita `diagnosticosSoloParaAdministracion()`, sobre la lista ya armada y
+    en un solo lugar, igual que `apagarEnMantenimiento()`. Se quita el **grupo
+    entero** y no sus dos tarjetas: un encabezado sin nada debajo es la misma
+    sección muerta que ya se quitó de "Herramientas" para el alumnado.
+  - Va **después** del `if` que le reapunta el destino al arbitraje, así quien
+    administra lo conserva apuntando a `arbitraje.html` —la página con la
+    revisión de los exámenes del público y el detalle pregunta por pregunta— y
+    no a la versión pública. Y el grupo se queda **escrito en `TILE_GROUPS`**
+    con sus dos tarjetas: definirlo dentro del `if` de un rol volvería a
+    repartir el panel a pedazos.
+  - **El diagnóstico de nivel sigue abierto al público sin cuenta** en
+    `entreno/diagnostico.html`, que es una puerta de entrada al sitio y otra
+    cosa: lo que se quitó es el camino desde el panel de quien ya está adentro.
+    Lo mismo `nivel-de-arbitraje.html`, que es pública y enlazada desde la
+    portada.
+  - La comprobación que importa no es que el grupo no salga en la lista: es que
+    **no quede ni un enlace a esas dos páginas en la grilla**, escondido o no —
+    un enlace invisible pero presente sigue siendo una parada de tabulador.
+    `verificar-panel.js` lo mira con las tres caras, y a administración le pide
+    lo contrario: que SÍ se le pinten los dos, o se quedaría sin ninguna puerta.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
   promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
@@ -4428,6 +5481,131 @@ decir.** Una franja que diga "no tienes tareas" es ruido en todas las visitas
 menos una, y un cartel que se repite deja de leerse — la misma lección que dejó
 el aviso de instalar la app.
 
+### Por dónde empezar: sin nada que vencer, la franja la ocupa el primer paso
+
+Un alumno recién invitado no tiene ninguna tarea ni ningún examen —nadie se los
+puso todavía—, así que la franja se le quedaba en blanco y el panel era un
+directorio de veintitantos lugares sin ninguna pista de por cuál empezar. En los
+datos se veía exactamente así: **de los alumnos que llegaron a entrar, la mayoría
+no había resuelto ni un ejercicio**, y buena parte de ellos **sí había hecho el
+diagnóstico** — o sea que no es que no arranquen, es que **el camino se corta
+justo después**.
+
+Lo confirma el otro número: `training_plans` tiene **cero filas** desde que
+existe. El diagnóstico se rinde, da un resultado, y no hay nada que lo convierta
+en «ahora haz esto».
+
+**Por eso no es UN primer paso, es EL SIGUIENTE**, y son tres peldaños que se
+calculan de lo que ya hay. El panel pinta el primero que no esté cumplido:
+
+| si… | se le ofrece |
+|---|---|
+| ya rindió el diagnóstico y no ha resuelto nada | **su** área floja, con dónde practicarla |
+| lo dejó a medias | seguir el diagnóstico, diciendo por qué pregunta iba |
+| no lo empezó nunca | hacer el diagnóstico |
+
+- **Se apaga solo.** Al resolver el primer ejercicio el peldaño deja de
+  cumplirse. No hay nada que marcar ni ningún «ya lo vi» en `localStorage` que se
+  pueda quedar desincronizado.
+- **Va en la MISMA franja** (`#pendientes-aviso`), no en una nueva: contesta la
+  misma pregunta —«¿qué hago ahora?»— y dos franjas peleando por el primer lugar
+  es el problema que este panel ya tuvo con «Estado de la clase». Por eso el
+  pintado se sacó a **`pintarFranja()`**: con dos, el que se olvidara de quitar
+  el rojo dejaría una sugerencia con pinta de entrega vencida.
+- **Lo que vence MANDA.** El primer paso solo llega hasta donde
+  `cargarPendientes()` hoy se rendía sin pintar nada: una fecha le gana siempre a
+  un consejo. Sin eso, a un alumno nuevo con una tarea ya puesta el panel le
+  escondería la tarea detrás de la sugerencia.
+- **Nunca se pinta en rojo** y tiene su propio título («Empieza por acá»): decir
+  «tienes 1 pendiente» sobre una sugerencia sería mentir.
+
+#### El destino tiene que ser una página cuyo trabajo CUENTE
+
+Es lo único de todo esto que se rompe callado. **Cinco de las nueve áreas tienen
+como primer recurso la PORTADA de un curso**, que es un temario: mandar ahí a
+quien quiere *hacer* algo lo deja leyendo un índice, no escribe ni una fila en
+`training_progress`, y **mañana la franja le dice exactamente lo mismo** — el
+peldaño no se apaga nunca y no se entera nadie.
+
+Así que el destino se cruza contra `MaterialPlataforma.HERRAMIENTAS` y solo vale
+el que ofrece la meta `cantidad`, que es lo mismo que decir «escribe en
+`training_progress`». Si el área más floja no tiene ninguno, **se baja a la
+siguiente que sí lo tenga**.
+
+- **Y por eso el texto NO dice «lo más flojo».** Se ofrece la más floja *de las
+  que tienen dónde practicar*, que no siempre es la peor de todas; «señala un
+  hueco en X» es cierto para cualquiera por debajo del 60 %, y el superlativo
+  sería mentira.
+- **Ni el área ni el enlace se escriben acá.** Las áreas flojas las calcula
+  `PlanEntrenamiento.resumir()` —la misma que pinta Informes y el resultado del
+  diagnóstico— y a dónde va cada una está en su propio `recursos`.
+- **Se compara la PÁGINA, no la dirección entera** (`r.href.split("?")[0]`):
+  los recursos del plan llevan su recorte puesto y el catálogo de Tareas guarda
+  la página pelada. Comparando la dirección completa no coincidiría ni uno solo
+  y el paso caería siempre al genérico, sin que nada fallara.
+- **Y se manda la dirección CON el recorte.** Es lo que separa «haz ejercicios
+  de clavada» de «ahí tienes ochenta temas, busca» — la misma decisión que el
+  enlace de una tarea.
+
+### Los recursos del plan: específicos, y comprobados contra el banco
+
+`AREAS[].recursos` decía «Ejercicios por tema» y «Curso: Estrategia y Táctica»,
+o sea el nombre de la página y nada más. Eso se escribió cuando el sitio tenía
+mucho menos material; hoy hay **80 temas, 3 categorías de mates, 40 líneas de
+apertura y 56 fichas de estudio**, todos con su enlace directo, y el plan no
+conocía ninguno. Quien tenía flojos los finales recibía «Ejercicios por tema»
+y ochenta temas por delante para encontrar los de final.
+
+Ahora cada área ofrece **de 5 a 7 recursos con su recorte puesto**, y en un
+orden que no es casual: **primero lo que se HACE** (ejercicios que cuentan),
+después la ficha de Estudio para mirarlo de un vistazo, y al final el curso o el
+artículo para leerlo a fondo. Son 57 enlaces, 35 de ellos recortados.
+
+- **Las nueve áreas tienen ahora dónde practicar.** Antes, cinco mandaban a la
+  portada de un curso y el primer paso del panel se las tenía que saltar;
+  `finales` ya tiene `pawnEndgame` y `rookEndgame`, `estrategia` tiene
+  `quietMove` y `middlegame`, y `maestria`, las partidas de maestros.
+- **`entreno/aperturas.html` entró en «Principios de apertura»**, que era la
+  única área cuyo plan no ofrecía ni un ejercicio que resolver.
+- **El desequilibrio de material tiene su propio curso** y ahí se manda ahora
+  «Valor del material», que apuntaba a Fundamentos.
+
+**Al tocar `recursos`, los bancos o `js/material-plataforma.js`, correr `node
+herramientas/verificar-plan-recursos.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que cada enlace exista como archivo, que cada recorte
+esté **en el banco de verdad** —`entreno/data/metas.json`, el mismo que genera
+`metas-indice.py` leyendo las fuentes—, que ninguna área repita un recurso, y
+—lo que sostiene el primer paso del panel— **que ninguna se quede sin un solo
+recurso donde el trabajo cuente**. Con qué parámetro recorta cada página se le
+pregunta a su propio `hrefRecorte` y no a una tabla escrita en el verificador:
+el día que cambie, una tabla copiada seguiría dando verde sobre enlaces rotos.
+
+Todo lo que se rompe acá se rompe callado y lo descubre el alumno, que es el
+único que no puede arreglarlo: un `?tema=` con una clave que ya no está abre la
+lista vacía, sin error y sin aviso. Está probado que falla de verdad —con un
+tema inventado y con un archivo renombrado, salta—.
+
+#### Detalles que ya costaron una vez
+
+- **Haber rendido el diagnóstico NO es haber entrenado.** Es una fila de
+  `training_progress` como cualquier otra, así que «no ha hecho un solo
+  ejercicio» **no** es `total_ejercicios === 0`: hay que descontarlo de
+  `por_actividad`. Sin eso, a quien acaba de rendirlo el panel lo daría por
+  arrancado y no le diría nunca qué hacer con el resultado — que es justo el caso
+  que más abunda.
+- **No se le promete que el diagnóstico se retoma donde lo dejó.** Una prueba
+  empezada con una `VERSION` anterior se descarta a propósito, así que
+  prometerlo sería mentirle justo a quien vuelve confiando en eso. Se dice por
+  qué pregunta iba, y nada más.
+- **`js/plan-entrenamiento.js` y `js/material-plataforma.js` se bajan cuando
+  hacen falta**, no en cada carga: son 39 KB que solo usa quien ya tiene un
+  diagnóstico rendido, y por el panel entra todo el mundo —incluidos los que
+  todavía no lo hicieron, que son justamente los que más van a ver esta franja—.
+  Mismo criterio que el libro de aperturas del bot.
+- **`Logros.cargar()` se pide UNA vez y la promesa se reparte** entre el número
+  de «Tu progreso» y el primer paso: dos llamadas serían dos veces la misma
+  consulta para pintar el mismo dato.
+
 ### El orden de la página es el de las preguntas que uno se hace al entrar
 
     qué me toca  →  por dónde iba  →  cómo voy  →  y recién entonces a dónde ir
@@ -4501,6 +5679,104 @@ lo que se hace para los profesores.
   que pueda contradecir a los otros dos.
 - **El rojo solo aparece cuando el número no es cero.** En rojo permanente se
   deja de ver, que es lo mismo que no ponerlo.
+- **La situación de una tarea NO es su columna `estado`.** Esa columna quedó
+  sin uso a propósito (ver «Tareas») y nunca vale `'vencida'`: la calcula
+  `tareas_con_avance()` a partir de los renglones, que es la misma cuenta que
+  pintan `tareas.html`, el panel del alumno y el informe a la casa.
+  `panel_profesor()` la miraba igual, y medido con los datos reales eso eran
+  **dos tareas que el alumno ya había terminado contadas como pendientes Y
+  vencidas**: el único número que le pide al profesor hacer algo, inflado, y sin
+  que nada fallara. Al escribir cualquier cuenta de tareas se usa
+  `tareas_con_avance()`, nunca la columna.
+- **`tareas_puestas` y `clases_dadas` no son `tareas_pendientes` ni
+  `clases_30d`.** Existen porque los peldaños de abajo necesitan distinguir
+  "nunca" de "ahora no": con todas las tareas hechas las pendientes son cero
+  igual que si no hubiera puesto ninguna, y `clases_30d` en cero puede ser un
+  mes flojo o una cuenta que nunca dio clase. Son dos situaciones que piden
+  decirle cosas opuestas.
+
+#### Por dónde empezar, del lado del que da clase
+
+Es el mismo problema del alumno y la misma solución, con los peldaños del otro
+lado del escritorio: un entrenador nuevo abre el panel, ve cuatro números en
+cero y un directorio de accesos, y nada le dice cuál es el siguiente paso. En
+los datos se veía igual — el profesor con más alumnos llevaba **49 entradas y
+ni una tarea, ni una clase, ni un plan, ni una nota**.
+
+`primerPasoDelProfesor()` pinta **el primer peldaño que no esté cumplido**, y
+todos se calculan de lo que ya hay, así que **se apagan solos**: al mandar la
+primera tarea ese peldaño deja de cumplirse. No hay nada que marcar ni ningún
+"ya lo vi" en `localStorage` que se pueda quedar desincronizado.
+
+| | cuándo | a dónde |
+|---|---|---|
+| 1 | sin alumnos asignados | a ninguna parte (ver abajo) |
+| 2 | ninguno hizo el diagnóstico | Tareas |
+| 3 | hay planes sin compartir | Informes |
+| 4 | no ha puesto ninguna tarea | Tareas |
+| 5 | no ha dado ninguna clase | la clase en vivo |
+| 6 | faltan diagnósticos (goteo) | Tareas |
+
+- **El orden es el del trabajo, y por eso se dice UNA sola cosa**: sin alumnos
+  no hay nada que hacer; sin diagnóstico no hay plan que armar; un plan sin
+  compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
+  existe; y recién entonces la tarea y la clase.
+- **El peldaño 1 no lleva a ninguna parte, y es a propósito.** Asignar alumnos
+  es de quien administra, así que a un profesor se le explica **que no está
+  roto** —eso es justo lo que parecen cuatro ceros con Informes vacío, Tareas
+  sin a quién mandarle y un subgrupo que no se puede llenar— y se le dice quién
+  se los asigna. Se le **quita el `href`** al `<a>`, no se le deja uno que no
+  haga nada: sin `href` no recibe el foco ni se anuncia como enlace. A quien
+  administra sí se le ofrece `admin.html`, que es suyo. Tres de los siete del
+  equipo docente estaban en ese estado.
+- **Va en la MISMA franja que lo del alumno** (`#pendientes-aviso`, por
+  `pintarFranja()`): contesta la misma pregunta —«¿qué hago ahora?»— y dos
+  franjas peleando por el primer lugar es el problema que este panel ya tuvo
+  con «Estado de la clase».
+- **Nunca en rojo**: nada de esto se venció, está por hacer.
+- **Con todo al día no se pinta nada.** Un cartel que se repite deja de leerse
+  — la misma lección del aviso de instalar la app.
+- Reemplazó al renglón `#profe-planes`, que decía solo lo de los planes: dos
+  lugares decidiendo qué se le dice al profesor terminan diciendo dos cosas.
+
+#### El camino del entrenador, recorrido entero
+
+Cada pieza tiene su verificador —tareas, planes, la clase en vivo, la
+bitácora, informes— y todos comprueban SU pantalla. Lo que no comprobaba
+ninguno es la **costura**: que un entrenador pueda recorrer el camino entero
+sin encontrarse una puerta cerrada. `herramientas/verificar-camino-entrenador.js`
+abre las 13 pantallas del camino, una detrás de otra, en un navegador de
+verdad.
+
+- **Con una profesora que NO administra**, que es la cara que ningún
+  verificador miraba: los dobles suelen ponerle `is_admin` —el de las capturas
+  de la guía lo hace a propósito, porque la guía tiene que enseñar todas las
+  pantallas— y con eso los permisos no se prueban, porque quien administra pasa
+  por todas partes.
+- **Reusa el doble de `guia-capturas.js`**, que ya sabe servir 25 pantallas con
+  sesión y datos de mentira. `clienteFalso()` acepta ahora `{ perfiles, yo,
+  rpc, tablas }` y sin nada hace exactamente lo de siempre. Un doble escrito
+  aparte se iría separando de este a la primera corrección.
+  - Ahí mismo saltó la trampa de siempre: `tablas.profiles` **no es una tabla
+    suelta**, se rellena con `DEMO.perfiles`, así que cambiar las cuentas sin
+    cambiarla deja a la página sin encontrar a quien dice ser — y eso se ve
+    como «No se pudo cargar tu perfil», que parece un fallo de la página y es
+    del doble. Ya pasó con `verificar-aperturas-pagina.js` y con
+    `verificar-informes.js`.
+- Lo que mide es lo que se rompe callado: que ninguna pantalla **se vaya al
+  login**, se quede en «Comprobando tu sesión…», le diga acceso denegado o
+  pinte `undefined`; que desde todas se pueda **volver al panel** (un enlace a
+  `clases.html` que se vea de verdad, medido con `checkVisibility()`) — una
+  pantalla sin vuelta es un callejón del que solo se sale con el botón de
+  atrás; y **que el destino que el panel PROPONE en cada uno de sus seis
+  peldaños abra para ese mismo perfil**. Un peldaño que mande a una pantalla
+  que le rebota no da ningún error: la franja se ve perfecta y el clic termina
+  en el aviso de acceso denegado.
+- El destino se lee **de la propia franja**, no de una lista copiada en el
+  verificador: una lista escrita a mano se queda vieja y daría verde sobre
+  enlaces que ya no son esos.
+- Está probado que falla de verdad: apuntando el peldaño de los planes a
+  `cobros.html` —que a quien no coordina le niega— salta.
 
 ### El registro de clases no se baja entero
 
@@ -4550,6 +5826,16 @@ y —lo que de verdad importa— que los tres números **salgan del RPC y que na
 pida `training_progress`**: si alguien vuelve a sumarlos acá la página se ve
 igual de bien hasta que un alumno cruza el techo de PostgREST. Y que a quien da
 clase se le pinte "Tu semana" y **no** el panel del alumno.
+
+De los peldaños del profesor comprueba los seis, que es donde está el error
+fácil: que sin alumnos la franja **no ofrezca ninguna página** que la base le
+vaya a negar (se mira el `href` de verdad) pero que a quien administra sí, que
+«ninguna tarea puesta» no se confunda con «ninguna pendiente» —a quien mandó
+cinco y las hicieron todas no se le pide la primera—, que «nunca dio clase» no
+se confunda con «este mes no», y que con todo al día la franja **no se
+destape** (se mide el `display` que calcula el navegador). Está probado que
+falla de verdad: cambiando `tareas_puestas` por `tareas_pendientes`, saltan
+seis comprobaciones.
 
 De los exámenes en la franja comprueba los seis estados en que se puede estar,
 que son justamente los que se distinguen mal: que uno entregado no la destape,
@@ -4654,7 +5940,10 @@ empezó todo esto. Comprueba además que al entrar **no se pinte ni una fila** �
 alguien vuelve a mostrarlas todas, la página se ve igual de bien hasta que hay
 trescientas— y qué manda de verdad la ficha a la Edge Function al sumarle un
 profesor a un grupo (los 401 ids y el modo `agregar`, no medio grupo ni un
-`reemplazar`).
+`reemplazar`). Del volcado en un equipo comprueba que se ofrezcan los grupos y
+los subgrupos —con el dueño de cada subgrupo escrito—, que **un grupo que no
+cabe en el tope no se mande** y se diga con su número, y que el que sí cabe se
+sume al que ya estaba en vez de reemplazarlo.
 
 ## Las inscripciones a torneos en línea
 
@@ -5464,6 +6753,21 @@ lee Google.
   se agrega ahí.
 - "vos" se resuelve por contexto: con preposición delante es *ti* ("un lugar
   para ti"), si no es *tú* ("busca tú mismo").
+- **El barrido mira también las Edge Functions** (`supabase/functions/**/*.ts`),
+  no solo el HTML, el JS y el CSS. Esos archivos escriben **correo que sale a
+  las familias**, o sea el texto del sitio que menos se revisa y el único que no
+  se puede corregir después de mandado: el correo de invitación de
+  `admin-manage-users` decía «elegí un plan» y ahí lleva desde que se escribió,
+  porque esa función vivía solo desplegada y el verificador solo leía el sitio.
+
+  **`admin-manage-users` entró al repositorio por eso**, bajada tal cual del
+  despliegue y sin tocarle nada más que esa palabra. Antes cambiarle una línea
+  era bajarla, editarla a ciegas y volver a subirla —la misma decisión que ya se
+  había tomado con `cobros-recordatorios` e `informes-encargados`—. **Está
+  pendiente de desplegar**: hasta que se suba (`node
+  herramientas/funciones-armar.js` y el despliegue), el correo que reciben las
+  familias sigue diciendo «elegí». Nada más de esa función cambió, así que
+  desplegarla no arrastra ningún otro cambio.
 
 ### Y las respuestas de Claude también van en español
 
@@ -5482,3 +6786,86 @@ exactamente por donde entraron las 1.900 formas de septiembre.
 
 Los nombres de archivo, las clases de CSS, los identificadores y los comandos
 se quedan como están: son código, no texto.
+
+## El punto de restauración: la base no vivía en ninguna parte
+
+`RESTAURAR.md` es el documento operativo —qué hacer si algo falla— y esto es
+por qué existe. El sitio siempre estuvo respaldado: es un repositorio de git,
+se vuelve atrás con una etiqueta. Lo que no estaba respaldado era **todo lo
+demás**, y no daba ningún error porque la plataforma funcionaba igual.
+
+- **Las 179 migraciones de la Academia vivían SOLO en Supabase.** Ahí están las
+  62 tablas, las 110 funciones, las 176 políticas de RLS y los 20 triggers: o
+  sea, quién ve a quién, quién puede escribir qué y todas las decisiones que
+  este archivo explica. Si ese proyecto se perdiera o alguien borrara de más,
+  no había de dónde reconstruirlo. Ahora están en `supabase/migraciones/`
+  (y las 5 del proyecto de inscripciones en `supabase/migraciones-colegios/`),
+  bajadas de `supabase_migrations.schema_migrations` **y comprobadas una por
+  una con su md5**: una migración transcrita a medias se ve igual de bien que
+  una entera, y la diferencia solo aparece el día que hay que restaurar.
+- **Cinco Edge Functions estaban desplegadas y no estaban en el repositorio**:
+  `notificar` (el VAPID y el cifrado `aes128gcm` escritos a mano, o sea lo más
+  difícil de rehacer de todo el sitio), `chess-results-proxy`, `ocr-scoresheet`,
+  `enviar-resultado-arbitraje` y `bootstrap-admin`. Es el mismo agujero que ya
+  se había tapado de a una con `cobros-recordatorios`, `informes-encargados` y
+  `admin-manage-users`; ahora están las 14.
+- **El retrato del esquema** (`supabase/esquema/`) no restaura nada: sirve para
+  comprobar, DESPUÉS de restaurar, que no falte ninguna política ni ningún
+  trigger. Un esquema al que le falta una política se ve perfecto y deja
+  abierto —o cerrado— algo que no era.
+
+### Lo que sigue sin red, y es lo caro
+
+**Los datos de la gente no están respaldados en ninguna parte.** El esquema se
+reconstruye en minutos; los 105 perfiles, las 3.976 filas de progreso, los 80
+encargados a los que llegan los informes y los 53 planes de clase, no. Y la
+organización de Supabase está en el plan **gratuito**, que no hace copias
+automáticas de la base — igual que no deja encender la protección contra
+contraseñas filtradas, que este archivo ya tenía anotada por lo mismo.
+
+`herramientas/respaldo-datos.sh` es la salida mientras tanto: `pg_dump` con la
+cadena de conexión por variable de entorno (nunca escrita en el repositorio) y
+la salida en `respaldos/`, que está en `.gitignore` **y** en `.assetsignore`.
+Los dos candados son para el mismo descuido: ahí adentro van cédulas y correos
+de menores, de git no se borra nada, y el despliegue sube la carpeta de
+trabajo, no lo que hay en git.
+
+- **`.assetsignore` ahora excluye `supabase/` entero.** El worker sirve TODO el
+  directorio, así que lo que no se excluya queda publicado: las migraciones son
+  el modelo de permisos completo, y publicarlas es regalarle a cualquiera el
+  mapa de por dónde buscarle la vuelta. Ninguna página las pide.
+- **Un respaldo que depende de que alguien se acuerde de correrlo, tarde o
+  temprano no se corre.** La salida de verdad es el plan Pro, con sus copias
+  diarias. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+  alguien no existe.
+
+### Al aplicar una migración o desplegar una función, actualizar el respaldo
+
+**Correr `node herramientas/verificar-punto-restauracion.js`** (no necesita
+red, ni navegador, ni el sitio servido). Comprueba que no falte ninguna pieza
+—las migraciones, las 14 funciones con su código, los inventarios, los cuatro
+archivos de Cloudflare— e imprime la **huella** md5 de las migraciones, que se
+compara contra la base con la consulta que el propio script deja escrita. Si no
+coincide, hay migraciones aplicadas que no están respaldadas. Está probado que
+falla de verdad: quitando una migración y una función, saltan las dos.
+
+Un respaldo a medias no da ningún error —la carpeta está, los archivos se
+ven— y eso solo se descubre en el peor momento posible.
+
+**Pendiente de desplegar:** `ocr-scoresheet` se bajó tal cual estaba y traía
+tres formas de voseo («Avisá al profesor», «Probá con una foto»). Se
+corrigieron en el repositorio, así que hasta que se vuelva a desplegar, lo que
+el alumno ve en pantalla sigue diciendo lo de antes. Es el mismo caso que
+`admin-manage-users` con su «elegí un plan».
+
+### La etiqueta del punto de restauración se pone a mano
+
+`RESTAURAR.md` nombra el **commit** del estado bueno, no una etiqueta, y es a
+propósito: las credenciales de una sesión de Claude Code en la web empujan
+ramas pero reciben un **403 con `refs/tags`**, así que la etiqueta no se crea
+sola por más que el commit sí quede en `main`. Un documento que mandara a
+`git checkout restauracion-…` con esa etiqueta sin existir sería justo el fallo
+callado de siempre: se lee bien, y el día que hace falta no está.
+
+El comando queda escrito en `RESTAURAR.md` para correrlo desde una máquina con
+permiso de escribir etiquetas.

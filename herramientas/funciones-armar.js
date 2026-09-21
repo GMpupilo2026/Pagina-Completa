@@ -34,13 +34,20 @@ const COMPARTIDO = path.join(RAIZ, "_compartido");
  * adivina leyendo los imports: si mañana una función importa algo que no está
  * declarado, es mejor que falle el armado a que se despliegue a medias. */
 const FUNCIONES = {
+  // Su instrucciones-email.ts es suyo y vive en su carpeta: no lo usa nadie
+  // más. Va en esta lista igual, para que se despliegue con el resto y no
+  // haya que acordarse de subirla aparte.
+  "admin-manage-users": [],
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
   "reenviar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],
-  // No comparte nada: su examen-html.ts es suyo y vive en su carpeta.
-  "informe-examen": [],
-  "cobros-recordatorios": ["usuario-alumno.ts"],
+  "correos-alumno": ["usuario-alumno.ts"],
+  // Su examen-html.ts es suyo y vive en su carpeta; lo único compartido es el
+  // número al que la casa escribe, que es el mismo en los tres correos.
+  "informe-examen": ["contacto-academia.ts"],
+  "informes-encargados": ["contacto-academia.ts"],
+  "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts"],
 };
 
 function armar(nombre) {

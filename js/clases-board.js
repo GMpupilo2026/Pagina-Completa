@@ -155,8 +155,13 @@
 
       // Coordenadas a-h/1-8 FUERA del tablero (como uno físico), siempre visibles —
       // independientes de this.showCoords, que ahora en cambio repite el nombre de cada
-      // casilla ADENTRO (ver render()). Solo se pide en el tablero principal: los overlays
-      // de pregunta/práctica y las miniaturas no lo necesitan.
+      // casilla ADENTRO (ver render()). Va en los tres tableros grandes de la clase: el
+      // principal y los dos overlays del alumno (preguntar y practicar). En los de
+      // preguntar y practicar hace más falta todavía que en el principal — ahí el alumno
+      // está buscando una jugada solo, sin el profesor señalándole la casilla —, y además
+      // es el mismo tablero rotulado al que está acostumbrado en Entrenamiento. Las
+      // miniaturas de supervisión sí se quedan sin ellas: son de mirar de lejos y a ese
+      // tamaño las letras no se leerían.
       if (opts.externalCoords) this._setupExternalCoords();
 
       // Arrastrar y soltar piezas (además del clic-clic de siempre): ver js/board-drag.js.
@@ -184,11 +189,15 @@
       const parent = this.el.parentElement;
       const outer = document.createElement("div");
       outer.className = "board-coords-outer";
-      // Mismo ancho máximo que traía #chessboard directamente, para que el tablero se
-      // vea igual de grande que antes con las coordenadas ahora afuera.
-      const maxWidthMatch = this.el.className.match(/max-w-\[(\d+)px\]/);
+      // Mismo ancho máximo que traía el tablero directamente, para que se vea igual de
+      // grande que antes con las coordenadas ahora afuera. El tope se lee tal cual esté
+      // escrito y NO solo como un número de píxeles: los overlays de pregunta y práctica
+      // usan max-w-[min(92vw,560px)], y un patrón que solo entendiera "560px" los dejaría
+      // sin tope — el tablero se quedaría en sus 560 px y la fila de letras se estiraría a
+      // todo el ancho de la tarjeta, o sea las coordenadas señalando la columna que no era.
+      const maxWidthMatch = this.el.className.match(/max-w-\[([^\]\s]+)\]/);
       if (maxWidthMatch) {
-        outer.style.maxWidth = maxWidthMatch[1] + "px";
+        outer.style.maxWidth = maxWidthMatch[1];
         this.el.classList.remove(maxWidthMatch[0]);
       }
       parent.insertBefore(outer, this.el);

@@ -378,7 +378,7 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
 
             const { data: roomData, error: roomError } = await sb.from("fourplayer_games").select("*").eq("id", ROOM_ID).maybeSingle();
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
@@ -388,8 +388,12 @@
             if (!mySeat && !isTeacher) { showError("No formas parte de esta partida."); return; }
 
             const ids = SEATS.map((s) => room.seats[s].player_id).filter(Boolean);
-            const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", ids);
-            (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+            /* Los nombres salen de nombres_de_jugadores() y no de `profiles`:
+               desde que el reto está abierto a toda la Academia un asiento
+               puede ser de otra clase, que por la RLS de `profiles` no se ve, y
+               aquel select se llevaba también su correo. */
+            const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: ids });
+            (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
 
             document.getElementById("page-title").textContent = "♟️ Ajedrez para 4 · " + (room.mode === "teams" ? "Equipos" : "Todos contra todos");
 

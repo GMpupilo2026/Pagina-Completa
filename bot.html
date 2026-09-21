@@ -301,7 +301,7 @@ const PST = {
 // El rey quiere estar escondido en la esquina mientras hay damas y torres en
 // el tablero, y activo en el centro cuando ya no queda con qué darle mate de
 // un zarpazo — por eso son dos tablas, mezcladas según qué tan avanzada está
-// la partida (ver `faseDePartida`).
+// la partida (ver `fase` en materialDeTablero).
 const PST_REY_MEDIO = [
     -30,-40,-40,-50,-50,-40,-40,-30,
     -30,-40,-40,-50,-50,-40,-40,-30,
@@ -336,14 +336,6 @@ function indicePst(casilla, color) {
 // partida). Lo que trae cada bando al inicio: 2 caballos + 2 alfiles + 2
 // torres + 1 dama, con los valores de VALOR (unos 31.66 en esta escala).
 const MATERIAL_INICIAL_SIN_PEONES = 2 * VALOR.n + 2 * VALOR.b + 2 * VALOR.r + VALOR.q;
-function faseDePartida(piezas) {
-    let total = 0;
-    piezas.forEach((p) => {
-        if (p.types || p.type === "p" || p.type === "k") return;
-        total += VALOR[p.type] || 0;
-    });
-    return Math.min(1, total / (MATERIAL_INICIAL_SIN_PEONES * 2));
-}
 
 const MODALIDADES = {
     estandar: {
@@ -404,32 +396,52 @@ const MODALIDADES = {
    también dónde está parada cada pieza (PST) y, en Crazyhouse, lo que hay en
    la reserva de cada quien — una torre en la mano vale lo mismo que una en el
    tablero, y el bot que no la contara jugaría como si no la tuviera. */
+/* Una pasada por las 64 casillas y ni un objeto de más.
+   Antes se armaba una lista `piezas` con un objeto nuevo por pieza
+   (`Object.assign({casilla}, p)`) y se recorría tres veces: una para llenarla,
+   otra para la fase de la partida y otra para sumar. Eso son ~32 objetos por
+   evaluación, y el bot evalúa cientos de posiciones por jugada — basura que el
+   recolector tiene que ir limpiando justo mientras se busca, que es cuando
+   menos conviene pararse.
+   Lo único que obligaba a las dos pasadas era el rey: su tabla se mezcla según
+   la fase, y la fase no se sabe hasta haber visto el tablero entero. Se
+   resuelve anotando en qué casilla está cada rey y sumando su parte al final:
+   el rey vale 0 de material (VALOR.k), así que lo único que aporta es esa
+   tabla. El número que sale es exactamente el mismo. */
 function materialDeTablero(leer, casillas, pockets) {
-    const piezas = [];
-    casillas.forEach((s) => {
+    let total = 0, faseTotal = 0, alfilesW = 0, alfilesB = 0, reyW = null, reyB = null;
+    for (let i = 0; i < casillas.length; i++) {
+        const s = casillas[i];
         const p = leer(s);
-        if (p) piezas.push(Object.assign({ casilla: s }, p));
-    });
-    const fase = faseDePartida(piezas);
-    let total = 0, alfilesW = 0, alfilesB = 0;
-    piezas.forEach((p) => {
-        const tipos = p.types || [p.type];
+        if (!p) continue;
+        const blanca = p.color === "w";
         let v = 0;
-        tipos.forEach((t) => { v += VALOR[t] || 0; });
         if (p.types) {
             // Pieza fusionada (Abrazos): no tiene una tabla de posición
             // propia (no es "de siempre" un caballo o un alfil), así que se
             // queda con el bono de centro genérico.
-            v += (CENTRO[p.casilla] || 0);
-        } else if (p.type === "k") {
-            const idx = indicePst(p.casilla, p.color);
-            v += (fase * PST_REY_MEDIO[idx] + (1 - fase) * PST_REY_FINAL[idx]) / 100;
-        } else if (PST[p.type]) {
-            v += PST[p.type][indicePst(p.casilla, p.color)] / 100;
-            if (p.type === "b") { if (p.color === "w") alfilesW++; else alfilesB++; }
+            for (let k = 0; k < p.types.length; k++) v += VALOR[p.types[k]] || 0;
+            v += (CENTRO[s] || 0);
+        } else {
+            v = VALOR[p.type] || 0;
+            if (p.type === "k") {
+                if (blanca) reyW = s; else reyB = s;
+            } else {
+                if (p.type !== "p") faseTotal += v;
+                const tabla = PST[p.type];
+                if (tabla) {
+                    v += tabla[indicePst(s, p.color)] / 100;
+                    if (p.type === "b") { if (blanca) alfilesW++; else alfilesB++; }
+                }
+            }
         }
-        total += (p.color === "w" ? 1 : -1) * v;
-    });
+        total += blanca ? v : -v;
+    }
+    // Cuánto material "mayor" (sin peones ni reyes) queda en el tablero, entre
+    // 0 (final, cambiaron todas las piezas de peso) y 1 (recién empezada).
+    const fase = Math.min(1, faseTotal / (MATERIAL_INICIAL_SIN_PEONES * 2));
+    if (reyW !== null) { const i = indicePst(reyW, "w"); total += (fase * PST_REY_MEDIO[i] + (1 - fase) * PST_REY_FINAL[i]) / 100; }
+    if (reyB !== null) { const i = indicePst(reyB, "b"); total -= (fase * PST_REY_MEDIO[i] + (1 - fase) * PST_REY_FINAL[i]) / 100; }
     if (alfilesW >= 2) total += 0.3;
     if (alfilesB >= 2) total -= 0.3;
     if (pockets) {
@@ -447,6 +459,65 @@ const TODAS_LAS_CASILLAS = (function () {
     return out;
 })();
 
+/* ---------------- Qué promete una jugada, SIN jugarla ----------------
+   Es lo que el bot (js/bot-oscar.js) usa para ordenar las jugadas de un nodo
+   antes de explorarlas. Ahí está casi todo el costo de la búsqueda y no se
+   ve: ordenarlas por `material()` obliga a CLONAR la posición de cada una
+   —unos 123 µs por clon, cuarenta por nodo— y la poda alfa-beta después
+   explora dos o tres. Con esto el orden sale de mirar dos casillas del
+   tablero que ya está delante, y solo se clona la rama en la que se entra.
+
+   No pretende acertar el valor de la jugada: solo ponerlas en un orden
+   razonable. Un orden malo no da ningún resultado equivocado —alfa-beta
+   devuelve lo mismo en cualquier orden—, solo poda menos.
+
+   El criterio es el de siempre en ajedrez: primero las capturas, y entre
+   ellas la que se queda con la pieza más gorda usando la más barata (si con
+   el peón y con la dama se come la misma torre, se prueba antes la del
+   peón: si la torre estaba defendida, la de la dama es un desastre). Va con
+   `leer(casilla)` y no con los campos del objeto jugada porque los cinco
+   motores devuelven jugadas con forma distinta, pero todos saben leer su
+   propio tablero. En Abrazos nadie captura —las piezas se fusionan— y da
+   igual: llegar encima de una pieza sigue siendo lo que más cambia la
+   posición, que es justo lo que hay que mirar primero. */
+function valorDePieza(p) {
+    if (!p) return 0;
+    if (p.types) { let v = 0; p.types.forEach((t) => { v += VALOR[t] || 0; }); return v; }
+    return VALOR[p.type] || 0;
+}
+
+/* Lo que vale una pieza por DÓNDE está parada, con la misma tabla que usa
+   materialDeTablero(). El rey se queda en cero: su tabla depende de la fase de
+   la partida y calcularla acá sería recorrer el tablero entero, que es
+   exactamente lo que este atajo viene a evitar. */
+function valorPosicional(p, casilla) {
+    if (!p || p.types || p.type === "k") return CENTRO[casilla] || 0;
+    const tabla = PST[p.type];
+    return tabla ? tabla[indicePst(casilla, p.color)] / 100 : (CENTRO[casilla] || 0);
+}
+
+function valorDeJugada(leer, j) {
+    let v = 0;
+    // Una pieza soltada desde la reserva (Crazyhouse) no viene de ninguna
+    // casilla: no hay agresor que descontar.
+    const agresor = j.drop ? null : (j.from ? leer(j.from) : null);
+    // `captured` lo trae chess.js y es más fiel que mirar el destino: la
+    // captura al paso se come un peón que NO está en la casilla de llegada,
+    // y mirando solo el tablero pasaría por jugada tranquila.
+    const victima = j.captured ? { type: j.captured } : (j.to ? leer(j.to) : null);
+    if (victima) v += 10 * valorDePieza(victima) - valorDePieza(agresor);
+    // Y en una posición SIN capturas —un final de peones, que es donde más
+    // falta hace buscar hondo— lo de arriba vale cero para todas y el orden
+    // quedaría al azar. Cuánto mejora de casilla la pieza que se mueve sí
+    // distingue, y son dos consultas a una tabla: la misma señal que antes se
+    // sacaba clonando la posición entera para mirarle el material.
+    else v += valorPosicional(agresor, j.to) - valorPosicional(agresor, j.from);
+    if (j.promotion) v += VALOR[j.promotion] || VALOR.q;
+    else if (j.flags && j.flags.indexOf("p") !== -1) v += VALOR.q;
+    if (j.drop) v += (VALOR[j.piece] || 0) / 2;
+    return v;
+}
+
 function adaptadorChess(juego) {
     return {
         motor: juego,
@@ -457,6 +528,7 @@ function adaptadorChess(juego) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorChess(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        valorJugada: (j) => valorDeJugada((s) => juego.get(s), j),
         // Sin esto el bot no distinguía "no tengo jugadas porque me dieron
         // mate" de "no tengo jugadas porque es ahogado": las dos son "sin
         // jugadas", pero una es pésima y la otra son tablas.
@@ -499,6 +571,7 @@ function adaptadorCrazyhouse(juego) {
             return hecho ? adaptadorCrazyhouse(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS, juego.pockets),
+        valorJugada: (j) => valorDeJugada((s) => juego.get(s), j),
         enJaque: () => juego.in_check(),
         jugar(j) { return j.drop ? juego.drop(j.piece, j.to) : juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => juego.in_checkmate() || juego.in_stalemate() || juego.in_draw(),
@@ -525,6 +598,7 @@ function adaptadorVariante(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorVariante(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        valorJugada: (j) => valorDeJugada((s) => motor.get(s), j),
         enJaque: () => typeof motor.inCheck === "function" && motor.inCheck(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada() { return !motor.allMoves().length || !!motor.terminado; },
@@ -552,6 +626,7 @@ function adaptadorCiegas(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCiegas(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        valorJugada: (j) => valorDeJugada((s) => motor.get(s), j),
         enJaque: () => motor.game.in_check(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => motor.game.game_over(),
@@ -583,6 +658,7 @@ function adaptadorCartas(juego) {
             return r.ok ? adaptadorCartas(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        valorJugada: (j) => valorDeJugada((s) => juego.get(s), j),
         enJaque: () => juego.inCheck(),
         jugar(j) {
             const r = juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
@@ -700,6 +776,7 @@ function adaptadorDuelo(dueloGame, colorFijo) {
             };
         },
         material: () => materialDeTablero((s) => dueloGame.get(s), TODAS_LAS_CASILLAS),
+        valorJugada: (j) => valorDeJugada((s) => dueloGame.get(s), j),
     };
 }
 

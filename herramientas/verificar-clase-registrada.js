@@ -68,13 +68,17 @@ const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, es_coordinador: f
    MANDA. Y el canal de presencia se puede empujar a mano desde la prueba
    (window.__entraAlumno) para simular que se conecta alguien — sin eso no hay
    forma de probar el disparador que más importa. */
-function clienteFalso(quien, claseAbierta) {
+function clienteFalso(quien, claseAbierta, semilla) {
   return `
 window.__inserts = [];
 window.__updates = [];
+window.__deletes = [];
 (function () {
   const PERFILES = ${JSON.stringify([PROFE, ALUMNA])};
   const SESIONES = ${JSON.stringify(claseAbierta ? [claseAbierta] : [])};
+  // Filas de arranque para las tablas que la prueba quiera sembrar (mensajes de
+  // chat, por ejemplo): así se puede ver una conversación con algo dentro.
+  const SEMILLA = ${JSON.stringify(semilla || {})};
   const GAME_STATE = [{
     id: 7, owner_id: "u-profe", fen: null, moves: [], start_fen: null, last_move: null,
     arrows: [], circles: [], active_player_id: null, active_player_color: "both",
@@ -84,7 +88,7 @@ window.__updates = [];
   let nuevas = 0;
 
   function constructor(tabla, filas) {
-    let filas2 = (filas || []).slice(), unica = false, pend = null, condiciones = [], porActualizar = null;
+    let filas2 = (filas || []).slice(), unica = false, pend = null, condiciones = [], porActualizar = null, porBorrar = false;
     const b = {
       select() { return b; },
       eq(col, val) { condiciones.push([col, val]); filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
@@ -107,10 +111,24 @@ window.__updates = [];
       // encadena, así que en este momento condiciones todavía está vacío y el
       // doble daría por bueno un cierre sobre la clase que no era.
       update(campos) { pend = null; porActualizar = campos; return b; },
-      delete() { filas2 = []; return b; },
+      // Igual que update: el filtro se apunta al RESOLVER, porque
+      // .delete().eq(...) encadena y acá condiciones todavía está vacío. Y borra
+      // de verdad de la tabla, para que una consulta posterior no encuentre lo
+      // que ya no existe — es justo lo que hay que poder comprobar al vaciar una
+      // conversación del chat.
+      delete() { pend = null; porBorrar = true; return b; },
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       then(res, rej) {
+        if (porBorrar) {
+          window.__deletes.push({ tabla: tabla, donde: condiciones.slice() });
+          for (const fila of filas2) {
+            const i = (filas || []).indexOf(fila);
+            if (i >= 0) filas.splice(i, 1);
+          }
+          filas2 = [];
+          porBorrar = false;
+        }
         if (porActualizar) {
           window.__updates.push({ tabla: tabla, campos: porActualizar, donde: condiciones.slice() });
           if (filas2[0]) Object.assign(filas2[0], porActualizar);
@@ -131,6 +149,7 @@ window.__updates = [];
     class_chat_messages: [], saved_games: [], archivos_pgn: [], planes_clase: [], plan_items: [],
     notas_alumno: [],
   };
+  for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
 
   // El canal de presencia se puede empujar desde la prueba: __entraAlumno()
   // hace lo que haría Realtime cuando alguien se conecta a la clase.
@@ -138,6 +157,14 @@ window.__updates = [];
   const oyentes = { presence: [], broadcast: [] };
   window.__entraAlumno = function () {
     estado["u-ana"] = [{ email: "ana@x.cr", full_name: "Ana Rojas", role: "alumno", online_at: new Date().toISOString() }];
+    oyentes.presence.forEach((f) => f());
+  };
+  // Un aviso de presencia SIN nadie nuevo: es el que llega solo, una y otra vez,
+  // mientras los alumnos de la clase que se acaba de cerrar todavía no cierran su
+  // pestaña. Es distinto de que entre alguien que no estaba.
+  window.__avisoDePresencia = function () { oyentes.presence.forEach((f) => f()); };
+  window.__entraOtroAlumno = function () {
+    estado["u-beto"] = [{ email: "beto@x.cr", full_name: "Beto Mora", role: "alumno", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
   };
 
@@ -150,6 +177,8 @@ window.__updates = [];
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
     rpc: (n) => constructor(n, n === "mis_clases"
       ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
+      : n === "alumnos_del_profesor"
+      ? [{ id: "u-ana", full_name: "Ana Rojas", email: "ana@x.cr" }]
       : []),
     channel: (nombre) => ({
       on(tipo, ev, f) {
@@ -179,14 +208,14 @@ function igual(nombre, hallado, esperado) {
   }
 }
 
-async function abrir(browser, quien, claseAbierta) {
+async function abrir(browser, quien, claseAbierta, semilla) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(quien, claseAbierta) }));
+    r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(quien, claseAbierta, semilla) }));
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -286,6 +315,12 @@ async function pruebaClaseYaAbierta(browser) {
 
   igual("no se abre una segunda", await sesionesAbiertas(page), 0);
 
+  // La clase se cierra CON alumnos conectados, que es como pasa de verdad: el
+  // profesor confirma el cierre y ellos todavía tienen la pestaña abierta.
+  await page.evaluate(() => window.__entraAlumno());
+  await page.waitForTimeout(500);
+  igual("con la clase ya abierta, que entre un alumno no abre otra", await sesionesAbiertas(page), 0);
+
   // Cerrar pide primero el nombre y la nota: así no se cierra de un clic
   // accidental en medio de la clase, y se recoge lo único que hace falta para
   // que el registro sirva de algo después.
@@ -309,6 +344,34 @@ async function pruebaClaseYaAbierta(browser) {
   await page.waitForFunction(() =>
     document.getElementById("clase-estado-texto").textContent.includes("Todavía no hay clase"), null, { timeout: 8000 });
   igual("y la franja vuelve a decir la verdad", "lo dice", "lo dice");
+  igual("y se dice que quedó guardada, con su nombre", await page.evaluate(() =>
+    document.getElementById("status-banner").textContent.includes("Finales de rey y peón") ? "lo dice" : document.getElementById("status-banner").textContent), "lo dice");
+
+  /* Lo que de verdad se rompía callado: cerrar y que se volviera a abrir sola.
+     Los alumnos no cierran su pestaña en el mismo segundo, así que el aviso de
+     presencia siguiente encontraba gente conectada y abría una clase NUEVA — que
+     el profesor, ya de salida, dejaba abierta para siempre. Y con esa fila abierta
+     el índice único impide abrir la del día siguiente: la clase de mañana se cuelga
+     de la fantasma y en el registro no aparece ninguna nueva. */
+  const abiertasAntes = await sesionesAbiertas(page);
+  await page.evaluate(() => window.__avisoDePresencia());
+  await page.waitForTimeout(600);
+  igual("un aviso de presencia después de cerrar NO reabre la clase",
+    (await sesionesAbiertas(page)) - abiertasAntes, 0);
+  await page.evaluate(() => window.__entraAlumno());
+  await page.waitForTimeout(600);
+  igual("ni el mismo alumno que ya estaba conectado",
+    (await sesionesAbiertas(page)) - abiertasAntes, 0);
+  await page.waitForFunction(() =>
+    document.getElementById("clase-estado-texto").textContent.includes("Todavía no hay clase"), null, { timeout: 8000 });
+  igual("y la franja sigue diciendo que está cerrada", "lo dice", "lo dice");
+
+  /* Pero un alumno que NO estaba sí es una clase nueva: quedarse sin abrirla
+     sería el fallo de siempre al revés — su asistencia no se registraría. */
+  await page.evaluate(() => window.__entraOtroAlumno());
+  await page.waitForTimeout(800);
+  igual("pero un alumno que entra después SÍ abre otra clase",
+    (await sesionesAbiertas(page)) - abiertasAntes, 1);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();

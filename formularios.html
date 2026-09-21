@@ -95,6 +95,24 @@
                     </div>
                 </div>
 
+                <!-- Compartir. Solo aparece en un formulario tuyo ya guardado
+                     (uno nuevo todavía no tiene id con qué compartir), y solo
+                     con quien coordina: es lo único que puede terminar viendo
+                     las respuestas, que traen cédulas y fechas de nacimiento
+                     de menores. -->
+                <div id="bloque-compartir" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">🤝 Compartir con otro coordinador</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Quien lo reciba puede verlo, leer sus respuestas y dar de alta las cuentas desde ellas. Editarlo y borrarlo siguen siendo tuyos.</p>
+                    <ul id="c-etiquetas" class="flex flex-wrap gap-1.5 mb-2"></ul>
+                    <p id="c-nadie" class="hidden text-xs text-brand-450 dark:text-brand-350 mb-2">Todavía no lo compartes con nadie.</p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <label for="c-agregar" class="sr-only">Sumar un coordinador</label>
+                        <select id="c-agregar" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        <button type="button" id="c-sumar" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir</button>
+                    </div>
+                    <p id="c-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                         <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white">Qué se le pregunta</h2>
@@ -233,6 +251,15 @@ let misFormularios = [];
 let campos = [];          // lo que se está editando
 let editando = null;      // el formulario abierto en el editor, o null si es nuevo
 let respuestasActuales = { formulario: null, filas: [] };
+let coordinadores = [];   // con quién se puede compartir: el resto del equipo de coordinación
+let compartidoCon = [];   // ids de coordinadores con los que YA se comparte el formulario abierto
+
+// Es dueño (o administra) quien puede editar/borrar/compartir un formulario;
+// la RLS ya lo impide para el de un colega, pero sin esto los botones
+// "funcionarían" sin cambiar nada, que es peor que no mostrarlos.
+function esDueno(f) {
+    return !!f && (f.creado_por === perfil.id || perfil.is_admin);
+}
 
 const TIPOS = [
     { id: "texto",    etiqueta: "Texto corto" },
@@ -433,7 +460,7 @@ function agregarCampo(base) {
     campos.push(c);
 }
 
-function abrirEditor(form) {
+async function abrirEditor(form) {
     editando = form || null;
     campos = form ? JSON.parse(JSON.stringify(form.campos || [])) : [];
     document.getElementById("f-titulo").value = form ? form.titulo : "";
@@ -444,6 +471,103 @@ function abrirEditor(form) {
     document.getElementById("guardar-msg").textContent = "";
     pintarCampos();
     mostrar("vista-editor");
+    await abrirCompartir(form);
+}
+
+// ------------------------------------------------------------------ compartir
+// Solo aparece en un formulario YA guardado (uno nuevo todavía no tiene id con
+// qué compartir) y solo si es de quien mira: el material de un colega no es
+// tuyo para repartirlo.
+async function abrirCompartir(form) {
+    const bloque = document.getElementById("bloque-compartir");
+    compartidoCon = [];
+    if (!form || !esDueno(form)) {
+        bloque.classList.add("hidden");
+        return;
+    }
+    bloque.classList.remove("hidden");
+    document.getElementById("c-msg").textContent = "Cargando…";
+    try {
+        const { data, error } = await sb.from("formulario_compartidos")
+            .select("coordinador_id").eq("formulario_id", form.id);
+        if (error) throw error;
+        compartidoCon = (data || []).map((r) => r.coordinador_id);
+        document.getElementById("c-msg").textContent = "";
+    } catch (err) {
+        document.getElementById("c-msg").textContent = "No se pudo cargar con quién lo compartes: " + (err.message || err);
+    }
+    pintarCompartir();
+}
+
+function pintarCompartir() {
+    const etiquetas = document.getElementById("c-etiquetas");
+    etiquetas.innerHTML = "";
+    document.getElementById("c-nadie").classList.toggle("hidden", compartidoCon.length > 0);
+    compartidoCon.forEach((id) => {
+        const quien = coordinadores.find((c) => c.id === id);
+        const li = document.createElement("li");
+        li.className = "inline-flex items-center gap-1.5 bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 text-xs font-semibold pl-3 pr-1.5 py-1 rounded-full";
+        const nombre = document.createElement("span");
+        nombre.textContent = quien ? quien.nombre : "(ya no disponible)";
+        li.appendChild(nombre);
+        const x = document.createElement("button");
+        x.type = "button";
+        x.className = "w-4 h-4 flex items-center justify-center rounded-full hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        x.textContent = "✕";
+        x.setAttribute("aria-label", "Dejar de compartir con " + (quien ? quien.nombre : "este coordinador"));
+        x.addEventListener("click", () => dejarDeCompartir(id));
+        li.appendChild(x);
+        etiquetas.appendChild(li);
+    });
+
+    // El selector solo ofrece a quien todavía no lo tiene.
+    const libres = coordinadores.filter((c) => !compartidoCon.includes(c.id));
+    const select = document.getElementById("c-agregar");
+    select.innerHTML = libres.map((c) => `<option value="${escapar(c.id)}">${escapar(c.nombre)}</option>`).join("");
+    const sinNadie = libres.length === 0;
+    select.disabled = sinNadie;
+    document.getElementById("c-sumar").disabled = sinNadie;
+    if (sinNadie && coordinadores.length === 0) {
+        document.getElementById("c-msg").textContent = "No hay más coordinadores en la plataforma con quién compartirlo.";
+    } else if (sinNadie) {
+        document.getElementById("c-msg").textContent = "Ya lo compartes con todo el equipo de coordinación.";
+    }
+}
+
+document.getElementById("c-sumar").addEventListener("click", async () => {
+    const id = document.getElementById("c-agregar").value;
+    if (!id || !editando) return;
+    const btn = document.getElementById("c-sumar");
+    const msg = document.getElementById("c-msg");
+    btn.disabled = true;
+    msg.textContent = "Compartiendo…";
+    try {
+        const { error } = await sb.from("formulario_compartidos")
+            .insert({ formulario_id: editando.id, coordinador_id: id });
+        if (error) throw error;
+        compartidoCon = compartidoCon.concat([id]);
+        pintarCompartir();
+        msg.textContent = "Compartido.";
+    } catch (err) {
+        msg.textContent = "No se pudo compartir: " + (err.message || err);
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+async function dejarDeCompartir(id) {
+    if (!editando) return;
+    const msg = document.getElementById("c-msg");
+    try {
+        const { error } = await sb.from("formulario_compartidos")
+            .delete().eq("formulario_id", editando.id).eq("coordinador_id", id);
+        if (error) throw error;
+        compartidoCon = compartidoCon.filter((x) => x !== id);
+        pintarCompartir();
+        msg.textContent = "Ya no lo ve.";
+    } catch (err) {
+        msg.textContent = "No se pudo quitar: " + (err.message || err);
+    }
 }
 
 function mostrar(cual) {
@@ -559,8 +683,8 @@ function pintarLista() {
         // Editar y Borrar solo si es de quien mira (o administra): la RLS ya
         // lo impide para el de un compañero de equipo, pero sin esto el botón
         // "funcionaría" sin cambiar nada, que es peor que no mostrarlo.
-        const esDueno = f.creado_por === perfil.id || perfil.is_admin;
-        if (esDueno) {
+        const esMio = esDueno(f);
+        if (esMio) {
             acciones.append(boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)));
         }
         acciones.append(
@@ -572,7 +696,7 @@ function pintarLista() {
                 setTimeout(() => { b.textContent = "Copiar enlace"; }, 1500);
             }),
         );
-        if (esDueno) {
+        if (esMio) {
             acciones.append(boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
                 if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
                 const { error } = await sb.from("formularios").delete().eq("id", f.id);
@@ -706,7 +830,7 @@ function abrirAlta(r, boton) {
        alumno: es lo que de verdad pasa con los pequeños — la familia escribe
        el suyo y deja ese campo vacío. Se propone, no se decide: queda a la
        vista y se puede desmarcar. */
-    // La marca de "lo escribí a mano" se borra al abrir OTRA respuesta: si no,
+    // La marca de "lo puso a mano" se borra al abrir OTRA respuesta: si no,
     // el usuario que se corrigió para un alumno se le quedaría puesto al
     // siguiente, y ese es el usuario con el que va a entrar.
     const campoUsuario = document.getElementById("alta-usuario");
@@ -1022,6 +1146,18 @@ async function init() {
     document.getElementById("f-grupo").innerHTML =
         '<option value="">— Sin equipo en particular —</option>' +
         grupos.map((g) => `<option value="${escapar(g)}">${escapar(g)}</option>`).join("");
+
+    // Con quién se puede compartir un formulario: el resto del equipo de
+    // coordinación. Si falla, el bloque de compartir se queda sin opciones en
+    // vez de tumbar la página entera — lo que se comparte no es lo primero
+    // que hace falta al entrar.
+    try {
+        const { data: cs, error } = await sb.rpc("coordinadores_disponibles");
+        if (error) throw error;
+        coordinadores = cs || [];
+    } catch (err) {
+        coordinadores = [];
+    }
 
     try {
         await cargarFormularios();

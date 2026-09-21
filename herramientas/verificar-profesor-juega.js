@@ -88,8 +88,46 @@ window.__inserts = [];
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)} }, access_token: "t" } } }), signOut: () => Promise.resolve({}) },
     from: (t) => constructor(t, DATOS.tablas[t] !== undefined ? DATOS.tablas[t] : []),
-    rpc: (n) => constructor(n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : []),
-    channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
+    /* nombres_de_jugadores() se resuelve DESDE la tabla de perfiles, filtrando por los
+       ids que le pasan: es lo que hace la función de verdad. Devolviendo
+       siempre la tabla entera, esta prueba daría por buena una página que le
+       pone a la partida el nombre de quien no era. Y el correo nunca sale
+       entero: esa función solo devuelve el nombre. */
+    rpc: (n, args) => {
+      if (n === "nombres_de_jugadores") {
+        const pedidos = (args && args.p_ids) || [];
+        return constructor(n, (DATOS.tablas.profiles || [])
+          .filter((p) => pedidos.indexOf(p.id) >= 0)
+          .map((p) => ({ id: p.id, nombre: p.full_name || String(p.email || "").split("@")[0] })));
+      }
+      return constructor(n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : []);
+    },
+    /* El canal de presencia de mentira ANUNCIA a quien le siembren y dispara
+       el sync, que es lo único que pinta la lista de "en línea ahora". Con un
+       presenceState siempre vacío —como estaba— la lista salía vacía y esta
+       prueba habría dado por buena cualquier regla de filtrado, incluida una
+       que no deja retar a nadie: las dos se ven igual, "no hay nadie". */
+    channel: (nombre) => {
+      const c = {
+        _sync: null,
+        on(tipo, opts, cb) { if (tipo === "presence" && opts && opts.event === "sync") c._sync = cb; return c; },
+        subscribe(cb) {
+          Promise.resolve().then(() => {
+            if (cb) cb("SUBSCRIBED");
+            if (c._sync) c._sync();
+          });
+          return c;
+        },
+        track() { return Promise.resolve(); },
+        presenceState() {
+          const estado = {};
+          (DATOS._enLinea || []).forEach((p) => { estado[p.id] = [p]; });
+          return estado;
+        },
+      };
+      window.__canales = (window.__canales || []).concat([nombre]);
+      return c;
+    },
     removeChannel: () => {},
   };
 })();
@@ -237,6 +275,45 @@ async function pruebaAlumnoSinPartidas(browser) {
   }
 }
 
+/* Retarse es lo único que comparte toda la Academia. Antes había que
+   compartir profesor, y eso dejaba la lista vacía casi siempre — que se lee
+   igual que "no hay nadie conectado", así que el filtro de más no daba ningún
+   error, solo dejaba al alumno sin con quién jugar.
+
+   Bruno es alumno de otra clase (su profesor no es el de Ana) y Ana tiene que
+   poder retarlo. Lo que se mide es la LISTA PINTADA, con su botón, no una
+   variable de la página. */
+async function pruebaEnLineaAbierto(browser) {
+  console.log("\n=== juegos.html · el espacio de juegos es de toda la Academia ===");
+  const datos = DATOS_JUEGOS(3, []);
+  datos._enLinea = [
+    { id: "u-ana",   nombre: "Ana Rojas",  is_admin: false, role: "alumno" },
+    { id: "u-bruno", nombre: "Bruno Mena", is_admin: false, role: "alumno" },
+    { id: "u-profe", nombre: "Karina Rojas", is_admin: false, role: "profesor" },
+  ];
+  const { page, ctx, errores } = await pagina(browser, "/juegos.html", clienteFalso(datos, "u-ana"));
+  await page.waitForFunction(() => document.querySelectorAll("#en-linea-lista [data-retar]").length > 0, { timeout: 10000 });
+  const v = await page.evaluate(() => ({
+    quienes: Array.from(document.querySelectorAll("#en-linea-lista [data-retar]")).map((b) => b.dataset.retar),
+    texto: document.getElementById("en-linea-lista").textContent,
+    cuenta: document.getElementById("en-linea-cuenta").textContent,
+  }));
+  igual("un alumno de OTRA clase sale en la lista, con su botón de retar",
+    v.quienes.sort(), ["u-bruno", "u-profe"]);
+  igual("y sale con su nombre", /Bruno Mena/.test(v.texto), "true");
+  igual("uno mismo no se puede retar", v.quienes.indexOf("u-ana"), "-1");
+  igual("y la cuenta dice cuántos hay", v.cuenta, "2 personas");
+
+  /* El reto se manda de verdad: es lo que la base tiene que aceptar ahora. */
+  await page.click("#en-linea-lista [data-retar='u-bruno']");
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "desafios"), { timeout: 10000 });
+  const fila = await page.evaluate(() => window.__inserts.filter((i) => i.tabla === "desafios").pop().fila);
+  igual("el reto sale a nombre de quien lo manda", fila.de_id, "u-ana");
+  igual("y va dirigido al de la otra clase", fila.para_id, "u-bruno");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 async function pruebaTorneos(browser) {
   console.log("\n=== torneos.html · quien organiza también se inscribe ===");
   const datos = { rpc: {}, tablas: { profiles: [PROFE, ANA, BRUNO, CARLA], tournaments: [TORNEO], tournament_registrations: [] } };
@@ -283,6 +360,7 @@ async function pruebaTorneo(browser) {
     await pruebaPartidaPropia(browser);
     await pruebaAlumnoIntacto(browser);
     await pruebaAlumnoSinPartidas(browser);
+    await pruebaEnLineaAbierto(browser);
     await pruebaTorneos(browser);
     await pruebaTorneo(browser);
   } finally {

@@ -57,6 +57,13 @@ const SIN_ESTILO = new Set([
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
     "lesson-send-btn",
     "ficha-btn", "plan-btn",
+    // El editor a mano del plan de entrenamiento (informes.html): cada campo
+    // de cada semana lleva su marca para que leerEdicionPlan() lo encuentre con
+    // querySelector, no para pintarlo distinto.
+    "pe-sem-titulo", "pe-sem-porque", "pe-sem-objetivo", "pe-sem-tareas",
+    // Cada cobro de la lista, para que la prueba pueda contarlos sin depender
+    // de cómo estén anidados dentro del bloque de su mes.
+    "cobro-fila",
     /* Los cuatro exámenes de arbitraje (arbitraje.html y nivel-de-arbitraje.html):
        cada uno lleva su <span> con cuántas preguntas trae, y ese número NO se
        escribe a mano — lo rellena el propio banco con `totalPara(techo)`, así

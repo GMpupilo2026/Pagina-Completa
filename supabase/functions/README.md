@@ -9,6 +9,14 @@ carpeta es la fuente; lo que corre en Supabase es su despliegue.
 > existe esta carpeta**. Las demás siguen viviendo únicamente en Supabase. Al
 > tocar una, se baja primero su código de allá y se agrega aquí — si no, la
 > carpeta empieza a mentir sobre lo que hay desplegado.
+>
+> `admin-manage-users` entró así, y de paso demostró para qué sirve. Su correo
+> de «elige un plan» decía **«elegí un plan»**: un voseo que llevaba meses
+> saliendo a familias de verdad y que no podía ver nadie, porque ese texto no
+> estaba en ningún archivo del repositorio. Y tampoco lo habría visto
+> `verificar-voseo.py`, que barría `.html`, `.js` y `.json` pero no los `.ts`
+> de esta carpeta — justo donde vive el texto que solo aparece en la bandeja de
+> alguien. Ahora los barre.
 
 ## Cómo se arma un despliegue
 

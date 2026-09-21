@@ -1,0 +1,101 @@
+tabla  Coles  rls=true
+tabla  chess_leads  rls=true
+tabla  inscripciones  rls=true
+columna  Coles.CANTON  text
+columna  Coles.CIRCUITO  bigint
+columna  Coles.CODPRES  bigint
+columna  Coles.CODSABER  text
+columna  Coles.DIRECCIÓN REGIONAL  text
+columna  Coles.DISTRITO  text
+columna  Coles.ESPECIALIDAD TÉCNICA  text
+columna  Coles.MATRÍCULA  bigint
+columna  Coles.MODALIDAD  text
+columna  Coles.MODALIDAD DE CENTRO EDUCATIVO  text
+columna  Coles.NIVELES/SERVICIO DEL CENTRO EDUCATIVO  text
+columna  Coles.NOMBRE  text
+columna  Coles.OFERTA  text
+columna  Coles.POBLADO  text
+columna  Coles.PROVINCIA  text
+columna  Coles.REGIÓN DE PLANIFICACIÓN  text
+columna  Coles.SERVICIO  text
+columna  Coles.TIPO DE CENTRO EDUCATIVO  text
+columna  Coles.TIPO INSTITUCIÓN  text
+columna  Coles.ZONA  text
+columna  chess_leads.color_jugador  text
+columna  chess_leads.correo  text
+columna  chess_leads.creado_en  timestamp with time zone
+columna  chess_leads.dificultad  text
+columna  chess_leads.duracion_seg  integer
+columna  chess_leads.id  uuid
+columna  chess_leads.jugadas  integer
+columna  chess_leads.nombre  text
+columna  chess_leads.pgn  text
+columna  chess_leads.precision_estimada  numeric
+columna  chess_leads.resultado  text
+columna  chess_leads.resumen_partida  text
+columna  inscripciones.acepto_datos  boolean
+columna  inscripciones.apellido1  text
+columna  inscripciones.apellido2  text
+columna  inscripciones.canton  text
+columna  inscripciones.cedula  text
+columna  inscripciones.centro  text
+columna  inscripciones.circuito  integer
+columna  inscripciones.contacto  text
+columna  inscripciones.correo  text
+columna  inscripciones.creado_en  timestamp with time zone
+columna  inscripciones.direccion_regional  text
+columna  inscripciones.edad  integer
+columna  inscripciones.fecha_nacimiento  date
+columna  inscripciones.genero  text
+columna  inscripciones.grado  text
+columna  inscripciones.id  uuid
+columna  inscripciones.modalidad  text
+columna  inscripciones.nombre  text
+columna  inscripciones.provincia  text
+columna  inscripciones.tipo_centro  text
+columna  inscripciones.usuario  text
+columna  inscripciones.zona  text
+columna  inscripciones_export.acepto_datos  boolean
+columna  inscripciones_export.apellido1  text
+columna  inscripciones_export.apellido2  text
+columna  inscripciones_export.canton  text
+columna  inscripciones_export.cedula  text
+columna  inscripciones_export.centro  text
+columna  inscripciones_export.circuito  integer
+columna  inscripciones_export.contacto  text
+columna  inscripciones_export.correo  text
+columna  inscripciones_export.creado_en  timestamp with time zone
+columna  inscripciones_export.direccion_regional  text
+columna  inscripciones_export.edad  integer
+columna  inscripciones_export.fecha_nacimiento  date
+columna  inscripciones_export.genero  text
+columna  inscripciones_export.grado  text
+columna  inscripciones_export.id  uuid
+columna  inscripciones_export.modalidad  text
+columna  inscripciones_export.nombre  text
+columna  inscripciones_export.provincia  text
+columna  inscripciones_export.tipo_centro  text
+columna  inscripciones_export.usuario  text
+columna  inscripciones_export.zona  text
+vista  inscripciones_export
+funcion  quitar_tildes(input text)
+politica  Coles  Enable read access for all users  SELECT
+indice  chess_leads  chess_leads_pkey
+indice  inscripciones  inscripciones_cedula_unique
+indice  inscripciones  inscripciones_pkey
+grant  Coles  anon  SELECT
+grant  Coles  authenticated  SELECT
+grant  inscripciones_export  anon  DELETE
+grant  inscripciones_export  anon  INSERT
+grant  inscripciones_export  anon  REFERENCES
+grant  inscripciones_export  anon  SELECT
+grant  inscripciones_export  anon  TRIGGER
+grant  inscripciones_export  anon  TRUNCATE
+grant  inscripciones_export  anon  UPDATE
+grant  inscripciones_export  authenticated  DELETE
+grant  inscripciones_export  authenticated  INSERT
+grant  inscripciones_export  authenticated  REFERENCES
+grant  inscripciones_export  authenticated  SELECT
+grant  inscripciones_export  authenticated  TRIGGER
+grant  inscripciones_export  authenticated  TRUNCATE
+grant  inscripciones_export  authenticated  UPDATE

@@ -31,6 +31,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { avisoHtml, type Tipo, ASUNTOS } from "./aviso-html.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
+import { contactoDeConsultas } from "./contacto-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -75,12 +76,25 @@ function tipoDe(c: Cobro, hoy: Date): Tipo | null {
 
 const URGENCIA: Record<Tipo, number> = { proximo: 1, vencido: 2, moroso: 3 };
 
-// A qué correos se le avisa por un alumno: sus encargados activos, y SOLO SI
-// no tiene ninguno, su propia cuenta (si el correo es de verdad y no un
-// usuario interno). Antes se avisaba siempre a los dos: quien paga es la
-// persona encargada cuando la hay, y el alumno terminaba recibiendo el mismo
-// estado de cuenta de su familia aunque no le tocara a él resolverlo.
+// A qué correos se le avisa por un alumno.
+//
+// 1. EL QUE SE FIJÓ A MANO MANDA SOBRE TODO, y es el único: quien coordina lo
+//    puso justamente porque los otros no servían —una letra mal escrita en el
+//    correo de la mamá, un papá que es quien paga pero no recibe el informe—.
+//    Si se sumara a los demás, corregir un correo equivocado seguiría
+//    mandándole el aviso al equivocado.
+// 2. Si no hay, sus encargados activos.
+// 3. Y SOLO SI no tiene ninguno, su propia cuenta (si el correo es de verdad y
+//    no un usuario interno). Antes se avisaba siempre a los dos: quien paga es
+//    la persona encargada cuando la hay, y el alumno terminaba recibiendo el
+//    estado de cuenta de su familia aunque no le tocara a él resolverlo.
 async function destinatariosDe(studentId: string) {
+  const { data: aMano } = await admin
+    .from("cobros_contacto").select("nombre, email").eq("student_id", studentId).maybeSingle();
+  if (aMano?.email) {
+    return [{ nombre: (aMano.nombre as string) || "", email: String(aMano.email).toLowerCase() }];
+  }
+
   const { data: encargados } = await admin
     .from("encargados").select("nombre, email").eq("student_id", studentId).eq("activo", true);
   const lista = (encargados ?? []).map((e) => ({ nombre: e.nombre as string, email: String(e.email).toLowerCase() }));
@@ -134,6 +148,10 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const accion = body.action;
 
+  // El número al que se le pide a la familia que mande el comprobante sale de
+  // `ajustes_academia`, no de una constante: lo pone quien coordina.
+  const contacto = await contactoDeConsultas(admin);
+
   // -------------------------------------------------------------- la tanda
   if (accion === "tanda") {
     const { data: esperado } = await admin.rpc("secreto_tanda_cobros");
@@ -171,7 +189,7 @@ Deno.serve(async (req) => {
           .eq("cobro_id", g.disparador.id).eq("tipo", g.tipo).eq("correo", d.email).maybeSingle();
         if (yaFue) { saltados += 1; continue; }
 
-        const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL });
+        const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL, contacto });
         const r = await mandar(d.email, ASUNTOS[g.tipo](nombre), html);
         hechos += 1;
         if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
@@ -226,7 +244,7 @@ Deno.serve(async (req) => {
 
       const enviados: string[] = [];
       for (const d of destinos) {
-        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL });
+        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto });
         const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
         if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
         // upsert a mano: si el aviso automático ya le mandó este mismo tipo hoy,
@@ -273,7 +291,14 @@ Deno.serve(async (req) => {
   const nombre = await nombreDe(studentId, comoQuienLlama);
 
   if (accion === "vista_previa") {
-    return json({ ok: true, alumno: nombre, html: avisoHtml({ tipo, alumno: nombre, destinatario: "", cobros, sitio: SITE_URL }) });
+    // A dónde SALDRÍA, para que quien lo está por mandar lo vea antes y no
+    // después: es el mismo dato que hace falta para corregirlo si está mal.
+    const destinos = await destinatariosDe(studentId);
+    return json({
+      ok: true, alumno: nombre,
+      correos: destinos.map((d) => d.email),
+      html: avisoHtml({ tipo, alumno: nombre, destinatario: "", cobros, sitio: SITE_URL, contacto }),
+    });
   }
 
   if (accion === "recordar_ahora") {
@@ -283,7 +308,7 @@ Deno.serve(async (req) => {
     let mandados = 0;
     const fallos: string[] = [];
     for (const d of destinos) {
-      const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL });
+      const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto });
       const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
       if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
       // upsert a mano: si ya había un aviso de este tipo, no se duplica la fila.

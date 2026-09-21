@@ -1,0 +1,22 @@
+# Edge Functions desplegadas, proyecto AjedrezIntegral (bgtijpimpcokxatxxbki).
+# Retrato del 2026-09-21. `verify_jwt` importa: las que van en false no exigen
+# sesion (las dispara pg_cron o las llama quien perdio la contrasena) y a
+# cambio validan un secreto de la boveda o no dicen nunca si una cuenta existe.
+# Al desplegar una funcion nueva, sumarla aca: lo que no este en esta lista no
+# se restaura, y eso no da ningun error — simplemente esa funcion deja de existir.
+#
+# funcion                      verify_jwt   que hace
+admin-manage-users             true         el panel de administracion: cuentas, cupo, equipos
+bootstrap-admin                true         deshabilitada (410): la cuenta master ya existe
+chess-results-proxy            true         trae de chess-results.com la ficha de un jugador
+cobros-recordatorios           false        la tanda diaria de avisos de morosidad (pg_cron)
+correos-alumno                 true         corrige los tres correos de una familia
+create-student                 true         invita a un alumno desde la clase en vivo
+enviar-resultado-arbitraje     true         manda el detalle de un examen de arbitraje
+informe-examen                 true         manda a la casa el informe de un examen
+informes-encargados            false        la tanda diaria del informe a la casa (pg_cron)
+inscribir-alumno               true         de la respuesta del formulario a la cuenta
+notificar                      false        los avisos push (VAPID y aes128gcm a mano)
+ocr-scoresheet                 true         el lector de planilla, contra Google Vision
+recuperar-acceso               false        el olvido de contrasena de un usuario sin buzon
+reenviar-acceso                true         reenvia el acceso a una cuenta

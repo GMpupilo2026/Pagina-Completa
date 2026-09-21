@@ -85,11 +85,15 @@ Deno.serve(async (req) => {
   // cualquiera, quien coordina solo a los que tiene asignados. Sin fila no hay
   // permiso, y no hace falta preguntarlo aparte.
   const { data: alumno, error: alumnoError } = await callerClient
-    .from("profiles").select("id, email, full_name, role").eq("id", alumnoId).maybeSingle();
+    .from("profiles").select("id, email, full_name, role, is_admin").eq("id", alumnoId).maybeSingle();
   if (alumnoError) return json({ error: "No se pudo leer ese alumno" }, 500);
   if (!alumno) return json({ error: "Ese alumno no es tuyo" }, 403);
-  if (alumno.role !== "alumno") {
-    return json({ error: "Esto es para restablecer la contraseña de un alumno, no de una cuenta de profesor" }, 400);
+  /* Vale también para un PROFESOR bajo coordinación: quien coordina es quien
+     da de alta al equipo, así que es quien recibe el "no me llegó nada". Lo
+     que no se toca desde acá es la cuenta master — para eso está el "olvidé mi
+     contraseña" de siempre, y no hay nadie por encima a quien pedírselo. */
+  if (alumno.is_admin) {
+    return json({ error: "La cuenta que administra no se restablece desde acá" }, 400);
   }
 
   // SECURITY INVOKER: corre con el permiso de quien llama, ya comprobado

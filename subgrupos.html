@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Mis subgrupos — Ajedrez Integral</title>
+    <meta name="description" content="Cada profesor arma sus propias listas de alumnos para filtrar Informes y mandar tareas de una sola vez.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es para quien da clase</h1>
+            <p class="text-brand-500 dark:text-brand-300">Los subgrupos son la forma en que cada profesor ordena a sus propios alumnos.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a id="volver" href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <p id="ajeno" hidden class="mb-3 rounded-xl px-4 py-3 text-sm bg-accent-50 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></p>
+            <h1 id="titulo" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">👥 Mis subgrupos</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-2">Tus propias listas de alumnos: «los del martes», «los que van al torneo». Sirven para filtrar Informes y para mandarle una tarea o un examen a todo el grupo de una vez.</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350 mb-8 bg-white dark:bg-brand-900 rounded-xl p-3">
+                Un subgrupo <strong>no le da acceso a nadie</strong>: solo ordena a los alumnos que ya son tuyos, y solo lo ves tú.
+                Quien administra sigue decidiendo quién es alumno de quién.
+            </p>
+
+            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <form id="crear-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-6 flex flex-wrap items-end gap-3">
+                <div class="flex-1 min-w-[12rem]">
+                    <label for="nombre-nuevo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nombre del subgrupo</label>
+                    <input id="nombre-nuevo" type="text" maxlength="60" required placeholder="Ej: Los del martes"
+                           class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear</button>
+            </form>
+
+            <div id="lista" class="space-y-3"></div>
+            <p id="vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                Todavía no tienes ningún subgrupo. Crea el primero acá arriba.
+            </p>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script>
+/* Mis subgrupos — las listas de alumnos que cada profesor arma para sí mismo.
+ *
+ * NO ES LO MISMO QUE LAS OTRAS DOS FORMAS DE AGRUPAR QUE YA HAY, y confundirlas
+ * es el error caro de esta pantalla:
+ *   · `profiles.grupo` es UNO por alumno y lo pone quien administra.
+ *   · Los `equipos` de admin.html DAN PERMISOS: meter a un alumno en uno con
+ *     otro entrenador le abre a ese entrenador todo lo del alumno.
+ *   · Un subgrupo NO DA NI UN PERMISO. Por eso lo puede armar un profesor solo,
+ *     sin pedirle nada a nadie, y por eso solo puede contener a quien YA es
+ *     suyo (lo exige la política de insert de subgrupo_alumnos).
+ *
+ * La lista de alumnos sale de `informes_resumen_alumnos()`, la misma que usan
+ * Informes y Cobros: quién aparece lo decide la RLS y no hay ni un filtro de
+ * profesor escrito acá.
+ */
+let session = null;
+let subgrupos = [];
+let alumnos = [];
+let abierto = null;      // id del subgrupo desplegado
+let busqueda = "";
+/* De quién son los subgrupos que se están viendo. Normalmente los propios;
+   con `?profesor=<id>`, los de un profesor al que se coordina — parte del
+   trabajo de coordinar es dejarle los grupos hechos a quien acaba de entrar
+   con cuarenta alumnos. El dueño NO cambia: quien coordina entra a los suyos,
+   no se los queda. */
+let dueno = null;
+let esAjeno = false;
+
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
+    a.classList.remove("hidden");
+}
+
+/* Sin tildes, como el buscador de admin.html: quien escribe "ramirez" tiene
+   que encontrar a "Ramírez". */
+function pelado(t) {
+    return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function nombreDe(a) { return a.full_name || a.email || "Sin nombre"; }
+
+async function cargar() {
+    /* Los propios salen de `mis_subgrupos()`, que es la de todos los días —la
+       misma que usan el filtro de Informes y el selector de Tareas—; los de
+       otra persona, de `subgrupos_de()`. Dos nombres para dos preguntas
+       distintas, no una función con un parámetro que casi siempre es uno
+       mismo. Los alumnos, igual: los suyos o los de ese profesor. */
+    const [{ data: subs, error: e1 }, { data: gente, error: e2 }] = await Promise.all([
+        esAjeno ? sb.rpc("subgrupos_de", { p_profesor: dueno }) : sb.rpc("mis_subgrupos"),
+        esAjeno ? sb.rpc("alumnos_del_profesor_con_nombre", { p_profesor: dueno })
+                : sb.rpc("informes_resumen_alumnos"),
+    ]);
+    // Que una consulta falle y la pantalla pinte una lista vacía es el fallo
+    // callado de siempre: se ve igual que "no tienes ninguno".
+    if (e1) { avisar("No se pudieron cargar tus subgrupos: " + e1.message, true); return false; }
+    if (e2) { avisar("No se pudo cargar tu lista de alumnos: " + e2.message, true); return false; }
+    subgrupos = subs || [];
+    alumnos = (gente || []).map((a) => ({ id: a.id || a.student_id, full_name: a.full_name, email: a.email, grupo: a.grupo }))
+        .sort((a, b) => nombreDe(a).localeCompare(nombreDe(b), "es"));
+    return true;
+}
+
+function pintar() {
+    const caja = document.getElementById("lista");
+    caja.innerHTML = "";
+    document.getElementById("vacio").classList.toggle("hidden", subgrupos.length > 0);
+
+    subgrupos.forEach((s) => {
+        const tarjeta = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+
+        const fila = el("div", "flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div", "flex-1 min-w-[12rem]");
+        const nombre = document.createElement("input");
+        nombre.type = "text";
+        nombre.value = s.nombre;
+        nombre.maxLength = 60;
+        nombre.setAttribute("aria-label", "Nombre del subgrupo " + s.nombre);
+        nombre.className = "w-full bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 rounded-lg px-2 py-1 font-semibold text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        // Se guarda al salir del campo, sin botón: es un campo que se toca de
+        // pasada, como las notas de un plan de clase.
+        nombre.addEventListener("change", () => renombrar(s, nombre));
+        izq.appendChild(nombre);
+        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 px-2",
+            s.cuantos === 1 ? "1 alumno" : s.cuantos + " alumnos"));
+        fila.appendChild(izq);
+
+        const btnAbrir = el("button", "bg-brand-700 hover:bg-brand-800 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            abierto === s.id ? "Cerrar" : "👥 Quiénes están");
+        btnAbrir.type = "button";
+        btnAbrir.setAttribute("aria-expanded", abierto === s.id ? "true" : "false");
+        btnAbrir.addEventListener("click", () => { abierto = abierto === s.id ? null : s.id; busqueda = ""; pintar(); });
+        fila.appendChild(btnAbrir);
+
+        const btnBorrar = el("button", "border border-brand-200 dark:border-brand-700 hover:border-red-400 text-red-600 dark:text-red-400 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Borrar");
+        btnBorrar.type = "button";
+        btnBorrar.dataset.confirmar = "no";
+        // La confirmación va en el propio botón y no en un diálogo del
+        // navegador: esto se toca desde el celular, y ahí el diálogo tapa la
+        // pantalla. Misma decisión que borrar una nota de la bitácora.
+        btnBorrar.addEventListener("click", () => {
+            if (btnBorrar.dataset.confirmar === "no") {
+                btnBorrar.dataset.confirmar = "si";
+                btnBorrar.textContent = "¿Seguro? Borrar";
+                return;
+            }
+            borrar(s);
+        });
+        fila.appendChild(btnBorrar);
+        tarjeta.appendChild(fila);
+
+        if (abierto === s.id) tarjeta.appendChild(panelAlumnos(s));
+        caja.appendChild(tarjeta);
+    });
+}
+
+function panelAlumnos(s) {
+    const panel = el("div", "mt-4 pt-4 border-t border-brand-100 dark:border-brand-800");
+    const dentro = new Set(s.alumnos || []);
+
+    if (!alumnos.length) {
+        panel.appendChild(el("p", "text-sm text-brand-450 dark:text-brand-350",
+            "Todavía no tienes alumnos asignados, así que no hay a quién meter acá."));
+        return panel;
+    }
+
+    const buscador = document.createElement("input");
+    buscador.type = "search";
+    buscador.value = busqueda;
+    buscador.placeholder = "Buscar por nombre, correo o grupo…";
+    buscador.setAttribute("aria-label", "Buscar entre tus alumnos");
+    buscador.className = "w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    buscador.addEventListener("input", () => {
+        busqueda = buscador.value;
+        pintarCasillas();
+        // Se repinta solo la lista para no perder el foco de quien escribe.
+    });
+    panel.appendChild(buscador);
+
+    const casillas = el("div", "max-h-64 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1");
+    panel.appendChild(casillas);
+
+    function pintarCasillas() {
+        casillas.innerHTML = "";
+        const q = pelado(busqueda);
+        const visibles = alumnos.filter((a) => !q
+            || pelado(nombreDe(a)).includes(q) || pelado(a.email).includes(q) || pelado(a.grupo).includes(q));
+        if (!visibles.length) {
+            casillas.appendChild(el("p", "text-sm text-brand-450 dark:text-brand-350 p-2", "Ninguno coincide con eso."));
+            return;
+        }
+        visibles.forEach((a) => {
+            const label = el("label", "flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 px-1 py-0.5 cursor-pointer");
+            const chk = document.createElement("input");
+            chk.type = "checkbox";
+            chk.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+            chk.checked = dentro.has(a.id);
+            chk.addEventListener("change", () => {
+                if (chk.checked) dentro.add(a.id); else dentro.delete(a.id);
+                cuenta.textContent = dentro.size === 1 ? "1 marcado" : dentro.size + " marcados";
+            });
+            label.appendChild(chk);
+            // El nombre lo escribe una persona: siempre por textContent.
+            label.appendChild(el("span", null, nombreDe(a) + (a.grupo ? " · " + a.grupo : "")));
+            casillas.appendChild(label);
+        });
+    }
+
+    const pie = el("div", "flex flex-wrap items-center justify-between gap-3 mt-3");
+    const cuenta = el("p", "text-xs text-brand-450 dark:text-brand-350",
+        dentro.size === 1 ? "1 marcado" : dentro.size + " marcados");
+    pie.appendChild(cuenta);
+    const guardar = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Guardar quiénes están");
+    guardar.type = "button";
+    guardar.addEventListener("click", () => guardarAlumnos(s, dentro, guardar));
+    pie.appendChild(guardar);
+    panel.appendChild(pie);
+
+    pintarCasillas();
+    return panel;
+}
+
+async function crear(e) {
+    e.preventDefault();
+    const campo = document.getElementById("nombre-nuevo");
+    const nombre = campo.value.trim();
+    if (!nombre) return;
+    const { error } = await sb.from("subgrupos").insert({ profesor_id: dueno, nombre });
+    if (error) {
+        // 23505 es el índice único: ya tiene uno con ese nombre. Decirlo con
+        // sus palabras, no con el error de la base.
+        return avisar(error.code === "23505"
+            ? "Ya tienes un subgrupo que se llama así."
+            : "No se pudo crear: " + error.message, true);
+    }
+    campo.value = "";
+    avisar("Subgrupo creado.");
+    if (await cargar()) pintar();
+}
+
+async function renombrar(s, campo) {
+    const nombre = campo.value.trim();
+    if (!nombre || nombre === s.nombre) { campo.value = s.nombre; return; }
+    const { error } = await sb.from("subgrupos").update({ nombre }).eq("id", s.id);
+    if (error) {
+        campo.value = s.nombre;
+        return avisar(error.code === "23505"
+            ? "Ya tienes un subgrupo que se llama así."
+            : "No se pudo renombrar: " + error.message, true);
+    }
+    s.nombre = nombre;
+    avisar("Listo, ahora se llama «" + nombre + "».");
+}
+
+async function borrar(s) {
+    const { error } = await sb.from("subgrupos").delete().eq("id", s.id);
+    if (error) return avisar("No se pudo borrar: " + error.message, true);
+    if (abierto === s.id) abierto = null;
+    avisar("Subgrupo borrado. A los alumnos no les pasó nada: solo se fue la lista.");
+    if (await cargar()) pintar();
+}
+
+/* Se manda SOLO lo que cambió, no la lista entera: borrar todo y volver a
+   insertarlo dejaría la tabla sin nadie durante un instante y, si el insert
+   fallara a mitad, el subgrupo se quedaría vacío sin que nadie lo pidiera. */
+async function guardarAlumnos(s, dentro, boton) {
+    const antes = new Set(s.alumnos || []);
+    const suman = [...dentro].filter((id) => !antes.has(id));
+    const restan = [...antes].filter((id) => !dentro.has(id));
+    if (!suman.length && !restan.length) return avisar("No cambiaste a nadie.");
+
+    boton.disabled = true;
+    boton.textContent = "Guardando…";
+    if (restan.length) {
+        const { error } = await sb.from("subgrupo_alumnos").delete()
+            .eq("subgrupo_id", s.id).in("alumno_id", restan);
+        if (error) { boton.disabled = false; boton.textContent = "Guardar quiénes están"; return avisar("No se pudo quitar: " + error.message, true); }
+    }
+    if (suman.length) {
+        const { error } = await sb.from("subgrupo_alumnos")
+            .insert(suman.map((id) => ({ subgrupo_id: s.id, alumno_id: id })));
+        if (error) {
+            boton.disabled = false; boton.textContent = "Guardar quiénes están";
+            // La política exige que sean alumnos tuyos: si uno dejó de serlo,
+            // la base lo rechaza y hay que decirlo, no callarlo.
+            return avisar("No se pudo agregar: " + error.message +
+                " — a un subgrupo solo entran alumnos que siguen siendo tuyos.", true);
+        }
+    }
+    boton.disabled = false;
+    boton.textContent = "Guardar quiénes están";
+    avisar("Guardado: " + (dentro.size === 1 ? "1 alumno" : dentro.size + " alumnos") + " en «" + s.nombre + "».");
+    if (await cargar()) pintar();
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { location.href = "login.html?next=subgrupos.html"; return; }
+
+    const { data: perfil } = await sb.from("profiles").select("role, is_admin, es_coordinador").eq("id", session.user.id).maybeSingle();
+    const puede = !!(perfil && (perfil.role === "profesor" || perfil.is_admin));
+    document.getElementById("loading").classList.add("hidden");
+    if (!puede) { document.getElementById("denegado").classList.remove("hidden"); return; }
+
+    const pedido = new URLSearchParams(location.search).get("profesor");
+    dueno = pedido || session.user.id;
+    esAjeno = dueno !== session.user.id;
+
+    if (esAjeno) {
+        /* Se lee el nombre por la RLS: si no se la devuelve, esa persona no
+           está bajo su coordinación y se dice, en vez de dejar una pantalla
+           vacía que parece un subgrupo sin nada. */
+        const { data: quien } = await sb.from("profiles").select("full_name, email, role").eq("id", dueno).maybeSingle();
+        if (!quien || quien.role !== "profesor") {
+            document.getElementById("denegado").classList.remove("hidden");
+            return;
+        }
+        const nombre = quien.full_name || quien.email;
+        document.getElementById("titulo").textContent = "👥 Los subgrupos de " + nombre;
+        const aviso = document.getElementById("ajeno");
+        aviso.textContent = "Estás armando los subgrupos de " + nombre +
+            ". Siguen siendo suyos: los ve y los edita desde su propia cuenta.";
+        aviso.hidden = false;
+        const volver = document.getElementById("volver");
+        volver.href = "coordinacion.html";
+        volver.textContent = "← 🧭 Coordinación";
+    }
+
+    document.getElementById("app").classList.remove("hidden");
+    if (await cargar()) pintar();
+}
+
+document.getElementById("crear-form").addEventListener("submit", crear);
+init();
+    </script>
+</body>
+</html>

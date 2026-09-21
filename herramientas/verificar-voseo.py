@@ -58,6 +58,7 @@ IMPERATIVOS = {
     # -ir
     "abrí": "abre", "construí": "construye", "convertí": "convierte",
     "cubrí": "cubre", "decidí": "decide", "elegí": "elige", "escribí": "escribe",
+    "unite": "únete", "sumate": "súmate", "inscribite": "inscríbete",
     "exprimí": "exprime", "medí": "mide", "preferí": "prefiere", "reducí": "reduce",
     "recorré": "recorre", "repetí": "repite", "reproducí": "reproduce", "seguí": "sigue",
 }
@@ -108,7 +109,8 @@ así aquí allí ahí allá acá está están estás esté estés japonés portu
 demás porqué comité subcomité josé café caché también según razón bebé qué holandés
 aperturasmás
 elistá andrés valdés josué prevé noé
-empecé aprendí entendí tomé repasé jugué estudié
+empecé aprendí entendí tomé repasé jugué estudié olvidé
+quizá
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
@@ -123,8 +125,13 @@ def texto_visible(ruta):
     return s
 
 def archivos():
+    # Las Edge Functions llevan TEXTO QUE LE LLEGA A LAS FAMILIAS —el correo de
+    # bienvenida, el aviso de cobro, el informe a la casa— y no se revisaban:
+    # se quedaban fuera por la extensión. Es justo donde un voseo no lo ve
+    # nadie del equipo, porque ese texto solo aparece en la bandeja de alguien.
     vistos = sorted(set(glob.glob("**/*.html", recursive=True) +
-                        glob.glob("js/*.js") + glob.glob("**/*.json", recursive=True)))
+                        glob.glob("js/*.js") + glob.glob("**/*.json", recursive=True) +
+                        glob.glob("supabase/functions/**/*.ts", recursive=True)))
     # Los .min.js son librerías de fuera, minificadas: no tienen prosa que
     # revisar y sí nombres propios que el detector marca sin razón (pdf.js trae
     # una tabla de fuentes con "Trinité"). Revisarlos es ruido garantizado.

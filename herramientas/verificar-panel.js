@@ -38,7 +38,10 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 const PROFE  = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null };
 const ALUMNA = { id: "u-ana",   role: "alumno",   is_admin: false, es_coordinador: false, full_name: "Ana Rojas",    email: "ana@x.cr",    grupo: "7B" };
-const ADMIN  = { id: "u-admin", role: "profesor", is_admin: true,  es_coordinador: true,  full_name: "Oscar Angulo", email: "oscar@x.cr",  grupo: null };
+/* La cuenta master ya no es ni profesora ni alumna: su `role` es 'admin'.
+   Antes estaba guardada como alumna, así que salía en las listas de «para
+   quién» al mandar una tarea y contaba como alumna en los conteos. */
+const ADMIN  = { id: "u-admin", role: "admin", is_admin: true,  es_coordinador: true,  full_name: "Oscar Angulo", email: "oscar@x.cr",  grupo: null };
 
 /* 47 clases repartidas en cinco meses: más de una página (van de 20 en 20) y
    más de un mes, que es lo que hace falta para probar el agrupado. */
@@ -226,7 +229,7 @@ async function pruebaAlumna(browser) {
      grises. Un grupo del que no queda ni un acceso utilizable no se pinta. */
   igual("los grupos, en su orden", grupos.map((g) => g.titulo),
     ["Clase en vivo", "Lo que te pone tu profesor", "Aprender", "Jugar y competir",
-     "Mide tu nivel", "Tu cuenta"]);
+     "Tu cuenta"]);
   /* Que no se pinte es que NO ESTÁ, no que esté escondido con una clase: un
      enlace invisible pero presente sigue siendo una parada de tabulador. */
   igual("y los accesos de ese grupo no quedaron escondidos en la página",
@@ -247,18 +250,29 @@ async function pruebaAlumna(browser) {
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
      "articulos.html"]);
-  /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
-     de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
-     versión que NO enseña las respuestas al terminar. */
-  igual("«Mide tu nivel» queda en lo que uno hace cuando quiere: los dos diagnósticos",
-    grupo(grupos, "Mide tu nivel").tiles.map((t) => [t.enlace, t.apagado]),
-    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
+  /* Los dos diagnósticos son SOLO de administración: son las dos pruebas con
+     las que el sitio ubica el nivel de alguien, y sus bancos son archivos
+     estáticos — cuanta más gente las resuelve por su cuenta, menos miden. Y no
+     alcanza con que el grupo no salga en la lista de arriba: lo que importa es
+     que no quede ni un enlace a esas dos páginas en la grilla, escondido o no. */
+  igual("a la alumna no se le ofrece ningún diagnóstico",
+    grupos.flatMap((g) => g.tiles)
+      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
+      .map((t) => t.enlace), []);
+  igual("y tampoco escondido en la página",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href*='diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
+  /* «Mis pagos» ya no está en el panel de nadie: las mensualidades son cosa de
+     la casa, no de quien entra a entrenar. La página sigue enseñándole sus
+     recibos a quien entre por la dirección — lo que se quitó es el camino. */
   igual("Tu cuenta, en su orden",
     grupo(grupos, "Tu cuenta").tiles.map((t) => t.etiqueta),
-    ["Informes", "Mis pagos", "Configuración"]);
+    ["Informes", "Configuración"]);
+  igual("y a la alumna no se le ofrecen los cobros por ninguna parte",
+    grupos.flatMap((g) => g.tiles).filter((t) => /cobros\.html/.test(t.enlace || "")).length, "0");
   igual("«Cerrar sesión» no está dos veces: en el grid ya no",
     grupos.flatMap((g) => g.tiles).filter((t) => /Cerrar sesión/.test(t.etiqueta2)).length, "0");
   igual("y sigue estando en la cabecera, que es de donde no se movió",
@@ -272,11 +286,12 @@ async function pruebaAlumna(browser) {
       tag: el.tagName,
       texto: el.textContent,
     })));
-  /* Queda uno solo a la vista: los otros dos en mantenimiento se fueron con su
-     grupo. Un apagado ENTRE accesos que funcionan sí se queda —ahí uno vino por
-     otra cosa y de paso se entera de que eso vuelve—, y con su razón escrita. */
-  igual("el apagado que queda es el que convive con accesos que sí funcionan",
-    apagados.map((a) => a.etiqueta).sort(), ["Mis pagos"]);
+  /* Ya no queda ninguno a la vista: los dos en mantenimiento se fueron con su
+     grupo, y el tercero —«Mis pagos»— se fue del panel entero. Si mañana vuelve
+     a haber uno, tiene que seguir cumpliendo las dos reglas de abajo: ni enlace
+     ni botón, y con su razón escrita. */
+  igual("no le queda ningún acceso apagado a la vista",
+    apagados.map((a) => a.etiqueta).sort(), []);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
   } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");
@@ -293,27 +308,26 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* A la profesora la MISMA tarjeta la manda a la página con la revisión de los
-     exámenes del público y el detalle pregunta por pregunta. Una sola tarjeta y
-     no dos, para no repetir el nombre en el panel. */
-  igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
-    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
-    ["entreno/diagnostico.html", "arbitraje.html"]);
+  /* Tampoco a quien da clase: los diagnósticos son de administración y ya. A
+     ella se los aplica administración, no los resuelve por su cuenta — y su
+     banco es el mismo que el de sus alumnos. */
+  igual("a la profesora tampoco se le ofrece ningún diagnóstico",
+    grupos.flatMap((g) => g.tiles)
+      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
+      .map((t) => t.enlace), []);
   /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
      tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
   igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
     grupos.map((g) => g.titulo).filter((x) => /Lo que/.test(x)), ["Lo que le pones a tus alumnos"]);
   igual("a ella «Herramientas» sí se le pinta: sus accesos funcionan",
     grupos.map((g) => g.titulo).includes("Herramientas"), "true");
-  igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
-    grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html"]);
+    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html", "guia-del-profesor-accesible.html"]);
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
@@ -372,8 +386,6 @@ async function pruebaTextosPorRol(browser) {
   igual("los torneos los arma ella", profe["Torneos de la Academia"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
   igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
-  igual("y el diagnóstico de arbitraje le habla de revisar los del público",
-    profe["Diagnóstico de arbitraje"], "Reglamento FIDE: hazlo, revisa los del público y responde");
 
   /* La regla general, que es la que atrapa al tile que todavía no existe. */
   const conTuProfesor = Object.entries(profe).filter(([, d]) => /tu profesor/i.test(d)).map(([k]) => k);
@@ -403,8 +415,17 @@ async function pruebaAdmin(browser) {
     ["Cobros de la Academia"]);
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "guia-del-profesor-accesible.html",
-     "formularios.html", "cobros.html"]);
+    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",
+     "guia-del-profesor-accesible.html",
+     "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
+  /* La otra mitad de que los diagnósticos sean solo de administración: que a
+     administración SÍ se le pinten. Escondérselos también los dejaría sin
+     ninguna puerta desde el panel, que es lo contrario de lo que se pidió — y
+     el de arbitraje le lleva a SU página, la que trae la revisión de los
+     exámenes del público y el detalle pregunta por pregunta. */
+  igual("a administración los dos diagnósticos sí se le pintan",
+    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
+    ["entreno/diagnostico.html", "arbitraje.html"]);
   await ctx.close();
 }
 
@@ -533,8 +554,13 @@ const CURSOS_ANA = [
   { student_id: "u-ana", slug: "estrategia-y-tactica", titulo: "Estrategia y táctica", total: 12, hechos: 12,
     ultimo_titulo: "Final", ultima_fecha: new Date().toISOString() },
 ];
+/* `por_actividad` iba en {} con 80 ejercicios al lado, que es imposible: el
+   doble estaba incompleto. Importa desde que el panel lo usa para saber si el
+   alumno ya arrancó — con el {} de antes, a Ana la habría tratado como recién
+   llegada teniendo 80 ejercicios hechos. Suman los 80. */
 const RACHA_ANA = [{ dias_activos: 12, racha_actual: 4, racha_record: 9, total_ejercicios: 80,
-                     tipos_distintos: 5, hoy_ejercicios: 2, primer_dia: "2026-01-01", por_actividad: {} }];
+                     tipos_distintos: 5, hoy_ejercicios: 2, primer_dia: "2026-01-01",
+                     por_actividad: { "4x4": 40, mates: 25, temas: 15 } }];
 
 function datosAlumna(conVencida) {
   return {
@@ -617,8 +643,10 @@ async function pruebaTareasAlumna(browser) {
   await r.ctx.close();
 
   // --- Sin ninguna tarea: la franja no existe en pantalla ---
-  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, { rpc: { informes_resumen_alumnos: RESUMEN_ANA } });
-  igual("sin tareas, la franja NO se destapa (una franja vacía es ruido)",
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {},
+    { rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA } });
+  igual("sin tareas y con el entrenamiento ya empezado, la franja NO se destapa",
+
     await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
   igual("y sin ningún curso a medias, tampoco «Continúa donde ibas»",
     await r.page.evaluate(() => getComputedStyle(document.getElementById("seguir-curso")).display), "none");
@@ -753,6 +781,186 @@ async function pruebaExamenesEnLaFranja(browser) {
   await r.ctx.close();
 }
 
+/* ---------- Por dónde empezar ----------
+   Un alumno recién invitado no tiene ninguna tarea ni ningún examen —nadie se
+   los puso todavía— así que la franja se le quedaba vacía y el panel era un
+   directorio de veintitantos lugares sin ninguna pista. Ahí va ahora el
+   siguiente paso.
+
+   Todo lo que se rompe acá se rompe callado: el paso se ve perfecto mandando
+   a una página donde el alumno no puede hacer nada que cuente, y entonces no
+   se apaga nunca y al día siguiente le dice exactamente lo mismo. */
+
+// Racha de quien todavía no ha resuelto NADA. El diagnóstico sí es una fila de
+// training_progress, así que va en por_actividad: es justo lo que hay que
+// descontar para saber si arrancó o no.
+function rachaSinEjercicios(conDiagnostico) {
+  return [{ dias_activos: 0, racha_actual: 0, racha_record: 0,
+            total_ejercicios: conDiagnostico ? 1 : 0, tipos_distintos: conDiagnostico ? 1 : 0,
+            hoy_ejercicios: 0, primer_dia: null,
+            por_actividad: conDiagnostico ? { diagnostico: 1 } : {} }];
+}
+
+/* Un detalle de diagnóstico con las áreas en el porcentaje que se pida.
+   `resumir()` calcula el porcentaje como logrado/peso, así que con peso 100 el
+   número que se pasa ES el porcentaje.
+
+   LAS NUEVE ÁREAS SE DECLARAN SIEMPRE, y salen del propio banco y no de una
+   lista escrita acá. La primera versión de esta prueba nombraba cuatro y dejaba
+   las otras cinco fuera: `resumir()` le pone peso 0 a la que no está, o sea 0%,
+   así que quedaban MÁS flojas que las que la prueba ponía flojas a propósito y
+   el panel —con razón— ofrecía una de ellas. La prueba fallaba sobre una página
+   que estaba bien. Leyéndolas de PlanEntrenamiento, una décima área tampoco
+   podría colarse en cero sin que nadie lo note. */
+/* El primer recurso que CUENTA de cada área, leído del plan de verdad y del
+   catálogo de Tareas. La prueba no puede escribir el enlace esperado a mano:
+   al cambiar el plan —que es una decisión editorial— fallaría sobre una página
+   que está bien, y renumerar expectativas a mano es como se dejan de correr las
+   pruebas. Que ese enlace lleve a algo que existe lo comprueba
+   verificar-plan-recursos.js, que es su trabajo. */
+const PRIMER_RECURSO = (() => {
+  const g = { window: {} };
+  const leer = (f) => new Function("window", require("fs").readFileSync(
+    require("path").join(__dirname, "..", f), "utf8"))(g.window);
+  leer("js/plan-entrenamiento.js"); leer("js/material-plataforma.js");
+  const PE = g.window.PlanEntrenamiento, MP = g.window.MaterialPlataforma;
+  const out = {};
+  for (const a of PE.AREAS) {
+    out[a.id] = (a.recursos || []).find((r) => {
+      const h = MP.HERRAMIENTAS.find((t) => t.href === r.href.split("?")[0]);
+      return h && (h.metas || []).includes("cantidad");
+    }) || null;
+  }
+  return out;
+})();
+
+const AREAS_DEL_BANCO = (() => {
+  const g = { window: {} };
+  const fn = new Function("window", require("fs").readFileSync(
+    require("path").join(__dirname, "..", "js", "plan-entrenamiento.js"), "utf8"));
+  fn(g.window);
+  return g.window.PlanEntrenamiento.AREAS.map((a) => a.id);
+})();
+
+function diagnosticoCon(porcentajes) {
+  const areas = {};
+  for (const id of AREAS_DEL_BANCO) {
+    const pct = porcentajes[id] === undefined ? 100 : porcentajes[id];
+    areas[id] = { peso: 100, logrado: pct, aciertos: 0, total: 7, nosabe: 0 };
+  }
+  return { areas: areas, perfil: {} };
+}
+
+async function pruebaPrimerPaso(browser) {
+  console.log("\n=== Por dónde empezar: el siguiente paso ===");
+
+  const leer = (page) => page.evaluate(() => {
+    const a = document.getElementById("pendientes-aviso");
+    return {
+      display: getComputedStyle(a).display,
+      titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+      texto: document.getElementById("pendientes-aviso-texto").textContent,
+      cta: document.getElementById("pendientes-aviso-cta").textContent,
+      enlace: a.getAttribute("href"),
+      rojo: /ring-red-500/.test(a.className),
+    };
+  });
+
+  // --- Recién llegado: sin tareas, sin exámenes y sin diagnóstico ---
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: { informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: rachaSinEjercicios(false) },
+  });
+  let v = await leer(r.page);
+  // Se mide el display que calcula el navegador, no el atributo: la lección que
+  // dejó el cartel de instalar la app.
+  igual("a quien recién llega la franja SE LE VE de verdad", v.display !== "none", "true");
+  igual("y le ofrece el diagnóstico", v.enlace, "entreno/diagnostico.html");
+  igual("con su propio título, que no promete pendientes que no tiene", v.titulo, "Empieza por acá");
+  igual("no se pinta en rojo: una sugerencia no es una entrega vencida", v.rojo, "false");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // --- Lo empezó y lo dejó a medias ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(false),
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", detalle: null, fecha: null,
+                                        a_medias_pregunta: 23, a_medias_fecha: new Date().toISOString() }],
+    },
+  });
+  v = await leer(r.page);
+  igual("si lo dejó a medias, le dice por dónde iba", v.texto.includes("pregunta 23"), "true");
+  /* Y NO le promete que se retoma donde iba: una prueba de una versión anterior
+     se descarta a propósito (VERSION en entreno/diagnostico.html), así que
+     prometerlo sería mentirle justo a quien vuelve confiando en eso. */
+  igual("pero no le promete que lo retoma donde lo dejó",
+    /retoma|donde ibas|no hay que empezar/i.test(v.texto), "false");
+  await r.ctx.close();
+
+  /* --- Ya lo rindió: LA COMPROBACIÓN QUE IMPORTA ---
+     El destino tiene que ser una página donde el trabajo CUENTE y, si la página
+     sabe recortar, con su recorte puesto. Mandarlo a la portada de un curso lo
+     dejaría leyendo un temario, sin escribir una fila en training_progress, y
+     mañana la franja le diría exactamente lo mismo — el paso no se apagaría
+     NUNCA y nadie se enteraría. */
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(true),
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
+        detalle: diagnosticoCon({ finales: 10, mate: 30, tactica: 90, reglas: 95 }),
+        a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+  });
+  v = await leer(r.page);
+  igual("haber rendido el diagnóstico NO cuenta como haber entrenado", v.display !== "none", "true");
+  /* LO QUE MÁS IMPORTA: el enlace lleva su RECORTE. Sin él cae en la lista de
+     ochenta temas y le deja al alumno el trabajo de buscar, que es justo lo que
+     este paso viene a evitar — la misma razón por la que el enlace de una tarea
+     lleva el suyo. Y el recorte no se escribe acá: es el que el plan tenga
+     puesto para esa área, comprobado aparte contra el banco por
+     verificar-plan-recursos.js. */
+  igual("ofrece el área más floja de las que tienen dónde practicar",
+    v.enlace, PRIMER_RECURSO.finales.href);
+  igual("y el enlace lleva su recorte, no la lista entera",
+    v.enlace.includes("?"), "true");
+  igual("y nombra ESA área", v.texto.toLowerCase().includes("finales"), "true");
+  igual("no dice «lo más flojo»: sería mentira, y por eso dice «señala un hueco»",
+    /m[áa]s flojo|lo peor|tu punto m[áa]s/i.test(v.texto), "false");
+  igual("el botón nombra lo que va a abrir, no la página pelada",
+    v.cta, PRIMER_RECURSO.finales.texto + " →");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // --- Ya arrancó: no hay nada que guiar, y el panel se calla ---
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      informes_resumen_alumnos: RESUMEN_ANA, progreso_dias_y_racha: RACHA_ANA,
+      informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date().toISOString(),
+        detalle: diagnosticoCon({ mate: 30 }), a_medias_pregunta: null, a_medias_fecha: null }],
+    },
+  });
+  igual("a quien ya resolvió ejercicios no se le repite el paso uno",
+    await r.page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
+  await r.ctx.close();
+
+  /* --- Y lo que VENCE manda sobre la sugerencia ---
+     Una fecha le gana siempre a un consejo. Sin esto, a un alumno nuevo con una
+     tarea ya puesta el panel le escondería la tarea detrás del primer paso. */
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, {
+    rpc: {
+      tareas_con_avance: tareasDeMentira(false),
+      informes_resumen_alumnos: RESUMEN_ANA,
+      progreso_dias_y_racha: rachaSinEjercicios(false),
+    },
+  });
+  v = await leer(r.page);
+  igual("con una tarea puesta, manda la tarea y no el primer paso", v.enlace, "tareas.html");
+  igual("y el título es el de siempre", v.titulo, "Tienes 3 tareas pendientes");
+  await r.ctx.close();
+}
+
 async function pruebaFranjaDeClase(browser) {
   console.log("\n=== La franja de la clase solo habla cuando tiene algo que decir ===");
 
@@ -851,7 +1059,17 @@ async function pruebaProgresoAlumna(browser) {
 async function pruebaSemanaProfesora(browser) {
   console.log("\n=== Tu semana, vista por una profesora ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
-    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2, clases_30d: 8 }] },
+    /* Las tareas NO se cuentan por la columna `tareas.estado`, que quedó sin
+       uso y nunca vale 'vencida': las cuenta panel_profesor() con
+       tareas_con_avance(), a partir de los renglones. Medido con los datos
+       reales, la diferencia eran dos tareas que el alumno YA había terminado
+       contadas como pendientes Y vencidas — el único número que le pide al
+       profesor hacer algo, inflado y sin que nada fallara. Acá se comprueba lo
+       que le toca al navegador: que pinte lo que manda la base y no rehaga la
+       cuenta por su lado. */
+    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2,
+                              tareas_puestas: 9, clases_30d: 8, clases_dadas: 21,
+                              con_diagnostico: 29, con_plan: 29 }] },
   });
 
   const visto = await page.evaluate(() => ({
@@ -872,13 +1090,19 @@ async function pruebaSemanaProfesora(browser) {
   igual("las tareas que ÉL mandó y siguen sin hacerse", visto.tareas, "6");
   igual("y cuántas de esas ya vencieron", visto.vencidas, "2");
   igual("más las clases del mes", visto.clases, "Llevas 8 clases dadas en los últimos 30 días.");
+  /* Con todo lo suyo andando, la franja de "por dónde empezar" no se destapa:
+     lo que se le pinta son los números, no un consejo. */
+  igual("y con todo andando, ninguna franja de primer paso encima",
+    await page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
   // Con todo en cero no hay nada que perseguir: el rojo se va.
   const r = await panel(browser, [PROFE], "u-profe", {}, {
-    rpc: { panel_profesor: [{ alumnos: 4, activos_7d: 4, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 1 }] },
+    rpc: { panel_profesor: [{ alumnos: 4, activos_7d: 4, tareas_pendientes: 0, tareas_vencidas: 0,
+                              tareas_puestas: 3, clases_30d: 1, clases_dadas: 1,
+                              con_diagnostico: 4, con_plan: 4 }] },
   });
   const limpio = await r.page.evaluate(() => ({
     inactivos: document.getElementById("profe-inactivos").textContent,
@@ -889,6 +1113,130 @@ async function pruebaSemanaProfesora(browser) {
   igual("con todos al día, ningún número se pinta en rojo", limpio.rojo, "false");
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
   await r.ctx.close();
+
+  await pruebaPrimerPasoProfesor(browser);
+}
+
+/* ---------- Por dónde empezar, del lado del que da clase ----------
+   Un entrenador nuevo abre el panel, ve cuatro números en cero y un directorio
+   de accesos, y nada le dice cuál es el siguiente paso. En los datos se ve
+   igual: el profesor con más alumnos lleva decenas de entradas y ni una tarea,
+   ni una clase, ni un plan.
+
+   Son seis peldaños y se distinguen mal entre ellos, que es justo por lo que se
+   prueban uno por uno: sin alumnos no hay NADA que hacer y no hay página que
+   ofrecerle; sin diagnóstico no hay plan POSIBLE; y "ninguna tarea puesta" no
+   es lo mismo que "ninguna pendiente" —con todas hechas las pendientes también
+   son cero—, que es el error fácil de esta escalera.
+
+   Se mide el display que calcula el navegador y no el atributo: la lección que
+   dejó el cartel de instalar la app. */
+async function pruebaPrimerPasoProfesor(browser) {
+  console.log("\n=== Por dónde empezar, vista por quien da clase ===");
+
+  const leer = async (fila, quien) => {
+    const perfil = quien === "u-admin" ? ADMIN : PROFE;
+    const r = await panel(browser, [perfil], perfil.id, {}, {
+      rpc: { panel_profesor: [Object.assign(
+        { alumnos: 10, activos_7d: 10, tareas_pendientes: 0, tareas_vencidas: 0,
+          tareas_puestas: 5, clases_30d: 1, clases_dadas: 3,
+          con_diagnostico: 10, con_plan: 10 }, fila)] },
+    });
+    const v = await r.page.evaluate(() => {
+      const el = document.getElementById("pendientes-aviso");
+      return {
+        display: getComputedStyle(el).display,
+        titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+        texto: document.getElementById("pendientes-aviso-texto").textContent,
+        // El href tal cual está escrito, no el resuelto: lo que importa es a
+        // qué página del sitio manda.
+        destino: el.getAttribute("href"),
+        cta: document.getElementById("pendientes-aviso-cta").textContent,
+        ctaVisible: getComputedStyle(document.getElementById("pendientes-aviso-cta")).display !== "none",
+        rojo: /ring-red-500/.test(el.className),
+      };
+    });
+    await r.ctx.close();
+    return v;
+  };
+
+  /* 1. Sin alumnos asignados no funciona nada de lo suyo, y hoy eso se ve como
+     cuatro ceros sin explicación: parece roto y no lo está. Es el estado en que
+     están 3 de los 7 del equipo docente. */
+  let v = await leer({ alumnos: 0, activos_7d: 0, con_diagnostico: 0, con_plan: 0,
+                       tareas_puestas: 0, clases_dadas: 0 });
+  igual("sin alumnos, la franja se ve de verdad", v.display !== "none", "true");
+  igual("y dice que todavía no tiene ninguno", /Todavía no tienes alumnos/.test(v.titulo), "true");
+  igual("explicando que no está roto, que es lo que parece", /no es que estén rotos/.test(v.texto), "true");
+  igual("y quién se los asigna", /quien administra/i.test(v.texto), "true");
+  /* Un <a> sin href no recibe el foco ni se anuncia como enlace. Ofrecerle
+     admin.html a un profesor sería mandarlo a una página que la base le niega
+     — un botón que va a fallar es peor que ninguno. */
+  igual("a un profesor no se le ofrece ninguna página que le vayan a negar", v.destino, "null");
+  igual("ni un botón que no lleva a ningún lado", v.ctaVisible, "false");
+  igual("y nunca en rojo: esto no se venció", v.rojo, "false");
+
+  // La misma situación, pero quien administra SÍ puede resolverla ahí mismo.
+  v = await leer({ alumnos: 0, activos_7d: 0, con_diagnostico: 0, con_plan: 0,
+                   tareas_puestas: 0, clases_dadas: 0 }, "u-admin");
+  igual("a quien administra sí se le ofrece el panel donde se asignan", v.destino, "admin.html");
+  igual("con su botón", v.ctaVisible, "true");
+
+  /* 2. Sin diagnóstico no hay plan que armar: es el primer cuello de verdad, y
+     el mensaje NO puede ser «0 de 0 tienen plan», que no le pide nada a nadie. */
+  v = await leer({ con_diagnostico: 0, con_plan: 0 });
+  igual("con alumnos y sin ningún diagnóstico, ahí empieza todo",
+    /Empieza por el diagnóstico/.test(v.titulo), "true");
+  igual("y se dice cuántos son los suyos", /tus 10 alumnos/.test(v.texto), "true");
+  igual("nombrando lo que sale de ahí: el plan de cada uno", /plan de entrenamiento/.test(v.texto), "true");
+  igual("y se manda a donde se asigna", v.destino, "tareas.html");
+
+  // 3. Con diagnósticos y sin planes compartidos: el caso de hoy.
+  v = await leer({ con_diagnostico: 8, con_plan: 0 });
+  igual("con 8 diagnósticos y ningún plan, lo dice con los dos números",
+    /0 de los 8/.test(v.texto), "true");
+  igual("y dice quién se lo pierde", /ni ellos ni su casa/.test(v.texto), "true");
+  igual("mandando a Informes, que es donde se comparten", v.destino, "informes.html");
+
+  // A uno solo le falta: la frase va en singular.
+  v = await leer({ con_diagnostico: 8, con_plan: 7 });
+  igual("con uno solo pendiente, se dice en singular", /el otro no lo ve/.test(v.texto), "true");
+  igual("y no en plural", /los otros/.test(v.texto), "false");
+
+  /* 4. El error fácil de la escalera: mirar las tareas PENDIENTES. Con todas
+     hechas también son cero, y son dos situaciones muy distintas — a quien ya
+     mandó cinco tareas no se le dice que ponga la primera. */
+  v = await leer({ tareas_puestas: 0 });
+  igual("sin ninguna tarea puesta, se le pide la primera",
+    /Ponles la primera tarea/.test(v.titulo), "true");
+  igual("contando lo que la hace valer: se llena sola", /se llena sola/.test(v.texto), "true");
+  igual("y se manda a armarla", v.destino, "tareas.html");
+
+  v = await leer({ tareas_puestas: 5, tareas_pendientes: 0 });
+  igual("pero con cinco puestas y ninguna pendiente NO se le pide la primera",
+    /Ponles la primera tarea/.test(v.titulo), "false");
+
+  /* 5. Lo mismo con las clases: `clases_30d` no distingue "nunca" de "este mes
+     no", así que el peldaño mira el total de siempre. */
+  v = await leer({ clases_dadas: 0, clases_30d: 0 });
+  igual("sin ninguna clase dada, se le dice dónde se da",
+    /no has dado ninguna clase/.test(v.titulo), "true");
+  igual("explicando que se abre sola", /se abre sola/.test(v.texto), "true");
+  igual("y se manda al tablero de la clase", v.destino, "sesion.html");
+
+  v = await leer({ clases_dadas: 4, clases_30d: 0 });
+  igual("pero a quien ya dio cuatro, aunque no este mes, no se le dice eso",
+    /no has dado ninguna clase/.test(v.titulo), "false");
+
+  // 6. Con todo lo demás andando, lo que queda es el goteo de diagnósticos.
+  v = await leer({ con_diagnostico: 8, con_plan: 8 });
+  igual("con los planes al día, lo que queda son los diagnósticos que faltan",
+    /Faltan 2 alumnos/.test(v.texto), "true");
+
+  /* Todo al día: NO se pinta nada. Un cartel que se repite deja de leerse — la
+     misma decisión que las dos franjas del alumno y que la bitácora. */
+  v = await leer({});
+  igual("y con todo al día la franja no se destapa", v.display, "none");
 }
 
 /* Que la página SE VEA, no solo que funcione. Es lo que verificar-css.js no
@@ -949,6 +1297,7 @@ if (require.main !== module) return;
     await pruebaAlumna(browser);
     await pruebaTareasAlumna(browser);
     await pruebaExamenesEnLaFranja(browser);
+    await pruebaPrimerPaso(browser);
     await pruebaFranjaDeClase(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);

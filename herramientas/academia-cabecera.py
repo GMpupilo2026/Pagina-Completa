@@ -49,7 +49,7 @@ PAGINAS = [
     "lector-planilla.html", "logros.html", "niebla.html", "partidas.html",
     "examen.html", "examenes.html",
     "planes.html", "racha-tactica.html", "reportes.html", "sesion.html",
-    "tareas.html",
+    "coordinacion.html", "subgrupos.html", "tareas.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",

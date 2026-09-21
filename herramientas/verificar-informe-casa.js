@@ -57,6 +57,24 @@ const CASOS = [
   { nombre: "vencido-aunque-practique", frecuencia: "semanal", datos: { ...BASE, dias_activos: 7,
       tareas: { ...SIN_DEBERES, puestas: 3, completadas: 1, vencidas: 2, sin_hacer_hoy: 2 },
       examenes: { rendidos: 1, nota_media: 4, mejor_nota: 4, sin_hacer_hoy: 1, pendientes: 0 } } },
+  /* Con plan compartido. Es lo que la familia no veía: detrás de los minutos
+     hay un diagnóstico por áreas y un plan con su objetivo medible, y nada de
+     eso se nombraba en el correo. */
+  { nombre: "con-plan", frecuencia: "semanal", datos: { ...BASE, dias_activos: 5,
+      diagnostico: { nivel: "Intermedio", porcentaje: "62", fecha: "2026-09-01T10:00:00Z" },
+      plan: {
+        compartido_at: "2026-09-02T10:00:00Z",
+        nota: "Empieza por los finales; el jueves los repasamos juntos.",
+        rutina: "30 minutos al día, 5 días por semana",
+        meta_elo: "Elo 1200 → 1250 en los próximos torneos",
+        areas: [
+          { titulo: "Semana 1 · 🏁 Finales", objetivo: "Subir finales por encima del 70%.",
+            porque: "20% en el diagnóstico." },
+          { titulo: "Semana 2 · ⚔️ Táctica", objetivo: "Subir táctica por encima del 70%.",
+            porque: "40% en el diagnóstico." },
+        ],
+      },
+      tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -115,6 +133,46 @@ ok(/Nota 8,50/.test(texto("practico-poco")) === false, "sin exámenes rendidos n
 // Un alumno sin nada no tiene por qué ver secciones vacías.
 ok(!/Sus tareas|Sus exámenes/.test(texto("no-entro")),
   "sin tareas ni exámenes, esas secciones no deberían aparecer");
+
+/* ---------- El plan, que es lo que la familia no veía ----------
+   Lo que se comprueba no es que el HTML lo traiga: es que se LEA. Un informe
+   puede tener el dato dentro de una etiqueta y no enseñarlo — por eso todo esto
+   se mide sobre el texto pelado, igual que el resto. */
+const cp = texto("con-plan");
+ok(/Dónde está Sofía Muñoz y a dónde va/.test(cp), "falta el bloque del plan");
+ok(/Nivel medido/.test(cp) && /Intermedio/.test(cp), "el bloque debería decir el nivel medido");
+ok(/62% en el diagnóstico/.test(cp), "y de dónde sale ese nivel");
+ok(/Medido el 1 de septiembre/.test(cp), "y cuándo se midió");
+/* Lo más accionable que lleva el correo: una madre puede preguntar «¿cuánto
+   tiene que practicar?» y esto se lo contesta. */
+ok(/30 minutos al día, 5 días por semana/.test(cp), "no dice cuánto se espera que practique");
+ok(/Semana 1 · 🏁 Finales/.test(cp) && /Semana 2 · ⚔️ Táctica/.test(cp),
+  "no dice en qué áreas se está trabajando");
+ok(/Subir finales por encima del 70%/.test(cp), "el objetivo de cada área debería ser medible y estar escrito");
+ok(/Elo 1200 → 1250/.test(cp), "no dice la meta de Elo cuando la hay");
+/* La nota es lo ÚNICO escrito a mano por el profesor, así que va destacada y
+   con su nombre: "De su profe". */
+ok(/De su profe/.test(cp), "la nota del profesor debería ir rotulada como suya");
+ok(/Empieza por los finales/.test(cp), "y decir lo que el profesor escribió");
+/* Qué se dice de dónde sale el plan. NO se le atribuye al profesor un trabajo
+   que no hizo —nada de "dedicó horas"— pero tampoco se calla que fue él quien
+   lo armó y lo compartió, que es lo que de verdad pasó. */
+ok(/se lo armó su profe a partir del diagnóstico/.test(cp),
+  "debería decir de dónde sale el plan, sin exagerar ni callarlo");
+ok(!/(horas|dedicó|esfuerzo|much[oa]s? tiempo)/i.test(cp),
+  "el correo no puede atribuirle al profesor un trabajo que nadie midió");
+
+/* Y sin plan compartido, ni una palabra: prometerle a la casa un plan que no
+   existe es peor que no nombrarlo, y una sección que diga "todavía no tiene
+   plan" es ruido en todas las visitas menos una. Es la misma decisión que la
+   bitácora. */
+const sp = texto("va-bien");
+ok(!/a dónde va|Cuánto practicar|De su profe/.test(sp),
+  "sin plan compartido no debería aparecer ni el bloque ni sus rótulos");
+/* Pero el nivel medido SÍ se sigue viendo sin plan: ese dato ya salía antes y
+   no puede perderse al mudar el bloque. */
+const conNivel = texto("con-plan");
+ok(/Nivel medido/.test(conNivel), "el nivel no puede perderse al mudarse al bloque nuevo");
 
 // ---------- Los umbrales ----------
 ok(periodos.semanal.esperados > 0 && periodos.semanal.esperados < periodos.semanal.dias,

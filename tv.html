@@ -770,8 +770,8 @@
                 const session = sessionData && sessionData.session;
                 if (!session) return;
                 currentUserId = session.user.id;
-                const { data: profileData } = await sb.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
-                if (profileData && profileData.role === "profesor") {
+                const { data: profileData } = await sb.from("profiles").select("role, is_admin").eq("id", session.user.id).maybeSingle();
+                if (profileData && (profileData.role === "profesor" || profileData.is_admin === true)) {
                     isProfesor = true;
                     document.getElementById("tv-admin-panel").classList.remove("hidden");
                     if (currentSettings) fillAdminForm(currentSettings);

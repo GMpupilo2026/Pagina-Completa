@@ -13,3 +13,10 @@ __pycache__/
 
 # Salida de herramientas/planes-semilla.js: se regenera con el script.
 herramientas/planes/
+
+# Los volcados de la base: adentro van cédulas, correos y progreso de menores
+# de edad. De git no se borra nada, así que ahí no entran ni una vez.
+respaldos/
+
+# El video promocional se regenera con herramientas/video-promo.js
+promo/

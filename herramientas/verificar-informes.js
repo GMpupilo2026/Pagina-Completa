@@ -87,7 +87,7 @@ window.__funcion = [];
   const DATOS = ${JSON.stringify(datos)};
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
-    let condiciones = [], dentro = [], orden = null;
+    let condiciones = [], dentro = [], orden = null, pendiente = null;
     // El doble FILTRA Y ORDENA de verdad. Uno que devolviera siempre la tabla
     // entera daría por buena una página que mezcla las filas de dos alumnos, y
     // uno que ignorara el orden daría por bueno un código que se quedara con la
@@ -102,12 +102,36 @@ window.__funcion = [];
       range(a, z) { desde = a; hasta = z; return b; },
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
-      insert(fila) { window.__escrituras.push({ etiqueta: etiqueta, accion: "insert", fila: fila }); return b; },
-      update(fila) { window.__escrituras.push({ etiqueta: etiqueta, accion: "update", fila: fila }); return b; },
-      delete() { window.__escrituras.push({ etiqueta: etiqueta, accion: "delete" }); return b; },
+      /* La escritura se anota EN EL RESOLVER, no aquí: .update(x).in("id", y)
+         encadena, así que un doble que la apuntara en el update() se quedaría
+         sin saber SOBRE QUIÉN se escribió — y daría por bueno un lote que
+         comparte el plan del alumno que no era. Es la misma trampa que ya
+         documentó verificar-clase-registrada.js. */
+      insert(fila) { pendiente = { accion: "insert", fila: fila }; return b; },
+      update(fila) { pendiente = { accion: "update", fila: fila }; return b; },
+      upsert(filas, opciones) { pendiente = { accion: "upsert", fila: filas, opciones: opciones || null }; return b; },
+      delete() { pendiente = { accion: "delete" }; return b; },
       then(res, rej) {
+        if (pendiente) {
+          window.__escrituras.push(Object.assign({ etiqueta: etiqueta,
+            donde: condiciones.slice(), dentro: dentro.slice() }, pendiente));
+        }
         window.__consultas.push({ etiqueta: etiqueta, donde: condiciones.slice(), limite: limite });
         let d = filas;
+        /* Un insert/upsert con .select() devuelve LO ESCRITO, no la tabla: es
+           de donde la página refresca su estado, y un doble que devolviera la
+           tabla entera daría por bueno un recuento equivocado. */
+        if (pendiente && (pendiente.accion === "insert" || pendiente.accion === "upsert")) {
+          d = Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila];
+          return Promise.resolve({ data: unica ? (d[0] || null) : d, error: null }).then(res, rej);
+        }
+        if (pendiente && pendiente.accion === "update" && Array.isArray(filas)) {
+          let tocadas = filas;
+          condiciones.forEach(([c, v]) => { tocadas = tocadas.filter((f) => String(f[c]) === String(v)); });
+          dentro.forEach(([c, vs]) => { tocadas = tocadas.filter((f) => vs.indexOf(String(f[c])) !== -1); });
+          tocadas = tocadas.map((f) => Object.assign({}, f, pendiente.fila));
+          return Promise.resolve({ data: unica ? (tocadas[0] || null) : tocadas, error: null }).then(res, rej);
+        }
         if (Array.isArray(d)) {
           condiciones.forEach(([c, v]) => { d = d.filter((f) => String(f[c]) === String(v)); });
           dentro.forEach(([c, vs]) => { d = d.filter((f) => vs.indexOf(String(f[c])) !== -1); });
@@ -435,7 +459,8 @@ async function pruebaProfesor(browser) {
   await page.waitForFunction(() => window.__escrituras.length > 0);
   igual("agregar un encargado manda lo correcto", await page.evaluate(() => window.__escrituras[0]),
     { etiqueta: "from:encargados", accion: "insert",
-      fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual", creado_por: "prof-1" } });
+      fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
+              hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
   page.on("dialog", (d) => d.accept());
   await page.evaluate(() => {
@@ -560,6 +585,133 @@ async function pruebaAlumno(browser) {
 
    Y se comprueba además que el nombre SE SIGA VIENDO, literal. Borrarlo también
    quitaría el ataque, y dejaría al profesor sin saber de quién es esa fila. */
+/* ---------------- Compartir los planes de una vez ----------------
+   `training_plans` estuvo en CERO desde que la tabla existe, y no porque
+   faltara el botón: el de compartir vivía dentro del informe de CADA alumno,
+   o sea veintitantas visitas. Este lo hace de una.
+
+   Lo que se rompe acá se rompe callado y le cuesta al profesor su trabajo: un
+   lote que REGENERE el plan de quien ya lo tenía ajustado a mano le borra la
+   nota, y la pantalla se ve perfecta. Por eso lo que se mira es QUÉ se manda,
+   no que el botón cambie de texto. */
+async function pruebaCompartirPlanes(browser) {
+  console.log("\n=== Compartir los planes de una vez ===");
+
+  // Tres alumnos con diagnóstico. El de a-3 sirve para el caso del borrador.
+  const diagnosticos = ["a-1", "a-2", "a-3"].map((id) => ({
+    student_id: id, detalle: DIAGNOSTICO, fecha: "2026-09-10T12:00:00Z",
+    a_medias_pregunta: null, a_medias_fecha: null,
+  }));
+  const base = (planes) => ({
+    rpc: {
+      informes_resumen_alumnos: [ANA, BRUNO, CARLA],
+      informes_cursos_alumnos: [], informes_diagnosticos_alumnos: diagnosticos,
+      informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 },
+      resumen_tareas_examenes: DEBERES, evolucion_alumno: CURVA,
+    },
+    tablas: {
+      profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
+      training_plans: planes, diagnosticos_publicos: [], arbitrajes_publicos: [],
+      question_answers: [], training_progress: [], encargados: [],
+    },
+  });
+  const escrituras = (page) => page.evaluate(() =>
+    window.__escrituras.filter((e) => e.etiqueta === "from:training_plans"));
+
+  // ---- Ninguno compartido: el bloque se ve y dice los dos números ----
+  let { page, errores } = await abrir(browser, base([]), "prof-1");
+  igual("el bloque se ve cuando falta alguno",
+    await page.evaluate(() => {
+      const b = document.getElementById("compartir-planes");
+      return !!b && getComputedStyle(b).display !== "none";
+    }), "true");
+  igual("dice cuántos tienen plan de cuántos",
+    (await page.textContent("#diagnosticos-clase")).includes("0 de 3 tienen su plan compartido"), "true");
+
+  /* Un primer toque NO escribe nada: confirma. Se confirma en el propio botón
+     y no con un diálogo del navegador —la misma decisión que borrar una nota—
+     y acá pesa más, porque esto publica material de varios alumnos de una vez. */
+  await page.click("#compartir-planes");
+  igual("el primer toque no manda nada a la base", (await escrituras(page)).length, 0);
+  igual("y el botón dice con cuántos va", await page.textContent("#compartir-planes"), "Sí, compartir con los 3");
+  igual("y avisa de que lo verán sus casas",
+    (await page.textContent("#compartir-planes-estado")).includes("informes que llegan a sus casas"), "true");
+
+  // ---- El segundo toque sí ----
+  await page.click("#compartir-planes");
+  await page.waitForFunction(() => {
+    // Que el renglón DESAPAREZCA es la señal de éxito: al terminar se repinta el
+    // panel y el bloque pasa a la línea de "todos al día", botón incluido.
+    const el = document.getElementById("compartir-planes-estado");
+    return !el || /Listo|No se pudo/.test(el.textContent);
+  }, null, { timeout: 10000 });
+  let esc = await escrituras(page);
+  igual("se manda UNA sola escritura para los tres", esc.length, 1);
+  igual("y es un upsert, no tres inserts sueltos", esc[0].accion, "upsert");
+  igual("con los tres alumnos", esc[0].fila.map((f) => f.student_id).sort(), ["a-1", "a-2", "a-3"]);
+  igual("todos compartidos", esc[0].fila.every((f) => f.shared === true), "true");
+  igual("y a nombre de quien aprieta el botón", esc[0].fila.every((f) => f.teacher_id === "prof-1"), "true");
+  /* Cada plan es EL SUYO, armado de su propio diagnóstico: un lote que mandara
+     el mismo plan a los tres se vería igual de bien en pantalla. */
+  igual("cada uno lleva su plan armado, con sus semanas",
+    esc[0].fila.every((f) => f.plan && f.plan.generado && Array.isArray(f.plan.generado.semanas)
+                             && f.plan.generado.semanas.length > 0), "true");
+  igual("y la fecha del diagnóstico del que sale",
+    esc[0].fila.every((f) => f.plan.diagnostico_fecha === "2026-09-10T12:00:00Z"), "true");
+  /* `ignoreDuplicates`: si entre que se pintó la pantalla y se apretó el botón
+     alguien le guardó un plan a alguno, se salta en vez de pisárselo. */
+  igual("y no pisa a quien ya tuviera uno", esc[0].opciones && esc[0].opciones.ignoreDuplicates, "true");
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+
+  /* ---- Con un borrador guardado: se COMPARTE, no se regenera ----
+     Es lo que de verdad importa. A quien ya tiene un plan guardado con su nota
+     solo se le cambia la marca; regenerarlo le borraría al profesor lo que
+     ajustó a mano, y nadie se enteraría. */
+  ({ page, errores } = await abrir(browser, base([
+    { id: "pl-3", student_id: "a-3", teacher_id: "prof-1", shared: false,
+      nota: "Empieza por los finales.", plan: { generado: { semanas: [{ numero: 1, titulo: "A mano" }] } } },
+  ]), "prof-1"));
+  igual("cuenta el borrador como NO compartido",
+    (await page.textContent("#diagnosticos-clase")).includes("0 de 3 tienen su plan compartido"), "true");
+  await page.click("#compartir-planes");
+  await page.click("#compartir-planes");
+  /* Se espera a que el botón TERMINE, no a que aparezcan N escrituras: si
+     faltara una, esperarla por número deja la prueba treinta segundos colgada y
+     acaba en un timeout que no dice cuál falta. Así falla en seco y se lee. */
+  await page.waitForFunction(() => {
+    // Que el renglón DESAPAREZCA es la señal de éxito: al terminar se repinta el
+    // panel y el bloque pasa a la línea de "todos al día", botón incluido.
+    const el = document.getElementById("compartir-planes-estado");
+    return !el || /Listo|No se pudo/.test(el.textContent);
+  }, null, { timeout: 10000 });
+  esc = await escrituras(page);
+  const upd = esc.find((e) => e.accion === "update");
+  const ups = esc.find((e) => e.accion === "upsert");
+  igual("al del borrador se le hace update, no upsert", !!upd, "true");
+  igual("y el update filtra por ÉL, no por todos", upd && upd.dentro[0] ? upd.dentro[0][1] : "(no hubo update)", ["a-3"]);
+  igual("lo único que se le cambia es la marca de compartido",
+    upd ? Object.keys(upd.fila).sort() : "(no hubo update)", ["shared", "updated_at"]);
+  igual("no se le toca el plan ni la nota que el profesor ajustó",
+    upd ? ("plan" in upd.fila || "nota" in upd.fila) : "(no hubo update)", "false");
+  igual("y a los otros dos se les arma el suyo",
+    ups ? ups.fila.map((f) => f.student_id).sort() : "(no hubo upsert)", ["a-1", "a-2"]);
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+
+  /* ---- Con todos compartidos: no hay botón ----
+     Un control que no cambia nada es peor que no tenerlo. */
+  ({ page } = await abrir(browser, base(["a-1", "a-2", "a-3"].map((id, i) => ({
+    id: "pl-" + i, student_id: id, teacher_id: "prof-1", shared: true, nota: null,
+    plan: { generado: { semanas: [] } },
+  }))), "prof-1"));
+  igual("con todos al día no se ofrece el botón",
+    await page.evaluate(() => !!document.getElementById("compartir-planes")), "false");
+  igual("y se dice en una línea, sin números que pidan nada",
+    (await page.textContent("#diagnosticos-clase")).includes("tienen su plan compartido"), "true");
+  await page.close();
+}
+
 async function pruebaNombreAjeno(browser) {
   console.log("\n=== Un nombre con una etiqueta adentro ===");
   const NOMBRE = 'Eva" onmouseover="window.__xss=1" z="<img src=x onerror="window.__xss=1">';
@@ -612,6 +764,7 @@ async function pruebaNombreAjeno(browser) {
     pruebaVeredicto();
     await pruebaProfesor(browser);
     await pruebaAlumno(browser);
+    await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
   } finally {
     await browser.close();

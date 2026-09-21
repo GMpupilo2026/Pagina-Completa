@@ -6,7 +6,7 @@
 // Tres acciones:
 //   "vista_previa" { student_id, frecuencia }  -> devuelve el HTML, no manda nada
 //   "enviar_ahora" { encargado_id }            -> arma y manda ese, ahora mismo
-//   "tanda"        {}                          -> manda todos los que toquen hoy
+//   "tanda"        {}                          -> manda a quien le toque en esta hora
 //
 // QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde informes.html
 // con su sesión, y el permiso NO se comprueba aquí a mano: se lee la fila con
@@ -14,16 +14,23 @@
 // devuelve, no es profesor de ese alumno y se acabó. Una regla menos escrita
 // dos veces.
 //
-// "tanda" la dispara pg_cron una vez al día. Va con verify_jwt en false porque
-// el disparador no trae sesión de persona; a cambio, esa acción exige un
-// secreto que vive en la bóveda (Vault) y que esta función vuelve a leer con la
-// service role para compararlo. Sin ese secreto no hace nada.
+// "tanda" la dispara pg_cron una vez POR HORA (antes era una vez al día, a las
+// 13:00 UTC / 7 de la mañana de Costa Rica siempre). Cada encargado elige su
+// propia hora de Costa Rica (`encargados.hora_envio`) y, si su frecuencia es
+// semanal, opcionalmente también el día (`encargados.dia_semana`); esta tanda
+// filtra por la hora que está corriendo ahora y salta a quien no le toque
+// todavía, así que sigue siendo inofensivo correrla de más — cada quien recibe
+// el suyo una sola vez por periodo, nunca de más. Va con verify_jwt en false
+// porque el disparador no trae sesión de persona; a cambio, esa acción exige
+// un secreto que vive en la bóveda (Vault) y que esta función vuelve a leer con
+// la service role para compararlo. Sin ese secreto no hace nada.
 //
 // El correo sale por Resend (secreto RESEND_API_KEY, ya configurado) desde el
 // dominio verificado del sitio.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
+import { contactoDeConsultas } from "./contacto-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -54,7 +61,20 @@ function desdeDe(frecuencia: Frecuencia): Date {
   return d;
 }
 
+// Costa Rica no tiene horario de verano: es UTC-6 todo el año, así que la
+// hora y el día locales salen de restar 6 horas sin más vueltas.
+function horaCostaRica(ahora: Date): number {
+  return (ahora.getUTCHours() + 24 - 6) % 24;
+}
+function diaSemanaCostaRica(ahora: Date): number {
+  return new Date(ahora.getTime() - 6 * 3600 * 1000).getUTCDay();
+}
+
 async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin) {
+  // El número al que la casa escribe sale de `ajustes_academia` y lo pone
+  // quien coordina; se lee siempre con la service role, porque el informe se
+  // arma igual para la tanda de pg_cron que para la vista previa.
+  const contacto = await contactoDeConsultas(admin);
   const desde = desdeDe(frecuencia);
   const hasta = new Date();
   const { data, error } = await cliente.rpc("informe_de_alumno", {
@@ -64,7 +84,7 @@ async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin)
   });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("No se encontró ese alumno");
-  return { datos: data, html: informeHtml(data, frecuencia, SITE_URL) };
+  return { datos: data, html: informeHtml(data, frecuencia, SITE_URL, contacto) };
 }
 
 async function mandar(para: string, asunto: string, html: string) {
@@ -94,27 +114,41 @@ Deno.serve(async (req) => {
   const accion = body.action;
 
   // ------------------------------------------------------------- la tanda
+  //
+  // El cron dispara esto cada hora, no una vez al día: cada encargado elige su
+  // propia hora (`hora_envio`, en tiempo de Costa Rica) y esta tanda solo mira
+  // a quienes les toca en la hora que está corriendo ahora mismo. Para la
+  // frecuencia semanal hay además un día opcional (`dia_semana`): si lo puso,
+  // se respeta; si lo dejó en NULL, se manda el día que caiga, como antes de
+  // que existiera esta columna.
   if (accion === "tanda") {
     const { data: esperado } = await admin.rpc("secreto_tanda_informes");
     if (!esperado || !jwt || jwt !== esperado) {
       return json({ error: "Esta acción solo la dispara el programador de tareas" }, 401);
     }
     const ahora = new Date();
+    const horaCR = horaCostaRica(ahora);
+    const diaCR = diaSemanaCostaRica(ahora);
     const { data: encargados, error } = await admin
       .from("encargados")
-      .select("id, student_id, nombre, email, frecuencia, ultimo_envio_at")
+      .select("id, student_id, nombre, email, frecuencia, ultimo_envio_at, dia_semana")
       .eq("activo", true)
+      .eq("hora_envio", horaCR)
       .limit(MAX_POR_TANDA);
     if (error) return json({ error: error.message }, 500);
 
     let mandados = 0, saltados = 0;
     const fallos: string[] = [];
     for (const e of encargados ?? []) {
+      if (e.frecuencia === "semanal" && e.dia_semana !== null && e.dia_semana !== diaCR) {
+        saltados += 1;
+        continue;
+      }
       const cada = PERIODOS[e.frecuencia as Frecuencia]?.dias ?? 7;
       if (e.ultimo_envio_at) {
         const dias = (ahora.getTime() - new Date(e.ultimo_envio_at).getTime()) / 86400000;
-        // Un margen de medio día: si la tanda corre unos minutos antes que ayer,
-        // el informe no se salta una vuelta entera por eso.
+        // Un margen de medio día: si la tanda corre unos minutos antes que la
+        // vez pasada, el informe no se salta una vuelta entera por eso.
         if (dias < cada - 0.5) { saltados += 1; continue; }
       }
       try {

@@ -1,0 +1,15 @@
+-- Vaciar una conversación del chat privado no llegaba a la otra pantalla.
+--
+-- La RLS ya dejaba al profesor borrar el hilo entero de su alumno
+-- (class_chat_messages_delete: is_admin o soy_profesor_de(student_id)), así que el
+-- borrado SÍ ocurría en la base. Lo que no ocurría era el aviso: con la REPLICA
+-- IDENTITY por omisión, el payload de un DELETE solo trae la clave primaria, o sea
+-- que `old.student_id` llega vacío. sesion.html decide a qué conversación pertenece
+-- cada cambio justamente por esa columna, así que el evento no coincidía con ningún
+-- hilo y no se recargaba nada: el profesor apretaba "Vaciar esta conversación",
+-- confirmaba, y los mensajes seguían en pantalla — parecía que no se le permitía.
+-- Y al alumno le quedaban a la vista mensajes que ya no existían hasta recargar.
+--
+-- Con FULL el DELETE viaja con la fila completa. La tabla son 9 filas y mensajes de
+-- 500 caracteres: el costo de replicar la fila entera acá no es nada.
+alter table public.class_chat_messages replica identity full;

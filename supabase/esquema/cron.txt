@@ -1,0 +1,7 @@
+# Tareas de pg_cron, proyecto AjedrezIntegral. Las crea su migracion; esto es
+# el retrato para comprobar despues de restaurar que las cuatro siguen puestas.
+# La hora va en UTC: Costa Rica es UTC-6 todo el ano.
+cobros-generar                    30 11 * * *   activo=true   (5:30 a.m. CR — emite los cobros del mes)
+cobros-recordatorios              30 12 * * *   activo=true   (6:30 a.m. CR — los avisos de morosidad)
+cobros-recordatorios-programados  */5 * * * *   activo=true   (cada 5 minutos — los recordatorios programados para un dia y hora exactos)
+informes-a-encargados              0 13 * * *   activo=true   (7:00 a.m. CR — el informe a la casa)

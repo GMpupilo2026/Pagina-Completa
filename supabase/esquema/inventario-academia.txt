@@ -1,0 +1,1797 @@
+tabla  Ejercicios Lichess  rls=true
+tabla  ajustes_academia  rls=true
+tabla  arbitrajes_publicos  rls=true
+tabla  archivos_pgn  rls=true
+tabla  avisos_cobro  rls=true
+tabla  class_attendance  rls=true
+tabla  class_chat_messages  rls=true
+tabla  class_presence_log  rls=true
+tabla  class_sessions  rls=true
+tabla  cobros  rls=true
+tabla  cobros_contacto  rls=true
+tabla  coordinador_profesores  rls=true
+tabla  course_unlocks  rls=true
+tabla  datos_facturacion  rls=true
+tabla  desafios  rls=true
+tabla  diagnosticos_publicos  rls=true
+tabla  encargados  rls=true
+tabla  equipo_alumnos  rls=true
+tabla  equipo_entrenadores  rls=true
+tabla  equipos  rls=true
+tabla  examen_items  rls=true
+tabla  examen_respuestas  rls=true
+tabla  examenes  rls=true
+tabla  formulario_respuestas  rls=true
+tabla  formularios  rls=true
+tabla  fourplayer_games  rls=true
+tabla  game_rooms  rls=true
+tabla  game_state  rls=true
+tabla  notas_alumno  rls=true
+tabla  pagos  rls=true
+tabla  plan_compartidos  rls=true
+tabla  plan_items  rls=true
+tabla  planes_clase  rls=true
+tabla  planes_cobro  rls=true
+tabla  platform_activity_log  rls=true
+tabla  practice_games  rls=true
+tabla  practice_sessions  rls=true
+tabla  profile_teachers  rls=true
+tabla  profiles  rls=true
+tabla  public_streak_leaderboard  rls=true
+tabla  public_tournament_champions  rls=true
+tabla  push_suscripciones  rls=true
+tabla  puzzle_rush_scores  rls=true
+tabla  question_answers  rls=true
+tabla  question_engine_answers  rls=true
+tabla  questions  rls=true
+tabla  saved_games  rls=true
+tabla  solicitudes_academia  rls=true
+tabla  subgrupo_alumnos  rls=true
+tabla  subgrupos  rls=true
+tabla  suscripciones  rls=true
+tabla  tarea_items  rls=true
+tabla  tareas  rls=true
+tabla  tournament_pairings  rls=true
+tabla  tournament_registrations  rls=true
+tabla  tournament_rounds  rls=true
+tabla  tournaments  rls=true
+tabla  training_plans  rls=true
+tabla  training_progress  rls=true
+tabla  training_state  rls=true
+tabla  tv_settings  rls=true
+tabla  variant_nodes  rls=true
+columna  Ejercicios Lichess.DailyDate  text
+columna  Ejercicios Lichess.FEN  text
+columna  Ejercicios Lichess.GameUrl  text
+columna  Ejercicios Lichess.Moves  text
+columna  Ejercicios Lichess.NbPlays  bigint
+columna  Ejercicios Lichess.OpeningTags  text
+columna  Ejercicios Lichess.Popularity  bigint
+columna  Ejercicios Lichess.PuzzleId  text
+columna  Ejercicios Lichess.Rating  bigint
+columna  Ejercicios Lichess.RatingDeviation  bigint
+columna  Ejercicios Lichess.Themes  text
+columna  ajustes_academia.actualizado_at  timestamp with time zone  not null
+columna  ajustes_academia.actualizado_por  uuid
+columna  ajustes_academia.clave  text  not null
+columna  ajustes_academia.valor  text
+columna  arbitrajes_publicos.created_at  timestamp with time zone  not null
+columna  arbitrajes_publicos.detalle  jsonb  not null
+columna  arbitrajes_publicos.email  text  not null
+columna  arbitrajes_publicos.id  uuid  not null
+columna  arbitrajes_publicos.nivel  text
+columna  arbitrajes_publicos.nombre  text  not null
+columna  arbitrajes_publicos.porcentaje  integer
+columna  arbitrajes_publicos.resultado_enviado_at  timestamp with time zone
+columna  arbitrajes_publicos.retroalimentacion  text
+columna  arbitrajes_publicos.revisado  boolean  not null
+columna  arbitrajes_publicos.revisado_at  timestamp with time zone
+columna  arbitrajes_publicos.revisado_por  uuid
+columna  archivos_pgn.carpeta  text
+columna  archivos_pgn.created_at  timestamp with time zone  not null
+columna  archivos_pgn.fen_final  text  not null
+columna  archivos_pgn.id  uuid  not null
+columna  archivos_pgn.move_count  integer  not null
+columna  archivos_pgn.nombre_archivo  text  not null
+columna  archivos_pgn.pgn  text  not null
+columna  archivos_pgn.profesor_id  uuid  not null
+columna  archivos_pgn.titulo  text  not null
+columna  avisos_cobro.cobro_id  uuid  not null
+columna  avisos_cobro.correo  text  not null
+columna  avisos_cobro.enviado_at  timestamp with time zone  not null
+columna  avisos_cobro.id  uuid  not null
+columna  avisos_cobro.tipo  text  not null
+columna  class_attendance.id  uuid  not null
+columna  class_attendance.joined_at  timestamp with time zone  not null
+columna  class_attendance.session_id  uuid  not null
+columna  class_attendance.student_id  uuid  not null
+columna  class_chat_messages.body  text  not null
+columna  class_chat_messages.created_at  timestamp with time zone  not null
+columna  class_chat_messages.id  uuid  not null
+columna  class_chat_messages.sender_id  uuid  not null
+columna  class_chat_messages.student_id  uuid  not null
+columna  class_presence_log.id  uuid  not null
+columna  class_presence_log.joined_at  timestamp with time zone  not null
+columna  class_presence_log.left_at  timestamp with time zone
+columna  class_presence_log.session_id  uuid  not null
+columna  class_presence_log.student_id  uuid  not null
+columna  class_sessions.created_at  timestamp with time zone  not null
+columna  class_sessions.created_by  uuid
+columna  class_sessions.ended_at  timestamp with time zone
+columna  class_sessions.id  uuid  not null
+columna  class_sessions.notes  text
+columna  class_sessions.started_at  timestamp with time zone  not null
+columna  class_sessions.summary  jsonb
+columna  class_sessions.title  text
+columna  cobros.anulado_motivo  text
+columna  cobros.concepto  text  not null
+columna  cobros.consecutivo  text  not null
+columna  cobros.creado_por  uuid
+columna  cobros.created_at  timestamp with time zone  not null
+columna  cobros.estado  text  not null
+columna  cobros.hacienda_clave  text
+columna  cobros.hacienda_consecutivo  text
+columna  cobros.hacienda_estado  text
+columna  cobros.id  uuid  not null
+columna  cobros.moneda  text  not null
+columna  cobros.monto  numeric  not null
+columna  cobros.periodo_fin  date  not null
+columna  cobros.periodo_inicio  date  not null
+columna  cobros.student_id  uuid  not null
+columna  cobros.suscripcion_id  uuid
+columna  cobros.vence  date  not null
+columna  cobros_contacto.actualizado_at  timestamp with time zone  not null
+columna  cobros_contacto.actualizado_por  uuid
+columna  cobros_contacto.email  text  not null
+columna  cobros_contacto.nombre  text
+columna  cobros_contacto.nota  text
+columna  cobros_contacto.student_id  uuid  not null
+columna  cobros_vista.anulado_motivo  text
+columna  cobros_vista.concepto  text
+columna  cobros_vista.consecutivo  text
+columna  cobros_vista.created_at  timestamp with time zone
+columna  cobros_vista.dias_atraso  integer
+columna  cobros_vista.estado  text
+columna  cobros_vista.id  uuid
+columna  cobros_vista.moneda  text
+columna  cobros_vista.monto  numeric
+columna  cobros_vista.pagado  numeric
+columna  cobros_vista.periodo_fin  date
+columna  cobros_vista.periodo_inicio  date
+columna  cobros_vista.saldo  numeric
+columna  cobros_vista.situacion  text
+columna  cobros_vista.student_id  uuid
+columna  cobros_vista.suscripcion_id  uuid
+columna  cobros_vista.ultimo_pago  date
+columna  cobros_vista.vence  date
+columna  coordinador_profesores.coordinador_id  uuid  not null
+columna  coordinador_profesores.created_at  timestamp with time zone  not null
+columna  coordinador_profesores.profesor_id  uuid  not null
+columna  course_unlocks.created_at  timestamp with time zone  not null
+columna  course_unlocks.curso  text  not null
+columna  course_unlocks.granted_by  uuid
+columna  course_unlocks.hasta_leccion  integer  not null
+columna  course_unlocks.id  uuid  not null
+columna  course_unlocks.student_id  uuid  not null
+columna  course_unlocks.updated_at  timestamp with time zone  not null
+columna  datos_facturacion.actividad_economica  text
+columna  datos_facturacion.actualizado_at  timestamp with time zone  not null
+columna  datos_facturacion.cedula  text
+columna  datos_facturacion.correo  text
+columna  datos_facturacion.nombre  text
+columna  datos_facturacion.student_id  uuid  not null
+columna  datos_facturacion.telefono  text
+columna  desafios.created_at  timestamp with time zone  not null
+columna  desafios.de_id  uuid  not null
+columna  desafios.estado  text  not null
+columna  desafios.id  uuid  not null
+columna  desafios.increment_seconds  integer  not null
+columna  desafios.initial_seconds  integer
+columna  desafios.modalidad  text  not null
+columna  desafios.motivo_rechazo  text
+columna  desafios.para_id  uuid  not null
+columna  desafios.respondido_at  timestamp with time zone
+columna  desafios.room_id  uuid
+columna  diagnosticos_publicos.atendido  boolean  not null
+columna  diagnosticos_publicos.created_at  timestamp with time zone  not null
+columna  diagnosticos_publicos.detalle  jsonb  not null
+columna  diagnosticos_publicos.elo  integer
+columna  diagnosticos_publicos.elo_tipo  text
+columna  diagnosticos_publicos.email  text
+columna  diagnosticos_publicos.id  uuid  not null
+columna  diagnosticos_publicos.nivel  text
+columna  diagnosticos_publicos.nombre  text  not null
+columna  diagnosticos_publicos.porcentaje  integer
+columna  diagnosticos_publicos.telefono  text
+columna  encargados.activo  boolean  not null
+columna  encargados.creado_por  uuid
+columna  encargados.created_at  timestamp with time zone  not null
+columna  encargados.email  text  not null
+columna  encargados.frecuencia  text  not null
+columna  encargados.id  uuid  not null
+columna  encargados.nombre  text
+columna  encargados.student_id  uuid  not null
+columna  encargados.ultimo_envio_at  timestamp with time zone
+columna  equipo_alumnos.alumno_id  uuid  not null
+columna  equipo_alumnos.created_at  timestamp with time zone  not null
+columna  equipo_alumnos.equipo_id  uuid  not null
+columna  equipo_entrenadores.created_at  timestamp with time zone  not null
+columna  equipo_entrenadores.equipo_id  uuid  not null
+columna  equipo_entrenadores.teacher_id  uuid  not null
+columna  equipos.created_at  timestamp with time zone  not null
+columna  equipos.created_by  uuid
+columna  equipos.id  uuid  not null
+columna  equipos.nombre  text  not null
+columna  examen_items.area  text
+columna  examen_items.banco  text  not null
+columna  examen_items.clave  jsonb  not null
+columna  examen_items.created_at  timestamp with time zone  not null
+columna  examen_items.examen_id  uuid  not null
+columna  examen_items.id  uuid  not null
+columna  examen_items.item_id  text  not null
+columna  examen_items.orden  integer  not null
+columna  examen_items.peso  integer  not null
+columna  examen_items.tipo  text  not null
+columna  examen_items.visible  jsonb  not null
+columna  examen_respuestas.correcta  boolean  not null
+columna  examen_respuestas.created_at  timestamp with time zone  not null
+columna  examen_respuestas.examen_id  uuid  not null
+columna  examen_respuestas.id  uuid  not null
+columna  examen_respuestas.item_id  uuid  not null
+columna  examen_respuestas.puntos  integer  not null
+columna  examen_respuestas.respuesta  jsonb  not null
+columna  examen_respuestas.segundos  integer
+columna  examenes.alumno_id  uuid  not null
+columna  examenes.created_at  timestamp with time zone  not null
+columna  examenes.entregado_at  timestamp with time zone
+columna  examenes.estado  text  not null
+columna  examenes.id  uuid  not null
+columna  examenes.informe_enviado_at  timestamp with time zone
+columna  examenes.iniciado_at  timestamp with time zone
+columna  examenes.instrucciones  text  not null
+columna  examenes.minutos  integer  not null
+columna  examenes.motivo_cierre  text
+columna  examenes.nota  numeric
+columna  examenes.porcentaje  numeric
+columna  examenes.profesor_id  uuid  not null
+columna  examenes.puntos  integer
+columna  examenes.puntos_posibles  integer
+columna  examenes.respondidas  integer
+columna  examenes.salidas  integer  not null
+columna  examenes.salidas_permitidas  integer
+columna  examenes.segundos_fuera  integer  not null
+columna  examenes.termina_at  timestamp with time zone
+columna  examenes.titulo  text  not null
+columna  examenes.total_items  integer
+columna  examenes.vence_at  timestamp with time zone  not null
+columna  formulario_respuestas.alumno_id  uuid
+columna  formulario_respuestas.created_at  timestamp with time zone  not null
+columna  formulario_respuestas.cuenta_creada_at  timestamp with time zone
+columna  formulario_respuestas.cuenta_creada_por  uuid
+columna  formulario_respuestas.cuenta_id  uuid
+columna  formulario_respuestas.formulario_id  uuid  not null
+columna  formulario_respuestas.id  uuid  not null
+columna  formulario_respuestas.respuestas  jsonb  not null
+columna  formularios.abierto  boolean  not null
+columna  formularios.campos  jsonb  not null
+columna  formularios.cierra_el  timestamp with time zone
+columna  formularios.creado_por  uuid  not null
+columna  formularios.created_at  timestamp with time zone  not null
+columna  formularios.descripcion  text
+columna  formularios.grupo  text
+columna  formularios.id  uuid  not null
+columna  formularios.slug  text  not null
+columna  formularios.titulo  text  not null
+columna  formularios.updated_at  timestamp with time zone  not null
+columna  fourplayer_games.arrows  jsonb  not null
+columna  fourplayer_games.board  jsonb  not null
+columna  fourplayer_games.clock_updated_at  timestamp with time zone
+columna  fourplayer_games.created_at  timestamp with time zone  not null
+columna  fourplayer_games.created_by  uuid
+columna  fourplayer_games.id  uuid  not null
+columna  fourplayer_games.increment_seconds  integer
+columna  fourplayer_games.initial_seconds  integer
+columna  fourplayer_games.mode  text  not null
+columna  fourplayer_games.moves  jsonb  not null
+columna  fourplayer_games.result  jsonb
+columna  fourplayer_games.seats  jsonb  not null
+columna  fourplayer_games.status  text  not null
+columna  fourplayer_games.turn  text  not null
+columna  fourplayer_games.updated_at  timestamp with time zone  not null
+columna  game_rooms.black_id  uuid  not null
+columna  game_rooms.black_ready  boolean  not null
+columna  game_rooms.black_time_left  numeric
+columna  game_rooms.cartas_state  jsonb
+columna  game_rooms.clock_updated_at  timestamp with time zone
+columna  game_rooms.created_at  timestamp with time zone  not null
+columna  game_rooms.created_by  uuid  not null
+columna  game_rooms.duelo_state  jsonb
+columna  game_rooms.fen  text  not null
+columna  game_rooms.id  uuid  not null
+columna  game_rooms.increment_seconds  integer  not null
+columna  game_rooms.initial_seconds  integer
+columna  game_rooms.moves  jsonb  not null
+columna  game_rooms.result  text
+columna  game_rooms.status  text  not null
+columna  game_rooms.updated_at  timestamp with time zone  not null
+columna  game_rooms.variant  text  not null
+columna  game_rooms.variant_state  jsonb
+columna  game_rooms.white_id  uuid  not null
+columna  game_rooms.white_ready  boolean  not null
+columna  game_rooms.white_time_left  numeric
+columna  game_state.active_player_color  text  not null
+columna  game_state.active_player_id  uuid
+columna  game_state.arrows  jsonb  not null
+columna  game_state.circles  jsonb  not null
+columna  game_state.fen  text  not null
+columna  game_state.id  integer  not null
+columna  game_state.last_move  text
+columna  game_state.moves  jsonb  not null
+columna  game_state.owner_id  uuid  not null
+columna  game_state.pieces_hidden  boolean  not null
+columna  game_state.shown_curso  text
+columna  game_state.shown_leccion  integer
+columna  game_state.start_fen  text
+columna  game_state.updated_at  timestamp with time zone  not null
+columna  game_state.updated_by  uuid
+columna  notas_alumno.alumno_id  uuid  not null
+columna  notas_alumno.compartida  boolean  not null
+columna  notas_alumno.created_at  timestamp with time zone  not null
+columna  notas_alumno.etiqueta  text
+columna  notas_alumno.id  uuid  not null
+columna  notas_alumno.profesor_id  uuid  not null
+columna  notas_alumno.texto  text  not null
+columna  notas_alumno.updated_at  timestamp with time zone
+columna  pagos.cobro_id  uuid  not null
+columna  pagos.created_at  timestamp with time zone  not null
+columna  pagos.fecha  date  not null
+columna  pagos.id  uuid  not null
+columna  pagos.metodo  text  not null
+columna  pagos.monto  numeric  not null
+columna  pagos.nota  text
+columna  pagos.referencia  text
+columna  pagos.registrado_por  uuid
+columna  plan_compartidos.created_at  timestamp with time zone  not null
+columna  plan_compartidos.plan_id  uuid  not null
+columna  plan_compartidos.profesor_id  uuid  not null
+columna  plan_items.created_at  timestamp with time zone  not null
+columna  plan_items.curso  text
+columna  plan_items.fen  text
+columna  plan_items.id  uuid  not null
+columna  plan_items.leccion  integer
+columna  plan_items.nota  text
+columna  plan_items.orden  integer  not null
+columna  plan_items.plan_id  uuid  not null
+columna  plan_items.pregunta  text
+columna  plan_items.tipo  text  not null
+columna  plan_items.titulo  text  not null
+columna  planes_clase.compartido_todos  boolean  not null
+columna  planes_clase.created_at  timestamp with time zone  not null
+columna  planes_clase.id  uuid  not null
+columna  planes_clase.notas  text
+columna  planes_clase.profesor_id  uuid  not null
+columna  planes_clase.titulo  text  not null
+columna  planes_clase.updated_at  timestamp with time zone
+columna  planes_cobro.activo  boolean  not null
+columna  planes_cobro.creado_por  uuid
+columna  planes_cobro.created_at  timestamp with time zone  not null
+columna  planes_cobro.descripcion  text
+columna  planes_cobro.id  uuid  not null
+columna  planes_cobro.moneda  text  not null
+columna  planes_cobro.monto  numeric  not null
+columna  planes_cobro.nombre  text  not null
+columna  planes_cobro.periodicidad  text  not null
+columna  platform_activity_log.activity  text  not null
+columna  platform_activity_log.id  uuid  not null
+columna  platform_activity_log.joined_at  timestamp with time zone  not null
+columna  platform_activity_log.left_at  timestamp with time zone
+columna  platform_activity_log.pagina  text
+columna  platform_activity_log.student_id  uuid  not null
+columna  practice_games.attempts  integer  not null
+columna  practice_games.created_at  timestamp with time zone  not null
+columna  practice_games.eval_cp  integer
+columna  practice_games.fen  text  not null
+columna  practice_games.id  uuid  not null
+columna  practice_games.moves  jsonb  not null
+columna  practice_games.session_id  uuid  not null
+columna  practice_games.status  text  not null
+columna  practice_games.student_color  text  not null
+columna  practice_games.student_id  uuid  not null
+columna  practice_games.updated_at  timestamp with time zone  not null
+columna  practice_sessions.created_at  timestamp with time zone  not null
+columna  practice_sessions.created_by  uuid
+columna  practice_sessions.ended_at  timestamp with time zone
+columna  practice_sessions.fen  text  not null
+columna  practice_sessions.id  uuid  not null
+columna  practice_sessions.level  text  not null
+columna  profile_teachers.created_at  timestamp with time zone  not null
+columna  profile_teachers.student_id  uuid  not null
+columna  profile_teachers.teacher_id  uuid  not null
+columna  profiles.created_at  timestamp with time zone  not null
+columna  profiles.elo  integer
+columna  profiles.elo_actualizado  timestamp with time zone
+columna  profiles.elo_tipo  text
+columna  profiles.email  text  not null
+columna  profiles.es_coordinador  boolean  not null
+columna  profiles.full_name  text
+columna  profiles.grupo  text
+columna  profiles.id  uuid  not null
+columna  profiles.invitaciones_max  integer  not null
+columna  profiles.invitaciones_usadas  integer  not null
+columna  profiles.is_admin  boolean  not null
+columna  profiles.role  text  not null
+columna  profiles.teacher_id  uuid
+columna  public_streak_leaderboard.best_streak  integer  not null
+columna  public_streak_leaderboard.created_at  timestamp with time zone  not null
+columna  public_streak_leaderboard.display_name  text  not null
+columna  public_streak_leaderboard.id  uuid  not null
+columna  public_tournament_champions.display_name  text  not null
+columna  public_tournament_champions.finished_at  timestamp with time zone  not null
+columna  public_tournament_champions.format  text  not null
+columna  public_tournament_champions.id  uuid  not null
+columna  public_tournament_champions.tournament_id  uuid
+columna  public_tournament_champions.tournament_name  text  not null
+columna  public_tournament_champions.variant  text  not null
+columna  push_suscripciones.activa  boolean  not null
+columna  push_suscripciones.agente  text
+columna  push_suscripciones.auth  text  not null
+columna  push_suscripciones.created_at  timestamp with time zone  not null
+columna  push_suscripciones.endpoint  text  not null
+columna  push_suscripciones.id  uuid  not null
+columna  push_suscripciones.p256dh  text  not null
+columna  push_suscripciones.ultimo_error  text
+columna  push_suscripciones.usada_at  timestamp with time zone
+columna  push_suscripciones.user_id  uuid  not null
+columna  puzzle_rush_scores.achieved_at  timestamp with time zone  not null
+columna  puzzle_rush_scores.best_streak  integer  not null
+columna  puzzle_rush_scores.student_id  uuid  not null
+columna  puzzle_rush_scores.updated_at  timestamp with time zone  not null
+columna  question_answers.created_at  timestamp with time zone  not null
+columna  question_answers.id  uuid  not null
+columna  question_answers.is_correct  boolean
+columna  question_answers.moves  jsonb  not null
+columna  question_answers.question_id  uuid  not null
+columna  question_answers.resulting_fen  text  not null
+columna  question_answers.student_id  uuid  not null
+columna  question_answers.updated_at  timestamp with time zone  not null
+columna  question_engine_answers.answer  jsonb  not null
+columna  question_engine_answers.computed_at  timestamp with time zone  not null
+columna  question_engine_answers.question_id  uuid  not null
+columna  questions.closed_at  timestamp with time zone
+columna  questions.created_at  timestamp with time zone  not null
+columna  questions.created_by  uuid
+columna  questions.expected_plies  integer  not null
+columna  questions.fen  text  not null
+columna  questions.id  uuid  not null
+columna  questions.prompt  text  not null
+columna  saved_games.created_at  timestamp with time zone  not null
+columna  saved_games.created_by  uuid
+columna  saved_games.fen_final  text  not null
+columna  saved_games.id  uuid  not null
+columna  saved_games.move_count  integer  not null
+columna  saved_games.pgn  text  not null
+columna  saved_games.title  text
+columna  solicitudes_academia.created_at  timestamp with time zone  not null
+columna  solicitudes_academia.edad_nivel  text
+columna  solicitudes_academia.email  text  not null
+columna  solicitudes_academia.estado  text  not null
+columna  solicitudes_academia.id  uuid  not null
+columna  solicitudes_academia.mensaje  text
+columna  solicitudes_academia.nombre  text  not null
+columna  solicitudes_academia.plan_elegido  text
+columna  solicitudes_academia.plan_elegido_en  timestamp with time zone
+columna  solicitudes_academia.revisado_en  timestamp with time zone
+columna  solicitudes_academia.revisado_por  uuid
+columna  solicitudes_academia.telefono  text
+columna  subgrupo_alumnos.alumno_id  uuid  not null
+columna  subgrupo_alumnos.created_at  timestamp with time zone  not null
+columna  subgrupo_alumnos.subgrupo_id  uuid  not null
+columna  subgrupos.created_at  timestamp with time zone  not null
+columna  subgrupos.id  uuid  not null
+columna  subgrupos.nombre  text  not null
+columna  subgrupos.profesor_id  uuid  not null
+columna  suscripciones.activa  boolean  not null
+columna  suscripciones.creado_por  uuid
+columna  suscripciones.created_at  timestamp with time zone  not null
+columna  suscripciones.descuento_pct  numeric  not null
+columna  suscripciones.dia_cobro  smallint  not null
+columna  suscripciones.fin  date
+columna  suscripciones.id  uuid  not null
+columna  suscripciones.inicio  date  not null
+columna  suscripciones.nota  text
+columna  suscripciones.plan_id  uuid  not null
+columna  suscripciones.student_id  uuid  not null
+columna  tarea_items.actividades  ARRAY
+columna  tarea_items.completada_at  timestamp with time zone
+columna  tarea_items.created_at  timestamp with time zone  not null
+columna  tarea_items.filtro_clave  text
+columna  tarea_items.filtro_label  text
+columna  tarea_items.id  uuid  not null
+columna  tarea_items.leccion  integer
+columna  tarea_items.material_href  text  not null
+columna  tarea_items.material_label  text  not null
+columna  tarea_items.material_slug  text  not null
+columna  tarea_items.material_tipo  text  not null
+columna  tarea_items.meta_cantidad  integer
+columna  tarea_items.meta_tipo  text  not null
+columna  tarea_items.orden  integer  not null
+columna  tarea_items.tarea_id  uuid  not null
+columna  tareas.alumno_id  uuid  not null
+columna  tareas.completada_at  timestamp with time zone
+columna  tareas.created_at  timestamp with time zone  not null
+columna  tareas.estado  text  not null
+columna  tareas.id  uuid  not null
+columna  tareas.instrucciones  text  not null
+columna  tareas.leccion  integer
+columna  tareas.material_href  text  not null
+columna  tareas.material_label  text  not null
+columna  tareas.material_slug  text  not null
+columna  tareas.material_tipo  text  not null
+columna  tareas.profesor_id  uuid  not null
+columna  tareas.titulo  text  not null
+columna  tareas.vence_at  timestamp with time zone  not null
+columna  tournament_pairings.advance_id  uuid
+columna  tournament_pairings.black_id  uuid
+columna  tournament_pairings.board_number  integer  not null
+columna  tournament_pairings.created_at  timestamp with time zone  not null
+columna  tournament_pairings.finished_at  timestamp with time zone
+columna  tournament_pairings.game_room_id  uuid
+columna  tournament_pairings.id  uuid  not null
+columna  tournament_pairings.is_bye  boolean  not null
+columna  tournament_pairings.needs_manual_advance  boolean  not null
+columna  tournament_pairings.result  text
+columna  tournament_pairings.round_id  uuid  not null
+columna  tournament_pairings.tournament_id  uuid  not null
+columna  tournament_pairings.white_id  uuid
+columna  tournament_registrations.id  uuid  not null
+columna  tournament_registrations.player_id  uuid  not null
+columna  tournament_registrations.registered_at  timestamp with time zone  not null
+columna  tournament_registrations.tournament_id  uuid  not null
+columna  tournament_rounds.created_at  timestamp with time zone  not null
+columna  tournament_rounds.id  uuid  not null
+columna  tournament_rounds.round_number  integer  not null
+columna  tournament_rounds.status  text  not null
+columna  tournament_rounds.tournament_id  uuid  not null
+columna  tournaments.created_at  timestamp with time zone  not null
+columna  tournaments.created_by  uuid  not null
+columna  tournaments.current_round  integer  not null
+columna  tournaments.finished_at  timestamp with time zone
+columna  tournaments.format  text  not null
+columna  tournaments.id  uuid  not null
+columna  tournaments.increment_seconds  integer  not null
+columna  tournaments.initial_seconds  integer
+columna  tournaments.name  text  not null
+columna  tournaments.started_at  timestamp with time zone
+columna  tournaments.status  text  not null
+columna  tournaments.total_rounds  integer
+columna  tournaments.updated_at  timestamp with time zone  not null
+columna  tournaments.variant  text  not null
+columna  tournaments.winner_ids  jsonb  not null
+columna  training_plans.created_at  timestamp with time zone  not null
+columna  training_plans.id  uuid  not null
+columna  training_plans.nota  text
+columna  training_plans.plan  jsonb  not null
+columna  training_plans.shared  boolean  not null
+columna  training_plans.student_id  uuid  not null
+columna  training_plans.teacher_id  uuid  not null
+columna  training_plans.updated_at  timestamp with time zone  not null
+columna  training_progress.activity  text  not null
+columna  training_progress.created_at  timestamp with time zone  not null
+columna  training_progress.detail  jsonb  not null
+columna  training_progress.id  uuid  not null
+columna  training_progress.student_id  uuid  not null
+columna  training_state.key  text  not null
+columna  training_state.student_id  uuid  not null
+columna  training_state.updated_at  timestamp with time zone  not null
+columna  training_state.value  jsonb  not null
+columna  tv_settings.games_count  integer  not null
+columna  tv_settings.id  boolean  not null
+columna  tv_settings.lichess_tournament_id  text
+columna  tv_settings.note  text
+columna  tv_settings.updated_at  timestamp with time zone  not null
+columna  tv_settings.updated_by  uuid
+columna  tv_settings.video_url  text
+columna  variant_nodes.created_at  timestamp with time zone  not null
+columna  variant_nodes.created_by  uuid
+columna  variant_nodes.fen  text  not null
+columna  variant_nodes.id  uuid  not null
+columna  variant_nodes.parent_id  uuid
+columna  variant_nodes.root_ply  integer  not null
+columna  variant_nodes.san  text  not null
+columna  variant_nodes.teacher_id  uuid  not null
+vista  cobros_vista
+funcion  aceptar_desafio(p_desafio uuid, p_fen text, p_cartas jsonb, p_duelo jsonb, p_variant jsonb)  definer  anon=true  auth=true
+funcion  alumnos_de(p_profesor uuid)  definer  anon=true  auth=true
+funcion  alumnos_del_profesor(p_profesor uuid)  invoker  anon=false  auth=true
+funcion  alumnos_del_profesor_con_nombre(p_profesor uuid)  invoker  anon=true  auth=true
+funcion  avisar_clase_abierta()  definer  anon=false  auth=false
+funcion  avisar_desafio()  definer  anon=false  auth=false
+funcion  avisar_examen_asignado()  definer  anon=false  auth=false
+funcion  avisar_examen_reabierto()  definer  anon=false  auth=false
+funcion  avisar_push(p_a uuid[], p_titulo text, p_cuerpo text, p_url text, p_etiqueta text)  definer  anon=false  auth=false
+funcion  avisar_tarea_asignada()  definer  anon=false  auth=false
+funcion  bajo_mi_coordinacion(p_persona uuid)  definer  anon=true  auth=true
+funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=true  auth=true
+funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=true  auth=true
+funcion  cobros_morosos()  invoker  anon=true  auth=true
+funcion  cobros_resumen()  invoker  anon=true  auth=true
+funcion  consumir_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  coord_equipo_create(p_nombre text)  definer  anon=false  auth=true
+funcion  coord_equipo_delete(p_equipo uuid)  definer  anon=false  auth=true
+funcion  coord_equipo_rename(p_equipo uuid, p_nombre text)  definer  anon=false  auth=true
+funcion  coord_equipo_set_alumnos(p_equipo uuid, p_alumnos uuid[])  definer  anon=false  auth=true
+funcion  coord_equipo_set_entrenadores(p_equipo uuid, p_entrenadores uuid[])  definer  anon=false  auth=true
+funcion  coord_guardar_cuenta(p_persona uuid, p_nombre text, p_grupo text)  definer  anon=false  auth=true
+funcion  coord_set_profesores(p_alumno uuid, p_profesores uuid[])  definer  anon=false  auth=true
+funcion  correo_cobro(p_alumno uuid)  invoker  anon=true  auth=true
+funcion  correo_de_contacto(p_alumno uuid)  invoker  anon=true  auth=true
+funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer)  invoker  anon=true  auth=true
+funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb)  invoker  anon=true  auth=true
+funcion  devolver_invitacion(p_profesor uuid)  definer  anon=false  auth=false
+funcion  disparar_informes_encargados()  definer  anon=false  auth=false
+funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
+funcion  elegir_plan(p_id uuid, p_plan text)  definer  anon=true  auth=true
+funcion  equipo_bajo_mi_coordinacion(p_equipo uuid)  definer  anon=false  auth=true
+funcion  equipo_docente()  definer  anon=true  auth=true
+funcion  equipo_lo_cree_yo(p_equipo uuid)  definer  anon=false  auth=true
+funcion  es_companero(p_otro uuid)  definer  anon=false  auth=true
+funcion  es_correo_interno(p_email text)  invoker  anon=true  auth=true
+funcion  es_del_equipo_docente(p_persona uuid)  definer  anon=true  auth=true
+funcion  es_mi_profesor(p_profe uuid)  definer  anon=false  auth=true
+funcion  estoy_inscrito_en(p_torneo uuid)  definer  anon=true  auth=true
+funcion  evolucion_alumno(p_alumno uuid, p_semanas integer)  invoker  anon=true  auth=true
+funcion  examen_informe(p_examen uuid)  definer  anon=true  auth=true
+funcion  examen_para_alumno(p_examen uuid)  definer  anon=true  auth=true
+funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  invoker  anon=true  auth=true
+funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
+funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
+funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
+funcion  gente_de_mi_coordinacion()  definer  anon=true  auth=true
+funcion  handle_new_user()  definer  anon=false  auth=false
+funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
+funcion  informes_cursos_alumnos()  invoker  anon=false  auth=true
+funcion  informes_diagnosticos_alumnos()  invoker  anon=false  auth=true
+funcion  informes_resumen_alumnos()  invoker  anon=false  auth=true
+funcion  informes_totales()  invoker  anon=false  auth=true
+funcion  iniciar_examen(p_examen uuid)  definer  anon=true  auth=true
+funcion  json_seguro(p_texto text)  invoker  anon=false  auth=true
+funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
+funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
+funcion  mes_es(d date)  invoker  anon=true  auth=true
+funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
+funcion  mi_grupo()  definer  anon=false  auth=true
+funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
+funcion  mis_clases()  invoker  anon=false  auth=true
+funcion  mis_subgrupos()  invoker  anon=true  auth=true
+funcion  my_profile()  definer  anon=false  auth=true
+funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
+funcion  panel_profesor()  invoker  anon=false  auth=true
+funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
+funcion  planes_compartidos_conmigo()  definer  anon=true  auth=true
+funcion  profesores_de(p_alumno uuid)  definer  anon=true  auth=true
+funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=true  auth=true
+funcion  progreso_dias_y_racha(alumno uuid)  invoker  anon=true  auth=true
+funcion  protect_answer_grading()  definer  anon=false  auth=false
+funcion  protect_game_state_teacher_columns()  definer  anon=false  auth=false
+funcion  protect_profiles_identity_columns()  definer  anon=false  auth=false
+funcion  proteger_ajustes_academia()  definer  anon=false  auth=false
+funcion  proteger_cobros_contacto()  definer  anon=false  auth=false
+funcion  proteger_notas_alumno()  definer  anon=false  auth=false
+funcion  proteger_planes_clase()  definer  anon=false  auth=false
+funcion  proteger_reloj_de_partida()  invoker  anon=false  auth=false
+funcion  proteger_tarea_items_alumno()  definer  anon=false  auth=false
+funcion  proteger_tareas_alumno()  definer  anon=false  auth=false
+funcion  proteger_tiempos_de_presencia()  definer  anon=false  auth=false
+funcion  pueden_jugar_entre_si(a uuid, b uuid)  definer  anon=false  auth=true
+funcion  puedo_armar_partida_con(p_jugadores uuid[])  definer  anon=false  auth=true
+funcion  push_llaves_guardar(p_publica text, p_privada text)  definer  anon=false  auth=false
+funcion  push_llaves_leer()  definer  anon=false  auth=false
+funcion  registrar_arbitraje_publico(p_nombre text, p_email text, p_porcentaje integer, p_nivel text, p_detalle jsonb)  definer  anon=true  auth=true
+funcion  registrar_salida_examen(p_examen uuid, p_segundos integer)  definer  anon=true  auth=true
+funcion  reporte_actividades(p_desde date, p_hasta date)  invoker  anon=false  auth=true
+funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=true  auth=true
+funcion  responder_formulario(p_slug text, p_respuestas jsonb)  definer  anon=true  auth=true
+funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=true  auth=true
+funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
+funcion  secreto_tanda_informes()  definer  anon=false  auth=false
+funcion  secreto_tanda_push()  definer  anon=false  auth=false
+funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=true  auth=true
+funcion  set_student_elo(p_student uuid, p_elo integer, p_tipo text)  definer  anon=true  auth=true
+funcion  sincronizar_profesor_principal()  definer  anon=false  auth=false
+funcion  solicitar_academia(p_nombre text, p_email text, p_telefono text, p_edad_nivel text, p_mensaje text)  definer  anon=true  auth=true
+funcion  solicitud_para_elegir_plan(p_id uuid)  definer  anon=true  auth=true
+funcion  soy_coordinador()  definer  anon=false  auth=true
+funcion  soy_dueno_del_plan(p_plan uuid)  definer  anon=true  auth=true
+funcion  soy_profesor_de(p_alumno uuid)  definer  anon=false  auth=true
+funcion  soy_profesor_de_alguno(p_alumnos uuid[])  definer  anon=false  auth=true
+funcion  soy_profesor_de_todos(p_alumnos uuid[])  definer  anon=false  auth=true
+funcion  subgrupos_a_la_vista()  invoker  anon=false  auth=true
+funcion  subgrupos_de(p_profesor uuid)  invoker  anon=true  auth=true
+funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
+funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
+funcion  validar_marca_training_progress()  definer  anon=false  auth=false
+politica  Ejercicios Lichess  Ejercicios Lichess: lectura publica  SELECT
+politica  ajustes_academia  ajustes_academia_coordinacion  ALL
+politica  ajustes_academia  ajustes_academia_select  SELECT
+politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
+politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
+politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
+politica  archivos_pgn  archivos_pgn_delete  DELETE
+politica  archivos_pgn  archivos_pgn_insert  INSERT
+politica  archivos_pgn  archivos_pgn_select  SELECT
+politica  archivos_pgn  archivos_pgn_update  UPDATE
+politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  class_attendance  class_attendance_insert_own  INSERT
+politica  class_attendance  class_attendance_select  SELECT
+politica  class_chat_messages  class_chat_messages_delete  DELETE
+politica  class_chat_messages  class_chat_messages_insert  INSERT
+politica  class_chat_messages  class_chat_messages_select  SELECT
+politica  class_presence_log  class_presence_log_insert_own  INSERT
+politica  class_presence_log  class_presence_log_select  SELECT
+politica  class_presence_log  class_presence_log_update_own  UPDATE
+politica  class_sessions  class_sessions_delete  DELETE
+politica  class_sessions  class_sessions_insert  INSERT
+politica  class_sessions  class_sessions_select  SELECT
+politica  class_sessions  class_sessions_update  UPDATE
+politica  cobros  cobros_coordinacion  ALL
+politica  cobros  cobros_lee_alumno  SELECT
+politica  cobros_contacto  cobros_contacto_coordinacion  ALL
+politica  cobros_contacto  cobros_contacto_lee_alumno  SELECT
+politica  coordinador_profesores  coordinador_profesores_select  SELECT
+politica  course_unlocks  course_unlocks_delete  DELETE
+politica  course_unlocks  course_unlocks_insert  INSERT
+politica  course_unlocks  course_unlocks_select  SELECT
+politica  course_unlocks  course_unlocks_update  UPDATE
+politica  datos_facturacion  facturacion_coordinacion  ALL
+politica  datos_facturacion  facturacion_lee_alumno  SELECT
+politica  desafios  desafios_insert  INSERT
+politica  desafios  desafios_select  SELECT
+politica  desafios  desafios_update  UPDATE
+politica  diagnosticos_publicos  diagnosticos_publicos_insert  INSERT
+politica  diagnosticos_publicos  diagnosticos_publicos_select  SELECT
+politica  diagnosticos_publicos  diagnosticos_publicos_update  UPDATE
+politica  encargados  encargados_delete  DELETE
+politica  encargados  encargados_insert  INSERT
+politica  encargados  encargados_select  SELECT
+politica  encargados  encargados_update  UPDATE
+politica  equipo_alumnos  equipo_alumnos_select  SELECT
+politica  equipo_entrenadores  equipo_entrenadores_select  SELECT
+politica  equipos  equipos_select  SELECT
+politica  examen_items  examen_items_delete  DELETE
+politica  examen_items  examen_items_insert  INSERT
+politica  examen_items  examen_items_select  SELECT
+politica  examen_respuestas  examen_respuestas_select  SELECT
+politica  examenes  examenes_delete  DELETE
+politica  examenes  examenes_insert  INSERT
+politica  examenes  examenes_select  SELECT
+politica  examenes  examenes_update  UPDATE
+politica  formulario_respuestas  formulario_respuestas_delete  DELETE
+politica  formulario_respuestas  formulario_respuestas_select  SELECT
+politica  formularios  formularios_delete  DELETE
+politica  formularios  formularios_insert  INSERT
+politica  formularios  formularios_select  SELECT
+politica  formularios  formularios_update  UPDATE
+politica  fourplayer_games  fourplayer_games_delete  DELETE
+politica  fourplayer_games  fourplayer_games_insert  INSERT
+politica  fourplayer_games  fourplayer_games_select  SELECT
+politica  fourplayer_games  fourplayer_games_update  UPDATE
+politica  game_rooms  game_rooms_delete  DELETE
+politica  game_rooms  game_rooms_insert  INSERT
+politica  game_rooms  game_rooms_select  SELECT
+politica  game_rooms  game_rooms_update  UPDATE
+politica  game_state  game_state_insert  INSERT
+politica  game_state  game_state_select  SELECT
+politica  game_state  game_state_update  UPDATE
+politica  notas_alumno  notas_alumno_delete  DELETE
+politica  notas_alumno  notas_alumno_insert  INSERT
+politica  notas_alumno  notas_alumno_select_alumno  SELECT
+politica  notas_alumno  notas_alumno_select_profesor  SELECT
+politica  notas_alumno  notas_alumno_update  UPDATE
+politica  pagos  pagos_coordinacion  ALL
+politica  pagos  pagos_lee_alumno  SELECT
+politica  plan_compartidos  plan_compartidos_delete  DELETE
+politica  plan_compartidos  plan_compartidos_insert  INSERT
+politica  plan_compartidos  plan_compartidos_select  SELECT
+politica  plan_items  plan_items_delete  DELETE
+politica  plan_items  plan_items_insert  INSERT
+politica  plan_items  plan_items_select  SELECT
+politica  plan_items  plan_items_update  UPDATE
+politica  planes_clase  planes_clase_delete  DELETE
+politica  planes_clase  planes_clase_insert  INSERT
+politica  planes_clase  planes_clase_select  SELECT
+politica  planes_clase  planes_clase_update  UPDATE
+politica  planes_cobro  planes_escribe_coordinacion  ALL
+politica  planes_cobro  planes_lee_coordinacion  SELECT
+politica  platform_activity_log  platform_activity_log_insert_own  INSERT
+politica  platform_activity_log  platform_activity_log_select  SELECT
+politica  platform_activity_log  platform_activity_log_update_own  UPDATE
+politica  practice_games  practice_games_delete  DELETE
+politica  practice_games  practice_games_insert_own  INSERT
+politica  practice_games  practice_games_select  SELECT
+politica  practice_games  practice_games_update  UPDATE
+politica  practice_sessions  practice_sessions_insert  INSERT
+politica  practice_sessions  practice_sessions_select  SELECT
+politica  practice_sessions  practice_sessions_update  UPDATE
+politica  profile_teachers  profile_teachers_select  SELECT
+politica  profiles  profiles_select  SELECT
+politica  profiles  profiles_update_own  UPDATE
+politica  public_streak_leaderboard  public_streak_leaderboard_insert_all  INSERT
+politica  public_streak_leaderboard  public_streak_leaderboard_select_all  SELECT
+politica  public_tournament_champions  public_tournament_champions_insert  INSERT
+politica  public_tournament_champions  public_tournament_champions_select  SELECT
+politica  push_suscripciones  push_agrega_lo_suyo  INSERT
+politica  push_suscripciones  push_borra_lo_suyo  DELETE
+politica  push_suscripciones  push_cambia_lo_suyo  UPDATE
+politica  push_suscripciones  push_lee_lo_suyo  SELECT
+politica  puzzle_rush_scores  puzzle_rush_scores_insert_own  INSERT
+politica  puzzle_rush_scores  puzzle_rush_scores_select_authenticated  SELECT
+politica  puzzle_rush_scores  puzzle_rush_scores_update_own  UPDATE
+politica  question_answers  question_answers_insert_own  INSERT
+politica  question_answers  question_answers_select  SELECT
+politica  question_answers  question_answers_update  UPDATE
+politica  question_engine_answers  question_engine_answers_insert  INSERT
+politica  question_engine_answers  question_engine_answers_select  SELECT
+politica  questions  questions_insert  INSERT
+politica  questions  questions_select  SELECT
+politica  questions  questions_update  UPDATE
+politica  saved_games  saved_games_delete  DELETE
+politica  saved_games  saved_games_insert  INSERT
+politica  saved_games  saved_games_select  SELECT
+politica  solicitudes_academia  solicitudes_academia_select  SELECT
+politica  solicitudes_academia  solicitudes_academia_update  UPDATE
+politica  subgrupo_alumnos  subgrupo_alumnos_delete  DELETE
+politica  subgrupo_alumnos  subgrupo_alumnos_insert  INSERT
+politica  subgrupo_alumnos  subgrupo_alumnos_select  SELECT
+politica  subgrupos  subgrupos_delete  DELETE
+politica  subgrupos  subgrupos_insert  INSERT
+politica  subgrupos  subgrupos_select  SELECT
+politica  subgrupos  subgrupos_update  UPDATE
+politica  suscripciones  suscripciones_coordinacion  ALL
+politica  suscripciones  suscripciones_lee_alumno  SELECT
+politica  tarea_items  tarea_items_delete  DELETE
+politica  tarea_items  tarea_items_insert  INSERT
+politica  tarea_items  tarea_items_select  SELECT
+politica  tarea_items  tarea_items_update  UPDATE
+politica  tareas  tareas_delete  DELETE
+politica  tareas  tareas_insert  INSERT
+politica  tareas  tareas_select  SELECT
+politica  tareas  tareas_update  UPDATE
+politica  tournament_pairings  tournament_pairings_insert  INSERT
+politica  tournament_pairings  tournament_pairings_select  SELECT
+politica  tournament_pairings  tournament_pairings_update  UPDATE
+politica  tournament_registrations  tournament_registrations_delete  DELETE
+politica  tournament_registrations  tournament_registrations_insert  INSERT
+politica  tournament_registrations  tournament_registrations_select  SELECT
+politica  tournament_rounds  tournament_rounds_insert  INSERT
+politica  tournament_rounds  tournament_rounds_select  SELECT
+politica  tournament_rounds  tournament_rounds_update  UPDATE
+politica  tournaments  tournaments_delete  DELETE
+politica  tournaments  tournaments_insert  INSERT
+politica  tournaments  tournaments_select  SELECT
+politica  tournaments  tournaments_update  UPDATE
+politica  training_plans  training_plans_insert_teacher  INSERT
+politica  training_plans  training_plans_select_student  SELECT
+politica  training_plans  training_plans_select_teacher  SELECT
+politica  training_plans  training_plans_update_teacher  UPDATE
+politica  training_progress  training_progress_insert_own  INSERT
+politica  training_progress  training_progress_select_own  SELECT
+politica  training_progress  training_progress_select_teacher  SELECT
+politica  training_state  training_state_delete_own  DELETE
+politica  training_state  training_state_insert_own  INSERT
+politica  training_state  training_state_select_own  SELECT
+politica  training_state  training_state_select_teacher  SELECT
+politica  training_state  training_state_update_own  UPDATE
+politica  tv_settings  tv_settings_select_public  SELECT
+politica  tv_settings  tv_settings_update_profesor  UPDATE
+politica  variant_nodes  variant_nodes_delete  DELETE
+politica  variant_nodes  variant_nodes_insert  INSERT
+politica  variant_nodes  variant_nodes_select  SELECT
+trigger  ajustes_academia  ajustes_academia_protegido
+trigger  class_presence_log  class_presence_log_protege_tiempos
+trigger  class_sessions  class_sessions_avisa_push
+trigger  cobros_contacto  cobros_contacto_protegido
+trigger  desafios  desafios_avisa_push
+trigger  examenes  avisar_examen_asignado
+trigger  examenes  avisar_examen_reabierto
+trigger  fourplayer_games  reloj_de_partida
+trigger  game_rooms  reloj_de_partida
+trigger  game_state  protect_game_state_teacher_columns_trigger
+trigger  notas_alumno  notas_alumno_proteger
+trigger  planes_clase  planes_clase_proteger
+trigger  platform_activity_log  platform_activity_log_protege_tiempos
+trigger  profile_teachers  profile_teachers_sincroniza_principal
+trigger  profiles  protect_profiles_identity_columns_trigger
+trigger  question_answers  protect_answer_grading_trigger
+trigger  tarea_items  proteger_tarea_items_alumno
+trigger  tareas  tareas_avisa_push
+trigger  tareas  tareas_protege_alumno
+trigger  training_progress  training_progress_valida_marca
+indice  Ejercicios Lichess  ejercicios_lichess_nbplays_idx
+indice  ajustes_academia  ajustes_academia_pkey
+indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
+indice  arbitrajes_publicos  arbitrajes_publicos_pkey
+indice  archivos_pgn  archivos_pgn_pkey
+indice  archivos_pgn  archivos_pgn_profesor_id_idx
+indice  avisos_cobro  avisos_cobro_pkey
+indice  avisos_cobro  avisos_cobro_una_vez
+indice  class_attendance  class_attendance_pkey
+indice  class_attendance  class_attendance_session_id_student_id_key
+indice  class_attendance  class_attendance_student_idx
+indice  class_chat_messages  class_chat_messages_pkey
+indice  class_chat_messages  class_chat_messages_student_id_idx
+indice  class_presence_log  class_presence_log_pkey
+indice  class_presence_log  class_presence_log_student_idx
+indice  class_sessions  class_sessions_pkey
+indice  class_sessions  class_sessions_una_abierta_por_profesor
+indice  cobros  cobros_consecutivo_key
+indice  cobros  cobros_pkey
+indice  cobros  cobros_por_alumno
+indice  cobros  cobros_por_vencimiento
+indice  cobros  cobros_un_periodo_por_suscripcion
+indice  cobros_contacto  cobros_contacto_pkey
+indice  coordinador_profesores  coordinador_profesores_pkey
+indice  coordinador_profesores  coordinador_profesores_por_profesor
+indice  course_unlocks  course_unlocks_pkey
+indice  course_unlocks  course_unlocks_student_id_curso_key
+indice  datos_facturacion  datos_facturacion_pkey
+indice  desafios  desafios_de_pendiente
+indice  desafios  desafios_para_pendiente
+indice  desafios  desafios_pkey
+indice  diagnosticos_publicos  diagnosticos_publicos_pkey
+indice  encargados  encargados_pendientes_idx
+indice  encargados  encargados_pkey
+indice  encargados  encargados_sin_repetir
+indice  encargados  encargados_student_idx
+indice  equipo_alumnos  equipo_alumnos_alumno_idx
+indice  equipo_alumnos  equipo_alumnos_pkey
+indice  equipo_entrenadores  equipo_entrenadores_pkey
+indice  equipo_entrenadores  equipo_entrenadores_teacher_idx
+indice  equipos  equipos_nombre_unico
+indice  equipos  equipos_pkey
+indice  examen_items  examen_items_examen_id_orden_key
+indice  examen_items  examen_items_examen_idx
+indice  examen_items  examen_items_pkey
+indice  examen_respuestas  examen_respuestas_examen_idx
+indice  examen_respuestas  examen_respuestas_item_id_key
+indice  examen_respuestas  examen_respuestas_pkey
+indice  examenes  examenes_alumno_idx
+indice  examenes  examenes_pkey
+indice  examenes  examenes_profesor_idx
+indice  formulario_respuestas  formulario_respuestas_formulario_idx
+indice  formulario_respuestas  formulario_respuestas_pkey
+indice  formularios  formularios_creado_por_idx
+indice  formularios  formularios_pkey
+indice  formularios  formularios_slug_key
+indice  fourplayer_games  fourplayer_games_pkey
+indice  game_rooms  game_rooms_pkey
+indice  game_state  game_state_owner_id_uidx
+indice  game_state  game_state_pkey
+indice  notas_alumno  notas_alumno_alumno_compartida_idx
+indice  notas_alumno  notas_alumno_pkey
+indice  notas_alumno  notas_alumno_profesor_alumno_idx
+indice  pagos  pagos_pkey
+indice  pagos  pagos_por_cobro
+indice  plan_compartidos  plan_compartidos_pkey
+indice  plan_compartidos  plan_compartidos_profesor_idx
+indice  plan_items  plan_items_pkey
+indice  plan_items  plan_items_plan_idx
+indice  planes_clase  planes_clase_pkey
+indice  planes_clase  planes_clase_profesor_idx
+indice  planes_cobro  planes_cobro_pkey
+indice  platform_activity_log  platform_activity_log_pkey
+indice  platform_activity_log  platform_activity_log_student_idx
+indice  practice_games  practice_games_pkey
+indice  practice_games  practice_games_session_id_idx
+indice  practice_games  practice_games_session_id_student_id_key
+indice  practice_sessions  practice_sessions_pkey
+indice  profile_teachers  profile_teachers_pkey
+indice  profile_teachers  profile_teachers_teacher_idx
+indice  profiles  profiles_email_sin_repetir
+indice  profiles  profiles_grupo_idx
+indice  profiles  profiles_pkey
+indice  profiles  profiles_single_admin_idx
+indice  profiles  profiles_teacher_id_idx
+indice  public_streak_leaderboard  public_streak_leaderboard_best_streak_idx
+indice  public_streak_leaderboard  public_streak_leaderboard_pkey
+indice  public_tournament_champions  public_tournament_champions_pkey
+indice  push_suscripciones  push_por_persona
+indice  push_suscripciones  push_suscripciones_endpoint_key
+indice  push_suscripciones  push_suscripciones_pkey
+indice  puzzle_rush_scores  puzzle_rush_scores_pkey
+indice  question_answers  question_answers_pkey
+indice  question_answers  question_answers_question_id_student_id_key
+indice  question_answers  question_answers_student_idx
+indice  question_engine_answers  question_engine_answers_pkey
+indice  questions  questions_pkey
+indice  saved_games  saved_games_pkey
+indice  solicitudes_academia  solicitudes_academia_pkey
+indice  subgrupo_alumnos  subgrupo_alumnos_pkey
+indice  subgrupo_alumnos  subgrupo_alumnos_por_alumno
+indice  subgrupos  subgrupos_pkey
+indice  subgrupos  subgrupos_uno_por_nombre
+indice  suscripciones  suscripciones_pkey
+indice  suscripciones  suscripciones_una_activa_por_plan
+indice  tarea_items  tarea_items_pkey
+indice  tarea_items  tarea_items_tarea_idx
+indice  tareas  tareas_alumno_idx
+indice  tareas  tareas_pkey
+indice  tareas  tareas_profesor_idx
+indice  tournament_pairings  tournament_pairings_game_room_idx
+indice  tournament_pairings  tournament_pairings_pkey
+indice  tournament_pairings  tournament_pairings_round_idx
+indice  tournament_pairings  tournament_pairings_tournament_idx
+indice  tournament_registrations  tournament_registrations_pkey
+indice  tournament_registrations  tournament_registrations_tournament_id_player_id_key
+indice  tournament_registrations  tournament_registrations_tournament_idx
+indice  tournament_rounds  tournament_rounds_pkey
+indice  tournament_rounds  tournament_rounds_tournament_id_round_number_key
+indice  tournament_rounds  tournament_rounds_tournament_idx
+indice  tournaments  tournaments_pkey
+indice  training_plans  training_plans_pkey
+indice  training_plans  training_plans_student_id_key
+indice  training_plans  training_plans_student_idx
+indice  training_progress  training_progress_pkey
+indice  training_progress  training_progress_student_idx
+indice  training_state  training_state_pkey
+indice  tv_settings  tv_settings_pkey
+indice  variant_nodes  variant_nodes_pkey
+extension  pg_cron  1.6.4
+extension  pg_net  0.20.4
+extension  pg_stat_statements  1.11
+extension  pgcrypto  1.3
+extension  plpgsql  1.0
+extension  supabase_vault  0.3.1
+extension  uuid-ossp  1.1
+realtime  archivos_pgn
+realtime  class_attendance
+realtime  class_chat_messages
+realtime  class_sessions
+realtime  desafios
+realtime  fourplayer_games
+realtime  game_rooms
+realtime  game_state
+realtime  practice_games
+realtime  practice_sessions
+realtime  question_answers
+realtime  questions
+realtime  saved_games
+realtime  tv_settings
+realtime  variant_nodes
+cron  cobros-generar  30 11 * * *
+cron  cobros-recordatorios  30 12 * * *
+cron  informes-a-encargados  0 13 * * *
+grant  Ejercicios Lichess  anon  DELETE
+grant  Ejercicios Lichess  anon  INSERT
+grant  Ejercicios Lichess  anon  REFERENCES
+grant  Ejercicios Lichess  anon  SELECT
+grant  Ejercicios Lichess  anon  TRIGGER
+grant  Ejercicios Lichess  anon  TRUNCATE
+grant  Ejercicios Lichess  anon  UPDATE
+grant  Ejercicios Lichess  authenticated  DELETE
+grant  Ejercicios Lichess  authenticated  INSERT
+grant  Ejercicios Lichess  authenticated  REFERENCES
+grant  Ejercicios Lichess  authenticated  SELECT
+grant  Ejercicios Lichess  authenticated  TRIGGER
+grant  Ejercicios Lichess  authenticated  TRUNCATE
+grant  Ejercicios Lichess  authenticated  UPDATE
+grant  ajustes_academia  authenticated  DELETE
+grant  ajustes_academia  authenticated  INSERT
+grant  ajustes_academia  authenticated  REFERENCES
+grant  ajustes_academia  authenticated  SELECT
+grant  ajustes_academia  authenticated  TRIGGER
+grant  ajustes_academia  authenticated  TRUNCATE
+grant  ajustes_academia  authenticated  UPDATE
+grant  arbitrajes_publicos  anon  DELETE
+grant  arbitrajes_publicos  anon  INSERT
+grant  arbitrajes_publicos  anon  REFERENCES
+grant  arbitrajes_publicos  anon  SELECT
+grant  arbitrajes_publicos  anon  TRIGGER
+grant  arbitrajes_publicos  anon  TRUNCATE
+grant  arbitrajes_publicos  anon  UPDATE
+grant  arbitrajes_publicos  authenticated  DELETE
+grant  arbitrajes_publicos  authenticated  INSERT
+grant  arbitrajes_publicos  authenticated  REFERENCES
+grant  arbitrajes_publicos  authenticated  SELECT
+grant  arbitrajes_publicos  authenticated  TRIGGER
+grant  arbitrajes_publicos  authenticated  TRUNCATE
+grant  arbitrajes_publicos  authenticated  UPDATE
+grant  archivos_pgn  anon  DELETE
+grant  archivos_pgn  anon  INSERT
+grant  archivos_pgn  anon  REFERENCES
+grant  archivos_pgn  anon  SELECT
+grant  archivos_pgn  anon  TRIGGER
+grant  archivos_pgn  anon  TRUNCATE
+grant  archivos_pgn  anon  UPDATE
+grant  archivos_pgn  authenticated  DELETE
+grant  archivos_pgn  authenticated  INSERT
+grant  archivos_pgn  authenticated  REFERENCES
+grant  archivos_pgn  authenticated  SELECT
+grant  archivos_pgn  authenticated  TRIGGER
+grant  archivos_pgn  authenticated  TRUNCATE
+grant  archivos_pgn  authenticated  UPDATE
+grant  avisos_cobro  authenticated  DELETE
+grant  avisos_cobro  authenticated  INSERT
+grant  avisos_cobro  authenticated  REFERENCES
+grant  avisos_cobro  authenticated  SELECT
+grant  avisos_cobro  authenticated  TRIGGER
+grant  avisos_cobro  authenticated  TRUNCATE
+grant  avisos_cobro  authenticated  UPDATE
+grant  class_attendance  anon  DELETE
+grant  class_attendance  anon  INSERT
+grant  class_attendance  anon  REFERENCES
+grant  class_attendance  anon  SELECT
+grant  class_attendance  anon  TRIGGER
+grant  class_attendance  anon  TRUNCATE
+grant  class_attendance  anon  UPDATE
+grant  class_attendance  authenticated  DELETE
+grant  class_attendance  authenticated  INSERT
+grant  class_attendance  authenticated  REFERENCES
+grant  class_attendance  authenticated  SELECT
+grant  class_attendance  authenticated  TRIGGER
+grant  class_attendance  authenticated  TRUNCATE
+grant  class_attendance  authenticated  UPDATE
+grant  class_chat_messages  anon  DELETE
+grant  class_chat_messages  anon  INSERT
+grant  class_chat_messages  anon  REFERENCES
+grant  class_chat_messages  anon  SELECT
+grant  class_chat_messages  anon  TRIGGER
+grant  class_chat_messages  anon  TRUNCATE
+grant  class_chat_messages  anon  UPDATE
+grant  class_chat_messages  authenticated  DELETE
+grant  class_chat_messages  authenticated  INSERT
+grant  class_chat_messages  authenticated  REFERENCES
+grant  class_chat_messages  authenticated  SELECT
+grant  class_chat_messages  authenticated  TRIGGER
+grant  class_chat_messages  authenticated  TRUNCATE
+grant  class_chat_messages  authenticated  UPDATE
+grant  class_presence_log  anon  DELETE
+grant  class_presence_log  anon  INSERT
+grant  class_presence_log  anon  REFERENCES
+grant  class_presence_log  anon  SELECT
+grant  class_presence_log  anon  TRIGGER
+grant  class_presence_log  anon  TRUNCATE
+grant  class_presence_log  anon  UPDATE
+grant  class_presence_log  authenticated  DELETE
+grant  class_presence_log  authenticated  INSERT
+grant  class_presence_log  authenticated  REFERENCES
+grant  class_presence_log  authenticated  SELECT
+grant  class_presence_log  authenticated  TRIGGER
+grant  class_presence_log  authenticated  TRUNCATE
+grant  class_presence_log  authenticated  UPDATE
+grant  class_sessions  anon  DELETE
+grant  class_sessions  anon  INSERT
+grant  class_sessions  anon  REFERENCES
+grant  class_sessions  anon  SELECT
+grant  class_sessions  anon  TRIGGER
+grant  class_sessions  anon  TRUNCATE
+grant  class_sessions  anon  UPDATE
+grant  class_sessions  authenticated  DELETE
+grant  class_sessions  authenticated  INSERT
+grant  class_sessions  authenticated  REFERENCES
+grant  class_sessions  authenticated  SELECT
+grant  class_sessions  authenticated  TRIGGER
+grant  class_sessions  authenticated  TRUNCATE
+grant  class_sessions  authenticated  UPDATE
+grant  cobros  authenticated  DELETE
+grant  cobros  authenticated  INSERT
+grant  cobros  authenticated  REFERENCES
+grant  cobros  authenticated  SELECT
+grant  cobros  authenticated  TRIGGER
+grant  cobros  authenticated  TRUNCATE
+grant  cobros  authenticated  UPDATE
+grant  cobros_contacto  authenticated  DELETE
+grant  cobros_contacto  authenticated  INSERT
+grant  cobros_contacto  authenticated  REFERENCES
+grant  cobros_contacto  authenticated  SELECT
+grant  cobros_contacto  authenticated  TRIGGER
+grant  cobros_contacto  authenticated  TRUNCATE
+grant  cobros_contacto  authenticated  UPDATE
+grant  cobros_vista  authenticated  DELETE
+grant  cobros_vista  authenticated  INSERT
+grant  cobros_vista  authenticated  REFERENCES
+grant  cobros_vista  authenticated  SELECT
+grant  cobros_vista  authenticated  TRIGGER
+grant  cobros_vista  authenticated  TRUNCATE
+grant  cobros_vista  authenticated  UPDATE
+grant  coordinador_profesores  authenticated  DELETE
+grant  coordinador_profesores  authenticated  INSERT
+grant  coordinador_profesores  authenticated  REFERENCES
+grant  coordinador_profesores  authenticated  SELECT
+grant  coordinador_profesores  authenticated  TRIGGER
+grant  coordinador_profesores  authenticated  TRUNCATE
+grant  coordinador_profesores  authenticated  UPDATE
+grant  course_unlocks  anon  DELETE
+grant  course_unlocks  anon  INSERT
+grant  course_unlocks  anon  REFERENCES
+grant  course_unlocks  anon  SELECT
+grant  course_unlocks  anon  TRIGGER
+grant  course_unlocks  anon  TRUNCATE
+grant  course_unlocks  anon  UPDATE
+grant  course_unlocks  authenticated  DELETE
+grant  course_unlocks  authenticated  INSERT
+grant  course_unlocks  authenticated  REFERENCES
+grant  course_unlocks  authenticated  SELECT
+grant  course_unlocks  authenticated  TRIGGER
+grant  course_unlocks  authenticated  TRUNCATE
+grant  course_unlocks  authenticated  UPDATE
+grant  datos_facturacion  authenticated  DELETE
+grant  datos_facturacion  authenticated  INSERT
+grant  datos_facturacion  authenticated  REFERENCES
+grant  datos_facturacion  authenticated  SELECT
+grant  datos_facturacion  authenticated  TRIGGER
+grant  datos_facturacion  authenticated  TRUNCATE
+grant  datos_facturacion  authenticated  UPDATE
+grant  desafios  anon  DELETE
+grant  desafios  anon  INSERT
+grant  desafios  anon  REFERENCES
+grant  desafios  anon  SELECT
+grant  desafios  anon  TRIGGER
+grant  desafios  anon  TRUNCATE
+grant  desafios  anon  UPDATE
+grant  desafios  authenticated  DELETE
+grant  desafios  authenticated  INSERT
+grant  desafios  authenticated  REFERENCES
+grant  desafios  authenticated  SELECT
+grant  desafios  authenticated  TRIGGER
+grant  desafios  authenticated  TRUNCATE
+grant  desafios  authenticated  UPDATE
+grant  diagnosticos_publicos  anon  DELETE
+grant  diagnosticos_publicos  anon  INSERT
+grant  diagnosticos_publicos  anon  REFERENCES
+grant  diagnosticos_publicos  anon  SELECT
+grant  diagnosticos_publicos  anon  TRIGGER
+grant  diagnosticos_publicos  anon  TRUNCATE
+grant  diagnosticos_publicos  anon  UPDATE
+grant  diagnosticos_publicos  authenticated  DELETE
+grant  diagnosticos_publicos  authenticated  INSERT
+grant  diagnosticos_publicos  authenticated  REFERENCES
+grant  diagnosticos_publicos  authenticated  SELECT
+grant  diagnosticos_publicos  authenticated  TRIGGER
+grant  diagnosticos_publicos  authenticated  TRUNCATE
+grant  diagnosticos_publicos  authenticated  UPDATE
+grant  encargados  authenticated  DELETE
+grant  encargados  authenticated  INSERT
+grant  encargados  authenticated  REFERENCES
+grant  encargados  authenticated  SELECT
+grant  encargados  authenticated  TRIGGER
+grant  encargados  authenticated  TRUNCATE
+grant  encargados  authenticated  UPDATE
+grant  equipo_alumnos  anon  DELETE
+grant  equipo_alumnos  anon  INSERT
+grant  equipo_alumnos  anon  REFERENCES
+grant  equipo_alumnos  anon  SELECT
+grant  equipo_alumnos  anon  TRIGGER
+grant  equipo_alumnos  anon  TRUNCATE
+grant  equipo_alumnos  anon  UPDATE
+grant  equipo_alumnos  authenticated  DELETE
+grant  equipo_alumnos  authenticated  INSERT
+grant  equipo_alumnos  authenticated  REFERENCES
+grant  equipo_alumnos  authenticated  SELECT
+grant  equipo_alumnos  authenticated  TRIGGER
+grant  equipo_alumnos  authenticated  TRUNCATE
+grant  equipo_alumnos  authenticated  UPDATE
+grant  equipo_entrenadores  anon  DELETE
+grant  equipo_entrenadores  anon  INSERT
+grant  equipo_entrenadores  anon  REFERENCES
+grant  equipo_entrenadores  anon  SELECT
+grant  equipo_entrenadores  anon  TRIGGER
+grant  equipo_entrenadores  anon  TRUNCATE
+grant  equipo_entrenadores  anon  UPDATE
+grant  equipo_entrenadores  authenticated  DELETE
+grant  equipo_entrenadores  authenticated  INSERT
+grant  equipo_entrenadores  authenticated  REFERENCES
+grant  equipo_entrenadores  authenticated  SELECT
+grant  equipo_entrenadores  authenticated  TRIGGER
+grant  equipo_entrenadores  authenticated  TRUNCATE
+grant  equipo_entrenadores  authenticated  UPDATE
+grant  equipos  anon  DELETE
+grant  equipos  anon  INSERT
+grant  equipos  anon  REFERENCES
+grant  equipos  anon  SELECT
+grant  equipos  anon  TRIGGER
+grant  equipos  anon  TRUNCATE
+grant  equipos  anon  UPDATE
+grant  equipos  authenticated  DELETE
+grant  equipos  authenticated  INSERT
+grant  equipos  authenticated  REFERENCES
+grant  equipos  authenticated  SELECT
+grant  equipos  authenticated  TRIGGER
+grant  equipos  authenticated  TRUNCATE
+grant  equipos  authenticated  UPDATE
+grant  examen_items  anon  DELETE
+grant  examen_items  anon  INSERT
+grant  examen_items  anon  REFERENCES
+grant  examen_items  anon  SELECT
+grant  examen_items  anon  TRIGGER
+grant  examen_items  anon  TRUNCATE
+grant  examen_items  anon  UPDATE
+grant  examen_items  authenticated  DELETE
+grant  examen_items  authenticated  INSERT
+grant  examen_items  authenticated  REFERENCES
+grant  examen_items  authenticated  SELECT
+grant  examen_items  authenticated  TRIGGER
+grant  examen_items  authenticated  TRUNCATE
+grant  examen_items  authenticated  UPDATE
+grant  examen_respuestas  anon  DELETE
+grant  examen_respuestas  anon  INSERT
+grant  examen_respuestas  anon  REFERENCES
+grant  examen_respuestas  anon  SELECT
+grant  examen_respuestas  anon  TRIGGER
+grant  examen_respuestas  anon  TRUNCATE
+grant  examen_respuestas  anon  UPDATE
+grant  examen_respuestas  authenticated  DELETE
+grant  examen_respuestas  authenticated  INSERT
+grant  examen_respuestas  authenticated  REFERENCES
+grant  examen_respuestas  authenticated  SELECT
+grant  examen_respuestas  authenticated  TRIGGER
+grant  examen_respuestas  authenticated  TRUNCATE
+grant  examen_respuestas  authenticated  UPDATE
+grant  examenes  anon  DELETE
+grant  examenes  anon  INSERT
+grant  examenes  anon  REFERENCES
+grant  examenes  anon  SELECT
+grant  examenes  anon  TRIGGER
+grant  examenes  anon  TRUNCATE
+grant  examenes  anon  UPDATE
+grant  examenes  authenticated  DELETE
+grant  examenes  authenticated  INSERT
+grant  examenes  authenticated  REFERENCES
+grant  examenes  authenticated  SELECT
+grant  examenes  authenticated  TRIGGER
+grant  examenes  authenticated  TRUNCATE
+grant  examenes  authenticated  UPDATE
+grant  formulario_respuestas  authenticated  DELETE
+grant  formulario_respuestas  authenticated  INSERT
+grant  formulario_respuestas  authenticated  REFERENCES
+grant  formulario_respuestas  authenticated  SELECT
+grant  formulario_respuestas  authenticated  TRIGGER
+grant  formulario_respuestas  authenticated  TRUNCATE
+grant  formulario_respuestas  authenticated  UPDATE
+grant  formularios  authenticated  DELETE
+grant  formularios  authenticated  INSERT
+grant  formularios  authenticated  REFERENCES
+grant  formularios  authenticated  SELECT
+grant  formularios  authenticated  TRIGGER
+grant  formularios  authenticated  TRUNCATE
+grant  formularios  authenticated  UPDATE
+grant  fourplayer_games  anon  DELETE
+grant  fourplayer_games  anon  INSERT
+grant  fourplayer_games  anon  REFERENCES
+grant  fourplayer_games  anon  SELECT
+grant  fourplayer_games  anon  TRIGGER
+grant  fourplayer_games  anon  TRUNCATE
+grant  fourplayer_games  anon  UPDATE
+grant  fourplayer_games  authenticated  DELETE
+grant  fourplayer_games  authenticated  INSERT
+grant  fourplayer_games  authenticated  REFERENCES
+grant  fourplayer_games  authenticated  SELECT
+grant  fourplayer_games  authenticated  TRIGGER
+grant  fourplayer_games  authenticated  TRUNCATE
+grant  fourplayer_games  authenticated  UPDATE
+grant  game_rooms  anon  DELETE
+grant  game_rooms  anon  INSERT
+grant  game_rooms  anon  REFERENCES
+grant  game_rooms  anon  SELECT
+grant  game_rooms  anon  TRIGGER
+grant  game_rooms  anon  TRUNCATE
+grant  game_rooms  anon  UPDATE
+grant  game_rooms  authenticated  DELETE
+grant  game_rooms  authenticated  INSERT
+grant  game_rooms  authenticated  REFERENCES
+grant  game_rooms  authenticated  SELECT
+grant  game_rooms  authenticated  TRIGGER
+grant  game_rooms  authenticated  TRUNCATE
+grant  game_rooms  authenticated  UPDATE
+grant  game_state  anon  DELETE
+grant  game_state  anon  INSERT
+grant  game_state  anon  REFERENCES
+grant  game_state  anon  SELECT
+grant  game_state  anon  TRIGGER
+grant  game_state  anon  TRUNCATE
+grant  game_state  anon  UPDATE
+grant  game_state  authenticated  DELETE
+grant  game_state  authenticated  INSERT
+grant  game_state  authenticated  REFERENCES
+grant  game_state  authenticated  SELECT
+grant  game_state  authenticated  TRIGGER
+grant  game_state  authenticated  TRUNCATE
+grant  game_state  authenticated  UPDATE
+grant  notas_alumno  authenticated  DELETE
+grant  notas_alumno  authenticated  INSERT
+grant  notas_alumno  authenticated  REFERENCES
+grant  notas_alumno  authenticated  SELECT
+grant  notas_alumno  authenticated  TRIGGER
+grant  notas_alumno  authenticated  TRUNCATE
+grant  notas_alumno  authenticated  UPDATE
+grant  pagos  authenticated  DELETE
+grant  pagos  authenticated  INSERT
+grant  pagos  authenticated  REFERENCES
+grant  pagos  authenticated  SELECT
+grant  pagos  authenticated  TRIGGER
+grant  pagos  authenticated  TRUNCATE
+grant  pagos  authenticated  UPDATE
+grant  plan_compartidos  authenticated  DELETE
+grant  plan_compartidos  authenticated  INSERT
+grant  plan_compartidos  authenticated  REFERENCES
+grant  plan_compartidos  authenticated  SELECT
+grant  plan_compartidos  authenticated  TRIGGER
+grant  plan_compartidos  authenticated  TRUNCATE
+grant  plan_compartidos  authenticated  UPDATE
+grant  plan_items  authenticated  DELETE
+grant  plan_items  authenticated  INSERT
+grant  plan_items  authenticated  REFERENCES
+grant  plan_items  authenticated  SELECT
+grant  plan_items  authenticated  TRIGGER
+grant  plan_items  authenticated  TRUNCATE
+grant  plan_items  authenticated  UPDATE
+grant  planes_clase  authenticated  DELETE
+grant  planes_clase  authenticated  INSERT
+grant  planes_clase  authenticated  REFERENCES
+grant  planes_clase  authenticated  SELECT
+grant  planes_clase  authenticated  TRIGGER
+grant  planes_clase  authenticated  TRUNCATE
+grant  planes_clase  authenticated  UPDATE
+grant  planes_cobro  authenticated  DELETE
+grant  planes_cobro  authenticated  INSERT
+grant  planes_cobro  authenticated  REFERENCES
+grant  planes_cobro  authenticated  SELECT
+grant  planes_cobro  authenticated  TRIGGER
+grant  planes_cobro  authenticated  TRUNCATE
+grant  planes_cobro  authenticated  UPDATE
+grant  platform_activity_log  anon  DELETE
+grant  platform_activity_log  anon  INSERT
+grant  platform_activity_log  anon  REFERENCES
+grant  platform_activity_log  anon  SELECT
+grant  platform_activity_log  anon  TRIGGER
+grant  platform_activity_log  anon  TRUNCATE
+grant  platform_activity_log  anon  UPDATE
+grant  platform_activity_log  authenticated  DELETE
+grant  platform_activity_log  authenticated  INSERT
+grant  platform_activity_log  authenticated  REFERENCES
+grant  platform_activity_log  authenticated  SELECT
+grant  platform_activity_log  authenticated  TRIGGER
+grant  platform_activity_log  authenticated  TRUNCATE
+grant  platform_activity_log  authenticated  UPDATE
+grant  practice_games  anon  DELETE
+grant  practice_games  anon  INSERT
+grant  practice_games  anon  REFERENCES
+grant  practice_games  anon  SELECT
+grant  practice_games  anon  TRIGGER
+grant  practice_games  anon  TRUNCATE
+grant  practice_games  anon  UPDATE
+grant  practice_games  authenticated  DELETE
+grant  practice_games  authenticated  INSERT
+grant  practice_games  authenticated  REFERENCES
+grant  practice_games  authenticated  SELECT
+grant  practice_games  authenticated  TRIGGER
+grant  practice_games  authenticated  TRUNCATE
+grant  practice_games  authenticated  UPDATE
+grant  practice_sessions  anon  DELETE
+grant  practice_sessions  anon  INSERT
+grant  practice_sessions  anon  REFERENCES
+grant  practice_sessions  anon  SELECT
+grant  practice_sessions  anon  TRIGGER
+grant  practice_sessions  anon  TRUNCATE
+grant  practice_sessions  anon  UPDATE
+grant  practice_sessions  authenticated  DELETE
+grant  practice_sessions  authenticated  INSERT
+grant  practice_sessions  authenticated  REFERENCES
+grant  practice_sessions  authenticated  SELECT
+grant  practice_sessions  authenticated  TRIGGER
+grant  practice_sessions  authenticated  TRUNCATE
+grant  practice_sessions  authenticated  UPDATE
+grant  profile_teachers  authenticated  DELETE
+grant  profile_teachers  authenticated  INSERT
+grant  profile_teachers  authenticated  REFERENCES
+grant  profile_teachers  authenticated  SELECT
+grant  profile_teachers  authenticated  TRIGGER
+grant  profile_teachers  authenticated  TRUNCATE
+grant  profile_teachers  authenticated  UPDATE
+grant  profiles  anon  DELETE
+grant  profiles  anon  INSERT
+grant  profiles  anon  REFERENCES
+grant  profiles  anon  SELECT
+grant  profiles  anon  TRIGGER
+grant  profiles  anon  TRUNCATE
+grant  profiles  anon  UPDATE
+grant  profiles  authenticated  DELETE
+grant  profiles  authenticated  INSERT
+grant  profiles  authenticated  REFERENCES
+grant  profiles  authenticated  SELECT
+grant  profiles  authenticated  TRIGGER
+grant  profiles  authenticated  TRUNCATE
+grant  profiles  authenticated  UPDATE
+grant  public_streak_leaderboard  anon  DELETE
+grant  public_streak_leaderboard  anon  INSERT
+grant  public_streak_leaderboard  anon  REFERENCES
+grant  public_streak_leaderboard  anon  SELECT
+grant  public_streak_leaderboard  anon  TRIGGER
+grant  public_streak_leaderboard  anon  TRUNCATE
+grant  public_streak_leaderboard  anon  UPDATE
+grant  public_streak_leaderboard  authenticated  DELETE
+grant  public_streak_leaderboard  authenticated  INSERT
+grant  public_streak_leaderboard  authenticated  REFERENCES
+grant  public_streak_leaderboard  authenticated  SELECT
+grant  public_streak_leaderboard  authenticated  TRIGGER
+grant  public_streak_leaderboard  authenticated  TRUNCATE
+grant  public_streak_leaderboard  authenticated  UPDATE
+grant  public_tournament_champions  anon  DELETE
+grant  public_tournament_champions  anon  INSERT
+grant  public_tournament_champions  anon  REFERENCES
+grant  public_tournament_champions  anon  SELECT
+grant  public_tournament_champions  anon  TRIGGER
+grant  public_tournament_champions  anon  TRUNCATE
+grant  public_tournament_champions  anon  UPDATE
+grant  public_tournament_champions  authenticated  DELETE
+grant  public_tournament_champions  authenticated  INSERT
+grant  public_tournament_champions  authenticated  REFERENCES
+grant  public_tournament_champions  authenticated  SELECT
+grant  public_tournament_champions  authenticated  TRIGGER
+grant  public_tournament_champions  authenticated  TRUNCATE
+grant  public_tournament_champions  authenticated  UPDATE
+grant  push_suscripciones  authenticated  DELETE
+grant  push_suscripciones  authenticated  INSERT
+grant  push_suscripciones  authenticated  REFERENCES
+grant  push_suscripciones  authenticated  SELECT
+grant  push_suscripciones  authenticated  TRIGGER
+grant  push_suscripciones  authenticated  TRUNCATE
+grant  push_suscripciones  authenticated  UPDATE
+grant  puzzle_rush_scores  anon  DELETE
+grant  puzzle_rush_scores  anon  INSERT
+grant  puzzle_rush_scores  anon  REFERENCES
+grant  puzzle_rush_scores  anon  SELECT
+grant  puzzle_rush_scores  anon  TRIGGER
+grant  puzzle_rush_scores  anon  TRUNCATE
+grant  puzzle_rush_scores  anon  UPDATE
+grant  puzzle_rush_scores  authenticated  DELETE
+grant  puzzle_rush_scores  authenticated  INSERT
+grant  puzzle_rush_scores  authenticated  REFERENCES
+grant  puzzle_rush_scores  authenticated  SELECT
+grant  puzzle_rush_scores  authenticated  TRIGGER
+grant  puzzle_rush_scores  authenticated  TRUNCATE
+grant  puzzle_rush_scores  authenticated  UPDATE
+grant  question_answers  anon  DELETE
+grant  question_answers  anon  INSERT
+grant  question_answers  anon  REFERENCES
+grant  question_answers  anon  SELECT
+grant  question_answers  anon  TRIGGER
+grant  question_answers  anon  TRUNCATE
+grant  question_answers  anon  UPDATE
+grant  question_answers  authenticated  DELETE
+grant  question_answers  authenticated  INSERT
+grant  question_answers  authenticated  REFERENCES
+grant  question_answers  authenticated  SELECT
+grant  question_answers  authenticated  TRIGGER
+grant  question_answers  authenticated  TRUNCATE
+grant  question_answers  authenticated  UPDATE
+grant  question_engine_answers  anon  DELETE
+grant  question_engine_answers  anon  INSERT
+grant  question_engine_answers  anon  REFERENCES
+grant  question_engine_answers  anon  SELECT
+grant  question_engine_answers  anon  TRIGGER
+grant  question_engine_answers  anon  TRUNCATE
+grant  question_engine_answers  anon  UPDATE
+grant  question_engine_answers  authenticated  DELETE
+grant  question_engine_answers  authenticated  INSERT
+grant  question_engine_answers  authenticated  REFERENCES
+grant  question_engine_answers  authenticated  SELECT
+grant  question_engine_answers  authenticated  TRIGGER
+grant  question_engine_answers  authenticated  TRUNCATE
+grant  question_engine_answers  authenticated  UPDATE
+grant  questions  anon  DELETE
+grant  questions  anon  INSERT
+grant  questions  anon  REFERENCES
+grant  questions  anon  SELECT
+grant  questions  anon  TRIGGER
+grant  questions  anon  TRUNCATE
+grant  questions  anon  UPDATE
+grant  questions  authenticated  DELETE
+grant  questions  authenticated  INSERT
+grant  questions  authenticated  REFERENCES
+grant  questions  authenticated  SELECT
+grant  questions  authenticated  TRIGGER
+grant  questions  authenticated  TRUNCATE
+grant  questions  authenticated  UPDATE
+grant  saved_games  anon  DELETE
+grant  saved_games  anon  INSERT
+grant  saved_games  anon  REFERENCES
+grant  saved_games  anon  SELECT
+grant  saved_games  anon  TRIGGER
+grant  saved_games  anon  TRUNCATE
+grant  saved_games  anon  UPDATE
+grant  saved_games  authenticated  DELETE
+grant  saved_games  authenticated  INSERT
+grant  saved_games  authenticated  REFERENCES
+grant  saved_games  authenticated  SELECT
+grant  saved_games  authenticated  TRIGGER
+grant  saved_games  authenticated  TRUNCATE
+grant  saved_games  authenticated  UPDATE
+grant  solicitudes_academia  anon  DELETE
+grant  solicitudes_academia  anon  INSERT
+grant  solicitudes_academia  anon  REFERENCES
+grant  solicitudes_academia  anon  SELECT
+grant  solicitudes_academia  anon  TRIGGER
+grant  solicitudes_academia  anon  TRUNCATE
+grant  solicitudes_academia  anon  UPDATE
+grant  solicitudes_academia  authenticated  DELETE
+grant  solicitudes_academia  authenticated  INSERT
+grant  solicitudes_academia  authenticated  REFERENCES
+grant  solicitudes_academia  authenticated  SELECT
+grant  solicitudes_academia  authenticated  TRIGGER
+grant  solicitudes_academia  authenticated  TRUNCATE
+grant  solicitudes_academia  authenticated  UPDATE
+grant  subgrupo_alumnos  authenticated  DELETE
+grant  subgrupo_alumnos  authenticated  INSERT
+grant  subgrupo_alumnos  authenticated  REFERENCES
+grant  subgrupo_alumnos  authenticated  SELECT
+grant  subgrupo_alumnos  authenticated  TRIGGER
+grant  subgrupo_alumnos  authenticated  TRUNCATE
+grant  subgrupo_alumnos  authenticated  UPDATE
+grant  subgrupos  authenticated  DELETE
+grant  subgrupos  authenticated  INSERT
+grant  subgrupos  authenticated  REFERENCES
+grant  subgrupos  authenticated  SELECT
+grant  subgrupos  authenticated  TRIGGER
+grant  subgrupos  authenticated  TRUNCATE
+grant  subgrupos  authenticated  UPDATE
+grant  suscripciones  authenticated  DELETE
+grant  suscripciones  authenticated  INSERT
+grant  suscripciones  authenticated  REFERENCES
+grant  suscripciones  authenticated  SELECT
+grant  suscripciones  authenticated  TRIGGER
+grant  suscripciones  authenticated  TRUNCATE
+grant  suscripciones  authenticated  UPDATE
+grant  tarea_items  anon  DELETE
+grant  tarea_items  anon  INSERT
+grant  tarea_items  anon  REFERENCES
+grant  tarea_items  anon  SELECT
+grant  tarea_items  anon  TRIGGER
+grant  tarea_items  anon  TRUNCATE
+grant  tarea_items  anon  UPDATE
+grant  tarea_items  authenticated  DELETE
+grant  tarea_items  authenticated  INSERT
+grant  tarea_items  authenticated  REFERENCES
+grant  tarea_items  authenticated  SELECT
+grant  tarea_items  authenticated  TRIGGER
+grant  tarea_items  authenticated  TRUNCATE
+grant  tarea_items  authenticated  UPDATE
+grant  tareas  anon  DELETE
+grant  tareas  anon  INSERT
+grant  tareas  anon  REFERENCES
+grant  tareas  anon  SELECT
+grant  tareas  anon  TRIGGER
+grant  tareas  anon  TRUNCATE
+grant  tareas  anon  UPDATE
+grant  tareas  authenticated  DELETE
+grant  tareas  authenticated  INSERT
+grant  tareas  authenticated  REFERENCES
+grant  tareas  authenticated  SELECT
+grant  tareas  authenticated  TRIGGER
+grant  tareas  authenticated  TRUNCATE
+grant  tareas  authenticated  UPDATE
+grant  tournament_pairings  anon  DELETE
+grant  tournament_pairings  anon  INSERT
+grant  tournament_pairings  anon  REFERENCES
+grant  tournament_pairings  anon  SELECT
+grant  tournament_pairings  anon  TRIGGER
+grant  tournament_pairings  anon  TRUNCATE
+grant  tournament_pairings  anon  UPDATE
+grant  tournament_pairings  authenticated  DELETE
+grant  tournament_pairings  authenticated  INSERT
+grant  tournament_pairings  authenticated  REFERENCES
+grant  tournament_pairings  authenticated  SELECT
+grant  tournament_pairings  authenticated  TRIGGER
+grant  tournament_pairings  authenticated  TRUNCATE
+grant  tournament_pairings  authenticated  UPDATE
+grant  tournament_registrations  anon  DELETE
+grant  tournament_registrations  anon  INSERT
+grant  tournament_registrations  anon  REFERENCES
+grant  tournament_registrations  anon  SELECT
+grant  tournament_registrations  anon  TRIGGER
+grant  tournament_registrations  anon  TRUNCATE
+grant  tournament_registrations  anon  UPDATE
+grant  tournament_registrations  authenticated  DELETE
+grant  tournament_registrations  authenticated  INSERT
+grant  tournament_registrations  authenticated  REFERENCES
+grant  tournament_registrations  authenticated  SELECT
+grant  tournament_registrations  authenticated  TRIGGER
+grant  tournament_registrations  authenticated  TRUNCATE
+grant  tournament_registrations  authenticated  UPDATE
+grant  tournament_rounds  anon  DELETE
+grant  tournament_rounds  anon  INSERT
+grant  tournament_rounds  anon  REFERENCES
+grant  tournament_rounds  anon  SELECT
+grant  tournament_rounds  anon  TRIGGER
+grant  tournament_rounds  anon  TRUNCATE
+grant  tournament_rounds  anon  UPDATE
+grant  tournament_rounds  authenticated  DELETE
+grant  tournament_rounds  authenticated  INSERT
+grant  tournament_rounds  authenticated  REFERENCES
+grant  tournament_rounds  authenticated  SELECT
+grant  tournament_rounds  authenticated  TRIGGER
+grant  tournament_rounds  authenticated  TRUNCATE
+grant  tournament_rounds  authenticated  UPDATE
+grant  tournaments  anon  DELETE
+grant  tournaments  anon  INSERT
+grant  tournaments  anon  REFERENCES
+grant  tournaments  anon  SELECT
+grant  tournaments  anon  TRIGGER
+grant  tournaments  anon  TRUNCATE
+grant  tournaments  anon  UPDATE
+grant  tournaments  authenticated  DELETE
+grant  tournaments  authenticated  INSERT
+grant  tournaments  authenticated  REFERENCES
+grant  tournaments  authenticated  SELECT
+grant  tournaments  authenticated  TRIGGER
+grant  tournaments  authenticated  TRUNCATE
+grant  tournaments  authenticated  UPDATE
+grant  training_plans  anon  DELETE
+grant  training_plans  anon  INSERT
+grant  training_plans  anon  REFERENCES
+grant  training_plans  anon  SELECT
+grant  training_plans  anon  TRIGGER
+grant  training_plans  anon  TRUNCATE
+grant  training_plans  anon  UPDATE
+grant  training_plans  authenticated  DELETE
+grant  training_plans  authenticated  INSERT
+grant  training_plans  authenticated  REFERENCES
+grant  training_plans  authenticated  SELECT
+grant  training_plans  authenticated  TRIGGER
+grant  training_plans  authenticated  TRUNCATE
+grant  training_plans  authenticated  UPDATE
+grant  training_progress  anon  DELETE
+grant  training_progress  anon  INSERT
+grant  training_progress  anon  REFERENCES
+grant  training_progress  anon  SELECT
+grant  training_progress  anon  TRIGGER
+grant  training_progress  anon  TRUNCATE
+grant  training_progress  anon  UPDATE
+grant  training_progress  authenticated  DELETE
+grant  training_progress  authenticated  INSERT
+grant  training_progress  authenticated  REFERENCES
+grant  training_progress  authenticated  SELECT
+grant  training_progress  authenticated  TRIGGER
+grant  training_progress  authenticated  TRUNCATE
+grant  training_progress  authenticated  UPDATE
+grant  training_state  anon  DELETE
+grant  training_state  anon  INSERT
+grant  training_state  anon  REFERENCES
+grant  training_state  anon  SELECT
+grant  training_state  anon  TRIGGER
+grant  training_state  anon  TRUNCATE
+grant  training_state  anon  UPDATE
+grant  training_state  authenticated  DELETE
+grant  training_state  authenticated  INSERT
+grant  training_state  authenticated  REFERENCES
+grant  training_state  authenticated  SELECT
+grant  training_state  authenticated  TRIGGER
+grant  training_state  authenticated  TRUNCATE
+grant  training_state  authenticated  UPDATE
+grant  tv_settings  anon  DELETE
+grant  tv_settings  anon  INSERT
+grant  tv_settings  anon  REFERENCES
+grant  tv_settings  anon  SELECT
+grant  tv_settings  anon  TRIGGER
+grant  tv_settings  anon  TRUNCATE
+grant  tv_settings  anon  UPDATE
+grant  tv_settings  authenticated  DELETE
+grant  tv_settings  authenticated  INSERT
+grant  tv_settings  authenticated  REFERENCES
+grant  tv_settings  authenticated  SELECT
+grant  tv_settings  authenticated  TRIGGER
+grant  tv_settings  authenticated  TRUNCATE
+grant  tv_settings  authenticated  UPDATE
+grant  variant_nodes  anon  DELETE
+grant  variant_nodes  anon  INSERT
+grant  variant_nodes  anon  REFERENCES
+grant  variant_nodes  anon  SELECT
+grant  variant_nodes  anon  TRIGGER
+grant  variant_nodes  anon  TRUNCATE
+grant  variant_nodes  anon  UPDATE
+grant  variant_nodes  authenticated  DELETE
+grant  variant_nodes  authenticated  INSERT
+grant  variant_nodes  authenticated  REFERENCES
+grant  variant_nodes  authenticated  SELECT
+grant  variant_nodes  authenticated  TRIGGER
+grant  variant_nodes  authenticated  TRUNCATE
+grant  variant_nodes  authenticated  UPDATE

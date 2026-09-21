@@ -26,6 +26,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/equipo-volcar.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -129,7 +130,7 @@
                     <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
                 </summary>
                 <div class="mt-4">
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope. <strong>Coordina</strong> le suma, encima de todo lo de profesor, armar formularios de inscripción a torneos para sus equipos.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope. <strong>Coordina</strong> le suma, encima de todo lo de profesor, los formularios de inscripción, los cobros y el panel de Coordinación. <strong>Sobre quién</strong> lo decides tú en la última columna: quien coordina alcanza a los profesores que le pongas ahí y a los alumnos de esos profesores, no a toda la Academia.</p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -137,6 +138,7 @@
                                 <th class="py-2 pr-3 font-semibold">Profesor</th>
                                 <th class="py-2 pr-3 font-semibold text-right">Alumnos</th>
                                 <th class="py-2 pr-3 font-semibold">Coordina</th>
+                                <th class="py-2 pr-3 font-semibold">Coordina a estos profesores</th>
                                 <th class="py-2 pr-3 font-semibold">Cupo de invitaciones</th>
                                 <th class="py-2 pr-3 font-semibold">Usadas</th>
                                 <th class="py-2 font-semibold text-right">Acciones</th>
@@ -368,6 +370,13 @@
         // Todas las cuentas cargadas la última vez (para poder reagrupar sin
         // volver a pedirlas a la base de datos cada vez que cambia el select).
         let allUsers = [];
+        /* Quién coordina a quién. Se lee directo por PostgREST, como los
+           equipos: la tabla tiene política de SELECT y escribirla es cosa de
+           set_profesores_del_coordinador(), que exige is_admin. Va declarada
+           acá arriba y no junto a su tabla: renderProfesores() la usa, y un
+           `let` más abajo no existe hasta que se evalúa su línea — el mismo
+           "Cannot access before initialization" que dejó a 4x4.html colgada. */
+        let coordinadosPor = new Map();   // coordinador_id -> [profesor_id…]
 
         function teacherLabel(u) {
             return u.full_name || u.email;
@@ -1111,6 +1120,34 @@
                 tdCoord.appendChild(coord);
                 tr.appendChild(tdCoord);
 
+                /* A QUIÉN COORDINA. Esto es lo que le da alcance: sin ningún
+                   profesor puesto, quien coordina solo ve a sus propios
+                   alumnos —y no tiene forma de saber por qué, salvo por la
+                   franja que se lo dice en su panel—. Se manda la lista
+                   COMPLETA, como set_teachers y equipo_set_alumnos: lo que no
+                   esté, se quita. */
+                const tdCoordA = document.createElement("td");
+                tdCoordA.className = "py-2 pr-3";
+                if (p.es_coordinador) {
+                    const puestos = coordinadosPor.get(p.id) || [];
+                    const otros = profes.filter((x) => x.id !== p.id);
+                    tdCoordA.appendChild(renderEquipoTags(puestos, otros, async (lista) => {
+                        const { error } = await sb.rpc("set_profesores_del_coordinador",
+                                                       { p_coordinador: p.id, p_profesores: lista });
+                        if (error) { alert("No se pudo guardar: " + error.message); return; }
+                        coordinadosPor.set(p.id, lista);
+                        renderProfesores();
+                    }, "la coordinación de " + teacherLabel(p)));
+                } else {
+                    const sin = document.createElement("span");
+                    sin.className = "text-xs text-brand-450 dark:text-brand-350";
+                    // Sin la marca, la columna no tendría sentido: se dice en
+                    // vez de dejar un selector que no va a servir de nada.
+                    sin.textContent = "—";
+                    tdCoordA.appendChild(sin);
+                }
+                tr.appendChild(tdCoordA);
+
                 const tdCupo = document.createElement("td");
                 tdCupo.className = "py-2 pr-3";
                 if (p.is_admin) {
@@ -1227,6 +1264,8 @@
         let allEquipos = [];                       // [{id, nombre}…]
         let alumnosPorEquipo = new Map();           // id de equipo -> [id de alumno…]
         let entrenadoresPorEquipo = new Map();      // id de equipo -> [id de entrenador…]
+        let subgruposAlaVista = [];                 // [{id, nombre, profesor, alumnos:[…]}…]
+        let avisoDelLote = new Map();               // id de equipo -> qué pasó al volcar
 
         // Misma idea que renderProfesoresCelda (una etiqueta por cuenta, con su
         // ✕ para quitarla, y un selector al final para sumar otra) pero para
@@ -1360,6 +1399,29 @@
                     `los alumnos de ${eq.nombre}`,
                 ));
 
+                /* Y el lote, que es lo que hace que armar un equipo no sea una
+                   tarde: "todo 7° B" o "los del martes" de una vez. Suma a lo
+                   que ya hay — nunca reemplaza. */
+                filaAlumnos.appendChild(EquipoVolcar.montar({
+                    nombre: eq.nombre,
+                    yaEstan: alumnosPorEquipo.get(eq.id) || [],
+                    alumnos: alumnos.map((u) => ({ id: u.id, grupo: u.grupo })),
+                    subgrupos: subgruposAlaVista,
+                    tope: 300,
+                    mensaje: avisoDelLote.get(eq.id),
+                    guardar: async (lista, dicho) => {
+                        await callAdmin("equipo_set_alumnos", { equipo_id: eq.id, alumno_ids: lista });
+                        alumnosPorEquipo.set(eq.id, lista);
+                        avisoDelLote.set(eq.id, dicho);
+                        // La tarjeta se vuelve a pintar entera, como al quitar
+                        // una etiqueta: así no hay que acordarse de actualizar
+                        // el selector de "sumar otro" con los que acaban de
+                        // entrar, que es el descuido que dejaría a un alumno
+                        // ofrecido dos veces.
+                        renderEquipos();
+                    },
+                }));
+
                 card.append(encabezado, filaEntrenadores, filaAlumnos);
                 caja.appendChild(card);
             });
@@ -1371,6 +1433,22 @@
                 equipos = await traerTodo(() => sb.from("equipos").select("id, nombre").order("nombre", { ascending: true }));
                 filasAlumnos = await traerTodo(() => sb.from("equipo_alumnos").select("equipo_id, alumno_id"));
                 filasEntrenadores = await traerTodo(() => sb.from("equipo_entrenadores").select("equipo_id, teacher_id"));
+                const filasCoord = await traerTodo(() => sb.from("coordinador_profesores").select("coordinador_id, profesor_id"));
+                /* Los subgrupos, para poder volcar uno entero dentro de un
+                   equipo. Salen de subgrupos_a_la_vista(), que es SECURITY
+                   INVOKER: quién ve los de quién lo sigue decidiendo la RLS.
+                   Si fallan, los equipos se siguen pudiendo armar a mano —
+                   quedarse sin la tarjeta entera por esto sería peor. */
+                try {
+                    const { data: subs } = await sb.rpc("subgrupos_a_la_vista");
+                    subgruposAlaVista = subs || [];
+                } catch (_) { subgruposAlaVista = []; }
+                coordinadosPor = new Map();
+                (filasCoord || []).forEach((r) => {
+                    if (!coordinadosPor.has(r.coordinador_id)) coordinadosPor.set(r.coordinador_id, []);
+                    coordinadosPor.get(r.coordinador_id).push(r.profesor_id);
+                });
+                renderProfesores();
             } catch (err) {
                 document.getElementById("equipos-lista").innerHTML = '<p class="text-xs text-red-600 dark:text-red-400">No se pudieron cargar los equipos: ' + escapeHtml(err.message || err) + '</p>';
                 return;

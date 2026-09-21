@@ -271,7 +271,7 @@
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-alumnos">—</div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">👥 Tus alumnos</div>
                     </a>
-                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <a href="informes.html?tema=inactivos" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold" id="profe-inactivos">—</div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">😴 Sin entrenar (7 días)</div>
                     </a>
@@ -371,8 +371,8 @@
 
                El rótulo NO repite los nombres de las dos tarjetas: dice lo que
                las dos tienen en común y que no se deduce de ellas —que te las
-               pone alguien más y traen fecha—, que es lo que las separa de
-               "Mide tu nivel", ahí abajo, que uno hace cuando le parece. Por
+               pone alguien más y traen fecha—, que es lo que las separa de un
+               diagnóstico, que uno hace cuando le parece. Por
                eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
                del otro lado del escritorio la misma pareja es lo que MANDAS. */
             { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
@@ -408,14 +408,14 @@
                parece. El rótulo lo dice en dos palabras y sin repetir el
                nombre de sus dos tarjetas, que ya se llaman "Diagnóstico".
 
-               Los DOS diagnósticos son para todo el mundo: cualquiera puede medir
-               su nivel de arbitraje, no solo quien da clase. Lo que cambia según
-               quién mira es a dónde lleva la tarjeta, y lo decide init(): el
-               equipo docente va a arbitraje.html, que además trae la revisión de
-               los exámenes del público y el detalle pregunta por pregunta; todos
-               los demás van a nivel-de-arbitraje.html, que es el mismo examen y
-               el mismo criterio pero SIN enseñar las respuestas al terminar (el
-               banco es material docente). Una sola tarjeta y no dos, para no
+               ESTE GRUPO ES SOLO DE ADMINISTRACIÓN, y lo quita del panel
+               diagnosticosSoloParaAdministracion() para todos los demás — ver
+               ahí por qué. Se queda escrito acá, con las dos tarjetas
+               completas, porque quitarlo de la lista dejaría el grupo definido
+               en el `if` de un rol y el panel volvería a repartirse a pedazos.
+               El destino del arbitraje lo reapunta init(): administración va a
+               arbitraje.html, con la revisión de los exámenes del público y el
+               detalle pregunta por pregunta. Una sola tarjeta y no dos, para no
                repetir el nombre en el panel — ya pasó una vez con "Torneos". */
             { title: "Mide tu nivel", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
@@ -444,6 +444,29 @@
            acá, en vez de repetir el `||` y que a la cuarta se le olvide la
            mitad. */
         function esEquipoDocente() { return isTeacher || profile.is_admin; }
+
+        /* Los dos diagnósticos son SOLO de administración.
+
+           Estaban para todo el mundo, y eso era regalar las dos pruebas con
+           las que el sitio ubica el nivel de alguien: el banco de las 301
+           preguntas y el de las 200 de reglamento son archivos estáticos, así
+           que cuanta más gente las resuelve por su cuenta, menos miden. El
+           diagnóstico se aplica, no se practica — quien lo necesita lo recibe
+           de quien le da clase, y el de nivel sigue abierto al público sin
+           cuenta en entreno/diagnostico.html, que es una puerta de entrada al
+           sitio y otra cosa.
+
+           Se quita el GRUPO entero, no sus dos tarjetas: un encabezado sin
+           nada debajo es la misma sección muerta que ya se quitó de
+           "Herramientas" para el alumnado. Va sobre la lista ya armada y en un
+           solo lugar, como apagarEnMantenimiento(), y DESPUÉS de que init()
+           le reapunte el destino al arbitraje: así quien administra lo
+           conserva con el suyo. */
+        function diagnosticosSoloParaAdministracion() {
+            if (profile.is_admin) return;
+            const i = TILE_GROUPS.findIndex((g) => g.title === "Mide tu nivel");
+            if (i >= 0) TILE_GROUPS.splice(i, 1);
+        }
 
         function apagarEnMantenimiento() {
             if (esEquipoDocente()) return;
@@ -669,9 +692,9 @@
 
         // La racha de días la cuenta la base (public.progreso_dias_y_racha, ver
         // js/logros.js): acá solo se pone el número en su lugar.
-        async function loadRachaWidget() {
+        async function loadRachaWidget(rachaP) {
             const el = document.getElementById("progreso-racha");
-            const { stats, error } = await window.Logros.cargar();
+            const { stats, error } = await rachaP;
             if (error || !stats) { el.textContent = "—"; return; }
             el.textContent = String(stats.racha_actual || 0);
         }
@@ -709,7 +732,7 @@
             return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
         }
 
-        async function cargarPendientes() {
+        async function cargarPendientes(rachaP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
                 sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
@@ -733,7 +756,11 @@
             // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
             // pendientes" le ofrecería algo que no va a poder abrir.
             const hacibles = tareas.length + porHacer.length + corriendo.length;
-            if (!hacibles && !perdidos.length && !congelados.length) return;   // nada que decir: la franja no se destapa
+            /* Sin nada que vence, la franja NO se queda vacía: la ocupa el
+               siguiente paso de quien todavía no arrancó (ver abajo). Lo que
+               vence manda siempre —una fecha le gana a una sugerencia—, así que
+               el primer paso solo llega hasta acá. */
+            if (!hacibles && !perdidos.length && !congelados.length) return mostrarPrimerPaso(rachaP);
 
             /* EL ORDEN DE LAS REGLAS IMPORTA Y ESTÁ ESCRITO, como el del informe
                a la casa: el texto se queda con UNA cosa, la que pide actuar
@@ -797,11 +824,29 @@
                 }
             }
 
+            pintarFranja({
+                titulo: tituloPendientes(tareas.length, porHacer.length + corriendo.length),
+                texto: msg, destino, cta, icono, urgente,
+            });
+        }
+
+        /* La franja se pinta en UN solo lugar porque la usan dos cosas: lo que
+           vence (arriba) y el primer paso de quien todavía no tiene nada (abajo).
+           Con dos pintados, el que se olvidara de quitar el rojo dejaría una
+           sugerencia con pinta de entrega vencida — y no daría ningún error. */
+        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente }) {
             const caja = document.getElementById("pendientes-aviso");
             const titulo = document.getElementById("pendientes-aviso-titulo");
             const texto = document.getElementById("pendientes-aviso-texto");
 
-            caja.href = destino;
+            /* Hay un caso en que la franja NO lleva a ninguna parte: a un
+               profesor sin alumnos no hay página que ofrecerle —asignárselos es
+               cosa de quien administra—. Se le quita el href de verdad y no se
+               deja uno que no haga nada: un <a> sin href no recibe el foco ni
+               se anuncia como enlace, y un enlace que no lleva a ningún lado es
+               peor que ninguno. */
+            if (destino) caja.href = destino;
+            else caja.removeAttribute("href");
             caja.className = "mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                 + (urgente
                     ? "bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500"
@@ -810,13 +855,184 @@
             titulo.className = "font-serif text-lg font-bold " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-800 dark:text-white");
             texto.className = "text-sm " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-500 dark:text-brand-300");
             const cajaCta = document.getElementById("pendientes-aviso-cta");
-            cajaCta.textContent = cta;
+            cajaCta.textContent = cta || "";
+            cajaCta.hidden = !cta;
             cajaCta.className = "text-sm font-semibold whitespace-nowrap "
                 + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
 
-            titulo.textContent = tituloPendientes(tareas.length, porHacer.length + corriendo.length);
+            titulo.textContent = tit;
             texto.textContent = msg;
             caja.hidden = false;
+        }
+
+        /* ---------- Por dónde empezar: el siguiente paso ----------
+           Un alumno recién invitado abre esto, no tiene ninguna tarea ni ningún
+           examen —nadie se los puso todavía— y se encuentra un directorio de
+           veintitantos lugares sin ninguna pista de por cuál empezar. En los
+           datos se ve exactamente así: de los que entraron alguna vez, buena
+           parte no ha resuelto ni un ejercicio.
+
+           No es UN primer paso, es EL SIGUIENTE, y son tres peldaños que se
+           calculan de lo que ya hay. El panel pinta el primero que no esté
+           cumplido y se apaga solo: al resolver el primer ejercicio, el peldaño
+           deja de cumplirse. No hay nada que marcar ni ningún "ya lo vi" en
+           localStorage que se pueda quedar desincronizado.
+
+           Y NO se pinta "no tienes nada que hacer" cuando ya arrancó: un cartel
+           que se repite deja de leerse, la misma lección del aviso de instalar
+           la app. */
+        async function mostrarPrimerPaso(rachaP) {
+            let stats;
+            try {
+                const r = await rachaP;
+                if (!r || r.error) return;   // no se pudo leer: callar es mejor que adivinar
+                stats = r.stats || {};
+            } catch (e) { return; }
+
+            /* El diagnóstico TAMBIÉN es una fila de training_progress, así que
+               "no ha hecho un solo ejercicio" no es `total_ejercicios === 0`:
+               hay que descontarlo. Sin eso, a quien acaba de rendir el
+               diagnóstico el panel lo daría por arrancado y no le diría nunca
+               qué hacer con el resultado — que es justo el caso que más
+               abunda. */
+            const porActividad = stats.por_actividad || {};
+            const ejercicios = Object.keys(porActividad)
+                .filter((a) => a !== "diagnostico")
+                .reduce((n, a) => n + (porActividad[a] || 0), 0);
+            if (ejercicios > 0) return;   // ya arrancó: acá no hay nada que guiar
+
+            const { data, error } = await sb.rpc("informes_diagnosticos_alumnos");
+            if (error) return;
+            // SECURITY INVOKER: a un alumno la RLS le devuelve solo su renglón,
+            // pero se busca el suyo igual — es la misma precaución que en
+            // loadEntrenoProgress().
+            const mio = (data || []).find((f) => f.student_id === profile.id) || null;
+
+            // 1. Ya lo rindió: lo que falta es qué hacer con el resultado.
+            if (mio && mio.detalle) {
+                const paso = await areaParaEmpezar(mio.detalle);
+                if (paso) {
+                    pintarFranja({
+                        titulo: "Por dónde empezar",
+                        texto: `Tu diagnóstico señala un hueco en ${paso.area.nombre.toLowerCase()}`
+                             + ` (${paso.area.porcentaje}%). Empieza por ahí.`,
+                        // El botón dice A DÓNDE VA y no "Ir a X": con los
+                        // nombres del plan puestos ("Ejercicios de final de
+                        // peones") el verbo delante no se lee.
+                        destino: paso.href, cta: `${paso.label} →`,
+                        icono: paso.emoji, urgente: false,
+                    });
+                } else {
+                    // Diagnóstico sin ningún hueco marcado: no se le inventa uno.
+                    pintarFranja({
+                        titulo: "Por dónde empezar",
+                        texto: "Ya sabes en qué nivel estás. Lo que falta es entrenar: escoge lo que quieras y empieza.",
+                        destino: "entreno/index.html", cta: "Ir a Entrenamiento →",
+                        icono: "🎯", urgente: false,
+                    });
+                }
+                return;
+            }
+
+            // 2. Lo empezó y lo dejó. NO se le promete que se retoma donde iba:
+            //    una prueba de una versión anterior se descarta a propósito (ver
+            //    VERSION en entreno/diagnostico.html), así que prometerlo sería
+            //    mentir justo a quien vuelve confiando en eso.
+            if (mio && mio.a_medias_pregunta) {
+                pintarFranja({
+                    titulo: "Tienes el diagnóstico a medias",
+                    texto: `Lo dejaste en la pregunta ${mio.a_medias_pregunta}. Terminarlo es lo que le dice a tu profe qué ponerte.`,
+                    destino: "entreno/diagnostico.html", cta: "Seguir el diagnóstico →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 3. No lo empezó nunca: es lo primero que conviene hacer.
+            pintarFranja({
+                titulo: "Empieza por acá",
+                texto: "El diagnóstico dice en qué estás bien y en qué no, y con eso tu profe sabe qué ponerte. No hay que estudiar nada antes.",
+                destino: "entreno/diagnostico.html", cta: "Hacer el diagnóstico →",
+                icono: "🧭", urgente: false,
+            });
+        }
+
+        /* Qué área se le ofrece, y a dónde se le manda.
+
+           Las dos cosas salen de donde ya viven y no se escriben otra vez: las
+           áreas flojas las calcula `PlanEntrenamiento.resumir()` —la misma que
+           pinta Informes y el resultado del diagnóstico— y a dónde va cada área
+           está en su propio `recursos`, que ya estaba escrito y hasta ahora no
+           lo leía el panel.
+
+           Dos decisiones que no son de estilo:
+
+           - EL DESTINO TIENE QUE SER UNA PÁGINA CUYO TRABAJO CUENTE, o sea una
+             que ofrezca la meta `cantidad` en el catálogo de Tareas — que es lo
+             mismo que decir "escribe en training_progress". Cinco de las nueve
+             áreas tienen como primer recurso la PORTADA de un curso, que es un
+             temario: mandarlo ahí lo deja leyendo un índice, y mañana el panel
+             le diría exactamente lo mismo porque el peldaño no se apagaría
+             nunca. Eso no da ningún error y no lo ve nadie.
+           - POR ESO EL TEXTO NO DICE "LO MÁS FLOJO". Se ofrece la más floja de
+             las que tienen dónde practicar, que no siempre es la peor de todas;
+             "señala un hueco en X" es cierto para cualquiera por debajo del
+             60%, y el superlativo sería mentira. */
+        async function areaParaEmpezar(detalle) {
+            try {
+                await Promise.all([
+                    traerScript("js/plan-entrenamiento.js"),
+                    traerScript("js/material-plataforma.js"),
+                ]);
+            } catch (e) { return null; }
+            const PE = window.PlanEntrenamiento, MP = window.MaterialPlataforma;
+            if (!PE || !MP) return null;
+
+            let resumen;
+            try { resumen = PE.resumir(detalle || {}); } catch (e) { return null; }
+            const flojas = (resumen.porArea || [])
+                .filter((a) => a.porcentaje < 60)
+                .sort((a, b) => a.porcentaje - b.porcentaje);
+
+            for (const area of flojas) {
+                const ficha = PE.AREA_POR_ID[area.id];
+                if (!ficha) continue;
+                for (const r of ficha.recursos || []) {
+                    /* Se compara la PÁGINA, no la dirección entera: los recursos
+                       del plan llevan su recorte puesto
+                       (`entreno/temas.html?tema=pin`) y el catálogo de Tareas
+                       guarda la página pelada. Comparando la dirección completa
+                       no coincidiría ni uno solo y el paso caería siempre al
+                       genérico, sin que nada fallara. */
+                    const pagina = r.href.split("?")[0];
+                    const h = (MP.HERRAMIENTAS || []).find(
+                        (t) => t.href === pagina && (t.metas || []).includes("cantidad"));
+                    /* Y se manda la dirección CON el recorte: es lo que separa
+                       "haz ejercicios de clavada" de "ahí tienes ochenta temas,
+                       busca". La misma decisión que el enlace de una tarea. */
+                    if (h) return { area, href: r.href, label: r.texto, emoji: ficha.emoji };
+                }
+            }
+            return null;
+        }
+
+        /* Los dos archivos de arriba se bajan CUANDO hacen falta y no en cada
+           carga del panel: son 39 KB que solo usa quien ya tiene un diagnóstico
+           rendido, y por acá entra todo el mundo —incluidos los que todavía no
+           lo hicieron, que son justamente los que más van a ver esta franja—.
+           Mismo criterio que el libro de aperturas del bot. */
+        const scriptsPedidos = {};
+        function traerScript(src) {
+            if (!scriptsPedidos[src]) {
+                scriptsPedidos[src] = new Promise((listo, falla) => {
+                    const s = document.createElement("script");
+                    s.src = src;
+                    s.onload = listo;
+                    s.onerror = () => falla(new Error("No se pudo cargar " + src));
+                    document.head.appendChild(s);
+                });
+            }
+            return scriptsPedidos[src];
         }
 
         /* "Tienes 3 tareas y 1 examen pendientes". Con una sola clase de cosa se
@@ -898,6 +1114,129 @@
             document.getElementById("profe-clases").textContent = clases === 1
                 ? "Llevas 1 clase dada en los últimos 30 días."
                 : `Llevas ${clases} clases dadas en los últimos 30 días.`;
+
+            primerPasoDelProfesor(fila);
+        }
+
+        /* ---------- Por dónde empezar, del lado del que da clase ----------
+
+           Es el mismo problema que el del alumno y la misma solución, con los
+           peldaños del otro lado del escritorio: un entrenador nuevo abre esto,
+           ve cuatro números en cero y un directorio de accesos, y no hay nada
+           que le diga cuál es el siguiente paso. En los datos se ve igual — el
+           profesor con más alumnos lleva decenas de entradas y ni una tarea, ni
+           una clase, ni un plan.
+
+           Son peldaños que se calculan de lo que ya hay y se apagan solos: al
+           mandar la primera tarea, ese peldaño deja de cumplirse. No hay nada
+           que marcar ni ningún "ya lo vi" en localStorage que se pueda quedar
+           desincronizado.
+
+           El ORDEN es el del trabajo, y por eso se dice UNA sola cosa —la que
+           toca antes—: sin alumnos no hay nada que hacer; sin diagnóstico no
+           hay plan que armar; un plan sin compartir no lo ve ni el alumno ni su
+           casa, o sea que cuenta como que no existe; y recién entonces la
+           tarea y la clase. Con todo al día no se dice nada: un cartel que se
+           repite deja de leerse, la misma lección del aviso de instalar la app.
+
+           Va en la MISMA franja que lo del alumno (#pendientes-aviso) y no en
+           una nueva: contesta la misma pregunta —"¿qué hago ahora?"— y dos
+           franjas peleando por el primer lugar es el problema que este panel ya
+           tuvo con "Estado de la clase". */
+        function primerPasoDelProfesor(fila) {
+            const alumnos = fila.alumnos || 0;
+            const conDiagnostico = fila.con_diagnostico || 0;
+            const conPlan = fila.con_plan || 0;
+
+            // 1. Sin alumnos asignados no funciona NADA de lo suyo, y hoy eso
+            //    se ve como cuatro ceros sin explicación: Informes vacío,
+            //    Tareas sin a quién mandarle y un subgrupo que no se puede
+            //    llenar (su insert exige soy_profesor_de()). Parece roto y no
+            //    lo está.
+            if (!alumnos) {
+                const suyo = profile.is_admin;
+                pintarFranja({
+                    titulo: "Todavía no tienes alumnos",
+                    texto: "Mientras no te asignen ninguno, Informes, Tareas y los subgrupos te van a salir vacíos — no es que estén rotos."
+                         + (suyo ? " Se asignan en el panel de Administración."
+                                 : " Quien administra la Academia te los asigna desde el panel de Administración."),
+                    // A un profesor no se le ofrece una página que la base le va
+                    // a negar: asignar alumnos es de quien administra.
+                    destino: suyo ? "admin.html" : null,
+                    cta: suyo ? "Asignar alumnos →" : null,
+                    icono: "👥", urgente: false,
+                });
+                return;
+            }
+
+            // 2. Sin diagnóstico no hay plan que armar, ni qué ponerles, ni qué
+            //    contarle a la casa: es el primer cuello de verdad.
+            if (!conDiagnostico) {
+                pintarFranja({
+                    titulo: "Empieza por el diagnóstico",
+                    texto: `Ninguno de tus ${alumnos} alumnos lo ha hecho todavía. De ahí sale solo el plan de entrenamiento de cada uno`
+                         + " — sin eso no hay qué ponerles ni qué contarle a la casa.",
+                    destino: "tareas.html", cta: "Mandarlo como tarea →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 3. El plan se genera solo desde el diagnóstico, pero sin
+            //    compartir no lo ve ni el alumno ni su casa. Estuvo en CERO
+            //    desde que la tabla existe, y nada avisaba.
+            if (conPlan < conDiagnostico) {
+                const faltan = conDiagnostico - conPlan;
+                pintarFranja({
+                    titulo: "Hay planes sin compartir",
+                    texto: `${conPlan} de los ${conDiagnostico} que hicieron el diagnóstico tienen su plan compartido.`
+                         + ` A ${faltan === 1 ? "el otro no lo ve" : `los otros ${faltan} no los ven`} ni ellos ni su casa —`
+                         + " el plan sale solo del diagnóstico y se comparte en Informes, todos de una vez.",
+                    destino: "informes.html", cta: "Compartir los planes →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 4. Se mira `tareas_puestas` y no las pendientes: con todas hechas
+            //    las pendientes son cero igual que si no hubiera puesto
+            //    ninguna, y son dos situaciones muy distintas.
+            if (!(fila.tareas_puestas || 0)) {
+                pintarFranja({
+                    titulo: "Ponles la primera tarea",
+                    texto: "Una tarea se llena sola con lo que entrenan —«20 ejercicios de ataque doble» va subiendo sin que nadie marque nada—"
+                         + " y al asignarla le llega el aviso al celular.",
+                    destino: "tareas.html", cta: "Armar una tarea →",
+                    icono: "📋", urgente: false,
+                });
+                return;
+            }
+
+            // 5. `clases_dadas` es desde siempre, no de los últimos 30 días:
+            //    ese número no distingue "nunca" de "este mes no".
+            if (!(fila.clases_dadas || 0)) {
+                pintarFranja({
+                    titulo: "Todavía no has dado ninguna clase",
+                    texto: "La clase en vivo se abre sola en cuanto entre un alumno o mandes una posición al tablero, y desde ahí queda registrada la asistencia y el tiempo de cada uno.",
+                    destino: "sesion.html", cta: "Abrir el tablero de la clase →",
+                    icono: "🎬", urgente: false,
+                });
+                return;
+            }
+
+            // 6. Lo que queda es el goteo: los que faltan por diagnosticar. Va
+            //    al final porque ya está todo lo demás andando.
+            if (conDiagnostico < alumnos) {
+                const faltan = alumnos - conDiagnostico;
+                pintarFranja({
+                    titulo: "Faltan diagnósticos",
+                    texto: `Los ${conDiagnostico} que lo hicieron ya tienen su plan.`
+                         + ` ${faltan === 1 ? "Falta 1 alumno" : `Faltan ${faltan} alumnos`} por hacerlo, y sin diagnóstico no hay plan que armarles.`,
+                    destino: "tareas.html", cta: "Mandarlo como tarea →",
+                    icono: "🧭", urgente: false,
+                });
+            }
+            // Todo al día: no se dice nada.
         }
 
         // ---------- Registro de clases ----------
@@ -1194,7 +1533,7 @@
                 return;
             }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
             } else {
@@ -1228,7 +1567,7 @@
                    por su destino y no por su posición, para que reordenar el
                    grupo no la deje sin cambiar. */
                 const medirNivel = TILE_GROUPS.find((g) => g.title === "Mide tu nivel");
-                const arbitraje = medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
+                const arbitraje = medirNivel && medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
                 if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
 
                 /* Preparar la clase antes de darla. Es solo del equipo docente,
@@ -1236,6 +1575,11 @@
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
                     { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* Tus propias listas de alumnos. No son los "equipos" de
+                       Administración —esos dan permisos— ni el grupo de cada
+                       alumno: son de quien las arma y solo sirven para filtrar
+                       y para mandar una tarea a varios de una vez. */
+                    { emoji: "👥", label: "Mis subgrupos", desc: "Arma tus propias listas de alumnos para filtrar Informes y mandarles tareas de una vez", href: "subgrupos.html" },
                     /* La guía apunta a la versión accesible y no al PDF a
                        propósito: es una página que abre en cualquier aparato,
                        trae el contenido completo y desde ahí se bajan el manual
@@ -1251,30 +1595,35 @@
             // página lo vuelve a comprobar, y la RLS es la que de verdad manda.
             if (profile.es_coordinador || profile.is_admin) {
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    /* Por dónde se entra a la gente que uno coordina. Va
+                       primero del grupo de coordinación porque es la puerta:
+                       desde ahí se llega a sus subgrupos, a su acceso y a su
+                       rol. */
+                    { emoji: "🧭", label: "Coordinación", desc: "Tus profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html" },
                     { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse desde unirse.html: aprobar crea la cuenta, rechazar invita a un plan pago", href: "solicitudes.html" },
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );
-            } else if (!isTeacher) {
-                /* La misma página, pero quien no coordina solo ve lo suyo.
-                   No se le pone a quien coordina para no repetir el destino.
-
-                   Y tampoco a quien da clase: las mensualidades son de las
-                   familias del alumnado, así que a una profesora esa tarjeta
-                   le ofrecía "lo que se te ha cobrado" sobre una cuenta a la
-                   que no se le cobra nada. Quien coordina sí llega a los
-                   cobros, pero por "Cobros de la Academia" en Herramientas,
-                   que es la página entera y no el recibo propio. */
-                TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
-                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html", mantenimientoAlumno: true }
-                );
             }
+            /* LOS COBROS NO SE LE OFRECEN A NADIE MÁS QUE A COORDINACIÓN.
+               Aquí vivía «Mis pagos» para el alumnado. Se fue del panel entero,
+               y no por mantenimiento: las mensualidades son cosa de la casa,
+               no del alumno —a quien entra a entrenar no le toca resolver un
+               pago— y a quien da clase esa tarjeta le ofrecía «lo que se te ha
+               cobrado» sobre una cuenta a la que no se le cobra nada. Quien
+               coordina llega por «Cobros de la Academia», en Herramientas.
+
+               La página sigue existiendo y sigue enseñándole a cada quien sus
+               propios recibos si entra por la dirección: lo que se quitó es el
+               camino, no el derecho a ver lo suyo. Volver a ofrecerla es
+               agregar la tarjeta otra vez acá. */
 
             // Después de armar la lista y antes de pintarla: apaga para el
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo
             // docente.
             textosDelEquipoDocente();
             apagarEnMantenimiento();
+            diagnosticosSoloParaAdministracion();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
             // se vuelve a guardar sola; si no, el aparato deja de recibir sin
@@ -1301,12 +1650,17 @@
                 document.getElementById("progreso-alumno").hidden = false;
                 // Van en paralelo: son cinco consultas independientes y en
                 // serie se nota al abrir el panel desde el celular.
+                /* La racha se pide UNA vez y la promesa se reparte: la usan
+                   el número de "Tu progreso" y el primer paso, que necesita
+                   saber si ya resolvió algo. Dos llamadas serían dos veces la
+                   misma consulta para pintar el mismo dato. */
+                const rachaP = window.Logros.cargar();
                 await Promise.all([
-                    cargarPendientes(),
+                    cargarPendientes(rachaP),
                     cargarSeguirCurso(),
                     loadEntrenoProgress(),
                     loadTacticsRecord(),
-                    loadRachaWidget(),
+                    loadRachaWidget(rachaP),
                 ]);
             }
             subscribeSessions();

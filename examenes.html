@@ -26,6 +26,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/material-plataforma.js"></script>
+    <script src="js/subgrupos-marcar.js"></script>
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/diagnostico-items.js"></script>
     <script src="js/arbitraje-items.js"></script>
@@ -272,6 +273,10 @@ async function cargarAlumnos() {
     label.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 alumno-check"><span>${escapeHtml(a.full_name || a.email)}</span>`;
     cont.appendChild(label);
   });
+  // El selector de subgrupos se monta una sola vez, encima de la lista: es la
+  // misma pieza que usa Tareas, para que elegir "los del martes" se haga igual
+  // en las dos pantallas donde se manda algo.
+  if (window.SubgruposMarcar) SubgruposMarcar.montar({ sb, antesDe: cont, casillas: ".alumno-check" });
 }
 
 /* ---------------- Los bloques de preguntas ----------------

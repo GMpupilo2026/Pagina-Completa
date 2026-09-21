@@ -1,0 +1,1 @@
+alter table public.fourplayer_games add column clock_updated_at timestamptz;

@@ -292,14 +292,28 @@ function rpcObjetoConFechas() {
   return copia;
 }
 
-function clienteFalso() {
+/* `ajustes` es lo que deja reusar este doble desde otro verificador sin
+   escribir un segundo doble que se iría separando de este a la primera
+   corrección (verificar-camino-entrenador.js lo usa con una profesora que NO
+   administra, que es justo la cara que las capturas no enseñan). Sin ajustes
+   hace exactamente lo de siempre, que es lo que las capturas necesitan. */
+function clienteFalso(ajustes) {
+  const a = ajustes || {};
+  const perfiles = a.perfiles || DEMO.perfiles;
+  const yo = a.yo || PROFE;
+  const rpc = Object.assign({}, DEMO.rpc, a.rpc || {});
+  /* `profiles` se rellena con los perfiles y no es una tabla suelta: quien
+     cambia las cuentas tiene que cambiar las dos cosas o la página no
+     encuentra a quien dice ser —y eso se ve como «No se pudo cargar tu
+     perfil», no como un doble incompleto—. */
+  const tablas = Object.assign({}, DEMO.tablas, { profiles: perfiles }, a.tablas || {});
   return `
 (function () {
-  const PERFILES = ${JSON.stringify(DEMO.perfiles)};
-  const TABLAS = ${JSON.stringify(DEMO.tablas)};
-  const RPC = ${JSON.stringify(DEMO.rpc)};
+  const PERFILES = ${JSON.stringify(perfiles)};
+  const TABLAS = ${JSON.stringify(tablas)};
+  const RPC = ${JSON.stringify(rpc)};
   const RPC_OBJETO = ${JSON.stringify(rpcObjetoConFechas())};
-  const YO = ${JSON.stringify(PROFE.id)};
+  const YO = ${JSON.stringify(yo.id)};
 
   function constructor(tabla, filas) {
     let filas2 = (filas || []).slice(), unica = false;
@@ -342,8 +356,8 @@ function clienteFalso() {
 
   window.sb = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: YO, email: ${JSON.stringify(PROFE.email)} }, access_token: "demo" } } }),
-      getUser: () => Promise.resolve({ data: { user: { id: YO, email: ${JSON.stringify(PROFE.email)} } } }),
+      getSession: () => Promise.resolve({ data: { session: { user: { id: YO, email: ${JSON.stringify(yo.email)} }, access_token: "demo" } } }),
+      getUser: () => Promise.resolve({ data: { user: { id: YO, email: ${JSON.stringify(yo.email)} } } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: () => Promise.resolve({}),
       updateUser: () => Promise.resolve({ error: null }),
@@ -512,7 +526,7 @@ async function capturar(navegador, pagina) {
 /* Se exporta para poder depurar una página suelta con EL MISMO doble que usan
    las capturas: uno escrito aparte para depurar se separa del de verdad y se
    termina arreglando un problema que no existe. */
-module.exports = { clienteFalso, capturar, PAGINAS, DEMO };
+module.exports = { clienteFalso, capturar, PAGINAS, DEMO, PROFE, ALUMNOS };
 if (require.main !== module) return;
 
 (async () => {

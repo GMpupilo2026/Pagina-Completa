@@ -39,7 +39,11 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
 
-const ADMIN = { id: "u-admin", role: "profesor", is_admin: true, es_coordinador: false, full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null, created_at: "2026-01-10T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: null };
+/* La cuenta master lleva `role: "admin"`: no es profesora ni alumna. Antes
+   estaba guardada como profesora acá y como alumna en la base, y las dos
+   cosas la metían donde no pinta nada — en la lista de «para quién» al mandar
+   una tarea, en los conteos de alumnos, en el panel de profesores. */
+const ADMIN = { id: "u-admin", role: "admin", is_admin: true, es_coordinador: false, full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null, created_at: "2026-01-10T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: null };
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null, created_at: "2026-02-01T10:00:00Z", invitaciones_max: 10, invitaciones_usadas: 3, teacher_id: null };
 const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, es_coordinador: false, full_name: "Ana Rojas", email: "ana@x.cr", grupo: "7B", created_at: "2026-03-01T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: "u-profe" };
 
@@ -83,7 +87,18 @@ window.__consultas = [];
   const TABLAS = {
     profiles: ${JSON.stringify(perfiles)},
     profile_teachers: ${JSON.stringify(parejas)},
+    /* Un equipo con UN alumno dentro, que es lo que hace falta para que se
+       note si volcar un grupo lo borra: la lista que se manda deja el equipo
+       exactamente como llega. */
+    equipos: [{ id: "eq-1", nombre: "Selección sub-14", created_by: "u-admin" }],
+    equipo_alumnos: [{ equipo_id: "eq-1", alumno_id: "u-5" }],
+    equipo_entrenadores: [],
+    coordinador_profesores: [],
   };
+  const SUBGRUPOS_VISTA = [
+    { id: "sg-1", nombre: "Los del martes", profesor_id: "u-profe", profesor: "Profe Vega",
+      alumnos: ["u-1", "u-2"] },
+  ];
   const USUARIO = ${JSON.stringify(usuario)};
 
   function constructor(tabla, filas) {
@@ -114,9 +129,13 @@ window.__consultas = [];
       signOut: () => Promise.resolve({}),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
-    rpc: (n) => (n === "soy_coordinador"
-      ? Promise.resolve({ data: !!(USUARIO.is_admin || USUARIO.es_coordinador), error: null })
-      : constructor(n, [])),
+    rpc: (n) => {
+      if (n === "soy_coordinador") {
+        return Promise.resolve({ data: !!(USUARIO.is_admin || USUARIO.es_coordinador), error: null });
+      }
+      if (n === "subgrupos_a_la_vista") return constructor(n, SUBGRUPOS_VISTA);
+      return constructor(n, []);
+    },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel: () => {},
   };
@@ -192,7 +211,7 @@ async function pruebaAtajos(browser) {
   igual("Resultados: los dos diagnósticos y los dos exámenes", grupos[0].enlaces,
     ["informes.html?tema=diagnostico", "arbitraje.html",
      "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
-  igual("Formularios", grupos[1].enlaces, ["formularios.html", "inscripciones.html"]);
+  igual("Formularios", grupos[1].enlaces, ["formularios.html", "inscripciones.html", "solicitudes.html"]);
   igual("Bases de datos", grupos[2].enlaces, ["admin-jugador.html"]);
   igual("Reportes", grupos[3].enlaces, ["reportes.html", "cobros.html"]);
   igual("los informes de toda la plataforma siguen aparte y de primeros",
@@ -338,10 +357,15 @@ async function pruebaBuscarEntreGrupos(browser) {
   igual("al borrar la búsqueda se vuelve solo a las fichas",
     await page.evaluate(() => document.getElementById("users-panel").hidden), "true");
 
-  // El filtro de rol, y la opción que no es un rol.
+  /* El filtro de rol, y la opción que no es un rol.
+
+     Es UNA sola profesora, no dos: desde que la cuenta master dejó de estar
+     guardada como alumna y pasó a `role = 'admin'`, ya no cuenta ni como
+     profesora ni como alumna en ninguna lista. Que acá se esperaran dos era
+     justo el resto de antes. */
   await page.selectOption("#role-filter", "profesor");
-  await page.waitForFunction(() => /2 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
-  bien("filtrar por «Profesores» deja 2");
+  await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
+  bien("filtrar por «Profesores» deja 1: la cuenta master ya no cuenta como profesora");
 
   await page.selectOption("#role-filter", "sin-profesor");
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
@@ -606,11 +630,90 @@ async function pruebaPantalla(browser) {
   }
 }
 
+/* ======================================================================
+   Llenar un equipo de una vez.
+
+   Un equipo es la única forma de agrupar que DA PERMISOS, y llenarlo era
+   elegir de a uno entre mil doscientos nombres — que es la razón por la que
+   los permisos se terminaban repartiendo alumno por alumno.
+
+   Lo que se rompe callado: `equipo_set_alumnos` deja la lista EXACTAMENTE
+   como llega, así que mandar solo los del grupo vacía el equipo de todo lo
+   anterior. Se vería perfecto con sus nombres nuevos, y los de antes habrían
+   perdido a sus entrenadores sin que nadie lo pidiera.
+   ====================================================================== */
+async function pruebaVolcarEnUnEquipo(browser) {
+  console.log("\n=== Llenar un equipo de una vez ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html", ADMIN);
+  await page.goto(BASE + "/admin.html", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelectorAll("#equipos-lista > div").length === 1, { timeout: 15000 });
+
+  const opciones = await page.evaluate(() => {
+    const sel = Array.from(document.querySelectorAll("#equipos-lista select"))
+      .find((s) => (s.getAttribute("aria-label") || "").indexOf("grupo o un subgrupo") !== -1);
+    if (!sel) return null;
+    return Array.from(sel.querySelectorAll("optgroup")).map((g) => g.label);
+  });
+  igual("el equipo ofrece volcar un grupo o un subgrupo entero", opciones, ["Grupos", "Subgrupos"]);
+
+  /* De quién es cada subgrupo va escrito: dos profesores pueden tener cada uno
+     su «Los del martes», y son listas distintas. */
+  igual("y el subgrupo dice de quién es y cuántos son",
+    await page.evaluate(() => {
+      const sel = Array.from(document.querySelectorAll("#equipos-lista select"))
+        .find((s) => (s.getAttribute("aria-label") || "").indexOf("grupo o un subgrupo") !== -1);
+      // Un <optgroup> no tiene .options; las opciones se piden por selector.
+      const g = Array.from(sel.querySelectorAll("optgroup")).find((x) => x.label === "Subgrupos");
+      return g.querySelector("option").textContent;
+    }), "Los del martes — Profe Vega (2)");
+
+  const volcar = (texto) => page.evaluate((t) => {
+    const sel = Array.from(document.querySelectorAll("#equipos-lista select"))
+      .find((s) => (s.getAttribute("aria-label") || "").indexOf("grupo o un subgrupo") !== -1);
+    const op = Array.from(sel.options).find((o) => o.textContent.indexOf(t) === 0);
+    if (!op) return "no está la opción " + t;
+    sel.value = op.value;
+    sel.dispatchEvent(new Event("change"));
+    return "ok";
+  }, texto);
+
+  /* EL TOPE SE MIRA ANTES DE MANDAR. «7B» son 401 alumnos de los datos de
+     prueba y un equipo aguanta 300: si esto viajara, volvería con el error del
+     servidor y quien lo apretó se quedaría sin saber qué arreglar. */
+  llamadasDeAdmin.length = 0;
+  igual("el grupo grande está en la lista", await volcar("7B"), "ok");
+  await page.waitForTimeout(400);
+  igual("un grupo que no cabe no se manda, y se dice con el número",
+    [llamadasDeAdmin.filter((l) => l.action === "equipo_set_alumnos").length,
+     /Quedarían 40\d alumnos y el tope de un equipo es 300/.test(
+       await page.evaluate(() => document.getElementById("equipos-lista").textContent))],
+    [0, true]);
+
+  // ------------------------------------------------- y el que sí cabe, entra
+  llamadasDeAdmin.length = 0;
+  igual("el subgrupo está en la lista", await volcar("Los del martes"), "ok");
+  const mandado = await esperarLlamada("equipo_set_alumnos");
+  igual("volcar SUMA al que ya estaba, no lo reemplaza",
+    [mandado.equipo_id, mandado.alumno_ids.join(",")],
+    ["eq-1", "u-5,u-1,u-2"]);
+  igual("y ninguno se manda dos veces",
+    new Set(mandado.alumno_ids).size === mandado.alumno_ids.length, "true");
+
+  await page.waitForFunction(() => /Entraron 2 alumnos/.test(document.getElementById("equipos-lista").textContent), { timeout: 10000 });
+  igual("se dice cuántos entraron, y se sigue viendo después de repintar la tarjeta",
+    await page.evaluate(() => /Entraron 2 alumnos/.test(document.getElementById("equipos-lista").textContent)), "true");
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAtajos(browser);
     await pruebaFichasDeGrupo(browser);
+    await pruebaVolcarEnUnEquipo(browser);
     await pruebaCuentasDeUnGrupo(browser);
     await pruebaBuscarEntreGrupos(browser);
     await pruebaElNombreNoSeCorta(browser);

@@ -12,6 +12,8 @@
 // alumno de clase: dice que hablemos. Quien lee puede ser una familia a la que
 // se le complicó el mes, no alguien que no quiere pagar.
 
+import type { Contacto } from "./contacto-academia.ts";
+
 export type Tipo = "proximo" | "vencido" | "moroso";
 
 export const ASUNTOS: Record<Tipo, (alumno: string) => string> = {
@@ -64,6 +66,7 @@ type Fila = {
 
 export function avisoHtml(o: {
   tipo: Tipo; alumno: string; destinatario: string; cobros: Fila[]; sitio: string;
+  contacto?: Contacto | null;
 }) {
   const cab = CABECERA[o.tipo] ?? CABECERA.proximo;
   const conSaldo = o.cobros.filter((c) => Number(c.saldo) > 0);
@@ -89,6 +92,14 @@ export function avisoHtml(o: {
   }).join("");
 
   const saludo = o.destinatario ? `Hola, ${escapar(o.destinatario.split(" ")[0])}:` : "Hola:";
+
+  /* A dónde se manda el comprobante. El número sale de `ajustes_academia` y lo
+     pone quien coordina; si no hay ninguno puesto, se dice que respondan este
+     mismo correo. Inventar un número acá sería justo lo que este cambio vino a
+     quitar. */
+  const porDonde = o.contacto
+    ? `por WhatsApp al <a href="${o.contacto.enlace}" style="color:#a85a0d">${escapar(o.contacto.texto)}</a>`
+    : "respondiendo a este mismo correo";
 
   return `<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -118,12 +129,11 @@ export function avisoHtml(o: {
     <p style="margin:16px 0 0;padding:16px;background:#f0f4f8;border-radius:10px;font-size:14px;color:#243b53;line-height:1.7">
       <strong>Cómo pagar</strong><br>
       Por SINPE Móvil, transferencia o en efectivo en clase. Cuando lo hagas, mándanos el
-      comprobante por WhatsApp al <a href="https://wa.me/50683092291" style="color:#a85a0d">+506 8309-2291</a>
-      y lo registramos.
+      comprobante ${porDonde} y lo registramos.
     </p>
 
     <p style="margin:20px 0 0;font-size:13px;color:#55708a;line-height:1.6">
-      Si algo de este detalle no te cuadra, respóndenos este correo o escríbenos por WhatsApp y lo revisamos.
+      Si algo de este detalle no te cuadra, respóndenos este correo y lo revisamos.
     </p>
   </td></tr>
 
