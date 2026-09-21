@@ -1,0 +1,74 @@
+{
+  "titulo": "Ajedrez Integral — video promocional",
+  "transicion": 0.6,
+  "escenas": [
+    {
+      "tipo": "portada",
+      "titulo": "Clases de ajedrez en vivo",
+      "linea": "No videos grabados.",
+      "segundos": 4.5
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "sesion",
+      "titulo": "Un profesor real, en tiempo real",
+      "linea": "Mueve una pieza y toda la clase ve la posición al instante.",
+      "segundos": 7
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "panel",
+      "titulo": "El entrenador ve quién se quedó atrás",
+      "linea": "Quién no entrenó esta semana y qué tareas faltan.",
+      "segundos": 6.5
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "temas",
+      "titulo": "Y entre clase y clase, entrena",
+      "linea": "Ejercicios por tema, mates, aperturas, finales.",
+      "segundos": 6.5
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "tareas",
+      "titulo": "Le pones la tarea en un minuto",
+      "linea": "Y se va llenando sola con lo que el alumno entrena.",
+      "segundos": 6.5
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "diagnostico",
+      "titulo": "¿En qué nivel está de verdad?",
+      "linea": "Nueve áreas medidas, no una impresión.",
+      "segundos": 6.5
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "informes",
+      "titulo": "La familia ve el avance de verdad",
+      "linea": "Y recibe el informe en su correo, sin tener que pedirlo.",
+      "segundos": 7
+    },
+    {
+      "tipo": "pantalla",
+      "captura": "estudio",
+      "titulo": "Fichas para repasar antes de jugar",
+      "linea": "Una idea, su mapa y la posición que la explica.",
+      "segundos": 6.5
+    },
+    {
+      "tipo": "placa",
+      "titulo": "Y también sin ver la pantalla",
+      "linea": "Cada posición contada en palabras. Se responde escribiendo.",
+      "segundos": 5
+    },
+    {
+      "tipo": "cierre",
+      "titulo": "Mide tu nivel gratis",
+      "linea": "Sin cuenta, en 20 minutos.",
+      "pie": "ajedrez-integral.com",
+      "segundos": 6
+    }
+  ]
+}

@@ -3594,6 +3594,66 @@ páginas del cuerpo** —el error clásico es estamparla solo en la portada—.
   pregunta con `in`. Está probado que discrimina de verdad: sobre el PDF sin
   sellar da 0 de 39 páginas con marca, y sobre el sellado, 39 de 39.
 
+## El video promocional
+
+`node herramientas/video-promo.js` arma el video que se manda por enlace (un
+minuto escaso, 1080p, unos 5 MB). El texto vive en
+`herramientas/video/guion.json` y el generador solo lo monta, así que corregir
+una frase es corregir una línea y volver a correrlo — la misma decisión que el
+catálogo de cursos y la guía del profesor. Solo pide `ffmpeg`: ni el sitio
+servido, ni red, ni navegador.
+
+**Las pantallas salen de `img/guia/`, y eso NO es por comodidad.** Esas
+capturas las hace `guia-capturas.js` contra un Supabase de mentira, con cuentas
+inventadas. Grabar la pantalla de verdad —con el celular, con OBS, o abriendo
+la sesión de quien da clase— metería en un video que va a circular por WhatsApp
+los nombres, los correos y el progreso de **menores de edad**, y eso no se
+arregla después: el video ya salió. Por eso el generador **no sabe abrir el
+sitio**; solo sabe leer esa carpeta.
+
+- **La salida no se commitea.** `promo/` está en `.gitignore` **y** en
+  `.assetsignore`: el worker sirve todo el directorio, así que un mp4 suelto
+  quedaría publicado en el sitio sin que nadie lo pidiera. Es el mismo par de
+  candados que `respaldos/`, y por la misma razón — de git no se borra nada.
+- **Falla si le falta algo, en vez de apañarse.** Sin Inter usaría la fuente
+  que hubiera en la máquina: el video saldría con otra letra, se vería perfecto
+  y se vería de otra empresa. Sin una captura, dejaría una escena en negro que
+  nadie mira hasta que está publicada. Por eso la tipografía **está en el
+  repositorio** (`herramientas/video/fuentes/`, con su licencia SIL OFL) y el
+  generador se planta si no la encuentra — lo mismo que hace `arbitraje-pdf.js`
+  cuando le falta pypdf.
+- **El texto va sobre el fondo de marca y la captura debajo, nunca encima de
+  ella.** Con el texto sobre la pantalla habría que garantizar el contraste
+  contra una imagen que cambia en cada escena, y la mitad de las capturas
+  tienen fondo claro: se lee en el monitor de quien lo montó y no se lee en un
+  teléfono. Es la misma regla que el resto del sitio — el color no se elige a
+  ojo.
+- **Nada de Ken Burns.** El zoom continuo de `zoompan` se calcula en enteros y
+  da un temblor que a 1080p se nota; sobre una imagen fija, además, delata el
+  pixelado. Lo que hay es una entrada de seis píxeles en el primer medio
+  segundo y un encadenado limpio entre escenas.
+- **El guion no promete lo que la pantalla no enseña.** La primera versión
+  decía «cada alumno sabe qué le toca hoy» sobre el panel de la **profesora**
+  (el doble entra como docente, a propósito, para que la guía enseñe todo) y
+  «se puede estudiar sin ver la pantalla» sobre una captura donde no se ve nada
+  de eso. No falla nada: se ve muy bien y dice algo que no es. Lo que no tiene
+  captura que lo respalde —hoy, la accesibilidad— va en una placa de texto, que
+  no promete ilustrar nada.
+
+**Las capturas envejecen y eso es lo que se rompe callado.** Se hicieron en el
+PR #294 y `sesion.html` cambió en el #310, así que el primer montaje enseñaba
+una pestaña «Controles» que ya no existe: el video se ve perfecto y promociona
+una pantalla que nadie va a encontrar. **Antes de armar el video, rehacer las
+capturas** (`node herramientas/guia-capturas.js`, con el sitio en
+localhost:8777 y playwright) y después **mirarlas**, que es lo único que
+descubre un desajuste entre lo que el texto dice y lo que la pantalla enseña.
+Y correr `node herramientas/verificar-guia-profesores.js`: esas mismas 25
+capturas son las de la guía, que se imprime y se proyecta.
+
+Lo que este camino **no** da es locución ni música: la voz hay que grabarla
+—vale más la del profesor para una academia que vende «un profesor real»— y la
+música tiene que ser de librería con licencia.
+
 ## El sitio se instala como app (PWA)
 
 `manifest.json`, `sw.js`, `js/pwa.js` y los iconos de `img/app/` hacen que el
