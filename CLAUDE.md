@@ -2343,6 +2343,39 @@ salgan los avisos. Su código, antes solo en Supabase, ya vive en
   apunta **después** de que Resend acepte: si falla, mañana se reintenta en vez
   de darlo por mandado. Comprobado de punta a punta contra `delivered@resend.dev`
   — la primera corrida mandó 2 y la segunda saltó 2.
+
+### Programar un recordatorio para un día y hora exactos
+
+Los tres avisos automáticos y «Recordar ahora» no alcanzan cuando quien
+coordina quiere que algo salga en un momento preciso — por ejemplo, coordinado
+con una llamada o un acuerdo de pago. `cobros.html` tiene un botón
+«🕐 Programar» al lado de «Recordar ahora», en cada fila de la morosidad.
+
+- **Guardar el cuándo no pasa por la Edge Function.** El botón inserta
+  directo en `public.cobros_recordatorios_programados` (`student_id`,
+  `programado_para`, `creado_por`) con el cliente de quien llama — la RLS de
+  esa tabla es la misma que la de `cobros`: `soy_coordinador() AND
+  bajo_mi_coordinacion(student_id)`. No hace falta pasar por el servidor para
+  algo que ya decide la base.
+- **Mandarlo si pasa por la Edge Function.** `disparar_recordatorios_programados()`
+  es un job de `pg_cron` nuevo, **cada 5 minutos** (los otros dos avisos son una
+  vez al día, acá "hora exacta" no alcanza con eso). Antes de llamar a la
+  función comprueba si hay algo `pendiente` con `programado_para <= now()`: si
+  no hay nada, no gasta la llamada HTTP. Cuando sí hay, dispara la acción
+  `tanda_programados` de `cobros-recordatorios`, con el mismo secreto del Vault
+  que ya usaba `tanda`.
+- `tanda_programados` arma el aviso exactamente como `recordar_ahora`
+  —mismos `destinatariosDe()`, mismo HTML— y al terminar marca la fila
+  `enviado` (con los correos a los que salió) o `cancelado` si para ese
+  momento el alumno ya no tiene nada pendiente o no hay a quién escribirle.
+  Un recordatorio programado para un cobro que se pagó antes de esa hora no
+  manda un correo que ya no tiene sentido.
+- **No reemplaza los tres avisos automáticos**, es un envío suelto más: si el
+  aviso diario y el programado caen el mismo día, `avisos_cobro` sigue siendo
+  el que evita que le lleguen dos correos iguales por el mismo tipo.
+- La hora se escribe y se lee en hora de Costa Rica (UTC-06:00, sin horario de
+  verano) desde `cobros.html`; en la base y en la Edge Function todo es
+  `timestamptz` de siempre.
 - La tanda va firmada con su propio secreto del Vault (`tanda_cobros_secreto`,
   generado por la migración y nunca escrito en ninguna parte). Comprobado: con
   una firma inventada responde 401.

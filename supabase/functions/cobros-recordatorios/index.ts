@@ -3,19 +3,26 @@
 // Avisa por correo cuando una mensualidad está por vencer, cuando se venció y
 // cuando lleva rato sin pagarse.
 //
-// Tres acciones:
-//   "vista_previa"   { student_id }  -> devuelve el HTML del estado de cuenta
-//   "recordar_ahora" { student_id }  -> lo manda en el momento a quien corresponda
-//   "tanda"          {}              -> la corrida diaria
+// Cuatro acciones:
+//   "vista_previa"     { student_id }  -> devuelve el HTML del estado de cuenta
+//   "recordar_ahora"   { student_id }  -> lo manda en el momento a quien corresponda
+//   "tanda"             {}             -> la corrida diaria (3 días antes, vencido, moroso)
+//   "tanda_programados" {}             -> los recordatorios que alguien dejó
+//                                         programados para un día y hora exactos
 //
 // QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde cobros.html con
 // su sesión, y el permiso NO se comprueba aquí a mano: se leen las filas con un
 // cliente que lleva su JWT, o sea pasando por la RLS. Si la RLS no le devuelve
-// los cobros de ese alumno, no coordina ni administra y se acabó.
+// los cobros de ese alumno, no coordina ni administra y se acabó. Programar uno
+// nuevo NO pasa por aquí: cobros.html inserta directo en
+// `cobros_recordatorios_programados`, también con RLS — esta función solo lo
+// manda cuando le toca.
 //
-// "tanda" la dispara pg_cron. Va con verify_jwt en false porque el disparador no
-// trae sesión de persona; a cambio exige el secreto que vive en el Vault, que
-// esta función vuelve a leer con la service role para compararlo.
+// "tanda" y "tanda_programados" las dispara pg_cron, cada una con su propio job
+// (la primera una vez al día, la segunda cada pocos minutos). Van con verify_jwt
+// en false porque el disparador no trae sesión de persona; a cambio exigen el
+// secreto que vive en el Vault, que esta función vuelve a leer con la service
+// role para compararlo.
 //
 // UN CORREO POR ALUMNO, NO UNO POR COBRO: a nadie le sirve recibir tres correos
 // el mismo día. Se manda el estado de cuenta completo, con el tono del aviso más
@@ -175,6 +182,69 @@ Deno.serve(async (req) => {
       }
     }
     return json({ ok: true, mandados, saltados, fallos });
+  }
+
+  // ------------------------------------------------- los programados
+  if (accion === "tanda_programados") {
+    const { data: esperado } = await admin.rpc("secreto_tanda_cobros");
+    if (!esperado || !jwt || jwt !== esperado) {
+      return json({ error: "Esta acción solo la dispara el programador de tareas" }, 401);
+    }
+    const { data: pendientes, error: pendError } = await admin
+      .from("cobros_recordatorios_programados")
+      .select("id, student_id")
+      .eq("estado", "pendiente")
+      .lte("programado_para", new Date().toISOString())
+      .limit(MAX_POR_TANDA);
+    if (pendError) return json({ error: pendError.message }, 500);
+
+    const hoy = new Date();
+    let mandados = 0, cancelados = 0;
+    const fallos: string[] = [];
+    for (const p of pendientes ?? []) {
+      let cobros: Cobro[];
+      try { cobros = await cobrosPendientes(admin, p.student_id); }
+      catch (err) { fallos.push(`${p.id}: ${err instanceof Error ? err.message : String(err)}`); continue; }
+
+      const destinos = cobros.length ? await destinatariosDe(p.student_id) : [];
+      if (!cobros.length || !destinos.length) {
+        // Ya no hay nada pendiente (se pagó, se anuló) o no hay a quién
+        // escribirle: el recordatorio programado ya no tiene sentido.
+        await admin.from("cobros_recordatorios_programados")
+          .update({ estado: "cancelado" }).eq("id", p.id);
+        cancelados += 1;
+        continue;
+      }
+
+      let tipo: Tipo = "proximo";
+      for (const c of cobros) {
+        const t = tipoDe(c, hoy);
+        if (t && URGENCIA[t] > URGENCIA[tipo]) tipo = t;
+      }
+      const disparador = cobros.find((c) => tipoDe(c, hoy) === tipo) ?? cobros[0];
+      const nombre = await nombreDe(p.student_id);
+
+      const enviados: string[] = [];
+      for (const d of destinos) {
+        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL });
+        const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
+        if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
+        // upsert a mano: si el aviso automático ya le mandó este mismo tipo hoy,
+        // no se duplica la fila; el programado sigue contando como mandado.
+        await admin.from("avisos_cobro")
+          .upsert({ cobro_id: disparador.id, tipo, correo: d.email }, { onConflict: "cobro_id,tipo,correo" });
+        enviados.push(d.email);
+      }
+      if (enviados.length) {
+        await admin.from("cobros_recordatorios_programados")
+          .update({ estado: "enviado", enviado_at: new Date().toISOString(), correos: enviados })
+          .eq("id", p.id);
+        mandados += 1;
+      } else {
+        fallos.push(`${p.id}: no se pudo mandar a ninguno de sus destinatarios`);
+      }
+    }
+    return json({ ok: true, mandados, cancelados, fallos });
   }
 
   // --------------------------------------------- lo que pide una persona
