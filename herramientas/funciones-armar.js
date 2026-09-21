@@ -34,6 +34,10 @@ const COMPARTIDO = path.join(RAIZ, "_compartido");
  * adivina leyendo los imports: si mañana una función importa algo que no está
  * declarado, es mejor que falle el armado a que se despliegue a medias. */
 const FUNCIONES = {
+  // Su instrucciones-email.ts es suyo y vive en su carpeta: no lo usa nadie
+  // más. Va en esta lista igual, para que se despliegue con el resto y no
+  // haya que acordarse de subirla aparte.
+  "admin-manage-users": [],
   "create-student": ["invitacion-email.ts", "usuario-alumno.ts"],
   "inscribir-alumno": ["invitacion-email.ts", "usuario-alumno.ts"],
   "recuperar-acceso": ["usuario-alumno.ts", "recuperacion-email.ts"],

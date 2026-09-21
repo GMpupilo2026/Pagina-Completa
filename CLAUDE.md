@@ -956,6 +956,57 @@ cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
   coordinación —quien coordina da de alta al equipo y es quien recibe el «no me
   llegó nada»—; lo único que no se toca desde ahí es la cuenta master.
 
+### La ficha de una cuenta: coordinar es también corregir
+
+Quien coordina veía a su gente y no podía tocar nada: un correo mal escrito, un
+nombre con una letra de más o un alumno sin grupo había que pedírselos a quien
+administra. Cada cuenta tiene ahora su **«✏️ Su ficha»** —que se despliega
+debajo, sin salir de la lista— con el nombre, el grupo, el correo con el que
+entra y sus profesores.
+
+- **Lo escriben dos funciones de la base, NO la Edge Function del panel de
+  administración.** El alcance de la coordinación ya vive en SQL
+  —`bajo_mi_coordinacion()`, `cambiar_rol()`,
+  `set_profesores_del_coordinador()`— y partirlo entre la base y una función
+  que tendría que volver a preguntar lo mismo es exactamente cómo se separan
+  dos versiones de la misma regla. Son `public.coord_guardar_cuenta()` (nombre
+  y grupo) y `public.coord_set_profesores()`, las dos `SECURITY DEFINER`, las
+  dos exigiendo `soy_coordinador()` **y** `bajo_mi_coordinacion()` de la cuenta
+  que se toca, con el `execute` revocado de `public` y `anon`.
+- **`coord_guardar_cuenta()` vuelve a leer la fila y falla si no quedó**: es la
+  trampa que ya se comieron `marcar_coordinador()` y `cambiar_rol()` —el
+  trigger de identidad revierte por detrás y la función devuelve «listo» con el
+  valor viejo—. Acá el trigger no toca `full_name` ni `grupo`, pero la relectura
+  se escribe igual: el día que alguien le sume una columna protegida, el fallo
+  ya no puede ser callado.
+- **Lo que no puede mover no se ofrece**: el rol va por su propio botón (con
+  sus dos toques), el cupo de invitaciones es de quien administra, y la cuenta
+  master no se toca desde acá. Su firma solo acepta persona, nombre y grupo, así
+  que no hay por dónde colar el rol ni `is_admin`.
+- **`coord_set_profesores()` conserva a los profesores fuera de su alcance.**
+  «Lo que no esté, se quita» es la regla de `set_teachers` y de
+  `equipo_set_alumnos`, y acá sola sería un desastre callado: la lista que la
+  pantalla tiene delante son los profesores **que esa coordinación ve**, y
+  mandarla entera le borraría a la alumna el profesor de otra coordinación sin
+  que nada fallara. La función une lo pedido con lo que ya tiene y no coordina.
+  En pantalla, esa etiqueta se pinta **sin su ✕**: un botón que va a fallar es
+  peor que ninguno.
+- **Por eso `mi_gente()` devuelve una columna `profesores`** (un arreglo de
+  `{id, nombre}` de `profesores_de()`), y no se resuelven en el navegador: el
+  join con `profiles` pasa por la RLS, así que un profesor que esa coordinación
+  no ve **saldría como un hueco** y la lista se mandaría sin él.
+- **El correo lo sigue cambiando `correos-alumno`**, que es donde ya vivía esa
+  regla —el 409 cuando el correo ya es de otra cuenta, el usuario de la Academia
+  para quien no tiene buzón, y la relectura de la fila porque el trigger de
+  identidad revierte `email`—. Escribirlo otra vez acá sería una segunda versión
+  de la misma decisión. La casilla **«No tiene correo propio»** apaga el campo
+  en vez de esconderlo, y lo que la pantalla enseña al final es **el usuario que
+  devolvió el servidor**, no el que ella propuso: el desempate (`ana.rojas2`) lo
+  hace el servidor, y enseñar el propuesto dejaría a la familia intentando
+  entrar con uno que no es.
+- **Guardar no repinta la lista.** Se actualiza el encabezado de esa tarjeta y
+  nada más: repintar cerraría la ficha en la cara de quien acaba de guardar.
+
 ### Armarle los subgrupos a un profesor
 
 `subgrupos.html?profesor=<id>` abre los de otra persona. Un profesor nuevo con
@@ -978,7 +1029,13 @@ que no se ofrezca cambiar el rol de la cuenta master, que cambiar el rol mande a
 quién y a qué rol, que reenviar el acceso diga a qué bandeja salió, que a quien
 todavía no tiene profesores vinculados se le diga por qué no ve a nadie (se mide
 el `display` que calcula el navegador) y que crear un subgrupo ajeno lo deje a
-nombre del profesor.
+nombre del profesor. De la ficha comprueba qué MANDA —que guardar vaya por
+`coord_guardar_cuenta` con esa cuenta y solo con el nombre y el grupo, que
+quitarle un profesor mande la lista sin él por `coord_set_profesores` y que **no
+se llame a la Edge Function del panel de administración**—, que se vean todos
+sus profesores pero solo se pueda quitar al que coordina, y que al cambiar el
+correo se enseñe el que devolvió el servidor. Está probado que falla de verdad:
+mandando el id de quien coordina en vez del de la alumna, salta.
 
 ## Tareas: el profesor pide cantidades y la tarea se llena sola
 
@@ -6156,6 +6213,21 @@ lee Google.
   se agrega ahí.
 - "vos" se resuelve por contexto: con preposición delante es *ti* ("un lugar
   para ti"), si no es *tú* ("busca tú mismo").
+- **El barrido mira también las Edge Functions** (`supabase/functions/**/*.ts`),
+  no solo el HTML, el JS y el CSS. Esos archivos escriben **correo que sale a
+  las familias**, o sea el texto del sitio que menos se revisa y el único que no
+  se puede corregir después de mandado: el correo de invitación de
+  `admin-manage-users` decía «elegí un plan» y ahí lleva desde que se escribió,
+  porque esa función vivía solo desplegada y el verificador solo leía el sitio.
+
+  **`admin-manage-users` entró al repositorio por eso**, bajada tal cual del
+  despliegue y sin tocarle nada más que esa palabra. Antes cambiarle una línea
+  era bajarla, editarla a ciegas y volver a subirla —la misma decisión que ya se
+  había tomado con `cobros-recordatorios` e `informes-encargados`—. **Está
+  pendiente de desplegar**: hasta que se suba (`node
+  herramientas/funciones-armar.js` y el despliegue), el correo que reciben las
+  familias sigue diciendo «elegí». Nada más de esa función cambió, así que
+  desplegarla no arrastra ningún otro cambio.
 
 ### Y las respuestas de Claude también van en español
 

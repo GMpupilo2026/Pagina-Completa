@@ -103,6 +103,11 @@ let filas = [];
 let total = 0;
 let desde = 0;
 let peticion = 0;          // descarta la respuesta que llega tarde
+/* Los profesores a los que puede repartir alumnos: los de SU coordinación y
+   nadie más. Se piden una vez al abrir la página —son pocos— y de ahí sale el
+   selector de cada ficha. Ofrecer uno que no coordina sería ofrecer un botón
+   que `coord_set_profesores()` va a rechazar. */
+let misProfesores = [];
 const POR_PAGINA = 50;
 
 function el(tag, clase, texto) {
@@ -152,7 +157,8 @@ function pintar() {
 }
 
 function tarjeta(u) {
-    const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-start justify-between gap-3");
+    const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+    const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
     const izq = el("div", "min-w-0 flex-1");
     const linea = el("p", "font-semibold text-brand-800 dark:text-white");
     // El nombre lo escribe una persona: siempre por textContent.
@@ -174,9 +180,27 @@ function tarjeta(u) {
         pie.push(u.subgrupos === 1 ? "1 subgrupo" : u.subgrupos + " subgrupos");
     }
     if (pie.length) izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", pie.join(" · ")));
-    d.appendChild(izq);
+    fila.appendChild(izq);
 
     const acciones = el("div", "flex flex-wrap gap-2");
+
+    /* La ficha se monta ENTERA al abrirla y se tira al cerrarla, en vez de ir
+       actualizando lo que cambió: así no hay que acordarse de limpiar lo de la
+       cuenta anterior, que es justo el descuido que dejaría a quien coordina
+       corrigiéndole el correo a quien no era. Misma decisión que el panel de
+       la bitácora. */
+    const ficha = el("div", "hidden");
+    const editar = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "✏️ Su ficha");
+    editar.type = "button";
+    editar.setAttribute("aria-expanded", "false");
+    editar.addEventListener("click", () => {
+        const abierta = editar.getAttribute("aria-expanded") === "true";
+        editar.setAttribute("aria-expanded", abierta ? "false" : "true");
+        ficha.classList.toggle("hidden", abierta);
+        ficha.innerHTML = "";
+        if (!abierta) montarFicha(u, ficha, linea);
+    });
+    acciones.appendChild(editar);
 
     if (u.role === "profesor") {
         const subs = el("a", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "👥 Sus subgrupos");
@@ -211,8 +235,246 @@ function tarjeta(u) {
         acciones.appendChild(rol);
     }
 
-    d.appendChild(acciones);
+    fila.appendChild(acciones);
+    d.append(fila, ficha);
     return d;
+}
+
+/* ------------------------------------------------------------------ la ficha
+   Lo mismo que quien administra hace en admin.html, acotado a su gente: el
+   nombre, el grupo, con qué correo entra y entre qué profesores está
+   repartido. Quien coordina tiene que poder corregir un nombre mal escrito y
+   un correo con una letra de más sin pedírselo a nadie — es lo que pasa todos
+   los días con una familia nueva.
+
+   Lo que NO se ofrece acá, a propósito, porque la base lo va a rechazar y un
+   botón que va a fallar es peor que ninguno: el rol (va en su propio botón,
+   que sabe rechazar bajar a un profesor con alumnos), is_admin, el cupo de
+   invitaciones, borrar la cuenta y los equipos. Eso es de la cuenta master. */
+function campo(etiqueta, valor, tipo) {
+    const caja = el("label", "block");
+    caja.appendChild(el("span", "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1", etiqueta));
+    const i = document.createElement("input");
+    i.type = tipo || "text";
+    i.value = valor || "";
+    i.className = "w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    caja.appendChild(i);
+    return { caja: caja, input: i };
+}
+
+function seccion(titulo) {
+    const s = el("div", "mt-4 pt-4 border-t border-brand-100 dark:border-brand-800");
+    s.appendChild(el("h3", "font-semibold text-sm text-brand-700 dark:text-brand-200 mb-2", titulo));
+    return s;
+}
+
+function montarFicha(u, caja, lineaNombre) {
+    const esAlumno = u.role === "alumno";
+
+    // ---------------------------------------------------- nombre y grupo
+    const datos = seccion("Sus datos");
+    const rejilla = el("div", "grid gap-3 sm:grid-cols-2");
+    const nombre = campo("Nombre completo", u.full_name);
+    const grupo = campo("Grupo / equipo", u.grupo);
+    rejilla.append(nombre.caja, grupo.caja);
+    datos.appendChild(rejilla);
+    const guardar = el("button", "mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Guardar");
+    guardar.type = "button";
+    guardar.addEventListener("click", () => guardarDatos(u, nombre.input, grupo.input, guardar, lineaNombre));
+    datos.appendChild(guardar);
+    caja.appendChild(datos);
+
+    // ----------------------------------------- con qué entra a la Academia
+    /* `correos-alumno` solo corrige el correo de un ALUMNO: el del equipo
+       docente es otra cosa y lo rechaza. Así que acá ni se ofrece. */
+    if (esAlumno) {
+        const correo = seccion("Con qué entra");
+        const actual = campo("Correo o usuario", u.email, "text");
+        actual.input.setAttribute("autocapitalize", "none");
+        actual.input.setAttribute("autocorrect", "off");
+        correo.appendChild(actual.caja);
+
+        const sinCorreo = el("label", "flex items-center gap-2 mt-2 text-sm text-brand-600 dark:text-brand-300");
+        const marca = document.createElement("input");
+        marca.type = "checkbox";
+        marca.className = "rounded border-brand-300 dark:border-brand-700 text-accent-500 focus:ring-accent-400";
+        sinCorreo.append(marca, el("span", null, "No tiene correo propio (entra con un usuario de la Academia)"));
+        correo.appendChild(sinCorreo);
+        /* El campo se APAGA, no se esconde: así se ve que sigue ahí y que lo
+           que cambió es que ya no hace falta. Misma decisión que las dos
+           puertas de alta. */
+        marca.addEventListener("change", () => { actual.input.disabled = marca.checked; });
+
+        correo.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-2",
+            "El correo es la llave con la que inicia sesión. Si ya es de otra cuenta no se puede repetir: "
+            + "si son hermanos, marca «No tiene correo propio»."));
+
+        const botonCorreo = el("button", "mt-3 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-4 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cambiar el correo");
+        botonCorreo.type = "button";
+        botonCorreo.addEventListener("click", () => guardarCorreo(u, actual.input, marca, botonCorreo));
+        correo.appendChild(botonCorreo);
+        caja.appendChild(correo);
+
+        // ------------------------------------------------ sus profesores
+        const profes = seccion("Sus profesores");
+        const tags = el("div", "flex flex-wrap gap-2 mb-2");
+        profes.appendChild(tags);
+        const selector = document.createElement("select");
+        selector.className = "w-full sm:w-auto px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        selector.setAttribute("aria-label", "Sumarle un profesor");
+        profes.appendChild(selector);
+        caja.appendChild(profes);
+        pintarProfesores(u, tags, selector);
+    }
+}
+
+/* Las etiquetas de sus profesores, con su ✕, y el selector para sumar otro:
+   el mismo patrón que ya usan admin.html y la tarjeta de Equipos.
+
+   A un profesor que NO coordina se le ve el nombre pero NO se le pinta ✕:
+   quitárselo sería dejar sin su alumno a una colega de otra coordinación.
+   `coord_set_profesores()` lo conserva igual aunque la pantalla se equivocara
+   —une lo que se le manda con los que quedan fuera del alcance de quien
+   coordina— así que acá solo se evita ofrecer un botón que va a fallar. */
+function pintarProfesores(u, tags, selector) {
+    const suyos = (u.profesores || []);
+    const puedoQuitar = new Set(misProfesores.map((p) => p.id));
+    tags.innerHTML = "";
+    if (!suyos.length) {
+        tags.appendChild(el("p", "text-sm text-brand-450 dark:text-brand-350",
+            "Todavía no tiene ninguno, así que no le sale en los informes de nadie."));
+    }
+    suyos.forEach((pr) => {
+        const t = el("span", "inline-flex items-center gap-1 bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 px-2 py-1 rounded-full text-xs");
+        t.appendChild(el("span", null, pr.nombre));
+        if (puedoQuitar.has(pr.id)) {
+            const x = el("button", "text-brand-500 dark:text-brand-300 hover:text-red-600 dark:hover:text-red-400 font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded", "✕");
+            x.type = "button";
+            x.setAttribute("aria-label", "Quitarle a " + pr.nombre);
+            x.addEventListener("click", () => mandarProfesores(u, suyos.filter((o) => o.id !== pr.id), tags, selector));
+            t.appendChild(x);
+        }
+        tags.appendChild(t);
+    });
+
+    const yaEstan = new Set(suyos.map((p) => p.id));
+    selector.innerHTML = "";
+    const vacia = document.createElement("option");
+    vacia.value = "";
+    vacia.textContent = "Sumarle un profesor…";
+    selector.appendChild(vacia);
+    misProfesores.filter((p) => !yaEstan.has(p.id)).forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.nombre;
+        selector.appendChild(o);
+    });
+    selector.disabled = selector.options.length < 2;
+    selector.onchange = () => {
+        const elegido = misProfesores.find((p) => p.id === selector.value);
+        if (elegido) mandarProfesores(u, suyos.concat([elegido]), tags, selector);
+    };
+}
+
+/* Las dos escrituras van por SU FUNCIÓN DE LA BASE, no por la Edge Function
+   del panel de administración: el alcance de la coordinación ya vive en SQL
+   —`bajo_mi_coordinacion()`, `cambiar_rol()`, `set_profesores_del_coordinador()`—
+   y partirlo entre la base y una función que tendría que volver a preguntar lo
+   mismo es cómo se separan dos versiones de la misma regla.
+
+   El mensaje que devuelven se enseña TAL CUAL —«Esa cuenta no está bajo tu
+   coordinación», «Hay un profesor que no está bajo tu coordinación»—, porque un
+   «no se pudo» a secas deja a quien coordina sin saber qué arreglar. Es la
+   misma decisión del botón de rol. */
+async function guardarDatos(u, nombre, grupo, boton, lineaNombre) {
+    boton.disabled = true;
+    boton.textContent = "Guardando…";
+    try {
+        const { error } = await sb.rpc("coord_guardar_cuenta", {
+            p_persona: u.id,
+            p_nombre: nombre.value.trim(),
+            p_grupo: grupo.value.trim(),
+        });
+        if (error) throw new Error(error.message);
+        u.full_name = nombre.value.trim();
+        u.grupo = grupo.value.trim() || null;
+        // El encabezado de la tarjeta se actualiza sin repintar la lista: si
+        // se repintara, la ficha abierta se cerraría en la cara de quien
+        // acaba de guardar.
+        if (lineaNombre) lineaNombre.firstChild.textContent = nombreDe(u) + " ";
+        avisar("Guardado.");
+    } catch (err) {
+        avisar("No se pudo guardar: " + err.message, true);
+    }
+    boton.disabled = false;
+    boton.textContent = "Guardar";
+}
+
+async function mandarProfesores(u, lista, tags, selector) {
+    selector.disabled = true;
+    try {
+        const { error } = await sb.rpc("coord_set_profesores", {
+            p_alumno: u.id,
+            p_profesores: lista.map((p) => p.id),
+        });
+        if (error) throw new Error(error.message);
+        u.profesores = lista;
+        pintarProfesores(u, tags, selector);
+        avisar(lista.length
+            ? nombreDe(u) + " queda con " + lista.length + (lista.length === 1 ? " profesor." : " profesores.")
+            : nombreDe(u) + " se quedó sin ningún profesor: así no sale en los informes de nadie.");
+    } catch (err) {
+        avisar("No se pudo: " + err.message, true);
+        selector.disabled = false;
+    }
+}
+
+/* El correo lo cambia `correos-alumno`, que es donde ya vivía esa regla: el
+   409 cuando ya es de otra cuenta, el usuario de la Academia para quien no
+   tiene buzón, y la relectura de la fila —el trigger de identidad revierte
+   esa columna sin decir nada—. Escribirlo otra vez acá sería una segunda
+   versión que se separa a la primera corrección. */
+async function guardarCorreo(u, input, marca, boton) {
+    boton.disabled = true;
+    boton.textContent = "Cambiando…";
+    try {
+        const datos = await llamarCorreos({
+            action: "cuenta",
+            alumno_id: u.id,
+            email: input.value.trim(),
+            sin_correo: marca.checked,
+        });
+        if (datos.sin_cambios) {
+            avisar("Ese ya era su correo: no se cambió nada.");
+        } else {
+            /* Lo que se enseña es lo que devolvió el SERVIDOR, no lo que se
+               escribió: con «No tiene correo propio» el usuario lo desempata
+               él, así que enseñar el propuesto dejaría a la familia
+               intentando entrar con uno que no es. */
+            u.email = datos.cambiado || u.email;
+            input.value = u.email;
+            avisar("Ahora entra con " + u.email + ".");
+        }
+    } catch (err) {
+        avisar("No se pudo cambiar: " + err.message, true);
+    }
+    boton.disabled = false;
+    boton.textContent = "Cambiar el correo";
+}
+
+async function llamarCorreos(cuerpo) {
+    const res = await fetch(`${window.SUPABASE_URL}/functions/v1/correos-alumno`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": window.SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(cuerpo),
+    });
+    const datos = await res.json().catch(() => ({}));
+    if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+    return datos;
 }
 
 async function cambiarRol(u, rol, boton) {
@@ -294,6 +556,13 @@ async function init() {
     const nProfes = profes && profes.length ? Number(profes[0].total) : 0;
     const nAlumnos = alums && alums.length ? Number(alums[0].total) : 0;
     pintarTarjetas(nProfes, nAlumnos);
+
+    // Y la lista de a quién puede asignarle alumnos. Si falla, la ficha sigue
+    // dejando corregir el nombre y el correo: perder eso también por esto
+    // sería peor.
+    const { data: docentes } = await sb.rpc("mi_gente",
+        { p_busqueda: null, p_rol: "profesor", p_limite: 200, p_desde: 0 });
+    misProfesores = (docentes || []).map((x) => ({ id: x.id, nombre: nombreDe(x) }));
 
     if (!nProfes && !perfil.is_admin) {
         const franja = document.getElementById("sin-profesores");
