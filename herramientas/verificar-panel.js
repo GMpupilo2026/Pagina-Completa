@@ -1086,6 +1086,69 @@ async function pruebaSemanaProfesora(browser) {
   igual("con todos al día, ningún número se pinta en rojo", limpio.rojo, "false");
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
   await r.ctx.close();
+
+  await pruebaPlanesCompartidos(browser);
+}
+
+/* ---------- Cuántos alumnos tienen su plan ----------
+   `training_plans` estuvo en CERO desde que la tabla existe: el plan se genera
+   solo desde el diagnóstico y tiene su botón de compartir, pero eso vive dos
+   clics adentro de Informes y nada avisaba de que no lo usaba nadie. Un cero
+   que no se pinta en ninguna parte no lo ve nadie — y sin plan compartido, el
+   informe que llega a la casa no puede contar en qué se está trabajando.
+
+   Son cuatro estados y se distinguen mal, que es justo por lo que se prueban:
+   sin diagnóstico no hay plan POSIBLE, así que ahí el mensaje es otro. */
+async function pruebaPlanesCompartidos(browser) {
+  console.log("\n=== Cuántos de sus alumnos tienen su plan ===");
+
+  const leer = async (fila) => {
+    const r = await panel(browser, [PROFE], "u-profe", {}, {
+      rpc: { panel_profesor: [Object.assign(
+        { alumnos: 10, activos_7d: 10, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 1 }, fila)] },
+    });
+    const v = await r.page.evaluate(() => {
+      const el = document.getElementById("profe-planes");
+      // Se mide el display que calcula el navegador, no el atributo: la lección
+      // que dejó el cartel de instalar la app.
+      return { display: getComputedStyle(el).display, texto: el.textContent,
+               ambar: /text-accent-700/.test(el.className) };
+    });
+    await r.ctx.close();
+    return v;
+  };
+
+  // Nadie hizo el diagnóstico: sin él no hay plan que armar, y eso es lo que se
+  // dice — no «0 de 0 tienen plan», que no le pide hacer nada a nadie.
+  let v = await leer({ con_diagnostico: 0, con_plan: 0 });
+  igual("sin ningún diagnóstico, se ve de verdad", v.display !== "none", "true");
+  igual("y dice que ahí empieza todo", /Ninguno.*diagnóstico/.test(v.texto), "true");
+  igual("nombrando la consecuencia: el informe a la casa se queda sin qué contar",
+    /informe que llega a la casa/.test(v.texto), "true");
+  igual("en ámbar y no en rojo: esto no se venció, está por hacer", v.ambar, "true");
+
+  // Con diagnósticos y sin planes: el caso de hoy.
+  v = await leer({ con_diagnostico: 8, con_plan: 0 });
+  igual("con 8 diagnósticos y ningún plan, lo dice con los dos números",
+    /0 de los 8/.test(v.texto), "true");
+  igual("y dice quién se lo pierde", /ni ellos ni su casa/.test(v.texto), "true");
+  igual("y dónde se arregla", /Informes/.test(v.texto), "true");
+
+  // A uno solo le falta: la frase va en singular.
+  v = await leer({ con_diagnostico: 8, con_plan: 7 });
+  igual("con uno solo pendiente, se dice en singular", /el otro no lo ve/.test(v.texto), "true");
+  igual("y no en plural", /los otros/.test(v.texto), "false");
+
+  // Todos los que se diagnosticaron tienen plan, pero faltan diagnósticos.
+  v = await leer({ con_diagnostico: 8, con_plan: 8 });
+  igual("con los planes al día, lo que queda son los diagnósticos que faltan",
+    /Faltan 2 alumnos/.test(v.texto), "true");
+
+  /* Todo al día: NO se dice nada. Un renglón que diga «todo bien» es ruido en
+     todas las visitas menos una — la misma decisión que las dos franjas del
+     alumno y que la bitácora. */
+  v = await leer({ con_diagnostico: 10, con_plan: 10 });
+  igual("y con todo al día no se pinta ningún renglón", v.display, "none");
 }
 
 /* Que la página SE VEA, no solo que funcione. Es lo que verificar-css.js no

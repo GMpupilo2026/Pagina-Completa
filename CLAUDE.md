@@ -2494,6 +2494,67 @@ de números y no decir lo único que una madre pregunta.
   terminó, qué se le venció, cuándo vence la próxima, cuántos exámenes rindió y
   con qué nota.
 
+### Lo que la familia no veía: el plan
+
+El correo contaba minutos, clases y ejercicios, y no decía **una palabra** del
+plan. Detrás de esos números hay un diagnóstico de 63 preguntas por nueve áreas
+y un plan de cuatro semanas con el objetivo medible de cada una — y la casa no
+tenía forma de saberlo. El trabajo estaba hecho y era invisible.
+
+El bloque **«🧭 Dónde está X y a dónde va»** va **arriba, pegado al veredicto y
+antes de los números**, porque es el marco de todo lo que sigue: primero qué se
+está haciendo y por qué, después cuánto. Lleva el nivel medido, **cuánto se
+espera que practique** —que es lo más accionable que puede leer una madre—, las
+áreas con su objetivo, la meta de Elo si la hay, y la nota del profesor.
+
+- **El nivel medido se subió acá.** Estaba suelto al final del correo, que es
+  donde no lo lee nadie.
+- **La nota del profesor va destacada y rotulada «De su profe»**, porque es lo
+  ÚNICO escrito a mano: todo lo demás lo propone el sitio a partir del
+  diagnóstico.
+- **No se le atribuye al profesor un trabajo que nadie midió.** El correo dice
+  lo que de verdad pasó —«este plan se lo armó su profe a partir del
+  diagnóstico»— y el verificador falla si aparece «horas», «dedicó» o
+  «esfuerzo». Exagerar lo que hay se nota, y una vez que se nota ya no se cree
+  nada de lo que el correo diga.
+- **No se inventa ningún vínculo entre el plan y lo que hizo esta semana.** El
+  correo ya trae «En qué trabajó» con la actividad real; cruzarlos pediría medir
+  una correspondencia que nadie calcula. Se enseñan los dos y la familia los lee
+  juntos.
+
+#### Solo el plan COMPARTIDO, y por eso la función sigue siendo INVOKER
+
+Un plan guardado sin compartir es el borrador del profesor: enseñárselo a la
+casa antes que al alumno sería enseñar algo que todavía se está pensando. Con
+ese filtro escrito dentro de `informe_de_alumno()`, los tres caminos que la
+leen —la tanda de `pg_cron` con la service role, la vista previa del profesor y
+el propio alumno— devuelven **exactamente lo mismo**, así que no hizo falta
+volverla `SECURITY DEFINER` como `resumen_tareas_examenes()`.
+
+Y si no hay plan compartido, el bloque **no aparece**: una sección que diga
+«todavía no tiene plan» es ruido en todas las visitas menos una —la misma
+decisión que la bitácora— y prometer un plan que no existe es peor que no
+nombrarlo.
+
+#### El cero que nadie veía
+
+`training_plans` tenía **cero filas desde que la tabla existe**. El plan se
+genera solo desde el diagnóstico, se enseña entero en Informes y tiene su botón
+de compartir — y nadie lo había usado nunca, porque eso vive dos clics adentro
+de Informes y **nada avisaba**.
+
+Por eso `panel_profesor()` devuelve ahora `con_diagnostico` y `con_plan`, y «Tu
+semana» lo dice en una línea. Se dice **una sola cosa**, la que toca antes: sin
+diagnóstico no hay plan que armar, así que ese es el primer cuello; y un plan
+sin compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
+existe. Con todo al día no se dice nada. Va en **ámbar y no en rojo**: esto no
+se venció, está por hacer.
+
+**Esto pidió desplegar `informes-encargados`** (se arma con `node
+herramientas/funciones-armar.js`). Comprobado después de subirla: con una firma
+inventada la tanda responde **401** sin mandar un solo correo, que es la prueba
+de que el módulo nuevo carga.
+
 ### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
 
 `tareas` y `examenes` están aisladas por profesor a propósito (un profesor solo
