@@ -285,13 +285,6 @@
                     </a>
                 </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
-                <!-- El plan de entrenamiento existe desde hace meses, se genera
-                     solo desde el diagnóstico y tiene su botón de compartir —y
-                     nadie lo había usado nunca. Un cero que no se pinta en
-                     ninguna parte no lo ve nadie, así que se dice acá: es lo
-                     único de "Tu semana" que no es un número sino algo por
-                     hacer, y por eso va en texto y solo cuando falta. -->
-                <p id="profe-planes" hidden class="mt-2 text-sm"></p>
             </div>
 
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
@@ -846,7 +839,14 @@
             const titulo = document.getElementById("pendientes-aviso-titulo");
             const texto = document.getElementById("pendientes-aviso-texto");
 
-            caja.href = destino;
+            /* Hay un caso en que la franja NO lleva a ninguna parte: a un
+               profesor sin alumnos no hay página que ofrecerle —asignárselos es
+               cosa de quien administra—. Se le quita el href de verdad y no se
+               deja uno que no haga nada: un <a> sin href no recibe el foco ni
+               se anuncia como enlace, y un enlace que no lleva a ningún lado es
+               peor que ninguno. */
+            if (destino) caja.href = destino;
+            else caja.removeAttribute("href");
             caja.className = "mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                 + (urgente
                     ? "bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500"
@@ -855,7 +855,8 @@
             titulo.className = "font-serif text-lg font-bold " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-800 dark:text-white");
             texto.className = "text-sm " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-500 dark:text-brand-300");
             const cajaCta = document.getElementById("pendientes-aviso-cta");
-            cajaCta.textContent = cta;
+            cajaCta.textContent = cta || "";
+            cajaCta.hidden = !cta;
             cajaCta.className = "text-sm font-semibold whitespace-nowrap "
                 + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
 
@@ -1114,44 +1115,128 @@
                 ? "Llevas 1 clase dada en los últimos 30 días."
                 : `Llevas ${clases} clases dadas en los últimos 30 días.`;
 
-            pintarPlanes(alumnos, fila.con_diagnostico || 0, fila.con_plan || 0);
+            primerPasoDelProfesor(fila);
         }
 
-        /* Cuántos de sus alumnos tienen su plan compartido.
-        
-           Va acá porque `training_plans` estuvo en CERO desde que existe: el
-           plan se genera solo desde el diagnóstico y tiene su botón de
-           compartir, pero eso vive dentro de Informes, dos clics adentro, y
-           nada avisaba de que no lo usaba nadie.
-        
-           Se dice UNA sola cosa, la que toca antes: sin diagnóstico no hay plan
-           que armar, así que ese es el primer cuello; y con el plan sin
-           compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que
-           no existe. Cuando está todo al día no se dice nada — un renglón que
-           diga "todo bien" es ruido en todas las visitas menos una. */
-        function pintarPlanes(alumnos, conDiagnostico, conPlan) {
-            const el = document.getElementById("profe-planes");
-            if (!alumnos) return;   // sin alumnos no hay nada que decir
+        /* ---------- Por dónde empezar, del lado del que da clase ----------
 
-            let msg = null;
-            if (conDiagnostico === 0) {
-                msg = "Ninguno de tus alumnos ha hecho el diagnóstico todavía. Sin él no hay plan que armar, y el informe que llega a la casa no puede contar en qué se está trabajando.";
-            } else if (conPlan < conDiagnostico) {
-                const faltan = conDiagnostico - conPlan;
-                msg = `${conPlan} de los ${conDiagnostico} que hicieron el diagnóstico tienen su plan compartido.`
-                    + ` A ${faltan === 1 ? "el otro no lo ve" : `los otros ${faltan} no los ven`} ni ellos ni su casa —`
-                    + " el plan sale solo del diagnóstico, se revisa y se comparte en Informes.";
-            } else if (conDiagnostico < alumnos) {
-                const faltan = alumnos - conDiagnostico;
-                msg = `Los ${conDiagnostico} que hicieron el diagnóstico ya tienen su plan.`
-                    + ` ${faltan === 1 ? "Falta 1 alumno" : `Faltan ${faltan} alumnos`} por hacerlo.`;
+           Es el mismo problema que el del alumno y la misma solución, con los
+           peldaños del otro lado del escritorio: un entrenador nuevo abre esto,
+           ve cuatro números en cero y un directorio de accesos, y no hay nada
+           que le diga cuál es el siguiente paso. En los datos se ve igual — el
+           profesor con más alumnos lleva decenas de entradas y ni una tarea, ni
+           una clase, ni un plan.
+
+           Son peldaños que se calculan de lo que ya hay y se apagan solos: al
+           mandar la primera tarea, ese peldaño deja de cumplirse. No hay nada
+           que marcar ni ningún "ya lo vi" en localStorage que se pueda quedar
+           desincronizado.
+
+           El ORDEN es el del trabajo, y por eso se dice UNA sola cosa —la que
+           toca antes—: sin alumnos no hay nada que hacer; sin diagnóstico no
+           hay plan que armar; un plan sin compartir no lo ve ni el alumno ni su
+           casa, o sea que cuenta como que no existe; y recién entonces la
+           tarea y la clase. Con todo al día no se dice nada: un cartel que se
+           repite deja de leerse, la misma lección del aviso de instalar la app.
+
+           Va en la MISMA franja que lo del alumno (#pendientes-aviso) y no en
+           una nueva: contesta la misma pregunta —"¿qué hago ahora?"— y dos
+           franjas peleando por el primer lugar es el problema que este panel ya
+           tuvo con "Estado de la clase". */
+        function primerPasoDelProfesor(fila) {
+            const alumnos = fila.alumnos || 0;
+            const conDiagnostico = fila.con_diagnostico || 0;
+            const conPlan = fila.con_plan || 0;
+
+            // 1. Sin alumnos asignados no funciona NADA de lo suyo, y hoy eso
+            //    se ve como cuatro ceros sin explicación: Informes vacío,
+            //    Tareas sin a quién mandarle y un subgrupo que no se puede
+            //    llenar (su insert exige soy_profesor_de()). Parece roto y no
+            //    lo está.
+            if (!alumnos) {
+                const suyo = profile.is_admin;
+                pintarFranja({
+                    titulo: "Todavía no tienes alumnos",
+                    texto: "Mientras no te asignen ninguno, Informes, Tareas y los subgrupos te van a salir vacíos — no es que estén rotos."
+                         + (suyo ? " Se asignan en el panel de Administración."
+                                 : " Quien administra la Academia te los asigna desde el panel de Administración."),
+                    // A un profesor no se le ofrece una página que la base le va
+                    // a negar: asignar alumnos es de quien administra.
+                    destino: suyo ? "admin.html" : null,
+                    cta: suyo ? "Asignar alumnos →" : null,
+                    icono: "👥", urgente: false,
+                });
+                return;
             }
-            if (!msg) return;   // todo al día: no se dice nada
 
-            el.textContent = msg;
-            // Ámbar y no rojo: esto no se venció, está por hacer.
-            el.className = "mt-2 text-sm text-accent-700 dark:text-accent-400";
-            el.hidden = false;
+            // 2. Sin diagnóstico no hay plan que armar, ni qué ponerles, ni qué
+            //    contarle a la casa: es el primer cuello de verdad.
+            if (!conDiagnostico) {
+                pintarFranja({
+                    titulo: "Empieza por el diagnóstico",
+                    texto: `Ninguno de tus ${alumnos} alumnos lo ha hecho todavía. De ahí sale solo el plan de entrenamiento de cada uno`
+                         + " — sin eso no hay qué ponerles ni qué contarle a la casa.",
+                    destino: "tareas.html", cta: "Mandarlo como tarea →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 3. El plan se genera solo desde el diagnóstico, pero sin
+            //    compartir no lo ve ni el alumno ni su casa. Estuvo en CERO
+            //    desde que la tabla existe, y nada avisaba.
+            if (conPlan < conDiagnostico) {
+                const faltan = conDiagnostico - conPlan;
+                pintarFranja({
+                    titulo: "Hay planes sin compartir",
+                    texto: `${conPlan} de los ${conDiagnostico} que hicieron el diagnóstico tienen su plan compartido.`
+                         + ` A ${faltan === 1 ? "el otro no lo ve" : `los otros ${faltan} no los ven`} ni ellos ni su casa —`
+                         + " el plan sale solo del diagnóstico y se comparte en Informes, todos de una vez.",
+                    destino: "informes.html", cta: "Compartir los planes →",
+                    icono: "🧭", urgente: false,
+                });
+                return;
+            }
+
+            // 4. Se mira `tareas_puestas` y no las pendientes: con todas hechas
+            //    las pendientes son cero igual que si no hubiera puesto
+            //    ninguna, y son dos situaciones muy distintas.
+            if (!(fila.tareas_puestas || 0)) {
+                pintarFranja({
+                    titulo: "Ponles la primera tarea",
+                    texto: "Una tarea se llena sola con lo que entrenan —«20 ejercicios de ataque doble» va subiendo sin que nadie marque nada—"
+                         + " y al asignarla le llega el aviso al celular.",
+                    destino: "tareas.html", cta: "Armar una tarea →",
+                    icono: "📋", urgente: false,
+                });
+                return;
+            }
+
+            // 5. `clases_dadas` es desde siempre, no de los últimos 30 días:
+            //    ese número no distingue "nunca" de "este mes no".
+            if (!(fila.clases_dadas || 0)) {
+                pintarFranja({
+                    titulo: "Todavía no has dado ninguna clase",
+                    texto: "La clase en vivo se abre sola en cuanto entre un alumno o mandes una posición al tablero, y desde ahí queda registrada la asistencia y el tiempo de cada uno.",
+                    destino: "sesion.html", cta: "Abrir el tablero de la clase →",
+                    icono: "🎬", urgente: false,
+                });
+                return;
+            }
+
+            // 6. Lo que queda es el goteo: los que faltan por diagnosticar. Va
+            //    al final porque ya está todo lo demás andando.
+            if (conDiagnostico < alumnos) {
+                const faltan = alumnos - conDiagnostico;
+                pintarFranja({
+                    titulo: "Faltan diagnósticos",
+                    texto: `Los ${conDiagnostico} que lo hicieron ya tienen su plan.`
+                         + ` ${faltan === 1 ? "Falta 1 alumno" : `Faltan ${faltan} alumnos`} por hacerlo, y sin diagnóstico no hay plan que armarles.`,
+                    destino: "tareas.html", cta: "Mandarlo como tarea →",
+                    icono: "🧭", urgente: false,
+                });
+            }
+            // Todo al día: no se dice nada.
         }
 
         // ---------- Registro de clases ----------

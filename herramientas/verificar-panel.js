@@ -1059,7 +1059,17 @@ async function pruebaProgresoAlumna(browser) {
 async function pruebaSemanaProfesora(browser) {
   console.log("\n=== Tu semana, vista por una profesora ===");
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe", {}, {
-    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2, clases_30d: 8 }] },
+    /* Las tareas NO se cuentan por la columna `tareas.estado`, que quedó sin
+       uso y nunca vale 'vencida': las cuenta panel_profesor() con
+       tareas_con_avance(), a partir de los renglones. Medido con los datos
+       reales, la diferencia eran dos tareas que el alumno YA había terminado
+       contadas como pendientes Y vencidas — el único número que le pide al
+       profesor hacer algo, inflado y sin que nada fallara. Acá se comprueba lo
+       que le toca al navegador: que pinte lo que manda la base y no rehaga la
+       cuenta por su lado. */
+    rpc: { panel_profesor: [{ alumnos: 29, activos_7d: 11, tareas_pendientes: 6, tareas_vencidas: 2,
+                              tareas_puestas: 9, clases_30d: 8, clases_dadas: 21,
+                              con_diagnostico: 29, con_plan: 29 }] },
   });
 
   const visto = await page.evaluate(() => ({
@@ -1080,13 +1090,19 @@ async function pruebaSemanaProfesora(browser) {
   igual("las tareas que ÉL mandó y siguen sin hacerse", visto.tareas, "6");
   igual("y cuántas de esas ya vencieron", visto.vencidas, "2");
   igual("más las clases del mes", visto.clases, "Llevas 8 clases dadas en los últimos 30 días.");
+  /* Con todo lo suyo andando, la franja de "por dónde empezar" no se destapa:
+     lo que se le pinta son los números, no un consejo. */
+  igual("y con todo andando, ninguna franja de primer paso encima",
+    await page.evaluate(() => getComputedStyle(document.getElementById("pendientes-aviso")).display), "none");
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
   // Con todo en cero no hay nada que perseguir: el rojo se va.
   const r = await panel(browser, [PROFE], "u-profe", {}, {
-    rpc: { panel_profesor: [{ alumnos: 4, activos_7d: 4, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 1 }] },
+    rpc: { panel_profesor: [{ alumnos: 4, activos_7d: 4, tareas_pendientes: 0, tareas_vencidas: 0,
+                              tareas_puestas: 3, clases_30d: 1, clases_dadas: 1,
+                              con_diagnostico: 4, con_plan: 4 }] },
   });
   const limpio = await r.page.evaluate(() => ({
     inactivos: document.getElementById("profe-inactivos").textContent,
@@ -1098,68 +1114,129 @@ async function pruebaSemanaProfesora(browser) {
   igual("y una sola clase se dice en singular", limpio.clases, "Llevas 1 clase dada en los últimos 30 días.");
   await r.ctx.close();
 
-  await pruebaPlanesCompartidos(browser);
+  await pruebaPrimerPasoProfesor(browser);
 }
 
-/* ---------- Cuántos alumnos tienen su plan ----------
-   `training_plans` estuvo en CERO desde que la tabla existe: el plan se genera
-   solo desde el diagnóstico y tiene su botón de compartir, pero eso vive dos
-   clics adentro de Informes y nada avisaba de que no lo usaba nadie. Un cero
-   que no se pinta en ninguna parte no lo ve nadie — y sin plan compartido, el
-   informe que llega a la casa no puede contar en qué se está trabajando.
+/* ---------- Por dónde empezar, del lado del que da clase ----------
+   Un entrenador nuevo abre el panel, ve cuatro números en cero y un directorio
+   de accesos, y nada le dice cuál es el siguiente paso. En los datos se ve
+   igual: el profesor con más alumnos lleva decenas de entradas y ni una tarea,
+   ni una clase, ni un plan.
 
-   Son cuatro estados y se distinguen mal, que es justo por lo que se prueban:
-   sin diagnóstico no hay plan POSIBLE, así que ahí el mensaje es otro. */
-async function pruebaPlanesCompartidos(browser) {
-  console.log("\n=== Cuántos de sus alumnos tienen su plan ===");
+   Son seis peldaños y se distinguen mal entre ellos, que es justo por lo que se
+   prueban uno por uno: sin alumnos no hay NADA que hacer y no hay página que
+   ofrecerle; sin diagnóstico no hay plan POSIBLE; y "ninguna tarea puesta" no
+   es lo mismo que "ninguna pendiente" —con todas hechas las pendientes también
+   son cero—, que es el error fácil de esta escalera.
 
-  const leer = async (fila) => {
-    const r = await panel(browser, [PROFE], "u-profe", {}, {
+   Se mide el display que calcula el navegador y no el atributo: la lección que
+   dejó el cartel de instalar la app. */
+async function pruebaPrimerPasoProfesor(browser) {
+  console.log("\n=== Por dónde empezar, vista por quien da clase ===");
+
+  const leer = async (fila, quien) => {
+    const perfil = quien === "u-admin" ? ADMIN : PROFE;
+    const r = await panel(browser, [perfil], perfil.id, {}, {
       rpc: { panel_profesor: [Object.assign(
-        { alumnos: 10, activos_7d: 10, tareas_pendientes: 0, tareas_vencidas: 0, clases_30d: 1 }, fila)] },
+        { alumnos: 10, activos_7d: 10, tareas_pendientes: 0, tareas_vencidas: 0,
+          tareas_puestas: 5, clases_30d: 1, clases_dadas: 3,
+          con_diagnostico: 10, con_plan: 10 }, fila)] },
     });
     const v = await r.page.evaluate(() => {
-      const el = document.getElementById("profe-planes");
-      // Se mide el display que calcula el navegador, no el atributo: la lección
-      // que dejó el cartel de instalar la app.
-      return { display: getComputedStyle(el).display, texto: el.textContent,
-               ambar: /text-accent-700/.test(el.className) };
+      const el = document.getElementById("pendientes-aviso");
+      return {
+        display: getComputedStyle(el).display,
+        titulo: document.getElementById("pendientes-aviso-titulo").textContent,
+        texto: document.getElementById("pendientes-aviso-texto").textContent,
+        // El href tal cual está escrito, no el resuelto: lo que importa es a
+        // qué página del sitio manda.
+        destino: el.getAttribute("href"),
+        cta: document.getElementById("pendientes-aviso-cta").textContent,
+        ctaVisible: getComputedStyle(document.getElementById("pendientes-aviso-cta")).display !== "none",
+        rojo: /ring-red-500/.test(el.className),
+      };
     });
     await r.ctx.close();
     return v;
   };
 
-  // Nadie hizo el diagnóstico: sin él no hay plan que armar, y eso es lo que se
-  // dice — no «0 de 0 tienen plan», que no le pide hacer nada a nadie.
-  let v = await leer({ con_diagnostico: 0, con_plan: 0 });
-  igual("sin ningún diagnóstico, se ve de verdad", v.display !== "none", "true");
-  igual("y dice que ahí empieza todo", /Ninguno.*diagnóstico/.test(v.texto), "true");
-  igual("nombrando la consecuencia: el informe a la casa se queda sin qué contar",
-    /informe que llega a la casa/.test(v.texto), "true");
-  igual("en ámbar y no en rojo: esto no se venció, está por hacer", v.ambar, "true");
+  /* 1. Sin alumnos asignados no funciona nada de lo suyo, y hoy eso se ve como
+     cuatro ceros sin explicación: parece roto y no lo está. Es el estado en que
+     están 3 de los 7 del equipo docente. */
+  let v = await leer({ alumnos: 0, activos_7d: 0, con_diagnostico: 0, con_plan: 0,
+                       tareas_puestas: 0, clases_dadas: 0 });
+  igual("sin alumnos, la franja se ve de verdad", v.display !== "none", "true");
+  igual("y dice que todavía no tiene ninguno", /Todavía no tienes alumnos/.test(v.titulo), "true");
+  igual("explicando que no está roto, que es lo que parece", /no es que estén rotos/.test(v.texto), "true");
+  igual("y quién se los asigna", /quien administra/i.test(v.texto), "true");
+  /* Un <a> sin href no recibe el foco ni se anuncia como enlace. Ofrecerle
+     admin.html a un profesor sería mandarlo a una página que la base le niega
+     — un botón que va a fallar es peor que ninguno. */
+  igual("a un profesor no se le ofrece ninguna página que le vayan a negar", v.destino, "null");
+  igual("ni un botón que no lleva a ningún lado", v.ctaVisible, "false");
+  igual("y nunca en rojo: esto no se venció", v.rojo, "false");
 
-  // Con diagnósticos y sin planes: el caso de hoy.
+  // La misma situación, pero quien administra SÍ puede resolverla ahí mismo.
+  v = await leer({ alumnos: 0, activos_7d: 0, con_diagnostico: 0, con_plan: 0,
+                   tareas_puestas: 0, clases_dadas: 0 }, "u-admin");
+  igual("a quien administra sí se le ofrece el panel donde se asignan", v.destino, "admin.html");
+  igual("con su botón", v.ctaVisible, "true");
+
+  /* 2. Sin diagnóstico no hay plan que armar: es el primer cuello de verdad, y
+     el mensaje NO puede ser «0 de 0 tienen plan», que no le pide nada a nadie. */
+  v = await leer({ con_diagnostico: 0, con_plan: 0 });
+  igual("con alumnos y sin ningún diagnóstico, ahí empieza todo",
+    /Empieza por el diagnóstico/.test(v.titulo), "true");
+  igual("y se dice cuántos son los suyos", /tus 10 alumnos/.test(v.texto), "true");
+  igual("nombrando lo que sale de ahí: el plan de cada uno", /plan de entrenamiento/.test(v.texto), "true");
+  igual("y se manda a donde se asigna", v.destino, "tareas.html");
+
+  // 3. Con diagnósticos y sin planes compartidos: el caso de hoy.
   v = await leer({ con_diagnostico: 8, con_plan: 0 });
   igual("con 8 diagnósticos y ningún plan, lo dice con los dos números",
     /0 de los 8/.test(v.texto), "true");
   igual("y dice quién se lo pierde", /ni ellos ni su casa/.test(v.texto), "true");
-  igual("y dónde se arregla", /Informes/.test(v.texto), "true");
+  igual("mandando a Informes, que es donde se comparten", v.destino, "informes.html");
 
   // A uno solo le falta: la frase va en singular.
   v = await leer({ con_diagnostico: 8, con_plan: 7 });
   igual("con uno solo pendiente, se dice en singular", /el otro no lo ve/.test(v.texto), "true");
   igual("y no en plural", /los otros/.test(v.texto), "false");
 
-  // Todos los que se diagnosticaron tienen plan, pero faltan diagnósticos.
+  /* 4. El error fácil de la escalera: mirar las tareas PENDIENTES. Con todas
+     hechas también son cero, y son dos situaciones muy distintas — a quien ya
+     mandó cinco tareas no se le dice que ponga la primera. */
+  v = await leer({ tareas_puestas: 0 });
+  igual("sin ninguna tarea puesta, se le pide la primera",
+    /Ponles la primera tarea/.test(v.titulo), "true");
+  igual("contando lo que la hace valer: se llena sola", /se llena sola/.test(v.texto), "true");
+  igual("y se manda a armarla", v.destino, "tareas.html");
+
+  v = await leer({ tareas_puestas: 5, tareas_pendientes: 0 });
+  igual("pero con cinco puestas y ninguna pendiente NO se le pide la primera",
+    /Ponles la primera tarea/.test(v.titulo), "false");
+
+  /* 5. Lo mismo con las clases: `clases_30d` no distingue "nunca" de "este mes
+     no", así que el peldaño mira el total de siempre. */
+  v = await leer({ clases_dadas: 0, clases_30d: 0 });
+  igual("sin ninguna clase dada, se le dice dónde se da",
+    /no has dado ninguna clase/.test(v.titulo), "true");
+  igual("explicando que se abre sola", /se abre sola/.test(v.texto), "true");
+  igual("y se manda al tablero de la clase", v.destino, "sesion.html");
+
+  v = await leer({ clases_dadas: 4, clases_30d: 0 });
+  igual("pero a quien ya dio cuatro, aunque no este mes, no se le dice eso",
+    /no has dado ninguna clase/.test(v.titulo), "false");
+
+  // 6. Con todo lo demás andando, lo que queda es el goteo de diagnósticos.
   v = await leer({ con_diagnostico: 8, con_plan: 8 });
   igual("con los planes al día, lo que queda son los diagnósticos que faltan",
     /Faltan 2 alumnos/.test(v.texto), "true");
 
-  /* Todo al día: NO se dice nada. Un renglón que diga «todo bien» es ruido en
-     todas las visitas menos una — la misma decisión que las dos franjas del
-     alumno y que la bitácora. */
-  v = await leer({ con_diagnostico: 10, con_plan: 10 });
-  igual("y con todo al día no se pinta ningún renglón", v.display, "none");
+  /* Todo al día: NO se pinta nada. Un cartel que se repite deja de leerse — la
+     misma decisión que las dos franjas del alumno y que la bitácora. */
+  v = await leer({});
+  igual("y con todo al día la franja no se destapa", v.display, "none");
 }
 
 /* Que la página SE VEA, no solo que funcione. Es lo que verificar-css.js no

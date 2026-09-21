@@ -5250,6 +5250,65 @@ lo que se hace para los profesores.
   que pueda contradecir a los otros dos.
 - **El rojo solo aparece cuando el número no es cero.** En rojo permanente se
   deja de ver, que es lo mismo que no ponerlo.
+- **La situación de una tarea NO es su columna `estado`.** Esa columna quedó
+  sin uso a propósito (ver «Tareas») y nunca vale `'vencida'`: la calcula
+  `tareas_con_avance()` a partir de los renglones, que es la misma cuenta que
+  pintan `tareas.html`, el panel del alumno y el informe a la casa.
+  `panel_profesor()` la miraba igual, y medido con los datos reales eso eran
+  **dos tareas que el alumno ya había terminado contadas como pendientes Y
+  vencidas**: el único número que le pide al profesor hacer algo, inflado, y sin
+  que nada fallara. Al escribir cualquier cuenta de tareas se usa
+  `tareas_con_avance()`, nunca la columna.
+- **`tareas_puestas` y `clases_dadas` no son `tareas_pendientes` ni
+  `clases_30d`.** Existen porque los peldaños de abajo necesitan distinguir
+  "nunca" de "ahora no": con todas las tareas hechas las pendientes son cero
+  igual que si no hubiera puesto ninguna, y `clases_30d` en cero puede ser un
+  mes flojo o una cuenta que nunca dio clase. Son dos situaciones que piden
+  decirle cosas opuestas.
+
+#### Por dónde empezar, del lado del que da clase
+
+Es el mismo problema del alumno y la misma solución, con los peldaños del otro
+lado del escritorio: un entrenador nuevo abre el panel, ve cuatro números en
+cero y un directorio de accesos, y nada le dice cuál es el siguiente paso. En
+los datos se veía igual — el profesor con más alumnos llevaba **49 entradas y
+ni una tarea, ni una clase, ni un plan, ni una nota**.
+
+`primerPasoDelProfesor()` pinta **el primer peldaño que no esté cumplido**, y
+todos se calculan de lo que ya hay, así que **se apagan solos**: al mandar la
+primera tarea ese peldaño deja de cumplirse. No hay nada que marcar ni ningún
+"ya lo vi" en `localStorage` que se pueda quedar desincronizado.
+
+| | cuándo | a dónde |
+|---|---|---|
+| 1 | sin alumnos asignados | a ninguna parte (ver abajo) |
+| 2 | ninguno hizo el diagnóstico | Tareas |
+| 3 | hay planes sin compartir | Informes |
+| 4 | no ha puesto ninguna tarea | Tareas |
+| 5 | no ha dado ninguna clase | la clase en vivo |
+| 6 | faltan diagnósticos (goteo) | Tareas |
+
+- **El orden es el del trabajo, y por eso se dice UNA sola cosa**: sin alumnos
+  no hay nada que hacer; sin diagnóstico no hay plan que armar; un plan sin
+  compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que no
+  existe; y recién entonces la tarea y la clase.
+- **El peldaño 1 no lleva a ninguna parte, y es a propósito.** Asignar alumnos
+  es de quien administra, así que a un profesor se le explica **que no está
+  roto** —eso es justo lo que parecen cuatro ceros con Informes vacío, Tareas
+  sin a quién mandarle y un subgrupo que no se puede llenar— y se le dice quién
+  se los asigna. Se le **quita el `href`** al `<a>`, no se le deja uno que no
+  haga nada: sin `href` no recibe el foco ni se anuncia como enlace. A quien
+  administra sí se le ofrece `admin.html`, que es suyo. Tres de los siete del
+  equipo docente estaban en ese estado.
+- **Va en la MISMA franja que lo del alumno** (`#pendientes-aviso`, por
+  `pintarFranja()`): contesta la misma pregunta —«¿qué hago ahora?»— y dos
+  franjas peleando por el primer lugar es el problema que este panel ya tuvo
+  con «Estado de la clase».
+- **Nunca en rojo**: nada de esto se venció, está por hacer.
+- **Con todo al día no se pinta nada.** Un cartel que se repite deja de leerse
+  — la misma lección del aviso de instalar la app.
+- Reemplazó al renglón `#profe-planes`, que decía solo lo de los planes: dos
+  lugares decidiendo qué se le dice al profesor terminan diciendo dos cosas.
 
 ### El registro de clases no se baja entero
 
@@ -5299,6 +5358,16 @@ y —lo que de verdad importa— que los tres números **salgan del RPC y que na
 pida `training_progress`**: si alguien vuelve a sumarlos acá la página se ve
 igual de bien hasta que un alumno cruza el techo de PostgREST. Y que a quien da
 clase se le pinte "Tu semana" y **no** el panel del alumno.
+
+De los peldaños del profesor comprueba los seis, que es donde está el error
+fácil: que sin alumnos la franja **no ofrezca ninguna página** que la base le
+vaya a negar (se mira el `href` de verdad) pero que a quien administra sí, que
+«ninguna tarea puesta» no se confunda con «ninguna pendiente» —a quien mandó
+cinco y las hicieron todas no se le pide la primera—, que «nunca dio clase» no
+se confunda con «este mes no», y que con todo al día la franja **no se
+destape** (se mide el `display` que calcula el navegador). Está probado que
+falla de verdad: cambiando `tareas_puestas` por `tareas_pendientes`, saltan
+seis comprobaciones.
 
 De los exámenes en la franja comprueba los seis estados en que se puede estar,
 que son justamente los que se distinguen mal: que uno entregado no la destape,
