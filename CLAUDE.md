@@ -4642,10 +4642,13 @@ de práctica no tiene por qué ocupar una fila ni salir en los informes—.
   tampoco. Por eso no hizo falta tocar las seis páginas de partida.
 - `js/bot-oscar.js` **no conoce ninguna variante**: cada modalidad le pasa un
   adaptador con cuatro cosas —`turno()`, `jugadas()`, `probar(jugada)` (que
-  devuelve otro adaptador con la jugada hecha) y `material()`—. Tres niveles:
-  al azar con gusto por las capturas, una jugada mirando la respuesta, y dos
-  jugadas con poda alfa-beta. Está comprobado que el nivel 3 termina con ventaja
-  sobre el nivel 1.
+  devuelve otro adaptador con la jugada hecha) y `material()`— más dos
+  opcionales que si faltan no rompen nada: `enJaque()`, para distinguir el mate
+  del ahogado, y `valorJugada(j)`, para ordenar las jugadas sin clonarlas (ver
+  abajo). Cuatro niveles: al azar con gusto por las capturas, una jugada
+  mirando la respuesta, tres jugadas con poda alfa-beta, y el Maestro, que es
+  el mismo buscador con más tiempo y más profundidad. Está comprobado que el
+  nivel 3 termina con ventaja sobre el nivel 1.
 - No usa Stockfish a propósito: solo sabría jugar el ajedrez normal, y acá vale
   más un rival que entienda abrazos, camaleón y crazyhouse.
 - **A ciegas lleva su propio adaptador**: su motor delega en chess.js y no tiene
@@ -4655,6 +4658,94 @@ de práctica no tiene por qué ocupar una fila ni salir en los informes—.
   tablero desde un estado serializado (`loadState`) que hoy solo arma la página
   de partida, y Duelo Simultáneo no tiene turnos —los dos mueven a la vez contra
   reloj—, así que no hay "turno del bot" que atender y pide otro diseño.
+
+### El nivel 3 decía "tres jugadas" y estaba haciendo dos
+
+Todo el costo del bot está en `probar()`, y no se parece en nada a "hacer una
+jugada": cada adaptador se **clona desde su posición serializada** —chess.js
+vuelve a leer una FEN entera, Cartas rehace su JSON—, así que una llamada
+cuesta ~123 µs contra los ~7 µs de evaluar la posición ya hecha. Mil veces más.
+
+Y para ORDENAR las jugadas de un nodo se clonaban **todas**, solo para mirarle
+el `material()` a cada una. Después la poda alfa-beta hacía su trabajo y se
+exploraban dos o tres: **el 97% de los clones se construían para tirarlos**, y
+se tiraban después de haberlos pagado, así que el corte de la poda no ahorraba
+nada. Eso no da ningún error — el bot juega bien, solo que se le va el
+presupuesto en posiciones que nadie iba a mirar. Lo que sí se veía, si uno
+medía: **el nivel 3, que la pantalla describe como "busca tres jugadas
+adelante", se quedaba en DOS** en cuatro de seis posiciones normales, gastando
+sus 400 ms enteros. Un nivel que promete una profundidad y entrega otra.
+
+- **El orden se decide ahora sin jugar nada**, con `valorJugada(j)`, el quinto
+  método del adaptador: primero las capturas, y entre ellas la que se queda con
+  la pieza más gorda usando la más barata; sin capturas, cuánto mejora de
+  casilla la pieza que se mueve. Sale de leer dos casillas del tablero que ya
+  está delante. `probar()` se paga **una por una, al entrar en la rama**, así
+  que lo que la poda no explora tampoco se clona.
+- **`valorJugada` es opcional a propósito.** Un adaptador que no la tenga vuelve
+  solo al orden de antes y da exactamente el mismo resultado, más lento — nunca
+  peor. Pero al que se le olvide nadie se lo dice, y por eso el verificador
+  mira que los seis la tengan.
+- **Y un historial de cortes**, porque el orden barato se queda ciego donde no
+  hay capturas —un final de peones, que es justo donde más falta hace buscar
+  hondo—: cada jugada que provoca un corte suma un punto y se prueba antes la
+  próxima vez que aparezca. El bono está acotado (`h / (h + 50)`) para que no
+  se cuele delante de una captura buena, y la tabla se vacía en cada jugada.
+- **La raíz clona sus jugadas UNA vez** y las reordena con lo que aprendió la
+  profundidad anterior. Antes cada vuelta de la profundización iterativa
+  volvía a clonarlas todas y redescubría el orden desde cero, que es tirar
+  justamente lo que la profundización iterativa viene a comprar.
+- **A una jugada del fondo no se baja un nivel más.** `negamax(hijo, 0)`
+  devolvía `lado * material()`, que es el número que el orden **ya había
+  calculado**: era una llamada y una segunda evaluación de la misma posición
+  por cada hoja.
+- **`materialDeTablero()` ya no arma una lista de piezas.** Construía ~32
+  objetos por evaluación (`Object.assign({casilla}, p)`) y recorría tres veces;
+  ahora es una pasada por las 64 casillas sin una sola asignación. Lo único que
+  obligaba a las dos pasadas era el rey —su tabla se mezcla según la fase de la
+  partida, y la fase no se sabe hasta ver el tablero entero—: se anota en qué
+  casilla está cada rey y se suma su parte al final. El número que sale es
+  **exactamente** el mismo, comprobado sobre 120 posiciones al azar y dos
+  tableros raros (piezas fusionadas de Abrazos, reserva de Crazyhouse).
+
+Medido a profundidad fija 3, con el mismo trabajo: de 1.200 ms a 230 ms en una
+posición abierta (10 veces menos clones), de 780 a 198 en un mediojuego, y el
+pico de memoria de ~22 MB a ~11 MB. Con el presupuesto real, el nivel 3 llega a
+las tres jugadas que promete y le sobra la mitad del tiempo. Y jugando de
+verdad, 30 partidas del bot nuevo contra el viejo al nivel 3: **10 ganadas, 3
+perdidas, 17 tablas**.
+
+**Lo que esto NO arregla**, y conviene tenerlo escrito: el último nivel de la
+búsqueda es una evaluación estática —se mira el material de la posición que
+queda, no si el rival se quedó sin jugadas—, así que un mate que cae justo ahí
+se cuenta como "una posición con una torre de más". O sea que el **nivel 3 no
+ve un mate en 2**; el nivel 4, que llega hasta seis, sí. Viene siendo así desde
+siempre y arreglarlo costaría pedirle las jugadas legales a cada hoja, que es
+lo más caro que hay acá (~1,6 ms por llamada).
+
+**Al tocar `js/bot-oscar.js`, el evaluador de `bot.html` o cualquiera de los
+seis adaptadores, correr `node herramientas/verificar-bot-oscar.js`**
+(necesita `npm install chess.js@0.10.3`; no hace falta navegador, ni red, ni el
+sitio servido). Comprueba que la jugada elegida sea una de las que elegiría un
+**minimax puro** —sin poda, sin recortes, sin atajos— a la misma profundidad,
+que el camino de repuesto (sin `valorJugada`) dé lo mismo, que encuentre el
+mate y no busque el ahogado con la partida ganada, que el evaluador sea
+simétrico (la misma posición con los colores cambiados vale lo mismo con el
+signo al revés, que es lo que caza una tabla de posición mal reflejada), que
+ninguna jugada sea ilegal en los cuatro niveles, que no se pase del
+presupuesto —es tiempo del hilo principal, o sea la pantalla congelada— y
+**cuántas posiciones clona para decidir una jugada**. Esa última es la rara y
+es la que de verdad hace falta: volver a ordenar clonándolas todas funciona
+igual de bien y cuesta diez veces más, y no lo delata nada salvo contar los
+clones. Está probado que falla de verdad: con el orden de antes saltan las tres
+comprobaciones de costo, y rompiendo el atajo del último nivel saltan cuatro de
+las de equivalencia.
+
+- Su espejo arma los enroques en el orden `KQkq` y **comprueba que la FEN
+  vuelva a salir igual**: chess.js los valida con una expresión regular y, si
+  los rechaza, deja el tablero **vacío** en vez de dar un error — la prueba
+  pasaría a comparar el evaluador contra la nada y daría verde sin comprobar
+  nada. Es la misma trampa que ya documentaron los dobles de Supabase.
 
 ## Retar a quien está en línea
 
