@@ -316,6 +316,13 @@ el botón **al lado de «Sesión en vivo»**, dentro del mismo grupo «Clase en 
 y no dentro de la tarjeta: un `<a>` dentro de otro `<a>` no es HTML válido y el
 lector de pantalla anunciaría dos destinos donde se ve uno.
 
+- **Se probó guardarlo como una columna de `profiles` y se descartó**, así que
+  no se vuelve a intentar: `profiles.enlace_llamada` existió unas horas y se
+  quitó (`quitar_profiles_enlace_llamada`). La RLS es por FILA y no por
+  columna, y `profiles_select` le deja al alumno ver la fila entera de
+  cualquiera de sus profesores — o sea que ahí el enlace le llega SIEMPRE y el
+  «solo con la clase abierta» lo dibujaría únicamente la pantalla, que se salta
+  desde la consola. En una tabla aparte esa condición ES la política.
 - **El enlace es del PROFESOR, no de la clase**, y eso no es comodidad:
   `class_sessions` se crea SOLA —al entrar un alumno o al mandarse una
   posición—, sin pasar por ningún formulario, así que un `enlace_video` por

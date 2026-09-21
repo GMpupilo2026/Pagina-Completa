@@ -97,25 +97,25 @@ supabase db push
 Sin el CLI, se pegan una por una en el editor SQL, **en orden**: varias
 dependen de la anterior (la que agrega una columna a una tabla que otra creó).
 
-- Academia: `supabase/migraciones/` — 190 migraciones.
+- Academia: `supabase/migraciones/` — 193 migraciones.
 - Inscripciones: `supabase/migraciones-colegios/` — 5.
 
 **Después de aplicarlas, comparar contra el retrato** que está en
-`supabase/esquema/inventario-academia.txt`: 63 tablas, 112 funciones, 180
-políticas, 21 triggers, 130 índices, 15 tablas en Realtime, 3 tareas de cron.
+`supabase/esquema/inventario-academia.txt`: 64 tablas, 113 funciones, 181
+políticas, 21 triggers, 132 índices, 15 tablas en Realtime, 4 tareas de cron.
 Si falta una política, nadie se entera hasta que a alguien se le abre algo que
 no debía, o se le cierra algo que sí. La consulta que arma ese inventario está
 en `herramientas/verificar-punto-restauracion.js`.
 
-**Dos migraciones aplicadas que todavía NO están respaldadas acá**, y por eso
-la huella del verificador no va a coincidir hasta que se bajen:
-`20260921182205_cobros_recordatorios_programados` y
-`20260921213712_profiles_enlace_llamada`. Las aplicaron otras tandas de trabajo
-y su SQL vive solo en `supabase_migrations.schema_migrations`. Se bajan con el
-volcado de siempre; el archivo tiene que quedar **byte a byte** como
+**Al bajar una migración, el archivo tiene que quedar byte a byte** como
 `array_to_string(statements, E'\n\n')` —sin salto de línea al final si el
-guardado no lo trae—, o la huella sigue sin cuadrar aunque el contenido sea el
-mismo.
+guardado no lo trae—, o la huella no cuadra aunque el SQL sea el mismo, y una
+alarma que siempre suena deja de leerse. El md5 de cada una se pide así:
+
+```sql
+select version, md5(array_to_string(statements, E'\n\n'))
+from supabase_migrations.schema_migrations order by version desc limit 5;
+```
 
 ### 3. Los datos
 
