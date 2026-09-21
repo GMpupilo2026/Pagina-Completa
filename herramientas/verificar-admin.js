@@ -342,10 +342,15 @@ async function pruebaBuscarEntreGrupos(browser) {
   igual("al borrar la búsqueda se vuelve solo a las fichas",
     await page.evaluate(() => document.getElementById("users-panel").hidden), "true");
 
-  // El filtro de rol, y la opción que no es un rol.
+  /* El filtro de rol, y la opción que no es un rol.
+
+     Es UNA sola profesora, no dos: desde que la cuenta master dejó de estar
+     guardada como alumna y pasó a `role = 'admin'`, ya no cuenta ni como
+     profesora ni como alumna en ninguna lista. Que acá se esperaran dos era
+     justo el resto de antes. */
   await page.selectOption("#role-filter", "profesor");
-  await page.waitForFunction(() => /2 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
-  bien("filtrar por «Profesores» deja 2");
+  await page.waitForFunction(() => /1 cuenta/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });
+  bien("filtrar por «Profesores» deja 1: la cuenta master ya no cuenta como profesora");
 
   await page.selectOption("#role-filter", "sin-profesor");
   await page.waitForFunction(() => /3 cuentas/.test(document.getElementById("users-summary").textContent), { timeout: 10000 });

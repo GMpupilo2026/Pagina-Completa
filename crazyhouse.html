@@ -367,7 +367,7 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
 
             const { data: roomData, error: roomError } = await sb.from("game_rooms").select("*").eq("id", ROOM_ID).maybeSingle();
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
@@ -375,8 +375,13 @@
             myColor = room.white_id === profile.id ? "w" : (room.black_id === profile.id ? "b" : null);
             if (!myColor && !isTeacher) { showError("No formas parte de esta partida."); return; }
 
-            const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", [room.white_id, room.black_id]);
-            (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+            /* El nombre de los dos lados sale de nombres_de_jugadores() y no de
+               `profiles`: desde que el reto está abierto a toda la Academia el
+               rival puede ser de otra clase, que por la RLS de `profiles` no se
+               ve —la tarjeta diría "tu rival" sin que nada fallara— y, sobre
+               todo, aquel select se llevaba también su correo. */
+            const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: [room.white_id, room.black_id] });
+            (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
 
             board = new CrazyhouseBoard(
                 document.getElementById("board"),

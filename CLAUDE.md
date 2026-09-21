@@ -889,10 +889,24 @@ profesor. Acá es al revés — la cuenta master ya no cumplía ninguna de esas
 comprobaciones, porque era 'alumno'. Pasar a 'admin' no le quita ni un permiso
 de los que tenía; lo único que cambia es de qué listas desaparece.
 
-- Lo que la cuenta master **sigue sin poder**, igual que antes: abrir una clase
-  en vivo, plantear una pregunta o guardar una partida —esas políticas piden
-  `role = 'profesor'` a secas—. Para dar clase se usa una cuenta de profesor;
-  eso no cambió en esta tanda y no se tocó.
+- **La cuenta master también da clase**, y eso hubo que arreglarlo aparte:
+  cinco políticas pedían `role = 'profesor'` A SECAS —`class_sessions_insert`,
+  `questions_insert`, `practice_sessions_insert`, `saved_games_insert` y
+  `archivos_pgn_insert`, más `tv_settings_update_profesor`— así que al pasar a
+  'admin' no podía abrir una clase en vivo, plantear una pregunta, abrir una
+  ronda de práctica, guardar una partida ni subir un PGN. Ahora las seis
+  preguntan `is_admin or role = 'profesor'`, que es la regla permanente de la
+  casa. En el navegador, `isTeacher` hacía la misma comprobación a secas en
+  diez páginas (`sesion.html`, las siete de partida, `partidas.html`,
+  `clases.html`, `tv.html`) y las diez pasaron a `|| profile.is_admin`.
+  Comprobado impersonando roles en SQL: la cuenta master abre la clase y un
+  alumno sigue sin poder.
+  - **Quien coordina nunca dejó de poder**, y por eso no hizo falta tocar nada
+    para eso: coordinar es una marca ENCIMA de `role = 'profesor'`, no un
+    tercer valor — es justamente lo que esa decisión compra.
+  - En el chat de la clase en vivo, `isFromTeacher` miraba lo mismo, así que
+    los mensajes de quien administra se pintaban del lado del alumno. Va con
+    `is_admin` también, y la consulta trae esa columna.
 - El CHECK de `es_coordinador` acepta ahora 'profesor' o 'admin'.
 
 ### Cambiar el rol de una cuenta, desde coordinación
@@ -4165,7 +4179,8 @@ profesor o de administración.
 
 #### Dónde vive en el panel de la Academia
 
-En `clases.html` el diagnóstico tiene **tarjeta propia** en el grupo "Aprender".
+En `clases.html` el diagnóstico tiene **tarjeta propia**, hoy en el grupo "Mide
+tu nivel" y **solo para administración** (ver «El panel de la Academia»).
 Estaba enterrado en Entrenamiento › Aprende › Asignaciones, que son tres clics
 para lo primero que conviene hacer al entrar. El **examen de arbitraje** se mudó
 de "Herramientas" a la par del diagnóstico: las dos son pruebas que ubican el
@@ -4391,13 +4406,37 @@ arrancar una entre ellos.
   sobrevivir el rato que el otro tarda en contestar, y así le llega aunque en
   ese momento no estuviera mirando la página. La tabla está en la publicación
   `supabase_realtime`: sin eso los retos no llegan solos, que es todo el punto.
-- **Solo se ve y se puede retar a gente de la propia clase.** La regla es
-  `public.pueden_jugar_entre_si(a, b)` (`SECURITY DEFINER`): mismo profesor, o
-  alumno con su propio profesor, o alguien que administra. La página filtra la
-  lista con la misma regla, pero solo para no mostrar botones que van a fallar
-  — quien manda es la política de la base.
+- **Retarse es lo ÚNICO que comparte toda la Academia.** `public.pueden_jugar_entre_si(a, b)`
+  (`SECURITY DEFINER`) dice hoy "son dos cuentas distintas de la Academia" y
+  nada más. La página filtra con la misma regla, pero solo para no mostrar un
+  botón que va a fallar — quien manda es la política de la base.
+  - Antes había que **compartir profesor**, y eso dejaba la lista vacía casi
+    siempre: un alumno que quiere jugar AHORA no tiene por qué esperar a que
+    alguien de su propia clase esté conectado. Y la lista vacía se lee igual
+    que "no hay nadie", así que el filtro de más **no daba ningún error** —
+    solo lo dejaba sin con quién jugar.
+  - **Lo que NO se abrió**: `puedo_armar_partida_con()` (el profesor sigue
+    armando partidas solo con los suyos, desde el formulario) ni
+    `profiles_select` (ver y gestionar a alguien sigue siendo otra cosa que
+    jugar con él). Ver alumnos ajenos sigue cerrado para profesores y para
+    quien coordina.
+  - **El nombre del rival sale de `public.nombres_de_jugadores(uuid[])`**, no
+    de `profiles`. Las ocho páginas de partida pedían
+    `select("id, full_name, email")`, y con la lista abierta eso era doble
+    problema: el rival de otra clase no está en `profiles_select` —la tarjeta
+    habría dicho "tu rival" sin que nada fallara— y aquel select repartía el
+    correo de un montón de menores de edad. La función devuelve el nombre ya
+    resuelto (nunca el correo entero: solo lo de antes de la @ cuando no hay
+    nombre escrito) y **solo de quien comparte conmigo una partida o un reto**,
+    más lo que alcanza quien supervisa esa partida — el mismo alcance de
+    `game_rooms_select`, escrito con las mismas funciones de la casa
+    (`soy_profesor_de_alguno`), menos `es_companero`. No es un directorio.
+  - **El canal de presencia dejó de anunciar los profesores de cada quien.**
+    Servía para decidir si eran compañeros; ahora no hace falta y, de paso, era
+    repartirle a toda la página con quién estudia cada alumno.
 - **Aceptar no crea la partida con un insert**: un alumno no puede insertar en
-  `game_rooms` (esa política sigue exigiendo profesor, y así se queda). La crea
+  `game_rooms` (esa política sigue colgando de `puedo_armar_partida_con()`, que
+  NO se abrió, y así se queda). La crea
   `public.aceptar_desafio()`, `SECURITY DEFINER`, que comprueba que el reto
   existe, que sigue pendiente y que quien acepta es quien lo recibió, sortea los
   colores, arma la sala y de paso cancela los otros retos pendientes entre esos
@@ -4414,8 +4453,8 @@ arrancar una entre ellos.
   el otro podrían arrancar distinto.
 - Se retan las modalidades de a dos que ya existen; las de 4 jugadores no
   (necesitan cuatro personas y otro reparto) y las que están "Próximamente"
-  tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
-  la lista le ofrece el bot de Oscar mientras tanto.
+  tampoco. Cuando de verdad no hay nadie conectado, la lista ofrece el bot de
+  Oscar mientras tanto.
 - **Rechazar puede llevar un motivo** (`desafios.motivo_rechazo`, opcional, 140
   caracteres), que quien reta ve en vez del genérico "Tu reto no fue aceptado
   esta vez.". La política de `update` de `desafios` no restringe qué columnas
@@ -4560,13 +4599,24 @@ linter bajó a **61**.
 `protect_game_state_teacher_columns`) llevaban revocadas desde siempre. Se fue
 olvidando en las diez que se escribieron después.
 
-- **Se revoca de `PUBLIC`, NUNCA de `anon, authenticated`.** La primera
-  migración hizo `revoke ... from anon, authenticated`, **devolvió éxito y no
-  revocó nada**: ellos no tenían ningún grant propio que quitar. Es el fallo
-  callado de siempre, esta vez en el SQL — el comando "pasa" y todo queda igual.
-  Se ve en el ACL: una función bien revocada es
-  `{postgres=X/postgres,service_role=X/postgres}`, y una expuesta tiene además
-  la entrada **`=X/postgres`**, que es el grant a PUBLIC.
+- **Se revoca de los TRES: `public, anon, authenticated`.** Acá estuvo escrito
+  lo contrario —que bastaba con `PUBLIC` porque los otros dos no tenían ningún
+  grant propio que quitar— y **hoy no es cierto**: Supabase les da el suyo con
+  `alter default privileges`, así que una función nueva nace con los tres.
+  Revocar solo de `PUBLIC` "pasa" y la función **sigue publicada**, que es el
+  mismo fallo callado en el SQL, ahora al revés. Lo que manda es el ACL, no lo
+  que devuelva el comando: una función bien revocada es
+  `{postgres=X/postgres,service_role=X/postgres}` y nada más; cada entrada
+  `anon=X/...`, `authenticated=X/...` o **`=X/postgres`** (ése es PUBLIC) es una
+  puerta abierta. Y lo que de verdad contesta es
+  `has_function_privilege('anon', oid, 'execute')`, que es lo que pregunta la
+  consulta de abajo.
+- **A `authenticated` NO se le quita el execute de una función que llame una
+  política de RLS.** Una política se evalúa con los privilegios de quien
+  escribe, así que sin ese execute la política rechaza a todo el mundo — y ahí
+  sí se rompe algo de verdad. Solo se le quita a `anon`, que no tiene nada que
+  hacer ahí. Es la diferencia con las de trigger, que el motor dispara sin
+  pedirle `EXECUTE` a nadie.
 - **`service_role` conserva el suyo**, que es el que usan las Edge Functions.
 - **Revocar NO afecta a los triggers.** El motor los dispara con los privilegios
   del trigger y no le pide `EXECUTE` a quien hace el insert. Está comprobado
@@ -4598,7 +4648,7 @@ where pronamespace = 'public'::regnamespace
     or has_function_privilege('authenticated', oid, 'execute')
     or proconfig is null);
 
-revoke execute on function public.<la_nueva>() from public;
+revoke execute on function public.<la_nueva>() from public, anon, authenticated;
 ```
 
 ### Lo que queda pendiente y NO se puede hacer desde acá
@@ -4692,7 +4742,8 @@ lista, y el resto se acomoda solo.
 - **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
   "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
   con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
-  dónde está parado. Ahí quedan los dos diagnósticos y nada más.
+  dónde está parado. Ahí quedan los dos diagnósticos y nada más — y **el grupo
+  entero es SOLO de administración**, ver abajo.
 - **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
   alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
   dos accesos están en mantenimiento—: una sección entera de la página que no
@@ -4701,20 +4752,31 @@ lista, y el resto se acomoda solo.
   queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
   entera de que eso vuelve. No se esconde con una clase: no se pinta — un
   enlace invisible pero presente sigue siendo una parada de tabulador.
-- **Los dos diagnósticos son para todo el mundo**, el de arbitraje incluido:
-  cualquiera puede medir su nivel de reglamento, no solo quien da clase. Lo que
-  cambia según quién mira es **a dónde lleva la tarjeta**, y es UNA sola tarjeta
-  (repetir el nombre en el panel ya salió mal una vez, con "Torneos"):
-  - equipo docente → `arbitraje.html`, que además trae la revisión de los
-    exámenes del público y el detalle pregunta por pregunta;
-  - todos los demás → `nivel-de-arbitraje.html`, el mismo examen y el mismo
-    criterio pero **sin enseñar las respuestas al terminar**. El banco es un
-    archivo estático y quien sepa mirar el código las ve igual; lo que se evita
-    es regalárselas en pantalla.
-  Esa página es la pública, así que pide nombre y correo — pero **se rellenan
-  solos cuando hay sesión**: a quien entra desde el panel el sitio ya se los
-  sabe, y hacerle escribir lo que ya escribió no tiene sentido. Lo que ya venía
-  escrito a mano no se toca.
+- **Los dos diagnósticos son SOLO de administración.** Estaban para todo el
+  mundo, y eso era regalar las dos pruebas con las que el sitio ubica el nivel
+  de alguien: los bancos —301 preguntas y 200 de reglamento— son archivos
+  estáticos, así que cuanta más gente las resuelve por su cuenta, menos miden.
+  Un diagnóstico se APLICA, no se practica.
+  - Lo quita `diagnosticosSoloParaAdministracion()`, sobre la lista ya armada y
+    en un solo lugar, igual que `apagarEnMantenimiento()`. Se quita el **grupo
+    entero** y no sus dos tarjetas: un encabezado sin nada debajo es la misma
+    sección muerta que ya se quitó de "Herramientas" para el alumnado.
+  - Va **después** del `if` que le reapunta el destino al arbitraje, así quien
+    administra lo conserva apuntando a `arbitraje.html` —la página con la
+    revisión de los exámenes del público y el detalle pregunta por pregunta— y
+    no a la versión pública. Y el grupo se queda **escrito en `TILE_GROUPS`**
+    con sus dos tarjetas: definirlo dentro del `if` de un rol volvería a
+    repartir el panel a pedazos.
+  - **El diagnóstico de nivel sigue abierto al público sin cuenta** en
+    `entreno/diagnostico.html`, que es una puerta de entrada al sitio y otra
+    cosa: lo que se quitó es el camino desde el panel de quien ya está adentro.
+    Lo mismo `nivel-de-arbitraje.html`, que es pública y enlazada desde la
+    portada.
+  - La comprobación que importa no es que el grupo no salga en la lista: es que
+    **no quede ni un enlace a esas dos páginas en la grilla**, escondido o no —
+    un enlace invisible pero presente sigue siendo una parada de tabulador.
+    `verificar-panel.js` lo mira con las tres caras, y a administración le pide
+    lo contrario: que SÍ se le pinten los dos, o se quedaría sin ninguna puerta.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
   `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
   promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
