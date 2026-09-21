@@ -38,7 +38,10 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 
 const PROFE  = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null };
 const ALUMNA = { id: "u-ana",   role: "alumno",   is_admin: false, es_coordinador: false, full_name: "Ana Rojas",    email: "ana@x.cr",    grupo: "7B" };
-const ADMIN  = { id: "u-admin", role: "profesor", is_admin: true,  es_coordinador: true,  full_name: "Oscar Angulo", email: "oscar@x.cr",  grupo: null };
+/* La cuenta master ya no es ni profesora ni alumna: su `role` es 'admin'.
+   Antes estaba guardada como alumna, así que salía en las listas de «para
+   quién» al mandar una tarea y contaba como alumna en los conteos. */
+const ADMIN  = { id: "u-admin", role: "admin", is_admin: true,  es_coordinador: true,  full_name: "Oscar Angulo", email: "oscar@x.cr",  grupo: null };
 
 /* 47 clases repartidas en cinco meses: más de una página (van de 20 en 20) y
    más de un mes, que es lo que hace falta para probar el agrupado. */
@@ -411,7 +414,7 @@ async function pruebaAdmin(browser) {
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
     ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
-     "solicitudes.html", "formularios.html", "cobros.html"]);
+     "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
   await ctx.close();
 }
 

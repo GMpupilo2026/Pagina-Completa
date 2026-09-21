@@ -833,6 +833,139 @@ el subgrupo salga en el selector de Informes y —lo que de verdad importa— qu
 se ve exactamente igual de bien. Está probado que falla de verdad: quitándole
 el filtro a `filteredStudents()`, salta.
 
+## Coordinar es un alcance, no una llave maestra
+
+`soy_coordinador()` contestaba una sola pregunta —«¿coordina o administra?»— y
+con eso se abría TODO: los cobros de la Academia entera, las inscripciones, los
+formularios. Con miles de alumnos y varios coordinadores eso no es coordinar,
+es administrar, y quien coordina un colegio no tiene por qué ver las
+mensualidades de otro.
+
+Lo que faltaba era el ALCANCE, y se arma como todo lo demás acá: una tabla
+puente que solo escribe quien administra, y una función que contesta la
+pregunta.
+
+- **`soy_coordinador()` dice QUIÉN entra a una pantalla;
+  `bajo_mi_coordinacion(persona)` dice SOBRE QUIÉN.** Al escribir una política
+  o una función de coordinación se pregunta por la segunda, nunca por la tabla
+  — el mismo principio que `profesores_de()` para "quién es profesor de quién".
+- **`public.coordinador_profesores` NO tiene política de insert/update/delete**,
+  igual que `profile_teachers` y `equipos`: darse a sí mismo un profesor sería
+  darse sus alumnos. La escribe `set_profesores_del_coordinador()`, que exige
+  `is_admin` y **deja la lista EXACTAMENTE como se mandó** — lo que no esté, se
+  quita, igual que `set_teachers` y `equipo_set_alumnos`.
+- **Quien coordina alcanza a tres clases de gente**, y las tres hacen falta:
+  sus profesores, los alumnos de esos profesores y sus propios alumnos.
+  Coordinar no quita dar clase.
+- **Quien administra da `true` siempre.** Por eso las políticas no llevan una
+  segunda rama para él: `bajo_mi_coordinacion()` ya la trae.
+- **Los cobros quedaron acotados con eso** (`cobros`, `pagos`, `suscripciones`,
+  `cobros_contacto`). Los **planes** no: son las tarifas de la Academia, no de
+  un alumno, y no hay a quién atarlos.
+  - **Cuidado con `pagos`**, que fue el error de esta tanda y se atajó en el
+    momento: colgarlo solo del cobro visible abre la puerta que se quería
+    cerrar, porque un alumno VE su propio cobro y podría insertar un pago sobre
+    él y darse por pagado. El `soy_coordinador()` va escrito; lo que cuelga del
+    cobro es el alcance, no el permiso. Comprobado impersonando a un alumno: ve
+    su cobro y su insert de 999.999 queda **rechazado**.
+- **Un coordinador sin profesores vinculados ve casi nada**, y eso no puede ser
+  callado: el panel se lo dice con todas las letras y nombra quién se los
+  vincula. Es la primera cosa que pasa al marcar a alguien como coordinador.
+
+### `role = 'admin'`: la cuenta master no es alumna de nadie
+
+`role` solo valía 'profesor' o 'alumno', así que quien administra estaba
+guardado como ALUMNO con `is_admin` encima. No rompía ningún permiso —`is_admin`
+va escrito aparte en todas las políticas que le importan— pero la metía donde no
+pinta nada: salía en la lista de «para quién» al mandar una tarea o un examen,
+contaba como alumna en los conteos y podía ser «compañera de clase» de
+cualquiera.
+
+**Por qué esto NO es el tercer valor contra el que avisa este archivo.** Aquel
+aviso era por `es_coordinador`: hacer de "coordinar" un tercer rol habría
+obligado a revisar las 23 comprobaciones de `role === 'profesor'` del navegador
+y las 13 de la base, porque quien coordina SÍ tiene que poder todo lo de un
+profesor. Acá es al revés — la cuenta master ya no cumplía ninguna de esas
+comprobaciones, porque era 'alumno'. Pasar a 'admin' no le quita ni un permiso
+de los que tenía; lo único que cambia es de qué listas desaparece.
+
+- Lo que la cuenta master **sigue sin poder**, igual que antes: abrir una clase
+  en vivo, plantear una pregunta o guardar una partida —esas políticas piden
+  `role = 'profesor'` a secas—. Para dar clase se usa una cuenta de profesor;
+  eso no cambió en esta tanda y no se tocó.
+- El CHECK de `es_coordinador` acepta ahora 'profesor' o 'admin'.
+
+### Cambiar el rol de una cuenta, desde coordinación
+
+`public.cambiar_rol(persona, rol)` sube a un alumno a profesor o baja a un
+profesor a alumno. Es lo que pasa en una academia de verdad: el alumno grande
+empieza a dar clase a los pequeños.
+
+- **Va por una función `SECURITY DEFINER` con la marca local
+  `ajedrez.cambiando_rol`**, porque el trigger de identidad revierte `role` —el
+  rol no lo decide quien lo tiene—. Y **vuelve a leer la fila y falla si no
+  quedó**: es exactamente la trampa que ya se comió `marcar_coordinador()`, que
+  devolvía "listo" con el valor revertido detrás.
+- **Bajar a alumno a alguien que todavía tiene alumnos asignados se rechaza,
+  CON EL NÚMERO**: esos alumnos se quedarían sin profesor y sus informes
+  dejarían de salirle a nadie, sin que nada fallara.
+- **Nunca deja poner 'admin'**: la cuenta master es una decisión de quien ya
+  administra y se da con su interruptor.
+- **Y lo que más se rompe callado: que la persona DESAPAREZCA de la vista de
+  quien la cambió.** Subir a un alumno a profesor lo saca de `profile_teachers`
+  en la práctica, así que quien coordina lo perdería de vista en el mismo acto
+  de ascenderlo. Por eso queda bajo su coordinación; y al revés, quien baja a un
+  profesor a alumno se queda con él como alumno suyo.
+- Comprobado impersonando roles en SQL: un alumno ajeno se rechaza, el suyo sube
+  y queda coordinado, vuelve a bajar y deja de estarlo, la cuenta master se
+  rechaza y un alumno no puede ascenderse solo.
+
+### `coordinacion.html`: por dónde se entra a la gente que uno coordina
+
+Sus profesores y sus alumnos, con buscador, filtro por rol y «Ver más». Por
+cada cuenta: entrar a sus subgrupos, reenviarle el acceso y cambiarle el rol.
+
+- **La lista la filtra y la corta `mi_gente()`, en la base.** Nace pensando en
+  miles: bajarse las cuentas para filtrarlas en el navegador es la piedra con la
+  que ya tropezaron Informes, el registro de clases y Cobros — PostgREST corta
+  la respuesta a partir de cierta cantidad de filas sin dar ningún error.
+  La búsqueda va **sin tildes** en el propio SQL, para no tener que bajarlas.
+- **No se ofrece lo que la base va a rechazar**: ni cambiarle el rol a la cuenta
+  master ni a la propia. Un botón que va a fallar es peor que ninguno.
+- **Cambiar el rol pide dos toques en el propio botón**, no un diálogo del
+  navegador: esto se toca desde el celular. Y cuando la base dice que no, se
+  enseña SU mensaje —«todavía tiene 12 alumnos asignados»—, porque un «no se
+  pudo» a secas deja a quien coordina sin saber qué arreglar.
+- **Reenviar el acceso dice a qué bandeja salió.** Con un alumno sin buzón no
+  salió a la suya, y ese es justo el dato que hace falta para avisarle a la
+  familia. `reenviar-acceso` vale ahora también para un PROFESOR bajo
+  coordinación —quien coordina da de alta al equipo y es quien recibe el «no me
+  llegó nada»—; lo único que no se toca desde ahí es la cuenta master.
+
+### Armarle los subgrupos a un profesor
+
+`subgrupos.html?profesor=<id>` abre los de otra persona. Un profesor nuevo con
+cuarenta alumnos no se pone a ordenarlos solo: parte del trabajo de coordinar es
+dejarle los grupos hechos.
+
+- **El dueño no cambia.** Quien coordina entra a los suyos, no se los queda, y
+  la página lo dice arriba con todas las letras. **El fallo callado de esta
+  pantalla es crear con el id de quien coordina en vez del de su profesor**: se
+  vería exactamente igual, y los subgrupos que creía estar armándole a otro
+  serían suyos. El verificador lo mide, y está probado que falla de verdad.
+- Los propios salen de `mis_subgrupos()` —la de todos los días, la que usan el
+  filtro de Informes y el selector de Tareas— y los de otra persona de
+  `subgrupos_de()`. Dos nombres para dos preguntas distintas.
+
+**Al tocar la coordinación, correr `node herramientas/verificar-coordinacion.js`**
+(con el sitio en localhost:8777 y playwright). Comprueba que la lista se le pida
+a la base con su filtro y su rango —y que nadie se baje la tabla de cuentas—,
+que no se ofrezca cambiar el rol de la cuenta master, que cambiar el rol mande a
+quién y a qué rol, que reenviar el acceso diga a qué bandeja salió, que a quien
+todavía no tiene profesores vinculados se le diga por qué no ve a nadie (se mide
+el `display` que calcula el navegador) y que crear un subgrupo ajeno lo deje a
+nombre del profesor.
+
 ## Tareas: el profesor pide cantidades y la tarea se llena sola
 
 `tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
@@ -1663,7 +1796,9 @@ ya seguía `is_admin`.
   columna — **y además la función vuelve a leer la fila y falla si no quedó**,
   para que no pueda mentir otra vez.
 - `public.soy_coordinador()` (`es_coordinador or is_admin`) es lo que preguntan
-  las políticas nuevas.
+  las políticas nuevas para saber QUIÉN entra. **Sobre quién lo dice
+  `bajo_mi_coordinacion()`** — ver «Coordinar es un alcance, no una llave
+  maestra»: coordinar dejó de abrir la Academia entera.
 
 ### Los formularios
 

@@ -58,6 +58,7 @@ IMPERATIVOS = {
     # -ir
     "abrí": "abre", "construí": "construye", "convertí": "convierte",
     "cubrí": "cubre", "decidí": "decide", "elegí": "elige", "escribí": "escribe",
+    "unite": "únete", "sumate": "súmate", "inscribite": "inscríbete",
     "exprimí": "exprime", "medí": "mide", "preferí": "prefiere", "reducí": "reduce",
     "recorré": "recorre", "repetí": "repite", "reproducí": "reproduce", "seguí": "sigue",
 }
@@ -108,7 +109,7 @@ así aquí allí ahí allá acá está están estás esté estés japonés portu
 demás porqué comité subcomité josé café caché también según razón bebé qué holandés
 aperturasmás
 elistá andrés valdés josué prevé noé
-empecé aprendí entendí tomé repasé jugué estudié escribí
+empecé aprendí entendí tomé repasé jugué estudié
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá

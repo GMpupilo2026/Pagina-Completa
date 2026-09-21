@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Coordinación — Ajedrez Integral</title>
+    <meta name="description" content="Las cuentas que coordina cada persona: sus profesores, sus alumnos y lo que puede hacer con ellos.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es de quien coordina</h1>
+            <p class="text-brand-500 dark:text-brand-300">Si te toca coordinar y no puedes entrar, pídele a quien administra que te marque como coordinadora o coordinador.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">🧭 Coordinación</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Tus profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena.</p>
+
+            <!-- Un coordinador sin profesores vinculados no ve casi nada, y sin
+                 esta franja no tendría forma de saber por qué. -->
+            <p id="sin-profesores" hidden class="mb-6 rounded-xl px-4 py-3 text-sm bg-accent-50 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></p>
+            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <div id="tarjetas" class="grid gap-4 sm:grid-cols-3 mb-8"></div>
+
+            <div class="flex flex-wrap items-end gap-3 mb-4">
+                <div class="flex-1 min-w-[12rem]">
+                    <label for="buscar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Buscar</label>
+                    <input id="buscar" type="search" placeholder="Nombre, correo o grupo…" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <div>
+                    <label for="f-rol" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Quiénes</label>
+                    <select id="f-rol" class="bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <option value="">Todas las cuentas</option>
+                        <option value="profesor">Profesores</option>
+                        <option value="alumno">Alumnos</option>
+                    </select>
+                </div>
+            </div>
+
+            <p id="cuenta" class="text-xs text-brand-450 dark:text-brand-350 mb-3" aria-live="polite"></p>
+            <div id="lista" class="space-y-3"></div>
+            <div class="text-center mt-4">
+                <button type="button" id="mas" class="hidden bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más cuentas</button>
+            </div>
+            <p id="vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                Ninguna cuenta coincide con eso.
+            </p>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script>
+/* Coordinación: las cuentas que alcanza quien coordina.
+ *
+ * QUÉ ALCANZA Y POR QUÉ. `soy_coordinador()` dice quién entra acá;
+ * `bajo_mi_coordinacion()` dice sobre quién. Son sus profesores —los que le
+ * vinculó quien administra—, los alumnos de esos profesores y sus propios
+ * alumnos. Antes coordinar abría la Academia entera: con miles de alumnos eso
+ * no es coordinar, es administrar, y las cuentas de un colegio no son asunto
+ * de quien coordina otro.
+ *
+ * LA LISTA LA FILTRA Y LA CORTA LA BASE (`mi_gente`), no el navegador. Es la
+ * piedra con la que ya tropezaron Informes, el registro de clases y Cobros:
+ * PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
+ * ningún error, así que con miles de cuentas la página empezaría a esconder
+ * gente en silencio.
+ */
+let session = null;
+let perfil = null;
+let filas = [];
+let total = 0;
+let desde = 0;
+let peticion = 0;          // descarta la respuesta que llega tarde
+const POR_PAGINA = 50;
+
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
+    a.classList.remove("hidden");
+}
+
+const nombreDe = (u) => u.full_name || u.email || "Sin nombre";
+
+async function cargar(desdeCero) {
+    if (desdeCero) { desde = 0; filas = []; }
+    const mia = ++peticion;
+    const { data, error } = await sb.rpc("mi_gente", {
+        p_busqueda: document.getElementById("buscar").value.trim() || null,
+        p_rol: document.getElementById("f-rol").value || null,
+        p_limite: POR_PAGINA,
+        p_desde: desde,
+    });
+    if (mia !== peticion) return;         // llegó tarde: el filtro ya es otro
+    if (error) { avisar("No se pudo cargar: " + error.message, true); return; }
+    filas = filas.concat(data || []);
+    total = data && data.length ? Number(data[0].total) : (desde ? total : 0);
+    desde = filas.length;
+    pintar();
+}
+
+function pintar() {
+    const caja = document.getElementById("lista");
+    caja.innerHTML = "";
+    document.getElementById("vacio").classList.toggle("hidden", filas.length > 0);
+    document.getElementById("cuenta").textContent = filas.length
+        ? "Mostrando " + filas.length + " de " + total + (total === 1 ? " cuenta" : " cuentas") : "";
+    document.getElementById("mas").classList.toggle("hidden", filas.length >= total);
+
+    filas.forEach((u) => caja.appendChild(tarjeta(u)));
+}
+
+function tarjeta(u) {
+    const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-start justify-between gap-3");
+    const izq = el("div", "min-w-0 flex-1");
+    const linea = el("p", "font-semibold text-brand-800 dark:text-white");
+    // El nombre lo escribe una persona: siempre por textContent.
+    linea.append(nombreDe(u) + " ");
+    /* Los tonos salen de la paleta que de verdad existe (ver PALETA en
+       herramientas/css-construir.js): el ámbar tiene 50, 300, 400, 500, 600 y
+       700, no 100 ni 900. Una clase que no está en la paleta no pinta nada y
+       no da ningún error — la etiqueta se vería sin fondo y nadie lo notaría. */
+    linea.appendChild(el("span", "ml-1 inline-block px-2 py-0.5 rounded-full text-xs font-semibold " + (u.role === "profesor"
+        ? "bg-accent-50 text-accent-700 dark:bg-brand-800 dark:text-accent-400"
+        : "bg-brand-100 text-brand-600 dark:bg-brand-800 dark:text-brand-200"),
+        u.role === "profesor" ? (u.es_coordinador ? "Coordina" : "Profesor") : "Alumno"));
+    izq.appendChild(linea);
+    izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", u.email || ""));
+    const pie = [];
+    if (u.grupo) pie.push(u.grupo);
+    if (u.role === "profesor") {
+        pie.push(u.alumnos === 1 ? "1 alumno" : u.alumnos + " alumnos");
+        pie.push(u.subgrupos === 1 ? "1 subgrupo" : u.subgrupos + " subgrupos");
+    }
+    if (pie.length) izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", pie.join(" · ")));
+    d.appendChild(izq);
+
+    const acciones = el("div", "flex flex-wrap gap-2");
+
+    if (u.role === "profesor") {
+        const subs = el("a", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "👥 Sus subgrupos");
+        subs.href = "subgrupos.html?profesor=" + encodeURIComponent(u.id);
+        acciones.appendChild(subs);
+    }
+
+    /* Reenviar el acceso es lo que se pide cuando una familia dice que el
+       correo de bienvenida nunca llegó. La Edge Function decide a dónde sale
+       —al correo propio, o al de la casa si entra con un usuario— y lo dice:
+       ese dato es justo el que hace falta para poder avisarle a la familia. */
+    const acceso = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "✉️ Reenviar acceso");
+    acceso.type = "button";
+    acceso.addEventListener("click", () => reenviar(u, acceso));
+    acciones.appendChild(acceso);
+
+    // La cuenta master no cambia de rol desde acá, y la propia tampoco.
+    if (!u.is_admin && u.id !== session.user.id) {
+        const otro = u.role === "profesor" ? "alumno" : "profesor";
+        const rol = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+            otro === "profesor" ? "⬆️ Hacer profesor" : "⬇️ Pasar a alumno");
+        rol.type = "button";
+        rol.dataset.confirmar = "no";
+        rol.addEventListener("click", () => {
+            if (rol.dataset.confirmar === "no") {
+                rol.dataset.confirmar = "si";
+                rol.textContent = "¿Seguro? " + (otro === "profesor" ? "Hacer profesor" : "Pasar a alumno");
+                return;
+            }
+            cambiarRol(u, otro, rol);
+        });
+        acciones.appendChild(rol);
+    }
+
+    d.appendChild(acciones);
+    return d;
+}
+
+async function cambiarRol(u, rol, boton) {
+    boton.disabled = true;
+    boton.textContent = "Cambiando…";
+    const { data, error } = await sb.rpc("cambiar_rol", { p_persona: u.id, p_rol: rol });
+    boton.disabled = false;
+    if (error) {
+        /* La base dice POR QUÉ no se puede —«todavía tiene 12 alumnos
+           asignados»—, y eso es lo que hay que enseñar: un "no se pudo" a
+           secas deja a quien coordina sin saber qué arreglar. */
+        avisar(error.message, true);
+        await cargar(true);
+        return;
+    }
+    avisar(rol === "profesor"
+        ? nombreDe(u) + " ahora es profesor, y queda bajo tu coordinación."
+        : nombreDe(u) + " vuelve a ser alumno, y queda asignado a ti.");
+    await cargar(true);
+}
+
+async function reenviar(u, boton) {
+    boton.disabled = true;
+    boton.textContent = "Mandando…";
+    try {
+        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/reenviar-acceso`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`,
+                "apikey": window.SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ alumno_id: u.id }),
+        });
+        const datos = await res.json().catch(() => ({}));
+        if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+        avisar("Le salió el enlace para crear su contraseña a " + (datos.correo_destino || "su correo") + ".");
+    } catch (err) {
+        avisar("No se pudo mandar: " + err.message, true);
+    }
+    boton.disabled = false;
+    boton.textContent = "✉️ Reenviar acceso";
+}
+
+function pintarTarjetas(profesores, alumnos) {
+    const caja = document.getElementById("tarjetas");
+    caja.innerHTML = "";
+    const t = (valor, etiqueta) => {
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5");
+        d.appendChild(el("p", "text-2xl font-bold text-brand-800 dark:text-white", String(valor)));
+        d.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", etiqueta));
+        return d;
+    };
+    caja.appendChild(t(profesores, profesores === 1 ? "profesor que coordinas" : "profesores que coordinas"));
+    caja.appendChild(t(alumnos, alumnos === 1 ? "alumno alcanzado" : "alumnos alcanzados"));
+    caja.appendChild(t(profesores + alumnos, "cuentas en total"));
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { location.href = "login.html?next=coordinacion.html"; return; }
+
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle();
+    perfil = p;
+    document.getElementById("loading").classList.add("hidden");
+    if (!(perfil && (perfil.es_coordinador || perfil.is_admin))) {
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    document.getElementById("app").classList.remove("hidden");
+
+    // Los conteos salen de la propia función, con el tope de cordura: pedir
+    // "todas" solo para contarlas es justo lo que esta página no hace.
+    const [{ data: profes }, { data: alums }] = await Promise.all([
+        sb.rpc("mi_gente", { p_busqueda: null, p_rol: "profesor", p_limite: 1, p_desde: 0 }),
+        sb.rpc("mi_gente", { p_busqueda: null, p_rol: "alumno", p_limite: 1, p_desde: 0 }),
+    ]);
+    const nProfes = profes && profes.length ? Number(profes[0].total) : 0;
+    const nAlumnos = alums && alums.length ? Number(alums[0].total) : 0;
+    pintarTarjetas(nProfes, nAlumnos);
+
+    if (!nProfes && !perfil.is_admin) {
+        const franja = document.getElementById("sin-profesores");
+        franja.textContent = "Todavía no tienes ningún profesor asignado, así que acá solo ves a tus propios alumnos. "
+            + "Quien administra te los vincula desde el panel de Administración.";
+        franja.hidden = false;
+    }
+
+    await cargar(true);
+}
+
+let temporizador = null;
+document.getElementById("buscar").addEventListener("input", () => {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => cargar(true), 300);
+});
+document.getElementById("f-rol").addEventListener("change", () => cargar(true));
+document.getElementById("mas").addEventListener("click", () => cargar(false));
+init();
+    </script>
+</body>
+</html>
