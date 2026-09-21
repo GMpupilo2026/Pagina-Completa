@@ -154,6 +154,10 @@ window.__consultas = [];
     /* La sala de videollamada del profesor. Al equipo docente se la sirve esta
        tabla (es SUYA); al alumnado le llega por mis_clases(), que es donde la
        RLS decide si se la entrega. */
+    /* Una fila por (profesor, grupo): «» es la sala de todas sus clases.
+       Al alumnado no se le sirve de acá —le llega por mis_clases(), que es
+       donde la RLS decide cuál le toca—; esto es lo que ve el equipo docente
+       de lo SUYO. */
     profesor_videollamada: DATOS.profesor_videollamada || [],
   };
 
@@ -1447,11 +1451,39 @@ async function pruebaVideollamada(browser) {
   await r.ctx.close();
 
   r = await panel(browser, [PROFE, ALUMNA], "u-profe", {},
-    { profesor_videollamada: [{ profesor_id: "u-profe", enlace: "https://zoom.us/j/123456789" }] });
+    { profesor_videollamada: [{ profesor_id: "u-profe", grupo: "", enlace: "https://zoom.us/j/123456789" }] });
   b = await botonListo(r.page);
   igual("la profesora con su sala: entra sin esperar a nadie",
     [b.tag, b.href, b.bloqueado], ["A", "https://zoom.us/j/123456789", false]);
   igual("…y se le nombra el servicio", /Entrar a Zoom/.test(b.texto), "true");
+  await r.ctx.close();
+
+  /* 5b. Varias salas: una por sede. Es el caso de un profesor que da en SJ y
+     en CENFO — con un solo botón, el de SJ le servía también para entrar a la
+     clase de CENFO, o sea a la que no era. */
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", { viewport: { width: 1280, height: 900 } },
+    { profesor_videollamada: [
+      { profesor_id: "u-profe", grupo: "", enlace: "https://meet.google.com/todas" },
+      { profesor_id: "u-profe", grupo: "SJ", enlace: "https://meet.google.com/sj" },
+      { profesor_id: "u-profe", grupo: "CENFO", enlace: "https://zoom.us/j/cenfo" },
+    ] });
+  await botonListo(r.page);
+  const varias = await r.page.evaluate(() => Array.from(
+    document.querySelectorAll("#videollamada-wrap > *")).map((el) => ({
+      href: el.getAttribute("href"),
+      texto: el.innerText.replace(/\s+/g, " ").trim(),
+    })));
+  igual("con tres sedes se pintan tres botones", varias.length, "3");
+  /* Los grupos primero y la general al final: la general es el respaldo —la
+     reciben los grupos que no tengan sala propia— y arriba haría pensar que es
+     la que manda. */
+  igual("…los grupos primero y la general al final",
+    varias.map((b) => b.href),
+    ["https://zoom.us/j/cenfo", "https://meet.google.com/sj", "https://meet.google.com/todas"]);
+  /* Cuál es cuál no se adivina por el enlace, y a las tres de la tarde hay que
+     poder apretar la de SJ sin pensarlo. */
+  igual("…y cada uno dice de qué clase es",
+    varias.map((b) => /Clase de CENFO|Clase de SJ|Los demás grupos/.test(b.texto)), [true, true, true]);
   await r.ctx.close();
 
   // 6. A un alumno sin ningún profesor no se le pinta: no hay clase que

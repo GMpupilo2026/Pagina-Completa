@@ -636,12 +636,12 @@
         };
 
         let misClases = [];          // lo que devolvió mis_clases(): un renglón por profesor
-        let miVideollamada = null;   // la sala propia, para el equipo docente
+        let misSalas = [];           // las salas propias, para el equipo docente: una por grupo
         let videollamadaLista = false;
 
         function cajaVideollamada(boton) {
             const el = document.createElement(boton.href ? "a" : "div");
-            el.className = "group flex flex-col items-center justify-center text-center gap-1 rounded-2xl p-5 shadow-md transition-all duration-200 sm:min-w-[13rem] "
+            el.className = "group flex flex-1 flex-col items-center justify-center text-center gap-1 rounded-2xl p-4 shadow-md transition-all duration-200 sm:min-w-[13rem] "
                 + boton.clases;
             if (boton.href) {
                 el.href = boton.href;
@@ -694,27 +694,38 @@
                 tituloClases: "text-brand-900", notaClases: "text-brand-900/80" });
         }
 
-        function botonVideollamadaProfesor() {
+        /* El equipo docente puede tener VARIAS salas —una por sede— así que
+           se pinta una por sala y no un botón con menú: con dos o tres, verlas
+           todas de un vistazo es más rápido que desplegar nada, y el nombre
+           del grupo va escrito en cada una. A las tres de la tarde, quien va a
+           dar clase en SJ tiene que poder apretar «SJ» sin pensarlo. */
+        function botonesVideollamadaProfesor() {
             if (!videollamadaLista) {
-                return cajaVideollamada({ emoji: "📹", titulo: "Videollamada", nota: "Cargando…",
-                    ...VLL_APAGADO });
+                return [cajaVideollamada({ emoji: "📹", titulo: "Videollamada", nota: "Cargando…", ...VLL_APAGADO })];
             }
             /* Al profesor NO se le bloquea: él entra a la llamada ANTES de que
                haya clase abierta —la clase se abre sola cuando llega alguien—,
                así que un candado ahí le cerraría la puerta por la que tiene
                que entrar primero. El candado es del alumno, que es quien no
                debe entrar a una llamada que no está pasando. */
-            if (!Videollamada.esSeguro(miVideollamada)) {
-                return cajaVideollamada({ emoji: "📹", titulo: "Pon tu videollamada",
+            const salas = misSalas.filter((x) => Videollamada.esSeguro(x.enlace));
+            if (!salas.length) {
+                return [cajaVideollamada({ emoji: "📹", titulo: "Pon tu videollamada",
                     nota: "Tus alumnos la verán cuando abras la clase",
                     href: "configuracion.html#videollamada",
-                    clases: "bg-white dark:bg-brand-900 border-2 border-dashed border-accent-400 hover:shadow-xl hover:-translate-y-0.5" });
+                    clases: "bg-white dark:bg-brand-900 border-2 border-dashed border-accent-400 hover:shadow-xl hover:-translate-y-0.5" })];
             }
-            return cajaVideollamada({ emoji: "📹", titulo: Videollamada.etiqueta(miVideollamada),
-                nota: "Tu sala — se cambia en Configuración",
-                href: miVideollamada, fuera: true,
+            // Los grupos primero y la general al final, como en Configuración:
+            // la general es el respaldo, no la que manda.
+            salas.sort((a, b) => (a.grupo ? 0 : 1) - (b.grupo ? 0 : 1) || String(a.grupo).localeCompare(b.grupo, "es"));
+            return salas.map((sala) => cajaVideollamada({
+                emoji: "📹",
+                titulo: Videollamada.etiqueta(sala.enlace),
+                // Con varias salas, cuál es cuál no se adivina por el enlace.
+                nota: sala.grupo ? "Clase de " + sala.grupo : (salas.length > 1 ? "Los demás grupos" : "Tu sala"),
+                href: sala.enlace, fuera: true,
                 clases: "bg-accent-500 hover:bg-accent-600 hover:shadow-xl hover:-translate-y-0.5",
-                tituloClases: "text-brand-900", notaClases: "text-brand-900/80" });
+                tituloClases: "text-brand-900", notaClases: "text-brand-900/80" }));
         }
 
         function pintarVideollamada() {
@@ -726,7 +737,14 @@
                le asignen uno. Un candado más ahí sería una promesa de algo que
                no va a llegar solo. */
             if (!esEquipoDocente() && videollamadaLista && !misClases.length) return;
-            caja.appendChild(esEquipoDocente() ? botonVideollamadaProfesor() : botonVideollamadaAlumno());
+            // Al alumno le toca UNA: la que la base ya eligió por su grupo.
+            const botones = esEquipoDocente() ? botonesVideollamadaProfesor() : [botonVideollamadaAlumno()];
+            botones.forEach((b) => caja.appendChild(b));
+            /* Con una sola sala, el botón se estira hasta la altura de la
+               tarjeta de al lado y la fila queda pareja. Con tres, estirar la
+               tarjeta para acompañarlos la deja con media pantalla en blanco:
+               ahí cada uno se queda con su alto. */
+            if (caja.parentElement) caja.parentElement.classList.toggle("sm:items-start", botones.length > 1);
         }
 
         /* Se vuelve a preguntar entera en vez de mirar solo el evento que
@@ -734,8 +752,8 @@
            abrir cualquiera de ellos. */
         async function refrescarVideollamada() {
             if (esEquipoDocente()) {
-                const { data } = await sb.from("profesor_videollamada").select("enlace").eq("profesor_id", profile.id).maybeSingle();
-                miVideollamada = (data && data.enlace) || null;
+                const { data } = await sb.from("profesor_videollamada").select("grupo, enlace").eq("profesor_id", profile.id);
+                misSalas = data || [];
             } else {
                 const { data } = await sb.rpc("mis_clases");
                 misClases = data || [];
@@ -786,7 +804,9 @@
                     if (t.videollamada) {
                         const caja = document.createElement("div");
                         caja.id = "videollamada-wrap";
-                        caja.className = "contents";
+                        // Una celda del grid que apila lo que lleve dentro: con
+                        // una sala se ve como un botón, con tres son tres.
+                        caja.className = "flex flex-col gap-3";
                         tilesGrid.appendChild(caja);
                     }
                 });

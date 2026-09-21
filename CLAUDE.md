@@ -328,9 +328,37 @@ lector de pantalla anunciaría dos destinos donde se ve uno.
   posición—, sin pasar por ningún formulario, así que un `enlace_video` por
   clase se quedaría en null casi siempre y el botón no se desbloquearía nunca.
   No daría ningún error: un candado para siempre y nadie sabría por qué. Vive en
-  `public.profesor_videollamada` (una fila por profesor) y se pone una vez, en
+  `public.profesor_videollamada` (una fila por profesor y grupo) y se pone una vez, en
   **`configuracion.html` → «Videollamada de tus clases»**, que es la única
   pantalla que lo escribe.
+- **Una sala POR GRUPO, y una general de respaldo.** Un profesor da clase en
+  varias sedes y cada una tiene la suya: con un solo enlace, el de SJ le
+  llegaba también a los de CENFO y entraban a la clase que no era. La tabla
+  lleva una fila por `(profesor, grupo)` y el grupo vacío es «para todas mis
+  clases». El reparto lo hace `mis_clases()`: la sala del grupo del alumno si
+  su profesor puso una, y si no la general.
+  - **Se reparte por `profiles.grupo` y no por subgrupo**, a propósito: el
+    grupo es UNO por alumno, así que no hay dos salas que puedan
+    disputárselo. Un subgrupo puede tener al mismo alumno en dos listas y
+    habría que inventar un desempate — y el que perdiera mandaría a alguien a
+    la llamada de otro grupo sin que nada fallara.
+  - **El grupo se ELIGE de una lista, no se escribe**
+    (`grupos_de_mis_alumnos()`, que además dice cuántos alumnos suyos hay en
+    cada uno): un enlace guardado para «Cenfo» cuando sus alumnos están en
+    «CENFO» no le llega a nadie nunca, y el profesor lo ve guardado y cree que
+    está.
+  - **Al alumno no le llega la lista de salas de su profesor**, solo la suya y
+    la general: la política lo filtra por `mi_grupo()`. Con la de otro grupo a
+    la vista podría colarse en una clase que no es la suya, y no haría falta
+    ni saber SQL.
+  - **Quitar una sala filtra por profesor Y grupo.** Con el filtro de menos se
+    borrarían las de todas sus sedes de una vez, y la pantalla se vería igual
+    de bien — por eso al quitar se vuelve a LEER en vez de tachar la fila en
+    pantalla.
+  - En el panel, quien da clase ve **una tarjeta por sala** con el grupo
+    escrito, no un botón con menú: a las tres de la tarde hay que poder
+    apretar «SJ» sin pensarlo. Con más de una, la tarjeta de «Sesión en vivo»
+    deja de estirarse (`sm:items-start`), o quedaría media pantalla en blanco.
 - **El candado lo hace cumplir la RLS, no la pantalla.** La política de select
   solo le entrega el enlace al alumno **mientras ese profesor tenga una clase
   abierta** (`es_mi_profesor(profesor_id) and clase_abierta_de(profesor_id)`).
