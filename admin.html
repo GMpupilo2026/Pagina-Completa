@@ -272,6 +272,14 @@
         let session = null;
         let currentUserId = null;
         const FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/admin-manage-users`;
+        // El correo de un alumno no se corrige como el nombre o el grupo, con
+        // un update de callAdmin: cambia con qué entra a la cuenta (auth.users,
+        // no solo profiles), así que pasa por la misma Edge Function que ya usa
+        // la ficha «✉️ Contacto» de cobros.html — es la única que sabe hacerlo
+        // sin que el trigger de identidad lo revierta y sin dejar dos cuentas
+        // con el mismo correo. Escribirlo de nuevo acá sería una segunda
+        // versión que se puede ir separando de la primera corrección.
+        const FUNCION_CORREOS = `${window.SUPABASE_URL}/functions/v1/correos-alumno`;
 
         /* ================= Los atajos del panel =================
          *
@@ -365,6 +373,104 @@
             const result = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(result.error || "Error desconocido");
             return result;
+        }
+
+        async function llamarCorreos(cuerpo) {
+            const res = await fetch(FUNCION_CORREOS, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "apikey": window.SUPABASE_ANON_KEY,
+                },
+                body: JSON.stringify(cuerpo),
+            });
+            const datos = await res.json().catch(() => ({}));
+            if (!res.ok || datos.error) throw new Error(datos.error || `El servidor respondió ${res.status}`);
+            return datos;
+        }
+
+        /* Correo de un alumno: se ve como enlace y, con el lápiz, se abre un
+           campo para corregirlo. Solo para alumnos —la función rechaza el
+           correo de una cuenta del equipo docente, que no tiene ese camino
+           definido— y ni siquiera se ofrece el lápiz para los demás roles. */
+        function renderCorreoCelda(u) {
+            const caja = document.createElement("div");
+
+            function pintarVista() {
+                caja.innerHTML = "";
+                const fila = document.createElement("div");
+                fila.className = "flex items-center gap-1 px-2";
+                const correo = document.createElement("a");
+                correo.href = "mailto:" + u.email;
+                correo.className = "text-xs text-brand-450 dark:text-brand-350 hover:text-accent-500 truncate";
+                correo.textContent = u.email;
+                correo.title = u.email;          // por si el correo largo se recorta
+                fila.appendChild(correo);
+                if (u.role === "alumno") {
+                    const editar = document.createElement("button");
+                    editar.type = "button";
+                    editar.className = "shrink-0 text-xs leading-none text-brand-450 dark:text-brand-350 hover:text-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                    editar.textContent = "✏️";
+                    editar.setAttribute("aria-label", "Cambiar el correo de " + (u.full_name || u.email));
+                    editar.title = "Cambiar el correo con el que entra";
+                    editar.addEventListener("click", pintarEdicion);
+                    fila.appendChild(editar);
+                }
+                caja.appendChild(fila);
+            }
+
+            function pintarEdicion() {
+                caja.innerHTML = "";
+                const fila = document.createElement("div");
+                fila.className = "flex flex-wrap items-center gap-1 px-2";
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = u.email;
+                input.placeholder = "correo@dominio.com";
+                input.setAttribute("aria-label", "Nuevo correo de " + (u.full_name || u.email));
+                input.className = "min-w-[11rem] px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 focus:border-accent-500 outline-none text-xs";
+                const guardar = document.createElement("button");
+                guardar.type = "button";
+                guardar.className = "text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                guardar.textContent = "Guardar";
+                const cancelar = document.createElement("button");
+                cancelar.type = "button";
+                cancelar.className = "text-xs text-brand-450 dark:text-brand-350 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                cancelar.textContent = "Cancelar";
+                cancelar.addEventListener("click", pintarVista);
+                const error = document.createElement("p");
+                error.className = "w-full text-xs text-red-600 dark:text-red-400 mt-1";
+
+                async function guardarCorreo() {
+                    const nuevo = input.value.trim();
+                    if (!nuevo || nuevo.toLowerCase() === String(u.email).toLowerCase()) { pintarVista(); return; }
+                    guardar.disabled = true; cancelar.disabled = true; input.disabled = true;
+                    guardar.textContent = "Guardando…";
+                    error.textContent = "";
+                    try {
+                        const datos = await llamarCorreos({ action: "cuenta", alumno_id: u.id, email: nuevo });
+                        u.email = datos.cuenta?.email ?? nuevo;
+                        pintarVista();
+                    } catch (err) {
+                        guardar.disabled = false; cancelar.disabled = false; input.disabled = false;
+                        guardar.textContent = "Guardar";
+                        error.textContent = err.message;
+                    }
+                }
+                guardar.addEventListener("click", guardarCorreo);
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") { e.preventDefault(); guardarCorreo(); }
+                    else if (e.key === "Escape") { e.preventDefault(); pintarVista(); }
+                });
+
+                fila.append(input, guardar, cancelar, error);
+                caja.appendChild(fila);
+                input.focus();
+            }
+
+            pintarVista();
+            return caja;
         }
 
         // Todas las cuentas cargadas la última vez (para poder reagrupar sin
@@ -501,12 +607,7 @@
                     corona.title = "Administrador";
                     nameLine.appendChild(corona);
                 }
-                const correo = document.createElement("a");
-                correo.href = "mailto:" + u.email;
-                correo.className = "block px-2 text-xs text-brand-450 dark:text-brand-350 hover:text-accent-500 truncate";
-                correo.textContent = u.email;
-                correo.title = u.email;          // por si el correo largo se recorta
-                tdCuenta.append(nameLine, correo);
+                tdCuenta.append(nameLine, renderCorreoCelda(u));
 
                 const tdRole = document.createElement("td");
                 tdRole.className = "py-2 pr-3";
