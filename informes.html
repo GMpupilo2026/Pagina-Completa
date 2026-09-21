@@ -715,12 +715,18 @@
                 cargarResumen(),
                 sb.rpc("informes_totales").maybeSingle(),
                 traerTodo(() => sb.from("training_plans").select("*").order("student_id")),
-                traerTodo(() => sb.from("diagnosticos_publicos").select("*").order("created_at", { ascending: false })),
-                // Exámenes de arbitraje del público (nivel-de-arbitraje.html). La RLS ya
-                // los limita a profesores y administración: sin permiso llega vacío.
-                traerTodo(() => sb.from("arbitrajes_publicos")
+                /* Lo que se hace FUERA de la plataforma —el diagnóstico público y
+                   el examen de arbitraje de nivel-de-arbitraje.html— es de
+                   administración y de nadie más: son visitantes del sitio, no
+                   alumnos de nadie, y lo que dejan (nombre y correo) son
+                   contactos para invitar a Academia. A un profesor ni se le pinta
+                   ni se le baja: la RLS se lo devolvería igual, así que el filtro
+                   tiene que estar acá. Son dos páginas de mil filas que además no
+                   iba a mirar. */
+                profile.is_admin ? traerTodo(() => sb.from("diagnosticos_publicos").select("*").order("created_at", { ascending: false })) : [],
+                profile.is_admin ? traerTodo(() => sb.from("arbitrajes_publicos")
                     .select("id, created_at, nombre, email, porcentaje, nivel, revisado, revisado_at, detalle")
-                    .order("created_at", { ascending: false })),
+                    .order("created_at", { ascending: false })) : [],
                 // Los subgrupos de quien mira: sus propias listas de alumnos.
                 // Si fallan, el filtro se queda con los grupos de siempre en
                 // vez de tumbar el informe entero — son un extra, no el dato.
@@ -821,12 +827,12 @@
            abrir un <select> de cien nombres. Nada de esto daba ningún error: la
            página se veía perfecta y el profesor simplemente no usaba Informes.
 
-           El corte no es cosmético. `alumnos-tbody` se pinta de veinte en
-           veinte; las tablas completas de abajo siguen pintándose enteras
+           El corte no es cosmético. `alumnos-tbody` se pinta de tres en tres
+           —lo que se ve de un vistazo sin bajar la pantalla—; las tablas completas de abajo siguen pintándose enteras
            porque viven dentro de un <details> cerrado, así que no cuestan
            pantalla — y son las que sirven para comparar columna a columna, que
            es lo único que un índice de una fila por alumno no puede dar. */
-        const PASO_ALUMNOS = 20;
+        const PASO_ALUMNOS = 3;
         const panelAlumnos = { busqueda: "", orden: "nombre", mostrados: PASO_ALUMNOS };
 
         // Buscar "ramirez" tiene que encontrar a "Ramírez": nadie escribe las
@@ -984,6 +990,25 @@
             caja.classList.toggle("hidden", !botones.children.length);
         }
 
+        /* Lo de fuera de la plataforma se QUITA, no se esconde: un <details>
+           escondido con una clase sigue recibiendo el foco del teclado, y un
+           panel al que se llega tabulando pero no se ve es peor que no tenerlo.
+           Misma decisión que `soloParaAdministracion()` en el panel de la
+           Academia. Las dos opciones del filtro se van con ellos, o quedaría un
+           tema que enseña un panel que ya no está. */
+        function quitarLoDeFueraSiNoEsAdmin() {
+            if (profile && profile.is_admin) return;
+            ["arbitrajes-publicos", "diagnosticos-visitantes"].forEach((id) => {
+                const panel = document.getElementById(id);
+                const caja = panel && panel.closest("details");
+                if (caja) caja.remove();
+            });
+            ["arbitraje", "diagnostico-publico"].forEach((tema) => {
+                const opcion = document.querySelector(`#topic-filter option[value="${tema}"]`);
+                if (opcion) opcion.remove();
+            });
+        }
+
         function hideAllReportPanels() {
             document.getElementById("stat-cards").innerHTML = "";
             document.getElementById("stat-cards").classList.add("hidden");
@@ -1084,14 +1109,17 @@
             panelAlumnos.mostrados = PASO_ALUMNOS;
             renderPanelAlumnos();
 
-            renderArbitrajesPublicos(document.getElementById("arbitrajes-publicos"));
+            const cajaArbitrajes = document.getElementById("arbitrajes-publicos");
+            const cajaVisitantes = document.getElementById("diagnosticos-visitantes");
+            if (cajaArbitrajes) renderArbitrajesPublicos(cajaArbitrajes);
             renderDiagnosticosClase(document.getElementById("diagnosticos-clase"));
-            renderDiagnosticosVisitantes(document.getElementById("diagnosticos-visitantes"));
+            if (cajaVisitantes) renderDiagnosticosVisitantes(cajaVisitantes);
 
             /* Los dos paneles del público van plegados, así que su conteo tiene
                que leerse SIN abrirlos: si no, hay que abrir los dos en cada
                visita solo para saber si llegó algo nuevo, que es justo el paso
                que el plegado viene a quitar. */
+            if (!cajaArbitrajes) { document.getElementById("teacher-report").classList.remove("hidden"); return; }
             const arb = (teacherData.arbitrajes || []).length;
             const sinRevisar = (teacherData.arbitrajes || []).filter((a) => !a.revisado).length;
             document.getElementById("arbitrajes-resumen").textContent = arb
@@ -1756,6 +1784,12 @@
                 alumnos.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-3">Alumnos registrados</h3>';
                 const cajaAlumnos = document.createElement("div"); alumnos.appendChild(cajaAlumnos);
                 renderDiagnosticosClase(cajaAlumnos);
+                if (!(profile && profile.is_admin)) {
+                    // Los visitantes no son alumnos de nadie: son de administración.
+                    body.append(alumnos);
+                    document.getElementById("topic-report").classList.remove("hidden");
+                    return;
+                }
                 const visitantes = document.createElement("div");
                 visitantes.className = "mt-8 border-t border-brand-100 dark:border-brand-800 pt-6";
                 visitantes.innerHTML = '<h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">🌐 Visitantes (diagnóstico público, fuera del panel)</h3><p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Aparte de los alumnos y sin entrar en los promedios de la clase.</p>';
@@ -2735,6 +2769,10 @@ function areasFlojasArbitraje(fila) {
             });
         }
 
+        // Cuántos diagnósticos se ven antes de tocar "ver más". Los mismos tres
+        // que el índice de la clase: es lo que cabe de un vistazo sin bajar.
+        const NIVELES_A_LA_VISTA = 3;
+
         function renderDiagnosticosClase(contenedor) {
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
             const total = conDiagnostico.length + pendientes.length;
@@ -2777,9 +2815,17 @@ function areasFlojasArbitraje(fila) {
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Nivel por alumno</h3>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Porcentaje del diagnóstico completo, de mayor a menor. Toca un nombre para abrir su informe y su plan.</p>
+                <!-- Los tres primeros y el resto detrás del botón, como el índice de
+                     la clase: con cuarenta diagnósticos esto era una pared de barras
+                     y lo que se viene a ver de un vistazo son los de arriba. Se
+                     pintan todos y se esconden con la clase: no son enfocables
+                     mientras están escondidos, así que no dejan ninguna parada de
+                     tabulador fantasma, y "ver más" no tiene que repintar nada
+                     —repintar cerraría "El perfil de cada alumno" si estuviera
+                     abierto—. -->
                 <div class="space-y-2.5">
-                    ${conDiagnostico.map((d) => `
-                        <div>
+                    ${conDiagnostico.map((d, i) => `
+                        <div data-nivel-fila${i < NIVELES_A_LA_VISTA ? "" : ' class="hidden"'}>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
                                 <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
                                 <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
@@ -2787,9 +2833,13 @@ function areasFlojasArbitraje(fila) {
                             ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
                         </div>`).join("")}
                 </div>
+                ${conDiagnostico.length > NIVELES_A_LA_VISTA ? `<button type="button" id="niveles-mas" class="mt-3 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más alumnos (faltan ${conDiagnostico.length - NIVELES_A_LA_VISTA})</button>` : ""}
                 ${leyendaBandasHTML()}
 
-                <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">Dónde está floja la clase</h3>
+                <!-- Las nueve áreas van SIEMPRE completas y sin plegar: es lo que
+                     contesta "¿qué doy la clase que viene?", y son nueve renglones,
+                     no una lista que crezca con la clase. -->
+                <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">Dónde se debe mejorar</h3>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Promedio del grupo en cada área, de la más floja a la más firme: por arriba se elige qué trabajar en clase.</p>
                 <div class="space-y-2.5">
                     ${promedioPorArea.map((a) => `
@@ -2827,6 +2877,25 @@ function areasFlojasArbitraje(fila) {
                 </details>
 
                 ${pendientes.length ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-6"><strong class="text-brand-500 dark:text-brand-300">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "")).join(", ")}.</p>` : ""}`;
+
+            /* "Ver más" destapa los siguientes tres y dice cuántos quedan; cuando
+               ya no queda ninguno el botón se va, y con él el foco, así que pasa
+               al último nombre destapado en vez de perderse al principio. */
+            const masNiveles = contenedor.querySelector("#niveles-mas");
+            if (masNiveles) {
+                masNiveles.addEventListener("click", () => {
+                    const escondidas = [...contenedor.querySelectorAll("[data-nivel-fila].hidden")];
+                    escondidas.slice(0, NIVELES_A_LA_VISTA).forEach((d) => d.classList.remove("hidden"));
+                    const quedan = escondidas.length - Math.min(NIVELES_A_LA_VISTA, escondidas.length);
+                    if (!quedan) {
+                        const ultimo = [...contenedor.querySelectorAll("[data-nivel-fila] [data-alumno]")].pop();
+                        masNiveles.remove();
+                        if (ultimo) ultimo.focus();
+                    } else {
+                        masNiveles.textContent = `Ver más alumnos (faltan ${quedan})`;
+                    }
+                });
+            }
 
             // Los nombres llevan al informe completo de ese alumno.
             contenedor.querySelectorAll("[data-alumno]").forEach((btn) => {
@@ -2879,6 +2948,7 @@ function areasFlojasArbitraje(fila) {
                     const cont = document.getElementById("teacher-filters");
                     if (cont && cont.parentNode) cont.parentNode.insertBefore(aviso, cont);
                 }
+                quitarLoDeFueraSiNoEsAdmin();
                 populateStudentFilter();
                 populateGroupFilter();
                 document.getElementById("teacher-filters").classList.remove("hidden");

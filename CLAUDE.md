@@ -2548,9 +2548,11 @@ bien, y el profesor simplemente no usaba Informes.
 - **«👥 Tus alumnos» es UN índice, una fila por alumno**: asistencia, tiempo,
   asignaciones, el nivel del diagnóstico y si está entrenando esta semana. Con
   **buscador sin tildes** —«ramirez» tiene que encontrar a «Ramírez»— y de
-  **veinte en veinte** con su «Ver más» y su «Mostrando 20 de 143». Tocar a un
-  alumno abre su informe: eso es lo que reemplaza a buscarlo dentro del
-  `<select>`, que se queda porque es el control accesible de siempre.
+  **tres en tres** con su «Ver más» y su «Mostrando 3 de 143» — tres es lo que
+  se ve de un vistazo sin bajar la pantalla, y quien busca a alguien lo busca,
+  no lo encuentra bajando. Tocar a un alumno abre su informe: eso es lo que
+  reemplaza a buscarlo dentro del `<select>`, que se queda porque es el control
+  accesible de siempre.
 - **Las tres tablas de antes NO se perdieron**: van plegadas dentro de ese
   mismo panel, «Las tablas completas, columna a columna». Sirven para comparar
   columna a columna, que es justamente lo que un índice de una fila por alumno
@@ -2570,9 +2572,42 @@ bien, y el profesor simplemente no usaba Informes.
   exámenes recibidos · 502 sin responder»). Si no, hay que abrir los dos en
   cada visita solo para saber si llegó algo nuevo, que es el paso que el
   plegado viene a quitar.
+- **«Nivel por alumno» corta en tres**, igual que el índice, con su «Ver más
+  alumnos (faltan N)». Con cuarenta diagnósticos era una pared de barras antes
+  de llegar a lo que de verdad se mira. Se pintan todos y se esconden con la
+  clase —no son enfocables mientras están escondidos—, así que «ver más» no
+  repinta nada: repintar cerraría «El perfil de cada alumno» si estuviera
+  abierto.
+- **«Dónde se debe mejorar»** —que se llamaba «Dónde está floja la clase»— va
+  **siempre completa y sin plegar**: son nueve renglones fijos, no una lista
+  que crezca con la clase, y es lo que contesta «¿qué doy la clase que viene?».
 - **«El perfil de cada alumno»** (la rejilla con las nueve áreas de cada
-  diagnóstico) también se pliega: es una tarjeta por alumno y el resumen del
-  grupo está justo encima.
+  diagnóstico) sí se pliega: es una tarjeta por alumno y el resumen del grupo
+  está justo encima.
+
+#### Lo que se hace FUERA de la plataforma es de administración
+
+El diagnóstico público y el examen de arbitraje de `nivel-de-arbitraje.html`
+los hace **gente sin cuenta**: no son alumnos de nadie, y lo que dejan —nombre
+y correo— son contactos para invitar a Academia, no material de clase. Ocupaban
+el primer lugar del informe de cualquier profesor, que es al revés de lo que
+tiene que ver al entrar.
+
+- **A quien no administra no se le pintan los dos paneles, y se QUITAN, no se
+  esconden.** Un `<details>` escondido con una clase sigue recibiendo el foco
+  del teclado, y un panel al que se llega tabulando pero no se ve es peor que
+  no tenerlo. Misma decisión que `soloParaAdministracion()` en el panel de la
+  Academia; lo hace `quitarLoDeFueraSiNoEsAdmin()`.
+- **Sus dos temas se van del filtro con ellos** (`arbitraje` y
+  `diagnostico-publico`), o quedaría un tema que enseña un panel que ya no
+  está. Las dos `<option>` siguen escritas en el HTML —`verificar-admin.js`
+  comprueba contra el archivo que los atajos de `admin.html` apunten a temas
+  que existen— y se quitan del DOM al cargar.
+- **Tampoco se le bajan.** La RLS se los devuelve igual a un profesor, así que
+  el filtro tiene que estar en la página: son dos páginas de mil filas que no
+  iba a mirar.
+- Dentro del tema «🧭 Diagnóstico de nivel», el apartado de visitantes que va
+  debajo de los alumnos se salta por lo mismo.
 
 En el informe de UN alumno:
 
@@ -2598,14 +2633,17 @@ En el informe de UN alumno:
 **Al tocar el índice, la franja o los plegables, correr `node
 herramientas/verificar-informes.js`.** Su prueba nueva —«Una clase de
 cincuenta»— existe porque **con tres alumnos todo esto se ve bien**: el
-problema empieza a los cincuenta. Comprueba que el índice corte de veinte en
-veinte y lo diga con el total de verdad, que «Ver más» traiga los siguientes,
+problema empieza a los cincuenta. Comprueba que el índice corte de tres en
+tres y lo diga con el total de verdad, que «Ver más» traiga los siguientes,
+que «Nivel por alumno» corte igual y su botón se vaya cuando ya no queda
+nadie, que las nueve áreas de «Dónde se debe mejorar» vayan completas,
 que el buscador filtre **también** las tablas de abajo y no se pierda con las
 tildes, que ordenar por «sin entrenar» ponga «nunca» antes que «hace mes y
 medio», que la franja se vea **de verdad** (el `display` que calcula el
 navegador, no la clase) y deje el filtro puesto al tocarla, que el conteo de
-los paneles plegados se lea sin abrirlos, y que las ocho tarjetas secundarias
-nazcan escondidas. Está probado que falla de verdad: quitándole el corte al
+los paneles plegados se lea sin abrirlos, que las ocho tarjetas secundarias
+nazcan escondidas, y que a quien no administra no se le pinten —ni se le
+bajen— los dos paneles del público. Está probado que falla de verdad: quitándole el corte al
 índice saltan dos comprobaciones, y dejando el buscador sin filtrar, la prueba
 se cae.
 
