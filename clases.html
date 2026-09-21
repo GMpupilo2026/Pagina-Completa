@@ -371,8 +371,8 @@
 
                El rótulo NO repite los nombres de las dos tarjetas: dice lo que
                las dos tienen en común y que no se deduce de ellas —que te las
-               pone alguien más y traen fecha—, que es lo que las separa de
-               "Mide tu nivel", ahí abajo, que uno hace cuando le parece. Por
+               pone alguien más y traen fecha—, que es lo que las separa de un
+               diagnóstico, que uno hace cuando le parece. Por
                eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
                del otro lado del escritorio la misma pareja es lo que MANDAS. */
             { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
@@ -408,14 +408,14 @@
                parece. El rótulo lo dice en dos palabras y sin repetir el
                nombre de sus dos tarjetas, que ya se llaman "Diagnóstico".
 
-               Los DOS diagnósticos son para todo el mundo: cualquiera puede medir
-               su nivel de arbitraje, no solo quien da clase. Lo que cambia según
-               quién mira es a dónde lleva la tarjeta, y lo decide init(): el
-               equipo docente va a arbitraje.html, que además trae la revisión de
-               los exámenes del público y el detalle pregunta por pregunta; todos
-               los demás van a nivel-de-arbitraje.html, que es el mismo examen y
-               el mismo criterio pero SIN enseñar las respuestas al terminar (el
-               banco es material docente). Una sola tarjeta y no dos, para no
+               ESTE GRUPO ES SOLO DE ADMINISTRACIÓN, y lo quita del panel
+               diagnosticosSoloParaAdministracion() para todos los demás — ver
+               ahí por qué. Se queda escrito acá, con las dos tarjetas
+               completas, porque quitarlo de la lista dejaría el grupo definido
+               en el `if` de un rol y el panel volvería a repartirse a pedazos.
+               El destino del arbitraje lo reapunta init(): administración va a
+               arbitraje.html, con la revisión de los exámenes del público y el
+               detalle pregunta por pregunta. Una sola tarjeta y no dos, para no
                repetir el nombre en el panel — ya pasó una vez con "Torneos". */
             { title: "Mide tu nivel", tiles: [
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
@@ -444,6 +444,29 @@
            acá, en vez de repetir el `||` y que a la cuarta se le olvide la
            mitad. */
         function esEquipoDocente() { return isTeacher || profile.is_admin; }
+
+        /* Los dos diagnósticos son SOLO de administración.
+
+           Estaban para todo el mundo, y eso era regalar las dos pruebas con
+           las que el sitio ubica el nivel de alguien: el banco de las 301
+           preguntas y el de las 200 de reglamento son archivos estáticos, así
+           que cuanta más gente las resuelve por su cuenta, menos miden. El
+           diagnóstico se aplica, no se practica — quien lo necesita lo recibe
+           de quien le da clase, y el de nivel sigue abierto al público sin
+           cuenta en entreno/diagnostico.html, que es una puerta de entrada al
+           sitio y otra cosa.
+
+           Se quita el GRUPO entero, no sus dos tarjetas: un encabezado sin
+           nada debajo es la misma sección muerta que ya se quitó de
+           "Herramientas" para el alumnado. Va sobre la lista ya armada y en un
+           solo lugar, como apagarEnMantenimiento(), y DESPUÉS de que init()
+           le reapunte el destino al arbitraje: así quien administra lo
+           conserva con el suyo. */
+        function diagnosticosSoloParaAdministracion() {
+            if (profile.is_admin) return;
+            const i = TILE_GROUPS.findIndex((g) => g.title === "Mide tu nivel");
+            if (i >= 0) TILE_GROUPS.splice(i, 1);
+        }
 
         function apagarEnMantenimiento() {
             if (esEquipoDocente()) return;
@@ -1379,7 +1402,7 @@
                 return;
             }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
             } else {
@@ -1413,7 +1436,7 @@
                    por su destino y no por su posición, para que reordenar el
                    grupo no la deje sin cambiar. */
                 const medirNivel = TILE_GROUPS.find((g) => g.title === "Mide tu nivel");
-                const arbitraje = medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
+                const arbitraje = medirNivel && medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
                 if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
 
                 /* Preparar la clase antes de darla. Es solo del equipo docente,
@@ -1469,6 +1492,7 @@
             // docente.
             textosDelEquipoDocente();
             apagarEnMantenimiento();
+            diagnosticosSoloParaAdministracion();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
             // se vuelve a guardar sola; si no, el aparato deja de recibir sin

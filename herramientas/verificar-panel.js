@@ -229,7 +229,7 @@ async function pruebaAlumna(browser) {
      grises. Un grupo del que no queda ni un acceso utilizable no se pinta. */
   igual("los grupos, en su orden", grupos.map((g) => g.titulo),
     ["Clase en vivo", "Lo que te pone tu profesor", "Aprender", "Jugar y competir",
-     "Mide tu nivel", "Tu cuenta"]);
+     "Tu cuenta"]);
   /* Que no se pinte es que NO ESTÁ, no que esté escondido con una clase: un
      enlace invisible pero presente sigue siendo una parada de tabulador. */
   igual("y los accesos de ese grupo no quedaron escondidos en la página",
@@ -250,12 +250,18 @@ async function pruebaAlumna(browser) {
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
     ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
      "articulos.html"]);
-  /* Los DOS diagnósticos son para todo el mundo: cualquiera puede medir su nivel
-     de arbitraje, no solo quien da clase. A la alumna la tarjeta la manda a la
-     versión que NO enseña las respuestas al terminar. */
-  igual("«Mide tu nivel» queda en lo que uno hace cuando quiere: los dos diagnósticos",
-    grupo(grupos, "Mide tu nivel").tiles.map((t) => [t.enlace, t.apagado]),
-    [["entreno/diagnostico.html", false], ["nivel-de-arbitraje.html", false]]);
+  /* Los dos diagnósticos son SOLO de administración: son las dos pruebas con
+     las que el sitio ubica el nivel de alguien, y sus bancos son archivos
+     estáticos — cuanta más gente las resuelve por su cuenta, menos miden. Y no
+     alcanza con que el grupo no salga en la lista de arriba: lo que importa es
+     que no quede ni un enlace a esas dos páginas en la grilla, escondido o no. */
+  igual("a la alumna no se le ofrece ningún diagnóstico",
+    grupos.flatMap((g) => g.tiles)
+      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
+      .map((t) => t.enlace), []);
+  igual("y tampoco escondido en la página",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href*='diagnostico'], #tile-grid [href*='arbitraje']").length), "0");
   /* "Cerrar sesión" salió del grid: ya está en la cabecera, que es donde se
      busca, y era la única ACCIÓN entre un grid de lugares a los que ir. Un
      destino repetido en el panel ya había dado problemas con "Torneos". */
@@ -302,20 +308,19 @@ async function pruebaProfesora(browser) {
   const { page, ctx, errores } = await panel(browser, [PROFE], "u-profe");
   const grupos = await page.evaluate(LEER_GRILLA);
 
-  /* A la profesora la MISMA tarjeta la manda a la página con la revisión de los
-     exámenes del público y el detalle pregunta por pregunta. Una sola tarjeta y
-     no dos, para no repetir el nombre en el panel. */
-  igual("al equipo docente el diagnóstico de arbitraje lo manda a su página, no a la pública",
-    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
-    ["entreno/diagnostico.html", "arbitraje.html"]);
+  /* Tampoco a quien da clase: los diagnósticos son de administración y ya. A
+     ella se los aplica administración, no los resuelve por su cuenta — y su
+     banco es el mismo que el de sus alumnos. */
+  igual("a la profesora tampoco se le ofrece ningún diagnóstico",
+    grupos.flatMap((g) => g.tiles)
+      .filter((t) => /diagnostico|arbitraje/i.test((t.enlace || "") + " " + (t.etiqueta || "")))
+      .map((t) => t.enlace), []);
   /* El rótulo del grupo tiene dos públicos, igual que la descripción de un
      tile: del otro lado del escritorio, lo que te ponen es lo que mandas. */
   igual("y el grupo con fecha le habla de sus alumnos, no de su profesor",
     grupos.map((g) => g.titulo).filter((x) => /Lo que/.test(x)), ["Lo que le pones a tus alumnos"]);
   igual("a ella «Herramientas» sí se le pinta: sus accesos funcionan",
     grupos.map((g) => g.titulo).includes("Herramientas"), "true");
-  igual("y sigue siendo una sola tarjeta de arbitraje, no dos con el mismo nombre",
-    grupos.flatMap((g) => g.tiles).filter((t) => /arbitraje/i.test(t.etiqueta)).length, "1");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
@@ -381,8 +386,6 @@ async function pruebaTextosPorRol(browser) {
   igual("los torneos los arma ella", profe["Torneos de la Academia"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
   igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
-  igual("y el diagnóstico de arbitraje le habla de revisar los del público",
-    profe["Diagnóstico de arbitraje"], "Reglamento FIDE: hazlo, revisa los del público y responde");
 
   /* La regla general, que es la que atrapa al tile que todavía no existe. */
   const conTuProfesor = Object.entries(profe).filter(([, d]) => /tu profesor/i.test(d)).map(([k]) => k);
@@ -415,6 +418,14 @@ async function pruebaAdmin(browser) {
     ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
+  /* La otra mitad de que los diagnósticos sean solo de administración: que a
+     administración SÍ se le pinten. Escondérselos también los dejaría sin
+     ninguna puerta desde el panel, que es lo contrario de lo que se pidió — y
+     el de arbitraje le lleva a SU página, la que trae la revisión de los
+     exámenes del público y el detalle pregunta por pregunta. */
+  igual("a administración los dos diagnósticos sí se le pintan",
+    grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
+    ["entreno/diagnostico.html", "arbitraje.html"]);
   await ctx.close();
 }
 

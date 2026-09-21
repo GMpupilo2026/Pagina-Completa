@@ -2602,7 +2602,7 @@
             const wasNearBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 40;
             listEl.innerHTML = "";
             for (const m of messages) {
-                const isFromTeacher = m.profiles && m.profiles.role === "profesor";
+                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true);
                 const isOwn = m.sender_id === profile.id;
                 // Recuadro de chat estilo mensajería: los mensajes propios a la derecha, los
                 // del otro lado de la conversación a la izquierda — sin importar el rol de
@@ -2652,7 +2652,7 @@
             // con profiles (sender_id y student_id), así que hay que decirle a PostgREST
             // cuál usar — sin esto la consulta fallaba (ambigua) y el chat nunca cargaba.
             const { data, error } = await sb.from("class_chat_messages")
-                .select("*, profiles!class_chat_messages_sender_id_fkey(full_name, email, role)")
+                .select("*, profiles!class_chat_messages_sender_id_fkey(full_name, email, role, is_admin)")
                 .eq("student_id", threadId)
                 .order("created_at", { ascending: false })
                 .limit(150);
@@ -3946,7 +3946,7 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { setStatus("No se pudo cargar tu perfil."); return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
             } else {

@@ -327,8 +327,8 @@
                 const ids = new Set();
                 active.forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
                 active4p.forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
-                const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
-                (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+                const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: Array.from(ids) });
+                (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
 
                 active.forEach((r) => {
                     const myColor = r.white_id === profile.id ? "w" : "b";
@@ -557,8 +557,8 @@
             (rooms || []).forEach((r) => { ids.add(r.white_id); ids.add(r.black_id); });
             (games4p || []).forEach((r) => SEATS.forEach((s) => { if (r.seats[s].player_id) ids.add(r.seats[s].player_id); }));
             if (ids.size) {
-                const { data: players } = await sb.from("profiles").select("id, full_name, email").in("id", Array.from(ids));
-                (players || []).forEach((p) => { playerNames[p.id] = p.full_name || p.email; });
+                const { data: players } = await sb.rpc("nombres_de_jugadores", { p_ids: Array.from(ids) });
+                (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
             }
 
             const all = (rooms || []).map((r) => Object.assign({ _table: "game_rooms" }, r))
@@ -672,21 +672,18 @@
 
         const nombreVisible = (p) => p.full_name || p.email || "Alguien";
 
-        /* Con quién puedo jugar: la misma regla que aplica la base
-           (public.pueden_jugar_entre_si). Acá es solo para no mostrar botones que
-           después van a fallar; quien manda es la base.
-           Cada quien anuncia en el canal de presencia la lista de sus profesores
-           —un alumno puede tener varios—, así que "la misma clase" es compartir
-           al menos uno. */
-        let misProfesores = [];
+        /* Con quién puedo jugar: cualquiera de la Academia, que es la misma
+           regla que aplica la base (public.pueden_jugar_entre_si). Acá es solo
+           para no mostrar un botón que va a fallar; quien manda es la base.
 
+           Antes había que compartir profesor, y eso dejaba la lista vacía casi
+           siempre: un alumno que quiere jugar AHORA no tiene por qué esperar a
+           que alguien de su propia clase esté conectado. Retarse es lo único
+           que comparte toda la Academia — ver y gestionar alumnos sigue
+           acotado a quien es su profesor, y armar una partida desde el
+           formulario de abajo también (public.puedo_armar_partida_con). */
         function puedoJugarCon(otro) {
-            if (!otro || otro.id === profile.id) return false;
-            if (profile.is_admin || otro.is_admin) return true;
-            const suyos = otro.profesores || [];
-            if (misProfesores.some((t) => suyos.includes(t))) return true;   // compañeros
-            if (misProfesores.includes(otro.id) || suyos.includes(profile.id)) return true;  // alumno con su profesor
-            return false;
+            return !!otro && !!otro.id && otro.id !== profile.id;
         }
 
         function prepararSelectoresDeReto() {
@@ -711,12 +708,11 @@
             prepararSelectoresDeReto();
             document.getElementById("en-linea-caja").classList.remove("hidden");
 
-            // Mis profesores, para poder decir quién es compañero mío. Un
-            // profesor no tiene profesores: su lista queda vacía y a él lo
-            // encuentran los suyos por el otro lado de la regla.
-            const { data: clases } = await sb.rpc("mis_clases");
-            misProfesores = (clases || []).map((c) => c.profesor_id);
-
+            /* En el canal de presencia va lo justo para pintar la fila y
+               apretar "Retar": el id, el nombre y si da clase. Antes iba
+               también la lista de profesores de cada quien, que servía para
+               decidir si eran compañeros — ahora no hace falta y, de paso, era
+               repartirle a toda la página con quién estudia cada alumno. */
             canalPresencia = sb.channel(CANAL_PRESENCIA, { config: { presence: { key: profile.id } } });
             canalPresencia.on("presence", { event: "sync" }, () => {
                 const estado = canalPresencia.presenceState();
@@ -731,7 +727,7 @@
                 if (estado !== "SUBSCRIBED") return;
                 await canalPresencia.track({
                     id: profile.id, nombre: nombreVisible(profile),
-                    profesores: misProfesores, is_admin: !!profile.is_admin, role: profile.role,
+                    is_admin: !!profile.is_admin, role: profile.role,
                 });
             });
         }
@@ -743,7 +739,7 @@
             cuenta.textContent = disponibles.length ? disponibles.length + (disponibles.length === 1 ? " persona" : " personas") : "";
             lista.innerHTML = "";
             if (!disponibles.length) {
-                lista.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más de tu clase en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
+                lista.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Ahora mismo no hay nadie más en esta página. Si quieres jugar ya, está <a href="bot.html" class="underline">el bot de Oscar</a>.</p>';
                 return;
             }
             disponibles.forEach((p) => {
@@ -834,8 +830,8 @@
             retosPendientes.push(reto);
             let nombre = playerNames[reto.de_id];
             if (!nombre) {
-                const { data } = await sb.from("profiles").select("id, full_name, email").eq("id", reto.de_id).maybeSingle();
-                nombre = data ? nombreVisible(data) : "Alguien";
+                const { data } = await sb.rpc("nombres_de_jugadores", { p_ids: [reto.de_id] });
+                nombre = (data && data[0]) ? data[0].nombre : "Alguien";
                 playerNames[reto.de_id] = nombre;
             }
             const tc = TIME_CONTROLS.find((t) => t.initial === reto.initial_seconds && t.increment === reto.increment_seconds);
