@@ -606,6 +606,52 @@ diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
 - Las **miniaturas de supervisión** del profesor siguen sin ellas a propósito: son
   de mirar de lejos y a ese tamaño las letras no se leerían.
 
+### Las miniaturas de la práctica: a 16 px no se distingue una pieza
+
+Mientras la clase practica contra el motor, el profesor ve una miniatura por alumno
+debajo de su tablero. Es la pantalla con la que decide a quién ayudar, y estaba
+ilegible de dos maneras a la vez — las dos calladas, porque las tarjetas se pintan
+igual y con la posición correcta:
+
+- **Las tarjetas topaban en 160 px**, o sea casillas de 16 px y piezas de 10. El tope
+  fijo es una decisión que se queda (con `1/N` del ancho, dos alumnos se veían
+  enormes y, peor, **todos cambiaban de tamaño en cuanto se conectaba uno más**,
+  justo mientras se los está mirando), pero el número estaba mal: **190 px** es lo
+  más chico donde la pieza se reconoce de un vistazo y siguen entrando tres por fila.
+- **La pieza se dibujaba con el glifo Unicode.** El de las blancas (♔♕♖) es un
+  contorno hueco, así que para no confundirse con las negras se apoya en un
+  `text-shadow` de 1 px en las cuatro direcciones (ver `css/styles.css`). A 10 px ese
+  contorno es el 10 % del glifo: le rellena los huecos y **las blancas se ven tan
+  oscuras como las negras**. Agrandar la tarjeta no lo arregla — está medido: a 220 px
+  con glifo las dos filas de torres siguen costando.
+
+**En `compact` manda el set dibujado** (`js/chess-piece-svg.js`), pase lo que pase con
+la preferencia de pieza y con el tema divertido: tiene relleno sólido, así que se
+distingue en cualquier tamaño, y un emoji a 20 px tampoco dice qué pieza es. **No le
+cambia el tablero a nadie**: el suyo sigue con lo que eligió en Configuración — `compact`
+lo usan solo estas miniaturas. Y el factor de tamaño dejó de ser uno solo: 0,62 es la
+fracción que pinta un glifo de texto dentro de su em, pero la pieza dibujada mide 1 em
+exacto, así que con 0,62 quedaba flotando en el medio desperdiciando un tercio de la
+casilla — va en 0,82.
+
+Dos cosas más de la misma tarjeta, que se rompían igual de calladas:
+
+- **La barra de evaluación era blanca sobre una tarjeta blanca.** Lo blanco es la
+  ventaja de las blancas, como en cualquier tablero, pero sin borde esa mitad no se
+  veía y la barra se leía al revés — se veía «lo que falta». Lleva borde, y su
+  `aria-label` dice en palabras quién va mejor: era un `role="img"` cuyo nombre fijo
+  («Barra de evaluación») no decía nada de la partida.
+- **De qué color juega el alumno iba pegado al final del nombre**, que se trunca. Con
+  un nombre largo —el caso de todos los días— se perdía siempre, y es justo el dato
+  que dice cómo leer el tablero, porque se gira según su color. Va afuera y con
+  `shrink-0`; el nombre se encoge con `min-w-0`.
+
+`verificar-sesion-curso.js` lo comprueba midiendo la pantalla: qué se dibujó de
+verdad (no la preferencia guardada), el alto real de la pieza contra el de su casilla,
+que la barra se separe del fondo y que el color se siga viendo con un nombre largo.
+Está probado que falla de verdad: con el código de antes saltan seis comprobaciones,
+la primera diciendo «pintó ♜, que a esta escala no se distingue».
+
 `verificar-sesion-curso.js` lo comprueba midiendo en el navegador: que cada letra
 caiga sobre su columna y cada número sobre su fila —contra las casillas de verdad,
 por su `data-square`, no contra lo que diga la página—, que las etiquetas se giren

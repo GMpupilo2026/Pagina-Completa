@@ -3621,9 +3621,20 @@
                 const wrap = document.createElement("div");
                 wrap.className = "bg-white dark:bg-brand-900 rounded-xl shadow-md p-3";
                 wrap.innerHTML =
-                    '<p class="practice-mini-name text-xs font-semibold text-brand-700 dark:text-brand-200 truncate mb-1"></p>' +
+                    // De qué color juega va FUERA del nombre y sin encogerse: el tablero se
+                    // gira según su color, así que es lo que dice cómo leerlo — y iba pegado
+                    // al final de un nombre que se trunca, o sea que con un nombre largo
+                    // (que es el caso de todos los días) se perdía siempre.
+                    '<div class="flex items-baseline gap-1 mb-1">' +
+                        '<p class="practice-mini-name text-xs font-semibold text-brand-700 dark:text-brand-200 truncate min-w-0"></p>' +
+                        '<span class="practice-mini-color text-[11px] text-brand-450 dark:text-brand-350 shrink-0"></span>' +
+                    "</div>" +
                     '<div class="practice-mini-board grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow border-2 border-brand-700 select-none mb-2"></div>' +
-                    '<div class="h-1.5 w-full rounded-full overflow-hidden bg-brand-800 flex mb-1.5" role="img" aria-label="Barra de evaluación">' +
+                    // Quién va ganando, como en cualquier tablero: lo blanco es de las
+                    // blancas y lo oscuro de las negras. El relleno blanco iba SIN borde
+                    // sobre una tarjeta blanca, así que la mitad de las blancas era
+                    // invisible y la barra se leía al revés — se veía "lo que falta".
+                    '<div class="practice-mini-eval h-2 w-full rounded-full overflow-hidden bg-brand-800 border border-brand-300 dark:border-brand-700 flex mb-1.5" role="img">' +
                         '<div class="practice-mini-bar bg-white h-full transition-all duration-500 ease-out" style="width:50%"></div>' +
                     "</div>" +
                     '<p class="practice-mini-status text-[11px] text-brand-450 dark:text-brand-350"></p>';
@@ -3631,6 +3642,8 @@
                 entry = {
                     el: wrap,
                     nameEl: wrap.querySelector(".practice-mini-name"),
+                    colorEl: wrap.querySelector(".practice-mini-color"),
+                    evalEl: wrap.querySelector(".practice-mini-eval"),
                     barEl: wrap.querySelector(".practice-mini-bar"),
                     statusEl: wrap.querySelector(".practice-mini-status"),
                     board: new ClasesBoard(wrap.querySelector(".practice-mini-board"), { interactive: false, allowArrows: false, compact: true }),
@@ -3638,23 +3651,36 @@
                 practiceStudentBoards[row.student_id] = entry;
             }
             const displayName = (row.profiles && (row.profiles.full_name || row.profiles.email)) || "Alumno";
-            entry.nameEl.textContent = displayName + " · " + (row.student_color === "w" ? "blancas" : "negras");
+            entry.nameEl.textContent = displayName;
+            entry.nameEl.title = displayName;
+            entry.colorEl.textContent = row.student_color === "w" ? "· blancas" : "· negras";
             entry.board.setFlipped(row.student_color === "b");
             entry.board.loadMoves(row.moves || [], latestPracticeSession.fen);
             // eval_cp queda en null justo al reintentar (partida recién reiniciada): la barra
             // vuelve al centro en vez de quedarse con el valor de la partida anterior.
-            entry.barEl.style.width = (row.eval_cp !== null && row.eval_cp !== undefined ? evalToBarPercent(row.eval_cp) : 50) + "%";
+            const hayEval = row.eval_cp !== null && row.eval_cp !== undefined;
+            entry.barEl.style.width = (hayEval ? evalToBarPercent(row.eval_cp) : 50) + "%";
+            // Una barra es una imagen: sin nombre, quien usa lector de pantalla oye "imagen"
+            // y nada más. Va en palabras porque el color nunca dice nada solo.
+            entry.evalEl.setAttribute("aria-label", !hayEval ? "Todavía sin evaluar"
+                : Math.abs(row.eval_cp) < 50 ? "La partida va pareja"
+                : "Va mejor " + (row.eval_cp > 0 ? "el blanco" : "el negro"));
             entry.statusEl.textContent = practiceStatusLabelWithAttempts(row);
         }
 
-        // Tableros siempre chicos y del mismo tamaño (proporción fija), sin importar
-        // cuántos alumnos estén jugando: antes cada uno ocupaba 1/N del ancho de la
-        // fila, así que con 1-2 alumnos se veían enormes. Ahora cada tarjeta mide lo
-        // mismo (entre 140 y 160px) y se acomodan solas en la fila; con más alumnos
-        // simplemente se envuelve en más filas, en vez de crecer.
+        // Tableros siempre del MISMO tamaño, sin importar cuántos alumnos estén jugando:
+        // antes cada uno ocupaba 1/N del ancho de la fila, así que con 1-2 alumnos se veían
+        // enormes — y, peor, todos cambiaban de tamaño en el momento en que un alumno más se
+        // conectaba, justo mientras el profesor los está mirando.
+        //
+        // Pero el tope estaba en 160px, o sea casillas de 16px y piezas de 10: ahí no se
+        // distingue ni la figura ni de qué color es. 190 es lo más chico donde la pieza
+        // dibujada se reconoce de un vistazo (medido en pantalla, no a ojo) y siguen
+        // entrando tres por fila en la columna del profesor. El `min(…, 100%)` es para que
+        // en una pantalla más angosta que una tarjeta se encoja en vez de desbordarse.
         function updatePracticeBoardsGridColumns() {
             const grid = document.getElementById("practice-boards-grid");
-            grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(140px, 160px))";
+            grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(min(190px, 100%), 190px))";
             grid.style.justifyContent = "center";
         }
 
