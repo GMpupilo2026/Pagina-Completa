@@ -1,7 +1,9 @@
 /* Comprueba las dos páginas de formularios de inscripción en un navegador de
    verdad, con un Supabase de mentira:
      · formularios.html — el armador: que solo entre quien coordina, que la
-       plantilla ponga las preguntas, y sobre todo QUÉ manda a guardar.
+       plantilla ponga las preguntas, y sobre todo QUÉ manda a guardar; y que
+       compartir un formulario con otro coordinador solo aparezca en uno
+       propio ya guardado, y mande el formulario y el coordinador elegidos.
      · formulario.html — el lado público: que pinte cada tipo de pregunta, que
        no deje mandar sin los obligatorios y que el cuerpo que envía sea el
        correcto.
@@ -346,6 +348,75 @@ async function pruebaAlta(page) {
     }), "✅ Creada");
 }
 
+/* Compartir un formulario con otro coordinador. Lo que hace cumplir quién
+   puede leer qué se comprobó impersonando roles en SQL; esto es lo otro: que
+   el bloque solo aparezca donde tiene que aparecer y que mande a la base
+   exactamente lo que la pantalla dice que va a mandar. */
+async function pruebaCompartir(browser) {
+  console.log("\n=== Compartir con otro coordinador ===");
+
+  const { page, errores } = await abrir(browser, "/formularios.html", clienteFalso({
+    rpc: {
+      informes_resumen_alumnos: [{ id: "a1", grupo: "7A" }],
+      coordinadores_disponibles: [
+        { id: "u-otro", nombre: "Otro Coordinador", email: "otro@x.cr" },
+        { id: "u-tercero", nombre: "Tercera Coordinadora", email: "tercera@x.cr" },
+      ],
+    },
+    tablas: {
+      profiles: [{ id: "u-karina", role: "profesor", is_admin: false, es_coordinador: true, full_name: "Karina" }],
+      formularios: [FORM],
+      formulario_respuestas: RESPUESTAS,
+      formulario_compartidos: [],
+    },
+  }, "u-karina"));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+
+  // Uno nuevo, sin id, no tiene con qué compartir todavía.
+  await page.click("#nuevo-btn");
+  await page.waitForSelector("#vista-editor:not(.hidden)");
+  igual("un formulario nuevo no ofrece compartir",
+    await page.evaluate(() => getComputedStyle(document.getElementById("bloque-compartir")).display), "none");
+  await page.click("#volver-btn");
+  await page.waitForSelector("#vista-lista:not(.hidden)");
+
+  // El de siempre, que ya es de esta cuenta, sí.
+  await page.evaluate(() => [...document.querySelectorAll("#lista button")].find((b) => b.textContent === "Editar").click());
+  await page.waitForSelector("#vista-editor:not(.hidden)");
+  await page.waitForFunction(() => getComputedStyle(document.getElementById("bloque-compartir")).display !== "none");
+  igual("un formulario propio SÍ ofrece compartir",
+    await page.evaluate(() => getComputedStyle(document.getElementById("bloque-compartir")).display), "block");
+  igual("el selector ofrece a los coordinadores disponibles",
+    await page.evaluate(() => [...document.getElementById("c-agregar").options].map((o) => o.textContent)),
+    ["Otro Coordinador", "Tercera Coordinadora"]);
+  igual("todavía no se comparte con nadie", await page.evaluate(() =>
+    getComputedStyle(document.getElementById("c-nadie")).display), "block");
+
+  await page.selectOption("#c-agregar", "u-otro");
+  await page.click("#c-sumar");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "formulario_compartidos"));
+  const compartido = await page.evaluate(() => window.__escrituras.find((e) => e.tabla === "formulario_compartidos"));
+  igual("compartir manda el formulario y el coordinador elegidos",
+    [compartido.accion, compartido.fila.formulario_id, compartido.fila.coordinador_id],
+    ["insert", FORM.id, "u-otro"]);
+  igual("la etiqueta se pinta con su nombre",
+    await page.evaluate(() => document.getElementById("c-etiquetas").textContent.trim()), "Otro Coordinador✕");
+  igual("y ya no se ofrece de nuevo en el selector",
+    await page.evaluate(() => [...document.getElementById("c-agregar").options].map((o) => o.textContent)),
+    ["Tercera Coordinadora"]);
+
+  await page.click("#c-etiquetas button");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "formulario_compartidos" && e.accion === "delete"));
+  igual("dejar de compartir se lo dice a la base",
+    await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "formulario_compartidos").map((e) => e.accion)),
+    ["insert", "delete"]);
+  igual("y la etiqueta desaparece",
+    await page.evaluate(() => document.getElementById("c-etiquetas").children.length), 0);
+
+  errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
+  await page.close();
+}
+
 async function pruebaPublica(browser) {
   console.log("\n=== El lado público (formulario.html) ===");
 
@@ -408,6 +479,7 @@ async function pruebaPublica(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaArmador(browser);
+    await pruebaCompartir(browser);
     await pruebaPublica(browser);
   } finally {
     await browser.close();

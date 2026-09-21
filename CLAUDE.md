@@ -2087,9 +2087,65 @@ líneas de HTML.
   no era la veía quien lo recibía, que es el único que no puede arreglarlo.
 - **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
   sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
-  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, qué
-  manda el formulario público al contestar y el alta de abajo — qué dedujo de
-  cada etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, que
+  compartir un formulario mande lo correcto (ver abajo), qué manda el
+  formulario público al contestar y el alta de abajo — qué dedujo de cada
+  etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+
+### Compartir un formulario con otro coordinador
+
+Un formulario ya lo veía quien lo coordinaba (`bajo_mi_coordinacion(creado_por)`,
+ver «Coordinar es un alcance, no una llave maestra»), pero eso deja un hueco:
+`bajo_mi_coordinacion()` nunca es cierto para la cuenta master, porque
+administrar no es "estar bajo" ningún coordinador. Un formulario que arma quien
+administra queda invisible para todo el equipo de coordinación, sin que nada lo
+avise — y aunque lo hubiera armado otra coordinadora, no había forma de dárselo
+a UNA colega puntual, solo a quien ya la coordinaba a ella.
+
+La salida es la misma que ya se usó para los planes de clase: el dueño elige,
+uno por uno, con qué coordinador comparte el formulario. **Sigue siendo DE
+quien lo armó** — compartirlo da ver el formulario, leer sus respuestas y dar
+de alta las cuentas desde ellas (es lo mismo que ya hace `inscribir-alumno`:
+lee la respuesta con el JWT de quien llama, así que a quien se le comparte
+puede usar "Crear cuenta" igual que el dueño), pero **no** editarlo ni
+borrarlo, y tampoco borrar sus respuestas — eso sigue siendo del dueño o de
+quien administra.
+
+- `public.formulario_compartidos (formulario_id, coordinador_id)` es la tabla
+  puente, igual que `plan_compartidos`. **No hay política de update**: una fila
+  de "compartido" se pone o se quita.
+- **Las dos preguntas de siempre van en funciones `SECURITY DEFINER`**
+  (`soy_dueno_del_formulario()`, `formulario_compartido_conmigo()`), por lo de
+  siempre: la política de `formularios` mira `formulario_compartidos` y la de
+  `formulario_compartidos` mira `formularios` — una RLS llamando a la otra es
+  recursión infinita.
+- **Solo se puede compartir con alguien que YA coordina** (`es_coordinador_de()`
+  exige `es_coordinador` o `is_admin` en la cuenta destino): sin eso nada
+  impediría poner ahí el id de un profesor cualquiera o de un alumno, y
+  `formulario_respuestas` trae cédulas y fechas de nacimiento de menores.
+- **`coordinadores_disponibles()`** es la que llena el selector, con nombre —
+  hace falta una función porque la RLS de `profiles` no le deja a un
+  coordinador ver a sus colegas (solo a sus alumnos y a sí mismo), igual que
+  `equipo_docente()` para los planes.
+- **Las cuatro funciones nacen con EXECUTE de PUBLIC**, como toda función
+  nueva de Postgres, y revocarlo solo de `anon` no alcanza: `anon` lo hereda
+  igual de PUBLIC si no se le revoca a PUBLIC directamente. Comprobado con
+  datos reales antes de escribir la migración de cierre: `bajo_mi_coordinacion()`
+  y `equipo_docente()` —que solo revocan de `anon`— siguen dando
+  `has_function_privilege('anon', …) = true` hoy; `soy_coordinador()` —que
+  revoca de `public, anon`— da `false`. Las cuatro funciones nuevas se
+  revocaron de PUBLIC y se les volvió a dar el execute a `authenticated`, que
+  es quien de verdad las necesita para las políticas de RLS.
+- **En `formularios.html`, "Compartir con otro coordinador" solo aparece en un
+  formulario propio y YA GUARDADO** (uno nuevo todavía no tiene id con qué
+  compartir): la sección vive dentro del editor y se destapa en `abrirEditor()`
+  solo cuando `esDueno(form)`. El selector **excluye a quien ya lo tiene**, la
+  misma regla que "O con quien elijas" de los planes.
+- Comprobado impersonando cuentas reales en SQL, revertido: antes de
+  compartir, otra coordinadora no lo ve (0 filas); al compartirlo, la cuenta
+  elegida lo ve y puede leer sus respuestas, pero un intento de editarlo,
+  borrarlo o volver a compartirlo con un tercero queda rechazado; una TERCERA
+  coordinadora, sin compartir, sigue sin verlo.
 
 ### De la respuesta a la cuenta, en un botón
 
