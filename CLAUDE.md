@@ -4140,13 +4140,27 @@ revoke execute on function public.<la_nueva>() from public;
 
 ### Lo que queda pendiente y NO se puede hacer desde acá
 
-**La protección contra contraseñas filtradas está apagada.** Supabase puede
-comparar cada contraseña nueva contra HaveIBeenPwned y rechazar las que ya se
-filtraron; el sitio es de menores de edad y hoy acepta cualquiera. Es un
-interruptor del panel, no SQL, así que no entra en ninguna migración:
-**Authentication › Policies › "Leaked password protection"** en el proyecto de
-Supabase. Queda escrito acá porque un pendiente que solo vive en la cabeza de
-alguien no existe.
+**La protección contra contraseñas filtradas está apagada, y hoy no se puede
+encender.** Supabase puede comparar cada contraseña nueva contra
+HaveIBeenPwned y rechazar las que ya se filtraron; el sitio es de menores de
+edad y hoy acepta cualquiera. Es un interruptor del panel, no SQL, así que no
+entra en ninguna migración — pero además **es de plan Pro**, y la organización
+(`Base de Colegios`, donde viven los dos proyectos) está en el gratuito: en el
+panel el interruptor aparece con candado.
+
+- Cuando se pague el plan, está en **Authentication › Sign In / Providers ›
+  Email › "Prevent use of leaked passwords"**. No es «Authentication ›
+  Policies» —ahí no hay nada de esto— y mucho menos **Database › Policies**,
+  que son las reglas RLS de las tablas y es otra pantalla completamente
+  distinta.
+- Mientras tanto lo único que hay es el mínimo de 6 caracteres de
+  `bienvenida.html`, que es lo que trae Supabase por omisión. Subirlo a 8 sí se
+  puede sin pagar (es otro campo de esa misma pantalla), pero un mínimo más
+  largo no distingue una contraseña filtrada de una nueva: son cosas distintas
+  y conviene no confundirlas.
+
+Queda escrito acá porque un pendiente que solo vive en la cabeza de alguien no
+existe.
 
 ## Confites del caballo
 
@@ -4599,6 +4613,26 @@ toda la razón de que esta página esté armada distinto al resto del sitio.
   fechas de nacimiento y teléfonos de personas menores de edad, y la clave
   pública de ese proyecto está escrita dentro de `inscripcion.html`, a la vista
   de cualquiera — darle lectura a `anon` sería publicarlas.
+- **Y además se le quitó el permiso de tabla, que es otra cosa.** La RLS sin
+  políticas ya lo paraba, pero Supabase le concede a `anon` y a `authenticated`
+  el `select/insert/update/delete` de toda tabla nueva de `public` y confía en
+  la política: o sea que las 87 cédulas dependían de que nadie apagara la RLS
+  desde el panel, con un clic y sin ninguna confirmación. Ahora esas dos tablas
+  —`inscripciones` y `chess_leads`— no tienen en su ACL más que `postgres` y
+  `service_role`, que es con lo que entran la Edge Function y el Worker. Es la
+  misma decisión que ya se había tomado en la Academia con `formularios`,
+  `formulario_respuestas` y `profile_teachers`: **una puerta menos que dependa
+  de que la política esté bien escrita.**
+- **`Coles` sí se lee sin sesión, y por eso es la excepción.** Son los 12.104
+  centros educativos del MEP —datos públicos— y de ahí sale el selector de
+  colegios de `inscripcion.html`, que se abre sin cuenta. Lo que se le quitó es
+  lo que nunca usó: `anon` podía **insertar, actualizar y borrar** en la lista
+  de colegios del país, y lo único que lo impedía era que su única política
+  fuera de `select`. Le quedó `select` y nada más.
+- Comprobado impersonando roles en SQL, los cuatro casos: `anon` ya no lee
+  `inscripciones` ni `chess_leads` —da error de permisos, que es lo que se
+  busca, no «0 filas»—, no puede escribir en `Coles`, sigue leyendo sus 12.104
+  colegios, y `service_role` conserva todo.
 - Las trae la Edge Function **`inscripciones-torneo`**, que vive en ese mismo
   proyecto y lee con la service role. Las pide de mil en mil, por lo de siempre.
 - **El permiso lo decide la Academia, no la función**, y no podría decidirlo
