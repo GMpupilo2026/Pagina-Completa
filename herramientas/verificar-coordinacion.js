@@ -32,10 +32,15 @@ const MASTER = { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr", 
 
 // Lo que devolvería `mi_gente`: un profesor coordinado, su alumna, la propia
 // cuenta y la master. El `total` viaja en cada fila, como la función.
+/* `profesores` es la columna que estrena la ficha: todos los de ese alumno,
+   no solo los que quien mira coordina. Ana lleva a Luis —coordinado, y por eso
+   con su ✕— y a Marta, que es de OTRA coordinación: se le ve el nombre y no se
+   le puede quitar. */
 const GENTE = [
-  { id: "u-luis",  full_name: "Luis Vega",    email: "luis@x.cr",   role: "profesor", grupo: null, es_coordinador: false, is_admin: false, alumnos: 1, subgrupos: 2, total: 3 },
-  { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr",  role: "admin",    grupo: null, es_coordinador: false, is_admin: true,  alumnos: 0, subgrupos: 0, total: 3 },
-  { id: "u-ana",   full_name: "Ana Rojas",    email: "ana@x.cr",    role: "alumno",   grupo: "7A", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, total: 3 },
+  { id: "u-luis",  full_name: "Luis Vega",    email: "luis@x.cr",   role: "profesor", grupo: null, es_coordinador: false, is_admin: false, alumnos: 1, subgrupos: 2, profesores: [], total: 3 },
+  { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr",  role: "admin",    grupo: null, es_coordinador: false, is_admin: true,  alumnos: 0, subgrupos: 0, profesores: [], total: 3 },
+  { id: "u-ana",   full_name: "Ana Rojas",    email: "ana@x.cr",    role: "alumno",   grupo: "7A", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, total: 3,
+    profesores: [{ id: "u-luis", nombre: "Luis Vega" }, { id: "u-marta", nombre: "Marta Solís" }] },
 ];
 
 function clienteFalso(perfil, gente) {
@@ -105,6 +110,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       if (n === "mis_subgrupos") return constructor([], "rpc:mis_subgrupos");
       if (n === "informes_resumen_alumnos") return constructor([], "rpc:informes");
       if (n === "cambiar_rol") return constructor({ ok: true, rol: (args || {}).p_rol }, "rpc:cambiar_rol");
+      if (n === "coord_guardar_cuenta") {
+        return constructor({ ok: true, full_name: (args || {}).p_nombre, grupo: (args || {}).p_grupo }, "rpc:coord_guardar_cuenta");
+      }
+      if (n === "coord_set_profesores") {
+        return constructor({ ok: true, profesores: (args || {}).p_profesores }, "rpc:coord_set_profesores");
+      }
       return constructor([], "rpc:" + n);
     },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
@@ -113,8 +124,18 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const fetchReal = window.fetch;
   window.fetch = function (url, opciones) {
     if (String(url).indexOf("/functions/v1/") !== -1) {
-      window.__llamadas.push({ funcion: JSON.parse((opciones && opciones.body) || "{}"), url: String(url) });
-      return Promise.resolve(new Response(JSON.stringify({ ok: true, correo_destino: "mama@x.cr" }),
+      const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
+      window.__llamadas.push({ funcion: cuerpo, url: String(url) });
+      /* Cada función contesta lo SUYO. Con una respuesta única para las tres,
+         cambiar el correo diría "listo" con lo que devuelve reenviar-acceso y
+         la prueba daría verde sobre una pantalla que no enseña el correo que
+         de verdad quedó — que es lo único que esa pantalla tiene que enseñar,
+         porque el usuario lo desempata el servidor. */
+      let respuesta = { ok: true, correo_destino: "mama@x.cr" };
+      if (String(url).indexOf("correos-alumno") !== -1 && cuerpo.action === "cuenta") {
+        respuesta = { ok: true, cambiado: cuerpo.sin_correo ? "ana.rojas2" : String(cuerpo.email || "").toLowerCase() };
+      }
+      return Promise.resolve(new Response(JSON.stringify(respuesta),
         { status: 200, headers: { "Content-Type": "application/json" } }));
     }
     return fetchReal.apply(this, arguments);
@@ -224,6 +245,129 @@ async function pruebaPanel(browser) {
   await page.close();
 }
 
+/* LA FICHA. Es lo que quien coordina hace todos los días —corregirle el
+   nombre a una familia nueva, arreglarle una letra al correo, repartir a un
+   alumno entre sus profesores— y lo que antes había que pedirle a quien
+   administra. Todo lo que se rompe acá se rompe callado: un correo mandado
+   con el id de otra cuenta queda en la ficha que no era y la pantalla se ve
+   perfecta. */
+async function pruebaFicha(browser) {
+  console.log("\n=== La ficha de una cuenta ===");
+  const { page, errores } = await abrir(browser, "coordinacion.html", COORD);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelectorAll("#lista > div").length >= 3, { timeout: 10000 });
+
+  /* Se abre la de la alumna, no la primera que haya: las fichas se distinguen
+     por su cuenta y abrir la que no era es el fallo de esta pantalla. */
+  const abrirFicha = async (correo) => {
+    await page.evaluate((c) => {
+      const tarjetas = Array.from(document.querySelectorAll("#lista > div"));
+      const suya = tarjetas.find((t) => t.textContent.indexOf(c) !== -1);
+      suya.querySelector("button[aria-expanded]").click();
+    }, correo);
+  };
+  await abrirFicha("ana@x.cr");
+  await page.waitForFunction(() => document.querySelectorAll("#lista input[type=checkbox]").length > 0, { timeout: 10000 });
+
+  igual("la ficha dice con qué entra y deja corregirlo",
+    await page.evaluate(() => {
+      const c = Array.from(document.querySelectorAll("#lista input")).find((i) => i.value === "ana@x.cr");
+      return !!c && !c.disabled;
+    }), "true");
+
+  // --------------------------------------------- el nombre y el grupo
+  await page.evaluate(() => { window.__rpc = []; window.__llamadas = []; });
+  await page.evaluate(() => {
+    const inputs = Array.from(document.querySelectorAll("#lista input[type=text]"));
+    inputs[0].value = "Ana Ramírez";
+    inputs[1].value = "7B";
+    Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === "Guardar").click();
+  });
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "coord_guardar_cuenta"), { timeout: 10000 });
+  const upd = await page.evaluate(() => window.__rpc.find((r) => r.rpc === "coord_guardar_cuenta").args);
+  igual("guardar manda el nombre y el grupo de ESA cuenta",
+    [upd.p_persona, upd.p_nombre, upd.p_grupo], ["u-ana", "Ana Ramírez", "7B"]);
+  /* Va por SU función de la base y no por el panel de administración: el
+     alcance de la coordinación ya vive en SQL, y partirlo entre la base y una
+     Edge Function que tendría que volver a preguntar lo mismo es como se
+     separan dos versiones de la misma regla. */
+  igual("y no se cuela el rol ni nada de la cuenta master",
+    Object.keys(upd).sort(), ["p_grupo", "p_nombre", "p_persona"]);
+  igual("el encabezado de la tarjeta se entera, sin cerrar la ficha",
+    await page.evaluate(() => {
+      const t = Array.from(document.querySelectorAll("#lista > div")).find((x) => x.textContent.indexOf("ana@x.cr") !== -1);
+      return [t.textContent.indexOf("Ana Ramírez") !== -1, t.querySelector("input[type=checkbox]") !== null];
+    }), [true, true]);
+
+  // ------------------------------------------------------- el correo
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.evaluate(() => {
+    const c = Array.from(document.querySelectorAll("#lista input")).find((i) => i.value === "ana@x.cr");
+    c.value = "ana.ramirez@x.cr";
+    Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === "Cambiar el correo").click();
+  });
+  await page.waitForFunction(() => window.__llamadas.some((l) => l.funcion && l.funcion.action === "cuenta"), { timeout: 10000 });
+  const cor = await page.evaluate(() => window.__llamadas.find((l) => l.funcion && l.funcion.action === "cuenta"));
+  igual("el correo lo cambia correos-alumno, que es donde ya vivía esa regla",
+    cor.url.indexOf("correos-alumno") !== -1, "true");
+  igual("y va con el alumno y el correo escrito",
+    [cor.funcion.alumno_id, cor.funcion.email, cor.funcion.sin_correo], ["u-ana", "ana.ramirez@x.cr", false]);
+
+  /* «No tiene correo propio»: el campo se APAGA —no se esconde— y lo que la
+     pantalla enseña al final es el usuario que devolvió el SERVIDOR, no el
+     que ella propuso. Enseñar el propuesto dejaría a la familia intentando
+     entrar con uno que no es. */
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.evaluate(() => { document.querySelector("#lista input[type=checkbox]").click(); });
+  igual("marcar «no tiene correo propio» apaga el campo, no lo esconde",
+    await page.evaluate(() => {
+      const c = Array.from(document.querySelectorAll("#lista input")).find((i) => i.value.indexOf("ana") === 0);
+      return [c.disabled, getComputedStyle(c).display !== "none"];
+    }), [true, true]);
+  await page.evaluate(() => {
+    Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === "Cambiar el correo").click();
+  });
+  await page.waitForFunction(() => window.__llamadas.some((l) => l.funcion && l.funcion.sin_correo === true), { timeout: 10000 });
+  await page.waitForFunction(() => document.getElementById("aviso").textContent.indexOf("ana.rojas2") !== -1, { timeout: 10000 });
+  igual("y se enseña el usuario que devolvió el servidor, no el que se propuso",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#lista input")).some((i) => i.value === "ana.rojas2")), "true");
+
+  // --------------------------------------------------- sus profesores
+  igual("se ven TODOS sus profesores, no solo los que coordina",
+    await page.evaluate(() => {
+      // Dentro de SU apartado: la etiqueta de rol de la tarjeta comparte
+      // clases con estas, y contarla daría verde sobre una lista equivocada.
+      const h = Array.from(document.querySelectorAll("#lista h3")).find((x) => x.textContent === "Sus profesores");
+      return Array.from(h.parentElement.querySelectorAll("span.rounded-full"))
+        .map((x) => x.textContent.replace("✕", "").trim());
+    }), ["Luis Vega", "Marta Solís"]);
+  /* Y a la de OTRA coordinación no se le pinta ✕: quitársela sería dejar sin
+     su alumna a una colega, y `coord_set_profesores()` la conserva igual — acá
+     lo que se evita es ofrecer un botón que va a fallar. */
+  igual("pero solo se puede quitar al que coordina",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#lista button"))
+      .filter((b) => b.textContent === "✕")
+      .map((b) => b.getAttribute("aria-label"))), ["Quitarle a Luis Vega"]);
+
+  await page.evaluate(() => { window.__rpc = []; window.__llamadas = []; });
+  await page.evaluate(() => {
+    Array.from(document.querySelectorAll("#lista button")).find((b) => b.textContent === "✕").click();
+  });
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "coord_set_profesores"), { timeout: 10000 });
+  const st = await page.evaluate(() => window.__rpc.find((r) => r.rpc === "coord_set_profesores").args);
+  igual("quitarle uno manda la lista sin él, y sobre esa alumna",
+    [st.p_alumno, st.p_profesores.join(",")], ["u-ana", "u-marta"]);
+  /* Lo que se manda es la lista COMPLETA de los que coordina: la función deja
+     la lista exactamente como llegó y conserva aparte a los de fuera de su
+     alcance. Mandar «el que se quitó» en vez de la lista entera se vería
+     igual y dejaría a la alumna con los dos. */
+  igual("y no se manda a la Edge Function del panel de administración",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.funcion).length), 0);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+}
+
 async function pruebaSinProfesores(browser) {
   console.log("\n=== Coordinar sin ningún profesor vinculado ===");
   // Nadie: es lo que ve quien todavía no tiene ningún profesor vinculado.
@@ -286,6 +430,7 @@ async function pruebaSubgruposAjenos(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaPanel(browser);
+    await pruebaFicha(browser);
     await pruebaSinProfesores(browser);
     await pruebaAlumna(browser);
     await pruebaSubgruposAjenos(browser);
