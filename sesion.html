@@ -2212,7 +2212,7 @@
                 lista.forEach((pl) => {
                     const o = document.createElement("option");
                     o.value = pl.id;
-                    o.textContent = pl.titulo + (pl.autor ? " · " + pl.autor : "");
+                    o.textContent = PlanClase.tituloVisible(pl.titulo) + (pl.autor ? " · " + pl.autor : "");
                     g.appendChild(o);
                 });
                 select.appendChild(g);

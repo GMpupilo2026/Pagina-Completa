@@ -39,6 +39,17 @@ window.PlanClase = (function () {
 
     const tipoDe = (id) => TIPOS.find((t) => t.id === id) || TIPOS[2];
 
+    /* Los 53 planes de arranque (herramientas/planes-semilla.js) llevan la
+       marca " · AI" en el título A PROPÓSITO: es lo que ese script usa para
+       reconocerlos y borrarlos antes de volver a sembrar, sin tocar los que
+       el profesor armó a mano (ver su `MARCA`, que no se puede importar
+       acá — un script de Node y un archivo de navegador no comparten
+       módulos, así que la marca queda escrita en los dos). Por eso NO se
+       quita al guardar: se quita solo al MOSTRAR el título, que es lo único
+       que el profesor tiene que ver. */
+    const MARCA_ARRANQUE = / · AI$/;
+    const tituloVisible = (titulo) => String(titulo || "").replace(MARCA_ARRANQUE, "");
+
     async function listarPlanes(sb, profesorId) {
         const { data, error } = await sb.from("planes_clase").select(CAMPOS_PLAN)
             .eq("profesor_id", profesorId)
@@ -123,7 +134,9 @@ window.PlanClase = (function () {
        falta, sin tocar el original. */
     async function duplicarPlan(sb, profesorId, plan) {
         const items = await itemsDe(sb, plan.id);
-        const copia = await crearPlan(sb, profesorId, "Copia de " + plan.titulo, plan.notas);
+        // La copia es un plan nuevo y propio, no uno de arranque: no tiene por
+        // qué heredar la marca " · AI" del original.
+        const copia = await crearPlan(sb, profesorId, "Copia de " + tituloVisible(plan.titulo), plan.notas);
         for (let i = 0; i < items.length; i += 1) {
             await agregarItem(sb, copia.id, Object.assign({}, items[i], { orden: i }));
         }
@@ -202,7 +215,7 @@ window.PlanClase = (function () {
     }
 
     return {
-        TIPOS, tipoDe, resumen,
+        TIPOS, tipoDe, resumen, tituloVisible,
         listarPlanes, itemsDe, crearPlan, actualizarPlan, borrarPlan,
         agregarItem, borrarItem, moverItem, duplicarPlan,
         equipoDocente, planesCompartidosConmigo, compartidosDe,
