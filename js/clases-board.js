@@ -550,7 +550,17 @@
           // Tema de piezas "divertido" elegido en Configuración (js/board-themes.js):
           // preferencia de este navegador, no de la partida — cada quien ve sus propios
           // tableros con el tema que eligió, sin afectar lo que ven los demás.
-          const themedEmoji = window.BoardThemes ? window.BoardThemes.getEmoji(piece.type) : null;
+          // En COMPACTO manda el set dibujado, pase lo que pase con la preferencia. La
+          // casilla mide unos 20px, y ahí el glifo Unicode de las blancas (♔♕♖, que son un
+          // contorno hueco) se apoya en un text-shadow de 1px en las cuatro direcciones para
+          // no confundirse con las negras: a ese tamaño ese contorno es el 10% del glifo, le
+          // rellena los huecos y las blancas terminan viéndose tan oscuras como las negras
+          // — que es exactamente lo que se ve al mirar la pantalla, sin que nada falle. El
+          // set dibujado tiene relleno sólido, así que se distingue de un vistazo en
+          // cualquier tamaño. Un emoji del tema "divertido" a 20px tampoco dice qué pieza es.
+          // Esto NO le cambia el tablero a nadie: el suyo sigue con lo que eligió.
+          const dibujada = !!(this.compact && window.ChessPieceSVG);
+          const themedEmoji = !dibujada && window.BoardThemes ? window.BoardThemes.getEmoji(piece.type) : null;
           if (themedEmoji) {
             span.textContent = themedEmoji;
             span.className = "theme-token " + (piece.color === "w" ? "theme-token-white" : "theme-token-black");
@@ -559,7 +569,7 @@
             label.textContent = TYPE_LABEL[piece.type];
             label.setAttribute("aria-hidden", "true");
             span.appendChild(label);
-          } else if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+          } else if (dibujada || (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG)) {
             span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
             span.className = "chess-piece-illustrated";
           } else {
@@ -626,7 +636,12 @@
         if (!square) return;
         const cellWidth = square.getBoundingClientRect().width;
         if (!cellWidth) return;
-        const fontPx = Math.max(8, Math.min(cellWidth * 0.62, 40));
+        // 0.62 es la fracción del glifo de TEXTO: de un em, la letra solo pinta unos dos
+        // tercios, así que con más se sale de la casilla. La pieza dibujada mide 1em exacto
+        // (.chess-piece-svg), o sea que con el mismo 0.62 quedaba flotando en el medio
+        // desperdiciando un tercio de la casilla, justo donde menos sobra.
+        const dibujada = !!this.el.querySelector(".chess-piece-illustrated");
+        const fontPx = Math.max(8, Math.min(cellWidth * (dibujada ? 0.82 : 0.62), 40));
         this.el.querySelectorAll("[data-square]").forEach((sq) => {
           sq.style.fontSize = fontPx + "px";
         });

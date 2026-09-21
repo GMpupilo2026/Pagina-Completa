@@ -503,6 +503,120 @@ async function pruebaCoordenadasDelAlumno(browser) {
   await dos.ctx.close();
 }
 
+/* ---------------------------------------- 5. las miniaturas de los alumnos
+
+   Mientras la clase practica contra el motor, el profesor ve una miniatura por
+   alumno debajo de su tablero. Es la pantalla con la que decide a quién ayudar,
+   y todo lo que se rompe ahí se rompe callado: las tarjetas se pintan igual,
+   con la posición correcta, solo que no se distingue nada.
+
+   Pasaba lo dos veces: las tarjetas topaban en 160px —casillas de 16px— y la
+   pieza se dibujaba con el glifo Unicode, que en las blancas es un contorno
+   hueco sostenido por un text-shadow de 1px: a ese tamaño ese contorno le
+   rellena los huecos y las blancas se ven tan oscuras como las negras. Por eso
+   se mide LA PANTALLA —el alto real de la pieza contra el de su casilla, y qué
+   se dibujó de verdad—, nunca la clase ni la preferencia.                    */
+async function pruebaMiniaturas(browser) {
+  console.log("\n=== Las miniaturas de los alumnos que están practicando ===");
+
+  const jugadas = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"];
+  const semilla = {
+    // La ronda arranca de la posición inicial de siempre; cada alumno lleva ya unas
+    // jugadas, que es como se ve esto en medio de una clase.
+    practice_sessions: [{ id: "p-1", fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                          level: 1500, created_by: "u-profe", ended_at: null, created_at: new Date().toISOString() }],
+  };
+  semilla.practice_games = [
+    { id: "g-1", session_id: "p-1", student_id: "u-ana", student_color: "w", moves: jugadas,
+      eval_cp: 120, result: null, attempt: 1, created_at: new Date().toISOString(),
+      profiles: { full_name: "Daniel Alberto Ortega Ochoa Vargas", email: "d@x.cr" } },
+    { id: "g-2", session_id: "p-1", student_id: "u-otro", student_color: "b", moves: jugadas,
+      eval_cp: -300, result: null, attempt: 2, created_at: new Date().toISOString(),
+      profiles: { full_name: "Sebastián Cruz", email: "s@x.cr" } },
+  ];
+
+  // Las dos preferencias de pieza que existen se prueban por separado, porque son
+  // las dos ramas del if que decide qué se dibuja. "clasico" es la de por omisión
+  // (la que tiene casi todo el mundo) y un tema de emojis es la otra: a 20px un
+  // emoji tampoco dice qué pieza es.
+  for (const tema of [{ estilo: "clasico", divertido: "clasico", nombre: "con la preferencia de siempre" },
+                      { estilo: "clasico", divertido: "pokemon", nombre: "con el tema divertido puesto" }]) {
+    const ctx = await browser.newContext({ serviceWorkers: "block" });
+    await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
+    await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
+    await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+    await ctx.route("**/js/supabase-client.js", (r) =>
+      r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso([PROFE, ALUMNA], "u-profe", semilla) }));
+    await ctx.addInitScript((t) => {
+      try {
+        localStorage.setItem("piece_style_theme_v1", t.estilo);
+        localStorage.setItem("board_theme_v1", t.divertido);
+      } catch (e) {}
+    }, tema);
+    const page = await ctx.newPage();
+    const errores = [];
+    page.on("pageerror", (e) => errores.push(String(e)));
+    await page.goto(BASE + "/sesion.html", { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
+    await page.waitForSelector("#practice-boards-grid .practice-mini-board [data-square]", { timeout: 30000 });
+    await page.waitForTimeout(400);   // el tamaño de la pieza se fija en el rAF siguiente
+
+    const m = await page.evaluate(() => {
+      const tarjeta = document.querySelector("#practice-boards-grid > div");
+      const tablero = tarjeta.querySelector(".practice-mini-board");
+      const casilla = tablero.querySelector("[data-square]");
+      const conPieza = [...tablero.querySelectorAll("[data-square]")].filter((c) => c.firstElementChild);
+      const pieza = conPieza[0] && conPieza[0].firstElementChild;
+      const cajaCasilla = casilla.getBoundingClientRect();
+      const dibujo = pieza && pieza.querySelector("svg.chess-piece-svg");
+      // Con el código de antes estos dos nodos no existían. Se contestan en null en vez
+      // de reventar: una prueba que explota deja sin correr todo lo que venía después y
+      // no dice cuál de las comprobaciones es la que falla.
+      const barra = tarjeta.querySelector(".practice-mini-eval");
+      const nombre = tarjeta.querySelector(".practice-mini-name");
+      const color = tarjeta.querySelector(".practice-mini-color");
+      const cajaTarjeta = tarjeta.getBoundingClientRect();
+      const cajaColor = color ? color.getBoundingClientRect() : null;
+      return {
+        casilla: +cajaCasilla.width.toFixed(1),
+        piezas: conPieza.length,
+        dibujada: !!dibujo,
+        texto: pieza ? (pieza.textContent || "").trim() : "",
+        altoPieza: dibujo ? +dibujo.getBoundingClientRect().height.toFixed(1) : 0,
+        bordeBarra: barra ? parseFloat(getComputedStyle(barra).borderTopWidth) : 0,
+        nombreVisible: !!nombre && nombre.checkVisibility(),
+        colorVisible: !!color && color.checkVisibility(),
+        colorTexto: color ? (color.textContent || "").trim() : "no hay dónde decirlo",
+        colorDentro: !!cajaColor && cajaColor.right <= cajaTarjeta.right + 0.5 && cajaColor.width > 1,
+        etiquetaBarra: (barra && barra.getAttribute("aria-label")) || "",
+      };
+    });
+
+    console.log("  — " + tema.nombre);
+    // Lo que se rompe callado: que vuelva el glifo. Se pregunta por lo que el
+    // navegador DIBUJÓ, no por la preferencia guardada.
+    if (m.dibujada) bien("la pieza es la dibujada, no un glifo ni un emoji");
+    else mal("la miniatura no dibujó la pieza: pintó «" + m.texto + "», que a esta escala no se distingue");
+    if (m.casilla >= 19) bien("la casilla mide " + m.casilla + "px");
+    else mal("la casilla quedó en " + m.casilla + "px: ahí no se aprecia ni la figura ni el color");
+    const fraccion = m.casilla ? m.altoPieza / m.casilla : 0;
+    if (fraccion >= 0.7) bien("la pieza llena su casilla (" + Math.round(fraccion * 100) + "%)");
+    else mal("la pieza ocupa el " + Math.round(fraccion * 100) + "% de la casilla: se pierde dentro de ella");
+    igual("dibuja las piezas de la posición", m.piezas, 32);
+    // La barra de evaluación es blanca sobre una tarjeta blanca: sin borde, la
+    // mitad de las blancas no se ve y la barra se lee al revés.
+    if (m.bordeBarra > 0) bien("la barra de evaluación se separa del fondo de la tarjeta");
+    else mal("la barra va sin borde: sobre la tarjeta blanca, lo blanco no se ve");
+    if (m.etiquetaBarra) bien("y dice en palabras quién va mejor: «" + m.etiquetaBarra + "»");
+    else mal("la barra es un role=img sin nombre: quien no la ve no se entera de nada");
+    // El nombre se trunca a propósito; el color NO puede irse con él.
+    igual("de qué color juega se sigue viendo con un nombre largo", m.colorVisible && m.colorDentro ? m.colorTexto : "se perdió", "· blancas");
+    igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -510,6 +624,7 @@ async function pruebaCoordenadasDelAlumno(browser) {
     await pruebaLeccionDelProfesor(browser);
     await pruebaTactica(browser);
     await pruebaCoordenadasDelAlumno(browser);
+    await pruebaMiniaturas(browser);
   } finally {
     await browser.close();
   }
