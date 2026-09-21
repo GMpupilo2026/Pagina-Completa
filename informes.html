@@ -2772,6 +2772,8 @@ function areasFlojasArbitraje(fila) {
         // Cuántos diagnósticos se ven antes de tocar "ver más". Los mismos tres
         // que el índice de la clase: es lo que cabe de un vistazo sin bajar.
         const NIVELES_A_LA_VISTA = 3;
+        // Y los mismos tres para la lista de quienes todavía no lo hicieron.
+        const PENDIENTES_A_LA_VISTA = 3;
 
         function renderDiagnosticosClase(contenedor) {
             const { conDiagnostico, pendientes } = diagnosticosDeClase();
@@ -2876,7 +2878,25 @@ function areasFlojasArbitraje(fila) {
                 </div>
                 </details>
 
-                ${pendientes.length ? `<p class="text-xs text-brand-450 dark:text-brand-350 mt-6"><strong class="text-brand-500 dark:text-brand-300">Sin diagnóstico todavía:</strong> ${pendientes.map((p) => p.nombre + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "")).join(", ")}.</p>` : ""}`;
+                ${pendientes.length ? (() => {
+                    /* El nombre lo escribe el alumno (ver «El nombre de un alumno
+                       es texto ajeno»): acá se pintaba CRUDO. Es el único sitio de
+                       esta función que se había quedado sin `escVis`, y no saltaba
+                       en ninguna prueba porque el nombre atacante se le ponía a una
+                       alumna CON diagnóstico, o sea que nunca caía en esta lista. */
+                    const texto = (p) => escVis(p.nombre) + (p.aMedias ? ` <em>(empezado, va en la pregunta ${p.aMedias.pregunta})</em>` : "");
+                    const restan = pendientes.length - PENDIENTES_A_LA_VISTA;
+                    /* Con cuarenta sin diagnóstico esto era media pantalla de nombres
+                       de corrido, y quedó siendo lo más largo del panel justo después
+                       de acortar todo lo demás. Se dice cuántos son —que es el dato— y
+                       los nombres se destapan a pedido. Los dos textos se pintan de una
+                       y se cambia cuál se ve: son cuarenta nombres, no cuesta nada, y
+                       así el botón no tiene que repintar el panel. */
+                    return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-6"><strong class="text-brand-500 dark:text-brand-300">Sin diagnóstico todavía (${pendientes.length}):</strong>
+                        <span data-pend-corto>${pendientes.slice(0, PENDIENTES_A_LA_VISTA).map(texto).join(", ")}${restan > 0 ? ` y ${restan} más` : ""}.</span>
+                        <span data-pend-todos class="hidden">${pendientes.map(texto).join(", ")}.</span>
+                        ${restan > 0 ? `<button type="button" id="pendientes-mas" class="ml-1 underline text-brand-500 dark:text-brand-300 hover:text-accent-600 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver los ${pendientes.length}</button>` : ""}</p>`;
+                })() : ""}`;
 
             /* "Ver más" destapa los siguientes tres y dice cuántos quedan; cuando
                ya no queda ninguno el botón se va, y con él el foco, así que pasa
@@ -2894,6 +2914,23 @@ function areasFlojasArbitraje(fila) {
                     } else {
                         masNiveles.textContent = `Ver más alumnos (faltan ${quedan})`;
                     }
+                });
+            }
+
+            /* Los nombres de quienes no lo hicieron se destapan y se vuelven a
+               guardar con el mismo botón: si desapareciera al abrirlo, el foco se
+               perdería al principio de la página — acá no hay ningún nombre
+               enfocable al que pasarlo, al revés que en «Nivel por alumno». */
+            const masPend = contenedor.querySelector("#pendientes-mas");
+            if (masPend) {
+                const corto = contenedor.querySelector("[data-pend-corto]");
+                const todos = contenedor.querySelector("[data-pend-todos]");
+                let abierto = false;
+                masPend.addEventListener("click", () => {
+                    abierto = !abierto;
+                    corto.classList.toggle("hidden", abierto);
+                    todos.classList.toggle("hidden", !abierto);
+                    masPend.textContent = abierto ? "Ver solo los primeros" : `Ver los ${pendientes.length}`;
                 });
             }
 
