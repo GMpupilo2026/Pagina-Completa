@@ -4073,6 +4073,81 @@ para `class_presence_log`/`platform_activity_log` con
   antes; escribir un número inventado (999999) lo rechaza con
   "Tiempo restante inválido".
 
+## Una función de TRIGGER no es una API
+
+Postgres le da `EXECUTE` a **PUBLIC** a toda función nueva, y `anon` y
+`authenticated` lo heredan de ahí. Así que las diecisiete funciones de trigger
+del sitio —las que protegen los relojes, los tiempos de presencia, las notas y
+las marcas de progreso, y las que mandan los avisos push— nacen publicadas en
+`/rest/v1/rpc/` sin que nadie lo pida.
+
+**Hoy no es una fuga, y por eso nadie lo notó en meses**: al llamarlas, Postgres
+contesta «trigger functions can only be called as triggers» —comprobado, no
+supuesto—. Lo que cuesta es el RUIDO. El linter de Supabase levantaba **80
+avisos**; casi todos son por diseño (las funciones de permiso validan por
+dentro: `generar_cobros` exige `soy_coordinador()`, `set_student_elo` exige ser
+profesor del alumno, las dos revisadas una por una). Entre ese montón, estas
+diez eran las únicas sin ninguna razón de estar — y el día que aparezca un aviso
+de verdad va a estar enterrado en la misma lista que nadie lee. Quitadas, el
+linter bajó a **61**.
+
+**Ya era la costumbre de la casa**: las siete funciones de trigger más viejas
+(`handle_new_user`, `protect_answer_grading`, `protect_profiles_identity_columns`,
+`sincronizar_profesor_principal`, `avisar_clase_abierta`, `avisar_desafio`,
+`protect_game_state_teacher_columns`) llevaban revocadas desde siempre. Se fue
+olvidando en las diez que se escribieron después.
+
+- **Se revoca de `PUBLIC`, NUNCA de `anon, authenticated`.** La primera
+  migración hizo `revoke ... from anon, authenticated`, **devolvió éxito y no
+  revocó nada**: ellos no tenían ningún grant propio que quitar. Es el fallo
+  callado de siempre, esta vez en el SQL — el comando "pasa" y todo queda igual.
+  Se ve en el ACL: una función bien revocada es
+  `{postgres=X/postgres,service_role=X/postgres}`, y una expuesta tiene además
+  la entrada **`=X/postgres`**, que es el grant a PUBLIC.
+- **`service_role` conserva el suyo**, que es el que usan las Edge Functions.
+- **Revocar NO afecta a los triggers.** El motor los dispara con los privilegios
+  del trigger y no le pide `EXECUTE` a quien hace el insert. Está comprobado
+  impersonando a un alumno en una transacción revertida, los cinco casos: la
+  hora inventada en `platform_activity_log` se sigue ignorando, la marca de
+  coordenadas de 999999 se sigue rechazando y la legítima sigue entrando, el
+  reloj de 999999 se sigue rechazando y el cálculo de una jugada normal sigue
+  pasando.
+- **`proteger_reloj_de_partida` era la ÚNICA de las diecisiete sin `search_path`
+  fijo.** Sin él lo pone quien dispara el trigger, así que un esquema propio por
+  delante puede cambiar qué `now()` se resuelve — y ese trigger existe
+  justamente para que la hora la ponga el servidor. Quedó en `''` y no en
+  `'public'` porque su cuerpo no toca ninguna tabla: solo `now()`, `greatest`,
+  `coalesce`, `extract` y los operadores de jsonb, todos de `pg_catalog`.
+
+**Al escribir una función de trigger nueva, revocarle el execute de PUBLIC.**
+Estas dos consultas lo dicen — la primera tiene que devolver cero filas:
+
+```sql
+-- Funciones de trigger publicadas como API, o sin search_path fijo.
+select proname,
+       has_function_privilege('anon', oid, 'execute') as anon,
+       has_function_privilege('authenticated', oid, 'execute') as auth,
+       coalesce(proconfig::text, '(SIN search_path)') as config
+from pg_proc
+where pronamespace = 'public'::regnamespace
+  and prorettype = 'pg_catalog.trigger'::regtype
+  and (has_function_privilege('anon', oid, 'execute')
+    or has_function_privilege('authenticated', oid, 'execute')
+    or proconfig is null);
+
+revoke execute on function public.<la_nueva>() from public;
+```
+
+### Lo que queda pendiente y NO se puede hacer desde acá
+
+**La protección contra contraseñas filtradas está apagada.** Supabase puede
+comparar cada contraseña nueva contra HaveIBeenPwned y rechazar las que ya se
+filtraron; el sitio es de menores de edad y hoy acepta cualquiera. Es un
+interruptor del panel, no SQL, así que no entra en ninguna migración:
+**Authentication › Policies › "Leaked password protection"** en el proyecto de
+Supabase. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+alguien no existe.
+
 ## Confites del caballo
 
 `confites.html` (ficha en Juegos) es el paseo del caballo contado como juego:
