@@ -459,7 +459,8 @@ async function pruebaProfesor(browser) {
   await page.waitForFunction(() => window.__escrituras.length > 0);
   igual("agregar un encargado manda lo correcto", await page.evaluate(() => window.__escrituras[0]),
     { etiqueta: "from:encargados", accion: "insert",
-      fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual", creado_por: "prof-1" } });
+      fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
+              hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
   page.on("dialog", (d) => d.accept());
   await page.evaluate(() => {
