@@ -285,6 +285,13 @@
                     </a>
                 </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
+                <!-- El plan de entrenamiento existe desde hace meses, se genera
+                     solo desde el diagnóstico y tiene su botón de compartir —y
+                     nadie lo había usado nunca. Un cero que no se pinta en
+                     ninguna parte no lo ve nadie, así que se dice acá: es lo
+                     único de "Tu semana" que no es un número sino algo por
+                     hacer, y por eso va en texto y solo cuando falta. -->
+                <p id="profe-planes" hidden class="mt-2 text-sm"></p>
             </div>
 
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
@@ -1106,6 +1113,45 @@
             document.getElementById("profe-clases").textContent = clases === 1
                 ? "Llevas 1 clase dada en los últimos 30 días."
                 : `Llevas ${clases} clases dadas en los últimos 30 días.`;
+
+            pintarPlanes(alumnos, fila.con_diagnostico || 0, fila.con_plan || 0);
+        }
+
+        /* Cuántos de sus alumnos tienen su plan compartido.
+        
+           Va acá porque `training_plans` estuvo en CERO desde que existe: el
+           plan se genera solo desde el diagnóstico y tiene su botón de
+           compartir, pero eso vive dentro de Informes, dos clics adentro, y
+           nada avisaba de que no lo usaba nadie.
+        
+           Se dice UNA sola cosa, la que toca antes: sin diagnóstico no hay plan
+           que armar, así que ese es el primer cuello; y con el plan sin
+           compartir no lo ve ni el alumno ni su casa, o sea que cuenta como que
+           no existe. Cuando está todo al día no se dice nada — un renglón que
+           diga "todo bien" es ruido en todas las visitas menos una. */
+        function pintarPlanes(alumnos, conDiagnostico, conPlan) {
+            const el = document.getElementById("profe-planes");
+            if (!alumnos) return;   // sin alumnos no hay nada que decir
+
+            let msg = null;
+            if (conDiagnostico === 0) {
+                msg = "Ninguno de tus alumnos ha hecho el diagnóstico todavía. Sin él no hay plan que armar, y el informe que llega a la casa no puede contar en qué se está trabajando.";
+            } else if (conPlan < conDiagnostico) {
+                const faltan = conDiagnostico - conPlan;
+                msg = `${conPlan} de los ${conDiagnostico} que hicieron el diagnóstico tienen su plan compartido.`
+                    + ` A ${faltan === 1 ? "el otro no lo ve" : `los otros ${faltan} no los ven`} ni ellos ni su casa —`
+                    + " el plan sale solo del diagnóstico, se revisa y se comparte en Informes.";
+            } else if (conDiagnostico < alumnos) {
+                const faltan = alumnos - conDiagnostico;
+                msg = `Los ${conDiagnostico} que hicieron el diagnóstico ya tienen su plan.`
+                    + ` ${faltan === 1 ? "Falta 1 alumno" : `Faltan ${faltan} alumnos`} por hacerlo.`;
+            }
+            if (!msg) return;   // todo al día: no se dice nada
+
+            el.textContent = msg;
+            // Ámbar y no rojo: esto no se venció, está por hacer.
+            el.className = "mt-2 text-sm text-accent-700 dark:text-accent-400";
+            el.hidden = false;
         }
 
         // ---------- Registro de clases ----------
