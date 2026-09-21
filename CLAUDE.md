@@ -4116,9 +4116,39 @@ lista, y el resto se acomoda solo.
   buscarla justo cuando hay clase. Un grupo de un solo acceso pintado con la
   grilla de cuatro columnas sería un cuadrito perdido a la izquierda, que es
   peor que no destacarlo.
-- **"Evaluaciones" es un grupo aparte de "Aprender"**: lo que MIDE el nivel de
-  quien lo hace no es lo mismo que lo que lo enseña. Ahí viven los dos
-  diagnósticos y ahí va a vivir "Exámenes" cuando exista.
+- **Los grupos se ordenan por las preguntas que uno se hace al entrar**, igual
+  que las pestañas de la clase en vivo: qué pasa AHORA (Clase en vivo) → qué me
+  pusieron con fecha → qué hago por mi cuenta (Aprender) → dónde juego → dónde
+  me mido → mi cuenta.
+- **"Lo que te pone tu profesor" junta Tareas y Exámenes**, y es lo segundo que
+  se ve. Antes Tareas vivía en "Aprender" y Exámenes en "Evaluaciones": lo
+  único del panel que **tiene fecha** estaba partido en dos grupos y cada mitad
+  enterrada entre cosas que se hacen cuando uno quiere. La franja de arriba
+  solo aparece cuando hay tareas pendientes —y **nunca por un examen**—, así
+  que fuera de ese momento no había dónde mirar.
+  - **El rótulo no repite los nombres de sus dos tarjetas**: dice lo que las
+    dos tienen en común y que no se deduce de ellas —que te las pone alguien
+    más y vencen—. Es la misma regla que en la clase en vivo, donde el rótulo
+    dice QUIÉN LO VE en vez de qué hace el botón.
+  - Por eso el grupo lleva **`titleProfe`**, igual que los tiles llevan
+    `descProfe`: del otro lado del escritorio esa misma pareja es "Lo que le
+    pones a tus alumnos". Lo aplica `textosDelEquipoDocente()`, en el mismo
+    lugar y de la misma forma que las descripciones. **Olvidárselo a un grupo
+    nuevo le pondría a la profesora un encabezado que habla de su profesor**,
+    así que la regla de "a quien da clase ninguna tarjeta le habla de «tu
+    profesor»" vale ahora también para los rótulos, y la prueba los mira.
+- **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
+  "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
+  con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
+  dónde está parado. Ahí quedan los dos diagnósticos y nada más.
+- **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
+  alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
+  dos accesos están en mantenimiento—: una sección entera de la página que no
+  lleva a ninguna parte, que es la misma razón por la que se fue el
+  "Próximamente" sin fecha. Un acceso apagado **entre otros que funcionan sí se
+  queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
+  entera de que eso vuelve. No se esconde con una clase: no se pinta — un
+  enlace invisible pero presente sigue siendo una parada de tabulador.
 - **Los dos diagnósticos son para todo el mundo**, el de arbitraje incluido:
   cualquiera puede medir su nivel de reglamento, no solo quien da clase. Lo que
   cambia según quién mira es **a dónde lleva la tarjeta**, y es UNA sola tarjeta
