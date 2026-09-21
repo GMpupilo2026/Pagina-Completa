@@ -26,6 +26,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/equipo-volcar.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
@@ -1263,6 +1264,8 @@
         let allEquipos = [];                       // [{id, nombre}…]
         let alumnosPorEquipo = new Map();           // id de equipo -> [id de alumno…]
         let entrenadoresPorEquipo = new Map();      // id de equipo -> [id de entrenador…]
+        let subgruposAlaVista = [];                 // [{id, nombre, profesor, alumnos:[…]}…]
+        let avisoDelLote = new Map();               // id de equipo -> qué pasó al volcar
 
         // Misma idea que renderProfesoresCelda (una etiqueta por cuenta, con su
         // ✕ para quitarla, y un selector al final para sumar otra) pero para
@@ -1396,6 +1399,29 @@
                     `los alumnos de ${eq.nombre}`,
                 ));
 
+                /* Y el lote, que es lo que hace que armar un equipo no sea una
+                   tarde: "todo 7° B" o "los del martes" de una vez. Suma a lo
+                   que ya hay — nunca reemplaza. */
+                filaAlumnos.appendChild(EquipoVolcar.montar({
+                    nombre: eq.nombre,
+                    yaEstan: alumnosPorEquipo.get(eq.id) || [],
+                    alumnos: alumnos.map((u) => ({ id: u.id, grupo: u.grupo })),
+                    subgrupos: subgruposAlaVista,
+                    tope: 300,
+                    mensaje: avisoDelLote.get(eq.id),
+                    guardar: async (lista, dicho) => {
+                        await callAdmin("equipo_set_alumnos", { equipo_id: eq.id, alumno_ids: lista });
+                        alumnosPorEquipo.set(eq.id, lista);
+                        avisoDelLote.set(eq.id, dicho);
+                        // La tarjeta se vuelve a pintar entera, como al quitar
+                        // una etiqueta: así no hay que acordarse de actualizar
+                        // el selector de "sumar otro" con los que acaban de
+                        // entrar, que es el descuido que dejaría a un alumno
+                        // ofrecido dos veces.
+                        renderEquipos();
+                    },
+                }));
+
                 card.append(encabezado, filaEntrenadores, filaAlumnos);
                 caja.appendChild(card);
             });
@@ -1408,6 +1434,15 @@
                 filasAlumnos = await traerTodo(() => sb.from("equipo_alumnos").select("equipo_id, alumno_id"));
                 filasEntrenadores = await traerTodo(() => sb.from("equipo_entrenadores").select("equipo_id, teacher_id"));
                 const filasCoord = await traerTodo(() => sb.from("coordinador_profesores").select("coordinador_id, profesor_id"));
+                /* Los subgrupos, para poder volcar uno entero dentro de un
+                   equipo. Salen de subgrupos_a_la_vista(), que es SECURITY
+                   INVOKER: quién ve los de quién lo sigue decidiendo la RLS.
+                   Si fallan, los equipos se siguen pudiendo armar a mano —
+                   quedarse sin la tarjeta entera por esto sería peor. */
+                try {
+                    const { data: subs } = await sb.rpc("subgrupos_a_la_vista");
+                    subgruposAlaVista = subs || [];
+                } catch (_) { subgruposAlaVista = []; }
                 coordinadosPor = new Map();
                 (filasCoord || []).forEach((r) => {
                     if (!coordinadosPor.has(r.coordinador_id)) coordinadosPor.set(r.coordinador_id, []);

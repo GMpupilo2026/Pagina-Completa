@@ -37,10 +37,35 @@ const MASTER = { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr", 
    con su ✕— y a Marta, que es de OTRA coordinación: se le ve el nombre y no se
    le puede quitar. */
 const GENTE = [
-  { id: "u-luis",  full_name: "Luis Vega",    email: "luis@x.cr",   role: "profesor", grupo: null, es_coordinador: false, is_admin: false, alumnos: 1, subgrupos: 2, profesores: [], total: 3 },
-  { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr",  role: "admin",    grupo: null, es_coordinador: false, is_admin: true,  alumnos: 0, subgrupos: 0, profesores: [], total: 3 },
-  { id: "u-ana",   full_name: "Ana Rojas",    email: "ana@x.cr",    role: "alumno",   grupo: "7A", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, total: 3,
+  { id: "u-luis",  full_name: "Luis Vega",    email: "luis@x.cr",   role: "profesor", grupo: null, es_coordinador: false, is_admin: false, alumnos: 1, subgrupos: 2, profesores: [], total: 6 },
+  { id: "u-rita",  full_name: "Rita Soto",    email: "rita@x.cr",   role: "profesor", grupo: null, es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, profesores: [], total: 6 },
+  { id: "u-oscar", full_name: "Oscar Angulo", email: "oscar@x.cr",  role: "admin",    grupo: null, es_coordinador: false, is_admin: true,  alumnos: 0, subgrupos: 0, profesores: [], total: 6 },
+  { id: "u-ana",   full_name: "Ana Rojas",    email: "ana@x.cr",    role: "alumno",   grupo: "7A", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, total: 6,
     profesores: [{ id: "u-luis", nombre: "Luis Vega" }, { id: "u-marta", nombre: "Marta Solís" }] },
+  // Dos alumnos más, del mismo grupo que Ana, para que volcar «7A» tenga algo
+  // que sumar y se note si la página manda solo el grupo en vez de la unión.
+  { id: "u-beto", full_name: "Beto Cruz",  email: "beto@x.cr", role: "alumno", grupo: "7A", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, profesores: [], total: 6 },
+  { id: "u-caro", full_name: "Caro Díaz",  email: "caro@x.cr", role: "alumno", grupo: "7B", es_coordinador: false, is_admin: false, alumnos: 0, subgrupos: 0, profesores: [], total: 6 },
+];
+
+/* Dos equipos. El primero es de quien coordina y toda su gente está a su
+   alcance; el segundo lo armó administración y tiene dentro a alguien que ella
+   no coordina, así que no se le puede repartir — y eso la pantalla no lo puede
+   ofrecer, porque la base lo rechaza. */
+const EQUIPOS = [
+  { id: "eq-1", nombre: "Los del martes", created_by: "u-coord" },
+  { id: "eq-2", nombre: "Selección de la Academia", created_by: "u-oscar" },
+];
+const EQUIPO_ALUMNOS = [
+  { equipo_id: "eq-1", alumno_id: "u-caro" },     // ya está: volcar 7A no lo puede borrar
+  { equipo_id: "eq-2", alumno_id: "u-ajeno" },    // de otra coordinación
+];
+const EQUIPO_ENTRENADORES = [
+  { equipo_id: "eq-1", teacher_id: "u-luis" },
+];
+const SUBGRUPOS_VISTA = [
+  { id: "sg-1", nombre: "Los del sábado", profesor_id: "u-luis", profesor: "Luis Vega",
+    alumnos: ["u-ana", "u-beto"] },
 ];
 
 function clienteFalso(perfil, gente) {
@@ -54,7 +79,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const GENTE = ${JSON.stringify(gente)};
   const TABLAS = {
     profiles: ${JSON.stringify([COORD, PROFE, ALUMNA, MASTER])},
+    equipos: ${JSON.stringify(EQUIPOS)},
+    equipo_alumnos: ${JSON.stringify(EQUIPO_ALUMNOS)},
+    equipo_entrenadores: ${JSON.stringify(EQUIPO_ENTRENADORES)},
   };
+  const SUBGRUPOS_VISTA = ${JSON.stringify(SUBGRUPOS_VISTA)};
   /* Este doble FILTRA de verdad por rol y por texto, igual que la función de
      la base: uno que devolviera siempre la lista entera daría por buena una
      página que no le pasa el filtro a la base y lo hace acá. */
@@ -115,6 +144,18 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       }
       if (n === "coord_set_profesores") {
         return constructor({ ok: true, profesores: (args || {}).p_profesores }, "rpc:coord_set_profesores");
+      }
+      if (n === "subgrupos_a_la_vista") return constructor(SUBGRUPOS_VISTA, "rpc:subgrupos_a_la_vista");
+      if (n === "coord_equipo_create") {
+        return constructor({ ok: true, id: "eq-nuevo", nombre: (args || {}).p_nombre }, "rpc:coord_equipo_create");
+      }
+      if (n === "coord_equipo_rename") return constructor({ ok: true }, "rpc:coord_equipo_rename");
+      if (n === "coord_equipo_delete") return constructor({ ok: true }, "rpc:coord_equipo_delete");
+      if (n === "coord_equipo_set_alumnos") {
+        return constructor({ ok: true, alumnos: (args || {}).p_alumnos }, "rpc:coord_equipo_set_alumnos");
+      }
+      if (n === "coord_equipo_set_entrenadores") {
+        return constructor({ ok: true, entrenadores: (args || {}).p_entrenadores }, "rpc:coord_equipo_set_entrenadores");
       }
       return constructor([], "rpc:" + n);
     },
@@ -182,20 +223,28 @@ async function pruebaPanel(browser) {
 
   igual("salen las cuentas de su gente, profesores primero",
     await page.evaluate(() => [...document.querySelectorAll("#lista p.font-semibold")].map((p) => p.textContent.trim())),
-    ["Luis Vega Profesor", "Oscar Angulo Alumno", "Ana Rojas Alumno"]);
+    ["Luis Vega Profesor", "Rita Soto Profesor", "Oscar Angulo Alumno",
+     "Ana Rojas Alumno", "Beto Cruz Alumno", "Caro Díaz Alumno"]);
 
   igual("dice cuántas de cuántas",
-    await page.evaluate(() => document.getElementById("cuenta").textContent), "Mostrando 3 de 3 cuentas");
+    await page.evaluate(() => document.getElementById("cuenta").textContent), "Mostrando 6 de 6 cuentas");
 
   /* Lo que NO se ofrece: cambiarle el rol a la cuenta master ni a uno mismo.
-     Un botón que la base va a rechazar es peor que ninguno. */
-  const botones = await page.evaluate(() =>
-    [...document.querySelectorAll("#lista > div")].map((d) =>
-      [...d.querySelectorAll("button, a")].map((b) => b.textContent.trim())));
+     Un botón que la base va a rechazar es peor que ninguno.
+
+     La fila se busca POR SU CORREO, nunca por su posición: sumar una cuenta a
+     los datos de prueba corre los índices y deja media docena de
+     comprobaciones fallando por algo que no tiene nada que ver con lo que
+     miran. Es la misma razón por la que el panel de la Academia busca sus
+     grupos por nombre. */
+  const botonesDe = (correo) => page.evaluate((c) => {
+    const d = [...document.querySelectorAll("#lista > div")].find((x) => x.textContent.indexOf(c) !== -1);
+    return d ? [...d.querySelectorAll("button, a")].map((b) => b.textContent.trim()) : null;
+  }, correo);
   igual("a la cuenta master no se le ofrece cambiar de rol",
-    botones[1].some((b) => /Hacer profesor|Pasar a alumno/.test(b)), "false");
+    (await botonesDe("oscar@x.cr")).some((b) => /Hacer profesor|Pasar a alumno/.test(b)), "false");
   igual("a un profesor se le ofrece entrar a sus subgrupos",
-    botones[0].includes("👥 Sus subgrupos"), "true");
+    (await botonesDe("luis@x.cr")).includes("👥 Sus subgrupos"), "true");
 
   /* La etiqueta de rol tiene que PINTAR. Esta página está detrás del login, así
      que verificar-css.js —que abre las páginas sin cuenta— no ve ni una de sus
@@ -211,7 +260,7 @@ async function pruebaPanel(browser) {
 
   // Cambiar el rol: dos toques, y lo que se manda.
   await page.evaluate(() => { window.__llamadas = []; });
-  const filaAna = page.locator("#lista > div").nth(2);
+  const filaAna = page.locator("#lista > div").filter({ hasText: "ana@x.cr" });
   await filaAna.locator("button", { hasText: "Hacer profesor" }).click();
   igual("el primer toque solo pregunta",
     await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "cambiar_rol").length), 0);
@@ -223,7 +272,8 @@ async function pruebaPanel(browser) {
 
   // Reenviar el acceso
   await page.evaluate(() => { window.__llamadas = []; });
-  await page.locator("#lista > div").nth(0).locator("button", { hasText: "Reenviar acceso" }).click();
+  await page.locator("#lista > div").filter({ hasText: "luis@x.cr" })
+    .locator("button", { hasText: "Reenviar acceso" }).click();
   await page.waitForTimeout(400);
   const envio = await page.evaluate(() => window.__llamadas.find((l) => l.funcion));
   igual("reenviar acceso llama a su función con esa cuenta",
@@ -426,6 +476,140 @@ async function pruebaSubgruposAjenos(browser) {
   await page.close();
 }
 
+/* ======================================================================
+   Los equipos: la única forma de agrupar que DA PERMISOS.
+
+   Lo que se rompe callado acá, y por lo que existe esta prueba:
+
+   1. VOLCAR UN GRUPO TIENE QUE MANDAR LA UNIÓN. Las dos puertas que escriben
+      los alumnos de un equipo dejan la lista EXACTAMENTE como llega, así que
+      mandar solo los del grupo vaciaría el equipo de todo lo anterior: se
+      vería perfecto con sus nombres nuevos y los de antes habrían perdido a
+      sus entrenadores sin que nadie lo pidiera.
+   2. SOBRE UN EQUIPO QUE NO PUEDE REPARTIR NO SE OFRECE NADA. La base lo
+      rechaza igual, pero el fallo lo descubriría quien apretó.
+   ====================================================================== */
+async function pruebaEquipos(browser) {
+  console.log("\n=== Los equipos, desde coordinación ===");
+  const { page, errores } = await abrir(browser, "coordinacion.html", COORD, GENTE);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelectorAll("#equipos-lista > div").length === 2, { timeout: 10000 });
+
+  /* El nombre de un equipo propio vive en un <input> —se renombra ahí mismo—,
+     así que buscarlo solo por textContent no lo encuentra: es el mismo tipo de
+     descuido que daría verde sobre la tarjeta que no era. */
+  const tarjeta = (nombre) => page.evaluateHandle((n) => {
+    return Array.from(document.querySelectorAll("#equipos-lista > div"))
+      .find((d) => d.textContent.indexOf(n) !== -1
+        || Array.from(d.querySelectorAll("input")).some((i) => i.value === n));
+  }, nombre);
+
+  igual("se ven los dos equipos, con su gente puesta",
+    await page.evaluate(() => Array.from(document.querySelectorAll("#equipos-lista > div"))
+      .map((d) => d.querySelector("input, p").value || d.querySelector("p").textContent)),
+    ["Los del martes", "Selección de la Academia"]);
+
+  /* El equipo con gente de otra coordinación: se ve, se dice por qué no se
+     toca, y no se pinta ni un control que vaya a fallar. */
+  const ajeno = await tarjeta("Selección de la Academia");
+  igual("sobre un equipo con gente ajena se dice por qué no se reparte",
+    await ajeno.evaluate((d) => d.textContent.indexOf("no está bajo tu coordinación") !== -1), "true");
+  igual("y no se le pinta ni ✕, ni selector, ni volcado",
+    await ajeno.evaluate((d) => [
+      d.querySelectorAll("button").length,
+      d.querySelectorAll("select").length,
+    ]), [0, 0]);
+
+  /* ------------------------------------------------ volcar un grupo entero
+     CADA vez se vuelve a buscar la tarjeta en el DOM: guardar repinta la
+     lista entera, así que un handle tomado antes se queda apuntando a un nodo
+     huérfano — con su mensaje escrito y su estado viejo. Mirándolo a él, la
+     prueba daría verde sobre una pantalla donde no se ve nada. */
+  await page.evaluate(() => { window.__rpc = []; });
+  let mio = await tarjeta("Los del martes");
+  const eligio = await mio.evaluate((d) => {
+    const sel = Array.from(d.querySelectorAll("select"))
+      .find((s) => (s.getAttribute("aria-label") || "").indexOf("grupo o un subgrupo") !== -1);
+    if (!sel) return "no hay selector de volcado";
+    const op = Array.from(sel.options).find((o) => o.textContent.indexOf("7A") === 0);
+    if (!op) return "no está el grupo 7A";
+    sel.value = op.value;
+    sel.dispatchEvent(new Event("change"));
+    return "ok";
+  });
+  igual("el volcado ofrece el grupo por su nombre y cuántos son", eligio, "ok");
+
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "coord_equipo_set_alumnos"), { timeout: 10000 });
+  const mandado = await page.evaluate(() => window.__rpc.find((r) => r.rpc === "coord_equipo_set_alumnos").args);
+  igual("volcar un grupo SUMA, no reemplaza: el que ya estaba sigue en la lista",
+    [mandado.p_equipo, mandado.p_alumnos.slice().sort().join(",")],
+    ["eq-1", ["u-ana", "u-beto", "u-caro"].join(",")]);
+  mio = await tarjeta("Los del martes");
+  igual("y se dice cuántos entraron EN LA TARJETA QUE SE VE, no en la que se repintó",
+    await mio.evaluate((d) => /Entraron 2 alumnos/.test(d.textContent)), "true");
+
+  // ------------------------------------- volcar lo que ya está no borra nada
+  await page.evaluate(() => { window.__rpc = []; });
+  const otraVez = await mio.evaluate((d) => {
+    const sel = Array.from(d.querySelectorAll("select"))
+      .find((s) => (s.getAttribute("aria-label") || "").indexOf("grupo o un subgrupo") !== -1);
+    const op = Array.from(sel.options).find((o) => o.textContent.indexOf("Los del sábado") === 0);
+    if (!op) return "no está el subgrupo";
+    sel.value = op.value;
+    sel.dispatchEvent(new Event("change"));
+    return "ok";
+  });
+  igual("el volcado ofrece también los subgrupos, con el nombre de su dueño", otraVez, "ok");
+  await page.waitForTimeout(300);
+  igual("un subgrupo cuya gente ya está no manda nada, y lo dice",
+    [await page.evaluate(() => window.__rpc.filter((r) => r.rpc === "coord_equipo_set_alumnos").length),
+     await mio.evaluate((d) => /Ya estaban/.test(d.textContent))],
+    [0, true]);
+
+  // --------------------------------------------------- entrenadores y alta
+  await page.evaluate(() => { window.__rpc = []; });
+  mio = await tarjeta("Los del martes");
+  await mio.evaluate((d) => {
+    const sel = Array.from(d.querySelectorAll("select"))
+      .find((s) => (s.getAttribute("aria-label") || "").indexOf("entrenadores") !== -1);
+    sel.value = sel.options[1].value;
+    sel.dispatchEvent(new Event("change"));
+  });
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "coord_equipo_set_entrenadores"), { timeout: 10000 });
+  igual("sumar un entrenador manda la lista completa de ESE equipo",
+    await page.evaluate(() => {
+      const a = window.__rpc.find((r) => r.rpc === "coord_equipo_set_entrenadores").args;
+      return [a.p_equipo, a.p_entrenadores.slice().sort().join(",")];
+    }), ["eq-1", "u-luis,u-rita"]);
+
+  await page.evaluate(() => { window.__rpc = []; });
+  await page.fill("#equipo-nombre", "Los del jueves");
+  await page.click("#equipo-nuevo button[type=submit]");
+  await page.waitForFunction(() => window.__rpc.some((r) => r.rpc === "coord_equipo_create"), { timeout: 10000 });
+  igual("crear un equipo va por su función de la base",
+    await page.evaluate(() => window.__rpc.find((r) => r.rpc === "coord_equipo_create").args.p_nombre),
+    "Los del jueves");
+
+  /* Borrar un equipo le quita el acceso a sus entrenadores, así que pide dos
+     toques en el propio botón — no un diálogo del navegador, que desde el
+     celular tapa la pantalla. */
+  await page.evaluate(() => { window.__rpc = []; });
+  mio = await tarjeta("Los del martes");
+  const primerToque = await mio.evaluate((d) => {
+    const b = Array.from(d.querySelectorAll("button")).find((x) => x.textContent === "Borrar equipo");
+    if (!b) return "no hay botón de borrar";
+    b.click();
+    return b.textContent;
+  });
+  igual("el primer toque avisa de qué va a pasar, no borra",
+    [/pierden/.test(primerToque),
+     await page.evaluate(() => window.__rpc.filter((r) => r.rpc === "coord_equipo_delete").length)],
+    [true, 0]);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await page.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -434,6 +618,7 @@ async function pruebaSubgruposAjenos(browser) {
     await pruebaSinProfesores(browser);
     await pruebaAlumna(browser);
     await pruebaSubgruposAjenos(browser);
+    await pruebaEquipos(browser);
   } finally {
     await browser.close();
   }
