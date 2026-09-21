@@ -4,7 +4,7 @@
 # guardar) con pg_dump.
 #
 # POR QUÉ HACE FALTA, Y POR QUÉ ES LO MÁS URGENTE DE TODO EL PUNTO DE
-# RESTAURACIÓN. El esquema entero —las 184 migraciones, las 110 funciones, las
+# RESTAURACIÓN. El esquema entero —las 179 migraciones, las 110 funciones, las
 # 176 políticas— vive en el repositorio desde esta tanda, así que la base se
 # puede reconstruir vacía en minutos. Lo que NO se puede reconstruir es lo que
 # la gente hizo dentro: los 105 perfiles, el progreso de cada alumno, los
@@ -16,13 +16,23 @@
 # borre, se borró. Esto es esa red, y hay que correrlo a mano (o por cron en
 # alguna máquina que quede prendida).
 #
-#   PGURL='postgresql://postgres.<ref>:<clave>@<host>:6543/postgres' \
+#   PGURL='postgresql://postgres.<ref>:<clave>@<host>:5432/postgres' \
 #     bash herramientas/respaldo-datos.sh
 #
 # La cadena sale del panel de Supabase: Project Settings › Database ›
 # Connection string › URI. NO se escribe en ningún archivo del repositorio —
 # una cadena de conexión en el repositorio es una cadena publicada, la misma
 # regla que ya tiene escrita `.mcp.json`.
+#
+# EL PUERTO IMPORTA, Y ES EL ERROR FÁCIL. Supabase ofrece tres cadenas y la
+# que el panel deja más a mano es la del *transaction pooler*, en el
+# **6543** — y contra esa `pg_dump` NO funciona: el pooler de transacciones
+# no sostiene la sesión ni las sentencias preparadas que el volcado necesita,
+# así que corta con un error que no dice nada de puertos y parece un problema
+# de credenciales. Hay que usar el **5432**, que es el de la conexión directa
+# (`db.<ref>.supabase.co`) y el del *session pooler*. Por eso el guardia de
+# abajo rechaza el 6543 con todas las letras: enterarse acá cuesta veinte
+# segundos, enterarse cuando hace falta el respaldo cuesta los datos.
 #
 # Deja tres archivos en `respaldos/`, que está en .gitignore A PROPÓSITO:
 # ahí adentro van cédulas, correos y progreso de menores de edad, y eso no
@@ -35,6 +45,14 @@ if [ -z "${PGURL:-}" ]; then
   exit 1
 fi
 command -v pg_dump >/dev/null || { echo "Falta pg_dump (paquete postgresql-client)." >&2; exit 1; }
+
+case "$PGURL" in
+  *:6543/*)
+    echo "Esa cadena es la del transaction pooler (puerto 6543) y pg_dump no funciona contra ella." >&2
+    echo "Usa la conexión directa o el session pooler, en el puerto 5432." >&2
+    exit 1
+    ;;
+esac
 
 DEST="$(cd "$(dirname "$0")/.." && pwd)/respaldos"
 FECHA=$(date +%Y-%m-%d-%H%M)

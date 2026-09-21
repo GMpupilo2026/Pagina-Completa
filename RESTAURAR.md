@@ -43,14 +43,19 @@ que se borre, se borró. Hay dos salidas y conviene tomar las dos:
    migración que toque datos:
 
    ```
-   PGURL='postgresql://postgres.<ref>:<clave>@<host>:6543/postgres' \
+   PGURL='postgresql://postgres.<ref>:<clave>@<host>:5432/postgres' \
      bash herramientas/respaldo-datos.sh
    ```
 
    La cadena sale de Supabase › Project Settings › Database › Connection
-   string › URI. Deja tres archivos en `respaldos/`, que **no se commitea**:
-   ahí adentro van cédulas, correos y progreso de menores de edad, y de git no
-   se borra nada.
+   string › URI. **Tiene que ser la del puerto 5432** —la conexión directa o
+   el *session pooler*—, nunca la del *transaction pooler*, que es la que el
+   panel deja más a mano y va en el **6543**: contra esa `pg_dump` no
+   funciona, y el error que da no nombra el puerto, así que parece un
+   problema de contraseña. El script rechaza el 6543 y lo dice.
+
+   Deja tres archivos en `respaldos/`, que **no se commitea**: ahí adentro van
+   cédulas, correos y progreso de menores de edad, y de git no se borra nada.
 
 2. **Pagar el plan Pro**, que trae copias diarias automáticas con siete días de
    ventana (y de paso habilita la protección contra contraseñas filtradas que
