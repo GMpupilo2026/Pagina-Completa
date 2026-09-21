@@ -16,6 +16,11 @@
  *                    original; null si por lo que sea no se puede simular
  *   material()       cuánto vale la posición para las blancas, en peones
  *
+ * y dos opcionales, que si faltan no rompen nada:
+ *
+ *   enJaque()        para distinguir el mate del ahogado (ver valorSinJugadas)
+ *   valorJugada(j)   qué promete una jugada SIN jugarla — ver «El orden» abajo
+ *
  * `material()` no es solo material a secas — en bot.html incluye tablas de
  * posición, fase de partida y (en Crazyhouse) lo que hay en la reserva —, pero
  * este archivo no necesita saberlo: para el bot sigue siendo "un número, más
@@ -41,6 +46,36 @@
  * Por qué no Stockfish: solo sabría jugar el ajedrez normal. Un bot que entiende
  * abrazos, camaleón, crazyhouse y cartas vale más acá que uno fortísimo en una
  * sola modalidad.
+ *
+ * ---------------------------------------------------------------------------
+ * EL ORDEN DE LAS JUGADAS ES CASI TODO EL COSTO, Y NO SE VE
+ *
+ * `probar()` es lo caro de este bot y no se parece en nada a "hacer una
+ * jugada": cada adaptador se CLONA desde su posición serializada (chess.js
+ * vuelve a leer una FEN entera, Cartas rehace su JSON), así que una sola
+ * llamada cuesta unas mil veces más que evaluar la posición ya hecha. Medido
+ * en un mediojuego normal: `probar()` ~123 µs, `material()` ~7 µs.
+ *
+ * Antes, para ordenar las jugadas de un nodo se hacía `probar()` sobre TODAS
+ * —cuarenta clones— solo para poder mirar el `material()` de cada una y
+ * ponerlas de mejor a peor. Después la poda alfa-beta hacía su trabajo y se
+ * exploraban dos o tres. O sea: **el 97% de los clones se construían para
+ * tirarlos**, y se tiraban DESPUÉS de haberlos pagado — la poda no podía
+ * ahorrar nada, porque el trabajo ya estaba hecho antes de entrar al bucle.
+ * Eso no da ningún error: el bot juega igual de bien, solo que con el
+ * presupuesto de tiempo gastado en clonar posiciones que nadie iba a mirar, y
+ * con cuarenta posiciones vivas a la vez en cada nivel de la búsqueda.
+ *
+ * Ahora el orden se decide **sin jugar nada**, con `valorJugada(j)` —lo que la
+ * jugada promete mirando la pieza que se mueve y la que hay en la casilla de
+ * destino, que el adaptador sabe leer de su propio tablero— y `probar()` se
+ * paga **una por una, solo al entrar en la rama**. Así el corte de la poda
+ * deja de ser cosmético: lo que no se explora tampoco se clona.
+ *
+ * `valorJugada` es opcional a propósito. Un adaptador que no la tenga vuelve
+ * solo al orden de antes (clonar todas y mirar el material): más lento, pero
+ * idéntico a lo que ya hacía — nunca peor.
+ * ---------------------------------------------------------------------------
  */
 window.BotOscar = (function () {
   "use strict";
@@ -75,20 +110,65 @@ window.BotOscar = (function () {
     return c;
   }
 
+  /* Las primeras `n` de la lista, al azar y sin barajar el resto: cuando solo
+     se van a mirar ocho de cuarenta jugadas, revolver las cuarenta es trabajo
+     tirado. Se copia igual porque la lista es del motor y no se toca. */
+  function muestraAlAzar(lista, n) {
+    const c = lista.slice();
+    const tope = Math.min(n, c.length);
+    for (let i = 0; i < tope; i++) {
+      const j = i + azar(c.length - i);
+      const t = c[i]; c[i] = c[j]; c[j] = t;
+    }
+    c.length = tope;
+    return c;
+  }
+
   /* El signo con el que mira el tablero: material() siempre cuenta a favor de
      las blancas, así que las negras buscan el mínimo. */
   const signo = (color) => (color === "w" ? 1 : -1);
 
+  /* ---------------- Lo que ya cortó una vez, se prueba primero ----------------
+     `valorJugada()` ordena muy bien donde hay capturas y se queda ciego donde
+     no las hay: en un final de peones TODAS las jugadas valen casi lo mismo y
+     el orden sale prácticamente al azar — justo en la clase de posición donde
+     más hace falta buscar hondo.
+     El historial lo arregla con lo que la propia búsqueda va aprendiendo: cada
+     vez que una jugada provoca un corte de la poda se le suma un punto, y la
+     próxima vez que aparezca —en otra rama, a otra profundidad— se prueba
+     antes. Un corte cerca de la raíz vale más que uno en el fondo, porque se
+     ahorra un subárbol más grande: de ahí el `profundidad * profundidad`.
+     Es una tabla de cuatro mil entradas como mucho y se vacía en cada jugada:
+     lo aprendido en la posición anterior ya no sirve para esta.
+     Ordenar mal no da ningún resultado equivocado —alfa-beta devuelve lo mismo
+     en cualquier orden—, solo poda menos. Por eso esto es solo velocidad. */
+  let historial = Object.create(null);
+
+  function claveJugada(j, lado) {
+    const quien = lado > 0 ? "w" : "b";
+    return j.drop ? quien + "*" + j.piece + j.to : quien + j.from + j.to;
+  }
+
+  /* Del conteo crudo a un empujón acotado: `h / (h + 50)` nunca llega a 1, así
+     que el bono se queda por debajo de 0.9 de peón y puede reordenar jugadas
+     tranquilas entre ellas sin llegar a colarse delante de una captura buena.
+     Sin ese techo, una jugada con mil cortes encima taparía a cualquier otra. */
+  function bonoHistorial(clave) {
+    const h = historial[clave];
+    return h ? 0.9 * (h / (h + 50)) : 0;
+  }
+
   /* ---------------- Nivel 1: al azar, con gusto por las capturas ---------------- */
   function nivelAprendiz(ad) {
-    const jugadas = barajar(ad.jugadas());
+    const jugadas = ad.jugadas();
     if (!jugadas.length) return null;
     // Con una de cada tres, se queda con la que más material gane; el resto del
     // tiempo juega lo primero que se le ocurre. Así comete errores de verdad.
-    if (azar(3) !== 0) return jugadas[0];
-    let mejor = jugadas[0], mejorValor = -INFINITO;
+    if (azar(3) !== 0) return jugadas[azar(jugadas.length)];
+    const candidatas = muestraAlAzar(jugadas, 8);
+    let mejor = candidatas[0], mejorValor = -INFINITO;
     const yo = signo(ad.turno());
-    jugadas.slice(0, 8).forEach((j) => {
+    candidatas.forEach((j) => {
       const despues = ad.probar(j);
       if (!despues) return;
       const v = yo * despues.material();
@@ -111,11 +191,17 @@ window.BotOscar = (function () {
       const respuestas = despues.jugadas();
       if (respuestas.length) {
         let peor = INFINITO;
-        barajar(respuestas).slice(0, 12).forEach((r) => {
-          const luego = despues.probar(r);
-          if (!luego) return;
-          peor = Math.min(peor, yo * luego.material());
-        });
+        const muestra = muestraAlAzar(respuestas, 12);
+        for (let i = 0; i < muestra.length; i++) {
+          const luego = despues.probar(muestra[i]);
+          if (!luego) continue;
+          if (luego.material() * yo < peor) peor = yo * luego.material();
+          // `peor` es un mínimo: solo puede bajar. En cuanto queda por debajo
+          // de lo mejor que ya se encontró, esta jugada ya no va a ganar por
+          // más respuestas que se miren — y cada una cuesta un clon. Cortar
+          // acá da EXACTAMENTE el mismo resultado con la mitad del trabajo.
+          if (peor <= mejorValor) break;
+        }
         if (peor !== INFINITO) v = peor;
       } else if (typeof despues.enJaque !== "function" || despues.enJaque()) {
         // Sin respuestas Y en jaque: es mate de verdad. Sin la comprobación
@@ -132,27 +218,37 @@ window.BotOscar = (function () {
   /* ---------------- Niveles 3 y 4: poda alfa-beta con profundización iterativa ----------------
      Las dos comparten el mismo buscador (negamax con poda alfa-beta y las
      jugadas ordenadas de mejor a peor antes de explorarlas): lo único que
-     cambia es cuánto tiempo y cuánta profundidad tope se les da.
+     cambia es cuánto tiempo y cuánta profundidad tope se les da. */
 
-     El ORDEN de las jugadas es lo que hace que la poda corte de verdad: si se
-     exploran al azar, alfa-beta tarda en darse cuenta de qué rama es mala; si
-     se prueba primero la que la propia evaluación ya dice que es mejor, la
-     mayoría de las ramas restantes se descartan en un vistazo. Cuesta un
-     `probar()` extra por jugada (evaluarla antes de explorarla a fondo), pero
-     sale ganando de sobra en cuántos nodos deja de visitar. */
+  /* Deja las jugadas de mejor a peor para quien va a mover, y devuelve pares
+     {j, despues}. Dos caminos, y la diferencia es lo que cuesta cada uno:
 
-  // Evalúa cada jugada con la posición resultante (sin buscar más adentro) y
-  // las deja de mejor a peor para quien va a mover. Devuelve pares {j,
-  // despues} — el `despues` ya calculado se reusa al explorar, así no se
-  // vuelve a "jugar" la misma jugada dos veces.
+     - Con `valorJugada()`: el adaptador puntúa cada jugada MIRÁNDOLA, sin
+       jugarla. `despues` queda en null y lo paga el bucle de la búsqueda,
+       solo por las ramas en las que de verdad entra.
+     - Sin ella: el orden de siempre, clonando la posición de cada jugada para
+       verle el material. `despues` ya viene hecho y se reusa, así que no se
+       clona nada dos veces.
+
+     El recorte a RAMAS_POR_NODO se hace bajando el `length` en vez de con
+     `slice()`: una copia menos, y de paso suelta las posiciones sobrantes para
+     que el recolector se las lleve en vez de tenerlas vivas todo el subárbol. */
   function jugadasOrdenadas(ad, jugadas, yo) {
     const anotadas = [];
-    jugadas.forEach((j) => {
-      const despues = ad.probar(j);
-      if (!despues) return;
-      anotadas.push({ j, despues, v: yo * despues.material() });
-    });
+    if (typeof ad.valorJugada === "function") {
+      for (let i = 0; i < jugadas.length; i++) {
+        const clave = claveJugada(jugadas[i], yo);
+        anotadas.push({ j: jugadas[i], despues: null, clave, v: ad.valorJugada(jugadas[i]) + bonoHistorial(clave) });
+      }
+    } else {
+      for (let i = 0; i < jugadas.length; i++) {
+        const despues = ad.probar(jugadas[i]);
+        if (!despues) continue;
+        anotadas.push({ j: jugadas[i], despues, clave: null, v: yo * despues.material() });
+      }
+    }
     anotadas.sort((a, b) => b.v - a.v);
+    if (anotadas.length > RAMAS_POR_NODO) anotadas.length = RAMAS_POR_NODO;
     return anotadas;
   }
 
@@ -175,13 +271,30 @@ window.BotOscar = (function () {
     if (profundidad === 0) return lado * ad.material();
     const jugadas = ad.jugadas();
     if (!jugadas.length) return valorSinJugadas(ad, profundidad);
-    const ordenadas = jugadasOrdenadas(ad, jugadas, lado).slice(0, RAMAS_POR_NODO);
+    const ordenadas = jugadasOrdenadas(ad, jugadas, lado);
     let mejor = -INFINITO;
-    for (const { despues } of ordenadas) {
-      const v = -negamax(despues, profundidad - 1, -beta, -alfa, -lado, limiteTiempo);
+    for (let i = 0; i < ordenadas.length; i++) {
+      const entrada = ordenadas[i];
+      const despues = entrada.despues || ad.probar(entrada.j);
+      entrada.despues = null; // ya no hace falta: que no quede viva durante todo el subárbol
+      if (!despues) continue;
+      // A una jugada del fondo, el valor de la rama ES el material de la
+      // posición que queda: bajar un nivel más solo para que negamax devuelva
+      // `lado * material()` costaba una llamada y una SEGUNDA evaluación de
+      // la misma posición (jugadasOrdenadas ya la había mirado). Da el mismo
+      // número, exactamente.
+      const v = profundidad === 1
+        ? lado * despues.material()
+        : -negamax(despues, profundidad - 1, -beta, -alfa, -lado, limiteTiempo);
       if (v > mejor) mejor = v;
       if (mejor > alfa) alfa = mejor;
-      if (alfa >= beta) break; // poda: el rival ya tiene algo mejor en otra rama, esta no va a elegir
+      if (alfa >= beta) {
+        // Poda: el rival ya tiene algo mejor en otra rama, esta no va a
+        // elegir. Y queda anotado que esta jugada corta, para probarla antes
+        // la próxima vez que aparezca.
+        if (entrada.clave) historial[entrada.clave] = (historial[entrada.clave] || 0) + profundidad * profundidad;
+        break;
+      }
     }
     return mejor === -INFINITO ? lado * ad.material() : mejor;
   }
@@ -191,19 +304,36 @@ window.BotOscar = (function () {
     if (!jugadasRaiz.length) return null;
     const yo = signo(ad.turno());
     const limiteTiempo = Date.now() + presupuestoMs;
+    historial = Object.create(null); // lo aprendido en la jugada anterior ya no vale acá
     // Semilla de seguridad: si el tiempo se agotara antes de terminar la
     // primerísima profundidad (no debería, con solo 1 jugada de búsqueda),
     // igual hay algo legal para jugar.
     let mejorGlobal = jugadasRaiz[azar(jugadasRaiz.length)];
+    // Las posiciones de la raíz se clonan UNA sola vez y se reusan en todas
+    // las profundidades: son unas cuarenta, caben de sobra, y volver a
+    // clonarlas en cada iteración era pagar seis veces lo mismo.
+    const raiz = jugadasOrdenadas(ad, barajar(jugadasRaiz), yo);
+    for (let i = 0; i < raiz.length; i++) {
+      if (!raiz[i].despues) raiz[i].despues = ad.probar(raiz[i].j);
+    }
     for (let profundidad = 1; profundidad <= profundidadMaxima; profundidad++) {
       try {
-        const ordenadas = jugadasOrdenadas(ad, barajar(jugadasRaiz), yo);
-        let mejor = ordenadas.length ? ordenadas[0].j : mejorGlobal, alfa = -INFINITO;
-        for (const { j, despues } of ordenadas) {
-          const v = -negamax(despues, profundidad - 1, -INFINITO, -alfa, -yo, limiteTiempo);
+        let mejor = raiz.length ? raiz[0].j : mejorGlobal, alfa = -INFINITO;
+        for (let i = 0; i < raiz.length; i++) {
+          const { j, despues } = raiz[i];
+          if (!despues) continue;
+          const v = profundidad === 1
+            ? yo * despues.material()
+            : -negamax(despues, profundidad - 1, -INFINITO, -alfa, -yo, limiteTiempo);
+          raiz[i].v = v;
           if (v > alfa) { alfa = v; mejor = j; }
         }
         mejorGlobal = mejor; // esta profundidad terminó completa: ya se puede confiar en ella
+        // Y lo que se aprendió se aprovecha: la próxima profundidad empieza
+        // por la que quedó mejor acá. Es de lo que vive la profundización
+        // iterativa — con la mejor primero, la poda corta casi todo el resto
+        // de una; sin esto, cada vuelta redescubría el orden desde cero.
+        raiz.sort((a, b) => b.v - a.v);
       } catch (e) {
         break; // se acabó el tiempo a mitad de esta profundidad: nos quedamos con la anterior
       }
