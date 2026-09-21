@@ -12,12 +12,14 @@ mapa de dónde vive cada cosa, porque no todo se recupera del mismo lado:
 | **los datos de la gente** | **en ninguna parte todavía** | **ver abajo — esto es lo urgente** |
 | los secretos (Resend, Vision, VAPID) | en Supabase y Cloudflare | se vuelven a poner a mano |
 
-**El estado bueno es un commit de `main`**, y el primero es
-`0e14950` (2026-09-21). Conviene además ponerle una etiqueta, que es lo que
-hace que se encuentre dentro de un año sin tener que leer el historial:
+**El estado bueno es un commit de `main`**, y hoy es
+`8488639` (2026-09-21) — el punto de restauración nació en `0e14950` y las
+dos correcciones de después (la etiqueta y el puerto del volcado) ya entran
+acá. Conviene además ponerle una etiqueta, que es lo que hace que se
+encuentre dentro de un año sin tener que leer el historial:
 
 ```
-git tag -a restauracion-2026-09-21 0e14950 -m "Punto de restauración"
+git tag -a restauracion-2026-09-21 8488639 -m "Punto de restauración"
 git push origin restauracion-2026-09-21
 ```
 
@@ -72,7 +74,7 @@ vive en el mismo lugar que lo respaldado no es un respaldo.
 ### 1. El sitio
 
 ```
-git checkout 0e14950                     # o la etiqueta, si ya se creó
+git checkout 8488639                     # o la etiqueta, si ya se creó
 npm install tailwindcss@3 && node herramientas/css-construir.js
 npx wrangler deploy
 ```
