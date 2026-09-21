@@ -348,6 +348,29 @@ async function pruebaCoordinacion(browser) {
   await page.click('[data-ficha="morosidad"]');
   await page.waitForTimeout(200);
 
+  // -------- programar un recordatorio para un día y hora exactos
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["2026-10-01", "15:30"]; });
+  await page.locator("#morosos-lista button", { hasText: "Programar" }).click();
+  await page.waitForTimeout(300);
+  const programado = await page.evaluate(() => window.__llamadas.find(
+    (l) => l.tabla === "cobros_recordatorios_programados" && l.verbo === "insert"));
+  igual("lo que manda «Programar»: el alumno y la hora exacta en UTC (CR es UTC-06:00)",
+    programado && { student_id: programado.datos.student_id, programado_para: programado.datos.programado_para },
+    { student_id: "u-ana", programado_para: "2026-10-01T21:30:00.000Z" });
+
+  // Una fecha o una hora mal escritas, o una que ya pasó, no se mandan.
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["1-oct-2026", "15:30"]; });
+  await page.locator("#morosos-lista button", { hasText: "Programar" }).click();
+  await page.waitForTimeout(300);
+  igual("una fecha que no es AAAA-MM-DD no se programa",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros_recordatorios_programados").length), 0);
+
+  await page.evaluate(() => { window.__llamadas = []; window.__respuestas = ["2020-01-01", "08:00"]; });
+  await page.locator("#morosos-lista button", { hasText: "Programar" }).click();
+  await page.waitForTimeout(300);
+  igual("una fecha y hora que ya pasaron no se programan",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros_recordatorios_programados").length), 0);
+
   // -------- emitir los que falten
   await page.evaluate(() => { window.__llamadas = []; });
   await page.click("#generar-btn");

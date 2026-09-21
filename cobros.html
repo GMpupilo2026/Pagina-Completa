@@ -139,9 +139,10 @@
                 </p>
                 <p class="mt-6 text-xs text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4 leading-relaxed">
                     Los avisos salen solos: uno tres días antes de vencer, otro al día siguiente del vencimiento y otro a los 15 días,
-                    y cada aviso se manda una sola vez. «Recordar ahora» lo manda en el momento, sin esperar a la corrida del día.
-                    Van al correo que le hayas puesto a ese alumno en la ficha «Contacto»; si no le pusiste ninguno, a las personas
-                    encargadas apuntadas en Informes, y solo si tampoco hay, a su propia cuenta.
+                    y cada aviso se manda una sola vez. Van al correo que le hayas puesto a ese alumno en la ficha «Contacto»; si no le
+                    pusiste ninguno, a las personas encargadas apuntadas en Informes, y solo si tampoco hay, a su propia cuenta.
+                    «Recordar ahora» lo manda en el momento, sin esperar a la corrida del día. «Programar» lo deja listo para un día
+                    y hora exactos: se revisa cada pocos minutos y sale apenas llega esa hora.
                 </p>
             </section>
 
@@ -286,7 +287,7 @@
  * recalculara por su lado, tarde o temprano diría algo distinto que la base.
  */
 let session = null, perfil = null, coordina = false;
-let planes = [], suscripciones = [], cobros = [], alumnos = [];
+let planes = [], suscripciones = [], cobros = [], alumnos = [], programados = [];
 
 const FUNCION_COBROS = `${window.SUPABASE_URL}/functions/v1/cobros-recordatorios`;
 const FUNCION_CORREOS = `${window.SUPABASE_URL}/functions/v1/correos-alumno`;
@@ -313,6 +314,10 @@ function plata(monto, moneda) {
 function fecha(iso) {
     if (!iso) return "";
     return new Date(iso + "T12:00:00Z").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
+}
+function fechaHora(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleString("es-CR", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 }
 function el(tag, clase, texto) {
     const n = document.createElement(tag);
@@ -681,12 +686,17 @@ async function anularCobro(c) {
 async function pintarMorosos() {
     const caja = document.getElementById("morosos-lista");
     caja.innerHTML = "";
-    const { data, error } = await sb.rpc("cobros_morosos");
+    const [{ data, error }, { data: prog, error: progError }] = await Promise.all([
+        sb.rpc("cobros_morosos"),
+        sb.from("cobros_recordatorios_programados").select("*").eq("estado", "pendiente").order("programado_para"),
+    ]);
     if (error) { caja.appendChild(el("p", "text-sm text-red-500", "No se pudo cargar: " + error.message)); return; }
     const lista = data || [];
+    programados = progError ? [] : (prog || []);
     document.getElementById("morosos-vacio").classList.toggle("hidden", lista.length > 0);
     lista.forEach((m) => {
-        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4");
+        const fila = el("div", "flex flex-wrap items-center justify-between gap-3");
         const izq = el("div");
         izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", m.alumno));
         izq.appendChild(el("p", "text-sm text-red-600 dark:text-red-400",
@@ -696,7 +706,7 @@ async function pintarMorosos() {
             (m.grupo ? m.grupo + " · " : "")
             + (m.correo ? "se le avisa a " + m.correo : "⚠️ sin correo al que avisarle")
             + " · el más viejo vencía el " + fecha(m.vence_mas_viejo)));
-        d.appendChild(izq);
+        fila.appendChild(izq);
 
         const botones = el("div", "flex flex-wrap gap-2");
         /* Si el correo está mal, el momento de darse cuenta es este: viendo
@@ -725,9 +735,64 @@ async function pintarMorosos() {
             btn.disabled = false; btn.textContent = "📧 Recordar ahora";
         });
         botones.appendChild(btn);
-        d.appendChild(botones);
+
+        const progBtn = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "🕐 Programar");
+        progBtn.type = "button";
+        progBtn.addEventListener("click", () => programarRecordatorio(m));
+        botones.appendChild(progBtn);
+        fila.appendChild(botones);
+        d.appendChild(fila);
+
+        const propios = programados.filter((p) => p.student_id === m.student_id);
+        if (propios.length) {
+            const chips = el("div", "flex flex-wrap gap-2 mt-3 pt-3 border-t border-brand-100 dark:border-brand-800");
+            propios.forEach((p) => {
+                const chip = el("span", "inline-flex items-center gap-1.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300 text-xs px-2.5 py-1 rounded-full");
+                chip.appendChild(document.createTextNode("🕐 " + fechaHora(p.programado_para)));
+                const x = el("button", "hover:text-red-600 dark:hover:text-red-400 font-bold leading-none", "✕");
+                x.type = "button";
+                x.setAttribute("aria-label", "Cancelar este recordatorio programado");
+                x.addEventListener("click", () => cancelarProgramado(p.id));
+                chip.appendChild(x);
+                chips.appendChild(chip);
+            });
+            d.appendChild(chips);
+        }
+
         caja.appendChild(d);
     });
+}
+
+// A qué hora exacta llega el recordatorio: se guarda directo en la tabla —RLS
+// de por medio, como pagos o planes— y una tanda aparte (cada pocos minutos)
+// lo manda apenas llega esa hora. No reemplaza los tres avisos automáticos.
+async function programarRecordatorio(m) {
+    const manana = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const diaTxt = prompt("¿Qué día? (AAAA-MM-DD)", manana);
+    if (diaTxt === null) return;
+    const horaTxt = prompt("¿A qué hora? (HH:MM, hora de Costa Rica)", "08:00");
+    if (horaTxt === null) return;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(diaTxt.trim())) return avisar("Esa fecha no tiene el formato AAAA-MM-DD.", true);
+    if (!/^\d{1,2}:\d{2}$/.test(horaTxt.trim())) return avisar("Esa hora no tiene el formato HH:MM.", true);
+    // Costa Rica no tiene horario de verano: siempre UTC-06:00.
+    const cuando = new Date(`${diaTxt.trim()}T${horaTxt.trim().padStart(5, "0")}:00-06:00`);
+    if (isNaN(cuando.getTime())) return avisar("Esa fecha y hora no son válidas.", true);
+    if (cuando.getTime() < Date.now()) return avisar("Esa fecha y hora ya pasaron.", true);
+
+    const { error } = await sb.from("cobros_recordatorios_programados").insert({
+        student_id: m.student_id, programado_para: cuando.toISOString(), creado_por: session.user.id,
+    });
+    if (error) return avisar("No se pudo programar: " + error.message, true);
+    avisar("Recordatorio programado para el " + fechaHora(cuando.toISOString()) + ".");
+    await pintarMorosos();
+}
+
+async function cancelarProgramado(id) {
+    if (!confirm("¿Cancelar este recordatorio programado?")) return;
+    const { error } = await sb.from("cobros_recordatorios_programados").update({ estado: "cancelado" }).eq("id", id);
+    if (error) return avisar("No se pudo cancelar: " + error.message, true);
+    await pintarMorosos();
 }
 
 async function llamarCobros(cuerpo) {

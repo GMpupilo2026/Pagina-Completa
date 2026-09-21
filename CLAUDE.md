@@ -2245,7 +2245,9 @@ solo lugar:
   `SECURITY INVOKER` como las de informes: quién puede preguntar por quién lo
   sigue decidiendo la RLS.
 - `cobros_morosos()` devolvía `p.email` tal cual, así que le habría mandado el
-  aviso de morosidad a la dirección muerta. Ahora devuelve `correo_de_contacto()`.
+  aviso de morosidad a la dirección muerta. Pasó a devolver `correo_de_contacto()`
+  y, más tarde, a `correo_cobro()` — misma idea, prioridad al revés: ver "Los
+  avisos de morosidad" más abajo.
 - `profiles` ganó un índice único sobre `lower(email)`: `auth.users` ya lo
   impedía para las cuentas, pero era sobre `profiles` que el alta buscaba a quién
   reusar.
@@ -3019,11 +3021,25 @@ Mismo circuito que los informes a la casa: `pg_cron` → `pg_net` → Edge Funct
 `cobros-recordatorios` → Resend, desde el dominio verificado. Dos tareas
 diarias: `cobros-generar` a las 11:30 UTC (5:30 de la mañana en Costa Rica) y
 `cobros-recordatorios` a las 12:30 — los cobros quedan emitidos **antes** de que
-salgan los avisos.
+salgan los avisos. Su código, antes solo en Supabase, ya vive en
+`supabase/functions/cobros-recordatorios/`.
 
 - Tres avisos: **tres días antes** de vencer, **al día siguiente** del
-  vencimiento y **a los 15 días**. Van a los encargados apuntados en Informes y
-  a la propia cuenta del alumno.
+  vencimiento y **a los 15 días**.
+- **A quién le llega: el encargado, no el alumno — salvo que no tenga
+  encargado.** `destinatariosDe()` manda a los encargados activos de ese
+  alumno; solo si no tiene ninguno le escribe a su propia cuenta, y solo si ese
+  correo es de verdad (`esCorreoInterno()` descarta el usuario del dominio
+  interno). Antes se mandaba a los dos siempre, y el alumno terminaba viendo el
+  estado de cuenta de su propia familia aunque no le tocara resolverlo a él.
+  Mismo criterio en `recordar_ahora` (el botón «Recordar ahora» de
+  `cobros.html`) y en la tanda diaria — es la misma función.
+- El texto que se le muestra a quien coordina en la lista de morosidad
+  (`cobros_morosos()`) usa `correo_cobro()`, no `correo_de_contacto()`: la
+  misma prioridad de encargado-primero, para que lo que se lee ahí coincida con
+  a dónde de verdad sale el correo. `correo_de_contacto()` sigue como estaba
+  (el correo propio primero) porque además la usa `recuperar-acceso`, donde la
+  pregunta es otra: a quién se le puede probar que la cuenta es suya.
 - **Un correo por alumno, no uno por cobro**: a nadie le sirve recibir tres el
   mismo día. Se manda el estado de cuenta entero con el tono del aviso más
   urgente que tenga.
@@ -3032,6 +3048,39 @@ salgan los avisos.
   apunta **después** de que Resend acepte: si falla, mañana se reintenta en vez
   de darlo por mandado. Comprobado de punta a punta contra `delivered@resend.dev`
   — la primera corrida mandó 2 y la segunda saltó 2.
+
+### Programar un recordatorio para un día y hora exactos
+
+Los tres avisos automáticos y «Recordar ahora» no alcanzan cuando quien
+coordina quiere que algo salga en un momento preciso — por ejemplo, coordinado
+con una llamada o un acuerdo de pago. `cobros.html` tiene un botón
+«🕐 Programar» al lado de «Recordar ahora», en cada fila de la morosidad.
+
+- **Guardar el cuándo no pasa por la Edge Function.** El botón inserta
+  directo en `public.cobros_recordatorios_programados` (`student_id`,
+  `programado_para`, `creado_por`) con el cliente de quien llama — la RLS de
+  esa tabla es la misma que la de `cobros`: `soy_coordinador() AND
+  bajo_mi_coordinacion(student_id)`. No hace falta pasar por el servidor para
+  algo que ya decide la base.
+- **Mandarlo si pasa por la Edge Function.** `disparar_recordatorios_programados()`
+  es un job de `pg_cron` nuevo, **cada 5 minutos** (los otros dos avisos son una
+  vez al día, acá "hora exacta" no alcanza con eso). Antes de llamar a la
+  función comprueba si hay algo `pendiente` con `programado_para <= now()`: si
+  no hay nada, no gasta la llamada HTTP. Cuando sí hay, dispara la acción
+  `tanda_programados` de `cobros-recordatorios`, con el mismo secreto del Vault
+  que ya usaba `tanda`.
+- `tanda_programados` arma el aviso exactamente como `recordar_ahora`
+  —mismos `destinatariosDe()`, mismo HTML— y al terminar marca la fila
+  `enviado` (con los correos a los que salió) o `cancelado` si para ese
+  momento el alumno ya no tiene nada pendiente o no hay a quién escribirle.
+  Un recordatorio programado para un cobro que se pagó antes de esa hora no
+  manda un correo que ya no tiene sentido.
+- **No reemplaza los tres avisos automáticos**, es un envío suelto más: si el
+  aviso diario y el programado caen el mismo día, `avisos_cobro` sigue siendo
+  el que evita que le lleguen dos correos iguales por el mismo tipo.
+- La hora se escribe y se lee en hora de Costa Rica (UTC-06:00, sin horario de
+  verano) desde `cobros.html`; en la base y en la Edge Function todo es
+  `timestamptz` de siempre.
 - La tanda va firmada con su propio secreto del Vault (`tanda_cobros_secreto`,
   generado por la migración y nunca escrito en ninguna parte). Comprobado: con
   una firma inventada responde 401.
