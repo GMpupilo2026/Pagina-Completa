@@ -789,7 +789,7 @@
         },
         {
           "titulo": "Torneos",
-          "donde": "clases.html › Jugar y competir › Torneos de la Academia",
+          "donde": "clases.html › Jugar y competir › Torneos",
           "intro": "Un torneo con sus inscripciones, sus rondas, sus cruces y su tabla.",
           "pasos": [
             "«Crear un torneo nuevo»: nombre, modalidad y control de tiempo.",

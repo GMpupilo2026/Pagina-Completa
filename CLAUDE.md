@@ -5276,6 +5276,22 @@ lista, y el resto se acomoda solo.
     nuevo le pondría a la profesora un encabezado que habla de su profesor**,
     así que la regla de "a quien da clase ninguna tarjeta le habla de «tu
     profesor»" vale ahora también para los rótulos, y la prueba los mira.
+- **Dentro de un grupo el orden también dice algo.** En "Aprender" va primero
+  lo que se HACE (Entrenamiento), después lo que se mira de un vistazo para
+  repasarlo (Estudio), después el curso completo y al final la lectura: Cursos
+  estaba primero y es lo más largo de los cuatro, así que quien entra a
+  practicar veinte minutos tenía delante lo que menos se parece a eso. En
+  "Jugar y competir" va primero donde se juega contra otra persona (Juegos),
+  después el torneo, y de último lo que se MIRA —TV en vivo no es jugar, es ver
+  jugar—, con el bot y las medallas detrás.
+- **Un mismo destino no va dos veces en el panel.** "Racha táctica" salió de
+  "Jugar y competir" porque ya es lo PRIMERO que hay dentro de `juegos.html`,
+  en una franja a todo el ancho: el segundo camino no se usa y de paso ensancha
+  la grilla. Es el mismo error que el panel ya había cometido con "Torneos", y
+  por eso mismo **"Torneos de la Academia" volvió a llamarse "Torneos"**: el
+  nombre estaba largo para distinguirlo de la otra tarjeta que se llamaba
+  igual, y esa otra es hoy "TV en vivo". El día que vuelva a haber dos, el que
+  se renombra es el nuevo.
 - **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
   "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
   con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
@@ -5360,6 +5376,17 @@ lista, y el resto se acomoda solo.
   marca con `mantenimientoAlumno: true` en el tile, así que volver a prender un
   acceso es borrar esa palabra. Como todo filtro del sitio esto decide qué se
   PINTA: la dirección sigue existiendo y quien la conozca entra igual.
+- **Y `soloAdmin` no es lo mismo, aunque se parezca.** `mantenimientoAlumno`
+  APAGA un acceso para el alumnado y se lo deja entero al equipo docente;
+  `soloAdmin` lo QUITA para todos menos administración, en
+  `soloParaAdministracion()` y con el mismo patrón de sus dos hermanas (sobre
+  la lista ya armada, así alcanza también a los tiles que `init()` agrega
+  después). **Confundirlos es lo que dejó al lector de planilla a la vista de
+  la profesora**: la página todavía no funciona y ella la tenía como un acceso
+  normal, o sea una promesa que se descubre rota delante de la clase. Hoy el
+  lector de planilla y la "Guía del profesor" son los dos `soloAdmin`. Se
+  quitan y no se apagan porque una tarjeta gris dice "esto vuelve", y acá lo
+  que hay que decir es que no es suyo.
 
 ### Arriba va lo que vence, no otro directorio de lugares
 

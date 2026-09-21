@@ -235,6 +235,14 @@ async function pruebaAlumna(browser) {
   igual("y los accesos de ese grupo no quedaron escondidos en la página",
     await page.evaluate(() => document.querySelectorAll(
       "#tile-grid [href='lector-planilla.html'], #tile-grid [href='partidas.html']").length), "0");
+  /* El lector de planilla y la guía del profesor son SOLO de administración
+     (`soloAdmin`), que es otra cosa que estar en mantenimiento: se QUITAN, no
+     se apagan. Acá lo que importa es que no quede ni un enlace en la grilla,
+     escondido o no — un enlace invisible pero presente sigue siendo una parada
+     de tabulador. */
+  igual("ni el lector de planilla ni la guía del profesor, por ninguna parte",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html']").length), "0");
   /* Lo que tiene FECHA va junto y arriba: tareas y exámenes son lo mismo desde
      el lado del alumno —te lo pone otra persona y vence—, y estaban partidos
      entre "Aprender" y "Evaluaciones". El rótulo dice lo que las dos tienen en
@@ -244,11 +252,20 @@ async function pruebaAlumna(browser) {
     ["tareas.html", "examenes.html"]);
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
     grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);   // por índice a propósito: que vaya PRIMERA es el punto
+  /* Primero donde se juega contra otra persona, después el torneo, y de último
+     lo que se MIRA. Y «Racha táctica» NO está: ya es lo primero que hay dentro
+     de juegos.html, y un mismo destino dos veces en el panel es el error que ya
+     se cometió con «Torneos». */
   igual("Jugar y competir", grupo(grupos, "Jugar y competir").tiles.map((t) => t.enlace),
-    ["tablero.html", "juegos.html", "torneos.html", "racha-tactica.html", "logros.html", "tv.html"]);
+    ["juegos.html", "torneos.html", "tv.html", "tablero.html", "logros.html"]);
+  igual("y la racha táctica no se ofrece dos veces: en el panel ya no",
+    grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "racha-tactica.html").length, "0");
+  /* Dentro de Aprender, el orden es el del trabajo de todos los días: lo que se
+     hace, lo que se repasa de un vistazo, el curso entero y al final la
+     lectura. */
   igual("Aprender: lo que uno hace por su cuenta, ya sin Tareas",
     grupo(grupos, "Aprender").tiles.map((t) => t.enlace),
-    ["cursos/academia/index.html", "entreno/index.html", "entreno/estudio.html",
+    ["entreno/index.html", "entreno/estudio.html", "cursos/academia/index.html",
      "articulos.html"]);
   /* Los dos diagnósticos son SOLO de administración: son las dos pruebas con
      las que el sitio ubica el nivel de alguien, y sus bancos son archivos
@@ -325,9 +342,17 @@ async function pruebaProfesora(browser) {
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]")).map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
+  /* El lector de planilla TODAVÍA NO FUNCIONA, y a ella le salía como un acceso
+     normal: `mantenimientoAlumno` solo lo apagaba para el alumnado. Ahora es
+     `soloAdmin`, igual que la guía del profesor, así que a quien da clase se le
+     QUITAN — no se le apagan: una tarjeta gris dice «esto vuelve», y lo que se
+     quiere decir es que no es suyo. */
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html", "guia-del-profesor-accesible.html"]);
+    ["partidas.html", "planes.html", "subgrupos.html"]);
+  igual("y ni el lector de planilla ni la guía le quedan escondidos en la página",
+    await page.evaluate(() => document.querySelectorAll(
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html']").length), "0");
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
@@ -383,7 +408,7 @@ async function pruebaTextosPorRol(browser) {
   igual("a la profesora, Tareas le habla de asignar",
     profe["Tareas"], "Pide cantidades y la tarea se llena sola con lo que entrenan");
   igual("Informes es el de sus alumnos", profe["Informes"], "El progreso de tus alumnos y los informes a la casa");
-  igual("los torneos los arma ella", profe["Torneos de la Academia"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
+  igual("los torneos los arma ella", profe["Torneos"], "Arma torneos para tus alumnos, con sus rondas y su tabla");
   igual("y el rival de Juegos también", profe["Juegos"], "Crazyhouse y otras modalidades — arma las partidas de tus alumnos");
   igual("la sesión en vivo es el tablero de SU clase", profe["Sesión en vivo"], "El tablero que ve tu clase, en vivo");
 
@@ -413,6 +438,9 @@ async function pruebaAdmin(browser) {
   igual("y llega a los cobros una sola vez, por la página entera",
     grupos.flatMap((g) => g.tiles).filter((t) => t.enlace === "cobros.html").map((t) => t.etiqueta),
     ["Cobros de la Academia"]);
+  /* La otra mitad de `soloAdmin`: a administración SÍ se le pintan el lector de
+     planilla y la guía del profesor. Escondérselos también la dejaría sin forma
+     de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
     ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",

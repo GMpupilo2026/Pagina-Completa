@@ -386,19 +386,41 @@
                dentro de esta lista y nada más: todo lo que después retoca la
                grilla (administración, coordinación, el equipo docente) busca su
                grupo POR NOMBRE, nunca por la posición. */
+            /* Dentro del grupo, el orden es el del trabajo de todos los días:
+               primero lo que se HACE (Entrenamiento), después lo que se mira de
+               un vistazo para repasarlo (Estudio), después el curso completo, y
+               al final la lectura. Cursos estaba primero y es lo más largo de
+               los cuatro: quien entra a practicar veinte minutos tenía delante
+               lo que menos se parece a eso. */
             { title: "Aprender", tiles: [
-                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
                 { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
+            /* Primero donde se juega de verdad contra otra persona, después el
+               torneo, y de último lo que se MIRA — TV en vivo no es jugar, es
+               ver jugar. Detrás van las dos que cuelgan de eso: el bot y las
+               medallas.
+
+               «Racha táctica» se fue de acá porque ya es lo PRIMERO que hay
+               dentro de juegos.html, en una franja ámbar a todo el ancho. Un
+               mismo destino dos veces en el panel es el error que ya se cometió
+               con «Torneos», y cuesta lo mismo: el segundo camino no se usa y
+               de paso ensancha la grilla. Sigue enlazada desde Juegos, que es
+               donde se la busca.
+
+               Y por eso mismo «Torneos de la Academia» pudo volver a llamarse
+               «Torneos» a secas: el nombre estaba largo para distinguirlo de la
+               otra tarjeta que se llamaba igual, y esa otra es hoy «TV en
+               vivo». Si algún día vuelve a haber dos «Torneos», el que se
+               renombra es el nuevo. */
             { title: "Jugar y competir", tiles: [
-                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
                 { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
-                { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
-                { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
-                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                { emoji: "🥇", label: "Torneos", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
                 { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
+                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
             ] },
             /* Acá viven los dos diagnósticos y nada más: lo que uno hace por
                su cuenta, cuando quiere, para saber dónde está parado. Se
@@ -422,7 +444,16 @@
                 { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
             ] },
             { title: "Herramientas", tiles: [
-                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", mantenimientoAlumno: true },
+                /* El lector de planilla TODAVÍA NO FUNCIONA, así que no se
+                   ofrece: ni al alumnado ni a quien da clase. Estaba solo
+                   apagado para el alumnado (`mantenimientoAlumno`), o sea que
+                   a la profesora le salía como un acceso normal y la llevaba a
+                   una página que no hace lo que promete — que es peor que no
+                   tenerla, porque el fallo lo descubre delante de la clase.
+                   `soloAdmin` lo deja donde hace falta: a la vista de quien
+                   administra, que es quien tiene que poder probarlo para saber
+                   cuándo vuelve. El día que funcione, se borra esa palabra. */
+                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", soloAdmin: true },
                 { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             { title: "Tu cuenta", tiles: [
@@ -466,6 +497,28 @@
             if (profile.is_admin) return;
             const i = TILE_GROUPS.findIndex((g) => g.title === "Mide tu nivel");
             if (i >= 0) TILE_GROUPS.splice(i, 1);
+        }
+
+        /* Lo que hoy SOLO se le ofrece a quien administra, marcado tile por
+           tile con `soloAdmin`. Es distinto de `mantenimientoAlumno`, y
+           confundirlos es lo que dejó al lector de planilla a la vista de la
+           profesora: aquello APAGA un acceso para el alumnado y se lo deja
+           entero al equipo docente; esto lo QUITA para todos menos
+           administración.
+
+           Se quita, no se apaga: una tarjeta gris dice «esto vuelve», y acá lo
+           que se quiere decir es que no es suyo. Y se quita de verdad, no con
+           una clase — un enlace invisible pero presente sigue siendo una parada
+           de tabulador.
+
+           Va sobre la lista ya armada, como sus dos hermanas, para que alcance
+           igual a los tiles que init() agrega después (la guía del profesor se
+           suma dentro del `if` del equipo docente y cae acá lo mismo). Un grupo
+           que se quede sin ningún acceso utilizable no se pinta: eso ya lo hace
+           renderTiles(). */
+        function soloParaAdministracion() {
+            if (profile.is_admin) return;
+            TILE_GROUPS.forEach((g) => { g.tiles = g.tiles.filter((t) => !t.soloAdmin); });
         }
 
         function apagarEnMantenimiento() {
@@ -1587,7 +1640,7 @@
                        desde el celular se baja un archivo para leer lo que
                        podía leer ahí mismo, y la versión accesible quedaría de
                        repuesto en vez de ser la puerta. */
-                    { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma te deja hacer y cómo se hace — en página, en manual y en diapositivas", href: "guia-del-profesor-accesible.html" }
+                    { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma te deja hacer y cómo se hace — en página, en manual y en diapositivas", href: "guia-del-profesor-accesible.html", soloAdmin: true }
                 );
             }
 
@@ -1623,6 +1676,7 @@
             // docente.
             textosDelEquipoDocente();
             apagarEnMantenimiento();
+            soloParaAdministracion();
             diagnosticosSoloParaAdministracion();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
