@@ -43,8 +43,9 @@
         </div>
 
         <div id="app" class="hidden">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
-            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">👥 Mis subgrupos</h1>
+            <a id="volver" href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <p id="ajeno" hidden class="mb-3 rounded-xl px-4 py-3 text-sm bg-accent-50 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></p>
+            <h1 id="titulo" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">👥 Mis subgrupos</h1>
             <p class="text-brand-500 dark:text-brand-300 mt-1 mb-2">Tus propias listas de alumnos: «los del martes», «los que van al torneo». Sirven para filtrar Informes y para mandarle una tarea o un examen a todo el grupo de una vez.</p>
             <p class="text-xs text-brand-450 dark:text-brand-350 mb-8 bg-white dark:bg-brand-900 rounded-xl p-3">
                 Un subgrupo <strong>no le da acceso a nadie</strong>: solo ordena a los alumnos que ya son tuyos, y solo lo ves tú.
@@ -91,6 +92,13 @@ let subgrupos = [];
 let alumnos = [];
 let abierto = null;      // id del subgrupo desplegado
 let busqueda = "";
+/* De quién son los subgrupos que se están viendo. Normalmente los propios;
+   con `?profesor=<id>`, los de un profesor al que se coordina — parte del
+   trabajo de coordinar es dejarle los grupos hechos a quien acaba de entrar
+   con cuarenta alumnos. El dueño NO cambia: quien coordina entra a los suyos,
+   no se los queda. */
+let dueno = null;
+let esAjeno = false;
 
 function el(tag, clase, texto) {
     const n = document.createElement(tag);
@@ -117,16 +125,22 @@ function pelado(t) {
 function nombreDe(a) { return a.full_name || a.email || "Sin nombre"; }
 
 async function cargar() {
+    /* Los propios salen de `mis_subgrupos()`, que es la de todos los días —la
+       misma que usan el filtro de Informes y el selector de Tareas—; los de
+       otra persona, de `subgrupos_de()`. Dos nombres para dos preguntas
+       distintas, no una función con un parámetro que casi siempre es uno
+       mismo. Los alumnos, igual: los suyos o los de ese profesor. */
     const [{ data: subs, error: e1 }, { data: gente, error: e2 }] = await Promise.all([
-        sb.rpc("mis_subgrupos"),
-        sb.rpc("informes_resumen_alumnos"),
+        esAjeno ? sb.rpc("subgrupos_de", { p_profesor: dueno }) : sb.rpc("mis_subgrupos"),
+        esAjeno ? sb.rpc("alumnos_del_profesor_con_nombre", { p_profesor: dueno })
+                : sb.rpc("informes_resumen_alumnos"),
     ]);
     // Que una consulta falle y la pantalla pinte una lista vacía es el fallo
     // callado de siempre: se ve igual que "no tienes ninguno".
     if (e1) { avisar("No se pudieron cargar tus subgrupos: " + e1.message, true); return false; }
     if (e2) { avisar("No se pudo cargar tu lista de alumnos: " + e2.message, true); return false; }
     subgrupos = subs || [];
-    alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email, grupo: a.grupo }))
+    alumnos = (gente || []).map((a) => ({ id: a.id || a.student_id, full_name: a.full_name, email: a.email, grupo: a.grupo }))
         .sort((a, b) => nombreDe(a).localeCompare(nombreDe(b), "es"));
     return true;
 }
@@ -255,7 +269,7 @@ async function crear(e) {
     const campo = document.getElementById("nombre-nuevo");
     const nombre = campo.value.trim();
     if (!nombre) return;
-    const { error } = await sb.from("subgrupos").insert({ profesor_id: session.user.id, nombre });
+    const { error } = await sb.from("subgrupos").insert({ profesor_id: dueno, nombre });
     if (error) {
         // 23505 es el índice único: ya tiene uno con ese nombre. Decirlo con
         // sus palabras, no con el error de la base.
@@ -328,10 +342,34 @@ async function init() {
     session = data.session;
     if (!session) { location.href = "login.html?next=subgrupos.html"; return; }
 
-    const { data: perfil } = await sb.from("profiles").select("role, is_admin").eq("id", session.user.id).maybeSingle();
+    const { data: perfil } = await sb.from("profiles").select("role, is_admin, es_coordinador").eq("id", session.user.id).maybeSingle();
     const puede = !!(perfil && (perfil.role === "profesor" || perfil.is_admin));
     document.getElementById("loading").classList.add("hidden");
     if (!puede) { document.getElementById("denegado").classList.remove("hidden"); return; }
+
+    const pedido = new URLSearchParams(location.search).get("profesor");
+    dueno = pedido || session.user.id;
+    esAjeno = dueno !== session.user.id;
+
+    if (esAjeno) {
+        /* Se lee el nombre por la RLS: si no se la devuelve, esa persona no
+           está bajo su coordinación y se dice, en vez de dejar una pantalla
+           vacía que parece un subgrupo sin nada. */
+        const { data: quien } = await sb.from("profiles").select("full_name, email, role").eq("id", dueno).maybeSingle();
+        if (!quien || quien.role !== "profesor") {
+            document.getElementById("denegado").classList.remove("hidden");
+            return;
+        }
+        const nombre = quien.full_name || quien.email;
+        document.getElementById("titulo").textContent = "👥 Los subgrupos de " + nombre;
+        const aviso = document.getElementById("ajeno");
+        aviso.textContent = "Estás armando los subgrupos de " + nombre +
+            ". Siguen siendo suyos: los ve y los edita desde su propia cuenta.";
+        aviso.hidden = false;
+        const volver = document.getElementById("volver");
+        volver.href = "coordinacion.html";
+        volver.textContent = "← 🧭 Coordinación";
+    }
 
     document.getElementById("app").classList.remove("hidden");
     if (await cargar()) pintar();

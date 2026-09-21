@@ -39,7 +39,11 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
 
-const ADMIN = { id: "u-admin", role: "profesor", is_admin: true, es_coordinador: false, full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null, created_at: "2026-01-10T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: null };
+/* La cuenta master lleva `role: "admin"`: no es profesora ni alumna. Antes
+   estaba guardada como profesora acá y como alumna en la base, y las dos
+   cosas la metían donde no pinta nada — en la lista de «para quién» al mandar
+   una tarea, en los conteos de alumnos, en el panel de profesores. */
+const ADMIN = { id: "u-admin", role: "admin", is_admin: true, es_coordinador: false, full_name: "Oscar Angulo", email: "oscar@x.cr", grupo: null, created_at: "2026-01-10T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: null };
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null, created_at: "2026-02-01T10:00:00Z", invitaciones_max: 10, invitaciones_usadas: 3, teacher_id: null };
 const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, es_coordinador: false, full_name: "Ana Rojas", email: "ana@x.cr", grupo: "7B", created_at: "2026-03-01T10:00:00Z", invitaciones_max: 0, invitaciones_usadas: 0, teacher_id: "u-profe" };
 
@@ -192,7 +196,7 @@ async function pruebaAtajos(browser) {
   igual("Resultados: los dos diagnósticos y los dos exámenes", grupos[0].enlaces,
     ["informes.html?tema=diagnostico", "arbitraje.html",
      "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
-  igual("Formularios", grupos[1].enlaces, ["formularios.html", "inscripciones.html"]);
+  igual("Formularios", grupos[1].enlaces, ["formularios.html", "inscripciones.html", "solicitudes.html"]);
   igual("Bases de datos", grupos[2].enlaces, ["admin-jugador.html"]);
   igual("Reportes", grupos[3].enlaces, ["reportes.html", "cobros.html"]);
   igual("los informes de toda la plataforma siguen aparte y de primeros",
