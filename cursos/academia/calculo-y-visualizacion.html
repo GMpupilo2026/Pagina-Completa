@@ -30,40 +30,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../../js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="../../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="../../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="../../cursos.html" class="hover:text-accent-400 text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="../../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="../../clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="../../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="../../cursos.html" class="block py-2 text-accent-400">Cursos</a></li>
-                <li><a href="../../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="../../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="../../clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="../../clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
 
     <main id="main-content">
     <article class="pt-8 pb-16">
@@ -77,41 +44,13 @@
             <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                 <div class="flex-1 min-w-[180px]">
                     <p class="text-sm text-brand-500 dark:text-brand-300"><strong class="text-brand-800 dark:text-white">10 lecciones</strong> · Intermedio</p>
-                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Video, ejercicios interactivos y partidas comentadas por nuestros entrenadores.</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Ejercicios interactivos y partidas comentadas por nuestros entrenadores.</p>
                 </div>
             </div>
 
-            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-6">Temario del curso</h2>
-            <div class="space-y-8">
-                <div>
-                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 1 · Fundamentos de cálculo</h3>
-                    <ol start="1" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
-                        <li class="text-brand-600 dark:text-brand-300">El árbol de variantes<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cómo organizar mentalmente las jugadas posibles antes de decidir.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Visualización sin mover piezas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Ejercicios progresivos para ver posiciones futuras en tu mente.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Jugadas candidatas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cómo elegir qué líneas vale la pena calcular primero.</span></li>
-                    </ol>
-                </div>
-                <div>
-                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 2 · Precisión en el cálculo</h3>
-                    <ol start="4" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
-                        <li class="text-brand-600 dark:text-brand-300">Calcular capturas en cadena<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cómo no equivocarte al contar quién captura y en qué orden.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Jaques y amenazas forzadas<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El orden correcto de cálculo.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Detectar las jugadas intermedias (zwischenzug)<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">La jugada inesperada que cambia el resultado del cálculo.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Verificación final<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">El último paso antes de mover: comprobar que la jugada es correcta.</span></li>
-                    </ol>
-                </div>
-                <div>
-                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Bloque 3 · Visualización avanzada</h3>
-                    <ol start="8" class="space-y-2 list-decimal pl-5 marker:text-accent-600 marker:font-semibold">
-                        <li class="text-brand-600 dark:text-brand-300">Ajedrez a la ciega<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Ejercicios de visualización pura, sin ver el tablero.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Calcular bajo presión de tiempo<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cómo mantener la precisión cuando el reloj corre.</span></li>
-                        <li class="text-brand-600 dark:text-brand-300">Sesión práctica cronometrada<span class="block text-xs text-brand-450 dark:text-brand-350 mt-0.5">Resolución de problemas de cálculo contra el reloj.</span></li>
-                    </ol>
-                </div>
-            </div>
-            <section aria-labelledby="ac-contenido" class="mt-12">
+            <section aria-labelledby="ac-contenido">
                 <h2 id="ac-contenido" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus lecciones</h2>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-5">Cada lección desarrollada por completo, con su video explicativo, presentación y PDF de ejercicios, lista para llevarse en línea a tu ritmo. Los videos son contenido de terceros alojado en YouTube (no en este sitio): pueden cambiar o dejar de estar disponibles con el tiempo. Las lecciones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. Tu avance queda guardado y tu profesor puede verlo en Informes.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-5">Cada lección desarrollada por completo, con su presentación y su PDF de ejercicios, lista para llevarse en línea a tu ritmo. Las lecciones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. Tu avance queda guardado y tu profesor puede verlo en Informes.</p>
                 <div id="ac-progreso" class="ac-prog" aria-label="Tu progreso en el curso"><p class="ac-prog-txt">Cargando tu progreso…</p></div>
                 <div id="ac-avisos" class="ac-avisos" aria-live="polite" role="status"></div>
                 <div id="course-content-body" data-course="calculo-y-visualizacion" data-titulo="Cálculo y Visualización" class="space-y-8">
@@ -130,9 +69,13 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="../../js/main.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../../js/vendor/supabase.js"></script>
     <script src="../../js/supabase-client.js"></script>
     <script src="../../js/acceso-admin.js"></script>
+    <!-- Los encabezados que hacen navegable el curso con lector de pantalla, y
+         lo que el Modo Adaptado cambia. Va antes que curso-academia.js porque se
+         engancha al evento "curso:contenido" que ese dispara. -->
+    <script src="../../js/curso-adaptado.js"></script>
     <script src="../../js/curso-academia.js"></script>
 </body>
 </html>

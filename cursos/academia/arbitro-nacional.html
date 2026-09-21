@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../../img/favicon.svg">
+    <title>Academia · Árbitro Nacional — Ajedrez Integral</title>
+    <meta name="description" content="Segundo curso de la formación arbitral, para quien ya dio los primeros pasos (con "Formación Ajedrez" o en la práctica) y quiere llegar al nivel que suele pedir un examen de árbitro nacional. No enseña a arbitrar un torneo escolar desde cero: profundiza artículo por artículo en las Leyes del Ajedrez 2023 y en el Handbook de la FIDE, con los casos que de verdad complican una sala — el reclamo a medio resolver, la jugada ilegal en el tercer control, el desempate que hay que justificar por escrito.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="../../css/tailwind.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="../../js/adaptive-mode.js"></script>
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="../../css/curso-academia.css">
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../../js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="../../clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <main id="main-content">
+        <article class="pt-8 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="index.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Mis cursos</a> <span class="text-brand-450 dark:text-brand-350 text-sm mx-1" aria-hidden="true">·</span> <a href="../../clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4">Panel de Academia</a>
+            <span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide">Formación docente</span>
+            <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">Árbitro Nacional</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-6">Segundo curso de la formación arbitral, para quien ya dio los primeros pasos (con "Formación Ajedrez" o en la práctica) y quiere llegar al nivel que suele pedir un examen de árbitro nacional. No enseña a arbitrar un torneo escolar desde cero: profundiza artículo por artículo en las Leyes del Ajedrez 2023 y en el Handbook de la FIDE, con los casos que de verdad complican una sala — el reclamo a medio resolver, la jugada ilegal en el tercer control, el desempate que hay que justificar por escrito.</p>
+            <div aria-hidden="true" class="h-48 bg-gradient-to-br from-brand-900 to-accent-700 rounded-2xl flex items-center justify-center text-7xl mb-6">⚖️</div>
+
+            <div class="flex flex-wrap items-center gap-4 mb-10 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                <div class="flex-1 min-w-[180px]">
+                    <p class="text-sm text-brand-500 dark:text-brand-300"><strong class="text-brand-800 dark:text-white">17 lecciones</strong> · Formación docente</p>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">18 lecciones con su presentación y su PDF de ejercicios, para estudiar al propio ritmo antes de rendir un examen de árbitro nacional.</p>
+                </div>
+            </div>
+
+            <section aria-labelledby="ac-contenido">
+                <h2 id="ac-contenido" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus lecciones</h2>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-5">Cada lección desarrollada por completo, con su presentación y su PDF de ejercicios, lista para llevarse en línea a tu ritmo. Las lecciones se abren en orden: al terminar una, márcala como estudiada y se desbloquea la siguiente. Tu avance queda guardado y tu profesor puede verlo en Informes.</p>
+                <div id="ac-progreso" class="ac-prog" aria-label="Tu progreso en el curso"><p class="ac-prog-txt">Cargando tu progreso…</p></div>
+                <div id="ac-avisos" class="ac-avisos" aria-live="polite" role="status"></div>
+                <div id="course-content-body" data-course="arbitro-nacional" data-titulo="Árbitro Nacional" class="space-y-8">
+                    <p class="text-sm text-brand-450 dark:text-brand-350">Cargando lecciones…</p>
+                </div>
+            </section>
+
+
+            <nav aria-label="Navegación entre cursos" class="mt-10 flex items-center justify-between border-t border-brand-100 dark:border-brand-800 pt-6">
+                <a href="formacion-ajedrez.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors" aria-label="Curso anterior: Formación Ajedrez"><span aria-hidden="true">←</span> Formación Ajedrez</a>
+                <a href="fundamentos-del-ajedrez.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors text-right" aria-label="Siguiente curso: Fundamentos del Ajedrez">Fundamentos del Ajedrez <span aria-hidden="true">→</span></a>
+            </nav>
+        </div>
+    </article>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="../../js/main.js"></script>
+    <script src="../../js/vendor/supabase.js"></script>
+    <script src="../../js/supabase-client.js"></script>
+    <script src="../../js/acceso-admin.js"></script>
+    <!-- Los encabezados que hacen navegable el curso con lector de pantalla, y
+         lo que el Modo Adaptado cambia. Va antes que curso-academia.js porque se
+         engancha al evento "curso:contenido" que ese dispara. -->
+    <script src="../../js/curso-adaptado.js"></script>
+    <script src="../../js/curso-academia.js"></script>
+</body>
+</html>

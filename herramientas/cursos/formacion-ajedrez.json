@@ -1,0 +1,186 @@
+{
+  "_comentario": [
+    "Contenido de 'Formación Ajedrez', curso de formación docente (reglamento FIDE,",
+    "normativa JDE y arbitraje práctico). No es un curso 'clásico' -sus lecciones",
+    "son sesiones con quiz de respuesta y la última es presencial con agenda y",
+    "evaluación final-, así que lo genera herramientas/curso-generar-formacion.py",
+    "y no herramientas/curso-generar.py.",
+    "",
+    "    pip install python-pptx reportlab",
+    "    python3 herramientas/curso-generar-formacion.py"
+  ],
+  "slug": "formacion-ajedrez",
+  "titulo": "Formación Ajedrez",
+  "nivel": "Formación docente",
+  "emoji": "⚖️",
+  "gradiente": "from-accent-700 to-brand-900",
+  "resumen": "Reglamento FIDE, normativa JDE, sistemas de competencia y arbitraje práctico, con torneo real de cierre.",
+  "descripcion_larga": "Curso para personas docentes, asesoras regionales y árbitras de ajedrez: el reglamento de la FIDE, la normativa vigente de los Juegos Deportivos Estudiantiles (JDE) y el arbitraje práctico, con una sesión presencial de cierre en la que se organiza y arbitra un torneo real.",
+  "duracion_texto": "30 horas en total (22 horas virtuales sincrónicas por Microsoft Teams y 8 horas presenciales), con quiz, práctica y tarea en cada sesión.",
+  "unidad": "sesiones",
+  "anterior": { "href": "preparacion-para-torneos.html", "titulo": "Preparación para Torneos" },
+  "siguiente": { "href": "fundamentos-del-ajedrez.html", "titulo": "Fundamentos del Ajedrez" },
+  "bloques": [
+    {
+      "titulo": "Reglamento y reglas de competición",
+      "lecciones": [
+        {
+          "titulo": "Encuadre del curso y reglas básicas del ajedrez",
+          "archivo": "01-encuadre-y-reglas-basicas",
+          "resumen": "Movimientos legales, jaque, jaque mate, ahogado y tablas, con los errores más frecuentes en el aula.",
+          "contenido": [
+            "Presentación del curso: las 8 sesiones, propósitos, cronograma y la sesión de cierre presencial.",
+            "El rol y el perfil de la persona árbitra y asesora en los Juegos Deportivos Estudiantiles.",
+            "Reglas básicas del ajedrez: movimientos legales, jaque, jaque mate, ahogado, tablas.",
+            "Notación algebraica y su uso obligatorio en competencia.",
+            "Errores y dudas frecuentes en la aplicación de las reglas en el ámbito escolar."
+          ],
+          "practica_titulo": "Identificación de jugadas legales y finales de partida",
+          "practica": "A partir de un set de 8 posiciones, cada participante determina si hay jaque, jaque mate, ahogado o tablas, y justifica su respuesta con base en el reglamento.",
+          "quiz": [
+            { "pregunta": "Un rey está en jaque y no existe ninguna jugada legal que lo saque de esa condición. ¿Cómo se denomina esta situación?", "respuesta": "Jaque mate." },
+            { "pregunta": "Un jugador no está en jaque, pero no dispone de ninguna jugada legal en su turno. ¿Qué resultado corresponde?", "respuesta": "Partida ahogada (tablas)." }
+          ],
+          "tarea": "Leer el capítulo de reglas básicas de las Leyes de Ajedrez de la FIDE y completar una ficha breve de reflexión sobre una situación de arbitraje básica vivida en su contexto educativo."
+        },
+        {
+          "titulo": "Reglas de competición",
+          "archivo": "02-reglas-de-competicion",
+          "resumen": "Conducta durante la partida, uso de dispositivos electrónicos, reclamos e incidencias frecuentes.",
+          "contenido": [
+            "Conducta durante la partida, uso de dispositivos electrónicos y anotación obligatoria.",
+            "Faltas, sanciones y procedimiento ante reclamos de las personas jugadoras.",
+            "Gestión de incidencias durante la partida (piezas mal colocadas, toques de pieza, incidencias con el reloj)."
+          ],
+          "practica_titulo": "Simulación de reclamos en salas de trabajo",
+          "practica": "En subgrupos, cada participante asume el rol de árbitro ante un reclamo distinto y debe resolverlo aplicando el procedimiento correcto.",
+          "quiz": [
+            { "pregunta": "Un jugador toca una pieza propia que puede mover legalmente. ¿Qué debe hacer?", "respuesta": "Debe moverla si tiene jugada legal." },
+            { "pregunta": "¿Qué debe hacer la persona árbitra ante el uso de un dispositivo electrónico no autorizado?", "respuesta": "Aplicar la sanción establecida en el reglamento de competición." }
+          ],
+          "tarea": "Redactar el análisis de un caso de reclamo (real o hipotético) indicando la normativa aplicada y la decisión arbitral justificada."
+        }
+      ]
+    },
+    {
+      "titulo": "Modalidades, normativa y sistemas de torneo",
+      "lecciones": [
+        {
+          "titulo": "Apéndices de las Leyes de Ajedrez y normativa de los Juegos Deportivos Estudiantiles",
+          "archivo": "03-apendices-y-normativa-jde",
+          "resumen": "Ajedrez rápido y relámpago, sistemas de desempate y normativa vigente de los Juegos Deportivos Estudiantiles.",
+          "contenido": [
+            "Apéndices de las Leyes de Ajedrez: ajedrez rápido y relámpago.",
+            "Sistemas de desempate (Buchholz, Sonneborn-Berger, enfrentamiento directo, entre otros).",
+            "Normativa vigente de los Juegos Deportivos Estudiantiles: categorías, requisitos y procedimientos."
+          ],
+          "practica_titulo": "Cálculo de desempates de un torneo simulado",
+          "practica": "Con los resultados de un torneo simulado de 8 jugadores, cada participante calcula la tabla final aplicando Buchholz y Sonneborn-Berger.",
+          "quiz": [
+            { "pregunta": "¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados?", "respuesta": "Buchholz." },
+            { "pregunta": "¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido?", "respuesta": "El control de tiempo asignado a cada jugador." }
+          ],
+          "tarea": "Analizar un caso de inscripción o de categorización de una persona estudiante y determinar el procedimiento correcto según la normativa JDE vigente."
+        },
+        {
+          "titulo": "Sistemas de emparejamiento para torneos",
+          "archivo": "04-sistemas-de-emparejamiento",
+          "resumen": "Sistema suizo y todos contra todos (round robin): cómo funcionan y cuándo usar cada uno.",
+          "contenido": [
+            "Sistema suizo: principios, conformación de rondas y criterios de emparejamiento.",
+            "Sistema todos contra todos (round robin): calendarización y control de resultados.",
+            "Criterios para seleccionar el sistema según cantidad de participantes, tiempo disponible y objetivo del torneo."
+          ],
+          "practica_titulo": "Construcción de un cuadro de emparejamiento",
+          "practica": "Con una lista de 12 jugadores ficticios, cada participante construye la primera ronda bajo sistema suizo y, luego, la calendarización equivalente en round robin.",
+          "quiz": [
+            { "pregunta": "¿Qué sistema resulta más adecuado cuando hay muchos participantes y tiempo limitado?", "respuesta": "El sistema suizo." },
+            { "pregunta": "En el sistema todos contra todos (round robin), ¿qué característica lo define?", "respuesta": "Cada jugador se enfrenta una vez a todos los demás participantes." }
+          ],
+          "tarea": "A partir de los resultados de la ronda 1, elaborar el emparejamiento de la ronda 2 bajo sistema suizo."
+        },
+        {
+          "titulo": "Uso, configuración y control del reloj de ajedrez",
+          "archivo": "05-uso-y-control-del-reloj",
+          "resumen": "Controles de tiempo, incrementos y resolución de incidencias con el reloj en competencia.",
+          "contenido": [
+            "Tipos de reloj y sistemas de control de tiempo (incrementos, aplazamientos, tiempo Fischer).",
+            "Configuración del reloj según la modalidad de juego (clásico, rápido, relámpago).",
+            "Penalizaciones e incidencias relacionadas con el manejo del tiempo."
+          ],
+          "practica_titulo": "Configuración de un reloj según escenario",
+          "practica": "Con un simulador de reloj digital en línea, cada participante configura el control de tiempo correspondiente a tres escenarios: partida clásica, rápida y relámpago.",
+          "quiz": [
+            { "pregunta": "¿Qué es el incremento o «tiempo Fischer» en el reloj de ajedrez?", "respuesta": "Un tiempo adicional que se suma después de cada jugada." },
+            { "pregunta": "Si a un jugador se le agota el tiempo, ¿qué debe verificar primero la persona árbitra?", "respuesta": "Si el rival tiene material suficiente para dar mate." }
+          ],
+          "tarea": "Completar una ficha con la configuración correcta del reloj (tiempo base e incremento) para tres modalidades, según la normativa JDE."
+        }
+      ]
+    },
+    {
+      "titulo": "Integración práctica y cierre presencial",
+      "lecciones": [
+        {
+          "titulo": "Resolución de casos en grupos y experiencias regionales",
+          "archivo": "06-resolucion-de-casos-en-grupos",
+          "resumen": "Casos integradores de arbitraje y elementos logísticos de un torneo estudiantil.",
+          "contenido": [
+            "Integración de los contenidos de las sesiones I a V en casos complejos e integradores.",
+            "Elementos logísticos de un torneo: inscripción, espacios, materiales y personal de apoyo.",
+            "Estrategias de fortalecimiento del desempeño como persona asesora y árbitra."
+          ],
+          "practica_titulo": "Resolución grupal de casos integradores",
+          "practica": "En grupos, se analiza un caso integrador que combina reglas de competición, desempates y logística, y se presenta la solución fundamentada.",
+          "quiz": [
+            { "pregunta": "¿Cuál de estos elementos NO forma parte de la logística previa a un torneo escolar?", "respuesta": "El resultado final de las partidas." },
+            { "pregunta": "Ante una situación arbitral no contemplada explícitamente en el reglamento, ¿qué debe primar?", "respuesta": "Aplicar el criterio más cercano del reglamento con imparcialidad, y justificarlo." }
+          ],
+          "tarea": "Elaborar una propuesta logística breve (inscripción, espacios, materiales, personal de apoyo) para un torneo estudiantil de su región."
+        },
+        {
+          "titulo": "Talleres prácticos y simulacros de arbitraje",
+          "archivo": "07-talleres-y-simulacros-de-arbitraje",
+          "resumen": "Simulacros de arbitraje entre pares y preparación de roles para la sesión presencial.",
+          "contenido": [
+            "Simulacros de arbitraje en vivo mediante salas de trabajo colaborativo.",
+            "Revisión de los formularios y de la lista de cotejo oficial que se usará en la sesión presencial.",
+            "Asignación de roles para el torneo presencial (árbitro principal, árbitro auxiliar, mesa de control)."
+          ],
+          "practica_titulo": "Simulacro de arbitraje con observación entre pares",
+          "practica": "Cada participante arbitra una partida simulada mientras otra persona observa y completa la lista de cotejo; luego se intercambian los roles.",
+          "quiz": [
+            { "pregunta": "Durante un simulacro, no se aplicó la sanción por uso de dispositivo electrónico. ¿Qué instrumento documenta esa observación?", "respuesta": "La lista de cotejo." },
+            { "pregunta": "¿Cuál es el propósito principal de asignar roles antes de la sesión presencial?", "respuesta": "Garantizar una organización clara y una evaluación práctica ordenada." }
+          ],
+          "tarea": "Confirmar el rol asignado, revisar la lista de cotejo y reunir los materiales solicitados para el día presencial."
+        },
+        {
+          "titulo": "Torneo real, evaluación final y certificación",
+          "presencial": true,
+          "archivo_formularios": "08-torneo-real-evaluacion-formularios",
+          "archivo_prueba": "08-prueba-final",
+          "resumen": "Sesión presencial, 8 horas.",
+          "contenido": [
+            "Acreditación y bienvenida presencial.",
+            "Organización integral de un torneo real: inscripción, emparejamiento y logística de mesas.",
+            "Arbitraje en vivo de las rondas del torneo, con observación mediante la lista de cotejo oficial.",
+            "Evaluación final teórica integradora (prueba escrita de 20 preguntas).",
+            "Autoevaluación final y plenaria de cierre.",
+            "Entrega de certificados a las personas que aprobaron el curso."
+          ],
+          "agenda": [
+            ["8:00 a. m.", "Acreditación y bienvenida."],
+            ["8:30 a. m.", "Organización del torneo: inscripción y emparejamiento de la ronda 1."],
+            ["9:30 a. m.", "Rondas del torneo con arbitraje en vivo y rotación de roles."],
+            ["12:30 p. m.", "Receso para almuerzo."],
+            ["1:30 p. m.", "Evaluación final teórica integradora."],
+            ["2:30 p. m.", "Cierre de listas de cotejo y autoevaluación."],
+            ["3:30 p. m.", "Plenaria de cierre y entrega de certificados."]
+          ],
+          "evaluacion": "Prueba teórica integradora (20 preguntas), lista de cotejo de desempeño arbitral y organizativo durante el torneo real, y autoevaluación final. Las personas que aprueben reciben su certificado en la plenaria de cierre."
+        }
+      ]
+    }
+  ]
+}

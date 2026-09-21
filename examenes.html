@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Exámenes — Ajedrez Integral</title>
+    <meta name="description" content="El profesor arma exámenes con nota y ve el informe de cada alumno.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/material-plataforma.js"></script>
+    <script src="js/plan-entrenamiento.js"></script>
+    <script src="js/diagnostico-items.js"></script>
+    <script src="js/arbitraje-items.js"></script>
+    <script src="js/aperturas-lineas.js"></script>
+    <script src="js/examen-banco.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">📝 Exámenes</h1>
+            <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mb-8"></p>
+
+            <!-- ============ Vista profesor ============ -->
+            <section id="vista-profesor" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Poner un examen</h2>
+                    <form id="form-examen" class="grid gap-4">
+                        <div>
+                            <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Para quién <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(uno o varios)</span></span>
+                            <div id="lista-alumnos" class="max-h-40 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1"></div>
+                            <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 mt-2">Todavía no tienes alumnos asignados.</p>
+                        </div>
+
+                        <!-- Las preguntas se piden por BLOQUES y se suman, como los
+                             renglones de una tarea: "10 de finales + 5 de reglamento +
+                             ejecutar la italiana" es un solo examen. Antes el examen
+                             salía de una sola fuente, así que para medir dos cosas había
+                             que poner dos exámenes y el alumno recibía dos relojes. -->
+                        <div>
+                            <div class="flex items-baseline justify-between gap-3 mb-1">
+                                <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Preguntas</span>
+                                <p id="e-total" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></p>
+                            </div>
+                            <div id="e-bloques" class="space-y-3"></div>
+                            <button type="button" id="e-agregar-bloque" class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
+                                + Agregar preguntas de otra cosa
+                            </button>
+                        </div>
+
+                        <!-- El tiempo: o lo propone el sitio sobre las preguntas que de
+                             verdad salieron, o lo pone el profesor. El campo se ve SIEMPRE,
+                             también en "Recomendado" —de solo lectura, no escondido—: así
+                             se ve el número que se va a mandar, en vez de tener que confiar
+                             en que hay uno. Misma decisión que la casilla "No tiene correo
+                             propio", que apaga el campo del correo en vez de quitarlo. -->
+                        <fieldset>
+                            <legend class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tiempo</legend>
+                            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+                                <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-100 cursor-pointer">
+                                    <input type="radio" name="e-tiempo-modo" id="e-tiempo-reco" value="reco" checked class="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span>Recomendado</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-100 cursor-pointer">
+                                    <input type="radio" name="e-tiempo-modo" id="e-tiempo-mio" value="mio" class="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span>Lo elijo yo</span>
+                                </label>
+                                <span class="flex items-center gap-2">
+                                    <label for="e-minutos" class="sr-only">Minutos del examen</label>
+                                    <input id="e-minutos" type="number" min="1" value="10" readonly class="w-24 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <span class="text-sm text-brand-600 dark:text-brand-100">minutos</span>
+                                </span>
+                            </div>
+                            <p id="e-minimo" class="text-xs text-brand-450 dark:text-brand-350 mt-1" aria-live="polite"></p>
+                        </fieldset>
+
+                        <!-- Cuántas veces puede salirse de la pantalla antes de perder el
+                             examen. Iba fijo en tres, escrito dentro de la función de la
+                             base: el mismo rigor para un quiz de práctica que para una
+                             prueba de fin de curso. El tope lo sigue haciendo cumplir el
+                             servidor; acá solo se elige. -->
+                        <div>
+                            <label for="e-salidas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Si se sale de la pantalla</label>
+                            <select id="e-salidas" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="0">Se congela a la primera</option>
+                                <option value="1">Le perdono 1 salida</option>
+                                <option value="2" selected>Le perdono 2 salidas</option>
+                                <option value="3">Le perdono 3 salidas</option>
+                                <option value="5">Le perdono 5 salidas</option>
+                                <option value="">No congelar, solo anotarlo</option>
+                            </select>
+                            <p id="e-salidas-nota" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="e-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
+                                <input id="e-titulo" type="text" maxlength="200" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="e-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se puede hacer hasta</label>
+                                <input id="e-vence" type="datetime-local" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="e-instrucciones" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nota para el alumno <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <textarea id="e-instrucciones" rows="2" maxlength="2000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button type="submit" id="poner-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Poner el examen</button>
+                            <p id="form-status" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                    </form>
+                </div>
+
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Exámenes puestos</h2>
+                <div id="puestos-lista" class="grid gap-3"></div>
+                <p id="puestos-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">Todavía no le has puesto ningún examen a nadie.</p>
+            </section>
+
+            <!-- ============ Vista alumno ============ -->
+            <section id="vista-alumno" class="hidden">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Por hacer</h2>
+                <div id="mios-pendientes" class="grid gap-3 mb-8"></div>
+                <p id="mios-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">No tienes ningún examen pendiente.</p>
+                <details id="mios-hechos-details">
+                    <summary class="cursor-pointer font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Ya hechos</summary>
+                    <div id="mios-hechos" class="grid gap-3 mt-4"></div>
+                </details>
+            </section>
+        </div>
+
+        <!-- El informe detallado, en su propio diálogo -->
+        <dialog id="dlg-informe" class="rounded-2xl p-0 w-[min(46rem,92vw)] backdrop:bg-black/50 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100">
+            <div class="p-6">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <h2 id="inf-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Informe</h2>
+                    <button id="inf-cerrar" class="text-brand-450 dark:text-brand-350 hover:text-red-600 text-xl leading-none px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">✕<span class="sr-only"> Cerrar</span></button>
+                </div>
+                <div id="inf-cuerpo" class="text-sm"></div>
+                <div class="flex items-center gap-3 mt-5 flex-wrap border-t border-brand-200 dark:border-brand-700 pt-4">
+                    <button id="inf-imprimir" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🖨️ Imprimir o guardar en PDF</button>
+                    <button id="inf-encargado" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">📧 Mandarlo a la casa</button>
+                    <p id="inf-status" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                </div>
+            </div>
+        </dialog>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+/* Exámenes: una página para dos públicos, como informes.html y tareas.html.
+ *
+ * El profesor arma el examen —sobre qué, cuántas preguntas, con qué
+ * dificultad y cuánto tiempo—, lo manda, ve la nota de cada quien y abre
+ * el informe detallado para repasarlo o mandarlo a la casa.
+ * El alumno ve lo que le pusieron y entra a rendirlo.
+ *
+ * Lo que NO pasa acá:
+ *
+ *  - Las preguntas no se inventan: salen de los bancos ya verificados,
+ *    vía js/examen-banco.js, que separa lo que el alumno ve de la
+ *    respuesta. La respuesta viaja a una columna que el alumno no puede
+ *    leer.
+ *  - La nota no se calcula acá: la calcula cerrar_examen() ponderando
+ *    por dificultad. Esta página pinta lo que vino.
+ *  - El mínimo de "un minuto por pregunta" se avisa acá pero lo hace
+ *    cumplir crear_examen(): un mínimo que solo comprueba el navegador
+ *    se salta desde la consola.
+ *  - El tiempo recomendado no lo inventa esta página ni lo pide a
+ *    ninguna IA —este sitio no usa ninguna—: lo calcula
+ *    ExamenBanco.minutosRecomendados() sobre las preguntas que de
+ *    verdad le tocaron al examen, que son las mismas que se mandan.
+ *  - El aviso al celular no lo manda esta página: sale de dos triggers
+ *    (avisar_examen_asignado al mandarlo, avisar_examen_reabierto al
+ *    volver a abrirlo), igual que el de las tareas. Mandarlo desde acá
+ *    lo dejaría atado a que la pestaña siga abierta.
+ */
+let session = null, profile = null, puedeExaminar = false;
+let alumnosDisponibles = [];
+let cursosCatalogo = [];
+let informeActual = null;
+
+function $(id) { return document.getElementById(id); }
+function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
+function fecha(iso) {
+  return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function init() {
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if (!session) { location.href = "login.html?next=examenes.html"; return; }
+
+  const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+  profile = p;
+  puedeExaminar = !!profile && (profile.role === "profesor" || profile.is_admin);
+
+  $("subtitulo").textContent = puedeExaminar
+    ? "Arma el examen, mándalo y mira cómo le fue a cada quien, pregunta por pregunta."
+    : "Lo que tu profe te puso. Se hace de una sola vez y con reloj.";
+
+  if (puedeExaminar) {
+    $("vista-profesor").classList.remove("hidden");
+    await cargarAlumnos();
+    cursosCatalogo = await MaterialPlataforma.cursos();
+    $("e-agregar-bloque").addEventListener("click", () => {
+      bloques.push(bloqueNuevo());
+      pintarBloques();
+      refrescarMedida();
+    });
+    ["e-tiempo-reco", "e-tiempo-mio"].forEach((id) =>
+      $(id).addEventListener("change", () => aplicarTiempo(refrescarPrevision())));
+    $("e-salidas").addEventListener("change", notaDeSalidas);
+    $("form-examen").addEventListener("submit", ponerExamen);
+    bloques = [bloqueNuevo()];
+    pintarBloques();
+    refrescarMedida();
+    await cargarPuestos();
+  } else {
+    $("vista-alumno").classList.remove("hidden");
+    await cargarMios();
+  }
+
+  $("inf-cerrar").addEventListener("click", () => $("dlg-informe").close());
+  $("inf-imprimir").addEventListener("click", () => window.print());
+  $("inf-encargado").addEventListener("click", mandarALaCasa);
+
+  $("loading").classList.add("hidden");
+  $("app").classList.remove("hidden");
+}
+
+/* ---------------- Profesor: armar ---------------- */
+async function cargarAlumnos() {
+  const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+  alumnosDisponibles = data || [];
+  const cont = $("lista-alumnos");
+  cont.innerHTML = "";
+  $("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);
+  alumnosDisponibles.forEach((a) => {
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white dark:hover:bg-brand-900 cursor-pointer";
+    label.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 alumno-check"><span>${escapeHtml(a.full_name || a.email)}</span>`;
+    cont.appendChild(label);
+  });
+}
+
+/* ---------------- Los bloques de preguntas ----------------
+
+   Un examen se arma sumando bloques, como los renglones de una tarea:
+   "10 de finales + 5 de reglamento + ejecutar la italiana" es UN examen.
+   Antes salía de una sola fuente, así que para medir dos cosas había que
+   poner dos exámenes — y el alumno recibía dos relojes y dos notas de lo
+   que para el profesor era una sola prueba.
+
+   La base ya lo aguantaba: `crear_examen()` recibe las preguntas en un
+   arreglo y no le importa de dónde salió cada una. Lo que había que
+   cambiar era esta pantalla. */
+
+const FUENTES = [
+  { valor: "curso",     texto: "Un curso" },
+  { valor: "areas",     texto: "Áreas sueltas" },
+  { valor: "linea",     texto: "Ejecutar una apertura o defensa" },
+  { valor: "arbitraje", texto: "Reglamento (arbitraje)" },
+];
+
+let bloques = [];
+let seqBloque = 0;
+
+function bloqueNuevo() {
+  return { id: ++seqBloque, fuente: "curso", cual: "", areas: [], cantidad: 10, difMin: 1, difMax: 5 };
+}
+
+const CAMPO = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+const ETIQUETA = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+
+function opcionesDeCual(b) {
+  if (b.fuente === "curso") {
+    const conPreguntas = ExamenBanco.cursosConPreguntas();
+    return cursosCatalogo.filter((c) => conPreguntas.includes(c.slug))
+      .map((c) => ({ valor: c.slug, texto: c.label }));
+  }
+  if (b.fuente === "linea") {
+    return ((window.AperturasLineas && window.AperturasLineas.LINEAS) || []).map((l) => ({
+      valor: l.id,
+      texto: l.nombre + (l.apertura ? " — " + l.apertura : "") + (l.color === "w" ? " (blancas)" : " (negras)"),
+    }));
+  }
+  return [];
+}
+
+function opcionesDelBloque(b) {
+  return {
+    fuente: b.fuente,
+    curso: b.fuente === "curso" ? b.cual : null,
+    linea_id: b.fuente === "linea" ? b.cual : null,
+    areas: b.fuente === "areas" ? b.areas.slice() : [],
+    cantidad: Math.max(1, b.cantidad || 1),
+    dificultad: { min: b.difMin, max: b.difMax },
+  };
+}
+
+function hayEnBloque(b) {
+  try { return ExamenBanco.disponibles(opcionesDelBloque(b)); } catch (e) { return 0; }
+}
+
+/* Cómo se llama este bloque, para el título propuesto y para el aviso. */
+function nombreDeBloque(b) {
+  const op = opcionesDeCual(b).find((o) => o.valor === b.cual);
+  if (b.fuente === "curso") return op ? op.texto : "un curso";
+  if (b.fuente === "linea") return op ? op.texto.split(" — ")[0] : "una apertura";
+  if (b.fuente === "arbitraje") return "reglamento";
+  return b.areas.length ? b.areas.join(", ") : "todas las áreas";
+}
+
+function pintarBloques() {
+  const cont = $("e-bloques");
+  cont.innerHTML = "";
+  bloques.forEach((b) => cont.appendChild(pintarBloque(b)));
+  $("e-agregar-bloque").disabled = bloques.length >= 8;
+}
+
+function pintarBloque(b) {
+  const caja = document.createElement("div");
+  caja.className = "rounded-xl border border-brand-200 dark:border-brand-700 p-3 bg-brand-50/60 dark:bg-brand-950/40";
+  caja.dataset.bloque = String(b.id);
+
+  const sel = (id, etiqueta, opciones, valor, alCambiar) => {
+    const wrap = document.createElement("div");
+    const lab = document.createElement("label");
+    lab.className = ETIQUETA; lab.setAttribute("for", id); lab.textContent = etiqueta;
+    const s = document.createElement("select");
+    s.id = id; s.className = CAMPO;
+    opciones.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.valor; opt.textContent = o.texto;
+      if (String(o.valor) === String(valor)) opt.selected = true;
+      s.appendChild(opt);
+    });
+    s.addEventListener("change", () => { alCambiar(s.value); refrescarMedida(); });
+    wrap.append(lab, s);
+    return wrap;
+  };
+
+  // Fila de arriba: sobre qué, y cuál.
+  const arriba = document.createElement("div");
+  arriba.className = "grid gap-3 sm:grid-cols-2";
+  arriba.appendChild(sel(`b${b.id}-fuente`, "Sobre qué", FUENTES, b.fuente, (v) => {
+    b.fuente = v;
+    const ops = opcionesDeCual(b);
+    b.cual = ops.length ? ops[0].valor : "";
+    pintarBloques();
+  }));
+  const cuales = opcionesDeCual(b);
+  if (cuales.length) {
+    if (!cuales.some((o) => String(o.valor) === String(b.cual))) b.cual = cuales[0].valor;
+    arriba.appendChild(sel(`b${b.id}-cual`, "Cuál", cuales, b.cual, (v) => { b.cual = v; }));
+  }
+  caja.appendChild(arriba);
+
+  // Áreas sueltas: las casillas.
+  if (b.fuente === "areas") {
+    const wrap = document.createElement("div");
+    wrap.className = "mt-3";
+    const t = document.createElement("span");
+    t.className = ETIQUETA; t.textContent = "Áreas";
+    const grid = document.createElement("div");
+    grid.className = "border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-3 gap-1";
+    (window.PlanEntrenamiento.AREAS || []).forEach((a) => {
+      const l = document.createElement("label");
+      l.className = "flex items-center gap-2 text-sm px-2 py-1 rounded cursor-pointer";
+      const c = document.createElement("input");
+      c.type = "checkbox"; c.value = a.id;
+      c.className = "rounded border-brand-300 text-accent-500 focus:ring-accent-400 area-check";
+      c.checked = b.areas.includes(a.id);
+      c.addEventListener("change", () => {
+        b.areas = c.checked ? b.areas.concat([a.id]) : b.areas.filter((x) => x !== a.id);
+        refrescarMedida();
+      });
+      const sp = document.createElement("span");
+      sp.textContent = a.emoji + " " + a.nombre;
+      l.append(c, sp);
+      grid.appendChild(l);
+    });
+    wrap.append(t, grid);
+    caja.appendChild(wrap);
+  }
+
+  // Cuántas y de qué dificultad. Una línea de apertura es UNA pregunta y
+  // trae su propia dificultad, así que no se le pide ninguna de las dos.
+  const abajo = document.createElement("div");
+  abajo.className = "grid gap-3 sm:grid-cols-3 mt-3";
+  if (b.fuente !== "linea") {
+    const wrapC = document.createElement("div");
+    const labC = document.createElement("label");
+    labC.className = ETIQUETA; labC.setAttribute("for", `b${b.id}-cantidad`); labC.textContent = "Preguntas";
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "1"; inp.id = `b${b.id}-cantidad`;
+    inp.value = String(b.cantidad); inp.className = CAMPO;
+    inp.addEventListener("input", () => { b.cantidad = parseInt(inp.value, 10) || 1; refrescarMedida(); });
+    const hay = document.createElement("p");
+    hay.id = `b${b.id}-hay`; hay.className = "text-xs text-brand-450 dark:text-brand-350 mt-1";
+    wrapC.append(labC, inp, hay);
+    abajo.appendChild(wrapC);
+
+    const nums = [1, 2, 3, 4, 5].map((n) => ({
+      valor: String(n),
+      texto: n === 1 ? "1 · muy fácil" : n === 5 ? "5 · muy difícil" : String(n),
+    }));
+    abajo.appendChild(sel(`b${b.id}-dif-min`, "Dificultad desde", nums, b.difMin, (v) => { b.difMin = parseInt(v, 10); }));
+    abajo.appendChild(sel(`b${b.id}-dif-max`, "hasta", nums, b.difMax, (v) => { b.difMax = parseInt(v, 10); }));
+  } else {
+    const p = document.createElement("p");
+    p.className = "text-xs text-brand-450 dark:text-brand-350 sm:col-span-3";
+    p.textContent = "Una línea es una sola pregunta: la da entera, sin pistas y sin deshacer.";
+    abajo.appendChild(p);
+  }
+  caja.appendChild(abajo);
+
+  // Quitar. Con un solo bloque no se ofrece: un examen sin preguntas no
+  // existe, y un botón que va a fallar es peor que no tenerlo.
+  if (bloques.length > 1) {
+    const fila = document.createElement("div");
+    fila.className = "mt-2 text-right";
+    const quitar = document.createElement("button");
+    quitar.type = "button";
+    quitar.className = "quitar-bloque text-xs font-semibold text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1";
+    quitar.textContent = "✕ Quitar estas preguntas";
+    quitar.addEventListener("click", () => {
+      bloques = bloques.filter((x) => x.id !== b.id);
+      pintarBloques();
+      refrescarMedida();
+    });
+    fila.appendChild(quitar);
+    caja.appendChild(fila);
+  }
+  return caja;
+}
+
+/* Cuántas preguntas hay de verdad en cada bloque, y cuántos minutos hacen
+   falta como mínimo. Las dos cosas se dicen ANTES de mandar: enterarse de
+   que el examen salió más corto de lo pedido cuando el alumno ya lo rindió
+   es tarde. */
+function refrescarMedida() {
+  bloques.forEach((b) => {
+    if (b.difMin > b.difMax) {
+      b.difMax = b.difMin;
+      const s = document.getElementById(`b${b.id}-dif-max`);
+      if (s) s.value = String(b.difMax);
+    }
+    if (b.fuente === "linea") return;
+    const hay = hayEnBloque(b);
+    if (b.cantidad > hay && hay > 0) {
+      b.cantidad = hay;
+      const c = document.getElementById(`b${b.id}-cantidad`);
+      if (c) c.value = String(hay);
+    }
+    const c = document.getElementById(`b${b.id}-cantidad`);
+    if (c) c.max = String(Math.max(1, hay));
+    const avisoHay = document.getElementById(`b${b.id}-hay`);
+    if (avisoHay) {
+      avisoHay.textContent = hay ? `Hay ${hay} para elegir.` : "No hay preguntas con ese filtro.";
+      avisoHay.className = "text-xs mt-1 " + (hay ? "text-brand-450 dark:text-brand-350" : "text-red-600 dark:text-red-400");
+    }
+  });
+  const prev = refrescarPrevision();
+  const n = prev.items.length;
+  $("e-total").textContent = n ? `${n} ${n === 1 ? "pregunta" : "preguntas"} en total` : "";
+  aplicarTiempo(prev);
+  notaDeSalidas();
+  proponerTitulo();
+}
+
+function notaDeSalidas() {
+  const v = $("e-salidas").value;
+  $("e-salidas-nota").textContent = v === ""
+    ? "Las salidas se cuentan y salen en el informe, pero el examen no se cierra solo."
+    : v === "0"
+      ? "A la primera salida el examen se congela y se califica con lo que llevaba."
+      : `A la salida número ${parseInt(v, 10) + 1} el examen se congela y se califica con lo que llevaba.`;
+}
+
+/* ---------------- El tiempo ---------------- */
+
+/* La previsión: las preguntas que le van a tocar al examen, sorteadas
+   UNA vez y guardadas. El tiempo recomendado se calcula sobre ELLAS y
+   son las mismas que después se mandan.
+
+   Sortear otra vez al apretar el botón habría sido lo natural —es lo que
+   hacía antes— y habría dejado el peor defecto de los que este
+   repositorio persigue: el número que el profesor leyó en pantalla
+   estaría calculado sobre unas preguntas y el examen llevaría otras. No
+   falla nada, no avisa nadie, y el tiempo simplemente no corresponde. La
+   previsión se rehace sola en cuanto cambia cualquier parámetro, porque
+   su clave es el propio objeto de opciones. */
+let prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {}, repetidas: 0 };
+
+function refrescarPrevision() {
+  const clave = JSON.stringify(bloques);
+  if (prevision.clave === clave) return prevision;
+
+  const items = [];
+  const vistas = new Set();
+  let repetidas = 0, error = null;
+  bloques.forEach((b) => {
+    let salieron = [];
+    try {
+      salieron = ExamenBanco.armar(Object.assign({}, opcionesDelBloque(b),
+        { semilla: Math.floor(Math.random() * 1e9) }));
+    } catch (e) { if (!error) error = e.message; }
+    salieron.forEach((it) => {
+      // DOS BLOQUES PUEDEN PEDIR DEL MISMO BANCO. "10 de finales" y "5 de
+      // finales" son dos bloques legítimos, y sin esto el examen podría
+      // llevar la misma pregunta dos veces: el alumno la contestaría dos
+      // veces y valdría doble en la nota, sin que nada fallara.
+      const llave = it.banco + "/" + it.item_id;
+      if (vistas.has(llave)) { repetidas += 1; return; }
+      vistas.add(llave);
+      items.push(it);
+    });
+  });
+
+  const r = items.length ? ExamenBanco.minutosRecomendados(items)
+                         : { minutos: 0, minimo: 1, porTipo: {} };
+  prevision = { clave, items, error, repetidas,
+                minutos: r.minutos, minimo: r.minimo, porTipo: r.porTipo };
+  return prevision;
+}
+
+const NOMBRE_TIPO = {
+  opcion: "de opción", opcion_tablero: "con tablero", jugada: "de jugada",
+  casilla: "de casilla", linea: "de línea entera",
+};
+
+function desgloseDe(porTipo) {
+  return Object.keys(porTipo)
+    .map((t) => `${porTipo[t]} ${NOMBRE_TIPO[t] || t}`)
+    .join(", ");
+}
+
+function modoRecomendado() { return $("e-tiempo-reco").checked; }
+
+/* Pone el número y explica de dónde salió. El campo queda de SOLO
+   LECTURA en modo recomendado, no desactivado: así el lector de pantalla
+   lo sigue anunciando y el número se puede copiar; un campo desactivado
+   desaparece del recorrido y quien no ve la pantalla no se entera de
+   cuánto tiempo lleva el examen que está por mandar. */
+function aplicarTiempo(prev) {
+  const reco = modoRecomendado();
+  const campo = $("e-minutos");
+  campo.readOnly = reco;
+  campo.classList.toggle("opacity-70", reco);
+  campo.min = String(Math.max(1, prev.minimo));
+
+  if (!prev.items.length) {
+    $("e-minimo").textContent = prev.error || "Todavía no hay preguntas con ese filtro.";
+    return;
+  }
+  if (reco) campo.value = String(prev.minutos);
+  else if ((parseInt(campo.value, 10) || 0) < prev.minimo) campo.value = String(prev.minimo);
+
+  const n = prev.items.length;
+  const cuantas = `${n} ${n === 1 ? "pregunta" : "preguntas"}`;
+  // Si dos bloques pidieron la misma pregunta se dice, en vez de dejar que
+  // el examen salga más corto de lo que el profesor pidió sin explicación.
+  const repes = prev.repetidas
+    ? ` ${prev.repetidas} ${prev.repetidas === 1 ? "pregunta repetida se quitó" : "preguntas repetidas se quitaron"}.`
+    : "";
+  $("e-minimo").textContent = (reco
+    ? `${prev.minutos} min para estas ${cuantas} (${desgloseDe(prev.porTipo)}). El mínimo es ${prev.minimo}.`
+    : `Mínimo ${prev.minimo} (un minuto por pregunta). Lo recomendado para estas ${cuantas} son ${prev.minutos}.`) + repes;
+}
+
+let tituloTocado = false;
+document.addEventListener("input", (ev) => { if (ev.target && ev.target.id === "e-titulo") tituloTocado = true; });
+function proponerTitulo() {
+  if (tituloTocado) return;
+  if (!bloques.length) { $("e-titulo").value = "Examen"; return; }
+  if (bloques.length === 1) {
+    const b = bloques[0];
+    $("e-titulo").value = b.fuente === "linea"
+      ? "Ejecutar: " + nombreDeBloque(b)
+      : "Examen de " + nombreDeBloque(b);
+    return;
+  }
+  // Con varios bloques se nombran los dos primeros y se cuenta el resto: un
+  // título con cinco cosas encadenadas no se lee en la lista del alumno.
+  const nombres = bloques.map(nombreDeBloque);
+  const resto = nombres.length - 2;
+  $("e-titulo").value = "Examen de " + nombres.slice(0, 2).join(" y ") +
+    (resto > 0 ? ` y ${resto} ${resto === 1 ? "cosa más" : "cosas más"}` : "");
+}
+
+async function ponerExamen(ev) {
+  ev.preventDefault();
+  const status = $("form-status");
+  const alumnos = [...document.querySelectorAll(".alumno-check:checked")].map((c) => c.value);
+  if (!alumnos.length) { status.textContent = "Elige al menos un alumno."; return; }
+
+  // Las preguntas ya están sorteadas: son las mismas sobre las que se
+  // calculó el tiempo que el profesor tiene delante. Volver a sortearlas
+  // acá mandaría un examen distinto del que se midió.
+  const prev = refrescarPrevision();
+  if (prev.error) { status.textContent = prev.error; return; }
+  const items = prev.items;
+  if (!items.length) { status.textContent = "Con ese filtro no sale ninguna pregunta."; return; }
+
+  const minutos = modoRecomendado() ? prev.minutos : (parseInt($("e-minutos").value, 10) || 0);
+  if (minutos < items.length) {
+    status.textContent = `Con ${items.length} preguntas hacen falta al menos ${items.length} minutos.`;
+    return;
+  }
+  const vence = $("e-vence").value;
+  if (!vence) { status.textContent = "Ponle hasta cuándo se puede hacer."; return; }
+  const titulo = $("e-titulo").value.trim();
+  if (!titulo) { status.textContent = "Falta el título."; return; }
+
+  const btn = $("poner-btn");
+  btn.disabled = true;
+  status.textContent = "Poniendo el examen…";
+  const { data, error } = await sb.rpc("crear_examen", {
+    p_alumnos: alumnos,
+    p_titulo: titulo,
+    p_instrucciones: $("e-instrucciones").value.trim(),
+    p_minutos: minutos,
+    p_vence: new Date(vence).toISOString(),
+    p_items: items,
+    // "" es "no congelar nunca". Va como null y no como 0: cero significa
+    // lo contrario —congela a la primera— y confundirlos le cerraría el
+    // examen en la cara al primer despiste.
+    p_salidas_permitidas: $("e-salidas").value === "" ? null : parseInt($("e-salidas").value, 10),
+  });
+  btn.disabled = false;
+  if (error) { status.textContent = "No se pudo poner: " + error.message; return; }
+
+  const n = typeof data === "number" ? data : alumnos.length;
+  status.textContent = `Examen de ${items.length} preguntas puesto a ${n} ${n === 1 ? "alumno" : "alumnos"} · ${minutos} min.`;
+  document.querySelectorAll(".alumno-check").forEach((c) => { c.checked = false; });
+  // Se tira la previsión para que el examen siguiente vuelva a sortear.
+  // Sin esto, poner el mismo examen dos veces seguidas —al grupo de la
+  // mañana y al de la tarde— mandaría exactamente las mismas preguntas.
+  prevision = { clave: null, items: [], error: null, minutos: 0, minimo: 1, porTipo: {}, repetidas: 0 };
+  refrescarMedida();
+  await cargarPuestos();
+}
+
+/* ---------------- Profesor: lo que ya puso ---------------- */
+const COLOR_ESTADO = {
+  asignado: "text-brand-500 dark:text-brand-300",
+  en_curso: "text-accent-700 dark:text-accent-400",
+  entregado: "text-green-600 dark:text-green-400",
+  congelado: "text-red-600 dark:text-red-400",
+};
+const TEXTO_ESTADO = {
+  asignado: "Sin empezar", en_curso: "Rindiendo ahora",
+  entregado: "Entregado", congelado: "🔒 Congelado",
+};
+
+async function cargarPuestos() {
+  const { data, error } = await sb.rpc("examenes_con_nota", { p_profesor: session.user.id });
+  const lista = $("puestos-lista");
+  lista.innerHTML = "";
+  const filas = data || [];
+  const vacia = $("puestos-vacia");
+  vacia.classList.toggle("hidden", !!filas.length);
+  if (error) { vacia.textContent = "No se pudieron cargar: " + error.message; vacia.classList.remove("hidden"); return; }
+  filas.forEach((e) => lista.appendChild(tarjetaPuesto(e)));
+}
+
+function tarjetaPuesto(e) {
+  const div = document.createElement("div");
+  div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3";
+  const nota = e.nota != null ? Number(e.nota).toFixed(2) : "—";
+  const salidas = e.salidas > 0
+    ? `<span class="text-red-600 dark:text-red-400"> · salió ${e.salidas} ${e.salidas === 1 ? "vez" : "veces"}</span>` : "";
+  div.innerHTML = `
+    <div class="min-w-0">
+      <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(e.titulo)}</p>
+      <p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(e.alumno_nombre || "—")} · ${e.preguntas} preguntas · ${e.minutos} min${salidas}</p>
+      <p class="text-xs text-brand-450 dark:text-brand-350">Hasta ${fecha(e.vence_at)}</p>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="text-right">
+        <p class="text-xs font-semibold ${COLOR_ESTADO[e.estado]}">${TEXTO_ESTADO[e.estado]}</p>
+        ${e.estado === "entregado" || e.estado === "congelado"
+          ? `<p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${nota}</p>` : ""}
+      </div>
+      ${e.estado === "entregado" || e.estado === "congelado"
+        ? `<button type="button" class="text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded informe-btn">Ver informe</button>` : ""}
+      ${e.estado === "congelado"
+        ? `<button type="button" class="text-xs font-semibold text-brand-600 dark:text-brand-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded reabrir-btn">Volver a abrir</button>` : ""}
+      <button type="button" class="text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded borrar-btn">Eliminar</button>
+    </div>`;
+  const inf = div.querySelector(".informe-btn");
+  if (inf) inf.addEventListener("click", () => abrirInforme(e.id));
+  const re = div.querySelector(".reabrir-btn");
+  if (re) re.addEventListener("click", () => reabrir(e.id));
+  div.querySelector(".borrar-btn").addEventListener("click", () => borrar(e.id));
+  return div;
+}
+
+/* Volver a abrir un examen congelado es del profesor, y reinicia las dos
+   cosas: el reloj —el tiempo se le fue mientras estaba trabado— y el
+   contador de salidas. Lo segundo no es un olvido: dejándolo donde estaba, el
+   examen se volvería a congelar en cuanto parpadeara, o sea que reabrirlo
+   no serviría de nada. Las respuestas que ya había dado SÍ se conservan,
+   así que sigue desde donde quedó y no vuelve a contestar lo mismo — y el
+   trigger avisar_examen_reabierto le avisa al celular, que es lo único que
+   le dice que ya puede volver a entrar. */
+async function reabrir(id) {
+  if (!confirm("¿Volver a abrir este examen?\n\nSigue desde donde quedó —lo que ya contestó no se repite— con el tiempo completo otra vez, y el contador de salidas vuelve a cero.")) return;
+  const { error } = await sb.from("examenes").update({
+    estado: "asignado", iniciado_at: null, termina_at: null,
+    entregado_at: null, motivo_cierre: null, salidas: 0,
+    nota: null, puntos: null, puntos_posibles: null, porcentaje: null,
+    respondidas: null, total_items: null,
+  }).eq("id", id);
+  if (error) { alert("No se pudo: " + error.message); return; }
+  await cargarPuestos();
+}
+
+async function borrar(id) {
+  if (!confirm("¿Eliminar este examen?")) return;
+  const { error } = await sb.from("examenes").delete().eq("id", id);
+  if (error) { alert("No se pudo eliminar: " + error.message); return; }
+  await cargarPuestos();
+}
+
+/* ---------------- El informe ---------------- */
+async function abrirInforme(id) {
+  const { data, error } = await sb.rpc("examen_informe", { p_examen: id });
+  if (error || !data) { alert("No se pudo abrir el informe: " + (error ? error.message : "")); return; }
+  informeActual = data;
+  $("inf-titulo").textContent = `${data.titulo} — ${data.alumno || ""}`;
+  $("inf-cuerpo").innerHTML = informeHtml(data);
+  $("inf-status").textContent = "";
+  $("dlg-informe").showModal();
+}
+
+/* El HTML del informe se arma UNA vez y de ahí salen las tres cosas: lo
+   que se ve, lo que se imprime y lo que se manda a la casa. Si cada una
+   lo armara por su lado se irían separando — la misma razón por la que
+   el informe que llega a las familias vive en un solo informe-html.ts. */
+function informeHtml(d) {
+  const motivo = {
+    entregado: "Lo entregó completo.",
+    tiempo: "Se le acabó el tiempo; se entregó con lo que llevaba.",
+    congelado: "Se congeló: salió de la ventana tres veces.",
+  }[d.motivo_cierre] || "";
+
+  const areas = (d.areas || []).map((a) => {
+    const pct = Number(a.porcentaje);
+    const color = pct >= 70 ? "#16a34a" : pct >= 40 ? "#de911d" : "#dc2626";
+    return `<tr>
+      <td style="padding:4px 8px">${escapeHtml(a.area)}</td>
+      <td style="padding:4px 8px;text-align:right"><strong style="color:${color}">${pct}%</strong></td>
+      <td style="padding:4px 8px;text-align:right">${a.aciertos} de ${a.preguntas}</td>
+      <td style="padding:4px 8px;text-align:right">${a.puntos}/${a.posibles} pts</td>
+    </tr>`;
+  }).join("");
+
+  const preguntas = (d.preguntas || []).map((p) => {
+    const marca = !p.respondida ? "⬜" : p.correcta ? "✅" : "❌";
+    const estado = !p.respondida ? "No alcanzó a contestarla" : p.correcta ? "Correcta" : "Incorrecta";
+    return `<li style="margin-bottom:10px">
+      <div><strong>${marca} ${p.orden + 1}.</strong> ${escapeHtml(p.enunciado || "")}</div>
+      <div style="font-size:12px;opacity:.8">${escapeHtml(estado)} · dificultad ${p.peso}/5 · ${escapeHtml(p.area || "")}${p.segundos != null ? " · " + p.segundos + " s" : ""}</div>
+      ${p.explica ? `<div style="font-size:12px;opacity:.8;margin-top:2px"><em>${escapeHtml(p.explica)}</em></div>` : ""}
+    </li>`;
+  }).join("");
+
+  // Cuántas salidas se le permitían va junto al número: tres salidas en un
+  // examen que perdonaba cinco no es lo mismo que tres en uno que perdonaba
+  // dos, y el número solo no lo dice.
+  const tope = d.salidas_permitidas == null
+    ? " Este examen no congelaba por salir."
+    : ` Se le permitían ${d.salidas_permitidas}.`;
+  const salidas = d.salidas > 0
+    ? `<p style="color:#dc2626"><strong>Salió de la ventana ${d.salidas} ${d.salidas === 1 ? "vez" : "veces"}</strong> (${d.segundos_fuera} segundos fuera en total).${tope}</p>`
+    : `<p style="opacity:.8">No salió de la ventana en ningún momento.</p>`;
+
+  return `
+    <div id="inf-imprimible">
+      <p style="margin-bottom:6px"><strong>Nota: ${d.nota != null ? Number(d.nota).toFixed(2) : "—"} de 10</strong>
+         — ${d.puntos} de ${d.puntos_posibles} puntos, contando la dificultad de cada pregunta.</p>
+      <p style="opacity:.85;margin-bottom:6px">Respondió ${d.respondidas} de ${d.total_items} preguntas. ${escapeHtml(motivo)}</p>
+      ${salidas}
+      <h3 style="margin:14px 0 6px;font-weight:700">Por área</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">${areas}</table>
+      <h3 style="margin:14px 0 6px;font-weight:700">Pregunta por pregunta</h3>
+      <ul style="list-style:none;padding:0;font-size:13px">${preguntas}</ul>
+    </div>`;
+}
+
+async function mandarALaCasa() {
+  if (!informeActual) return;
+  const status = $("inf-status");
+  status.textContent = "Buscando a quién escribirle…";
+  const { data: encargados, error } = await sb.from("encargados")
+    .select("nombre, email, activo").eq("student_id", informeActual.alumno_id).eq("activo", true);
+  if (error) { status.textContent = "No se pudo consultar: " + error.message; return; }
+  if (!encargados || !encargados.length) {
+    status.textContent = "Ese alumno no tiene ninguna persona encargada apuntada. Se agrega en Informes › 📧 Informes a la casa.";
+    return;
+  }
+  // El correo lo manda la misma función que los informes a la casa, con
+  // el mismo remitente verificado. Si todavía no está desplegada se dice,
+  // en vez de dejar creer que salió.
+  status.textContent = "Mandando…";
+  // Función aparte de la de los informes periódicos a propósito: meterle una
+  // acción más a la que dispara pg_cron todos los días habría puesto en
+  // riesgo, por un botón nuevo, el camino que ya funciona.
+  const { data, error: err2 } = await sb.functions.invoke("informe-examen", {
+    body: { examen_id: informeActual.id },
+  });
+  if (err2) {
+    status.textContent = "No se pudo mandar: " + err2.message +
+      " — si es la primera vez, hay que desplegar la Edge Function informe-examen.";
+    return;
+  }
+  status.textContent = (data && data.enviados)
+    ? `Informe enviado a ${data.enviados} ${data.enviados === 1 ? "correo" : "correos"}.`
+    : "El informe salió.";
+}
+
+/* ---------------- Alumno ---------------- */
+async function cargarMios() {
+  const { data, error } = await sb.rpc("examenes_con_nota", { p_alumno: session.user.id });
+  const filas = data || [];
+  const pendientes = filas.filter((e) => e.estado === "asignado" || e.estado === "en_curso");
+  const hechos = filas.filter((e) => e.estado === "entregado" || e.estado === "congelado");
+
+  const pl = $("mios-pendientes");
+  pl.innerHTML = "";
+  $("mios-vacia").classList.toggle("hidden", !!pendientes.length);
+  pendientes.forEach((e) => pl.appendChild(tarjetaAlumno(e, true)));
+
+  const hl = $("mios-hechos");
+  hl.innerHTML = "";
+  hechos.forEach((e) => hl.appendChild(tarjetaAlumno(e, false)));
+
+  if (error) { $("mios-vacia").textContent = "No se pudieron cargar: " + error.message; $("mios-vacia").classList.remove("hidden"); }
+}
+
+function tarjetaAlumno(e, pendiente) {
+  const div = document.createElement("div");
+  const vencido = pendiente && new Date(e.vence_at) < new Date() && e.estado === "asignado";
+  div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4" + (vencido ? " border-l-4 border-red-500" : "");
+  const nota = e.nota != null ? Number(e.nota).toFixed(2) : "—";
+  div.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(e.titulo)}</p>
+        <p class="text-xs text-brand-450 dark:text-brand-350">De ${escapeHtml(e.profesor_nombre || "tu profe")} · ${e.preguntas} preguntas · ${e.minutos} minutos</p>
+        <p class="text-xs ${vencido ? "text-red-600 dark:text-red-400 font-semibold" : "text-brand-450 dark:text-brand-350"}">
+          ${vencido ? "Se pasó la fecha: " : "Se puede hacer hasta "}${fecha(e.vence_at)}</p>
+      </div>
+      <div class="shrink-0 text-right">
+        ${pendiente
+          ? (vencido ? "" : `<a href="examen.html?id=${encodeURIComponent(e.id)}" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">${e.estado === "en_curso" ? "Seguir" : "Empezar"}</a>`)
+          : `<p class="text-xs font-semibold ${COLOR_ESTADO[e.estado]}">${TEXTO_ESTADO[e.estado]}</p>
+             <p class="font-serif text-2xl font-bold text-brand-800 dark:text-white">${nota}</p>`}
+      </div>
+    </div>`;
+  return div;
+}
+
+init();
+
+    </script>
+</body>
+</html>

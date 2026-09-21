@@ -24,59 +24,21 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="racha"></script>
     <script src="js/board-drag.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/chess-move-parser.js"></script>
+    <script src="js/cuadro-comandos.js"></script>
     <script src="data/puzzle-rush-data.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
@@ -112,6 +74,8 @@
                 <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[420px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none transition-shadow"></div>
             </div>
 
+            <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js). -->
+            <div id="q-comandos"></div>
             <p id="result-text" class="text-center text-sm mt-4 min-h-[1.5em] text-brand-600 dark:text-brand-300"></p>
 
             <div class="text-center mt-4">
@@ -124,17 +88,7 @@
 
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script src="js/coordenadas-tablero.js"></script>
     <script>
@@ -177,6 +131,7 @@
 
         // ---------- Tablero ----------
         function renderBoard() {
+            refrescarComandos();
             const boardEl = document.getElementById("board");
             boardEl.innerHTML = "";
             // Mostrar el tablero desde la perspectiva de quien tiene que mover — el
@@ -247,15 +202,53 @@
             onSquareClick: (square) => onSquareClick(square),
         });
 
+
+        /* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+         * El ejercicio solo se podía contestar tocando el tablero: con lector de
+         * pantalla era incontestable, y no daba ningún error — la página se veía
+         * perfecta y quien no podía verla no resolvía ni uno. Acá la jugada
+         * también se escribe, con la posición contada en palabras justo encima.
+         * Ver js/cuadro-comandos.js. El tablero NO se esconde: quien ve poco usa
+         * las dos cosas. */
+        let comandos = null;
+
+        function refrescarComandos() {
+            if (!window.CuadroComandos || !game) return;
+            if (!comandos) {
+                comandos = CuadroComandos.montar(document.getElementById("q-comandos"), {
+                    etiqueta: "Escribe tu jugada",
+                    onEnviar: jugarEscribiendo,
+                });
+                comandos.ayuda('En español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D".');
+            }
+            comandos.posicion(game);
+        }
+
+        function jugarEscribiendo(texto, api) {
+            if (!running || resultLocked) { api.decir("Ahora mismo no se puede contestar."); return; }
+            // El intérprete HACE la jugada sobre la partida que se le pasa, así
+            // que se le pasa una copia: quien decide si entra es attemptMove(),
+            // la misma puerta por la que pasa el clic.
+            const copia = new Chess(game.fen());
+            const mv = CuadroComandos.jugadaPedida(copia, texto);
+            if (!mv) { api.decir('"' + texto + '" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.'); return; }
+            api.limpiar().decir("");
+            attemptMove(mv.from, mv.to);
+        }
+
         function attemptMove(from, to) {
-            // Se compara ANTES de aplicar la jugada: el UCI de la solución es siempre
-            // "origen+destino" (+ promoción, en los 2 puzzles que coronan) — alcanza con
-            // los primeros 4 caracteres porque el tablero solo permite mover una pieza
-            // legal de esa casilla a esa otra, así que no hay ambigüedad posible.
-            const isCorrect = (from + to) === currentSolution.slice(0, 4);
             const move = game.move({ from, to, promotion: "q" });
             selected = null;
             if (!move) { renderBoard(); return; } // no debería pasar: ya se validó como legal
+            // El UCI de la solución es siempre "origen+destino" (+ promoción, en los 2
+            // puzzles que coronan) — alcanza con los primeros 4 caracteres porque el
+            // tablero solo permite mover una pieza legal de esa casilla a esa otra.
+            // Además, en los puzzles de mate hay unas 140 posiciones con más de una
+            // jugada que da jaque mate: si el ejercicio es un mate y la jugada elegida
+            // también da mate (aunque no sea la guardada), también cuenta como acierto.
+            const esLaJugadaGuardada = (from + to) === currentSolution.slice(0, 4);
+            const esOtroMateValido = !esLaJugadaGuardada && currentSan.endsWith("#") && game.in_checkmate();
+            const isCorrect = esLaJugadaGuardada || esOtroMateValido;
             if (isCorrect) onCorrect(); else onFail("wrong");
         }
 

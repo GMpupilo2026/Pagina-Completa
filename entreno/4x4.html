@@ -298,14 +298,23 @@
   .cmd-help{font-size:0.76rem; color:var(--text-muted); line-height:1.5; margin:0 0 8px;}
   /* Encabezados reales dentro de #cmd-help (ver renderHelpReadout): mismo tamaño que el
      texto de alrededor — la regla global h1,h2,h3 de arriba solo pone negrita, no toca el
-     tamaño, y por defecto un h2/h3 se vería mucho más grande que el resto del panel sin
+     tamaño, y por defecto un h3 se vería mucho más grande que el resto del panel sin
      necesidad ninguna; lo que importa aquí es el nivel semántico, no el tamaño visual. */
-  .cmd-help h2, .cmd-help h3{font-size:inherit; margin:6px 0 2px;}
+  .cmd-help h3{font-size:inherit; margin:6px 0 2px;}
   .cmd-help p{margin:0 0 4px;}
   .cmd-status{font-size:0.85rem; color:var(--brass-bright); min-height:1.2em; margin-bottom:10px;}
-  .position-readout{font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px;}
+  /* La lectura de la posición va ENCIMA del tablero, con el encabezado "Piezas"
+     justo antes: es lo primero que hace falta saber al entrar al ejercicio. */
+  .position-readout{font-size:0.9rem; color:var(--text); line-height:1.6; margin:0 0 10px;}
   .position-readout p{margin:2px 0;}
-  .shortcuts-help{font-size:0.74rem; color:var(--text-muted); line-height:1.6; margin:10px 0 0;}
+  /* La ayuda, plegada. El encabezado va dentro del summary, así que hay que
+     sacarlo del flujo de bloque para que la flechita del details no quede en
+     otro renglón. */
+  .ayuda-detalles{max-width:520px; margin:0 auto 20px; border:1px solid var(--line); background:var(--bg-panel);}
+  .ayuda-summary{cursor:pointer; padding:10px 16px; color:var(--text);}
+  .ayuda-summary:focus-visible{outline:3px solid var(--brass); outline-offset:2px;}
+  .ayuda-titulo{display:inline; font-size:0.95rem;}
+  .ayuda-detalles .cmd-help{padding:0 16px 14px;}
 
   .board-pos-wrap{position:relative;}
   .board4{
@@ -445,9 +454,10 @@
     .grid{grid-template-columns:repeat(auto-fill, minmax(96px,1fr)); gap:8px;}
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/vendor/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="4x4"></script>
+<script src="../js/tarea-en-curso.js" defer></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
@@ -462,40 +472,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="../cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="../cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="../clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
 
 <!-- ===== PASSWORD GATE ===== -->
 <div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
@@ -544,15 +521,30 @@
       </div>
       <div class="progress-bar"><div id="solo-progress-fill" style="width:0%"></div></div>
 
-      <!-- El encabezado "Piezas" + el tablero van ANTES de las indicaciones y del
-           panel de comandos (más abajo): la idea es que un ciego, apenas entra a un
-           ejercicio, llegue directo acá y con las flechas ya pueda consultar la
-           posición, en vez de tener que escuchar toda la instrucción y el recuadro
-           de jugada primero (ver loadPuzzleAt, que enfoca #piezas-heading en modo
-           adaptado). Las instrucciones siguen disponibles justo después, un
-           encabezado más allá, para quien las necesite. -->
+      <!-- EL ORDEN DE ESTE BLOQUE ES LO QUE HACE USABLE EL EJERCICIO CON LECTOR DE
+           PANTALLA, y es el orden en que hacen falta las cosas:
+
+             1. el encabezado "Piezas" (ahí cae el foco al entrar; ver loadPuzzleAt),
+             2. QUÉ HAY en el tablero — cuántas piezas y dónde está cada una,
+             3. el tablero,
+             4. el recuadro donde se escribe la jugada,
+             5. los botones de ejercicio,
+             6. la ayuda, PLEGADA.
+
+           Antes la lectura de la posición vivía dentro del panel de comandos, o sea
+           DESPUÉS del tablero, del recuadro y de toda la ayuda: había que recorrer
+           medio ejercicio para enterarse de qué había que resolver. Y las
+           instrucciones colgaban del `aria-describedby` del tablero, así que se leían
+           enteras cada vez que el foco entraba ahí — que es el mismo defecto que esta
+           página ya había arreglado para el recuadro de comandos. Ahora se entra,
+           se oye qué hay, y se contesta; la ayuda está a un encabezado de distancia
+           para quien la necesite. -->
       <div class="board-pos-wrap">
         <h2 id="piezas-heading" class="piezas-heading" tabindex="-1">Piezas</h2>
+        <!-- La región se llama con el propio encabezado en vez de tener su propio
+             nombre: dos nombres para lo mismo ("Piezas" y "Posición actual") se oyen
+             como dos cosas distintas. -->
+        <div id="position-readout" role="region" aria-labelledby="piezas-heading" aria-live="polite" class="position-readout"></div>
         <div class="board4" id="board4" role="group" aria-label="Tablero de ajedrez 4 por 4, en solitario" aria-describedby="board-instructions"></div>
         <div id="win-overlay">
           <div class="win-title">¡MUY BIEN!</div>
@@ -564,26 +556,12 @@
         </div>
       </div>
 
-      <!-- "Anterior/Reiniciar/Siguiente" van justo debajo del tablero, antes de las
-           indicaciones y del panel de comandos, para que "Reiniciar" quede a mano de
-           inmediato si alguien llega a un callejón sin salida (sin capturas posibles)
-           y no quiere tener que bajar por todo ese bloque para reiniciar. -->
-      <div class="board-controls">
-        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
-        <button class="bctrl" id="board-reset">Reiniciar</button>
-        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
-      </div>
-
+      <!-- Una SOLA línea, no el manual entero: cuelga del aria-describedby del
+           tablero, así que se lee cada vez que el foco entra ahí. Lo que hace es
+           señalar dónde está la ayuda, no recitarla. -->
       <p id="board-instructions" class="sr-only">
-        Tablero de ajedrez de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d
-        y las filas 1 a 4 (por ejemplo, a1). Usa las flechas del teclado para moverte entre casillas.
-        Pulsa Intro o espacio sobre una casilla con pieza para seleccionarla; las casillas donde esa
-        pieza puede capturar se anuncian y se marcan. Vuelve a pulsar Intro o espacio sobre una de esas
-        casillas para mover y capturar. Cada movimiento debe ser una captura; no existe la regla de
-        jaque. El peón siempre captura hacia arriba (como si fuera blanco), nunca hacia abajo ni al
-        costado. Ganas el ejercicio al dejar una sola pieza sobre el tablero. Activa "Modo Adaptado"
-        arriba de la página para escribir jugadas y comandos, y para atajos de teclado adicionales
-        pensados para lectores de pantalla.
+        Flechas para moverte, Intro para seleccionar y capturar. Las reglas y los atajos están en
+        "Ayuda", debajo del tablero.
       </p>
 
       <div id="a11y-panel" class="a11y-panel" hidden>
@@ -595,19 +573,34 @@
           </div>
           <button type="submit" class="bctrl">Jugar</button>
         </form>
-        <!-- Oculto a propósito (ver renderHelpReadout/announceHelpFirstTimeIfNeeded más abajo):
-             con aria-describedby, este texto se leía completo cada vez que el foco volvía al
-             recuadro, es decir, después de CADA jugada o comando. Ahora se arma con encabezados
-             reales (h2/h3) y se muestra una sola vez, la primera vez que se activa el modo
-             adaptado en este navegador — así se puede saltar directo a la sección que hace
-             falta con el comando "ayuda", en vez de escuchar todo de nuevo desde el principio. -->
-        <div id="cmd-help" class="cmd-help" role="region" aria-live="polite" aria-label="Ayuda" hidden></div>
         <div id="cmd-status" role="status" aria-live="assertive" class="cmd-status"></div>
-        <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="position-readout"></div>
         <button type="button" id="repeat-captures-btn" class="bctrl">🔊 Repetir capturas</button>
         <div id="repeat-captures-status" role="status" aria-live="polite" class="sr-only"></div>
-        <p class="shortcuts-help">Con una casilla del tablero enfocada: i (ir al recuadro de jugada), o (casilla actual), c o l (última captura), m (capturas posibles), flechas (moverse), k q r b n p (saltar a la siguiente pieza de ese tipo; mayúscula invierte el orden), números 1-4 (ir a esa fila), shift+1-4 (ir a esa columna), x, shift+x o alt+x (piezas alrededor), shift+a y shift+d (repasar capturas anteriores/siguientes).</p>
       </div>
+
+      <!-- "Anterior/Reiniciar/Siguiente" van debajo del recuadro de jugada: quien
+           contesta escribiendo ya tiene el comando "reiniciar", y quien juega con el
+           ratón los ve igual de cerca del tablero que antes. -->
+      <div class="board-controls">
+        <button class="bctrl" id="board-prev-puzzle">&#8249; Anterior</button>
+        <button class="bctrl" id="board-reset">Reiniciar</button>
+        <button class="bctrl" id="board-next-puzzle">Siguiente &#8250;</button>
+      </div>
+
+      <!-- LA AYUDA, PLEGADA Y EN UN SOLO LUGAR. El encabezado va DENTRO del summary
+           (el HTML lo permite): así se anuncia como las dos cosas, encabezado para
+           saltar y botón para abrir. El cuerpo lo escribe renderHelpReadout() desde
+           HELP_SECTIONS, que es la única fuente — antes lo mismo estaba escrito tres
+           veces (el párrafo del aria-describedby, el de atajos, y HELP_SECTIONS), y
+           tres copias del mismo texto se van separando a la primera corrección.
+           El comando "ayuda" la abre y la vuelve a anunciar. -->
+      <details id="ayuda-detalles" class="ayuda-detalles">
+        <summary class="ayuda-summary"><h2 id="ayuda-titulo" class="ayuda-titulo">Ayuda: cómo se juega, comandos y atajos</h2></summary>
+        <!-- La región se llama con el encabezado del summary, igual que la lectura de
+             la posición con "Piezas": un aria-label propio sería un segundo nombre
+             para lo mismo. -->
+        <div id="cmd-help" class="cmd-help" role="region" aria-labelledby="ayuda-titulo" aria-live="polite"></div>
+      </details>
 
       <div id="board-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
       <div class="board-status" id="board-status" aria-hidden="true">Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.</div>
@@ -965,6 +958,15 @@ const refreshSpeechToggle = window.BlindNotation
 
 function applyBlindModeUI(){
   if(a11yPanel) a11yPanel.hidden = !blindMode;
+  // La posición escrita y la ayuda plegada son del Modo Adaptado: quien ve el
+  // tablero ya tiene la posición delante, y un bloque de texto repitiéndola
+  // sería ruido. Van con `hidden`, no con sr-only: dentro llevan un <details>
+  // que recibe el foco del teclado, y una parada de tabulador invisible es
+  // peor que no tener el bloque.
+  const posEl = document.getElementById('position-readout');
+  if(posEl) posEl.hidden = !blindMode;
+  const ayuda = document.getElementById('ayuda-detalles');
+  if(ayuda) ayuda.hidden = !blindMode;
   if(refreshSpeechToggle) refreshSpeechToggle();
   if(modeNormalBtn){
     modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
@@ -1020,8 +1022,14 @@ let boardExIndex = 0;      // índice dentro de boardExList
 let captureLog = [];       // capturas hechas en el intento actual: {fromSq,toSq,movedType,capturedType}
 let captureReviewIndex = null; // índice de "repaso" de capturas (shift+A/shift+D), solo narra
 
-function announce(text){
-  if(window.BlindNotation) window.BlindNotation.speak(text);
+/* `hablado` existe porque la voz y las regiones vivas no se reparten igual el texto.
+   El lector de pantalla lee DOS regiones —este anuncio y la lectura de la posición de
+   arriba—, así que la posición no puede ir en las dos o se oye dos veces. La voz del
+   navegador, en cambio, es una sola y `BlindNotation.speak()` CANCELA lo anterior al
+   empezar lo siguiente: dos llamadas seguidas se comen la primera. Por eso la voz
+   recibe todo junto en una sola frase, y las regiones se lo reparten. */
+function announce(text, hablado){
+  if(window.BlindNotation) window.BlindNotation.speak(hablado === undefined ? text : hablado);
   const el = document.getElementById('board-announcer');
   el.textContent = '';
   /* pequeño retardo para que los lectores de pantalla noten el cambio
@@ -1029,7 +1037,12 @@ function announce(text){
   window.setTimeout(() => { el.textContent = text; }, 30);
 }
 
-function loadPuzzleAt(exIndex){
+/* `prefijo` es lo que se quiera decir ANTES del ejercicio ("Ejercicio reiniciado.").
+   Va por parámetro y no con un announce() aparte después: la voz del navegador cancela
+   lo anterior al empezar lo siguiente, así que un segundo anuncio se comía la posición
+   entera — al reiniciar solo se oía "Ejercicio reiniciado." y nunca qué había quedado
+   en el tablero, que es justo lo que hace falta para volver a empezar. */
+function loadPuzzleAt(exIndex, prefijo){
   selectedCell = null;
   focusedCell = [0,0];
   captureLog = [];
@@ -1050,10 +1063,13 @@ function loadPuzzleAt(exIndex){
   setStatus('Mueve una pieza para capturar otra. Gana al dejar 1 sola pieza.');
   renderBoard();
   updatePuzzleNavButtons();
+  // Al empezar el ejercicio hay que saber dónde está cada pieza, no solo cuántas
+  // quedan. Lo dice la lectura de arriba (#position-readout, región viva), que es
+  // la que el foco tiene al lado; este anuncio se queda SOLO con el número de
+  // ejercicio. Antes los dos decían la posición entera y se oía dos veces seguidas.
+  const cabecera = (prefijo ? prefijo + ' ' : '') + `Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}.`;
   renderPositionReadout();
-  // Al empezar el ejercicio se dice la posición completa (no solo cuántas piezas hay):
-  // hace falta saber dónde está cada una para poder resolverlo.
-  announce(`Ejercicio ${ex.number} de ${boardExList.length}, ${ex.categoryLabel}. ${spokenPositionText()}`);
+  announce(cabecera, `${cabecera} ${spokenPositionText()}`);
   // En modo adaptado, el foco cae en "Piezas" (justo antes del tablero) en vez de
   // quedarse en el botón que se acaba de tocar (Siguiente/Anterior/Reiniciar, que en
   // el HTML quedan DESPUÉS del tablero) — así se llega directo, sin tener que ir a
@@ -1178,8 +1194,11 @@ function performCapture(r,c){
   else focusSquare(r,c);
   // Después de cada captura se dice la posición completa, no solo cuántas piezas
   // quedan: así no hace falta pulsar aparte "Z" para saber dónde quedó cada una.
-  announce(`${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}. ${spokenPositionText()}`);
+  // La posición la dice la lectura de arriba y NO este anuncio: son dos regiones
+  // vivas, y si las dos la llevaran se oiría dos veces seguidas.
+  const dicho = `${PIECE_NAME[movingPiece]} captura ${PIECE_NAME[capturedPiece]} en ${squareSpokenRC(r,c)}.`;
   renderPositionReadout();
+  announce(dicho, `${dicho} ${spokenPositionText()}`);
   checkWin();
 }
 
@@ -1294,8 +1313,10 @@ function updatePuzzleNavButtons(){
 /* ---------------- Modo Adaptado: comandos de texto, dictado de posición y atajos
    de teclado extra en el tablero enfocado — igual que en la página Tablero, adaptado
    a un tablero de 4x4 de un solo "bando" donde toda jugada es una captura. ---------- */
-function cmdAnnounce(text){
-  if(blindMode && window.BlindNotation) window.BlindNotation.speak(text);
+// `hablar` en false escribe el aviso pero no lo dice: sirve cuando la voz ya lo dijo
+// dentro de otra frase (ver loadPuzzleAt) y repetirlo cancelaría aquella.
+function cmdAnnounce(text, hablar){
+  if(hablar !== false && blindMode && window.BlindNotation) window.BlindNotation.speak(text);
   const el = document.getElementById('cmd-status');
   if(!el) return;
   el.textContent = '';
@@ -1567,6 +1588,16 @@ function handleBoardShortcutKey(e, r, c){
 // hace falta repetir. ----------
 const HELP_SECTIONS = [
   {
+    title: 'Cómo se juega',
+    text:
+      'Tablero de 4 filas por 4 columnas, en solitario. Las columnas se llaman a, b, c, d y las filas ' +
+      '1 a 4 (por ejemplo, a1). Con el tablero enfocado, las flechas mueven entre casillas; Intro o espacio ' +
+      'sobre una casilla con pieza la selecciona y anuncia dónde puede capturar, y otra vez Intro o espacio ' +
+      'sobre una de esas casillas hace la captura. Cada movimiento tiene que ser una captura y no existe la ' +
+      'regla de jaque. El peón siempre captura hacia arriba (como si fuera blanco), nunca hacia abajo ni al ' +
+      'costado. Ganas el ejercicio al dejar una sola pieza sobre el tablero.',
+  },
+  {
     title: 'Cómo escribir una jugada',
     text:
       'Casilla de origen y de destino, por ejemplo "a1 b2" o "a1xb2" (columnas a-d, filas 1-4). ' +
@@ -1593,19 +1624,27 @@ const HELP_SECTIONS = [
   },
 ];
 
-function renderHelpReadout(){
+/* El cuerpo de la ayuda. `abrir` lo pide el comando "ayuda" y la primera vez que se
+   enciende el modo: sin eso el texto queda dentro de un <details> cerrado, o sea fuera
+   del árbol de accesibilidad, y la región viva no anunciaría nada. El vaciar y
+   repoblar con un retraso es el mismo truco de renderPositionReadout(): pedir "ayuda"
+   dos veces seguidas tiene que volver a leerla aunque el texto sea el mismo. */
+function renderHelpReadout(abrir){
   const el = document.getElementById('cmd-help');
   if(!el) return;
-  let html = '<h2>Ayuda</h2>';
+  const detalles = document.getElementById('ayuda-detalles');
+  let html = '';
   HELP_SECTIONS.forEach((section) => {
     html += `<h3>${section.title}</h3><p>${section.text}</p>`;
   });
-  el.innerHTML = html;
-  el.hidden = false;
+  if(!abrir){ el.innerHTML = html; return; }
+  if(detalles) detalles.open = true;
+  el.innerHTML = '';
+  window.setTimeout(() => { el.innerHTML = html; }, 50);
 }
 
 function announceHelp(){
-  renderHelpReadout();
+  renderHelpReadout(true);
   // Para quien tiene el Modo Speech activado (ver js/blind-notation.js), se lee todo
   // seguido en voz — la navegación sección por sección es cosa del lector de pantalla
   // real, que sí puede saltar entre los encabezados de arriba.
@@ -1614,16 +1653,27 @@ function announceHelp(){
   }
 }
 
-// La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR, se muestran y
-// anuncian las instrucciones completas una sola vez (después, "ayuda" las repite bajo
-// demanda, pero nunca se vuelven a anunciar solas).
+// La ayuda se escribe apenas se puede, aunque esté plegada: si solo se escribiera al
+// pedirla con el comando, abrir el desplegable a mano mostraría una caja vacía. Va acá
+// y no junto a applyBlindModeUI() porque HELP_SECTIONS es un `const` de más abajo: allá
+// arriba todavía está en su zona muerta y la llamada tiraba la página entera.
+renderHelpReadout(false);
+
+/* La primera vez que alguien activa el modo adaptado EN ESTE NAVEGADOR se dice UNA
+   línea: dónde se contesta y cómo pedir el resto. Antes se leían las instrucciones
+   enteras —cuatro secciones— y eso es justo lo que no se quiere de entrada: quien
+   llega a un ejercicio quiere saber qué hay en el tablero y contestarlo, no escuchar
+   el manual. El manual sigue estando, plegado y a un encabezado de distancia, y el
+   comando "ayuda" lo abre y lo lee. */
 const HELP_SHOWN_KEY = 'oscarMoveHelpShown4x4_v1';
 function announceHelpFirstTimeIfNeeded(){
   let shown = false;
   try{ shown = localStorage.getItem(HELP_SHOWN_KEY) === '1'; }catch(e){}
   if(shown) return;
   try{ localStorage.setItem(HELP_SHOWN_KEY, '1'); }catch(e){}
-  window.setTimeout(announceHelp, 400);
+  window.setTimeout(() => {
+    announce('Modo adaptado. Escribe tu jugada en el recuadro de abajo. Escribe "ayuda" para las reglas, los comandos y los atajos.');
+  }, 400);
 }
 
 function handleCmdFormSubmit(e){
@@ -1640,8 +1690,8 @@ function handleCmdFormSubmit(e){
   if(upper === 'AYUDA' || upper === 'HELP' || upper === '?'){ input.value=''; announceHelp(); return; }
   if(upper === 'REINICIAR' || upper === 'RESET'){
     input.value = '';
-    loadPuzzleAt(boardExIndex);
-    cmdAnnounce('Ejercicio reiniciado.');
+    loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
+    cmdAnnounce('Ejercicio reiniciado.', false);
     return;
   }
 
@@ -1743,8 +1793,7 @@ const repeatCapturesBtn = document.getElementById('repeat-captures-btn');
 if(repeatCapturesBtn) repeatCapturesBtn.addEventListener('click', announceCaptureHistory);
 
 document.getElementById('board-reset').addEventListener('click', () => {
-  loadPuzzleAt(boardExIndex);
-  announce('Ejercicio reiniciado.');
+  loadPuzzleAt(boardExIndex, 'Ejercicio reiniciado.');
 });
 document.getElementById('win-retry').addEventListener('click', () => loadPuzzleAt(boardExIndex));
 document.getElementById('board-prev-puzzle').addEventListener('click', () => {

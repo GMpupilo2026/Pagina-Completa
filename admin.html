@@ -23,7 +23,7 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
@@ -31,49 +31,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
@@ -89,28 +47,36 @@
     </div>
 
     <div id="app" class="hidden pt-20 pb-16">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- max-w-7xl y no 5xl: la lista de cuentas es una tabla ancha, y en 1024 px
+             el nombre se cortaba. -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Panel de Administración 👑</h1>
             <p class="text-brand-500 dark:text-brand-300 mb-4">Todas las cuentas de la plataforma: quién es profesor, quién es estudiante y quién administra.</p>
 
             <!-- Quien administra ve en Informes lo mismo que un profesor, pero de TODOS los
                  alumnos de la plataforma, no solo de los suyos: diagnósticos, planes de
-                 entrenamiento y la actividad de Entrenamiento. -->
-            <div class="flex flex-wrap gap-3 mb-8">
-                <a href="informes.html" class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">📊 Informes de toda la plataforma</a>
-                <a href="informes.html?tema=diagnostico" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🧭 Diagnósticos de nivel</a>
-                <a href="arbitraje.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">⚖️ Examen de arbitraje</a>
-                <a href="informes.html?tema=arbitraje" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📊 Exámenes de arbitraje del público</a>
-                <a href="solicitudes.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📝 Solicitudes de la Academia</a>
-                <a href="formularios.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📋 Formularios de inscripción</a>
-                <a href="cobros.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">💳 Cobros de la Academia</a>
-                <a href="admin-jugador.html" class="inline-flex items-center gap-2 border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🔎 Base de datos de jugadores (chess-results.com)</a>
-            </div>
+                 entrenamiento y la actividad de Entrenamiento. Por eso va aparte y primero:
+                 es la puerta grande, y las tarjetas de abajo son atajos a un apartado. -->
+            <a href="informes.html" class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors mb-6">📊 Informes de toda la plataforma</a>
 
-            <!-- ===== Crear cuenta ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Crear cuenta nueva</h2>
+            <!-- Los atajos, por grupos. Salen de ATAJOS (abajo) y no escritos a mano:
+                 eran ocho botones en una sola fila, sin ningún criterio de orden, y
+                 cada uno con las mismas 12 clases copiadas. -->
+            <div id="atajos" class="space-y-5 mb-8"></div>
+
+            <!-- ===== Crear cuenta =====
+                 Va en un <details>: es la tarjeta que se abre solo cuando hace
+                 falta invitar a alguien, para no empujar "Las cuentas, por
+                 grupo" —lo que se consulta a diario— más abajo en la pantalla.
+                 Mismo patrón de <details> que ya usan las preguntas frecuentes
+                 de index.html. -->
+            <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 open:shadow-lg transition-shadow">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">Crear cuenta nueva</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <div class="mt-4">
                 <form id="create-form" class="grid sm:grid-cols-4 gap-3 items-end">
                     <div class="sm:col-span-2">
                         <label for="create-name" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre</label>
@@ -144,11 +110,25 @@
                 </form>
                 <p id="create-msg" class="text-xs mt-3"></p>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Se envía un correo de invitación; la persona entra directo y pone su propia contraseña. El grupo es solo para ordenar la lista; el profesor asignado determina qué alumnos puede ver y gestionar cada profesor.</p>
-            </div>
+                </div>
+            </details>
 
-            <!-- ===== Profesores: sus alumnos y su cupo de invitaciones ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Profesores</h2>
+            <!-- ===== Profesores: sus alumnos y su cupo de invitaciones =====
+                 También en <details>, cerrado de entrada: se consulta cuando
+                 hace falta revisar un cupo o marcar a alguien coordinador, no
+                 en cada visita a este panel. -->
+            <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 open:shadow-lg transition-shadow">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <span class="flex items-center gap-3 min-w-0">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">Profesores</h2>
+                        <!-- Visible aunque la tarjeta esté cerrada: es el aviso de
+                             siempre ("alumnos sin profesor no salen en los informes
+                             de nadie"), y colapsar la tarjeta no puede esconderlo. -->
+                        <span id="profesores-badge" class="hidden shrink-0 text-xs font-semibold text-accent-700 dark:text-accent-400"></span>
+                    </span>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <div class="mt-4">
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cada profesor ve y gestiona <strong>solo</strong> a sus alumnos asignados — en Informes, en la clase en vivo y en los retos. El cupo es cuántos alumnos nuevos puede invitar por su cuenta desde la Academia; quien administra no tiene tope. <strong>Coordina</strong> le suma, encima de todo lo de profesor, armar formularios de inscripción a torneos para sus equipos.</p>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
@@ -166,21 +146,80 @@
                     </table>
                 </div>
                 <p id="sin-profesor-aviso" class="hidden text-xs mt-3 rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200"></p>
-            </div>
+                </div>
+            </details>
 
-            <!-- ===== Lista de usuarios ===== -->
+            <!-- ===== Equipos: un alumno puede estar en varios a la vez, y un
+                 equipo puede tener cualquier cantidad de entrenadores =====
+                 No es lo mismo que "Grupo" (texto libre, uno solo, sin efecto en
+                 permisos, en la tabla de cuentas de abajo): esto es una tabla de
+                 verdad, muchos a muchos en los dos sentidos, y estar en un equipo
+                 con un entrenador le da a ese entrenador los mismos permisos que
+                 ya le da tenerlo asignado directamente. En <details>, cerrado de
+                 entrada, por la misma razón que Profesores. -->
+            <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 open:shadow-lg transition-shadow">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">Equipos</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <div class="mt-4">
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Un alumno puede estar en varios equipos a la vez, y un equipo puede tener cualquier cantidad de entrenadores — no hay límite de dos. Cada entrenador de un equipo ve y gestiona a todos sus alumnos, igual que si se los hubiera asignado uno por uno. Esto no reemplaza el campo "Grupo" de la tabla de cuentas: ese sigue siendo solo una etiqueta, sin efecto en permisos.</p>
+                <form id="equipo-create-form" class="flex flex-wrap items-end gap-3 mb-5">
+                    <div class="flex-1 min-w-[12rem]">
+                        <label for="equipo-nombre-nuevo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nuevo equipo</label>
+                        <input type="text" id="equipo-nombre-nuevo" placeholder="Ej: Selección sub-14" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">+ Crear equipo</button>
+                    <span id="equipo-create-msg" class="text-xs"></span>
+                </form>
+                <div id="equipos-lista" class="space-y-4"></div>
+                <p id="equipos-vacio" class="hidden text-xs text-brand-450 dark:text-brand-350">Todavía no hay ningún equipo.</p>
+                </div>
+            </details>
+
+            <!-- ===== Las cuentas, por grupos =====
+                 NO se muestran todas de una: con trescientas cuentas la pantalla no
+                 se puede leer. Primero se ven las fichas de cada grupo —cuántos son,
+                 qué profesores tienen y un selector para sumarle otro a todo el
+                 grupo— y las cuentas solo aparecen al abrir un grupo o al buscar a
+                 alguien. Ver renderFichasDeGrupo() y renderUsers() más abajo. -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Todas las cuentas</h2>
-                    <div class="flex items-center gap-2 text-xs">
-                        <label for="group-by" class="text-brand-500 dark:text-brand-300 font-semibold uppercase tracking-wide">Agrupar por</label>
-                        <select id="group-by" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
-                            <option value="none">Sin agrupar</option>
-                            <option value="grupo" selected>Grupo / equipo</option>
-                            <option value="teacher">Profesor asignado</option>
+                <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Las cuentas, por grupo</h2>
+                        <p id="users-summary" class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cargando…</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <label for="user-search" class="sr-only">Buscar una cuenta en todos los grupos</label>
+                        <input id="user-search" type="search" placeholder="🔍 Nombre, correo o grupo…" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full sm:w-64 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <label for="role-filter" class="sr-only">Filtrar por rol</label>
+                        <select id="role-filter" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                            <option value="">Todos los roles</option>
+                            <option value="alumno">Estudiantes</option>
+                            <option value="profesor">Profesores</option>
+                            <option value="admin">Administración</option>
+                            <option value="sin-profesor">Sin profesor asignado</option>
                         </select>
                     </div>
                 </div>
+
+                <!-- Las fichas. Se esconden al abrir un grupo o al buscar. -->
+                <div id="grupos-fichas" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+
+                <!-- Las cuentas de UN grupo (o el resultado de una búsqueda). -->
+                <div id="users-panel" hidden>
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <h3 id="users-panel-title" class="font-serif font-bold text-brand-800 dark:text-white"></h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <label for="group-by" class="text-brand-500 dark:text-brand-300 font-semibold uppercase tracking-wide">Agrupar por</label>
+                            <select id="group-by" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                <option value="none">Sin agrupar</option>
+                                <option value="grupo" selected>Grupo / equipo</option>
+                                <option value="teacher">Profesor asignado</option>
+                            </select>
+                            <button type="button" id="volver-grupos" class="font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">← Volver a los grupos</button>
+                        </div>
+                    </div>
                 <!-- Asignar de a muchos: marcar un grupo entero y mandarlo a un profesor
                      de una vez, en vez de fila por fila. Arranca oculta y aparece al marcar. -->
                 <div id="asignar-lote" class="hidden flex-wrap items-center gap-3 mb-4 rounded-xl bg-accent-50 dark:bg-brand-800 border border-accent-500/40 px-4 py-3">
@@ -199,22 +238,25 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
+                        <caption class="sr-only">Todas las cuentas de la plataforma</caption>
                         <thead>
                             <tr class="text-left text-brand-450 dark:text-brand-350 border-b border-brand-100 dark:border-brand-800">
-                                <th class="py-2 pr-2 font-semibold w-8"><span class="sr-only">Marcar</span></th>
-                                <th class="py-2 pr-3 font-semibold">Nombre</th>
-                                <th class="py-2 pr-3 font-semibold">Correo</th>
-                                <th class="py-2 pr-3 font-semibold">Rol</th>
-                                <th class="py-2 pr-3 font-semibold">Grupo</th>
-                                <th class="py-2 pr-3 font-semibold">Profesor</th>
-                                <th class="py-2 pr-3 font-semibold">Admin</th>
-                                <th class="py-2 pr-3 font-semibold">Creado</th>
-                                <th class="py-2 font-semibold text-right">Acciones</th>
+                                <th scope="col" class="py-2 pr-2 font-semibold w-8"><span class="sr-only">Marcar</span></th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[20rem]">Cuenta</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Rol</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Grupo</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[12rem]">Profesores</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Creado</th>
+                                <th scope="col" class="py-2 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="users-body"></tbody>
                     </table>
                 </div>
+                <div class="mt-4 text-center">
+                    <button id="users-more" type="button" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más cuentas</button>
+                </div>
+                </div><!-- /#users-panel -->
             </div>
         </div>
     </div>
@@ -222,22 +264,84 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script>
         let session = null;
         let currentUserId = null;
         const FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/admin-manage-users`;
+
+        /* ================= Los atajos del panel =================
+         *
+         * Eran ocho botones en una fila corrida, sin ningún criterio de orden:
+         * el diagnóstico de los alumnos al lado de la base de datos de
+         * chess-results. Agrupados por lo que uno viene a hacer —ver
+         * resultados, manejar formularios, consultar una base, sacar un
+         * informe— se encuentra sin leerlos todos.
+         *
+         * Las tarjetas son más chicas que las del panel de la Academia a
+         * propósito: acá son atajos de quien administra, que ya sabe lo que
+         * busca, no la puerta de entrada de un alumno.
+         *
+         * Están en una lista y no escritas a mano porque eran las mismas doce
+         * clases copiadas ocho veces, que es cuestión de tiempo que una quede
+         * distinta.
+         */
+        const ATAJOS = [
+            { titulo: "Resultados", cards: [
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "De los alumnos de la Academia", href: "informes.html?tema=diagnostico" },
+                { emoji: "⚖️", label: "Examen de arbitraje", desc: "Del equipo docente, con su detalle", href: "arbitraje.html" },
+                { emoji: "🌐", label: "Diagnóstico de nivel público", desc: "Visitantes sin cuenta: contactos para invitar", href: "informes.html?tema=diagnostico-publico" },
+                { emoji: "🌐", label: "Examen de arbitraje público", desc: "Quiénes lo hicieron y a quién falta responder", href: "informes.html?tema=arbitraje" },
+            ] },
+            { titulo: "Formularios", cards: [
+                { emoji: "📋", label: "Formularios de inscripción", desc: "Ármalos, compártelos por enlace y baja las respuestas", href: "formularios.html" },
+                { emoji: "🏅", label: "Resultados del formulario de torneos en línea", desc: "Las inscripciones de inscripcion.html", href: "inscripciones.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Aprobar o rechazar pedidos de ingreso", href: "solicitudes.html" },
+            ] },
+            { titulo: "Bases de datos", cards: [
+                { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html" },
+            ] },
+            { titulo: "Reportes", cards: [
+                { emoji: "📄", label: "Actividades", desc: "Lo que pasó en clase, en Word y en PDF", href: "reportes.html" },
+                { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad", href: "cobros.html" },
+            ] },
+        ];
+
+        function renderAtajos() {
+            const caja = document.getElementById("atajos");
+            caja.innerHTML = "";
+            ATAJOS.forEach((grupo) => {
+                const sec = document.createElement("section");
+                const h = document.createElement("h2");
+                h.className = "text-xs font-bold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-2";
+                h.textContent = grupo.titulo;
+                const grid = document.createElement("div");
+                grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2";
+                grupo.cards.forEach((c) => {
+                    const a = document.createElement("a");
+                    a.href = c.href;
+                    a.className = "group flex items-center gap-3 rounded-xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 px-3 py-2.5 hover:border-accent-500 hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    const icono = document.createElement("span");
+                    icono.className = "text-xl shrink-0";
+                    icono.setAttribute("aria-hidden", "true");
+                    icono.textContent = c.emoji;
+                    const texto = document.createElement("span");
+                    texto.className = "min-w-0";
+                    const label = document.createElement("span");
+                    label.className = "block text-sm font-semibold text-brand-800 dark:text-white leading-tight";
+                    label.textContent = c.label;
+                    const desc = document.createElement("span");
+                    desc.className = "block text-xs text-brand-450 dark:text-brand-350 leading-tight mt-0.5";
+                    desc.textContent = c.desc;
+                    texto.append(label, desc);
+                    a.append(icono, texto);
+                    grid.appendChild(a);
+                });
+                sec.append(h, grid);
+                caja.appendChild(sec);
+            });
+        }
 
         function fmtDate(iso) {
             return new Date(iso).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
@@ -290,7 +394,7 @@
                 try {
                     await callAdmin("set_teachers", { target_id: u.id, teacher_ids: lista });
                     profesoresPorAlumno.set(u.id, lista);
-                    renderUsers();
+                    pintarCuentas();
                     renderProfesores();
                 } catch (err) {
                     alert("No se pudo cambiar los profesores: " + err.message);
@@ -331,6 +435,10 @@
             return caja;
         }
 
+        /* Nombre y correo van en UNA sola celda, uno debajo del otro. Eran dos
+           columnas, y con nueve columnas en la tabla al nombre no le quedaba
+           ancho: se cortaba justo el dato por el que uno busca a alguien. El
+           correo va debajo en letra chica, que es como se lee de todas formas. */
         function renderRow(u, teachers) {
                 const isSelf = u.id === currentUserId;
                 const tr = document.createElement("tr");
@@ -355,31 +463,47 @@
                 }
                 tr.appendChild(tdMarca);
 
-                const tdName = document.createElement("td");
-                tdName.className = "py-2 pr-3";
+                const tdCuenta = document.createElement("td");
+                tdCuenta.className = "py-2 pr-3";
+                const nameLine = document.createElement("div");
+                nameLine.className = "flex items-center gap-1";
                 const nameInput = document.createElement("input");
                 nameInput.type = "text";
                 nameInput.value = u.full_name || "";
                 nameInput.placeholder = "(sin nombre)";
-                nameInput.className = "w-full px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm";
+                nameInput.setAttribute("aria-label", "Nombre de " + u.email);
+                nameInput.title = u.full_name || u.email;   // un nombre larguísimo, al menos legible al pasar el mouse
+                nameInput.addEventListener("input", () => { nameInput.title = nameInput.value; });
+                nameInput.className = "w-full px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm font-medium";
                 nameInput.addEventListener("change", async () => {
                     try {
                         await callAdmin("update", { target_id: u.id, full_name: nameInput.value.trim() });
+                        u.full_name = nameInput.value.trim();
                     } catch (err) {
                         alert("No se pudo guardar el nombre: " + err.message);
                         nameInput.value = u.full_name || "";
                     }
                 });
-                tdName.appendChild(nameInput);
-
-                const tdEmail = document.createElement("td");
-                tdEmail.className = "py-2 pr-3 text-brand-500 dark:text-brand-300";
-                tdEmail.textContent = u.email;
+                nameLine.appendChild(nameInput);
+                if (u.is_admin) {
+                    const corona = document.createElement("span");
+                    corona.className = "shrink-0 text-xs font-bold text-accent-700 dark:text-accent-400";
+                    corona.textContent = "👑";
+                    corona.title = "Administrador";
+                    nameLine.appendChild(corona);
+                }
+                const correo = document.createElement("a");
+                correo.href = "mailto:" + u.email;
+                correo.className = "block px-2 text-xs text-brand-450 dark:text-brand-350 hover:text-accent-500 truncate";
+                correo.textContent = u.email;
+                correo.title = u.email;          // por si el correo largo se recorta
+                tdCuenta.append(nameLine, correo);
 
                 const tdRole = document.createElement("td");
                 tdRole.className = "py-2 pr-3";
                 const roleSelect = document.createElement("select");
                 roleSelect.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm";
+                roleSelect.setAttribute("aria-label", "Rol de " + (u.full_name || u.email));
                 roleSelect.innerHTML = '<option value="alumno">Estudiante</option><option value="profesor">Profesor</option>';
                 roleSelect.value = u.role;
                 roleSelect.addEventListener("change", async () => {
@@ -401,7 +525,8 @@
                 grupoInput.type = "text";
                 grupoInput.value = u.grupo || "";
                 grupoInput.placeholder = "—";
-                grupoInput.className = "w-full px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm";
+                grupoInput.setAttribute("aria-label", "Grupo de " + (u.full_name || u.email));
+                grupoInput.className = "w-24 px-2 py-1 rounded bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 focus:bg-brand-50 dark:focus:bg-brand-950 outline-none text-sm";
                 grupoInput.addEventListener("change", async () => {
                     try {
                         await callAdmin("update", { target_id: u.id, grupo: grupoInput.value.trim() });
@@ -421,31 +546,8 @@
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
                 }
 
-                const tdAdmin = document.createElement("td");
-                tdAdmin.className = "py-2 pr-3";
-                if (u.is_admin) {
-                    tdAdmin.innerHTML = '<span class="inline-flex items-center gap-1 text-xs font-bold text-accent-700 dark:text-accent-400">👑 Administrador</span>';
-                } else if (!isSelf) {
-                    const makeAdminBtn = document.createElement("button");
-                    makeAdminBtn.type = "button";
-                    makeAdminBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline";
-                    makeAdminBtn.textContent = "Hacer administrador";
-                    makeAdminBtn.addEventListener("click", async () => {
-                        if (!confirm(`¿Transferir el panel de administración a ${u.email}? Perderás tu propio acceso a este panel.`)) return;
-                        try {
-                            await callAdmin("update", { target_id: u.id, is_admin: true });
-                            loadUsers();
-                        } catch (err) {
-                            alert("No se pudo transferir: " + err.message);
-                        }
-                    });
-                    tdAdmin.appendChild(makeAdminBtn);
-                } else {
-                    tdAdmin.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
-                }
-
                 const tdCreated = document.createElement("td");
-                tdCreated.className = "py-2 pr-3 text-brand-450 dark:text-brand-350 text-xs";
+                tdCreated.className = "py-2 pr-3 text-brand-450 dark:text-brand-350 text-xs whitespace-nowrap";
                 tdCreated.textContent = u.created_at ? fmtDate(u.created_at) : "—";
 
                 const tdActions = document.createElement("td");
@@ -465,6 +567,26 @@
                 });
                 tdActions.appendChild(resetBtn);
 
+                // Transferir la administración es de una vez cada tanto, no de todos
+                // los días: pasó de tener columna propia a vivir acá. La corona
+                // sigue a la vista, al lado del nombre.
+                if (!u.is_admin && !isSelf) {
+                    const makeAdminBtn = document.createElement("button");
+                    makeAdminBtn.type = "button";
+                    makeAdminBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
+                    makeAdminBtn.textContent = "Hacer administrador";
+                    makeAdminBtn.addEventListener("click", async () => {
+                        if (!confirm(`¿Transferir el panel de administración a ${u.email}? Perderás tu propio acceso a este panel.`)) return;
+                        try {
+                            await callAdmin("update", { target_id: u.id, is_admin: true });
+                            loadUsers();
+                        } catch (err) {
+                            alert("No se pudo transferir: " + err.message);
+                        }
+                    });
+                    tdActions.appendChild(makeAdminBtn);
+                }
+
                 if (!isSelf) {
                     const delBtn = document.createElement("button");
                     delBtn.type = "button";
@@ -482,17 +604,20 @@
                     tdActions.appendChild(delBtn);
                 }
 
-                tr.append(tdName, tdEmail, tdRole, tdGrupo, tdTeacher, tdAdmin, tdCreated, tdActions);
+                tr.append(tdCuenta, tdRole, tdGrupo, tdTeacher, tdCreated, tdActions);
                 return tr;
         }
 
-        function groupHeaderRow(label, alumnosDelGrupo) {
+        // `cuantas` es cuántas CUENTAS hay en el grupo y `alumnosDelGrupo` cuáles de
+        // ellas se pueden marcar: no es lo mismo, y poner el número de alumnos al
+        // lado del nombre hacía que un grupo de dos profesores dijera "· 0".
+        function groupHeaderRow(label, cuantas, alumnosDelGrupo) {
             const tr = document.createElement("tr");
             const td = document.createElement("td");
-            td.colSpan = 9;
+            td.colSpan = 7;
             td.className = "pt-4 pb-1 text-xs font-bold uppercase tracking-wide text-accent-700 dark:text-accent-400";
             const texto = document.createElement("span");
-            texto.textContent = label;
+            texto.textContent = label + " · " + cuantas;
             td.appendChild(texto);
             // Marcar el grupo entero de una vez: es la forma en que de verdad se
             // reparten los alumnos ("todo 7° B al profesor nuevo").
@@ -506,7 +631,7 @@
                 boton.addEventListener("click", () => {
                     if (todosMarcados) ids.forEach((id) => marcados.delete(id));
                     else ids.forEach((id) => marcados.add(id));
-                    renderUsers();
+                    pintarCuentas();
                     pintarBarraDeLote();
                 });
                 td.appendChild(boton);
@@ -515,14 +640,321 @@
             return tr;
         }
 
+        /* ================= Buscar, filtrar y mostrar de a poco =================
+         *
+         * Con treinta cuentas la lista entera se lee de un vistazo; con
+         * trescientas, no. Tres cosas, y las tres hacen falta juntas:
+         *
+         *  - BUSCAR por nombre, correo o grupo, que es como se encuentra a
+         *    alguien de verdad. Sin tildes: quien escribe "ramirez" tiene que
+         *    encontrar a "Ramírez".
+         *  - FILTRAR por rol, con una opción que no es un rol pero es la
+         *    pregunta que más se hace acá: "sin profesor asignado" — esos no
+         *    salen en los informes de nadie.
+         *  - MOSTRAR de 50 en 50. Pintar 300 filas, cada una con sus cuatro
+         *    campos editables y sus etiquetas de profesor, deja la página
+         *    pesada para nada: casi siempre se busca a uno.
+         *
+         * El filtro se hace acá y no en la base a propósito: las cuentas ya
+         * están todas cargadas (hacen falta enteras para contar los alumnos de
+         * cada profesor y para los selectores), así que pedirlas otra vez por
+         * cada tecla sería un viaje de más.
+         */
+        const CUENTAS_POR_PAGINA = 50;
+        let cuentasMostradas = CUENTAS_POR_PAGINA;
+
+        /* ================= Las fichas de grupo =================
+         *
+         * Antes esta página pintaba las cuentas TODAS de una. Con treinta se
+         * lee; con trescientas es una pared de filas con sus campos editables y
+         * sus etiquetas de profesor, y encontrar un grupo es hacer scroll.
+         *
+         * Ahora lo primero que se ve son las fichas: una por grupo, con cuánta
+         * gente tiene, qué profesores lo llevan y un selector para sumarle otro
+         * profesor A TODO EL GRUPO de una vez. Las cuentas aparecen solo al
+         * abrir un grupo o al buscar a alguien.
+         *
+         * `grupoAbierto` es lo que decide qué se ve:
+         *   null            -> solo las fichas
+         *   "<nombre>"      -> las cuentas de ese grupo
+         *   SIN_GRUPO       -> los alumnos a los que nadie les puso grupo
+         *   EQUIPO          -> profesores y administración (no tienen grupo, y
+         *                      mezclarlos con "(sin grupo)" los escondía entre
+         *                      los alumnos sueltos)
+         * Una búsqueda o un filtro de rol mandan sobre todo esto y buscan en
+         * TODOS los grupos: buscar a alguien sin saber en qué grupo está es
+         * justamente para lo que se busca.
+         */
+        const SIN_GRUPO = "\u0000sin-grupo";
+        const EQUIPO = "\u0000equipo";
+        let grupoAbierto = null;
+
+        function esDelEquipo(u) {
+            return u.role === "profesor" || u.is_admin === true;
+        }
+
+        function claveDeGrupo(u) {
+            if (esDelEquipo(u)) return EQUIPO;
+            return u.grupo || SIN_GRUPO;
+        }
+
+        function nombreDeGrupo(clave) {
+            if (clave === EQUIPO) return "Profesores y administración";
+            if (clave === SIN_GRUPO) return "Sin grupo";
+            return clave;
+        }
+
+        // Un renglón por grupo, ordenados: primero los grupos de verdad (por
+        // nombre), después los sueltos y el equipo docente al final.
+        function gruposDeCuentas() {
+            const mapa = new Map();
+            allUsers.forEach((u) => {
+                const k = claveDeGrupo(u);
+                if (!mapa.has(k)) mapa.set(k, []);
+                mapa.get(k).push(u);
+            });
+            const claves = [...mapa.keys()].sort((a, b) => {
+                const peso = (k) => (k === EQUIPO ? 2 : k === SIN_GRUPO ? 1 : 0);
+                return peso(a) - peso(b) || String(a).localeCompare(String(b), "es");
+            });
+            return claves.map((k) => ({ clave: k, nombre: nombreDeGrupo(k), cuentas: mapa.get(k) }));
+        }
+
+        function abrirGrupo(clave) {
+            grupoAbierto = clave;
+            cuentasMostradas = CUENTAS_POR_PAGINA;
+            document.getElementById("user-search").value = "";
+            document.getElementById("role-filter").value = "";
+            pintarCuentas();
+            document.getElementById("users-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function volverAGrupos() {
+            grupoAbierto = null;
+            marcados.clear();
+            document.getElementById("user-search").value = "";
+            document.getElementById("role-filter").value = "";
+            pintarCuentas();
+            pintarBarraDeLote();
+        }
+
+        /* Sumarle un profesor a TODO un grupo de una vez, desde su ficha. Es la
+         * operación que de verdad se hace al empezar el año ("todo 7° B también
+         * al profesor nuevo"), y antes pedía marcar el grupo entero y bajar a la
+         * barra de lote. Va en modo "agregar": suma, no reemplaza — quitarle un
+         * profesor a alguien sin querer es el error caro acá.
+         */
+        async function agregarProfesorAlGrupo(grupo, teacherId, selectEl) {
+            const alumnos = grupo.cuentas.filter((u) => u.role === "alumno").map((u) => u.id);
+            if (!alumnos.length || !teacherId) return;
+            selectEl.disabled = true;
+            try {
+                await callAdmin("assign_bulk", { target_ids: alumnos, teacher_id: teacherId, modo: "agregar" });
+                await loadUsers();
+            } catch (err) {
+                alert("No se pudo asignar: " + err.message);
+            } finally {
+                selectEl.disabled = false;
+                selectEl.value = "";
+            }
+        }
+
+        function renderFichasDeGrupo() {
+            const caja = document.getElementById("grupos-fichas");
+            caja.innerHTML = "";
+            const teachers = allUsers.filter((u) => u.role === "profesor");
+            const porId = new Map(teachers.map((t) => [t.id, t]));
+            const grupos = gruposDeCuentas();
+
+            if (!grupos.length) {
+                caja.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Todavía no hay ninguna cuenta.</p>';
+                return;
+            }
+
+            grupos.forEach((g) => {
+                const alumnos = g.cuentas.filter((u) => u.role === "alumno");
+                const ficha = document.createElement("article");
+                ficha.className = "rounded-xl border border-brand-100 dark:border-brand-800 bg-brand-50/60 dark:bg-brand-950/40 p-4 flex flex-col gap-2";
+
+                const titulo = document.createElement("h3");
+                titulo.className = "font-serif font-bold text-brand-800 dark:text-white";
+                titulo.textContent = g.nombre;
+                const cuenta = document.createElement("p");
+                cuenta.className = "text-xs text-brand-450 dark:text-brand-350";
+                cuenta.textContent = g.clave === EQUIPO
+                    ? g.cuentas.length + (g.cuentas.length === 1 ? " cuenta" : " cuentas")
+                    : alumnos.length + (alumnos.length === 1 ? " alumno" : " alumnos");
+                ficha.append(titulo, cuenta);
+
+                if (g.clave !== EQUIPO) {
+                    // Qué profesores llevan este grupo, con cuántos alumnos de él
+                    // tiene cada uno: un grupo repartido entre dos profesores se ve
+                    // de una, sin abrirlo.
+                    const cuantos = new Map();
+                    let sinProfesor = 0;
+                    alumnos.forEach((u) => {
+                        const suyos = profesoresDe(u.id);
+                        if (!suyos.length) sinProfesor += 1;
+                        suyos.forEach((t) => cuantos.set(t, (cuantos.get(t) || 0) + 1));
+                    });
+                    const chips = document.createElement("div");
+                    chips.className = "flex flex-wrap items-center gap-1";
+                    [...cuantos.entries()]
+                        .sort((a, b) => b[1] - a[1])
+                        .forEach(([tid, n]) => {
+                            const chip = document.createElement("span");
+                            chip.className = "inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-800 px-2 py-0.5 text-xs text-brand-700 dark:text-brand-200";
+                            chip.textContent = (porId.has(tid) ? teacherLabel(porId.get(tid)) : "?")
+                                + (n < alumnos.length ? ` · ${n}` : "");
+                            chips.appendChild(chip);
+                        });
+                    if (!cuantos.size) {
+                        const vacio = document.createElement("span");
+                        vacio.className = "text-xs text-brand-450 dark:text-brand-350";
+                        vacio.textContent = "Sin ningún profesor asignado";
+                        chips.appendChild(vacio);
+                    }
+                    ficha.appendChild(chips);
+
+                    if (sinProfesor && cuantos.size) {
+                        // Un alumno sin profesor no sale en los informes de nadie: que
+                        // se vea en la ficha y no solo en el aviso de arriba.
+                        const aviso = document.createElement("p");
+                        aviso.className = "text-xs text-accent-700 dark:text-accent-400";
+                        aviso.textContent = sinProfesor === 1
+                            ? "⚠️ 1 sin profesor asignado"
+                            : "⚠️ " + sinProfesor + " sin profesor asignado";
+                        ficha.appendChild(aviso);
+                    }
+
+                    if (alumnos.length && teachers.length) {
+                        const sel = document.createElement("select");
+                        sel.className = "px-2 py-1.5 rounded-lg bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                        sel.setAttribute("aria-label", "Agregar un profesor a todo el grupo " + g.nombre);
+                        sel.innerHTML = '<option value="">＋ Agregar profesor a todo el grupo…</option>' +
+                            teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
+                        sel.addEventListener("change", () => {
+                            if (!sel.value) return;
+                            const quien = porId.has(sel.value) ? teacherLabel(porId.get(sel.value)) : "ese profesor";
+                            if (!confirm(`¿Agregarle ${quien} a los ${alumnos.length} alumnos de ${g.nombre}? Se SUMA a los profesores que ya tengan.`)) {
+                                sel.value = "";
+                                return;
+                            }
+                            agregarProfesorAlGrupo(g, sel.value, sel);
+                        });
+                        ficha.appendChild(sel);
+                    }
+                }
+
+                const ver = document.createElement("button");
+                ver.type = "button";
+                ver.className = "self-start text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                ver.textContent = "Ver las cuentas →";
+                ver.addEventListener("click", () => abrirGrupo(g.clave));
+                ficha.appendChild(ver);
+
+                caja.appendChild(ficha);
+            });
+        }
+
+        // Qué se pinta: las fichas, o las cuentas de un grupo / de una búsqueda.
+        function hayBusqueda() {
+            return !!document.getElementById("user-search").value.trim() || !!document.getElementById("role-filter").value;
+        }
+
+        function pintarCuentas() {
+            const verCuentas = grupoAbierto !== null || hayBusqueda();
+            document.getElementById("grupos-fichas").hidden = verCuentas;
+            document.getElementById("users-panel").hidden = !verCuentas;
+            if (verCuentas) {
+                document.getElementById("users-panel-title").textContent = grupoAbierto !== null
+                    ? nombreDeGrupo(grupoAbierto)
+                    : "Resultado de la búsqueda";
+                renderUsers();
+            } else {
+                renderFichasDeGrupo();
+                pintarResumenCuentas(0, 0);
+            }
+        }
+
+        // "Ramírez" y "ramirez" tienen que encontrarse: se quitan las tildes.
+        function sinTildes(t) {
+            return String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+
+        function cuentasFiltradas() {
+            const texto = sinTildes(document.getElementById("user-search").value.trim());
+            const rol = document.getElementById("role-filter").value;
+            // Con un grupo abierto se mira SOLO ese grupo; buscando o filtrando por
+            // rol se mira todo, que es para lo que sirve buscar.
+            const base = (grupoAbierto !== null && !hayBusqueda())
+                ? allUsers.filter((u) => claveDeGrupo(u) === grupoAbierto)
+                : allUsers;
+            return base.filter((u) => {
+                if (rol === "admin" && !u.is_admin) return false;
+                if (rol === "sin-profesor" && !(u.role === "alumno" && !profesoresDe(u.id).length)) return false;
+                if ((rol === "alumno" || rol === "profesor") && u.role !== rol) return false;
+                if (!texto) return true;
+                return sinTildes(u.full_name).includes(texto)
+                    || sinTildes(u.email).includes(texto)
+                    || sinTildes(u.grupo).includes(texto);
+            });
+        }
+
+        function pintarResumenCuentas(mostradas, total) {
+            const resumen = document.getElementById("users-summary");
+            const masBtn = document.getElementById("users-more");
+            const hayFiltro = hayBusqueda();
+
+            // Sin grupo abierto y sin búsqueda, lo que se está viendo son las
+            // fichas: el resumen cuenta grupos, no cuentas sueltas.
+            if (grupoAbierto === null && !hayFiltro) {
+                const grupos = gruposDeCuentas().filter((g) => g.clave !== EQUIPO).length;
+                resumen.textContent = allUsers.length
+                    ? allUsers.length + (allUsers.length === 1 ? " cuenta" : " cuentas") + " en "
+                      + grupos + (grupos === 1 ? " grupo" : " grupos") + ". Abre uno para ver las suyas."
+                    : "Todavía no hay ninguna cuenta.";
+                masBtn.hidden = true;
+                return;
+            }
+            if (!total) {
+                resumen.textContent = hayFiltro
+                    ? "Ninguna cuenta coincide con la búsqueda."
+                    : "Este grupo no tiene ninguna cuenta.";
+                masBtn.hidden = true;
+                return;
+            }
+            const cuantas = total === 1 ? "1 cuenta" : total + " cuentas";
+            resumen.textContent = mostradas < total
+                ? "Mostrando " + mostradas + " de " + cuantas + (hayFiltro ? " que coinciden." : ".")
+                : cuantas + (hayFiltro ? " coinciden." : " en este grupo.");
+            masBtn.hidden = mostradas >= total;
+        }
+
         function renderUsers() {
             const body = document.getElementById("users-body");
             body.innerHTML = "";
             const teachers = allUsers.filter((u) => u.role === "profesor");
             const groupBy = document.getElementById("group-by").value;
+            const encontradas = cuentasFiltradas();
+            const visibles = encontradas.slice(0, cuentasMostradas);
+
+            if (!visibles.length) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 7;
+                td.className = "py-6 text-center text-brand-450 dark:text-brand-350";
+                td.textContent = allUsers.length
+                    ? "Ninguna cuenta coincide con la búsqueda."
+                    : "Todavía no hay ninguna cuenta.";
+                tr.appendChild(td); body.appendChild(tr);
+                pintarResumenCuentas(0, encontradas.length);
+                return;
+            }
 
             if (groupBy === "none") {
-                allUsers.forEach((u) => body.appendChild(renderRow(u, teachers)));
+                visibles.forEach((u) => body.appendChild(renderRow(u, teachers)));
+                pintarResumenCuentas(visibles.length, encontradas.length);
                 return;
             }
 
@@ -539,18 +971,36 @@
                 }
                 return "(sin profesor asignado)";
             }
+            /* Los grupos se arman sobre TODO lo que coincide, no sobre las 50 que
+               se están pintando: si no, un 7° B de 400 alumnos diría "· 50" y su
+               botón "marcar los 50" marcaría cincuenta de cuatrocientos, sin
+               avisar. Y marcar el grupo entero de una vez es justamente para lo
+               que existe ("todo 7° B al profesor nuevo"). Se pintan solo las
+               filas visibles, pero el encabezado cuenta y marca el grupo
+               completo. */
             const groups = new Map();
-            allUsers.forEach((u) => {
+            encontradas.forEach((u) => {
                 const k = keyFor(u);
                 if (!groups.has(k)) groups.set(k, []);
                 groups.get(k).push(u);
             });
+            const aLaVista = new Set(visibles.map((u) => u.id));
             const sortedKeys = [...groups.keys()].sort((a, b) => a.localeCompare(b, "es"));
             sortedKeys.forEach((k) => {
                 const filas = groups.get(k);
-                body.appendChild(groupHeaderRow(k, filas.filter((u) => u.role === "alumno")));
-                filas.forEach((u) => body.appendChild(renderRow(u, teachers)));
+                const pintables = filas.filter((u) => aLaVista.has(u.id));
+                if (!pintables.length) return;   // este grupo cae entero en las páginas que todavía no se piden
+                body.appendChild(groupHeaderRow(k, filas.length, filas.filter((u) => u.role === "alumno")));
+                pintables.forEach((u) => body.appendChild(renderRow(u, teachers)));
             });
+            pintarResumenCuentas(visibles.length, encontradas.length);
+        }
+
+        // Al cambiar el filtro se vuelve a empezar por la primera página: si no,
+        // una búsqueda con 3 resultados heredaría el "Ver más" de la anterior.
+        function refiltrarCuentas() {
+            cuentasMostradas = CUENTAS_POR_PAGINA;
+            pintarCuentas();
         }
 
         /* ================= Asignar alumnos a un profesor ==================
@@ -737,31 +1187,264 @@
             // Un alumno sin profesor no aparece en los informes de nadie: conviene
             // que salte a la vista en vez de quedarse perdido en la lista.
             const sueltos = allUsers.filter((u) => u.role === "alumno" && !profesoresDe(u.id).length).length;
+            // Este badge va en el <summary>, así que se ve aunque la tarjeta
+            // "Profesores" esté cerrada: colapsarla no puede esconder este aviso.
+            const badge = document.getElementById("profesores-badge");
+            badge.classList.toggle("hidden", sueltos === 0);
+            badge.textContent = sueltos ? "⚠️ " + sueltos + " sin profesor" : "";
             const aviso = document.getElementById("sin-profesor-aviso");
             aviso.classList.toggle("hidden", sueltos === 0);
             if (sueltos) {
                 aviso.textContent = sueltos === 1
-                    ? "⚠️ Hay 1 alumno sin profesor asignado: no aparece en los informes de nadie. Agrúpalo por “Profesor asignado” abajo para encontrarlo."
-                    : "⚠️ Hay " + sueltos + " alumnos sin profesor asignado: no aparecen en los informes de nadie. Agrúpalos por “Profesor asignado” abajo para encontrarlos.";
+                    ? "⚠️ Hay 1 alumno sin profesor asignado: no aparece en los informes de nadie. "
+                    : "⚠️ Hay " + sueltos + " alumnos sin profesor asignado: no aparecen en los informes de nadie. ";
+                // Un aviso que dice "búscalos abajo" obliga a saber dónde. Este los
+                // deja a la vista de un clic, con el filtro ya puesto.
+                const ver = document.createElement("button");
+                ver.type = "button";
+                ver.className = "font-semibold underline hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                ver.textContent = sueltos === 1 ? "Ver cuál es" : "Ver cuáles son";
+                ver.addEventListener("click", () => {
+                    grupoAbierto = null;
+                    document.getElementById("user-search").value = "";
+                    document.getElementById("role-filter").value = "sin-profesor";
+                    refiltrarCuentas();
+                    document.getElementById("users-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+                aviso.appendChild(ver);
             }
         }
+
+        /* ================= Equipos =================
+         *
+         * Igual que profesoresPorAlumno, la verdad está en dos tablas puente
+         * (equipo_alumnos, equipo_entrenadores), no en una columna. Un alumno
+         * puede estar en varios equipos y un equipo puede tener cualquier
+         * cantidad de entrenadores: por eso cada equipo guarda su propia
+         * lista de ids, como profesoresPorAlumno guarda la lista de un
+         * alumno.
+         */
+        let allEquipos = [];                       // [{id, nombre}…]
+        let alumnosPorEquipo = new Map();           // id de equipo -> [id de alumno…]
+        let entrenadoresPorEquipo = new Map();      // id de equipo -> [id de entrenador…]
+
+        // Misma idea que renderProfesoresCelda (una etiqueta por cuenta, con su
+        // ✕ para quitarla, y un selector al final para sumar otra) pero para
+        // los dos lados de un equipo — se deja aparte en vez de generalizar
+        // renderProfesoresCelda para no arriesgar ese camino ya probado.
+        function renderEquipoTags(puestos, opciones, guardar, ariaBase) {
+            const caja = document.createElement("div");
+            caja.className = "flex flex-wrap items-center gap-1";
+            const porId = new Map(opciones.map((o) => [o.id, o]));
+
+            puestos.forEach((id) => {
+                const chip = document.createElement("span");
+                chip.className = "inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-800 px-2 py-0.5 text-xs text-brand-700 dark:text-brand-200";
+                chip.append(document.createTextNode(porId.has(id) ? teacherLabel(porId.get(id)) : "?"));
+                const quitar = document.createElement("button");
+                quitar.type = "button";
+                quitar.className = "text-brand-500 dark:text-brand-300 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                quitar.textContent = "✕";
+                quitar.setAttribute("aria-label", "Quitar a " + (porId.has(id) ? teacherLabel(porId.get(id)) : "esta cuenta") + " de " + ariaBase);
+                quitar.addEventListener("click", () => guardar(puestos.filter((x) => x !== id)));
+                chip.appendChild(quitar);
+                caja.appendChild(chip);
+            });
+
+            const libres = opciones.filter((o) => !puestos.includes(o.id));
+            if (libres.length) {
+                const sel = document.createElement("select");
+                sel.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs max-w-[12rem]";
+                sel.setAttribute("aria-label", "Agregar a " + ariaBase);
+                sel.innerHTML = '<option value="">' + (puestos.length ? "＋ otro…" : "— Ninguno —") + "</option>" +
+                    libres.map((o) => `<option value="${o.id}">${escapeHtml(teacherLabel(o))}</option>`).join("");
+                sel.addEventListener("change", () => { if (sel.value) guardar(puestos.concat([sel.value])); });
+                caja.appendChild(sel);
+            } else if (!puestos.length) {
+                const vacio = document.createElement("span");
+                vacio.className = "text-xs text-brand-450 dark:text-brand-350";
+                vacio.textContent = "—";
+                caja.appendChild(vacio);
+            }
+            return caja;
+        }
+
+        function renderEquipos() {
+            const caja = document.getElementById("equipos-lista");
+            caja.innerHTML = "";
+            document.getElementById("equipos-vacio").classList.toggle("hidden", allEquipos.length > 0);
+
+            const profesores = allUsers.filter((u) => u.role === "profesor")
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            const alumnos = allUsers.filter((u) => u.role === "alumno")
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+
+            allEquipos.forEach((eq) => {
+                const card = document.createElement("div");
+                card.className = "rounded-xl border border-brand-100 dark:border-brand-800 p-4";
+
+                const encabezado = document.createElement("div");
+                encabezado.className = "flex flex-wrap items-center gap-3 mb-3";
+
+                const nombreInput = document.createElement("input");
+                nombreInput.type = "text";
+                nombreInput.value = eq.nombre;
+                nombreInput.setAttribute("aria-label", "Nombre del equipo");
+                nombreInput.className = "font-serif font-bold text-brand-800 dark:text-white bg-transparent border border-transparent hover:border-brand-200 dark:hover:border-brand-700 focus:border-accent-500 outline-none rounded px-2 py-1 text-sm flex-1 min-w-[10rem]";
+                nombreInput.addEventListener("change", async () => {
+                    const nuevo = nombreInput.value.trim();
+                    if (!nuevo) { nombreInput.value = eq.nombre; return; }
+                    try {
+                        await callAdmin("equipo_rename", { equipo_id: eq.id, nombre: nuevo });
+                        eq.nombre = nuevo;
+                    } catch (err) {
+                        alert("No se pudo renombrar el equipo: " + err.message);
+                        nombreInput.value = eq.nombre;
+                    }
+                });
+
+                const borrar = document.createElement("button");
+                borrar.type = "button";
+                borrar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                borrar.textContent = "Borrar equipo";
+                borrar.addEventListener("click", async () => {
+                    if (!confirm(`¿Borrar el equipo "${eq.nombre}"? No borra a sus alumnos ni a sus entrenadores, solo el equipo.`)) return;
+                    try {
+                        await callAdmin("equipo_delete", { equipo_id: eq.id });
+                        await loadEquipos();
+                    } catch (err) {
+                        alert("No se pudo borrar el equipo: " + err.message);
+                    }
+                });
+
+                encabezado.append(nombreInput, borrar);
+
+                const filaEntrenadores = document.createElement("div");
+                filaEntrenadores.className = "mb-2";
+                const etEnt = document.createElement("span");
+                etEnt.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+                etEnt.textContent = "Entrenadores";
+                filaEntrenadores.appendChild(etEnt);
+                filaEntrenadores.appendChild(renderEquipoTags(
+                    entrenadoresPorEquipo.get(eq.id) || [],
+                    profesores,
+                    async (lista) => {
+                        try {
+                            await callAdmin("equipo_set_entrenadores", { equipo_id: eq.id, teacher_ids: lista });
+                            entrenadoresPorEquipo.set(eq.id, lista);
+                            renderEquipos();
+                        } catch (err) {
+                            alert("No se pudo cambiar los entrenadores: " + err.message);
+                        }
+                    },
+                    `los entrenadores de ${eq.nombre}`,
+                ));
+
+                const filaAlumnos = document.createElement("div");
+                const etAl = document.createElement("span");
+                etAl.className = "block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1";
+                etAl.textContent = "Alumnos";
+                filaAlumnos.appendChild(etAl);
+                filaAlumnos.appendChild(renderEquipoTags(
+                    alumnosPorEquipo.get(eq.id) || [],
+                    alumnos,
+                    async (lista) => {
+                        try {
+                            await callAdmin("equipo_set_alumnos", { equipo_id: eq.id, alumno_ids: lista });
+                            alumnosPorEquipo.set(eq.id, lista);
+                            renderEquipos();
+                        } catch (err) {
+                            alert("No se pudo cambiar los alumnos: " + err.message);
+                        }
+                    },
+                    `los alumnos de ${eq.nombre}`,
+                ));
+
+                card.append(encabezado, filaEntrenadores, filaAlumnos);
+                caja.appendChild(card);
+            });
+        }
+
+        async function loadEquipos() {
+            let equipos, filasAlumnos, filasEntrenadores;
+            try {
+                equipos = await traerTodo(() => sb.from("equipos").select("id, nombre").order("nombre", { ascending: true }));
+                filasAlumnos = await traerTodo(() => sb.from("equipo_alumnos").select("equipo_id, alumno_id"));
+                filasEntrenadores = await traerTodo(() => sb.from("equipo_entrenadores").select("equipo_id, teacher_id"));
+            } catch (err) {
+                document.getElementById("equipos-lista").innerHTML = '<p class="text-xs text-red-600 dark:text-red-400">No se pudieron cargar los equipos: ' + escapeHtml(err.message || err) + '</p>';
+                return;
+            }
+            allEquipos = equipos || [];
+            alumnosPorEquipo = new Map();
+            (filasAlumnos || []).forEach((r) => {
+                if (!alumnosPorEquipo.has(r.equipo_id)) alumnosPorEquipo.set(r.equipo_id, []);
+                alumnosPorEquipo.get(r.equipo_id).push(r.alumno_id);
+            });
+            entrenadoresPorEquipo = new Map();
+            (filasEntrenadores || []).forEach((r) => {
+                if (!entrenadoresPorEquipo.has(r.equipo_id)) entrenadoresPorEquipo.set(r.equipo_id, []);
+                entrenadoresPorEquipo.get(r.equipo_id).push(r.teacher_id);
+            });
+            renderEquipos();
+        }
+
+        document.getElementById("equipo-create-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const input = document.getElementById("equipo-nombre-nuevo");
+            const msg = document.getElementById("equipo-create-msg");
+            const nombre = input.value.trim();
+            if (!nombre) return;
+            msg.textContent = "";
+            try {
+                await callAdmin("equipo_create", { nombre });
+                input.value = "";
+                await loadEquipos();
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+            }
+        });
 
         function populateTeacherSelect(selectEl, teachers) {
             selectEl.innerHTML = '<option value="">— Sin asignar —</option>' +
                 teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
         }
 
+        /* PostgREST corta la respuesta a partir de cierta cantidad de filas (mil,
+           salvo que se cambie en Settings › API) y NO da ningún error: devuelve
+           las primeras y nada más. Esta página se bajaba las cuentas de un solo
+           pedido, así que el día que la plataforma pase de mil, el panel de
+           administración empezaría a esconder cuentas en silencio —y los
+           conteos de alumnos por profesor saldrían mal, calculados sobre un
+           pedazo—. Se pide de mil en mil hasta que llega una página corta, la
+           misma forma que usa informes.html. */
+        async function traerTodo(consulta) {
+            const PASO = 1000;
+            let desde = 0, todo = [];
+            for (;;) {
+                const { data, error } = await consulta().range(desde, desde + PASO - 1);
+                if (error) throw error;
+                todo = todo.concat(data || []);
+                if (!data || data.length < PASO) return todo;
+                desde += PASO;
+            }
+        }
+
         async function loadUsers() {
-            const { data, error } = await sb.from("profiles").select("*").order("full_name", { ascending: true, nullsFirst: false });
             const body = document.getElementById("users-body");
-            if (error || !data) {
-                body.innerHTML = '<tr><td colspan="9" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas.</td></tr>';
+            let data, parejas;
+            try {
+                data = await traerTodo(() => sb.from("profiles").select("*").order("full_name", { ascending: true, nullsFirst: false }));
+                // Quién tiene a quién. La RLS ya limita qué filas llegan; quien
+                // administra las recibe todas.
+                parejas = await traerTodo(() => sb.from("profile_teachers").select("student_id, teacher_id"));
+            } catch (err) {
+                body.innerHTML = '<tr><td colspan="7" class="py-4 text-brand-450 dark:text-brand-350">No se pudo cargar la lista de cuentas: ' + escapeHtml(err.message || err) + '</td></tr>';
+                document.getElementById("users-summary").textContent = "No se pudo cargar la lista de cuentas.";
                 return;
             }
             allUsers = data;
-            // Quién tiene a quién. La RLS ya limita qué filas llegan; quien
-            // administra las recibe todas.
-            const { data: parejas } = await sb.from("profile_teachers").select("student_id, teacher_id");
             profesoresPorAlumno = new Map();
             (parejas || []).forEach((r) => {
                 if (!profesoresPorAlumno.has(r.student_id)) profesoresPorAlumno.set(r.student_id, []);
@@ -774,16 +1457,30 @@
             const vivos = new Set(data.map((u) => u.id));
             [...marcados].forEach((id) => { if (!vivos.has(id)) marcados.delete(id); });
             renderProfesores();
-            renderUsers();
+            renderEquipos();
+            pintarCuentas();
             pintarBarraDeLote();
         }
 
         document.getElementById("asignar-btn").addEventListener("click", asignarLote);
         document.getElementById("asignar-limpiar").addEventListener("click", () => {
-            marcados.clear(); renderUsers(); pintarBarraDeLote();
+            marcados.clear(); pintarCuentas(); pintarBarraDeLote();
         });
 
         document.getElementById("group-by").addEventListener("change", renderUsers);
+        document.getElementById("volver-grupos").addEventListener("click", volverAGrupos);
+        // La búsqueda con un respiro: repintar 50 filas con sus campos editables
+        // en cada tecla se siente pesado.
+        let buscarTimer = null;
+        document.getElementById("user-search").addEventListener("input", () => {
+            clearTimeout(buscarTimer);
+            buscarTimer = setTimeout(refiltrarCuentas, 200);
+        });
+        document.getElementById("role-filter").addEventListener("change", refiltrarCuentas);
+        document.getElementById("users-more").addEventListener("click", () => {
+            cuentasMostradas += CUENTAS_POR_PAGINA;
+            renderUsers();
+        });
 
         // El profesor asignado solo tiene sentido al crear un estudiante.
         function toggleCreateTeacherField() {
@@ -832,7 +1529,9 @@
                 return;
             }
 
+            renderAtajos();
             await loadUsers();
+            await loadEquipos();
             document.getElementById("app").classList.remove("hidden");
         }
 

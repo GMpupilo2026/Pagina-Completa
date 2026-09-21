@@ -29,6 +29,21 @@
  * la deseleccionaría (toggle) en vez de mantenerla seleccionada camino al
  * destino. Si no se pasa, se asume que nunca hay una selección previa.
  *
+ * EL DEDO Y EL SCROLL. Un navegador de celular, ante un dedo que se desliza,
+ * asume que quiere desplazar la página: se queda con el gesto, manda
+ * `pointercancel` y el arrastre muere a medio camino. Resultado: arrastrar una
+ * pieza en el celular movía la PÁGINA y la jugada no se hacía — en los 16
+ * tableros del sitio, y sin dar ningún error. Se arregla con `touch-action`,
+ * que es la forma de decirle al navegador que este gesto no le toca.
+ *
+ * Pero ponerlo en el tablero entero deja un cuadrado de media pantalla por el
+ * que no se puede desplazar la página, que en una página larga es un fastidio
+ * peor que el que se viene a arreglar. Así que se marcan SOLO las casillas que
+ * en este momento se pueden levantar (las que `isDraggable` aprueba): en la
+ * posición inicial son las dos filas propias, y por las otras seis la página
+ * se sigue desplazando como siempre. Como el conjunto cambia con cada jugada,
+ * un observador lo recalcula cada vez que el tablero se vuelve a dibujar.
+ *
  * `shouldStartDrag(pointerEvent)` (opcional) es una válvula de escape para el
  * tablero de Clases: el profesor ya usa un toque largo en pantallas táctiles
  * para dibujar flechas/círculos sobre el tablero (ver js/clases-board.js), y
@@ -147,6 +162,30 @@
       // Soltar sobre la misma casilla (o fuera del tablero) cancela el
       // arrastre sin cambiar nada, igual que en lichess/chess.com.
     }
+
+    /* Marca con `touch-action: none` las casillas que ahora mismo se pueden
+       levantar, para que el navegador no se quede con el gesto (ver arriba).
+       Las demás quedan sin marcar y la página se sigue desplazando por ahí. */
+    function marcarLevantables() {
+      const celdas = boardEl.querySelectorAll("[" + dataAttr + "]");
+      for (let i = 0; i < celdas.length; i++) {
+        const casilla = celdas[i].getAttribute(dataAttr);
+        let levantable = false;
+        try { levantable = !!options.isDraggable(casilla); } catch (err) { levantable = false; }
+        celdas[i].style.touchAction = levantable ? "none" : "";
+      }
+    }
+
+    /* El tablero se vuelve a dibujar con cada jugada y las casillas son otras,
+       así que la marca hay que rehacerla. Se agrupa en un cuadro de animación
+       para no recalcular 64 casillas por cada nodo que cambia. */
+    let pedido = null;
+    const observador = new MutationObserver(function () {
+      if (pedido) return;
+      pedido = requestAnimationFrame(function () { pedido = null; marcarLevantables(); });
+    });
+    observador.observe(boardEl, { childList: true, subtree: true });
+    marcarLevantables();
 
     boardEl.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return; // solo botón izquierdo / toque

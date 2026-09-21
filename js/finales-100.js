@@ -145,20 +145,37 @@
     return window.BlindNotation ? sqs.map((sq) => BlindNotation.squareSpoken(sq)).join(", ") : sqs.join(", ");
   }
 
+  // Sin BlindNotation cargado se queda con el singular: es mejor "alfil en c1, f1"
+  // que inventar un plural.
+  function nombrePieza(t, cuantas) {
+    if (window.BlindNotation && BlindNotation.pieceLabel) return BlindNotation.pieceLabel(t, cuantas);
+    return { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" }[t.toUpperCase()] || t;
+  }
+
   function describe(fen) {
     const { board, turn } = parseFen(fen);
-    const names = { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" };
     const out = [];
     [["w", "Blancas"], ["b", "Negras"]].forEach(([col, nom]) => {
       const parts = [];
       "KQRBNP".split("").forEach((t) => {
         const sqs = Object.keys(board).filter((sq) => board[sq] === (col === "w" ? t : t.toLowerCase())).sort();
-        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + spokenSquares(sqs));
+        // El plural sale de BlindNotation: sumarle una "s" daba "alfils" y "peóns",
+        // que el lector de pantalla dice tal cual. Es el mismo lugar del que sale la
+        // forma hablada de las casillas, dos líneas más abajo.
+        if (sqs.length) parts.push(nombrePieza(t, sqs.length) + " en " + spokenSquares(sqs));
       });
       out.push(nom + ": " + (parts.join("; ") || "sin piezas") + ".");
     });
     return out.join(" ") + (turn === "w" ? " Juegan blancas." : " Juegan negras.");
   }
+
+  /* La posición que el visor tiene AHORA en pantalla, publicada en el propio
+     elemento. Quien lo envuelve puede así ofrecer algo con ella sin volver a
+     leer el archivo de datos ni rehacer la cuenta de jugadas: sesion.html le
+     pone a cada diagrama un botón que la transmite al tablero de la clase en
+     vivo, y lo que transmite es lo que el profesor está viendo — la posición
+     inicial o la jugada de la línea a la que llegó, no siempre la primera. */
+  function publicarFen(el, fen) { el.dataset.fenActual = fen; }
 
   function makeViewer(el, d) {
     const startFen = d.fenInicio || d.fen;
@@ -202,6 +219,7 @@
     }
     function renderView() {
       const fen = currentFen();
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, marks: state.ply === 0 ? d.marcas : [], last: lastSquares(), label: describe(fen) });
       descEl.textContent = describe(fen);
       plyEl.textContent = moves.length ? state.ply + "/" + moves.length : "";
@@ -273,6 +291,7 @@
     }
     function renderPractice(extra) {
       const fen = game.fen();
+      publicarFen(el, fen);
       const dots = sel ? game.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
       const h = game.history({ verbose: true }); const lm = h.length ? h[h.length - 1] : null;
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, sel, dots, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });

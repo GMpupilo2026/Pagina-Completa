@@ -23,59 +23,19 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
+    <script src="js/notas-alumno.js"></script>
+    <script src="js/evolucion-alumno.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
@@ -120,6 +80,7 @@
                         <option value="concentracion">🧠 Concentración</option>
                         <option value="diagnostico">🧭 Diagnóstico de nivel</option>
                         <option value="cursos">🏛️ Cursos — temas estudiados</option>
+                        <option value="diagnostico-publico">🌐 Diagnósticos de nivel (público)</option>
                         <option value="arbitraje">⚖️ Exámenes de arbitraje (público)</option>
                     </select>
                 </div>
@@ -140,10 +101,63 @@
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
+            <!-- Cómo viene EN EL TIEMPO, que es lo que las tarjetas de arriba no
+                 pueden decir: son totales acumulados y solo suben, así que un
+                 alumno que lleva un mes sin entrar se ve igual de bien que ayer.
+                 Va antes de la bitácora a propósito: primero se mira cómo viene
+                 y después se anota lo que se ve. Arranca oculto y solo se
+                 destapa si de verdad hay semanas con algo. -->
+            <div id="evolucion-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="evolucion-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📈 Cómo viene</h2>
+                <p id="evolucion-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Las últimas 12 semanas, para ver si sube o si se frenó.</p>
+                <div id="evolucion-body"></div>
+            </div>
+
+            <!-- La bitácora: lo que el profesor observa de este alumno.
+                 Mirando a UN alumno y solo para quien da clase; el alumno ve
+                 aparte las que le compartieron (#notas-alumno-report). -->
+            <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Bitácora</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
+                <div id="notas-body"></div>
+            </div>
+
+            <!-- Lo que su profesor decidió compartirle. Arranca oculto y solo
+                 se destapa si hay alguna: un bloque que diga "tu profesor no te
+                 ha escrito nada" es ruido en todas las visitas menos una. -->
+            <div id="notas-alumno-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Notas de tu profesor</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que te dejó anotado para que lo tengas presente.</p>
+                <div id="notas-alumno-body"></div>
+            </div>
+
+            <!-- Lo que se le pidió y lo que entregó: tareas y exámenes.
+                 Los números salen de public.resumen_tareas_examenes(), que es
+                 SECURITY DEFINER a propósito: `tareas` y `examenes` están
+                 aisladas por profesor, así que contándolas desde acá con la RLS
+                 de quien mira, a un profesor que comparte alumno con un colega
+                 le saldría "0 tareas" sobre un alumno que tiene cinco. El
+                 informe es del ALUMNO, no de un profesor. -->
+            <div id="deberes-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="deberes-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📋 Tareas y exámenes</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuenta las de todos sus profesores, no solo las tuyas.</p>
+                <div id="deberes-body"></div>
+            </div>
+
             <!-- Diagnóstico de nivel y plan de entrenamiento (entreno/diagnostico.html) -->
             <div id="diagnostico-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 id="diagnostico-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Diagnóstico y plan de entrenamiento</h2>
                 <div id="diagnostico-body"></div>
+            </div>
+
+            <!-- Reenviar el enlace para crear o cambiar la contraseña. Solo para quien
+                 coordina o administra (se muestra u oculta desde el script, según
+                 profile.es_coordinador/is_admin) y solo mirando a UN alumno: es de él. -->
+            <div id="acceso-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🔑 Acceso a la cuenta</h2>
+                <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+                <button type="button" id="acceso-reenviar" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-200 dark:hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Reenviar enlace para restablecer la contraseña</button>
+                <p id="acceso-msg" class="text-sm mt-3" aria-live="polite"></p>
             </div>
 
             <!-- A quién de la casa se le manda el informe de este alumno y cada cuánto.
@@ -271,17 +285,7 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false;
@@ -320,6 +324,21 @@
                 if (!data || data.length < PAGINA) return filas;
             }
         }
+
+        // Todo texto que escribió una persona pasa por aquí antes de entrar a un
+        // innerHTML. Vivía dentro del bloque de visitantes, como si el único texto
+        // ajeno de esta página fuera el de un formulario público — y no: el nombre
+        // de un alumno lo escribe él, `profiles_update_own` le deja editarlo y el
+        // trigger de identidad no lo revierte (solo role, email, is_admin y
+        // compañía). Un `full_name` con una etiqueta adentro se ejecutaba en la
+        // pantalla de SU PROFESOR, con la sesión del profesor puesta. No daba
+        // ningún error: la página se veía normal.
+        //
+        // La regla del sitio es la de `renderStudentsList()` y `js/notas-alumno.js`:
+        // el nombre de un alumno va por textContent. Donde hace falta armar HTML,
+        // va por aquí — y escapa también la comilla, porque hay nombres que entran
+        // en un atributo (el `title=` de barraHTML).
+        function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
         function statCard(emoji, value, label) {
             const div = document.createElement("div");
@@ -389,7 +408,7 @@
             body.innerHTML = "";
             document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
             if (!entreno.cursos.length) {
-                body.innerHTML = `<p class="text-sm text-brand-450 dark:text-brand-350">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-700 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
+                body.innerHTML = `<p class="text-sm text-brand-450 dark:text-brand-350">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (escVis(nombre) + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-700 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
             } else {
                 entreno.cursos.forEach((c) => {
                     const wrap = document.createElement("div");
@@ -465,7 +484,7 @@
             const wrap = document.createElement("div");
             const head = document.createElement("div");
             head.className = "flex items-center justify-between text-sm mb-1";
-            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${name}</span><span class="text-brand-450 dark:text-brand-350">${correct}/${total} · ${pct}%</span>`;
+            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(name)}</span><span class="text-brand-450 dark:text-brand-350">${correct}/${total} · ${pct}%</span>`;
             const track = document.createElement("div");
             track.className = "h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
             const fill = document.createElement("div");
@@ -524,6 +543,9 @@
             );
 
             renderCursosReport(entreno, true);
+            renderEvolucion(profile.id, true, "");
+            renderDeberes(profile.id, true);
+            renderNotasDelAlumno(profile.id);
             renderDiagnosticoAlumno(entreno, planCompartido);
 
             const historyEl = document.getElementById("student-history");
@@ -623,7 +645,12 @@
             document.getElementById("student-report").classList.add("hidden");
             document.getElementById("cursos-report").classList.add("hidden");
             document.getElementById("diagnostico-report").classList.add("hidden");
+            document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
+            document.getElementById("deberes-report").classList.add("hidden");
+            document.getElementById("evolucion-report").classList.add("hidden");
+            document.getElementById("notas-report").classList.add("hidden");
+            document.getElementById("notas-alumno-report").classList.add("hidden");
             document.getElementById("topic-report").classList.add("hidden");
             document.getElementById("teacher-report").classList.add("hidden");
         }
@@ -750,7 +777,11 @@
             );
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
+            renderEvolucion(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
+            renderDeberes(studentId, false);
+            renderAcceso(studentId, name);
+            renderNotas(studentId);
             renderEncargados(studentId, name);
 
             const historyEl = document.getElementById("student-history");
@@ -772,6 +803,275 @@
             document.getElementById("student-report").classList.remove("hidden");
         }
 
+        /* ---------------- Tareas y exámenes ----------------
+
+           Un solo bloque para los dos públicos, como el resto de esta página:
+           el profesor mirando a un alumno y el alumno mirándose a sí mismo ven
+           lo mismo, porque lo pinta la misma función con los mismos números.
+
+           Los números NO se cuentan acá: los da public.resumen_tareas_examenes(),
+           que es la misma que usa el informe que llega a la casa. Si esta página
+           los sumara por su cuenta, el correo y la pantalla podrían decir cosas
+           distintas del mismo alumno y nadie se enteraría hasta que una madre
+           preguntara. */
+
+        function pluralES(n, uno, varios) {
+            return `${n} ${n === 1 ? uno : varios}`;
+        }
+
+        function filaDeber(etiqueta, valor, alerta) {
+            const li = document.createElement("li");
+            li.className = "flex items-center justify-between gap-3 border-b border-brand-50 dark:border-brand-800/60 last:border-0 py-2";
+            const izq = document.createElement("span");
+            izq.className = "text-brand-500 dark:text-brand-300 text-sm";
+            izq.textContent = etiqueta;
+            const der = document.createElement("span");
+            der.className = "font-semibold text-sm " + (alerta
+                ? "text-red-600 dark:text-red-400"
+                : "text-brand-700 dark:text-brand-200");
+            der.textContent = valor;
+            li.append(izq, der);
+            return li;
+        }
+
+        function bloqueDeberes(titulo, filas, vacio) {
+            const caja = document.createElement("div");
+            const h = document.createElement("h3");
+            h.className = "font-semibold text-brand-700 dark:text-brand-200 mb-1";
+            h.textContent = titulo;
+            caja.appendChild(h);
+            if (!filas.length) {
+                const p = document.createElement("p");
+                p.className = "text-sm text-brand-450 dark:text-brand-350";
+                p.textContent = vacio;
+                caja.appendChild(p);
+                return caja;
+            }
+            const ul = document.createElement("ul");
+            filas.forEach((f) => ul.appendChild(f));
+            caja.appendChild(ul);
+            return caja;
+        }
+
+        function fechaCortaES(iso) {
+            return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long" });
+        }
+
+        /* ---------------- La bitácora ----------------
+
+           Las dos caras de siempre, pero acá NO son la misma vista: el profesor
+           escribe y el alumno lee, y lo que ve cada uno lo decide la RLS de
+           `notas_alumno`, no estas funciones. El profesor ve las que él escribió
+           (un colega que comparta el alumno no las ve); el alumno, solo las que
+           tienen compartida = true. */
+
+        /* "Cómo viene": la curva semanal y, si hizo el diagnóstico más de una
+           vez, en qué áreas mejoró. Lo pinta js/evolucion-alumno.js, que lo
+           comparten las dos vistas — escrito acá dentro, la del alumno y la del
+           profesor se irían separando a la primera corrección.
+
+           El bloque se esconde entero cuando no hay semanas con nada: un panel
+           que diga "todavía no hay datos" es ruido en todas las visitas menos
+           una, la misma decisión que la bitácora. */
+        async function renderEvolucion(studentId, propio, nombre) {
+            const panel = document.getElementById("evolucion-report");
+            document.getElementById("evolucion-title").textContent = propio ? "📈 Cómo vienes" : "📈 Cómo viene " + nombre;
+            document.getElementById("evolucion-sub").textContent = propio
+                ? "Tus últimas 12 semanas, para ver si vas subiendo o si te frenaste."
+                : "Las últimas 12 semanas. Las tarjetas de arriba son totales de siempre: solo suben, así que no dicen si se frenó.";
+            panel.classList.remove("hidden");
+
+            const comparacion = await comparacionDeDiagnosticos(studentId);
+            const semanas = await EvolucionAlumno.montar(sb, "evolucion-body", studentId, { propio, comparacion });
+            // Sin curva y sin dos diagnósticos no hay nada que mirar acá.
+            if (!semanas && !comparacion) panel.classList.add("hidden");
+        }
+
+        /* Los diagnósticos anteriores salen de `training_progress` y no del
+           espejo `training_state`: el espejo guarda SOLO el último, así que con
+           él no hay con qué comparar. Son pocas filas por alumno y la RLS ya
+           decide de quién se pueden pedir. */
+        async function comparacionDeDiagnosticos(studentId) {
+            const { data, error } = await sb.from("training_progress")
+                .select("created_at, detail")
+                .eq("student_id", studentId).eq("activity", "diagnostico")
+                .order("created_at", { ascending: false }).limit(5);
+            if (error || !data || data.length < 2) return "";
+            const ultimo = data[0], anterior = data[1];
+            // El resumen lo hace PlanEntrenamiento, que es quien sabe de áreas y
+            // porcentajes: una segunda cuenta acá podría decir otro nivel que el
+            // resto del informe. Sin el Elo, que no afecta a las áreas.
+            const lista = EvolucionAlumno.compararDiagnosticos(
+                PE.resumir(anterior.detail), PE.resumir(ultimo.detail));
+            return '<div class="mt-5 border-t border-brand-100 dark:border-brand-800 pt-4">'
+                + EvolucionAlumno.comparacionHTML(lista, fmtFecha(anterior.created_at), fmtFecha(ultimo.created_at))
+                + "</div>";
+        }
+
+        function renderNotas(studentId) {
+            document.getElementById("notas-report").classList.remove("hidden");
+            NotasAlumno.montarPanel(document.getElementById("notas-body"), {
+                sb,
+                alumnoId: studentId,
+                profesorId: profile.id,
+            });
+        }
+
+        async function renderNotasDelAlumno(studentId) {
+            const cuantas = await NotasAlumno.montarLectura(
+                document.getElementById("notas-alumno-body"), { sb, alumnoId: studentId });
+            // Sin ninguna nota compartida el bloque ni aparece.
+            document.getElementById("notas-alumno-report").classList.toggle("hidden", cuantas === 0);
+        }
+
+        async function renderDeberes(studentId, propio) {
+            const cuerpo = document.getElementById("deberes-body");
+            cuerpo.innerHTML = "";
+            document.getElementById("deberes-title").textContent = "📋 Tareas y exámenes";
+
+            // Desde siempre, como el resto de los números de esta página. El
+            // tope de arriba va un minuto adelante porque el filtro es `<`: sin
+            // eso, una tarea puesta en este mismo instante quedaría fuera.
+            const { data, error } = await sb.rpc("resumen_tareas_examenes", {
+                p_alumno: studentId,
+                p_desde: new Date(0).toISOString(),
+                p_hasta: new Date(Date.now() + 60000).toISOString(),
+            });
+            if (error || !data) {
+                cuerpo.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudieron cargar las tareas y los exámenes.</p>';
+                document.getElementById("deberes-report").classList.remove("hidden");
+                return;
+            }
+
+            const t = data.tareas || {}, e = data.examenes || {};
+            const quien = propio ? "Tienes" : "Tiene";
+
+            const filasT = [];
+            if (Number(t.puestas) > 0) {
+                filasT.push(filaDeber("Le pusieron", pluralES(Number(t.puestas), "tarea", "tareas")));
+                filasT.push(filaDeber("Terminadas", `${Number(t.completadas) || 0} de ${Number(t.puestas)}`));
+                if (Number(t.renglones) > 0) {
+                    filasT.push(filaDeber("Renglones cumplidos",
+                        `${Number(t.cumplidos) || 0} de ${Number(t.renglones)}`));
+                }
+            }
+            if (Number(t.sin_hacer_hoy) > 0) {
+                filasT.push(filaDeber("Se le pasó la fecha de",
+                    pluralES(Number(t.sin_hacer_hoy), "tarea", "tareas"), true));
+            }
+            if (Number(t.pendientes) > 0) {
+                filasT.push(filaDeber("Por hacer",
+                    pluralES(Number(t.pendientes), "tarea", "tareas") +
+                    (t.proxima_vence ? ` · la próxima vence el ${fechaCortaES(t.proxima_vence)}` : "")));
+            }
+
+            const filasE = [];
+            if (Number(e.rendidos) > 0) {
+                filasE.push(filaDeber("Rendidos", pluralES(Number(e.rendidos), "examen", "exámenes")));
+                if (e.nota_media != null) {
+                    filasE.push(filaDeber(Number(e.rendidos) > 1 ? "Nota promedio" : "Nota",
+                        Number(e.nota_media).toFixed(2).replace(".", ",") + " de 10"));
+                }
+                if (e.mejor_nota != null && Number(e.rendidos) > 1) {
+                    filasE.push(filaDeber("Mejor nota",
+                        Number(e.mejor_nota).toFixed(2).replace(".", ",") + " de 10"));
+                }
+            }
+            if (Number(e.sin_hacer_hoy) > 0) {
+                filasE.push(filaDeber("Se le pasó la fecha de",
+                    pluralES(Number(e.sin_hacer_hoy), "examen", "exámenes"), true));
+            }
+            if (Number(e.pendientes) > 0) {
+                filasE.push(filaDeber("Por rendir",
+                    pluralES(Number(e.pendientes), "examen", "exámenes") +
+                    (e.proximo_vence ? ` · hasta el ${fechaCortaES(e.proximo_vence)}` : "")));
+            }
+
+            const grid = document.createElement("div");
+            grid.className = "grid gap-6 sm:grid-cols-2";
+            grid.append(
+                bloqueDeberes("Tareas", filasT, propio ? "Todavía no te han puesto ninguna tarea." : "Todavía no le han puesto ninguna tarea."),
+                bloqueDeberes("Exámenes", filasE, propio ? "Todavía no te han puesto ningún examen." : "Todavía no le han puesto ningún examen.")
+            );
+            cuerpo.appendChild(grid);
+
+            // El aviso de lo atrasado va arriba y con todas las letras: es la
+            // única línea de este bloque que pide hacer algo hoy.
+            const atrasado = (Number(t.sin_hacer_hoy) || 0) + (Number(e.sin_hacer_hoy) || 0);
+            if (atrasado > 0) {
+                const aviso = document.createElement("p");
+                aviso.className = "mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-medium";
+                aviso.textContent = `${quien} ${pluralES(atrasado, "entrega vencida", "entregas vencidas")} sin hacer.`;
+                cuerpo.insertBefore(aviso, grid);
+            }
+            document.getElementById("deberes-report").classList.remove("hidden");
+        }
+
+        /* ---------------- Acceso a la cuenta ----------------
+           Reenviar a UN alumno el enlace para crear o cambiar su contraseña,
+           a pedido de quien coordina o administra — no del propio alumno, que
+           ya tiene su "¿Olvidaste tu contraseña?" en login.html. Existe para
+           cuando una familia dice que el correo de bienvenida nunca llegó o
+           que ya no encuentra la contraseña: sin esto, la única salida era
+           pedirle a alguien de sistemas que la reseteara a mano.
+
+           La Edge Function reenviar-acceso decide a quién se le puede mandar
+           (soy_coordinador() y que ese alumno sea suyo) y a dónde sale el
+           correo (correo_de_contacto(), la misma regla que usan los informes
+           a la casa): acá solo se pinta el botón y se dice qué contestó. */
+        const FUNCION_ACCESO = `${window.SUPABASE_URL}/functions/v1/reenviar-acceso`;
+
+        function esCoordinadorOAdmin() {
+            return !!(profile && (profile.es_coordinador || profile.is_admin));
+        }
+
+        function renderAcceso(studentId, nombreAlumno) {
+            const card = document.getElementById("acceso-report");
+            if (!esCoordinadorOAdmin()) { card.classList.add("hidden"); return; }
+            card.classList.remove("hidden");
+            document.getElementById("acceso-info").textContent =
+                `Por si la familia dice que el correo de bienvenida nunca llegó o que ya no encuentra ` +
+                `la contraseña: le vuelve a mandar el enlace para crear una nueva.`;
+
+            const btn = document.getElementById("acceso-reenviar");
+            const msg = document.getElementById("acceso-msg");
+            msg.textContent = "";
+            btn.disabled = false;
+            btn.textContent = "Reenviar enlace para restablecer la contraseña";
+            btn.onclick = async () => {
+                if (!confirm(`¿Mandarle a ${nombreAlumno} un enlace nuevo para restablecer su contraseña?`)) return;
+                btn.disabled = true;
+                btn.textContent = "Enviando…";
+                msg.textContent = "";
+                try {
+                    // El token se pide fresco, no del `session` guardado al cargar la
+                    // página: ese es una foto de un solo momento y el access_token
+                    // expira. Misma razón que llamarInformes() más abajo.
+                    const { data: fresca } = await sb.auth.getSession();
+                    if (!fresca.session) { window.location.href = "login.html"; return; }
+                    const res = await fetch(FUNCION_ACCESO, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${fresca.session.access_token}`,
+                            "apikey": window.SUPABASE_ANON_KEY,
+                        },
+                        body: JSON.stringify({ alumno_id: studentId }),
+                    });
+                    const r = await res.json().catch(() => ({}));
+                    if (!res.ok || r.error) throw new Error(r.error || "No se pudo enviar");
+                    msg.textContent = `Enviado a ${r.correo_destino}.`;
+                    msg.className = "text-sm mt-3 text-green-700 dark:text-green-400";
+                } catch (err) {
+                    msg.textContent = err.message;
+                    msg.className = "text-sm mt-3 text-red-600 dark:text-red-400";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Reenviar enlace para restablecer la contraseña";
+                }
+            };
+        }
+
         /* ---------------- Informes a la casa ----------------
            A quién se le manda el informe de este alumno y cada cuánto. El envío
            automático lo hace pg_cron una vez al día llamando a la Edge Function
@@ -789,11 +1089,19 @@
         let encargadoAlumno = null;   // el alumno que se está mirando
 
         async function llamarInformes(cuerpo) {
+            // El token se pide fresco en cada llamada, no del `session` que se
+            // guardó al cargar la página: ese es una foto de un solo momento y
+            // el access_token expira (una hora). sb lo renueva solo por dentro
+            // mientras la pestaña sigue abierta, pero la variable `session`
+            // nunca se entera del renuevo. Con el token viejo, la función
+            // respondía "Token inválido" sin ninguna otra pista.
+            const { data: fresca } = await sb.auth.getSession();
+            if (!fresca.session) { window.location.href = "login.html"; return; }
             const res = await fetch(FUNCION_INFORMES, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "Authorization": `Bearer ${fresca.session.access_token}`,
                     "apikey": window.SUPABASE_ANON_KEY,
                 },
                 body: JSON.stringify(cuerpo),
@@ -814,7 +1122,7 @@
             const { data, error } = await sb.from("encargados")
                 .select("*").eq("student_id", studentId).order("created_at");
             if (error) {
-                caja.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudo cargar: ' + error.message + "</p>";
+                caja.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudo cargar: ' + escVis(error.message) + "</p>";
                 return;
             }
             caja.innerHTML = "";
@@ -978,6 +1286,7 @@
             mates: "♚ Mates resueltos",
             tactica: "⚔️ Táctica — posiciones resueltas",
             diagnostico: "🧭 Diagnóstico de nivel — resumen y gráficos del grupo",
+            "diagnostico-publico": "🌐 Diagnósticos de nivel del público — quiénes lo hicieron y a quién falta atender",
             arbitraje: "⚖️ Exámenes de arbitraje del público — quiénes lo hicieron y a quién falta responder",
             concentracion: "🧠 Concentración — ejercicios resueltos",
             cursos: "🏛️ Cursos — temas estudiados por alumno",
@@ -1006,6 +1315,16 @@
             }
             if (topic === "cursos") {
                 renderCursosClase(body);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+            /* El diagnóstico público, SOLO. Ya sale dentro del tema "diagnostico"
+               (debajo de los alumnos) y en el resumen general, pero ahí es un
+               apartado al que hay que bajar; acá es la pregunta entera, igual
+               que con los exámenes de arbitraje del público. Son contactos para
+               invitar a Academia, así que se consultan seguido. */
+            if (topic === "diagnostico-publico") {
+                renderDiagnosticosVisitantes(body);
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }
@@ -1038,7 +1357,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
                         body.appendChild(row);
                     });
             } else {
@@ -1059,7 +1378,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.label}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.label}</span>`;
                         body.appendChild(row);
                     });
             }
@@ -1148,7 +1467,7 @@
             if (e.declarado) {
                 return `<p class="text-xs text-brand-600 dark:text-brand-300 mt-2"><strong>Elo ${e.declarado}</strong> (${e.tipoEtiqueta}) · la prueba sugiere ≈${e.estimado} · nivel calculado con ambos (≈${e.combinado}). ${e.lectura.texto}</p>`;
             }
-            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agregá tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
+            return `<p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Sin Elo registrado: el nivel sale solo de la prueba (≈${e.estimado}).${propio ? ' <a href="configuracion.html" class="text-accent-700 dark:text-accent-400 hover:underline">Agrega tu Elo en Configuración</a> y el análisis lo tendrá en cuenta.' : ''}</p>`;
         }
 
         // Elo del alumno, editable por su profesor o un administrador (función
@@ -1244,8 +1563,8 @@
 
         function sinDiagnosticoHTML(nombre, esProfesor) {
             return esProfesor
-                ? `<p class="text-sm text-brand-500 dark:text-brand-300">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
-                : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 56 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
+                ? `<p class="text-sm text-brand-500 dark:text-brand-300">${escVis(nombre)} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
+                : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 63 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
         }
 
@@ -1380,7 +1699,7 @@
         // y pegada a la línea de base, y el valor siempre en texto al lado.
         function barraHTML(pct, titulo) {
             const banda = bandaDe(pct);
-            return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${titulo}">
+            return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${escVis(titulo)}">
                 <div class="h-full ${banda.clase} rounded-r" style="width:${Math.max(pct, 1)}%"></div>
             </div>`;
         }
@@ -1552,9 +1871,6 @@ function areasFlojasArbitraje(fila) {
     .map((a) => `${a.nombre.toLowerCase()} (${a.porcentaje}%)`);
 }
 
-        // Texto de visitantes (nombre, correo, teléfono) → HTML seguro.
-        function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
-
         // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
         // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
         function renderDiagnosticosVisitantes(contenedor) {
@@ -1617,7 +1933,7 @@ function areasFlojasArbitraje(fila) {
 
             if (!conDiagnostico.length) {
                 const empezados = pendientes.filter((p) => p.aMedias);
-                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; también se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a> (material docente: trae las respuestas y va con marca de agua, no se le entrega al alumno).</p>`;
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${escVis(p.nombre)} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Evaluaciones › Diagnóstico de nivel y toma unos 20 minutos.${profile && profile.is_admin ? ` También se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a>, y para estudiar y corregir está <a href="libro-de-diagnostico.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">el libro con el banco entero</a> (los dos traen las respuestas: son solo para administración).` : ""}</p>`;
                 return;
             }
 
@@ -1655,7 +1971,7 @@ function areasFlojasArbitraje(fila) {
                     ${conDiagnostico.map((d) => `
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
-                                <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
                                 <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
                             </div>
                             ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
@@ -1677,15 +1993,15 @@ function areasFlojasArbitraje(fila) {
                 </div>
 
                 <h3 class="font-serif font-bold text-brand-800 dark:text-white mt-7 mb-1">El perfil de cada alumno</h3>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Las ocho áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Las nueve áreas de cada diagnóstico, en el mismo orden en todos: se ve de un vistazo quién tiene un perfil parejo y quién un hueco puntual.</p>
                 <div class="grid sm:grid-cols-2 gap-4">
                     ${conDiagnostico.map((d) => `
                         <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-3">
                             <div class="flex items-baseline justify-between gap-2 mb-2">
-                                <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
                                 <span class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
                             </div>
-                            <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${d.nombre}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
+                            <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${escVis(d.nombre)}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
                                 ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.porcentaje).clase} rounded-t" style="height:${Math.max(a.porcentaje, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.porcentaje).etiqueta})"></div>`).join("")}
                             </div>
                             <div class="flex gap-[2px] mt-1">

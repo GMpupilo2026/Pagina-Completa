@@ -76,7 +76,6 @@
   let evalRequestId = 0; // descarta respuestas de evaluación que ya quedaron obsoletas (posición cambió)
   let resigned = false; // true si el visitante se rindió (termina la partida como derrota suya)
   let startFen = null; // FEN inicial de la partida actual si viene de "Modo Desafío"; null = partida estándar desde el inicio
-  let challengeEntry = null; // {fen, opponent, date, oscarColor, result, moveNum} si estamos jugando el Modo Desafío
   let gameStartTime = Date.now(); // marca de tiempo del inicio de la partida actual, para calcular la duración
   let lastAnalysis = null; // {accuracy, flaggedCount, plies} tras "Analizar mis jugadas" (para el modal/correo)
   let closeEndGameModal = null; // cierra el modal de fin de partida abierto, si lo hay (ver showEndGameModal)
@@ -1089,27 +1088,6 @@
     return items.slice(0, -1).join(", ") + " y " + items[items.length - 1];
   }
 
-  function describeSide(color) {
-    const board = game.board();
-    const byType = { k: [], q: [], r: [], b: [], n: [], p: [] };
-    for (let r = 0; r < 8; r++) {
-      for (let f = 0; f < 8; f++) {
-        const cell = board[r][f];
-        if (cell && cell.color === color) byType[cell.type].push(FILES[f] + (8 - r));
-      }
-    }
-    const parts = [];
-    for (const type of POSITION_PIECE_ORDER) {
-      const squares = byType[type];
-      if (!squares.length) continue;
-      squares.sort();
-      const forms = PIECE_NAME_FORMS[type];
-      const label = squares.length === 1 ? forms.singular : forms.plural;
-      parts.push(`${label} ${joinSpanishList(squares)}`);
-    }
-    return parts.length ? parts.join(", ") : "sin piezas en el tablero";
-  }
-
   // Cada columna (a-h) tiene una palabra propia para poder distinguir las casillas con
   // claridad al oído (parecido al alfabeto fonético "Alfa, Bravo, Charlie…", pero con la
   // letra inicial de cada palabra igual a la columna): a=anna, b=bella, c=cesar, d=david,
@@ -2112,7 +2090,6 @@
     if (!startFen) colorBeforeChallenge = colorEl ? colorEl.value : "w"; // sólo la 1a vez que se entra (no al cambiar de posición estando ya en modo desafío)
     currentPositionIndex = index;
     const entry = positionEntryFromRow(window.OSCAR_POSITIONS[index]);
-    challengeEntry = entry;
     startFen = entry.fen;
     const turnField = entry.fen.split(" ")[1]; // "w" o "b": a quién le toca mover en esa posición real
     userColor = turnField === "b" ? "b" : "w";
@@ -2144,7 +2121,6 @@
   if (challengeExitBtn) {
     challengeExitBtn.addEventListener("click", () => {
       startFen = null;
-      challengeEntry = null;
       if (colorEl) {
         colorEl.disabled = false;
         colorEl.value = colorBeforeChallenge || "w";

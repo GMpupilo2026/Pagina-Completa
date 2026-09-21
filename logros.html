@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Logros — Ajedrez Integral</title>
+    <meta name="robots" content="noindex">
+    <meta name="description" content="Tu racha de días de entrenamiento y las medallas que has ganado en la Academia.">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tiempo-plataforma.js" data-activity="logros"></script>
+    <script src="js/logros-catalogo.js"></script>
+    <script src="js/logros.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <!-- ===== PASSWORD GATE ===== -->
+    <div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+        <div class="w-full max-w-sm text-center">
+            <p class="text-5xl mb-4" aria-hidden="true">🏅</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Logros</h1>
+            <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+        </div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div id="app" class="hidden pt-20 pb-16">
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 pb-5 mb-8 border-b border-brand-200 dark:border-brand-800">
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Logros 🏅</h1>
+                <a href="clases.html" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Academia</a>
+            </div>
+
+            <!-- ===== Racha de días ===== -->
+            <section aria-labelledby="racha-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="racha-titulo" class="sr-only">Tu racha de días</h2>
+                <div class="flex flex-wrap items-center gap-6">
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-brand-800 dark:text-white" id="racha-actual">—</div>
+                        <div class="text-xs font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mt-1">🔥 días seguidos</div>
+                    </div>
+                    <div class="flex-1 min-w-[220px]">
+                        <p class="text-sm text-brand-500 dark:text-brand-300" id="racha-record-texto">Cargando tu racha…</p>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 mt-1" id="racha-hoy-texto"></p>
+                        <div class="mt-2 flex gap-1" id="racha-hoy-barra" role="img" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-4 pt-4 border-t border-brand-50 dark:border-brand-800">
+                    Un día cuenta para la racha si resuelves al menos 5 ejercicios de cualquier tipo: Mates, 4×4,
+                    Aprende, Coordenadas, Ejercicios por tema, Practicar, Concentración, Diagnóstico de nivel,
+                    Aperturas y celadas, Confites del caballo, Ilumina el tablero o Visualización.
+                </p>
+            </section>
+
+            <p id="sin-sesion-aviso" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 text-sm text-brand-500 dark:text-brand-300">
+                No se pudo cargar tu racha ni tus logros en este momento — vuelve a intentarlo más tarde.
+            </p>
+
+            <!-- ===== Grilla de logros, agrupados por categoría ===== -->
+            <div id="logros-grid"></div>
+        </main>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+        const gate = document.getElementById('gate');
+        const app = document.getElementById('app');
+        const gateChecking = document.getElementById('gate-checking');
+        const NEXT_PATH = 'logros.html';
+
+        // Un nombre de sección por categoría, en el mismo orden en que el
+        // catálogo ya las agrupa (js/logros-catalogo.js) — así no hace falta
+        // una segunda lista con el orden a mano, que se iría separando de la
+        // primera a la primera corrección.
+        const CATEGORIA_TITULO = {
+            racha: "Racha de días",
+            ejercicios: "Ejercicios resueltos",
+            variedad: "Variedad",
+            dias: "Días de práctica",
+            mates: "Mates",
+            "4x4": "4×4",
+            temas: "Ejercicios por tema",
+            tactica: "Táctica de ataque",
+            aprender: "Aprende",
+            coordenadas: "Coordenadas",
+            practicar: "Practicar",
+            concentracion: "Concentración",
+            diagnostico: "Diagnóstico de nivel",
+            aperturas: "Aperturas y celadas",
+            confites: "Confites del caballo",
+            ilumina: "Ilumina el tablero",
+            visualizacion: "Visualización",
+        };
+        const NIVEL_TEXTO = { bronce: "Bronce", plata: "Plata", oro: "Oro", diamante: "Diamante" };
+
+        function fmt(n) { return new Intl.NumberFormat("es-CR").format(n); }
+
+        function pintarRacha(stats) {
+            document.getElementById("racha-actual").textContent = fmt(stats.racha_actual);
+            const record = stats.racha_record > stats.racha_actual
+                ? ` Tu récord es de ${fmt(stats.racha_record)} días.`
+                : (stats.racha_record > 0 ? " Es tu récord — nunca habías llegado tan lejos." : "");
+            document.getElementById("racha-record-texto").textContent =
+                (stats.racha_actual > 0
+                    ? `Llevas ${fmt(stats.racha_actual)} día${stats.racha_actual === 1 ? "" : "s"} seguidos con al menos 5 ejercicios.`
+                    : "Todavía no tienes una racha activa — resuelve 5 ejercicios hoy para empezarla.") + record;
+
+            const meta = window.Logros.META_DIARIA;
+            const hoy = Math.min(stats.hoy_ejercicios, meta);
+            document.getElementById("racha-hoy-texto").textContent = stats.hoy_ejercicios >= meta
+                ? `Hoy ya llevas ${fmt(stats.hoy_ejercicios)} ejercicios — el día de hoy ya cuenta para la racha. ✅`
+                : `Hoy llevas ${stats.hoy_ejercicios} de ${meta} ejercicios para que el día cuente.`;
+            const barra = document.getElementById("racha-hoy-barra");
+            barra.innerHTML = "";
+            for (let i = 0; i < meta; i++) {
+                const seg = document.createElement("span");
+                seg.className = "h-2 flex-1 rounded-full " + (i < hoy ? "bg-accent-500" : "bg-brand-100 dark:bg-brand-800");
+                barra.appendChild(seg);
+            }
+        }
+
+        function tarjetaLogro(l) {
+            const card = document.createElement("li");
+            card.className = "flex flex-col gap-2 rounded-xl border p-4 " +
+                (l.conseguido
+                    ? "bg-white dark:bg-brand-900 border-accent-400 dark:border-accent-500"
+                    : "bg-brand-50/60 dark:bg-brand-900/40 border-brand-100 dark:border-brand-800 opacity-75");
+            const cabecera = document.createElement("div");
+            cabecera.className = "flex items-start gap-3";
+            const icono = document.createElement("span");
+            icono.className = "text-2xl shrink-0";
+            icono.setAttribute("aria-hidden", "true");
+            icono.textContent = l.conseguido ? l.emoji : "🔒";
+            const texto = document.createElement("div");
+            texto.className = "flex-1 min-w-0";
+            const nombre = document.createElement("p");
+            nombre.className = "font-semibold text-sm text-brand-800 dark:text-white";
+            nombre.textContent = l.nombre;
+            const desc = document.createElement("p");
+            desc.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5";
+            desc.textContent = l.descripcion;
+            texto.append(nombre, desc);
+            cabecera.append(icono, texto);
+
+            const pie = document.createElement("div");
+            pie.className = "flex items-center justify-between gap-2 mt-auto pt-1";
+            const nivel = document.createElement("span");
+            nivel.className = "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-500 dark:text-brand-300";
+            nivel.textContent = NIVEL_TEXTO[l.nivel] || l.nivel;
+            const progreso = document.createElement("span");
+            progreso.className = "text-xs font-medium " + (l.conseguido ? "text-accent-700 dark:text-accent-400" : "text-brand-450 dark:text-brand-350");
+            progreso.textContent = l.conseguido ? "Conseguido ✔" : `${fmt(l.valor)} / ${fmt(l.meta)}`;
+            pie.append(nivel, progreso);
+
+            const barra = document.createElement("div");
+            barra.className = "h-1.5 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
+            const relleno = document.createElement("div");
+            relleno.className = "h-full rounded-full " + (l.conseguido ? "bg-accent-500" : "bg-brand-300 dark:bg-brand-600");
+            relleno.style.width = Math.round(l.progreso * 100) + "%";
+            barra.appendChild(relleno);
+
+            card.append(cabecera, barra, pie);
+            return card;
+        }
+
+        function pintarLogros(logros) {
+            const cont = document.getElementById("logros-grid");
+            cont.innerHTML = "";
+            let categoriaActual = null, ul = null;
+            logros.forEach((l) => {
+                if (l.categoria !== categoriaActual) {
+                    categoriaActual = l.categoria;
+                    const section = document.createElement("section");
+                    const conseguidos = logros.filter((x) => x.categoria === categoriaActual && x.conseguido).length;
+                    const total = logros.filter((x) => x.categoria === categoriaActual).length;
+                    const h2 = document.createElement("h2");
+                    h2.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 mt-8 first:mt-0";
+                    h2.textContent = (CATEGORIA_TITULO[categoriaActual] || categoriaActual) + ` (${conseguidos}/${total})`;
+                    ul = document.createElement("ul");
+                    ul.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3";
+                    section.append(h2, ul);
+                    cont.appendChild(section);
+                }
+                ul.appendChild(tarjetaLogro(l));
+            });
+        }
+
+        async function unlock() {
+            gate.classList.add("hidden");
+            app.classList.remove("hidden");
+            const { stats, logros, error } = await window.Logros.cargar();
+            document.getElementById("sin-sesion-aviso").classList.toggle("hidden", !error);
+            pintarRacha(stats);
+            pintarLogros(logros);
+        }
+
+        // Igual que Entrenamiento: exige sesión iniciada en el sitio, porque
+        // la racha y los logros salen de training_progress y son de cada
+        // cuenta, no del aparato.
+        async function requireLoginThenGate() {
+            let hasSession = false;
+            try {
+                const { data } = await sb.auth.getSession();
+                hasSession = !!(data && data.session);
+            } catch (e) {
+                hasSession = false;
+            }
+            if (!hasSession) {
+                gateChecking.textContent = "Necesitas iniciar sesión en el sitio para ver tus logros. Redirigiendo a iniciar sesión…";
+                window.location.href = "login.html?next=" + encodeURIComponent(NEXT_PATH);
+                return;
+            }
+            gateChecking.classList.add("hidden");
+            unlock();
+        }
+
+        requireLoginThenGate();
+    </script>
+</body>
+</html>

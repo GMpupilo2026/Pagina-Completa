@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Inscripciones a torneos en línea — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: las inscripciones recibidas por el formulario de torneos en línea.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Solo para quien administra o coordina</h1>
+            <p class="text-brand-500 dark:text-brand-300">Estas inscripciones traen datos personales de menores de edad, así que no las ve todo el equipo docente. Si crees que deberías tener acceso, pídeselo a la persona administradora.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">← Volver a la Academia</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="admin.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 👑 Administración</a>
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-2">
+                <div>
+                    <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">🏅 Inscripciones a torneos en línea</h1>
+                    <p class="text-brand-500 dark:text-brand-300 mt-1">Lo que llegó por el formulario público de <a href="inscripcion.html" class="text-accent-700 dark:text-accent-400 hover:underline">inscripcion.html</a>.</p>
+                </div>
+                <button type="button" id="csv-btn" class="bg-brand-700 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
+            </div>
+            <p class="text-xs rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200 mb-6">
+                🔒 Acá hay cédulas, fechas de nacimiento y teléfonos de personas menores de edad. Se piden para inscribirlas en el torneo y no son para nada más: no se comparten ni se publican, y el archivo que se baja tampoco.
+            </p>
+
+            <!-- Las tarjetas de arriba: cuántas van y cómo se reparten. -->
+            <div id="totales" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Las inscripciones</h2>
+                        <p id="resumen" class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">Cargando…</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <label for="buscar" class="sr-only">Buscar una inscripción</label>
+                        <input id="buscar" type="search" placeholder="🔍 Nombre, cédula, centro o correo…" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full sm:w-64 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <label for="f-provincia" class="sr-only">Filtrar por provincia</label>
+                        <select id="f-provincia" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        <label for="f-grado" class="sr-only">Filtrar por grado</label>
+                        <select id="f-grado" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        <label for="f-centro" class="sr-only">Filtrar por tipo de centro</label>
+                        <select id="f-centro" class="px-2 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">Inscripciones recibidas por el formulario de torneos en línea</caption>
+                        <thead>
+                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                <th scope="col" class="py-2 pr-3 font-semibold">Fecha</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[13rem]">Persona</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Edad</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold min-w-[14rem]">Centro educativo</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Grado</th>
+                                <th scope="col" class="py-2 pr-3 font-semibold">Provincia</th>
+                                <th scope="col" class="py-2 font-semibold text-right">Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpo"></tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-center">
+                    <button id="ver-mas" type="button" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más inscripciones</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+/* Las inscripciones al torneo en línea, para quien administra o coordina.
+ *
+ * DE DÓNDE SALEN, que es lo raro de esta página: no del Supabase de la
+ * Academia sino del OTRO, el de "Base de Colegios", que es donde
+ * inscripcion.html las escribe. Y no se leen directo: `public.inscripciones`
+ * tiene RLS y ni una sola política, así que desde el navegador no la lee nadie
+ * —son cédulas, fechas de nacimiento y teléfonos de menores, y la clave pública
+ * de ese proyecto está escrita dentro de inscripcion.html—. Las trae la Edge
+ * Function `inscripciones-torneo`, que lee con la service role y antes le
+ * pregunta a la Academia si quien llama administra o coordina (le reenvía la
+ * sesión y llama a `public.soy_coordinador()`). O sea: el permiso lo decide la
+ * misma regla que decide cobros.html, no un `if` de esta página.
+ *
+ * Por eso acá no hay ningún `sb.from("inscripciones")` y no lo puede haber.
+ *
+ * El filtro y el orden sí son del navegador: llegan todas de una (son
+ * decenas, no miles) y filtrar acá evita un viaje por cada tecla. Lo que NO se
+ * hace acá es cortar la lista a mil filas sin avisar — eso lo resuelve la
+ * función, que las pide de mil en mil.
+ */
+const FUNCION = "https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/inscripciones-torneo";
+
+let inscripciones = [];
+const POR_PAGINA = 50;
+let mostradas = POR_PAGINA;
+
+/* El único camino por el que entra la lista. Está en una función suya para que
+   se vea de un golpe que no hay otro: ni un `sb.from("inscripciones")` acá ni
+   en ninguna parte. */
+async function pedirInscripciones(token) {
+    const res = await fetch(FUNCION, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: "{}",
+    });
+    const cuerpo = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(cuerpo.error || "No se pudo leer las inscripciones.");
+    return cuerpo.inscripciones || [];
+}
+
+function esc(t) {
+    return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function sinTildes(t) {
+    return String(t == null ? "" : t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+function fmtFecha(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return isNaN(d) ? "—" : d.toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" });
+}
+function nombreCompleto(i) {
+    return [i.nombre, i.apellido1, i.apellido2].filter(Boolean).join(" ") || "(sin nombre)";
+}
+
+/* ------------------------------------------------------------ los filtros */
+
+// Cada selector se arma con los valores que DE VERDAD hay, no con una lista
+// escrita a mano: el día que entre una provincia nueva aparece sola, y una que
+// nadie eligió no ocupa lugar.
+function llenarSelector(id, etiquetaTodos, valores) {
+    const sel = document.getElementById(id);
+    const previo = sel.value;
+    const unicos = [...new Set(valores.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), "es"));
+    sel.innerHTML = '<option value="">' + etiquetaTodos + "</option>" +
+        unicos.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    if (previo && unicos.includes(previo)) sel.value = previo;
+}
+
+function filtradas() {
+    const texto = sinTildes(document.getElementById("buscar").value.trim());
+    const provincia = document.getElementById("f-provincia").value;
+    const grado = document.getElementById("f-grado").value;
+    const centro = document.getElementById("f-centro").value;
+    return inscripciones.filter((i) => {
+        if (provincia && i.provincia !== provincia) return false;
+        if (grado && i.grado !== grado) return false;
+        if (centro && i.tipo_centro !== centro) return false;
+        if (!texto) return true;
+        return sinTildes(nombreCompleto(i)).includes(texto)
+            || sinTildes(i.cedula).includes(texto)
+            || sinTildes(i.centro).includes(texto)
+            || sinTildes(i.correo).includes(texto)
+            || sinTildes(i.contacto).includes(texto);
+    });
+}
+
+/* ------------------------------------------------------------ lo que se ve */
+
+function pintarTotales() {
+    const caja = document.getElementById("totales");
+    caja.innerHTML = "";
+    const centros = new Set(inscripciones.map((i) => i.centro).filter(Boolean)).size;
+    const provincias = new Set(inscripciones.map((i) => i.provincia).filter(Boolean)).size;
+    const edades = inscripciones.map((i) => Number(i.edad)).filter((n) => n > 0);
+    const promedio = edades.length ? Math.round(edades.reduce((a, b) => a + b, 0) / edades.length) : null;
+    [
+        ["🏅", inscripciones.length, inscripciones.length === 1 ? "inscripción" : "inscripciones"],
+        ["🏫", centros, centros === 1 ? "centro educativo" : "centros educativos"],
+        ["📍", provincias, provincias === 1 ? "provincia" : "provincias"],
+        ["🎂", promedio == null ? "—" : promedio, "edad promedio"],
+    ].forEach(([emoji, valor, etiqueta]) => {
+        const d = document.createElement("div");
+        d.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 text-center";
+        d.innerHTML = '<p class="text-2xl" aria-hidden="true">' + emoji + "</p>"
+            + '<p class="text-2xl font-bold text-brand-800 dark:text-white">' + esc(valor) + "</p>"
+            + '<p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">' + esc(etiqueta) + "</p>";
+        caja.appendChild(d);
+    });
+}
+
+// Lo que no cabe en la fila: se despliega debajo, en vez de estirar la tabla a
+// quince columnas que nadie puede leer.
+function filaDetalle(i) {
+    const tr = document.createElement("tr");
+    tr.className = "bg-brand-50 dark:bg-brand-950/60";
+    const td = document.createElement("td");
+    td.colSpan = 7;
+    td.className = "px-3 py-3";
+    const campos = [
+        ["Cédula", i.cedula],
+        ["Fecha de nacimiento", i.fecha_nacimiento ? fmtFecha(i.fecha_nacimiento) : null],
+        ["Género", i.genero],
+        ["Teléfono", i.contacto],
+        ["Correo", i.correo],
+        ["Cantón", i.canton],
+        ["Tipo de centro", i.tipo_centro],
+        ["Dirección regional", i.direccion_regional],
+        ["Circuito", i.circuito],
+        ["Zona", i.zona],
+        ["Modalidad", i.modalidad],
+        ["Usuario", i.usuario],
+        ["Aceptó el trato de sus datos", i.acepto_datos ? "Sí" : "No"],
+    ];
+    const dl = document.createElement("dl");
+    dl.className = "grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 text-xs";
+    campos.forEach(([etiqueta, valor]) => {
+        const fila = document.createElement("div");
+        fila.className = "flex gap-2";
+        const dt = document.createElement("dt");
+        dt.className = "text-brand-450 dark:text-brand-350 shrink-0";
+        dt.textContent = etiqueta + ":";
+        const dd = document.createElement("dd");
+        dd.className = "text-brand-700 dark:text-brand-200 break-words min-w-0";
+        if (etiqueta === "Correo" && valor) {
+            const a = document.createElement("a");
+            a.href = "mailto:" + valor; a.textContent = valor;
+            a.className = "text-accent-700 dark:text-accent-400 hover:underline";
+            dd.appendChild(a);
+        } else if (etiqueta === "Teléfono" && valor) {
+            const a = document.createElement("a");
+            a.href = "https://wa.me/" + String(valor).replace(/[^\d]/g, "");
+            a.target = "_blank"; a.rel = "noopener"; a.textContent = valor;
+            a.className = "text-accent-700 dark:text-accent-400 hover:underline";
+            dd.appendChild(a);
+        } else {
+            dd.textContent = valor == null || valor === "" ? "—" : String(valor);
+        }
+        fila.append(dt, dd);
+        dl.appendChild(fila);
+    });
+    td.appendChild(dl);
+    tr.appendChild(td);
+    return tr;
+}
+
+function pintar() {
+    const cuerpo = document.getElementById("cuerpo");
+    const masBtn = document.getElementById("ver-mas");
+    cuerpo.innerHTML = "";
+    const encontradas = filtradas();
+    const visibles = encontradas.slice(0, mostradas);
+    const resumen = document.getElementById("resumen");
+    const hayFiltro = !!document.getElementById("buscar").value.trim()
+        || !!document.getElementById("f-provincia").value
+        || !!document.getElementById("f-grado").value
+        || !!document.getElementById("f-centro").value;
+
+    if (!visibles.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.className = "py-6 text-center text-brand-450 dark:text-brand-350";
+        td.textContent = inscripciones.length
+            ? "Ninguna inscripción coincide con el filtro."
+            : "Todavía no ha llegado ninguna inscripción.";
+        tr.appendChild(td); cuerpo.appendChild(tr);
+        resumen.textContent = td.textContent;
+        masBtn.hidden = true;
+        return;
+    }
+
+    visibles.forEach((i) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-brand-50 dark:border-brand-800/60 align-middle";
+
+        const tdFecha = document.createElement("td");
+        tdFecha.className = "py-2 pr-3 text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap";
+        tdFecha.textContent = fmtFecha(i.creado_en);
+
+        const tdPersona = document.createElement("td");
+        tdPersona.className = "py-2 pr-3";
+        const nom = document.createElement("p");
+        nom.className = "font-medium text-brand-800 dark:text-white";
+        nom.textContent = nombreCompleto(i);
+        const ced = document.createElement("p");
+        ced.className = "text-xs text-brand-450 dark:text-brand-350";
+        ced.textContent = i.cedula ? "Cédula " + i.cedula : "—";
+        tdPersona.append(nom, ced);
+
+        const tdEdad = document.createElement("td");
+        tdEdad.className = "py-2 pr-3 text-brand-600 dark:text-brand-300 whitespace-nowrap";
+        tdEdad.textContent = i.edad == null ? "—" : String(i.edad);
+
+        const tdCentro = document.createElement("td");
+        tdCentro.className = "py-2 pr-3 text-brand-600 dark:text-brand-300";
+        tdCentro.textContent = i.centro || "—";
+
+        const tdGrado = document.createElement("td");
+        tdGrado.className = "py-2 pr-3 text-brand-600 dark:text-brand-300 whitespace-nowrap";
+        tdGrado.textContent = i.grado || "—";
+
+        const tdProv = document.createElement("td");
+        tdProv.className = "py-2 pr-3 text-brand-600 dark:text-brand-300 whitespace-nowrap";
+        tdProv.textContent = i.provincia || "—";
+
+        const tdVer = document.createElement("td");
+        tdVer.className = "py-2 text-right";
+        const ver = document.createElement("button");
+        ver.type = "button";
+        ver.className = "text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        ver.textContent = "Ver detalle";
+        ver.setAttribute("aria-expanded", "false");
+        ver.addEventListener("click", () => {
+            const abierto = ver.getAttribute("aria-expanded") === "true";
+            if (abierto) {
+                if (tr.nextSibling && tr.nextSibling.dataset && tr.nextSibling.dataset.detalle) tr.nextSibling.remove();
+                ver.setAttribute("aria-expanded", "false");
+                ver.textContent = "Ver detalle";
+            } else {
+                const det = filaDetalle(i);
+                det.dataset.detalle = "1";
+                tr.after(det);
+                ver.setAttribute("aria-expanded", "true");
+                ver.textContent = "Ocultar";
+            }
+        });
+        tdVer.appendChild(ver);
+
+        tr.append(tdFecha, tdPersona, tdEdad, tdCentro, tdGrado, tdProv, tdVer);
+        cuerpo.appendChild(tr);
+    });
+
+    const total = encontradas.length;
+    const cuantas = total === 1 ? "1 inscripción" : total + " inscripciones";
+    resumen.textContent = visibles.length < total
+        ? "Mostrando " + visibles.length + " de " + cuantas + (hayFiltro ? " que coinciden." : ".")
+        : cuantas + (hayFiltro ? " coinciden." : " en total.");
+    masBtn.hidden = visibles.length >= total;
+}
+
+function refiltrar() { mostradas = POR_PAGINA; pintar(); }
+
+/* CSV con punto y coma y BOM: es lo que Excel en español abre de un doble clic
+   sin preguntar nada. Con coma, Excel mete la fila entera en la columna A.
+   Baja lo que se está viendo (con su filtro puesto), no siempre todo: si se
+   filtró por provincia es porque se quiere esa lista. */
+const COLUMNAS_CSV = [
+    ["Fecha", (i) => fmtFecha(i.creado_en)],
+    ["Nombre", (i) => i.nombre],
+    ["Primer apellido", (i) => i.apellido1],
+    ["Segundo apellido", (i) => i.apellido2],
+    ["Cédula", (i) => i.cedula],
+    ["Fecha de nacimiento", (i) => i.fecha_nacimiento],
+    ["Edad", (i) => i.edad],
+    ["Género", (i) => i.genero],
+    ["Teléfono", (i) => i.contacto],
+    ["Correo", (i) => i.correo],
+    ["Centro educativo", (i) => i.centro],
+    ["Tipo de centro", (i) => i.tipo_centro],
+    ["Grado", (i) => i.grado],
+    ["Provincia", (i) => i.provincia],
+    ["Cantón", (i) => i.canton],
+    ["Dirección regional", (i) => i.direccion_regional],
+    ["Circuito", (i) => i.circuito],
+    ["Zona", (i) => i.zona],
+    ["Modalidad", (i) => i.modalidad],
+    ["Usuario", (i) => i.usuario],
+    ["Aceptó el trato de sus datos", (i) => (i.acepto_datos ? "Sí" : "No")],
+];
+
+function bajarCsv() {
+    const filas = filtradas();
+    const celda = (t) => '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"';
+    const lineas = [COLUMNAS_CSV.map((c) => celda(c[0])).join(";")];
+    filas.forEach((i) => lineas.push(COLUMNAS_CSV.map((c) => celda(c[1](i))).join(";")));
+    const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "inscripciones-torneo.csv";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ------------------------------------------------------------- el arranque */
+
+document.getElementById("buscar").addEventListener("input", () => {
+    clearTimeout(window.__buscarTimer);
+    window.__buscarTimer = setTimeout(refiltrar, 200);
+});
+["f-provincia", "f-grado", "f-centro"].forEach((id) =>
+    document.getElementById(id).addEventListener("change", refiltrar));
+document.getElementById("ver-mas").addEventListener("click", () => {
+    mostradas += POR_PAGINA;
+    pintar();
+});
+document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    const session = data.session;
+    if (!session) { window.location.href = "login.html?next=inscripciones.html"; return; }
+
+    /* Este es el filtro de PINTAR: se pregunta acá para poder mostrar el aviso
+       de siempre en vez de un error feo. Quien de verdad deja pasar o no es la
+       Edge Function, que vuelve a preguntar lo mismo con esta misma sesión. */
+    const { data: perfil } = await sb.rpc("soy_coordinador");
+    document.getElementById("loading").classList.add("hidden");
+    if (perfil !== true) { document.getElementById("denegado").classList.remove("hidden"); return; }
+    document.getElementById("app").classList.remove("hidden");
+
+    try {
+        inscripciones = await pedirInscripciones(session.access_token);
+    } catch (err) {
+        // Se dice lo que pasó, en vez de dejar una tabla vacía que se lee como
+        // "todavía no se ha inscrito nadie".
+        document.getElementById("resumen").textContent = err.message;
+        document.getElementById("cuerpo").innerHTML =
+            '<tr><td colspan="7" class="py-6 text-center text-red-600 dark:text-red-400">' + esc(err.message) + "</td></tr>";
+        return;
+    }
+    llenarSelector("f-provincia", "Todas las provincias", inscripciones.map((i) => i.provincia));
+    llenarSelector("f-grado", "Todos los grados", inscripciones.map((i) => i.grado));
+    llenarSelector("f-centro", "Todo tipo de centro", inscripciones.map((i) => i.tipo_centro));
+    pintarTotales();
+    pintar();
+}
+
+init();
+    </script>
+</body>
+</html>

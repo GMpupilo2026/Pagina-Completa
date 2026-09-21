@@ -14,6 +14,98 @@ las cabeceras de seguridad. Se edita el HTML/JS directamente; lo único que se
   historial.
 - Si el PR de la rama ya se mergeó, la siguiente tarea arranca de `main` al día.
 
+## Los servidores MCP van en `.mcp.json`, no en la máquina
+
+`.mcp.json` (raíz) declara los servidores MCP del proyecto y **se commitea a
+propósito**. Es la única de las tres formas de agregarlo que sobrevive: el
+alcance `local` escribe en `~/.claude.json` y el `user` en la carpeta personal,
+así que en una sesión de Claude Code en la web —donde el contenedor es de usar y
+tirar— el servidor se pierde al terminar la sesión, sin dar ningún error: la
+siguiente sesión simplemente no lo tiene. En el repositorio lo lee cualquier
+sesión al arrancar, en cualquier máquina.
+
+- **Ahí no va ninguna credencial.** La dirección de un servidor no es secreta;
+  un token sí, y un token en el repositorio es un token publicado. Si un
+  servidor pide autenticación, la clave entra por variable de entorno.
+- Los servidores se conectan **al arrancar**, así que agregar uno no lo activa
+  en la sesión que lo agregó: hace falta abrir otra (o reiniciar `claude` en la
+  terminal). `/mcp` dice cuáles se conectaron de verdad.
+
+## El dominio: `www` manda al dominio sin `www`
+
+`worker.js` redirige `www.ajedrez-integral.com` a `ajedrez-integral.com` con un
+301. **No es una preferencia de estilo.** Para el navegador son **dos orígenes
+distintos**, así que si los dos sirvieran el sitio, quien entrara por `www`
+tendría:
+
+- otro `localStorage` — o sea otro progreso, otro tema y otra clase elegida;
+- **otro service worker**, es decir una segunda app instalable con el estado en
+  blanco;
+- **otra suscripción de avisos push**, que no recibiría nada de la primera.
+
+Y de paso: todos los `canonical`, el `sitemap.xml` y el Open Graph apuntan al
+dominio sin `www`, así que servir las dos direcciones sería contenido duplicado.
+
+- **Las dos correcciones del worker se resuelven en UNA respuesta.** Quien entra
+  por `www` a una dirección vieja de "Los 100 finales" recibe un solo 301, ya
+  con el dominio y la dirección arreglados. Encadenar dos redirecciones —una
+  para el dominio y otra para la dirección— es el error natural si cada arreglo
+  devuelve lo suyo, y le cuesta un viaje de más a quien entra.
+- Lo único que hay que hacer **fuera del repositorio** es que el nombre
+  exista. En Cloudflare son dos cosas, en este orden: un **CNAME `www` →
+  `ajedrez-integral.com` con el proxy encendido** (la nube naranja; en "Solo
+  DNS" el tráfico no pasa por Cloudflare y el worker nunca ve la petición) y
+  una **ruta `www.ajedrez-integral.com/*`** apuntando al worker. La ruta
+  necesita que el nombre ya exista en el DNS, por eso ese orden.
+  El camino corto es "Añadir dominio" en la pestaña Dominios del worker, que
+  hace las dos cosas de una; pero acá ese diálogo respondía "ninguna zona
+  coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
+  cuenta, así que queda escrito el de dos pasos, que no depende de esa
+  búsqueda.
+- **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
+  necesita ni Cloudflare ni internet: el worker es una función que recibe una
+  petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
+  con un `env.ASSETS` de mentira. Lo que se comprueba es lo que no se ve: que la
+  redirección **conserve la dirección completa y sus parámetros**. Una que se
+  coma lo que va después del dominio manda a la portada a quien venía a un
+  curso, y de eso no se entera nadie salvo quien se quedó mirando la página que
+  no era.
+
+### El correo del dominio
+
+El dominio **manda y recibe por caminos distintos**, y conviven porque viven en
+nombres distintos. Confundirlos es lo único que puede romper esto:
+
+- **Sale** por Resend, con sus registros en **`send.ajedrez-integral.com`** (el
+  MX y el SPF) y la firma en `resend._domainkey`. Es por donde salen los
+  informes a la casa y los avisos de cobro.
+- **Entra** por Cloudflare Email Routing, con sus tres MX, su SPF y su DKIM
+  (`cf2024-1._domainkey`) en el **dominio raíz**. No es un buzón: reenvía a una
+  cuenta de correo de siempre.
+
+**No se borran los registros de `send.` ni el `resend._domainkey`.** Sin ellos
+el sitio deja de mandar los informes y los avisos, y —como casi todo lo de
+correo— no da ningún error: simplemente dejan de llegar.
+
+- **`informes@` es la dirección que más importa.** El sitio manda desde ahí a
+  las familias, o sea que es correo que invita a contestar. Antes de esto el
+  raíz no tenía ningún MX: la respuesta de una madre rebotaba y no se enteraba
+  nadie, ni ella ni quien daba la clase.
+- **El catch-all va en "Enviar a un correo", no en "Descartar".** "Descartar"
+  no rechaza: acepta el correo y lo tira, así que quien escribió mal la
+  dirección se queda convencido de que llegó. Es la misma clase de falla
+  callada contra la que están escritas media docena de decisiones de este
+  archivo.
+- **Un solo SPF por nombre.** Si algún día manda otro servicio desde
+  `@ajedrez-integral.com`, su `include:` va DENTRO del TXT que ya está, nunca
+  en un segundo registro: con dos, los dos se invalidan y el correo empieza a
+  caer en spam sin avisar.
+- El reenvío solo trae correo. Para **responder** desde una dirección del
+  dominio hace falta además un SMTP —Gmail → "Enviar como", con
+  `smtp.resend.com` y una API key de Resend—, y eso es de cada persona, no del
+  sitio.
+
+
 ## Cursos
 
 Decisión vigente: el **temario es público** (portada, descripción y lista de
@@ -74,6 +166,304 @@ evaluar la posición inicial **y la final de la línea**: así se descubrió que
 posición de Lucena del curso "Estrategia en el final" tenía el rey negro
 demasiado cerca y la técnica del puente no ganaba, aunque todas las jugadas
 fueran legales.
+
+### Los cursos, recorridos con lector de pantalla
+
+`js/curso-adaptado.js` retoca el fragmento del curso después de que
+`curso-academia.js` lo inyecta (se engancha al evento `curso:contenido`). Hace
+tres cosas, y **una de ellas no depende del Modo Adaptado a propósito**.
+
+**1. Los encabezados, SIEMPRE.** El curso no se podía recorrer: el título de cada
+lección era un `<summary>` —que se anuncia como botón, no como encabezado— y los
+títulos de bloque eran `<h4>` colgando de un `<h2>`, saltándose el h3. Quien usa
+lector de pantalla se mueve saltando de encabezado en encabezado, así que para
+llegar a la lección 14 había que tabular por las trece anteriores con todos sus
+enlaces de material. El remapeo encaja con lo que ya estaba escrito:
+
+    h2 "Tus lecciones"  →  h3 Bloque  →  h4 Lección  →  h5 secciones
+
+Los `h5` de dentro de las lecciones ya venían así, o sea que solo hubo que bajar
+el bloque y subir la lección. **Va siempre y no solo en Modo Adaptado**: ese modo
+se enciende a mano o se adivina (por el contraste del sistema o por el primer
+Tab), así que puede estar apagado para alguien que usa lector de pantalla — la
+accesibilidad de verdad es de la semántica, no de un modo visual, como dice la
+cabecera de `js/adaptive-mode.js`. Y a quien ve la página no le cambia nada: el
+encabezado va `inline` dentro del summary, con su mismo estilo.
+
+- El encabezado va **dentro** del `<summary>` (el HTML lo permite): así se
+  anuncia como las dos cosas, encabezado para saltar y botón para abrir.
+- La marca de ✔/🔒 que pone `curso-academia.js` queda **fuera** del encabezado,
+  así que saltando de encabezado en encabezado se oye el título limpio. El
+  `aria-label` que explica por qué está bloqueada sigue en el summary.
+
+**2. Solo el material adaptado, en Modo Adaptado.** Cada lección ofrece el
+cuadernillo en PDF, el mismo material en HTML accesible, la presentación y la
+hoja de ejercicios. El PDF y la presentación son diagramas con marca de agua —
+para un lector de pantalla son lo peor que se le puede dar, que es justamente
+por lo que existe la versión accesible. Se esconden. **El video se queda**: un
+video es audio, y eso sí se oye. Y va un aviso arriba explicando qué falta y por
+qué: si no, parecería que a las lecciones les faltan cosas.
+
+**3. La posición escrita, junto al cuadro de comandos.** Los tres visores
+(`finales-100.js`, `curso-partidas.js`) ya contaban la posición en palabras y ya
+dejaban escribir la jugada en vez de arrastrarla — pero lo contado vivía en un
+párrafo `sr-only` al final del visor, lejísimos del cuadro donde se escribe. Ese
+párrafo se mueve justo encima del cuadro y, en Modo Adaptado, se hace visible:
+leer la posición y contestarla son el mismo gesto. Sigue siendo región viva
+(`aria-live`), así que cada jugada se vuelve a leer.
+
+**Lo que decide qué se ve es el CSS** (`html.adaptive-mode` en `css/styles.css`),
+no el JavaScript: así encender y apagar el modo surte efecto al instante, sin
+volver a recorrer el contenido del curso.
+
+#### "alfils" y "peónes" no son palabras
+
+El plural de las piezas se calculaba sumando una letra —`alfil`+`s`,
+`peón`+`es`— y el lector de pantalla las decía tal cual. Estuvo así en **61
+materiales accesibles y en el libro del diagnóstico**, o sea justo en lo único
+que esas personas pueden leer, y nunca dio un error: solo se oía mal.
+
+Ahora el plural va **escrito**, en dos tablas que son la misma: `PIECE_PLURAL` de
+`js/blind-notation.js` (el navegador, vía `BlindNotation.pieceLabel()`) y
+`PLURAL_PIEZA` de `herramientas/lib/describir-fen.js` (los generadores). Los
+archivos que ya estaban generados se corrigieron con las dos únicas palabras que
+salían mal; las otras cuatro (damas, torres, caballos, reyes) ya salían bien.
+
+**Al tocar los cursos de Academia, `curso-adaptado.js` o los visores, correr
+`node herramientas/verificar-curso-adaptado.js`** (con el sitio en
+localhost:8777, playwright y `npm install chess.js@0.10.3`). Los cursos están
+detrás del login, así que `verificar-css.js` no ve nada de esto. Comprueba el
+árbol de encabezados (un solo h1, ningún nivel saltado, una lección = un
+encabezado, y que el summary siga abriendo), qué material se ofrece en cada modo,
+que la posición escrita esté pegada al cuadro de comandos y **se vea de verdad**
+en Modo Adaptado (se mide el `position` que calcula el navegador, no la clase), y
+que no quede ningún plural inventado ni en los generadores ni en los archivos ya
+generados, que ningún fragmento de curso vuelva a traer un enlace de video y que
+ninguna página de curso de la Academia vuelva a repetir el temario.
+
+### Los cursos ya no ofrecen video, y dentro de la plataforma no repiten el temario
+
+Dos cosas que se quitaron de los cursos, por razones distintas:
+
+- **Los 86 enlaces a video, fuera.** Vivían en seis de los diez fragmentos de
+  `cursos/protegido/`, apuntando a YouTube. Con ellos se fueron las frases que
+  los prometían —"Video, ejercicios interactivos…", "con su video explicativo",
+  "lecciones en video"— en `cursos.html`, en las diez portadas públicas y en las
+  diez páginas de la Academia: una promesa que la lección ya no cumple es peor
+  que no hacerla. Lo que **no** se tocó es `tv.html`, que es la TV en vivo y no
+  tiene nada que ver, ni las frases de la portada que contrastan las clases en
+  vivo con "videos grabados", que siguen siendo ciertas. El campo `video` de
+  `herramientas/lib/leer-curso.js` se fue también: no lo leía nadie y sugería
+  que aún los hay.
+- **El temario introductorio de `cursos/academia/*.html`, fuera.** Ahí abajo
+  viene el contenido completo, lección por lección: el índice de arriba decía lo
+  mismo dos veces. Y para quien salta de encabezado en encabezado no era solo
+  repetición — había que recorrer el índice entero antes de llegar a la primera
+  lección de verdad. **Las portadas públicas de `cursos/` lo conservan**: ahí el
+  temario es lo único que hay, y es lo que se mira antes de inscribirse.
+
+## La clase en vivo: el material del profesor no es el de la clase
+
+En `sesion.html` el profesor tiene delante cosas que la clase NO ve —el PDF que
+está leyendo, la lección del curso que está dando— y una sola cosa que la clase
+sí recibe: **la posición del tablero**. Esa es la línea, y las dos herramientas
+que traen material a la clase la respetan igual.
+
+- **La lección del curso es suya, no de la clase.** "📚 Curso" abre una lección
+  de `cursos/protegido/<curso>.html` debajo del tablero **solo en su pantalla**
+  (`abrirLeccionLocal`), como el PDF. Antes se sincronizaba por
+  `game_state.shown_curso`/`shown_leccion` y la veían todos: el alumno tenía
+  delante el temario entero de la lección, **con las respuestas de sus
+  ejercicios**, mientras el profesor apenas iba por el primer diagrama. Las dos
+  columnas quedaron **sin uso** (no se borraron de la tabla: quitarlas obligaría
+  a una migración para nada) y lo único que se sigue haciendo con ellas es
+  **dejarlas en null la primera vez** que se abre la clase, para que a nadie con
+  la página anterior cargada le quede una lección abierta de antes.
+- **Lo que sí viaja es cada posición, una por una.** Cada diagrama de la lección
+  —y cada partida y cada ejercicio— trae un botón **"📥 Al tablero de la clase"**
+  que transmite **la posición que el profesor está viendo en ese momento**, no
+  la inicial del diagrama: `js/finales-100.js` y `js/curso-partidas.js` publican
+  en `data-fen-actual` la posición de cada repintado (`publicarFen`), así que
+  recorrer la línea y pulsar el botón manda la jugada 12 y no la 0. Mandar
+  siempre la inicial no da ningún error — se transmite una posición, solo que la
+  que no era.
+  - El botón se pone con un `MutationObserver`, no recorriendo la lección una
+    vez: los visores del curso se construyen **cuando se ven** (los `<details>`
+    cerrados esperan a abrirse), así que el que aparezca después se quedaría sin
+    él. Mismo patrón que `js/coordenadas-tablero.js`.
+  - Hay posiciones de curso que son **ilustraciones y no partidas** (una del
+    mapa de los finales tiene un peón y un solo rey, sin rey negro): no se
+    pueden poner en un tablero en vivo, y el aviso de por qué va **dentro del
+    panel de la lección**, no solo en la franja de estado de arriba — para
+    llegar a ese botón hay que tener la lección delante, o sea la franja fuera
+    de la pantalla.
+- **Las tres puertas que ponen una posición en el tablero escriben por la misma
+  función**, `aplicarPosicionEnClase()`: "✅ Aplicar posición" del editor, el
+  botón de cada diagrama del curso y el de Táctica. Si cada una armara su propio
+  `update`, la que se olvidara de limpiar las variantes o de quitarle el control
+  al alumno dejaría la clase con un resto de la posición anterior — y eso no da
+  ningún error, el tablero simplemente no se comporta igual según por dónde
+  entró la posición. La validación va aparte, en `motivoPosicionInvalida()`: son
+  las tres posiciones que chess.js carga sin quejarse y que **rompen a Stockfish
+  para el resto de la sesión** (sin rey, con peones en la primera o la última
+  fila, con el rey que no le toca mover en jaque).
+
+### La pantalla se ordena por QUIÉN VE CADA COSA, no por qué hace cada botón
+
+`sesion.html` es la pantalla más cargada del sitio: catorce controles del
+profesor entre la barra de arriba y las pestañas. Estaban puestos sin ningún
+criterio —una rejilla de ocho botones idénticos y seis pestañas en el orden en
+que se fueron escribiendo—, y eso **no da ningún error**: la pantalla se ve
+bien, funciona, y quien la abre por primera vez no sabe por dónde empezar. Para
+un entrenador nuevo, con la clase mirando, ese es el momento exacto en que se
+pierde.
+
+- **Los ocho botones van en dos grupos, y el rótulo dice QUIÉN LO VE**: «Tu
+  material — solo lo ves tú» (Curso, Archivos, PDF, Armar posición) y «El
+  tablero — lo ve toda la clase» (Reiniciar, Flechas, Ocultar, Guardar PGN). No
+  es una agrupación estética: es **la misma línea que ordena toda la clase en
+  vivo** —el material del profesor no es el de la clase— puesta donde de verdad
+  hace falta saberla, que es antes de apretar. Sin ese rótulo son ocho botones
+  iguales y ninguna pista de cuál se puede tocar con la clase delante.
+- **Las pestañas van en el orden de la clase**, que es el orden en que se usan:
+  qué voy a dar (Mi plan) → qué le pongo delante (Táctica) → qué le pido
+  (Preguntar, Practicar) → a quién se lo estoy dando (Alumnos) → y al final lo
+  que no se hace dando clase (Invitar).
+- **La que abre sola la primera vez es «Mi plan»**, o sea `TEACHER_TABS[0]`:
+  es lo único que contesta «¿qué voy a dar?» y estaba quinta. Abría
+  «Controles», cuyo contenido era **un párrafo explicando dónde estaban los
+  otros ocho botones** — una pantalla que necesita explicarse es una pantalla
+  mal ordenada. Ese párrafo se fue con el rótulo que lo reemplaza, y la pestaña
+  quedó en lo único que de verdad hacía: «➕ Invitar».
+- «✏️ Editar» pasó a **«✏️ Armar posición»**: lo que hace no es editar nada que
+  ya exista, es poner una posición en el tablero a mano.
+- Después de la primera vez **se recuerda la última pestaña abierta**, como
+  antes: el orden decide dónde se entra, no dónde se vuelve.
+
+**Al tocar la barra de herramientas o las pestañas, correr `node
+herramientas/verificar-sesion-orden.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Reusa el Supabase de mentira de
+`verificar-clase-registrada.js` —dos copias del mismo doble se irían separando a
+la primera corrección—. Comprueba que los ocho botones estén en sus dos grupos y
+**que no quede ninguno fuera** (un botón suelto es el principio de la rejilla sin
+criterio de antes), que cada rótulo diga quién lo ve, que el orden de las
+pestañas sea el de la clase y que la que abre sola sea «Mi plan», que cada
+pestaña apunte a **su** panel (un `aria-controls` al de al lado manda a quien usa
+lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
+escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
+tú»— y que a la alumna no se le pinte nada de esto.
+
+### La clase se registra sola, porque el botón vivía en la página que no era
+
+Todo lo que el sitio sabe de una clase —la asistencia, los minutos en clase, el
+«asistió a 4 de 5» del informe a la casa, el reporte de actividades y el «clases
+este mes» del panel del profesor— cuelga de que exista una fila **abierta** en
+`class_sessions`. Y esa fila la abría un botón que vive en **`clases.html`**,
+mientras que la clase se da en **`sesion.html`**.
+
+Al tablero se entra **directo desde el grid del panel**, sin pasar por esa
+franja — que además solo aparece cuando tiene algo que decir. O sea: un
+entrenador nuevo da su clase entera, con la pizarra, las preguntas y los
+alumnos conectados, y **no queda registrada ninguna**. No da ningún error: esa
+clase simplemente no existió, y eso no se puede reconstruir después.
+
+- **La clase se abre SOLA, y no al entrar** sino al primer acto de clase de
+  verdad: que **se conecte un alumno** (el `sync` del canal de presencia) o que
+  el profesor **transmita una posición** (`aplicarPosicionEnClase()`, por donde
+  pasan las tres puertas). Abrirla con solo entrar llenaría el registro de
+  clases de dos minutos que nadie dio cada vez que se asoma a preparar algo, y
+  los informes contarían de más.
+- **Se engancha DESPUÉS de que la posición se haya transmitido**, no antes:
+  abrir la clase por un intento que falló —una posición que la validación
+  rechaza— dejaría registrada una clase que no se dio.
+- **Que no se abran dos lo impide un índice único parcial**, no la bandera del
+  navegador: `class_sessions_una_abierta_por_profesor` sobre `(created_by) where
+  ended_at is null`. Los dos disparadores pueden caer juntos, y dos pestañas del
+  mismo profesor, peor. Con dos filas abiertas la asistencia se reparte entre
+  las dos y **cada informe cuenta la mitad**, sin que nada falle. Es el mismo
+  patrón que el UNIQUE de `examen_respuestas` y el de `avisos_cobro`: lo que no
+  puede pasar dos veces lo garantiza un índice, no un `if` que dos pestañas se
+  saltan. El insert atiende el `23505` y se queda con la que ya hay, porque eso
+  no es un fallo — es el índice haciendo su trabajo.
+- **La franja de `sesion.html` dice con todas las letras si se está registrando
+  o no**, no con un color: «🔴 Clase en curso: se está registrando la asistencia
+  y el tiempo de tus alumnos» o «⚪ Todavía no hay clase abierta. Se abre sola
+  en cuanto entre un alumno o mandes una posición al tablero». Un punto gris no
+  le dice a un entrenador nuevo que la asistencia se está perdiendo.
+- **Cerrar pide el nombre y la nota ahí mismo**, en dos toques: el primero
+  destapa los campos, el segundo cierra. Así no se cierra de un clic accidental
+  en medio de la clase, y se recoge lo único que hace falta para que el registro
+  sirva después — mandarlo al panel a escribirlo es mandarlo a otra página justo
+  cuando terminó y se va.
+- **El botón del panel se queda**, como atajo para abrirla ANTES de entrar, pero
+  ahora dice que no hace falta apretarlo. Dos botones que parecen obligatorios
+  confunden más que uno que se explica.
+- Al alumno no le cambia nada: `markAttendance()` y `startPresenceLog()` ya se
+  disparaban con el INSERT que llega por Realtime, así que **la clase se puede
+  abrir en cualquier momento** y el que ya estaba conectado queda marcado igual.
+
+**Al tocar esto, correr `node herramientas/verificar-clase-registrada.js`** (con
+el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba que entrar solo **no invente ninguna clase**, que entre un alumno la
+abra y quede a nombre de quien la da, que mandar una posición también la abra y
+que una **rechazada** no, que un segundo aviso de presencia no abra otra, que
+cerrar mande el título, la nota y la hora **sobre la clase que estaba abierta**,
+y que a la alumna no se le pinte la franja pero su asistencia sí se marque sola.
+Su Supabase de mentira **apunta el filtro al RESOLVER y no en el `update()`**:
+`.update(x).eq("id", y)` encadena, así que uno que lo capturara antes daría por
+bueno un cierre sobre la clase que no era.
+
+### Táctica por tema: la vista previa y su botón
+
+- **El tablero de la vista previa lo dibuja el mismo diagrama de ejemplo que los
+  artículos** (`js/article-example-board.js`, que ahora exporta
+  `window.ExampleBoard`). Estaba copiado dentro de `sesion.html`, y la copia ya
+  se había separado del original por donde se separan siempre: dibujaba las
+  piezas con el `font-size` fijo de 24 px del CSS —pensado para un tablero
+  grande— dentro de casillas de 22 px, así que **la pieza era más grande que su
+  casilla**; y no entendía el juego de piezas ilustrado, así que a quien lo
+  tuviera elegido le salían aquí las de texto. El original **mide la casilla ya
+  renderizada** y ajusta la pieza a ella. La vista previa dice además de quién
+  es la jugada, que antes había que deducir de la posición.
+- **"📥 Al tablero" y "❓ Preguntar" no son lo mismo, por eso son dos botones.**
+  El primero transmite solo la posición, para explicarla; el segundo además abre
+  la pregunta. Con un solo botón había que preguntar para poder enseñar el
+  ejercicio, y entonces el alumno ya está contestando mientras se explica.
+
+**Al tocar la lección de curso de la clase, los visores o la vista previa de
+Táctica, correr `node herramientas/verificar-sesion-curso.js`** (con el sitio en
+localhost:8777, playwright y `npm install chess.js@0.10.3`). Existe porque
+`sesion.html` está detrás del login **y** detrás del rol: `verificar-css.js` abre
+las páginas sin cuenta y no ve nada de esto. Comprueba, en un navegador de
+verdad, que al alumno no se le pinte ni un carácter de la lección **aunque su
+fila de `game_state` traiga `shown_curso` puesta** (el resto de antes), que abrir
+la lección no mande ni un `update`, que el botón mande la posición que está en
+pantalla —contra el archivo de datos del curso, leído aparte— antes y después de
+avanzar una jugada, y que en la vista previa **la pieza quepa en su casilla**
+(se miden los dos en el navegador, no la clase ni el CSS).
+
+### "Jalar un archivo a la clase" tiene las mismas tres acciones que Táctica
+
+El panel de Archivos (`toggle-archivos-btn` en `sesion.html`) lista los PGN que
+el profesor subió en `partidas.html` —cada partida de un `.pgn` con varias
+queda en su propia fila de `archivos_pgn`, así que un archivo con varios
+ejercicios ("Position 2, 1 Move", "Position 3, 1 Move"…) ya llega separado uno
+por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
+`board.loadMoves`); ahora cada fila suma lo mismo que ya tenía Táctica:
+
+- **👁 Vista previa**, con el mismo `renderTacticsPreviewBoard()` de Táctica —no
+  una segunda copia— dibujando la posición de **salida** del PGN (la de
+  `archivoStartFen()`, sacada del propio PGN en memoria: el header `FEN` si lo
+  trae, o el inicio de siempre). No la posición final (`fen_final`, que sí vive
+  en la base): la de salida es la que identifica al ejercicio y la que tiene
+  sentido preguntar o practicar.
+- **❓ Preguntar** y **🎯 Practicar**, las dos pasando primero por
+  `aplicarPosicionEnClase()` como cualquier otra puerta que pone una posición en
+  el tablero. `Preguntar` calcula `expected_plies` del propio `move_count` del
+  archivo (con el mismo tope de 6 que usa Táctica); `Practicar` inserta en
+  `practice_sessions` con el nivel que esté elegido en la pestaña Practicar —el
+  mismo insert que `start-practice-btn`, solo que con el fen del archivo en vez
+  de `board.fen()`.
 
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
@@ -204,6 +594,872 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+### Equipos: un alumno en varios a la vez, un equipo con cualquier cantidad de entrenadores
+
+**No es lo mismo que `profiles.grupo`.** Ese campo sigue exactamente como
+estaba: texto libre, uno solo por alumno, sin ningún efecto en permisos, solo
+para ordenar la lista de `admin.html`. "Equipos" es un sistema aparte, real,
+con dos tablas puente (`equipo_alumnos`, `equipo_entrenadores`) — muchos a
+muchos en los dos sentidos — y **con efecto directo en permisos**: estar en un
+equipo con un entrenador le da a ese entrenador los mismos permisos que ya le
+da tenerlo asignado directo en `profile_teachers`, sin límite de dos ni de
+ningún otro número chico.
+
+- **`profesores_de(alumno)` y `alumnos_de(profesor)` son la ÚNICA fuente de
+  esa unión** (asignación directa ∪ la que da compartir un equipo). Se
+  agregaron en la migración `equipos_varios_por_alumno_y_entrenador` y las
+  cinco funciones que ya hacían cumplir "quién es profesor de quién"
+  (`soy_profesor_de`, `es_mi_profesor`, `soy_profesor_de_alguno`,
+  `soy_profesor_de_todos`, `es_companero`) se reescribieron sobre ellas, igual
+  que `pueden_jugar_entre_si()`, `puedo_armar_partida_con()`,
+  `alumnos_del_profesor()`, `mis_clases()` y el trigger
+  `avisar_clase_abierta()`. Ninguna política de RLS cambió: todas llaman a
+  estas funciones y no a la tabla, así que las 38 políticas que ya usaban
+  `soy_profesor_de()`/`es_mi_profesor()`/etc. quedaron con el permiso ampliado
+  sin tocarlas — el mismo principio que ya regía para `profile_teachers` sola,
+  extendido un nivel más: **al preguntar quién es profesor de quién se usa
+  `profesores_de()`/`alumnos_de()`, nunca `profile_teachers` ni `equipo_*`
+  directo.**
+  - Comprobado con datos reales antes de escribir nada nuevo encima: sin
+    ningún equipo creado, `profesores_de()` da exactamente lo mismo que
+    `profile_teachers` sola (0 diferencias en 87 alumnos). Y con un equipo de
+    prueba (creado y borrado en la misma comprobación, sin dejar rastro), el
+    entrenador del equipo aparece en `profesores_de()` del alumno y viceversa.
+  - **`es_companero()` y "compañeros de equipo" quedan cubiertos gratis.**
+    `profesores_de(alumno)` no es "el entrenador que a MÍ me asignaron dentro
+    del equipo": es TODOS los entrenadores de cada equipo al que el alumno
+    pertenece. Dos alumnos del mismo equipo comparten automáticamente esos
+    entrenadores en la intersección de `profesores_de()`, así que no hizo
+    falta una regla aparte de "somos del mismo equipo" en `es_companero()` ni
+    en `pueden_jugar_entre_si()`.
+- **`equipos`, `equipo_alumnos` y `equipo_entrenadores` no tienen política de
+  insert/update/delete**, igual que `profile_teachers`: solo se escriben desde
+  la Edge Function `admin-manage-users` con la service role, y solo quien
+  administra puede llamarlas (mismo nivel que `assign_bulk`/`set_teachers`,
+  no el de `soy_coordinador()`). Acciones nuevas: `equipo_create`,
+  `equipo_rename`, `equipo_delete`, `equipo_set_alumnos` y
+  `equipo_set_entrenadores` — estas dos últimas, igual que `set_teachers`,
+  **dejan la lista EXACTAMENTE como se mandó**: lo que no esté, se quita. El
+  único tope es de cordura (`MAX_ENTRENADORES_POR_EQUIPO = 30`,
+  `MAX_ALUMNOS_POR_EQUIPO = 300`), para atajar un error de dedo, no una regla
+  de negocio — nunca un límite de dos.
+- `equipos.nombre` tiene un índice único sobre `lower(trim(nombre))`: dos
+  equipos con el mismo nombre (o el mismo nombre con otra mayúscula) serían
+  imposibles de distinguir en la lista.
+- **En `admin.html`, la tarjeta "Equipos"** (entre "Profesores" y "Las
+  cuentas, por grupo") deja crear un equipo, renombrarlo, borrarlo, y sumarle
+  o quitarle alumnos y entrenadores con el mismo patrón de etiqueta-con-✕-y-
+  selector que ya usaban los profesores de un alumno — a propósito NO se tocó
+  `renderProfesoresCelda()` para no arriesgar ese camino ya probado por
+  `verificar-varios-profesores.js`: la de equipos es una función aparte,
+  `renderEquipoTags()`.
+
+## Tareas: el profesor pide cantidades y la tarea se llena sola
+
+`tareas.html` es de dos públicos, como `informes.html`: quien es profesor (o
+administra) arma una tarea con **varios renglones** y se la manda a uno o
+varios de sus alumnos con una fecha de vencimiento; el alumno la ve en un solo
+lugar y **no tiene que marcar casi nada**, porque cada renglón se va llenando
+con lo que entrena.
+
+    Resolver 10 ejercicios de ataque doble
+    Resolver 20 ejercicios de 4×4
+    Hacer 10 minutos de coordenadas
+    Hacer 25 mates en 1
+    Aprender la apertura italiana
+
+No es un curso nuevo ni un tipo de contenido nuevo — es una capa fina que
+apunta a lo que ya existe y **cuenta lo que ya se guardaba**.
+
+### Lo que se guarda es lo que pasó; el avance se calcula
+
+`tareas` es el encabezado (a quién, con qué fecha) y **`tarea_items` son los
+renglones**: uno por cosa que hacer, con su material, su recorte y su meta.
+Cuánto lleva de cada uno **no es una columna**: lo cuenta
+`public.tareas_con_avance()` a partir de `training_progress` y
+`platform_activity_log`, que son las filas que el alumno ya venía dejando al
+entrenar. Es la misma decisión de `cobros.estado`, que no guarda "pagado": un
+contador aparte habría que mantenerlo al día con un trigger por cada ejercicio
+resuelto y podría contradecir a las filas que lo respaldan.
+
+**Y eso es exactamente lo que hace que la tarea "se rellene sola" y que el
+alumno no repita ejercicios.** Entra por el enlace del renglón, la página de
+entreno arranca en el primero SIN resolver (`firstUnsolvedIndex`, que ya
+existía), y cada uno que resuelve cuenta para la tarea **y** queda marcado
+como resuelto. Son el mismo acto, no dos contadores que puedan separarse.
+
+- **Tres metas, y elegir mal la meta no da ningún error**: `cantidad`
+  (ejercicios distintos), `minutos` (rato de verdad en la página) y
+  `completar` (lo único que el alumno marca a mano). Una herramienta que **no**
+  escribe en `training_progress` —Estudio, a propósito— no puede ofrecer
+  `cantidad`: la barra se quedaría clavada en cero para siempre y la página se
+  vería perfecta. Por eso `js/material-plataforma.js` declara qué metas admite
+  cada cosa y `verificar-tareas.js` lo comprueba.
+- **`tarea_items.actividades` es un ARREGLO, y ahí está el error fácil.** Con
+  qué nombre apunta una página en `training_progress` no siempre es su slug:
+  Practicar y Desafíos apuntan las dos como `'practicar'`, y un tema del grupo
+  de táctica apunta como `'tactica'` mientras el resto de los temas apunta como
+  `'temas'` (ver `temasDeTactica()`). Deducirlo del slug dejaría esos diez
+  ejercicios contando contra cero sin que nada fallara. Desafíos por eso **no
+  ofrece `cantidad`**: sus series no se pueden distinguir de las de Practicar.
+- **El avance se cuenta desde `tareas.created_at`**, no desde siempre: lo que
+  se pide son diez ejercicios **nuevos**, no diez que ya tenía hechos. Está
+  comprobado en la base con datos reales (una tarea fechada hace 30 días cuenta
+  los 395 ejercicios de ese alumno; la misma tarea fechada ahora cuenta 0).
+- **Los minutos se cuentan con `minutos_por_tramos()`**, la misma función que
+  los informes: una tarea que dijera otro número que Informes sería peor que no
+  tenerla.
+- `tareas_con_avance(alumno, profesor, solo_pendientes, limite)` la usan las
+  tres pantallas: la del alumno, la del profesor y la franja de `clases.html`
+  (que pasa `p_limite: 50`, porque solo pinta la más próxima y el conteo — no
+  tiene por qué bajarse los renglones de cien tareas). Escribirla tres veces
+  sería tres cuentas que pueden decir cosas distintas del mismo alumno.
+- **`tareas.estado` y `tareas.completada_at` quedaron SIN USO.** La situación
+  (`pendiente`/`vencida`/`completada`) la calcula la función a partir de los
+  renglones, igual que `cobros_vista`. No se borraron de la tabla — quitarlas
+  obligaría a una migración para nada, la misma decisión que con
+  `game_state.shown_curso`. Las 17 tareas que ya existían se migraron a un
+  renglón `completar` cada una, así que hay **una sola forma de leer una
+  tarea** y ninguna página tiene que distinguir "de las de antes".
+
+### El enlace deja al alumno DENTRO del ejercicio
+
+Era la otra mitad del problema: una tarea que dice "10 de ataque doble" y un
+enlace que cae en la lista de ochenta temas le deja el trabajo de buscar al
+alumno, que es justo lo que la tarea viene a evitar.
+
+- `entreno/temas.html?tema=<key>` y `entreno/mates.html?cat=<categoria>` son
+  nuevos; `estudio.html?ficha=` y `aperturas.html?linea=` ya existían. El
+  `material_href` que queda guardado en el renglón **ya trae el recorte**.
+- Los recortes (los 80 temas, las 3 categorías de Mates, las 40 líneas de
+  Aperturas, las 56 fichas de Estudio) salen de `entreno/data/metas.json`, que
+  **genera `python3 herramientas/metas-indice.py`** leyendo los bancos de
+  verdad. No se bajan los bancos enteros en `tareas.html`: `temas.json` ya pesa
+  1,8 MB, y esa página es para elegir ejercicios, no para resolverlos — sería
+  la piedra de la portada con el libro de aperturas otra vez. **Al agregar un
+  tema, una categoría o una línea, correrlo**; el verificador compara el índice
+  contra las fuentes, porque un índice viejo le ofrece al profesor un tema que
+  ya no existe y eso solo lo descubre el alumno al abrir el enlace.
+
+### La franja de la tarea vive dentro del ejercicio
+
+`js/tarea-en-curso.js` (cargado en las 14 páginas que el catálogo puede mandar)
+pinta arriba qué le pidieron y cuánto lleva — "Coordenadas · 7 de 10 minutos"—
+y avisa al llegar. Sin `?tarea=` en la dirección no hace absolutamente nada,
+así que ponerlo en una página de más no cuesta.
+
+Existe porque el alumno está **ahí**, resolviendo: sin la franja tendría que
+volver a Tareas para saber si ya hizo los diez, y lo más probable es que no
+vuelva — haría siete, o veinte. **No lleva su propia cuenta**: el número sale
+de la misma `tareas_con_avance()` que pinta `tareas.html` y el panel. Se
+refresca envolviendo `EntrenoProgress.log()`, así sube al resolver y no le pide
+nada a la base mientras el alumno piensa.
+
+### Lo que el alumno no puede tocar
+
+- El insert exige `profesor_id = auth.uid()` SIEMPRE, `is_admin` incluido, y
+  las tareas siguen **aisladas por profesor**: un profesor solo ve las que ÉL
+  mandó, no las de un colega que comparte el mismo alumno. Es la misma decisión
+  de aislamiento que `class_sessions` y `game_state`.
+- **`proteger_tarea_items_alumno()`** (mismo patrón que
+  `proteger_tiempos_de_presencia()`: `new := old` y después solo la columna que
+  puede moverse) deja al alumno marcar `completada_at` **y solo en los
+  renglones `completar`**. Comprobado impersonando roles en SQL: un update del
+  alumno bajándose la meta de 25 mates a 1, quitando el filtro y marcándose el
+  renglón medible deja las tres cosas como estaban; el renglón de curso sí
+  queda marcado. Una profesora que no tiene a ese alumno recibe **cero filas**.
+- **Mandar la tarea es UNA llamada** (`public.crear_tarea()`, `SECURITY
+  INVOKER`, así que los dos inserts pasan por la RLS como si los hiciera el
+  navegador). Partido en dos —el encabezado y después los renglones— si la
+  segunda mitad falla queda una tarea vacía en la lista del alumno y eso no da
+  ningún error. Es la decisión que ya tomaron `inscribir-alumno` y
+  `create-student`.
+- El aviso push sale solo, del trigger `avisar_tarea_asignada`.
+- `estado` nunca vale "vencida", igual que `cobros.estado`: eso se calcula
+  contra `vence_at`.
+
+**Al tocar `tareas.html`, `js/material-plataforma.js`, `js/tarea-en-curso.js`,
+los deep links o la tabla `tareas`, correr `node
+herramientas/verificar-tareas.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Existe porque `tareas.html` está
+detrás del login: `verificar-css.js` no la ve nunca. Comprueba que el índice de
+metas siga coincidiendo con los bancos, que ninguna herramienta ofrezca una
+meta que no puede medir, que el profesor arme dos renglones y se mande **la
+actividad correcta** (`tactica` y no `temas` para un tema de táctica — con la
+equivocada la barra no subiría nunca), que el enlace lleve el recorte y la
+tarea, que el alumno vea su avance con una barra por renglón y **solo pueda
+marcar el que no se mide**, que marcar uno de tres no dé la tarea por hecha,
+que la franja se vea de verdad dentro del ejercicio (se mide el `display` que
+calcula el navegador) y que sin `?tarea=` no aparezca, y que `?tema=` y `?cat=`
+abran de verdad lo que piden.
+
+Lo que se rompe acá no da error: un renglón que cuenta la actividad equivocada,
+un enlace sin su recorte, o una tarea que se le manda a todos los alumnos en
+vez de a los marcados.
+
+## El plan de clase: preparar la clase antes de darla
+
+`sesion.html` es potentísimo EN VIVO —editor de posición, PDF, lección de curso,
+Táctica, archivos PGN, preguntar, practicar— pero todo hay que ir a buscarlo
+sobre la marcha, con la clase mirando. `planes.html` es donde se arma antes.
+
+**Lo que de verdad compra es REUSARLO**: el mismo plan se da al grupo de la
+mañana y al de la tarde, y ahí es donde una clase suelta se vuelve un programa.
+Por eso el plan **no está atado a una clase ni a un grupo**, y por eso tiene
+"⧉ Duplicar": se copia entero y se le cambia lo que haga falta sin tocar el
+original.
+
+- `planes_clase` es el encabezado (título y las notas del profesor) y
+  **`plan_items` son los renglones**, en orden.
+- **`js/plan-clase.js` es lo único que sabe leer y escribir un plan**, porque lo
+  usan el armador y la clase en vivo. Escrito dos veces, se separarían a la
+  primera corrección.
+
+### Los tres tipos existen porque la clase en vivo YA tiene su puerta
+
+| tipo | qué hace | por dónde entra |
+|---|---|---|
+| `posicion` | la transmite a toda la clase | `aplicarPosicionEnClase()` |
+| `leccion` | la abre **solo en su pantalla** | `abrirLeccionLocal()` |
+| `nota` | no toca el tablero: es su chuleta | — |
+
+**Un tipo nuevo sin su puerta deja un renglón que no hace nada al tocarlo**, en
+medio de la clase y delante de todos, sin dar ningún error. Y ninguno arma su
+propio `update`: si lo hiciera, el que se olvidara de limpiar las variantes o de
+quitarle el control al alumno dejaría la clase con un resto de la posición
+anterior — la misma razón por la que las tres puertas de antes pasan todas por
+`aplicarPosicionEnClase()`.
+
+- **El `CHECK plan_items_coherente` es lo que impide guardar un renglón sin lo
+  que su tipo necesita** (una posición sin FEN, una lección sin número). Sin él
+  el renglón se ve perfecto en el armador y no hace nada en la clase.
+- **La `pregunta` de un renglón NO le llega al alumno.** `questions` no tiene
+  enunciado: el alumno contesta moviendo, como en Táctica. Es la chuleta del
+  profesor para no tener que acordarse de qué iba a preguntar, y el armador lo
+  dice con todas las letras — prometer que el alumno la lee sería mentirle.
+- **`expected_plies` va en 1 y no se guarda en el plan**, a propósito: el caso de
+  todos los días es "¿cuál es la jugada?", y un campo más que llenar al armar se
+  queda sin llenar. Si hace falta otra cantidad, el panel de Preguntar la cambia
+  como siempre.
+- **En pantalla las lecciones se numeran desde 1 y en la base desde 0**, que es
+  como las cuenta `abrirLeccionLocal()`. Separarlos abre la lección de al lado, y
+  eso no da ningún error: simplemente se da la clase que no era.
+
+### La validación de la posición se mudó a `js/posicion-valida.js`
+
+`motivoPosicionInvalida()` vivía dentro de `sesion.html`. El armador necesita la
+**misma** pregunta y la necesita ANTES: una posición que rompe a Stockfish
+guardada en el plan no da ningún error hasta que el profesor la manda al
+tablero, delante de todos. Enterarse al guardarla cuesta una corrección;
+enterarse allá cuesta la clase.
+
+- En `sesion.html` queda el nombre de siempre, que usan sus cuatro puertas, y va
+  como **`function` y no como `const`**: la primera de esas puertas está escrita
+  más ARRIBA en el archivo, y un `const` no existe hasta que se evalúa su línea
+  — el mismo "Cannot access before initialization" que dejó a `4x4.html` colgada
+  en "Comprobando tu sesión…".
+
+### Detalles del armador
+
+- **Reordenar manda el `orden` de CADA renglón que se movió**, no solo del que
+  cambió: con dos renglones en el mismo número, el orden que sale depende de cómo
+  resuelva el empate la base, o sea que el plan se ve distinto cada vez sin que
+  nada falle.
+- **Los cursos salen de `herramientas/cursos/catalogo.json`**, la misma fuente que
+  las tarjetas de `cursos.html`: una segunda lista se iría quedando vieja y le
+  ofrecería al profesor un curso que ya no existe.
+- **Cuál plan está dando se recuerda en `localStorage`** (`plan_en_clase`), como
+  el tema o la clase elegida: si se recarga la página en medio de la clase —que
+  pasa— no hay que volver a buscarlo en la lista.
+- Las notas del plan **se guardan al salir del campo**, sin botón: es un campo
+  que se toca de pasada mientras se arma el resto.
+
+### Quién puede qué
+
+Un plan es **del profesor que lo escribió**: una colega no lo ve hasta que él se
+lo comparte (ver abajo). Quien administra los ve todos (la regla permanente de
+siempre) pero **no los edita** — el material de un colega no es de nadie más. El
+insert exige `profesor_id = auth.uid()` y `role = 'profesor'` o `is_admin`, así
+que un alumno no puede crear ninguno, y a `anon` se le revocan los permisos de
+tabla. Comprobado impersonando roles en SQL, 12 casos.
+
+### Compartir un plan: se ve y se duplica, NO se edita
+
+El dueño elige con quién. Son dos formas, y conviven porque contestan preguntas
+distintas: `planes_clase.compartido_todos` es "con todo el equipo docente" —el
+caso de los planes de arranque y del material de la Academia, que alcanza además
+a quien entre después— y `public.plan_compartidos (plan_id, profesor_id)` es
+"esto es para ti". **A quien lo recibe le da igual por cuál de las dos le
+llegó**, así que las dos se leen en la misma lista de "Compartidos contigo".
+
+- **Lo único que se amplió es el `select` del plan.** El `update` y el `delete`
+  siguen exigiendo `profesor_id = auth.uid()`, así que el colega lo da en su
+  clase y lo duplica, pero no lo toca. Los renglones se ampliaron **solos**: la
+  política de `plan_items` cuelga del select de `planes_clase` y no de la
+  columna — el mismo principio que ya regía para `profesores_de()`.
+- **Las dos preguntas van en funciones `SECURITY DEFINER`**
+  (`soy_dueno_del_plan()`, `plan_compartido_conmigo()`) y no escritas dentro de
+  la política. No es estilo: la política de `planes_clase` mira
+  `plan_compartidos` y las de `plan_compartidos` miran `planes_clase` — una RLS
+  llamando a la otra es **recursión infinita**, y el error salta en la cara de
+  quien abre la página, no al escribirla.
+- **"Todo el equipo docente" es el equipo docente.** La política lleva el filtro
+  de rol escrito; sin él, un alumno que preguntara por `planes_clase` se llevaría
+  todos los planes marcados así —con las soluciones de sus propios ejercicios en
+  la chuleta de cada renglón— y no daría ningún error.
+- **Y compartir de a uno también.** `plan_compartidos_insert` exige, además de
+  ser el dueño, que el destinatario sea del equipo (`es_del_equipo_docente()`):
+  sin eso, nada impedía poner ahí el id de un alumno.
+- **`equipo_docente()` y `planes_compartidos_conmigo()` existen por lo mismo:**
+  la RLS de `profiles` no le deja a un profesor ver a sus colegas (solo sus
+  alumnos y a sí mismo — comprobado: uno ve 46 perfiles y **un solo profesor, él
+  mismo**). Sin esas dos funciones, el selector saldría vacío y los planes
+  compartidos, sin autor — que es justo el dato que dice si vale la pena abrirlo.
+- **En pantalla, lo que no se puede hacer no se ofrece.** Sobre un plan ajeno no
+  se pintan "Borrar plan", el formulario de renglones, los ↑ ↓ ✖ ni el apartado
+  de compartir; las notas van `readOnly` **y no `disabled`** (un campo
+  desactivado sale del recorrido del teclado y quien no ve la pantalla no se
+  enteraría de que están ahí). La base los rechazaría igual, pero el fallo lo
+  descubriría la colega. El modo **se pinta entero al abrir cada plan**, no
+  prendiendo y apagando lo que cambió: es el mismo descuido que dejaría el botón
+  de borrar encima del material de otra persona.
+- **Con "todo el equipo" marcado, elegir de a uno se esconde**: ya lo ven todos,
+  así que sería un control que no cambia nada.
+- **En la clase en vivo los dos grupos van en el MISMO selector**, con su
+  `<optgroup>`: a la hora de dar la clase un plan compartido se da igual que uno
+  propio — lo que cambia es quién lo edita, y eso es en el armador. Si los
+  compartidos no llegan, se dice y **los propios se siguen ofreciendo**: quedarse
+  sin plan en medio de la clase por eso sería peor.
+
+Comprobado impersonando roles en SQL, 16 casos: el colega no ve nada antes de
+que se lo compartan; después ve el plan y sus renglones pero editarlo, borrarlo,
+borrarle un renglón y quitarse el compartido cambian **0 filas**; otra profesora
+no lo ve hasta que se marca "todo el equipo"; un alumno no lo ve ni con eso;
+compartirlo con un alumno se rechaza; `equipo_docente()` le da 3 a un profesor
+(sin él) y **0 a un alumno**; y el colega sí puede duplicarlo entero.
+
+**Al tocar `planes.html`, `js/plan-clase.js`, `js/posicion-valida.js` o el panel
+del plan de la clase en vivo, correr `node herramientas/verificar-planes.js`**
+(con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba que una posición que rompe a Stockfish **se rechace al guardarla y no
+se mande nada a la base**, que la buena entre con su tipo, su FEN, su pregunta y
+su orden, que la lección 5 se guarde como 4, y que subir un renglón **renumere
+los dos** que se movieron. De compartir comprueba qué se MANDA (el plan abierto y
+el profesor elegido, y que quitar filtre por **las dos** columnas), que sin nada
+compartido el apartado no se destape, y que sobre un plan ajeno no se pinte ni un
+botón que vaya a fallar —pero sí el de duplicar, y que la copia quede a nombre de
+quien la hizo—. Sirve chess.js desde `node_modules`: sin él
+`PosicionValida.motivo()` revienta y el armador deja de validar — que es justo lo
+que la prueba viene a comprobar.
+
+### Los 53 planes de arranque
+
+`planes.html` nacía vacía, y una página vacía no se usa: el profesor entra, no
+ve nada y se vuelve a la forma de siempre. Los planes de arranque son **53
+clases listas para dar** —12 de finales, 5 de estrategia, 10 de apertura, 3 de
+celadas, 16 de táctica, 5 de mates con nombre y 3 de mates en 1, 2 y 3—, con 303
+renglones y 262 posiciones.
+
+**NINGUNA POSICIÓN SE INVENTA.** Todas salen de bancos que este repositorio ya
+verificó, y `herramientas/planes-semilla.js` es lo único que las arma:
+
+| de dónde | qué sale |
+|---|---|
+| `cursos/protegido/data/el-mapa-de-los-finales.json` | 240 diagramas, 12 capítulos |
+| `cursos/protegido/data/estrategia-en-el-final.json` | 6 diagramas |
+| `js/aperturas-lineas.js` | las 40 líneas |
+| `entreno/data/temas.json` | los ejercicios de Lichess |
+| `entreno/data/mates.json` | mate en 1, 2 y 3 |
+
+Inventar una posición es el error que este repositorio ya cometió una vez, con
+una «Lucena» que no era Lucena. Y cada FEN vuelve a pasar por la **misma**
+validación que hace la clase en vivo (`js/posicion-valida.js`) antes de entrar a
+un plan: enterarse al sembrar cuesta una corrección; enterarse en clase cuesta la
+clase.
+
+- **Qué temas de táctica se siembran es una decisión editorial ESCRITA**
+  (`TEMAS_QUE_SE_ENSENAN`), como `AREAS_DEL_CURSO` en los exámenes. `temas.json`
+  trae 79 temas y sembrarlos todos daría 79 planes; elegirlos por «el que tenga
+  más ejercicios» tampoco sirve, porque casi todos tienen 100 y tener muchos no
+  hace a un tema didáctico.
+- **La chuleta de cada renglón lleva la solución**, y eso está bien: el panel del
+  plan solo lo ve el profesor, como el PDF y la lección de curso. No hay ningún
+  lugar donde el alumno la lea.
+- **La chuleta de un final se arma con `jugadas[].san`, NO con el campo
+  `linea_es` del banco.** Ese campo es texto suelto y tiene capturas escritas sin
+  la x: en «Retrasando la captura» dice `Ra5` donde la jugada de verdad es
+  `Rxa5`. Como nunca fue más que texto, no falló nada en meses — pero puesto en
+  la chuleta es lo que el profesor lee en voz alta delante de la clase, y no se
+  puede jugar.
+- **Una celada que termina en mate se siembra UNA JUGADA ANTES**, con la chuleta
+  diciendo cuál remata. Dos razones: la posición final no tiene jugadas legales y
+  no entra al tablero de la clase, y sembrarla sería enseñarles el mate ya
+  puesto en vez de darles algo que encontrar.
+- Los planes llevan la marca `· AI` en el título, y el SQL que genera el script
+  los borra por ahí antes de sembrar: **se puede volver a correr sin duplicar** y
+  sin tocar los que el profesor armó a mano.
+- La salida (`herramientas/planes/`) **no se commitea**: se regenera con el
+  script. Lo que vive en el repositorio es cómo se arman.
+
+**Al tocar el generador o cualquiera de esos bancos, correr `node
+herramientas/planes-semilla.js && node
+herramientas/verificar-planes-semilla.js`** (necesita `npm install
+chess.js@0.10.3`; no hace falta navegador ni red). Comprueba las cuatro cosas que
+se rompen calladas: que ninguna posición sembrada la rechace la regla de la clase
+en vivo —corriendo **la del propio `js/posicion-valida.js`**, no una copia—, que
+**la solución escrita en cada chuleta se pueda jugar de verdad** (1.224 jugadas
+con chess.js), que lo que promete mate sea mate, y que cada posición de apertura
+salga de jugar su línea (o la de justo antes del mate, con su remate
+comprobado). Un plan vacío, repetido o con el orden con huecos también salta.
+
+**Se siembran a nombre de un profesor** (`PROFESOR_ID`, la variable de entorno
+del script) y desde ahí se reparten: marcándolos «con todo el equipo docente» en
+`planes.html` los ve el equipo entero, incluido quien entre después. Resembrarlos
+por profesor ya no hace falta, y no conviene: serían 53 copias que se van
+separando a la primera corrección.
+
+## La bitácora: lo que el profesor observa, donde lo observa
+
+Hasta ahora lo único que el profesor podía escribir de un alumno era
+`class_sessions.notes`: **un `<input>` de una sola línea, por clase entera y sin
+alumno**. No había dónde poner "a Sofía le cuesta el final de torre, revisarlo en
+dos semanas", que es la materia prima del seguimiento — y sin eso, ni el plan de
+la clase siguiente sabe qué repasar ni el informe a la casa tiene qué explicar.
+
+`public.notas_alumno` es una fila por observación (alumno, profesor, texto,
+etiqueta, `compartida`). Se escribe desde dos lugares y se lee desde tres, así
+que la lógica vive en **`js/notas-alumno.js`** y no en ninguna de las páginas:
+
+- **`sesion.html`**, con el botón **📝** de cada alumno conectado. Va ahí porque
+  ese es **el momento en que se ve lo que hay que anotar**: si hay que esperar a
+  volver a Informes, no se anota. En modo compacto (las últimas 5), colgando del
+  panel de Alumnos, y solo lo ve el profesor — como el PDF y la lección de curso.
+- **`informes.html`**, bloque "📝 Bitácora" del informe individual, que es cuando
+  se repasa.
+- Y de solo lectura, el **propio alumno**, en su página de Informes.
+
+### Quién ve qué lo decide la base
+
+- **Aislada por profesor, igual que `tareas` y `class_sessions`**: un profesor ve
+  las notas que ÉL escribió, no las de un colega que comparte el mismo alumno.
+  Quien administra ve todas, como en `tareas` — la regla permanente de que todo
+  lo de los profesores vale para quien administra, con su alcance.
+- **El alumno solo ve las que tienen `compartida = true`** (misma idea que
+  `training_plans.shared`) y **no puede escribir ninguna**: no tiene política de
+  insert, update ni delete. Por eso su vista **no le pinta ni un botón**:
+  ofrecerle "compartir" o "borrar" no rompería nada — la base los rechaza— pero
+  el fallo lo descubriría él.
+- **El insert exige `profesor_id = auth.uid()` SIEMPRE**, `is_admin` incluido:
+  nadie firma una nota con el nombre de otro.
+- **`proteger_notas_alumno()`** (mismo patrón que `proteger_tiempos_de_presencia()`:
+  `new := old` y después solo lo que puede moverse) revierte `alumno_id`,
+  `profesor_id` y `created_at`, y pone `updated_at` con el reloj del servidor.
+  Sin eso, una nota se podía mudar de alumno con un update.
+- A `anon` se le revocan los permisos de tabla, como en `formularios`.
+
+Comprobado impersonando roles en SQL, 15 casos: el profesor escribe sobre su
+alumno y no sobre uno ajeno, no firma como otro; **una colega que comparte el
+mismo alumno recibe cero filas**; el alumno no ve la privada, sí la compartida,
+y sus intentos de editarla o borrarla cambian **0 filas**; el trigger revierte la
+mudanza de alumno y la fecha regalada.
+
+### El bloque del alumno solo aparece si hay algo
+
+`montarLectura()` devuelve cuántas pintó y la página esconde el bloque entero
+cuando son cero. Un bloque que diga "tu profesor no te ha escrito nada" es ruido
+en todas las visitas menos una — la misma lección del cartel de instalar la app.
+Y si la consulta **falla**, se dice: una bitácora vacía y una que no se pudo leer
+se ven igual y son cosas muy distintas.
+
+### De la nota a la tarea, sin copiar nada
+
+Cada nota trae **"📋 Convertir en tarea"**, que lleva a
+`tareas.html?alumno=<id>&nota=<id>`: marca ese alumno y pone el texto en "Nota
+para el alumno". Observo, asigno. Dos detalles que no son de estilo:
+
+- **El texto NO viaja en la dirección, solo el id.** `tareas.html` lo lee de la
+  base, que ya se lo deja leer a quien la escribió. Una dirección con lo que el
+  profesor anotó de un alumno queda en el historial del navegador, y esa nota
+  puede ser privada.
+- **El título no se toca.** Lo propone la página desde el renglón elegido;
+  pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
+  campo que antes salía bien.
+
+### Detalles que ya costaron una vez
+
+- **Que la nota esté compartida va ESCRITO** ("👁️ La ve el alumno"), no solo con
+  otro color: la misma regla de los gráficos de Informes y de las barras del
+  diagnóstico.
+- **Borrar pide confirmación en el propio botón**, no con un diálogo del
+  navegador: una nota se escribe en medio de una clase, desde el celular, y ahí
+  el diálogo tapa la pantalla.
+- **Las clases de CSS van escritas enteras**, nunca armadas con una expresión
+  regular sobre `className`: el CSS se compila leyendo el código, así que una
+  clase a medias no se escribe en la hoja y no pinta nada, sin dar ningún error.
+- **El panel se monta entero al cambiar de alumno**, en vez de ir actualizando la
+  lista: así no hay que acordarse de limpiar lo del anterior, que es justo el
+  descuido que dejaría al profesor escribiendo sobre quien no era.
+- El texto de una nota y el nombre de un alumno **los escribe una persona**, así
+  que van siempre por `textContent` — la misma regla que ya sigue
+  `renderStudentsList()`.
+
+**Al tocar `js/notas-alumno.js`, el bloque de Informes, el botón de la clase en
+vivo o el enlace a Tareas, correr `node herramientas/verificar-notas.js`** (con
+el sitio en localhost:8777 y playwright). Existe porque todo lo que se rompe acá
+se rompe callado: una nota mandada con el `alumno_id` equivocado queda en la
+ficha de otro y la pantalla se ve perfecta. Comprueba qué se MANDA al guardar
+(alumno, autor, texto, etiqueta y la marca de compartir), que compartir lo diga
+con todas las letras, que el enlace a Tareas lleve el id y **no el texto**, que
+cambiar de alumno traiga su bitácora y suelte la del anterior, que al alumno no
+se le pinte ningún botón, y que su bloque **se vea de verdad** con una nota
+compartida y **no se destape** sin ninguna (se mide el `display` que calcula el
+navegador, no la clase). Su Supabase de mentira **filtra de verdad por `eq`**:
+uno que devolviera siempre la tabla entera daría por buena una página que mezcla
+las notas de dos alumnos.
+
+## Exámenes: acá se ejecuta y se demuestra, no se practica
+
+`examenes.html` (armar y ver) y `examen.html?id=…` (rendir) son la otra mitad
+de Tareas, y la diferencia no es de grado:
+
+| | Tareas | Exámenes |
+|---|---|---|
+| qué mide | que lo haga | que lo sepa |
+| intentos | los que quiera | **uno por pregunta** |
+| ayuda | pistas, deshacer, repaso espaciado | ninguna |
+| avance | se llena solo con lo que entrena | se rinde de una vez, con reloj |
+| resultado | una barra | **una nota**, ponderada por dificultad |
+
+Una tarea dice "resuelve 10 de ataque doble" y el alumno los hace cuando
+quiera, con las pistas que quiera. Un examen le pone 10 preguntas delante, con
+reloj, y cada una se contesta una sola vez.
+
+### Lo que NO puede pasar, y dónde se impide
+
+Todo lo que sostiene un examen se rompería callado si viviera en el navegador,
+así que nada de esto vive ahí:
+
+- **La respuesta correcta no llega nunca al alumno.** Vive en
+  `examen_items.clave`, y esa tabla **no tiene política de select para él** —
+  ni siquiera para sus propias preguntas, porque la clave viaja en la misma
+  fila. Lo que ve se lo sirve `examen_para_alumno()`, que arma el JSON
+  **columna por columna**: un `select *` de ahí se llevaría la clave, y es
+  justo el descuido que esa función existe para hacer imposible. Comprobado
+  impersonando roles en SQL: leer `examen_items` directo le da **0 filas**, y
+  el JSON de su examen no contiene ni `clave`, ni `correcta`, ni `casillas`,
+  ni `jugadas`.
+- **El ejecutor tampoco carga el banco.** Las preguntas se COPIAN al examen al
+  crearlo, así que `examen.html` no necesita `diagnostico-items.js` — si lo
+  cargara, el alumno se bajaría las 301 respuestas junto con su examen.
+- **Una sola oportunidad la hace cumplir el UNIQUE de `examen_respuestas`**, no
+  un `if`: dos pestañas mandando a la vez no pueden colar dos. Y esa tabla no
+  tiene política de insert ni de update — solo escribe `responder_examen()`.
+- **El reloj es del servidor.** `termina_at` lo fija `iniciar_examen()` con
+  `now()`, y `responder_examen()` rechaza lo que llegue tarde. El alumno no
+  puede escribir en `examenes` (no tiene política de update): comprobado, su
+  intento de regalarse tiempo cambia **0 filas**. Volver a entrar **no
+  reinicia** el reloj: cerrar y abrir la pestaña regalaría el tiempo entero.
+- **El mínimo de un minuto por pregunta lo valida `crear_examen()`**, no la
+  pantalla. Un mínimo que solo comprueba el navegador se salta desde la
+  consola.
+- **La nota se guarda, no se recalcula.** Es el acta del examen: recalcularla
+  mañana, con un banco que cambió, daría otro número. Es la excepción a la
+  regla de `cobros`/`tareas` —donde lo que se calcula no se guarda— y la razón
+  es distinta: ahí el estado deriva de filas que siguen vivas; acá deriva de un
+  banco que cambia.
+
+### La nota pondera por dificultad
+
+Cada pregunta vale su `peso` (1 a 5, que es la dificultad que ya traía el banco
+del diagnóstico). `nota = 10 × puntos / puntos_posibles`. Acertar cinco fáciles
+no es lo mismo que acertar dos difíciles, y se nota: en la comprobación, un
+alumno que acierta la de peso 1 y la de peso 5 y falla la de peso 2 saca
+**7,50**; por aciertos a secas habría sacado 6,67.
+
+Lo que **no** alcanzó a contestar vale cero — eso es lo que significa que se le
+acabó el tiempo— pero **cuántas de cuántas respondió se guarda aparte**
+(`respondidas`/`total_items`) y el informe lo dice por separado: no es lo mismo
+fallar diez que no llegar a verlas.
+
+### Las preguntas no se inventan
+
+Salen de bancos que ya estaban verificados, vía `js/examen-banco.js`:
+
+- **`js/diagnostico-items.js`** — 301 preguntas, 9 áreas, peso 1-5, cuatro
+  tipos (opción, opción con tablero, jugada, casilla). De acá salen las
+  preguntas "sobre un tema de un curso": `AREAS_DEL_CURSO` dice qué áreas cubre
+  cada curso, y es una decisión editorial escrita, no deducida. Un curso que no
+  esté ahí **lo dice** en vez de devolver un examen vacío.
+- **`js/arbitraje-items.js`** — 200 de reglamento.
+- **`js/aperturas-lineas.js`** — las 40 líneas, para "ejecuta la italiana de
+  una vez": el rival contesta solo y el alumno da sus jugadas **sin pistas y
+  sin deshacer**. Es la misma línea que en `entreno/aperturas.html` se practica
+  con ayuda y repaso espaciado; acá se demuestra.
+
+**Las opciones se barajan al armar el examen** y la clave guarda el índice ya
+barajado, así que el número que queda en la base no dice nada por sí solo. Eso
+tiene una trampa que el verificador vigila sobre 1.600 preguntas: si el
+barajado mueve el texto y no el índice, **se califica mal el examen entero** y
+nadie se entera — los alumnos reprueban y no hay ningún error.
+
+Y `clave.correcta` se guarda como **texto**, no como número: en la base se
+compara con `->>'opcion'`, que también es texto. Un número contra un texto en
+jsonb da `false` siempre.
+
+### Un examen se arma sumando bloques, como los renglones de una tarea
+
+"10 de finales + 5 de reglamento + ejecutar la italiana" es **un** examen. Antes
+salía de una sola fuente, así que para medir dos cosas había que poner dos
+exámenes — y el alumno recibía dos relojes y dos notas de lo que para el
+profesor era una sola prueba.
+
+**La base ya lo aguantaba**: `crear_examen()` recibe las preguntas en un arreglo
+y no le importa de dónde salió cada una. Lo único que había que cambiar era la
+pantalla, que es la que armaba de una sola fuente.
+
+- Cada bloque tiene su fuente, su recorte, su cantidad y su rango de dificultad,
+  y dice cuántas preguntas hay para elegir. Los controles llevan el número del
+  bloque en el id (`b1-fuente`, `b2-cantidad`), que es por donde los agarra el
+  verificador.
+- **Dos bloques pueden pedir del mismo banco**, y ahí está el error fácil: "10
+  de finales" y "5 de finales" son dos bloques legítimos, y sin quitar las
+  repetidas el examen llevaría la misma pregunta dos veces. El alumno la
+  contestaría dos veces y **valdría doble en la nota**, con el examen viéndose
+  perfecto. Se descartan por `banco/item_id` **y se dice cuántas se quitaron**,
+  en vez de dejar el examen más corto de lo que el profesor pidió sin
+  explicación.
+- **Con un solo bloque no se ofrece quitarlo.** Un examen sin preguntas no
+  existe, y un botón que va a fallar es peor que no tenerlo.
+- El título propuesto nombra los dos primeros bloques y cuenta el resto
+  ("Examen de Finales y reglamento y 2 cosas más"): encadenar cinco no se lee en
+  la lista del alumno.
+- El tiempo recomendado se calcula sobre **el examen entero ya armado**, con las
+  repetidas fuera.
+
+### Cuántas veces puede salirse de la pantalla lo decide el profesor
+
+Eran tres siempre, escritas como una constante DENTRO de
+`registrar_salida_examen()`: el mismo rigor para un quiz de práctica que para
+una prueba de fin de curso. Ahora es `examenes.salidas_permitidas`, que elige
+quien pone el examen.
+
+- **La columna guarda cuántas salidas se PERDONAN, no el tope al que congela.**
+  Es lo que el profesor está decidiendo ("le permito dos") y lo que la pantalla
+  le dice al alumno ("te quedan dos"). El 2 por omisión es el comportamiento de
+  siempre: perdona la primera y la segunda, y a la tercera congela.
+- **NULL es "no congelar nunca"**: las salidas se siguen contando y van igual en
+  el informe, pero el examen no se cierra solo. Es para un examen en el aula,
+  con el profesor al lado, donde cerrarle la pantalla a un chico porque le entró
+  una notificación es peor que anotarlo. En el formulario, `""` viaja como
+  `null` y **no** como 0 — cero significa lo contrario, congela a la primera, y
+  confundirlos le cerraría el examen en la cara al primer despiste.
+- **El tope lo sigue haciendo cumplir el servidor**, igual que el mínimo de
+  tiempo: `crear_examen()` valida el rango y `registrar_salida_examen()` lee el
+  del examen. La pantalla solo elige.
+- **La antesala y el aviso dicen el tope de ESE examen**, no un "a la tercera"
+  escrito a mano: avisar de un margen que no se tiene es peor que no avisar. Y
+  si el campo **no llega** (una versión vieja de `examen_para_alumno()`), la
+  página asume el tope de siempre en vez de "no congela" — equivocarse hacia el
+  aviso de más no le cuesta nada al alumno, hacia el de menos le cuesta el
+  examen.
+- **El informe del profesor dice el número Y el tope**: tres salidas en un
+  examen que perdonaba cinco no es lo mismo que tres en uno que perdonaba dos, y
+  el número solo no lo dice.
+- Comprobado impersonando al alumno en una transacción revertida, los tres
+  casos: con 0 la primera salida congela; con 2 quedan 2 avisos, después 1, y la
+  tercera congela (idéntico a lo de antes); sin tope, cuatro salidas no congelan
+  y **las cuatro quedan contadas**.
+
+### El tiempo: recomendado o a mano, pero siempre el que se enseñó
+
+El profesor elige entre **"Recomendado"** —lo calcula el sitio— y **"Lo elijo
+yo"**. El mínimo de un minuto por pregunta lo sigue haciendo cumplir
+`crear_examen()` en los dos casos.
+
+**No hay ninguna IA detrás de la recomendación, y no la habría aunque se
+quisiera**: este sitio no usa ningún modelo de lenguaje (la misma decisión que
+`js/reporte-textos.js`, que ordena pero no resume). Es
+`ExamenBanco.minutosRecomendados()`, una cuenta sobre lo que hay que HACER en
+cada pregunta: leer cuatro frases (60 s), leer además una posición (90 s),
+señalar una casilla (75 s) o calcular una jugada (120 s), estirado o encogido
+por la dificultad (×0,7 en peso 1, ×1,3 en peso 5). Una línea de apertura se
+mide por las jugadas que le tocan al alumno, a 30 s cada una — y **ahí no se
+multiplica por el peso**, porque el peso de una línea ya se calcula a partir de
+esa misma longitud en `deLinea()` y sería contar lo mismo dos veces.
+
+- **Que una pregunta de opción media dé justo 60 s no es casualidad ni se puede
+  bajar sin pensarlo**: es el mismo minuto por pregunta que exige el servidor.
+  La primera versión usaba bases más cortas y el mínimo tapaba el cálculo casi
+  siempre — el "recomendado" devolvía la cantidad de preguntas y nada más, o
+  sea que no recomendaba nada, y en pantalla se veía perfecto. Lo encontró el
+  verificador, no la vista.
+- **El `Math.max` contra el mínimo no es una precaución de adorno.** Sin él, un
+  examen de diez opciones fáciles recomendaría 7 minutos contra un mínimo de
+  10: el sitio le propondría al profesor un número que su propio servidor
+  rechaza. El verificador lo mide sobre más de 400 exámenes armados.
+
+**Y lo que se enseña es lo que se manda, en las dos mitades.** Las preguntas se
+sortean UNA vez, al cambiar cualquier parámetro del formulario (`prevision`), y
+son las mismas que viajan al apretar el botón. Antes se volvían a sortear al
+mandar, que es lo natural de escribir y deja el defecto de siempre: el número
+que el profesor leyó estaría calculado sobre unas preguntas y el examen
+llevaría otras. No falla nada y el tiempo simplemente no corresponde. Después
+de mandar, la previsión se tira, o poner el mismo examen al grupo de la mañana
+y al de la tarde mandaría exactamente las mismas preguntas.
+
+**El campo de minutos se ve SIEMPRE**, también en "Recomendado", y ahí va de
+solo lectura — no desactivado: un campo desactivado sale del recorrido del
+teclado y quien no ve la pantalla no se enteraría de cuánto dura el examen que
+está por mandar. Debajo va escrito de dónde salió el número ("18 min para estas
+12 preguntas (9 de opción, 3 con tablero). El mínimo es 12."), y en modo manual
+se sigue diciendo cuánto era lo recomendado.
+
+### El antitrampa: dos avisos y al tercero se congela
+
+**Ninguna página web puede impedir que alguien cambie de pestaña** — eso solo
+lo puede una app instalada con permisos del sistema. Prometer más que eso sería
+mentirle al profesor. Lo que sí se hace:
+
+- se pide **pantalla completa** al empezar (si el navegador la niega, el examen
+  se hace igual: negarle rendir por la configuración de su navegador sería
+  castigarlo por otra cosa);
+- se detecta cada salida (`visibilitychange`, `blur` y salirse de pantalla
+  completa, que es la forma más cómoda de poner otra ventana al lado);
+- **el conteo lo lleva `registrar_salida_examen()`, no la página**: un contador
+  del cliente se pone en cero desde la consola;
+- los **dos primeros avisos perdonan** —una notificación del celular no puede
+  costar el examen entero— y **al tercero se congela** y se califica con lo que
+  llevaba. Solo el profesor lo reabre.
+- **Las salidas van SIEMPRE en el informe**, aunque no se haya congelado: tres
+  salidas cortas siguen siendo un dato que quien lee tiene que tener.
+
+Volver a abrir un examen congelado reinicia **el reloj y el contador de
+salidas**. Lo segundo no es un olvido: dejándolo en tres, se volvería a
+congelar en cuanto el alumno parpadeara, o sea que reabrirlo no serviría de
+nada. Las respuestas que ya dio **sí se conservan** —`examen_respuestas` no se
+toca— así que sigue desde donde quedó y no vuelve a contestar lo mismo.
+
+Y un examen congelado **sí tiene informe para el alumno**: `examen_informe()`
+acepta los dos estados terminados (`entregado` y `congelado`). Exigir solo
+`entregado` le dejaba un error en pantalla justo a quien más falta le hace
+entender qué pasó.
+
+### El aviso al celular, y las dos trampas que tenía
+
+Al asignar un examen sale solo un aviso push, igual que con las tareas
+(`avisar_tarea_asignada`). El trigger es `avisar_examen_asignado` y ninguna de
+las dos cosas que tiene distintas es un capricho:
+
+- **Es un `CONSTRAINT TRIGGER ... DEFERRABLE INITIALLY DEFERRED`, no un `AFTER
+  INSERT` de siempre**, porque `crear_examen()` inserta la fila de `examenes`
+  **antes** que sus preguntas. Un trigger normal corre ahí en medio y contaría
+  `examen_items` cuando todavía no hay ninguna: el aviso diría **«0 preguntas»**
+  sin que nada fallara. Diferido corre al COMMIT, con las preguntas ya puestas.
+  Está comprobado en una transacción revertida, de las dos formas: diferido dice
+  «7 preguntas en 7 minutos», y disparándolo a mano antes de los items dice «0
+  preguntas en 7 minutos», que es exactamente el fallo que se evita.
+- **La etiqueta lleva el id del examen** (`'examen:' || new.id`), no es
+  `'examen'` a secas. `sw.js` la usa como `tag`, y el `tag` hace que un aviso
+  REEMPLACE al anterior de la misma etiqueta. En tareas eso no cuesta nada
+  porque el aviso lleva a `/tareas.html`, donde están todas; acá lleva a
+  `/examen.html?id=<uno>`, así que un segundo examen taparía el aviso del
+  primero **y con él su único enlace**. El examen seguiría asignado y el alumno
+  no se enteraría de ese: el fallo callado de siempre.
+
+El enlace va **directo a rendirlo** y no a una lista, que es la otra diferencia
+con las tareas: un examen tiene reloj y una sola oportunidad, así que buscarlo
+entre otros es un paso de más.
+
+**Reabrir también avisa**, con `avisar_examen_reabierto`, y es el momento en
+que más falta hace: el alumno se quedó congelado a mitad del examen y no tiene
+forma de enterarse de que ya puede volver a entrar — sin aviso tendría que ir
+probando la página cada tanto.
+
+- **Ese va como `AFTER UPDATE` normal, no diferido**, al revés que el de
+  asignar: acá las preguntas existen desde hace rato, no se están insertando en
+  la misma transacción.
+- **Su `WHEN` es lo único que lo separa del ruido**: `old.estado is distinct
+  from 'asignado' and new.estado = 'asignado'`. Sin él saltaría también cuando
+  el alumno empieza su examen, cuando se le cuenta una salida y cuando lo
+  entrega — un aviso en el celular por cada cosa que él mismo acaba de hacer.
+  Comprobado en una transacción revertida: esos cuatro updates no disparan
+  nada, y el quinto —el de reabrir, el mismo que manda `examenes.html`— sí.
+- **Dice cuántas le faltan, y ese número NO sale de `examenes.total_items`**:
+  al reabrir, esa columna se pone en null junto con la nota (es del cierre
+  anterior), así que leerla daría siempre null y el aviso no diría nada. Se
+  cuentan `examen_items` menos `examen_respuestas`. Comprobado: con 6 preguntas
+  y 2 contestadas dice «te faltan 4 preguntas y tienes 12 minutos», y con una
+  sola, «te falta 1 pregunta y tienes 1 minuto».
+- **Lleva la MISMA etiqueta que el aviso de asignación** (`examen:<id>`), a
+  propósito: así reemplaza al anterior en la bandeja en vez de dejar dos avisos
+  del mismo examen, y el que se queda es el que dice la verdad.
+
+### El informe, y qué ve cada quien
+
+`examen_informe()` es **una sola función para los dos públicos**, y lo que
+cambia es cuánto devuelve: al profesor le da la respuesta correcta y la
+explicación de cada pregunta; **al alumno no**. Dos funciones se habrían
+separado a la primera corrección, y la del alumno es justo la que no puede
+equivocarse: enseñarle las respuestas convierte el banco en un juego de memoria
+para el examen siguiente. Es la misma decisión de `nivel-de-arbitraje.html`.
+
+Al terminar, el alumno ve **su nota y cómo le fue por área**, nunca las
+respuestas. El profesor ve pregunta por pregunta, con qué contestó, cuánto
+tardó y si no llegó a verla.
+
+**El correo a la casa lo manda `informe-examen`, una Edge Function APARTE de
+`informes-encargados`.** Podría haber sido una acción más de aquella, pero esa
+es la que `pg_cron` dispara todos los días para todas las familias: meterle
+mano por un botón nuevo habría puesto en riesgo el camino que ya funciona, y si
+se rompiera no daría ningún error — simplemente dejarían de llegar los
+informes. Quién puede mandarlo lo decide la RLS (lee el informe con el JWT de
+quien llama), y `informe_enviado_at` se marca **después** de que Resend acepte.
+El correo a la casa lleva en qué se equivocó, **no las respuestas correctas**.
+
+**Esto pide desplegar la Edge Function `informe-examen`** (ya desplegada desde
+esta tanda; se arma con `node herramientas/funciones-armar.js`). Si algún día
+queda sin subir, el botón lo dice en pantalla en vez de dejar creer que salió.
+
+### Lo que este diseño NO cierra
+
+`js/diagnostico-items.js` y `js/arbitraje-items.js` **siguen siendo archivos
+estáticos que cualquiera con sesión puede leer**, porque los usan el
+diagnóstico y el examen de arbitraje. Un alumno decidido puede buscar ahí la
+pregunta que tiene delante. Lo que este diseño quita es lo fácil: su examen no
+trae las respuestas, el ejecutor no carga el banco, y con pantalla completa y
+un minuto por pregunta buscar entre 301 no sale gratis. Cerrarlo del todo
+pediría servir los bancos desde una función con RLS, y eso es otro cambio.
+
+`js/tablero-pregunta.js` es el tablero de una pregunta con respuesta, sacado
+aparte para esta página. **`entreno/diagnostico.html` sigue con el suyo**, que
+es el mismo dibujo acoplado a su `itemActual` y a su cuadro de comandos:
+moverlo ahora arriesgaría `verificar-diagnostico.js` y
+`verificar-cuadro-comandos.js` por un cambio que no se pidió. Unificarlos queda
+anotado — es el mismo camino que siguió `js/cuadro-comandos.js`, que nació para
+las páginas que no lo tenían.
+
+**Al tocar los exámenes, correr `node herramientas/verificar-examenes.js`**
+(con el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
+Comprueba, sin navegador, que la clave siga apuntando a la respuesta correcta
+después de barajar (sobre 1.600 preguntas) y que lo visible no la filtre; y en
+un navegador de verdad, que dos bloques de fuentes distintas viajen en el MISMO
+examen y que dos del mismo banco no cuelen una pregunta repetida (se mide sobre
+las llaves de verdad, no sobre el conteo), que el total y el botón de quitar
+sigan a los bloques, que el tope de salidas que se eligió sea el que se manda y
+que su nota diga lo que de verdad va a pasar, que el tiempo recomendado nunca
+quede por debajo del
+mínimo que exige el servidor (sobre más de 400 exámenes) y que de verdad mire
+las preguntas en vez de ser una constante disfrazada, que lo que se manda sean
+**el mismo tiempo y las mismas preguntas** que la pantalla tenía delante, que el
+ejecutor no pinte ninguna respuesta, que mande la opción que se tocó, que no
+deje volver atrás, que el reloj salga de la hora
+del SERVIDOR (se le corre la de la computadora una hora y la cuenta atrás no se
+mueve), que salir de la ventana se le cuente al servidor dos veces y a la
+tercera cierre, que el alumno vea nota y áreas pero no las preguntas, y que el
+profesor sí las vea. Lo que hace cumplir la base se comprobó impersonando roles
+en SQL, como está dicho arriba.
+
+
 ## Coordinación: el rol nuevo y los formularios de inscripción
 
 **Coordinar es una marca encima de "profesor", no un tercer valor de `role`**, y
@@ -264,9 +1520,326 @@ líneas de HTML.
   doble clic. Con coma, Excel mete la fila entera en la columna A.
 - `formulario.html` lleva `noindex`: es el formulario de una actividad puntual,
   con su enlace propio.
+- **El enlace que copia el armador se arma desde la CARPETA de la página, no
+  cortándole el `.html` al final.** Cloudflare sirve la misma página en dos
+  direcciones —`/formularios` y `/formularios.html`—, así que con el corte, a
+  quien la abría sin la extensión el botón le copiaba
+  `/formulariosformulario.html?f=…`: los dos nombres pegados, o sea un 404. Y no
+  daba ningún error en el armador — el enlace se copiaba igual y la página que
+  no era la veía quien lo recibía, que es el único que no puede arreglarlo.
 - **Al tocar esto, correr `node herramientas/verificar-formularios.js`** (con el
   sitio en localhost:8777 y playwright). Comprueba en un navegador de verdad qué
-  manda el armador a guardar y qué manda el formulario público al contestar.
+  manda el armador a guardar, qué enlace copia **con `.html` y sin él**, qué
+  manda el formulario público al contestar y el alta de abajo — qué dedujo de
+  cada etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
+
+### De la respuesta a la cuenta, en un botón
+
+Cada respuesta tiene su botón **"Crear cuenta"**: crea la cuenta del alumno con
+su invitación por correo, lo deja asignado a quien aprieta el botón, le pone el
+equipo del formulario y **apunta a la persona encargada con su correo**, que es
+lo que después usa "📧 Informes a la casa" de `informes.html`. Antes eso era
+copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
+
+- **Es UNA Edge Function (`inscribir-alumno`), no dos llamadas del navegador.**
+  Invitar al alumno y apuntar a su encargado son un solo acto: "dar de alta a
+  esta familia". Partido en dos, si la segunda mitad falla queda un alumno con
+  cuenta y sin encargado, y eso **no da ningún error** — simplemente nunca le
+  llega el informe a la casa y nadie se entera hasta que alguien pregunta.
+- **Se puede apretar dos veces sin romper nada.** Si ya hay cuenta con ese
+  correo se reusa y **no se gasta otra invitación del cupo**; la asignación de
+  profesor y la persona encargada son upsert (`profile_teachers` y el
+  `UNIQUE (student_id, email)` de `encargados`). Así un doble clic, o reintentar
+  después de un fallo a mitad de camino, termina el alta en vez de enredarla.
+- **La marca de "ya se creó" vive en la base**, en la propia respuesta
+  (`cuenta_id`, `cuenta_creada_at`, `cuenta_creada_por`), no en una variable de
+  la pantalla: al volver mañana, la fila muestra ✅ en vez de ofrecer una
+  segunda invitación al mismo correo. Se escribe **al final**, cuando todo lo
+  demás salió bien. No confundir `cuenta_id` con `alumno_id`, que ya existía y
+  es otra cosa: quién *contestó* el formulario (casi siempre nulo, porque el
+  formulario es público).
+  `formulario_respuestas` **sigue sin política de update**: una respuesta
+  enviada no se toca desde el navegador, así que esas tres columnas solo las
+  escribe la función con la service role.
+- **El permiso no se comprueba a mano**: la fila de la respuesta se lee con el
+  JWT de quien llama, o sea pasando por la RLS. Comprobado impersonando roles en
+  SQL — quien administra coordina y ve la respuesta; una coordinadora que no
+  creó ese formulario recibe **cero filas** y se lleva un 403; un alumno no
+  coordina. Es la misma regla que ya usa `informes-encargados`.
+- **Qué pregunta es cuál se declara, y si no, se deduce.** Cada pregunta lleva
+  un `papel` (`alumno_nombre`, `alumno_correo`, `encargado_nombre`,
+  `encargado_correo`) que se elige al armarla, y la plantilla ya viene con los
+  cuatro puestos. Los formularios que ya existen no lo traen, así que
+  `papelesDe()` lo deduce de la etiqueta — "correo encargado" es de la casa,
+  "correo electrónico" es del alumno.
+- **Pero deducir no es saber, y por eso el botón NO manda de una.** Abre el
+  diálogo con los cuatro datos ya puestos y editables. Mandarle la invitación al
+  correo de la mamá en vez de al del alumno no da ningún error: simplemente
+  entra al sitio la persona que no era, y el correo ya salió. Lo que se enseña
+  antes de mandar es exactamente lo que se va a mandar.
+- El cupo sigue siendo el de siempre (`profiles.invitaciones_max`): quien
+  administra no tiene tope, un profesor sin invitaciones asignadas recibe el
+  mismo aviso que en la Academia.
+
+## El alumno que no tiene correo propio
+
+Una familia con dos hijos pequeños tiene **un solo correo** —el de la mamá o el
+papá— y quiere inscribir a los dos con él. No se puede, y no es una regla del
+sitio que se pueda aflojar: el correo es la llave con la que se inicia sesión y
+Supabase Auth lo exige único (`users_email_partial_key`). Repetirlo sería que
+los dos hermanos entren a la misma cuenta.
+
+La salida no es darle un buzón a un niño de siete años, es **dejar de
+pedírselo**: entra con un **usuario** del dominio `alumno.ajedrez-integral.com`,
+que no recibe correo, y todo lo que el sitio le escribe a esa familia va al
+correo de la persona encargada. Así los dos hermanos tienen cuentas separadas
+—con su progreso, sus tareas y sus cobros aparte— y la mamá recibe las dos
+bienvenidas y los dos informes en su único correo.
+
+Eso separa dos cosas que hasta ahora el sitio confundía en una sola columna:
+
+- **con qué entra el alumno** → `profiles.email`, que puede ser un usuario;
+- **a dónde se le escribe** → `public.correo_de_contacto()`, de aquí en adelante.
+
+### Antes de esto, el segundo hermano se comía al primero
+
+`inscribir-alumno` decidía si reusar una cuenta **buscando el correo en
+`profiles`**, no mirando la respuesta que se estaba dando de alta. Así que
+inscribir a un segundo alumno con un correo ya usado encontraba la cuenta del
+primero, la reusaba, y más abajo le escribía encima el nombre y el equipo: **el
+primer hijo dejaba de existir**, con su progreso, su asistencia y sus tareas
+adentro de la cuenta del segundo. Y la pantalla decía ✅ "cuenta creada", sin un
+solo error.
+
+El reuso existe por una razón buena —apretar el botón dos veces, o reintentar un
+alta que falló a mitad de camino, no debe costar otra invitación del cupo— pero
+"otra vez" y "otro alumno" no son lo mismo. Ahora se decide por
+**`respuesta.cuenta_id`**: esta respuesta, esta cuenta. Un correo que ya es de
+otra cuenta se rechaza con un 409 que dice qué hacer en vez de pisarla.
+
+### La regla de a dónde se le escribe vive en la base
+
+**El peligro de todo esto es mandarle correo a ese buzón que no existe**, y no
+daría ningún error: Resend acepta el envío, el correo rebota y la reputación del
+dominio se va deteriorando sin que nadie mire. Por eso la pregunta se hace en un
+solo lugar:
+
+- `public.es_correo_interno(text)` — si eso es un usuario y no una dirección.
+- `public.correo_de_contacto(alumno)` — el correo de su cuenta si es de verdad,
+  y si no el de su encargado activo. **NULL quiere decir "no hay forma de
+  escribirle"**, y quien llame tiene que decirlo, no callarlo. Es
+  `SECURITY INVOKER` como las de informes: quién puede preguntar por quién lo
+  sigue decidiendo la RLS.
+- `cobros_morosos()` devolvía `p.email` tal cual, así que le habría mandado el
+  aviso de morosidad a la dirección muerta. Ahora devuelve `correo_de_contacto()`.
+- `profiles` ganó un índice único sobre `lower(email)`: `auth.users` ya lo
+  impedía para las cuentas, pero era sobre `profiles` que el alta buscaba a quién
+  reusar.
+
+Comprobado con los datos reales antes y después: en los 93 perfiles de hoy
+—ninguno con usuario interno— `correo_de_contacto()` devuelve **exactamente** el
+mismo correo que antes, 93 de 93. Y en una transacción revertida, dos hermanos
+con usuario interno y el mismo encargado resuelven los dos a ese correo, y un
+alumno sin encargado da NULL en vez de inventar un destino.
+
+### El dominio está escrito tres veces, a la fuerza
+
+En `js/usuario-alumno.js` (el navegador), en
+`supabase/functions/_compartido/usuario-alumno.ts` (las Edge Functions) y en
+`public.es_correo_interno()` (la base). Son tres tiempos de ejecución que no
+pueden leerse entre sí, así que no hay forma de tener una sola copia — lo que sí
+hay es una comprobación que falla si se separan. Separadas, el sitio crearía
+usuarios en un dominio que la base no reconoce como interno y volvería a
+mandarles correo a la nada.
+
+**Y no es el dominio del sitio a propósito.** `alumno.ajedrez-integral.com` no
+tiene MX y no debe tenerlo: su razón de ser es que nada le llegue nunca. Un
+usuario en el dominio raíz recibiría correo de verdad y se perdería la
+separación entera.
+
+### El usuario se propone, se enseña y se puede corregir
+
+`baseDeUsuario()` arma `nombre.apellido` sin tildes ni eñes —"Sofía Muñoz Pérez"
+es `sofia.munoz`—, y **cuál pedazo es el apellido se adivina**: acá se nombra
+completo (Nombre1 [Nombre2] Apellido1 Apellido2), así que con cuatro pedazos el
+apellido es el tercero y con dos o tres es el segundo. Acierta casi siempre y
+falla con "María José Vargas", que da `maria.jose`.
+
+Por eso **las dos pantallas de alta lo muestran y dejan corregirlo antes de
+crear la cuenta**, con la misma regla que ya usa el diálogo de inscripción:
+deducir no es saber. El usuario es lo que el niño va a escribir todos los días y
+después no se cambia solo.
+
+- El choque se resuelve **numerando** (`jose.rodriguez2`, `jose.rodriguez3`) y no
+  con un id al azar: `jose.rodriguez.a7f3` no se lo aprende nadie. Dos "José
+  Rodríguez" en la misma academia no son ninguna rareza.
+- El desempate lo hace **siempre el servidor**, aunque el usuario venga propuesto
+  desde la pantalla: entre que se propuso y que se apretó el botón pudo entrar
+  otro alumno con ese nombre. **Lo que la pantalla enseña al final es el usuario
+  que devolvió el servidor**, no el que ella propuso — enseñar el propuesto
+  dejaría a la familia intentando entrar con uno que no es.
+- El plural de las tildes se quita del USUARIO, no del nombre: el nombre se
+  guarda como la familia lo escribió. Un usuario con tilde se puede escribir de
+  dos formas y el niño no sabría cuál le toca.
+
+### El niño escribe `sofia.munoz`, no el correo entero
+
+`login.html` acepta el usuario pelado y le pega el dominio
+(`UsuarioAlumno.completar()`). Pedirle a un niño que escriba
+`sofia.munoz@alumno.ajedrez-integral.com` cada vez que entra es pedirle justo lo
+que esto vino a evitar — y dictárselo por teléfono a la mamá, peor. Escribirlo
+entero sigue funcionando, porque es lo que dice el correo que recibió la casa.
+
+- **El campo pasó a `type="text"`.** Con `type="email"` el navegador rechaza
+  `sofia.munoz` con SU aviso, en su idioma, antes de que la página pueda decir
+  nada: el usuario no se podría ni mandar. Misma razón por la que el formulario
+  de `bienvenida.html` va con `novalidate`.
+- `autocapitalize="none"` y `autocorrect="off"`: en el celular, "Sofia.Munoz" no
+  entra.
+- En `bienvenida.html`, donde la página dice "tu correo" dice **"tu usuario"**
+  cuando lo es. Si no, los cuatro pasos del ingreso le explican a un niño cómo
+  entrar con algo que no tiene. Y se le enseña el usuario **sin el dominio**:
+  enseñárselo entero debajo de la palabra "Tu correo" es decirle que le escriban
+  ahí, y ahí no llega nada.
+
+### El olvido de contraseña, que es donde esto se podía romper callado
+
+`sb.auth.resetPasswordForEmail()` manda el enlace **a la dirección de la
+cuenta**. Para un alumno con usuario esa dirección no existe: el correo sale, no
+llega a ninguna parte, y la página dice igual "si esa cuenta existe, ya salió el
+correo". El niño se queda fuera para siempre y nadie se entera. Dejar eso abierto
+habría sido cambiar un agujero por otro.
+
+La Edge Function **`recuperar-acceso`** atiende ese caso: genera el enlace con la
+service role y lo manda a donde de verdad se le puede escribir a esa familia,
+que lo dice `correo_de_contacto()` — la misma regla de los informes a la casa y
+los avisos de cobro.
+
+- **Los correos de verdad siguen por el camino de siempre.** `bienvenida.html`
+  elige por `UsuarioAlumno.esInterno()`: lo que ya estaba probado no se toca.
+- `verify_jwt` va en **false**, porque quien olvidó su contraseña no tiene
+  sesión. A cambio **no dice nunca si la cuenta existe**: contesta lo mismo en
+  todos los casos, exista o no, salga el correo o no, y hasta si algo falla.
+  Decir "ese usuario no está registrado" le contaría a cualquiera quién tiene
+  cuenta acá, y son menores de edad. **Tampoco dice a qué correo lo mandó**: ese
+  dato es de la familia.
+
+### Las dos puertas de alta
+
+Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
+(invitar desde la clase en vivo)— traen la casilla **"No tiene correo propio"**:
+
+- el campo del correo del alumno se **apaga**, no se esconde: así se ve que
+  sigue ahí y que lo que cambió es que ya no hace falta;
+- el **correo de la persona encargada pasa a ser obligatorio** — es la única
+  forma de mandar el enlace, y sin él la cuenta queda creada y muda;
+- en el formulario, la casilla **arranca marcada cuando la respuesta no trajo
+  correo del alumno**, que es lo que de verdad pasa con los pequeños: la familia
+  escribe el suyo y deja ese campo vacío. Se propone, no se decide;
+- `create-student` apunta al encargado **en la misma llamada**, no en una
+  segunda del navegador: partido en dos, si la segunda mitad falla queda una
+  cuenta a la que nunca se le puede escribir. Es la decisión que ya tomaba
+  `inscribir-alumno`;
+- el aviso del final **enseña el usuario y dice a qué bandeja salió el correo**.
+  Con un alumno sin buzón no salió a la suya, y quien dio de alta tiene que
+  poder decírselo a la familia: ese dato no lo adivina nadie.
+
+**Esto pide desplegar tres Edge Functions**, que no se suben solas al mergear:
+`create-student`, `inscribir-alumno` y la nueva `recuperar-acceso` —esta última
+con **`verify_jwt` en false**, como los informes a la casa—. Se arman con `node
+herramientas/funciones-armar.js`. La migración de la base ya está aplicada. Si
+las funciones quedan sin subir, la casilla «No tiene correo propio» contesta que
+el correo del alumno no parece un correo: se ve el error, no se pierde nada.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-alumno-sin-correo.js`** (con el sitio en localhost:8777 y
+playwright). Todo lo que se rompe acá se rompe callado, así que se mira desde
+afuera: que el dominio diga lo mismo en sus tres copias, que la regla del usuario
+de la pantalla dé lo mismo que la del servidor (si se separan, lo enseñado no es
+lo guardado), que el login le pegue el dominio, que el olvido de un usuario NO
+pase por `resetPasswordForEmail` y que los dos caminos contesten **exactamente**
+lo mismo, y que dar de alta a dos hermanos con un solo correo mande dos usuarios
+distintos con el mismo correo de la casa.
+
+## La invitación pide la contraseña y explica cómo se entra
+
+Las dos puertas de alta —el formulario de inscripción (`inscribir-alumno`) y la
+invitación directa del profesor desde la clase en vivo (`create-student`)—
+mandan **el mismo correo**, y ese correo hace dos cosas que antes no hacía:
+pedirle al alumno que **cree su contraseña** y explicarle **cómo entra a partir
+de ahora**.
+
+Antes no era así, y fallaba callado: Supabase mandaba su correo de invitación,
+el alumno abría el enlace, entraba **ya autenticado** y su contraseña quedaba
+sin poner. Al día siguiente no tenía con qué volver — el enlace se usa una sola
+vez— y nada en el sitio le había dicho que existía un botón "Contraseña" dentro
+del panel. No daba ningún error: simplemente ese alumno no volvía, y quien lo
+invitó se enteraba cuando preguntaba por qué nunca entró.
+
+- **`bienvenida.html` es a donde lleva el enlace** (`redirectTo` de las dos
+  funciones). Lo primero y único que pide es la contraseña, con el correo del
+  alumno a la vista —de solo lectura: es el dato con el que va a entrar— y los
+  dos campos para escribirla y repetirla.
+- **La explicación de cómo se entra va desde el primer momento, no al final.**
+  Quien pone su contraseña se va de la página enseguida; si los cuatro pasos
+  aparecieran recién después de guardarla, no los leería nadie. Están arriba
+  del pliegue desde que la página abre, y siguen ahí después.
+- **"Ver la contraseña" destapa los DOS campos a la vez**, porque el error que
+  evita es justamente que no coincidan.
+- **El formulario va con `novalidate`.** Sin eso el navegador corta el envío
+  con SU propio aviso, en el idioma del navegador y no en el de la página, y el
+  aviso en español no sale nunca. `required` y `minlength` se quedan puestos:
+  los anuncia el lector de pantalla al entrar al campo.
+- **La misma página atiende el enlace vencido y el "se me olvidó".** Los dos
+  piden lo mismo —un enlace nuevo—, así que el formulario está escrito una sola
+  vez y lo que cambia es el encabezado. `login.html` manda ahí con
+  `?recuperar=1`, y ese enlace **tiene que existir**: la explicación de la
+  página lo nombra, y una explicación que manda a un botón que no está es peor
+  que no explicar.
+- Ese aviso de "si esa cuenta existe, ya salió el correo" es a propósito: decir
+  "ese correo no está registrado" le contaría a cualquiera quién tiene cuenta.
+
+### El correo lo manda el sitio, no Supabase
+
+- **Sale UNO solo, no dos.** Antes salían el de Supabase (con el enlace, sin
+  explicar nada) y otro nuestro con el PDF de instrucciones adaptadas. Ahora el
+  enlace lo genera `generateLink` —que crea la cuenta pero **no** manda ningún
+  correo— y viaja dentro del correo nuestro, junto con los cuatro pasos del
+  ingreso y el PDF adjunto.
+- **`supabase/functions/_compartido/invitacion-email.ts` es la única copia de
+  ese texto.** Cada Edge Function se despliega con SUS archivos y no puede
+  importar de una carpeta hermana, así que `node herramientas/funciones-armar.js`
+  copia el compartido dentro de cada función al armar el despliegue: se escribe
+  en un lugar y se genera en los que hagan falta, como el resto de
+  `herramientas/`. Escrito dos veces, se iría separando a la primera corrección
+  y la mitad de las familias recibiría la versión vieja sin que nada falle.
+- **Sin `RESEND_API_KEY` no se usa `generateLink`**: se invita como siempre con
+  `inviteUserByEmail` y el correo lo manda Supabase. Un proyecto sin Resend
+  configurado tiene que seguir dando de alta alumnos, no crear cuentas a las que
+  no les llega nada.
+- **Si la cuenta queda creada y el correo NO sale, se dice.** `correo_enviado:
+  false` sube hasta la pantalla de quien invitó —en la clase en vivo y en el
+  armador de formularios—, con qué hacer ("que entre con «¿Olvidaste tu
+  contraseña?»"). Es el fallo callado de siempre: una cuenta muda de la que
+  nadie se entera hasta que alguien pregunta.
+- **El alumno del formulario ahora también recibe el PDF de instrucciones
+  adaptadas.** Antes solo lo recibía el invitado por el profesor: esa puerta no
+  mandaba ningún correo propio.
+- Los estilos del correo van **a mano en cada etiqueta**, no en una hoja
+  aparte: Gmail descarta el `<style>` del `<head>`. Misma decisión que
+  `informe-html.ts`.
+
+**Al tocar `bienvenida.html`, `login.html` o cualquiera de las dos funciones,
+correr `node herramientas/verificar-bienvenida.js`** (con el sitio en
+localhost:8777 y playwright). Existe porque esta página vive **detrás de un
+correo**: no se llega a ella desde ningún enlace del sitio, así que
+`verificar-css.js` no la abre nunca. Comprueba que lo que manda a guardar sea
+la contraseña que se escribió y no otra cosa, que una corta o dos distintas no
+manden nada y lo digan, que los cuatro pasos del ingreso **se vean de verdad**
+(se mide con `checkVisibility()`, no con la clase — la lección que dejó
+`verificar-pwa.js`) ya antes de guardar, que el enlace vencido ofrezca otro y
+que `login.html` tenga de verdad el «¿Olvidaste tu contraseña?» que la página
+promete.
 
 ## Informes: la cuenta la hace la base, no el navegador
 
@@ -314,6 +1887,13 @@ Detalles que importan:
   el texto tal cual lo escribió `localStorage`: el JSON de dentro puede estar
   roto y una fecha puede no ser una fecha. Devuelven NULL en vez de tumbar el
   informe entero.
+- **Tareas y exámenes tienen su bloque**, mirando a UN alumno y también en la
+  página del propio alumno — la misma función los pinta para los dos públicos,
+  con los mismos números—. Los da `public.resumen_tareas_examenes()`, la misma
+  que usa el correo a la casa: si esta página los sumara por su cuenta, el
+  correo y la pantalla podrían decir cosas distintas del mismo alumno. Lo
+  vencido va arriba, en rojo **y escrito con todas las letras**: es la única
+  línea del bloque que pide hacer algo hoy, y un color solo no se lee.
 - **Al tocar informes.html, correr `node herramientas/verificar-informes.js`**
   (con el sitio en localhost:8777 y playwright instalado). Abre la página en un
   navegador de verdad con un cliente de Supabase de mentira y comprueba número
@@ -324,6 +1904,203 @@ Detalles que importan:
   `class_attendance(student_id)` y `question_answers(student_id, created_at
   desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
   `student_id`.
+
+### Un total solo sube: «Cómo viene» es lo que dice si mejora
+
+Todos los números de Informes eran **acumulados desde siempre**, y eso no
+contesta la pregunta del entrenador —«¿está mejor que hace tres meses?»— ni la
+de la casa. Peor: un alumno que lleva un mes sin entrar se ve **exactamente
+igual de bien** que el día que paró, porque el número de ayer sigue ahí. No da
+ningún error; simplemente nadie se entera.
+
+El bloque **«📈 Cómo viene»** va en el informe individual —y en la página del
+propio alumno— entre los cursos y la bitácora: primero se mira cómo viene y
+después se anota lo que se ve.
+
+- **`public.evolucion_alumno(alumno, semanas)`** devuelve una fila por semana:
+  ejercicios, días, minutos y respuestas de pizarra. Es **`SECURITY INVOKER`**
+  como el resto de las de informes, así que quién puede pedir la curva de quién
+  lo decide la RLS y un alumno recibe solo la suya — la misma función pinta las
+  dos pantallas y la cuenta no queda escrita dos veces.
+- **La rejilla de semanas viene COMPLETA, con las vacías en cero**, y esa es
+  media función. Si las semanas sin nada no vinieran, el gráfico pegaría dos
+  semanas separadas por un mes en blanco y dibujaría una línea que **sube**,
+  cuando lo que pasó fue que el alumno no entró. Se ve perfecto y dice lo
+  contrario de lo que pasó.
+- **Las semanas se cuentan en hora de Costa Rica**, igual que los días de la
+  racha y los del informe a la casa: quien entrena a las once de la noche no
+  puede caer en la semana siguiente por el huso del servidor.
+- **Los minutos salen de `minutos_por_tramos()`**, la misma de Informes, Tareas
+  y el reporte de actividades, con la semana como partición. Comprobado contra
+  los datos reales: los minutos de la curva y los de la tarjeta de arriba dan
+  **el mismo número** (472 y 472 en el alumno con más actividad).
+
+#### El veredicto escrito manda sobre el gráfico
+
+Arriba de todo va una franja con la frase —«Va subiendo · 40 ejercicios este
+último mes contra 4 el anterior»—, que es lo primero y muchas veces lo único
+que se lee. Misma decisión que la franja del informe a la casa: el gráfico es el
+respaldo, no el mensaje.
+
+- **Compara las últimas 4 semanas contra las 4 anteriores**, no contra siempre.
+- **Un porcentaje a secas no sabe decir dos casos**, y los dos importan: de 0 a
+  40 no es «+∞ %» sino **«Empezó a entrenar»**, y caer a cero es **«Dejó de
+  entrenar»**, que es lo único del bloque que pide hacer algo hoy.
+- **Un vaivén de ±15 % no es una tendencia.** Sin ese margen, el profesor
+  recibiría «va bajando» todos los meses sin ningún motivo y dejaría de leerlo.
+- El color de la franja **nunca va solo**: al lado está el título escrito y
+  debajo los dos números.
+
+#### Las barras, y lo que solo se descubre mirando la pantalla
+
+- **Una sola serie, un solo color.** Pintar cada barra más oscura cuanto más
+  alta sería codificar el alto dos veces y gastar el color en algo que la barra
+  ya dice.
+- **Una semana en cero se queda en CERO**, sin mínimo visible: darle uno la
+  haría parecer una semana con algo, que es justo lo contrario.
+- **Las columnas NO llevan pista de fondo.** La primera versión sí, y al mirar
+  la captura se vio el problema: con doce bloques grises de la altura del
+  gráfico, **cuatro semanas con algo se leen como un gráfico casi lleno**. Lo
+  que marca el suelo es una línea de base hairline. Ninguna comprobación iba a
+  encontrar eso — **hay que renderizarlo y mirarlo**.
+- **El valor va en dos barras, no en las doce**: la más alta y la última. Doce
+  números pegados no los lee nadie.
+- **La tabla de abajo no es un extra: es la versión accesible**, y por eso el
+  gráfico va `aria-hidden`. Doce columnas enfocables serían doce paradas de
+  tabulador para leer lo que la tabla dice mejor.
+
+#### Comparar dos diagnósticos mide si SABE más, no si trabajó más
+
+Se pueden resolver trescientos ejercicios de lo que uno ya sabía. Cuando el
+alumno tiene dos diagnósticos, debajo de la curva va la comparación área por
+área, con la barra divergente, la flecha y **los puntos escritos** (`+40 puntos
+(30% → 70%)`): con daltonismo el verde y el ámbar no se distinguen, y eso ya
+está medido en el diagnóstico de clase.
+
+- **Menos de 5 puntos no se pinta.** Son dos pruebas distintas —las preguntas se
+  sortean— y llamar «mejoró» a tres puntos es ruido.
+- **Los diagnósticos anteriores salen de `training_progress`, no del espejo
+  `training_state`**: el espejo guarda SOLO el último, así que con él no hay con
+  qué comparar. Van con `.limit(5)` y su `.eq()` de alumno.
+- **El resumen lo hace `PlanEntrenamiento.resumir()`**, que es quien sabe de
+  áreas y porcentajes: una segunda cuenta acá podría decir otro nivel que el
+  resto del informe.
+- Hoy **solo 2 alumnos de 97 tienen más de un diagnóstico**, y es justamente
+  porque repetirlo no servía de nada: no había dónde comparar. Esto es lo que
+  rompe ese círculo.
+
+#### El bloque se esconde entero si no hay nada
+
+Sin semanas con algo y sin dos diagnósticos no se destapa: un panel que diga
+«todavía no hay datos» es ruido en todas las visitas menos una, la misma
+decisión que la bitácora. Y si la consulta **falla**, se dice — una curva vacía
+y una que no se pudo leer se ven igual y son cosas muy distintas.
+
+**Al tocar `js/evolucion-alumno.js`, la función `evolucion_alumno()` o el bloque
+de Informes, correr `node herramientas/verificar-informes.js`.** Comprueba sin
+navegador los seis casos del veredicto (incluidos «empezó» y «dejó de
+entrenar», que son los que un porcentaje no sabe decir), y en un navegador de
+verdad que las 12 semanas se pinten con las vacías incluidas, que **una semana
+en cero no dibuje barra** —se mide el alto que calcula el navegador, no la
+clase—, que la tabla diga los mismos números que la base mandó, que la
+comparación de diagnósticos salga con los puntos escritos, que **no se cuele el
+diagnóstico de otro alumno** y que sin nada el bloque no se destape.
+
+- **Su Supabase de mentira ahora FILTRA Y ORDENA de verdad** (`eq`, `in`,
+  `order`, `limit`). Antes devolvía siempre la tabla entera: habría dado por
+  buena una página que mezcla los diagnósticos de dos alumnos, y una que se
+  quedara con la fila que no era al pedir «el anterior». Al arreglarlo saltaron
+  los datos de prueba, a los que les faltaba el `student_id` — era el doble el
+  que estaba incompleto, no la página.
+
+### El tiempo conectado no se lo cree porque lo diga el navegador
+
+`class_presence_log` (clase en vivo, latido de `sesion.html`) y
+`platform_activity_log` (entrenamiento, latido de `js/tiempo-plataforma.js`)
+son las dos tablas de donde sale `minutos_clase`/`minutos_ejercicios`. Sus
+políticas de insert/update solo exigían `student_id = auth.uid()`, sin acotar
+`joined_at` ni `left_at`: un alumno podía, desde la consola del navegador,
+insertar o actualizar una fila propia con la hora que quisiera —incluida una
+de hace veinte años— e inflarse los minutos que después ve su profesor y que
+le llegan a la casa en "📧 Informes a la casa". La página nunca lo hacía —
+`abrirFila()`/`tocarFila()` y `startPresenceLog()`/`touchPresenceLog()` solo
+mandan lo que hace falta y la hora del momento—, pero la tabla en sí quedaba
+abierta a mandarle cualquier cosa.
+
+- **`public.proteger_tiempos_de_presencia()`** (trigger `BEFORE INSERT OR
+  UPDATE` en las dos tablas) ignora lo que mande el cliente y usa el reloj del
+  servidor: en el insert fuerza `joined_at := now()` y `left_at := null`
+  —nadie necesita mandar otra cosa—, y en el update hace `new := old` y
+  después `new.left_at := now()`, o sea que revierte CUALQUIER otra columna a
+  su valor de antes y solo deja avanzar `left_at`. Es el mismo patrón que
+  `protect_answer_grading`, aplicado a las dos tablas con una sola función
+  porque el problema es idéntico en las dos.
+  - De regalo, esto cierra otra puerta que no era la buscada: el update de
+    `class_presence_log` tampoco revalidaba nada más que la dueñez de la
+    fila, así que un alumno podía reasignar su propia fila de presencia a
+    OTRA `session_id` —el insert sí exige `es_mi_profesor(cs.created_by)`,
+    pero el update no volvía a mirarlo—. Con `new := old` esa columna
+    tampoco se mueve.
+  - Comprobado impersonando roles en SQL: un insert con `joined_at`/`left_at`
+    inventados los ignora y usa "ahora"; un update legítimo (mandar la hora
+    real, como hace la página) sigue funcionando igual; un intento de
+    reasignar `session_id` a otra clase queda revertido.
+- **La fórmula de "unir tramos superpuestos" ya no está copiada tres veces.**
+  Estaba pegada tal cual en `informes_resumen_alumnos()`, `informe_de_alumno()`
+  y `reporte_actividades()` — si un día hay que corregir el criterio (por
+  ejemplo, el margen de 20 s), había que acordarse de tocarla en los tres
+  lugares. Ahora vive en `public.minutos_por_tramos(tramo_crudo[])`, que recibe
+  un arreglo de `(particion, joined_at, left_at)` —`particion` es lo que sea
+  que se esté agrupando, normalmente `student_id::text`— y devuelve los
+  minutos ya sumados por partición. Las tres funciones solo arman el arreglo
+  con un `array_agg` y le pasan el resultado.
+  - Comprobado contra datos reales antes y después del cambio: los tres
+    devuelven exactamente los mismos números que devolvían con la cadena de
+    CTEs vieja (diferencia 0 en todos los alumnos), y aparte la función nueva
+    se comparó tramo por tramo contra la cadena vieja sobre toda
+    `platform_activity_log`.
+
+### `training_progress` tenía el mismo problema, con otro nombre
+
+Igual que las tablas de tiempo, `training_progress_insert_own` solo exige
+`student_id = auth.uid()`: el contenido de `detail` (jsonb) quedaba entero en
+manos del cliente. La diferencia es que acá no hay ninguna política de
+`update` —una fila insertada no se puede tocar—, así que alcanza con validar
+en el insert.
+
+- **No todos los campos de `detail` son igual de sensibles.** Los que
+  importan son los que `informes_resumen_alumnos()` usa como "la mejor
+  marca": `coordenadas.score` (vía `mejor_coord`) y `practicar.stars`. Un
+  `rating` de Lichess en `temas`/`tactica`, en cambio, describe la dificultad
+  del EJERCICIO, no algo que el alumno se gane — inflarlo no le sirve de
+  nada, así que no hace falta acotarlo.
+- **`public.validar_marca_training_progress()`** (trigger `BEFORE INSERT`)
+  rechaza con una excepción —no recorta el valor en silencio— un
+  `coordenadas.score`/`best_streak`/`misses` fuera de 0-300 (el más alto en
+  los datos reales es 33, en una ronda de 30s; 300 deja muchísimo margen y
+  aun así es humanamente imposible de alcanzar de verdad) o un
+  `practicar.stars` fuera de 1-3 (`entreno/practicas.html` solo asigna esos
+  tres valores). Rechazar en vez de recortar es a propósito: un score
+  recortado a 300 seguiría siendo una marca falsa, solo que más discreta.
+  Comprobado impersonando roles en SQL: las marcas legítimas (dentro de
+  rango, y cualquier otra actividad que el trigger no toca) se siguen
+  insertando igual; un `score: 999999` o `stars: 50` quedan rechazados.
+- **Lo que esto NO cierra**: los conteos basados en "cuántos ids distintos"
+  —`puzzles` (4×4), `lecciones` (Aprende), `mate1/2/3`, `tactica`,
+  `concentracion`— se pueden seguir inflando insertando muchas filas con
+  `puzzle_id`/`lesson_id` inventados. Cerrar eso de verdad pediría tener el
+  banco real de ejercicios adentro de Postgres, sincronizado con los JSON
+  que sirve el sitio, para poder validar que cada id existe — un proyecto
+  aparte, no este arreglo puntual.
+- **Hallazgo de paso, sin arreglar**: el `CHECK` de `activity` no incluye
+  `'curso'`, así que `cursos_temas` (el CTE `entreno` de
+  `informes_resumen_alumnos()` filtra por `tp.activity = 'curso'`) cuenta
+  contra cero filas siempre —confirmado, hoy no hay ninguna fila con esa
+  actividad—. No se tocó porque no se investigó de dónde debería salir ese
+  número en realidad (`training_state` es candidato, ya que el progreso de
+  cursos podría estar viviendo ahí y no en `training_progress`), pero queda
+  anotado: es el mismo síntoma de siempre, un campo que se ve en cero sin
+  que nada avise por qué.
 
 ## Los informes que llegan a la casa
 
@@ -373,6 +2150,86 @@ de arbitraje).
 - Comprobado de punta a punta contra Resend con `delivered@resend.dev` (su
   dirección de pruebas, que no llega a ninguna bandeja real): la primera corrida
   mandó 1 y la segunda saltó 1, que es exactamente lo que tiene que pasar.
+- **La función vive en el repositorio**, en `supabase/functions/informes-encargados/`.
+  Antes solo existía desplegada en Supabase: para cambiarle una línea había que
+  bajarla, editarla a ciegas y volver a subirla, sin que quedara rastro de qué
+  cambió ni cuándo.
+
+### Lo que la casa de verdad quiere saber: si está trabajando o no
+
+Ninguna de las cifras que el informe traía contestaba eso. Media hora puede ser
+una sola tarde y veinte ejercicios también, así que el correo podía verse lleno
+de números y no decir lo único que una madre pregunta.
+
+- **Arriba de todo va una franja con el veredicto**, y es lo primero —y muchas
+  veces lo único— que se lee: «Va bien · Practicó 5 días de 7», «Practicó poco»,
+  «Sofía no entró a practicar» o «Se le pasó la fecha de 2 tareas y 1 examen».
+- **Los días son la medida**, no los minutos: `informe_de_alumno()` devuelve
+  `dias_activos`, los días distintos con actividad contados **en hora de Costa
+  Rica** —mismo criterio que `progreso_dias_y_racha()`, para que quien entrena a
+  las once de la noche no pierda el día por el huso del servidor—.
+- **Cuántos días son "suficiente" vive en `PERIODOS`**, junto a la frecuencia
+  (1 al día, 3 a la semana, 8 al mes, 60 al año). No es una nota ni una regla de
+  la Academia: es el umbral con el que el correo decide el tono.
+- **El orden de las reglas importa y está escrito**: lo VENCIDO manda sobre todo
+  lo demás —se puede haber practicado los siete días y tener una tarea sin
+  entregar—, y quedarse en cero manda sobre "practicó poco".
+- **Ninguno de los textos regaña.** El de "no entró" ofrece ayuda, porque quien
+  lo lee puede ser una familia a la que se le complicó el mes.
+- Debajo van **Sus tareas** y **Sus exámenes**: cuántas le pusieron, cuántas
+  terminó, qué se le venció, cuándo vence la próxima, cuántos exámenes rindió y
+  con qué nota.
+
+### Las tareas y los exámenes del informe NO se cuentan con la RLS de quien mira
+
+`tareas` y `examenes` están aisladas por profesor a propósito (un profesor solo
+ve las que ÉL mandó), y eso choca de frente con un informe que es del ALUMNO.
+Son dos problemas, y el segundo es el que no se ve:
+
+1. A la madre no le sirve leer "hizo 2 de 2 tareas" cuando en realidad le
+   pusieron cinco entre sus dos profesores.
+2. **`informe_de_alumno()` es `SECURITY INVOKER`**, así que la tanda de
+   `pg_cron` (service role) y la vista previa del profesor pasarían por reglas
+   distintas: el profesor vería un informe y a la casa llegaría otro, sin que
+   nada fallara.
+
+Por eso esa parte la da **`public.resumen_tareas_examenes(alumno, desde, hasta)`,
+que es `SECURITY DEFINER`** y lleva escrito arriba quién puede preguntar por
+quién (el propio alumno, quien administra, o `soy_profesor_de()`; `auth.uid()`
+nulo es la tanda, y a `anon` se le revoca el `execute`).
+
+- **Devuelve números y fechas, nunca títulos ni quién puso la tarea.** La
+  familia necesita el conteo; el trabajo del colega sigue siendo suyo.
+- **Las tareas las cuenta `tareas_con_avance()`**, la misma función que pintan
+  `tareas.html` y el panel — dentro de la `SECURITY DEFINER` la RLS no filtra,
+  así que vienen las de todos sus profesores. Escribir la cuenta de nuevo sería
+  una tercera versión de "cuánto lleva hecho" que puede decir otra cosa.
+- **Lo que quedó sin hacer se cuenta HOY, no dentro del periodo**
+  (`sin_hacer_hoy`): una tarea que venció hace tres semanas no sale en el
+  informe semanal y es justo la que hay que decir.
+- Comprobado impersonando roles en SQL, con datos reales: el cron, el profesor
+  del alumno y el propio alumno reciben **exactamente los mismos números**; una
+  profesora que no lo tiene se lleva una excepción. Y la prueba que lo justifica:
+  a una profesora que sí tiene al alumno pero no puso esas tareas, **su RLS le
+  deja ver 0 tareas y 0 exámenes** mientras el informe cuenta 1 y 1.
+- **Ojo al probar el aislamiento: Profe Angulo es `is_admin`**, así que ve todo y
+  con él la prueba no prueba nada. Hay que impersonar a un profesor que no
+  administre.
+
+**Al tocar el informe de la casa, correr `node
+herramientas/verificar-informe-casa.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que las cuatro situaciones se distingan y que el orden
+de prioridad se respete —practicar los siete días no tapa una entrega vencida—,
+que los números de tareas y exámenes lleguen al HTML con los nombres que de
+verdad usa la base (una clave mal escrita no rompe nada: la sección simplemente
+no aparece), que el informe diario no diga "practicó 1 día de 1", y que un
+alumno sin nada no vea secciones vacías. Está probado que falla de verdad:
+cambiándole `puestas` por `asignadas` al HTML, salta.
+
+Lleva un ayudante, `herramientas/casos-informe-casa.mts`, porque
+`informe-html.ts` es TypeScript —se despliega a Deno— y se corre con
+`--experimental-strip-types`; el verificador lo lanza como subproceso para poder
+seguir siendo un `.js` como el resto de `herramientas/`.
 
 ## Para quien administra, el contenido está todo abierto
 
@@ -489,6 +2346,224 @@ dos caras de la página, que no recalcule situaciones, qué manda al crear un
 plan, al poner a un alumno en un plan, al registrar un pago y al anular, y que
 el CSV salga con punto y coma y BOM.
 
+## Reportes de actividades para presentar
+
+`reportes.html` (botón "📄 Reportes de actividades" en `admin.html`) arma el
+informe de lo que pasó en clase en un periodo, para presentarlo a quien haya
+que presentárselo. Sale en **Word y en PDF**, los dos con la marca de agua de
+Oscar en todas las páginas.
+
+Es de **quien coordina o administra** (`is_admin || es_coordinador`), como
+`cobros.html`. Lo que se ve dentro lo sigue acotando la RLS.
+
+- **Los datos salen de `public.reporte_actividades(desde, hasta)`**, que es
+  `SECURITY INVOKER` como las de informes: clases con su título, fecha, duración
+  y notas; asistencia por clase y por estudiante; minutos en clase; preguntas de
+  pizarra y aciertos. **Los minutos se cuentan con la misma técnica que
+  `informes_resumen_alumnos()`** (unir tramos superpuestos antes de sumar): un
+  informe que diga otro número que la página de Informes sería peor que no
+  tenerlo.
+- **Los archivos que se suben no se suben a ningún lado.** Fotos, hojas de
+  cálculo y grabaciones se leen en el navegador, entran al documento y ahí
+  termina. No hace falta Supabase Storage, no hay gigabyte que administrar y
+  —lo que más pesa— no quedan fotos de menores guardadas en un servidor.
+- **El contenido se arma UNA sola vez**, en `js/reporte-armar.js`: de esa
+  estructura neutral salen la vista previa, el PDF y el Word. Si cada generador
+  armara lo suyo, los dos archivos se irían separando a la primera corrección
+  — la misma razón por la que el informe que llega a la casa vive en un solo
+  `informe-html.ts`.
+
+### Dos informes distintos, no uno con opciones
+
+La página tiene **dos modos**, y la diferencia no es cosmética: cambia de dónde
+sale la información.
+
+1. **De la Academia** — las clases dadas en la plataforma. Los datos los pone
+   `public.reporte_actividades()`.
+2. **De clases dadas por fuera** — una escuela, un colegio, donde sea. Acá **no
+   se consulta nada**: la asistencia sale del Excel que llevó quien dio la
+   clase y el contenido, de sus documentos. Es el caso de todo profesor que da
+   clases fuera del sitio y tiene que reportarlas igual.
+
+#### Entender una hoja de asistencia hecha por una persona
+
+`js/reporte-asistencia.js`. Esa hoja no la escribió un sistema, y por eso
+reconoce **las dos formas** en que la gente lleva asistencia:
+
+- **Una fila por asistencia** ("fecha | estudiante | asistió"), que es lo que
+  sale de un formulario. Si no hay encabezados reconocibles, se deduce por el
+  contenido: la columna con fechas en casi todas sus celdas es la fecha, y la
+  de textos largos con letras es el nombre.
+- **Matriz**: alumnos en las filas, fechas en las columnas, una marca en cada
+  cruce. Es la que hace todo el mundo a mano y la que una librería de Excel no
+  entiende sola — para ella son columnas con nombres raros.
+
+**En una matriz, la casilla vacía es una FALTA.** Es lo que hace que la cuenta
+sirva de algo: en la cuadrícula hay una casilla por cada alumno y cada fecha, y
+quien lleva la lista marca a los que vinieron. Tratando el blanco como "no dice
+nada", *todo el mundo salía con 100 % de asistencia* — un número perfectamente
+creíble y falso, que es lo peor que puede llevar un informe. Una columna sin
+ninguna marca sí se salta entera: es un día que no hubo clase, y contarlo le
+pondría una falta a todos.
+
+**El informe DICE cómo leyó cada hoja**, y esa explicación va dentro del
+documento, no en un rincón de la pantalla: qué columna tomó por la fecha, cuál
+por el nombre, qué marcas contó como presente. Una hoja mal leída da números
+creíbles y equivocados; con la explicación al pie, el error se ve de una ojeada
+y quien lo recibe puede confiar en el resto. Si no entiende una hoja, lo dice y
+no inventa.
+
+#### El contenido sale de los documentos, ordenado por clase
+
+`js/reporte-textos.js` lee `.txt`, `.md` y `.docx` (el `.docx` con el mismo
+lector de ZIP que `js/reporte-excel.js`, que los dos formatos son un ZIP con XML
+adentro). Corta el documento en secciones cuando una línea **empieza** con una
+fecha —"12/09/2026", "16 de septiembre de 2026"— y `armarExterno()` las empareja
+con las clases de la asistencia. Ahí está la gracia: cada clase queda con su
+asistencia **y** con lo que se trabajó ese día, en vez de dos listas sueltas que
+hay que ir cruzando a mano.
+
+**Lo que NO hace: resumir ni interpretar.** Eso pide un modelo de lenguaje, con
+su credencial y su costo, y este sitio no usa ninguno. Lo que va en el informe
+son las palabras de quien dio la clase, ordenadas y puestas donde corresponden,
+no una versión inventada de ellas.
+
+### Los dos generadores están escritos a mano
+
+Ninguno usa librería, y no es capricho: las de PDF pesan entre 300 KB y 1 MB y
+SheetJS otros 900 KB, para una página que se abre de vez en cuando. Con lo que
+el navegador ya trae alcanza.
+
+- **`js/reporte-pdf.js`.** Las fotos van con `DCTDecode`, que quiere decir
+  "adentro va un JPEG tal cual", así que la página pasa toda imagen por un
+  canvas y la saca en JPEG: el generador no tiene que saber decodificar PNG ni
+  WebP. La marca de agua va con su canal alfa aparte (`/SMask`); sin el alfa,
+  taparía el texto con un rectángulo blanco.
+  **Ojo con el texto: WinAnsi NO es Latin-1.** El guion largo y las comillas
+  tipográficas viven en los bytes 0x80-0x9F, que en Latin-1 no son nada.
+  Tratarlo como Latin-1 a secas se comía el guion largo de "Jean Quesada — 1
+  clase" y dejaba un hueco en el papel, sin dar ningún error.
+- **`js/reporte-docx.js`.** Un .docx es un ZIP con XML; el ZIP va sin comprimir,
+  que Word acepta igual. **`[Content_Types].xml` TIENE que ser la primera
+  entrada**: con ese archivo al final, Word lo abría igual pero LibreOffice
+  respondía "source file could not be loaded" y nada más — o sea que el fallo
+  solo aparecía en la mitad de los programas. La marca de agua es una forma VML
+  en el encabezado, con el `gain` y el `blacklevel` que usa el propio Word para
+  lavarla y dejarla detrás del texto.
+- **`js/reporte-excel.js`.** Un .xlsx también es un ZIP, y el navegador trae
+  `DecompressionStream("deflate-raw")`. Lee la primera hoja, los textos
+  compartidos y los estilos. Los estilos hacen falta porque **una fecha de Excel
+  es un número**: "14/09/2026" se guarda como 46280, y sin convertirlo el
+  informe para los jefes tendría una columna de números sin sentido. Lee también
+  CSV, detectando solo si el separador es coma o punto y coma.
+
+### El tercer archivo: el formato adaptado
+
+Además del Word y el PDF sale un **HTML en formato adaptado**
+(`js/reporte-accesible.js`), con el mismo contenido y del mismo documento
+neutral. **No es un PDF, a propósito**: es la misma decisión que ya se tomó con
+el material de estudio de los cursos. Un PDF con marca de agua, tablas dibujadas
+y fotos es lo peor que se le puede dar a un lector de pantalla — el orden de
+lectura se desordena, la marca de agua se lee en medio del texto y las tablas
+salen como una hilera de números sueltos.
+
+Sirve para dos personas distintas: quien usa lector de pantalla (sin ninguna
+imagen, encabezados sin saltos de nivel, tablas con `<caption>` y `<th scope>`)
+y quien ve poco y necesita agrandar (una sola columna, 1.15rem, interlínea 1.8,
+alto contraste y su versión en oscuro). Va todo en un archivo, sin CSS ni
+fuentes de fuera: se manda por correo y se abre sin internet.
+
+- **Las fotos hay que describirlas, y por eso la página lo pide.** Al adjuntar
+  una foto aparece el campo "Qué se ve en la foto": eso es a la vez el pie en el
+  PDF y en el Word, y **lo único que va a oír quien no la puede ver**. Si no se
+  llena, la versión adaptada lo dice con todas las letras en vez de callarlo —
+  quien lee tiene derecho a saber que ahí hay algo que se está perdiendo.
+- **El `<caption>` de cada tabla va siempre**, aunque repita el encabezado de
+  arriba: quien usa lector de pantalla puede saltar de tabla en tabla sin pasar
+  por los encabezados, y ahí el nombre es lo único que la identifica. Cuando
+  repite, se esconde **a la vista** con `.solo-lectores` (posición absoluta y
+  recorte), nunca con `display: none` ni `visibility: hidden`, que lo sacarían
+  también del lector.
+
+### Cómo se comprueba
+
+Son dos piezas, porque un informe roto **no da error**: se descarga igual. Un
+.docx con una etiqueta mal cerrada abre con el aviso de "contenido ilegible", un
+PDF con la tabla de posiciones mal calculada no abre en ningún lado, y una marca
+de agua que no se dibuja se ve perfecta en la vista previa y falta en el papel.
+
+    node herramientas/verificar-reportes.js      # la página, en un navegador
+    python3 herramientas/verificar-reportes.py <carpeta que dejó el anterior>
+
+El de navegador comprueba quién entra y quién no, que la vista previa diga lo
+que dicen los datos, que una foto y una hoja entren al informe, y que los dos
+archivos se descarguen. **Comprueba además que la página SE VEA** —sin CSS
+impreso como texto, sin `<style>` suelto, y que con el tema en oscuro arranque
+en oscuro—: se clonó de `formularios.html`, y clonar una cabecera ya salió mal
+una vez; `verificar-css.js` no lo vería porque todo esto solo existe después de
+iniciar sesión.
+
+El de Python abre los dos archivos con `pypdf` y `python-docx` y mira lo que no
+se ve en pantalla: que abran, que la marca de agua esté en **todas** las páginas
+(el error clásico es estamparla solo en la portada) y que las tildes hayan
+llegado.
+
+El formato adaptado se revisa con **las mismas reglas que el material de estudio**
+(ver `herramientas/verificar-material.py`): que no dependa de ninguna imagen, que
+declare el idioma, que lleve al autor y el aviso de uso, que tenga un solo `<h1>`
+y no salte niveles, y que la foto esté contada en palabras.
+
+- Los dobles del verificador van en el **contexto** y no en la página: esta
+  página registra el service worker, y lo que pide el service worker no pasa por
+  las rutas de una página. Con las rutas en la página, al recargar servía la
+  copia cacheada del cliente de verdad y todo se caía con "sb is not defined".
+
+### La transcripción corre en la máquina de quien hace el informe
+
+Cada grabación tiene su botón "📝 Transcribir", y lo que sale entra al informe
+en los tres formatos.
+
+**El audio NO sale de la computadora, y esa es la decisión de fondo.** Un
+servicio de transcripción sería más rápido y más exacto, pero estas son clases
+con voces de menores: mandarlas a un servidor ajeno es sacar esos datos del
+control de quien dio la clase, y eso pide el consentimiento de las familias (en
+Costa Rica, Ley 8968). Corriendo el modelo ahí mismo, ese problema no existe —
+y de paso no hace falta ninguna credencial ni cuesta nada.
+
+- **Dos piezas, y la separación importa.** `js/reporte-transcribir.js`
+  decodifica el audio en la página: cualquier formato que el navegador sepa
+  abrir se convierte en muestras a 16 kHz en un canal, que es lo único que
+  entiende Whisper (sirve igual para un `.mp4`: se decodifica la pista de audio
+  y el video se ignora). `js/reporte-transcribir-worker.js` corre el modelo en
+  un Web Worker, porque una clase de 40 minutos tarda minutos y en el hilo de
+  la página dejaría el navegador congelado todo ese rato.
+- Es un worker **de módulo**: hace `import()` para traer la librería, y en un
+  worker clásico ese import no está en todos los navegadores.
+- El modelo (`onnx-community/whisper-base`, unos 80 MB) se baja **una vez** y
+  queda en la caché del navegador; después funciona hasta sin internet. Usa
+  WebGPU cuando el navegador lo tiene y WASM cuando no.
+- `no_repeat_ngram_size` no es un adorno: ante un silencio largo Whisper se
+  pone a repetir la última frase hasta llenar el trozo, y en una clase hay
+  silencios de sobra.
+- **`_usarMotor()` es una costura de verdad, no un adorno de pruebas.** Es por
+  donde entraría un servicio con credencial el día que se prefiera la velocidad
+  a la privacidad, y es lo que permite comprobar toda la página sin bajar 80 MB
+  en cada corrida.
+- **`_headers` abrió `connect-src` a `cdn.jsdelivr.net`, `huggingface.co` y
+  `*.hf.co`**, que es de donde sale el modelo. Es lo único que se les pide y es
+  de bajada: el audio no va a ninguna parte. Si algún día se quita la función,
+  se quitan esos tres.
+- El informe avisa que la transcripción es automática y que se hizo en esa
+  computadora: puede traer errores de nombres y de términos de ajedrez, y quien
+  lo lee tiene que saberlo.
+
+**Lo que la comprobación NO prueba es el modelo.** Se prueba que el audio se
+decodifique bien (con un WAV de verdad, estéreo y a 44.100 Hz, que tiene que
+salir a 16 kHz en mono), que el worker arranque y que su camino de error
+conteste en vez de quedarse mudo, y que el texto llegue hasta el informe. Si
+Whisper entiende bien el español es lo único que hay que mirar a mano, con una
+grabación de verdad.
+
 ## El material de estudio de cada lección
 
 Cada una de las **186 lecciones** de los diez cursos tiene dos archivos de
@@ -506,6 +2581,16 @@ HTML cada posición va descrita pieza por pieza ("Rey blanco en e4; peón blanco
 en d3"), con la línea escrita y la FEN por si se quiere cargar en un programa,
 así que no hace falta ver ninguna imagen — y no hay ninguna: el verificador
 falla si aparece un `<img>`.
+
+**Lleva de vuelta al curso, arriba y en el pie.** El material se abre en su
+propia pestaña desde la lección, y sin esos enlaces quedaba en un callejón sin
+salida: no tiene el encabezado del sitio ni el menú, así que lo único que
+quedaba era el botón "atrás" del navegador, que con lector de pantalla no
+siempre está a mano. Arriba va como región de navegación con su nombre; abajo,
+dentro del pie, como párrafo — dos `<nav>` con el mismo nombre se anuncian como
+dos regiones iguales y no se sabe cuál es cuál. Va en los dos extremos porque el
+documento es largo: quien termina de leerlo no tendría que subir de nuevo para
+salir.
 
 ### De dónde sale el contenido (y por qué importa)
 
@@ -568,6 +2653,12 @@ texto, no en esa lista.
     node herramientas/curso-material-generar.js      # los 372 archivos, ~2 min
     node herramientas/curso-material-enlazar.js      # pone los enlaces
 
+**`--solo-accesible` rehace únicamente los 186 HTML** y no toca ningún PDF (ni
+necesita playwright ni pypdf). El cuadernillo sale distinto byte por byte en
+cada corrida —lleva la fecha adentro—, así que retocar una línea del HTML no
+tiene por qué mover 186 archivos binarios. Sin esa puerta, la tentación es
+editar los HTML a mano y que el generador y lo generado se vayan separando.
+
 El enlazador **se puede correr todas las veces que se quiera**: reconoce lo que
 puso una corrida anterior por las marcas `<!-- material: inicio -->` y lo
 reemplaza en vez de duplicarlo. Eso importa porque el nombre del archivo sale
@@ -576,7 +2667,11 @@ viejo apuntando a un archivo que ya no existe.
 
 `herramientas/lib/tablero-svg.js` dibuja los diagramas y lo comparten este
 generador y el de las tarjetas de `cursos.html`: una segunda copia de los mismos
-dibujos se iría separando de la primera a la primera corrección.
+dibujos se iría separando de la primera a la primera corrección. **Lee las
+piezas de `js/chess-piece-svg.js`**, que es donde viven hoy; estuvieron dentro
+de `js/finales-100.js` y al mudarse nadie tocó esta línea, así que los dos
+generadores morían al arrancar con "No se encontraron las piezas". No se notó
+en meses porque no rompe el sitio: solo rompe regenerar.
 
 **Al tocar cualquiera de estas piezas, correr
 `python3 herramientas/verificar-material.py`** (necesita `pypdf`). Comprueba
@@ -597,6 +2692,162 @@ todo de `calculo-y-visualizacion`, `preparacion-para-torneos`,
 verificadas es casi todo de finales y de desequilibrios, y no hay de dónde
 prestarles. Cuando esos cursos tengan su archivo de posiciones, la corrida se
 repite y las toman solas.
+
+## La guía del profesor
+
+`herramientas/guia-profesores.js` arma, desde UN solo contenido
+(`herramientas/guia/contenido.json`), tres archivos que dicen exactamente lo
+mismo:
+
+| archivo | para qué |
+|---|---|
+| `guia-del-profesor-presentacion.pdf` | diapositivas 16:9, para proyectar en una capacitación |
+| `guia-del-profesor.pdf` | manual A4, para leer y tener al lado del teclado |
+| `guia-del-profesor-accesible.html` | el mismo contenido sin una sola imagen |
+
+Son tres salidas y **no tres documentos**: escritas aparte se irían separando a
+la primera corrección y media capacitación quedaría explicando algo que el
+manual ya no dice. Es la misma decisión de `js/reporte-armar.js` (una estructura
+neutral, tres generadores) y del `informe-html.ts` del correo a la casa. El
+generador **exporta sus tres maquetas** (`module.exports` detrás de
+`require.main`) para que el verificador las arme él mismo: comprobar una copia
+de la maqueta no comprobaría nada.
+
+- **La puerta de entrada es la versión accesible, no el PDF.** La tarjeta
+  «📘 Guía del profesor» del panel (grupo Herramientas, solo equipo docente,
+  junto a «Planes de clase») apunta ahí: es una página que abre en cualquier
+  aparato, trae el contenido completo y desde ella se bajan el manual y la
+  presentación. Con el PDF de destino, quien entra desde el celular se baja un
+  archivo para leer lo que podía leer ahí mismo, y la versión accesible quedaría
+  de repuesto en vez de ser la puerta. Lleva el enlace de vuelta al panel arriba
+  **y** en el pie, como el material de estudio: el documento es largo y quien
+  termina de leerlo no tendría que subir de nuevo para salir.
+- **La marca de agua es la MISMA de los libros** (el logo de Oscar Angulo
+  Cubero, rotado y al 11%), estampada con pypdf y no con CSS, por la razón de
+  siempre: con `position: fixed` Chromium la repite pero al paginar no respeta
+  el centrado. **Cada formato lleva su propia hoja de sello**, del tamaño exacto
+  de SU página — una hoja A4 estampada sobre una diapositiva apaisada dejaría la
+  marca en una esquina. Después de estampar hay que recomprimir y clonar, o el
+  archivo se va a megabytes.
+- **Acá SÍ se puede imprimir, al revés que los tres libros.** Aquellos bloquean
+  la impresión porque traen las respuestas de una prueba y cuanto menos
+  circulen, mejor. Esta guía es lo contrario: es material de trabajo que se
+  lleva en papel y se proyecta. Lo que queda bloqueado es **modificarla** y
+  reordenarle las páginas. La extracción de texto se deja habilitada por lo de
+  siempre: sin ella el archivo queda fuera del alcance de quien lo lee con
+  lector de pantalla. `CLAVE_PROPIETARIO` es `guia-profesores-ai-2026`.
+- **Cuánto texto lleva una diapositiva decide su tamaño de letra**
+  (`densidad()`: holgada, justa, apretada). Sin eso, la lámina con seis pasos y
+  tres advertencias se sale de la página, y el desborde **no da ningún error**:
+  se imprime cortada y de eso se entera quien está proyectando, delante de todo
+  el equipo.
+- `--solo-accesible` rehace únicamente el HTML y no toca ningún PDF (ni necesita
+  playwright ni pypdf): los PDF salen distintos byte por byte en cada corrida
+  porque llevan la fecha adentro. Sin esa puerta, la tentación es editar el HTML
+  a mano y que el generador y lo generado se vayan separando — la misma decisión
+  de `curso-material-generar.js`.
+- **La guía accesible está en las dos listas de páginas exceptuadas de la app**,
+  `verificar-pwa.js` y `pwa-cabecera.py`, junto a
+  `libro-de-diagnostico-accesible.html`: es un documento que se abre suelto,
+  hasta por correo y sin red, así que declarar un `manifest` que no va a poder
+  cargar es peor que no declararlo. **Las dos listas tienen que decir lo mismo**
+  — ya pasó una vez que no lo decían y el generador le ponía la cabecera en cada
+  corrida sin que el verificador se quejara.
+
+### Las capturas de pantalla
+
+`herramientas/guia-capturas.js` fotografía 25 páginas de la plataforma y deja
+los archivos en `img/guia/<slug>.jpg`. Cada apartado del contenido puede
+declarar `"captura": "<slug>"`, y entonces:
+
+- en la **presentación** se agrega una diapositiva propia con la pantalla en
+  grande, justo después del apartado. No va metida al lado del texto a
+  propósito: al proyectar, lo que sirve es verla grande —los botones de los que
+  habla el apartado tienen que leerse desde el fondo del aula— y apretujada en
+  media lámina no se lee ninguna de las dos cosas;
+- en el **manual** va debajo del apartado, a ancho de columna;
+- en la **versión accesible** no va ninguna, y se dice una vez arriba por qué:
+  una captura es una imagen, esa página no depende de ninguna y lo que las
+  fotos enseñan está contado paso a paso en cada apartado.
+
+**Casi todas esas páginas están detrás del login**, así que no se pueden abrir y
+fotografiar sin más: sin sesión redirigen a `login.html` y la foto saldría del
+formulario de acceso una y otra vez, sin que nada fallara. Se usa el mismo truco
+que los verificadores: se intercepta `js/supabase-client.js` y se sirve un
+cliente de mentira con sesión de profesora y datos de demostración.
+
+- **Los datos son inventados, y eso no es un detalle.** Ahí no puede salir el
+  nombre de un alumno real, ni su correo, ni su progreso: la guía se imprime, se
+  proyecta delante de todo el equipo y se manda por correo. Las cuentas de
+  mentira viven todas en `DEMO`, en un solo lugar, para que se vea de un vistazo
+  que ninguna es de verdad.
+- **Los nombres de los campos de `DEMO` son los que lee cada página, uno por
+  uno.** Con otro nombre la pantalla se pinta igual y escribe «undefined» en su
+  lugar: así salió la primera captura de Informes, con tres tarjetas diciendo
+  undefined, y la de Tareas con «undefined/undefined». Por eso el capturador
+  **rechaza la foto si encuentra `undefined`, `NaN` o `[object Object]` en la
+  pantalla** —en todo el texto, no en el principio—, además de rechazar el gate
+  («Comprobando tu sesión…»), los avisos de acceso denegado y la página que se
+  fue al login.
+- **Una captura rechazada borra la que hubiera de antes.** Dejarla sería lo peor
+  de los dos mundos: la corrida avisa de que falló y el generador encuentra el
+  archivo igual, así que la guía sale con la pantalla vieja —la que tenía el
+  undefined— y nadie se entera.
+- **`reporte_actividades()` devuelve un OBJETO y no filas**, así que va en
+  `rpcObjeto` y no en `rpc`: pasado por el mismo camino que los demás llegaría
+  como arreglo y el informe saldría «del undefined al undefined». Su periodo se
+  calcula desde HOY y no está escrito: con una fecha fija la captura envejece
+  sola, que es el problema de almanaque que ya tuvo `verificar-panel.js`.
+- **chess.js se sirve DE VERDAD desde `node_modules`**, y su ruta se registra
+  DESPUÉS de las de los CDN: playwright resuelve la última que se registró, así
+  que puesta antes la tapaba la de cdnjs y la clase en vivo se quedaba en
+  «Cargando…» para siempre, sin dar ningún error.
+- Algunas páginas necesitan un gesto antes de la foto (`antes`): Reportes abre
+  con la vista previa vacía, así que se le aprieta «Traer los datos» — una
+  captura del formulario en blanco no enseña lo que el apartado cuenta.
+- La foto va en **16:9, la misma proporción que la diapositiva** que la va a
+  enseñar: con otra forma entra por el lado que le sobra y deja dos franjas en
+  blanco a los costados.
+- Se corre con el sitio en localhost:8777 y playwright:
+  `node herramientas/guia-capturas.js`, o `SOLO=panel,tareas` para rehacer unas
+  pocas. Las 25 pesan 2,6 MB y **se commitean**, como `img/cursos/`.
+
+El verificador comprueba las dos direcciones —que cada captura declarada tenga
+su archivo y que no sobre ninguna en `img/guia/`—, que haya una diapositiva de
+pantalla por cada una, que lleven texto alternativo, que vayan incrustadas y que
+**ninguna se salga de su diapositiva ni quede aplastada** (se miden los dos
+rectángulos en el navegador). El de Python cuenta, dentro de cada PDF, las
+páginas con más de una imagen: desde que hay capturas, «¿tiene alguna imagen?»
+ya no distingue si la marca de agua se estampó — lo que distingue es el número.
+
+**Al tocar el contenido o el generador, correr las dos comprobaciones**:
+
+    node herramientas/guia-capturas.js                # las pantallas (sitio en localhost:8777)
+    node herramientas/guia-profesores.js
+    node herramientas/verificar-guia-profesores.js    # las maquetas, en un navegador
+    python3 herramientas/verificar-guia-profesores.py # los dos PDF, con pypdf
+
+La primera necesita playwright y mide **el desborde de cada diapositiva en un
+navegador de verdad** —no se fía del cálculo de densidad, que es justamente lo
+que hay que comprobar—, que los 78 apartados estén en las tres salidas, que la
+portada tenga fondo propio (si no, sería letra blanca sobre blanco, invisible y
+sin ningún error) y que la versión accesible no dependa de ninguna imagen, no
+salte ningún nivel de encabezado y no tenga anclas rotas en su índice. La
+segunda necesita pypdf y mira lo que no se ve: que los dos PDF abran sin
+contraseña pero estén cifrados, que SÍ dejen imprimir y extraer texto y NO
+modificar, que lleven al autor, y que tengan **marca de agua en todas las
+páginas del cuerpo** —el error clásico es estamparla solo en la portada—.
+
+- **Dos trampas que esa comprobación ya se comió**, las dos del verificador y no
+  de los archivos: `merge_page` no pega la imagen al primer nivel de los
+  recursos de la página, la envuelve en un XObject de tipo `/Form`, así que
+  buscarla solo arriba daba «no hay marca» sobre un archivo que sí la tiene; y
+  `user_access_permissions` es un `IntFlag`, donde `permisos.MODIFY` devuelve
+  **siempre** el miembro del enum —que es truthy— en vez de decir si ese bit
+  está puesto: preguntado así, las cuatro líneas de permisos daban lo mismo para
+  cualquier archivo y la comprobación se veía perfecta sin comprobar nada. Se
+  pregunta con `in`. Está probado que discrimina de verdad: sobre el PDF sin
+  sellar da 0 de 39 páginas con marca, y sobre el sellado, 39 de 39.
 
 ## El sitio se instala como app (PWA)
 
@@ -656,8 +2907,31 @@ por las marcas `<!-- app: inicio -->`.
 
 El aviso de instalación de `clases.html` (`#instalar-app`) **arranca oculto** y
 `js/pwa.js` lo destapa solo cuando el navegador confirma que se puede instalar.
-Un botón que no haría nada es peor que ningún botón. Quien dice "ahora no" no lo
-vuelve a ver por 30 días.
+Un botón que no haría nada es peor que ningún botón.
+
+**Se muestra UNA vez.** Antes salía en cada carga de la página, porque el
+navegador dispara `beforeinstallprompt` cada vez: quien entraba a diario lo veía
+a diario, y un cartel que se repite deja de leerse y empieza a molestar. Ahora
+se apunta en `localStorage` (`app_instalar_v2`, con `visto` y `rechazado`) y solo
+vuelve en un caso: **quien apretó "Ahora no" lo ve de nuevo una semana después**,
+por si en ese momento le venía mal. Quien lo dejó pasar sin tocar nada tampoco lo
+vuelve a ver — no contestar también es una respuesta. Al instalarse se borra todo,
+por si algún día la desinstala.
+
+**Y durante meses nada de eso se cumplió, porque el cartel no se escondía.** El
+atributo `hidden` y la clase `flex` de Tailwind tienen la MISMA especificidad
+(`[hidden]:where(:not([hidden=until-found]))` vale 0,1,0 — `:where` no suma
+nada), y la utilidad va después en la hoja: gana `.flex`. El cartel lleva las
+dos cosas, así que salía en cada carga y "Ahora no" no lo hacía desaparecer. Lo
+arregla una línea en `css/styles.css` — `[hidden] { display: none !important; }`
+—, que va ahí y no en la página porque el atributo tiene que significar lo mismo
+en todo el sitio.
+
+**Y no daba ningún error, ni siquiera en la comprobación**: `verificar-pwa.js`
+preguntaba por `elemento.hidden`, la propiedad, que sí estaba puesta. Daba verde
+sobre una página rota. Ahora pregunta por `getComputedStyle(...).display`, que
+es lo que ve quien entra. **Al comprobar que algo se esconde, mirar la pantalla,
+nunca el atributo.**
 
 **Al tocar cualquiera de estas piezas, correr `node
 herramientas/verificar-pwa.js`** (con el sitio en localhost:8777 y playwright).
@@ -752,9 +3026,152 @@ celular.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
   volver.
 
+## Logros y racha de días
+
+`logros.html` (tarjeta "🏅 Logros" en el panel, grupo "Jugar y competir", junto a
+"Racha táctica") es la gamificación de Entrenamiento: una racha de días
+consecutivos y un catálogo de medallas, de sencillas a avanzadas, calculadas
+siempre a partir de `training_progress` — nunca de una tabla de "logros
+desbloqueados", para que un logro no pueda quedar a medias por un guardado que
+falló.
+
+- **Un día cuenta si tiene 5 o más ejercicios de CUALQUIER tipo**, agrupados
+  por fecha de **Costa Rica** (no UTC: quien entrena a las 11 p.m. no puede
+  perder el día por el huso horario del servidor). Lo calcula
+  `public.progreso_dias_y_racha(alumno uuid default auth.uid())`
+  —`SECURITY INVOKER`, mismo criterio que las funciones de informes: quién
+  puede pedir la racha de quién lo decide la RLS de `training_progress`, así
+  que ya sirve tanto para que un alumno pida la suya como para que un
+  profesor pida la de uno de sus alumnos el día que se necesite en Informes—
+  con la técnica de siempre para islas de días consecutivos (gaps and
+  islands: `dia - row_number()` agrupa un tramo sin huecos en un solo valor).
+  Devuelve `dias_activos`, `racha_actual`, `racha_record`, `total_ejercicios`,
+  `tipos_distintos`, `hoy_ejercicios`, `primer_dia` y `por_actividad` (un
+  `jsonb` con cuántas filas hay de cada actividad).
+- **La racha actual se corta si el último día activo no fue hoy ni ayer.**
+  Con datos de mentira se comprobó el caso de siempre —una racha vieja que no
+  sigue hasta hoy no cuenta como "actual" pero sí sigue contando para el
+  récord— y el caso vacío (nadie ha practicado nunca) sin que la función
+  truene.
+- **Los logros usan `racha_record`, no `racha_actual`.** Un logro ya ganado no
+  se puede perder porque un día se rompió la racha — "lo hecho, hecho está",
+  el mismo criterio que ya usa `js/progreso-usuario.js` para los ejercicios
+  resueltos.
+- **El catálogo (`js/logros-catalogo.js`) es puro**: cada logro es
+  `{ id, categoria, nivel, meta, valor(stats) }`, y `conEstado(stats)` no
+  guarda nada — recalcula conseguido/progreso cada vez a partir de los
+  números de la función de arriba. Van de sencillos a avanzados en cuatro
+  niveles (bronce, plata, oro, diamante): racha de días, ejercicios totales,
+  variedad de tipos practicados, días de práctica acumulados (no hace falta
+  que sean seguidos) y metas por cada tipo de ejercicio.
+- **`ACTIVIDADES_ALCANZABLES` es 13, no 14.** El CHECK de `training_progress`
+  tiene 14 actividades, pero `desafios` está declarada sin ningún uso real
+  (`entreno/desafios.html` registra como `'practicar'`): pedir las 14 para el
+  logro "Las probaste todas" habría dejado un logro que nadie puede conseguir
+  nunca, y eso no da ningún error —se queda gris para siempre sin que nadie
+  sepa por qué—.
+- **Cuatro actividades se sumaron al CHECK para que "cualquier tipo" sea
+  cierto de verdad**: `aperturas`, `confites`, `ilumina` y `visualizacion`
+  vivían solo en `localStorage` (con un comentario explícito en
+  `entreno/aperturas.html` de por qué no escribían en `training_progress`) y
+  no contaban para nada del lado del servidor. Ahora sus páginas cargan
+  `js/entreno-progress.js` y llaman a `EntrenoProgress.log(...)` al terminar
+  una ronda, una línea, un nivel o un ejercicio — mismo patrón que ya usaban
+  Mates, 4×4, Aprende, etc. `finales100` (Los 100 finales) y el `slug` de
+  `js/curso-partidas.js` siguen sin poder escribir en `training_progress` (no
+  están en el CHECK): **no** se tocaron acá, porque emparejarlos con
+  `curso`/`leccion` como espera `cursos_temas` de `informes_resumen_alumnos()`
+  es un cambio aparte, no de esta tanda.
+- **`logros.html` exige sesión** (mismo patrón que `entreno/estudio.html`:
+  gate → `requireLoginThenGate()` → `unlock()`), porque la racha es de la
+  cuenta, no del aparato. Pide `progreso_dias_y_racha` por RPC — nunca baja
+  `training_progress` entera — y pinta la racha, la barra de "hoy" (cuántos
+  de los 5 ya lleva) y la grilla de medallas agrupada por categoría, con el
+  conteo conseguidas/total en cada encabezado.
+- `clases.html` suma una tarjeta chica de racha (`loadRachaWidget()`, junto a
+  la de "Racha táctica — récord de la clase") que solo pinta un resumen de una
+  línea — la cuenta la sigue haciendo la misma función.
+- **Al tocar cualquiera de estas piezas, correr `node
+  herramientas/verificar-logros.js`** (con el sitio en localhost:8777,
+  playwright y `npm install chess.js@0.10.3`). Con un resultado de mentira ya
+  calculado (no vuelve a sumar días: eso ya se probó con SQL de verdad,
+  impersonando el rol del alumno, contra el proyecto de Supabase) comprueba
+  que la racha, la barra de "hoy" y cada medalla salgan EXACTAMENTE como las
+  calcula `js/logros-catalogo.js` para esos mismos números —comparando contra
+  el catálogo cargado de verdad en el navegador, no reimplementando sus
+  metas—, que sin sesión mande a iniciar sesión, que un RPC vacío se vea en
+  cero sin romper la página, y que las cuatro páginas nuevas (Confites,
+  Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
+  fila a `training_progress` al terminar un ejercicio.
+
+## El hub de Entrenamiento y sus tres grupos
+
+`entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,
+Aprender, Coordenadas, Desafíos), **Practicar** (Ejercicios por tema, Practicar)
+y **Entreno** (Aperturas y celadas, 4×4).
+
+- **Cada acceso es un encabezado de verdad (`<h3>`), no un `<span>`**, y eso es
+  el punto, no un detalle de maqueta: quien usa lector de pantalla se mueve
+  saltando de encabezado en encabezado. Con el nombre metido en un `<span>`
+  había que tabular por los ocho enlaces para llegar al último; con un `<h3>`
+  por acceso dentro del `<h2>` de su grupo, Entrenamiento se recorre entero de
+  un salto por tarjeta. Los niveles van `h1 → h2 → h3` **sin saltarse
+  ninguno**.
+- **Un solo enlace por tarjeta**, con el título como enlace y su `::after`
+  estirando el área de clic sobre toda la tarjeta — el mismo patrón de
+  `cursos.html`. Con dos enlaces al mismo destino, el lector de pantalla lo
+  anuncia dos veces.
+
+### La táctica se mudó dentro de Ejercicios por tema
+
+`entreno/tactica.html` era una segunda página resolviendo exactamente lo mismo
+que `entreno/temas.html`: su propio tablero, su propia racha y su propia lista
+de resueltos. El mismo ejercicio se podía resolver en las dos y contaba dos
+veces. Ahora sus 148 ejercicios son **un grupo más del selector de temas**
+("Táctica de ataque", con sus cinco categorías), y `tactica.html` solo manda a
+`temas.html` — la dirección está en favoritos de quien la usaba y un 404 no le
+dice a nadie a dónde ir.
+
+- **El traslado lo hace `entreno/data/sumar_tactica.py`, no una edición a mano
+  de `temas.json`.** Ese archivo lo GENERA `construir_temas.py` desde Supabase,
+  así que un grupo escrito a mano se perdería en la siguiente corrida sin que
+  nada fallara. Por eso `construir_temas.py` llama a `sumar()` al final: una
+  sola implementación, dos puertas de entrada. Se puede correr todas las veces
+  que se quiera (si el grupo ya está, lo reemplaza).
+- **Estos ejercicios no traen `rating`**: son de la casa, no de Lichess. La
+  página tiene que aguantar que falte, y no lo hacía — escribía "Dificultad
+  undefined" debajo de cada tablero, que no da ningún error, solo se ve mal.
+- **Lo que ya llevaba resuelto cada quien se hereda.** `heredarTactica()` funde
+  `entreno_tactica_solved` dentro de `entreno_temas_solved` al cargar. Los ids
+  no se pisan (los de táctica son texto, `ultima-linea-001`; los de Lichess son
+  números) y como se unen y no se reemplazan, correrlo mil veces da lo mismo.
+  Va **después** de `ProgresoUsuario.init()`, o sea sobre la lista ya bajada de
+  la cuenta.
+- **Informes sigue contando Táctica aparte.** Si todo se apuntara como `temas`,
+  esa columna se habría quedado congelada en el número del día de la mudanza —
+  y eso no da ningún error: el profesor ve un número que ya no sube y no sabe
+  por qué. Así que `EntrenoProgress.log()` elige la actividad según el tema.
+  **Qué temas son de táctica sale del propio `temas.json`** (`temasDeTactica()`
+  lee el grupo), no de una lista copiada en la página: con la lista a mano,
+  agregarle una categoría al grupo la dejaría contando como "temas" sin que
+  nada fallara.
+- `GROUP_ICON` de `temas.html` necesita una entrada por grupo: sin ella el
+  grupo nuevo se pinta con un punto pelado.
+
+**Al tocar el hub, `temas.html` o el traslado, correr `node
+herramientas/verificar-entreno.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Cuenta los 148 ejercicios uno por
+uno contra `tactica.json` —uno que se pierda por el camino no da ningún error,
+el grupo simplemente tiene menos— y comprueba con chess.js que cada solución
+siga siendo jugable y que el mate prometido sea mate. Después, en un navegador:
+los tres grupos con lo suyo, que cada acceso sea un encabezado, que no se salte
+ningún nivel, que el clic en la esquina de la tarjeta siga abriendo su enlace,
+que `tactica.html` redirija, que el progreso se herede y que un ejercicio de
+táctica se apunte como `tactica`.
+
 ## Aperturas y celadas: memorizar jugando, con repaso espaciado
 
-`entreno/aperturas.html` es un banco de 37 líneas —12 celadas y 25 aperturas—
+`entreno/aperturas.html` es un banco de 40 líneas —12 celadas y 28 aperturas—
 que el alumno memoriza **jugándolas en el tablero**: el entrenador mueve por el
 rival y él tiene que dar todas las jugadas de su color, de memoria. Al terminar,
 la línea se programa para más adelante.
@@ -784,7 +3201,7 @@ la línea se programa para más adelante.
   `js/tiempo-plataforma.js data-activity="aperturas"`.
 - **Al tocar el banco o el SRS, correr `node herramientas/verificar-aperturas.js`**
   (necesita `npm install chess.js@0.10.3`). Comprueba con chess.js que **cada
-  jugada exista de verdad en su posición** —431 jugadas—, que el mate prometido
+  jugada exista de verdad en su posición** —466 jugadas—, que el mate prometido
   sea mate, que los ids no se repitan, que al alumno le toquen al menos tres
   jugadas, y de paso corre las pruebas del algoritmo de repaso. Una jugada mal
   escrita no da error en pantalla: el alumno no puede terminar la línea nunca y
@@ -809,6 +3226,191 @@ la línea se programa para más adelante.
   propias pinten algo de verdad y que con el tema oscuro el fondo sea oscuro.
   **Al clonar la cabecera de otra página, mirar la pantalla, no solo el DOM.**
 
+## Estudio: una ficha por idea, con su mapa y su posición
+
+`entreno/estudio.html` (tarjeta **"📚 Estudio"** en `clases.html` → grupo
+"Aprender") son 56 fichas de estudio: 12 aperturas, 12 defensas, 16 temas
+tácticos y 16 conceptos. Cada una es **una sola pantalla**: la idea principal
+arriba, cuatro bloques alrededor de un nodo con la pieza, y abajo la posición
+que lo explica, recorrible jugada por jugada.
+
+No es otra forma de `entreno/aperturas.html`, y por eso son dos páginas y no
+una: Aperturas y celadas se **juega** de memoria con repaso espaciado, y una
+ficha se **mira de un vistazo** — es lo que uno repasa cinco minutos antes de
+jugar, o imprime y pega en el cuaderno. Las dos comparten el banco de líneas,
+así que no hay dos versiones de la misma apertura.
+
+### Antes esto eran DOS páginas, y eran la misma
+
+Durante un tiempo convivieron `entreno/fichas.html` (las 56) y
+`entreno/estudio.html` (las 24 de apertura y defensa, que son un subconjunto
+exacto de las otras). Mismo banco, mismo mapa, mismo tablero, mismo botón de
+practicar: **la misma página dos veces**, con dos listas que había que
+mantener parejas y dos verificadores que comprobaban lo mismo. Se fusionaron
+en Estudio y Fichas se borró.
+
+- **La dirección vieja no murió: redirige.** `_redirects` manda
+  `/entreno/fichas.html` a `/entreno/estudio.html` con un 301, y Cloudflare
+  conserva la parte de `?ficha=<id>` — esos enlaces se compartían por
+  WhatsApp, y un 404 no le dice a nadie a dónde ir. Es la misma decisión que
+  se tomó con `entreno/tactica.html` al mudarse dentro de Ejercicios por tema.
+- **La tarjeta del panel quedó en una sola.** Dos tarjetas que llevan a lo
+  mismo con nombres distintos son el error que el panel ya cometió con
+  "Torneos"; en Tareas (`js/material-plataforma.js`) pasa igual: un solo
+  material asignable, "Estudio".
+- **Sin pestañas, con un `<h2>` por categoría.** Las cuatro secciones van una
+  debajo de otra: se salta de grupo en grupo con lector de pantalla y nadie
+  tiene que elegir una pestaña antes de poder ver nada.
+- Con 56 fichas el **buscador** sí hace falta, y mira las cuatro categorías a
+  la vez, sin tildes ("peon pasado" encuentra todas las que hablan de él).
+  Cuando hay búsqueda, lo que sobrevive se sigue pintando dentro de su grupo:
+  el árbol de encabezados no cambia según lo que se escriba.
+
+### Cómo es una ficha
+
+- **Los cinco bloques están SIEMPRE y en el mismo lugar de la pantalla.** Sus
+  títulos salen de `TITULOS[categoria]` (una apertura tiene Planes, Ideas
+  tácticas, Medio juego y Final; un tema táctico tiene Cómo se reconoce, Quién
+  la hace, Errores frecuentes y Cómo practicarla), así que dos fichas distintas
+  se leen igual y el ojo ya sabe dónde buscar cada cosa. El verificador falla si
+  una ficha trae tres bloques o seis.
+- **El color no dice nada solo.** Cada bloque tiene el suyo —y las líneas que
+  salen del nodo, también— pero el título va escrito y la categoría va en una
+  etiqueta de texto: es la misma regla de los gráficos de Informes. Los
+  renglones usan `--text-cuerpo` y no el gris de los textos secundarios, que
+  contra el blanco de la caja se queda justo en el borde de 4.5.
+- **Las líneas del mapa son un SVG con `preserveAspectRatio="none"`, y por eso
+  cada una lleva `vector-effect="non-scaling-stroke"`.** Ese atributo **no se
+  hereda del `<g>`**: puesto en el grupo, el navegador escala el grosor junto
+  con el viewBox y las cinco líneas salen como cuñas de 15 px. Se ve raro pero
+  no falla nada, así que solo se descubre mirando la pantalla.
+- **El mapa y el tablero los pinta `js/ficha-render.js`**, que se sacó afuera
+  cuando esto eran dos páginas. Quedó igual: es la pieza que sabe dibujar una
+  ficha, y la página solo decide cuáles muestra.
+- **La posición no se inventa nunca**, y sale de **una sola** de estas tres
+  fuentes: `lineaId` (una línea de `js/aperturas-lineas.js` — las jugadas NO se
+  copian: se leen de ahí, que es donde viven), `jugadas` propias desde el
+  principio, o una `fen` de estudio con su `linea`. El verificador falla si una
+  ficha trae dos.
+### El motivo que promete la ficha se comprueba con el motor, no a ojo
+
+Cada ficha declara en `comprueba` qué tiene que cumplirse en el tablero —que la
+jugada dé jaque, que la línea termine en mate, que la pieza clavada no tenga
+ninguna jugada legal, que el peón esté pasado de verdad, que la columna no tenga
+un solo peón, que los dos alfiles sean de distinto color de casilla—, y
+`herramientas/verificar-fichas.js` lo juega con chess.js. Es el mismo criterio
+del material de los cursos y del banco del diagnóstico, y encontró dos errores
+que en pantalla no se veían:
+
+- El jaque descubierto ganaba una dama con `Cd7+`… solo que **el rey se comía el
+  caballo**: estaba sin defender. El caballo se mudó a g6, donde no lo alcanza
+  nadie.
+- La clavada de la española **no es una clavada** mientras el peón negro siga en
+  d7: la diagonal b5-e8 está tapada por él. La ficha ahora muestra la posición
+  después de `3…d6`, y ese mismo hallazgo quedó escrito como error frecuente
+  dentro de la ficha.
+
+La comprobación fuerte es `ganaSiempre`: no alcanza con que la pieza **ataque**
+dos cosas, se juegan **todas** las respuestas legales del rival y ninguna puede
+salvar lo prometido. Una horquilla que se para con una jugada no es una
+horquilla, y en el diagrama se ve igual de bien.
+
+**Cuando una ficha dice «el tema X», ese X existe.** Los nombres salen de
+`entreno/data/temas.json` —el mismo archivo que arma Ejercicios por tema— y el
+verificador los compara contra él. Así se corrigieron cuatro: el tema de la
+horquilla se llama ahí **«Pincho»**, el del descubierto **«Ataque a la
+descubierta»** y el de la enfilada, **«Ataque por rayos X»**. Mandar a un alumno
+a un tema que no está no da ningún error: lo busca, no lo encuentra y se queda
+pensando que se equivocó él.
+
+### La segunda tanda: de 28 a 56 fichas
+
+Se duplicaron las cuatro pestañas (12 aperturas, 12 defensas, 16 temas tácticos
+y 16 conceptos) sin tocar ni una de las 28 primeras. Lo que dejó escrito:
+
+- **Tres aperturas nuevas entraron ANTES al banco de líneas.** La vienesa, el
+  gambito Evans y el ataque indio de rey no estaban en
+  `js/aperturas-lineas.js`, así que sus fichas nacieron con `jugadas` propias
+  — y eso las dejaba sin el botón de practicar, que solo sale cuando la línea
+  existe allá. En vez de dejar el botón afuera, las tres líneas se sumaron al
+  banco (40 líneas ahora) y las fichas las leen de ahí: una sola fuente, y de
+  paso tres líneas más para memorizar jugando. **Toda ficha de apertura o
+  defensa tiene su `lineaId`**; las de táctica y conceptos pueden partir de
+  una FEN de estudio.
+- **El verificador volvió a atajar tres posiciones mal armadas**, las tres
+  invisibles en pantalla:
+  - el jaque doble salía con `Ch6+`… y desde g5 **un caballo no llega a h6**;
+  - en la pieza atrapada, el alfil se comía el peón que venía a encerrarlo,
+    porque ese peón no estaba defendido;
+  - y el zugzwang no era zugzwang: al rey le quedaba una casilla de espera,
+    así que mover no le costaba nada.
+- **Los predicados nuevos de `comprueba`** siguen la misma idea —el motivo se
+  juega, no se declara—: `materialGanado` (la combinación TERMINA con el
+  material prometido), `defiendeDos` (la sobrecarga: esa pieza defiende de
+  verdad las dos casillas), `dobleJaque` (al rival no le queda otra que mover
+  el rey), `bateria`, `atrapada` (todas sus salidas la dejan donde la comen),
+  `repeticion` (el perpetuo repite tres veces), `zugzwang` (no está en jaque,
+  el rival no tiene ninguna captura y CUALQUIER jugada le regala una),
+  `oposicion`, `torreDetras`, `cuadrado` (la cuenta de la regla, con el salto
+  doble incluido), `alfilMalo`, `aislado`, `ahogado` y `peonesEn`.
+- De paso, `herramientas/verificar-aperturas-pagina.js` tenía su doble de
+  Supabase sin `insert()`: desde que esa página apunta la línea terminada en
+  `training_progress`, terminar una línea tiraba un TypeError en la consola y
+  el verificador lo contaba como fallo. Era el doble el que estaba incompleto,
+  no la página.
+
+
+### Lo demás que hace la página
+
+- **Cada ficha tiene su enlace** (`estudio.html?ficha=<id>`), para mandarla por
+  WhatsApp. Un id que ya no existe cae a la lista, no a una ficha en blanco.
+- **Se imprime.** Una hoja de estilos de impresión deja solo la ficha —sin
+  encabezado, sin lista, sin buscador, sin botones— y acomoda el mapa a dos
+  columnas.
+- **El tablero es decorativo** (`aria-hidden`): el pie cuenta qué se ve y la
+  posición va contada pieza por pieza con `BlindNotation.positionSentence()`,
+  que es la única tabla de nombres y plurales del sitio — escribirla otra vez
+  acá sería la quinta copia. En Modo Adaptado esa lectura se agranda, y lo
+  decide el CSS, no el JavaScript.
+- El botón de practicar **solo sale cuando esa línea existe** en el banco de
+  `entreno/aperturas.html`, y dice de qué color se juega: las fichas de
+  apertura y defensa siempre la tienen; las de táctica y conceptos pueden
+  partir de una FEN de estudio y ahí el botón no aparece. La misma línea se
+  practica de un lado solo (el gambito de dama está en el banco desde el lado
+  del negro, aunque la ficha sea de aperturas).
+- **No lleva marca de progreso ni clave en `js/progreso-usuario.js` a
+  propósito.** No hay nada que sincronizar entre aparatos porque no hay ningún
+  "resuelto" que guardar: la memorización de verdad, con su repaso espaciado,
+  vive en `entreno/aperturas.html`. El tiempo sí se registra, como en toda
+  página de Entreno: `js/tiempo-plataforma.js data-activity="estudio"`.
+- Se puede asignar desde Tareas: está en `js/material-plataforma.js`.
+
+**Al tocar el banco o la página, correr las dos comprobaciones**:
+
+    node herramientas/verificar-fichas.js     # el banco, con chess.js
+    node herramientas/verificar-estudio.js    # la página, en un navegador
+
+La primera no necesita más que `npm install chess.js@0.10.3`. La segunda pide
+además playwright y el sitio en localhost:8777, y existe porque esta página está
+detrás del login: `verificar-css.js` abre las páginas sin cuenta y no ve nada de
+esto. Comprueba que estén las cuatro secciones con sus fichas y en orden, que
+cada bloque traiga SUS renglones y no los del de al lado, que el tablero dibuje
+**pieza por pieza** la posición que toca en cada jugada (contra chess.js, no
+contra lo que diga la página), que el buscador mire las cuatro categorías, que
+el enlace `?ficha=` abra la ficha y que un id inventado caiga a la lista, que
+**la regla de `_redirects` siga mandando la dirección vieja de Fichas acá**, que
+al imprimir salga la ficha y no la lista, y que la página **se vea**: sin CSS
+impreso como texto, con una sola hoja, y en oscuro cuando el tema está en
+oscuro. Absorbió todo lo que comprobaba `verificar-fichas-pagina.js`, que se fue
+con la página.
+
+- De paso se le quitó la fecha fija a `herramientas/verificar-panel.js`: sus
+  clases de mentira colgaban de un día escrito a mano y el filtro de "últimos 3
+  meses" se mide contra hoy, así que la prueba se iba pudriendo sola —fallaba
+  por el almanaque, no por el código—. Ahora cuelgan de hoy y los meses
+  esperados se calculan de las mismas filas.
+
+
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
@@ -821,7 +3423,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
 - **El banco es más grande que la prueba**: cada diagnóstico sortea sus
   preguntas con `DiagnosticoPrueba.armar()` (al final de
   `js/diagnostico-items.js`). Lo que nunca cambia es la forma: 7 ítems por
-  área, el mismo reparto de dificultad y 160 puntos, para que dos diagnósticos
+  área, el mismo reparto de dificultad y 180 puntos, para que dos diagnósticos
   del mismo alumno se puedan comparar aunque las preguntas hayan sido otras.
   Los ids de la prueba quedan guardados en el estado (para retomarla) y en el
   resultado (`detalle.items`, para que la corrección repase esas preguntas y no
@@ -832,7 +3434,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   entera. El nivel estimado es **el escalón más alto superado** —60% de
   aciertos ahí y el promedio de los anteriores también en 60%—, con un tope: si
   un área quedó por debajo del 30% no pasa de Avanzado, y por debajo del 50% no
-  pasa de Experto (nadie con los finales en blanco es maestro). Está en
+  pasa de Avanzado (nadie con los finales en blanco es «muy avanzado»). Está en
   `nivelPorEscalones()` de `js/plan-entrenamiento.js`.
   Por qué: con el porcentaje a secas, un jugador de 1400 y uno de 2300 sacaron
   los dos "Experto" (93% y 99%), porque el techo de la prueba eran preguntas de
@@ -883,7 +3485,7 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   profesor o un administrador puede crearlo o editarlo.
 - En Informes, profesores y administradores ven "🧭 Diagnósticos de nivel": el
   resumen del grupo con sus gráficos (nivel por alumno, promedio por área y el
-  perfil de ocho áreas de cada uno). Las barras usan tres bandas —a trabajar,
+  perfil de nueve áreas de cada uno). Las barras usan tres bandas —a trabajar,
   en camino, firme— y **el color nunca va solo**: verde y ámbar no se
   distinguen con daltonismo (ΔE 5.7 en deutan, comprobado con el validador de
   la skill dataviz), así que cada barra lleva su porcentaje y su etiqueta en
@@ -896,16 +3498,221 @@ volver a verificarlas con chess.js: cada ítem dice en `prueba` qué debe cumpli
   coincidir con la pantalla. El cuadernillo es **una** de las formas posibles
   de la prueba, sorteada con semilla fija: `SEMILLA=<número> node
   herramientas/diagnostico-pdf.js` saca otra versión, útil para aplicar dos
-  formas distintas en el mismo grupo. **Es material docente**: trae las
-  respuestas y la hoja de corrección, así que lleva marca de agua ("Ajedrez
-  Integral · uso docente", repetida en todas las páginas) y el enlace para
-  descargarlo solo aparece con perfil de profesor o de administración —en
-  `entreno/diagnostico.html` lo muestra `mostrarPdfSiEsDocente()` y en
-  `informes.html` vive dentro del bloque que solo ven ellos. Como todo en el
-  sitio, el filtro es del navegador: el archivo sigue estando en la raíz, así
-  que quien conozca la dirección exacta puede bajarlo igual (la marca de agua
-  es justamente para eso). Cerrar esa puerta del todo pediría servir el PDF
-  desde Supabase Storage con RLS.
+  formas distintas en el mismo grupo. **Trae las respuestas** y la hoja de
+  corrección, así que lleva marca de agua ("Ajedrez Integral · uso docente",
+  repetida en todas las páginas) y el enlace para descargarlo **solo aparece
+  para quien administra**.
+
+### Los tres PDF con las respuestas son SOLO de administración
+
+`diagnostico-de-nivel.pdf`, `libro-de-diagnostico.pdf` y
+`examen-de-arbitraje.pdf` traen las respuestas y la hoja de corrección. Antes se
+le ofrecían a todo el equipo docente; ahora solo a `is_admin`. La razón es
+simple: cuanta más gente los tenga bajados, más fácil es que terminen circulando
+y que las dos pruebas dejen de medir nada. Quien dé clase y los necesite se los
+pide a quien administra.
+
+Están enlazados en **cuatro** lugares y los cuatro comprueban `is_admin`:
+
+- `entreno/diagnostico.html` — `mostrarPdfSiEsAdmin()` destapa los dos y su nota;
+- `arbitraje.html` — el bloque `#banco-pdf`, que arranca oculto;
+- `informes.html` — dentro del texto de "todavía nadie ha hecho el diagnóstico",
+  detrás de un `profile.is_admin ?`. **Este es el que se escapa**: no es un
+  enlace escrito en el HTML, se arma con JavaScript dentro de un template, así
+  que buscar `href="…pdf"` a mano no lo encuentra.
+
+Como todo filtro del sitio, esto decide qué se **pinta**: los archivos siguen en
+la raíz y quien conozca la dirección los baja igual — para eso llevan marca de
+agua en todas las páginas y van sin permiso de copiar ni imprimir. Cerrar la
+puerta del todo pediría servirlos desde Supabase Storage con RLS.
+
+`verificar-admin.js` abre las páginas con las tres caras (alumna, profesora,
+administración) y **mira si el enlace se ve**, y además barre el sitio entero
+por si alguien vuelve a escribir uno suelto en otra página. Ese barrido fue el
+que encontró el de `informes.html`.
+
+### El libro del banco
+
+`libro-de-diagnostico.pdf` es **otra cosa** que `diagnostico-de-nivel.pdf`, y
+conviene no confundirlos: aquel es UNA forma de la prueba, sorteada, para que el
+alumno la conteste en papel; este es el **banco entero** —las 301 preguntas, área
+por área y escalón por escalón, con la respuesta marcada, el porqué y cómo se
+comprobó cada posición—, para estudiar y para corregir. Uno se reparte, el otro
+no. Lo genera `herramientas/diagnostico-libro.js`.
+
+Es el hermano de `examen-de-arbitraje.pdf` y comparte **todas** sus
+características, a propósito: tapa a página completa impresa aparte y pegada con
+`pypdf`, capítulo por área, índice, escala de niveles, hoja de respuestas al
+final, opciones barajadas con semilla sacada del id, marca de agua estampada con
+`pypdf` en todas las páginas del cuerpo (recomprimiendo y clonando después, o el
+archivo se va a megabytes), firma en la tapa, en el pie, en los datos del archivo
+y protección del PDF. `CLAVE_PROPIETARIO` es `diagnostico-ai-2026`.
+
+- **Donde el de arbitraje pone la fuente del Handbook, este pone `prueba`**: qué
+  se le comprobó a la posición con chess.js ("la jugada es legal y su bandera
+  incluye la captura al paso"). Es el equivalente exacto — de dónde sale que la
+  respuesta es esa, y no de la memoria de nadie.
+- **El diagrama va al LADO de la respuesta, no encima.** Con el tablero arriba,
+  cada pregunta con posición ocupaba media página y el libro se iba a 120.
+- La hoja de respuestas lleva la letra de la opción **o la jugada**, según el
+  tipo de ítem, y con "o" cuando hay más de una jugada válida (`alternas`): dar
+  solo una dejaría a quien corrige marcando mal una respuesta correcta.
+
+**Tiene su versión accesible**, `libro-de-diagnostico-accesible.html`, por la
+misma razón que el material de estudio: un PDF con diagramas, marca de agua y
+cifrado es lo peor que se le puede dar a un lector de pantalla. Cada posición va
+contada pieza por pieza y con su FEN, y no hay ni una imagen. El describir lo
+comparten los dos generadores desde `herramientas/lib/describir-fen.js` — estaba
+dentro de `curso-material.js` y se sacó ahí, porque una segunda copia se iría
+separando de la primera a la primera corrección.
+
+Ese archivo **está exceptuado del barrido de `verificar-pwa.js`**, junto a
+`inscripcion.html` y `formulario.html`: es un documento que se descarga y se abre
+suelto —incluso por correo y sin red—, así que declarar un `manifest` que no va a
+poder cargar sería peor que no declararlo.
+
+**El libro descubrió un defecto que la tapa del de arbitraje ya tenía**, y se
+arregló en los dos: `overflow: hidden` en el `body` **no recorta el body**, se
+propaga al viewport. El tablero decorativo del fondo asoma 44 mm a la derecha, el
+documento quedaba más ancho que A4 y Chromium **encogía la tapa entera al 79%** —
+se veía como un lomo y un degradado que se cortan antes de llegar al borde de
+abajo. Ahora los adornos viven dentro de un `.fondo` con su propio recorte. Los
+dos PDF se volvieron a generar.
+
+**Al tocar el banco de ítems o este generador, correr `python3
+herramientas/verificar-libro-diagnostico.py`** (necesita `pypdf`). Lee el banco
+con Node desde el mismo archivo que usa el sitio —comprobar el libro contra una
+copia de la lista no comprobaría nada— y mira que el PDF esté cifrado y se abra
+sin contraseña, que NO deje imprimir, copiar ni modificar pero SÍ extraer texto,
+que lleve al autor, que tenga marca de agua en **todas** las páginas del cuerpo y
+no en la tapa, que estén las 301 preguntas con su respuesta marcada, y que la
+versión accesible no dependa de ninguna imagen, tenga los encabezados en orden y
+cuente en palabras **cada una** de las posiciones que el PDF dibuja.
+
+
+### Las 301 preguntas y los cinco niveles
+
+El banco pasó de 118 ítems en 8 áreas a **301 en 9**: se sumaron 183 preguntas
+del documento de Oscar («225 preguntas con sus opciones, la respuesta correcta y
+la explicación») y con ellas la novena área, **Maestría** — lo que rodea al
+tablero: reglamento de torneo, Elo y títulos, motores, partidas históricas.
+
+**De las 225 del documento, 42 ya estaban** preguntadas de otra forma, muchas
+veces al revés: «¿qué piezas dan el mate de Boden?» contra «¿cómo se llama el
+mate de los dos alfiles cruzados?». Esas no se agregaron. Dos preguntas hermanas
+en la misma prueba se regalan la respuesta entre ellas, y el comparador
+automático no las distingue de las que solo comparten la plantilla de la frase
+(«1.e4 e6 corresponde a la Defensa…» no es la Siciliana): la última pasada fue a
+mano.
+
+**Y no se reemplazó el banco viejo.** Los ids de los 118 ítems anteriores están
+guardados dentro de los resultados ya rendidos (`detalle.items`), así que borrar
+los que no aparecían en el documento habría roto la corrección de esos
+diagnósticos.
+
+#### El documento llegaba con la respuesta delatada
+
+Medido antes de importar nada: **la correcta era la opción más larga en 193 de
+las 225 (86 %)**, con 28 caracteres de ventaja de mediana —71 contra 34 de
+promedio— y era la opción A en 208 de 225. Quien no supiera nada de ajedrez
+aprobaba marcando siempre la más larga.
+
+Lo de la posición se arregla solo, porque el sitio baraja las opciones en cada
+intento. Lo del largo no: es **exactamente la falla que este banco ya había
+tenido** (la correcta era la más larga en 91 de 96 ítems) y por la que
+`verificar-diagnostico.js` falla si la correcta gana por más de 2 caracteres. La
+causa era siempre la misma —la explicación venía metida dentro de la opción—, así
+que se pasó a `explica`, que es donde vive, y las cuatro opciones quedaron
+parejas. Son 183 ítems reescritos uno por uno; no hay forma de automatizarlo sin
+estropear el contenido.
+
+El documento **no traía los pesos**, aunque su introducción habla de 1 a 3. Están
+puestos a mano, en la escala de 1 a 5 del resto del banco, según cuánto exige
+cada pregunta. Maestría quedó con 5 en cada escalón, que es el reparto ideal.
+
+Una de las 225 estaba **en el área equivocada** —«Un alfil se mueve siempre…»
+figuraba en Cálculo— y se movió a Reglas: puntuada como cálculo, distorsionaba
+esa área del informe.
+
+#### Los niveles pasaron a cinco, con rangos de Elo
+
+| Nivel | % global | Elo |
+|---|---|---|
+| Principiante | 0-29 % | hasta 1399 |
+| Básico | 30-49 % | 1400 a 1599 |
+| Intermedio | 50-69 % | 1600 a 1799 |
+| Avanzado | 70-86 % | 1800 a 1999 |
+| Muy avanzado | 87-100 % | 2000 o más |
+
+- **La lista que llegó tenía un hueco**: Básico terminaba en 1599 e Intermedio
+  arrancaba en 1601, así que el 1600 no caía en ningún nivel. Se cerró en
+  Intermedio.
+- **El último tramo queda abierto** hacia arriba aunque se muestre «2000 a
+  2199»: si no, alguien de 2300 se quedaría sin nivel.
+- **El Elo estimado se interpola DENTRO del tramo según el porcentaje**, no es
+  el centro. Con un tramo tan ancho como Principiante (hasta 1399), el centro le
+  pondría el mismo número a quien sacó 2 % y a quien sacó 28 %. El piso de ese
+  tramo es 400 y no 0, porque cero no es una puntuación que exista.
+- `nivelPorEscalones()` **tiene que recortar el índice**: `escalonAlcanzado()`
+  devuelve de 0 a 5 y ahora los niveles son cinco, así que sin el tope quien
+  supera el escalón 5 se quedaba con `NIVELES[5]`, que no existe. Los topes por
+  área bajaron en consecuencia: un área por debajo del 30 % no pasa de
+  Intermedio, y por debajo del 50 % no pasa de Avanzado.
+- **`DiagnosticoPrueba.AREAS` ya no es una lista escrita a mano**: sale de
+  `PlanEntrenamiento.AREAS`. Con la lista a mano, sumar la novena área habría
+  dejado la prueba en ocho **sin que nada fallara** — simplemente no habría
+  preguntado nada de Maestría y el informe la habría pintado en cero. Por eso
+  los dos generadores de PDF cargan `plan-entrenamiento.js` ANTES que el banco.
+
+#### Un diagnóstico nuevo ya no se compara con uno viejo
+
+La prueba pasó de 56 ítems y 160 puntos a **63 y 180**, porque son nueve áreas
+por siete ítems. Eso cambia la medición, así que `VERSION` subió a **4** y una
+prueba empezada con la anterior se descarta con aviso. Los resultados ya
+guardados se siguen leyendo y calificando con los umbrales de entonces, como los
+de la versión 1: **no se vuelven a etiquetar**, porque se midieron con otra
+prueba.
+
+#### El diagnóstico es una puerta de entrada, así que se puede encontrar
+
+`entreno/diagnostico.html` siempre se pudo hacer **sin cuenta** —quien no tiene
+sesión deja nombre y correo y su resultado va a `diagnosticos_publicos`— pero
+estaba escondido de dos maneras a la vez, y las dos había que quitarlas:
+
+- la página llevaba `<meta name="robots" content="noindex">` y no tenía
+  `canonical`, como todo lo que pide sesión;
+- y **`robots.txt` tapa `/entreno/` entero**, que es lo que de verdad importa:
+  con el `Disallow` puesto, quitarle el `noindex` no habría servido de nada,
+  porque el buscador ni siquiera llega a leer la página. Por eso lleva
+  `Allow: /entreno/diagnostico.html` **antes** del `Disallow`, que es como se
+  desempata (gana la regla más específica).
+
+Las dos mitades tienen que decir lo mismo, y separarlas no daría ningún error:
+la página simplemente seguiría sin aparecer nunca. `verificar-metadatos.py`
+comprueba ahora las cuatro cosas —el `Allow`, su orden, que no quede `noindex` y
+que esté en el sitemap—, y el sitemap lo agrega solo (lo arma leyendo qué
+páginas NO tienen `noindex`, así que solo hubo que volver a correrlo). Es la
+**única** excepción de `/entreno/`; el resto del entrenamiento sigue tapado.
+
+En la portada tiene su propia sección, hermana de la del examen de arbitraje y
+justo antes: antes era una línea de letra chica debajo del hero. **Lo que NO se
+enlaza ahí es `diagnostico-de-nivel.pdf`**: ese cuadernillo trae las respuestas
+y la hoja de corrección, así que su enlace sigue apareciendo solo con perfil de
+profesor o de administración.
+
+#### Dónde vive en el panel de la Academia
+
+En `clases.html` el diagnóstico tiene **tarjeta propia** en el grupo "Aprender".
+Estaba enterrado en Entrenamiento › Aprende › Asignaciones, que son tres clics
+para lo primero que conviene hacer al entrar. El **examen de arbitraje** se mudó
+de "Herramientas" a la par del diagnóstico: las dos son pruebas que ubican el
+nivel de quien las hace, y en Herramientas quedaba entre el lector de planilla y
+la caja de partidas. Se inserta buscando el diagnóstico **por su destino**
+(`t.href`), no por su posición, para que reordenar el grupo no lo mande a otro
+lado. De paso, la ficha de `tv.html` pasó a llamarse **"📺 TV en vivo"**: se
+llamaba "Torneos" igual que la de `torneos.html`, así que el panel tenía dos
+tarjetas con el mismo nombre y destinos distintos.
+
 
 ## Examen de arbitraje (reglamento FIDE)
 
@@ -1146,6 +3953,200 @@ arrancar una entre ellos.
   (necesitan cuatro personas y otro reparto) y las que están "Próximamente"
   tampoco. Un alumno al que todavía no le asignaron profesor no ve a nadie:
   la lista le ofrece el bot de Oscar mientras tanto.
+- **Rechazar puede llevar un motivo** (`desafios.motivo_rechazo`, opcional, 140
+  caracteres), que quien reta ve en vez del genérico "Tu reto no fue aceptado
+  esta vez.". La política de `update` de `desafios` no restringe qué columnas
+  toca cada verbo más allá de `estado`/`room_id`, así que esta columna se
+  suma sin tocar la política.
+- **El botón "Retar" ya no espera los 20 segundos completos si ya hay
+  respuesta.** Se libera con el timeout de siempre (por si no contestan) o,
+  antes, en cuanto llega por Realtime un "rechazado" o un "aceptado" —
+  `reactivarBoton()`, indexado por el id del reto. Antes, rechazar de
+  inmediato igual dejaba a quien retó viendo "Esperando…" el resto de los 20
+  segundos, sin ninguna razón para seguir esperando.
+
+## El profesor también se sienta a jugar
+
+El sitio asumía que el profesor reparte rivales y mira. Ahora además **juega**:
+contra sus alumnos en una partida amistosa y emparejado como uno más en sus
+propios torneos.
+
+**Lo que lo impedía no era el botón, era la base.** Crear una partida exigía
+`soy_profesor_de_todos([blancas, negras])`, o sea "¿son todos alumnos míos?", y
+**un profesor no es alumno de sí mismo** — `profile_teachers` solo tiene alumnos
+como `student_id`. Ponerse en el tablero daba `false` y la fila se rechazaba.
+
+Y no era solo el formulario de Juegos: `torneo.html` inserta en `game_rooms` al
+generar cada ronda, así que un profesor inscrito en su propio torneo **tumbaba la
+ronda entera**, no su partida. Ese es el tipo de fallo que este cambio tenía que
+mirar entero antes de tocar nada.
+
+- La pregunta correcta no era "¿son todos alumnos míos?" sino **"¿puedo sentar a
+  esta gente en un tablero?"**, que es la misma más una excepción: yo. Vive en
+  `public.puedo_armar_partida_con(uuid[])` (`SECURITY DEFINER`, como sus
+  hermanas) y la usan las dos políticas de insert, `game_rooms` y
+  `fourplayer_games`. Administración arma partidas con cualquiera, igual que
+  antes en el resto del sitio.
+- **`game_rooms_insert` suma `white_id is distinct from black_id`.** Antes eso lo
+  impedía de rebote la propia regla (nadie es alumno de sí mismo); al abrir la
+  excepción del "yo" había que escribirlo, o un profesor podía crearse una
+  partida contra sí mismo.
+- Comprobado impersonando roles en SQL, diez casos: el profesor crea con su
+  alumno y no con uno ajeno, no contra sí mismo, no firmando como otro; un
+  profesor sin alumnos no crea nada; un alumno tampoco; administración sí; **y
+  sigue funcionando lo de siempre**, dos alumnos distintos del mismo profesor.
+- **El reto en vivo de "🟢 En línea ahora" ya funcionaba** profesor↔alumno
+  (`pueden_jugar_entre_si` lo contempla y la lista rotula "· profe"): ese camino
+  crea la sala con `aceptar_desafio()`, que es `SECURITY DEFINER` y no pasa por
+  la política. Era la única de las tres puertas que estaba abierta.
+
+En el navegador:
+
+- **"Yo" va en su propio `<optgroup>` y AL FINAL de los selectores, no arriba.**
+  Si fuera la primera opción, el caso de todos los días —armar una partida entre
+  dos alumnos— arrancaría con el profesor puesto de blancas y habría que sacarlo
+  a mano cada vez. Al final, los índices de la preselección siguen cayendo donde
+  caían. Con un solo alumno, las negras arrancan en el profesor: antes quedaban
+  las dos casillas en el mismo alumno y el formulario se quejaba sin razón
+  aparente.
+- **`#my-active-games` salió de la vista del alumno** y vive fuera de las dos:
+  desde que el profesor juega, necesita la misma puerta de entrada a su partida.
+  El aviso de "espera a que tu profesor te asigne un rival" sigue siendo solo del
+  alumno. En la lista de supervisión, la partida propia del profesor dice
+  **"♟️ Jugar"** y no "👀 Ver" — el mismo enlace, pero un "Ver" sobre la partida
+  propia se pasa por alto.
+- **En los torneos lo único que lo impedía era el botón escondido.** La RLS ya
+  dejaba inscribirse a quien organiza (`tournament_registrations_insert` tiene su
+  rama de dueño), y `TorneoEngine` no sabe quién es profesor: empareja ids. Se
+  quitó el `!isManager` de `torneos.html` y el `else` que escondía el botón en
+  `torneo.html`.
+- `juegos.html` trata `is_admin` como profesor, como `informes.html`.
+
+**Quien organiza y juega también anota los resultados de su propia partida**, y se
+deja así a propósito: es una academia, no un torneo federado, y la alternativa
+—pedir un árbitro para que el profesor pueda jugar— no la pidió nadie. Los
+cruces y los resultados quedan a la vista de todos los inscritos, que es el
+control que corresponde a esta escala.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-profesor-juega.js`** (con el sitio en localhost:8777 y
+playwright). Comprueba en un navegador de verdad qué manda el formulario, que la
+preselección de siempre no se haya movido, que la partida propia se vea y su
+botón diga "Jugar", que al alumno no se le haya movido nada y que el botón de
+inscripción aparezca para quien organiza. Su Supabase de mentira **filtra de
+verdad** (`eq`, `in`, `or`): la página pide `profiles` tres veces seguidas con
+filtros distintos, y un doble que devolviera siempre la tabla entera daría por
+buena una página rota.
+
+## El reloj de la partida no se fía del navegador
+
+`game_rooms.white_time_left`/`black_time_left` (y el `time_left` de cada
+asiento en `fourplayer_games.seats`) los escribe el propio cliente en cada
+jugada — es el navegador el que calcula "cuánto le quedaba menos lo que pasó
+más el incremento" (ver el comentario "Reloj" en `estandar.html` y
+hermanos). La política de `UPDATE` de las dos tablas solo comprueba QUIÉN
+escribe, nunca QUÉ valor manda: hasta este cambio, cualquiera de los dos
+jugadores podía, desde la consola del navegador, escribirle a su propio
+reloj el número que quisiera — el mismo tipo de fuga que ya se había cerrado
+para `class_presence_log`/`platform_activity_log` con
+`proteger_tiempos_de_presencia()`.
+
+- **`public.proteger_reloj_de_partida()`** (el mismo trigger `BEFORE INSERT
+  OR UPDATE` que ya forzaba `clock_updated_at` a la hora del servidor, ahora
+  también valida el tiempo) calcula el tiempo real transcurrido con
+  `now() - OLD.clock_updated_at` — la hora del SERVIDOR, nunca la que mande
+  el navegador — y rechaza cualquier `white_time_left`/`black_time_left` (o
+  `time_left` de asiento) que sea mayor que "lo que le quedaba menos ese
+  tiempo real, más el incremento, más 2 segundos de margen" por latencia de
+  red. Un cliente puede seguir siendo generoso consigo mismo por un par de
+  segundos; ya no puede escribirse un reloj infinito.
+- **Solo valida la columna que de verdad cambia.** Una jugada normal solo
+  toca el reloj de quien la hizo — el del rival queda igual porque no viene
+  en el `UPDATE`, así que no hay nada que comprobar ahí (compararlo contra
+  el tiempo transcurrido habría rechazado la jugada de siempre, porque el
+  reloj de quien NO mueve no tiene por qué haber bajado).
+- Es la misma función para las dos tablas: en `fourplayer_games` recorre los
+  cuatro asientos (`red`, `blue`, `yellow`, `green`) dentro de `seats`, en
+  vez de dos columnas sueltas.
+- Comprobado insertando una fila de prueba y actualizándola de las dos
+  formas: el cálculo legítimo (el mismo que hace la página) pasa igual que
+  antes; escribir un número inventado (999999) lo rechaza con
+  "Tiempo restante inválido".
+
+## Una función de TRIGGER no es una API
+
+Postgres le da `EXECUTE` a **PUBLIC** a toda función nueva, y `anon` y
+`authenticated` lo heredan de ahí. Así que las diecisiete funciones de trigger
+del sitio —las que protegen los relojes, los tiempos de presencia, las notas y
+las marcas de progreso, y las que mandan los avisos push— nacen publicadas en
+`/rest/v1/rpc/` sin que nadie lo pida.
+
+**Hoy no es una fuga, y por eso nadie lo notó en meses**: al llamarlas, Postgres
+contesta «trigger functions can only be called as triggers» —comprobado, no
+supuesto—. Lo que cuesta es el RUIDO. El linter de Supabase levantaba **80
+avisos**; casi todos son por diseño (las funciones de permiso validan por
+dentro: `generar_cobros` exige `soy_coordinador()`, `set_student_elo` exige ser
+profesor del alumno, las dos revisadas una por una). Entre ese montón, estas
+diez eran las únicas sin ninguna razón de estar — y el día que aparezca un aviso
+de verdad va a estar enterrado en la misma lista que nadie lee. Quitadas, el
+linter bajó a **61**.
+
+**Ya era la costumbre de la casa**: las siete funciones de trigger más viejas
+(`handle_new_user`, `protect_answer_grading`, `protect_profiles_identity_columns`,
+`sincronizar_profesor_principal`, `avisar_clase_abierta`, `avisar_desafio`,
+`protect_game_state_teacher_columns`) llevaban revocadas desde siempre. Se fue
+olvidando en las diez que se escribieron después.
+
+- **Se revoca de `PUBLIC`, NUNCA de `anon, authenticated`.** La primera
+  migración hizo `revoke ... from anon, authenticated`, **devolvió éxito y no
+  revocó nada**: ellos no tenían ningún grant propio que quitar. Es el fallo
+  callado de siempre, esta vez en el SQL — el comando "pasa" y todo queda igual.
+  Se ve en el ACL: una función bien revocada es
+  `{postgres=X/postgres,service_role=X/postgres}`, y una expuesta tiene además
+  la entrada **`=X/postgres`**, que es el grant a PUBLIC.
+- **`service_role` conserva el suyo**, que es el que usan las Edge Functions.
+- **Revocar NO afecta a los triggers.** El motor los dispara con los privilegios
+  del trigger y no le pide `EXECUTE` a quien hace el insert. Está comprobado
+  impersonando a un alumno en una transacción revertida, los cinco casos: la
+  hora inventada en `platform_activity_log` se sigue ignorando, la marca de
+  coordenadas de 999999 se sigue rechazando y la legítima sigue entrando, el
+  reloj de 999999 se sigue rechazando y el cálculo de una jugada normal sigue
+  pasando.
+- **`proteger_reloj_de_partida` era la ÚNICA de las diecisiete sin `search_path`
+  fijo.** Sin él lo pone quien dispara el trigger, así que un esquema propio por
+  delante puede cambiar qué `now()` se resuelve — y ese trigger existe
+  justamente para que la hora la ponga el servidor. Quedó en `''` y no en
+  `'public'` porque su cuerpo no toca ninguna tabla: solo `now()`, `greatest`,
+  `coalesce`, `extract` y los operadores de jsonb, todos de `pg_catalog`.
+
+**Al escribir una función de trigger nueva, revocarle el execute de PUBLIC.**
+Estas dos consultas lo dicen — la primera tiene que devolver cero filas:
+
+```sql
+-- Funciones de trigger publicadas como API, o sin search_path fijo.
+select proname,
+       has_function_privilege('anon', oid, 'execute') as anon,
+       has_function_privilege('authenticated', oid, 'execute') as auth,
+       coalesce(proconfig::text, '(SIN search_path)') as config
+from pg_proc
+where pronamespace = 'public'::regnamespace
+  and prorettype = 'pg_catalog.trigger'::regtype
+  and (has_function_privilege('anon', oid, 'execute')
+    or has_function_privilege('authenticated', oid, 'execute')
+    or proconfig is null);
+
+revoke execute on function public.<la_nueva>() from public;
+```
+
+### Lo que queda pendiente y NO se puede hacer desde acá
+
+**La protección contra contraseñas filtradas está apagada.** Supabase puede
+comparar cada contraseña nueva contra HaveIBeenPwned y rechazar las que ya se
+filtraron; el sitio es de menores de edad y hoy acepta cualquiera. Es un
+interruptor del panel, no SQL, así que no entra en ninguna migración:
+**Authentication › Policies › "Leaked password protection"** en el proyecto de
+Supabase. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+alguien no existe.
 
 ## Confites del caballo
 
@@ -1167,13 +4168,471 @@ quedarse sin saltos; 64 es el recorrido completo.
   el juego no es una de ellas—; el tiempo sí se registra con
   `js/tiempo-plataforma.js data-activity="confites"`, que no tiene CHECK.
 
+## El panel de la Academia
+
+`clases.html` es por donde entra todo el mundo. Sus accesos viven en
+`TILE_GROUPS`, un solo lugar: mover un acceso de grupo es cambiarle el objeto de
+lista, y el resto se acomoda solo.
+
+- **"Aprender" va antes que "Jugar y competir".** Esto es una academia: lo
+  primero que se ofrece al entrar es lo que se viene a hacer. Jugar queda
+  justo debajo, a un golpe de vista — no se esconde, se ordena.
+- **Mover un grupo de lugar es mover su objeto dentro de `TILE_GROUPS`, y
+  nada más.** Todo lo que después retoca la grilla —administración,
+  coordinación, el equipo docente— busca su grupo **por nombre**
+  (`TILE_GROUPS.find((g) => g.title === …)`), nunca por la posición. Por eso
+  `verificar-panel.js` también pregunta por nombre: con índices, un cambio de
+  orden rompía media docena de comprobaciones que no tienen nada que ver con
+  el orden y había que renumerarlas a mano. El orden se comprueba aparte y
+  una sola vez, que es donde importa.
+- **"Sesión en vivo" va sola y de primera**, en su propio grupo ("Clase en
+  vivo") y con `destacado: true`, que la pinta ancha y en una línea. Es lo único
+  del panel que pasa AHORA MISMO; mezclada entre Juegos y Torneos había que
+  buscarla justo cuando hay clase. Un grupo de un solo acceso pintado con la
+  grilla de cuatro columnas sería un cuadrito perdido a la izquierda, que es
+  peor que no destacarlo.
+- **Los grupos se ordenan por las preguntas que uno se hace al entrar**, igual
+  que las pestañas de la clase en vivo: qué pasa AHORA (Clase en vivo) → qué me
+  pusieron con fecha → qué hago por mi cuenta (Aprender) → dónde juego → dónde
+  me mido → mi cuenta.
+- **"Lo que te pone tu profesor" junta Tareas y Exámenes**, y es lo segundo que
+  se ve. Antes Tareas vivía en "Aprender" y Exámenes en "Evaluaciones": lo
+  único del panel que **tiene fecha** estaba partido en dos grupos y cada mitad
+  enterrada entre cosas que se hacen cuando uno quiere. La franja de arriba
+  solo aparece cuando hay tareas pendientes —y **nunca por un examen**—, así
+  que fuera de ese momento no había dónde mirar.
+  - **El rótulo no repite los nombres de sus dos tarjetas**: dice lo que las
+    dos tienen en común y que no se deduce de ellas —que te las pone alguien
+    más y vencen—. Es la misma regla que en la clase en vivo, donde el rótulo
+    dice QUIÉN LO VE en vez de qué hace el botón.
+  - Por eso el grupo lleva **`titleProfe`**, igual que los tiles llevan
+    `descProfe`: del otro lado del escritorio esa misma pareja es "Lo que le
+    pones a tus alumnos". Lo aplica `textosDelEquipoDocente()`, en el mismo
+    lugar y de la misma forma que las descripciones. **Olvidárselo a un grupo
+    nuevo le pondría a la profesora un encabezado que habla de su profesor**,
+    así que la regla de "a quien da clase ninguna tarjeta le habla de «tu
+    profesor»" vale ahora también para los rótulos, y la prueba los mira.
+- **"Mide tu nivel" es lo que uno hace por su cuenta**, y se llamaba
+  "Evaluaciones" con los exámenes adentro. Un examen te lo pone otra persona,
+  con fecha y con nota; un diagnóstico lo hace uno cuando quiere, para saber
+  dónde está parado. Ahí quedan los dos diagnósticos y nada más.
+- **Un grupo del que no queda ni un acceso utilizable no se pinta.** A la
+  alumna, "Herramientas" le salía como un encabezado y dos cuadros grises —sus
+  dos accesos están en mantenimiento—: una sección entera de la página que no
+  lleva a ninguna parte, que es la misma razón por la que se fue el
+  "Próximamente" sin fecha. Un acceso apagado **entre otros que funcionan sí se
+  queda**, y con su razón escrita: ahí uno vino por otra cosa y de paso se
+  entera de que eso vuelve. No se esconde con una clase: no se pinta — un
+  enlace invisible pero presente sigue siendo una parada de tabulador.
+- **Los dos diagnósticos son para todo el mundo**, el de arbitraje incluido:
+  cualquiera puede medir su nivel de reglamento, no solo quien da clase. Lo que
+  cambia según quién mira es **a dónde lleva la tarjeta**, y es UNA sola tarjeta
+  (repetir el nombre en el panel ya salió mal una vez, con "Torneos"):
+  - equipo docente → `arbitraje.html`, que además trae la revisión de los
+    exámenes del público y el detalle pregunta por pregunta;
+  - todos los demás → `nivel-de-arbitraje.html`, el mismo examen y el mismo
+    criterio pero **sin enseñar las respuestas al terminar**. El banco es un
+    archivo estático y quien sepa mirar el código las ve igual; lo que se evita
+    es regalárselas en pantalla.
+  Esa página es la pública, así que pide nombre y correo — pero **se rellenan
+  solos cuando hay sesión**: a quien entra desde el panel el sitio ya se los
+  sabe, y hacerle escribir lo que ya escribió no tiene sentido. Lo que ya venía
+  escrito a mano no se toca.
+- **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
+  `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
+  promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
+  ("En mantenimiento", "Próximamente") en la propia tarjeta — un cuadro gris sin
+  explicación se lee como una página rota.
+- **Cada tarjeta lleva el texto de los dos públicos: `desc` y `descProfe`.**
+  El panel estaba escrito para el alumno de punta a punta, así que a quien da
+  clase le decía cosas que no son: que "tu profesor te asigna el rival" (lo
+  asigna ella), que los torneos "los arma tu profesor" (los arma ella), que
+  Informes es "tu progreso" (es el de sus alumnos) o que la sesión en vivo es
+  "el tablero con tu profesor". **Tareas tenía el defecto al revés**: su texto
+  era el del profesor, así que al alumno le ofrecía asignarle material a unos
+  alumnos que no tiene.
+  - Los dos textos viven **junto al tile** y no repartidos en `if`s por
+    `init()`: así se ven de un vistazo al leer la lista, y un tile nuevo que
+    solo sirva para uno de los dos se nota enseguida. Lo aplica
+    `textosDelEquipoDocente()` sobre la lista ya armada, en un solo lugar,
+    igual que `apagarEnMantenimiento()` — y vale para quien administra, como
+    todo lo que se hace para los profesores.
+  - **Un texto que sirve igual para los dos NO se duplica.** Dos versiones de
+    la misma frase se van separando a la primera corrección; sin `descProfe`,
+    el tile usa el suyo y ya.
+  - **La comprobación que importa no es la lista de textos uno por uno**, que
+    envejece con cada corrección: es que a quien da clase **ninguna** tarjeta
+    le hable de "tu profesor". Un tile nuevo copiado de otro cae ahí solo.
+- **"Mis pagos" es del alumnado, no del equipo docente.** Las mensualidades
+  son de las familias, así que a una profesora esa tarjeta le ofrecía "lo que
+  se te ha cobrado" sobre una cuenta a la que no se le cobra nada. Quien
+  coordina sí llega a los cobros, pero por **"Cobros de la Academia"** en
+  Herramientas, que es la página entera y no el recibo propio — y por eso
+  nunca aparecen las dos, que serían el mismo destino repetido.
+- **En el grid van LUGARES, no acciones.** "Cerrar sesión" estaba ahí *y*
+  como botón de la cabecera: el mismo destino dos veces —lo que ya había
+  pasado con "Torneos"— y la única acción entre un grid de sitios a los que
+  ir. Se queda solo en la cabecera, que es donde se busca. Con él se fue el
+  camino `action === "logout"` de `renderTileCard()`, que no usaba nadie más.
+- **Un "Próximamente" sin fecha no se queda.** "Exámenes" llevaba meses
+  apagado esperando unos exámenes de curso que todavía no existen, ocupando
+  un lugar de la grilla. Una tarjeta que nunca cambia deja de leerse; el día
+  que los exámenes existan, vuelve. No es lo mismo que "En mantenimiento",
+  que sí dice algo cierto sobre un acceso que existe y va a volver.
+- **Lo de mantenimiento se apaga SOLO para el alumnado**, en
+  `apagarEnMantenimiento()`, sobre la lista ya armada y en un solo lugar. Se
+  marca con `mantenimientoAlumno: true` en el tile, así que volver a prender un
+  acceso es borrar esa palabra. Como todo filtro del sitio esto decide qué se
+  PINTA: la dirección sigue existiendo y quien la conozca entra igual.
+
+### Arriba va lo que vence, no otro directorio de lugares
+
+El panel era una lista de sitios a los que ir: todo lo que es "esto te toca
+AHORA" vivía detrás de un clic, y quien no lo buscaba no se enteraba. Dos
+franjas, las dos arriba del grid y **antes** de los accesos:
+
+- **Lo que te pusieron con fecha: tareas Y exámenes** (`#pendientes-aviso`, que
+  por eso dejó de llamarse `tareas-aviso` — un examen contado dentro de algo
+  que se llama "tareas" es como empiezan los malentendidos). La fecha límite ya
+  vivía en `tareas.vence_at` y en `examenes.vence_at`; lo que faltaba era
+  decirla acá. Un alumno abría el panel, no veía nada que hacer, y la entrega
+  vencía **sin que nada avisara** — el aviso push sale al asignarla y después
+  no vuelve nunca, y del examen ese push es el **único** aviso que existe.
+  - **Ninguna de las dos cuentas se hace acá**: `tareas_con_avance()` es la
+    misma función que pinta `tareas.html` y `examenes_con_nota()` la misma que
+    pinta la lista del alumno en `examenes.html`. Dos pantallas que cuenten lo
+    mismo por su cuenta terminan diciendo cosas distintas del mismo alumno.
+  - **Un examen vencido NO es una tarea vencida, y confundirlos sería
+    mentirle.** `iniciar_examen()` rechaza con «Se pasó la fecha para hacer
+    este examen» el que sigue en `asignado` después de su `vence_at`: ahí se
+    acabó. Una tarea vencida, en cambio, se sigue pudiendo hacer, y por eso su
+    texto dice "todavía puedes" y el del examen **no**. Lo mismo el
+    `congelado`, que solo reabre el profesor, y el `en_curso` al que ya se le
+    pasó el `termina_at`. De los cuatro estados, solo **asignado con fecha por
+    delante** y **en curso con reloj corriendo** son "puedes hacer algo ahora":
+    lo decide `estadoDeExamen()`, en un solo lugar.
+  - **Lo que ya no se puede hacer se dice pero no se cuenta.** Sumarlo al
+    "tienes N pendientes" le ofrecería algo que no va a poder abrir; callarlo
+    sería el fallo de siempre. El título pasa a "Hay algo que tienes que
+    saber".
+  - **El orden de las reglas importa y está escrito**, como el del informe a la
+    casa: el texto se queda con UNA cosa, la que pide actuar antes — primero el
+    examen con **el reloj corriendo** (que es lo más urgente que hay en el
+    panel: el tiempo se está yendo ahora), después lo que ya se perdió, después
+    la tarea vencida, y al final lo que viene, donde entre dos que vencen el
+    mismo día manda el examen porque tiene una sola oportunidad.
+  - **Los minutos que quedan NO se dicen acá.** El reloj del examen sale de la
+    hora del **servidor** (`termina_at` contra `now()`) y en el panel solo está
+    la del navegador: un número sacado del reloj de la computadora podría
+    decirle que le quedan diez minutos cuando ya se le acabaron. Ese número lo
+    da `examen.html`, que lo pide a la base. Decidir "corre o no corre" con el
+    reloj local sí es tolerable — en el peor caso lo manda a la pantalla del
+    examen, que le dice la verdad.
+  - **El enlace lleva a lo que el texto acaba de nombrar**, y cuando es un
+    examen rendible va **directo a rendirlo** (`examen.html?id=…`), la misma
+    decisión que el aviso al celular: tiene reloj y una sola oportunidad, así
+    que buscarlo en una lista es un paso de más. Uno vencido o congelado va a
+    `examenes.html` — mandarlo a la pantalla que lo va a rechazar sería peor.
+  - **Si los exámenes no llegan, las tareas se siguen mostrando**: quedarse sin
+    franja por la mitad que falló sería perder también la que sí se pudo leer.
+  - **Una tarea vencida pinta la franja en rojo**, con el emoji cambiado. Es la
+    diferencia entre "tienes algo que hacer" y "se te pasó", y en el gris del
+    resto del panel esas dos cosas se leen igual. El emoji acompaña a la
+    **línea** y no a la franja: con el 📋 de Tareas sobre un texto que habla de
+    un examen, el icono estaría señalando otra cosa.
+  - **"vence mañana", no una fecha.** Una fecha hay que compararla con el
+    almanaque; se cuenta por **días de calendario** y no por horas, así que una
+    tarea de mañana a las 8 a. m. vence mañana aunque falten menos de 24 horas.
+  - **Las pendientes las filtra la base** (`p_pendientes` de la función), no se
+    bajan todas para descartar las hechas acá.
+- **Continúa donde ibas.** El curso a medias cuya última lección marcada es la
+  más reciente, con su barra. Los datos ya los cuenta
+  `informes_cursos_alumnos()` (un renglón por alumno y curso empezado, con el
+  total, lo hecho y el último tema): acá solo se elige cuál mostrar. Un curso
+  terminado no se ofrece — no hay nada que continuar ahí.
+
+**Las dos arrancan con `hidden` y solo se destapan cuando de verdad hay algo que
+decir.** Una franja que diga "no tienes tareas" es ruido en todas las visitas
+menos una, y un cartel que se repite deja de leerse — la misma lección que dejó
+el aviso de instalar la app.
+
+### El orden de la página es el de las preguntas que uno se hace al entrar
+
+    qué me toca  →  por dónde iba  →  cómo voy  →  y recién entonces a dónde ir
+
+O sea: tareas, "Continúa donde ibas", "Tu progreso" y después el grid de
+accesos. El resumen estaba **al final**, después de las seis secciones de
+tarjetas: la racha y los números —que son lo que da ganas de volver— solo los
+veía quien hacía scroll hasta el fondo.
+
+- **La franja de "Estado de la clase" solo aparece cuando tiene algo que
+  decir**: si hay clase en curso (eso lo ve todo el mundo) o si quien mira da
+  clase y puede iniciar una. A un alumno fuera del horario —que es casi
+  siempre— le ocupaba el **primer lugar de la página** para avisarle de que NO
+  pasa nada, empujando hacia abajo sus tareas. El acceso a la sesión en vivo
+  sigue estando en el grid, que es donde se busca.
+  - **Se esconde la tarjeta entera** (`#session-status-card`), no solo sus dos
+    mitades: con las dos ocultas quedaba la caja blanca vacía con su relleno,
+    que se lee como algo que no cargó.
+  - **La condición es la misma que ya decide el botón de iniciar clase**, así
+    que no se le esconde a nadie un control que sí podría usar. Esconderla de
+    más le quitaría a quien da clase la única forma de empezarla, y eso no
+    daría ningún error: simplemente no podría.
+- **El orden se comprueba con `compareDocumentPosition`**, no con el CSS: lo
+  que importa es el orden del documento, que es también el que recorre un
+  lector de pantalla.
+
+### Los tres números de Entrenamiento los contaba el navegador
+
+Es la misma piedra de `informes.html` y de `admin.html`, y estaba acá desde
+siempre: "Tu progreso en Entrenamiento" hacía
+`from("training_progress").select("*").eq("student_id", …)` y sumaba en el
+navegador. **PostgREST corta la respuesta a partir de cierta cantidad de filas
+sin dar ningún error**, y `training_progress` crece unas 5 filas por alumno y
+por día: a un alumno con bastante entrenamiento encima el panel le pintaba un
+número **que ya no subía**, sin que nada fallara.
+
+Los tres números ya los devuelve `informes_resumen_alumnos()` —`puzzles`,
+`lecciones`, `mejor_coord`— y, siendo `SECURITY INVOKER`, a un alumno le
+devuelve **solo su propio renglón**: la misma función que usa `informes.html`,
+así que la cuenta tampoco queda escrita dos veces.
+
+De paso, **las tres tarjetas anchas apiladas** —récord de racha táctica, racha
+de días y los tres números— quedaron en **una sola franja "Tu progreso"**, cada
+número con su enlace. Eran mucho scroll para tres datos y para llegar al
+registro de clases.
+
+### Quien da clase no entra al panel del alumno
+
+Al profesor el panel le mostraba **sus** ejercicios 4×4 (en cero, porque no es
+alumno), **su** racha de días y el récord de racha táctica de la clase. Nada de
+eso le sirve: lo que necesita al entrar es **a quién hay que perseguir**. Ahora
+ve "Tu semana" — sus alumnos, cuántos no entrenaron en 7 días, las tareas que
+ÉL mandó y siguen sin hacerse, cuántas ya vencieron y las clases del mes. Es la
+misma decisión de "una página, dos públicos" que ya toman `informes.html`,
+`cobros.html` y `tareas.html`, y **vale igual para quien administra**, como todo
+lo que se hace para los profesores.
+
+- **La cuenta la hace `public.panel_profesor()`**, no el navegador: contar
+  "alumnos distintos que entrenaron" desde el cliente pide bajarse
+  `training_progress` y cruzar el mismo techo de arriba en silencio.
+- Es **`SECURITY INVOKER`**, como las funciones de informes: **quién es alumno
+  de quién lo decide la RLS** y no hay un solo filtro de profesor escrito, ni en
+  la función ni en la página. Comprobado impersonando roles en SQL — una
+  profesora recibe exactamente sus 29 alumnos, los mismos que `alumnos_de()`, y
+  quien administra los 89.
+- **Las tareas sí llevan `profesor_id = auth.uid()` escrito dentro de la
+  función**: la política de `tareas` deja ver también las de quien administra, y
+  lo que el panel dice es "las tareas que TÚ mandaste", no las de toda la
+  plataforma.
+- **"Sin entrenar" es una resta** (`alumnos - activos_7d`), no un número aparte
+  que pueda contradecir a los otros dos.
+- **El rojo solo aparece cuando el número no es cero.** En rojo permanente se
+  deja de ver, que es lo mismo que no ponerlo.
+
+### El registro de clases no se baja entero
+
+Es la misma piedra de `informes.html`: con 100 clases, bajarlas todas y
+pintarlas de corrido no sirve de nada —no se encuentra ninguna— y a partir de
+cierta cantidad de filas **PostgREST corta la respuesta sin dar ningún error**.
+Así que el filtro y el corte los hace la base y la página solo pinta:
+
+- el periodo, con un `gte` sobre `started_at` (30 días, 3 meses, un año, todas);
+- la búsqueda por título o notas, con un `or(...ilike...)`;
+- la página, con un `range()` de 20 y un "Ver más clases";
+- y la cuenta total con `count: "exact"`, que es lo que permite decir "Mostrando
+  20 de 143" sin haber traído 143 filas.
+- **El texto de búsqueda se limpia antes de mandarlo**: PostgREST arma el
+  `or=(...)` con comas y paréntesis, así que un título con una coma rompería la
+  consulta entera.
+- Cada consulta lleva su marca (`sesionesPeticion`): una respuesta que llega
+  tarde, después de que se escribió otra búsqueda, se descarta en vez de pintar
+  el resultado de un filtro que ya no está.
+
+Se muestra **agrupado por mes**, con el más reciente abierto y los de atrás
+cerrados, y el encabezado de cada mes dice cuántas clases y cuántas horas. Eso
+es lo que hace que un año de clases se pueda mirar. Qué mes quedó abierto vive
+en `sesionesMeses`, o repintar los cerraría todos. Y la lista se repinta entera
+desde lo que se lleva cargado, en vez de ir pegando filas: así un mes partido
+entre dos páginas queda en un solo bloque y su encabezado cuenta bien.
+
+**Al tocar el panel, correr `node herramientas/verificar-panel.js`** (con el
+sitio en localhost:8777 y playwright). Existe porque `clases.html` está detrás
+del login: `verificar-css.js` abre las páginas sin cuenta, así que nada de esto
+lo ve nunca. Comprueba en un navegador de verdad los grupos y su orden con las
+tres caras (alumna, profesora, administración), que lo apagado esté apagado para
+quien tiene que estarlo y abierto para los demás, que el registro mande a la
+base un `gte`, un `ilike` y un `range` de 20 —su Supabase de mentira anota cada
+consulta, así que si algún día alguien vuelve a bajarse la tabla entera se
+nota— y **que la página se vea**: que el cartel de instalar arranque invisible
+de verdad, que no haya CSS impreso como texto y que con el tema en oscuro el
+fondo salga oscuro.
+
+Comprueba además lo de arriba, que es lo que se rompe callado: que la franja de
+tareas **se vea de verdad** (se mide el `display` que calcula el navegador, no
+el atributo — la lección que dejó el cartel de instalar), que cuente las
+pendientes y no las hechas, que una vencida la pinte en rojo y ninguna vencida
+no, que **sin tareas y sin cursos a medias las dos franjas no se destapen**, que
+"Continúa donde ibas" ofrezca el curso a medias más reciente y no el terminado,
+y —lo que de verdad importa— que los tres números **salgan del RPC y que nadie
+pida `training_progress`**: si alguien vuelve a sumarlos acá la página se ve
+igual de bien hasta que un alumno cruza el techo de PostgREST. Y que a quien da
+clase se le pinte "Tu semana" y **no** el panel del alumno.
+
+De los exámenes en la franja comprueba los seis estados en que se puede estar,
+que son justamente los que se distinguen mal: que uno entregado no la destape,
+que uno con el reloj corriendo **mande sobre una tarea vencida** y lleve directo
+a terminarlo, que al que se le pasó la fecha **no se le diga «todavía puedes»**
+—el texto de la tarea, que ahí sería mentira— ni se le ofrezca la pantalla que
+lo va a rechazar, que al congelado se le diga quién tiene que reabrirlo, que el
+título cuente las dos clases de cosa ("3 tareas y 1 examen") y **que no se
+inventen los minutos que quedan**, que eso lo sabe el servidor. Sus exámenes de
+mentira se cuelgan de HOY y no de una fecha escrita, como las clases: con fechas
+fijas la prueba se pudre sola con el almanaque.
+
+- Su Supabase de mentira **resuelve las columnas de tabla relacionada**
+  (`profiles.grupo`, que es como PostgREST las nombra). Sin eso ese filtro no
+  encontraba nunca nada, así que el récord de racha táctica salía siempre en
+  "todavía nadie" y la prueba daba verde porque no lo miraba.
+
+## El panel de Administración
+
+`admin.html` es de quien administra y tiene dos mitades: los atajos de arriba y
+la lista de cuentas.
+
+### Los atajos, por grupos
+
+Eran ocho botones en una fila corrida, sin ningún criterio de orden —el
+diagnóstico de los alumnos al lado de la base de datos de chess-results— y cada
+uno con las mismas doce clases de Tailwind copiadas. Ahora salen de `ATAJOS`,
+una lista con cuatro grupos: **Resultados** (los dos diagnósticos y los dos
+exámenes, el de la Academia y el del público), **Formularios**, **Bases de
+datos** y **Reportes**.
+
+- Las tarjetas son **más chicas** que las del panel de la Academia a propósito:
+  acá son atajos de quien ya sabe lo que busca, no la puerta de entrada de un
+  alumno.
+- **"Informes de toda la plataforma" queda aparte y primero**, con su botón
+  ámbar: es la puerta grande, y las tarjetas son atajos a un apartado suyo.
+- Cuatro de los cinco atajos de Resultados llevan a `informes.html?tema=…`. Ese
+  enlace directo **depende de que el tema exista en el selector de
+  `informes.html`**: si se le cambia el nombre a una opción, el atajo lleva al
+  resumen general sin decir nada. Por eso `verificar-admin.js` comprueba que
+  cada atajo apunte a un archivo que existe y, si lleva `?tema=`, a un tema que
+  el selector de verdad tiene.
+- Se agregó el tema `diagnostico-publico`, hermano del de arbitraje público: los
+  diagnósticos de visitantes ya salían dentro del tema `diagnostico` y en el
+  resumen general, pero ahí hay que bajar a buscarlos, y son contactos para
+  invitar a Academia — se consultan seguido.
+
+### Las cuentas se ven por GRUPO, no todas de una
+
+Lo primero que muestra la página son **fichas de grupo**, no la lista de
+cuentas: con trescientas, una pared de filas con sus campos editables y sus
+etiquetas de profesor no se lee, y encontrar un grupo es hacer scroll. Cada
+ficha dice cuánta gente tiene, qué profesores la llevan (con cuántos alumnos de
+ese grupo tiene cada uno) y cuántos se quedaron sin profesor. Las cuentas
+aparecen solo al **abrir un grupo** o al **buscar a alguien**.
+
+- `grupoAbierto` es lo único que decide qué se ve: `null` son las fichas, y un
+  nombre de grupo son sus cuentas. Hay dos grupos que no son un `profiles.grupo`:
+  **Sin grupo** (alumnos a los que nadie se lo puso) y **Profesores y
+  administración** — el equipo docente no tiene grupo, y mezclarlo con los
+  sueltos lo escondía entre ellos.
+- **Buscar manda sobre el grupo abierto y mira TODOS los grupos.** Buscar a
+  alguien sin saber en qué grupo está es justamente para lo que se busca.
+- **Cada ficha puede sumarle un profesor a TODO su grupo de una vez.** Es la
+  operación de todos los años ("todo 7° B también al profesor nuevo") y antes
+  pedía marcar el grupo entero y bajar a la barra de lote. Va en modo
+  **`agregar`**, que suma y no reemplaza: quitarle sin querer un profesor a
+  cuatrocientos alumnos es el error caro de esta página. Manda **todos** los
+  alumnos del grupo, no los 50 que se estén pintando, y solo alumnos —a un
+  profesor no se le asigna profesor—.
+
+### La lista de cuentas, pensada para muchas
+
+- **El nombre se cortaba, y la causa era la maqueta**: nueve columnas dentro de
+  un `max-w-5xl` (1024 px). Ahora la página es `max-w-7xl` y **nombre y correo
+  van en UNA sola celda**, uno debajo del otro. De paso "Hacer administrador"
+  se fue a Acciones (es de una vez cada tanto, no de todos los días) y la corona
+  quedó al lado del nombre. Siete columnas en vez de nueve.
+- **Buscar, filtrar y mostrar de a poco**, las tres cosas juntas: búsqueda por
+  nombre, correo o grupo **sin tildes** (quien escribe "ramirez" tiene que
+  encontrar a "Ramírez"), filtro de rol, y 50 filas por vez con "Ver más". Cada
+  fila lleva cuatro campos editables y sus etiquetas de profesor: pintar
+  trescientas para buscar a una es trabajo tirado.
+- El filtro de rol tiene una opción que **no es un rol**: "Sin profesor
+  asignado". Es la pregunta que más se hace en esta página —esos alumnos no
+  salen en los informes de nadie— y el aviso de arriba ahora los deja a la vista
+  de un clic en vez de decir "agrúpalos abajo para encontrarlos".
+- **Las cuentas se piden de mil en mil.** Se pedían de un solo tiro, y PostgREST
+  corta la respuesta a partir de cierta cantidad de filas **sin dar ningún
+  error**: el día que la plataforma pase de mil cuentas, el panel habría
+  empezado a esconder cuentas en silencio, y los conteos de alumnos por profesor
+  habrían salido calculados sobre un pedazo. Es la misma piedra de
+  `informes.html`, con el mismo `traerTodo()`.
+
+**Al tocar `admin.html` o `inscripciones.html`, correr `node
+herramientas/verificar-admin.js`** (con el sitio en localhost:8777 y
+playwright). Las dos están detrás del login, así que `verificar-css.js` no las
+ve. Su Supabase de mentira trae **1.205 cuentas a propósito**: es el único
+número con el que se nota si la página se las pide de una sola vez. Y mide el
+ancho del campo del nombre con un nombre largo de verdad, que es con lo que
+empezó todo esto. Comprueba además que al entrar **no se pinte ni una fila** —si
+alguien vuelve a mostrarlas todas, la página se ve igual de bien hasta que hay
+trescientas— y qué manda de verdad la ficha a la Edge Function al sumarle un
+profesor a un grupo (los 401 ids y el modo `agregar`, no medio grupo ni un
+`reemplazar`).
+
+## Las inscripciones a torneos en línea
+
+`inscripciones.html` muestra lo que llegó por `inscripcion.html`, el formulario
+público de torneos. Es de **quien administra o coordina**, no de todo el equipo
+docente.
+
+**Esos datos viven en OTRO Supabase.** `inscripcion.html` escribe en el proyecto
+"Base de Colegios" (`prcfbzvshnusisczlpxl`), no en el de la Academia, y esa es
+toda la razón de que esta página esté armada distinto al resto del sitio.
+
+- **La tabla no se abre, y no se va a abrir.** `public.inscripciones` tiene RLS
+  y **ni una sola política**: desde el navegador no la lee nadie. Son cédulas,
+  fechas de nacimiento y teléfonos de personas menores de edad, y la clave
+  pública de ese proyecto está escrita dentro de `inscripcion.html`, a la vista
+  de cualquiera — darle lectura a `anon` sería publicarlas.
+- Las trae la Edge Function **`inscripciones-torneo`**, que vive en ese mismo
+  proyecto y lee con la service role. Las pide de mil en mil, por lo de siempre.
+- **El permiso lo decide la Academia, no la función**, y no podría decidirlo
+  aunque quisiera: el JWT de quien llama lo firmó el otro proyecto, así que este
+  no lo puede validar (por eso su `verify_jwt` va en `false`). Lo que hace es
+  **reenviar esa misma sesión** a la Academia y llamar a
+  `public.soy_coordinador()`, que es `SECURITY DEFINER` y solo `authenticated`
+  puede ejecutar. O sea: la misma regla que decide `cobros.html`, escrita una
+  sola vez.
+- Comprobado, impersonando roles en SQL y llamando a la función de verdad: el
+  administrador recibe `true`; un alumno con sesión válida, `false`; una sesión
+  con un `sub` que no existe, `false`; `anon` ni siquiera puede ejecutarla. Y la
+  función contesta **401 sin token, 403 con un token inventado y 403 con la
+  clave pública de la Academia**. Lo único que no se pudo probar desde acá es el
+  camino bueno de punta a punta —hace falta una sesión de verdad de quien
+  administra—, así que eso se mira al entrar la primera vez.
+- La página vuelve a preguntar `soy_coordinador()` antes de pintar, pero eso es
+  solo para mostrar el aviso de siempre en vez de un error feo: quien de verdad
+  deja pasar es la función.
+- El CSV sale con **punto y coma y BOM**, como el de formularios, y baja **lo
+  que se está viendo** (con su filtro puesto): si se filtró por provincia es
+  porque se quiere esa lista.
+- **Si algún día hay que cambiar quién puede ver esto**, se cambia
+  `soy_coordinador()` en la Academia y se cambia solo; la función no tiene
+  ninguna regla propia que actualizar.
+
 ## Coordenadas en los tableros
 
 `js/coordenadas-tablero.js` rotula cualquier tablero: la letra de columna en la
 fila de abajo y el número de fila en la columna izquierda, dentro de las casillas
 del borde (no cambia la maqueta). Está en todos los tableros de ejercicios:
-Aprende, 4×4, Mates, Táctica, Ejercicios por tema, Practicar, Desafíos, el
-diagnóstico, Concentración, Racha táctica y ¡Te reto!
+Aprende, 4×4, Mates, Ejercicios por tema (incluida la táctica, que se mudó ahí
+dentro), Practicar, Desafíos, el diagnóstico, Concentración, Racha táctica y
+¡Te reto!
 
 - Se llama una vez por página: `Coordenadas.aplicar(document.getElementById('board'))`.
   Un observador repinta las etiquetas cada vez que la página redibuja el tablero.
@@ -1275,10 +4734,195 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
 - Las clases que **a propósito** no definen ningún estilo —marcadores de estado
   y ganchos para `querySelectorAll`, como `filter-btn` o `color-opt`— están
   listadas en `SIN_ESTILO`. Si aparece una nueva que no hace nada, va ahí.
+  - **Que una clase no tenga CSS no quiere decir que esté muerta.** Los cuatro
+    `total-*` de los exámenes de arbitraje parecían restos: no los encuentra
+    ningún grep, porque el nombre se **arma concatenando** (`'.total-' +
+    n.clave` sobre `NIVELES_EXAMEN`). Son ganchos vivos, y de los que importan:
+    cada `<span>` dice cuántas preguntas trae ese examen y el número lo rellena
+    el propio banco con `totalPara(techo)`, así que la página no puede prometer
+    24 preguntas y armar otra cantidad. Antes de dar una clase por muerta, hay
+    que buscarla también por pedazos.
 - La primera corrida encontró **huecos de la paleta que ya estaban muertos con
   el CDN**: `bg-accent-50` y `hover:text-accent-300` no pintaban nada porque el
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
   `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
+
+## La librería de Supabase tampoco viene de un CDN
+
+Por la misma razón que el CSS, y con más consecuencias: `js/vendor/supabase.js`
+está **en el repositorio**, no pedido a jsDelivr. Estaba escrito así en las 77
+páginas que lo cargan:
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+Eso es un **rango**, no una versión, y sin `integrity`. O sea que cada visita
+ejecutaba lo que hubiera publicado ahí en ese momento, con la sesión de quien
+entrara —un alumno, un profesor, quien administra—, y con acceso al cliente que
+guarda el token. No es un peligro teórico: es lo que pasó con polyfill.io en
+2024. Y **no habría dado ningún error**: las páginas se seguirían viendo igual
+mientras las sesiones se van, que es el fallo callado de siempre pero con todo
+el sitio adentro.
+
+- **Vive al lado de Stockfish**, en `js/vendor/`, que ya estaba servido así.
+- Se trae con `node herramientas/vendor-supabase.js`, después de
+  `npm install @supabase/supabase-js@2`. Queda **byte a byte como viene de
+  npm** —sin cabecera de comentario— para que se pueda comparar contra el
+  paquete; la versión no se anota aparte porque el bundle la lleva dentro
+  (`supabase-js/2.116.0`).
+- **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
+  transcripción** de `reportes.html`, que importa `@huggingface/transformers`
+  desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va
+  de las dos directivas.
+- **`js/supabase-client.js` no pisa un `window.sb` que ya exista.** Dos clientes
+  en la misma página son dos suscripciones de auth y dos juegos de canales de
+  Realtime sobre la misma sesión: no falla, las cosas llegan dos veces. Y de
+  paso los verificadores pueden poner el suyo con `addInitScript` sin depender
+  —como hasta ahora— de que esa línea **reventara** por no encontrar la
+  librería. Eso último no es un detalle: media docena de verificadores pasaban
+  gracias a ese accidente, y al traer la librería al repositorio se cayeron
+  todos a la vez. `verificar-planes.js` necesitó además su doble en
+  `pruebaResumen`, que abría la página a pelo: con el cliente funcionando de
+  verdad, `planes.html` hace lo que tiene que hacer —mandar al login sin
+  sesión— y se lleva `PlanClase` con ella.
+
+**Al agregar una página que use el cliente, o al actualizar la librería, correr
+`node herramientas/verificar-vendor.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que ninguna página la pida a un CDN, que la ruta
+relativa de cada una **llegue de verdad al archivo** —`js/vendor/…` escrito
+desde `entreno/`, que está un piso abajo, da un 404 que tampoco avisa: la
+página se queda en «Comprobando tu sesión…» para siempre—, que toda página que
+use `js/supabase-client.js` cargue antes la librería, y que el archivo siga
+siendo el de npm sin editar a mano.
+
+## El nombre de un alumno es texto ajeno
+
+`profiles_update_own` deja a cada quien editar su propia fila y el trigger de
+identidad revierte `role`, `email`, `is_admin`, `es_coordinador` y el cupo de
+invitaciones — **pero no `full_name`**. O sea que el nombre que se ve en toda la
+plataforma lo escribe el alumno, y hay que tratarlo como lo que es.
+
+La regla ya estaba escrita para la bitácora y para `renderStudentsList()` —el
+nombre va por `textContent`— y `informes.html` no la cumplía: pintaba el nombre
+con `innerHTML` en una docena de sitios, dos de ellos **dentro de un atributo**
+(el `title=` de una barra y el `aria-label=` del perfil por área), y no tenía
+ninguna función de escape a mano. Tenía una, `escVis`, pero declarada dentro del
+bloque de visitantes, como si el único texto ajeno de la página fuera el de un
+formulario público.
+
+Un `full_name` con una etiqueta adentro se ejecutaba **en la pantalla de su
+profesor**, con la sesión del profesor puesta — o la de quien administra, que lo
+ve todo: los 90 perfiles, la bitácora, los cobros y las inscripciones con
+cédulas y fechas de nacimiento de menores. Y la CSP del sitio lleva
+`'unsafe-inline'`, así que no había nada que lo frenara. La página se veía
+perfecta.
+
+- `escVis` subió al principio del script, que es donde se ve que es del archivo
+  entero, y **escapa también la comilla** por los dos atributos.
+- Se escapa **dentro de `barRow()` y `barraHTML()`**, no en cada llamada: las
+  dos reciben a veces un título del catálogo (seguro) y a veces un nombre de
+  alumno, y acordarse en cada sitio es cuestión de tiempo.
+- Lo que **no** se escapa, a propósito, son los nombres de las nueve áreas del
+  diagnóstico y los títulos del plan: salen de `js/plan-entrenamiento.js`, o sea
+  del repositorio, y escaparlos sería sugerir que algo de eso es ajeno.
+
+**Al tocar `informes.html`, correr `node herramientas/verificar-informes.js`**,
+que ahora abre la página con un alumno cuyo nombre ataca las dos formas a la vez
+—una etiqueta para el cuerpo, una comilla para el atributo— y mira lo que pasó
+DE VERDAD en el navegador: si algo se ejecutó, si nació algún elemento que no
+estaba en la página. **Y comprueba que el nombre se siga viendo, literal**:
+borrarlo también quitaría el ataque, y dejaría al profesor sin saber de quién es
+esa fila. Está probado que falla de verdad: contra el archivo de antes,
+`window.__xss` queda puesto y nacen cinco elementos que nadie pintó.
+
+
+## El dedo y el scroll: arrastrar piezas en el celular
+
+Un navegador de celular, ante un dedo que se desliza, asume que quiere
+desplazar la página: se queda con el gesto, manda `pointercancel` y el arrastre
+muere a medio camino. Así que **arrastrar una pieza en el celular movía la
+PÁGINA y la jugada no se hacía** — en los 16 tableros del sitio, y sin dar
+ningún error: el alumno arrastraba, la pantalla se movía sola y la pieza se
+quedaba donde estaba.
+
+Se arregla con `touch-action`, en `js/board-drag.js`, que es el único lugar:
+los 16 tableros lo comparten.
+
+- **No se marca el tablero entero, y eso es la mitad del arreglo.** Poner
+  `touch-action: none` en el tablero deja un cuadrado de media pantalla por el
+  que no se puede desplazar la página, que en una página larga es un fastidio
+  peor que el que se viene a arreglar. Se marcan **solo las casillas que en ese
+  momento se pueden levantar** (las que `isDraggable` aprueba): en la posición
+  inicial son las dos filas propias —16 de 64— y por las otras seis la página
+  se sigue desplazando como siempre.
+- Como el conjunto cambia con cada jugada, un `MutationObserver` lo recalcula
+  cada vez que el tablero se vuelve a dibujar, agrupado en un cuadro de
+  animación. Es el mismo patrón que ya usa `js/coordenadas-tablero.js`.
+- Esto obliga a que `isDraggable` sea un **predicado puro**: ahora se lo llama
+  para las 64 casillas en cada redibujado, no solo durante un gesto. Los 16 lo
+  eran ya; al escribir uno nuevo, que lo siga siendo.
+- **Al tocar `js/board-drag.js`, correr `node
+  herramientas/verificar-arrastre-tactil.js`** (con el sitio en localhost:8777,
+  playwright y chess.js). Hace el gesto de verdad con eventos de toque y
+  comprueba **las dos mitades**: que arrastrar una pieza haga la jugada y no
+  mueva la página, y que deslizando sobre una casilla vacía o sobre una pieza
+  del rival la página sí se desplace. Comprobar solo la primera dejaría pasar
+  el arreglo fácil que rompe el scroll.
+
+**`js/variantes-board.js` no usa `enableBoardDrag`**: ahí se juega solo a
+clic-clic. No es un olvido que este arreglo tape — es que ese tablero nunca
+tuvo arrastre.
+
+### La última jugada se ve y la pieza se desliza
+
+Los tableros de partida (`js/niebla-board.js`, que también sirve a
+`estandar.html`, y `js/crazyhouse-board.js`) redibujan las 64 casillas
+ENTERAS en cada jugada — es lo más simple de mantener, pero de regalo la
+pieza rival "aparecía" de golpe en su casilla nueva, sin ninguna marca de
+cuál había sido la última jugada. Es justo lo que se nota al lado de un
+tablero como el de lichess, que sí desliza y sí resalta.
+
+- **`js/board-fluid.js` no sabe nada de ajedrez, solo lee FEN.** Compara la
+  posición anterior con la nueva y deduce de qué casilla a cuál se movió la
+  pieza (`diffMove`), y desliza la que quedó en la casilla de destino desde
+  donde estaba (`slide`, técnica FLIP: se la coloca con un `transform` en la
+  posición de "antes", sin transición, y al cuadro siguiente se suelta la
+  transición hacia 0). Sirve para cualquier tablero con notación FEN de
+  siempre, jugada normal, captura, enroque, al paso, coronación y — con
+  `from: null`, sin deslizamiento porque no hay de dónde — una pieza suelta
+  desde la reserva de Crazyhouse. Comprobado con jugadas reales de chess.js
+  para los seis casos.
+- **No sirve para `js/variantes-board.js`** (Abrazos, Camaleón): ahí una
+  pieza puede ser la fusión de varias y no hay un solo carácter por casilla,
+  así que compararlas con este método daría diffs sin sentido. Ese tablero
+  ya traía su propio `lastMove`/resalte para jugadas propias (`_apply()`);
+  quedó sin tocar.
+- **Solo se anima la jugada del RIVAL, nunca la propia.** La propia ya se
+  vio moverse arrastrando la pieza (o, si fue por toques, el usuario mismo
+  la disparó) — deslizarla otra vez de "antes" a "después" encima de eso se
+  vería como que la pieza rebota de vuelta al origen antes de llegar. Por
+  eso `loadFen()`/`load()` (que es por donde entra la posición que llega de
+  Supabase) es la única puerta con deslizamiento; `_applyMove()`/`tryMove()`
+  (el clic o el arrastre propios) solo actualizan el resalte, sin animar.
+- **El resalte SÍ es el mismo `bg-accent-400/30` que ya usaba
+  `variantes-board.js`** para su última jugada — no una clase nueva, para
+  que las dos familias de tableros se vean iguales.
+- En Niebla de Guerra, el resalte de la última jugada respeta la niebla: si
+  la casilla de destino queda cubierta, ni se marca ni se desliza nada ahí
+  — lo contrario sería delatar dónde cayó una pieza que la niebla tendría
+  que estar tapando.
+
+### El tamaño de las casillas
+
+El tablero de la portada tenía casillas de **36 px** en un celular de 360, y la
+guía de Apple y la de Google piden 44 px para algo que se toca con el dedo. El
+tablero recupera el relleno de la tarjeta con `-mx-4 sm:mx-0`: la tarjeta lo
+conserva para el encabezado y los controles, pero el tablero no. Quedó en 40 px
+(360), 44 px (iPhone) y 47 px (Android normal).
+
+Al hacerlo salió otra vez la piedra de siempre: `-mx-4` **no estaba en el CSS
+compilado**, así que la clase no pintaba nada y la medida no se movía. Hay que
+correr `node herramientas/css-construir.js` al agregar una clase que no estaba
+en ninguna parte del sitio.
 
 ## Lo pesado se baja cuando se usa, no al entrar
 
@@ -1366,6 +5010,19 @@ donde se comparte esto, y sin `og:image` el enlace sale pelado.
 - `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
   leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
   se vuelve a correr y el sitemap se entera solo.
+  - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
+    `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
+    está en `.gitignore` la falla solo aparece en la máquina de quien siguió las
+    instrucciones de este mismo archivo y corrió `npm install`: el sitemap salía
+    ofreciéndole a Google media docena de páginas internas de playwright, y no
+    daba ningún error — quedaban escritas en el archivo y ya. `pwa-cabecera.py`
+    y `verificar-voseo.py` ya lo hacían; ahora lo hacen los cuatro.
+  - **Las dos listas de páginas exceptuadas de la app tienen que decir lo
+    mismo.** `verificar-pwa.js` exceptuaba `libro-de-diagnostico-accesible.html`
+    y `pwa-cabecera.py` no, así que el generador le ponía el `manifest` en cada
+    corrida y el verificador no se quejaba nunca. Es un documento que se abre
+    suelto, hasta por correo y sin red: declarar un `manifest` que no va a poder
+    cargar es peor que no declararlo.
 - Los datos estructurados (JSON-LD) los genera
   `herramientas/datos-estructurados.py` desde el propio HTML —título,
   descripción, fecha impresa del artículo, lista de cursos de la portada—, así
@@ -1412,6 +5069,59 @@ ocupa su espacio solo, se pega al hacer scroll y no hay nada que descontar.
   padding: `min-h-[calc(100vh-5rem)]`, no `pt-20 min-h-screen` (que daba una
   página más alta que la pantalla).
 
+## Dentro de la Academia no hay encabezado de marketing
+
+Decisión: quien ya inició sesión no vuelve a ver el encabezado ni el pie del
+sitio público. Hasta este cambio los compartían las 76 páginas del sitio por
+igual — la portada, un artículo, **y también** el panel de Clases, un
+ejercicio de Entrenamiento o la partida en vivo con el profesor: Inicio,
+Cursos, Artículos, Jugar contra el profe, el botón "💬 Inscríbete" (que invita
+a inscribirse a quien ya está inscrito) y la barra de arriba con "🏆 ¡Te
+reto!" y "TV en vivo". Nada de eso rompía nada — es exactamente la clase de
+falla que no truena: un alumno resolviendo un ejercicio o mirando su registro
+de clases tenía ahí arriba seis destinos que no tienen nada que ver con lo
+que estaba haciendo, y de ahí a irse por donde no corresponde hay un clic.
+
+- **El criterio es "exige sesión", no la carpeta ni el nombre.** Una página
+  cae en esto si redirige a `login.html` sin sesión (`location.href =
+  "login.html"`) o si la pide con `requireLoginThenGate()`. Por eso
+  `entreno/diagnostico.html` y `nivel-de-arbitraje.html` **quedan afuera** a
+  propósito: se pueden hacer sin cuenta, están pensadas para llegar desde un
+  buscador, y ahí el encabezado público —con su enlace a "Cursos" y su
+  "Inscríbete"— es lo que corresponde mostrarle a quien todavía no es alumno.
+  `cobros.html` **sí** entra aunque no redirija (muestra un aviso de "inicia
+  sesión" en vez de mandar a otra página): es una página que solo tiene
+  sentido con cuenta, igual que el resto.
+- **Aplica a todo el mundo con sesión, profesor y administración incluidos.**
+  No es una regla solo para alumnos: dentro de la Academia nadie necesita el
+  menú de marketing, y tenerlo iba a la deriva por página según quién la
+  escribió — algunas ya traían un encabezado reducido a mano (`entreno/*` sin
+  "Cursos" ni la barra de arriba), otras el completo. Ahora es una sola forma.
+- **El encabezado queda en dos elementos: el logo y el interruptor de
+  tema.** El logo lleva de vuelta a `clases.html` (el panel, no `index.html`)
+  — es la puerta de salida de cualquier página de la Academia, con un
+  `sr-only` ("— panel de la Academia") para quien no lo intuye por el nombre.
+  Sin menú no hace falta el botón de hamburguesa ni el `#mobile-menu`:
+  `js/main.js` ya los busca con `if (menuToggle && mobileMenu)` antes de
+  engancharlos, así que su ausencia no rompe nada.
+- **El pie queda en una sola línea** (`&copy; 2026 Ajedrez Integral…`), la
+  misma que ya traían de antes los `entreno/*` y algunas páginas de
+  `cursos/academia/`: se pareja el resto en vez de inventar una tercera
+  forma.
+- **`herramientas/academia-cabecera.py`** hace el cambio y se puede correr
+  todas las veces que se quiera: reemplaza el único
+  `<header id="header">…</header>` y el único `<footer>…</footer>` de cada
+  página de su lista, así que una corrida encima de otra da lo mismo. **Al
+  agregar una página nueva que exige sesión, sumarla a la lista `PAGINAS` del
+  script y correrlo** — copiar el encabezado de otra página de la Academia a
+  mano es exactamente como esas 76 páginas terminaron todas con el mismo
+  encabezado de marketing.
+- Las páginas públicas (`index.html`, `cursos.html`, `cursos/<curso>.html`,
+  `tv.html`, `te-reto.html`, `bot.html`, `tablero.html`, los dos
+  diagnósticos públicos, etc.) **no se tocan**: siguen con el encabezado y el
+  pie completos, porque ahí sí hace falta poder llegar a cualquier parte del
+  sitio y la invitación a inscribirse tiene sentido.
+
 ## Contraste: el color nunca se elige a ojo
 
 Todo texto llega al mínimo de WCAG AA (4.5 para texto normal, 3 para el
@@ -1449,6 +5159,186 @@ alto contraste y los encabezados que permiten saltar directo al contenido.
   el estado. El menú móvil además cierra con Escape y devuelve el foco al botón
   —si no, el foco se queda dentro de algo que ya no está en pantalla—.
 
+### El cuadro de comandos: todo ejercicio se puede contestar escribiendo
+
+**Un ejercicio que solo se puede contestar tocando el tablero no se puede
+contestar con lector de pantalla, y eso no da ningún error**: la página carga,
+el ejercicio se pinta, y quien no puede verlo simplemente no avanza. Pasaba en
+el diagnóstico (los ítems de jugada y de casilla), en Ejercicios por tema, en
+Racha táctica y en ¡Te reto! — estas dos últimas ni siquiera cargaban
+`js/adaptive-mode.js`, o sea que no tenían Modo Adaptado en absoluto.
+
+`js/cuadro-comandos.js` es el recuadro donde se escribe la respuesta —una
+jugada, una casilla, la letra de una opción o "no lo sé"— y la página la recibe
+igual que si se hubiera hecho clic. Ya estaba escrito tres veces (el
+`#blind-panel` de Mates, Aprender, Desafíos y Practicar; el `#cmd-form` de 4×4;
+la `.f100-cmd` de los visores de los cursos); este archivo es para las páginas
+que no lo tenían y para que la siguiente no lo escriba por cuarta vez.
+
+- **No reemplaza al tablero, se suma.** En Mates y sus hermanas el Modo Adaptado
+  esconde el tablero y deja solo el recuadro; acá conviven. Quien ve poco usa las
+  dos cosas —mira el tablero ampliado y escribe la jugada, porque arrastrar una
+  pieza de 40 px con lupa es un suplicio— y quien acompaña a un alumno necesita
+  ver qué está contestando.
+- **Lo que decide si se ve es el CSS** (`html.adaptive-mode`), no el JavaScript:
+  así encender y apagar el modo surte efecto al instante, sin repintar el
+  ejercicio. El recuadro se monta SIEMPRE y el modo solo lo destapa. Fuera del
+  modo va con `display: none` y **no** con `sr-only`: un campo de texto invisible
+  pero enfocable es una parada de tabulador fantasma para quien ve la página.
+- **La posición va contada en palabras JUSTO ENCIMA del cuadro**, no al final del
+  ejercicio: leerla y contestarla son el mismo gesto (la misma decisión que en
+  `js/curso-adaptado.js`). Es región viva, así que cada jugada se vuelve a leer.
+- **El texto de la posición sale de `BlindNotation.positionSentence()`**, hermana
+  de `groupedReadoutHTML()` y con el mismo agrupado por dentro. La diferencia es
+  que no lleva encabezados: `groupedReadoutHTML()` mete un `<h2>` "Piezas" y un
+  `<h3>` por color, que sirven donde la lectura es lo único que hay en esa zona
+  (Mates, Aprender, Desafíos, Practicar) pero rompen el árbol de encabezados de
+  una página que ya tiene el suyo. El cuadro **no tiene su propia tabla de
+  nombres de pieza**: sería la cuarta copia de los plurales escritos, y se irían
+  separando.
+- **La jugada escrita la interpreta `js/chess-move-parser.js`**, que ya usaban
+  los visores de los cursos y las páginas de Juegos: entiende español, inglés y
+  los descuidos de tipeo de siempre. Ojo — ese intérprete HACE la jugada sobre la
+  partida que se le pasa, así que se le pasa siempre una copia y la jugada
+  entra por la misma puerta que el clic (`playMove`, `attemptMove`), que es la
+  que corrige contra la solución.
+- **La casilla también se escribe como se dice**: "eva 4" llega a e4, porque así
+  es como el sitio lee las columnas en voz alta. Escribir lo que uno acaba de oír
+  tiene que funcionar.
+
+#### En los ejercicios de opción, cada opción dice su letra
+
+"Opción A. …", "Opción B. …", y se contesta escribiendo la letra. Vale en el
+diagnóstico de nivel y en los dos exámenes de arbitraje (el docente y el
+público).
+
+- **La letra va ESCRITA dentro del botón**, no puesta con CSS (un `::before`, un
+  contador de lista). Con CSS se vería igual en pantalla y el lector de pantalla
+  no la diría: quien contesta por el cuadro no sabría qué letra escribir. Por eso
+  está siempre, también fuera del Modo Adaptado — es texto del botón, no del modo.
+- **Lo que se guarda es cuál opción del ítem es, no su posición.** Las opciones se
+  barajan en cada intento; guardar la posición ataría la respuesta al barajado.
+- **Lo que no se entiende se dice, no se marca cualquier cosa.** "La de arriba"
+  responde "no entendí", no la primera.
+- **"No lo sé" y "dejar en blanco" también se escriben**: son respuestas de
+  verdad —valen cero como fallar pero se guardan aparte—, no un botón de saltar.
+
+#### Contestar por el cuadro PASA SOLA a la siguiente
+
+El Enter que contesta es el mismo que avanza: quien contesta escribiendo no
+tiene por qué ir a buscar el botón "Siguiente", que es justamente lo que este
+cuadro viene a evitar. Vale en el diagnóstico y en los dos exámenes de
+arbitraje.
+
+- **Los botones de opción NO avanzan.** Ahí se ve la pantalla, y poder cambiar
+  de idea antes de seguir es lo normal; además en los exámenes de arbitraje se
+  puede volver atrás con "Anterior". Solo avanza el cuadro.
+- **Lo que no se entiende no avanza**, y lo dice: una jugada ilegal, una casilla
+  que no existe o un "la de arriba" dejan todo como estaba.
+- **El aviso lleva el enunciado de la pregunta nueva.** Al no pasar por el
+  botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+  contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+  que se lee solo, y el foco se queda en el cuadro para contestar la siguiente
+  sin moverse.
+- **En la última, ese Enter TERMINA la prueba**, y la ayuda lo dice antes de que
+  lo aprieten ("Es la última: al responder se termina…"). Es el mismo acto que
+  el botón de "Terminar y ver el resultado", pero conviene saberlo de antemano.
+
+#### En los 4×4, el orden es lo que hace usable el ejercicio
+
+`entreno/4x4.html` tiene su propio recuadro de comandos, más viejo que
+`js/cuadro-comandos.js`, y su propio interruptor de modo. Lo que se arregló ahí no
+fue el recuadro sino **el orden en que se ofrecen las cosas**, que ahora es el orden
+en que hacen falta:
+
+    Piezas → qué hay en el tablero → el tablero → dónde se contesta → los botones
+    → la ayuda, PLEGADA
+
+- **La lectura de la posición subió a la primera línea**, justo debajo del
+  encabezado "Piezas" donde cae el foco al entrar. Vivía dentro del panel de
+  comandos, o sea DESPUÉS del tablero, del recuadro y de toda la ayuda: había que
+  recorrer medio ejercicio para enterarse de qué había que resolver. La región se
+  llama con ese mismo encabezado (`aria-labelledby`) y no con un nombre propio:
+  "Piezas" y "Posición actual" se oyen como dos cosas distintas.
+- **El tablero ya no recita el manual en cada foco.** Su `aria-describedby`
+  apuntaba a un párrafo de diez líneas con las reglas enteras, que se leía cada vez
+  que el foco entraba ahí — el mismo defecto que esta página ya había arreglado
+  para el recuadro de comandos. Ahora apunta a UNA línea que señala dónde está la
+  ayuda, en vez de recitarla.
+- **La ayuda vive en un `<details>` plegado**, con el encabezado dentro del
+  `<summary>` (el HTML lo permite): se anuncia como encabezado para saltar y como
+  botón para abrir. El cuerpo lo escribe `renderHelpReadout()` desde
+  `HELP_SECTIONS`, **que es la única fuente**: lo mismo estaba escrito tres veces
+  —el párrafo del `aria-describedby`, el de atajos y `HELP_SECTIONS`— y tres copias
+  del mismo texto se van separando a la primera corrección. Se escribe al cargar
+  aunque esté plegada, o abrirla a mano mostraría una caja vacía; el comando
+  "ayuda" la abre y la vuelve a leer.
+  - Cuidado con dónde se llama `renderHelpReadout()`: `HELP_SECTIONS` es un
+    `const` declarado 600 líneas más abajo, así que llamarla junto a
+    `applyBlindModeUI()` tiraba la página entera con "Cannot access before
+    initialization" — y la página se quedaba en "Comprobando tu sesión…".
+- **La primera vez ya no se lee el manual entero.** Se decía una sola vez por
+  navegador, pero eran cuatro secciones justo cuando lo que se quiere es empezar.
+  Ahora es una línea: dónde se contesta y que "ayuda" abre el resto.
+- **La posición se dice UNA vez.** El anuncio del ejercicio y el de cada captura
+  llevaban la posición completa, y la lectura de arriba también: son dos regiones
+  vivas, así que se oía dos veces seguidas. Ahora el anuncio se queda con el
+  ejercicio o con la captura, y la posición la lleva la lectura.
+- **Pero la VOZ no se reparte igual que las regiones**, y eso es lo que tiene
+  trampa: `BlindNotation.speak()` **cancela lo anterior** al empezar lo siguiente,
+  así que dos llamadas seguidas se comen la primera. Por eso `announce(texto,
+  hablado)` lleva dos versiones — las regiones se reparten el texto y la voz lo
+  recibe todo junto en una sola frase. Lo mismo obligó a que `loadPuzzleAt()` acepte
+  un `prefijo`: al reiniciar se decía "Ejercicio reiniciado." DESPUÉS de cargar, y
+  eso cancelaba la posición entera — se oía el aviso y nunca qué había quedado en el
+  tablero, que es justo lo que hace falta para volver a empezar. `verificar-cuadro-
+  comandos.js` lo comprueba enganchándose a `BlindNotation.speak()`, que es la única
+  forma: la voz no deja rastro en el DOM.
+- Fuera del Modo Adaptado no se ve nada de esto: quien ve el tablero ya tiene la
+  posición delante. Va con `hidden` y **no** con `sr-only`, porque el `<details>`
+  recibe el foco del teclado y una parada de tabulador invisible es peor que no
+  tener el bloque.
+
+`verificar-cuadro-comandos.js` comprueba el orden con
+`compareDocumentPosition` —no con el CSS—, que la lectura diga cuántas piezas hay y
+dónde está cada una, que la ayuda arranque plegada **también la primera vez**, que
+el comando "ayuda" la abra, y que escribir una captura la haga y la lectura lo
+refleje. Para "no se ve" usa `checkVisibility()` y no el rectángulo: un `<details>`
+cerrado esconde su contenido con `content-visibility`, y ahí
+`getBoundingClientRect()` sigue devolviendo el alto de antes — daría verde sobre una
+ayuda desplegada.
+
+`concentracion.html` e `ilumina-tablero.html` **no llevan cuadro**, y no es un
+olvido: ahí la tarea ES mirar (recordar dónde estaban las piezas, encontrar la
+casilla iluminada). Un recuadro para escribir no las haría accesibles, solo
+daría la impresión de que lo son.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-cuadro-comandos.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Contesta de verdad, escribiendo, en
+las siete páginas, y **todo lo que mira sale de la pantalla** —qué dice el botón,
+qué dice la etiqueta del cuadro, qué piezas hay dibujadas en el tablero—, nunca
+de una variable interna: una prueba que espiara las variables daría verde sobre
+una página que no se puede contestar. Comprueba además que el cuadro **se vea de
+verdad** (se mide el `display` que calcula el navegador, no la clase) y que fuera
+del modo no esté. Las preguntas que se contestan con una casilla son 2 de las 301
+del banco, así que esa prueba **siembra el estado guardado** con esos dos ítems en
+vez de confiar en el sorteo: dejarlo al azar es dejar ese camino sin probar. Con
+el mismo truco se salta a la última pregunta para comprobar que ese Enter
+termina la prueba de verdad —quedarse trabado ahí dejaría a quien contesta
+escribiendo sin forma de llegar al resultado—.
+
+Que la respuesta quedó ANOTADA y no solo que la pantalla pasó de pregunta se
+comprueba con el estado que la propia página guarda en `localStorage` para poder
+retomar la prueba, y en los exámenes de arbitraje volviendo atrás con "Anterior"
+y mirando qué opción quedó marcada. Dos cosas que hacen falta para que no sea
+frágil: **el contexto va sin service worker** (`serviceWorkers: "block"`) —al
+recargar es él quien sirve los archivos, y lo que pide no pasa por las rutas del
+contexto, así que volvía el `js/supabase-client.js` de verdad y la página moría;
+es la misma piedra que ya documentó `verificar-reportes.js`— y las páginas
+contrarreloj se miran **por la posición del tablero y no por el renglón de
+resultado**, que al acertar lo borra el ejercicio siguiente a los 350 ms.
+
 ## Cómo se escribe en el sitio
 
 El español del sitio es el de acá: latinoamericano, costarricense. Se tutea
@@ -1472,6 +5362,9 @@ lee Google.
   voseo no lleva tilde ("dejalo") y el tuteo sí ("déjalo"). Por eso la
   conversión es una tabla escrita verbo por verbo dentro del script, no una
   regla.
+- **La tabla se completa cuando algo se escapa.** «Agregá» no estaba y llevaba
+  meses dentro de `informes.html` sin que el verificador dijera nada: al
+  corregir el texto se sumó el verbo, o el siguiente entra por la misma puerta.
 - Lo que **no** es voseo y por eso está en la lista blanca: los futuros
   ("quedará", "tendrás", "podrá"), los pretéritos de primera persona
   ("empecé", "aprendí", "entendí", "tomé") y los nombres propios ("Elistá",
@@ -1479,3 +5372,21 @@ lee Google.
   se agrega ahí.
 - "vos" se resuelve por contexto: con preposición delante es *ti* ("un lugar
   para ti"), si no es *tú* ("busca tú mismo").
+
+### Y las respuestas de Claude también van en español
+
+**Todo lo que Claude escriba en la conversación va en español**, no solo el
+texto que termina en el sitio: las explicaciones, los resúmenes de lo que hizo,
+las preguntas, los mensajes de commit y los cuerpos de los PR. El dueño del
+repositorio trabaja en español y contestarle en inglés lo obliga a traducir
+mentalmente cada respuesta.
+
+Y va con **el mismo español de arriba** —tuteo, latinoamericano, sin voseo y sin
+giros peninsulares— por una razón práctica, no de estilo: buena parte de lo que
+se escribe en la conversación termina copiado dentro del sitio (un aviso, el
+texto de un botón, la descripción de una lección). Si en el chat se escribe
+"podés" y en el sitio "puedes", el voseo entra por esa puerta — que es
+exactamente por donde entraron las 1.900 formas de septiembre.
+
+Los nombres de archivo, las clases de CSS, los identificadores y los comandos
+se quedan como están: son código, no texto.

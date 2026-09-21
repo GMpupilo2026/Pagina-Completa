@@ -25,57 +25,36 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        /* Red de seguridad para el enlace de la invitación.
+           Ese enlace tiene que llevar a /bienvenida.html, que es donde el alumno
+           crea su contraseña. Pero a dónde puede mandar lo decide la lista de
+           "Redirect URLs" de Supabase Auth, que vive FUERA del repositorio: si
+           esa dirección no está permitida, Supabase manda al Site URL —o sea
+           aquí— y el alumno entra con sesión y sin contraseña puesta, que es
+           exactamente el agujero que este cambio viene a tapar. Y no daría
+           ningún error: simplemente ese alumno no podría volver mañana.
+           El token viaja igual al destino, así que si llega con marca de
+           invitación o de recuperación, se lo manda a donde iba.
+           Va antes del cliente de Supabase porque el cliente LIMPIA el hash. */
+        (function () {
+            var h = window.location.hash || "";
+            if (/[#&]type=(invite|recovery)\b/.test(h)) {
+                window.location.replace("bienvenida.html" + h);
+            }
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/notificaciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/juego-aviso.js"></script>
+    <script src="js/logros-catalogo.js"></script>
+    <script src="js/logros.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
@@ -124,8 +103,14 @@
                 </div>
             </div>
 
-            <!-- ===== Estado de la clase ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+            <!-- ===== Estado de la clase =====
+                 Solo aparece cuando tiene algo que decir: si hay clase en curso
+                 (para todo el mundo) o si quien mira da clase y puede iniciar
+                 una. A un alumno fuera del horario —que es casi siempre— le
+                 ocupaba el lugar más visible de la página para avisarle de que
+                 NO pasa nada, empujando hacia abajo lo que sí tiene que hacer.
+                 El acceso a la sesión en vivo sigue estando en el grid. -->
+            <div id="session-status-card" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <div id="session-status-open" class="hidden">
                     <div class="flex items-center justify-between flex-wrap gap-4">
                         <div class="flex items-center gap-3">
@@ -155,6 +140,13 @@
                         <div class="flex items-center gap-3">
                             <span class="w-3 h-3 rounded-full bg-brand-300 dark:bg-brand-700"></span>
                             <p class="text-brand-500 dark:text-brand-300 text-sm" id="closed-status-text">No hay ninguna clase en curso ahora mismo.</p>
+                            <!-- Desde que la clase se abre sola en sesion.html —al
+                                 entrar un alumno o al mandar una posición—, este
+                                 botón es solo un atajo para abrirla ANTES de entrar.
+                                 Decirlo evita que un entrenador nuevo crea que sin
+                                 tocarlo no se le registra nada, que es justo lo que
+                                 pasaba de verdad hasta ahora. -->
+                            <p class="text-brand-450 dark:text-brand-350 text-xs" id="closed-status-hint"></p>
                         </div>
                         <div id="start-session-controls" class="hidden flex items-center gap-2 flex-wrap">
                             <input id="new-session-title" type="text" placeholder="Título de la clase (opcional)" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -164,63 +156,166 @@
                 </div>
             </div>
 
+            <!-- ===== Lo que te toca hacer =====
+                 El panel era un directorio de LUGARES: todo lo que es "esto te
+                 toca ahora" estaba detrás de un clic, y quien no lo buscaba no
+                 se enteraba. Estas dos franjas van arriba del grid a propósito,
+                 porque son lo único de esta página que vence.
+
+                 Las dos arrancan con `hidden` y solo se destapan cuando de
+                 verdad hay algo que decir: una franja vacía que diga "no tienes
+                 tareas" es ruido en todas las visitas menos una. -->
+
+            <!-- Lo que le pusieron con fecha: tareas Y exámenes. Las dos
+                 cosas vencen y las dos las pone otra persona, así que van en la
+                 misma franja — y el id lo dice, que por eso dejó de llamarse
+                 "tareas-aviso": un examen contado dentro de algo que se llama
+                 tareas es como empiezan los malentendidos.
+
+                 Lo que pinta la franja en rojo es lo que ya no se puede
+                 arreglar solo: es la diferencia entre "tienes algo que hacer" y
+                 "se te pasó". -->
+            <a id="pendientes-aviso" hidden href="tareas.html" class="mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <span class="text-4xl" aria-hidden="true" id="pendientes-aviso-emoji">📋</span>
+                <div class="flex-1 min-w-[200px]">
+                    <h2 class="font-serif text-lg font-bold" id="pendientes-aviso-titulo"></h2>
+                    <p class="text-sm" id="pendientes-aviso-texto"></p>
+                </div>
+                <span class="text-sm font-semibold whitespace-nowrap" id="pendientes-aviso-cta">Ver tus tareas →</span>
+            </a>
+
+            <!-- Continúa donde ibas. El curso a medias con la fecha más
+                 reciente, para no tener que acordarse de por dónde iba ni
+                 recorrer el temario entero para encontrarlo. -->
+            <a id="seguir-curso" hidden href="#" class="mb-8 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <span class="text-4xl" aria-hidden="true">📖</span>
+                <div class="flex-1 min-w-[200px]">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Continúa donde ibas</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300" id="seguir-curso-texto"></p>
+                    <div class="mt-2 h-1.5 w-full max-w-xs rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden">
+                        <div id="seguir-curso-barra" class="h-full bg-accent-500 rounded-full" style="width:0%"></div>
+                    </div>
+                </div>
+                <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Seguir el curso →</span>
+            </a>
+
+            <!-- El resumen va ARRIBA del grid, no al final. Estaba después de las
+                 seis secciones de accesos, o sea que la racha y los números
+                 —que son lo que da ganas de volver— solo los veía quien hacía
+                 scroll hasta el fondo. El orden de la página es el de las
+                 preguntas que uno se hace al entrar: qué me toca, por dónde
+                 iba, cómo voy, y recién entonces a dónde puedo ir. -->
+            <!-- ===== Tu progreso (alumno) =====
+                 Antes esto eran TRES tarjetas anchas apiladas —récord de racha
+                 táctica, racha de días y los tres números de Entrenamiento—,
+                 o sea mucho scroll para tres datos y para llegar al registro de
+                 clases. Van juntas en una franja, cada número con su enlace.
+
+                 Los números NO se cuentan acá: los da informes_resumen_alumnos(),
+                 que es SECURITY INVOKER y a un alumno le devuelve solo su propio
+                 renglón. Antes esta página se bajaba training_progress entera y
+                 sumaba en el navegador, y eso tenía el techo invisible de
+                 siempre: PostgREST corta la respuesta a partir de cierta
+                 cantidad de filas sin dar ningún error, así que a un alumno con
+                 un año de entrenamiento encima el panel le mostraba un número
+                 que ya no subía. -->
+            <div id="progreso-alumno" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso</h2>
+                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <a href="logros.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="progreso-racha">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🔥 Racha de días</div>
+                    </a>
+                    <a href="entreno/4x4.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">0</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🧩 Ejercicios 4×4</div>
+                    </a>
+                    <a href="entreno/aprender.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">0</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🎓 Lecciones</div>
+                    </a>
+                    <a href="entreno/coordenadas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⚡ Mejor Coordenadas</div>
+                    </a>
+                </div>
+                <a href="racha-tactica.html" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 flex items-center gap-3 flex-wrap hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">
+                    <span class="text-2xl" aria-hidden="true">🏆</span>
+                    <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> — <span id="tactics-record-text">Cargando…</span></p>
+                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
+                </a>
+            </div>
+
+            <!-- ===== Tu semana (equipo docente) =====
+                 Quien da clase entraba y veía "Tu progreso en Entrenamiento"
+                 con SUS ejercicios 4×4 en cero, su racha de días y el récord de
+                 racha táctica de la clase. Nada de eso le sirve: lo que
+                 necesita al entrar es a quién hay que perseguir.
+
+                 La cuenta la hace public.panel_profesor() —SECURITY INVOKER,
+                 así que la RLS es la que decide qué alumnos son los suyos, sin
+                 un solo filtro de profesor escrito acá— por lo de siempre:
+                 contar "alumnos distintos con actividad" desde el navegador
+                 pide bajarse training_progress y cruzar el techo de PostgREST
+                 sin que nada avise. -->
+            <div id="progreso-profe" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu semana</h2>
+                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver informes completos →</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-alumnos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">👥 Tus alumnos</div>
+                    </a>
+                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold" id="profe-inactivos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">😴 Sin entrenar (7 días)</div>
+                    </a>
+                    <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-tareas">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">📋 Tareas sin hacer</div>
+                    </a>
+                    <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold" id="profe-vencidas">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⏰ Tareas vencidas</div>
+                    </a>
+                </div>
+                <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
+            </div>
+
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
             <div id="tile-grid" class="space-y-8 mb-10"></div>
 
-            <!-- ===== Logro: racha más larga de "Racha táctica" (Juegos), visible para toda la clase ===== -->
-            <a href="racha-tactica.html" class="block bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10 hover:shadow-lg transition-shadow">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <span class="text-4xl" aria-hidden="true">🏆</span>
-                    <div class="flex-1 min-w-[200px]">
-                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica — récord de la clase</h2>
-                        <p class="text-sm text-brand-500 dark:text-brand-300" id="tactics-record-text">Cargando…</p>
-                    </div>
-                    <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
-                </div>
-            </a>
-
-            <!-- ===== Progreso en Entrenamiento ===== -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Tu progreso en Entrenamiento</h2>
-                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline">Ver informes completos →</a>
-                </div>
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles">0</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🧩 Ejercicios 4×4</div>
-                    </div>
-                    <div>
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-lessons">0</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">🎓 Lecciones</div>
-                    </div>
-                    <div>
-                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-coord">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⚡ Mejor Coordenadas</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== Registro de clases ===== -->
+            <!-- ===== Registro de clases =====
+                 Con 100 clases una tabla corrida no se puede leer, así que el
+                 historial se pide a la base filtrado y por páginas (nunca entero)
+                 y se muestra agrupado por mes, con el mes más reciente abierto.
+                 Ver cargarSesiones() más abajo. -->
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-4">Historial de clases con día, hora de inicio y de cierre.</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
-                                <th class="py-2 pr-4 font-semibold">Fecha</th>
-                                <th class="py-2 pr-4 font-semibold">Inicio</th>
-                                <th class="py-2 pr-4 font-semibold">Cierre</th>
-                                <th class="py-2 pr-4 font-semibold">Duración</th>
-                                <th class="py-2 pr-4 font-semibold">Notas</th>
-                                <th class="py-2 font-semibold"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="sessions-log-body">
-                            <tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Cargando…</td></tr>
-                        </tbody>
-                    </table>
+                <div class="flex items-start justify-between flex-wrap gap-4 mb-4">
+                    <div>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
+                        <p class="text-brand-500 dark:text-brand-300 text-sm" id="sessions-log-summary">Cargando…</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label for="sessions-search" class="sr-only">Buscar en el registro de clases</label>
+                        <input id="sessions-search" type="search" placeholder="🔍 Título o notas…" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <label for="sessions-period" class="sr-only">Periodo del registro de clases</label>
+                        <select id="sessions-period" class="px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
+                            <option value="30">Últimos 30 días</option>
+                            <option value="90" selected>Últimos 3 meses</option>
+                            <option value="365">Último año</option>
+                            <option value="0">Todas</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="sessions-log" class="space-y-2"></div>
+                <div class="mt-4 text-center">
+                    <button id="sessions-more" type="button" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más clases</button>
                 </div>
             </div>
 
@@ -243,17 +338,7 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
     <script>
@@ -268,48 +353,151 @@
         // sin ningún criterio de orden). Un solo lugar para agregar o mover destinos:
         // basta con cambiar de grupo el objeto del tile, el resto se acomoda solo. ----------
         const TILE_GROUPS = [
-            { title: "Jugar y competir", tiles: [
-                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", href: "sesion.html", primary: true },
-                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
-                { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", href: "juegos.html" },
-                { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", href: "torneos.html" },
-                { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
-                { emoji: "🏆", label: "Torneos", desc: "Partidas en vivo y tabla de posiciones", href: "tv.html" },
+            /* "Sesión en vivo" va sola y de primera: es lo único del panel que
+               pasa AHORA MISMO, y mezclada entre Juegos y Torneos costaba
+               encontrarla justo cuando hay clase. Su grupo lleva `destacado`,
+               que la pinta ancha y en una línea en vez de como un cuadrito
+               más. */
+            { title: "Clase en vivo", destacado: true, tiles: [
+                { emoji: "♟️", label: "Sesión en vivo", desc: "Tablero en vivo con tu profesor", descProfe: "El tablero que ve tu clase, en vivo", href: "sesion.html", primary: true },
             ] },
+            /* Lo segundo que se ve, y antes de cualquier lugar a donde ir: lo
+               que OTRA PERSONA te puso, con fecha. Tareas vivía en "Aprender" y
+               Exámenes en "Evaluaciones", o sea que lo único del panel que
+               tiene fecha estaba partido en dos grupos y cada mitad enterrada
+               entre cosas que se hacen cuando uno quiere. La franja de arriba
+               solo aparece cuando hay tareas pendientes —y nunca por un
+               examen—, así que fuera de ese momento no había dónde mirar.
+
+               El rótulo NO repite los nombres de las dos tarjetas: dice lo que
+               las dos tienen en común y que no se deduce de ellas —que te las
+               pone alguien más y traen fecha—, que es lo que las separa de
+               "Mide tu nivel", ahí abajo, que uno hace cuando le parece. Por
+               eso lleva `titleProfe`, igual que los tiles llevan `descProfe`:
+               del otro lado del escritorio la misma pareja es lo que MANDAS. */
+            { title: "Lo que te pone tu profesor", titleProfe: "Lo que le pones a tus alumnos", tiles: [
+                { emoji: "📋", label: "Tareas", desc: "Con fecha límite, y se llenan solas con lo que entrenas", descProfe: "Pide cantidades y la tarea se llena sola con lo que entrenan", href: "tareas.html" },
+                { emoji: "📝", label: "Exámenes", desc: "Con nota y reloj: una sola oportunidad por pregunta", descProfe: "Con nota y reloj, y el informe pregunta por pregunta de cada uno", href: "examenes.html" },
+            ] },
+            /* "Aprender" va antes que "Jugar y competir": esto es una academia,
+               y lo primero que se ofrece al entrar es lo que se viene a hacer.
+               Jugar sigue estando a un golpe de vista, justo debajo — no se
+               esconde, se ordena. Mover un grupo de lugar es mover su objeto
+               dentro de esta lista y nada más: todo lo que después retoca la
+               grilla (administración, coordinación, el equipo docente) busca su
+               grupo POR NOMBRE, nunca por la posición. */
             { title: "Aprender", tiles: [
-                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", href: "cursos/academia/index.html" },
+                { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🏋️", label: "Entrenamiento", desc: "Ejercicios tácticos y lecciones interactivas", href: "entreno/index.html" },
+                { emoji: "📚", label: "Estudio", desc: "Aperturas, defensas, temas tácticos y conceptos: cada uno en una ficha de una pantalla", href: "entreno/estudio.html" },
                 { emoji: "📖", label: "Artículos", desc: "Lecturas técnicas y pedagógicas", href: "articulos.html" },
             ] },
+            { title: "Jugar y competir", tiles: [
+                { photo: "img/oscar-avatar.jpg", label: "Juega contra mí", desc: "Practica contra Oscar, nuestro motor", href: "tablero.html" },
+                { emoji: "🎲", label: "Juegos", desc: "Crazyhouse y otras modalidades — tu profesor te asigna el rival", descProfe: "Crazyhouse y otras modalidades — arma las partidas de tus alumnos", href: "juegos.html" },
+                { emoji: "🥇", label: "Torneos de la Academia", desc: "Inscríbete y compite en los torneos que arma tu profesor", descProfe: "Arma torneos para tus alumnos, con sus rondas y su tabla", href: "torneos.html" },
+                { emoji: "🔥", label: "Racha táctica", desc: "Encuentra la jugada correcta en 10 segundos y suma tu racha", href: "racha-tactica.html" },
+                { emoji: "🏅", label: "Logros", desc: "Tu racha de días entrenando y las medallas que has ganado", descProfe: "El catálogo de medallas y cómo se gana la racha de días", href: "logros.html" },
+                { emoji: "📺", label: "TV en vivo", desc: "Las partidas de la Academia en directo, con su tabla de posiciones", href: "tv.html" },
+            ] },
+            /* Acá viven los dos diagnósticos y nada más: lo que uno hace por
+               su cuenta, cuando quiere, para saber dónde está parado. Se
+               llamaba "Evaluaciones" y tenía dentro los exámenes — pero un
+               examen te lo pone otra persona, con fecha y con nota, así que
+               se fue arriba con las tareas, que es lo que de verdad se le
+               parece. El rótulo lo dice en dos palabras y sin repetir el
+               nombre de sus dos tarjetas, que ya se llaman "Diagnóstico".
+
+               Los DOS diagnósticos son para todo el mundo: cualquiera puede medir
+               su nivel de arbitraje, no solo quien da clase. Lo que cambia según
+               quién mira es a dónde lleva la tarjeta, y lo decide init(): el
+               equipo docente va a arbitraje.html, que además trae la revisión de
+               los exámenes del público y el detalle pregunta por pregunta; todos
+               los demás van a nivel-de-arbitraje.html, que es el mismo examen y
+               el mismo criterio pero SIN enseñar las respuestas al terminar (el
+               banco es material docente). Una sola tarjeta y no dos, para no
+               repetir el nombre en el panel — ya pasó una vez con "Torneos". */
+            { title: "Mide tu nivel", tiles: [
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "63 preguntas en nueve áreas: tu nivel estimado y por dónde empezar", href: "entreno/diagnostico.html" },
+                { emoji: "⚖️", label: "Diagnóstico de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", descProfe: "Reglamento FIDE: hazlo, revisa los del público y responde", href: "nivel-de-arbitraje.html" },
+            ] },
             { title: "Herramientas", tiles: [
-                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html" },
-                { emoji: "💾", label: "Caja de Compartir", desc: "Partidas guardadas en clase: revísalas y descárgalas en PGN", href: "partidas.html" },
+                { emoji: "📝", label: "Lector de planilla", desc: "Fotografía tu planilla de partida y conviértela en PGN", href: "lector-planilla.html", mantenimientoAlumno: true },
+                { emoji: "📂", label: "Archivos", desc: "Sube tus PGN completos y revisa las partidas guardadas en clase — llévalos al tablero en vivo", href: "partidas.html", mantenimientoAlumno: true },
             ] },
             { title: "Tu cuenta", tiles: [
-                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", href: "informes.html" },
+                { emoji: "📊", label: "Informes", desc: "Tu progreso y estadísticas", descProfe: "El progreso de tus alumnos y los informes a la casa", href: "informes.html" },
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
-                { emoji: "🚪", label: "Cerrar sesión", desc: "Salir de tu cuenta", action: "logout" },
             ] },
         ];
 
-        function renderTileCard(t) {
-            const base = "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200";
+        /* Un acceso "en mantenimiento" se apaga SOLO para el alumnado: el equipo
+           docente lo sigue necesitando. Se apaga acá, en un solo lugar y sobre
+           la lista ya armada, en vez de escribir `disabled` a mano en cada
+           tile — así prender de nuevo un acceso es borrar una línea. Como todo
+           filtro del sitio, esto decide qué se PINTA: la dirección sigue
+           existiendo y quien la conozca entra igual. */
+        /* Quien da clase y quien administra ven lo mismo: la regla permanente
+           de que todo lo que se hace para los profesores vale también para
+           quien administra, con el alcance que ya le da la base. Las tres
+           funciones que reparten el panel entre sus dos públicos preguntan por
+           acá, en vez de repetir el `||` y que a la cuarta se le olvide la
+           mitad. */
+        function esEquipoDocente() { return isTeacher || profile.is_admin; }
+
+        function apagarEnMantenimiento() {
+            if (esEquipoDocente()) return;
+            TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
+                if (!t.mantenimientoAlumno) return;
+                t.disabled = true;
+                t.nota = "En mantenimiento";
+                delete t.href;
+            }));
+        }
+
+        /* El panel estaba escrito para el alumno de punta a punta, y a quien da
+           clase le decía cosas que no son: que "tu profesor te asigna el rival"
+           (lo asigna ella), que los torneos "los arma tu profesor" (los arma
+           ella), que Informes es "tu progreso" (es el de sus 29 alumnos) o que
+           la sesión en vivo es "el tablero con tu profesor". Tareas tenía el
+           defecto al revés: su texto era el del profesor, así que al alumno le
+           ofrecía asignarle material a unos alumnos que no tiene.
+
+           No rompía nada —por eso nunca saltó—, que es justamente por lo que
+           conviene que lo mire una prueba. El texto de cada rol vive junto al
+           tile (`desc` y `descProfe`) y no repartido en `if`s por init(): así
+           se ven los dos de un vistazo al leer la lista, y un tile nuevo que
+           solo sirva para uno de los dos se nota enseguida.
+
+           Se aplica sobre la lista ya armada y en un solo lugar, igual que
+           apagarEnMantenimiento(). Vale para quien administra, como todo lo
+           que se hace para los profesores. */
+        function textosDelEquipoDocente() {
+            if (!esEquipoDocente()) return;
+            TILE_GROUPS.forEach((g) => g.tiles.forEach((t) => {
+                if (t.descProfe) t.desc = t.descProfe;
+            }));
+        }
+
+        function renderTileCard(t, destacado) {
+            const base = "group flex flex-col items-center text-center gap-2 rounded-2xl p-5 shadow-md transition-all duration-200"
+                + (destacado ? " sm:flex-row sm:items-center sm:text-left sm:gap-5" : "");
             let el;
             if (t.disabled) {
+                // Ni <a> ni <button>: un acceso apagado no debe recibir el foco
+                // del teclado ni prometer un destino que no va a abrir. La
+                // razón va escrita en la tarjeta (t.nota) — un cuadro gris sin
+                // explicación se lee como una página rota.
                 el = document.createElement("div");
                 el.className = base + " bg-white/60 dark:bg-brand-900/60 opacity-60 cursor-not-allowed";
-            } else if (t.action === "logout") {
-                el = document.createElement("button");
-                el.type = "button";
-                el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5";
-                el.addEventListener("click", doLogout);
+                el.setAttribute("aria-disabled", "true");
             } else {
                 el = document.createElement("a");
                 el.href = t.href;
                 el.className = base + " bg-white dark:bg-brand-900 hover:shadow-xl hover:-translate-y-0.5" + (t.primary ? " ring-2 ring-accent-500" : "");
             }
             const iconWrap = document.createElement("div");
-            iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
+            iconWrap.className = "w-14 h-14 rounded-xl flex items-center justify-center text-3xl overflow-hidden shrink-0 " + (t.primary ? "bg-accent-500/20" : "bg-brand-50 dark:bg-brand-800") + " group-hover:scale-105 transition-transform";
             if (t.photo) {
                 // Foto real de Oscar en vez de un emoji genérico, igual que en tablero.html
                 // ("Juega contra Oscar"): la etiqueta de al lado ya dice de qué se trata,
@@ -322,13 +510,22 @@
             } else {
                 iconWrap.textContent = t.emoji;
             }
+            const texto = document.createElement("span");
+            texto.className = "flex flex-col items-center gap-1" + (destacado ? " sm:items-start" : "");
             const label = document.createElement("span");
             label.className = "font-semibold text-brand-800 dark:text-white text-sm";
             label.textContent = t.label;
             const desc = document.createElement("span");
             desc.className = "text-xs text-brand-450 dark:text-brand-350";
             desc.textContent = t.desc;
-            el.append(iconWrap, label, desc);
+            texto.append(label, desc);
+            if (t.nota) {
+                const nota = document.createElement("span");
+                nota.className = "text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-500 dark:text-brand-300";
+                nota.textContent = t.nota;
+                texto.appendChild(nota);
+            }
+            el.append(iconWrap, texto);
             return el;
         }
 
@@ -336,13 +533,36 @@
             const grid = document.getElementById("tile-grid");
             grid.innerHTML = "";
             TILE_GROUPS.forEach((group) => {
+                /* Un grupo del que no queda ni un acceso utilizable no se
+                   pinta. A la alumna, "Herramientas" le salía como un
+                   encabezado y dos cuadros grises —sus dos accesos están en
+                   mantenimiento—: una sección entera de la página que no lleva
+                   a ninguna parte, que es la misma razón por la que se fue el
+                   "Próximamente" sin fecha. Un acceso apagado ENTRE otros que
+                   funcionan sí se queda, y con su razón escrita: ahí uno vino
+                   por otra cosa y de paso se entera de que eso vuelve. */
+                if (group.tiles.length === 0 || group.tiles.every((t) => t.disabled)) return;
                 const section = document.createElement("section");
                 const heading = document.createElement("h2");
                 heading.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-3";
-                heading.textContent = group.title;
+                /* El rótulo tiene los mismos dos públicos que la descripción de
+                   un tile: "Lo que te pone tu profesor" es, del otro lado del
+                   escritorio, lo que ELLA le pone a sus alumnos. Pero al revés
+                   que `descProfe`, se ELIGE al pintar y no se escribe encima de
+                   `group.title`: todo lo que retoca la grilla busca su grupo por
+                   ese nombre, y un título mutado dejaría esas búsquedas sin
+                   encontrarlo. Al alumnado no le fallaría nunca —el rótulo solo
+                   cambia para el equipo docente—, así que se descubriría en el
+                   panel de otra persona. */
+                heading.textContent = (esEquipoDocente() && group.titleProfe) || group.title;
                 const tilesGrid = document.createElement("div");
-                tilesGrid.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
-                group.tiles.forEach((t) => tilesGrid.appendChild(renderTileCard(t)));
+                // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
+                // columnas quedaría un cuadrito perdido a la izquierda, así que
+                // ocupa el ancho entero.
+                tilesGrid.className = group.destacado
+                    ? "grid grid-cols-1 gap-4 md:gap-5"
+                    : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
+                group.tiles.forEach((t) => tilesGrid.appendChild(renderTileCard(t, !!group.destacado)));
                 section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
@@ -374,6 +594,22 @@
 
             document.getElementById("session-status-open").classList.toggle("hidden", !openSession);
             document.getElementById("session-status-closed").classList.toggle("hidden", !!openSession);
+            document.getElementById("closed-status-hint").textContent = isTeacher
+                ? "No hace falta apretar nada: la clase se abre sola al entrar a Sesión en vivo, en cuanto llegue un alumno o mandes una posición."
+                : "";
+
+            /* La tarjeta entera solo aparece cuando tiene algo que decir: hay
+               clase en curso —eso lo ve todo el mundo— o quien mira da clase y
+               puede iniciar una. A un alumno fuera del horario, que es casi
+               siempre, le ocupaba el primer lugar de la página para avisarle de
+               que NO pasa nada, empujando hacia abajo sus tareas.
+
+               Se esconde la TARJETA y no solo sus dos mitades: con las dos
+               ocultas quedaba la caja blanca vacía con su relleno, que se lee
+               como algo que no cargó. Es la misma condición que ya decide el
+               botón de iniciar clase, así que no se le esconde a nadie un
+               control que sí podría usar. */
+            document.getElementById("session-status-card").hidden = !openSession && !isTeacher;
 
             if (openSession) {
                 document.getElementById("open-session-title").textContent = openSession.title ? `— ${openSession.title}` : "";
@@ -397,77 +633,488 @@
             const el = document.getElementById("tactics-record-text");
             const scopedToGroup = !isTeacher && profile.grupo;
             document.getElementById("tactics-record-title").textContent = scopedToGroup
-                ? `Racha táctica — récord del grupo ${profile.grupo}`
-                : "Racha táctica — récord de la clase";
+                ? `Racha táctica del grupo ${profile.grupo}`
+                : "Racha táctica de la clase";
             let query = sb.from("puzzle_rush_scores")
                 .select("best_streak, profiles!inner(full_name, email, grupo)")
                 .order("best_streak", { ascending: false })
                 .limit(1);
             if (scopedToGroup) query = query.eq("profiles.grupo", profile.grupo);
             const { data, error } = await query.maybeSingle();
-            if (error) { el.textContent = "Encuentra la jugada correcta en 10 segundos y suma tu racha."; return; }
-            if (!data || !data.best_streak) { el.textContent = "Todavía nadie tiene una racha registrada — ¡sé el primero!"; return; }
+            if (error) { el.textContent = "encuentra la jugada correcta en 10 segundos."; return; }
+            if (!data || !data.best_streak) { el.textContent = "todavía nadie tiene una racha registrada. ¡Sé el primero!"; return; }
             const name = (data.profiles && (data.profiles.full_name || data.profiles.email)) || "?";
-            el.textContent = name + " tiene la racha más larga: " + data.best_streak + " aciertos seguidos.";
+            el.textContent = name + " lleva el récord con " + data.best_streak + " aciertos seguidos.";
         }
 
-        // ---------- Progreso en Entrenamiento (4x4, Aprender, Coordenadas) ----------
+        // ---------- Tu progreso: los tres números y la racha de días ----------
+        // Los números NO se cuentan acá. Esta página se bajaba training_progress
+        // ENTERA (select * where student_id = …) y sumaba en el navegador, y eso
+        // tenía el techo invisible de siempre: PostgREST corta la respuesta a
+        // partir de cierta cantidad de filas y no da ningún error, así que a un
+        // alumno con bastante entrenamiento encima el panel le pintaba un número
+        // que ya no subía. informes_resumen_alumnos() ya trae esos tres contados
+        // por la base y, siendo SECURITY INVOKER, a un alumno le devuelve
+        // únicamente su propio renglón — la misma función que usa informes.html,
+        // así que la cuenta tampoco queda escrita dos veces.
         async function loadEntrenoProgress() {
-            const { data, error } = await sb.from("training_progress").select("*").eq("student_id", profile.id);
-            if (error) return; // deja los ceros por defecto en vez de romper el resto del panel
-            const rows = data || [];
-            const puzzles = new Set(), lessons = new Set();
-            let bestCoord = 0;
-            rows.forEach((r) => {
-                const d = r.detail || {};
-                if (r.activity === "4x4" && d.puzzle_id) puzzles.add(d.puzzle_id);
-                else if (r.activity === "aprender" && d.lesson_id) lessons.add(d.lesson_id);
-                else if (r.activity === "coordenadas" && typeof d.score === "number") bestCoord = Math.max(bestCoord, d.score);
-            });
-            document.getElementById("entreno-puzzles").textContent = String(puzzles.size);
-            document.getElementById("entreno-lessons").textContent = String(lessons.size);
-            document.getElementById("entreno-coord").textContent = bestCoord || "—";
+            const { data, error } = await sb.rpc("informes_resumen_alumnos");
+            if (error) return;   // deja los guiones en vez de romper el resto del panel
+            const fila = (data || []).find((f) => f.id === profile.id) || (data || [])[0];
+            if (!fila) return;
+            document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
+            document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);
+            document.getElementById("entreno-coord").textContent = fila.mejor_coord || "—";
         }
 
-        async function refreshSessionsLog() {
-            const body = document.getElementById("sessions-log-body");
-            if (!boardOwnerId) { body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay clases registradas.</td></tr>'; return; }
-            const { data, error } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).order("started_at", { ascending: false }).limit(10);
-            body.innerHTML = "";
-            if (error || !data || !data.length) {
-                body.innerHTML = '<tr><td colspan="6" class="py-4 text-brand-450 dark:text-brand-350">Todavía no hay clases registradas.</td></tr>';
+        // La racha de días la cuenta la base (public.progreso_dias_y_racha, ver
+        // js/logros.js): acá solo se pone el número en su lugar.
+        async function loadRachaWidget() {
+            const el = document.getElementById("progreso-racha");
+            const { stats, error } = await window.Logros.cargar();
+            if (error || !stats) { el.textContent = "—"; return; }
+            el.textContent = String(stats.racha_actual || 0);
+        }
+
+        /* ---------- Lo que te toca: tareas Y exámenes ----------
+           La fecha límite ya vivía en `tareas.vence_at` y en `examenes.vence_at`;
+           lo que faltaba era decirla en el panel. Un alumno abría esto, no veía
+           nada que hacer, y la entrega vencía sin que nada avisara — del examen
+           el único aviso es el push del momento en que se lo asignan, así que
+           quien no lo vio no se entera nunca.
+
+           Ninguna de las dos cuentas se hace acá:
+           - `tareas_con_avance()` es la misma función que pinta `tareas.html`
+             (desde que una tarea tiene renglones con cantidad, lo pendiente NO
+             es una columna: `tareas.estado` quedó sin uso);
+           - `examenes_con_nota()` es la misma que pinta la lista del alumno en
+             `examenes.html`.
+           Dos pantallas que cuenten lo mismo por su cuenta terminan diciendo
+           cosas distintas del mismo alumno. */
+
+        /* Un examen NO es una tarea vencida, y confundirlos sería mentirle.
+           `iniciar_examen()` rechaza con "Se pasó la fecha para hacer este
+           examen" el que sigue en `asignado` después de su `vence_at`: ahí se
+           acabó, mientras que una tarea vencida se sigue pudiendo hacer. Y un
+           `congelado` solo lo reabre el profesor. Así que de los cuatro estados
+           solo dos son "puedes hacer algo ahora". */
+        function estadoDeExamen(e, ahora) {
+            if (e.estado === "entregado") return "hecho";
+            if (e.estado === "congelado") return "congelado";
+            if (e.estado === "en_curso") {
+                // Volver a entrar no reinicia el reloj, así que un en_curso con
+                // su termina_at pasado ya no da para nada.
+                return new Date(e.termina_at) > ahora ? "corriendo" : "sin_tiempo";
+            }
+            return new Date(e.vence_at) > ahora ? "por_hacer" : "perdido";
+        }
+
+        async function cargarPendientes() {
+            const [t, x] = await Promise.all([
+                sb.rpc("tareas_con_avance", { p_alumno: profile.id, p_pendientes: true, p_limite: 50 }),
+                sb.rpc("examenes_con_nota", { p_alumno: profile.id, p_limite: 50 }),
+            ]);
+            const tareas = (t.error ? [] : t.data) || [];
+            /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
+               sin franja por la mitad que falló sería perder también la que sí
+               se pudo leer. */
+            const examenes = (x.error ? [] : x.data) || [];
+
+            const ahora = new Date();
+            const conEstado = examenes.map((e) => ({ ...e, situacion: estadoDeExamen(e, ahora) }));
+            const porHacer   = conEstado.filter((e) => e.situacion === "por_hacer")
+                                        .sort((a, b) => new Date(a.vence_at) - new Date(b.vence_at));
+            const corriendo  = conEstado.filter((e) => e.situacion === "corriendo");
+            const perdidos   = conEstado.filter((e) => e.situacion === "perdido" || e.situacion === "sin_tiempo");
+            const congelados = conEstado.filter((e) => e.situacion === "congelado");
+            const vencidas   = tareas.filter((t) => t.situacion === "vencida");
+
+            // Los que se le pasaron se cuentan como cosas que decir, no como
+            // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
+            // pendientes" le ofrecería algo que no va a poder abrir.
+            const hacibles = tareas.length + porHacer.length + corriendo.length;
+            if (!hacibles && !perdidos.length && !congelados.length) return;   // nada que decir: la franja no se destapa
+
+            /* EL ORDEN DE LAS REGLAS IMPORTA Y ESTÁ ESCRITO, como el del informe
+               a la casa: el texto se queda con UNA cosa, la que pide actuar
+               antes. Primero lo que corre ahora mismo, después lo que ya se
+               perdió, y al final lo que viene. */
+            let msg, destino = "tareas.html", cta = "Ver tus tareas →";
+            /* El icono acompaña a la LÍNEA, no a la franja: si el texto habla
+               de un examen, el 📋 de la tarjeta Tareas estaría señalando otra
+               cosa. Es decorativo (`aria-hidden`), así que lo que dice va
+               escrito igual. */
+            let icono = "📋";
+            const urgente = !!(corriendo.length || perdidos.length || vencidas.length || congelados.length);
+
+            if (corriendo.length) {
+                const e = corriendo[0];
+                /* NO se dicen los minutos que quedan. El reloj del examen sale
+                   de la hora del SERVIDOR (`termina_at` contra `now()`), y acá
+                   solo está la del navegador: un número calculado con el reloj
+                   de la computadora podría decirle que le quedan diez minutos
+                   cuando ya se le acabaron. Que el número lo dé `examen.html`,
+                   que lo pide a la base. Decidir "corre o no corre" con el reloj
+                   local sí es tolerable: en el peor caso lo manda a la pantalla
+                   del examen, que le dice la verdad. */
+                msg = `El examen «${e.titulo}» lo tienes a medias y el reloj corre. Entra a terminarlo.`;
+                destino = `examen.html?id=${encodeURIComponent(e.id)}`;   // directo a rendirlo, como el aviso al celular
+                cta = "Seguir el examen →"; icono = "⏰";
+            } else if (perdidos.length) {
+                const e = perdidos[0];
+                // Acá NO se dice "todavía puedes": no puede, y prometérselo es
+                // peor que no decir nada.
+                msg = perdidos.length === 1
+                    ? `Se te pasó la fecha del examen «${e.titulo}» y ya no se puede rendir. Habla con tu profe.`
+                    : `Se te pasó la fecha de ${perdidos.length} exámenes y ya no se pueden rendir. Habla con tu profe.`;
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "⏰";
+            } else if (vencidas.length) {
+                // Una tarea vencida sí se sigue pudiendo hacer, y se dice.
+                msg = vencidas.length === 1
+                    ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
+                    : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
+                icono = "⏰";
+            } else if (congelados.length) {
+                const e = congelados[0];
+                msg = `El examen «${e.titulo}» quedó congelado a la mitad. Tu profe tiene que volver a abrirlo.`;
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "📝";
+            } else {
+                /* Nada urgente: se nombra lo que vence antes, sea tarea o
+                   examen. Un examen tiene reloj y una sola oportunidad, así que
+                   cuando los dos caen el mismo día manda el examen. */
+                const t0 = tareas[0], e0 = porHacer[0];
+                const antesElExamen = e0 && (!t0 || new Date(e0.vence_at) <= new Date(t0.vence_at));
+                if (antesElExamen) {
+                    msg = `El examen «${e0.titulo}» vence ${venceEnPalabras(e0.vence_at)}`
+                        + ` · ${e0.preguntas} preguntas en ${e0.minutos} minutos.`;
+                    destino = `examen.html?id=${encodeURIComponent(e0.id)}`;
+                    cta = "Empezar el examen →"; icono = "📝";
+                } else {
+                    // Cuánto lleva de la más próxima: con renglones, "2 de 5"
+                    // dice mucho más que el título solo.
+                    const avance = t0.renglones > 1 ? ` Llevas ${t0.cumplidos} de ${t0.renglones}.` : "";
+                    msg = `La más próxima es «${t0.titulo}», vence ${venceEnPalabras(t0.vence_at)}.${avance}`;
+                }
+            }
+
+            const caja = document.getElementById("pendientes-aviso");
+            const titulo = document.getElementById("pendientes-aviso-titulo");
+            const texto = document.getElementById("pendientes-aviso-texto");
+
+            caja.href = destino;
+            caja.className = "mb-6 rounded-2xl shadow-md p-5 md:p-6 flex items-center gap-4 flex-wrap hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
+                + (urgente
+                    ? "bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500"
+                    : "bg-white dark:bg-brand-900");
+            document.getElementById("pendientes-aviso-emoji").textContent = urgente && icono === "📋" ? "⏰" : icono;
+            titulo.className = "font-serif text-lg font-bold " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-800 dark:text-white");
+            texto.className = "text-sm " + (urgente ? "text-red-700 dark:text-red-300" : "text-brand-500 dark:text-brand-300");
+            const cajaCta = document.getElementById("pendientes-aviso-cta");
+            cajaCta.textContent = cta;
+            cajaCta.className = "text-sm font-semibold whitespace-nowrap "
+                + (urgente ? "text-red-700 dark:text-red-300" : "text-accent-700 dark:text-accent-400");
+
+            titulo.textContent = tituloPendientes(tareas.length, porHacer.length + corriendo.length);
+            texto.textContent = msg;
+            caja.hidden = false;
+        }
+
+        /* "Tienes 3 tareas y 1 examen pendientes". Con una sola clase de cosa se
+           dice solo esa: nombrar las dos siempre obligaría a escribir "y 0
+           exámenes", que es ruido. */
+        function tituloPendientes(nTareas, nExamenes) {
+            const trozo = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+            if (nTareas && nExamenes) {
+                return `Tienes ${trozo(nTareas, "tarea", "tareas")} y ${trozo(nExamenes, "examen", "exámenes")} pendientes`;
+            }
+            if (nExamenes) return `Tienes ${trozo(nExamenes, "examen pendiente", "exámenes pendientes")}`;
+            if (nTareas)  return `Tienes ${trozo(nTareas, "tarea pendiente", "tareas pendientes")}`;
+            // Sin nada que hacer pero con algo que decir (se le pasó uno, o le
+            // quedó congelado): el título no puede prometer pendientes.
+            return "Hay algo que tienes que saber";
+        }
+
+        // "vence hoy" / "vence mañana" se entienden de un vistazo; una fecha
+        // hay que compararla con el almanaque. Se cuenta por días de calendario
+        // y no por horas: una tarea de mañana a las 8 a. m. vence mañana,
+        // aunque falten menos de 24 horas.
+        function venceEnPalabras(iso) {
+            const dia = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+            const dias = Math.round((dia(new Date(iso)) - dia(new Date())) / 86400000);
+            if (dias <= 0) return "hoy";
+            if (dias === 1) return "mañana";
+            if (dias < 7) return `en ${dias} días`;
+            return "el " + fmtDate(iso);
+        }
+
+        // ---------- Lo que te toca: continúa donde ibas ----------
+        // El curso a medias cuya última lección marcada es la más reciente. Los
+        // datos ya los cuenta informes_cursos_alumnos() (un renglón por alumno y
+        // curso empezado, con el total, lo hecho y el último tema): acá solo se
+        // elige cuál mostrar.
+        async function cargarSeguirCurso() {
+            const { data, error } = await sb.rpc("informes_cursos_alumnos");
+            if (error || !data || !data.length) return;
+            const mios = data.filter((c) => (!c.student_id || c.student_id === profile.id) && c.hechos > 0 && c.hechos < c.total);
+            if (!mios.length) return;   // sin ningún curso a medias no hay nada que retomar
+            mios.sort((a, b) => new Date(b.ultima_fecha || 0) - new Date(a.ultima_fecha || 0));
+            const c = mios[0];
+
+            document.getElementById("seguir-curso").href = `cursos/academia/${c.slug}.html`;
+            document.getElementById("seguir-curso-texto").textContent =
+                `${c.titulo} — ${c.hechos} de ${c.total} temas`
+                + (c.ultimo_titulo ? `. Lo último: ${c.ultimo_titulo}.` : ".");
+            document.getElementById("seguir-curso-barra").style.width =
+                Math.round((c.hechos / c.total) * 100) + "%";
+            document.getElementById("seguir-curso").hidden = false;
+        }
+
+        // ---------- Tu semana (equipo docente) ----------
+        // Los cinco números los cuenta public.panel_profesor(), que es
+        // SECURITY INVOKER: quién es alumno de quién lo decide la RLS y no hay
+        // ni un filtro de profesor escrito acá ni allá. Contar "alumnos
+        // distintos que entrenaron" desde el navegador pediría bajarse
+        // training_progress y cruzar el techo de PostgREST en silencio.
+        async function cargarPanelProfe() {
+            const { data, error } = await sb.rpc("panel_profesor");
+            const fila = (data && data[0]) || null;
+            if (error || !fila) return;   // deja los guiones puestos
+
+            const alumnos = fila.alumnos || 0;
+            const inactivos = Math.max(0, alumnos - (fila.activos_7d || 0));
+            document.getElementById("profe-alumnos").textContent = String(alumnos);
+            document.getElementById("profe-tareas").textContent = String(fila.tareas_pendientes || 0);
+
+            // Los dos números que piden hacer algo se pintan en rojo solo cuando
+            // no son cero: en rojo permanente se dejan de ver.
+            const inact = document.getElementById("profe-inactivos");
+            inact.textContent = String(inactivos);
+            inact.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+            const venc = document.getElementById("profe-vencidas");
+            venc.textContent = String(fila.tareas_vencidas || 0);
+            venc.className = "text-2xl font-bold " + (fila.tareas_vencidas > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+
+            const clases = fila.clases_30d || 0;
+            document.getElementById("profe-clases").textContent = clases === 1
+                ? "Llevas 1 clase dada en los últimos 30 días."
+                : `Llevas ${clases} clases dadas en los últimos 30 días.`;
+        }
+
+        // ---------- Registro de clases ----------
+        // Con 100 clases, bajarlas todas y pintarlas de corrido no sirve de
+        // nada: no se encuentra ninguna. Así que el filtro y el corte los hace
+        // la BASE — `.gte()` por periodo, `.ilike()` por texto y `.range()` por
+        // página— y acá solo se pinta. La cuenta total viene con
+        // `count: "exact"`, así que "Mostrando 20 de 143" dice la verdad
+        // aunque solo hayan llegado 20 filas.
+        const SESIONES_POR_PAGINA = 20;
+        let sesionesCargadas = [];
+        let sesionesTotal = 0;
+        let sesionesBusqueda = "";
+        let sesionesPeriodo = 90;           // días; 0 = todas
+        let sesionesPeticion = 0;           // descarta respuestas que llegan tarde
+        // Qué meses dejó abiertos o cerrados quien mira, para que repintar no
+        // los vuelva a cerrar todos. Lo que no está acá toma el valor por
+        // omisión: abierto el más reciente, cerrados los de atrás.
+        const sesionesMeses = new Map();
+
+        function claveMes(iso) {
+            const d = new Date(iso);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+        }
+        function nombreMes(iso) {
+            const t = new Date(iso).toLocaleDateString("es-CR", { month: "long", year: "numeric" });
+            return t.charAt(0).toUpperCase() + t.slice(1);
+        }
+        function fmtMinutos(mins) {
+            const h = Math.floor(mins / 60), m = mins % 60;
+            if (!h) return `${m} min`;
+            return m ? `${h} h ${m} min` : `${h} h`;   // "6 h", no "6 h 0 min"
+        }
+
+        // PostgREST arma el filtro `or=(...)` con comas y paréntesis, así que un
+        // texto que los traiga rompe la consulta entera. Se limpian (y se corta
+        // el largo) antes de mandarlo: lo que se busca es un título, no una
+        // expresión.
+        function limpiarBusqueda(t) {
+            return t.replace(/[,()%*\\"']/g, " ").trim().slice(0, 60);
+        }
+
+        function consultaSesiones() {
+            let q = sb.from("class_sessions").select("*", { count: "exact" }).eq("created_by", boardOwnerId);
+            if (sesionesPeriodo) {
+                q = q.gte("started_at", new Date(Date.now() - sesionesPeriodo * 86400000).toISOString());
+            }
+            const texto = limpiarBusqueda(sesionesBusqueda);
+            if (texto) q = q.or(`title.ilike.%${texto}%,notes.ilike.%${texto}%`);
+            return q.order("started_at", { ascending: false });
+        }
+
+        function filaDeSesion(s) {
+            const tr = document.createElement("tr");
+            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+            const tdDate = document.createElement("td"); tdDate.className = "py-2 pr-4 whitespace-nowrap"; tdDate.textContent = fmtDate(s.started_at);
+            const tdStart = document.createElement("td"); tdStart.className = "py-2 pr-4 whitespace-nowrap"; tdStart.textContent = fmtTime(s.started_at);
+            const tdEnd = document.createElement("td"); tdEnd.className = "py-2 pr-4 whitespace-nowrap";
+            tdEnd.textContent = s.ended_at ? fmtTime(s.ended_at) : "En curso";
+            const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4 whitespace-nowrap";
+            tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
+            const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
+            tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
+            const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
+            if (isTeacher) {
+                const delBtn = document.createElement("button");
+                delBtn.type = "button";
+                delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
+                delBtn.textContent = "Eliminar";
+                delBtn.addEventListener("click", async () => {
+                    if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
+                    const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
+                    if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
+                    refreshSessionStatus();
+                    cargarSesiones();
+                });
+                tdActions.appendChild(delBtn);
+            }
+            tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes, tdActions);
+            return tr;
+        }
+
+        function avisoSesiones(texto) {
+            const caja = document.getElementById("sessions-log");
+            caja.innerHTML = "";
+            const p = document.createElement("p");
+            p.className = "py-4 text-sm text-brand-450 dark:text-brand-350";
+            p.textContent = texto;
+            caja.appendChild(p);
+        }
+
+        // Se repinta la lista entera desde lo que se lleva cargado, en vez de ir
+        // pegando filas: así un mes partido entre dos páginas queda en un solo
+        // bloque y su encabezado cuenta bien. Qué mes está abierto vive en
+        // `sesionesMeses`, o al repintar se cerrarían todos.
+        function pintarSesiones() {
+            const caja = document.getElementById("sessions-log");
+            caja.innerHTML = "";
+            const meses = new Map();
+            sesionesCargadas.forEach((s) => {
+                const k = claveMes(s.started_at);
+                if (!meses.has(k)) meses.set(k, []);
+                meses.get(k).push(s);
+            });
+            let primero = true;
+            meses.forEach((filas, k) => {
+                const det = document.createElement("details");
+                det.className = "border border-brand-100 dark:border-brand-800 rounded-xl overflow-hidden";
+                // El mes más reciente abierto y los de atrás cerrados: eso es
+                // lo que hace que 100 clases se puedan mirar. Salvo que quien
+                // mira haya dicho otra cosa.
+                det.open = sesionesMeses.has(k) ? sesionesMeses.get(k) : primero;
+                det.addEventListener("toggle", () => sesionesMeses.set(k, det.open));
+                primero = false;
+
+                const sum = document.createElement("summary");
+                sum.className = "cursor-pointer select-none px-4 py-3 bg-brand-50 dark:bg-brand-800/50 text-sm font-semibold text-brand-800 dark:text-white flex items-center justify-between gap-3";
+                const nombre = document.createElement("span");
+                nombre.textContent = nombreMes(filas[0].started_at);
+                const cuenta = document.createElement("span");
+                const minutos = filas.reduce((a, s) => a + (s.ended_at
+                    ? Math.max(0, Math.round((new Date(s.ended_at) - new Date(s.started_at)) / 60000)) : 0), 0);
+                cuenta.className = "text-xs font-normal text-brand-450 dark:text-brand-350";
+                cuenta.textContent = filas.length + (filas.length === 1 ? " clase" : " clases")
+                    + (minutos ? " · " + fmtMinutos(minutos) : "");
+                sum.append(nombre, cuenta);
+
+                const envoltura = document.createElement("div");
+                envoltura.className = "overflow-x-auto px-4 pb-3";
+                const tabla = document.createElement("table");
+                tabla.className = "w-full text-sm";
+                tabla.innerHTML = '<caption class="sr-only">Clases de ' + nombreMes(filas[0].started_at) + '</caption>'
+                    + '<thead><tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Fecha</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Inicio</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Cierre</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Duración</th>'
+                    + '<th scope="col" class="py-2 pr-4 font-semibold">Notas</th>'
+                    + '<th scope="col" class="py-2 font-semibold"><span class="sr-only">Acciones</span></th>'
+                    + '</tr></thead>';
+                const tbody = document.createElement("tbody");
+                filas.forEach((s) => tbody.appendChild(filaDeSesion(s)));
+                tabla.appendChild(tbody);
+                envoltura.appendChild(tabla);
+                det.append(sum, envoltura);
+                caja.appendChild(det);
+            });
+        }
+
+        function pintarResumenSesiones(error) {
+            const resumen = document.getElementById("sessions-log-summary");
+            const masBtn = document.getElementById("sessions-more");
+            if (error) {
+                // Se DICE que falló, en vez de dejar el hueco de "no hay clases":
+                // un registro vacío por un error de red se lee como un registro
+                // vacío de verdad.
+                resumen.textContent = "No se pudo cargar el registro: " + error;
+                masBtn.hidden = true;
                 return;
             }
-            data.forEach((s) => {
-                const tr = document.createElement("tr");
-                tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-                const tdDate = document.createElement("td"); tdDate.className = "py-2 pr-4"; tdDate.textContent = fmtDate(s.started_at);
-                const tdStart = document.createElement("td"); tdStart.className = "py-2 pr-4"; tdStart.textContent = fmtTime(s.started_at);
-                const tdEnd = document.createElement("td"); tdEnd.className = "py-2 pr-4";
-                tdEnd.textContent = s.ended_at ? fmtTime(s.ended_at) : "En curso";
-                const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4";
-                tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
-                const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
-                tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
-                const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
-                if (isTeacher) {
-                    const delBtn = document.createElement("button");
-                    delBtn.type = "button";
-                    delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
-                    delBtn.textContent = "Eliminar";
-                    delBtn.addEventListener("click", async () => {
-                        if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
-                        const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
-                        if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
-                        refreshSessionStatus();
-                        refreshSessionsLog();
-                    });
-                    tdActions.appendChild(delBtn);
-                }
-                tr.append(tdDate, tdStart, tdEnd, tdDur, tdNotes, tdActions);
-                body.appendChild(tr);
-            });
+            const hayFiltro = !!limpiarBusqueda(sesionesBusqueda) || sesionesPeriodo !== 0;
+            resumen.textContent = sesionesTotal === 0
+                ? (hayFiltro ? "Ninguna clase coincide con el filtro." : "Todavía no hay clases registradas.")
+                : "Mostrando " + sesionesCargadas.length + " de " + sesionesTotal
+                  + (sesionesTotal === 1 ? " clase" : " clases") + (hayFiltro ? " en el filtro elegido." : ".");
+            masBtn.hidden = sesionesCargadas.length >= sesionesTotal;
         }
+
+        async function cargarSesiones({ mas = false } = {}) {
+            const masBtn = document.getElementById("sessions-more");
+            if (!boardOwnerId) {
+                sesionesCargadas = []; sesionesTotal = 0;
+                avisoSesiones("Todavía no hay clases registradas.");
+                masBtn.hidden = true;
+                document.getElementById("sessions-log-summary").textContent = "Todavía no hay clases registradas.";
+                return;
+            }
+            const marca = ++sesionesPeticion;
+            const desde = mas ? sesionesCargadas.length : 0;
+            masBtn.disabled = true;
+            const { data, error, count } = await consultaSesiones().range(desde, desde + SESIONES_POR_PAGINA - 1);
+            masBtn.disabled = false;
+            // Llegó tarde: mientras tanto se escribió otra búsqueda. Pintarla
+            // ahora dejaría en pantalla el resultado de un filtro que ya no está.
+            if (marca !== sesionesPeticion) return;
+            if (error) {
+                sesionesCargadas = []; sesionesTotal = 0;
+                avisoSesiones("No se pudo cargar el registro de clases.");
+                pintarResumenSesiones(error.message);
+                return;
+            }
+            sesionesCargadas = mas ? sesionesCargadas.concat(data || []) : (data || []);
+            sesionesTotal = typeof count === "number" ? count : sesionesCargadas.length;
+            if (!sesionesCargadas.length) {
+                avisoSesiones(limpiarBusqueda(sesionesBusqueda) || sesionesPeriodo
+                    ? "Ninguna clase coincide con el filtro. Prueba con otro periodo."
+                    : "Todavía no hay clases registradas.");
+            } else {
+                pintarSesiones();
+            }
+            pintarResumenSesiones(null);
+        }
+
+        // Los filtros: el texto con un respiro de 300 ms para no pedirle a la
+        // base una consulta por tecla.
+        let sesionesTimer = null;
+        document.getElementById("sessions-search").addEventListener("input", (e) => {
+            sesionesBusqueda = e.target.value;
+            clearTimeout(sesionesTimer);
+            sesionesTimer = setTimeout(() => cargarSesiones(), 300);
+        });
+        document.getElementById("sessions-period").addEventListener("change", (e) => {
+            sesionesPeriodo = Number(e.target.value) || 0;
+            cargarSesiones();
+        });
+        document.getElementById("sessions-more").addEventListener("click", () => cargarSesiones({ mas: true }));
+
 
         document.getElementById("start-session-btn").addEventListener("click", async () => {
             const btn = document.getElementById("start-session-btn");
@@ -478,7 +1125,7 @@
             if (error) { alert("No se pudo iniciar la clase: " + error.message); return; }
             document.getElementById("new-session-title").value = "";
             await refreshSessionStatus();
-            await refreshSessionsLog();
+            await cargarSesiones();
         });
 
         document.getElementById("close-session-btn").addEventListener("click", async () => {
@@ -491,7 +1138,7 @@
             if (error) { alert("No se pudo cerrar la clase: " + error.message); return; }
             document.getElementById("close-session-notes").value = "";
             await refreshSessionStatus();
-            await refreshSessionsLog();
+            await cargarSesiones();
         });
 
         function subscribeSessions() {
@@ -499,7 +1146,7 @@
             sb.channel("class_sessions_panel:" + boardOwnerId)
                 .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + boardOwnerId }, () => {
                     refreshSessionStatus();
-                    refreshSessionsLog();
+                    cargarSesiones();
                 })
                 .subscribe();
         }
@@ -575,8 +1222,28 @@
             // Herramientas del equipo docente: no se le muestran al alumnado
             // (y la propia página vuelve a comprobar el perfil).
             if (isTeacher || profile.is_admin) {
+                /* La tarjeta del diagnóstico de arbitraje ya está para todo el
+                   mundo; al equipo docente se le cambia el destino a la página
+                   con la revisión y el detalle pregunta por pregunta. Se busca
+                   por su destino y no por su posición, para que reordenar el
+                   grupo no la deje sin cambiar. */
+                const medirNivel = TILE_GROUPS.find((g) => g.title === "Mide tu nivel");
+                const arbitraje = medirNivel.tiles.find((t) => t.href === "nivel-de-arbitraje.html");
+                if (arbitraje) arbitraje.href = "arbitraje.html";   // el texto va en su descProfe, como el resto
+
+                /* Preparar la clase antes de darla. Es solo del equipo docente,
+                   así que no lleva `desc` de alumno: se suma acá en vez de vivir
+                   en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "⚖️", label: "Examen de arbitraje", desc: "Reglamento FIDE: 40 preguntas y tu nivel estimado de arbitraje", href: "arbitraje.html" }
+                    { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* La guía apunta a la versión accesible y no al PDF a
+                       propósito: es una página que abre en cualquier aparato,
+                       trae el contenido completo y desde ahí se bajan el manual
+                       y la presentación. Con el PDF de destino, quien entra
+                       desde el celular se baja un archivo para leer lo que
+                       podía leer ahí mismo, y la versión accesible quedaría de
+                       repuesto en vez de ser la puerta. */
+                    { emoji: "📘", label: "Guía del profesor", desc: "Todo lo que la plataforma te deja hacer y cómo se hace — en página, en manual y en diapositivas", href: "guia-del-profesor-accesible.html" }
                 );
             }
 
@@ -588,14 +1255,26 @@
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );
-            } else {
-                // La misma página, pero quien no coordina solo ve lo suyo.
-                // No se le pone a quien coordina para no repetir el destino.
+            } else if (!isTeacher) {
+                /* La misma página, pero quien no coordina solo ve lo suyo.
+                   No se le pone a quien coordina para no repetir el destino.
+
+                   Y tampoco a quien da clase: las mensualidades son de las
+                   familias del alumnado, así que a una profesora esa tarjeta
+                   le ofrecía "lo que se te ha cobrado" sobre una cuenta a la
+                   que no se le cobra nada. Quien coordina sí llega a los
+                   cobros, pero por "Cobros de la Academia" en Herramientas,
+                   que es la página entera y no el recibo propio. */
                 TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.splice(1, 0,
-                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html" }
+                    { emoji: "💳", label: "Mis pagos", desc: "Lo que se te ha cobrado y lo que queda pendiente", href: "cobros.html", mantenimientoAlumno: true }
                 );
             }
 
+            // Después de armar la lista y antes de pintarla: apaga para el
+            // alumnado lo que está en mantenimiento, sin tocar lo del equipo
+            // docente.
+            textosDelEquipoDocente();
+            apagarEnMantenimiento();
             renderTiles();
             // Si el navegador renueva la suscripción de avisos por su cuenta,
             // se vuelve a guardar sola; si no, el aparato deja de recibir sin
@@ -604,9 +1283,32 @@
             // Partida asignada por el profesor: aviso en el panel y traslado automático al tablero.
             if (!isTeacher && window.JuegoAviso) JuegoAviso.iniciar({ sb, userId: profile.id, esProfesor: isTeacher });
             await refreshSessionStatus();
-            await refreshSessionsLog();
-            await loadEntrenoProgress();
-            await loadTacticsRecord();
+            await cargarSesiones();
+
+            /* Dos resúmenes distintos, no uno solo con los números del alumno
+               para todo el mundo. Quien da clase veía acá SUS ejercicios 4×4
+               (en cero, porque no es alumno) y su racha de días; lo que
+               necesita al entrar es a quién hay que perseguir. Es la misma
+               decisión de "una página, dos públicos" que ya toman
+               informes.html, cobros.html y tareas.html.
+
+               Y vale igual para quien administra, como todo lo que se hace
+               para los profesores. */
+            if (isTeacher || profile.is_admin) {
+                document.getElementById("progreso-profe").hidden = false;
+                await cargarPanelProfe();
+            } else {
+                document.getElementById("progreso-alumno").hidden = false;
+                // Van en paralelo: son cinco consultas independientes y en
+                // serie se nota al abrir el panel desde el celular.
+                await Promise.all([
+                    cargarPendientes(),
+                    cargarSeguirCurso(),
+                    loadEntrenoProgress(),
+                    loadTacticsRecord(),
+                    loadRachaWidget(),
+                ]);
+            }
             subscribeSessions();
 
             document.getElementById("loading").classList.add("hidden");

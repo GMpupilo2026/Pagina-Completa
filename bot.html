@@ -6,13 +6,13 @@
     <link rel="icon" href="img/favicon.svg">
     <title>Jugar contra el bot de Oscar — Ajedrez Integral</title>
     <meta name="robots" content="noindex">
-    <meta name="description" content="Practica cualquier modalidad contra el bot: ajedrez estándar, Crazyhouse, Niebla de Guerra, Ajedrez de abrazos, Camaleón y A ciegas.">
+    <meta name="description" content="Practica cualquier modalidad contra el bot: ajedrez estándar, Crazyhouse, Niebla de Guerra, Ajedrez de abrazos, Camaleón, A ciegas, Ajedrez de Cartas y Duelo Simultáneo.">
     <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Jugar contra el bot de Oscar — Ajedrez Integral">
-    <meta property="og:description" content="Practica cualquier modalidad contra el bot: ajedrez estándar, Crazyhouse, Niebla de Guerra, Ajedrez de abrazos, Camaleón y A ciegas.">
+    <meta property="og:description" content="Practica cualquier modalidad contra el bot: ajedrez estándar, Crazyhouse, Niebla de Guerra, Ajedrez de abrazos, Camaleón, A ciegas, Ajedrez de Cartas y Duelo Simultáneo.">
     <meta property="og:url" content="https://ajedrez-integral.com/bot.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -36,11 +36,14 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="bot"></script>
     <script src="js/crazyhouse-engine.js"></script>
     <script src="js/niebla-engine.js"></script>
     <script src="js/variantes-engines.js"></script>
+    <script src="js/cartas-engine.js"></script>
+    <script src="js/duelo-engine.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/chess-piece-svg.js"></script>
     <script src="js/piece-color-themes.js"></script>
@@ -49,6 +52,8 @@
     <script src="js/niebla-board.js"></script>
     <script src="js/crazyhouse-board.js"></script>
     <script src="js/variantes-board.js"></script>
+    <script src="js/cartas-board.js"></script>
+    <script src="js/duelo-board.js"></script>
     <script src="js/bot-oscar.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
@@ -142,10 +147,17 @@
                 <div id="status" class="mb-3 rounded-xl px-4 py-3 text-sm bg-brand-100 dark:bg-brand-900 text-brand-600 dark:text-brand-300" aria-live="polite">—</div>
 
                 <div id="top-pocket" class="hidden mb-2"></div>
+                <p id="cartas-rivales" class="hidden text-center text-sm mb-2 min-h-[1.4em] text-brand-450 dark:text-brand-350"></p>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 sm:p-4 mb-2">
-                    <div id="board" class="w-full"></div>
+                    <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] mx-auto aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                 </div>
                 <div id="bottom-pocket" class="hidden mb-3"></div>
+                <div id="cartas-propias" class="hidden flex flex-wrap gap-2 mb-4"></div>
+
+                <div id="duelo-controles" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3 flex gap-2">
+                    <button type="button" id="duelo-confirmar" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">🔒 Comprometer esta jugada</button>
+                    <button type="button" id="duelo-cambiar" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">Cambiar</button>
+                </div>
 
                 <div id="panel-ciegas" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-3">
                     <label for="ciegas-input" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Escribe tu jugada (Cf3, e4, 0-0)</label>
@@ -168,6 +180,14 @@
             </section>
         </div>
     </main>
+
+    <!-- Elegir pieza para la carta "Ascenso" (Ajedrez de Cartas) -->
+    <div id="ascenso-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div class="bg-white dark:bg-brand-900 rounded-xl shadow-xl p-5 text-center">
+            <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-3">👑 Ascenso: ¿en qué pieza lo conviertes?</p>
+            <div id="ascenso-options" class="flex gap-2"></div>
+        </div>
+    </div>
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8 mb-12">
@@ -197,14 +217,133 @@
  * jugadas, probar, material). El bot está en js/bot-oscar.js y no sabe de
  * ninguna variante en concreto.
  *
- * Quedan fuera dos modalidades, por razones distintas:
- *   - Ajedrez de Cartas: el tablero se monta desde un estado serializado
- *     (loadState) que hoy solo arma la página de partida.
- *   - Duelo Simultáneo: los dos mueven a la vez contra reloj, así que no hay
- *     "turno del bot" que atender; pide otro diseño.
+ * Dos modalidades no encajan en ese ciclo turno-por-turno y llevan su propio
+ * camino, separado del genérico (empezar/alMover/turnoDelBot):
+ *   - Ajedrez de Cartas: el turno normal se resuelve con el adaptador de
+ *     siempre, pero ANTES de que el bot mueva decide si le conviene jugar una
+ *     carta (jugarCartaBot), mutando el motor real — no hace falta que el
+ *     bot "busque" con cartas de por medio, alcanza con una heurística.
+ *   - Duelo Simultáneo: los dos jugadores comprometen su jugada A LA VEZ, sin
+ *     ver la del otro, así que no hay "espera tu turno" que atender: el bot
+ *     compromete la suya apenas empieza la ronda (no puede ver la humana de
+ *     todos modos) y las dos se revelan solas en cuanto están las dos.
+ *
+ * OJO al tocar `alMover`: el tablero interactivo de cada modalidad NO
+ * comparte siempre el mismo objeto que `ad.motor`. Para "niebla"/"crazyhouse"
+ * y "cartas" cada uno lleva su PROPIO motor (así que la jugada humana se
+ * sincroniza a `ad` releyendo el estado resultante); para "variante" el
+ * tablero recibe el motor real de `ad` (`engine: ad.motor`) y lo muta
+ * directamente, así que ahí NO hay que volver a aplicar la jugada, solo
+ * anotarla — aplicarla de nuevo fallaría (la pieza ya no está en el origen).
  */
-const VALOR = { p: 1, n: 3, b: 3.2, r: 5, q: 9, k: 0 };
+const VALOR = { p: 1, n: 3.05, b: 3.33, r: 5.1, q: 9.5, k: 0 };
 const CENTRO = { d4: .12, d5: .12, e4: .12, e5: .12, c4: .05, c5: .05, f4: .05, f5: .05 };
+
+/* ---------------- Tablas de posición (PST) ----------------
+   No alcanza con contar material: un caballo en el borde vale menos que uno
+   en el centro, y una torre en la séptima fila vale más que en la primera.
+   Son las tablas clásicas de Tomasz Michniewski (de dominio público, las usan
+   decenas de motores educativos), en centipeones — se dividen entre 100 para
+   la escala en peones que ya usa el sitio. Están escritas para blancas mirando
+   "hacia adelante" (índice 0 = a8): `indicePst()` hace el espejo para negras. */
+const PST = {
+    p: [
+         0,  0,  0,  0,  0,  0,  0,  0,
+        50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+         5,  5, 10, 25, 25, 10,  5,  5,
+         0,  0,  0, 20, 20,  0,  0,  0,
+         5, -5,-10,  0,  0,-10, -5,  5,
+         5, 10, 10,-20,-20, 10, 10,  5,
+         0,  0,  0,  0,  0,  0,  0,  0,
+    ],
+    n: [
+        -50,-40,-30,-30,-30,-30,-40,-50,
+        -40,-20,  0,  0,  0,  0,-20,-40,
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50,
+    ],
+    b: [
+        -20,-10,-10,-10,-10,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  5,  5, 10, 10,  5,  5,-10,
+        -10,  0, 10, 10, 10, 10,  0,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+        -10,  5,  0,  0,  0,  0,  5,-10,
+        -20,-10,-10,-10,-10,-10,-10,-20,
+    ],
+    r: [
+          0,  0,  0,  0,  0,  0,  0,  0,
+          5, 10, 10, 10, 10, 10, 10,  5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+         -5,  0,  0,  0,  0,  0,  0, -5,
+          0,  0,  0,  5,  5,  0,  0,  0,
+    ],
+    q: [
+        -20,-10,-10, -5, -5,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5,  5,  5,  5,  0,-10,
+         -5,  0,  5,  5,  5,  5,  0, -5,
+          0,  0,  5,  5,  5,  5,  0, -5,
+        -10,  5,  5,  5,  5,  5,  0,-10,
+        -10,  0,  5,  0,  0,  0,  0,-10,
+        -20,-10,-10, -5, -5,-10,-10,-20,
+    ],
+};
+// El rey quiere estar escondido en la esquina mientras hay damas y torres en
+// el tablero, y activo en el centro cuando ya no queda con qué darle mate de
+// un zarpazo — por eso son dos tablas, mezcladas según qué tan avanzada está
+// la partida (ver `faseDePartida`).
+const PST_REY_MEDIO = [
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -30,-40,-40,-50,-50,-40,-40,-30,
+    -20,-30,-30,-40,-40,-30,-30,-20,
+    -10,-20,-20,-20,-20,-20,-20,-10,
+     20, 20,  0,  0,  0,  0, 20, 20,
+     20, 30, 10,  0,  0, 10, 30, 20,
+];
+const PST_REY_FINAL = [
+    -50,-40,-30,-20,-20,-30,-40,-50,
+    -30,-20,-10,  0,  0,-10,-20,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 30, 40, 40, 30,-10,-30,
+    -30,-10, 20, 30, 30, 20,-10,-30,
+    -30,-30,  0,  0,  0,  0,-30,-30,
+    -50,-30,-30,-30,-30,-30,-30,-50,
+];
+const FILES_PST = "abcdefgh";
+function indicePst(casilla, color) {
+    const file = FILES_PST.indexOf(casilla[0]);
+    const rank = parseInt(casilla[1], 10);
+    // Blancas: a8 es el índice 0 (avanzan "hacia abajo" en la tabla). Negras
+    // miran la partida al revés, así que se refleja verticalmente.
+    return color === "w" ? (8 - rank) * 8 + file : (rank - 1) * 8 + file;
+}
+
+// Cuánto material "mayor" (sin peones ni reyes) queda en el tablero, entre 0
+// (final, cambiaron todas las piezas de peso) y 1 (recién empezada la
+// partida). Lo que trae cada bando al inicio: 2 caballos + 2 alfiles + 2
+// torres + 1 dama, con los valores de VALOR (unos 31.66 en esta escala).
+const MATERIAL_INICIAL_SIN_PEONES = 2 * VALOR.n + 2 * VALOR.b + 2 * VALOR.r + VALOR.q;
+function faseDePartida(piezas) {
+    let total = 0;
+    piezas.forEach((p) => {
+        if (p.types || p.type === "p" || p.type === "k") return;
+        total += VALOR[p.type] || 0;
+    });
+    return Math.min(1, total / (MATERIAL_INICIAL_SIN_PEONES * 2));
+}
 
 const MODALIDADES = {
     estandar: {
@@ -243,6 +382,17 @@ const MODALIDADES = {
         crear: () => adaptadorCiegas(Variantes.crear("ciegas")),
         tablero: "variante", ciegas: true,
     },
+    cartas: {
+        emoji: "🃏", titulo: "Ajedrez de Cartas",
+        resumen: "Ajedrez de siempre + una mano de cartas de un solo uso.",
+        crear: () => adaptadorCartas(CartasChess.Game.iniciar()),
+        tablero: "cartas",
+    },
+    duelo: {
+        emoji: "⚡", titulo: "Duelo Simultáneo",
+        resumen: "Los dos eligen su jugada a la vez, en secreto, y se revela junta.",
+        tablero: "duelo",
+    },
 };
 
 /* ---------------- Adaptadores ----------------
@@ -250,16 +400,44 @@ const MODALIDADES = {
    devuelve otro adaptador con la jugada hecha, sin tocar el original: por eso
    todos saben clonarse desde su propia posición serializada. */
 
-function materialDeTablero(leer, casillas) {
-    let total = 0;
+/* La evaluación de la posición para las blancas, en peones: no solo material,
+   también dónde está parada cada pieza (PST) y, en Crazyhouse, lo que hay en
+   la reserva de cada quien — una torre en la mano vale lo mismo que una en el
+   tablero, y el bot que no la contara jugaría como si no la tuviera. */
+function materialDeTablero(leer, casillas, pockets) {
+    const piezas = [];
     casillas.forEach((s) => {
         const p = leer(s);
-        if (!p) return;
+        if (p) piezas.push(Object.assign({ casilla: s }, p));
+    });
+    const fase = faseDePartida(piezas);
+    let total = 0, alfilesW = 0, alfilesB = 0;
+    piezas.forEach((p) => {
         const tipos = p.types || [p.type];
         let v = 0;
         tipos.forEach((t) => { v += VALOR[t] || 0; });
-        total += (p.color === "w" ? 1 : -1) * (v + (CENTRO[s] || 0));
+        if (p.types) {
+            // Pieza fusionada (Abrazos): no tiene una tabla de posición
+            // propia (no es "de siempre" un caballo o un alfil), así que se
+            // queda con el bono de centro genérico.
+            v += (CENTRO[p.casilla] || 0);
+        } else if (p.type === "k") {
+            const idx = indicePst(p.casilla, p.color);
+            v += (fase * PST_REY_MEDIO[idx] + (1 - fase) * PST_REY_FINAL[idx]) / 100;
+        } else if (PST[p.type]) {
+            v += PST[p.type][indicePst(p.casilla, p.color)] / 100;
+            if (p.type === "b") { if (p.color === "w") alfilesW++; else alfilesB++; }
+        }
+        total += (p.color === "w" ? 1 : -1) * v;
     });
+    if (alfilesW >= 2) total += 0.3;
+    if (alfilesB >= 2) total -= 0.3;
+    if (pockets) {
+        Crazyhouse.POCKET_TYPES.forEach((t) => {
+            total += (pockets.w[t] || 0) * VALOR[t];
+            total -= (pockets.b[t] || 0) * VALOR[t];
+        });
+    }
     return total;
 }
 
@@ -279,6 +457,10 @@ function adaptadorChess(juego) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorChess(copia) : null;
         },
         material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        // Sin esto el bot no distinguía "no tengo jugadas porque me dieron
+        // mate" de "no tengo jugadas porque es ahogado": las dos son "sin
+        // jugadas", pero una es pésima y la otra son tablas.
+        enJaque: () => juego.in_check(),
         jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => juego.game_over(),
         desenlace() {
@@ -291,17 +473,34 @@ function adaptadorChess(juego) {
     };
 }
 
+/* juego.moves() de Crazyhouse.Game delega sin más en chess.js: por su cuenta
+   NUNCA ofrece soltar una pieza de la reserva. Sin esto el bot "no sabía" que
+   podía hacer drops — la mitad de lo que hace especial a esta modalidad — y
+   jugaba como si tuviera menos piezas de las que en realidad tiene en mano. */
+function jugadasCrazyhouse(juego) {
+    const normales = juego.moves({ verbose: true });
+    const color = juego.turn();
+    const drops = [];
+    Crazyhouse.POCKET_TYPES.forEach((tipo) => {
+        if (!juego.pocket(color)[tipo]) return;
+        juego.dropSquares(tipo, color).forEach((sq) => drops.push({ drop: true, piece: tipo, to: sq }));
+    });
+    return normales.concat(drops);
+}
+
 function adaptadorCrazyhouse(juego) {
     return {
         motor: juego,
         turno: () => juego.turn(),
-        jugadas: () => juego.moves({ verbose: true }),
+        jugadas: () => jugadasCrazyhouse(juego),
         probar(j) {
             const copia = new Crazyhouse.Game(juego.fen());
-            return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCrazyhouse(copia) : null;
+            const hecho = j.drop ? copia.drop(j.piece, j.to) : copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+            return hecho ? adaptadorCrazyhouse(copia) : null;
         },
-        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
-        jugar(j) { return juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
+        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS, juego.pockets),
+        enJaque: () => juego.in_check(),
+        jugar(j) { return j.drop ? juego.drop(j.piece, j.to) : juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => juego.in_checkmate() || juego.in_stalemate() || juego.in_draw(),
         desenlace() {
             if (juego.in_checkmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
@@ -326,6 +525,7 @@ function adaptadorVariante(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorVariante(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => typeof motor.inCheck === "function" && motor.inCheck(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada() { return !motor.allMoves().length || !!motor.terminado; },
         desenlace() {
@@ -352,6 +552,7 @@ function adaptadorCiegas(motor) {
             return copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }) ? adaptadorCiegas(copia) : null;
         },
         material: () => materialDeTablero((s) => motor.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => motor.game.in_check(),
         jugar(j) { return motor.move({ from: j.from, to: j.to, promotion: j.promotion || "q" }); },
         terminada: () => motor.game.game_over(),
         desenlace() {
@@ -362,6 +563,143 @@ function adaptadorCiegas(motor) {
             return { fin: false };
         },
         posicion: () => motor.serialize(),
+    };
+}
+
+/* Ajedrez de Cartas: el ciclo de turno de siempre (mover) más, aparte, la
+   posibilidad de jugar una carta ANTES de mover — eso lo decide
+   jugarCartaBot() con una heurística, mutando el motor real directamente
+   (no hace falta que la búsqueda del bot conozca las cartas). `jugar()`
+   devuelve null en vez de {ok:false} para encajar con el resto de los
+   adaptadores, que usan null como señal de "jugada inválida". */
+function adaptadorCartas(juego) {
+    return {
+        motor: juego,
+        turno: () => juego.turn(),
+        jugadas: () => juego.legalMoves(),
+        probar(j) {
+            const copia = CartasChess.Game.fromJSON(juego.toJSON());
+            const r = copia.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+            return r.ok ? adaptadorCartas(copia) : null;
+        },
+        material: () => materialDeTablero((s) => juego.get(s), TODAS_LAS_CASILLAS),
+        enJaque: () => juego.inCheck(),
+        jugar(j) {
+            const r = juego.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+            return r.ok ? r : null;
+        },
+        terminada: () => juego.isGameOver(),
+        desenlace() {
+            if (juego.inCheckmate()) return { fin: true, ganador: juego.turn() === "w" ? "b" : "w", texto: "Jaque mate" };
+            if (juego.inStalemate()) return { fin: true, ganador: null, texto: "Ahogado: tablas" };
+            if (juego.inDraw()) return { fin: true, ganador: null, texto: "Tablas" };
+            return { fin: false };
+        },
+        posicion: () => juego.toJSON(),
+    };
+}
+
+// La pieza rival (o propia) más valiosa del tablero, sin contar el rey — la
+// que más conviene congelar o proteger con una carta.
+function piezaMasValiosaDe(motor, color) {
+    let mejor = null, mejorValor = -1;
+    TODAS_LAS_CASILLAS.forEach((sq) => {
+        const p = motor.get(sq);
+        if (!p || p.color !== color || p.type === "k") return;
+        const v = VALOR[p.type] || 0;
+        if (v > mejorValor) { mejorValor = v; mejor = sq; }
+    });
+    return mejor;
+}
+
+// Heurística de cartas del bot: se llama ANTES de calcular su jugada de
+// tablero, sobre el motor REAL (lo muta directamente con playCard). No
+// busca la mejor combinación posible — cada carta tiene una condición
+// simple y razonable, en el orden en que más suelen convenir.
+function jugarCartaBot(motor, color) {
+    const mano = motor.hands[color] || [];
+    if (!mano.length) return;
+    const rival = color === "w" ? "b" : "w";
+
+    if (mano.indexOf("ascenso") !== -1) {
+        const objetivo = TODAS_LAS_CASILLAS.find((sq) => {
+            const p = motor.get(sq);
+            if (!p || p.type !== "p" || p.color !== color) return false;
+            const rank = parseInt(sq[1], 10);
+            return color === "w" ? rank >= 6 : rank <= 3;
+        });
+        if (objetivo && motor.playCard(color, "ascenso", { square: objetivo, promotion: "q" }).ok) return;
+    }
+
+    if (mano.indexOf("refuerzo") !== -1) {
+        const candidatas = TODAS_LAS_CASILLAS.filter((sq) => {
+            if (motor.get(sq)) return false;
+            const rank = parseInt(sq[1], 10);
+            return color === "w" ? (rank >= 2 && rank <= 4) : (rank >= 5 && rank <= 7);
+        }).sort((a, b) => (CENTRO[b] || 0) - (CENTRO[a] || 0));
+        if (candidatas.length && motor.playCard(color, "refuerzo", { square: candidatas[0] }).ok) return;
+    }
+
+    if (mano.indexOf("congelar") !== -1) {
+        const objetivo = piezaMasValiosaDe(motor, rival);
+        if (objetivo && motor.playCard(color, "congelar", { square: objetivo }).ok) return;
+    }
+
+    if (mano.indexOf("escudo") !== -1) {
+        const objetivo = piezaMasValiosaDe(motor, color);
+        if (objetivo && motor.playCard(color, "escudo", { square: objetivo }).ok) return;
+    }
+
+    if (mano.indexOf("robo") !== -1 && (motor.hands[rival] || []).length > mano.length) {
+        if (motor.playCard(color, "robo", {}).ok) return;
+    }
+
+    if (mano.indexOf("salto") !== -1 && motor.inCheck()) {
+        if (motor.playCard(color, "salto", {}).ok) return;
+    }
+
+    // Doble turno vale la pena cuando hay algo grueso que capturar YA: la
+    // jugada obligada de esta ronda se come una pieza de peso y la siguiente
+    // (gracias a la carta) puede rematar o defender lo que quedó flojo. Se
+    // mira `motor.legalMoves()` en vez de tirar una moneda: es información
+    // que el motor ya tiene calculada, no hace falta simular nada.
+    if (mano.indexOf("doble") !== -1) {
+        const hayCapturaValiosa = motor.legalMoves().some((m) => m.captured && (VALOR[m.captured] || 0) >= 3);
+        if (hayCapturaValiosa && motor.playCard(color, "doble", {}).ok) return;
+    }
+    // Visión no toca el tablero, así que no hay ningún motivo para guardarla
+    // "por si acaso" — es la única carta que nunca puede salir mal jugarla ya.
+    if (mano.indexOf("vision") !== -1) {
+        motor.playCard(color, "vision", {});
+    }
+}
+
+/* Duelo Simultáneo: no hay "adaptador persistente" — el bot elige, de una
+   sola vez, la jugada que compromete al arrancar la ronda, sin saber qué va
+   a elegir el humano (es el sentido del commit/reveal). Por eso `jugadas()`
+   siempre mira al mismo color fijo (el del bot) y `probar()` no encadena una
+   segunda búsqueda: no hay "la respuesta del rival" que mirar todavía. Con
+   BotOscar esto colapsa a "elegir la jugada que más material deja después de
+   la propia", que es justo lo único que se puede calcular sin ver al rival. */
+function adaptadorDuelo(dueloGame, colorFijo) {
+    return {
+        turno: () => colorFijo,
+        jugadas: () => dueloGame.legalMovesFor(colorFijo),
+        probar(j) {
+            const clon = new Chess(dueloGame.fen());
+            const partes = clon.fen().split(" ");
+            partes[1] = colorFijo;
+            clon.load(partes.join(" "));
+            const hecho = clon.move({ from: j.from, to: j.to, promotion: j.promotion || "q" });
+            if (!hecho) return null;
+            return {
+                turno: () => (colorFijo === "w" ? "b" : "w"),
+                jugadas: () => [],
+                probar: () => null,
+                material: () => materialDeTablero((s) => clon.get(s), TODAS_LAS_CASILLAS),
+            };
+        },
+        material: () => materialDeTablero((s) => dueloGame.get(s), TODAS_LAS_CASILLAS),
     };
 }
 
@@ -408,13 +746,7 @@ const claseOpcion = (sel) => "w-full text-left px-4 py-3 rounded-xl border-2 tex
          : "border-brand-100 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300");
 
 /* ---------------- Jugar ---------------- */
-function empezar() {
-    const m = MODALIDADES[modalidad];
-    ad = m.crear();
-    historial = [];
-    terminada = false;
-    pensando = false;
-
+function prepararVistaJuego(m) {
     $("setup-view").classList.add("hidden");
     $("game-view").classList.remove("hidden");
     $("g-titulo").textContent = `${m.emoji} ${m.titulo}`;
@@ -422,7 +754,21 @@ function empezar() {
     $("panel-ciegas").classList.toggle("hidden", !m.ciegas);
     $("top-pocket").classList.toggle("hidden", m.tablero !== "crazyhouse");
     $("bottom-pocket").classList.toggle("hidden", m.tablero !== "crazyhouse");
+    $("cartas-rivales").classList.toggle("hidden", m.tablero !== "cartas");
+    $("cartas-propias").classList.toggle("hidden", m.tablero !== "cartas");
+    $("duelo-controles").classList.add("hidden"); // se destapa sola cuando haya una jugada lista para comprometer
+}
 
+function empezar() {
+    const m = MODALIDADES[modalidad];
+    prepararVistaJuego(m);
+    historial = [];
+    terminada = false;
+    pensando = false;
+
+    if (m.tablero === "duelo") { empezarDuelo(); return; }
+
+    ad = m.crear();
     montarTablero(m);
     pintarHistorial();
     actualizar();
@@ -436,7 +782,10 @@ function montarTablero(m) {
         interactive: true,
         myColor: miColor,
         onMove: alMover,
-        onPromotionNeeded: (info, cb) => cb("q"),
+        // El tablero llama a esto como (from, to, cb), no (info, cb) — pasarle
+        // menos parámetros de los que espera deja `cb` apuntando a la casilla
+        // de destino en vez de al callback, y `cb("q")` truena.
+        onPromotionNeeded: (from, to, cb) => cb("q"),
     };
     if (m.tablero === "niebla") {
         board = new NieblaBoard(el, Object.assign({ spectator: !!m.spectator }, comun));
@@ -444,6 +793,11 @@ function montarTablero(m) {
     } else if (m.tablero === "crazyhouse") {
         board = new CrazyhouseBoard(el, $("top-pocket"), $("bottom-pocket"), comun);
         board.loadFen(ad.posicion());
+    } else if (m.tablero === "cartas") {
+        board = new CartasBoard(el, $("cartas-propias"), $("cartas-rivales"), Object.assign({
+            onAscensoPieceNeeded: mostrarAscensoPicker,
+        }, comun));
+        board.loadState(ad.posicion());
     } else {
         board = new VarianteBoard(el, Object.assign({
             engine: ad.motor,
@@ -455,11 +809,43 @@ function montarTablero(m) {
     }
 }
 
+function mostrarAscensoPicker(square, callback) {
+    const modal = $("ascenso-modal");
+    const optionsEl = $("ascenso-options");
+    optionsEl.innerHTML = "";
+    let resuelto = false;
+    const glyphs = miColor === "b" ? { q: "♛", r: "♜", b: "♝", n: "♞" } : { q: "♕", r: "♖", b: "♗", n: "♘" };
+    [["q", glyphs.q], ["r", glyphs.r], ["b", glyphs.b], ["n", glyphs.n]].forEach(([tipo, glyph]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "w-12 h-12 text-3xl rounded-lg border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 bg-white dark:bg-brand-800 transition-colors";
+        btn.textContent = glyph;
+        btn.addEventListener("click", () => { if (resuelto) return; resuelto = true; modal.classList.add("hidden"); callback(tipo); });
+        optionsEl.appendChild(btn);
+    });
+    modal.classList.remove("hidden");
+}
+
 function alMover(info) {
-    if (terminada || pensando || ad.turno() !== miColor) { refrescar(); return; }
-    const hecho = ad.jugar(info);
-    if (!hecho) { refrescar(); return; }
-    anotar(hecho, info);
+    if (terminada || pensando) { refrescar(); return; }
+    const m = MODALIDADES[modalidad];
+    if (m.tablero === "variante") {
+        // El tablero comparte el mismo motor que `ad` (engine: ad.motor): la
+        // jugada humana YA se aplicó ahí mismo. Repetirla fallaría (la pieza
+        // ya no está en la casilla de origen) y desharía el movimiento.
+        anotar(info, info);
+        refrescar();
+        if (revisarFinal()) return;
+        setTimeout(turnoDelBot, BotOscar.demora(nivel));
+        return;
+    }
+    if (ad.turno() !== miColor) { refrescar(); return; }
+    // niebla/crazyhouse/cartas: el tablero lleva su PROPIO motor, separado del
+    // adaptador del bot — se sincroniza `ad` desde el estado que el tablero
+    // ya produjo.
+    if (m.tablero === "cartas") ad = adaptadorCartas(CartasChess.Game.fromJSON(board.state()));
+    else ad.motor.load(info.fen);
+    anotar(info, info);
     refrescar();
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
@@ -469,13 +855,17 @@ function turnoDelBot() {
     if (terminada || ad.turno() === miColor) return;
     pensando = true;
     actualizar();
+    if (MODALIDADES[modalidad].tablero === "cartas") jugarCartaBot(ad.motor, ad.turno());
     const jugada = BotOscar.jugar(ad, nivel);
     pensando = false;
     if (!jugada) { revisarFinal(); return; }
     const hecho = ad.jugar(jugada);
     anotar(hecho, jugada);
     refrescar();
-    revisarFinal();
+    if (revisarFinal()) return;
+    // "Doble turno" (Ajedrez de Cartas) le devuelve el turno a quien acaba de
+    // mover: si sigue siendo el del bot, que juegue otra vez.
+    if (ad.turno() !== miColor) setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
 
 function anotar(hecho, jugada) {
@@ -487,6 +877,7 @@ function anotar(hecho, jugada) {
 function refrescar() {
     const m = MODALIDADES[modalidad];
     if (m.tablero === "variante") board.load(ad.posicion());
+    else if (m.tablero === "cartas") board.loadState(ad.posicion());
     else board.loadFen(ad.posicion());
     actualizar();
 }
@@ -494,6 +885,15 @@ function refrescar() {
 function pintarHistorial() {
     const ol = $("historial");
     ol.innerHTML = "";
+    if (MODALIDADES[modalidad].tablero === "duelo") {
+        historial.forEach((linea) => {
+            const li = document.createElement("li");
+            li.className = "col-span-2 sm:col-span-3";
+            li.textContent = linea;
+            ol.appendChild(li);
+        });
+        return;
+    }
     for (let i = 0; i < historial.length; i += 2) {
         const li = document.createElement("li");
         li.textContent = `${i / 2 + 1}. ${historial[i]}${historial[i + 1] ? " " + historial[i + 1] : ""}`;
@@ -541,7 +941,7 @@ function avisar(texto, tipo) {
    español y en inglés y también las coordenadas (Cf3, Nf3, g1f3, 0-0). Es el
    mismo camino que usa la página de partida. */
 function jugarEscrita() {
-    if (terminada || pensando || ad.turno() !== miColor) return;
+    if (!ad || terminada || pensando || ad.turno() !== miColor) return;
     const texto = $("ciegas-input").value.trim();
     if (!texto) return;
     const hecho = ad.motor.moveText(texto);
@@ -552,6 +952,102 @@ function jugarEscrita() {
     if (revisarFinal()) return;
     setTimeout(turnoDelBot, BotOscar.demora(nivel));
 }
+
+/* ---------------- Duelo Simultáneo ----------------
+ * No usa el ciclo turno-por-turno de arriba: acá no hay "espera tu turno",
+ * los dos jugadores comprometen su jugada de la ronda sin ver la del otro
+ * (commit/reveal con hash+sal, ver js/duelo-engine.js) y las dos se aplican
+ * juntas en cuanto están las dos reveladas.
+ *
+ * El bot no tiene por qué esperar al humano para decidir la suya — no puede
+ * verla de todos modos —, así que la compromete apenas arranca la ronda; el
+ * humano puede tardar lo que quiera en elegir la suya mientras tanto. */
+let dueloBotSecreto = null, dueloMiSecreto = null;
+
+function botColorDuelo() { return miColor === "w" ? "b" : "w"; }
+
+function empezarDuelo() {
+    ad = null;
+    dueloBotSecreto = null;
+    dueloMiSecreto = null;
+    const el = $("board");
+    el.innerHTML = "";
+    board = new DueloBoard(el, {
+        interactive: true,
+        myColor: miColor,
+        onPromotionNeeded: (from, to, cb) => cb("q"),
+        onStagedChange: actualizarDuelo,
+    });
+    pintarHistorial();
+    nuevaRondaDuelo();
+}
+
+function nuevaRondaDuelo() {
+    dueloBotSecreto = null;
+    board.setInteractive(true);
+    actualizarDuelo();
+    const jugada = BotOscar.jugar(adaptadorDuelo(board.game, botColorDuelo()), nivel);
+    if (!jugada) return; // sin jugadas legales para el bot: la ronda ya está en jaque mate/ahogado, avanzarDuelo() no llegará a resolverse y el humano queda con el control
+    setTimeout(async () => {
+        const r = await board.game.commitMove(botColorDuelo(), { from: jugada.from, to: jugada.to, promotion: jugada.promotion });
+        if (r.ok) dueloBotSecreto = { move: r.move, salt: r.salt };
+        actualizarDuelo();
+        await avanzarDuelo();
+    }, BotOscar.demora(nivel));
+}
+
+// Revela lo que haga falta y resuelve la ronda en cuanto las dos jugadas
+// estén comprometidas — se llama después de cada compromiso (del bot y del
+// humano), y es segura de llamar de más: cada paso comprueba su propia
+// condición antes de actuar.
+async function avanzarDuelo() {
+    const g = board.game;
+    if (g.gameOver) return;
+    if (g.commit[botColorDuelo()] && !g.reveal[botColorDuelo()] && dueloBotSecreto && g.bothCommitted()) {
+        await g.revealMove(botColorDuelo(), dueloBotSecreto.move, dueloBotSecreto.salt);
+    }
+    if (g.commit[miColor] && !g.reveal[miColor] && dueloMiSecreto && g.bothCommitted()) {
+        await g.revealMove(miColor, dueloMiSecreto.move, dueloMiSecreto.salt);
+    }
+    if (g.bothRevealed()) {
+        const res = g.resolveRound();
+        dueloBotSecreto = null;
+        dueloMiSecreto = null;
+        historial.push(`Ronda ${res.lastRound.round}: blancas ${res.lastRound.w} · negras ${res.lastRound.b}${res.lastRound.choque ? " (choque)" : ""}`);
+        pintarHistorial();
+        board.selected = null;
+        board.staged = null;
+        board.locked = false;
+        board.render();
+        if (res.gameOver) {
+            terminada = true;
+            const gane = res.result === miColor;
+            avisar(res.result === "draw" ? "Tablas." : (gane ? "🎉 ¡Ganaste!" : "Ganó el bot — a la próxima."), gane ? "logro" : "fin");
+            $("duelo-controles").classList.add("hidden");
+            return;
+        }
+        nuevaRondaDuelo();
+    }
+}
+
+function actualizarDuelo() {
+    if (terminada) return;
+    const g = board.game;
+    $("duelo-controles").classList.toggle("hidden", !board.staged);
+    if (g.commit[miColor]) avisar("Ya comprometiste tu jugada — esperando a que se revele la ronda…", "normal");
+    else avisar("Elige tu jugada en secreto: el bot no la ve hasta que las dos estén comprometidas.", "normal");
+}
+
+$("duelo-confirmar").addEventListener("click", async () => {
+    if (!board.staged || board.game.commit[miColor]) return;
+    const r = await board.game.commitMove(miColor, board.staged);
+    if (!r.ok) { avisar(r.error, "error"); return; }
+    dueloMiSecreto = { move: r.move, salt: r.salt };
+    board.markLocked();
+    actualizarDuelo();
+    await avanzarDuelo();
+});
+$("duelo-cambiar").addEventListener("click", () => { board.clearStaged(); actualizarDuelo(); });
 
 /* ---------------- Arranque ---------------- */
 $("empezar-btn").addEventListener("click", empezar);

@@ -26,6 +26,7 @@ const BASE = process.env.BASE || "http://localhost:8777";
 const PAGINAS = [
     "/index.html", "/cursos.html", "/articulos.html", "/sobre-oscar.html", "/tablero.html",
     "/te-reto.html", "/campeones.html", "/tv.html", "/nivel-de-arbitraje.html", "/login.html",
+    "/bienvenida.html",
     "/juegos.html", "/bot.html", "/confites.html", "/ilumina-tablero.html", "/clases.html",
     "/admin.html", "/admin-jugador.html", "/admin-jugador.html", "/informes.html", "/sesion.html", "/arbitraje.html", "/configuracion.html",
     "/formularios.html", "/formulario.html", "/cobros.html", "/offline.html",
@@ -36,7 +37,10 @@ const PAGINAS = [
     "/articulos/la-clavada.html", "/cursos/fundamentos-del-ajedrez.html",
     "/cursos/el-mapa-de-los-finales.html", "/cursos/academia/index.html",
     "/entreno/index.html", "/entreno/diagnostico.html", "/entreno/mates.html", "/entreno/aperturas.html",
-    "/entreno/aprender.html", "/entreno/4x4.html", "/entreno/tactica.html",
+    "/entreno/aprender.html", "/entreno/estudio.html", "/entreno/4x4.html",
+    // entreno/tactica.html ya no se abre: sus ejercicios viven dentro de
+    // temas.html y esa dirección ahora solo redirige. Abrirla acá mediría el CSS
+    // de temas.html dos veces.
     "/entreno/temas.html", "/entreno/practicas.html", "/entreno/desafios.html",
     "/entreno/coordenadas.html", "/inscripcion.html",
 ];
@@ -51,7 +55,15 @@ const SIN_ESTILO = new Set([
     "example-card", "example-board-wrap",
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
+    "lesson-send-btn",
     "ficha-btn", "plan-btn",
+    /* Los cuatro exámenes de arbitraje (arbitraje.html y nivel-de-arbitraje.html):
+       cada uno lleva su <span> con cuántas preguntas trae, y ese número NO se
+       escribe a mano — lo rellena el propio banco con `totalPara(techo)`, así
+       que la página no puede prometer 24 preguntas y armar otra cantidad. La
+       clase se arma concatenando (`'.total-' + n.clave`) sobre NIVELES_EXAMEN,
+       que es por lo que buscar el literal en el código no las encuentra. */
+    "total-completo", "total-nacional", "total-fide", "total-internacional",
     // Clases descriptivas del set SVG de piezas (js/chess-piece-svg.js): vienen
     // en el <g class="white king"> de cada pieza tal como las trae el arte
     // original — nadie las usa para dar estilo, solo identifican qué es cada

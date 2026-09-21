@@ -50,9 +50,11 @@
         .casilla.inicio-libre:hover { transform: scale(1.06); }
         .coord-etiqueta { position: absolute; font-size: 9px; font-weight: 700; color: rgba(16,42,67,.55); pointer-events: none; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/tiempo-plataforma.js" data-activity="confites"></script>
+    <script src="js/tarea-en-curso.js" defer></script>
+    <script src="js/entreno-progress.js"></script>
     <script src="js/coordenadas-tablero.js"></script>
     <script src="js/progreso-usuario.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -189,6 +191,10 @@
  * js/progreso-usuario.js (hay que declararlas en sus CLAVES):
  *   confites_best         la mejor marca, con ayuda o sin ella
  *   confites_best_limpio  la mejor SIN pistas y SIN deshacer
+ *
+ * Cada ronda terminada además se registra en training_progress ("confites",
+ * ver js/entreno-progress.js): es lo que hace que una ronda de acá cuente
+ * para la racha de días de logros.html, igual que cualquier otro ejercicio.
  */
 const FILAS = [8, 7, 6, 5, 4, 3, 2, 1];
 const COLUMNAS = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -297,6 +303,7 @@ function revisarFinal() {
   }
   terminado = true;
   guardarMarca();
+  if (window.EntrenoProgress) EntrenoProgress.log("confites", { pisadas: pisadas.size, limpio: !conAyuda });
   const n = pisadas.size;
   avisar(`${cierre(n)} Recogiste <strong>${n} de 64</strong> confites${conAyuda ? " (con ayuda)" : ""}.`, n === 64 ? "logro" : "fin");
   pintar();
@@ -385,6 +392,7 @@ $("btn-pista").addEventListener("click", pista);
 
 (async function init() {
   construirTablero();
+  if (window.EntrenoProgress) { try { await EntrenoProgress.init(); } catch (e) {} }
   if (window.ProgresoUsuario) { try { await ProgresoUsuario.init(); } catch (e) {} }
   pintarRecord();
   pintar();

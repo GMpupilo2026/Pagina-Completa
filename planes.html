@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Planes de clase — Ajedrez Integral</title>
+    <meta name="description" content="El profesor prepara la clase antes de darla: las posiciones, las lecciones y sus notas, en orden.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/posicion-valida.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">📋 Planes de clase</h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-8">Prepara la clase antes de darla. En la sesión en vivo cada renglón trae su botón para mandarlo al tablero, y el mismo plan se vuelve a dar con otro grupo.</p>
+
+            <!-- Quien no da clase no tiene nada que hacer acá. La base lo impide
+                 igual (no puede insertar un plan); esto solo evita enseñarle una
+                 página que no le sirve. -->
+            <div id="sin-permiso" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-brand-500 dark:text-brand-300">Los planes de clase son para quien da clase. Si crees que deberías verlos, pídele a la persona administradora que revise tu cuenta.</p>
+            </div>
+
+            <div id="cuerpo" class="hidden grid gap-6 lg:grid-cols-[20rem_1fr] items-start">
+                <!-- Los planes que ya tiene -->
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus planes</h2>
+                    <ul id="lista-planes" class="grid gap-1.5 mb-4"></ul>
+                    <p id="sin-planes" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Todavía no has armado ninguno.</p>
+
+                    <!-- Los que otros profesores te comparten. Arranca oculta y
+                         solo se destapa si hay alguno: un apartado que diga
+                         "nadie te ha compartido nada" es ruido en todas las
+                         visitas menos una. -->
+                    <div id="bloque-compartidos" class="hidden border-t border-brand-100 dark:border-brand-800 pt-4 mb-4">
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Compartidos contigo</h2>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los puedes dar y duplicar. Editarlos es de quien los escribió.</p>
+                        <ul id="lista-compartidos" class="grid gap-1.5"></ul>
+                    </div>
+
+                    <form id="form-plan" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-2">
+                        <label for="p-titulo" class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide">Plan nuevo</label>
+                        <input id="p-titulo" type="text" maxlength="200" required placeholder="Ej. Finales de rey y peón" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear</button>
+                        <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                    </form>
+                </section>
+
+                <!-- El plan abierto -->
+                <section id="detalle" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                    <div class="flex items-start justify-between gap-3 flex-wrap mb-1">
+                        <div class="min-w-0">
+                            <h2 id="detalle-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+                            <p id="detalle-autor" class="hidden text-xs text-brand-450 dark:text-brand-350"></p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" id="duplicar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" title="Copiarlo entero para darlo a otro grupo">⧉ Duplicar</button>
+                            <button type="button" id="borrar-plan" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar plan</button>
+                        </div>
+                    </div>
+                    <label for="p-notas" class="sr-only">Notas del plan</label>
+                    <textarea id="p-notas" rows="2" maxlength="4000" placeholder="Cómo quieres dar esta clase (solo lo ves tú)." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm mb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                    <p id="detalle-msg" class="text-xs text-brand-500 dark:text-brand-300 mb-4" aria-live="polite"></p>
+
+                    <!-- Compartir. Solo aparece en un plan tuyo: el material de
+                         un colega no es tuyo para repartirlo. -->
+                    <div id="bloque-compartir" class="hidden bg-brand-50 dark:bg-brand-950 rounded-xl p-4 mb-4">
+                        <h3 class="font-semibold text-brand-700 dark:text-brand-200 mb-1">🤝 Compartir este plan</h3>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Quien lo reciba lo puede dar en su clase y duplicarlo. Editarlo y borrarlo siguen siendo tuyos.</p>
+
+                        <label class="flex items-start gap-2 text-sm text-brand-700 dark:text-brand-200 mb-3 cursor-pointer">
+                            <input type="checkbox" id="c-todos" class="mt-0.5 w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>Con <strong>todo el equipo docente</strong><span class="block text-xs font-normal text-brand-450 dark:text-brand-350">También con quien entre después. Si lo marcas, no hace falta ir nombrando a nadie.</span></span>
+                        </label>
+
+                        <div id="c-elegidos-bloque">
+                            <p class="text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">O con quien elijas</p>
+                            <ul id="c-etiquetas" class="flex flex-wrap gap-1.5 mb-2"></ul>
+                            <p id="c-nadie" class="hidden text-xs text-brand-450 dark:text-brand-350 mb-2">Todavía no lo compartes con nadie.</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <label for="c-agregar" class="sr-only">Sumar un profesor</label>
+                                <select id="c-agregar" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                                <button type="button" id="c-sumar" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir</button>
+                            </div>
+                        </div>
+                        <p id="c-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                    </div>
+
+                    <h3 class="font-semibold text-brand-700 dark:text-brand-200 mb-2">Qué vas a dar, en orden</h3>
+                    <ol id="lista-items" class="grid gap-2 mb-4"></ol>
+                    <p id="sin-items" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-4">Este plan todavía está vacío. Agrega la primera posición abajo.</p>
+
+                    <p id="solo-lectura" class="hidden text-sm text-brand-450 dark:text-brand-350 border-t border-brand-100 dark:border-brand-800 pt-4">Este plan lo escribió otra persona: lo puedes dar tal cual o duplicarlo para cambiarlo a tu gusto.</p>
+
+                    <form id="form-item" class="border-t border-brand-100 dark:border-brand-800 pt-4 grid gap-3">
+                        <div class="grid gap-3 sm:grid-cols-[10rem_1fr]">
+                            <div>
+                                <label for="i-tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué es</label>
+                                <select id="i-tipo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            </div>
+                            <div>
+                                <label for="i-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo lo llamas</label>
+                                <input id="i-titulo" type="text" maxlength="200" required placeholder="Ej. La oposición" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <p id="i-ayuda" class="text-xs text-brand-450 dark:text-brand-350"></p>
+
+                        <div id="campo-posicion" class="grid gap-3">
+                            <div>
+                                <label for="i-fen" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Posición (FEN)</label>
+                                <input id="i-fen" type="text" maxlength="120" placeholder="8/8/8/4k3/8/4K3/4P3/8 w - - 0 1" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">La copias del editor de la clase en vivo, o de donde la tengas.</p>
+                            </div>
+                            <div>
+                                <label for="i-pregunta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Pregunta <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                                <input id="i-pregunta" type="text" maxlength="500" placeholder="Ej. ¿Cómo gana el blanco?" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Te la recuerda en la clase y el renglón trae el botón para abrir la pregunta en el tablero. El enunciado se lo dices tú: los alumnos contestan moviendo, como en Táctica.</p>
+                            </div>
+                        </div>
+
+                        <div id="campo-leccion" class="hidden grid gap-3 sm:grid-cols-[1fr_8rem]">
+                            <div>
+                                <label for="i-curso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Curso</label>
+                                <select id="i-curso" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            </div>
+                            <div>
+                                <label for="i-leccion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lección n.º</label>
+                                <input id="i-leccion" type="number" min="1" max="200" value="1" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+
+                        <div id="campo-nota" class="hidden">
+                            <label for="i-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tu nota</label>
+                            <textarea id="i-nota" rows="2" maxlength="2000" placeholder="Ej. No pasar de aquí si no entendieron la oposición." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar al plan</button>
+                            <p id="item-msg" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+/* El armador de planes de clase.
+ *
+ * Lo que se arma acá se da en `sesion.html`: cada renglón lleva su botón para
+ * mandarlo al tablero. Por eso la POSICIÓN se valida al guardarla y no al
+ * usarla — con la misma función que usa la clase en vivo
+ * (`js/posicion-valida.js`): una posición rota guardada en el plan no da ningún
+ * error hasta que el profesor la manda al tablero, delante de todos.
+ */
+let session = null, profile = null, planes = [], planAbierto = null, items = [];
+/* Los que otros comparten conmigo y a quién se lo comparto yo. Van aparte de
+   `planes` a propósito: lo que se puede hacer con cada uno es distinto, y
+   mezclarlos en una sola lista era ofrecerle "Borrar plan" sobre el material de
+   una colega — la base lo rechazaría, pero el fallo lo descubriría ella. */
+let compartidosConmigo = [], equipo = [], compartidoCon = [];
+
+const $ = (id) => document.getElementById(id);
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { window.location.href = "login.html"; return; }
+    const { data: perfil } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    if (!perfil) { $("loading").textContent = "No se pudo cargar tu perfil."; return; }
+    profile = perfil;
+
+    $("loading").classList.add("hidden");
+    $("app").classList.remove("hidden");
+
+    // Como en el resto del sitio, is_admin va con los profesores.
+    if (!(profile.role === "profesor" || profile.is_admin === true)) {
+        $("sin-permiso").classList.remove("hidden");
+        return;
+    }
+    $("cuerpo").classList.remove("hidden");
+
+    PlanClase.TIPOS.forEach((t) => {
+        const o = document.createElement("option");
+        o.value = t.id;
+        o.textContent = t.icono + " " + t.etiqueta;
+        $("i-tipo").appendChild(o);
+    });
+    $("i-tipo").addEventListener("change", pintarCamposDelTipo);
+    pintarCamposDelTipo();
+    await cargarCursos();
+
+    $("form-plan").addEventListener("submit", crearPlan);
+    $("form-item").addEventListener("submit", agregarItem);
+    $("duplicar-plan").addEventListener("click", duplicar);
+    $("borrar-plan").addEventListener("click", borrarPlan);
+    // Las notas del plan se guardan al salir del campo, no con un botón: es un
+    // campo que se toca de pasada mientras se arma el resto.
+    $("p-notas").addEventListener("blur", guardarNotas);
+    $("c-todos").addEventListener("change", cambiarCompartidoTodos);
+    $("c-sumar").addEventListener("click", sumarProfesor);
+
+    await cargarEquipo();
+    await cargarPlanes();
+    await cargarCompartidosConmigo();
+}
+
+/* El equipo docente sale de una función de la base y no de `profiles`: la RLS no
+   le deja a un profesor ver a sus colegas. Si falla, se dice y el resto de la
+   página sigue funcionando — lo que no se puede es ofrecer una lista vacía como
+   si de verdad no hubiera nadie. */
+async function cargarEquipo() {
+    try {
+        equipo = await PlanClase.equipoDocente(sb);
+    } catch (e) {
+        equipo = [];
+        $("c-msg").textContent = "No se pudo cargar el equipo docente: " + e.message;
+    }
+}
+
+async function cargarCompartidosConmigo() {
+    try {
+        compartidosConmigo = await PlanClase.planesCompartidosConmigo(sb);
+    } catch (e) {
+        compartidosConmigo = [];
+        $("plan-msg").textContent = "No se pudieron cargar los planes compartidos: " + e.message;
+    }
+    pintarCompartidosConmigo();
+}
+
+function pintarCompartidosConmigo() {
+    const lista = $("lista-compartidos");
+    lista.innerHTML = "";
+    $("bloque-compartidos").classList.toggle("hidden", compartidosConmigo.length === 0);
+    compartidosConmigo.forEach((p) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.plan = p.id;
+        b.className = claseDeBotonDePlan(planAbierto && planAbierto.id === p.id);
+        const t = document.createElement("span");
+        t.className = "block";
+        t.textContent = p.titulo;
+        const a = document.createElement("span");
+        a.className = "block text-xs font-normal opacity-80";
+        // El nombre lo escribió una persona: siempre por textContent.
+        a.textContent = "de " + (p.autor || "otro profesor");
+        b.append(t, a);
+        b.addEventListener("click", () => abrirPlan(p.id));
+        li.appendChild(b);
+        lista.appendChild(li);
+    });
+}
+
+const claseDeBotonDePlan = (activo) =>
+    "w-full text-left text-sm px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
+    (activo ? "bg-accent-500 text-brand-900 font-semibold"
+            : "bg-brand-50 dark:bg-brand-950 hover:bg-brand-100 dark:hover:bg-brand-800 text-brand-700 dark:text-brand-200");
+
+/* Los cursos salen del mismo catálogo que las tarjetas de cursos.html, para no
+   tener una segunda lista que se vaya quedando vieja. */
+async function cargarCursos() {
+    const sel = $("i-curso");
+    try {
+        const res = await fetch("herramientas/cursos/catalogo.json");
+        const catalogo = await res.json();
+        (catalogo.cursos || catalogo || []).forEach((c) => {
+            const o = document.createElement("option");
+            o.value = c.slug;
+            o.textContent = c.titulo || c.slug;
+            sel.appendChild(o);
+        });
+    } catch (e) {
+        // Sin catálogo se sigue pudiendo armar el plan con posiciones y notas:
+        // lo que no se puede es inventar una lista de cursos.
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = "(no se pudo cargar la lista de cursos)";
+        sel.appendChild(o);
+    }
+}
+
+function pintarCamposDelTipo() {
+    const tipo = $("i-tipo").value;
+    $("campo-posicion").classList.toggle("hidden", tipo !== "posicion");
+    $("campo-leccion").classList.toggle("hidden", tipo !== "leccion");
+    $("campo-nota").classList.toggle("hidden", tipo !== "nota");
+    $("i-ayuda").textContent = PlanClase.tipoDe(tipo).ayuda;
+}
+
+async function cargarPlanes() {
+    try {
+        planes = await PlanClase.listarPlanes(sb, profile.id);
+    } catch (e) {
+        $("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
+        return;
+    }
+    const lista = $("lista-planes");
+    lista.innerHTML = "";
+    $("sin-planes").classList.toggle("hidden", planes.length > 0);
+    planes.forEach((p) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.plan = p.id;
+        b.className = claseDeBotonDePlan(planAbierto && planAbierto.id === p.id);
+        b.textContent = p.titulo;
+        b.addEventListener("click", () => abrirPlan(p.id));
+        li.appendChild(b);
+        lista.appendChild(li);
+    });
+    // Un plan compartido también se puede tener abierto: no se cierra por no
+    // estar en la lista propia.
+    const abiertoSigue = planAbierto && (planes.some((p) => p.id === planAbierto.id)
+        || compartidosConmigo.some((p) => p.id === planAbierto.id));
+    if (planAbierto && !abiertoSigue) cerrarPlan();
+    pintarCompartidosConmigo();
+}
+
+function cerrarPlan() {
+    planAbierto = null;
+    items = [];
+    $("detalle").classList.add("hidden");
+}
+
+async function abrirPlan(id) {
+    planAbierto = planes.find((p) => p.id === id)
+        || compartidosConmigo.find((p) => p.id === id) || null;
+    if (!planAbierto) return;
+    const mio = PlanClase.esMio(planAbierto, profile.id);
+    $("detalle").classList.remove("hidden");
+    $("detalle-titulo").textContent = planAbierto.titulo;
+    $("p-notas").value = planAbierto.notas || "";
+    $("detalle-msg").textContent = "";
+    $("item-msg").textContent = "";
+    pintarModoDelPlan(mio);
+    if (mio) await cargarCompartidoCon(planAbierto.id);
+    try {
+        items = await PlanClase.itemsDe(sb, id);
+    } catch (e) {
+        $("detalle-msg").textContent = "No se pudieron cargar los renglones: " + e.message;
+        items = [];
+    }
+    pintarItems();
+    await cargarPlanes();
+}
+
+function pintarItems() {
+    const lista = $("lista-items");
+    const mio = planAbierto ? PlanClase.esMio(planAbierto, profile.id) : true;
+    lista.innerHTML = "";
+    $("sin-items").classList.toggle("hidden", items.length > 0);
+    items.forEach((it, i) => {
+        const li = document.createElement("li");
+        li.dataset.itemId = it.id;
+        li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 flex items-start justify-between gap-2 flex-wrap";
+
+        const izq = document.createElement("div");
+        izq.className = "min-w-0 flex-1";
+        const t = document.createElement("p");
+        t.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 break-words";
+        t.textContent = PlanClase.resumen(it);
+        izq.appendChild(t);
+        const detalle = it.pregunta || it.nota || it.fen;
+        if (detalle) {
+            const d = document.createElement("p");
+            d.className = "text-xs text-brand-450 dark:text-brand-350 break-words" + (it.fen && !it.pregunta && !it.nota ? " font-mono" : "");
+            d.textContent = detalle;
+            izq.appendChild(d);
+        }
+        li.appendChild(izq);
+
+        // En el plan de una colega no se pintan reordenar ni quitar. La base los
+        // rechazaría igual, pero un botón que va a fallar es peor que no tenerlo.
+        if (!mio) { lista.appendChild(li); return; }
+
+        const acciones = document.createElement("div");
+        acciones.className = "flex items-center gap-1 shrink-0";
+        const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40";
+
+        const subir = document.createElement("button");
+        subir.type = "button"; subir.className = clases; subir.textContent = "↑";
+        subir.title = "Subir este renglón";
+        subir.setAttribute("aria-label", "Subir: " + it.titulo);
+        subir.disabled = i === 0;
+        subir.addEventListener("click", () => mover(it.id, -1));
+
+        const bajar = document.createElement("button");
+        bajar.type = "button"; bajar.className = clases; bajar.textContent = "↓";
+        bajar.title = "Bajar este renglón";
+        bajar.setAttribute("aria-label", "Bajar: " + it.titulo);
+        bajar.disabled = i === items.length - 1;
+        bajar.addEventListener("click", () => mover(it.id, 1));
+
+        const quitar = document.createElement("button");
+        quitar.type = "button"; quitar.className = clases; quitar.textContent = "✖";
+        quitar.title = "Quitar del plan";
+        quitar.setAttribute("aria-label", "Quitar: " + it.titulo);
+        quitar.addEventListener("click", () => quitarItem(it.id));
+
+        acciones.append(subir, bajar, quitar);
+        li.appendChild(acciones);
+        lista.appendChild(li);
+    });
+}
+
+/* Qué se ve del plan abierto según de quién sea. Se pinta ENTERO cada vez que se
+   abre uno, en vez de ir prendiendo y apagando lo que cambió: así no hay que
+   acordarse de limpiar lo del anterior, que es justo el descuido que dejaría el
+   botón de borrar encima del material de una colega. */
+function pintarModoDelPlan(mio) {
+    $("detalle-autor").classList.toggle("hidden", mio);
+    if (!mio) {
+        $("detalle-autor").textContent = "Lo escribió " + (planAbierto.autor || "otro profesor");
+    }
+    $("borrar-plan").classList.toggle("hidden", !mio);
+    $("bloque-compartir").classList.toggle("hidden", !mio);
+    $("form-item").classList.toggle("hidden", !mio);
+    $("solo-lectura").classList.toggle("hidden", mio);
+    // Las notas del plan de una colega se leen —explican cómo darlo— pero no se
+    // escriben. Va `readOnly` y no `disabled`: un campo desactivado sale del
+    // recorrido del teclado y quien no ve la pantalla no se enteraría de que
+    // están ahí.
+    $("p-notas").readOnly = !mio;
+    $("p-notas").classList.toggle("opacity-70", !mio);
+}
+
+async function cargarCompartidoCon(planId) {
+    try {
+        compartidoCon = await PlanClase.compartidosDe(sb, planId);
+        $("c-msg").textContent = "";
+    } catch (e) {
+        compartidoCon = [];
+        $("c-msg").textContent = "No se pudo leer con quién lo compartes: " + e.message;
+    }
+    pintarCompartir();
+}
+
+function pintarCompartir() {
+    const todos = planAbierto ? planAbierto.compartido_todos === true : false;
+    $("c-todos").checked = todos;
+    // Con "todo el equipo" puesto, elegir de a uno no agrega nada: ya lo ven
+    // todos. Se esconde en vez de dejar un control que no cambia nada.
+    $("c-elegidos-bloque").classList.toggle("hidden", todos);
+
+    const ul = $("c-etiquetas");
+    ul.innerHTML = "";
+    $("c-nadie").classList.toggle("hidden", todos || compartidoCon.length > 0);
+    compartidoCon.forEach((id) => {
+        const quien = equipo.find((p) => p.id === id);
+        const li = document.createElement("li");
+        li.className = "inline-flex items-center gap-1 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-full pl-3 pr-1 py-1 text-xs text-brand-700 dark:text-brand-200";
+        const n = document.createElement("span");
+        n.textContent = quien ? quien.nombre : "Profesor";
+        const x = document.createElement("button");
+        x.type = "button";
+        x.className = "w-5 h-5 flex items-center justify-center rounded-full hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        x.textContent = "✕";
+        x.setAttribute("aria-label", "Dejar de compartir con " + (quien ? quien.nombre : "este profesor"));
+        x.addEventListener("click", () => quitarProfesor(id));
+        li.append(n, x);
+        ul.appendChild(li);
+    });
+
+    const sel = $("c-agregar");
+    sel.innerHTML = "";
+    const libres = equipo.filter((p) => !compartidoCon.includes(p.id));
+    if (!libres.length) {
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = equipo.length ? "Ya lo compartes con todos" : "No hay otros profesores";
+        sel.appendChild(o);
+        $("c-sumar").disabled = true;
+        return;
+    }
+    $("c-sumar").disabled = false;
+    libres.forEach((pr) => {
+        const o = document.createElement("option");
+        o.value = pr.id;
+        o.textContent = pr.nombre + (pr.es_admin ? " 👑" : "");
+        sel.appendChild(o);
+    });
+}
+
+async function cambiarCompartidoTodos() {
+    if (!planAbierto) return;
+    const valor = $("c-todos").checked;
+    $("c-msg").textContent = "Guardando…";
+    try {
+        planAbierto = Object.assign({}, planAbierto,
+            await PlanClase.actualizarPlan(sb, planAbierto.id, { compartido_todos: valor }));
+        planes = planes.map((p) => (p.id === planAbierto.id ? planAbierto : p));
+        $("c-msg").textContent = valor
+            ? "Lo ve todo el equipo docente."
+            : "Ya no lo ve todo el equipo. Sigue compartido con quien elegiste.";
+        pintarCompartir();
+    } catch (err) {
+        // Si no se guardó, la casilla tiene que volver a decir la verdad.
+        $("c-todos").checked = !valor;
+        $("c-msg").textContent = "No se pudo guardar: " + err.message;
+    }
+}
+
+async function sumarProfesor() {
+    if (!planAbierto) return;
+    const id = $("c-agregar").value;
+    if (!id) return;
+    $("c-msg").textContent = "Compartiendo…";
+    try {
+        await PlanClase.compartirCon(sb, planAbierto.id, id);
+        compartidoCon = compartidoCon.concat([id]);
+        pintarCompartir();
+        const quien = equipo.find((p) => p.id === id);
+        $("c-msg").textContent = "Compartido con " + (quien ? quien.nombre : "ese profesor") + ".";
+    } catch (err) {
+        $("c-msg").textContent = "No se pudo compartir: " + err.message;
+    }
+}
+
+async function quitarProfesor(id) {
+    if (!planAbierto) return;
+    try {
+        await PlanClase.dejarDeCompartir(sb, planAbierto.id, id);
+        compartidoCon = compartidoCon.filter((x) => x !== id);
+        pintarCompartir();
+        $("c-msg").textContent = "Ya no lo comparte.";
+    } catch (err) {
+        $("c-msg").textContent = "No se pudo quitar: " + err.message;
+    }
+}
+
+async function crearPlan(e) {
+    e.preventDefault();
+    const titulo = $("p-titulo").value.trim();
+    if (!titulo) return;
+    $("plan-msg").textContent = "Creando…";
+    try {
+        const nuevo = await PlanClase.crearPlan(sb, profile.id, titulo, null);
+        $("p-titulo").value = "";
+        $("plan-msg").textContent = "";
+        planes.unshift(nuevo);
+        await abrirPlan(nuevo.id);
+    } catch (err) {
+        $("plan-msg").textContent = "No se pudo crear: " + err.message;
+    }
+}
+
+async function guardarNotas() {
+    if (!planAbierto || !PlanClase.esMio(planAbierto, profile.id)) return;
+    const notas = $("p-notas").value.trim();
+    if ((planAbierto.notas || "") === notas) return;
+    try {
+        planAbierto = await PlanClase.actualizarPlan(sb, planAbierto.id, { notas: notas || null });
+        planes = planes.map((p) => (p.id === planAbierto.id ? planAbierto : p));
+        $("detalle-msg").textContent = "Notas guardadas.";
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudieron guardar las notas: " + err.message;
+    }
+}
+
+async function agregarItem(e) {
+    e.preventDefault();
+    if (!planAbierto) return;
+    const tipo = $("i-tipo").value;
+    const titulo = $("i-titulo").value.trim();
+    if (!titulo) { $("item-msg").textContent = "Ponle un nombre al renglón."; return; }
+
+    const item = { tipo, titulo, orden: items.length };
+    if (tipo === "posicion") {
+        const fen = $("i-fen").value.trim();
+        if (!fen) { $("item-msg").textContent = "Pega la posición en FEN."; return; }
+        // La misma pregunta que hace la clase en vivo, pero AHORA: enterarse
+        // aquí cuesta una corrección; enterarse allá cuesta la clase.
+        const motivo = PosicionValida.motivo(fen);
+        if (motivo) { $("item-msg").textContent = motivo; return; }
+        item.fen = fen;
+        item.pregunta = $("i-pregunta").value.trim() || null;
+    } else if (tipo === "leccion") {
+        const curso = $("i-curso").value;
+        if (!curso) { $("item-msg").textContent = "Elige el curso."; return; }
+        item.curso = curso;
+        // En la base y en los visores la primera lección es la 0; en pantalla se
+        // numera desde 1, que es como la nombra el profesor.
+        item.leccion = Math.max(1, parseInt($("i-leccion").value, 10) || 1) - 1;
+    } else {
+        item.nota = $("i-nota").value.trim() || null;
+    }
+
+    $("item-msg").textContent = "Guardando…";
+    try {
+        const nuevo = await PlanClase.agregarItem(sb, planAbierto.id, item);
+        items.push(nuevo);
+        pintarItems();
+        $("i-titulo").value = "";
+        $("i-fen").value = "";
+        $("i-pregunta").value = "";
+        $("i-nota").value = "";
+        $("item-msg").textContent = "Agregado.";
+    } catch (err) {
+        $("item-msg").textContent = "No se pudo agregar: " + err.message;
+    }
+}
+
+async function mover(id, direccion) {
+    try {
+        items = await PlanClase.moverItem(sb, items, id, direccion);
+        pintarItems();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo reordenar: " + err.message;
+    }
+}
+
+async function quitarItem(id) {
+    try {
+        await PlanClase.borrarItem(sb, id);
+        items = items.filter((x) => x.id !== id);
+        pintarItems();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo quitar: " + err.message;
+    }
+}
+
+async function duplicar() {
+    if (!planAbierto) return;
+    $("detalle-msg").textContent = "Duplicando…";
+    try {
+        const copia = await PlanClase.duplicarPlan(sb, profile.id, planAbierto);
+        planes.unshift(copia);
+        await abrirPlan(copia.id);
+        $("detalle-msg").textContent = "Listo: la copia es tuya y la puedes cambiar.";
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo duplicar: " + err.message;
+    }
+}
+
+/* Borrar un plan se lleva sus renglones, así que el paso de confirmación va en
+   el propio botón y no en un diálogo del navegador, que en el celular tapa la
+   pantalla. Mismo patrón que la bitácora. */
+async function borrarPlan() {
+    if (!planAbierto) return;
+    const btn = $("borrar-plan");
+    if (btn.dataset.confirmando !== "1") {
+        btn.dataset.confirmando = "1";
+        btn.textContent = "¿Seguro? Borrar plan";
+        setTimeout(() => {
+            if (btn.dataset.confirmando === "1") { btn.dataset.confirmando = ""; btn.textContent = "Borrar plan"; }
+        }, 4000);
+        return;
+    }
+    btn.dataset.confirmando = "";
+    btn.textContent = "Borrar plan";
+    try {
+        await PlanClase.borrarPlan(sb, planAbierto.id);
+        planes = planes.filter((p) => p.id !== planAbierto.id);
+        cerrarPlan();
+        await cargarPlanes();
+    } catch (err) {
+        $("detalle-msg").textContent = "No se pudo borrar: " + err.message;
+    }
+}
+
+init();
+    </script>
+</body>
+</html>

@@ -89,7 +89,7 @@ def portada(curso):
             '                    </ol>\n'
             '                </div>' % (bloque["n"], escapar(bloque["titulo"]), inicio, items))
 
-    articulo = '''    <article class="pt-28 pb-16">
+    articulo = '''    <article class="pt-8 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="../cursos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Volver a Cursos</a>
             <span class="text-xs text-accent-600 font-semibold uppercase tracking-wide">{nivel}</span>
@@ -122,8 +122,8 @@ def portada(curso):
             </div>
 
             <div class="mt-10 bg-brand-800 dark:bg-brand-900 rounded-2xl p-6 text-center hidden" id="course-login-cta" hidden>
-                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Academia</p>
-                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Academia para ver las {total} lecciones completas de este curso, con sus recursos descargables.</p>
+                <p class="text-white font-serif text-lg font-bold mb-2">Contenido para alumnos de Ajedrez Integral</p>
+                <p class="text-brand-200 text-sm mb-4">Inicia sesión con tu cuenta de Ajedrez Integral para ver las {total} lecciones completas de este curso, con sus recursos descargables.</p>
                 <a href="../login.html?next=cursos/{slug}.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Iniciar sesión →</a>
             </div>
 
@@ -146,12 +146,23 @@ def portada(curso):
         anterior_href=curso["anterior"]["href"], anterior_titulo=escapar(curso["anterior"]["titulo"]),
         siguiente_href=curso["siguiente"]["href"], siguiente_titulo=escapar(curso["siguiente"]["titulo"]))
 
-    salida = re.sub(r'<article class="pt-28 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
+    salida = re.sub(r'<article class="pt-8 pb-16">.*?</article>', lambda m: articulo, base, flags=re.S)
     salida = salida.replace("<title>Finales Prácticos — Ajedrez Integral</title>",
                             "<title>%s — Ajedrez Integral</title>" % escapar(titulo))
+    descripcion_meta = "Temario completo del curso %s: %s" % (titulo, curso["resumen"])
     salida = re.sub(r'<meta name="description" content="[^"]*">',
-                    '<meta name="description" content="Temario completo del curso %s: %s">'
-                    % (escapar(titulo), escapar(curso["resumen"])), salida, count=1)
+                    '<meta name="description" content="%s">' % escapar(descripcion_meta), salida, count=1)
+    # El molde (finales-practicos.html) trae SU PROPIO canonical/og — clonarlo
+    # sin corregirlos deja el curso nuevo compartiéndose con la miniatura y la
+    # descripción de "Finales Prácticos", sin que nada avise.
+    salida = re.sub(r'<link rel="canonical" href="[^"]*">',
+                    '<link rel="canonical" href="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
+    salida = re.sub(r'<meta property="og:title" content="[^"]*">',
+                    '<meta property="og:title" content="%s — Ajedrez Integral">' % escapar(titulo), salida)
+    salida = re.sub(r'<meta property="og:description" content="[^"]*">',
+                    '<meta property="og:description" content="%s">' % escapar(descripcion_meta), salida)
+    salida = re.sub(r'<meta property="og:url" content="[^"]*">',
+                    '<meta property="og:url" content="https://ajedrez-integral.com/cursos/%s.html">' % slug, salida)
 
     # Si el curso trae posiciones, la página carga el visor de tableros (el
     # mismo de "Los 100 finales"): chess.js para las reglas, el motor para la

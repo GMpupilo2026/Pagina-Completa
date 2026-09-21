@@ -63,7 +63,7 @@ def tarjeta(c):
     url = f"cursos/{c['slug']}.html"
     extras = [x for x in (c.get("duracion"), c.get("modalidad"), c.get("precio")) if x]
     extra = ('<p class="text-xs text-brand-450 dark:text-brand-350 mb-3">' + e(" · ".join(extras)) + "</p>\n                            ") if extras else ""
-    lecciones = f'{c["lecciones"]} lecciones'
+    lecciones = f'{c["lecciones"]} {c.get("unidad", "lecciones")}'
     return f"""                <li class="relative group" data-nivel="{c['nivel']}">
                     <article class="h-full flex flex-col bg-white dark:bg-brand-900 rounded-2xl shadow-md overflow-hidden transition-shadow group-hover:shadow-xl group-focus-within:shadow-xl">
                         <div class="h-44 bg-gradient-to-br {nivel['gradiente']} flex items-center justify-center">

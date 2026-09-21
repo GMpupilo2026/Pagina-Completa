@@ -63,15 +63,24 @@
     for (let r = 0; r < 8; r++) { let f = 0; for (const ch of rows[r]) { if (/\d/.test(ch)) f += parseInt(ch, 10); else { board["abcdefgh"[f] + (8 - r)] = ch; f++; } } }
     return { board, turn: parts[1] || "w", full: parseInt(parts[5] || "1", 10) };
   }
+  // Sin BlindNotation cargado se queda con el singular: es mejor "alfil en c1, f1"
+  // que inventar un plural.
+  function nombrePieza(t, cuantas) {
+    if (window.BlindNotation && BlindNotation.pieceLabel) return BlindNotation.pieceLabel(t, cuantas);
+    return { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" }[t.toUpperCase()] || t;
+  }
+
   function describe(fen) {
     const { board, turn } = parseFen(fen);
-    const names = { K: "rey", Q: "dama", R: "torre", B: "alfil", N: "caballo", P: "peón" };
     const out = [];
     [["w", "Blancas"], ["b", "Negras"]].forEach(([col, nom]) => {
       const parts = [];
       "KQRBNP".split("").forEach((t) => {
         const sqs = Object.keys(board).filter((sq) => board[sq] === (col === "w" ? t : t.toLowerCase())).sort();
-        if (sqs.length) parts.push(names[t] + (sqs.length > 1 ? "s" : "") + " en " + spokenSquares(sqs));
+        // El plural sale de BlindNotation: sumarle una "s" daba "alfils" y "peóns",
+        // que el lector de pantalla dice tal cual. Es el mismo lugar del que sale la
+        // forma hablada de las casillas, dos líneas más abajo.
+        if (sqs.length) parts.push(nombrePieza(t, sqs.length) + " en " + spokenSquares(sqs));
       });
       out.push(nom + ": " + (parts.join("; ") || "sin piezas") + ".");
     });
@@ -144,12 +153,18 @@
     return { enable(v) { enabled = v; sel = null; pendingPromo = null; promoEl.hidden = true; }, get sel() { return sel; } };
   }
 
+  /* La posición que el visor tiene AHORA en pantalla, publicada en el propio
+     elemento — igual que en js/finales-100.js, y por la misma razón: sesion.html
+     le pone a cada partida y a cada ejercicio un botón que transmite al tablero
+     de la clase en vivo lo que el profesor está viendo, que casi nunca es la
+     posición inicial sino la jugada a la que llegó recorriendo la partida. */
+  function publicarFen(el, fen) { el.dataset.fenActual = fen; }
+
   // ---------- 1. partida comentada ----------
   function makeGame(el, g) {
     const moves = g.moves, claves = g.claves || [];
     const claveAt = {}; claves.forEach((c) => { claveAt[c.ply] = c; });
     const state = { ply: 0, flip: g.orientacion === "b", mode: "ver", guess: null, intentos: 0, aciertos: 0, fallos: 0, pendientes: null };
-    const startTurn = parseFen(g.start_fen).turn;
     const cmdId = "cp-cmd-" + (++cmdSeq);
     el.classList.add("cp-viewer");
     el.innerHTML =
@@ -188,6 +203,7 @@
     }
     function renderView(extra) {
       const fen = fenAt(state.ply);
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last: lastSquares(state.ply), label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);
       plyEl.textContent = state.ply + "/" + moves.length;
@@ -294,7 +310,7 @@
     function stopGuess() { state.mode = "ver"; setMoveInputEnabled(false); cmdForm.hidden = true; guessBtn.textContent = "🎯 Adivinar las jugadas clave"; practBtn.disabled = false; msgEl.innerHTML = ""; renderMoves(); renderView(); }
 
     // ----- práctica contra el motor desde la posición actual -----
-    let human = "w", thinking = false;
+    let human = "w";
     function levelKey() { return el.querySelector('[data-act="level"]').value; }
     function startPractice() {
       if (typeof Chess !== "function" || !window.PracticeEngine) { msgEl.textContent = "El motor no está disponible en este navegador."; return; }
@@ -308,6 +324,7 @@
     }
     function renderPractice(txt) {
       const fen = game.fen(), h = game.history({ verbose: true }), lm = h.length ? h[h.length - 1] : null;
+      publicarFen(el, fen);
       boardEl.innerHTML = boardSvg(fen, { flip: state.flip, last: lm ? [lm.from, lm.to] : [], label: describe(fen) });
       descEl.textContent = describe(fen);
       movesEl.innerHTML = h.map((m, i) => '<span class="cp-h">' + esSan(m.san) + "</span>").join(" ");
@@ -386,6 +403,7 @@
     function fenAt(p) { return p === 0 ? x.fen : sol[p - 1].fen; }
     function render(extra) {
       const fen = state.solved ? fenAt(state.ply) : (game ? game.fen() : x.fen);
+      publicarFen(el, fen);
       const last = state.solved && state.ply ? [sol[state.ply - 1].uci.slice(0, 2), sol[state.ply - 1].uci.slice(2, 4)] : [];
       boardEl.innerHTML = boardSvg(fen, Object.assign({ flip: state.flip, last, label: describe(fen) }, extra || {}));
       descEl.textContent = describe(fen);

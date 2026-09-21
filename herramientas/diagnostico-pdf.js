@@ -19,8 +19,9 @@ const fs = require("fs");
 const path = require("path");
 const RAIZ = path.join(__dirname, "..");
 global.window = {};
-eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
+// El plan va PRIMERO: de ahí saca el banco la lista de áreas de la prueba.
 eval(fs.readFileSync(path.join(RAIZ, "js/plan-entrenamiento.js"), "utf8"));
+eval(fs.readFileSync(path.join(RAIZ, "js/diagnostico-items.js"), "utf8"));
 /* El banco tiene más ítems de los que entran en una prueba: el cuadernillo
    lleva UNA de las formas posibles, sorteada con semilla fija para que volver
    a correr el generador dé exactamente el mismo papel (misma prueba, mismas

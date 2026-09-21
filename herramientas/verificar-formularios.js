@@ -25,6 +25,10 @@ const CAMPOS = [
     { id: "dias",      etiqueta: "Días que puede",    tipo: "varias",   requerido: false, ayuda: "", opciones: ["Sábado", "Domingo"] },
     { id: "notas",     etiqueta: "Algo más",          tipo: "parrafo",  requerido: false, ayuda: "", opciones: [] },
     { id: "autoriza",  etiqueta: "Autorizo el uso de los datos", tipo: "si_no", requerido: true, ayuda: "", opciones: [] },
+    // El papel declarado manda sobre la etiqueta…
+    { id: "correo_alumno", etiqueta: "Su propio correo", tipo: "correo", requerido: false, ayuda: "", opciones: [], papel: "alumno_correo" },
+    // …y este no lo declara: hay que deducirlo, como los formularios viejos.
+    { id: "enc_nombre", etiqueta: "Nombre de la persona encargada", tipo: "texto", requerido: false, ayuda: "", opciones: [] },
 ];
 
 const FORM = {
@@ -36,14 +40,38 @@ const FORM = {
 };
 
 const RESPUESTAS = [
-    { created_at: "2026-09-10T10:00:00Z", respuestas: { nombre: "Ana Rojas", correo: "mama@x.cr", dias: ["Sábado", "Domingo"], autoriza: true } },
-    { created_at: "2026-09-09T10:00:00Z", respuestas: { nombre: "Bruno Mena", correo: "papa@x.cr", modalidad: "En línea", autoriza: false } },
+    { id: "resp-1", created_at: "2026-09-10T10:00:00Z", cuenta_id: null, cuenta_creada_at: null,
+      respuestas: { nombre: "Ana Rojas", correo: "mama@x.cr", dias: ["Sábado", "Domingo"], autoriza: true,
+                    correo_alumno: "ana@x.cr", enc_nombre: "Gina Rojas" } },
+    // Esta ya tiene cuenta: su celda es una marca, no un botón.
+    { id: "resp-2", created_at: "2026-09-09T10:00:00Z", cuenta_id: "u-bruno", cuenta_creada_at: "2026-09-11T10:00:00Z",
+      respuestas: { nombre: "Bruno Mena", correo: "papa@x.cr", modalidad: "En línea", autoriza: false } },
 ];
 
 function clienteFalso(datos, usuarioId) {
   return `
 window.__escrituras = [];
 window.__rpc = [];
+window.__edge = [];
+/* Los pone el cliente de verdad, que acá está ruteado; sin ellos la llamada a
+   la Edge Function sale a "undefined/functions/v1/...". */
+window.SUPABASE_URL = "https://ejemplo.supabase.co";
+window.SUPABASE_ANON_KEY = "anon-de-mentira";
+(function () {
+  const original = window.fetch;
+  window.fetch = function (url, opciones) {
+    const u = String(url);
+    if (u.indexOf("/functions/v1/") !== -1) {
+      const cuerpo = JSON.parse((opciones && opciones.body) || "{}");
+      window.__edge.push({ url: u, cuerpo: cuerpo, auth: opciones.headers.Authorization });
+      const respuesta = window.__edgeRespuesta ||
+        { ok: true, alumno_id: "u-nuevo", email: cuerpo.alumno_email, ya_tenia_cuenta: false, encargado_guardado: !!cuerpo.encargado_email };
+      return Promise.resolve(new Response(JSON.stringify(respuesta),
+        { status: respuesta.ok ? 200 : 400, headers: { "Content-Type": "application/json" } }));
+    }
+    return original.apply(this, arguments);
+  };
+})();
 (function () {
   const DATOS = ${JSON.stringify(datos)};
   function constructor(nombre, filas) {
@@ -127,10 +155,40 @@ async function pruebaArmador(browser) {
   igual("la lista muestra el formulario con sus respuestas",
     await page.evaluate(() => document.querySelector("#lista h3").textContent.trim() + " · " +
       document.querySelector("#lista p").textContent.replace(/\s+/g, " ").trim()),
-    "Inscripción al Torneo Sub-14 · 7A · 7 preguntas · 2 respuestas");
+    "Inscripción al Torneo Sub-14 · 7A · 9 preguntas · 2 respuestas");
   igual("los equipos salen de los alumnos que uno ve",
     await page.evaluate(() => [...document.getElementById("f-grupo").options].map((o) => o.textContent)),
     ["— Sin equipo en particular —", "7A", "7B"]);
+
+  /* El enlace que copia el botón, que es el único producto de esta página que
+     sale de ella. Se mira DOS veces, con las dos direcciones en que Cloudflare
+     sirve la misma página: con ".html" y sin él. Cortarle la extensión al
+     pathname funciona en la primera y pega los dos nombres en la segunda
+     ("/formulariosformulario.html"), y eso no da ningún error acá — el enlace
+     se copia igual y el 404 lo ve quien lo recibe. */
+  const copiado = async () => {
+    await page.evaluate(() => {
+      window.__copiado = null;
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: (t) => { window.__copiado = t; return Promise.resolve(); } },
+      });
+    });
+    // El botón dice "¡Copiado!" un segundo y medio: hay que esperar a que vuelva.
+    await page.waitForFunction(() => [...document.querySelectorAll("#lista button")].some((b) => b.textContent === "Copiar enlace"));
+    await page.evaluate(() => [...document.querySelectorAll("#lista button")].find((b) => b.textContent === "Copiar enlace").click());
+    await page.waitForFunction(() => window.__copiado !== null);
+    return page.evaluate(() => window.__copiado);
+  };
+
+  igual("el enlace que se copia, abriendo la página con .html",
+    (await copiado()).replace(BASE, ""), "/formulario.html?f=torneo-sub14-ab12");
+
+  // La misma página servida sin extensión, que es como la deja Cloudflare.
+  await page.evaluate(() => history.replaceState(null, "", "/formularios"));
+  igual("el enlace que se copia, abriendo la página sin .html",
+    (await copiado()).replace(BASE, ""), "/formulario.html?f=torneo-sub14-ab12");
+  await page.evaluate(() => history.replaceState(null, "", "/formularios.html"));
 
   // Formulario nuevo con la plantilla.
   await page.click("#nuevo-btn");
@@ -138,7 +196,7 @@ async function pruebaArmador(browser) {
   page.on("dialog", (d) => d.accept());
   await page.click("#plantilla-btn");
   igual("la plantilla pone las preguntas de una inscripción",
-    await page.evaluate(() => document.querySelectorAll("#campos > div").length), 11);
+    await page.evaluate(() => document.querySelectorAll("#campos > div").length), 13);
 
   await page.fill("#f-titulo", "Torneo Nacional Sub-16");
   await page.selectOption("#f-grupo", "7B");
@@ -157,7 +215,7 @@ async function pruebaArmador(browser) {
     (() => {
       const ids = insercion.fila.campos.map((c) => c.id);
       return new Set(ids).size === ids.length ? ids.slice(0, 3).join(",") : "HAY REPETIDOS";
-    })(), "nombre_completo,fecha_de_nacimiento,genero");
+    })(), "nombre_completo,correo_del_alumno,fecha_de_nacimiento");
   igual("una pregunta de opciones guarda sus opciones",
     insercion.fila.campos.find((c) => c.id === "modalidad").opciones, ["Presencial", "En línea"]);
   igual("se guarda quién lo creó", insercion.fila.creado_por, "u-karina");
@@ -168,20 +226,124 @@ async function pruebaArmador(browser) {
   await page.waitForSelector("#vista-respuestas:not(.hidden)");
   igual("la tabla de respuestas: cabecera",
     await page.evaluate(() => [...document.querySelectorAll("#respuestas-cabecera th")].map((t) => t.textContent)),
-    ["Fecha", "Nombre completo", "Fecha de nacimiento", "Correo del encargado", "Modalidad", "Días que puede", "Algo más", "Autorizo el uso de los datos"]);
+    ["Fecha", "Nombre completo", "Fecha de nacimiento", "Correo del encargado", "Modalidad", "Días que puede", "Algo más", "Autorizo el uso de los datos", "Su propio correo", "Nombre de la persona encargada", "Cuenta"]);
   igual("varias opciones se leen juntas, y sí/no se lee en palabras",
     await page.evaluate(() => {
       const f = document.querySelectorAll("#respuestas-cuerpo tr")[0];
-      return [...f.children].map((c) => c.textContent).slice(1).join(" | ");
+      return [...f.children].map((c) => c.textContent).slice(1, 8).join(" | ");
     }),
     "Ana Rojas |  | mama@x.cr |  | Sábado, Domingo |  | Sí");
   igual("y el «no» también", await page.evaluate(() => {
       const f = document.querySelectorAll("#respuestas-cuerpo tr")[1];
-      return f.children[f.children.length - 1].textContent;
+      return f.children[7].textContent;
     }), "No");
+
+  await pruebaAlta(page);
 
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
+}
+
+/* Crear la cuenta desde una respuesta. Es lo único de esta página que le manda
+   un correo a una persona de verdad, y lo que decide a QUIÉN se lo manda es
+   adivinar cuál de las preguntas era el correo del alumno: por eso lo que se
+   mira acá es qué sale puesto en el diálogo y qué cuerpo se manda, no que el
+   botón "haga algo". */
+async function pruebaAlta(page) {
+  console.log("\n=== Crear la cuenta desde una respuesta ===");
+
+  // Qué pregunta es cuál, con las etiquetas de un formulario de verdad que NO
+  // declara ningún papel — que es como están todos los que ya existen.
+  igual("se deduce qué pregunta es cuál por su etiqueta",
+    await page.evaluate(() => papelesDe([
+      { id: "pregunta",   etiqueta: "Nombre y 2 apellidos", tipo: "texto" },
+      { id: "pregunta_2", etiqueta: "correo electrónico",   tipo: "texto" },
+      { id: "pregunta_4", etiqueta: "Nombre encargado",     tipo: "texto" },
+      { id: "pregunta_3", etiqueta: "correo encargado",     tipo: "texto" },
+    ])),
+    { alumno_nombre: "pregunta", alumno_correo: "pregunta_2",
+      encargado_nombre: "pregunta_4", encargado_correo: "pregunta_3" });
+
+  igual("«Correo de la persona encargada» no se confunde con el del alumno",
+    await page.evaluate(() => papelesDe([
+      { id: "a", etiqueta: "Nombre completo", tipo: "texto" },
+      { id: "b", etiqueta: "Correo de la persona encargada", tipo: "correo" },
+    ])),
+    { alumno_nombre: "a", encargado_correo: "b" });
+
+  igual("el papel declarado manda sobre lo que diga la etiqueta",
+    await page.evaluate(() => papelesDe([
+      { id: "x", etiqueta: "Correo de la mamá", tipo: "correo", papel: "alumno_correo" },
+    ])), { alumno_correo: "x" });
+
+  // Una respuesta que ya tiene cuenta no vuelve a ofrecer invitar.
+  igual("la que ya tiene cuenta muestra la marca, no el botón",
+    await page.evaluate(() => {
+      const f = document.querySelectorAll("#respuestas-cuerpo tr")[1];
+      const celda = f.children[f.children.length - 1];
+      return celda.querySelector("button") ? "BOTÓN" : celda.textContent.split(" el ")[0].trim();
+    }), "✅ Creada");
+
+  /* Que el diálogo esté escondido se mide por el `display` que calcula el
+     navegador, no por la clase: una utilidad de Tailwind con la misma
+     especificidad ya dejó una vez un cartel a la vista con su `hidden` puesto,
+     y la comprobación daba verde igual. */
+  igual("el diálogo arranca invisible de verdad",
+    await page.evaluate(() => getComputedStyle(document.getElementById("alta-fondo")).display), "none");
+
+  // La que no la tiene, sí.
+  await page.evaluate(() => {
+    const f = document.querySelectorAll("#respuestas-cuerpo tr")[0];
+    f.children[f.children.length - 1].querySelector("button").click();
+  });
+  await page.waitForSelector("#alta-fondo:not(.hidden)");
+  igual("y al abrirlo se ve",
+    await page.evaluate(() => getComputedStyle(document.getElementById("alta-fondo")).display), "block");
+
+  igual("el diálogo abre con cada dato en su lugar",
+    await page.evaluate(() => [
+      document.getElementById("alta-alumno-nombre").value,
+      document.getElementById("alta-alumno-correo").value,
+      document.getElementById("alta-encargado-nombre").value,
+      document.getElementById("alta-encargado-correo").value,
+      document.getElementById("alta-grupo").value,
+    ]),
+    ["Ana Rojas", "ana@x.cr", "Gina Rojas", "mama@x.cr", "7A"]);
+
+  /* Sin correo del alumno no se manda nada: la invitación no tendría a dónde
+     ir. El aviso además dice la salida —marcar «No tiene correo propio»—,
+     porque este caso es justamente el de una familia que comparte el correo
+     entre hermanos (ver verificar-alumno-sin-correo.js). */
+  await page.fill("#alta-alumno-correo", "");
+  await page.click("#alta-enviar");
+  igual("sin el correo del alumno, avisa y no manda nada",
+    await page.evaluate(() => document.getElementById("alta-msg").textContent + " · llamadas: " + window.__edge.length),
+    "Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio». · llamadas: 0");
+
+  await page.fill("#alta-alumno-correo", "ana@x.cr");
+  await page.click("#alta-enviar");
+  await page.waitForFunction(() => window.__edge.length > 0);
+
+  const envio = await page.evaluate(() => window.__edge[0]);
+  igual("llama a la función que da de alta", envio.url.replace(/^.*\/functions/, "/functions"),
+    "/functions/v1/inscribir-alumno");
+  /* `sin_correo: false` y `usuario: ""` van SIEMPRE, también en el alta normal:
+     el servidor decide por ese campo y no por la ausencia del otro. */
+  igual("manda el alumno, el encargado y de qué respuesta sale", envio.cuerpo,
+    { respuesta_id: "resp-1", alumno_nombre: "Ana Rojas", alumno_email: "ana@x.cr",
+      sin_correo: false, usuario: "",
+      encargado_nombre: "Gina Rojas", encargado_email: "mama@x.cr",
+      frecuencia: "semanal", grupo: "7A" });
+  igual("va firmada con la sesión de quien lo hace", envio.auth, "Bearer t");
+
+  await page.waitForFunction(() =>
+    getComputedStyle(document.getElementById("alta-fondo")).display === "none");
+  igual("y esa fila pasa a mostrar la marca",
+    await page.evaluate(() => {
+      const f = document.querySelectorAll("#respuestas-cuerpo tr")[0];
+      const celda = f.children[f.children.length - 1];
+      return celda.querySelector("button") ? "SIGUE EL BOTÓN" : celda.textContent.split(" el ")[0].trim();
+    }), "✅ Creada");
 }
 
 async function pruebaPublica(browser) {
@@ -209,7 +371,7 @@ async function pruebaPublica(browser) {
       const c = d.querySelector("input, select, textarea, fieldset");
       return c.tagName.toLowerCase() + (c.type ? ":" + c.type : "");
     })),
-    ["input:text", "input:date", "input:email", "select:select-one", "fieldset:fieldset", "textarea:textarea", "input:checkbox"]);
+    ["input:text", "input:date", "input:email", "select:select-one", "fieldset:fieldset", "textarea:textarea", "input:checkbox", "input:email", "input:text"]);
   igual("los obligatorios llevan su marca",
     await page.evaluate(() => document.querySelectorAll('#campos span[aria-hidden="true"]').length), 4);
   igual("un grupo de casillas se rotula con legend, no con label",

@@ -22,6 +22,14 @@
   .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
   .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
   footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
   @media (prefers-color-scheme: dark) {
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
@@ -32,6 +40,11 @@
 </style>
 </head>
 <body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/partidas-modelo.html">← Volver al curso Partidas modelo del ajedrez moderno</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
 <header>
   <p>Partidas modelo del ajedrez moderno · Lección 20</p>
   <h1>Complejo de casillas débiles G. Kaspárov – A. Shírov</h1>
@@ -67,8 +80,8 @@
 <div class="posicion">
   <h3>Posición 1: Después de 5.Nc3</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfils en c1, f1; caballos en c3, d4; peónes en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfils en c8, f8; caballos en b8, f6; peónes en a7, b7, d7, e6, f7, g7, h7.</p>
+  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en c1, f1; caballos en c3, d4; peones en a2, b2, c2, e4, f2, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en b8, f6; peones en a7, b7, d7, e6, f7, g7, h7.</p>
   <p>Juegan las negras.</p>
   
   
@@ -79,8 +92,8 @@
 <div class="posicion">
   <h3>Posición 2: Después de 9.Na3</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfils en f1, g5; caballos en a3, c3; peónes en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfils en c8, f8; caballos en c6, f6; peónes en a6, b7, d6, e5, f7, g7, h7.</p>
+  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en f1, g5; caballos en a3, c3; peones en a2, b2, c2, e4, f2, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en c6, f6; peones en a6, b7, d6, e5, f7, g7, h7.</p>
   <p>Juegan las negras.</p>
   
   
@@ -91,8 +104,8 @@
 <div class="posicion">
   <h3>Posición 3: Después de 10.Nd5</h3>
   
-  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfils en f1, g5; caballos en a3, d5; peónes en a2, b2, c2, e4, f2, g2, h2.</p>
-  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfils en c8, f8; caballos en c6, f6; peónes en a6, b5, d6, e5, f7, g7, h7.</p>
+  <p>Piezas blancas: rey en e1; dama en d1; torres en a1, h1; alfiles en f1, g5; caballos en a3, d5; peones en a2, b2, c2, e4, f2, g2, h2.</p>
+  <p>Piezas negras: rey en e8; dama en d8; torres en a8, h8; alfiles en c8, f8; caballos en c6, f6; peones en a6, b5, d6, e5, f7, g7, h7.</p>
   <p>Juegan las negras.</p>
   
   
@@ -163,6 +176,11 @@
 <footer>
   <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
   <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/partidas-modelo.html">← Volver al curso Partidas modelo del ajedrez moderno</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
 </footer>
 </body>
 </html>

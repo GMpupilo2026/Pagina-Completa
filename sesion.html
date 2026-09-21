@@ -28,7 +28,7 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/board-themes.js"></script>
     <script src="js/chess-piece-svg.js"></script>
@@ -41,8 +41,12 @@
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/posicion-valida.js"></script>
+    <script src="js/plan-clase.js"></script>
+    <script src="js/notas-alumno.js"></script>
     <script src="js/finales-100.js"></script>
     <script src="js/curso-partidas.js"></script>
+    <script src="js/article-example-board.js"></script>
     <script src="js/pdf.min.js"></script>
     <script src="js/pdf-diagramas.js"></script>
 
@@ -50,49 +54,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="app" class="hidden pt-20 pb-16">
@@ -109,6 +71,32 @@
             </div>
 
             <div id="status-banner" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+
+            <!-- Si la clase está quedando registrada o no. Va ACÁ y no en el
+                 panel porque acá es donde se da la clase: el profesor entra
+                 directo a esta página desde el grid y no pasa por el panel, así
+                 que un control que vive allá es un control que no existe. Solo
+                 para quien da clase. -->
+            <div id="clase-estado" class="hidden mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+                <p id="clase-estado-texto" class="text-sm font-semibold" aria-live="polite"></p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" id="clase-abrir-btn" class="hidden bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Abrir la clase</button>
+                    <button type="button" id="clase-cerrar-btn" class="hidden bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cerrar la clase</button>
+                </div>
+                <!-- Ponerle nombre y dejar la nota se hace acá mismo al cerrar:
+                     mandarlo al panel a escribirlas es mandarlo a otra página
+                     justo cuando acaba de terminar y se va. -->
+                <div id="clase-cerrar-campos" class="hidden w-full grid sm:grid-cols-2 gap-2">
+                    <div>
+                        <label for="clase-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Cómo se llamó esta clase <span class="font-normal normal-case">(opcional)</span></label>
+                        <input id="clase-titulo" type="text" maxlength="200" placeholder="Ej. Finales de rey y peón" class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="clase-notas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Qué se trabajó <span class="font-normal normal-case">(opcional)</span></label>
+                        <input id="clase-notas" type="text" maxlength="500" placeholder="Ej. Se trabó la oposición; repasar el jueves." class="w-full bg-white dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                </div>
+            </div>
 
             <div class="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
                 <div>
@@ -200,15 +188,17 @@
                         </div>
                     </div>
 
-                    <!-- Elegir un curso para darlo como lección en vivo (solo profesor): se abre con
-                         "📚 Curso" de la barra de abajo. El contenido elegido se muestra a toda la
-                         clase en #class-lesson-panel, más abajo (ver applyShownLesson). -->
+                    <!-- Elegir un curso para tenerlo a mano mientras se da la clase (solo profesor):
+                         se abre con "📚 Curso" de la barra de abajo. La lección elegida se abre SOLO
+                         en la pantalla del profesor, en #class-lesson-panel más abajo (ver
+                         abrirLeccionLocal): lo que la clase recibe son las posiciones que él decide
+                         mandar al tablero, una por una. -->
                     <div id="lesson-picker-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Dar un curso como lección</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Tener un curso a mano</h2>
                             <button type="button" id="lesson-picker-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
-                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: se muestra debajo del tablero, igual para ti y para los alumnos conectados.</p>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: la lección se abre debajo del tablero y <strong>solo tú la ves</strong>. Cada posición del curso trae su botón para pasarla al tablero de la clase.</p>
                         <div class="mb-2">
                             <label for="lesson-curso-select" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Curso</label>
                             <select id="lesson-curso-select" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
@@ -219,8 +209,8 @@
                         </div>
                         <p id="lesson-picker-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
                         <div class="flex gap-2">
-                            <button id="lesson-show-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">👁️ Mostrar a la clase</button>
-                            <button id="lesson-hide-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">🙈 Ocultar</button>
+                            <button id="lesson-show-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">📖 Abrir la lección</button>
+                            <button id="lesson-hide-btn" type="button" class="flex-1 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-3 py-2 rounded-lg text-sm transition-colors">✖ Cerrar</button>
                         </div>
                     </div>
 
@@ -274,6 +264,21 @@
                         </div>
                     </div>
 
+                    <!-- Jalar al tablero un PGN ya subido en "Archivos" (solo el profesor): se
+                         carga como historial jugada a jugada (board.loadMoves), no solo la
+                         posición final, para poder recorrerlo con la clase igual que cualquier
+                         otra partida jugada en vivo. -->
+                    <div id="archivos-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📂 Jalar un archivo a la clase</h2>
+                            <button type="button" id="archivos-panel-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
+                        </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los PGN que subiste en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>. Al elegir uno se carga jugada a jugada: recórrelo con la clase con la navegación de jugadas de abajo del tablero.</p>
+                        <p id="archivos-panel-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
+                        <p id="archivos-panel-empty" class="hidden text-xs text-brand-450 dark:text-brand-350 py-4 text-center">Todavía no has subido ningún PGN — súbelos en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>.</p>
+                        <div id="archivos-panel-list" class="space-y-2"></div>
+                    </div>
+
                     <div class="flex justify-center">
                         <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[560px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
                     </div>
@@ -295,14 +300,17 @@
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
 
-                    <!-- Lección de un curso que el profesor eligió mostrar a la clase (ver
-                         #lesson-picker-panel). Visible igual para el profesor y los alumnos: se
-                         sincroniza vía game_state.shown_curso/shown_leccion (ver applyShownLesson). -->
+                    <!-- Lección de un curso que el profesor abrió para darla (ver
+                         #lesson-picker-panel). SOLO la ve él, como el PDF: nunca se sincroniza por
+                         game_state, y el alumno no tiene forma de llegar a ella (ver
+                         abrirLeccionLocal). Lo que la clase recibe son las posiciones sueltas que
+                         el profesor manda al tablero con el botón de cada diagrama. -->
                     <section id="class-lesson-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
-                        <div class="flex items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center justify-between gap-2 mb-2">
                             <h2 id="class-lesson-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Lección</h2>
-                            <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Dejar de mostrar esta lección a la clase">🙈 Ocultar</button>
+                            <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Cerrar la lección">✖ Cerrar</button>
                         </div>
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">🔒 Solo tú ves esta lección — los alumnos siguen viendo únicamente el tablero. Usa el botón <strong>📥 Al tablero de la clase</strong> de cada posición para enseñarles la que estés explicando.</p>
                         <p id="class-lesson-msg" class="text-xs text-brand-450 dark:text-brand-350"></p>
                         <div id="class-lesson-body"></div>
                     </section>
@@ -417,18 +425,33 @@
                 </div>
 
                 <aside class="space-y-4">
-                    <!-- Acciones rápidas del profesor: fila compacta, siempre visible sin
-                         importar qué pestaña esté abierta abajo (evita tener que cambiar de
-                         pestaña para lo que se usa todo el tiempo durante la clase). -->
-                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3">
-                        <div class="flex flex-wrap gap-1.5">
-                            <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
-                            <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
-                            <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
-                            <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
-                            <button id="toggle-free-mode-btn" type="button" title="Editar el tablero (mover piezas libremente o cargar FEN/PGN)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Editar</button>
-                            <button id="toggle-lesson-btn" type="button" title="Mostrar a la clase una lección de cualquier curso, como si la estuvieras dando ahí mismo" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
-                            <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
+                    <!-- Las ocho acciones rápidas estaban en una sola rejilla sin ningún
+                         criterio, y el panel de abajo tenía que explicar con un párrafo dónde
+                         encontrarlas. Van en DOS grupos con su rótulo, y el rótulo no describe
+                         la herramienta sino QUIÉN LO VE — que es la línea de toda la clase en
+                         vivo y lo único que de verdad hay que entender acá: los cuatro de arriba
+                         abren un panel que es solo del profesor (de ahí se manda al tablero lo
+                         que él elija); los cuatro de abajo tocan el tablero que está viendo la
+                         clase entera. Sin ese rótulo son ocho botones iguales y ninguna pista de
+                         cuál se puede apretar con la clase mirando. -->
+                    <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 space-y-3">
+                        <div>
+                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">Tu material — solo lo ves tú</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
+                                <button id="toggle-archivos-btn" type="button" title="Jalar al tablero un PGN que subiste en Archivos, jugada a jugada" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📂 Archivos</button>
+                                <button id="toggle-pdf-btn" type="button" title="Leer un PDF durante la clase (solo tú lo ves) y reconocer sus diagramas para pasarlos al tablero" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📄 PDF</button>
+                                <button id="toggle-free-mode-btn" type="button" title="Armar una posición a mano, o cargarla desde un FEN o un PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Armar posición</button>
+                            </div>
+                        </div>
+                        <div class="border-t border-brand-100 dark:border-brand-800 pt-3">
+                            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
+                                <button id="clear-marks-btn" type="button" title="Borrar flechas y círculos dibujados" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🧹 Flechas</button>
+                                <button id="toggle-hide-btn" type="button" title="Ocultar piezas a los alumnos" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🙈 Ocultar</button>
+                                <button id="save-game-btn" type="button" title="Guardar la partida actual (queda en Partidas guardadas) y descargar su PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">💾 Guardar PGN</button>
+                            </div>
                         </div>
                     </div>
 
@@ -461,24 +484,69 @@
                     </div>
 
                     <!-- Pestañas del profesor: un solo panel visible a la vez, sin scroll para
-                         cambiar de herramienta. Se recuerda la última pestaña abierta. -->
+                         cambiar de herramienta.
+
+                         VAN EN EL ORDEN DE LA CLASE, que es el orden en que se usan: qué voy a
+                         dar, qué le pongo delante, qué le pido, a quién se lo estoy dando. Antes
+                         abría "Controles" —una pestaña cuyo contenido era un párrafo explicando
+                         dónde estaban los otros botones, más el formulario de invitar a un alumno,
+                         que no es algo que se haga dando clase— y el PLAN, que es justamente lo
+                         que ordena la clase entera, estaba quinto. -->
                     <div id="teacher-tabs-wrap" class="hidden">
                         <div id="teacher-tabs" class="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Herramientas del profesor">
-                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">🎛️ Controles</button>
+                            <button type="button" id="teacher-tab-plan" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="plan" role="tab" aria-selected="false" aria-controls="plan-panel">📋 Mi plan</button>
+                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
                             <button type="button" id="teacher-tab-preguntar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="preguntar" role="tab" aria-selected="false" aria-controls="question-panel">❓ Preguntar</button>
                             <button type="button" id="teacher-tab-practicar" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="practicar" role="tab" aria-selected="false" aria-controls="practice-panel">🎯 Practicar</button>
-                            <button type="button" id="teacher-tab-tactica" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="tactica" role="tab" aria-selected="false" aria-controls="tactics-panel">🧩 Táctica</button>
                             <button type="button" id="teacher-tab-alumnos" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="alumnos" role="tab" aria-selected="false" aria-controls="students-panel">👥 Alumnos<span id="hand-raised-badge" class="hidden ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Alguien pidió la palabra"></span></button>
+                            <button type="button" id="teacher-tab-controles" class="teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200" data-tab="controles" role="tab" aria-selected="false" aria-controls="teacher-panel">➕ Invitar</button>
                         </div>
 
                         <div id="teacher-panel" data-tab-panel="controles" role="tabpanel" aria-labelledby="teacher-tab-controles" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Controles del profesor</h2>
-                            <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Toca una pieza y luego la casilla destino para moverla. Los alumnos ven cada jugada en tiempo real. Las acciones rápidas (reiniciar, flechas, guardar, ocultar) están arriba de las pestañas; "✏️ Editar" abre el editor visual justo debajo del tablero.</p>
-
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">Invitar alumno por correo</h2>
+                            <!-- Acá vivía un párrafo explicando dónde estaban los otros
+                                 botones. Una pantalla que necesita explicarse es una
+                                 pantalla mal ordenada: ahora los botones llevan su rótulo
+                                 y el párrafo sobra. -->
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">➕ Invitar a un alumno</h2>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
                             <form id="create-student-form" class="space-y-3">
+                                <label for="student-name" class="sr-only">Nombre del alumno</label>
                                 <input id="student-name" type="text" placeholder="Nombre del alumno" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                <label for="student-email" class="sr-only">Correo del alumno</label>
                                 <input id="student-email" type="email" required placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+
+                                <!-- Una familia con dos hijos pequeños tiene UN correo, y
+                                     no se puede repetir: es la llave con la que se inicia
+                                     sesión. En vez de pedirle un buzón al niño se le arma
+                                     un usuario, y el enlace sale hacia la casa. -->
+                                <label class="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" id="student-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
+                                    <span class="text-xs text-brand-600 dark:text-brand-300">
+                                        <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
+                                        — se le arma un usuario y el correo va a la casa.
+                                    </span>
+                                </label>
+
+                                <div id="student-casa" class="hidden space-y-3">
+                                    <div>
+                                        <label for="student-usuario" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Usuario con el que va a entrar</label>
+                                        <div class="flex items-center gap-1">
+                                            <input id="student-usuario" type="text" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                            <span id="student-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
+                                        </div>
+                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si hace falta.</p>
+                                    </div>
+                                    <div>
+                                        <label for="student-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
+                                        <input id="student-encargado-nombre" type="text" maxlength="120" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                    </div>
+                                    <div>
+                                        <label for="student-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la casa</label>
+                                        <input id="student-encargado-correo" type="email" maxlength="200" placeholder="correo@ejemplo.com" class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el enlace para crear la contraseña. Sin esto no hay forma de escribirle a esta familia.</p>
+                                    </div>
+                                </div>
+
                                 <button type="submit" id="create-student-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-sm transition-colors">Enviar invitación</button>
                                 <p id="create-student-cupo" class="text-xs text-brand-450 dark:text-brand-350"></p>
                                 <p id="create-student-msg" class="text-xs"></p>
@@ -535,8 +603,21 @@
                              mecanismo de la pestaña Preguntar: transmite la posición y crea la pregunta. -->
                         <div id="tactics-panel" data-tab-panel="tactica" role="tabpanel" aria-labelledby="teacher-tab-tactica" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                             <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
-                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad para preguntarle un ejercicio a la clase — la posición se transmite a todos como una pregunta nueva.</p>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad. Con <strong>Preguntar</strong> el ejercicio se transmite a todos como una pregunta nueva; con <strong>Al tablero</strong>, solo la posición, para explicarla tú.</p>
                             <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
+                        </div>
+
+                        <!-- El plan de clase (solo profesor): lo que preparó en
+                             planes.html, con el botón para mandar cada posición al
+                             tablero de la clase. -->
+                        <div id="plan-panel" data-tab-panel="plan" role="tabpanel" aria-labelledby="teacher-tab-plan" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-1">Tu plan de clase</h2>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">🔒 Solo lo ves tú. Lo armas en <a href="planes.html" class="underline">Planes de clase</a>; acá cada renglón trae su botón.</p>
+                            <label for="plan-select" class="sr-only">Qué plan estás dando</label>
+                            <select id="plan-select" class="w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            <p id="plan-notas" class="hidden text-xs text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 mb-3 whitespace-pre-wrap break-words"></p>
+                            <ol id="plan-items" class="grid gap-2 text-sm"></ol>
+                            <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                         </div>
 
                         <!-- Alumnos conectados (solo profesor) -->
@@ -546,6 +627,17 @@
                             <ul id="students-list" class="space-y-2 text-sm">
                                 <li class="text-brand-450 dark:text-brand-350">Nadie conectado todavía…</li>
                             </ul>
+                            <!-- La bitácora del alumno que se esté mirando. Se abre con el
+                                 botón 📝 de su renglón: acá, en medio de la clase, es CUANDO
+                                 se ve lo que hay que anotar. Solo lo ve el profesor, como el
+                                 PDF y la lección de curso. -->
+                            <div id="notas-en-clase" class="hidden mt-4 border-t border-brand-100 dark:border-brand-800 pt-4">
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <h3 id="notas-en-clase-titulo" class="font-semibold text-sm text-brand-700 dark:text-brand-200"></h3>
+                                    <button type="button" id="notas-en-clase-cerrar" class="text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">✖ Cerrar</button>
+                                </div>
+                                <div id="notas-en-clase-body"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -577,19 +669,10 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
 
     <script src="js/main.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script src="js/clase-elegida.js"></script>
     <script>
         const EDGE_FUNCTION_URL = `${window.SUPABASE_URL}/functions/v1/create-student`;
@@ -646,7 +729,10 @@
         // Un solo panel visible a la vez, para no obligar a hacer scroll por una barra
         // lateral con los 5 a la vez. Se recuerda la última pestaña abierta en este navegador.
         const TEACHER_TAB_KEY = "sesion_teacher_tab_v1";
-        const TEACHER_TABS = ["controles", "preguntar", "practicar", "tactica", "alumnos"];
+        /* El orden manda dos cosas: el de los botones de arriba y, sobre todo, CUÁL SE
+           ABRE la primera vez (TEACHER_TABS[0]). Para quien entra por primera vez eso
+           es "Mi plan": lo que va a dar. Después se recuerda la última que usó. */
+        const TEACHER_TABS = ["plan", "tactica", "preguntar", "practicar", "alumnos", "controles"];
         const TEACHER_TAB_ACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-accent-500 text-brand-900";
         const TEACHER_TAB_INACTIVE = "teacher-tab-btn text-xs font-semibold px-3 py-2 rounded-lg transition-colors bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
 
@@ -837,7 +923,20 @@
             renderStudentsList();
             updateHideBoardBtn();
             if (isTeacher) updateEngineEval();
-            applyShownLesson(row.shown_curso || null, row.shown_leccion || null);
+            // La lección del curso ya NO viaja por game_state: es del profesor y solo él la
+            // ve (ver abrirLeccionLocal). Lo único que queda por hacer con esas dos columnas
+            // es dejarlas en null la primera vez, para que a nadie que siga con la página
+            // anterior cargada le quede una lección abierta de cuando sí se compartían.
+            if (isTeacher && (row.shown_curso || row.shown_leccion)) limpiarLeccionCompartida();
+        }
+
+        // Se llama como mucho una vez por carga: el update dispara su propio eco de Realtime,
+        // y sin la marca ese eco volvería a entrar aquí con la fila vieja en el camino.
+        let limpiandoLeccionCompartida = false;
+        async function limpiarLeccionCompartida() {
+            if (limpiandoLeccionCompartida) return;
+            limpiandoLeccionCompartida = true;
+            await sb.from("game_state").update({ shown_curso: null, shown_leccion: null }).eq("id", myGameStateId);
         }
 
         function updateAccessForRole() {
@@ -855,11 +954,19 @@
             setStatus(text);
         }
 
-        // ---------- Dar un curso como lección en vivo (solo el profesor lo elige; se ve
-        // igual para el profesor y los alumnos, sincronizado vía game_state.shown_curso/
-        // shown_leccion — ver applyGameStateRow). El contenido en sí no viaja por Supabase:
-        // cada cliente lo pide directo a cursos/protegido/<curso>.html, igual que hace
-        // js/curso-academia.js con el panel de Academia. ----------
+        // ---------- Tener un curso a mano mientras se da la clase (solo el profesor) ----------
+        // La lección se abre SOLO en la pantalla del profesor — es material suyo para dar la
+        // clase, como el PDF, no algo que la clase reciba: el temario entero delante lo
+        // adelanta al alumno y le regala las respuestas de los ejercicios de la lección. Lo
+        // que la clase sí recibe es cada posición que el profesor decide mandarle al tablero
+        // con el botón de su diagrama (ver vigilarPosicionesDeLaLeccion).
+        //
+        // Antes esto se sincronizaba por game_state.shown_curso/shown_leccion y lo veían
+        // todos; esas dos columnas quedaron sin uso (no se borran de la tabla: una columna
+        // de más no molesta a nadie y quitarla obligaría a una migración para nada).
+        //
+        // El contenido no viaja por Supabase: se pide directo a cursos/protegido/<curso>.html,
+        // igual que hace js/curso-academia.js con el panel de Academia. ----------
         const CLASS_LESSON_CATALOG = [
             { slug: "fundamentos-del-ajedrez", titulo: "Fundamentos del Ajedrez" },
             { slug: "aperturas-y-defensas", titulo: "Aperturas y Defensas" },
@@ -873,7 +980,6 @@
             { slug: "preparacion-para-torneos", titulo: "Preparación para Torneos" },
         ];
         const leccionesPorCurso = {}; // slug -> [{titulo}, ...] en caché, una vez pedidas
-        let lastShownCurso = null, lastShownLeccion = null; // para no volver a pedir lo mismo en cada eco de Realtime
 
         // Un <details> de nivel superior (con su propio <summary>) es una lección; se
         // ignoran los que están anidados dentro de otro <details> (por ejemplo, alguna
@@ -897,7 +1003,13 @@
             return lecciones;
         }
 
-        if (isTeacher) {
+        // Se llama desde init() una vez que isTeacher ya quedó resuelto (ver más abajo). Vivía
+        // como "if (isTeacher) {...}" a nivel superior del script, y por eso nunca se ejecutaba:
+        // ese código corre al analizar el <script>, antes de que init() — que es quien recién
+        // consulta la sesión y el perfil — llegue a fijar isTeacher. Con isTeacher siempre en su
+        // valor inicial (false), el botón "📚 Curso" no tenía ningún oyente de clic: no pasaba
+        // nada al presionarlo, para cualquier profesor, siempre.
+        function setupTeacherLessonTools() {
             const cursoSelect = document.getElementById("lesson-curso-select");
             const leccionSelect = document.getElementById("lesson-leccion-select");
             const panelMsg = document.getElementById("lesson-picker-msg");
@@ -929,32 +1041,22 @@
                 const active = panel.classList.contains("hidden");
                 panel.classList.toggle("hidden", !active);
                 document.getElementById("board-edit-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
                 if (active && leccionSelect.options.length === 0) refreshLeccionOptions();
             });
             document.getElementById("lesson-picker-close-btn").addEventListener("click", () => {
                 document.getElementById("lesson-picker-panel").classList.add("hidden");
             });
 
-            document.getElementById("lesson-show-btn").addEventListener("click", async () => {
+            document.getElementById("lesson-show-btn").addEventListener("click", () => {
                 const slug = cursoSelect.value, n = parseInt(leccionSelect.value, 10);
                 if (!slug || !n) { panelMsg.textContent = "Elige un curso y un tema."; return; }
-                const { error } = await sb.from("game_state").update({
-                    shown_curso: slug, shown_leccion: n,
-                    updated_by: session.user.id, updated_at: new Date().toISOString(),
-                }).eq("id", myGameStateId);
-                if (error) { panelMsg.textContent = "No se pudo mostrar la lección: " + error.message; return; }
                 panelMsg.textContent = "";
+                abrirLeccionLocal(slug, n);
             });
-            document.getElementById("lesson-hide-btn").addEventListener("click", async () => {
-                const { error } = await sb.from("game_state").update({
-                    shown_curso: null, shown_leccion: null,
-                    updated_by: session.user.id, updated_at: new Date().toISOString(),
-                }).eq("id", myGameStateId);
-                if (error) panelMsg.textContent = "No se pudo ocultar la lección: " + error.message;
-            });
-            document.getElementById("class-lesson-hide-btn").addEventListener("click", () => {
-                document.getElementById("lesson-hide-btn").click();
-            });
+            document.getElementById("lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
+            document.getElementById("class-lesson-hide-btn").addEventListener("click", cerrarLeccionLocal);
 
             // ---------- Leer un PDF en clase + reconocer sus diagramas (ver js/pdf-diagramas.js) ----------
             // El módulo hace todo el trabajo de PDF/reconocimiento; acá solo se le indica qué
@@ -977,23 +1079,235 @@
             }
         }
 
-        // Se llama desde applyGameStateRow cada vez que llega una fila nueva (propia o por
-        // Realtime) — para el profesor y para cada alumno conectado por igual. Compara con
-        // lo último mostrado para no volver a pedir el mismo archivo en cada jugada.
-        async function applyShownLesson(slug, n) {
+        // ---------- Jalar al tablero un PGN subido en Archivos (solo el profesor) ----------
+        // Misma tabla "archivos_pgn" de partidas.html: se listan solo las del propio
+        // profesor (la RLS ya aísla por profesor_id, pero acá además no tiene sentido
+        // ofrecer el archivo de otro). Al elegir uno se reproduce como historial jugada a
+        // jugada con board.loadMoves() —igual que applyGameStateRow() hace con cualquier
+        // game_state— y se transmite con pushBoardState(), sin ningún camino nuevo de
+        // sincronización: la clase lo ve exactamente como vería cualquier partida jugada
+        // en vivo, y se recorre con la navegación de jugadas de siempre.
+        let archivosPanelCargados = false;
+
+        // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
+        // identifica al ejercicio ("de qué posición se trata") y la que tiene sentido
+        // preguntar o practicar — cargarArchivoEnClase() ya recorre las jugadas a partir
+        // de acá con board.loadMoves(). No se guarda en la fila (solo fen_final vive en
+        // la base, ver partidas.html): sale del propio PGN, que ya se tiene en memoria.
+        function archivoStartFen(a) {
+            const game = new Chess();
+            if (!game.load_pgn(a.pgn, { sloppy: true })) return null;
+            const headers = typeof game.header === "function" ? game.header() : {};
+            return headers.FEN || new Chess().fen();
+        }
+
+        function renderArchivoPanelItem(a) {
+            const li = document.createElement("li");
+            li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+            const title = document.createElement("p");
+            title.className = "text-sm font-semibold text-brand-800 dark:text-white truncate";
+            title.textContent = a.titulo;
+            const meta = document.createElement("p");
+            meta.className = "text-xs text-brand-450 dark:text-brand-350";
+            meta.textContent = a.move_count + " jugadas · " + a.nombre_archivo;
+            info.append(title, meta);
+            li.appendChild(info);
+
+            // Mismo patrón que la lista de Táctica: vista previa opcional (el tablero se
+            // dibuja recién al destaparla, porque su tamaño se mide sobre la casilla ya
+            // renderizada) y tres acciones — cargar la línea completa, preguntarla o
+            // mandarla a practicar contra el motor.
+            const actions = document.createElement("div");
+            actions.className = "flex items-center flex-wrap gap-1.5 mt-2";
+            const previewBtn = document.createElement("button");
+            previewBtn.type = "button";
+            previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            previewBtn.textContent = "👁 Vista previa";
+            const loadBtn = document.createElement("button");
+            loadBtn.type = "button";
+            loadBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            loadBtn.textContent = "📥 Cargar";
+            loadBtn.title = "Cargar la línea completa en el tablero, jugada a jugada";
+            const askBtn = document.createElement("button");
+            askBtn.type = "button";
+            askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            askBtn.textContent = "❓ Preguntar";
+            askBtn.title = "Enviar la posición de salida a la clase como pregunta";
+            const practiceBtn = document.createElement("button");
+            practiceBtn.type = "button";
+            practiceBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            practiceBtn.textContent = "🎯 Practicar";
+            practiceBtn.title = "Que los alumnos practiquen esta posición contra el motor";
+            actions.append(previewBtn, loadBtn, askBtn, practiceBtn);
+            li.appendChild(actions);
+
+            const previewWrap = document.createElement("div");
+            previewWrap.className = "hidden mt-2";
+            li.appendChild(previewWrap);
+
+            previewBtn.addEventListener("click", () => {
+                const opening = previewWrap.classList.contains("hidden");
+                previewWrap.classList.toggle("hidden");
+                previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
+                // Mismo motivo que en Táctica: el tablero se dibuja con el recuadro YA
+                // destapado, porque el tamaño de la pieza se mide sobre la casilla
+                // renderizada y dentro de algo oculto esa medida es cero.
+                if (opening && !previewWrap.dataset.rendered) {
+                    previewWrap.dataset.rendered = "1";
+                    const fen = archivoStartFen(a);
+                    if (fen) renderTacticsPreviewBoard(previewWrap, fen);
+                    else previewWrap.textContent = "Ese PGN no se pudo interpretar.";
+                }
+            });
+            loadBtn.addEventListener("click", () => cargarArchivoEnClase(a));
+            askBtn.addEventListener("click", () => askArchivoExercise(a));
+            practiceBtn.addEventListener("click", () => practicarArchivoExercise(a));
+            return li;
+        }
+
+        function renderArchivoPanelGrupo(nombre, lista) {
+            const det = document.createElement("details");
+            det.className = "border border-brand-200 dark:border-brand-700 rounded-lg overflow-hidden";
+            det.open = !nombre; // "Sin carpeta" arranca abierta; las que tienen nombre, cerradas
+            const summary = document.createElement("summary");
+            summary.className = "cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200 px-3 py-2 marker:text-accent-600";
+            summary.textContent = (nombre ? "📁 " + nombre : "🗂️ Sin carpeta") + " (" + lista.length + ")";
+            det.appendChild(summary);
+            const ul = document.createElement("ul");
+            ul.className = "space-y-2 px-2 pb-2";
+            lista.forEach((a) => ul.appendChild(renderArchivoPanelItem(a)));
+            det.appendChild(ul);
+            return det;
+        }
+
+        // Las carpetas se ordenan en partidas.html; acá solo se agrupa lo que ya
+        // quedó puesto, para que la lista se pueda recorrer aunque sean muchos PGN.
+        async function refreshArchivosPanel() {
+            const wrap = document.getElementById("archivos-panel-list");
+            const emptyEl = document.getElementById("archivos-panel-empty");
+            const msgEl = document.getElementById("archivos-panel-msg");
+            msgEl.textContent = "";
+            wrap.innerHTML = "";
+            const { data, error } = await sb.from("archivos_pgn").select("*")
+                .eq("profesor_id", session.user.id).order("created_at", { ascending: false });
+            if (error) { msgEl.textContent = "No se pudo cargar tu lista de archivos."; return; }
+            const archivos = data || [];
+            emptyEl.classList.toggle("hidden", archivos.length > 0);
+
+            const porCarpeta = new Map(); // "" = sin carpeta
+            archivos.forEach((a) => {
+                const clave = a.carpeta || "";
+                if (!porCarpeta.has(clave)) porCarpeta.set(clave, []);
+                porCarpeta.get(clave).push(a);
+            });
+            const nombresCarpetas = [...porCarpeta.keys()].filter((c) => c !== "").sort((a, b) => a.localeCompare(b, "es"));
+            nombresCarpetas.forEach((nombre) => wrap.appendChild(renderArchivoPanelGrupo(nombre, porCarpeta.get(nombre))));
+            if (porCarpeta.has("")) wrap.appendChild(renderArchivoPanelGrupo(null, porCarpeta.get("")));
+
+            archivosPanelCargados = true;
+        }
+
+        async function cargarArchivoEnClase(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const game = new Chess();
+            if (!game.load_pgn(a.pgn, { sloppy: true })) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const moves = game.history();
+            const headers = typeof game.header === "function" ? game.header() : {};
+            board.loadMoves(moves, headers.FEN || null);
+            board.setMarks([], []);
+            document.getElementById("archivos-panel").classList.add("hidden");
+            await pushBoardState();
+            await clearVariantTree(); // las variantes de la línea anterior no tienen sentido con esta partida
+            updateTurnIndicator();
+            renderMoveList();
+            if (isTeacher) updateEngineEval();
+            setStatus("Se cargó \"" + a.titulo + "\" en el tablero — recórrela con la clase usando la navegación de jugadas.");
+        }
+
+        // Envía la posición de SALIDA del PGN como pregunta — mismo mecanismo que
+        // askTacticsExercise() más abajo (misma tabla game_state, misma tabla questions),
+        // solo que la posición viene de un archivo subido en Archivos y no del banco de
+        // Táctica. expectedPlies sale del propio move_count del archivo, con el mismo
+        // tope de 6 que usa Táctica: sin tope, un PGN de 40 jugadas dejaría el campo de
+        // "jugadas esperadas" con un número que nadie va a escribir de memoria.
+        async function askArchivoExercise(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            const expectedPlies = Math.max(1, Math.min(6, Math.ceil((a.move_count || 1) / 2)));
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            document.getElementById("question-plies-input").value = expectedPlies;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            document.getElementById("archivos-panel").classList.add("hidden");
+            activateTeacherTab("preguntar");
+            setStatus("Se envió \"" + a.titulo + "\" a la clase como pregunta.");
+            computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
+        }
+
+        // Manda la posición de salida a practicar contra el motor — mismo insert que
+        // start-practice-btn (misma tabla practice_sessions), pero con el fen del archivo
+        // en vez de board.fen(): por eso pasa antes por aplicarPosicionEnClase(), que deja
+        // el tablero de la clase mostrando la MISMA posición que los alumnos van a jugar.
+        async function practicarArchivoExercise(a) {
+            const msgEl = document.getElementById("archivos-panel-msg");
+            const fen = archivoStartFen(a);
+            if (!fen) { msgEl.textContent = "Ese PGN no se pudo interpretar."; return; }
+            if (!(await aplicarPosicionEnClase(fen))) return;
+            if (typeof PracticeEngine !== "undefined") PracticeEngine.preload();
+            await sb.from("practice_sessions").update({ ended_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("ended_at", null);
+            const { error } = await sb.from("practice_sessions").insert({
+                fen, level: selectedPracticeLevel, created_by: session.user.id,
+            });
+            if (error) { console.error(error); setStatus("No se pudo iniciar la práctica: " + error.message); return; }
+            document.getElementById("archivos-panel").classList.add("hidden");
+            activateTeacherTab("practicar");
+            setStatus("Práctica iniciada desde \"" + a.titulo + "\": los alumnos ya pueden jugar contra el motor.");
+        }
+
+        function setupArchivosTools() {
+            document.getElementById("toggle-archivos-btn").addEventListener("click", () => {
+                const panel = document.getElementById("archivos-panel");
+                const active = panel.classList.contains("hidden");
+                panel.classList.toggle("hidden", !active);
+                document.getElementById("board-edit-panel").classList.add("hidden");
+                document.getElementById("lesson-picker-panel").classList.add("hidden");
+                document.getElementById("pdf-panel").classList.add("hidden");
+                if (active && !archivosPanelCargados) refreshArchivosPanel();
+            });
+            document.getElementById("archivos-panel-close-btn").addEventListener("click", () => {
+                document.getElementById("archivos-panel").classList.add("hidden");
+            });
+        }
+
+        // Abre la lección en la pantalla del profesor y en ninguna otra: no toca Supabase,
+        // así que no hay nada que un alumno pueda recibir. Solo el profesor tiene el botón
+        // que llega hasta aquí, y el panel vive dentro de su columna del tablero.
+        function cerrarLeccionLocal() {
+            if (observadorDeLeccion) { observadorDeLeccion.disconnect(); observadorDeLeccion = null; }
+            const bodyEl = document.getElementById("class-lesson-body");
+            bodyEl.innerHTML = "";
+            delete bodyEl.dataset.course;
+            document.getElementById("class-lesson-msg").textContent = "";
+            document.getElementById("class-lesson-panel").classList.add("hidden");
+        }
+
+        let observadorDeLeccion = null;
+        async function abrirLeccionLocal(slug, n) {
+            if (!isTeacher) return;
+            cerrarLeccionLocal();
             const panel = document.getElementById("class-lesson-panel");
-            if (slug === lastShownCurso && n === lastShownLeccion) return;
-            lastShownCurso = slug; lastShownLeccion = n;
-            if (!slug || !n) { panel.classList.add("hidden"); return; }
             const titleEl = document.getElementById("class-lesson-title");
             const msgEl = document.getElementById("class-lesson-msg");
             const bodyEl = document.getElementById("class-lesson-body");
             const catalogEntry = CLASS_LESSON_CATALOG.find((c) => c.slug === slug);
             panel.classList.remove("hidden");
-            document.getElementById("class-lesson-hide-btn").classList.toggle("hidden", !isTeacher);
+            document.getElementById("class-lesson-hide-btn").classList.remove("hidden");
             titleEl.textContent = "📚 " + (catalogEntry ? catalogEntry.titulo : slug);
             msgEl.textContent = "Cargando…";
-            bodyEl.innerHTML = "";
             try {
                 const r = await fetch("cursos/protegido/" + slug + ".html", { credentials: "same-origin" });
                 if (!r.ok) throw new Error("no_content");
@@ -1009,10 +1323,116 @@
                 if (window.Finales100) window.Finales100.init(bodyEl);
                 if (window.CursoPartidas) window.CursoPartidas.init(bodyEl);
                 document.dispatchEvent(new CustomEvent("curso:contenido", { detail: { body: bodyEl, curso: slug } }));
+                vigilarPosicionesDeLaLeccion(bodyEl);
                 msgEl.textContent = "";
             } catch (e) {
                 msgEl.textContent = "No se pudo cargar esta lección.";
             }
+        }
+
+        // ---------- El botón que lleva una posición del curso al tablero de la clase ----------
+        // Los visores del curso se construyen cuando se ven (los <details> cerrados esperan a
+        // abrirse: el curso tiene más de 300 diagramas y construirlos todos de golpe frenaría
+        // el celular), así que no alcanza con recorrer la lección una vez al inyectarla — el
+        // botón se pone sobre lo que vaya apareciendo. Es el mismo patrón que ya usan
+        // js/coordenadas-tablero.js y js/board-drag.js.
+        //
+        // El FEN NO se vuelve a sacar del archivo de datos: se lee del data-fen-actual que el
+        // propio visor publica (ver publicarFen en js/finales-100.js y js/curso-partidas.js),
+        // que es la posición que el profesor tiene delante — recorriendo la línea casi nunca
+        // está en la primera, y mandar la inicial cuando él está explicando la jugada 12 es
+        // exactamente el fallo que no avisa: se transmite una posición, solo que la que no era.
+        const VISORES_CON_POSICION = ".f100-viewer, .cp-viewer";
+        function ponerBotonDePosicion(visor) {
+            const head = visor.querySelector(".f100-head, .cp-head");
+            if (!head || head.querySelector(".lesson-send-btn")) return;
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "lesson-send-btn text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
+            btn.textContent = "📥 Al tablero de la clase";
+            btn.title = "Transmitir a todos los alumnos la posición que estás viendo en este diagrama";
+            btn.addEventListener("click", async () => {
+                // El aviso va en el propio panel de la lección y no solo en la franja de
+                // estado de arriba: para llegar a este botón hay que estar con la lección
+                // delante, o sea con la franja fuera de la pantalla. Hay posiciones de curso
+                // que son ilustraciones y no partidas —una tiene un peón y un solo rey— y no
+                // se pueden poner en un tablero en vivo: decir por qué es lo único que evita
+                // que parezca que el botón no hace nada.
+                const leccionMsg = document.getElementById("class-lesson-msg");
+                const fen = visor.dataset.fenActual;
+                leccionMsg.textContent = "";
+                if (!fen) { leccionMsg.textContent = "Este diagrama todavía no tiene una posición que mandar."; return; }
+                const motivo = motivoPosicionInvalida(fen);
+                if (motivo) { leccionMsg.textContent = "No se puede llevar al tablero: " + motivo; return; }
+                const ok = await aplicarPosicionEnClase(fen, "Posición del curso enviada: ya la ven todos los alumnos.");
+                if (ok) { btn.textContent = "✅ Enviada"; setTimeout(() => { btn.textContent = "📥 Al tablero de la clase"; }, 2000); }
+            });
+            head.appendChild(btn);
+        }
+        function vigilarPosicionesDeLaLeccion(bodyEl) {
+            const repasar = () => bodyEl.querySelectorAll(VISORES_CON_POSICION).forEach(ponerBotonDePosicion);
+            repasar();
+            // Recorrer la línea de un diagrama reescribe su tablero entero en cada jugada, o
+            // sea decenas de mutaciones por clic: el repaso se agrupa en un solo cuadro de
+            // animación en vez de correr una vez por mutación.
+            let pendiente = false;
+            observadorDeLeccion = new MutationObserver(() => {
+                if (pendiente) return;
+                pendiente = true;
+                requestAnimationFrame(() => { pendiente = false; repasar(); });
+            });
+            observadorDeLeccion.observe(bodyEl, { childList: true, subtree: true });
+        }
+
+        // ---------- Poner una posición en el tablero de la clase ----------
+        // Tres puertas distintas llegan aquí: "✅ Aplicar posición" del editor, el botón
+        // de cada diagrama del curso que el profesor tiene abierto y el de la vista previa
+        // de Táctica. Las tres tienen que escribir EXACTAMENTE lo mismo — si cada una
+        // armara su propio update, la que se olvidara de limpiar las variantes o de
+        // quitarle el control al alumno dejaría la clase con un resto de la posición
+        // anterior, y eso no da ningún error: simplemente el tablero no se comporta igual
+        // según por dónde entró la posición.
+
+        // chess.js carga sin quejarse posiciones que no pueden existir en una partida real,
+        // y algunas de ellas rompen a Stockfish para el resto de la sesión (ver la nota en
+        // js/shared-engine.js). Devuelve el motivo por el que no se puede transmitir, o
+        // null si la posición está bien.
+        /* La validación vive en js/posicion-valida.js: la comparte el armador de
+           planes, que hace la misma pregunta ANTES de guardar. Acá queda el
+           nombre de siempre, que usan las cuatro puertas de esta página.
+
+           Va como `function` y no como `const`: la primera de esas puertas está
+           escrita más ARRIBA en el archivo, y un `const` no existe hasta que se
+           evalúa su línea — es el mismo "Cannot access before initialization"
+           que dejó a 4x4.html colgada en "Comprobando tu sesión…". */
+        function motivoPosicionInvalida(fen) { return PosicionValida.motivo(fen); }
+
+        async function aplicarPosicionEnClase(fen, aviso) {
+            const motivo = motivoPosicionInvalida(fen);
+            if (motivo) { setStatus(motivo); return false; }
+            board.loadMoves([], fen);
+            const { error } = await sb.from("game_state").update({
+                fen, moves: [], start_fen: fen, last_move: null,
+                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            }).eq("id", myGameStateId);
+            if (error) { console.error(error); setStatus("No se pudo transmitir la posición: " + error.message); return false; }
+            /* Segundo disparador de "esto ya es una clase": el profesor mandó una
+               posición al tablero de todos. Va DESPUÉS de que la posición se haya
+               transmitido de verdad — abrir la clase por un intento que falló
+               dejaría una clase registrada que nadie dio. Las tres puertas del
+               sitio pasan por esta función, así que alcanza con engancharlo acá. */
+            abrirClaseSiHaceFalta();
+            await clearVariantTree();
+            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
+            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
+            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página, en una
+            // red de aula puede tardar o perderse) y mientras tanto el panel se quedaba
+            // mostrando la evaluación de la posición anterior. El tablero del profesor ya
+            // tiene la posición nueva aplicada localmente, así que se le pide aquí.
+            if (isTeacher) updateEngineEval();
+            if (aviso) setStatus(aviso);
+            return true;
         }
 
         async function pushBoardState(extraFields) {
@@ -1105,6 +1525,108 @@
             }
         }
 
+        /* ---- Que la clase quede registrada sin acordarse de nada -----------
+         *
+         * La asistencia, los minutos en clase, el informe a la casa y el reporte
+         * de actividades cuelgan TODOS de que exista una fila abierta en
+         * `class_sessions`. Y esa fila la abría un botón que vive en el panel
+         * (`clases.html`), mientras que la clase se da acá: el profesor entra
+         * directo desde el grid, da su clase entera con la pizarra y las
+         * preguntas, y sin esa fila no se registró nada. No da ningún error —
+         * simplemente esa clase no existió, y eso no se puede reconstruir
+         * después.
+         *
+         * Así que se abre SOLA, y no al entrar sino al primer acto de clase de
+         * verdad: que se conecte un alumno, o que el profesor transmita una
+         * posición. Abrirla con solo entrar dejaría una clase fantasma cada vez
+         * que se asoma a preparar algo; con estos dos disparadores no hay que
+         * acordarse de nada y tampoco se inventan clases que no pasaron.
+         *
+         * Que no se abran dos lo impide un índice único parcial de la base
+         * (`class_sessions_una_abierta_por_profesor`), no la bandera de acá: dos
+         * pestañas, o los dos disparadores a la vez, se saltan cualquier
+         * comprobación previa. La bandera solo evita el pedido de más.
+         */
+        let abriendoClase = false;
+
+        async function abrirClaseSiHaceFalta() {
+            if (!isTeacher || currentOpenSessionId || abriendoClase) return;
+            abriendoClase = true;
+            const { data, error } = await sb.from("class_sessions")
+                .insert({ created_by: profile.id }).select().maybeSingle();
+            abriendoClase = false;
+            if (error) {
+                // 23505 es el índice único: alguien más (la otra pestaña, el otro
+                // disparador) ya la abrió. No es un fallo — es justo lo que el
+                // índice tiene que hacer. Se busca la que quedó.
+                if (error.code === "23505") { await checkOpenClassSession(); return; }
+                setStatus("No se pudo abrir la clase: " + error.message
+                    + " — la asistencia de tus alumnos no se está registrando.");
+                return;
+            }
+            if (data) currentOpenSessionId = data.id;
+            pintarEstadoDeClase();
+        }
+
+        async function cerrarClaseDesdeAqui() {
+            if (!isTeacher || !currentOpenSessionId) return;
+            const btn = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            // El primer toque destapa el título y la nota; el segundo cierra. Así
+            // no se cierra de un clic accidental en medio de la clase y, de paso,
+            // se le pide lo único que hace falta para que el registro sirva.
+            if (campos.classList.contains("hidden")) {
+                campos.classList.remove("hidden");
+                btn.textContent = "Confirmar y cerrar";
+                document.getElementById("clase-titulo").focus();
+                return;
+            }
+            const titulo = document.getElementById("clase-titulo").value.trim();
+            const notas = document.getElementById("clase-notas").value.trim();
+            btn.disabled = true;
+            const { error } = await sb.from("class_sessions").update({
+                ended_at: new Date().toISOString(),
+                title: titulo || null,
+                notes: notas || null,
+            }).eq("id", currentOpenSessionId);
+            btn.disabled = false;
+            if (error) { setStatus("No se pudo cerrar la clase: " + error.message); return; }
+            currentOpenSessionId = null;
+            document.getElementById("clase-titulo").value = "";
+            document.getElementById("clase-notas").value = "";
+            pintarEstadoDeClase();
+        }
+
+        /* Lo que se ve tiene que decir la VERDAD sobre si se está registrando,
+           con todas las letras y no solo con un color: un punto gris no le dice
+           a un entrenador nuevo que la asistencia de sus alumnos se está
+           perdiendo. */
+        function pintarEstadoDeClase() {
+            if (!isTeacher) return;
+            const caja = document.getElementById("clase-estado");
+            const texto = document.getElementById("clase-estado-texto");
+            const abrir = document.getElementById("clase-abrir-btn");
+            const cerrar = document.getElementById("clase-cerrar-btn");
+            const campos = document.getElementById("clase-cerrar-campos");
+            caja.classList.remove("hidden");
+
+            if (currentOpenSessionId) {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-green-50 dark:bg-green-950/30";
+                texto.className = "text-sm font-semibold text-green-700 dark:text-green-400";
+                texto.textContent = "🔴 Clase en curso: se está registrando la asistencia y el tiempo de tus alumnos.";
+                abrir.classList.add("hidden");
+                cerrar.classList.remove("hidden");
+            } else {
+                caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
+                texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
+                texto.textContent = "⚪ Todavía no hay clase abierta. Se abre sola en cuanto entre un alumno o mandes una posición al tablero.";
+                abrir.classList.remove("hidden");
+                cerrar.classList.add("hidden");
+                campos.classList.add("hidden");
+                cerrar.textContent = "Cerrar la clase";
+            }
+        }
+
         async function checkOpenClassSession() {
             const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
             const openSession = (data && data[0]) || null;
@@ -1113,6 +1635,13 @@
                 await markAttendance(openSession.id);
                 await startPresenceLog(openSession.id);
             }
+            pintarEstadoDeClase();
+        }
+
+        function conectarControlesDeClase() {
+            if (!isTeacher) return;
+            document.getElementById("clase-abrir-btn").addEventListener("click", abrirClaseSiHaceFalta);
+            document.getElementById("clase-cerrar-btn").addEventListener("click", cerrarClaseDesdeAqui);
         }
 
         function subscribeClassSessions() {
@@ -1122,11 +1651,17 @@
                         currentOpenSessionId = payload.new.id;
                         markAttendance(payload.new.id);
                         startPresenceLog(payload.new.id);
+                        pintarEstadoDeClase();
                     } else if (payload.eventType === "UPDATE" && payload.new.ended_at && payload.new.id === currentOpenSessionId) {
                         // El profesor cerró la clase: registramos el último instante conectado
                         // y devolvemos al alumno al panel.
                         if (!isTeacher) {
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
+                        } else {
+                            // La pudo cerrar desde el panel, o desde otra pestaña:
+                            // la franja de acá tiene que decir la verdad igual.
+                            currentOpenSessionId = null;
+                            pintarEstadoDeClase();
                         }
                     }
                 })
@@ -1383,7 +1918,11 @@
             setEditTool(null);
             if (active) resetBoardEditPanelPosition();
             document.getElementById("board-edit-panel").classList.toggle("hidden", !active);
-            if (active) document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
+            if (active) {
+                document.getElementById("lesson-picker-panel").classList.add("hidden"); // no los dos a la vez
+                document.getElementById("pdf-panel").classList.add("hidden");
+                document.getElementById("archivos-panel").classList.add("hidden");
+            }
             document.getElementById("free-mode-load-msg").textContent = "";
             const freeModeBtn = document.getElementById("toggle-free-mode-btn");
             freeModeBtn.textContent = active ? "🔒 Editando…" : "✏️ Editar";
@@ -1428,42 +1967,12 @@
             parts[3] = "-"; // sin al paso: no tiene sentido conservarlo en una posición armada a mano
             const candidateFen = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " 0 1";
             const msg = document.getElementById("free-mode-load-msg");
-            // chess.js no exige reyes al cargar un FEN (los acepta igual, sin avisar), así que
-            // se valida aparte: sin esto, la paleta permite borrar el único rey sin darse cuenta
-            // y transmitir a toda la clase un tablero roto.
-            const whiteKings = (parts[0].match(/K/g) || []).length;
-            const blackKings = (parts[0].match(/k/g) || []).length;
-            if (whiteKings !== 1 || blackKings !== 1) {
-                msg.textContent = "Debe haber exactamente un rey blanco y un rey negro en el tablero.";
-                return;
-            }
-            // Un peón en la primera o la última fila es imposible en una partida real (ya
-            // habría coronado) — chess.js lo carga sin quejarse, pero se confirmó que
-            // mandarle esa posición a Stockfish lo hace fallar con un error de memoria del
-            // que después no se recupera solo (ver la nota en js/shared-engine.js): a
-            // partir de ahí, Analizar, Preguntar y Practicar dejan de responder para
-            // siempre, hasta recargar la página. Se ataja acá, antes de que la posición
-            // llegue a transmitirse.
-            const boardRanks = parts[0].split("/");
-            if (boardRanks.length === 8 && (/[pP]/.test(boardRanks[0]) || /[pP]/.test(boardRanks[7]))) {
-                msg.textContent = "Posición inválida: no puede haber peones en la primera ni en la última fila.";
-                return;
-            }
-            // chess.js tampoco avisa si el rey del bando QUE NO LE TOCA MOVER queda en
-            // jaque — algo imposible en una partida real (ese bando ya habría tenido que
-            // responder antes), pero muy fácil de armar sin querer con la paleta (por
-            // ejemplo, dejando una pieza atacando al rey contrario y eligiendo el turno
-            // equivocado). El motor no está preparado para una posición así: analizarla da
-            // evaluaciones y jugadas sin sentido, porque para Stockfish esa "jugada
-            // pendiente de responder" ya se considera imposible. En vez de dejar que eso
-            // pase en silencio, se valida acá.
-            const oppositeTurn = editTurn === "w" ? "b" : "w";
-            const oppositeCheckFen = parts[0] + " " + oppositeTurn + " " + parts[2] + " " + parts[3] + " 0 1";
-            const oppositeCheckGame = new Chess(oppositeCheckFen);
-            if (oppositeCheckGame.in_check && oppositeCheckGame.in_check()) {
-                msg.textContent = "Posición inválida: el rey que NO le toca mover está en jaque (revisa el turno o quita la pieza que lo ataca).";
-                return;
-            }
+            // Las tres posiciones imposibles que chess.js carga igual, sin avisar, y que aquí
+            // son fáciles de armar sin querer con la paleta — sin rey, con peones coronados
+            // en la última fila, o con el rey que no le toca mover en jaque: se responden en
+            // el propio panel del editor, que es donde está mirando quien las armó.
+            const motivo = motivoPosicionInvalida(candidateFen);
+            if (motivo) { msg.textContent = motivo; return; }
             if (!board.loadFreeModeFen(candidateFen)) {
                 msg.textContent = "Esa posición no es válida (revisa que haya un solo rey de cada color, por ejemplo).";
                 return;
@@ -1475,22 +1984,7 @@
             document.getElementById("board-edit-panel").classList.add("hidden");
             document.getElementById("toggle-free-mode-btn").textContent = "✏️ Editar";
             document.getElementById("toggle-free-mode-btn").title = "Editar el tablero (mover piezas libremente o cargar FEN/PGN)";
-            const { error: applyError } = await sb.from("game_state").update({
-                fen: finalFen, moves: [], start_fen: finalFen, last_move: null,
-                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
-                updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", myGameStateId);
-            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir la posición: " + applyError.message); return; }
-            await clearVariantTree();
-            // No hay que esperar a que llegue el eco de Realtime del propio cambio para
-            // refrescar el motor de análisis: eso dependía de un viaje de ida y vuelta a
-            // Supabase (con las ~8 suscripciones de Realtime abiertas en esta página,
-            // en una red de aula puede tardar o perderse) y mientras tanto el panel se
-            // quedaba mostrando la evaluación de la posición anterior. El tablero del
-            // profesor ya tiene la posición nueva aplicada localmente, así que se le pide
-            // la evaluación directamente aquí.
-            if (isTeacher) updateEngineEval();
-            setStatus("Posición aplicada: ya se transmitió a todos los alumnos.");
+            await aplicarPosicionEnClase(finalFen, "Posición aplicada: ya se transmitió a todos los alumnos.");
         });
 
         document.getElementById("free-mode-cancel-btn").addEventListener("click", async () => {
@@ -1564,6 +2058,16 @@
                     lowerBtn.addEventListener("click", () => lowerStudentHand(studentId));
                     actions.appendChild(lowerBtn);
                 }
+                // La bitácora de ESTE alumno, sin salir de la clase.
+                const notasBtn = document.createElement("button");
+                notasBtn.type = "button";
+                notasBtn.className = "shrink-0 text-xs font-semibold px-2 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                notasBtn.textContent = "📝";
+                notasBtn.title = "Anotar algo de este alumno (solo lo ves tú)";
+                notasBtn.setAttribute("aria-label", "Bitácora de " + (info.full_name || info.email));
+                notasBtn.addEventListener("click", () => abrirNotasEnClase(studentId, info.full_name || info.email));
+                actions.appendChild(notasBtn);
+
                 // Con qué color puede mover: se elige ANTES de dar el control (para dárselo
                 // ya con el color correcto) y también se puede cambiar mientras ya lo tiene
                 // (por ejemplo, para pasar de "solo blancas" a "ambos colores" a mitad de la
@@ -1594,6 +2098,206 @@
                 listEl.appendChild(li);
             }
         }
+
+        /* ---------- El plan de clase ----------
+
+           Lo que el profesor preparó en planes.html, aquí al lado del tablero.
+           Ningún renglón hace nada nuevo: cada uno entra por la puerta que esta
+           página ya tenía —`aplicarPosicionEnClase()` para las posiciones y
+           `abrirLeccionLocal()` para las lecciones—, que es lo que garantiza que
+           una posición del plan y una del editor dejen la clase exactamente
+           igual. Si cada botón armara su propio `update`, el que se olvidara de
+           limpiar las variantes dejaría un resto de la posición anterior, y eso
+           no da ningún error.
+
+           Las NOTAS del plan no se transmiten: son su chuleta, como el PDF. */
+        let planesDelProfesor = [];
+        let itemsDelPlan = [];
+
+        async function cargarPlanesEnClase() {
+            if (!isTeacher) return;
+            const select = document.getElementById("plan-select");
+            /* Los propios y los que le comparten sus colegas. Van en la MISMA
+               lista porque a la hora de dar la clase los dos se dan igual —
+               lo que cambia es quién los puede editar, y eso es en el armador.
+               Se piden por separado: un plan compartido no sale del `select`
+               por profesor_id, y su autor no se puede leer de `profiles`. */
+            let compartidos = [];
+            try {
+                planesDelProfesor = await PlanClase.listarPlanes(sb, session.user.id);
+            } catch (e) {
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar tus planes: " + e.message;
+                return;
+            }
+            try {
+                compartidos = await PlanClase.planesCompartidosConmigo(sb);
+            } catch (e) {
+                // Que no lleguen los compartidos no puede dejar sin plan a quien
+                // sí tiene los suyos, en medio de la clase.
+                compartidos = [];
+                document.getElementById("plan-msg").textContent = "No se pudieron cargar los planes compartidos: " + e.message;
+            }
+            planesDelProfesor = planesDelProfesor.concat(compartidos);
+
+            select.innerHTML = "";
+            const vacio = document.createElement("option");
+            vacio.value = "";
+            vacio.textContent = planesDelProfesor.length ? "— Elige un plan —" : "Todavía no has armado ninguno";
+            select.appendChild(vacio);
+            const grupo = (nombre, lista) => {
+                if (!lista.length) return;
+                const g = document.createElement("optgroup");
+                g.label = nombre;
+                lista.forEach((pl) => {
+                    const o = document.createElement("option");
+                    o.value = pl.id;
+                    o.textContent = pl.titulo + (pl.autor ? " · " + pl.autor : "");
+                    g.appendChild(o);
+                });
+                select.appendChild(g);
+            };
+            grupo("Tus planes", planesDelProfesor.filter((pl) => pl.profesor_id === session.user.id));
+            grupo("Compartidos contigo", compartidos);
+            /* Cuál estaba dando se recuerda en ESTE aparato, como el tema o la
+               clase elegida: si se recarga la página en medio de la clase —que
+               pasa— no hay que volver a buscarlo en la lista. */
+            const recordado = localStorage.getItem("plan_en_clase");
+            if (recordado && planesDelProfesor.some((pl) => pl.id === recordado)) {
+                select.value = recordado;
+                await abrirPlanEnClase(recordado);
+            }
+        }
+
+        async function abrirPlanEnClase(planId) {
+            const lista = document.getElementById("plan-items");
+            const notasEl = document.getElementById("plan-notas");
+            const msg = document.getElementById("plan-msg");
+            lista.innerHTML = "";
+            notasEl.classList.add("hidden");
+            msg.textContent = "";
+            itemsDelPlan = [];
+            if (!planId) { localStorage.removeItem("plan_en_clase"); return; }
+            localStorage.setItem("plan_en_clase", planId);
+
+            const plan = planesDelProfesor.find((pl) => pl.id === planId);
+            if (plan && plan.notas) {
+                notasEl.textContent = plan.notas;
+                notasEl.classList.remove("hidden");
+            }
+            try {
+                itemsDelPlan = await PlanClase.itemsDe(sb, planId);
+            } catch (e) {
+                msg.textContent = "No se pudieron cargar los renglones: " + e.message;
+                return;
+            }
+            if (!itemsDelPlan.length) {
+                msg.textContent = "Este plan todavía está vacío.";
+                return;
+            }
+            itemsDelPlan.forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+        }
+
+        function pintarRenglonDelPlan(item) {
+            const li = document.createElement("li");
+            li.dataset.planItem = item.id;
+            li.className = "bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2";
+
+            const titulo = document.createElement("p");
+            titulo.className = "font-semibold text-brand-700 dark:text-brand-200 break-words";
+            titulo.textContent = PlanClase.resumen(item);
+            li.appendChild(titulo);
+
+            const detalle = item.pregunta || item.nota;
+            if (detalle) {
+                const d = document.createElement("p");
+                d.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5 break-words whitespace-pre-wrap";
+                d.textContent = detalle;
+                li.appendChild(d);
+            }
+
+            const acciones = document.createElement("div");
+            acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
+            const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+
+            if (item.tipo === "posicion") {
+                const alTablero = document.createElement("button");
+                alTablero.type = "button";
+                alTablero.className = clases;
+                alTablero.textContent = "📥 Al tablero";
+                alTablero.title = "Transmitir esta posición a toda la clase";
+                alTablero.addEventListener("click", async () => {
+                    await aplicarPosicionEnClase(item.fen, "Posición del plan enviada: ya la ven todos los alumnos.");
+                });
+                acciones.appendChild(alTablero);
+
+                if (item.pregunta) {
+                    const preguntar = document.createElement("button");
+                    preguntar.type = "button";
+                    preguntar.className = clases;
+                    preguntar.textContent = "❓ Preguntar";
+                    preguntar.title = "Abrir la pregunta con esta posición (el enunciado se lo dices tú)";
+                    preguntar.addEventListener("click", () => preguntarDelPlan(item));
+                    acciones.appendChild(preguntar);
+                }
+            } else if (item.tipo === "leccion") {
+                const abrir = document.createElement("button");
+                abrir.type = "button";
+                abrir.className = clases;
+                abrir.textContent = "📖 Abrir la lección";
+                abrir.title = "Abrirla solo en tu pantalla, como el PDF";
+                abrir.addEventListener("click", () => abrirLeccionLocal(item.curso, item.leccion));
+                acciones.appendChild(abrir);
+            }
+
+            if (acciones.childElementCount) li.appendChild(acciones);
+            return li;
+        }
+
+        /* Mismo mecanismo que Táctica y que los archivos PGN: se aplica la
+           posición y se abre una pregunta sobre ella.
+
+           `expected_plies` va en 1 y no sale del plan a propósito: el caso de
+           todos los días es "¿cuál es la jugada?", y un campo más que llenar al
+           armar el plan se queda sin llenar. Si hace falta otra cantidad, el
+           panel de Preguntar la cambia como siempre. */
+        async function preguntarDelPlan(item) {
+            if (!(await aplicarPosicionEnClase(item.fen))) return;
+            document.getElementById("question-plies-input").value = 1;
+            await sb.from("questions").update({ closed_at: new Date().toISOString() })
+                .eq("created_by", boardOwnerId).is("closed_at", null);
+            const { data, error } = await sb.from("questions")
+                .insert({ fen: item.fen, created_by: session.user.id, expected_plies: 1 })
+                .select().single();
+            if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
+            activateTeacherTab("preguntar");
+            setStatus("Pregunta abierta desde el plan: " + item.titulo);
+            computeEngineAnswer(data.id, item.fen, 1); // en segundo plano
+        }
+
+        document.getElementById("plan-select").addEventListener("change", (e) => {
+            abrirPlanEnClase(e.target.value);
+        });
+
+        /* La bitácora, abierta desde el renglón del alumno. El panel se monta
+           entero cada vez: son pocas notas (las últimas cinco) y así no hay que
+           acordarse de limpiar lo del alumno anterior — que es justo el descuido
+           que dejaría al profesor escribiendo sobre quien no era. */
+        function abrirNotasEnClase(studentId, nombre) {
+            if (!isTeacher) return;
+            const caja = document.getElementById("notas-en-clase");
+            document.getElementById("notas-en-clase-titulo").textContent = "📝 Bitácora de " + nombre;
+            caja.classList.remove("hidden");
+            NotasAlumno.montarPanel(document.getElementById("notas-en-clase-body"), {
+                sb,
+                alumnoId: studentId,
+                profesorId: profile.id,
+                compacto: true,
+            });
+        }
+
+        document.getElementById("notas-en-clase-cerrar").addEventListener("click", () => {
+            document.getElementById("notas-en-clase").classList.add("hidden");
+        });
 
         async function setActivePlayer(studentId, color) {
             const { error } = await sb.from("game_state").update({
@@ -1666,6 +2370,10 @@
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
                 if (isTeacher) renderChatStudentOptions();
+                // Primer disparador de "esto ya es una clase": hay alguien del
+                // otro lado. Sin esto, la asistencia del que acaba de entrar no
+                // se registra en ninguna parte.
+                if (isTeacher && onlineStudents.size > 0) abrirClaseSiHaceFalta();
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -2352,29 +3060,45 @@
                     label.className = "text-sm text-brand-700 dark:text-brand-200";
                     label.textContent = (i + 1) + ". " + (ex.mate ? "Mate en " + Math.ceil(ex.solution.length / 2) : "ELO " + ex.rating);
                     const actions = document.createElement("div");
-                    actions.className = "flex items-center gap-1.5 shrink-0";
+                    actions.className = "flex items-center justify-end flex-wrap gap-1.5 shrink-0";
                     const previewBtn = document.createElement("button");
                     previewBtn.type = "button";
                     previewBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
                     previewBtn.textContent = "👁 Vista previa";
+                    // "Al tablero" transmite SOLO la posición, sin abrir ninguna pregunta: es para
+                    // explicar el ejercicio en el tablero de todos, que no es lo mismo que
+                    // ponérselo a resolver. Con un solo botón había que preguntar para poder
+                    // enseñarlo, y entonces el alumno ya está contestando mientras se explica.
+                    const sendBtn = document.createElement("button");
+                    sendBtn.type = "button";
+                    sendBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-700 dark:hover:bg-brand-600 text-brand-700 dark:text-brand-200 transition-colors";
+                    sendBtn.textContent = "📥 Al tablero";
+                    sendBtn.title = "Poner esta posición en el tablero de la clase, sin preguntar nada";
                     const askBtn = document.createElement("button");
                     askBtn.type = "button";
                     askBtn.className = "text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";
                     askBtn.textContent = "❓ Preguntar";
-                    actions.append(previewBtn, askBtn);
+                    actions.append(previewBtn, sendBtn, askBtn);
                     row.append(label, actions);
                     li.appendChild(row);
                     const previewWrap = document.createElement("div");
-                    previewWrap.className = "hidden mt-2 max-w-[180px]";
+                    previewWrap.className = "hidden mt-2";
                     li.appendChild(previewWrap);
                     previewBtn.addEventListener("click", () => {
                         const opening = previewWrap.classList.contains("hidden");
                         previewWrap.classList.toggle("hidden");
                         previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
+                        // El tablero se dibuja con el recuadro YA destapado: el tamaño de la
+                        // pieza se mide sobre la casilla renderizada, y dentro de algo oculto
+                        // esa medida es cero.
                         if (opening && !previewWrap.dataset.rendered) {
                             previewWrap.dataset.rendered = "1";
                             renderTacticsPreviewBoard(previewWrap, ex.fen);
                         }
+                    });
+                    sendBtn.addEventListener("click", async () => {
+                        const ok = await aplicarPosicionEnClase(ex.fen, "Posición del ejercicio enviada: ya la ven todos los alumnos.");
+                        if (ok) { sendBtn.textContent = "✅ Enviada"; setTimeout(() => { sendBtn.textContent = "📥 Al tablero"; }, 2000); }
                     });
                     askBtn.addEventListener("click", () => askTacticsExercise(ex));
                     list.appendChild(li);
@@ -2384,35 +3108,29 @@
             }
         }
 
-        // Mini-tablero estático de solo lectura para la vista previa (mismas clases .example-*
-        // que ya usan los diagramas de ejemplo de los artículos, para que se vea igual en todo
-        // el sitio — ver js/article-example-board.js).
-        const TACTICS_GLYPH = { p: { w: "♙", b: "♟" }, n: { w: "♘", b: "♞" }, b: { w: "♗", b: "♝" }, r: { w: "♖", b: "♜" }, q: { w: "♕", b: "♛" }, k: { w: "♔", b: "♚" } };
+        // Mini-tablero de solo lectura para la vista previa. Lo dibuja el MISMO diagrama de
+        // ejemplo que usan los artículos (js/article-example-board.js): acá estaba copiado, y
+        // la copia ya se había separado del original por donde se separan siempre — dibujaba
+        // las piezas con el font-size fijo de 24px del CSS, pensado para un tablero grande,
+        // dentro de casillas de 22px, así que la pieza se salía de su casilla y el tablero
+        // "no se veía bien"; y no entendía el juego de piezas ilustrado, así que a quien lo
+        // tuviera elegido le salían aquí las de texto. El original mide la casilla ya
+        // renderizada y ajusta la pieza a ella, de modo que se ve igual a cualquier ancho.
         function renderTacticsPreviewBoard(container, fen) {
-            let previewGame;
-            try { previewGame = new Chess(fen); } catch (e) { container.textContent = "No se pudo mostrar la posición."; return; }
-            const boardEl = document.createElement("div");
-            boardEl.className = "example-board";
-            const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-            for (let rank = 8; rank >= 1; rank--) {
-                for (let f = 0; f < 8; f++) {
-                    const square = FILES[f] + rank;
-                    const light = (f + (rank - 1)) % 2 === 1; // h1 debe quedar clara, ver article-example-board.js
-                    const sq = document.createElement("div");
-                    sq.className = "example-sq " + (light ? "example-sq-light" : "example-sq-dark");
-                    const piece = previewGame.get(square);
-                    if (piece) {
-                        const span = document.createElement("span");
-                        span.className = piece.color === "w" ? "piece-white" : "piece-black";
-                        span.setAttribute("aria-hidden", "true");
-                        span.textContent = TACTICS_GLYPH[piece.type][piece.color];
-                        sq.appendChild(span);
-                    }
-                    boardEl.appendChild(sq);
-                }
-            }
             container.innerHTML = "";
+            let previewGame;
+            try { previewGame = new Chess(fen); } catch (e) { previewGame = null; }
+            if (!previewGame || !window.ExampleBoard) { container.textContent = "No se pudo mostrar la posición."; return; }
+            const boardEl = document.createElement("div");
+            boardEl.className = "example-board max-w-[260px]";
             container.appendChild(boardEl);
+            window.ExampleBoard.render(boardEl, previewGame);
+            // De quién es la jugada: sin esto hay que deducirlo de la posición, y el ejercicio
+            // no se entiende hasta que ya se mandó a la clase.
+            const turno = document.createElement("p");
+            turno.className = "text-xs text-brand-450 dark:text-brand-350 mt-2 max-w-[260px] text-center";
+            turno.textContent = previewGame.turn() === "w" ? "Juegan blancas" : "Juegan negras";
+            container.appendChild(turno);
         }
 
         // Transmite la posición del ejercicio elegido a toda la clase y la pregunta de
@@ -2424,19 +3142,11 @@
         async function askTacticsExercise(ex) {
             const fen = ex.fen;
             const expectedPlies = Math.max(1, Math.min(6, Math.ceil((ex.solution || [""]).length / 2)));
-            board.loadMoves([], fen);
-            const { error: applyError } = await sb.from("game_state").update({
-                fen, moves: [], start_fen: fen, last_move: null,
-                arrows: [], circles: [], active_player_id: null, active_player_color: "both",
-                updated_by: session.user.id, updated_at: new Date().toISOString(),
-            }).eq("id", myGameStateId);
-            if (applyError) { console.error(applyError); setStatus("No se pudo transmitir el ejercicio: " + applyError.message); return; }
-            await clearVariantTree();
+            if (!(await aplicarPosicionEnClase(fen))) return;
             document.getElementById("question-plies-input").value = expectedPlies;
             await sb.from("questions").update({ closed_at: new Date().toISOString() }).eq("created_by", boardOwnerId).is("closed_at", null);
             const { data, error } = await sb.from("questions").insert({ fen, created_by: session.user.id, expected_plies: expectedPlies }).select().single();
             if (error) { console.error(error); setStatus("No se pudo crear la pregunta: " + error.message); return; }
-            if (isTeacher) updateEngineEval();
             activateTeacherTab("preguntar");
             setStatus("Ejercicio de táctica enviado a la clase como pregunta.");
             computeEngineAnswer(data.id, fen, expectedPlies); // en segundo plano, no bloquea la pregunta
@@ -3112,6 +3822,9 @@
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
                 cargarCupoInvitaciones();
+                cargarPlanesEnClase();
+                setupTeacherLessonTools();
+                setupArchivosTools();
             } else {
                 document.getElementById("student-panel").classList.remove("hidden");
                 document.getElementById("raise-hand-btn").classList.remove("hidden");
@@ -3126,6 +3839,7 @@
             subscribePresence();
             await checkOpenClassSession();
             subscribeClassSessions();
+            conectarControlesDeClase();
             await loadVariantTree();
             subscribeVariants();
             await loadCurrentQuestion();
@@ -3199,6 +3913,46 @@
             } catch (e) { /* si no se puede leer, el servidor igual lo hace cumplir */ }
         }
 
+        /* Qué se ve y qué se pide según haya correo propio o no. El campo del
+           correo se apaga en vez de esconderse: así se ve que sigue ahí y que
+           lo que cambió es que ya no hace falta. */
+        function pintarModoAlumno() {
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const correo = document.getElementById("student-email");
+            const usuario = document.getElementById("student-usuario");
+            correo.disabled = sinCorreo;
+            correo.required = !sinCorreo;
+            correo.classList.toggle("opacity-50", sinCorreo);
+            document.getElementById("student-casa").classList.toggle("hidden", !sinCorreo);
+            document.getElementById("student-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+            // Se propone desde el nombre, pero lo escrito a mano no se pisa.
+            if (sinCorreo && !usuario.dataset.tocado) {
+                usuario.value = baseDeUsuarioEnPantalla(document.getElementById("student-name").value);
+            }
+        }
+
+        /* La misma regla que `baseDeUsuario()` de la Edge Function: primer
+           nombre y primer apellido, sin tildes. Acá solo PROPONE lo que se ve;
+           quien decide es el servidor, que además desempata si ya está tomado.
+           Que las dos coincidan lo comprueba verificar-alumno-sin-correo.js. */
+        function baseDeUsuarioEnPantalla(nombre) {
+            const pedazos = String(nombre || "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+                .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+            if (!pedazos.length) return "";
+            const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+            return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+        }
+
+        document.getElementById("student-sin-correo").addEventListener("change", pintarModoAlumno);
+        document.getElementById("student-name").addEventListener("input", () => {
+            if (!document.getElementById("student-usuario").dataset.tocado) pintarModoAlumno();
+        });
+        document.getElementById("student-usuario").addEventListener("input", (e) => {
+            e.target.dataset.tocado = "1";
+        });
+        pintarModoAlumno();
+
         document.getElementById("create-student-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const msg = document.getElementById("create-student-msg");
@@ -3208,6 +3962,22 @@
 
             const email = document.getElementById("student-email").value.trim();
             const full_name = document.getElementById("student-name").value.trim();
+            const sinCorreo = document.getElementById("student-sin-correo").checked;
+            const encargadoEmail = document.getElementById("student-encargado-correo").value.trim();
+            const encargadoNombre = document.getElementById("student-encargado-nombre").value.trim();
+            const usuario = document.getElementById("student-usuario").value.trim();
+
+            // Sin buzón propio, el correo de la casa es la ÚNICA forma de
+            // mandar el enlace: sin él la cuenta queda creada y muda.
+            if (sinCorreo && (!full_name || !encargadoEmail || !usuario)) {
+                msg.textContent = !full_name
+                    ? "Para armarle un usuario hace falta el nombre del alumno."
+                    : (!usuario ? "Falta el usuario con el que va a entrar."
+                                : "Falta el correo de la casa: es a donde va el enlace para crear la contraseña.");
+                msg.className = "text-xs text-red-600 dark:text-red-400";
+                btn.disabled = false; btn.textContent = "Enviar invitación";
+                return;
+            }
 
             try {
                 const res = await fetch(EDGE_FUNCTION_URL, {
@@ -3217,13 +3987,42 @@
                         "Authorization": `Bearer ${session.access_token}`,
                         "apikey": window.SUPABASE_ANON_KEY,
                     },
-                    body: JSON.stringify({ email, full_name }),
+                    body: JSON.stringify({
+                        email: sinCorreo ? "" : email,
+                        full_name,
+                        sin_correo: sinCorreo,
+                        usuario: sinCorreo ? usuario : "",
+                        encargado_email: sinCorreo ? encargadoEmail : "",
+                        encargado_nombre: sinCorreo ? encargadoNombre : "",
+                    }),
                 });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.error || "Error desconocido");
-                msg.textContent = `Invitación enviada a ${result.email}. Recibirá un correo con un enlace para entrar.`;
-                msg.className = "text-xs text-green-600 dark:text-green-400";
+                // Con qué entra lo dice el servidor: el usuario pudo salir con
+                // un número al final si ya estaba tomado.
+                const entra = result.usuario || result.email;
+                if (result.correo_enviado === false) {
+                    msg.textContent = `La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
+                        "Vuelve a intentarlo más tarde o dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.";
+                    msg.className = "text-xs font-semibold text-accent-700 dark:text-accent-400";
+                } else if (result.sin_correo) {
+                    // El usuario es el dato nuevo y hay que enseñarlo: no es un
+                    // correo y nadie lo adivina. Y el correo salió a la casa, no
+                    // al alumno — quien invitó tiene que poder decírselo.
+                    msg.textContent = `Listo: entra con ${entra}. El enlace para crear la contraseña salió a ` +
+                        `${result.correo_destino || encargadoEmail}, no al alumno — ese usuario no recibe correo.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                } else {
+                    msg.textContent = `Invitación enviada a ${entra}. Recibirá un correo para crear su contraseña, con los pasos para entrar.`;
+                    msg.className = "text-xs text-green-600 dark:text-green-400";
+                }
                 document.getElementById("create-student-form").reset();
+                // reset() limpia los campos pero no la marca de "lo escribí a
+                // mano" ni vuelve a pintar el modo: sin esto, la invitación
+                // siguiente arranca con los bloques abiertos de la anterior y
+                // el usuario del alumno de antes todavía escrito.
+                delete document.getElementById("student-usuario").dataset.tocado;
+                pintarModoAlumno();
                 // El servidor devuelve cuántas quedan: así el número de la pantalla
                 // es el que de verdad tiene la base, no una cuenta del navegador.
                 if (!result.ilimitado && typeof result.restantes === "number") {

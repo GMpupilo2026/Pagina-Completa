@@ -22,6 +22,14 @@
   .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
   .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
   footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
   @media (prefers-color-scheme: dark) {
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
@@ -32,6 +40,11 @@
 </style>
 </head>
 <body>
+<nav class="volver" aria-label="Volver a la plataforma">
+  <a href="../../academia/el-mapa-de-los-finales.html">← Volver al curso El mapa de los finales</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</nav>
 <header>
   <p>El mapa de los finales · Lección 12</p>
   <h1>Torre contra dos peones</h1>
@@ -68,7 +81,7 @@
 <div class="posicion">
   <h3>Posición 1: La posición límite: juegan blancas</h3>
   
-  <p>Piezas blancas: rey en h2; peónes en a6, b5.</p>
+  <p>Piezas blancas: rey en h2; peones en a6, b5.</p>
   <p>Piezas negras: rey en h5; torre en f1.</p>
   <p>Juegan las blancas.</p>
   
@@ -80,7 +93,7 @@
 <div class="posicion">
   <h3>Posición 2: La posición límite: juegan negras</h3>
   
-  <p>Piezas blancas: rey en h2; peónes en a6, b5.</p>
+  <p>Piezas blancas: rey en h2; peones en a6, b5.</p>
   <p>Piezas negras: rey en h5; torre en f1.</p>
   <p>Juegan las negras.</p>
   
@@ -92,7 +105,7 @@
 <div class="posicion">
   <h3>Posición 3: El rey fuerte frente a los peones</h3>
   
-  <p>Piezas blancas: rey en d5; peónes en d6, e6.</p>
+  <p>Piezas blancas: rey en d5; peones en d6, e6.</p>
   <p>Piezas negras: rey en e8; torre en a8.</p>
   <p>Juegan las blancas.</p>
   
@@ -184,6 +197,11 @@
 <footer>
   <p>© 2026 Oscar Angulo Cubero · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
   <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+<p class="volver">
+  <a href="../../academia/el-mapa-de-los-finales.html">← Volver al curso El mapa de los finales</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>
+</p>
 </footer>
 </body>
 </html>

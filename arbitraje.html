@@ -23,59 +23,18 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/arbitraje-items.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/cuadro-comandos.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
@@ -119,10 +78,50 @@
                     <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Texto oficial y vigente: <a href="https://handbook.fide.com/" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 hover:underline">handbook.fide.com</a>. Ante cualquier diferencia, manda el Handbook.</p>
                 </div>
 
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <!-- El cuadernillo con TODAS las respuestas: arranca oculto y solo lo
+                     destapa init() para quien administra, no para todo el equipo
+                     docente. Cuanta más gente lo tenga bajado, más fácil es que
+                     circule y que el examen deje de medir nada. Quien dé clase y lo
+                     necesite se lo pide a quien administra. -->
+                <div id="banco-pdf" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">📕 El banco completo, para estudiar</h2>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Las <span class="banco-total">—</span> preguntas del banco en un cuadernillo, área por área y escalón por escalón, con la respuesta correcta marcada, el porqué y el artículo del Handbook. <strong>Trae las respuestas</strong>, así que es material del equipo docente: no se le pasa a quien vaya a rendir el examen. Va protegido —se abre normal, pero no se puede copiar ni imprimir— y firmado por IA Oscar Angulo Cubero.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Las <span class="banco-total">—</span> preguntas del banco en un cuadernillo, área por área y escalón por escalón, con la respuesta correcta marcada, el porqué y el artículo del Handbook. <strong>Trae las respuestas</strong>, así que es solo para administración: no se le pasa a quien vaya a rendir el examen. Va protegido —se abre normal, pero no se puede copiar ni imprimir— y firmado por IA Oscar Angulo Cubero.</p>
                     <a href="examen-de-arbitraje.pdf" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-brand-800 hover:bg-brand-700 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">⬇️ Descargar el cuadernillo (PDF)</a>
+                </div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Qué examen rendir</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Los tres miden el mismo reglamento, con el techo de dificultad de cada título.</p>
+                    <div id="nivel-opciones" role="radiogroup" aria-label="Qué examen rendir" class="grid sm:grid-cols-2 gap-3">
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="" checked class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Examen completo</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-completo">40</span> preguntas, los cinco escalones.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="nacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro Nacional</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-nacional">24</span> preguntas, hasta el escalón 3.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="fide" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro FIDE</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-fide">32</span> preguntas, hasta el escalón 4.</span>
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-3 border-2 border-brand-100 dark:border-brand-700 rounded-xl p-3 cursor-pointer">
+                            <input type="radio" name="nivel-examen" value="internacional" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span>
+                                <span class="block font-semibold text-brand-800 dark:text-white text-sm">Árbitro Internacional</span>
+                                <span class="block text-xs text-brand-500 dark:text-brand-300"><span class="total-internacional">40</span> preguntas, los cinco escalones.</span>
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
@@ -152,6 +151,10 @@
                     </div>
                     <p class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4" id="q-text">…</p>
                     <div id="q-options" class="space-y-2"></div>
+                    <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js).
+                         Va aparte de #q-options porque esa caja se repinta entera en cada
+                         clic y el cuadro se monta una sola vez. -->
+                    <div id="q-comandos"></div>
                 </div>
 
                 <div class="flex items-center justify-between gap-3">
@@ -163,7 +166,7 @@
 
             <!-- ---------- Resultado ---------- -->
             <section id="resultado-view" class="hidden">
-                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Resultado del examen</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400" id="r-titulo-examen">Resultado del examen</p>
                 <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-1" id="r-nivel">—</h1>
                 <p class="text-brand-600 dark:text-brand-300 mb-2" id="r-descripcion"></p>
                 <p class="text-sm text-brand-500 dark:text-brand-300 mb-1" id="r-marcador"></p>
@@ -187,17 +190,7 @@
 
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script>
 /* ===== Examen de arbitraje FIDE — herramienta del equipo docente =====
@@ -222,18 +215,19 @@ const BANCO = window.ARBITRAJE_ITEMS;
 const PRUEBA = window.ArbitrajePrueba;
 const AN = window.ArbitrajeNivel;
 
-const MINUTOS = 50;
+let MINUTOS = 50;
 const CLAVE_RESULTADO = 'arbitraje_resultado_v1';
 const CLAVE_HISTORIAL = 'arbitraje_historial_v1';
 const EN_BLANCO = 'blanco';
 
 let perfil = null;
 let sesion = null;             // sesión de quien entra (para el token de las edge functions)
-let examen = [];              // las 40 preguntas de este intento
+let examen = [];              // las preguntas de este intento
 let respuestas = {};          // id → índice elegido, o EN_BLANCO
 let idx = 0;
 let quedan = MINUTOS * 60;
 let cronometro = null;
+let nivelExamen = null;       // { clave, techo, etiqueta, minutos } del examen elegido, o null = completo
 
 /* ---------------- Utilidades ---------------- */
 const $ = (id) => document.getElementById(id);
@@ -249,12 +243,16 @@ function irA(vista) {
 
 /* ---------------- El examen ---------------- */
 function empezar() {
-  examen = PRUEBA.armar();
+  const seleccion = document.querySelector('input[name="nivel-examen"]:checked');
+  nivelExamen = (seleccion && seleccion.value) ? PRUEBA.NIVEL_EXAMEN_POR_CLAVE[seleccion.value] : null;
+  MINUTOS = nivelExamen ? nivelExamen.minutos : 50;
+  examen = PRUEBA.armar(null, undefined, nivelExamen ? nivelExamen.techo : null);
   respuestas = {};
   idx = 0;
   quedan = MINUTOS * 60;
   irA('examen-view');
   pintarPregunta();
+  $('q-timer').textContent = reloj(quedan);
   clearInterval(cronometro);
   cronometro = setInterval(tic, 1000);
 }
@@ -293,13 +291,82 @@ function pintarPregunta() {
   blanco.textContent = '○ Dejar en blanco';
   blanco.addEventListener('click', () => { respuestas[item.id] = EN_BLANCO; pintarPregunta(); });
   caja.appendChild(blanco);
+  prepararComandos(item);
 }
+
+/* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+ * El examen solo se podía contestar apretando el botón de la opción. Con
+ * lector de pantalla eso se oye, pero no dice CUÁL es cuál: "la segunda" hay
+ * que contarla. Ahora cada opción lleva su letra escrita —"Opción A. …"— y la
+ * respuesta también se escribe.
+ *
+ * El cuadro se monta UNA vez, fuera de #q-options (que se repinta entero en
+ * cada clic), y lo que decide si se ve es el CSS. Ver js/cuadro-comandos.js. */
+let comandos = null;
+
+function prepararComandos(item) {
+  if (!window.CuadroComandos) return;
+  if (!comandos) {
+    comandos = CuadroComandos.montar($('q-comandos'), { onEnviar: responderEscribiendo });
+  }
+  comandos.etiqueta('Escribe la letra de la opción');
+  // Al responder por el cuadro se pasa solo a la siguiente, así que hay que
+  // decir de antemano qué va a hacer ese Enter — y sobre todo cuando es el que
+  // termina el examen.
+  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. `
+    + 'Puedes escribir solo la letra ("B"), "opción B", o "en blanco".'
+    + (idx === examen.length - 1
+        ? ' Es la última: al responder se termina el examen y se muestra el resultado.'
+        : ' Al responder se pasa sola a la siguiente.'));
+}
+
+/* Contestar por el cuadro PASA SOLA a la siguiente pregunta: quien contesta
+   escribiendo no tiene por qué ir a buscar el botón "Siguiente", que es
+   justamente lo que este cuadro viene a evitar.
+ *
+ * Y por eso el aviso lleva el enunciado de la pregunta nueva: al no pasar por
+ * el botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+ * contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+ * que se lee solo. Los botones de opción NO avanzan: ahí se ve la pantalla, y
+ * además este examen deja volver atrás con "Anterior". */
+function avanzarEscribiendo(resumen) {
+  if (idx === examen.length - 1) { terminar(false); return; }
+  idx += 1;
+  pintarPregunta();
+  comandos.decir(`${resumen} Pregunta ${idx + 1} de ${examen.length}: ${examen[idx].enunciado}`);
+  comandos.enfocar();
+}
+
+function responderEscribiendo(texto, api) {
+  const item = examen[idx];
+  if (CuadroComandos.esNoSe(texto)) {
+    respuestas[item.id] = EN_BLANCO;
+    api.limpiar();
+    avanzarEscribiendo('Anotado: en blanco.');
+    return;
+  }
+  const i = CuadroComandos.opcionPedida(texto, item.opciones.length);
+  if (i === null) {
+    api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}.`);
+    return;
+  }
+  // `i` es la POSICIÓN en la lista barajada; lo que se guarda es cuál opción
+  // del ítem es esa. Guardar la posición dejaría la respuesta atada al barajado.
+  const orden = item.__orden;
+  respuestas[item.id] = orden[i];
+  api.limpiar();
+  avanzarEscribiendo(`Anotado: opción ${CuadroComandos.letra(i)}, ${item.opciones[orden[i]]}.`);
+}
+
 
 function botonOpcion(item, original, elegida) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = claseOpcion(elegida);
-  b.textContent = item.opciones[original];
+  // La letra va ESCRITA en el botón, no puesta con CSS: es lo que hay que
+  // decir para contestar por el cuadro de comandos, así que quien la oye tiene
+  // que oírla de la misma lista que lee.
+  b.textContent = `Opción ${CuadroComandos.letra(item.__orden.indexOf(original))}. ${item.opciones[original]}`;
   b.addEventListener('click', () => { respuestas[item.id] = original; pintarPregunta(); });
   return b;
 }
@@ -339,6 +406,7 @@ function construirDetalle(porTiempo) {
     areas, dificultad,
     por_tiempo: !!porTiempo,
     minutos_usados: Math.round((MINUTOS * 60 - Math.max(quedan, 0)) / 60),
+    examen_elegido: nivelExamen ? nivelExamen.clave : 'completo',
   };
 }
 
@@ -365,6 +433,7 @@ async function guardar(detalle, resumen) {
     escalon: resumen.escalonAlcanzado, porcentaje: resumen.porcentaje,
     aciertos: resumen.aciertos, total: resumen.total, en_blanco: resumen.nosabe,
     por_tiempo: detalle.por_tiempo, minutos: detalle.minutos_usados,
+    examen_elegido: detalle.examen_elegido,
   };
   try { localStorage.setItem(CLAVE_RESULTADO, JSON.stringify({ ficha, detalle })); } catch (e) {}
   if (!perfil) return false;
@@ -394,6 +463,7 @@ async function leerEstado(id, clave) {
 
 function mostrarResultado(detalle, resumen, porTiempo) {
   irA('resultado-view');
+  $('r-titulo-examen').textContent = nivelExamen ? `Resultado del examen de ${nivelExamen.etiqueta}` : 'Resultado del examen';
   $('r-nivel').textContent = resumen.nivel.etiqueta;
   $('r-descripcion').textContent = resumen.nivel.descripcion;
   $('r-marcador').textContent =
@@ -698,6 +768,10 @@ window.addEventListener('beforeunload', (e) => {
 
 async function init() {
   $('tam-banco').textContent = BANCO.length;
+  document.querySelectorAll('.total-completo').forEach((el) => { el.textContent = PRUEBA.TOTAL; });
+  PRUEBA.NIVELES_EXAMEN.forEach((n) => {
+    document.querySelectorAll('.total-' + n.clave).forEach((el) => { el.textContent = PRUEBA.totalPara(n.techo); });
+  });
   document.querySelectorAll('.banco-total').forEach((el) => { el.textContent = BANCO.length; });
   try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
   if (!sesion) { window.location.href = 'login.html?next=' + encodeURIComponent('arbitraje.html'); return; }
@@ -707,6 +781,8 @@ async function init() {
   $('loading').classList.add('hidden');
   if (!puede) { $('denegado').classList.remove('hidden'); return; }
   $('app').classList.remove('hidden');
+  // El cuadernillo trae las respuestas: solo administración.
+  if (perfil.is_admin === true) $('banco-pdf').classList.remove('hidden');
   await pintarPrevio();
   await pintarPublicos();
   await pintarEquipo();

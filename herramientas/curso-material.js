@@ -22,21 +22,20 @@
  *   - las posiciones, del archivo de datos del propio curso. NO se inventa
  *     ninguna posición ni ninguna cita.
  *
- * Cómo se corre (necesita Node, Chromium por Playwright y pypdf; ninguno es
- * parte del sitio, son solo para generar los archivos):
+ * Este archivo es un MÓDULO (arma el HTML del cuadernillo y de la versión
+ * accesible), no el que se ejecuta directo: `node herramientas/curso-material.js`
+ * no hace nada, no tiene punto de entrada. Quien orquesta Playwright, pypdf y
+ * el resto de los pasos es herramientas/curso-material-generar.js, que lo
+ * importa (`require("./curso-material.js")`). Para regenerar todo:
  *
  *     npm install playwright && pip install pypdf
- *     node herramientas/curso-material.js              # todos los cursos
- *     node herramientas/curso-material.js finales-practicos
+ *     node herramientas/curso-material-generar.js      # todos los cursos
+ *     node herramientas/curso-material-enlazar.js      # pone los enlaces
  */
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
-const { execFileSync } = require("child_process");
 
-const RAIZ = path.join(__dirname, "..");
 const { tablero } = require("./lib/tablero-svg.js");
-const { lecciones, posiciones } = require("./lib/leer-curso.js");
 
 const AUTOR = "Oscar Angulo Cubero";
 /* La contraseña de propietario: la que levantaría las restricciones del PDF.
@@ -152,31 +151,8 @@ function posicionesDe(leccion, todas, prestadas) {
 }
 
 // ------------------------------------------------ describir una FEN en palabras
-const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
-const ORDEN = ["k", "q", "r", "b", "n", "p"];
-
-function describir(fen) {
-  const filas = fen.split(" ")[0].split("/");
-  const blancas = {}, negras = {};
-  filas.forEach((fila, r) => {
-    let c = 0;
-    for (const ch of fila) {
-      if (/\d/.test(ch)) { c += +ch; continue; }
-      const casilla = "abcdefgh"[c] + (8 - r);
-      const donde = ch === ch.toUpperCase() ? blancas : negras;
-      const tipo = ch.toLowerCase();
-      (donde[tipo] = donde[tipo] || []).push(casilla);
-      c += 1;
-    }
-  });
-  const lado = (mapa) => ORDEN.filter((t) => mapa[t]).map((t) => {
-    const cs = mapa[t].sort();
-    const nombre = NOMBRE_PIEZA[t] + (cs.length > 1 ? (t === "p" ? "es" : "s") : "");
-    return nombre + " en " + cs.join(", ");
-  }).join("; ");
-  const turno = fen.split(" ")[1] === "b" ? "Juegan las negras." : "Juegan las blancas.";
-  return { blancas: lado(blancas), negras: lado(negras), turno };
-}
+// Vive en lib/ porque el libro del diagnóstico describe sus posiciones igual.
+const { describir } = require("./lib/describir-fen.js");
 
 // --------------------------------------------------------- las fuentes
 function fuentesDe(curso, conceptos, hayPosiciones) {
@@ -327,6 +303,23 @@ function cuadernilloHtml(curso, leccion, conceptos, posics, partida) {
 </body></html>`;
 }
 
+// El camino de vuelta. El material se abre en su propia pestaña desde la
+// lección, así que sin esto queda en un callejón sin salida: no hay encabezado
+// del sitio, no hay menú y el "atrás" del navegador es lo único que queda.
+// Las direcciones son relativas a cursos/recursos/<curso>/, que es donde vive
+// este archivo.
+function volverA(curso, etiqueta) {
+  // Arriba es una región de navegación con su nombre; abajo, el mismo par de
+  // enlaces dentro del pie, ya como párrafo. Dos <nav> con el mismo nombre se
+  // anuncian como dos regiones iguales y no se sabe cuál es cuál.
+  const enlaces = `<a href="../../academia/${escapar(curso.slug)}.html">← Volver al curso ${escapar(curso.titulo)}</a>
+  ·
+  <a href="../../../clases.html">Panel de Academia</a>`;
+  return etiqueta
+    ? `<nav class="volver" aria-label="${escapar(etiqueta)}">\n  ${enlaces}\n</nav>`
+    : `<p class="volver">\n  ${enlaces}\n</p>`;
+}
+
 // ------------------------------------------------------- la versión accesible
 function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   const cuerpo = textoDe(leccion, partida);
@@ -362,6 +355,14 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
   .posicion { border: 2px solid #243b53; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
   .respuesta { background: #f0f4f8; border-left: 4px solid #102a43; padding: .6rem .9rem; }
   footer { margin-top: 3rem; border-top: 2px solid #102a43; padding-top: 1rem; font-size: .95rem; }
+  /* La vuelta a la plataforma. Este archivo se abre solo, en su propia
+     pestaña: sin estos enlaces no hay forma de regresar al curso salvo el
+     botón "atrás" del navegador, que con lector de pantalla no siempre está
+     a mano. Van arriba y abajo: el documento es largo y quien termina de
+     leerlo no tendría que subir de nuevo para salir. */
+  .volver { margin: 0 0 1.5rem; font-size: 1rem; }
+  footer .volver { margin: 1rem 0 0; }
+  .volver a { display: inline-block; padding: .2rem 0; }
   @media (prefers-color-scheme: dark) {
     body { background: #0a1f33; color: #f0f4f8; }
     h2, footer { border-color: #f0b429; }
@@ -372,6 +373,7 @@ function accesibleHtml(curso, leccion, conceptos, posics, partida) {
 </style>
 </head>
 <body>
+${volverA(curso, "Volver a la plataforma")}
 <header>
   <p>${escapar(curso.titulo)} · Lección ${leccion.n}</p>
   <h1>${escapar(leccion.titulo)}</h1>
@@ -437,6 +439,7 @@ ${lecturas.map((l) => `  <li>${escapar(l)}</li>`).join("\n")}
 <footer>
   <p>© ${ANIO} ${escapar(AUTOR)} · Ajedrez Integral. Material de uso docente para alumnos de la Academia.</p>
   <p>No se autoriza su reproducción ni su distribución fuera de ella.</p>
+${volverA(curso)}
 </footer>
 </body>
 </html>`;

@@ -97,7 +97,7 @@
                 <p class="text-lg text-brand-200 mb-3 max-w-xl mx-auto lg:mx-0">Un profesor real, en tiempo real, que corrige cada jugada. Desde las reglas básicas hasta preparación para torneos — con seguimiento de progreso para que la familia vea el avance de verdad.</p>
                 <p class="text-brand-300 text-sm mb-8 max-w-xl mx-auto lg:mx-0">Prueba el tablero contra mi motor abajo, sin necesidad de cuenta, para sentir el nivel antes de inscribirte.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">💬 Inscríbete a Academia</a>
+                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">💬 Inscríbete a la Academia Ajedrez Integral</a>
                     <a href="tablero.html" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all border border-white/20 backdrop-blur-sm">♟️ Probar el tablero gratis</a>
                 </div>
                 <p class="text-brand-300 text-sm mt-4 max-w-xl mx-auto lg:mx-0">¿No sabes tu nivel? <a href="entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 font-semibold underline">Haz el diagnóstico de nivel gratis</a>: 20 minutos, sin cuenta.</p>
@@ -113,7 +113,7 @@
                             <p class="text-brand-300 text-xs" id="turn-indicator">Turno: Blancas</p>
                         </div>
                     </div>
-                    <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full aspect-square rounded-lg overflow-hidden shadow-xl border-2 border-brand-600 select-none"></div>
+                    <div id="chessboard" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-auto -mx-4 sm:mx-0 sm:w-full aspect-square rounded-lg overflow-hidden shadow-xl border-2 border-brand-600 select-none"></div>
                     <div class="flex items-center justify-between gap-2 mt-3 flex-wrap">
                         <span id="status-msg" class="text-accent-400 text-xs sm:text-sm font-semibold">¡Tu turno!</span>
                         <div class="flex gap-2">
@@ -139,8 +139,8 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <span class="inline-block bg-accent-500/20 text-accent-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">🏛️ Academia Ajedrez Integral</span>
-                <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mt-2">Lo que hace diferente a Academia</h2>
-                <p class="text-brand-200 mt-4 max-w-2xl mx-auto">La mayoría de plataformas de ajedrez son videos grabados que nadie corrige. Academia es un profesor real, en vivo, con seguimiento del progreso de cada estudiante.</p>
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mt-2">Lo que hace diferente a Ajedrez Integral</h2>
+                <p class="text-brand-200 mt-4 max-w-2xl mx-auto">La mayoría de plataformas de ajedrez son videos grabados que nadie corrige. Ajedrez Integral es un profesor real, en vivo, con seguimiento del progreso de cada estudiante.</p>
             </div>
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/15 transition-colors">
@@ -175,8 +175,46 @@
                 </div>
             </div>
             <div class="text-center">
-                <a href="clases.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">🏛️ Ingresar a Academia</a>
+                <a href="clases.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 shadow-xl">🏛️ Ingresar a la Academia</a>
                 <p class="text-brand-300 text-sm mt-4">¿Aún no eres estudiante? <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="text-accent-400 hover:text-accent-300 font-semibold underline">Escríbenos por WhatsApp</a> y te ayudamos a inscribirte.</p>
+            </div>
+        </div>
+    </section>
+    <!-- El diagnóstico va ANTES del examen de arbitraje: es la misma clase de
+         puerta de entrada, pero para quien juega, que es casi todo el que llega
+         a la portada. Antes vivía en una línea de letra chica debajo del hero. -->
+    <section class="py-16 bg-brand-50 dark:bg-brand-950">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-to-br from-brand-800 to-brand-900 rounded-3xl p-8 md:p-10 shadow-xl grid md:grid-cols-[1fr_auto] gap-8 items-center">
+                <div>
+                    <span class="text-accent-400 font-semibold uppercase tracking-wide text-sm">Para quien juega</span>
+                    <h2 class="font-serif text-2xl md:text-3xl font-bold text-white mt-2 mb-3">¿En qué nivel estás de verdad?</h2>
+                    <p class="text-brand-200 mb-5">63 preguntas y posiciones, gratis y sin cuenta, que miden nueve áreas del juego: reglas, material, apertura, táctica, mates, finales, estrategia, cálculo y todo lo que rodea al tablero. Al terminar sabes tu nivel estimado con su rango de Elo, qué área hay que mejorar y por dónde conviene empezar.</p>
+                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3 rounded-xl transition-all hover:scale-105 shadow-lg">🧭 Hacer el diagnóstico</a>
+                    <p class="text-brand-300 text-sm mt-4">Toma unos 20 minutos y no hace falta registrarse.</p>
+                </div>
+                <div class="hidden md:block w-56 bg-white/95 rounded-2xl p-4 shadow-lg" aria-hidden="true">
+                    <svg viewBox="0 0 220 180" role="img" aria-labelledby="t-diag" class="w-full h-auto">
+                      <title id="t-diag">Cinco barras de nivel, cada una más alta que la anterior, con la tercera marcada</title>
+                      <ellipse cx="110" cy="166" rx="86" ry="9" fill="#0a1f33" opacity=".12"/>
+                      <line x1="14" y1="152" x2="206" y2="152" stroke="#9fb3c8" stroke-width="2"/>
+                      <rect x="20" y="122" width="26" height="30" rx="4" fill="#d9e2ec"/>
+                      <rect x="56" y="102" width="26" height="50" rx="4" fill="#bcccdc"/>
+                      <rect x="92" y="80" width="26" height="72" rx="4" fill="#de911d"/>
+                      <rect x="128" y="56" width="26" height="96" rx="4" fill="#bcccdc"/>
+                      <rect x="164" y="32" width="26" height="120" rx="4" fill="#d9e2ec"/>
+                      <path d="M105 62v10" stroke="#334e68" stroke-width="3" stroke-linecap="round"/>
+                      <path d="M100 68l5 6 5-6z" fill="#334e68"/>
+                      <text x="105" y="54" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="bold" fill="#334e68">AQUÍ</text>
+                      <g transform="translate(20 158)" fill="#627d98" font-family="Arial,Helvetica,sans-serif" font-size="9">
+                        <text x="13" y="8" text-anchor="middle">1</text>
+                        <text x="49" y="8" text-anchor="middle">2</text>
+                        <text x="85" y="8" text-anchor="middle">3</text>
+                        <text x="121" y="8" text-anchor="middle">4</text>
+                        <text x="157" y="8" text-anchor="middle">5</text>
+                      </g>
+                    </svg>
+                </div>
             </div>
         </div>
     </section>
@@ -186,7 +224,7 @@
                 <div>
                     <span class="text-accent-400 font-semibold uppercase tracking-wide text-sm">Para quienes arbitran</span>
                     <h2 class="font-serif text-2xl md:text-3xl font-bold text-white mt-2 mb-3">Mide tu nivel de arbitraje</h2>
-                    <p class="text-brand-200 mb-5">Cuarenta preguntas sobre el reglamento de la FIDE, gratis y sin cuenta. Al terminar sabes a qué nivel de arbitraje corresponde lo que sabes hoy, y Oscar revisa tu examen y te escribe con la retroalimentación.</p>
+                    <p class="text-brand-200 mb-5">40 preguntas sobre el reglamento de la FIDE, gratis y sin cuenta. Al terminar sabes a qué nivel de arbitraje corresponde lo que sabes hoy, y Oscar revisa tu examen y te escribe con la retroalimentación.</p>
                     <a href="nivel-de-arbitraje.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3 rounded-xl transition-all hover:scale-105 shadow-lg">⚖️ Hacer el examen</a>
                 </div>
                 <div class="hidden md:block w-56 bg-white/95 rounded-2xl p-4 shadow-lg" aria-hidden="true">
@@ -234,7 +272,7 @@
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 mx-auto rounded-full bg-accent-500 text-brand-900 font-serif text-2xl font-bold flex items-center justify-center mb-4 shadow-lg">2</div>
-                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Te damos tu acceso a Academia</h3>
+                    <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Te damos tu acceso a Ajedrez Integral</h3>
                     <p class="text-brand-500 dark:text-brand-300 text-sm">Creamos tu cuenta y te asignamos tu cupo: clases en vivo, cursos, entrenamiento e informes de progreso, todo en un mismo lugar.</p>
                 </div>
                 <div class="text-center">
@@ -290,7 +328,7 @@
                 </details>
                 <details class="group bg-brand-50 dark:bg-brand-800 rounded-xl p-5 open:shadow-md transition-shadow">
                     <summary class="font-serif font-bold text-brand-800 dark:text-white cursor-pointer list-none flex items-center justify-between gap-4"><h3 class="inline text-inherit">¿Cómo empiezo?</h3><span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none" aria-hidden="true">+</span></summary>
-                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">Escríbenos por WhatsApp, te contamos cómo funciona Academia y te ayudamos a inscribirte.</p>
+                    <p class="text-brand-500 dark:text-brand-300 text-sm mt-3">Escríbenos por WhatsApp, te contamos cómo funciona Ajedrez Integral y te ayudamos a inscribirte.</p>
                 </details>
             </div>
         </div>

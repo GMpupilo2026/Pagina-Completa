@@ -1,1 +1,15 @@
 entreno/data/temas_fuente.json
+
+# Lo que deja `npm install` para compilar el CSS o correr las comprobaciones.
+# El sitio no se construye con npm —se edita el HTML/JS directamente— así que
+# esto es andamio de cada quien, no del repositorio.
+node_modules/
+package.json
+package-lock.json
+
+# Lo que deja Python al importar un módulo de al lado (herramientas/, entreno/data/).
+__pycache__/
+*.pyc
+
+# Salida de herramientas/planes-semilla.js: se regenera con el script.
+herramientas/planes/

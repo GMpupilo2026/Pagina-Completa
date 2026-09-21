@@ -33,9 +33,15 @@ def fecha(ruta):
         pass
     return datetime.date.fromtimestamp(os.path.getmtime(ruta)).isoformat()
 
+# node_modules son las librerías que se instalan para compilar el CSS o correr
+# las comprobaciones (está en .gitignore): no son páginas del sitio. Sin esta
+# línea, el sitemap le ofrecía a Google media docena de páginas internas de
+# playwright — y no daba ningún error, solo aparecía en el archivo.
+FUERA = ("cursos/protegido/", "node_modules/")
+
 paginas = []
 for ruta in sorted(glob.glob("**/*.html", recursive=True)):
-    if ruta.startswith("cursos/protegido/"):
+    if ruta.replace(os.sep, "/").startswith(FUERA):
         continue
     texto = open(ruta, encoding="utf-8").read()
     if re.search(r'<meta name="robots"[^>]*noindex', texto):

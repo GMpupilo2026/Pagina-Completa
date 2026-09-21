@@ -25,6 +25,17 @@
   --piece-white-outline-adaptive: #000000;
   --piece-black-outline-adaptive: #ffffff;
 }
+/* El atributo `hidden` tiene que ganarle a las clases de display de Tailwind.
+   `[hidden]:where(...)` y `.flex` tienen la MISMA especificidad (0,1,0 — `:where`
+   no suma nada) y la utilidad va después en la hoja, así que gana `.flex`: un
+   elemento con `hidden` y `flex` a la vez se sigue viendo. Eso es lo que tenía
+   el cartel de "Instala la Academia en tu celular" — salía siempre, y "Ahora no"
+   le ponía `hidden` sin que desapareciera nada. Y no daba ningún error: la
+   comprobación miraba la propiedad `.hidden` del elemento, que sí estaba puesta.
+   Va acá y no en la página porque el atributo tiene que significar lo mismo en
+   todo el sitio. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 /* El encabezado es sticky: al saltar a un ancla el navegador tiene que dejarle
    su espacio arriba, o el destino queda debajo de la barra. Es la misma altura
@@ -325,3 +336,127 @@ html.adaptive-mode .piece-black {
 .dragging-from {
   opacity: 0.35;
 }
+
+/* ===== Los cursos en Modo Adaptado (js/curso-adaptado.js) =====
+ *
+ * Lo que decide qué se ve está acá y no en el JavaScript, a propósito: encender
+ * y apagar el modo surte efecto al instante, sin volver a recorrer el contenido
+ * del curso.
+ *
+ * 1) El material que solo sirve mirándolo. El cuadernillo en PDF y la
+ *    presentación son diagramas con marca de agua — para un lector de pantalla
+ *    son lo peor que se le puede dar, y por eso cada lección tiene su versión en
+ *    HTML accesible. En Modo Adaptado se ofrece esa y nada más. El video no se
+ *    esconde: un video es audio, y eso sí se oye.
+ */
+html.adaptive-mode .curso-solo-visual {
+  display: none !important;
+}
+
+/* El aviso que explica lo de arriba: si no, en Modo Adaptado parecería que a las
+   lecciones les faltan cosas. Faltan a propósito, y se dice cuáles. */
+.curso-aviso-adaptado {
+  display: none;
+}
+html.adaptive-mode .curso-aviso-adaptado {
+  display: block;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #de911d;
+  background: rgba(222, 145, 29, 0.12);
+  border-radius: 0 0.5rem 0.5rem 0;
+  line-height: 1.6;
+}
+
+/* 2) La posición contada en palabras ("Blancas: rey en anna 4; …").
+ *
+ *    Fuera de Modo Adaptado se comporta igual que antes —solo la oye el lector
+ *    de pantalla, mismo recorte que .sr-only—, así que a quien ve el tablero no
+ *    le cambia nada. Dentro, se lee en pantalla y vive pegada al cuadro donde se
+ *    escribe la jugada: leer la posición y contestarla son el mismo gesto, y
+ *    tenerla al final del visor obligaba a ir y volver.
+ */
+.curso-posicion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+html.adaptive-mode .curso-posicion {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 0.6rem;
+  padding: 0.6rem 0.8rem;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  border: 0;
+  border-left: 4px solid #de911d;
+  background: rgba(222, 145, 29, 0.12);
+  border-radius: 0 0.5rem 0.5rem 0;
+  line-height: 1.7;
+}
+/* El rótulo va en el CSS y no en el texto del párrafo: ese párrafo es una región
+   viva (aria-live) que se vuelve a leer con cada jugada, y el rótulo tiene que
+   ir con ella — pero escribirlo dentro obligaría a los visores a recomponerlo
+   cada vez. */
+html.adaptive-mode .curso-posicion::before {
+  content: "Posición: ";
+  font-weight: 700;
+}
+
+/* ===== La tarea, dentro del ejercicio (js/tarea-en-curso.js) =====
+   La franja que ve el alumno cuando entra a una página de Entrenamiento desde
+   un renglón de su tarea: qué le pidieron y cuánto lleva. Va en CSS propio y
+   no en clases de Tailwind porque la pinta un script que se carga en catorce
+   páginas distintas, y las clases de utilidad hay que volver a compilarlas
+   cada vez que aparece una nueva (ver herramientas/css-construir.js). */
+.tarea-en-curso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid #de911d;
+  background: rgba(222, 145, 29, 0.12);
+  color: #243b53;
+}
+.dark .tarea-en-curso { color: #f0f4f8; background: rgba(222, 145, 29, 0.16); }
+.tarea-en-curso.tarea-lista { border-left-color: #22c55e; background: rgba(34, 197, 94, 0.14); }
+.tarea-en-curso-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.tarea-en-curso-icono { font-size: 1.25rem; line-height: 1; }
+.tarea-en-curso-texto { display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; }
+.tarea-en-curso-texto strong { font-size: 0.9rem; font-weight: 600; }
+.tarea-en-curso-detalle { font-size: 0.8rem; opacity: 0.85; }
+.tarea-en-curso-volver {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b44d12;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+.dark .tarea-en-curso-volver { color: #f7c948; }
+.tarea-en-curso-volver:focus-visible { outline: 2px solid #de911d; outline-offset: 2px; border-radius: 0.25rem; }
+.tarea-en-curso-barra {
+  margin-top: 0.5rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: rgba(36, 59, 83, 0.15);
+  overflow: hidden;
+}
+.dark .tarea-en-curso-barra { background: rgba(240, 244, 248, 0.2); }
+.tarea-en-curso-barra i { display: block; height: 100%; background: #de911d; transition: width 0.3s ease; }
+.tarea-en-curso.tarea-lista .tarea-en-curso-barra i { background: #22c55e; }
+/* En Modo Adaptado la franja es de las primeras cosas que se leen, así que
+   crece con el resto del texto en vez de quedarse en letra chica. */
+html.adaptive-mode .tarea-en-curso-texto strong { font-size: 1.05rem; }
+html.adaptive-mode .tarea-en-curso-detalle { font-size: 0.95rem; opacity: 1; }

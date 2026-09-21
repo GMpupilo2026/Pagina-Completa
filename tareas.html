@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Tareas — Ajedrez Integral</title>
+    <meta name="description" content="El profesor elige material de la plataforma y se lo asigna a un alumno con una fecha límite.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/material-plataforma.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white mb-1">📋 Tareas</h1>
+            <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mb-8"></p>
+
+            <!-- ============ Vista profesor: asignar + lo enviado ============ -->
+            <section id="vista-profesor" class="hidden">
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 mb-8">
+                    <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Asignar una tarea</h2>
+                    <form id="form-tarea" class="grid gap-4">
+                        <div>
+                            <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Para quién <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(uno o varios)</span></span>
+                            <div id="lista-alumnos" class="max-h-40 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1"></div>
+                            <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 mt-2">Todavía no tienes alumnos asignados.</p>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="t-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
+                                <input id="t-titulo" type="text" maxlength="200" required placeholder="Ej. Tarea de la semana" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="t-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
+                                <input id="t-vence" type="datetime-local" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+
+                        <!-- Los renglones: cada uno es una meta con su cantidad.
+                             "Resolver 10 ejercicios de ataque doble", "Hacer 10
+                             minutos de coordenadas". El alumno los ve tal cual,
+                             con su barra, y se llenan solos con lo que entrena. -->
+                        <div>
+                            <span class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué tiene que hacer</span>
+                            <div id="renglones" class="grid gap-3"></div>
+                            <button type="button" id="agregar-renglon" class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1">+ Agregar otra cosa</button>
+                        </div>
+
+                        <div>
+                            <label for="t-instrucciones" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nota para el alumno <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                            <textarea id="t-instrucciones" rows="2" maxlength="2000" placeholder="Ej. Tómate tu tiempo con los mates, no corras." class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button type="submit" id="enviar-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enviar tarea</button>
+                            <p id="form-status" class="text-sm text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                        </div>
+                    </form>
+                </div>
+
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Tareas enviadas</h2>
+                <div id="enviadas-lista" class="grid gap-3"></div>
+                <p id="enviadas-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">Todavía no le has mandado ninguna tarea a nadie.</p>
+            </section>
+
+            <!-- ============ Vista alumno: lo que le mandaron ============ -->
+            <section id="vista-alumno" class="hidden">
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Pendientes</h2>
+                <div id="pendientes-lista" class="grid gap-3 mb-8"></div>
+                <p id="pendientes-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">No tienes ninguna tarea pendiente. 🎉</p>
+
+                <details id="completadas-details">
+                    <summary class="cursor-pointer font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Completadas</summary>
+                    <div id="completadas-lista" class="grid gap-3 mt-4"></div>
+                    <p id="completadas-vacia" class="hidden text-brand-450 dark:text-brand-350 text-sm mt-4">Todavía no has completado ninguna.</p>
+                </details>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <template id="tpl-renglon">
+        <div class="renglon border border-brand-200 dark:border-brand-700 rounded-lg p-3 bg-brand-50 dark:bg-brand-950">
+            <div class="grid gap-2 sm:grid-cols-12 items-end">
+                <div class="sm:col-span-4">
+                    <label class="block text-[0.7rem] font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Material</label>
+                    <select class="r-material w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                </div>
+                <div class="r-recorte-wrap sm:col-span-4 hidden">
+                    <label class="r-recorte-label block text-[0.7rem] font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tema</label>
+                    <select class="r-recorte w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[0.7rem] font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Pedir</label>
+                    <select class="r-meta w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                </div>
+                <div class="r-cantidad-wrap sm:col-span-1">
+                    <label class="block text-[0.7rem] font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuántos</label>
+                    <input type="number" min="1" value="10" class="r-cantidad w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <div class="r-leccion-wrap sm:col-span-1 hidden">
+                    <label class="block text-[0.7rem] font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lección</label>
+                    <input type="number" min="1" class="r-leccion w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <div class="sm:col-span-1 flex justify-end">
+                    <button type="button" class="r-quitar text-brand-450 dark:text-brand-350 hover:text-red-600 dark:hover:text-red-400 text-lg leading-none px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" title="Quitar este renglón">✕<span class="sr-only"> Quitar este renglón</span></button>
+                </div>
+            </div>
+            <p class="r-frase text-xs text-brand-500 dark:text-brand-300 mt-2"></p>
+        </div>
+    </template>
+    <script src="js/main.js"></script>
+    <script>
+/* Área de Tareas: el profesor arma una tarea con VARIOS renglones —"10
+ * ejercicios de ataque doble", "20 de 4x4", "10 minutos de coordenadas"— y se
+ * la manda a uno o varios de sus alumnos con una fecha límite. El alumno la ve
+ * en un solo lugar, con una barra por renglón y el enlace que lo deja DENTRO
+ * del ejercicio, sin tener que buscarlo por la plataforma.
+ *
+ * Lo que hace que esto funcione, y que no se ve desde acá:
+ *
+ *  - El avance NO lo lleva esta página ni una columna: lo cuenta
+ *    public.tareas_con_avance() a partir de lo que el alumno ya venía dejando
+ *    al entrenar (training_progress y platform_activity_log). Así resolver un
+ *    ejercicio llena la tarea Y lo marca como resuelto para no repetirlo —son
+ *    el mismo acto, no dos contadores que se puedan contradecir.
+ *  - Mandar la tarea es UNA llamada (crear_tarea), no un insert del encabezado
+ *    y otro de los renglones: partido en dos, si la segunda mitad falla queda
+ *    una tarea vacía en la lista del alumno y nadie se entera.
+ *  - Quién ve y quién puede mandarle tarea a quién lo hace cumplir la RLS
+ *    (soy_profesor_de), no esta página. El aviso push sale de un trigger.
+ */
+let session = null, profile = null, puedeAsignar = false;
+let alumnosDisponibles = [];
+let cursosCatalogo = [];
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text == null ? "" : String(text);
+    return div.innerHTML;
+}
+function formatoFecha(iso) {
+    return new Date(iso).toLocaleString("es-CR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+/* Cómo se lee un renglón. Es lo único que el alumno va a leer de la tarea, así
+   que se arma del material y la meta, no de un texto escrito a mano que
+   después pueda decir otra cosa que la barra de al lado. */
+const VERBO = { ejercicios: "Resolver", líneas: "Aprender", lecciones: "Hacer" };
+function fraseDe(r) {
+    const nombre = r.filtro_label || r.material_label;
+    if (r.meta_tipo === "minutos") return `Hacer ${r.meta_cantidad} minutos de ${nombre}`;
+    if (r.meta_tipo === "completar") {
+        return r.leccion ? `Estudiar la lección ${r.leccion} de ${nombre}` : `Terminar ${nombre}`;
+    }
+    /* La unidad no se guarda en el renglón: se busca en el catálogo por el
+       slug. Guardarla sería una segunda copia que se separaría de la primera
+       el día que Aprender deje de contar "lecciones" — y las tareas ya
+       enviadas seguirían diciendo la palabra vieja. Lo que sí es una foto es
+       el nombre del material, que tiene que sobrevivir a que lo renombren. */
+    const h = MaterialPlataforma.herramienta(r.material_slug);
+    const unidad = (h && h.unidad) || "ejercicios";
+    const verbo = VERBO[unidad] || "Hacer";
+    return `${verbo} ${r.meta_cantidad} ${unidad} de ${nombre}`;
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { window.location.href = "login.html?next=tareas.html"; return; }
+
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    profile = p;
+    puedeAsignar = !!profile && (profile.role === "profesor" || profile.is_admin);
+
+    document.getElementById("subtitulo").textContent = puedeAsignar
+        ? "Arma la tarea con lo que quieras que hagan y mándala. Se va llenando sola con lo que entrenen."
+        : "Lo que tu profe te pidió hacer. Cada cosa se marca sola cuando la haces.";
+
+    if (puedeAsignar) {
+        document.getElementById("vista-profesor").classList.remove("hidden");
+        await cargarAlumnos();
+        cursosCatalogo = await MaterialPlataforma.cursos();
+        document.getElementById("agregar-renglon").addEventListener("click", () => agregarRenglon());
+        agregarRenglon();
+        document.getElementById("form-tarea").addEventListener("submit", enviarTarea);
+        await desdeLaBitacora();
+        await cargarEnviadas();
+    } else {
+        document.getElementById("vista-alumno").classList.remove("hidden");
+        await cargarMisTareas();
+    }
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+}
+
+// ---------- Vista profesor: los alumnos ----------
+async function cargarAlumnos() {
+    const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+    alumnosDisponibles = data || [];
+    const cont = document.getElementById("lista-alumnos");
+    cont.innerHTML = "";
+    document.getElementById("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);
+    alumnosDisponibles.forEach((a) => {
+        const label = document.createElement("label");
+        label.className = "flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-white dark:hover:bg-brand-900 cursor-pointer";
+        label.innerHTML = `<input type="checkbox" value="${a.id}" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 alumno-check"><span>${escapeHtml(a.full_name || a.email)}</span>`;
+        cont.appendChild(label);
+    });
+}
+
+/* ---------- Venir desde una nota de la bitácora ----------
+
+   "Convertir en tarea" (informes.html y la clase en vivo) manda acá con el
+   alumno y el id de la nota. Se marca ese alumno y la nota queda puesta como
+   nota para él, que es lo que el profesor ya escribió — no hay que volver a
+   teclearla.
+
+   El TEXTO no viaja en la dirección: se lee de la base, que ya se la deja leer
+   a quien la escribió. Una dirección con lo que el profesor anotó de un alumno
+   queda en el historial del navegador, y esa nota puede ser privada.
+
+   Si la nota ya no está (la borró), se marca igual el alumno y no se dice
+   nada: el profesor venía a ponerle una tarea, no a leer la nota.
+
+   El TÍTULO no se toca: lo propone la página desde el renglón elegido, y
+   pisarlo con la etiqueta de la nota dejaría al profesor corrigiendo a mano un
+   campo que antes salía bien. */
+async function desdeLaBitacora() {
+    const params = new URLSearchParams(location.search);
+    const alumnoId = params.get("alumno");
+    if (!alumnoId) return;
+
+    const check = document.querySelector('.alumno-check[value="' + CSS.escape(alumnoId) + '"]');
+    if (check) {
+        check.checked = true;
+        check.closest("label").scrollIntoView({ block: "nearest" });
+    }
+
+    const notaId = params.get("nota");
+    if (!notaId) return;
+    const { data } = await sb.from("notas_alumno").select("texto, etiqueta").eq("id", notaId).maybeSingle();
+    if (!data) return;
+    const campo = document.getElementById("t-instrucciones");
+    if (!campo.value) campo.value = data.texto;
+}
+
+// ---------- Vista profesor: los renglones ----------
+function agregarRenglon() {
+    const tpl = document.getElementById("tpl-renglon");
+    const div = tpl.content.firstElementChild.cloneNode(true);
+
+    const selMat = div.querySelector(".r-material");
+    // Dos grupos, para no mezclar "Mates" con "Fundamentos del Ajedrez".
+    const gH = document.createElement("optgroup"); gH.label = "Entrenamiento";
+    MaterialPlataforma.HERRAMIENTAS.forEach((h) => {
+        const o = document.createElement("option");
+        o.value = "herramienta:" + h.slug; o.textContent = h.label;
+        gH.appendChild(o);
+    });
+    const gC = document.createElement("optgroup"); gC.label = "Cursos";
+    cursosCatalogo.forEach((c) => {
+        const o = document.createElement("option");
+        o.value = "curso:" + c.slug; o.textContent = c.label;
+        gC.appendChild(o);
+    });
+    selMat.appendChild(gH);
+    if (cursosCatalogo.length) selMat.appendChild(gC);
+
+    selMat.addEventListener("change", () => refrescarRenglon(div, true));
+    div.querySelector(".r-recorte").addEventListener("change", () => refrescarRenglon(div));
+    div.querySelector(".r-meta").addEventListener("change", () => refrescarRenglon(div));
+    div.querySelector(".r-cantidad").addEventListener("input", () => pintarFrase(div));
+    div.querySelector(".r-leccion").addEventListener("input", () => pintarFrase(div));
+    div.querySelector(".r-quitar").addEventListener("click", () => {
+        div.remove();
+        actualizarQuitar();
+        proponerTitulo();
+    });
+
+    document.getElementById("renglones").appendChild(div);
+    refrescarRenglon(div, true);
+    actualizarQuitar();
+}
+
+/* Con un solo renglón no se ofrece quitarlo: una tarea sin nada que hacer no
+   se puede mandar, así que el botón solo llevaría a un aviso de error. */
+function actualizarQuitar() {
+    const todos = [...document.querySelectorAll("#renglones .renglon")];
+    todos.forEach((d) => d.querySelector(".r-quitar").classList.toggle("invisible", todos.length === 1));
+}
+
+function materialDe(div) {
+    const [tipo, slug] = (div.querySelector(".r-material").value || "").split(":");
+    if (tipo === "curso") {
+        const c = cursosCatalogo.find((x) => x.slug === slug);
+        return c ? { tipo, item: c, herramienta: null } : null;
+    }
+    const h = MaterialPlataforma.herramienta(slug);
+    return h ? { tipo: "herramienta", item: h, herramienta: h } : null;
+}
+
+async function refrescarRenglon(div, cambioMaterial) {
+    const m = materialDe(div);
+    if (!m) return;
+    const h = m.herramienta;
+
+    // Los recortes: los 80 temas, las 3 categorías de Mates, las 40 líneas…
+    const recWrap = div.querySelector(".r-recorte-wrap");
+    const recSel = div.querySelector(".r-recorte");
+    if (cambioMaterial) {
+        const recortes = h ? await MaterialPlataforma.recortesDe(h.slug) : [];
+        recSel.innerHTML = "";
+        if (recortes.length) {
+            const todo = document.createElement("option");
+            todo.value = ""; todo.textContent = "— todo —";
+            recSel.appendChild(todo);
+            // Agrupados como vienen en su página, que es como el profesor los
+            // tiene en la cabeza ("Táctica de ataque", "Aperturas").
+            const grupos = new Map();
+            recortes.forEach((r) => {
+                const g = r.grupo || "";
+                if (!grupos.has(g)) grupos.set(g, []);
+                grupos.get(g).push(r);
+            });
+            grupos.forEach((lista, nombre) => {
+                const cont = nombre ? document.createElement("optgroup") : recSel;
+                if (nombre) { cont.label = nombre; recSel.appendChild(cont); }
+                lista.forEach((r) => {
+                    const o = document.createElement("option");
+                    o.value = r.clave;
+                    o.textContent = r.total > 1 ? `${r.label} (${r.total})` : r.label;
+                    o.dataset.total = String(r.total || 0);
+                    o.dataset.label = r.label;
+                    o.dataset.actividades = JSON.stringify(r.actividades || []);
+                    cont.appendChild(o);
+                });
+            });
+        }
+        recWrap.classList.toggle("hidden", !recortes.length);
+        div.querySelector(".r-recorte-label").textContent = (h && h.recorteLabel) || "Tema";
+
+        // Qué se le puede pedir a esto. Una herramienta que no escribe en
+        // training_progress no ofrece "cantidad": sería una barra clavada en
+        // cero para siempre.
+        const metaSel = div.querySelector(".r-meta");
+        const metas = (m.item.metas && m.item.metas.length) ? m.item.metas : ["completar"];
+        metaSel.innerHTML = metas.map((k) => `<option value="${k}">${escapeHtml(MaterialPlataforma.META_LABEL[k] || k)}</option>`).join("");
+    }
+
+    const meta = div.querySelector(".r-meta").value;
+    const cantWrap = div.querySelector(".r-cantidad-wrap");
+    const cant = div.querySelector(".r-cantidad");
+    cantWrap.classList.toggle("hidden", meta === "completar");
+
+    // El tope es de verdad: no se pueden pedir 300 ejercicios de un tema que
+    // tiene 53. Pedir más de los que hay dejaría la tarea imposible de
+    // terminar, y eso no daría ningún error — la barra se quedaría a un paso.
+    const opc = div.querySelector(".r-recorte").selectedOptions[0];
+    const total = opc && opc.dataset.total ? parseInt(opc.dataset.total, 10) : 0;
+    if (meta === "cantidad" && total > 0) {
+        cant.max = String(total);
+        if (parseInt(cant.value, 10) > total) cant.value = String(total);
+    } else {
+        cant.max = meta === "minutos" ? "600" : "1000";
+    }
+
+    // La lección, solo en los cursos.
+    const lecWrap = div.querySelector(".r-leccion-wrap");
+    const esCursoConLecciones = m.tipo === "curso" && m.item.lecciones;
+    lecWrap.classList.toggle("hidden", !esCursoConLecciones);
+    if (esCursoConLecciones) div.querySelector(".r-leccion").max = String(m.item.lecciones);
+    else div.querySelector(".r-leccion").value = "";
+
+    pintarFrase(div);
+    proponerTitulo();
+}
+
+/* Lo que el renglón va a decirle al alumno, escrito debajo mientras se arma:
+   lo que se ve antes de mandar es exactamente lo que se manda. */
+function pintarFrase(div) {
+    const r = leerRenglon(div);
+    div.querySelector(".r-frase").textContent = r ? fraseDe(r) : "";
+}
+
+function leerRenglon(div) {
+    const m = materialDe(div);
+    if (!m) return null;
+    const h = m.herramienta;
+    const opc = div.querySelector(".r-recorte").selectedOptions[0];
+    const clave = div.querySelector(".r-recorte-wrap").classList.contains("hidden") ? "" : div.querySelector(".r-recorte").value;
+    const recorte = clave && opc ? {
+        clave,
+        label: opc.dataset.label || opc.textContent,
+        actividades: JSON.parse(opc.dataset.actividades || "[]"),
+    } : null;
+
+    const meta = div.querySelector(".r-meta").value;
+    const leccionVal = div.querySelector(".r-leccion-wrap").classList.contains("hidden")
+        ? "" : div.querySelector(".r-leccion").value;
+    const cantidad = meta === "completar" ? null : parseInt(div.querySelector(".r-cantidad").value, 10);
+
+    // El enlace lleva al recorte cuando la página sabe abrirlo directo.
+    const href = (recorte && h && h.hrefRecorte) ? h.hrefRecorte(recorte.clave) : m.item.href;
+
+    return {
+        material_tipo: m.tipo,
+        material_slug: m.item.slug,
+        material_label: m.item.label,
+        material_href: href,
+        filtro_clave: recorte ? recorte.clave : "",
+        filtro_label: recorte ? recorte.label : "",
+        leccion: leccionVal || "",
+        actividades: meta === "completar" ? [] : MaterialPlataforma.actividadesDe(h, recorte),
+        meta_tipo: meta,
+        meta_cantidad: cantidad,
+    };
+}
+
+/* El título se propone del primer renglón —"Ejercicios por tema · Ataque a la
+   última línea"— y se puede cambiar. Escribirlo a mano cada vez, teniendo los
+   renglones ya puestos, es pedir dos veces lo mismo. */
+let tituloTocado = false;
+document.addEventListener("input", (ev) => {
+    if (ev.target && ev.target.id === "t-titulo") tituloTocado = true;
+});
+function proponerTitulo() {
+    if (tituloTocado) return;
+    const primero = document.querySelector("#renglones .renglon");
+    if (!primero) return;
+    const r = leerRenglon(primero);
+    if (!r) return;
+    const cuantos = document.querySelectorAll("#renglones .renglon").length;
+    const base = r.filtro_label || r.material_label;
+    document.getElementById("t-titulo").value = cuantos > 1 ? `${base} y ${cuantos - 1} cosa${cuantos > 2 ? "s" : ""} más` : base;
+}
+
+async function enviarTarea(ev) {
+    ev.preventDefault();
+    const status = document.getElementById("form-status");
+    const seleccionados = [...document.querySelectorAll(".alumno-check:checked")].map((c) => c.value);
+    if (!seleccionados.length) { status.textContent = "Elige al menos un alumno."; return; }
+
+    const divs = [...document.querySelectorAll("#renglones .renglon")];
+    const items = [];
+    for (const d of divs) {
+        const r = leerRenglon(d);
+        if (!r) { status.textContent = "Hay un renglón sin material."; return; }
+        if (r.meta_tipo !== "completar" && !(r.meta_cantidad > 0)) {
+            status.textContent = `Ponle una cantidad a «${r.filtro_label || r.material_label}».`;
+            return;
+        }
+        items.push(r);
+    }
+    if (!items.length) { status.textContent = "Agrega al menos una cosa que hacer."; return; }
+
+    const venceVal = document.getElementById("t-vence").value;
+    if (!venceVal) { status.textContent = "Ponle una fecha límite."; return; }
+
+    const titulo = document.getElementById("t-titulo").value.trim();
+    if (!titulo) { status.textContent = "Falta el título."; return; }
+
+    const boton = document.getElementById("enviar-btn");
+    boton.disabled = true;
+    status.textContent = "Enviando…";
+    const { data, error } = await sb.rpc("crear_tarea", {
+        p_alumnos: seleccionados,
+        p_titulo: titulo,
+        p_instrucciones: document.getElementById("t-instrucciones").value.trim(),
+        p_vence: new Date(venceVal).toISOString(),
+        p_items: items,
+    });
+    boton.disabled = false;
+    if (error) { status.textContent = "No se pudo enviar: " + error.message; return; }
+
+    const n = typeof data === "number" ? data : seleccionados.length;
+    status.textContent = `Tarea enviada a ${n} ${n === 1 ? "alumno" : "alumnos"}.`;
+    document.getElementById("form-tarea").reset();
+    document.querySelectorAll(".alumno-check").forEach((c) => { c.checked = false; });
+    document.getElementById("renglones").innerHTML = "";
+    tituloTocado = false;
+    agregarRenglon();
+    await cargarEnviadas();
+}
+
+// ---------- Vista profesor: lo que ya mandó ----------
+async function cargarEnviadas() {
+    const { data, error } = await sb.rpc("tareas_con_avance", { p_profesor: session.user.id });
+    const lista = document.getElementById("enviadas-lista");
+    lista.innerHTML = "";
+    const filas = data || [];
+    const vacia = document.getElementById("enviadas-vacia");
+    vacia.classList.toggle("hidden", !!filas.length);
+    if (error) { vacia.textContent = "No se pudieron cargar: " + error.message; vacia.classList.remove("hidden"); return; }
+    filas.forEach((t) => lista.appendChild(tarjetaEnviada(t)));
+}
+
+const COLOR_SITUACION = {
+    completada: "text-green-600 dark:text-green-400",
+    vencida: "text-red-600 dark:text-red-400",
+    pendiente: "text-brand-500 dark:text-brand-300",
+};
+const TEXTO_SITUACION = { completada: "✔ Completada", vencida: "⏰ Vencida", pendiente: "Pendiente" };
+
+function tarjetaEnviada(t) {
+    const div = document.createElement("div");
+    div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4 flex flex-wrap items-center justify-between gap-3";
+    const items = t.items || [];
+    // Qué lleva hecho, renglón por renglón: es lo que el profesor viene a ver.
+    const resumen = items.map((r) => {
+        const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
+        return `<span class="${r.cumplido ? "text-green-600 dark:text-green-400" : ""}">${r.cumplido ? "✔" : ""} ${escapeHtml(r.filtro_label || r.material_label)} ${r.hecho}/${meta}</span>`;
+    }).join(" · ");
+    div.innerHTML = `
+        <div class="min-w-0">
+            <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350">Para ${escapeHtml(t.alumno_nombre || "—")} · Vence ${formatoFecha(t.vence_at)}</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">${resumen}</p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <span class="text-xs font-semibold ${COLOR_SITUACION[t.situacion]}">${TEXTO_SITUACION[t.situacion]} ${t.cumplidos}/${t.renglones}</span>
+            <button type="button" class="text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded eliminar-btn">Eliminar</button>
+        </div>`;
+    div.querySelector(".eliminar-btn").addEventListener("click", () => eliminarTarea(t.id));
+    return div;
+}
+
+async function eliminarTarea(id) {
+    if (!confirm("¿Eliminar esta tarea?")) return;
+    const { error } = await sb.from("tareas").delete().eq("id", id);
+    if (error) { alert("No se pudo eliminar: " + error.message); return; }
+    await cargarEnviadas();
+}
+
+// ---------- Vista alumno ----------
+async function cargarMisTareas() {
+    const { data, error } = await sb.rpc("tareas_con_avance", { p_alumno: session.user.id });
+    const filas = data || [];
+    const pendientes = filas.filter((t) => t.situacion !== "completada");
+    const completadas = filas.filter((t) => t.situacion === "completada");
+
+    const pl = document.getElementById("pendientes-lista");
+    pl.innerHTML = "";
+    const pv = document.getElementById("pendientes-vacia");
+    pv.classList.toggle("hidden", !!pendientes.length);
+    pendientes.forEach((t) => pl.appendChild(tarjetaAlumno(t)));
+
+    const cl = document.getElementById("completadas-lista");
+    cl.innerHTML = "";
+    document.getElementById("completadas-vacia").classList.toggle("hidden", !!completadas.length);
+    completadas.forEach((t) => cl.appendChild(tarjetaAlumno(t)));
+
+    if (error) { pv.textContent = "No se pudieron cargar tus tareas: " + error.message; pv.classList.remove("hidden"); }
+}
+
+/* Un renglón del alumno: lo que hay que hacer, cuánto lleva, y el enlace que
+   lo deja DENTRO del ejercicio. El enlace lleva de qué tarea viene, así que la
+   propia página de entreno puede decirle cuánto le falta (ver
+   js/tarea-en-curso.js). */
+function renglonAlumno(r, tareaId) {
+    const li = document.createElement("li");
+    const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
+    const pct = Math.min(100, Math.round((100 * r.hecho) / (meta || 1)));
+    const enlace = r.material_href + (r.material_href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId);
+
+    li.className = "border-l-2 pl-3 py-1 " + (r.cumplido ? "border-green-500" : "border-brand-200 dark:border-brand-700");
+    li.innerHTML = `
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-sm ${r.cumplido ? "text-green-700 dark:text-green-400" : "text-brand-700 dark:text-brand-100"}">${r.cumplido ? "✔ " : ""}${escapeHtml(fraseDe(r))}</span>
+            <a href="${escapeHtml(enlace)}" class="text-xs font-semibold text-accent-700 dark:text-accent-400 hover:underline shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">${r.cumplido ? "Repasar" : "Ir"} →</a>
+        </div>`;
+
+    if (r.meta_tipo === "completar") {
+        // Lo que la plataforma no puede medir lo dice el alumno. Es el único
+        // caso: donde el avance se cuenta solo, un check a mano no significa
+        // nada y por eso no se ofrece.
+        const label = document.createElement("label");
+        label.className = "flex items-center gap-1.5 text-xs text-brand-500 dark:text-brand-300 mt-1 cursor-pointer";
+        label.innerHTML = `<input type="checkbox" class="rounded border-brand-300 text-accent-500 focus:ring-accent-400 marcar-item" ${r.cumplido ? "checked" : ""}> Ya lo hice`;
+        label.querySelector("input").addEventListener("change", (ev) => marcarItem(r.id, ev.target.checked));
+        li.appendChild(label);
+    } else {
+        const barra = document.createElement("div");
+        barra.className = "mt-1 flex items-center gap-2";
+        barra.innerHTML = `
+            <div class="flex-1 h-1.5 bg-brand-200 dark:bg-brand-700 rounded-full overflow-hidden" role="progressbar"
+                 aria-label="${escapeHtml(fraseDe(r))}" aria-valuemin="0" aria-valuemax="${meta}" aria-valuenow="${r.hecho}">
+                <i class="block h-full ${r.cumplido ? "bg-green-500" : "bg-accent-500"}" style="width:${pct}%"></i>
+            </div>
+            <span class="text-xs text-brand-450 dark:text-brand-350 tabular-nums">${r.hecho}/${meta}</span>`;
+        li.appendChild(barra);
+    }
+    return li;
+}
+
+function tarjetaAlumno(t) {
+    const div = document.createElement("div");
+    const vencida = t.situacion === "vencida";
+    div.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm p-4" + (vencida ? " border-l-4 border-red-500" : "");
+    const profeNombre = t.profesor_nombre || "tu profe";
+    const vencePrefijo = vencida ? '<span class="text-red-600 dark:text-red-400 font-semibold">Venció</span>' : "Vence";
+    div.innerHTML = `
+        <div class="flex items-start justify-between gap-3 mb-1">
+            <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
+            <span class="text-xs font-semibold shrink-0 ${COLOR_SITUACION[t.situacion]}">${t.cumplidos}/${t.renglones}</span>
+        </div>
+        <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">De ${escapeHtml(profeNombre)} · ${vencePrefijo} ${formatoFecha(t.vence_at)}</p>`;
+    if (t.instrucciones) {
+        const p = document.createElement("p");
+        p.className = "text-sm text-brand-600 dark:text-brand-300 mb-2";
+        p.textContent = t.instrucciones;
+        div.appendChild(p);
+    }
+    const ul = document.createElement("ul");
+    ul.className = "grid gap-2";
+    (t.items || []).forEach((r) => ul.appendChild(renglonAlumno(r, t.id)));
+    div.appendChild(ul);
+    return div;
+}
+
+async function marcarItem(id, hecha) {
+    // La hora la pone el servidor (proteger_tarea_items_alumno): acá solo se
+    // dice si va marcado o no.
+    const { error } = await sb.from("tarea_items")
+        .update({ completada_at: hecha ? new Date().toISOString() : null }).eq("id", id);
+    if (error) { alert("No se pudo actualizar: " + error.message); return; }
+    await cargarMisTareas();
+}
+
+init();
+    </script>
+</body>
+</html>

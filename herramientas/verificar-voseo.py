@@ -31,7 +31,7 @@ IMPERATIVOS = {
     # donde el verbo lo pide (contá→cuenta, jugá→juega, pensá→piensa).
     "acercá": "acerca", "activá": "activa", "actuá": "actúa", "agotá": "agota",
     "aguantá": "aguanta", "alcanzá": "alcanza", "amenazá": "amenaza",
-    "analizá": "analiza", "anotá": "anota", "aplicá": "aplica",
+    "agregá": "agrega", "analizá": "analiza", "anotá": "anota", "aplicá": "aplica",
     "aprovechá": "aprovecha", "armá": "arma", "atacá": "ataca", "avanzá": "avanza",
     "bloqueá": "bloquea", "buscá": "busca", "calculá": "calcula", "cambiá": "cambia",
     "centralizá": "centraliza", "cerrá": "cierra", "clavá": "clava",
@@ -105,10 +105,11 @@ def es_futuro(b):
 BLANCA = set("""
 más además después jamás quizás atrás detrás través compás interés inglés francés país
 así aquí allí ahí allá acá está están estás esté estés japonés portugués marqués revés
-demás porqué comité josé café también según razón bebé qué holandés
+demás porqué comité subcomité josé café caché también según razón bebé qué holandés
 aperturasmás
 elistá andrés valdés josué prevé noé
 empecé aprendí entendí tomé repasé jugué estudié
+mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
 pondrá querrá irá
 """.split())
@@ -130,6 +131,13 @@ def archivos():
     return [f for f in vistos
             if os.path.getsize(f) < 2_000_000
             and not f.startswith("herramientas/verificar")
+            # node_modules son las librerías que se instalan para compilar el
+            # CSS o correr las comprobaciones: no son del sitio y vienen llenas
+            # de nombres propios que el detector marca sin razón ("Matté").
+            # Aparecen solo después de un `npm install` y desaparecen al
+            # borrarlas, así que sin esto la revisión falla o no según lo que
+            # uno tenga instalado en ese momento.
+            and not f.startswith("node_modules" + os.sep)
             and not f.endswith(".min.js")]
 
 def hallazgos(ruta):

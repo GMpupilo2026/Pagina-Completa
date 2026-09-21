@@ -23,7 +23,7 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
@@ -31,49 +31,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
         <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
 
@@ -90,7 +48,13 @@
                     <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">📋 Formularios de inscripción</h1>
                     <p id="subtitulo" class="text-brand-500 dark:text-brand-300 mt-1">Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas en Excel.</p>
                 </div>
-                <button type="button" id="nuevo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Formulario nuevo</button>
+                <div class="flex flex-wrap gap-2">
+                    <!-- Crear una cuenta sin pasar por un formulario: el mismo diálogo de
+                         "Crear cuenta" de una respuesta, solo que en blanco. Es para el
+                         alumno que se inscribe por WhatsApp o en persona, no por el enlace. -->
+                    <button type="button" id="alumno-nuevo-btn" class="bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Alumno nuevo</button>
+                    <button type="button" id="nuevo-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">＋ Formulario nuevo</button>
+                </div>
             </div>
 
             <!-- ============ Lista ============ -->
@@ -163,21 +127,95 @@
                     </table>
                 </div>
             </section>
+
+            <!-- ============ Dar de alta a una familia ============
+                 Se abre con el botón "Crear cuenta" de una respuesta, ya con
+                 sus datos puestos. NO manda de una: crear la cuenta le manda un
+                 correo de verdad a una persona de verdad, y quién es el alumno
+                 y quién el encargado sale de adivinar qué pregunta es cuál. Se
+                 enseña lo que va a salir antes de que salga. -->
+            <div id="alta-fondo" class="hidden fixed inset-0 z-50 bg-brand-950/60 p-4 overflow-y-auto">
+                <div id="alta-caja" role="dialog" aria-modal="true" aria-labelledby="alta-titulo"
+                     class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl max-w-lg mx-auto my-8 p-6">
+                    <h2 id="alta-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1">Crear la cuenta del alumno</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-5">Se le manda un correo para que <strong>cree su contraseña</strong>, con los pasos para entrar a la plataforma; queda asignado a tu clase y la persona encargada queda apuntada para los informes a la casa. Revisa que cada dato esté en su lugar.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label for="alta-alumno-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre del alumno</label>
+                            <input id="alta-alumno-nombre" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="alta-alumno-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo del alumno <span id="alta-correo-obligatorio" class="text-red-600 dark:text-red-400" aria-hidden="true">*</span></label>
+                            <input id="alta-alumno-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el correo para crear su contraseña y entrar.</p>
+
+                            <!-- El caso de todos los días: una familia con dos hijos
+                                 pequeños y UN solo correo. No se puede repetir —el correo
+                                 es la llave con la que se inicia sesión—, así que en vez
+                                 de pedirle un buzón al niño se le arma un usuario. -->
+                            <label class="flex items-start gap-2 mt-3 cursor-pointer">
+                                <input type="checkbox" id="alta-sin-correo" class="mt-0.5 rounded border-brand-300 dark:border-brand-600 text-accent-500 focus:ring-accent-400">
+                                <span class="text-xs text-brand-600 dark:text-brand-300">
+                                    <strong class="text-brand-800 dark:text-white">No tiene correo propio</strong>
+                                    — es pequeño, o comparte el de la casa con un hermano.
+                                    Se le arma un usuario y todo le llega a la persona encargada.
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Se propone, se enseña y se puede corregir: cuál pedazo del
+                             nombre es el apellido se adivina, y quien da de alta tiene el
+                             nombre completo delante. El usuario es lo que el niño va a
+                             escribir todos los días. -->
+                        <div id="alta-usuario-fila" class="hidden">
+                            <label for="alta-usuario" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Usuario con el que va a entrar</label>
+                            <div class="flex items-center gap-1">
+                                <input id="alta-usuario" type="text" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <span id="alta-usuario-dominio" class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap"></span>
+                            </div>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Sale del nombre; corrígelo si el apellido no quedó bien. Si ya lo tiene otro alumno, se le pone un número al final.</p>
+                        </div>
+                        <div>
+                            <label for="alta-encargado-nombre" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Nombre de la persona encargada</label>
+                            <input id="alta-encargado-nombre" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="alta-encargado-correo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Correo de la persona encargada</label>
+                            <input id="alta-encargado-correo" type="email" maxlength="200" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <p id="alta-encargado-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.</p>
+                        </div>
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="alta-frecuencia" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Cada cuánto el informe</label>
+                                <select id="alta-frecuencia" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="diario">Todos los días</option>
+                                    <option value="semanal" selected>Cada semana</option>
+                                    <option value="mensual">Cada mes</option>
+                                    <option value="anual">Cada año</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="alta-grupo" class="block text-xs font-semibold text-brand-700 dark:text-brand-200 mb-1">Equipo o grupo</label>
+                                <input id="alta-grupo" type="text" maxlength="60" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <p id="alta-msg" class="text-sm mt-4" aria-live="polite"></p>
+
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button type="button" id="alta-enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear la cuenta y enviar la invitación</button>
+                        <button type="button" id="alta-cancelar" class="text-sm text-brand-600 dark:text-brand-300 underline px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Cancelar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
-<footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script>
 /* Formularios de inscripción a torneos.
  *
@@ -209,17 +247,61 @@ const TIPOS = [
 ];
 const TIPO_VALIDO = new Set(TIPOS.map((t) => t.id));
 
+/* QUÉ ES CADA PREGUNTA, para poder crear la cuenta desde la respuesta.
+   Una etiqueta es texto libre ("Nombre y 2 apellidos", "correo encargado"), así
+   que para saber a quién invitar hace falta marcar cuál es cuál. Se declara al
+   armar el formulario y queda guardado en el campo, junto al id. */
+const PAPELES = [
+    { id: "",                 etiqueta: "— Un dato más —" },
+    { id: "alumno_nombre",    etiqueta: "Nombre del alumno" },
+    { id: "alumno_correo",    etiqueta: "Correo del alumno" },
+    { id: "encargado_nombre", etiqueta: "Nombre del encargado" },
+    { id: "encargado_correo", etiqueta: "Correo del encargado" },
+];
+const PAPEL_VALIDO = new Set(PAPELES.map((p) => p.id).filter(Boolean));
+
+const sinTildes = (t) => String(t || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/* Los formularios que ya existen no traen `papel` —se armaron antes de que
+   existiera—, así que se deduce de la etiqueta. Es una propuesta, no una
+   certeza: por eso el alta SIEMPRE enseña qué dedujo antes de mandar nada.
+   Mandarle la invitación al correo de la mamá en vez de al del alumno no da
+   ningún error; simplemente entra la persona que no era. */
+function papelesDe(campos) {
+    const mapa = {};
+    const poner = (papel, campo) => { if (papel && !mapa[papel]) mapa[papel] = campo.id; };
+
+    // Lo declarado manda, y se aplica entero antes de adivinar nada.
+    (campos || []).forEach((c) => { if (PAPEL_VALIDO.has(c.papel)) poner(c.papel, c); });
+
+    (campos || []).forEach((c) => {
+        if (PAPEL_VALIDO.has(c.papel)) return;
+        const t = sinTildes(c.etiqueta);
+        const esCorreo = c.tipo === "correo" || /correo|email|e-mail/.test(t);
+        const esNombre = /nombre|apellido/.test(t);
+        // "encargad", no "encargado": cubre encargada y encargados.
+        const deLaCasa = /encargad|madre|padre|tutor|acudiente|responsable|familia|mama|papa/.test(t);
+        if (deLaCasa) poner(esCorreo ? "encargado_correo" : esNombre ? "encargado_nombre" : "", c);
+        else if (esCorreo) poner("alumno_correo", c);
+        else if (esNombre) poner("alumno_nombre", c);
+    });
+    return mapa;
+}
+
 /* Las preguntas de una inscripción a torneo de verdad, sacadas de las que ya
    pide inscripcion.html. Es un punto de partida: se borran y se cambian. */
 const PLANTILLA = [
-    { etiqueta: "Nombre completo", tipo: "texto", requerido: true },
+    { etiqueta: "Nombre completo", tipo: "texto", requerido: true, papel: "alumno_nombre" },
+    { etiqueta: "Correo del alumno", tipo: "correo", requerido: true, papel: "alumno_correo", ayuda: "Ahí le llega la invitación para entrar a la Academia." },
     { etiqueta: "Fecha de nacimiento", tipo: "fecha", requerido: true },
     { etiqueta: "Género", tipo: "opcion", requerido: true, opciones: ["Femenino", "Masculino", "Prefiero no decirlo"] },
     { etiqueta: "Centro educativo", tipo: "texto", requerido: true },
     { etiqueta: "Grado o nivel", tipo: "texto", requerido: true },
     { etiqueta: "Provincia", tipo: "texto", requerido: true },
     { etiqueta: "Cantón", tipo: "texto", requerido: false },
-    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: true, ayuda: "Ahí se manda la confirmación." },
+    { etiqueta: "Nombre de la persona encargada", tipo: "texto", requerido: true, papel: "encargado_nombre" },
+    { etiqueta: "Correo de la persona encargada", tipo: "correo", requerido: true, papel: "encargado_correo", ayuda: "Ahí se manda la confirmación y, si entra a la Academia, el informe." },
     { etiqueta: "Teléfono de contacto", tipo: "telefono", requerido: true },
     { etiqueta: "Modalidad", tipo: "opcion", requerido: true, opciones: ["Presencial", "En línea"] },
     { etiqueta: "Autorizo el uso de estos datos para organizar el torneo", tipo: "si_no", requerido: true },
@@ -309,6 +391,16 @@ function pintarCampos() {
         arriba.append(etiqueta, tipo, req, subir, bajar, quitar);
         fila.appendChild(arriba);
 
+        /* Qué es esta pregunta. Sirve para una sola cosa, pero importante: dar
+           de alta la cuenta desde la respuesta sin tener que adivinar cuál de
+           las preguntas era el correo del alumno y cuál el de la casa. */
+        const papel = document.createElement("select");
+        papel.setAttribute("aria-label", "Qué dato es la pregunta " + (i + 1));
+        papel.className = "mb-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-xs text-brand-600 dark:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        papel.innerHTML = PAPELES.map((x) => `<option value="${x.id}"${(c.papel || "") === x.id ? " selected" : ""}>${x.etiqueta}</option>`).join("");
+        papel.addEventListener("change", () => { c.papel = papel.value; });
+        fila.appendChild(papel);
+
         const ayuda = document.createElement("input");
         ayuda.type = "text"; ayuda.value = c.ayuda || ""; ayuda.maxLength = 300;
         ayuda.placeholder = "Aclaración debajo de la pregunta (opcional)";
@@ -336,7 +428,7 @@ function pintarCampos() {
 
 function agregarCampo(base) {
     const usados = new Set(campos.map((c) => c.id));
-    const c = Object.assign({ etiqueta: "", tipo: "texto", requerido: false, ayuda: "", opciones: [] }, base || {});
+    const c = Object.assign({ etiqueta: "", tipo: "texto", requerido: false, ayuda: "", opciones: [], papel: "" }, base || {});
     c.id = idDesde(c.etiqueta || "pregunta", usados);
     campos.push(c);
 }
@@ -359,6 +451,7 @@ function mostrar(cual) {
         document.getElementById(v).classList.toggle("hidden", v !== cual);
     });
     document.getElementById("nuevo-btn").classList.toggle("hidden", cual !== "vista-lista");
+    document.getElementById("alumno-nuevo-btn").classList.toggle("hidden", cual !== "vista-lista");
 }
 
 async function guardar() {
@@ -373,6 +466,7 @@ async function guardar() {
             id: c.id, etiqueta: c.etiqueta.trim(), tipo: TIPO_VALIDO.has(c.tipo) ? c.tipo : "texto",
             requerido: !!c.requerido, ayuda: (c.ayuda || "").trim(),
             opciones: (c.tipo === "opcion" || c.tipo === "varias") ? (c.opciones || []) : [],
+            papel: PAPEL_VALIDO.has(c.papel) ? c.papel : "",
         }));
     if (!limpios.length) { msg.textContent = "Agrégale al menos una pregunta."; msg.className = "text-sm text-red-600 dark:text-red-400"; return; }
     const sinOpciones = limpios.find((c) => (c.tipo === "opcion" || c.tipo === "varias") && !c.opciones.length);
@@ -419,8 +513,16 @@ async function guardar() {
 }
 
 // ------------------------------------------------------------------ lista
+// El enlace se arma desde la CARPETA de esta página, no cortándole el ".html"
+// al final del pathname. Cloudflare sirve la misma página en dos direcciones
+// —/formularios y /formularios.html—, así que con el corte, a quien la abría
+// sin la extensión el botón le copiaba "/formulariosformulario.html?f=…": los
+// dos nombres pegados, o sea un 404. Y no daba ningún error: el enlace se
+// copiaba igual, y el que se quedaba mirando la página que no era es quien lo
+// recibía.
 function enlacePublico(slug) {
-    return location.origin + location.pathname.replace(/formularios\.html$/, "") + "formulario.html?f=" + encodeURIComponent(slug);
+    const carpeta = location.pathname.replace(/[^/]*$/, "");
+    return location.origin + carpeta + "formulario.html?f=" + encodeURIComponent(slug);
 }
 
 function pintarLista() {
@@ -454,8 +556,14 @@ function pintarLista() {
             b.addEventListener("click", alPulsar);
             return b;
         };
+        // Editar y Borrar solo si es de quien mira (o administra): la RLS ya
+        // lo impide para el de un compañero de equipo, pero sin esto el botón
+        // "funcionaría" sin cambiar nada, que es peor que no mostrarlo.
+        const esDueno = f.creado_por === perfil.id || perfil.is_admin;
+        if (esDueno) {
+            acciones.append(boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)));
+        }
         acciones.append(
-            boton("Editar", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", () => abrirEditor(f)),
             boton("Respuestas", "bg-accent-500 hover:bg-accent-600 text-brand-900", () => verRespuestas(f)),
             boton("Copiar enlace", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", async (e) => {
                 const b = e.currentTarget;
@@ -463,13 +571,15 @@ function pintarLista() {
                 catch (err) { window.prompt("Copia el enlace:", enlacePublico(f.slug)); }
                 setTimeout(() => { b.textContent = "Copiar enlace"; }, 1500);
             }),
-            boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
+        );
+        if (esDueno) {
+            acciones.append(boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
                 if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
                 const { error } = await sb.from("formularios").delete().eq("id", f.id);
                 if (error) { alert("No se pudo borrar: " + error.message); return; }
                 await cargarFormularios();
-            })
-        );
+            }));
+        }
         card.appendChild(acciones);
         caja.appendChild(card);
     });
@@ -490,17 +600,23 @@ async function cargarFormularios() {
 async function verRespuestas(f) {
     document.getElementById("respuestas-titulo").textContent = "Respuestas · " + f.titulo;
     const { data, error } = await sb.from("formulario_respuestas")
-        .select("respuestas, created_at").eq("formulario_id", f.id)
+        .select("id, respuestas, created_at, cuenta_id, cuenta_creada_at").eq("formulario_id", f.id)
         .order("created_at", { ascending: false });
     if (error) { alert("No se pudieron cargar: " + error.message); return; }
-    respuestasActuales = { formulario: f, filas: data || [] };
+    respuestasActuales = { formulario: f, filas: data || [], papeles: papelesDe(f.campos) };
+    pintarRespuestas();
+    mostrar("vista-respuestas");
+}
 
+function pintarRespuestas() {
+    const { formulario: f, filas } = respuestasActuales;
     const cabecera = document.getElementById("respuestas-cabecera");
     const cuerpo = document.getElementById("respuestas-cuerpo");
     cabecera.innerHTML = "";
     cuerpo.innerHTML = "";
 
-    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(f.campos || []);
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(f.campos || [])
+        .concat([{ id: "__cuenta", etiqueta: "Cuenta" }]);
     columnas.forEach((c) => {
         const th = document.createElement("th");
         th.className = "py-2 pr-4 font-semibold whitespace-nowrap";
@@ -508,29 +624,305 @@ async function verRespuestas(f) {
         cabecera.appendChild(th);
     });
 
-    if (!respuestasActuales.filas.length) {
+    if (!filas.length) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
         td.colSpan = columnas.length;
         td.className = "py-4 text-brand-450 dark:text-brand-350";
         td.textContent = "Todavía no ha contestado nadie.";
         tr.appendChild(td); cuerpo.appendChild(tr);
-    } else {
-        respuestasActuales.filas.forEach((r) => {
-            const tr = document.createElement("tr");
-            tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
-            columnas.forEach((c) => {
-                const td = document.createElement("td");
-                td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
+        return;
+    }
+
+    filas.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-brand-50 dark:border-brand-800/60 last:border-0";
+        columnas.forEach((c) => {
+            const td = document.createElement("td");
+            td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
+            if (c.id === "__cuenta") {
+                td.appendChild(celdaCuenta(r));
+            } else {
                 td.textContent = c.id === "__fecha"
                     ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
                     : valorLegible(r.respuestas[c.id]);
-                tr.appendChild(td);
-            });
-            cuerpo.appendChild(tr);
+            }
+            tr.appendChild(td);
         });
+        cuerpo.appendChild(tr);
+    });
+}
+
+/* Que ya se le creó la cuenta lo dice la BASE (cuenta_id de la propia
+   respuesta), no una variable de la pantalla: al volver a abrir las respuestas
+   mañana, el botón no vuelve a ofrecer mandar una segunda invitación al mismo
+   correo. */
+function celdaCuenta(r) {
+    if (r.cuenta_id) {
+        const listo = document.createElement("span");
+        listo.className = "whitespace-nowrap text-green-700 dark:text-green-400";
+        listo.textContent = "✅ Creada" + (r.cuenta_creada_at
+            ? " el " + new Date(r.cuenta_creada_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short" })
+            : "");
+        return listo;
     }
-    mostrar("vista-respuestas");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "Crear cuenta";
+    b.className = "whitespace-nowrap bg-accent-500 hover:bg-accent-600 text-brand-900 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    b.addEventListener("click", () => abrirAlta(r, b));
+    return b;
+}
+
+// ------------------------------------------------------------------ dar de alta
+let altaRespuesta = null;
+let altaVolverEl = null;
+// Cierto cuando el diálogo se abrió con "＋ Alumno nuevo" y no con el botón
+// "Crear cuenta" de una respuesta: no hay `formulario_respuestas` de la que
+// partir, así que se manda a create-student (la misma que usa la invitación
+// directa desde la clase en vivo) en vez de a inscribir-alumno, que exige un
+// respuesta_id.
+let altaManual = false;
+
+function abrirAlta(r, boton) {
+    const { formulario: f, papeles } = respuestasActuales;
+    altaRespuesta = r;
+    altaManual = false;
+    altaVolverEl = boton || null;
+    document.getElementById("alta-titulo").textContent = "Crear la cuenta del alumno";
+    const dato = (papel) => {
+        const id = papeles[papel];
+        return id ? valorLegible(r.respuestas[id]) : "";
+    };
+    document.getElementById("alta-alumno-nombre").value = dato("alumno_nombre");
+    document.getElementById("alta-alumno-correo").value = dato("alumno_correo");
+    document.getElementById("alta-encargado-nombre").value = dato("encargado_nombre");
+    document.getElementById("alta-encargado-correo").value = dato("encargado_correo");
+    document.getElementById("alta-frecuencia").value = "semanal";
+    // El equipo del formulario: si se armó para 7° B, sus alumnos son de 7° B.
+    document.getElementById("alta-grupo").value = f.grupo || "";
+
+    /* La casilla arranca marcada cuando el formulario no trajo correo del
+       alumno: es lo que de verdad pasa con los pequeños — la familia escribe
+       el suyo y deja ese campo vacío. Se propone, no se decide: queda a la
+       vista y se puede desmarcar. */
+    // La marca de "lo escribí a mano" se borra al abrir OTRA respuesta: si no,
+    // el usuario que se corrigió para un alumno se le quedaría puesto al
+    // siguiente, y ese es el usuario con el que va a entrar.
+    const campoUsuario = document.getElementById("alta-usuario");
+    delete campoUsuario.dataset.tocado;
+    campoUsuario.value = "";
+    document.getElementById("alta-sin-correo").checked = !dato("alumno_correo");
+    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+    pintarModoAlta();
+    const msg = document.getElementById("alta-msg");
+    msg.textContent = "";
+    msg.className = "text-sm mt-4";
+    document.getElementById("alta-enviar").disabled = false;
+    document.getElementById("alta-fondo").classList.remove("hidden");
+    document.getElementById("alta-alumno-correo").focus();
+}
+
+/* La misma caja, en blanco: para el alumno que se inscribe por WhatsApp o en
+   persona, sin pasar por el enlace del formulario. Manda a create-student
+   (ver enviarAlta) en vez de inscribir-alumno. */
+function abrirAltaManual() {
+    altaRespuesta = null;
+    altaManual = true;
+    altaVolverEl = document.getElementById("alumno-nuevo-btn");
+    document.getElementById("alta-titulo").textContent = "Crear una cuenta de alumno";
+    document.getElementById("alta-alumno-nombre").value = "";
+    document.getElementById("alta-alumno-correo").value = "";
+    document.getElementById("alta-encargado-nombre").value = "";
+    document.getElementById("alta-encargado-correo").value = "";
+    document.getElementById("alta-frecuencia").value = "semanal";
+    document.getElementById("alta-grupo").value = "";
+
+    const campoUsuario = document.getElementById("alta-usuario");
+    delete campoUsuario.dataset.tocado;
+    campoUsuario.value = "";
+    document.getElementById("alta-sin-correo").checked = false;
+    document.getElementById("alta-usuario-dominio").textContent = "@" + UsuarioAlumno.DOMINIO;
+    pintarModoAlta();
+    const msg = document.getElementById("alta-msg");
+    msg.textContent = "";
+    msg.className = "text-sm mt-4";
+    document.getElementById("alta-enviar").disabled = false;
+    document.getElementById("alta-fondo").classList.remove("hidden");
+    document.getElementById("alta-alumno-nombre").focus();
+}
+
+/* Qué se ve y qué se pide según haya correo propio o no. Es UNA sola función
+   y la llaman el abrir y la casilla: si cada uno pintara lo suyo, marcar la
+   casilla y volver a abrir el diálogo dejarían la pantalla en dos estados
+   distintos. */
+function pintarModoAlta() {
+    const sinCorreo = document.getElementById("alta-sin-correo").checked;
+    const correo = document.getElementById("alta-alumno-correo");
+    const fila = document.getElementById("alta-usuario-fila");
+    const usuario = document.getElementById("alta-usuario");
+
+    correo.disabled = sinCorreo;
+    correo.classList.toggle("opacity-50", sinCorreo);
+    // El asterisco se muda: sin correo propio, el obligatorio es el de la casa.
+    document.getElementById("alta-correo-obligatorio").classList.toggle("hidden", sinCorreo);
+    fila.classList.toggle("hidden", !sinCorreo);
+
+    document.getElementById("alta-encargado-ayuda").textContent = sinCorreo
+        ? "Ahí llega el enlace para crear la contraseña Y el informe de cómo le va. Sin esto no hay forma de escribirle a esta familia."
+        : "Ahí llega el informe de cómo le va. Si se deja en blanco, no se apunta a nadie.";
+
+    // Se propone desde el nombre, pero lo escrito a mano no se pisa: quien lo
+    // corrigió no quiere que se le deshaga al volver a tocar la casilla.
+    if (sinCorreo && !usuario.dataset.tocado) {
+        usuario.value = baseDeUsuarioEnPantalla(document.getElementById("alta-alumno-nombre").value);
+    }
+}
+
+/* La misma regla que `baseDeUsuario()` de la Edge Function: primer nombre y
+   primer apellido, sin tildes. Acá es solo para PROPONER lo que se ve en
+   pantalla — quien decide de verdad es el servidor, que además desempata si el
+   usuario ya está tomado. Que las dos coincidan lo comprueba
+   verificar-alumno-sin-correo.js. */
+function baseDeUsuarioEnPantalla(nombre) {
+    const pedazos = String(nombre || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/gi, "n")
+        .toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+    if (!pedazos.length) return "";
+    const apellido = pedazos.length >= 4 ? pedazos[2] : pedazos[1];
+    return [pedazos[0], apellido].filter(Boolean).join(".").slice(0, 40);
+}
+
+function cerrarAlta() {
+    document.getElementById("alta-fondo").classList.add("hidden");
+    altaRespuesta = null;
+    altaManual = false;
+    // El foco vuelve al botón que abrió esto: si no, se queda dentro de algo
+    // que ya no está en pantalla.
+    if (altaVolverEl && document.body.contains(altaVolverEl)) altaVolverEl.focus();
+    altaVolverEl = null;
+}
+
+async function enviarAlta() {
+    if (!altaRespuesta && !altaManual) return;
+    const btn = document.getElementById("alta-enviar");
+    const msg = document.getElementById("alta-msg");
+    const v = (id) => document.getElementById(id).value.trim();
+
+    const sinCorreo = document.getElementById("alta-sin-correo").checked;
+    const alumnoNombre = v("alta-alumno-nombre");
+    const alumnoCorreo = sinCorreo ? "" : v("alta-alumno-correo");
+    const usuario = sinCorreo ? v("alta-usuario") : "";
+    const encargadoNombre = v("alta-encargado-nombre");
+    const encargadoCorreo = v("alta-encargado-correo");
+    const frecuencia = document.getElementById("alta-frecuencia").value;
+    const grupo = v("alta-grupo");
+
+    // Las dos puertas —"Crear cuenta" de una respuesta e "＋ Alumno nuevo"—
+    // validan y avisan igual; lo único que cambia es a qué función se manda
+    // y con qué nombres de campo la espera cada una.
+    const cuerpo = altaManual ? {
+        email: alumnoCorreo,
+        full_name: alumnoNombre,
+        sin_correo: sinCorreo,
+        usuario,
+        encargado_nombre: encargadoNombre,
+        encargado_email: encargadoCorreo,
+        frecuencia,
+        grupo,
+    } : {
+        respuesta_id: altaRespuesta.id,
+        alumno_nombre: alumnoNombre,
+        alumno_email: alumnoCorreo,
+        sin_correo: sinCorreo,
+        usuario,
+        encargado_nombre: encargadoNombre,
+        encargado_email: encargadoCorreo,
+        frecuencia,
+        grupo,
+    };
+
+    const fallar = (texto, campo) => {
+        msg.textContent = texto;
+        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
+        document.getElementById(campo).focus();
+    };
+
+    if (sinCorreo) {
+        // Sin buzón propio, el de la casa es la ÚNICA forma de mandarle el
+        // enlace: sin él la cuenta queda creada y muda, y de eso nadie se
+        // entera hasta que el alumno nunca aparece.
+        if (!alumnoNombre) {
+            return fallar("Para armarle un usuario hace falta el nombre del alumno.", "alta-alumno-nombre");
+        }
+        if (!encargadoCorreo) {
+            return fallar("Sin correo propio, el de la persona encargada es obligatorio: es a donde va el enlace para crear la contraseña.", "alta-encargado-correo");
+        }
+        if (!usuario) {
+            return fallar("Falta el usuario con el que va a entrar.", "alta-usuario");
+        }
+    } else if (!alumnoCorreo) {
+        return fallar("Falta el correo del alumno: es a donde va la invitación. Si no tiene, marca «No tiene correo propio».", "alta-alumno-correo");
+    }
+
+    btn.disabled = true;
+    msg.textContent = "Creando la cuenta…";
+    msg.className = "text-sm mt-4 text-brand-500 dark:text-brand-300";
+    try {
+        const funcion = altaManual ? "create-student" : "inscribir-alumno";
+        const res = await fetch(`${window.SUPABASE_URL}/functions/v1/${funcion}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session.access_token}`,
+                "apikey": window.SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify(cuerpo),
+        });
+        const out = await res.json();
+        if (!res.ok || !out.ok) throw new Error(out.error || "No se pudo crear la cuenta");
+
+        // La pantalla dice lo que de verdad pasó, no "listo" a secas: si ya
+        // tenía cuenta no salió ninguna invitación, y conviene saberlo. Solo
+        // aplica a una respuesta de formulario: "＋ Alumno nuevo" siempre crea
+        // una cuenta nueva, y no hay fila de respuesta que marcar.
+        if (!altaManual) {
+            altaRespuesta.cuenta_id = out.alumno_id;
+            altaRespuesta.cuenta_creada_at = new Date().toISOString();
+            pintarRespuestas();
+        }
+        cerrarAlta();
+        const encargado = out.encargado_guardado
+            ? " La persona encargada quedó apuntada para los informes a la casa." : "";
+        // Con qué entra de verdad lo dice el servidor, no la pantalla: el
+        // usuario pudo salir con un número al final si ya estaba tomado, y
+        // quien da de alta tiene que ver el que de verdad quedó.
+        const entra = out.usuario || out.email;
+
+        if (out.ya_tenia_cuenta) {
+            alert(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
+                  `Entra con ${entra}.${encargado}`);
+        } else if (out.correo_enviado === false) {
+            // La cuenta quedó creada y el correo no salió: se dice, o el alumno
+            // nunca aparece y nadie sabe por qué.
+            alert(`La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
+                  `Dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.${encargado}`);
+        } else if (out.sin_correo) {
+            // El dato nuevo es el usuario, y hay que enseñarlo: no es un correo
+            // y nadie lo adivina. El correo salió hacia la casa, no hacia el
+            // alumno, y quien da de alta tiene que saberlo para poder decírselo.
+            alert(`Listo. ${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
+                  `El enlace para crear la contraseña salió a ${out.correo_destino || encargadoCorreo}, ` +
+                  `no al alumno — ese usuario no recibe correo.${encargado}`);
+        } else {
+            alert(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
+                  `contraseña, con los pasos para entrar.${encargado}`);
+        }
+    } catch (err) {
+        msg.textContent = err.message;
+        msg.className = "text-sm mt-4 text-red-600 dark:text-red-400";
+        btn.disabled = false;
+    }
 }
 
 function valorLegible(v) {
@@ -546,12 +938,15 @@ function valorLegible(v) {
 function bajarCsv() {
     const { formulario, filas } = respuestasActuales;
     if (!formulario) return;
-    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(formulario.campos || []);
+    const columnas = [{ id: "__fecha", etiqueta: "Fecha" }].concat(formulario.campos || [])
+        .concat([{ id: "__cuenta", etiqueta: "Cuenta creada" }]);
     const celda = (t) => '"' + String(t == null ? "" : t).replace(/"/g, '""') + '"';
     const lineas = [columnas.map((c) => celda(c.etiqueta)).join(";")];
     filas.forEach((r) => {
         lineas.push(columnas.map((c) => celda(
-            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR") : valorLegible(r.respuestas[c.id])
+            c.id === "__fecha" ? new Date(r.created_at).toLocaleString("es-CR")
+            : c.id === "__cuenta" ? (r.cuenta_id ? "Sí" : "No")
+            : valorLegible(r.respuestas[c.id])
         )).join(";"));
     });
     const blob = new Blob(["﻿" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8;" });
@@ -565,10 +960,32 @@ function bajarCsv() {
 
 // ------------------------------------------------------------------ arranque
 document.getElementById("nuevo-btn").addEventListener("click", () => abrirEditor(null));
+document.getElementById("alumno-nuevo-btn").addEventListener("click", abrirAltaManual);
 document.getElementById("volver-btn").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("volver-btn-2").addEventListener("click", () => mostrar("vista-lista"));
 document.getElementById("guardar-btn").addEventListener("click", guardar);
 document.getElementById("csv-btn").addEventListener("click", bajarCsv);
+document.getElementById("alta-enviar").addEventListener("click", enviarAlta);
+document.getElementById("alta-cancelar").addEventListener("click", cerrarAlta);
+document.getElementById("alta-sin-correo").addEventListener("change", pintarModoAlta);
+// Corregir el nombre vuelve a proponer el usuario, mientras nadie lo haya
+// escrito a mano: arreglar una tilde del nombre no tiene por qué dejar el
+// usuario apuntando al nombre viejo.
+document.getElementById("alta-alumno-nombre").addEventListener("input", () => {
+    const usuario = document.getElementById("alta-usuario");
+    if (!usuario.dataset.tocado) pintarModoAlta();
+});
+// Lo escrito a mano manda: desde acá, el nombre ya no lo pisa.
+document.getElementById("alta-usuario").addEventListener("input", (e) => {
+    e.target.dataset.tocado = "1";
+});
+// Clic fuera de la caja y Escape cierran, como cualquier diálogo del sitio.
+document.getElementById("alta-fondo").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) cerrarAlta();
+});
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !document.getElementById("alta-fondo").classList.contains("hidden")) cerrarAlta();
+});
 document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
 document.getElementById("plantilla-btn").addEventListener("click", () => {
     if (campos.length && !confirm("Esto reemplaza las preguntas que ya pusiste. ¿Seguir?")) return;
@@ -594,6 +1011,9 @@ async function init() {
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
+    } else {
+        document.getElementById("subtitulo").textContent =
+            "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas en Excel. También ves los formularios y las respuestas de quien coordina tu mismo equipo.";
     }
 
     // Los equipos que de verdad existen entre los alumnos que uno ve.

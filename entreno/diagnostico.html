@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
     <title>Diagnóstico de nivel — Ajedrez Integral</title>
-    <meta name="robots" content="noindex">
-    <meta name="description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones en cinco escalones de dificultad, que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta name="description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
+    <link rel="canonical" href="https://ajedrez-integral.com/entreno/diagnostico.html">
     <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Diagnóstico de nivel — Ajedrez Integral">
-    <meta property="og:description" content="Diagnóstico completo de ajedrez: 56 preguntas y posiciones en cinco escalones de dificultad, que miden ocho áreas del juego y devuelven un plan de estudio.">
+    <meta property="og:description" content="Diagnóstico completo de ajedrez: 63 preguntas y posiciones en cinco escalones de dificultad, que miden nueve áreas del juego y devuelven un plan de estudio.">
     <meta property="og:url" content="https://ajedrez-integral.com/entreno/diagnostico.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -36,14 +36,18 @@
         })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="../js/vendor/supabase.js"></script>
     <script src="../js/supabase-client.js"></script>
     <script src="../js/tiempo-plataforma.js" data-activity="diagnostico"></script>
+    <script src="../js/tarea-en-curso.js" defer></script>
     <script src="../js/entreno-progress.js"></script>
     <script src="../js/progreso-usuario.js"></script>
     <script src="../js/plan-entrenamiento.js"></script>
     <script src="../js/diagnostico-items.js"></script>
     <script src="../js/adaptive-mode.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/chess-move-parser.js"></script>
+    <script src="../js/cuadro-comandos.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
@@ -96,7 +100,7 @@
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
                 <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
-                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">56 preguntas y posiciones que miden ocho áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
+                <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">63 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
 
@@ -105,7 +109,7 @@
                      aparte de los alumnos registrados). -->
                 <div id="visitante-box" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-brand-100">
                     <h2 class="font-serif text-lg font-bold text-white mb-1">Diagnóstico gratuito, sin cuenta</h2>
-                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Déjanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya eres alumno de Academia? Inicia sesión</a> y el resultado queda en tu cuenta.</p>
+                    <p class="text-sm text-brand-200 mb-4">Al terminar verás tu nivel estimado, tus áreas fuertes y flojas y por dónde empezar. Déjanos tu nombre y correo para que el profesor pueda ver tu resultado y escribirte. <a href="../login.html?next=entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 underline">¿Ya eres alumno de Ajedrez Integral? Inicia sesión</a> y el resultado queda en tu cuenta.</p>
                     <div class="grid sm:grid-cols-2 gap-3">
                         <div>
                             <label for="visitante-nombre" class="block text-xs font-medium text-brand-200 mb-1">Nombre y apellido <span aria-hidden="true">*</span></label>
@@ -141,11 +145,15 @@
                     <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Empezar el diagnóstico →</button>
                     <!-- Mismo diagnóstico en papel, con sus diagramas y su hoja de corrección:
                          se genera desde este mismo banco de ítems (herramientas/diagnostico-pdf.js).
-                         Es material docente —trae las respuestas—, así que solo se ofrece a
-                         profesores y a quien administra: init() lo muestra si el perfil lo es. -->
+                         Trae las respuestas, así que solo se le ofrece a QUIEN ADMINISTRA —ni
+                         siquiera al resto del equipo docente—: lo destapa mostrarPdfSiEsAdmin(). -->
                     <a href="../diagnostico-de-nivel.pdf" id="pdf-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📄 Descargar la versión imprimible (PDF)</a>
+                    <!-- El banco ENTERO, tipo libro (herramientas/diagnostico-libro.js). No es
+                         lo mismo que el de al lado: aquel es UNA prueba para que el alumno la
+                         conteste; este es para estudiar y corregir, y trae las 118 preguntas. -->
+                    <a href="../libro-de-diagnostico.pdf" id="libro-docente" class="hidden border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-5 py-3 rounded-xl text-sm hover:border-accent-500 transition-colors">📕 Descargar el libro del banco (PDF)</a>
                 </div>
-                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para docentes: el cuadernillo trae los 56 ejercicios con sus diagramas, la hoja de corrección y la tabla de niveles, y va con marca de agua. No se le entrega al alumno.</p>
+                <p id="pdf-docente-nota" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-2">Solo para administración, los dos con marca de agua y sin entregar a nadie más. El <strong>cuadernillo</strong> es una prueba de 63 ejercicios con sus diagramas y su hoja de corrección. El <strong>libro</strong> es el banco entero —301 preguntas por área y por escalón, con la respuesta, el porqué y cómo se comprobó cada posición—; hay también una <a href="../libro-de-diagnostico-accesible.html" class="underline">versión para lector de pantalla</a>.</p>
             </section>
 
             <!-- ---------- Prueba ---------- -->
@@ -166,6 +174,11 @@
 
                 <p id="q-hint" class="text-center text-xs text-brand-450 dark:text-brand-350 mb-3 min-h-[1.2em]"></p>
                 <div id="q-options" class="space-y-2"></div>
+                <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js).
+                     Va DESPUÉS de las opciones a propósito: primero se oyen las
+                     opciones o se lee la posición, y justo después está dónde
+                     escribir la respuesta. -->
+                <div id="q-comandos"></div>
 
                 <div class="flex justify-between items-center gap-3 mt-6">
                     <button type="button" id="abandon-btn" class="text-sm text-brand-450 dark:text-brand-350 hover:text-accent-500 transition-colors">Guardar y salir</button>
@@ -187,9 +200,9 @@
 
                 <div id="result-cta-visitante" class="hidden bg-brand-800 dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 text-center">
                     <p class="text-white font-serif text-lg font-bold mb-2">¿Quieres un plan de entrenamiento con seguimiento?</p>
-                    <p class="text-brand-200 text-sm mb-4">En Academia el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
+                    <p class="text-brand-200 text-sm mb-4">En Ajedrez Integral el profesor revisa este diagnóstico, te arma un plan de cuatro semanas y sigue tu avance clase a clase. Tu resultado ya le llegó.</p>
                     <div class="flex flex-wrap justify-center gap-3">
-                        <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Academia</a>
+                        <a href="https://wa.me/50683092291?text=Hola%2C%20hice%20el%20diagn%C3%B3stico%20de%20nivel%20en%20ajedrez-integral.com%20y%20quiero%20informaci%C3%B3n%20de%20la%20Academia." target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
                         <a href="../cursos.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver los cursos →</a>
                     </div>
                 </div>
@@ -244,7 +257,7 @@
  */
 /* El banco tiene más ítems de los que se preguntan: cada prueba sortea los
    suyos (DiagnosticoPrueba, en js/diagnostico-items.js). ITEMS son los de ESTA
-   prueba —siempre 56, siempre 109 puntos, siempre 7 por área—, y sus ids
+   prueba —siempre 63, siempre 180 puntos, siempre 7 por área—, y sus ids
    quedan guardados en el estado para poder retomarla igual y para volver a
    mostrar el resultado con las preguntas que de verdad se hicieron. */
 const PRUEBA = window.DiagnosticoPrueba;
@@ -260,10 +273,12 @@ const PENDIENTE_KEY = 'diagnostico_pendiente_v1';
      1 — se preguntaba el banco entero.
      2 — la prueba se sortea y el estado guarda qué ítems tocaron.
      3 — la prueba tiene escalones de dificultad 4 y 5 (preguntas duras).
+     4 — se suma la novena área (Maestría): 63 ítems en vez de 56, y otro
+         puntaje. Un resultado nuevo ya no se compara con uno de antes.
    Una prueba empezada con una versión anterior no se puede continuar: los
    ejercicios ya no son los mismos y el resultado mezclaría dos mediciones
    distintas. Se descarta y se avisa en la portada. */
-const VERSION = 3;
+const VERSION = 4;
 
 /* "No lo sé todavía" es una respuesta más, no un botón de saltar: vale cero
    puntos igual que fallar, pero se guarda aparte. Para el profesor no es lo
@@ -470,7 +485,8 @@ function pintarItem() {
   wrap.classList.toggle('flex', conTablero);
   if (conTablero) pintarTablero(new Chess(itemActual.fen));
 
-  if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
+  const esOpcion = itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero';
+  if (esOpcion) {
     // Las opciones se barajan en cada intento: escritas siempre en el mismo orden,
     // la correcta quedaría siempre en el mismo lugar y bastaría con marcar la
     // primera para aprobar media prueba sin saber ajedrez.
@@ -480,15 +496,11 @@ function pintarItem() {
       btn.type = 'button';
       btn.dataset.original = String(original);
       btn.className = claseOpcion(false);
-      btn.textContent = itemActual.opciones[original];
-      btn.addEventListener('click', () => {
-        seleccion = original;
-        [...opciones.children].forEach((b, j) => {
-          if (b.id === 'no-se-btn') b.className = claseNoSe(false);
-          else b.className = claseOpcion(j === posicion);
-        });
-        document.getElementById('next-btn').disabled = false;
-      });
+      // La letra va ESCRITA dentro del botón, no puesta con CSS ni con un
+      // ::before: es lo que se dice para contestar por el cuadro de comandos,
+      // así que quien la oye tiene que oírla de la misma lista que lee.
+      btn.textContent = `Opción ${CuadroComandos.letra(posicion)}. ${itemActual.opciones[original]}`;
+      btn.addEventListener('click', () => elegirOpcion(posicion));
       opciones.appendChild(btn);
     });
   } else if (itemActual.tipo === 'casilla') {
@@ -501,6 +513,137 @@ function pintarItem() {
     hint.textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
   }
   opciones.appendChild(botonNoSe());
+  prepararComandos(esOpcion);
+}
+
+/* Elegir la opción que está en la POSICIÓN `posicion` de la lista barajada.
+   Lo llaman el clic en el botón y el cuadro de comandos: una sola forma de
+   quedar elegida, para que escribir "B" y tocar la segunda opción no puedan
+   terminar marcando cosas distintas. */
+function elegirOpcion(posicion) {
+  const opciones = document.getElementById('q-options');
+  seleccion = ordenOpciones[posicion];
+  [...opciones.children].forEach((b, j) => {
+    if (b.id === 'no-se-btn') b.className = claseNoSe(false);
+    else b.className = claseOpcion(j === posicion);
+  });
+  document.getElementById('next-btn').disabled = false;
+}
+
+/* ---------------- El cuadro de comandos (Modo Adaptado) ----------------
+ * Un ítem de tablero solo se podía contestar arrastrando o haciendo clic en
+ * las casillas, y uno de opción solo apretando su botón: con lector de
+ * pantalla, media prueba era incontestable — y no daba ningún error, la página
+ * se veía perfecta. Acá la respuesta también se escribe: la letra de la
+ * opción, la casilla, la jugada o "no lo sé".
+ *
+ * El cuadro se monta UNA vez y se reconfigura en cada pregunta; lo que decide
+ * si se ve es el CSS (html.adaptive-mode), no este código. Ver
+ * js/cuadro-comandos.js. */
+let comandos = null;
+
+function prepararComandos(esOpcion) {
+  if (!window.CuadroComandos) return;
+  if (!comandos) {
+    comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+      onEnviar: responderEscribiendo,
+    });
+  }
+  comandos.limpiar().decir('');
+  // Al responder por el cuadro se pasa solo a la siguiente, así que hay que
+  // decir de antemano qué va a hacer ese Enter — y sobre todo cuando es el que
+  // termina la prueba.
+  const queHace = esUltima()
+    ? ' Es la última: al responder se termina la prueba y se muestra el resultado.'
+    : ' Al responder se pasa sola a la siguiente.';
+  if (esOpcion) {
+    const cuantas = itemActual.opciones.length;
+    comandos.etiqueta('Escribe la letra de la opción');
+    comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(cuantas - 1)}. `
+      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".' + queHace);
+    // En los ítems de opción CON tablero la posición también hace falta: la
+    // pregunta habla de una posición que no se puede ver.
+    comandos.posicion(itemActual.fen ? new Chess(itemActual.fen) : '');
+  } else if (itemActual.tipo === 'casilla') {
+    comandos.etiqueta('Escribe la casilla');
+    comandos.ayuda('Por ejemplo "e4" o "eva 4", como se leen las columnas. También vale "no lo sé".' + queHace);
+    comandos.posicion(new Chess(itemActual.fen));
+  } else {
+    comandos.etiqueta('Escribe tu jugada');
+    comandos.ayuda('Una sola jugada, en español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". También vale "no lo sé".' + queHace);
+    comandos.posicion(new Chess(itemActual.fen));
+  }
+}
+
+function esUltima() { return estado.idx === ITEMS.length - 1; }
+
+/* Contestar por el cuadro PASA SOLA a la siguiente pregunta: quien contesta
+   escribiendo no tiene por qué ir a buscar el botón "Siguiente", que es
+   justamente lo que este cuadro viene a evitar.
+ *
+ * Y por eso el aviso lleva el enunciado de la pregunta nueva: al no pasar por
+ * el botón ya no hay nada que anuncie el cambio, y quien escucha se quedaría
+ * contestando a ciegas una pregunta que nunca oyó. El aviso es región viva, así
+ * que se lee solo. Los botones de opción NO avanzan: ahí se ve la pantalla y
+ * poder cambiar de idea antes de seguir es lo normal. */
+function avanzarEscribiendo(resumen) {
+  const ultima = esUltima();
+  siguiente();
+  if (ultima) return;   // la prueba terminó: ya no hay cuadro que llenar
+  comandos.decir(`${resumen} Pregunta ${estado.idx + 1} de ${ITEMS.length}: ${itemActual.enunciado}`);
+  comandos.enfocar();
+}
+
+function responderEscribiendo(texto, api) {
+  if (CuadroComandos.esNoSe(texto)) {
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.click();
+    api.limpiar();
+    avanzarEscribiendo('Anotado: no lo sabías.');
+    return;
+  }
+  if (itemActual.tipo === 'opcion' || itemActual.tipo === 'opcion_tablero') {
+    const i = CuadroComandos.opcionPedida(texto, itemActual.opciones.length);
+    if (i === null) {
+      api.decir(`No entendí "${texto}". Escribe la letra de una opción, de la A a la ${CuadroComandos.letra(itemActual.opciones.length - 1)}.`);
+      return;
+    }
+    const dicho = `Anotado: opción ${CuadroComandos.letra(i)}, ${itemActual.opciones[ordenOpciones[i]]}.`;
+    elegirOpcion(i);
+    api.limpiar();
+    avanzarEscribiendo(dicho);
+    return;
+  }
+  if (itemActual.tipo === 'casilla') {
+    const sq = CuadroComandos.casillaPedida(texto);
+    if (!sq) { api.decir(`No entendí "${texto}". Escribe una casilla, por ejemplo "e4".`); return; }
+    seleccion = sq;
+    pintarTablero(new Chess(itemActual.fen), [sq]);
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.className = claseNoSe(false);
+    document.getElementById('q-hint').textContent = `Elegiste ${sq}.`;
+    document.getElementById('next-btn').disabled = false;
+    api.limpiar();
+    avanzarEscribiendo(`Anotado: ${sq}.`);
+    return;
+  }
+  if (itemActual.tipo === 'jugada') {
+    // El intérprete HACE la jugada sobre la partida que se le pasa, así que se
+    // le pasa una copia de usar y tirar: la respuesta es la jugada, no una
+    // posición nueva.
+    const juego = new Chess(itemActual.fen);
+    const mv = CuadroComandos.jugadaPedida(juego, texto);
+    if (!mv) { api.decir(`"${texto}" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.`); return; }
+    seleccion = { from: mv.from, to: mv.to, promotion: mv.promotion, san: mv.san };
+    origenElegido = null;
+    pintarTablero(juego, [mv.from, mv.to]);
+    const noSe = document.getElementById('no-se-btn');
+    if (noSe) noSe.className = claseNoSe(false);
+    document.getElementById('q-hint').textContent = `Jugaste ${mv.san}: esa es tu respuesta y no hace falta jugar más.`;
+    document.getElementById('next-btn').disabled = false;
+    api.limpiar();
+    avanzarEscribiendo(`Anotado: ${mv.san}.`);
+  }
 }
 
 // Siempre al final y con otra pinta: no compite con las opciones de contenido,
@@ -867,11 +1010,24 @@ document.getElementById('next-btn').addEventListener('click', siguiente);
 document.getElementById('abandon-btn').addEventListener('click', () => { guardarEstado(); irA('intro-view'); });
 document.getElementById('repeat-btn').addEventListener('click', () => { borrarEstado(); pintarPerfil(); irA('intro-view'); });
 
-async function mostrarPdfSiEsDocente(userId) {
+/* SOLO administración, no todo el equipo docente.
+ *
+ * Estos dos PDF traen las respuestas y la hoja de corrección: el cuadernillo es
+ * la prueba que el alumno va a contestar y el libro es el banco entero, las 301
+ * preguntas con su respuesta marcada. Cuanta más gente los tenga bajados, más
+ * fácil es que terminen circulando y que el diagnóstico deje de medir nada.
+ * Quien dé clase y los necesite se los pide a quien administra.
+ *
+ * Como todo filtro del sitio, esto decide qué se PINTA: los archivos siguen en
+ * la raíz y quien conozca la dirección los baja igual — para eso llevan marca
+ * de agua en todas las páginas y van sin permiso de copiar ni imprimir.
+ */
+async function mostrarPdfSiEsAdmin(userId) {
   try {
-    const { data } = await sb.from('profiles').select('role, is_admin').eq('id', userId).maybeSingle();
-    if (!data || !(data.role === 'profesor' || data.is_admin === true)) return;
+    const { data } = await sb.from('profiles').select('is_admin').eq('id', userId).maybeSingle();
+    if (!data || data.is_admin !== true) return;
     document.getElementById('pdf-docente').classList.remove('hidden');
+    document.getElementById('libro-docente').classList.remove('hidden');
     document.getElementById('pdf-docente-nota').classList.remove('hidden');
   } catch (e) { /* si no se puede saber, no se muestra */ }
 }
@@ -884,9 +1040,8 @@ async function init() {
   } catch (e) { sesion = null; }
   sesionActual = sesion || null;
   if (sesion) {
-    // El cuadernillo imprimible lleva las respuestas: se ofrece solo a quien da
-    // clase (profesor o administración), nunca al alumno que va a hacer la prueba.
-    mostrarPdfSiEsDocente(sesion.user.id);
+    // El cuadernillo y el libro llevan las respuestas: solo administración.
+    mostrarPdfSiEsAdmin(sesion.user.id);
     try {
       const { data: pf } = await sb.from('profiles').select('elo, elo_tipo').eq('id', sesion.user.id).maybeSingle();
       perfilCuenta = pf || null;

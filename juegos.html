@@ -23,7 +23,7 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/cartas-engine.js"></script>
@@ -37,49 +37,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
-                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
-                <span class="text-brand-700" aria-hidden="true">&middot;</span>
-                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
-            </div>
-        </div>
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
-                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                    <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">💬 Inscríbete</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
-                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
-                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
-                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
-                <li><a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">💬 Inscríbete</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
@@ -167,9 +125,13 @@
             <!-- Retos que me llegan: aparecen encima de todo y esperan respuesta -->
             <div id="retos-recibidos" class="space-y-3 mb-6"></div>
 
-            <!-- Vista del alumno: sus partidas asignadas -->
+            <!-- Mis partidas en curso. Va FUERA de las dos vistas a propósito:
+                 desde que el profesor también se sienta a jugar, él necesita la
+                 misma puerta de entrada a su partida que el alumno. -->
+            <div id="my-active-games" class="space-y-3 mb-8"></div>
+
+            <!-- Vista del alumno: el catálogo de modalidades -->
             <div id="student-view" class="hidden">
-                <div id="my-active-games" class="space-y-3 mb-8"></div>
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Modalidades</h2>
                 <div id="variant-grid" class="grid sm:grid-cols-2 gap-4"></div>
             </div>
@@ -259,17 +221,7 @@
     
     </main>
 
-    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-12">
-                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><span class="text-2xl">♟️</span><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li>📧 info@ajedrezintegral.com</li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">💬 +506 8309-2291 (WhatsApp)</a></li><li>📍 Educación a distancia</li></ul></div>
-            </div>
-            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div>
-        </div>
-    </footer>
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false;
@@ -350,10 +302,12 @@
             return "Terminada";
         }
 
-        // ---------- Vista del alumno ----------
-        async function renderStudentView() {
-            document.getElementById("student-view").classList.remove("hidden");
-
+        // ---------- Mis partidas en curso ----------
+        /* La usan los DOS, alumno y profesor. Desde que el profesor se sienta a
+           jugar —contra un alumno suyo, o emparejado en su propio torneo—
+           necesita entrar a su partida igual que cualquiera: verla pasar en la
+           lista de supervisión de abajo no es lo mismo que tener el botón. */
+        async function renderMisPartidas() {
             const { data: myRooms } = await sb.from("game_rooms")
                 .select("*")
                 .or("white_id.eq." + profile.id + ",black_id.eq." + profile.id)
@@ -400,13 +354,20 @@
                         '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Juegas con ' + SEAT_LABEL[mySeat] + ' — toca para continuar →</p>';
                     activeEl.appendChild(card);
                 });
-            } else {
+            } else if (!isTeacher) {
+                // Al profesor sin partidas propias no se le dice nada: lo suyo
+                // empieza en el panel de abajo. El aviso de "espera a que te
+                // asignen" es para el alumno y solo para él.
                 const p = document.createElement("p");
                 p.className = "text-sm text-brand-450 dark:text-brand-350 bg-white dark:bg-brand-900 rounded-xl p-4";
                 p.textContent = "Todavía no tienes ninguna partida asignada. Espera a que tu profesor te asigne un rival.";
                 activeEl.appendChild(p);
             }
+        }
 
+        // ---------- Vista del alumno ----------
+        async function renderStudentView() {
+            document.getElementById("student-view").classList.remove("hidden");
             const grid = document.getElementById("variant-grid");
             grid.innerHTML = "";
             VARIANTS.forEach((v) => {
@@ -466,7 +427,16 @@
         // ---------- Vista del profesor ----------
         let allStudents = [];
 
-        async function loadStudentsIntoSelects() {
+        /* Los selectores llevan a los alumnos Y al propio profesor: desde que se
+           puede sentar a jugar, es un jugador más. La lista de alumnos la acota
+           la RLS de `profiles`, no este `.eq()`: cada profesor recibe los suyos.
+
+           "Yo" va en su propio <optgroup> y AL FINAL, no arriba. Si fuera la
+           primera opción, el caso de todos los días —armar una partida entre dos
+           alumnos— arrancaría con el profesor puesto de blancas y habría que
+           sacarlo a mano cada vez. Así los índices de la preselección siguen
+           cayendo donde caían. */
+        async function loadPlayersIntoSelects() {
             const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
             allStudents = data || [];
             const whiteSelect = document.getElementById("white-select");
@@ -474,16 +444,32 @@
             const seatSelects = SEATS.map((s) => document.getElementById("seat-" + s + "-select"));
             [whiteSelect, blackSelect, ...seatSelects].forEach((sel) => {
                 sel.innerHTML = "";
-                allStudents.forEach((s) => {
-                    const opt = document.createElement("option");
-                    opt.value = s.id;
-                    opt.textContent = s.full_name || s.email;
-                    sel.appendChild(opt);
-                });
+                if (allStudents.length) {
+                    const grupo = document.createElement("optgroup");
+                    grupo.label = "Mis alumnos";
+                    allStudents.forEach((s) => {
+                        const opt = document.createElement("option");
+                        opt.value = s.id;
+                        opt.textContent = s.full_name || s.email;
+                        grupo.appendChild(opt);
+                    });
+                    sel.appendChild(grupo);
+                }
+                const mio = document.createElement("optgroup");
+                mio.label = "Yo";
+                const opt = document.createElement("option");
+                opt.value = profile.id;
+                opt.textContent = nombreVisible(profile);
+                mio.appendChild(opt);
+                sel.appendChild(mio);
             });
+            // Con dos alumnos o más, el caso de siempre: los dos primeros. Con uno
+            // solo, el rival natural soy yo — antes quedaban las dos casillas en
+            // el mismo alumno y el formulario se quejaba sin razón aparente.
             if (allStudents.length > 1) blackSelect.selectedIndex = 1;
-            // Preseleccionar 4 alumnos distintos si hay suficientes, para que el
-            // profesor solo tenga que cambiar los que hagan falta.
+            else blackSelect.value = profile.id;
+            // Preseleccionar 4 jugadores distintos si hay suficientes, para que
+            // solo haya que cambiar los que hagan falta.
             seatSelects.forEach((sel, i) => { if (allStudents.length > i) sel.selectedIndex = i; });
         }
 
@@ -513,10 +499,18 @@
                 '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
+            // Si el profesor es uno de los jugadores no viene a mirar: viene a
+            // jugar. Mismo enlace, otro nombre y otro color — un "Ver" sobre la
+            // partida propia se pasa por alto.
+            const juegoYo = is4p
+                ? SEATS.some((sc) => row.seats[sc] && row.seats[sc].player_id === profile.id)
+                : (row.white_id === profile.id || row.black_id === profile.id);
             const viewBtn = document.createElement("a");
             viewBtn.href = (is4p ? "cuatro-jugadores.html" : pageFor2pVariant(row.variant)) + "?room=" + row.id;
-            viewBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
-            viewBtn.textContent = "👀 Ver";
+            viewBtn.className = juegoYo
+                ? "text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors"
+                : "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+            viewBtn.textContent = juegoYo ? "♟️ Jugar" : "👀 Ver";
             actions.appendChild(viewBtn);
             if (row.status === "playing") {
                 const endBtn = document.createElement("button");
@@ -604,8 +598,8 @@
 
             if (variant === "4ffa" || variant === "4teams") {
                 const ids = SEATS.map((s) => document.getElementById("seat-" + s + "-select").value);
-                if (ids.some((id) => !id)) return fail("Elige un alumno para cada uno de los 4 asientos.");
-                if (new Set(ids).size !== 4) return fail("Elige 4 alumnos distintos.");
+                if (ids.some((id) => !id)) return fail("Elige un jugador para cada uno de los 4 asientos.");
+                if (new Set(ids).size !== 4) return fail("Elige 4 jugadores distintos.");
                 const mode = variant === "4teams" ? "teams" : "ffa";
                 const engineGame = new FourPlayerChess.Game(mode);
                 const seats = {};
@@ -619,8 +613,8 @@
             } else {
                 const whiteId = document.getElementById("white-select").value;
                 const blackId = document.getElementById("black-select").value;
-                if (!whiteId || !blackId) return fail("Elige un alumno para cada color.");
-                if (whiteId === blackId) return fail("Elige dos alumnos distintos.");
+                if (!whiteId || !blackId) return fail("Elige un jugador para cada color.");
+                if (whiteId === blackId) return fail("Elige dos jugadores distintos.");
                 const fila = {
                     variant: variant, white_id: whiteId, black_id: blackId, created_by: session.user.id,
                     initial_seconds: timeControl.initial, increment_seconds: timeControl.increment,
@@ -642,12 +636,15 @@
         async function renderTeacherView() {
             document.getElementById("teacher-view").classList.remove("hidden");
             populateTimeControlSelect();
-            await loadStudentsIntoSelects();
+            await loadPlayersIntoSelects();
             updateVariantFieldsVisibility();
-            if (allStudents.length < 2) {
-                setStatus("Necesitas al menos 2 alumnos registrados para armar una partida entre ellos.");
-            } else if (allStudents.length < 4) {
-                setStatus("Con menos de 4 alumnos registrados no vas a poder armar partidas de 4 jugadores.");
+            // Los topes bajan en uno porque el profesor cuenta como jugador: con
+            // un solo alumno ya hay partida, y con tres ya se puede armar una de
+            // cuatro.
+            if (!allStudents.length) {
+                setStatus("Todavía no tienes ningún alumno asignado, así que no hay con quién armar una partida.");
+            } else if (allStudents.length < 3) {
+                setStatus("Con menos de 3 alumnos no vas a poder armar partidas de 4 jugadores, aunque te cuentes a ti mismo.");
             }
             await loadRooms();
             subscribeRoomsList();
@@ -671,6 +668,7 @@
         let canalPresencia = null, canalDesafios = null;
         let gente = [];              // quién está conectado, sin contarme
         let retosPendientes = [];    // los que me llegaron y no he respondido
+        let retosEnviados = {};      // id de reto -> {boton, timeoutId}: los míos, mientras espero respuesta
 
         const nombreVisible = (p) => p.full_name || p.email || "Alguien";
 
@@ -770,17 +768,35 @@
             const tc = TIME_CONTROLS.find((t) => t.id === document.getElementById("reto-tiempo").value) || TIME_CONTROLS[0];
             boton.disabled = true;
             boton.textContent = "Enviado…";
-            const { error } = await sb.from("desafios").insert({
+            const { data, error } = await sb.from("desafios").insert({
                 de_id: profile.id, para_id: quien.id, modalidad: modalidad,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
-            });
-            if (error) {
+            }).select("id").single();
+            if (error || !data) {
                 boton.disabled = false; boton.textContent = "Retar";
-                alert("No se pudo enviar el reto: " + error.message);
+                alert("No se pudo enviar el reto: " + (error ? error.message : "intenta de nuevo"));
                 return;
             }
             boton.textContent = "Esperando…";
-            setTimeout(() => { boton.disabled = false; boton.textContent = "Retar"; }, 20000);
+            // Si tarda en contestar, el botón se libera solo a los 20s; si
+            // contesta antes (sobre todo si rechaza), reactivarBoton() de
+            // escucharDesafios() ya lo habrá liberado y este timeout no
+            // encuentra nada que hacer.
+            const timeoutId = setTimeout(() => { reactivarBoton(data.id); }, 20000);
+            retosEnviados[data.id] = { boton: boton, timeoutId: timeoutId };
+        }
+
+        // Libera el botón "Retar" de un reto mío, sea porque contestaron o
+        // porque se cumplió el plazo de espera. Sin esto, rechazar un reto
+        // de inmediato igual dejaba a quien retó viendo "Esperando…" el
+        // resto de los 20 segundos, sin ninguna razón para seguir esperando.
+        function reactivarBoton(retoId) {
+            const pendiente = retosEnviados[retoId];
+            if (!pendiente) return;
+            clearTimeout(pendiente.timeoutId);
+            pendiente.boton.disabled = false;
+            pendiente.boton.textContent = "Retar";
+            delete retosEnviados[retoId];
         }
 
         /* Los retos que me llegan y la respuesta al mío: las dos cosas por Realtime. */
@@ -793,8 +809,13 @@
                     { event: "UPDATE", schema: "public", table: "desafios", filter: "de_id=eq." + profile.id },
                     (msg) => {
                         if (!msg.new) return;
-                        if (msg.new.estado === "aceptado" && msg.new.room_id) irALaPartida(msg.new);
-                        if (msg.new.estado === "rechazado") avisoArriba("Tu reto no fue aceptado esta vez.");
+                        if (msg.new.estado === "aceptado" && msg.new.room_id) { reactivarBoton(msg.new.id); irALaPartida(msg.new); }
+                        if (msg.new.estado === "rechazado") {
+                            reactivarBoton(msg.new.id);
+                            avisoArriba(msg.new.motivo_rechazo
+                                ? "Por ahora no — " + msg.new.motivo_rechazo
+                                : "Tu reto no fue aceptado esta vez.");
+                        }
                     })
                 .subscribe();
             // Por si llegó uno mientras la página estaba cerrada.
@@ -821,10 +842,14 @@
             const caja = document.createElement("div");
             caja.dataset.reto = reto.id;
             caja.className = "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3";
+            const motivoId = "motivo-reto-" + reto.id;
             caja.innerHTML =
                 '<p class="font-serif font-bold text-brand-800 dark:text-white mb-1">⚔️ ' + escapeHtml(nombre) + ' te reta</p>' +
                 '<p class="text-sm text-brand-700 dark:text-brand-200 mb-3">' + escapeHtml(variantLabel(reto.modalidad)) +
                 (tc ? " · " + escapeHtml(tc.label) : "") + '</p>' +
+                '<label for="' + motivoId + '" class="block text-xs text-brand-450 dark:text-brand-350 mb-1">Si dices que no, puedes contarle por qué (opcional)</label>' +
+                '<input type="text" id="' + motivoId + '" maxlength="140" placeholder="Ej. Estoy estudiando" ' +
+                'class="w-full mb-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-3 py-1.5 text-sm text-brand-700 dark:text-brand-200" />' +
                 '<div class="flex flex-wrap gap-2">' +
                 '<button type="button" data-aceptar="' + reto.id + '" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-1.5 rounded-lg text-sm transition-colors">Aceptar y jugar</button>' +
                 '<button type="button" data-rechazar="' + reto.id + '" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-1.5 rounded-lg text-sm hover:border-red-400 transition-colors">Ahora no</button>' +
@@ -853,7 +878,13 @@
         }
 
         async function rechazar(reto, caja) {
-            await sb.from("desafios").update({ estado: "rechazado", respondido_at: new Date().toISOString() }).eq("id", reto.id);
+            const inputMotivo = caja.querySelector("input[id^='motivo-reto-']");
+            const motivo = inputMotivo ? inputMotivo.value.trim().slice(0, 140) : "";
+            await sb.from("desafios").update({
+                estado: "rechazado",
+                motivo_rechazo: motivo || null,
+                respondido_at: new Date().toISOString(),
+            }).eq("id", reto.id);
             retosPendientes = retosPendientes.filter((r) => r.id !== reto.id);
             caja.remove();
         }
@@ -876,11 +907,14 @@
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
             profile = profileData;
-            isTeacher = profile.role === "profesor";
+            // Quien administra ve esta página como profesor, igual que en Informes:
+            // lo que se hace para el profesor se hace para administración.
+            isTeacher = profile.role === "profesor" || !!profile.is_admin;
             document.getElementById("subtitle").textContent = isTeacher
-                ? "Arma partidas entre tus alumnos en distintas modalidades y sigue su avance."
+                ? "Arma partidas entre tus alumnos —o contra ti mismo— y sigue su avance."
                 : "Otras formas de jugar ajedrez, además de la partida clásica. Tu profesor te asigna el rival.";
 
+            await renderMisPartidas();
             if (isTeacher) await renderTeacherView();
             else await renderStudentView();
             // Si el profesor asigna una partida mientras el alumno está aquí, aviso y traslado automático.

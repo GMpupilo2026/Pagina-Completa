@@ -20,7 +20,18 @@ window.BlindNotation = (function () {
     e: 'eva', f: 'felix', g: 'gustav', h: 'hector',
   };
   const PIECE_LABEL = { k: 'rey', q: 'dama', r: 'torre', b: 'alfil', n: 'caballo', p: 'peón' };
+  /* El plural va escrito, no calculado. Sumarle una "s" al nombre da "alfils" y
+     "peóns", y ponerle "es" a secas da "peónes": las tres las dice el lector de
+     pantalla tal cual, y quien escucha la posición oye una palabra que no
+     existe. Es el único lugar del sitio donde se escriben estos plurales. */
+  const PIECE_PLURAL = { k: 'reyes', q: 'damas', r: 'torres', b: 'alfiles', n: 'caballos', p: 'peones' };
   const PIECE_ORDER = ['k', 'q', 'r', 'b', 'n', 'p'];
+
+  // 'b', 1 -> "alfil"   ·   'b', 2 -> "alfiles"
+  function pieceLabel(type, count) {
+    const t = String(type || '').toLowerCase();
+    return (count > 1 ? PIECE_PLURAL[t] : PIECE_LABEL[t]) || t;
+  }
   const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
   function fileName(file) {
@@ -84,8 +95,10 @@ window.BlindNotation = (function () {
   //   ...
   //   <h3>Negras</h3>
   //   ...
-  function groupedReadoutHTML(game, opts) {
-    opts = opts || {};
+  // Las piezas del tablero agrupadas por color y por tipo, con sus casillas
+  // ordenadas. Lo usan las dos lecturas de abajo: una copia por lectura se
+  // habría ido separando de la otra a la primera corrección.
+  function groupPieces(game) {
     const byColor = { w: {}, b: {} };
     FILES.forEach(function (file) {
       for (let rank = 1; rank <= 8; rank++) {
@@ -96,6 +109,12 @@ window.BlindNotation = (function () {
         byColor[piece.color][piece.type].push(square);
       }
     });
+    return byColor;
+  }
+
+  function groupedReadoutHTML(game, opts) {
+    opts = opts || {};
+    const byColor = groupPieces(game);
 
     let html = '';
     if (opts.includeTurn !== false) {
@@ -122,6 +141,32 @@ window.BlindNotation = (function () {
         : '<p>Sin piezas ' + (color === 'w' ? 'blancas' : 'negras') + ' en el tablero.</p>';
     });
     return html;
+  }
+
+  // La MISMA lectura, pero en una frase y sin ningún encabezado:
+  //   "Blancas: rey en eva 1, torre en anna 1. Negras: rey en gustav 8. Juegan blancas."
+  // groupedReadoutHTML() mete un <h2> "Piezas" y un <h3> por color, que sirven
+  // cuando la lectura es lo único que hay en esa zona de la página (Mates,
+  // Aprender, Desafíos, Practicar) pero rompen el árbol de encabezados de una
+  // página que ya tiene el suyo — el diagnóstico, con su <h2> por pregunta, o
+  // los ejercicios por tema. Ahí va esta.
+  function positionSentence(game, opts) {
+    opts = opts || {};
+    const byColor = groupPieces(game);
+    const out = [];
+    [['w', 'Blancas'], ['b', 'Negras']].forEach(function (par) {
+      const partes = [];
+      PIECE_ORDER.forEach(function (type) {
+        const squares = byColor[par[0]][type];
+        if (!squares || !squares.length) return;
+        partes.push(pieceLabel(type, squares.length) + ' en ' +
+          squares.slice().sort().map(squareSpoken).join(', '));
+      });
+      out.push(par[1] + ': ' + (partes.join('; ') || 'sin piezas') + '.');
+    });
+    if (opts.includeTurn === false) return out.join(' ');
+    const jaque = typeof game.in_check === 'function' && game.in_check() ? ', en jaque' : '';
+    return out.join(' ') + (game.turn() === 'w' ? ' Juegan blancas' : ' Juegan negras') + jaque + '.';
   }
 
   // ===== Modo Speech: leer los anuncios en voz alta con el propio navegador =====
@@ -234,7 +279,8 @@ window.BlindNotation = (function () {
   }
 
   return {
-    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, FILE_NAMES, PIECE_LABEL, PIECE_ORDER,
+    fileName, squareSpoken, textSpoken, sanSpoken, groupedReadoutHTML, positionSentence, pieceLabel,
+    FILE_NAMES, PIECE_LABEL, PIECE_PLURAL, PIECE_ORDER,
     isSpeechEnabled, setSpeechEnabled, speak, setupSpeechToggle,
     getAvailableVoices, getSpeechVoiceURI, setSpeechVoiceURI,
   };

@@ -1,0 +1,588 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Guía del profesor — versión accesible</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { max-width: 42rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; background: #fff; color: #10202e;
+         font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; line-height: 1.8; }
+  h1 { font-size: 1.9rem; line-height: 1.25; }
+  h2 { font-size: 1.45rem; margin-top: 2.8rem; border-bottom: 2px solid #10202e; padding-bottom: .3rem; }
+  h3 { font-size: 1.15rem; margin: 2rem 0 .3rem; font-family: system-ui, sans-serif; }
+  article { border-top: 1px solid #c9d4de; padding-top: .3rem; }
+  .resumen { font-style: italic; }
+  .donde { font-size: .95em; }
+  .rotulo { margin: .8rem 0 .2rem; font-weight: 700; font-family: system-ui, sans-serif; font-size: .95em; }
+  .ojo { background: #f7f2e6; border-left: 4px solid #8a5a00; padding: .7rem .9rem; margin: .8rem 0 0; }
+  .aviso { border: 2px solid #8a5a00; padding: 1rem; }
+  .volver { margin-bottom: 1.5rem; font-size: .95em; }
+  .descargas { background: #f1f5f8; padding: 1rem 1.2rem; margin: 1.5rem 0; }
+  .descargas .rotulo { margin: 0 0 .4rem; font-weight: 700; font-family: system-ui, sans-serif; font-size: .95em; }
+  .descargas ul { margin: 0 0 .6rem; }
+  .nota-pdf { margin: 0; font-size: .92em; }
+  ol, ul { padding-left: 1.6rem; }
+  li { margin-bottom: .35rem; }
+  nav ol { padding-left: 1.4rem; }
+  footer { margin-top: 3rem; border-top: 1px solid #c9d4de; padding-top: 1rem; font-size: .95rem; }
+  a { color: #0b4a76; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #10202e; color: #eef3f7; }
+    h2 { border-color: #eef3f7; }
+    .ojo { background: #2b2415; border-color: #e0b558; }
+    .descargas { background: #1b3145; }
+    article, footer { border-color: #3b5165; }
+    a { color: #9ecbf0; }
+  }
+</style>
+</head><body>
+<nav class="volver" aria-label="Volver a la Academia">
+  <a href="clases.html">&#8592; Volver al panel de la Academia</a>
+</nav>
+<h1>Guía del profesor</h1>
+<p>Todo lo que la plataforma de Ajedrez Integral te deja hacer, y cómo se hace. Esta página es el contenido completo, escrito
+para leerse en cualquier aparato, con lector de pantalla o con la letra
+agrandada. No hay ninguna imagen: no hace falta ver nada para usarla.</p>
+<div class="descargas">
+  <p class="rotulo">Los mismos contenidos, para llevar:</p>
+  <ul>
+    <li><a href="guia-del-profesor.pdf">El manual en PDF</a> — 15
+    capítulos en A4, para leer y tener al lado del teclado.</li>
+    <li><a href="guia-del-profesor-presentacion.pdf">La presentación en PDF</a> —
+    diapositivas 16:9, para proyectar en una capacitación.</li>
+  </ul>
+  <p class="nota-pdf">Los dos se pueden imprimir. Llevan la marca de agua de la
+  Academia y van firmados, como el resto del material docente.</p>
+</div>
+<p class="aviso"><strong>Material de uso docente.</strong> Explica la plataforma
+desde el lado de quien da clase.</p>
+<p><strong>Sobre las capturas de pantalla.</strong> Las dos versiones en PDF
+llevan además una foto de cada pantalla. Acá no están, a propósito: una captura
+es una imagen y esta página no depende de ninguna. No se pierde nada — lo que
+esas fotos muestran está contado paso a paso en cada apartado, que es lo que
+hace falta para usar la plataforma.</p>
+<p><strong>15 capítulos</strong> y 78 apartados.
+Cada apartado dice qué es, dónde está en el sitio, cómo se hace paso a paso y
+qué conviene no olvidar.</p>
+<nav aria-labelledby="indice-t">
+  <h2 id="indice-t">Índice</h2>
+  <ol><li><a href="#cap-1">Capítulo 1. Lo primero: entrar y orientarse</a></li><li><a href="#cap-2">Capítulo 2. La clase en vivo</a></li><li><a href="#cap-3">Capítulo 3. Planes de clase</a></li><li><a href="#cap-4">Capítulo 4. Tareas</a></li><li><a href="#cap-5">Capítulo 5. Exámenes</a></li><li><a href="#cap-6">Capítulo 6. Informes</a></li><li><a href="#cap-7">Capítulo 7. Los cursos de la Academia</a></li><li><a href="#cap-8">Capítulo 8. Entrenamiento</a></li><li><a href="#cap-9">Capítulo 9. Diagnóstico de nivel y arbitraje</a></li><li><a href="#cap-10">Capítulo 10. Jugar: partidas, retos y torneos</a></li><li><a href="#cap-11">Capítulo 11. Archivos y planillas</a></li><li><a href="#cap-12">Capítulo 12. Alumnos que ven poco o no ven</a></li><li><a href="#cap-13">Capítulo 13. Coordinación</a></li><li><a href="#cap-14">Capítulo 14. Administración</a></li><li><a href="#cap-15">Capítulo 15. Las cosas que conviene no olvidar</a></li></ol>
+</nav>
+<section id="cap-1"><h2>Capítulo 1. Lo primero: entrar y orientarse</h2>
+      <p class="resumen">Con qué entras, qué ves al entrar y dónde está cada cosa. Si solo vas a leer un capítulo antes de tu primera clase, que sea este.</p>
+      <article>
+      <h3>Con qué entras</h3>
+      <p class="donde"><strong>Dónde está:</strong> login.html</p>
+      <p>Tu cuenta es tu correo y la contraseña que creaste al abrir el enlace de la invitación. No hay usuario aparte ni código de academia.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra a la Academia y escribe tu correo y tu contraseña.</li><li>Si se te olvidó, usa «¿Olvidaste tu contraseña?»: te llega un enlace para poner una nueva.</li><li>La primera vez, el enlace del correo de bienvenida te lleva a crear la contraseña. Ese enlace se usa UNA sola vez.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los alumnos pequeños no siempre entran con un correo: muchos entran con un usuario del tipo sofia.munoz, que no recibe correo. Ellos escriben solo el usuario, sin el arroba.</li><li>Todo lo que el sitio le escribe a esa familia va al correo de la persona encargada, no al del niño.</li></ul></div>
+    </article><article>
+      <h3>Tu panel al entrar</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html</p>
+      <p>El panel es la puerta de todo. A ti no te muestra el panel del alumno: arriba te pone «Tu semana», que es a quién hay que perseguir esta semana.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Tu semana» te dice cuántos alumnos tienes, cuántos no entrenaron en los últimos 7 días, cuántas tareas tuyas siguen sin hacerse y cuántas ya vencieron.</li><li>Debajo, el estado de la clase: si hay una abierta ahora, o el botón «Iniciar clase» si te toca a ti.</li><li>Más abajo, la grilla de accesos agrupada: Clase en vivo, Aprender, Jugar y competir, Evaluaciones, Herramientas y Tu cuenta.</li><li>Al final, el registro de clases: todas las clases dadas, agrupadas por mes, con buscador por título o notas.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El número rojo solo aparece cuando no es cero. Si está en rojo, es algo de hoy.</li><li>El registro de clases no se baja entero: filtra por periodo y busca por texto, y se va cargando de 20 en 20.</li></ul></div>
+    </article><article>
+      <h3>Los tres roles, y qué abre cada uno</h3>
+      
+      <p>La plataforma tiene tres niveles de permiso, y uno de ellos es una marca encima de otro. Lo que ves depende de eso, no de la página que abras.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Alumno: su progreso, sus tareas, sus cursos y su clase.</li><li>Profesor: todo lo del alumno más sus propios alumnos, su clase en vivo, tareas, exámenes, informes, planes de clase y bitácora.</li><li>Coordinación: es un profesor con una marca encima. Suma formularios de inscripción, cobros de la Academia y reportes de actividades.</li><li>Administración: lo ve y lo maneja todo, incluidas las cuentas, los equipos y los cupos de invitación.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Coordinar no te quita nada de profesor: es una marca encima del rol, precisamente para que no se pierda ningún permiso por el camino.</li><li>Todo lo que se hace para los profesores se hace también para quien administra, con su alcance: el profesor ve lo suyo, quien administra ve todo.</li></ul></div>
+    </article><article>
+      <h3>Solo ves a TUS alumnos, y eso lo hace cumplir la base</h3>
+      
+      <p>No es que las páginas te escondan a los demás: la base de datos no te los entrega. Aunque abrieras la consola del navegador, no están.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Un alumno puede tener varios profesores, y todos lo ven.</li><li>Estar en el mismo equipo que un alumno te da sobre él los mismos permisos que tenerlo asignado directo.</li><li>Si un alumno no aparece en tus informes, es que no está asignado a ti ni comparten equipo. Se arregla desde Administración.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Tus tareas, tus exámenes, tus notas de bitácora y tu clase en vivo son TUYOS: un colega que comparte el mismo alumno no los ve.</li><li>Un alumno sin ningún profesor asignado no sale en los informes de nadie. El panel de Administración avisa cuando hay alumnos así.</li></ul></div>
+    </article><article>
+      <h3>La Academia se instala como app</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html</p>
+      <p>El sitio se puede instalar en el celular: queda el icono, abre a pantalla completa y entra directo a la Academia.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra desde el celular y acepta el aviso de instalación cuando aparezca.</li><li>En Configuración › «Avisos en el celular» enciendes las notificaciones.</li><li>Con eso te llegan avisos cuando empieza una clase o cuando te retan a una partida.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El aviso de instalar se muestra una sola vez. Si dijiste «Ahora no», vuelve a aparecer una semana después.</li><li>El permiso de notificaciones el navegador lo pregunta UNA vez por aparato: por eso solo se pide al tocar el interruptor, nunca al entrar.</li></ul></div>
+    </article>
+    </section><section id="cap-2"><h2>Capítulo 2. La clase en vivo</h2>
+      <p class="resumen">El tablero que ve tu clase, y las siete formas de ponerle algo delante. Es la herramienta más grande de la plataforma.</p>
+      <article>
+      <h3>Abrir la clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Iniciar clase · sesion.html</p>
+      <p>La clase en vivo es un tablero compartido: tú mueves y todos tus alumnos lo ven al instante, cada uno en su pantalla.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Desde el panel, «Iniciar clase». Se le manda un aviso al celular a los alumnos que lo tengan encendido.</li><li>Entra a «Sesión en vivo» y ya estás en el tablero.</li><li>Al terminar, «Cerrar clase» desde el panel. La clase queda guardada en el registro con su duración.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Cada profesor tiene SU propio tablero. Puedes dar clase al mismo tiempo que otro colega sin pisarte.</li><li>Un alumno con dos profesores elige en qué clase entra; si solo tiene uno, entra directo.</li></ul></div>
+    </article><article>
+      <h3>Lo que la clase ve y lo que no</h3>
+      
+      <p>Esta es la línea más importante de toda la página: tú tienes delante cosas que la clase NO ve, y una sola cosa que sí recibe.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>La clase recibe: la posición del tablero. Eso es todo.</li><li>Solo tú ves: el PDF que estás leyendo, la lección de curso que abriste, tu plan de clase, la vista previa de Táctica y tus notas de bitácora.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La lección de curso que abres NO se sincroniza, a propósito: si se sincronizara, el alumno tendría delante las respuestas de sus propios ejercicios mientras tú vas por el primer diagrama.</li><li>Para que algo de esos materiales llegue a la clase hay que mandarlo al tablero con su botón. Nada viaja solo.</li></ul></div>
+    </article><article>
+      <h3>Editar la posición a mano</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › ✏️ Editando el tablero</p>
+      <p>El editor es para armar una posición desde cero o retocar la que hay.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Abre «✏️ Editar» y arrastra las piezas, o usa «🗑️ Vaciar tablero» y «♟️ Posición inicial».</li><li>Elige de quién es la jugada con «⚪ Blancas» / «⚫ Negras».</li><li>«✅ Aplicar posición» la manda al tablero de la clase.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Hay tres posiciones que el sitio NO te deja aplicar: sin rey, con peones en la primera o la última fila, o con el rey que no le toca mover en jaque. No es un capricho: rompen el motor de análisis para el resto de la sesión.</li><li>Cuando una posición se rechaza, el aviso te dice exactamente por qué.</li></ul></div>
+    </article><article>
+      <h3>Tener un curso a mano</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 📚 Curso</p>
+      <p>Abre una lección completa de cualquier curso debajo del tablero, solo en tu pantalla, como si tuvieras el libro abierto.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«📚 Curso» › elige el curso y la lección › «📖 Abrir la lección».</li><li>Recorre los diagramas de la lección jugada por jugada, como en el curso.</li><li>Cuando llegues a la posición que quieres explicar, «📥 Al tablero de la clase».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El botón manda la posición que TIENES EN PANTALLA en ese momento, no la inicial del diagrama: si recorriste la línea hasta la jugada 12, manda la 12.</li><li>Hay posiciones de curso que son ilustraciones y no partidas (un peón y un solo rey, por ejemplo). Esas no se pueden poner en un tablero en vivo y te lo dice ahí mismo.</li></ul></div>
+    </article><article>
+      <h3>Leer un PDF en clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 📄 PDF</p>
+      <p>Abre cualquier PDF tuyo junto al tablero. Solo lo ves tú.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«📄 PDF» y elige el archivo de tu computadora.</li><li>Si en una página hay un diagrama, el sitio lo reconoce y te ofrece «✅ Cargar en el editor».</li><li>Desde el editor lo aplicas a la clase con «✅ Aplicar posición».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El PDF no se sube a ningún lado: se lee en tu navegador y ahí termina.</li><li>El reconocimiento de diagramas acierta con tableros impresos limpios; si no lo reconoce, siempre puedes armar la posición a mano.</li></ul></div>
+    </article><article>
+      <h3>Táctica por tema</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 🧩 Táctica</p>
+      <p>Un banco de ejercicios tácticos por tema, con vista previa, para sacar un ejercicio en medio de la clase sin buscarlo antes.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«🧩 Táctica» › elige el tema.</li><li>La vista previa te enseña la posición y de quién es la jugada.</li><li>«📥 Al tablero» la transmite para explicarla, o «❓ Preguntar» la transmite Y abre la pregunta.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Son dos botones distintos a propósito: con uno solo tendrías que preguntar para poder enseñar el ejercicio, y el alumno ya estaría contestando mientras explicas.</li></ul></div>
+    </article><article>
+      <h3>Jalar un archivo PGN a la clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 📂 Archivos</p>
+      <p>Los PGN que subiste en Archivos están acá, cada partida por separado, listos para llevar a la clase.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«📂 Archivos» y busca la partida en la lista.</li><li>«👁 Vista previa» te enseña la posición de salida.</li><li>«Cargar» pone la línea entera jugada por jugada; «❓ Preguntar» abre la pregunta; «🎯 Practicar» abre una ronda contra el motor desde ahí.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Un .pgn con varios ejercicios llega separado uno por uno: cada partida del archivo es su propia fila.</li><li>La vista previa enseña la posición de SALIDA, que es la que identifica el ejercicio, no la final.</li></ul></div>
+    </article><article>
+      <h3>Preguntar a la clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › ❓ Preguntar</p>
+      <p>Le pones delante la posición y les pides la jugada. Cada quien contesta en su tablero y tú ves quién acertó.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«❓ Preguntar: ¿qué jugarías?» sobre la posición que está en el tablero.</li><li>Elige cuántas jugadas tiene que dar (por omisión, una).</li><li>Las respuestas van apareciendo en tu pantalla. «Cerrar pregunta» la termina.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Cerrar la pregunta es tuyo: al alumno no se le enseña la respuesta antes de tiempo.</li><li>Todas las respuestas quedan guardadas y salen en Informes, con su porcentaje de acierto por alumno.</li></ul></div>
+    </article><article>
+      <h3>Practicar contra el motor</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 🎯 Practicar</p>
+      <p>Manda a toda la clase a jugar la posición contra el motor, cada quien en su tablero, con el nivel que elijas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Elige el nivel en la pestaña Practicar.</li><li>«🎯 Practicar: posición actual».</li><li>Ves cómo va cada alumno en «Tableros de los alumnos». «Terminar práctica» cierra la ronda.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La ronda es tuya: cerrarla no toca la de ningún otro profesor que esté dando clase al mismo tiempo.</li></ul></div>
+    </article><article>
+      <h3>Lo demás que tienes en la clase</h3>
+      
+      <p>Alrededor del tablero hay herramientas que no mandan nada a la clase pero te resuelven el día.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«♞ Motor de análisis»: la evaluación de la posición, solo para ti.</li><li>«💬 Chat privado con el profesor»: un hilo por alumno, continuo, no «de una clase».</li><li>«🖐️ Levantar la mano»: el alumno pide turno y te sale en la lista.</li><li>«🔢 Coordenadas», «⇅ Girar», «🧹 Flechas» y «💾 Guardar PGN» para la partida que se está armando.</li><li>«Invitar alumno por correo»: das de alta a un alumno sin salir de la clase.</li><li>«📝» junto a cada alumno conectado: le escribes una nota de bitácora en el momento.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El chat es continuo: con dos profesores, los dos ven y escriben en el mismo hilo con ese alumno.</li></ul></div>
+    </article>
+    </section><section id="cap-3"><h2>Capítulo 3. Planes de clase</h2>
+      <p class="resumen">Preparar la clase ANTES de darla, y darla de nuevo la semana siguiente sin volver a armarla.</p>
+      <article>
+      <h3>Qué es un plan y qué te ahorra</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas › Planes de clase</p>
+      <p>Un plan es la lista de lo que vas a dar, en orden: posiciones, lecciones y tus notas. La clase en vivo lo lee y te lo va sirviendo.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Crear» y ponle nombre.</li><li>Ve agregando renglones con «Agregar al plan».</li><li>En la clase, el panel «📋 Plan» te lo pone delante y tocas cada renglón cuando te toca.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El plan NO está atado a una clase ni a un grupo: el mismo plan se da al grupo de la mañana y al de la tarde.</li><li>«⧉ Duplicar» copia el plan entero para cambiarle lo que haga falta sin tocar el original. Ahí es donde una clase suelta se vuelve un programa.</li></ul></div>
+    </article><article>
+      <h3>Los tres tipos de renglón</h3>
+      
+      <p>Cada renglón hace una cosa distinta al tocarlo en clase, y las tres corresponden a una puerta que la clase en vivo ya tiene.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Posición: la transmite a toda la clase.</li><li>Lección: la abre solo en tu pantalla, como el PDF.</li><li>Nota: no toca el tablero. Es tu chuleta.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La pregunta que escribes en un renglón NO le llega al alumno: en la plataforma el alumno contesta moviendo, no leyendo un enunciado. Es tu recordatorio de qué ibas a preguntar.</li><li>Las posiciones del plan pasan por la misma validación que la clase en vivo: si una rompe el motor, te lo dice al guardarla y no en medio de la clase.</li></ul></div>
+    </article><article>
+      <h3>Compartir un plan con un colega</h3>
+      <p class="donde"><strong>Dónde está:</strong> planes.html › 🤝 Compartir este plan</p>
+      <p>Un plan es de quien lo escribió. Compartirlo lo deja ver y duplicar, nunca editar.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Abre el plan y baja a «🤝 Compartir este plan».</li><li>Elige a la persona del equipo docente, o marca «con todo el equipo docente».</li><li>A quien lo recibe le aparece en «Compartidos contigo», y en la clase en vivo sale en el mismo selector que los suyos.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Quien lo recibe puede darlo en su clase y duplicarlo. Borrar, editar y agregarle renglones siguen siendo solo tuyos.</li><li>«Con todo el equipo docente» alcanza también a quien entre a la Academia después.</li></ul></div>
+    </article><article>
+      <h3>Los 53 planes que ya están hechos</h3>
+      
+      <p>La plataforma trae 53 clases listas para dar, con 303 renglones y 262 posiciones: finales, estrategia, aperturas, celadas, táctica y mates.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Búscalos en tu lista de planes: llevan la marca «· AI» en el título.</li><li>Duplica el que te sirva y cámbiale lo que quieras.</li><li>Si no los ves, pídele a quien administra que los comparta con todo el equipo docente.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Ninguna de esas posiciones está inventada: todas salen de los bancos que la plataforma ya verificó con motor.</li><li>La chuleta de cada renglón lleva la solución escrita, y se puede jugar de verdad en el tablero. Solo la ves tú.</li></ul></div>
+    </article>
+    </section><section id="cap-4"><h2>Capítulo 4. Tareas</h2>
+      <p class="resumen">Pides cantidades y la tarea se llena sola con lo que el alumno entrena. No tienes que revisar nada a mano.</p>
+      <article>
+      <h3>Cómo se manda una tarea</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Aprender › Tareas</p>
+      <p>Una tarea son varios renglones con su fecha de vencimiento, para uno o varios alumnos a la vez.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Asignar una tarea»: marca a qué alumnos y pon la fecha límite.</li><li>Cada renglón: elige el material, el recorte (qué tema, qué categoría, qué línea) y la meta.</li><li>«+ Agregar otra cosa» para el siguiente renglón.</li><li>«Enviar tarea». Al alumno le llega un aviso al celular en el momento.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Revisa que estén marcados los alumnos que quieres: mandarla a todos en vez de a los marcados no da ningún error.</li><li>Un profesor solo ve las tareas que ÉL mandó, aunque comparta el alumno con un colega.</li></ul></div>
+    </article><article>
+      <h3>Las tres metas</h3>
+      
+      <p>Cada renglón mide una de tres cosas, y no todas las herramientas admiten las tres.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Cantidad: ejercicios distintos resueltos. «Resuelve 10 de ataque doble».</li><li>Minutos: rato de verdad dentro de la página. «10 minutos de coordenadas».</li><li>Completar: lo único que el alumno marca a mano, para lo que no se puede medir (una lección de Estudio, por ejemplo).</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El sitio solo te ofrece las metas que esa herramienta puede medir de verdad. Una barra que no puede subir nunca es peor que no tener la barra.</li><li>El avance se cuenta DESDE que mandaste la tarea: lo que el alumno ya tenía hecho no cuenta. Son diez ejercicios nuevos.</li></ul></div>
+    </article><article>
+      <h3>Por qué la tarea se llena sola</h3>
+      
+      <p>No hay nada que marcar ni que revisar: el avance se calcula con las mismas filas que el alumno deja al entrenar.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El alumno entra por el enlace del renglón y cae DENTRO del ejercicio, no en una lista.</li><li>La página arranca en el primero que no ha resuelto, así que no repite.</li><li>Cada ejercicio resuelto cuenta para la tarea y queda marcado como hecho. Es el mismo acto.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Dentro del ejercicio hay una franja arriba que le dice qué le pediste y cuánto lleva: «Coordenadas · 7 de 10 minutos».</li><li>Los minutos se cuentan con la misma regla que los informes, así que la tarea y el informe nunca dicen números distintos.</li></ul></div>
+    </article><article>
+      <h3>Cómo vas viendo el avance</h3>
+      <p class="donde"><strong>Dónde está:</strong> tareas.html › Tareas enviadas</p>
+      <p>En «Tareas enviadas» ves cada tarea con una barra por renglón y por alumno.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra a Tareas y mira la lista de lo que mandaste.</li><li>El alumno ve lo mismo en su propia página, con su barra.</li><li>Lo vencido sale arriba, en rojo y escrito con todas las letras.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Lo mismo aparece en Informes, dentro del bloque «📋 Tareas y exámenes» de cada alumno, y en el correo que le llega a la casa.</li><li>Marcar un renglón de tres no da la tarea por hecha.</li></ul></div>
+    </article>
+    </section><section id="cap-5"><h2>Capítulo 5. Exámenes</h2>
+      <p class="resumen">Lo contrario de una tarea: una sola oportunidad por pregunta, con reloj, sin pistas y con nota.</p>
+      <article>
+      <h3>Tarea o examen: no es lo mismo</h3>
+      
+      <p>Una tarea mide que lo haga; un examen mide que lo sepa. Todo lo demás se desprende de ahí.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Tarea: los intentos que quiera, con pistas y deshacer, cuando quiera, y el resultado es una barra.</li><li>Examen: una oportunidad por pregunta, sin ninguna ayuda, con reloj, y el resultado es una nota de 0 a 10.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La nota pondera por dificultad: acertar dos difíciles no es lo mismo que acertar cinco fáciles.</li><li>Lo que no alcanzó a contestar vale cero, pero cuántas de cuántas respondió se guarda aparte: no es lo mismo fallar diez que no llegar a verlas.</li></ul></div>
+    </article><article>
+      <h3>Armar un examen</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Evaluaciones › Exámenes</p>
+      <p>Un examen se arma sumando bloques, como los renglones de una tarea. «10 de finales + 5 de reglamento + ejecutar la italiana» es UN examen.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Poner un examen»: marca a qué alumnos.</li><li>Cada bloque: la fuente, el recorte, cuántas preguntas y el rango de dificultad. El sitio te dice cuántas hay para elegir.</li><li>Agrega los bloques que necesites.</li><li>Elige el tiempo y las salidas permitidas, y «Poner el examen».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Si dos bloques piden del mismo banco, las repetidas se quitan y el sitio te dice cuántas quitó: una pregunta repetida valdría doble en la nota.</li><li>Las preguntas que te enseña la previsión son EXACTAMENTE las que se mandan.</li></ul></div>
+    </article><article>
+      <h3>El tiempo: recomendado o el tuyo</h3>
+      
+      <p>El sitio calcula un tiempo recomendado mirando lo que hay que HACER en cada pregunta, no contando preguntas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Recomendado»: leer cuatro frases son 60 segundos; leer además una posición, 90; señalar una casilla, 75; calcular una jugada, 120. Se estira o se encoge según la dificultad.</li><li>«Lo elijo yo»: pones los minutos que quieras, con un mínimo de un minuto por pregunta.</li><li>Debajo del campo siempre está escrito de dónde salió el número.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El mínimo de un minuto por pregunta lo hace cumplir el servidor, no la pantalla.</li><li>No hay ninguna inteligencia artificial detrás de esa recomendación: es una cuenta escrita, y está explicada.</li></ul></div>
+    </article><article>
+      <h3>El antitrampa, y qué promete de verdad</h3>
+      
+      <p>Ninguna página web puede impedir que alguien cambie de pestaña. Eso solo lo puede una app con permisos del sistema. Lo que sí se hace:</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Se pide pantalla completa al empezar.</li><li>Se detecta cada salida de la ventana y se cuenta en el servidor, no en el navegador.</li><li>Los primeros avisos perdonan; al pasarse del tope, el examen se congela y se califica con lo que llevaba.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Cuántas salidas se perdonan lo eliges TÚ al poner el examen. Puedes dejarlo sin tope para un examen en el aula, donde estás al lado: se cuentan igual y salen en el informe, pero no se le cierra la pantalla a nadie.</li><li>Las salidas van SIEMPRE en el informe, aunque no se haya congelado. Y el informe dice el número Y el tope: tres salidas con cinco permitidas no es lo mismo que tres con dos.</li></ul></div>
+    </article><article>
+      <h3>Reabrir un examen congelado</h3>
+      <p class="donde"><strong>Dónde está:</strong> examenes.html › Volver a abrir</p>
+      <p>Solo tú lo reabres. Es lo que pasa cuando al alumno se le cerró por una notificación del celular.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Busca el examen en «Exámenes puestos» y usa «Volver a abrir».</li><li>Al alumno le llega un aviso al celular diciendo cuántas preguntas le faltan y cuánto tiempo tiene.</li><li>Sigue desde donde quedó: las respuestas que ya dio se conservan.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Reabrir reinicia el reloj y el contador de salidas. Si no se reiniciara, se congelaría otra vez al primer parpadeo.</li></ul></div>
+    </article><article>
+      <h3>El informe del examen</h3>
+      <p class="donde"><strong>Dónde está:</strong> examenes.html › Ver informe</p>
+      <p>Tú ves pregunta por pregunta; el alumno ve su nota y cómo le fue por área, nunca las respuestas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Ver informe»: qué contestó, cuánto tardó, si no llegó a verla, y la respuesta correcta con su explicación.</li><li>«🖨️ Imprimir o guardar en PDF» para tenerlo en papel.</li><li>«📧 Mandarlo a la casa» se lo manda a la persona encargada.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El correo a la casa lleva en qué se equivocó, NO las respuestas correctas.</li><li>Enseñarle las respuestas al alumno convertiría el banco en un juego de memoria para el examen siguiente. Por eso no se hace.</li></ul></div>
+    </article>
+    </section><section id="cap-6"><h2>Capítulo 6. Informes</h2>
+      <p class="resumen">Todo lo que la plataforma sabe de cada alumno, y lo que le llega a la casa por correo sin que aprietes nada.</p>
+      <article>
+      <h3>El resumen de tu clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Tu cuenta › Informes</p>
+      <p>Informes abre con las cuentas de toda tu clase y de ahí te metes a un alumno.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Arriba, las tarjetas con los totales.</li><li>Precisión por alumno: respuestas de pizarra y aciertos.</li><li>Asistencia y tiempo en la plataforma: clases asistidas, minutos en clase y minutos entrenando.</li><li>Entrenamiento: ejercicios 4×4, lecciones, mejor marca de coordenadas, mates, táctica, concentración.</li><li>El selector de tema de arriba recorta el informe a un solo asunto.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los minutos no son sumar filas: dos pestañas abiertas a la vez no cuentan doble, y una ventana que se cerró sin avisar no cuenta un día entero.</li><li>Si alguna consulta falla, te lo dice en pantalla en vez de pintar ceros.</li></ul></div>
+    </article><article>
+      <h3>El informe de un alumno</h3>
+      
+      <p>Eligiendo un alumno, Informes se convierte en su ficha completa.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Sus cursos y por dónde va en cada uno.</li><li>Sus últimas asignaciones y su plan de entrenamiento.</li><li>«📋 Tareas y exámenes»: lo que le pusiste y cómo va.</li><li>«📝 Bitácora»: tus observaciones sobre él.</li><li>Su diagnóstico de nivel, área por área.</li><li>«🔑 Acceso a la cuenta»: reenviarle el enlace para restablecer la contraseña.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>«Desbloquear hasta el tema» le abre el curso a ESE alumno y deja rastro de que fuiste tú.</li><li>«Guardar Elo» apunta su Elo si lo tiene.</li></ul></div>
+    </article><article>
+      <h3>La bitácora: lo que observas, donde lo observas</h3>
+      <p class="donde"><strong>Dónde está:</strong> sesion.html › 📝 · informes.html › 📝 Bitácora</p>
+      <p>Una fila por observación. «A Sofía le cuesta el final de torre, revisarlo en dos semanas» es la materia prima del seguimiento.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>En la clase en vivo, el botón «📝» junto a cada alumno conectado: ahí es donde de verdad ves lo que hay que anotar.</li><li>En Informes, dentro del bloque «📝 Bitácora», cuando repasas.</li><li>Cada nota puede llevar etiqueta y puedes marcarla «👁️ La ve el alumno».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Tus notas son tuyas: una colega que comparte el mismo alumno recibe cero.</li><li>El alumno solo ve las que marcaste como compartidas, y no puede escribir ni borrar ninguna.</li><li>Cada nota trae «📋 Convertir en tarea»: te lleva a Tareas con ese alumno marcado y el texto puesto.</li></ul></div>
+    </article><article>
+      <h3>Los informes que llegan a la casa</h3>
+      <p class="donde"><strong>Dónde está:</strong> informes.html › 📧 Informes a la casa</p>
+      <p>Apuntas el correo de la persona encargada y cada cuánto quiere el informe. Sale solo, sin que nadie apriete nada.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra al informe de ese alumno y abre «📧 Informes a la casa».</li><li>«Agregar»: nombre, correo y frecuencia (diario, semanal, mensual o anual).</li><li>«👁️ Ver» te enseña exactamente el correo que va a llegar.</li><li>La tanda sale todos los días a las 7 de la mañana y a cada quien le toca cuando le toca.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La frecuencia es las dos cosas: cada cuánto se manda Y qué periodo cubre. El semanal cuenta la semana, no todo lo que lleva hecho.</li><li>La persona encargada no necesita cuenta en el sitio. Solo un correo.</li><li>El correo cuenta las tareas y exámenes de TODOS sus profesores, no solo los tuyos: a una madre no le sirve leer «2 de 2» cuando le pusieron cinco.</li></ul></div>
+    </article><article>
+      <h3>Lo que el correo a la casa dice primero</h3>
+      
+      <p>Arriba de todo va una franja con el veredicto, y muchas veces es lo único que se lee.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Va bien · Practicó 5 días de 7».</li><li>«Practicó poco».</li><li>«Sofía no entró a practicar».</li><li>«Se le pasó la fecha de 2 tareas y 1 examen».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La medida son los días, no los minutos: media hora puede ser una sola tarde.</li><li>Lo vencido manda sobre todo lo demás: se puede haber practicado los siete días y tener una entrega sin hacer.</li><li>Ninguno de los textos regaña. Quien lo lee puede ser una familia a la que se le complicó el mes.</li></ul></div>
+    </article><article>
+      <h3>Los exámenes del público y los diagnósticos</h3>
+      <p class="donde"><strong>Dónde está:</strong> informes.html › ⚖️ Exámenes de arbitraje · 🧭 Diagnósticos de nivel</p>
+      <p>Informes también junta lo que llega de fuera del panel: gente que hizo el diagnóstico o el examen de arbitraje desde la página pública.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«🧭 Diagnósticos de nivel»: el resumen del grupo, el promedio por área y el perfil de cada alumno.</li><li>«🌐 Diagnósticos de visitantes»: los de gente sin cuenta. Son contactos para invitar.</li><li>«⚖️ Exámenes de arbitraje»: cuántos llegaron, cuántos faltan por responder y el estado de cada uno.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>En los gráficos el color nunca va solo: cada barra lleva su porcentaje y su etiqueta escrita, porque verde y ámbar no se distinguen con daltonismo.</li><li>Responder los exámenes del público se hace en la página de Arbitraje, que es donde está el detalle pregunta por pregunta.</li></ul></div>
+    </article>
+    </section><section id="cap-7"><h2>Capítulo 7. Los cursos de la Academia</h2>
+      <p class="resumen">Diez cursos con 186 lecciones, cada una con su cuadernillo, su presentación y su hoja de ejercicios.</p>
+      <article>
+      <h3>Qué hay y quién lo ve</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Aprender › Cursos</p>
+      <p>El temario de cada curso es público; el contenido completo de las lecciones se ve con sesión iniciada.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra a Cursos desde el panel y elige uno.</li><li>Cada lección trae su texto, sus diagramas y su material descargable.</li><li>Lo que tú tienes abierto de más: para quien administra, todas las lecciones están desbloqueadas desde el primer día.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Para el alumno las lecciones se abren de a poco, según va avanzando.</li><li>Si necesitas abrirle un curso a un alumno concreto, es «Desbloquear hasta el tema» en Informes, y queda el rastro.</li></ul></div>
+    </article><article>
+      <h3>El material de cada lección</h3>
+      
+      <p>Cada una de las 186 lecciones tiene dos archivos de estudio, enlazados desde la propia lección.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El cuadernillo en PDF: de qué trata, los conceptos con su error frecuente, ejemplos con diagrama, ejercicios, preguntas con su respuesta y las fuentes.</li><li>El mismo contenido en HTML accesible, con cada posición contada pieza por pieza.</li><li>Además, la presentación (.pptx) y la hoja de ejercicios (.pdf) de la lección.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los cuadernillos llevan marca de agua, van firmados y no se pueden imprimir ni copiar, pero SÍ se les puede extraer el texto: si no, quedarían fuera del alcance de quien los lee con lector de pantalla.</li><li>Ninguna posición del material está inventada: salen de un fondo de 1.178 posiciones verificadas con motor.</li></ul></div>
+    </article><article>
+      <h3>Los cursos con tablero</h3>
+      
+      <p>Algunos cursos traen visor: tablero, la línea jugada por jugada y práctica contra el motor desde la posición.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Ábrelos desde el curso como cualquier lección.</li><li>Recorre la línea con las flechas del visor.</li><li>En clase, cada diagrama trae «📥 Al tablero de la clase».</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El resultado que promete cada posición está verificado con motor, no a ojo. Así se descubrió que una «Lucena» del curso de estrategia no ganaba porque el rey negro estaba demasiado cerca.</li></ul></div>
+    </article><article>
+      <h3>Los cursos ya no traen video</h3>
+      
+      <p>Se quitaron los 86 enlaces a video que había. Es un dato que conviene tener antes de prometérselo a una familia.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Lo que hay: texto, diagramas, cuadernillo, presentación, hoja de ejercicios y, en varios cursos, tablero interactivo.</li><li>Lo que no hay: video de lección.</li><li>La TV en vivo es otra cosa y sigue ahí: son las partidas de la Academia en directo.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Una promesa que la lección ya no cumple es peor que no hacerla: por eso también se quitaron las frases que lo prometían.</li></ul></div>
+    </article>
+    </section><section id="cap-8"><h2>Capítulo 8. Entrenamiento</h2>
+      <p class="resumen">El catálogo de ejercicios que puedes mandar. Conviene conocerlo: es lo que se asigna en las tareas.</p>
+      <article>
+      <h3>Fundamentos</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Aprender › Entrenamiento</p>
+      <p>Lo que se trabaja al principio, y lo que más rinde mandar de tarea corta y seguida.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Mates: mate en 1, en 2 y en 3, por categoría.</li><li>Aprender: lecciones interactivas que se van abriendo.</li><li>Coordenadas: rondas contra reloj, con su mejor marca.</li><li>Desafíos: series mezcladas.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Coordenadas se manda por minutos; Mates, por cantidad.</li><li>Desafíos no se puede mandar por cantidad: sus series no se distinguen de las de Practicar.</li></ul></div>
+    </article><article>
+      <h3>Practicar</h3>
+      
+      <p>Resolver ejercicios de verdad, por tema o al azar.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Ejercicios por tema: unos 80 temas, incluida la táctica de ataque con sus cinco categorías.</li><li>Practicar: series contra el motor, con estrellas según cómo salió.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Al mandar un tema de táctica, el enlace de la tarea lleva el recorte: el alumno cae DENTRO del tema, no en la lista de ochenta.</li></ul></div>
+    </article><article>
+      <h3>Entreno</h3>
+      
+      <p>Lo que ya es preparación, no fundamentos.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Aperturas y celadas: 40 líneas que se memorizan JUGÁNDOLAS, con repaso espaciado. El sitio le pone la nota según cuántas veces se equivocó y cuántas pistas pidió, no según lo que él diga.</li><li>4×4: ejercicios de cálculo en tablero reducido.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>En Aperturas la coronación se elige y no se asume dama: la trampa de Lasker en la Albin solo funciona coronando caballo.</li></ul></div>
+    </article><article>
+      <h3>Estudio: una ficha por idea</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Aprender › Estudio</p>
+      <p>56 fichas de una sola pantalla: 12 aperturas, 12 defensas, 16 temas tácticos y 16 conceptos.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Cada ficha: la idea arriba, cuatro bloques alrededor y la posición que lo explica, recorrible.</li><li>Buscador que mira las cuatro categorías a la vez.</li><li>Cada ficha tiene su enlace propio, para mandarla por WhatsApp, y se imprime limpia para pegarla en el cuaderno.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>No es otra forma de Aperturas: allá se memoriza jugando, acá se mira de un vistazo cinco minutos antes de jugar.</li><li>Lo que cada ficha promete está comprobado con motor: que la clavada clave de verdad, que la horquilla no se pare con ninguna respuesta, que el zugzwang sea zugzwang.</li></ul></div>
+    </article><article>
+      <h3>Los otros juegos de entrenamiento</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Jugar y competir</p>
+      <p>Se mandan igual que lo demás y sirven para trabajar visión de tablero.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Racha táctica: la jugada correcta en 10 segundos, y la racha de la clase.</li><li>Concentración: niveles de memoria de posición.</li><li>Ilumina el tablero: encontrar la casilla.</li><li>Confites del caballo: el paseo del caballo, con dos marcas (la mejor, y la mejor sin pistas ni deshacer).</li><li>Visualización: jugar sin ver las piezas.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Concentración e Ilumina no tienen cuadro para escribir la respuesta, y no es un olvido: ahí la tarea ES mirar.</li></ul></div>
+    </article><article>
+      <h3>Logros y racha de días</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Jugar y competir › Logros</p>
+      <p>Una racha de días y un catálogo de medallas. Sirve para que vuelvan mañana.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Un día cuenta con 5 ejercicios o más, de cualquier tipo.</li><li>Los días se cuentan en hora de Costa Rica: quien entrena a las once de la noche no pierde el día.</li><li>Hay medallas de racha, de ejercicios totales, de variedad y de cada tipo.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Las medallas usan el RÉCORD de racha, no la actual: un logro ganado no se pierde porque un día se rompa la racha.</li></ul></div>
+    </article>
+    </section><section id="cap-9"><h2>Capítulo 9. Diagnóstico de nivel y arbitraje</h2>
+      <p class="resumen">Las dos pruebas que ubican a alguien. Sirven contigo, con tus alumnos y con quien todavía no es alumno.</p>
+      <article>
+      <h3>El diagnóstico de nivel</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Evaluaciones › Diagnóstico de nivel</p>
+      <p>63 preguntas en nueve áreas. Devuelve un nivel estimado, un Elo aproximado y un plan de entrenamiento de 4 semanas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El alumno lo hace desde su panel y el resultado te llega a Informes.</li><li>En Informes ves su perfil de nueve áreas y dónde está flojo.</li><li>El plan de 4 semanas se le comparte desde ahí.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El nivel NO sale del porcentaje: sale del escalón de dificultad más alto que superó. Con el porcentaje, un jugador de 1400 y uno de 2300 sacaban los dos «Experto».</li><li>Cada pregunta ofrece «🤔 No lo sé todavía», que vale cero pero se guarda aparte: un hueco que enseñar no es lo mismo que algo mal aprendido.</li><li>También se puede hacer sin cuenta, desde la portada. Esos resultados te llegan como contactos.</li></ul></div>
+    </article><article>
+      <h3>El examen de arbitraje</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Evaluaciones › Diagnóstico de arbitraje</p>
+      <p>40 preguntas del Handbook de la FIDE, 50 minutos, ocho áreas y un nivel estimado de arbitraje.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Hazlo tú desde el panel: la página del equipo docente te enseña el detalle pregunta por pregunta.</li><li>Cada respuesta cita su artículo exacto del Handbook.</li><li>En «📥 Exámenes del público» revisas los que llegaron de fuera y armas la retroalimentación.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Es una estimación de conocimiento del reglamento, NO un título: los títulos los da la FIDE.</li><li>La respuesta al público la manda una persona, desde su propio correo: el borrador se arma solo con el resultado.</li></ul></div>
+    </article><article>
+      <h3>Los tres libros en papel</h3>
+      
+      <p>Hay tres PDF con las respuestas y la hoja de corrección. Son SOLO de administración, y por una razón.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El cuadernillo del diagnóstico: una forma de la prueba, sorteada, para contestar en papel.</li><li>El libro del diagnóstico: el banco entero, 301 preguntas con su respuesta y su porqué.</li><li>El examen de arbitraje: las 200 preguntas con su artículo.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Cuanta más gente los tenga bajados, más fácil es que circulen y que las pruebas dejen de medir nada. Si das clase y los necesitas, pídeselos a quien administra.</li><li>Los tres tienen su versión accesible en HTML, con las posiciones contadas en palabras.</li></ul></div>
+    </article>
+    </section><section id="cap-10"><h2>Capítulo 10. Jugar: partidas, retos y torneos</h2>
+      <p class="resumen">Armar partidas entre alumnos, sentarte tú a jugar, y montar un torneo con sus rondas.</p>
+      <article>
+      <h3>Asignar rivales</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Jugar y competir › Juegos</p>
+      <p>Eliges la modalidad, el reloj y quiénes juegan. La partida nace y a los dos les aparece.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Asignar rivales»: elige blancas y negras de tu lista.</li><li>Elige la modalidad y el control de tiempo.</li><li>«Partidas en curso» te deja verlas todas mientras se juegan.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Tú también puedes jugar: apareces al final de los selectores, en tu propio grupo, para que el caso de todos los días —dos alumnos— siga saliendo de una.</li><li>Tu propia partida sale en la lista con «♟️ Jugar» y no con «👀 Ver».</li></ul></div>
+    </article><article>
+      <h3>Las modalidades</h3>
+      
+      <p>Además del ajedrez de siempre, hay modalidades que enseñan cosas distintas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Estándar, Crazyhouse, Niebla de guerra, A ciegas.</li><li>Abrazos y Camaleón, con sus reglas de fusión.</li><li>Ajedrez de cartas, Duelo simultáneo y partidas de cuatro jugadores.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El reloj de cada partida lo valida el servidor: nadie puede regalarse tiempo desde el navegador.</li></ul></div>
+    </article><article>
+      <h3>Retos entre alumnos</h3>
+      <p class="donde"><strong>Dónde está:</strong> juegos.html › 🟢 En línea ahora</p>
+      <p>Quién tiene la página abierta en este momento y un botón para retarlo. Si acepta, la partida nace sola.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El alumno ve la lista, elige modalidad y reloj, y reta.</li><li>A quien lo recibe le llega el reto aunque no estuviera mirando la página.</li><li>Puede aceptar, o rechazar con un motivo escrito.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Solo se ve y se puede retar a gente de la propia clase. Un alumno recién llegado, sin profesor asignado, no ve a nadie: le sale el bot mientras tanto.</li><li>Tú también sales en esa lista, rotulado como profe.</li></ul></div>
+    </article><article>
+      <h3>Torneos</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Jugar y competir › Torneos de la Academia</p>
+      <p>Un torneo con sus inscripciones, sus rondas, sus cruces y su tabla.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Crear un torneo nuevo»: nombre, modalidad y control de tiempo.</li><li>Los alumnos se inscriben. Tú también puedes inscribirte y jugarlo.</li><li>Generas cada ronda y se crean todas las partidas.</li><li>Anotas los resultados y la tabla se actualiza.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los cruces y los resultados quedan a la vista de todos los inscritos: ese es el control que corresponde a esta escala.</li><li>En «📺 TV en vivo» se siguen las partidas en directo con su tabla.</li></ul></div>
+    </article><article>
+      <h3>El bot de Oscar</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Jugar y competir › Juega contra mí</p>
+      <p>Un rival de la casa para cualquier modalidad, con tres niveles. La partida vive en el navegador y no se guarda.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Elige la modalidad y el nivel.</li><li>Juega. No ocupa una fila ni sale en los informes: contra el bot se practica.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>En el nivel difícil juega con el repertorio de Oscar, sacado de sus propias partidas.</li><li>Faltan dos modalidades: Ajedrez de cartas y Duelo simultáneo.</li></ul></div>
+    </article>
+    </section><section id="cap-11"><h2>Capítulo 11. Archivos y planillas</h2>
+      <p class="resumen">Meter tus propias partidas a la plataforma, y sacar una planilla de papel en PGN.</p>
+      <article>
+      <h3>Subir tus PGN</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas › Archivos</p>
+      <p>Tus propias partidas y colecciones de ejercicios, listas para llevar a la clase.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«📤 Tus PGN subidos»: sube el archivo.</li><li>Un .pgn con varias partidas queda separado en una fila por partida.</li><li>En la clase en vivo, el panel «📂 Archivos» te las ofrece con vista previa, preguntar y practicar.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Un archivo con varios ejercicios («Position 2, 1 Move», «Position 3, 1 Move»…) llega separado uno por uno, que es como se usa en clase.</li></ul></div>
+    </article><article>
+      <h3>Las partidas guardadas en clase</h3>
+      <p class="donde"><strong>Dónde está:</strong> partidas.html › 📥 Partidas guardadas en clase</p>
+      <p>Todo lo que guardaste con «💾 Guardar PGN» durante una clase queda acá.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra a Archivos y baja a las partidas guardadas.</li><li>Descárgalas o vuélvelas a llevar al tablero.</li></ol>
+      
+    </article><article>
+      <h3>El lector de planilla</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas › Lector de planilla</p>
+      <p>Fotografías la planilla de papel de una partida y sale el PGN.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Toma la foto de la planilla.</li><li>Revisa lo que leyó y corrige lo que haga falta.</li><li>Descarga el PGN.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Es una ayuda, no un dictado perfecto: una planilla escrita a mano siempre hay que repasarla.</li></ul></div>
+    </article>
+    </section><section id="cap-12"><h2>Capítulo 12. Alumnos que ven poco o no ven</h2>
+      <p class="resumen">La plataforma está pensada también para ellos, y hay cosas que conviene que sepas para acompañarlos.</p>
+      <article>
+      <h3>El Modo Adaptado</h3>
+      <p class="donde"><strong>Dónde está:</strong> En el encabezado de las páginas de entrenamiento</p>
+      <p>Un modo que agranda la letra, sube el contraste y cambia qué se ofrece en cada ejercicio.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Se enciende a mano, y el sitio también lo adivina por el contraste del sistema o por el primer Tab.</li><li>En los cursos, esconde el PDF y la presentación (que son diagramas con marca de agua) y deja el material accesible.</li><li>Pone visible la posición contada en palabras, justo encima del cuadro donde se escribe la jugada.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>La accesibilidad de verdad no depende de ese modo: los encabezados que permiten saltar de lección en lección están SIEMPRE puestos, esté el modo encendido o no.</li></ul></div>
+    </article><article>
+      <h3>Todo ejercicio se puede contestar escribiendo</h3>
+      
+      <p>Hay un cuadro de comandos donde se escribe la respuesta: una jugada, una casilla, la letra de una opción o «no lo sé».</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entiende la jugada en español, en inglés y en coordenadas, y perdona los errores de tipeo.</li><li>La casilla se puede escribir como se dice: «eva 4» llega a e4.</li><li>En los diagnósticos, el Enter que contesta también pasa a la siguiente pregunta.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>En los exámenes de opción, cada opción dice su letra en voz alta («Opción A…»), y está escrita dentro del botón, no puesta con color.</li><li>Lo que el sitio no entiende lo dice, nunca marca cualquier cosa.</li></ul></div>
+    </article><article>
+      <h3>El material accesible</h3>
+      
+      <p>Cada cuadernillo de lección tiene su gemelo en HTML, y los tres libros también.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>No tiene ni una imagen: cada posición va contada pieza por pieza, con su FEN por si se quiere cargar en un programa.</li><li>Se abre en su propia pestaña desde la lección, y lleva enlaces de vuelta arriba y abajo.</li><li>Se puede mandar por correo y se abre sin internet.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Un PDF con diagramas, marca de agua y cifrado es lo peor que se le puede dar a un lector de pantalla. Por eso la versión accesible NO es un PDF.</li></ul></div>
+    </article><article>
+      <h3>Al adjuntar una foto, descríbela</h3>
+      
+      <p>En los reportes de actividades, al adjuntar una foto aparece el campo «Qué se ve en la foto».</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Ese texto es a la vez el pie de la foto en el Word y en el PDF.</li><li>Y es lo único que va a oír quien no la puede ver.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Si no lo llenas, la versión accesible lo dice con todas las letras en vez de callarlo.</li></ul></div>
+    </article>
+    </section><section id="cap-13"><h2>Capítulo 13. Coordinación</h2>
+      <p class="resumen">Formularios de inscripción, dar de alta a las familias, cobros y reportes. Es lo que se suma con la marca de coordinación.</p>
+      <article>
+      <h3>Formularios de inscripción</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas › Formularios de inscripción</p>
+      <p>Armas un formulario, lo compartes por enlace y bajas las respuestas. No hay que escribir HTML.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Lo básico»: título, equipo y fecha de cierre.</li><li>«Qué se le pregunta»: agrega los campos. La plantilla ya trae los cuatro que importan.</li><li>Copia el enlace y compártelo.</li><li>Las respuestas se ven ahí mismo y se bajan en CSV.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El enlace da acceso al formulario, nunca a las respuestas.</li><li>El CSV sale con punto y coma y BOM: es lo que Excel en español abre de un doble clic.</li><li>El identificador de cada pregunta se fija al crearla: corregirle una tilde a la etiqueta no rompe las respuestas ya recibidas.</li></ul></div>
+    </article><article>
+      <h3>De la respuesta a la cuenta, en un botón</h3>
+      <p class="donde"><strong>Dónde está:</strong> formularios.html › Crear la cuenta del alumno</p>
+      <p>Cada respuesta trae «Crear cuenta»: crea la cuenta, la asigna a quien aprieta el botón, le pone el equipo y apunta a la persona encargada con su correo.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Aprieta «Crear cuenta» en la respuesta.</li><li>Se abre un diálogo con los cuatro datos ya puestos y editables: nombre y correo del alumno, nombre y correo de quien está a cargo.</li><li>Revisa que estén donde van y confirma.</li><li>El correo de invitación sale con el enlace para crear la contraseña y el PDF de instrucciones.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El diálogo NO manda de una a propósito: el sitio deduce qué campo es cuál por la etiqueta, y deducir no es saber. Mandarle la invitación al correo de la mamá en vez de al del alumno no da ningún error: entra la persona que no era y el correo ya salió.</li><li>Se puede apretar dos veces sin romper nada: si ya hay cuenta con ese correo se reusa y no se gasta otra invitación.</li><li>Al volver mañana, la fila muestra ✅ en vez de ofrecer una segunda invitación.</li></ul></div>
+    </article><article>
+      <h3>El alumno que no tiene correo propio</h3>
+      
+      <p>Una familia con dos hijos pequeños tiene un solo correo. Los dos no pueden compartir cuenta: el correo es la llave con la que se entra.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Marca «No tiene correo propio» en el alta.</li><li>El campo del correo del alumno se apaga y el de la persona encargada pasa a ser obligatorio.</li><li>El sitio propone un usuario del tipo sofia.munoz, te lo enseña y lo puedes corregir antes de crear la cuenta.</li><li>El aviso del final te dice el usuario que quedó y a qué bandeja salió el correo.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Ese usuario no recibe correo, y no debe recibirlo: todo lo que el sitio le escriba a esa familia va al correo de la persona encargada.</li><li>El usuario que vale es el que devuelve el servidor, no el que propuso la pantalla: entre que se propuso y que apretaste, pudo entrar otro «José Rodríguez».</li><li>El niño entra escribiendo solo sofia.munoz, sin el arroba ni el dominio.</li></ul></div>
+    </article><article>
+      <h3>Cobros de la Academia</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas › Cobros de la Academia</p>
+      <p>Planes, quién paga qué, cobros emitidos, pagos y morosidad.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Plan nuevo»: nombre, monto, moneda y periodicidad.</li><li>«Poner a un alumno en un plan» y la fecha de inicio.</li><li>Los cobros se emiten solos cada mes, a las 5:30 de la mañana.</li><li>Registras cada pago (SINPE, transferencia o efectivo). Se aceptan pagos parciales.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>No se guarda «pagado»: se calcula de los pagos registrados. Un cobro queda pagado cuando la suma alcanza, sin que nadie lo marque.</li><li>Los avisos de morosidad salen solos: tres días antes, al día siguiente del vencimiento y a los 15 días. Un correo por alumno, no uno por cobro.</li><li>Ningún aviso amenaza. Ni el de los 15 días habla de sacar a nadie de clase.</li><li>No hay pasarela de pago ni factura electrónica de Hacienda: el consecutivo de hoy es el del recibo interno.</li></ul></div>
+    </article><article>
+      <h3>Reportes de actividades</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Herramientas · admin.html › Reportes</p>
+      <p>El informe de lo que pasó en clase en un periodo, para presentarlo a quien haya que presentárselo. Sale en Word y en PDF, con la marca de agua.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Elige el periodo.</li><li>Adjunta lo que quieras: fotos, hojas de asistencia en Excel, documentos, grabaciones.</li><li>Revisa la vista previa y descarga el Word, el PDF y la versión accesible.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los archivos que subes NO se suben a ningún lado: se leen en tu navegador, entran al documento y ahí termina. No quedan fotos de menores guardadas en ningún servidor.</li><li>Hay dos modos: clases de la Academia (los datos los pone la plataforma) y clases dadas por fuera (la asistencia sale de tu Excel y el contenido, de tus documentos).</li></ul></div>
+    </article><article>
+      <h3>Las hojas de asistencia hechas a mano</h3>
+      
+      <p>El reporte entiende las dos formas en que la gente lleva asistencia, incluida la cuadrícula que hace todo el mundo.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Una fila por asistencia («fecha | estudiante | asistió»).</li><li>Matriz: alumnos en las filas, fechas en las columnas, una marca en cada cruce.</li><li>El informe DICE cómo leyó tu hoja: qué columna tomó por la fecha, cuál por el nombre y qué marcas contó como presente.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>En una matriz, la casilla vacía es una FALTA. Si no, todo el mundo sale con 100% de asistencia: un número creíble y falso, que es lo peor que puede llevar un informe.</li><li>Una columna sin ninguna marca se salta entera: es un día que no hubo clase.</li><li>Si no entiende una hoja, lo dice y no inventa.</li></ul></div>
+    </article><article>
+      <h3>Transcribir una grabación</h3>
+      <p class="donde"><strong>Dónde está:</strong> reportes.html › 📝 Transcribir</p>
+      <p>Cada grabación adjunta tiene su botón para transcribirla, y el texto entra al informe.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Adjunta la grabación y aprieta «📝 Transcribir».</li><li>La primera vez se baja el modelo (unos 80 MB) y queda guardado; después funciona hasta sin internet.</li><li>Una clase de 40 minutos tarda unos minutos.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El audio NO sale de tu computadora. Son clases con voces de menores: mandarlas a un servidor ajeno pediría el consentimiento de las familias.</li><li>El informe avisa que la transcripción es automática: puede traer errores de nombres y de términos de ajedrez.</li></ul></div>
+    </article>
+    </section><section id="cap-14"><h2>Capítulo 14. Administración</h2>
+      <p class="resumen">Cuentas, profesores, equipos y cupos. Es la mitad que decide quién ve a quién.</p>
+      <article>
+      <h3>El panel y sus dos mitades</h3>
+      <p class="donde"><strong>Dónde está:</strong> clases.html › Tu cuenta › Administración</p>
+      <p>Arriba los atajos por grupos; abajo las cuentas, que se ven POR GRUPO y no todas de una.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Los atajos: Resultados (los dos diagnósticos y los dos exámenes), Formularios, Bases de datos y Reportes.</li><li>Las cuentas empiezan en fichas de grupo: cuánta gente tiene, qué profesores lo llevan y cuántos se quedaron sin profesor.</li><li>Abres un grupo o buscas a alguien para ver las filas.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Buscar manda sobre el grupo abierto y mira TODOS los grupos: buscar a alguien sin saber en qué grupo está es justamente para lo que se busca.</li><li>La búsqueda no distingue tildes: «ramirez» encuentra a «Ramírez».</li></ul></div>
+    </article><article>
+      <h3>Asignar alumnos a profesores</h3>
+      <p class="donde"><strong>Dónde está:</strong> admin.html › Las cuentas, por grupo</p>
+      <p>Un alumno puede tener varios profesores y todos lo ven. Se maneja con etiquetas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Cada alumno tiene una etiqueta por profesor, con su ✕ para quitarlo, y un selector para sumar otro.</li><li>Para repartir en lote: marca alumnos (o un grupo entero desde su encabezado) y mándalos a un profesor.</li><li>El lote tiene tres modos: agregar ese profesor a los que ya tienen, reemplazar a todos por él, o quitarlo.</li><li>Desde la ficha de un grupo puedes sumarle un profesor a TODO el grupo de una vez.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>El modo del lote importa: «reemplazar» quita a todos los demás. Quitarle sin querer un profesor a cuatrocientos alumnos es el error caro de esta página.</li><li>El panel «Profesores» avisa si hay alumnos sin ningún profesor asignado: esos no salen en los informes de nadie.</li></ul></div>
+    </article><article>
+      <h3>Equipos</h3>
+      <p class="donde"><strong>Dónde está:</strong> admin.html › Equipos</p>
+      <p>Un equipo junta alumnos y entrenadores, y no tiene nada que ver con el campo «grupo».</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Crea el equipo, ponle nombre.</li><li>Agrégale alumnos y entrenadores con el mismo patrón de etiqueta y selector.</li><li>Un alumno puede estar en varios equipos a la vez, y un equipo puede tener cualquier cantidad de entrenadores.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Estar en un equipo con un entrenador le da a ese entrenador los mismos permisos que tenerlo asignado directo. No es solo organizativo.</li><li>«Grupo» sigue siendo texto libre, uno solo por alumno, sin ningún efecto en permisos: es para ordenar la lista.</li><li>Dos equipos no pueden llamarse igual, ni con otra mayúscula.</li></ul></div>
+    </article><article>
+      <h3>Crear cuentas y cupos de invitación</h3>
+      <p class="donde"><strong>Dónde está:</strong> admin.html › Crear cuenta nueva</p>
+      <p>Se dan de alta cuentas de alumno, de profesor y de administración, y se fija cuántos alumnos puede invitar cada profesor por su cuenta.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«Crear cuenta nueva»: nombre, correo y rol.</li><li>A cada profesor le pones su cupo de invitaciones.</li><li>El profesor gasta ese cupo al invitar desde la clase en vivo o desde un formulario.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Quien administra no tiene tope.</li><li>El cupo controla cuántas invitaciones manda, no cuántos alumnos tiene hoy: reasignar o borrar un alumno no devuelve la invitación.</li><li>El rol, el correo y la marca de administración no se los puede cambiar nadie a sí mismo, ni desde la consola del navegador.</li></ul></div>
+    </article><article>
+      <h3>Nombrar coordinación</h3>
+      
+      <p>Coordinar es una marca encima de profesor, que se pone y se quita desde Administración.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Marca a la persona como coordinadora en su fila.</li><li>Con eso le aparecen formularios de inscripción, cobros y reportes.</li><li>No pierde ni un permiso de profesor.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Solo se le puede poner a alguien que ya es profesor.</li><li>Nadie se la puede dar a sí mismo.</li></ul></div>
+    </article><article>
+      <h3>Las inscripciones a torneos en línea</h3>
+      <p class="donde"><strong>Dónde está:</strong> admin.html › Inscripciones</p>
+      <p>Lo que llegó por el formulario público de torneos del sitio.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Entra desde el panel de Administración.</li><li>Filtra y baja el CSV de lo que estás viendo.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Son cédulas, fechas de nacimiento y teléfonos de personas menores de edad: esa tabla no la puede leer nadie desde el navegador, ni con sesión.</li><li>Quién puede abrirla lo decide la misma regla que los cobros: coordinación o administración.</li></ul></div>
+    </article>
+    </section><section id="cap-15"><h2>Capítulo 15. Las cosas que conviene no olvidar</h2>
+      <p class="resumen">Lo que más se equivoca, y qué hacer cuando algo no sale.</p>
+      <article>
+      <h3>Los cinco descuidos de todos los días</h3>
+      
+      <p>Ninguno da error en pantalla. Esa es exactamente la razón por la que están acá.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Mandar la tarea a todos los alumnos en vez de a los marcados.</li><li>Mandar al tablero la posición inicial del diagrama en vez de la que tienes en pantalla (recorre la línea ANTES de apretar el botón: manda la que estás viendo).</li><li>Crear la cuenta con el correo de la mamá en el campo del alumno: revisa el diálogo antes de confirmar.</li><li>Usar el modo «reemplazar» del lote de profesores creyendo que suma.</li><li>Dar por hecho que el alumno vio la tarea: el aviso push sale al asignarla y no vuelve. Lo que sí le avisa todos los días es la franja de su panel.</li></ol>
+      
+    </article><article>
+      <h3>Cuando algo no sale</h3>
+      
+      <p>Lo que se puede arreglar sin pedirle nada a nadie.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>«El alumno no me aparece»: no está asignado a ti ni comparten equipo. Se arregla en Administración.</li><li>«No puedo aplicar esta posición»: el aviso te dice cuál de las tres reglas rompe. Casi siempre falta un rey.</li><li>«Se le congeló el examen»: reábrelo desde Exámenes. Conserva lo que ya contestó.</li><li>«No le llega el correo a la familia»: revisa el correo de la persona encargada en «📧 Informes a la casa». Si el alumno entra con usuario, todo va al correo de quien está a cargo.</li><li>«Se le olvidó la contraseña»: «Reenviar enlace para restablecer la contraseña» en el informe de ese alumno.</li></ol>
+      
+    </article><article>
+      <h3>Qué queda de rastro</h3>
+      
+      <p>Conviene saber qué se guarda, porque es lo que después sostiene un informe.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>Cada clase: su título, su fecha, su duración, quién asistió y cuánto tiempo estuvo.</li><li>Cada pregunta de pizarra: quién contestó qué y si acertó.</li><li>Cada ejercicio resuelto y cada rato dentro de una página de entrenamiento.</li><li>Cada tarea, cada examen y cada nota de bitácora, con su autor.</li><li>Quién le desbloqueó un curso a quién.</li></ol>
+      <div class="ojo"><p class="rotulo">Ojo con esto:</p><ul><li>Los minutos no se los cree el navegador: los pone el reloj del servidor. Un alumno no puede inflarse el tiempo ni su mejor marca.</li></ul></div>
+    </article><article>
+      <h3>Lo que la plataforma NO hace</h3>
+      
+      <p>Decirlo evita prometerlo.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>No usa ninguna inteligencia artificial que escriba o resuma: ni el tiempo recomendado de un examen, ni los reportes de actividades.</li><li>No impide que alguien cambie de pestaña en un examen: lo cuenta y lo informa.</li><li>No emite factura electrónica de Hacienda ni cobra con tarjeta.</li><li>Los cursos no traen video de lección.</li><li>Ningún filtro del sitio es una caja fuerte: lo que decide es qué se PINTA. Quien conoce la dirección de un PDF lo baja igual, y por eso van con marca de agua.</li></ol>
+      
+    </article><article>
+      <h3>Con qué quedarte</h3>
+      
+      <p>Si esta guía se resume en cinco frases, son estas.</p>
+      <p class="rotulo">Cómo se hace:</p><ol><li>El plan de clase es lo que convierte una clase suelta en un programa: se arma una vez y se da muchas.</li><li>La tarea se llena sola: pides cantidades, no revisas nada.</li><li>La bitácora se escribe EN la clase, no después: si hay que esperar, no se anota.</li><li>El informe a la casa sale solo, y lo primero que dice es si el alumno está trabajando o no.</li><li>En la clase en vivo, lo único que viaja es la posición. Todo lo demás es tuyo.</li></ol>
+      
+    </article>
+    </section>
+<footer>
+  <p><a href="clases.html">&#8592; Volver al panel de la Academia</a></p>
+  <p>Ajedrez Integral · IA Oscar Angulo Cubero · 2026. Material de uso docente.</p>
+</footer>
+</body></html>

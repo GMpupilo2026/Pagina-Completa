@@ -23,9 +23,11 @@
         } catch (e) {}
     })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../js/vendor/supabase.js"></script>
 <script src="../js/supabase-client.js"></script>
 <script src="../js/tiempo-plataforma.js" data-activity="aperturas"></script>
+<script src="../js/tarea-en-curso.js" defer></script>
+<script src="../js/entreno-progress.js"></script>
 <style>
   :root{
     --bg-deep:#f0f4f8;
@@ -215,36 +217,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/pwa.js" defer></script><!-- app: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
-            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
-                <a href="../index.html" class="flex items-center gap-2 text-white"><span class="text-3xl">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
-                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
-                    <li><a href="../index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
-                    <li><a href="../articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
-                    <li><a href="../tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
-                    <li><a href="../clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
-                </ul>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
-                        <span id="theme-icon" aria-hidden="true">☀️</span>
-                    </button>
-                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
-                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
-            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
-                <li><a href="../index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
-                <li><a href="../articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
-                <li><a href="../tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
-                <li><a href="../clases.html" class="block py-2 text-accent-400">Academia</a></li>
-            </ul>
-        </div>
-    </header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="../clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
   <main id="main-content">
     <div id="gate" class="wrap">
       <p id="gate-checking" class="panel">Comprobando tu sesión…</p>
@@ -353,8 +326,10 @@
  * El progreso se guarda en localStorage y js/progreso-usuario.js lo espeja en
  * la cuenta (claves aperturas_srs_v1 y aperturas_vistas_v1, declaradas en su
  * lista CLAVES), así que se puede estudiar en la compu y seguir en el celular.
- * No escribe en training_progress: esa tabla tiene el CHECK de actividades y
- * esto no es una de ellas.
+ * Cada línea terminada también se registra en training_progress ("aperturas",
+ * ver js/entreno-progress.js), que ya tiene esa actividad en su CHECK: es lo
+ * que hace que repasar una línea acá cuente para la racha de días de
+ * logros.html.
  */
 const CLAVE_SRS = "aperturas_srs_v1";
 const CLAVE_VISTAS = "aperturas_vistas_v1";
@@ -675,6 +650,7 @@ function terminar() {
   estado[linea.id] = RepasoEspaciado.calificar(estado[linea.id], nota);
   guardarEstado();
   sumarVista();
+  if (window.EntrenoProgress) EntrenoProgress.log("aperturas", { linea_id: linea.id, nota: nota });
 
   document.getElementById("turn-banner").textContent = "Línea completa.";
   decir("", "");
@@ -744,6 +720,11 @@ document.querySelectorAll(".promo-btn").forEach((b) => b.addEventListener("click
 
 /* ---------------- arranque ---------------- */
 async function init() {
+  // La tarjeta de estudio de entreno/aprender.html manda para acá con
+  // ?linea=<id> para practicarla de una, en vez de ir a buscarla en la lista.
+  const idLinea = new URLSearchParams(location.search).get("linea");
+  const rutaActual = "entreno/aperturas.html" + (idLinea ? "?linea=" + encodeURIComponent(idLinea) : "");
+
   let hay = false;
   try {
     const { data } = await sb.auth.getSession();
@@ -752,12 +733,13 @@ async function init() {
   if (!hay) {
     document.getElementById("gate-checking").textContent =
       "Necesitas iniciar sesión en el sitio para entrar a Entrenamiento. Redirigiendo…";
-    window.location.href = "../login.html?next=" + encodeURIComponent("entreno/aperturas.html");
+    window.location.href = "../login.html?next=" + encodeURIComponent(rutaActual);
     return;
   }
   // El avance viaja con la cuenta: se baja y se funde ANTES de pintar, para
   // seguir donde se quedó aunque sea otro aparato.
   if (window.ProgresoUsuario) await ProgresoUsuario.init();
+  if (window.EntrenoProgress) await EntrenoProgress.init();
   estado = leerEstado();
 
   document.getElementById("gate").classList.add("hidden");
@@ -765,6 +747,10 @@ async function init() {
   document.getElementById("btn-repaso").classList.add("active");
   pintarResumen();
   pintarLista(true);
+
+  // Si el id no existe (línea borrada o mal escrita) se cae a la lista de
+  // siempre, en vez de quedarse mostrando un tablero de mentira.
+  if (idLinea && AperturasLineas.LINEAS.some((L) => L.id === idLinea)) empezar(idLinea);
 }
 init();
 </script>

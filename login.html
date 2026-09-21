@@ -25,7 +25,7 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
@@ -52,10 +52,19 @@
 
                 <form id="login-form" class="space-y-4">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Correo electrónico</label>
-                        <input id="email" type="email" required autocomplete="username"
+                        <label for="email" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Correo o usuario</label>
+                        <!-- type="text" y no "email": los alumnos que no tienen correo
+                             propio entran con un usuario ("sofia.munoz"), y el navegador
+                             rechazaría eso con SU aviso, en su idioma, antes de que la
+                             página pueda decir nada. Misma razón por la que el formulario
+                             de bienvenida.html va con novalidate.
+                             autocapitalize/autocorrect apagados: en el celular, "Sofia.Munoz"
+                             no entra. -->
+                        <input id="email" type="text" required autocomplete="username"
+                            autocapitalize="none" autocorrect="off" spellcheck="false"
                             class="w-full bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500"
                             placeholder="tucorreo@ejemplo.com">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Si tu profesor te dio un usuario en vez de un correo, escríbelo tal cual.</p>
                     </div>
                     <div>
                         <label for="password" class="block text-sm font-medium text-brand-600 dark:text-brand-300 mb-1">Contraseña</label>
@@ -69,6 +78,10 @@
                     <button type="submit" id="submit-btn" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Iniciar sesión</button>
                 </form>
 
+                <p class="text-sm text-center mt-4">
+                    <a href="bienvenida.html?recuperar=1" class="text-brand-600 dark:text-brand-300 hover:text-accent-500 underline transition-colors">¿Olvidaste tu contraseña?</a>
+                </p>
+
                 <p class="text-xs text-brand-450 dark:text-brand-350 text-center mt-6">
                     ¿No tienes cuenta? Pídesela a tu profesor — las cuentas de alumno se crean manualmente.
                 </p>
@@ -81,6 +94,7 @@
     </main>
 
     <script src="js/main.js"></script>
+    <script src="js/usuario-alumno.js"></script>
     <script>
         // "next" permite volver a la página de la que venías (por ejemplo, una de
         // Entrenamiento que exige sesión iniciada) en vez de siempre ir a
@@ -111,13 +125,16 @@
             submitBtn.disabled = true;
             submitBtn.textContent = "Ingresando...";
 
-            const email = document.getElementById("email").value.trim();
+            // Quien tiene usuario escribe "sofia.munoz" y no el correo entero:
+            // UsuarioAlumno.completar() le pega el dominio. Un correo de verdad
+            // pasa igual que siempre.
+            const email = UsuarioAlumno.completar(document.getElementById("email").value);
             const password = document.getElementById("password").value;
 
             const { error } = await sb.auth.signInWithPassword({ email, password });
 
             if (error) {
-                errorMsg.textContent = "Correo o contraseña incorrectos.";
+                errorMsg.textContent = "Correo, usuario o contraseña incorrectos.";
                 errorMsg.classList.remove("hidden");
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Iniciar sesión";

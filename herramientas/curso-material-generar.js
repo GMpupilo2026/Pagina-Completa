@@ -3,6 +3,11 @@
  *
  *     npm install playwright && pip install pypdf
  *     node herramientas/curso-material-generar.js [curso] [--solo N]
+ *
+ * Con --solo-accesible rehace únicamente los HTML accesibles y no toca ningún
+ * PDF (ni necesita playwright ni pypdf): el cuadernillo sale distinto byte por
+ * byte en cada corrida, así que un retoque del HTML no tiene por qué mover 186
+ * archivos binarios.
  */
 const fs = require("fs");
 const path = require("path");
@@ -100,22 +105,30 @@ function python(guion, args, queHacia) {
   const crudo = process.argv.slice(2);
   const args = [];
   let soloN = null;
+  // "--solo-accesible" rehace SOLO el HTML accesible. El cuadernillo en PDF se
+  // vuelve a imprimir byte por byte distinto cada vez (lleva la fecha adentro),
+  // así que tocar una línea del HTML no tiene por qué mover 186 archivos
+  // binarios. Sin esta puerta, la tentación es editarlos a mano.
+  let soloAccesible = false;
   for (let i = 0; i < crudo.length; i++) {
     if (crudo[i] === "--solo") { soloN = Number(crudo[++i]); continue; }
+    if (crudo[i] === "--solo-accesible") { soloAccesible = true; continue; }
     if (crudo[i].startsWith("--")) continue;
     args.push(crudo[i]);
   }
   const cursos = args.length ? args : M.CURSOS;
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "material-"));
-  const archivoMarca = path.join(tmp, "marca.html");
-  fs.writeFileSync(archivoMarca, htmlMarca);
-
-  const navegador = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
-  const pagina = await navegador.newPage();
-  await pagina.goto("file://" + archivoMarca, { waitUntil: "load" });
-  const pdfMarca = path.join(tmp, "marca.pdf");
-  await pagina.pdf({ path: pdfMarca, format: "A4", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+  let navegador = null, pagina = null, pdfMarca = null;
+  if (!soloAccesible) {
+    const archivoMarca = path.join(tmp, "marca.html");
+    fs.writeFileSync(archivoMarca, htmlMarca);
+    navegador = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
+    pagina = await navegador.newPage();
+    await pagina.goto("file://" + archivoMarca, { waitUntil: "load" });
+    pdfMarca = path.join(tmp, "marca.pdf");
+    await pagina.pdf({ path: pdfMarca, format: "A4", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
+  }
 
   // Todas las posiciones verificadas de la Academia, con el curso del que
   // viene cada una: es el fondo del que sacan ejemplo los cursos que no
@@ -153,6 +166,7 @@ function python(guion, args, queHacia) {
       const base = String(leccion.n).padStart(2, "0") + "-" + M.slugDe(leccion.titulo) + "-material";
 
       // --- el cuadernillo
+      if (!soloAccesible) {
       const htmlTmp = path.join(tmp, base + ".html");
       fs.writeFileSync(htmlTmp, M.cuadernilloHtml(curso, leccion, conceptos, posics, partida));
       await pagina.goto("file://" + htmlTmp, { waitUntil: "load" });
@@ -171,18 +185,22 @@ function python(guion, args, queHacia) {
       python(GUION_PROTEGER, [pdfFinal, M.CLAVE_PROPIETARIO, M.AUTOR,
         `${leccion.titulo} — ${curso.titulo}`, "Material de estudio de la Academia de Ajedrez Integral"],
         "proteger el PDF");
+      paginas += Number(n) || 0;
+      }
 
       // --- la versión accesible
       fs.writeFileSync(path.join(destino, base + "-accesible.html"),
         M.accesibleHtml(curso, leccion, conceptos, posics, partida));
 
-      hechos += 1; paginas += Number(n) || 0;
+      hechos += 1;
       process.stdout.write(`\r  ${slug}: ${hechos} lecciones…`.padEnd(70));
     }
     process.stdout.write(`\r  ${slug.padEnd(28)} ${lista.length} lecciones · ${conPosiciones} con ejemplos del curso\n`);
   }
 
-  await navegador.close();
+  if (navegador) await navegador.close();
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log(`\n${hechos} lecciones · ${hechos * 2} archivos · ${paginas} páginas de PDF`);
+  console.log(soloAccesible
+    ? `\n${hechos} lecciones · ${hechos} archivos accesibles (el PDF no se tocó)`
+    : `\n${hechos} lecciones · ${hechos * 2} archivos · ${paginas} páginas de PDF`);
 })();
