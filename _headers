@@ -1,3 +1,9 @@
+# cdn.jsdelivr.net está en script-src SOLO por la transcripción de reportes.html
+# (importa @huggingface/transformers@3.3.3 desde ahí). La librería de Supabase ya
+# NO sale de ahí: vive en js/vendor/supabase.js, dentro del repositorio — pedida
+# a un CDN por rango y sin integrity, cada visita ejecutaba lo que hubiera
+# publicado ahí en ese momento, con la sesión de quien entrara.
+#
 # cdn.jsdelivr.net y huggingface.co están en connect-src por la transcripción
 # de reportes.html: el modelo de Whisper se baja de ahí UNA vez y queda en la
 # caché del navegador. Es lo único que se pide a esos dominios, y es de bajada:

@@ -23,7 +23,7 @@
             } catch (e) {}
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
@@ -325,6 +325,21 @@
             }
         }
 
+        // Todo texto que escribió una persona pasa por aquí antes de entrar a un
+        // innerHTML. Vivía dentro del bloque de visitantes, como si el único texto
+        // ajeno de esta página fuera el de un formulario público — y no: el nombre
+        // de un alumno lo escribe él, `profiles_update_own` le deja editarlo y el
+        // trigger de identidad no lo revierte (solo role, email, is_admin y
+        // compañía). Un `full_name` con una etiqueta adentro se ejecutaba en la
+        // pantalla de SU PROFESOR, con la sesión del profesor puesta. No daba
+        // ningún error: la página se veía normal.
+        //
+        // La regla del sitio es la de `renderStudentsList()` y `js/notas-alumno.js`:
+        // el nombre de un alumno va por textContent. Donde hace falta armar HTML,
+        // va por aquí — y escapa también la comilla, porque hay nombres que entran
+        // en un atributo (el `title=` de barraHTML).
+        function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
         function statCard(emoji, value, label) {
             const div = document.createElement("div");
             div.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 text-center";
@@ -393,7 +408,7 @@
             body.innerHTML = "";
             document.getElementById("cursos-report-title").textContent = propio ? "Tus cursos" : "Cursos de " + nombre;
             if (!entreno.cursos.length) {
-                body.innerHTML = `<p class="text-sm text-brand-450 dark:text-brand-350">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (nombre + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-700 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
+                body.innerHTML = `<p class="text-sm text-brand-450 dark:text-brand-350">${propio ? "Todavía no has marcado ningún tema como estudiado. Tus cursos están en " : (escVis(nombre) + " todavía no ha marcado ningún tema como estudiado. Los cursos están en ")}<a href="cursos/academia/index.html" class="text-accent-700 dark:text-accent-400 hover:underline">Academia › Cursos</a>.</p>`;
             } else {
                 entreno.cursos.forEach((c) => {
                     const wrap = document.createElement("div");
@@ -469,7 +484,7 @@
             const wrap = document.createElement("div");
             const head = document.createElement("div");
             head.className = "flex items-center justify-between text-sm mb-1";
-            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${name}</span><span class="text-brand-450 dark:text-brand-350">${correct}/${total} · ${pct}%</span>`;
+            head.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(name)}</span><span class="text-brand-450 dark:text-brand-350">${correct}/${total} · ${pct}%</span>`;
             const track = document.createElement("div");
             track.className = "h-2 rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden";
             const fill = document.createElement("div");
@@ -1107,7 +1122,7 @@
             const { data, error } = await sb.from("encargados")
                 .select("*").eq("student_id", studentId).order("created_at");
             if (error) {
-                caja.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudo cargar: ' + error.message + "</p>";
+                caja.innerHTML = '<p class="text-sm text-red-600 dark:text-red-400">No se pudo cargar: ' + escVis(error.message) + "</p>";
                 return;
             }
             caja.innerHTML = "";
@@ -1342,7 +1357,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.count}/${teacherData.closedSessions} clases · ⏱️ ${fmtDuration(r.minutes)} en clase + ${fmtDuration(r.exerciseMinutes)} en ejercicios = ${fmtDuration(r.minutes + r.exerciseMinutes)}</span>`;
                         body.appendChild(row);
                     });
             } else {
@@ -1363,7 +1378,7 @@
                     .forEach((r) => {
                         const row = document.createElement("div");
                         row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${r.name}</span><span class="text-brand-500 dark:text-brand-300">${r.label}</span>`;
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(r.name)}</span><span class="text-brand-500 dark:text-brand-300">${r.label}</span>`;
                         body.appendChild(row);
                     });
             }
@@ -1548,7 +1563,7 @@
 
         function sinDiagnosticoHTML(nombre, esProfesor) {
             return esProfesor
-                ? `<p class="text-sm text-brand-500 dark:text-brand-300">${nombre} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
+                ? `<p class="text-sm text-brand-500 dark:text-brand-300">${escVis(nombre)} todavía no ha hecho el diagnóstico de nivel. Está en Entrenamiento › Aprende › Asignaciones y toma unos 20 minutos; en cuanto lo entregue, aquí aparece su informe y su plan.</p>`
                 : `<p class="text-sm text-brand-500 dark:text-brand-300 mb-3">Todavía no has hecho el diagnóstico de nivel. Son 63 preguntas y posiciones en cinco escalones de dificultad: al terminar sabrás tu nivel estimado y qué estudiar primero.</p>
                    <a href="entreno/diagnostico.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Hacer el diagnóstico →</a>`;
         }
@@ -1684,7 +1699,7 @@
         // y pegada a la línea de base, y el valor siempre en texto al lado.
         function barraHTML(pct, titulo) {
             const banda = bandaDe(pct);
-            return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${titulo}">
+            return `<div class="w-full h-2.5 bg-brand-100 dark:bg-brand-800 rounded-sm overflow-hidden" title="${escVis(titulo)}">
                 <div class="h-full ${banda.clase} rounded-r" style="width:${Math.max(pct, 1)}%"></div>
             </div>`;
         }
@@ -1856,9 +1871,6 @@ function areasFlojasArbitraje(fila) {
     .map((a) => `${a.nombre.toLowerCase()} (${a.porcentaje}%)`);
 }
 
-        // Texto de visitantes (nombre, correo, teléfono) → HTML seguro.
-        function escVis(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
-
         // Visitantes: lista de más reciente a más antiguo, con contacto, nivel y Elo; cada uno
         // se puede desplegar (mismas barras por área que un alumno) y marcar como atendido.
         function renderDiagnosticosVisitantes(contenedor) {
@@ -1921,7 +1933,7 @@ function areasFlojasArbitraje(fila) {
 
             if (!conDiagnostico.length) {
                 const empezados = pendientes.filter((p) => p.aMedias);
-                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${p.nombre} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Evaluaciones › Diagnóstico de nivel y toma unos 20 minutos.${profile && profile.is_admin ? ` También se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a>, y para estudiar y corregir está <a href="libro-de-diagnostico.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">el libro con el banco entero</a> (los dos traen las respuestas: son solo para administración).` : ""}</p>`;
+                contenedor.innerHTML = `<p class="text-sm text-brand-500 dark:text-brand-300">Todavía ningún alumno ha terminado el diagnóstico${total ? ` (${total} asignado${total === 1 ? "" : "s"})` : ""}${empezados.length ? `; ${empezados.map((p) => `${escVis(p.nombre)} lo dejó en la pregunta ${p.aMedias.pregunta}`).join(", ")}` : ""}. Está en Evaluaciones › Diagnóstico de nivel y toma unos 20 minutos.${profile && profile.is_admin ? ` También se puede aplicar en papel con <a href="diagnostico-de-nivel.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">la versión imprimible</a>, y para estudiar y corregir está <a href="libro-de-diagnostico.pdf" class="text-accent-700 dark:text-accent-400 hover:underline">el libro con el banco entero</a> (los dos traen las respuestas: son solo para administración).` : ""}</p>`;
                 return;
             }
 
@@ -1959,7 +1971,7 @@ function areasFlojasArbitraje(fila) {
                     ${conDiagnostico.map((d) => `
                         <div>
                             <div class="flex items-baseline justify-between gap-3 text-sm mb-1">
-                                <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <button type="button" data-alumno="${d.id}" class="font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
                                 <span class="text-brand-500 dark:text-brand-300 whitespace-nowrap">${d.resumen.porcentaje}% · ${d.resumen.nivel.etiqueta}${d.elo ? ` · Elo ${d.elo}` : ""}</span>
                             </div>
                             ${barraHTML(d.resumen.porcentaje, `${d.nombre}: ${d.resumen.porcentaje}% (${bandaDe(d.resumen.porcentaje).etiqueta})`)}
@@ -1986,10 +1998,10 @@ function areasFlojasArbitraje(fila) {
                     ${conDiagnostico.map((d) => `
                         <div class="border border-brand-100 dark:border-brand-800 rounded-xl p-3">
                             <div class="flex items-baseline justify-between gap-2 mb-2">
-                                <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${d.nombre}</button>
+                                <button type="button" data-alumno="${d.id}" class="text-sm font-medium text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left">${escVis(d.nombre)}</button>
                                 <span class="text-xs text-brand-450 dark:text-brand-350 whitespace-nowrap">${d.resumen.nivel.etiqueta} · ${fmtFecha(d.fecha)}</span>
                             </div>
-                            <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${d.nombre}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
+                            <div class="flex items-end gap-[2px] h-16" role="img" aria-label="Perfil por área de ${escVis(d.nombre)}: ${d.resumen.porArea.map((a) => `${a.nombre} ${a.porcentaje}%`).join(", ")}">
                                 ${d.resumen.porArea.map((a) => `<div class="flex-1 ${bandaDe(a.porcentaje).clase} rounded-t" style="height:${Math.max(a.porcentaje, 3)}%" title="${a.emoji} ${a.nombre}: ${a.porcentaje}% (${bandaDe(a.porcentaje).etiqueta})"></div>`).join("")}
                             </div>
                             <div class="flex gap-[2px] mt-1">
