@@ -966,6 +966,68 @@ pregunta.
   callado: el panel se lo dice con todas las letras y nombra quién se los
   vincula. Es la primera cosa que pasa al marcar a alguien como coordinador.
 
+### El acotamiento se quedó a medio hacer en cuatro tablas más
+
+La ronda de arriba dejó acotados `cobros`, `cobros_contacto`, `pagos` y
+`suscripciones`, pero **no** tocó todo lo demás que también cuelga de
+`soy_coordinador()`. Con datos reales (dos cuentas coordinadoras, ambas con
+`grupo = 'SJ'`) quedó comprobado que la fuga era real, no teórica:
+
+- **`formularios` / `formulario_respuestas`** filtraban por `grupo =
+  mi_grupo()`, no por `bajo_mi_coordinacion()`. `grupo` es un texto de sede
+  (SJ, Santa Ana, ADAPZ) que **dos coordinadoras distintas pueden compartir**
+  —y de hecho comparten—, así que una veía los formularios y las respuestas
+  de la otra sin ser su coordinación en absoluto. Se cambió a
+  `bajo_mi_coordinacion(creado_por)`, igual que el resto. Como
+  `formularios_insert` exige `soy_coordinador()`, `creado_por` siempre es una
+  coordinadora o quien administra, así que la función de siempre alcanza sin
+  agregar ninguna columna.
+  - **Efecto secundario a propósito, no un bug**: un formulario que arme
+    quien administra (no una coordinadora) deja de aparecerle a las
+    coordinadoras aunque comparta su `grupo` — antes sí les aparecía, por la
+    misma fuga. Si hace falta que quien administra reparta un formulario a
+    una coordinadora puntual, hoy no hay botón para eso; es una función
+    aparte si se pide.
+- **`avisos_cobro`** y **`datos_facturacion`** solo tenían `soy_coordinador()`
+  a secas — cualquier coordinadora veía los avisos de pago y los datos
+  fiscales de cualquier alumno de la Academia. Se acotaron exactamente como
+  `cobros` (uniendo a `cobros.student_id` en el caso de `avisos_cobro`, que no
+  tiene alumno propio).
+- **`equipos` / `equipo_alumnos` / `equipo_entrenadores`** (los equipos que
+  arma cada coordinadora en `coordinacion.html` con sus propios profesores y
+  alumnos) también solo pedían `soy_coordinador()`: cualquier coordinadora
+  veía los equipos de las demás. Ya existía
+  `public.equipo_bajo_mi_coordinacion(equipo)` —comprueba que CADA alumno y
+  CADA entrenador del equipo estén bajo la coordinación de quien pregunta—
+  pero **no estaba conectada a ninguna política todavía**. Conectarla tal
+  cual disparaba `42P17: infinite recursion detected in policy`: la política
+  de `equipos` consulta a `equipo_entrenadores`/`equipo_alumnos`, cuyas
+  políticas volvían a consultar `equipos` (a través de la función) dentro del
+  mismo plan. Se resolvió con `set row_security to off` **dentro de la
+  función** —tanto en `equipo_bajo_mi_coordinacion()` como en la nueva
+  `public.puede_ver_equipo(equipo)`, que junta las tres condiciones (bajo mi
+  coordinación, soy su entrenador, soy su alumno) en un solo lugar para que
+  ninguna política tenga que hacer un `EXISTS` crudo contra otra tabla con
+  RLS— así que las tres políticas (`equipos_select`, `equipo_alumnos_select`,
+  `equipo_entrenadores_select`) llaman a `puede_ver_equipo()` y nada más.
+  Ser `SECURITY DEFINER` con el dueño teniendo `BYPASSRLS` **no alcanzó por sí
+  solo**: hace falta el `set row_security to off` explícito en la función
+  para que sus propias consultas no vuelvan a disparar la política de la
+  tabla que las llamó.
+- **`solicitudes_academia` se dejó afuera, a propósito.** Quien llena
+  `unirse.html` todavía no es alumna de nadie —no hay profesor, ni grupo, ni
+  ningún dato para decidir de qué coordinadora es la solicitud—, así que no
+  hay con qué acotarla sin agregar un campo nuevo (una sede que la persona
+  elija, o una asignación manual). El dueño del proyecto decidió dejarla
+  como bandeja compartida entre todas las coordinadoras y quien administra,
+  por ahora. Si se pide acotarla más adelante, hace falta decidir primero
+  cómo se liga cada solicitud a una coordinadora concreta — no alcanza con
+  repetir el patrón de `bajo_mi_coordinacion()`.
+- Comprobado impersonando a las dos coordinadoras reales de `grupo='SJ'`
+  (cuentas ya existentes, no de prueba): antes de este cambio ambas verían
+  las mismas filas; después, cada una ve solo lo suyo y ninguna ve lo de la
+  otra, mientras quien administra sigue viendo todo.
+
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
 
 `role` solo valía 'profesor' o 'alumno', así que quien administra estaba
