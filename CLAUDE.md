@@ -763,6 +763,93 @@ ningún otro número chico.
   `verificar-varios-profesores.js`: la de equipos es una función aparte,
   `renderEquipoTags()`.
 
+#### Llenar un equipo de una vez, que es lo que evita el uno por uno
+
+Un equipo hace exactamente lo que se pide cuando alguien dice «asignarle
+profesores a un grupo», y lo hace **vivo**: quien entre después al equipo
+hereda a sus entrenadores sin que nadie vuelva a tocar nada. Lo que faltaba no
+era el modelo, era poder llenarlo: el selector ofrecía los alumnos de a uno
+entre mil doscientos nombres, así que armar un equipo costaba una tarde y los
+permisos se terminaban repartiendo alumno por alumno.
+
+**`js/equipo-volcar.js` es esa pieza**, y está escrito una sola vez para las
+dos pantallas —`admin.html` y `coordinacion.html`—, como
+`js/subgrupos-marcar.js` lo está para Tareas y Exámenes. Ofrece, en un solo
+selector con sus dos `<optgroup>`, **los grupos** (`profiles.grupo`) y **los
+subgrupos**.
+
+- **SE MANDA LA UNIÓN, NUNCA SOLO EL GRUPO.** Las dos puertas que escriben los
+  alumnos de un equipo —`equipo_set_alumnos` de la Edge Function y
+  `coord_equipo_set_alumnos()` en la base— dejan la lista EXACTAMENTE como
+  llega, igual que `set_teachers`. Mandar solo los del grupo **vaciaría el
+  equipo de todo lo anterior**: se vería perfecto con sus 23 nombres nuevos y
+  los 40 de antes habrían perdido a sus entrenadores sin que nadie lo pidiera.
+  Por eso este módulo no ofrece «dejar solo estos».
+- **El tope se mira ANTES de mandar.** Un equipo aguanta 300 alumnos y un grupo
+  de colegio puede tener 400: si viajara, volvería con el error del servidor
+  justo cuando quien lo apretó ya no sabe qué arreglar. Se dice el número y se
+  propone partirlo en dos.
+- **Un id que la pantalla no reconoce se cuenta y se dice** («2 no están en tu
+  lista»): es un alumno que se fue de su alcance o un subgrupo de otro
+  profesor. Dar por bueno el número del grupo dejaría el equipo con menos gente
+  de la que se pidió sin que nada fallara — la misma regla que el selector de
+  subgrupos de Tareas.
+- **De quién es cada subgrupo va escrito en su opción.** Dos profesores pueden
+  tener cada uno su «Los del martes», y son listas distintas.
+- **El aviso de qué pasó sobrevive al repintado.** Guardar vuelve a pintar la
+  tarjeta entera —es la única forma de que las etiquetas y el selector de
+  «sumar otro» queden al día sin olvidos—, así que el renglón donde se escribió
+  «Entraron 23» se muere en el acto y no lo lee nadie. Por eso `guardar` recibe
+  la frase y quien repinta se la devuelve al control nuevo en `mensaje`.
+- **Los subgrupos los sirve `public.subgrupos_a_la_vista()`**, `SECURITY
+  INVOKER`: quién ve los de quién lo sigue decidiendo la RLS de `subgrupos`
+  (los propios, los de su coordinación, todos si administra). Devuelve el
+  arreglo de ids de cada uno, como `mis_subgrupos()`. **Volcarlo no convierte
+  al subgrupo en una llave**: lo que queda guardado es la lista del equipo, y
+  el subgrupo sigue sin dar ni un permiso.
+
+#### Los equipos también se manejan desde coordinación
+
+Estaban solo en `admin.html` y solo los escribía la Edge Function
+`admin-manage-users`, o sea solo quien administra. Ahora `coordinacion.html`
+tiene su tarjeta «👥 Equipos», acotada con el patrón de siempre:
+`soy_coordinador()` dice quién entra, `bajo_mi_coordinacion()` dice sobre
+quién. Son cinco funciones `SECURITY DEFINER` —`coord_equipo_create`,
+`_rename`, `_delete`, `_set_alumnos`, `_set_entrenadores`— con el `execute`
+revocado de `public` y `anon`.
+
+- **La fuga propia de los equipos, que no existe en `coord_set_profesores()`:**
+  meter a un alumno suyo en un equipo con entrenadores AJENOS le daría a esos
+  entrenadores acceso a ese alumno — o sea, repartir permisos fuera de su
+  coordinación sin que nada fallara. Por eso tocar la gente de un equipo pide
+  que **toda** la gente del equipo esté bajo su coordinación, en los dos lados,
+  y eso lo contesta `equipo_bajo_mi_coordinacion()`.
+- **Repartir no es lo mismo que renombrar o borrar.** Un equipo que armó
+  administración puede tener un sentido que no es el de quien coordina, así que
+  esos dos verbos se quedan con **lo que ella misma creó**
+  (`equipo_lo_cree_yo()`, sobre `equipos.created_by`); repartirle su propia
+  gente sí lo puede hacer en cualquier equipo que cumpla lo de arriba. En
+  pantalla, sobre un equipo que no puede repartir **no se pinta ni el ✕, ni el
+  selector, ni el volcado**, y se dice por qué: la base lo rechazaría igual,
+  pero el fallo lo descubriría quien apretó.
+- **Lo que ya estaba y no coordina se conserva** al escribir, igual que en
+  `coord_set_profesores()`. Hoy no puede pasar —el equipo entero tiene que ser
+  suyo— pero la regla se escribe igual: el día que se afloje esa condición, el
+  borrado callado ya no estaría esperando.
+- **Borrar pide dos toques en el propio botón**, con lo que va a pasar escrito
+  encima («sus entrenadores pierden a estos alumnos»), no un diálogo del
+  navegador: esto se toca desde el celular.
+- **Los alumnos del selector se piden hasta el final**, no con un límite a ojo:
+  `mi_gente` viene paginada porque PostgREST corta sin avisar, y un límite
+  dejaría fuera del selector a alumnos que sí puede repartir.
+
+Comprobado impersonando roles en SQL, 13 casos: quien coordina crea el equipo,
+le mete a su alumno, **un alumno ajeno se rechaza**, pone a su profesor de
+entrenador y con eso el entrenador **ya sale en `profesores_de()` de ese
+alumno**; sobre un equipo con gente ajena no puede sumar, ni renombrar, ni
+borrar; un alumno no crea ninguno, no se pone de entrenador y ve **0**
+subgrupos.
+
 ### Subgrupos: las listas que cada profesor arma para sí mismo
 
 Son la TERCERA forma de agrupar alumnos que tiene el sitio, y confundirla con
@@ -771,8 +858,15 @@ las otras dos es el error caro:
 | | quién la pone | cuántas por alumno | ¿da permisos? |
 |---|---|---|---|
 | `profiles.grupo` | quien administra | una | no |
-| **equipos** | quien administra | varias | **SÍ** |
+| **equipos** | quien administra **o quien coordina, sobre su gente** | varias | **SÍ** |
 | **subgrupos** | **cada profesor, solo** | varias | **no** |
+
+**Cuando alguien pide «asignarle profesores a un subgrupo» está pidiendo un
+equipo.** Un subgrupo no da permisos por diseño, y eso es lo que permite que
+cada profesor arme los suyos sin pedirle nada a nadie; lo que sí reparte acceso
+—de una vez y para los que entren después— es un equipo. Lo que hacía falta no
+era convertir el subgrupo en llave, sino poder **volcar** un subgrupo entero
+dentro de un equipo, que es lo de abajo.
 
 Un subgrupo se define por lo que NO hace: **no da ni un permiso**. Ninguna de
 las funciones que deciden quién es profesor de quién —`profesores_de()`,
@@ -1036,6 +1130,23 @@ se llame a la Edge Function del panel de administración**—, que se vean todos
 sus profesores pero solo se pueda quitar al que coordina, y que al cambiar el
 correo se enseñe el que devolvió el servidor. Está probado que falla de verdad:
 mandando el id de quien coordina en vez del de la alumna, salta.
+
+De los equipos comprueba que sobre uno con gente ajena **no se pinte ni un
+control**, que volcar un grupo mande la UNIÓN —con el que ya estaba dentro— y
+que volcar algo que ya está no mande nada, que crear, sumar entrenadores y
+borrar vayan por sus funciones de la base, y que el «Entraron 2 alumnos» se lea
+**en la tarjeta que se ve** y no en la que se acaba de repintar. Está probado
+que falla de verdad: haciendo que el volcado reemplace en vez de sumar, salta.
+
+- **Sus filas se buscan por el correo, nunca por su posición.** Sumar una
+  cuenta a los datos de prueba corre los índices y deja media docena de
+  comprobaciones fallando por algo que no tiene nada que ver con lo que miran
+  — la misma razón por la que el panel de la Academia busca sus grupos por
+  nombre.
+- **Y los handles se vuelven a pedir después de cada guardado.** Guardar
+  repinta la lista entera, así que un handle tomado antes apunta a un nodo
+  huérfano —con su mensaje escrito y su estado viejo—: mirándolo a él, la
+  prueba daría verde sobre una pantalla donde no se ve nada.
 
 ## Tareas: el profesor pide cantidades y la tarea se llena sola
 
@@ -5511,7 +5622,10 @@ empezó todo esto. Comprueba además que al entrar **no se pinte ni una fila** �
 alguien vuelve a mostrarlas todas, la página se ve igual de bien hasta que hay
 trescientas— y qué manda de verdad la ficha a la Edge Function al sumarle un
 profesor a un grupo (los 401 ids y el modo `agregar`, no medio grupo ni un
-`reemplazar`).
+`reemplazar`). Del volcado en un equipo comprueba que se ofrezcan los grupos y
+los subgrupos —con el dueño de cada subgrupo escrito—, que **un grupo que no
+cabe en el tope no se mande** y se diga con su número, y que el que sí cabe se
+sume al que ya estaba en vez de reemplazarlo.
 
 ## Las inscripciones a torneos en línea
 
