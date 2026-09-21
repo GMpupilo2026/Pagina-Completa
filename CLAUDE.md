@@ -2519,6 +2519,100 @@ Detalles que importan:
   desc)`. `training_state` **no** necesita uno: su clave primaria ya empieza por
   `student_id`.
 
+### La página no es un volcado: es un índice, y lo demás se abre
+
+Contar en la base arregló los números, pero no lo que se veía. Al entrar, quien
+da clase recibía **seis paneles abiertos a la vez**, y los dos primeros ni
+siquiera eran de sus alumnos: los exámenes de arbitraje del público y los
+diagnósticos de visitantes. Debajo, **los mismos N alumnos listados tres
+veces** —precisión, asistencia y entrenamiento—, sin buscador y sin corte. Con
+cien alumnos son trescientas filas de corrido, más una tarjeta de perfil por
+alumno en los diagnósticos; y para juntar los datos de uno había que cruzar
+tres tablas a ojo. Llegar a un alumno concreto era abrir un `<select>` de cien
+nombres.
+
+Nada de eso daba ningún error: la página se veía perfecta, los números estaban
+bien, y el profesor simplemente no usaba Informes.
+
+- **Arriba va lo que pide actuar**, como en el panel de la Academia: una franja
+  con quién lleva una semana sin entrenar, a quién le falta el diagnóstico y
+  cuántos planes están sin compartir. Los tres datos **ya estaban cargados** y
+  no se decían en ninguna parte — había que acordarse de ir a buscarlos al
+  filtro de tema. Cada uno es un botón que **deja el filtro puesto**, así que
+  enterarse y actuar son el mismo gesto. Con todo al día la franja no se pinta:
+  un cartel que se repite deja de leerse.
+  - Los conteos no se hacen acá: los inactivos salen de `informes_inactivos()`,
+    la misma lista que cuenta `panel_profesor()` en «Tu semana», y los planes
+    que faltan de `planesQueFaltan()`, la misma que pinta el botón de compartir
+    en lote. Un segundo criterio escrito acá diría otra cosa del mismo alumno.
+- **«👥 Tus alumnos» es UN índice, una fila por alumno**: asistencia, tiempo,
+  asignaciones, el nivel del diagnóstico y si está entrenando esta semana. Con
+  **buscador sin tildes** —«ramirez» tiene que encontrar a «Ramírez»— y de
+  **veinte en veinte** con su «Ver más» y su «Mostrando 20 de 143». Tocar a un
+  alumno abre su informe: eso es lo que reemplaza a buscarlo dentro del
+  `<select>`, que se queda porque es el control accesible de siempre.
+- **Las tres tablas de antes NO se perdieron**: van plegadas dentro de ese
+  mismo panel, «Las tablas completas, columna a columna». Sirven para comparar
+  columna a columna, que es justamente lo que un índice de una fila por alumno
+  no puede dar — y es lo que también da el filtro «Tema o actividad», que ya
+  existía. Se pintan enteras a propósito: viven dentro de un `<details>`
+  cerrado, así que no cuestan pantalla.
+  - **El buscador filtra el índice Y esas tres tablas.** Buscar «Ana» y que las
+    tablas siguieran enseñando a los cien sería exactamente la sorpresa que
+    esto viene a quitar. Por eso hay `alumnosDelPanel()` (grupo o subgrupo de
+    arriba + buscador) y no se toca `filteredStudents()`, que es de lo que
+    depende el filtro por tema y el de subgrupos.
+  - **Y no pasan por `applyTeacherFilters()`**: repintarían los diagnósticos,
+    los conteos de arriba y los dos paneles del público, que no dependen de lo
+    que se escriba.
+- **Lo que no es de sus alumnos va plegado** —arbitraje del público y
+  diagnósticos de visitantes— **pero su conteo se lee sin abrirlos** («1005
+  exámenes recibidos · 502 sin responder»). Si no, hay que abrir los dos en
+  cada visita solo para saber si llegó algo nuevo, que es el paso que el
+  plegado viene a quitar.
+- **«El perfil de cada alumno»** (la rejilla con las nueve áreas de cada
+  diagnóstico) también se pliega: es una tarjeta por alumno y el resumen del
+  grupo está justo encima.
+
+En el informe de UN alumno:
+
+- **Ocho números a la vista y ocho detrás de «Ver todos los números».**
+  Dieciséis tarjetas de golpe no las lee nadie y tapan las que se miran de
+  verdad. Las escondidas **siguen siendo hijas directas de `#stat-cards`** y se
+  ocultan con la clase, no se sacan del DOM: no son enfocables, así que no
+  dejan ninguna parada de tabulador fantasma.
+- **«🔑 Acceso a la cuenta» e «📧 Informes a la casa» van plegados**: son de
+  administración y se usan una vez cada tanto; abiertos en cada informe eran
+  media pantalla de formulario que nadie venía a ver.
+- **«🧭 Diagnóstico y plan» va plegado para quien da clase y ABIERTO para el
+  propio alumno.** Es el bloque más largo del informe; el nivel ya se lee en el
+  índice de la clase, pero para el alumno su plan es a lo que viene.
+- **La tarjeta del historial dejó de prometer lo que no es.** Se llamaba
+  «Informe de X» y lo que trae son las últimas quince respuestas: ahora es
+  «🚩 Últimas asignaciones de X» y bajó debajo de Tareas y exámenes, que es lo
+  que de verdad se busca. Y **ya no sale en blanco**: se miraba el contador de
+  respuestas para decidir si pintar el aviso de «todavía ninguna», pero se
+  pintaba la lista de las quince últimas — un alumno con respuestas viejas se
+  llevaba una tarjeta vacía. Se mira la lista, que es lo que se va a pintar.
+
+**Al tocar el índice, la franja o los plegables, correr `node
+herramientas/verificar-informes.js`.** Su prueba nueva —«Una clase de
+cincuenta»— existe porque **con tres alumnos todo esto se ve bien**: el
+problema empieza a los cincuenta. Comprueba que el índice corte de veinte en
+veinte y lo diga con el total de verdad, que «Ver más» traiga los siguientes,
+que el buscador filtre **también** las tablas de abajo y no se pierda con las
+tildes, que ordenar por «sin entrenar» ponga «nunca» antes que «hace mes y
+medio», que la franja se vea **de verdad** (el `display` que calcula el
+navegador, no la clase) y deje el filtro puesto al tocarla, que el conteo de
+los paneles plegados se lea sin abrirlos, y que las ocho tarjetas secundarias
+nazcan escondidas. Está probado que falla de verdad: quitándole el corte al
+índice saltan dos comprobaciones, y dejando el buscador sin filtrar, la prueba
+se cae.
+
+- **El verificador abre los plegables como los abre una persona**, tocando su
+  encabezado, en vez de dar por buena la existencia del nodo: un panel plegado
+  que no abre se ve igual que uno que no está.
+
 ### Un total solo sube: «Cómo viene» es lo que dice si mejora
 
 Todos los números de Informes eran **acumulados desde siempre**, y eso no
