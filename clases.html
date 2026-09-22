@@ -57,7 +57,7 @@
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
-        <div id="loading-spinner">
+        <div id="loading-spinner" role="status">
             <p class="text-brand-450 dark:text-brand-350">Cargando tu panel…</p>
         </div>
         <div id="loading-error" class="hidden w-full max-w-sm text-center">
@@ -85,19 +85,22 @@
                 </div>
             </div>
 
+            <!-- Región viva: dice cuándo se abre o se cierra la clase. -->
+            <p id="aviso-clase" role="status" class="sr-only"></p>
+
             <!-- ===== Bienvenida ===== -->
             <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
                 <div class="flex items-center gap-4">
-                    <div id="avatar" class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0"></div>
+                    <div id="avatar" aria-hidden="true" class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0"></div>
                     <div>
-                        <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">¡Bienvenido, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
+                        <h1 id="panel-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Bienvenido, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
                         <p class="text-brand-500 dark:text-brand-300 text-sm mt-0.5">Este es tu panel de Clases. Elige a dónde quieres ir.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
-                    <button id="change-pw-btn" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
+                    <button id="change-pw-btn" type="button" aria-haspopup="dialog" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
                 </div>
             </div>
@@ -191,7 +194,7 @@
                 <div class="flex-1 min-w-[200px]">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Continúa donde ibas</h2>
                     <p class="text-sm text-brand-500 dark:text-brand-300" id="seguir-curso-texto"></p>
-                    <div class="mt-2 h-1.5 w-full max-w-xs rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden">
+                    <div id="seguir-curso-progreso" role="progressbar" aria-label="Avance del curso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="mt-2 h-1.5 w-full max-w-xs rounded-full bg-brand-100 dark:bg-brand-800 overflow-hidden">
                         <div id="seguir-curso-barra" class="h-full bg-accent-500 rounded-full" style="width:0%"></div>
                     </div>
                 </div>
@@ -268,19 +271,19 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-alumnos">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">👥 Tus alumnos</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">👥 </span>Tus alumnos</div>
                     </a>
                     <a href="informes.html?tema=inactivos" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold" id="profe-inactivos">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">😴 Sin entrenar (4 días)</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">😴 </span>Sin entrenar (4 días)</div>
                     </a>
                     <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="profe-tareas">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">📋 Tareas sin hacer</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">📋 </span>Tareas sin hacer</div>
                     </a>
                     <a href="tareas.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold" id="profe-vencidas">—</div>
-                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1">⏰ Tareas vencidas</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">⏰ </span>Tareas vencidas</div>
                     </a>
                 </div>
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
@@ -323,13 +326,15 @@
 
     <!-- ===== Modal cambio de contraseña ===== -->
     <div id="pw-modal" class="hidden fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Cambiar contraseña</h3>
-            <input id="new-password" type="password" placeholder="Nueva contraseña (mín. 8 caracteres)" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
-            <p id="pw-msg" class="text-xs mb-3"></p>
+        <div role="dialog" aria-modal="true" aria-labelledby="pw-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h2 id="pw-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">Cambiar contraseña</h2>
+            <label for="new-password" class="block text-sm font-medium text-brand-700 dark:text-brand-200 mb-1">Nueva contraseña</label>
+            <input id="new-password" type="password" autocomplete="new-password" aria-describedby="pw-ayuda pw-msg" placeholder="Nueva contraseña (mín. 8 caracteres)" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent-500">
+            <p id="pw-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mb-2">Mínimo 8 caracteres.</p>
+            <p id="pw-msg" role="status" class="text-xs mb-3"></p>
             <div class="flex justify-end gap-2">
-                <button id="pw-cancel-btn" class="px-4 py-2 rounded-lg text-sm font-medium text-brand-500 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors">Cancelar</button>
-                <button id="pw-save-btn" class="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Guardar</button>
+                <button id="pw-cancel-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-brand-500 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors">Cancelar</button>
+                <button id="pw-save-btn" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors">Guardar</button>
             </div>
         </div>
     </div>
@@ -580,12 +585,20 @@
                 // razón va escrita en la tarjeta (t.nota) — un cuadro gris sin
                 // explicación se lee como una página rota.
                 el = document.createElement("div");
+                /* Se puede ENFOCAR aunque no lleve a ninguna parte: con Tab,
+                   quien usa lector de pantalla se saltaba la tarjeta entera y
+                   no se enteraba de que «Sesión en vivo» existe ni de por qué
+                   está cerrada. Con role="link" y aria-disabled se anuncia
+                   como «enlace, no disponible» y se lee su razón; sigue sin
+                   `href`, así que no promete ningún destino. */
+                el.tabIndex = 0;
+                el.setAttribute("role", "link");
                 /* `apagado` es para el candado que SÍ se va a abrir hoy —la
                    sesión en vivo mientras el profe no empieza—: ahí la nota
                    explica el candado, y con `opacity` sobre el blanco de la
                    tarjeta de al lado esa nota queda casi ilegible. Es la misma
                    pinta que ya usa el botón de la videollamada, que va pegado. */
-                el.className = base + " cursor-not-allowed "
+                el.className = base + " cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 "
                     + (t.apagado ? t.apagado.clases : "bg-white/60 dark:bg-brand-900/60 opacity-60");
                 el.setAttribute("aria-disabled", "true");
             } else {
@@ -664,9 +677,13 @@
                 el.href = boton.href;
                 if (boton.fuera) { el.target = "_blank"; el.rel = "noopener noreferrer"; }
             } else {
-                // Igual que un acceso apagado: ni <a> ni <button>. No recibe el
-                // foco del teclado ni promete un destino que no va a abrir.
+                // Igual que un acceso apagado: sin `href`, así que no promete
+                // un destino, pero se puede enfocar para leer por qué está
+                // cerrado (ver renderTileCard()).
+                el.tabIndex = 0;
+                el.setAttribute("role", "link");
                 el.setAttribute("aria-disabled", "true");
+                el.classList.add("focus:outline-none", "focus-visible:ring-2", "focus-visible:ring-accent-400");
             }
             const icono = document.createElement("span");
             icono.className = "text-2xl leading-none";
@@ -774,7 +791,25 @@
             return renderTileCard(t, true);
         }
 
+        /* Que la clase se abra lo trae Realtime y la tarjeta se destapa sola:
+           quien ve la pantalla lo nota, quien no la ve no se enteraba hasta
+           volver a pasar por ahí. Se dice en una región viva, y solo en el
+           CAMBIO: al cargar, la tarjeta ya lo dice y anunciarlo sería ruido. */
+        let claseAbiertaAntes = null;
+        function avisarCambioDeClase() {
+            if (esEquipoDocente() || !videollamadaLista) return;
+            const abierta = misClases.some((c) => c.clase_abierta);
+            if (claseAbiertaAntes !== null && abierta !== claseAbiertaAntes) {
+                const clase = misClases.find((c) => c.clase_abierta);
+                document.getElementById("aviso-clase").textContent = abierta
+                    ? `${(clase && clase.profesor) || "Tu profe"} abrió la clase: ya puedes entrar a la sesión en vivo.`
+                    : "La clase en vivo terminó.";
+            }
+            claseAbiertaAntes = abierta;
+        }
+
         function pintarClaseEnVivo() {
+            avisarCambioDeClase();
             const wrap = document.getElementById("sesion-wrap");
             if (wrap) {
                 wrap.innerHTML = "";
@@ -1371,8 +1406,12 @@
             document.getElementById("seguir-curso-texto").textContent =
                 `${c.titulo} — ${c.hechos} de ${c.total} temas`
                 + (c.ultimo_titulo ? `. Lo último: ${c.ultimo_titulo}.` : ".");
-            document.getElementById("seguir-curso-barra").style.width =
-                Math.round((c.hechos / c.total) * 100) + "%";
+            const pct = Math.round((c.hechos / c.total) * 100);
+            document.getElementById("seguir-curso-barra").style.width = pct + "%";
+            // El ancho solo se VE: el lector de pantalla lee el valor.
+            const progreso = document.getElementById("seguir-curso-progreso");
+            progreso.setAttribute("aria-valuenow", String(pct));
+            progreso.setAttribute("aria-valuetext", `${pct} % (${c.hechos} de ${c.total} temas)`);
             document.getElementById("seguir-curso").hidden = false;
         }
 
@@ -1806,9 +1845,34 @@
         }
 
         // Modal de cambio de contraseña
+        /* Es un diálogo de verdad: el foco entra al abrirlo, no se escapa
+           con Tab mientras está abierto, Escape lo cierra y al cerrar vuelve
+           al botón que lo abrió. Sin eso, quien usa lector de pantalla
+           apretaba «Contraseña», no oía nada, y el formulario quedaba al final
+           de la página, detrás de todo el panel. */
         const pwModal = document.getElementById("pw-modal");
-        document.getElementById("change-pw-btn").addEventListener("click", () => pwModal.classList.remove("hidden"));
-        document.getElementById("pw-cancel-btn").addEventListener("click", () => pwModal.classList.add("hidden"));
+        const pwAbrir = document.getElementById("change-pw-btn");
+        function cerrarPw() {
+            if (pwModal.classList.contains("hidden")) return;
+            pwModal.classList.add("hidden");
+            document.getElementById("new-password").value = "";
+            document.getElementById("pw-msg").textContent = "";
+            pwAbrir.focus();
+        }
+        pwAbrir.addEventListener("click", () => {
+            pwModal.classList.remove("hidden");
+            document.getElementById("new-password").focus();
+        });
+        document.getElementById("pw-cancel-btn").addEventListener("click", cerrarPw);
+        pwModal.addEventListener("click", (e) => { if (e.target === pwModal) cerrarPw(); });
+        pwModal.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") { e.preventDefault(); cerrarPw(); return; }
+            if (e.key !== "Tab") return;
+            const enfocables = pwModal.querySelectorAll("input, button");
+            const primero = enfocables[0], ultimo = enfocables[enfocables.length - 1];
+            if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+            else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+        });
         document.getElementById("pw-save-btn").addEventListener("click", async () => {
             const pwMsg = document.getElementById("pw-msg");
             const newPassword = document.getElementById("new-password").value;
@@ -1825,7 +1889,7 @@
             }
             pwMsg.textContent = "Contraseña actualizada.";
             pwMsg.className = "text-xs text-green-600 dark:text-green-400 mb-3";
-            setTimeout(() => { pwModal.classList.add("hidden"); document.getElementById("new-password").value = ""; }, 1200);
+            setTimeout(cerrarPw, 1200);
         });
 
         async function init() {
@@ -2003,6 +2067,14 @@
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
+            /* «Cargando tu panel…» desaparece y, sin esto, el lector de
+               pantalla no dice nada: quien no ve la página no sabe que ya
+               cargó. El foco va al título —que dice de quién es el panel—,
+               pero solo si nadie lo movió antes: arrancarle el foco a quien ya
+               estaba navegando sería peor que el silencio. */
+            if (!document.activeElement || document.activeElement === document.body) {
+                document.getElementById("panel-titulo").focus({ preventScroll: true });
+            }
         }
 
         init();
