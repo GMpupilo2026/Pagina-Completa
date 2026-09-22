@@ -31,12 +31,13 @@
     <script src="js/piece-color-themes.js"></script>
     <script src="js/piece-style-themes.js"></script>
     <script src="js/board-color-themes.js"></script>
+    <script src="js/temas-plataforma.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/videollamada.js"></script>
 
 
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
@@ -118,6 +119,23 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350">Cambia entre modo claro y oscuro con el botón <span aria-hidden="true">☀️/🌙</span> de la barra superior.</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Tema de toda la plataforma (js/temas-plataforma.js). No es el tema
+                 del tablero: cambia el color del encabezado, de las tarjetas, de
+                 los botones y de los textos en todas las páginas, más el color de
+                 las casillas y la decoración. -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tema de la plataforma 🎨</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                    Elige de qué color es <strong>todo el sitio</strong>: el encabezado, las tarjetas, los botones, los textos y las casillas del tablero.
+                    Es solo para tu pantalla, en este navegador — nadie más lo nota y no cambia ninguna partida.
+                    Funciona igual en modo claro y en modo oscuro.
+                </p>
+                <div id="tema-plataforma-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Tema de la plataforma"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">
+                    Cada tema propone también el color de las casillas. Si más abajo eliges un color de tablero a mano, ese manda y el tema no lo toca.
+                </p>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -443,6 +461,56 @@
         }
         renderBoardThemeGrid();
 
+        // ---------- Tema de TODA la plataforma (js/temas-plataforma.js) ----------
+        // La vista previa es una "pantallita" con seis colores del tema: la barra del
+        // encabezado, el fondo de la página, una tarjeta, el botón de acento y las dos
+        // casillas del tablero. Elegir por el nombre no dice nada — "Sirenas" puede ser
+        // cualquier cosa — y el nombre de un color tampoco: lo que se elige es cómo va a
+        // quedar el sitio, así que eso es lo que hay que poder ver antes de tocar.
+        function buildTemaPreviewHTML(tema) {
+            const casillas = (window.BoardColorThemes || {}).THEMES || {};
+            const sq = casillas[tema.casillas] || casillas.clasico || { light: "#f0f4f8", dark: "#486581" };
+            return (
+                '<span class="tema-previa" aria-hidden="true">' +
+                '<span class="tema-previa-barra" style="background:' + tema.brand[800] + '"></span>' +
+                '<span class="tema-previa-cuerpo" style="background:' + tema.brand[50] + '">' +
+                '<span class="tema-previa-tarjeta" style="background:#ffffff"></span>' +
+                '<span class="tema-previa-pastilla" style="background:' + tema.accent[500] + '"></span>' +
+                '<span class="tema-previa-sq" style="background:' + sq.light + '"></span>' +
+                '<span class="tema-previa-sq" style="background:' + sq.dark + '"></span>' +
+                "</span></span>"
+            );
+        }
+
+        function renderTemaPlataformaGrid() {
+            const grid = document.getElementById("tema-plataforma-grid");
+            if (!grid || !window.TemasPlataforma) return;
+            const actual = window.TemasPlataforma.getPreference();
+            grid.innerHTML = "";
+            Object.keys(window.TemasPlataforma.TEMAS).forEach((id) => {
+                const tema = window.TemasPlataforma.TEMAS[id];
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = id === actual ? THEME_ACTIVE : THEME_INACTIVE;
+                btn.setAttribute("role", "radio");
+                btn.setAttribute("aria-checked", id === actual ? "true" : "false");
+                btn.innerHTML =
+                    buildTemaPreviewHTML(tema) +
+                    '<span class="block text-lg" aria-hidden="true">' + tema.icono + "</span>" +
+                    '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + tema.label + "</span>" +
+                    '<span class="block text-[11px] leading-snug text-brand-450 dark:text-brand-350 mt-0.5">' + tema.descripcion + "</span>";
+                btn.addEventListener("click", () => {
+                    window.TemasPlataforma.setPreference(id);
+                    // Las tres rejillas se vuelven a pintar: las dos de colores de
+                    // tablero tienen una tarjeta "Como el tema", y su vista previa
+                    // enseña el color que acaba de cambiar.
+                    renderTemaPlataformaGrid();
+                    renderBoardColorThemeGrids();
+                });
+                grid.appendChild(btn);
+            });
+        }
+
         // ---------- Colores del tablero, normal y Modo Adaptado (preferencia local,
         // ver js/board-color-themes.js) — mismo patrón visual que el tema de piezas de
         // arriba, pero la "vista previa" acá son las 2 casillas del propio tema (no hace
@@ -456,14 +524,30 @@
             );
         }
 
-        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview) {
+        // `vars`, cuando se pasa, agrega adelante la tarjeta "Como el tema": es lo que
+        // trae quien nunca eligió un color a mano, y quiere decir que manda el que
+        // proponga el tema de plataforma (ver AUTO en js/board-color-themes.js). Su
+        // vista previa lee las variables YA CALCULADAS por el navegador y no la tabla
+        // de temas, que es la única forma de que enseñe el color que de verdad está
+        // puesto — el del tema, o el de resguardo de css/styles.css si no hay ninguno.
+        function colorDeVariable(nombre, resguardo) {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
+            return v || resguardo;
+        }
+
+        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars) {
             buildPreview = buildPreview || buildColorPreviewHTML;
             const grid = document.getElementById(gridId);
             if (!grid) return;
             const current = getCurrent();
             grid.innerHTML = "";
-            Object.keys(themes).forEach((id) => {
-                const theme = themes[id];
+            const ids = vars ? ["auto"].concat(Object.keys(themes)) : Object.keys(themes);
+            ids.forEach((id) => {
+                const theme = id === "auto"
+                    ? { label: "Como el tema",
+                        light: colorDeVariable(vars[0], "#f0f4f8"),
+                        dark: colorDeVariable(vars[1], "#486581") }
+                    : themes[id];
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = id === current ? THEME_ACTIVE : THEME_INACTIVE;
@@ -474,7 +558,7 @@
                     '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
                 btn.addEventListener("click", () => {
                     setCurrent(id);
-                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview);
+                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars);
                 });
                 grid.appendChild(btn);
             });
@@ -486,16 +570,21 @@
                 "board-color-theme-grid",
                 window.BoardColorThemes.THEMES,
                 window.BoardColorThemes.getPreference,
-                window.BoardColorThemes.setPreference
+                window.BoardColorThemes.setPreference,
+                buildColorPreviewHTML,
+                ["--sq-light", "--sq-dark"]
             );
             renderColorThemeGrid(
                 "board-color-theme-adaptive-grid",
                 window.BoardColorThemes.ADAPTIVE_THEMES,
                 window.BoardColorThemes.getAdaptivePreference,
-                window.BoardColorThemes.setAdaptivePreference
+                window.BoardColorThemes.setAdaptivePreference,
+                buildColorPreviewHTML,
+                ["--sq-light-adaptive", "--sq-dark-adaptive"]
             );
         }
         renderBoardColorThemeGrids();
+        renderTemaPlataformaGrid();
 
         // ---------- Color de las piezas, normal y Modo Adaptado (js/piece-color-themes.js) —
         // mismo renderColorThemeGrid de arriba, con una vista previa propia: acá el par es

@@ -38,6 +38,13 @@
     negro: { label: "Negro", light: "#e5e5e5", dark: "#2b2b2b" },
     moradooscuro: { label: "Morado oscuro y negro", light: "#9333ea", dark: "#000000" },
     moradoclaro: { label: "Morado claro y negro", light: "#e9d5ff", dark: "#000000" },
+    // Estos cuatro entraron con los temas de plataforma (js/temas-plataforma.js):
+    // son los que propone cada tema, y siguen estando acá para poder elegirlos
+    // a mano con cualquier tema puesto.
+    rosado: { label: "Rosado", light: "#ffe4f1", dark: "#d3608f" },
+    lila: { label: "Lila", light: "#f0e4ff", dark: "#9a6fc4" },
+    turquesa: { label: "Turquesa", light: "#e0f7fa", dark: "#4a9aa8" },
+    fuego: { label: "Rojo y arena", light: "#f7e6d8", dark: "#b9563f" },
   };
 
   // El de alto contraste (blanco y negro) es justo lo que pidió el profesor
@@ -50,19 +57,33 @@
     moradoclaro: { label: "Morado claro y negro", light: "#e9d5ff", dark: "#000000" },
     morado: { label: "Morado y negro", light: "#c084fc", dark: "#000000" },
     moradooscuro: { label: "Morado oscuro y negro", light: "#9333ea", dark: "#000000" },
+    rosadonegro: { label: "Rosado y negro", light: "#ffd6e8", dark: "#000000" },
   };
 
+  // "auto" es lo que trae cualquiera que nunca haya elegido, y quiere decir
+  // "el color que proponga el tema de plataforma" (ver js/temas-plataforma.js):
+  // Princesas pone las casillas rosadas, Bosque verdes. NO se resuelve acá
+  // preguntándole a esa tabla, que este script no carga en las páginas con
+  // tablero: se resuelve por CASCADA. Con "auto" no se escribe ninguna
+  // variable en línea, así que manda la que definió el tema en
+  // css/tailwind.css (y sin tema, la del :root de css/styles.css, que es el
+  // Clásico de siempre). Elegir un color a mano lo escribe en línea sobre
+  // <html>, y un estilo en línea gana sobre cualquier hoja: la elección
+  // explícita de cada quien nunca la pisa un tema.
+  const AUTO = "auto";
+
   function readKey(key, themes) {
-    let id = "clasico";
+    let id = AUTO;
     try {
-      id = localStorage.getItem(key) || "clasico";
+      id = localStorage.getItem(key) || AUTO;
     } catch (e) {}
-    return themes[id] ? id : "clasico";
+    return themes[id] || id === AUTO ? id : AUTO;
   }
   function writeKey(key, id, themes) {
-    if (!themes[id]) id = "clasico";
+    if (!themes[id]) id = AUTO;
     try {
-      localStorage.setItem(key, id);
+      if (id === AUTO) localStorage.removeItem(key);
+      else localStorage.setItem(key, id);
     } catch (e) {}
     return id;
   }
@@ -74,14 +95,24 @@
     return readKey(KEY_ADAPTIVE, ADAPTIVE_THEMES);
   }
 
+  // Con "auto" se QUITA la variable en línea en vez de no ponerla: hace falta
+  // para el camino de vuelta — quien tenía Madera elegido y pasa a "Como el
+  // tema" se quedaría con la madera escrita en línea, pisando al tema para
+  // siempre y sin ningún error a la vista.
+  function escribir(root, nombres, theme) {
+    if (!theme) {
+      nombres.forEach((n) => root.removeProperty(n));
+      return;
+    }
+    root.setProperty(nombres[0], theme.light);
+    root.setProperty(nombres[1], theme.dark);
+  }
+
   function apply() {
-    const theme = THEMES[getPreference()];
-    const adaptiveTheme = ADAPTIVE_THEMES[getAdaptivePreference()];
     const root = document.documentElement.style;
-    root.setProperty("--sq-light", theme.light);
-    root.setProperty("--sq-dark", theme.dark);
-    root.setProperty("--sq-light-adaptive", adaptiveTheme.light);
-    root.setProperty("--sq-dark-adaptive", adaptiveTheme.dark);
+    escribir(root, ["--sq-light", "--sq-dark"], THEMES[getPreference()]);
+    escribir(root, ["--sq-light-adaptive", "--sq-dark-adaptive"],
+             ADAPTIVE_THEMES[getAdaptivePreference()]);
   }
 
   function setPreference(id) {
@@ -95,11 +126,8 @@
     return id;
   }
 
-  // Aplica de una vez, antes de que cualquier tablero dibuje sus casillas
-  // (este script se carga en el <head>, junto a adaptive-mode.js).
-  apply();
-
-  window.BoardColorThemes = {
+  const API = {
+    AUTO,
     THEMES,
     ADAPTIVE_THEMES,
     getPreference,
@@ -107,4 +135,16 @@
     getAdaptivePreference,
     setAdaptivePreference,
   };
+
+  // Las dos tablas las lee también herramientas/css-construir.js con `require`,
+  // para escribir en css/tailwind.css el color de casillas que propone cada
+  // tema de plataforma: una lista de colores copiada allá se iría separando de
+  // esta a la primera corrección.
+  if (typeof module !== "undefined" && module.exports) module.exports = API;
+  if (typeof window !== "undefined") {
+    window.BoardColorThemes = API;
+    // Aplica de una vez, antes de que cualquier tablero dibuje sus casillas
+    // (este script se carga en el <head>, junto a adaptive-mode.js).
+    if (typeof document !== "undefined") apply();
+  }
 })();

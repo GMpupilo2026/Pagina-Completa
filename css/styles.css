@@ -4,10 +4,14 @@
    mismo azul grisáceo de siempre — y sirven de resguardo (fallback) si por
    lo que sea ese script no llegó a correr todavía: ningún tablero del sitio
    debería quedar con casillas transparentes por depender de una variable sin
-   definir. board-color-themes.js sobrescribe estos valores en <html> según
-   la preferencia guardada, así que todo tablero que use var(--sq-light) /
-   var(--sq-dark) (o las variantes -adaptive de Modo Adaptado) cambia de
-   color sin que haga falta tocar su propio CSS o JS. */
+   definir. Encima de estos valores mandan dos cosas, en este orden: el TEMA
+   de plataforma, que los redefine en css/tailwind.css (Princesas pone las
+   casillas rosadas), y la elección a mano de cada quien, que
+   board-color-themes.js escribe como estilo EN LÍNEA sobre <html> y por eso
+   gana siempre. Con «Como el tema» puesto —lo que trae quien nunca eligió—
+   ese script no escribe nada y manda el tema. Así todo tablero que use
+   var(--sq-light) / var(--sq-dark) (o las variantes -adaptive de Modo
+   Adaptado) cambia de color sin que haga falta tocar su propio CSS o JS. */
 :root {
   --sq-light: #f0f4f8;
   --sq-dark: #486581;
@@ -49,12 +53,12 @@ body { -webkit-font-smoothing: antialiased; }
    altura fija el contenido se sale de la caja en vez de empujarla. */
 #header.scrolled nav > div { min-height: 3.5rem; }
 #chessboard .square { display: flex; align-items: center; justify-content: center; font-size: clamp(1.5rem, 5vw, 2.5rem); cursor: pointer; transition: background-color 0.15s ease; user-select: none; }
-#chessboard .square.light { background-color: #f0f4f8; }
-#chessboard .square.dark  { background-color: #486581; }
-#chessboard .square.selected { background-color: #f0b429 !important; box-shadow: inset 0 0 0 3px #cb6e17; }
-#chessboard .square.legal-move::after { content: ''; width: 30%; height: 30%; border-radius: 50%; background-color: rgba(240, 180, 41, 0.5); position: absolute; }
-#chessboard .square.legal-capture { box-shadow: inset 0 0 0 4px rgba(203, 110, 23, 0.7); }
-#chessboard .square.last-move { background-color: rgba(240, 180, 41, 0.3) !important; }
+#chessboard .square.light { background-color: var(--sq-light, #f0f4f8); }
+#chessboard .square.dark  { background-color: var(--sq-dark, #486581); }
+#chessboard .square.selected { background-color: rgb(var(--c-accent-400, 240 180 41)) !important; box-shadow: inset 0 0 0 3px rgb(var(--c-accent-600, 203 110 23)); }
+#chessboard .square.legal-move::after { content: ''; width: 30%; height: 30%; border-radius: 50%; background-color: rgb(var(--c-accent-400, 240 180 41) / 0.5); position: absolute; }
+#chessboard .square.legal-capture { box-shadow: inset 0 0 0 4px rgb(var(--c-accent-600, 203 110 23) / 0.7); }
+#chessboard .square.last-move { background-color: rgb(var(--c-accent-400, 240 180 41) / 0.3) !important; }
 #chessboard .square.in-check { background-color: #e53e3e !important; }
 /* Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son solo un contorno hueco: sin un color
    propio quedan indistinguibles de las negras (heredan el mismo color de texto de la página).
@@ -91,7 +95,7 @@ body { -webkit-font-smoothing: antialiased; }
   vertical-align: middle;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
-.radio-card-selected { background-color: rgba(240, 180, 41, 0.1); border-color: #de911d; }
+.radio-card-selected { background-color: rgb(var(--c-accent-400, 240 180 41) / 0.1); border-color: rgb(var(--c-accent-500, 222 145 29)); }
 
 /* Tablero de "Ilumina el Tablero" (js/ilumina-board.js): la figura de cada
    nivel es una grilla irregular — las casillas fuera de la figura se dejan
@@ -101,7 +105,7 @@ body { -webkit-font-smoothing: antialiased; }
 .ilumina-casilla { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; position: relative; font-size: clamp(1.1rem, 3.5vw, 1.8rem); cursor: pointer; border: none; padding: 0; transition: background-color 0.15s ease; }
 .ilumina-casilla.clara { background: var(--sq-light); }
 .ilumina-casilla.oscura { background: var(--sq-dark); }
-.ilumina-casilla.iluminada { background-color: #f0b429 !important; box-shadow: inset 0 0 0 2px #cb6e17; }
+.ilumina-casilla.iluminada { background-color: rgb(var(--c-accent-400, 240 180 41)) !important; box-shadow: inset 0 0 0 2px rgb(var(--c-accent-600, 203 110 23)); }
 .ilumina-casilla.amenazada { background-color: #e53e3e !important; }
 .ilumina-pieza.amenazada { opacity: 0.55; filter: grayscale(60%); }
 
@@ -150,11 +154,11 @@ body { -webkit-font-smoothing: antialiased; }
   padding: 1px 3px;
   border-radius: 4px;
   background: #ffffff;
-  color: #102a43;
-  box-shadow: 0 0 0 1.5px rgba(16, 42, 67, 0.35);
+  color: rgb(var(--c-brand-800, 16 42 67));
+  box-shadow: 0 0 0 1.5px rgb(var(--c-brand-800, 16 42 67) / 0.35);
   pointer-events: none;
 }
-.dark .theme-token-label { background: #0a1f33; color: #f0f4f8; box-shadow: 0 0 0 1.5px rgba(240, 244, 248, 0.35); }
+.dark .theme-token-label { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-50, 240 244 248)); box-shadow: 0 0 0 1.5px rgb(var(--c-brand-50, 240 244 248) / 0.35); }
 
 /* Vista previa de cada tema en Configuración (configuracion.html): 3 mini-casillas con
    una pieza de muestra (rey blanco, dama negra, caballo blanco) para ver el estilo real
@@ -173,8 +177,8 @@ body { -webkit-font-smoothing: antialiased; }
 .theme-preview-sq-light { background: var(--sq-light); }
 .theme-preview-sq-dark { background: var(--sq-dark); }
 #move-history::-webkit-scrollbar { width: 6px; }
-#move-history::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 3px; }
-#move-history::-webkit-scrollbar-thumb { background: #9fb3c8; border-radius: 3px; }
+#move-history::-webkit-scrollbar-track { background: rgb(var(--c-brand-50, 240 244 248)); border-radius: 3px; }
+#move-history::-webkit-scrollbar-thumb { background: rgb(var(--c-brand-300, 159 179 200)); border-radius: 3px; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
 
@@ -186,16 +190,16 @@ body { -webkit-font-smoothing: antialiased; }
   grid-template-rows: repeat(8, 1fr);
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 2px solid #486581;
+  border: 2px solid rgb(var(--c-brand-500, 72 101 129));
   border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(16, 42, 67, 0.18);
+  box-shadow: 0 4px 14px rgb(var(--c-brand-800, 16 42 67) / 0.18);
 }
 /* font-size real lo fija js/article-example-board.js (mide el ancho ya renderizado de
    la casilla): esto es solo el valor antes de esa primera medición. */
 .example-sq { display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.example-sq-light { background: #f0f4f8; }
-.example-sq-dark { background: #486581; }
+.example-sq-light { background: var(--sq-light, #f0f4f8); }
+.example-sq-dark { background: var(--sq-dark, #486581); }
 .example-readout p { margin: 2px 0; }
 
 /* Coordenadas a-h/1-8 FUERA del tablero principal, como un tablero físico — siempre
@@ -220,11 +224,11 @@ body { -webkit-font-smoothing: antialiased; }
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
-  color: #627d98; /* brand-400 */
+  color: rgb(var(--c-brand-400, 98 125 152));
 }
 .dark .board-coords-ranks span,
 .dark .board-coords-files span {
-  color: #9fb3c8; /* brand-300 */
+  color: rgb(var(--c-brand-300, 159 179 200));
 }
 
 /* ===== Modo Adaptado (js/adaptive-mode.js) =====
@@ -260,9 +264,20 @@ html.adaptive-mode *::after {
   scroll-behavior: auto !important;
 }
 html.adaptive-mode *:focus-visible {
-  outline: 3px solid #de911d !important;
+  outline: 3px solid rgb(var(--c-accent-500, 222 145 29)) !important;
   outline-offset: 3px !important;
 }
+/* El fondo decorativo de un tema de plataforma (los corazones de Princesas, las
+   estrellas de Galaxia) se APAGA en Modo Adaptado. Va al 10 % de opacidad y
+   debajo del texto, o sea que es ruido visual justo para quien tiene el modo
+   encendido por baja visión — que es de lo poco que este modo puede quitar de
+   en medio. El tema no se apaga: los colores se quedan, lo que se va es el
+   adorno. Necesita !important porque la regla del tema lleva más
+   especificidad (`:root[data-tema="x"] body`). */
+html.adaptive-mode body {
+  background-image: none !important;
+}
+
 /* Piezas en Modo Adaptado: redefine las 4 variables "normales" a los valores
    "-adaptive" del tema elegido (js/piece-color-themes.js). Necesita
    !important: board-color-themes.js/piece-color-themes.js escriben las
@@ -362,8 +377,8 @@ html.adaptive-mode .curso-aviso-adaptado {
   display: block;
   margin-bottom: 1.25rem;
   padding: 0.75rem 1rem;
-  border-left: 4px solid #de911d;
-  background: rgba(222, 145, 29, 0.12);
+  border-left: 4px solid rgb(var(--c-accent-500, 222 145 29));
+  background: rgb(var(--c-accent-500, 222 145 29) / 0.12);
   border-radius: 0 0.5rem 0.5rem 0;
   line-height: 1.6;
 }
@@ -397,8 +412,8 @@ html.adaptive-mode .curso-posicion {
   clip: auto;
   white-space: normal;
   border: 0;
-  border-left: 4px solid #de911d;
-  background: rgba(222, 145, 29, 0.12);
+  border-left: 4px solid rgb(var(--c-accent-500, 222 145 29));
+  background: rgb(var(--c-accent-500, 222 145 29) / 0.12);
   border-radius: 0 0.5rem 0.5rem 0;
   line-height: 1.7;
 }
@@ -421,11 +436,11 @@ html.adaptive-mode .curso-posicion::before {
   margin: 0 0 1rem;
   padding: 0.7rem 0.9rem;
   border-radius: 0.75rem;
-  border-left: 4px solid #de911d;
-  background: rgba(222, 145, 29, 0.12);
-  color: #243b53;
+  border-left: 4px solid rgb(var(--c-accent-500, 222 145 29));
+  background: rgb(var(--c-accent-500, 222 145 29) / 0.12);
+  color: rgb(var(--c-brand-700, 36 59 83));
 }
-.dark .tarea-en-curso { color: #f0f4f8; background: rgba(222, 145, 29, 0.16); }
+.dark .tarea-en-curso { color: rgb(var(--c-brand-50, 240 244 248)); background: rgb(var(--c-accent-500, 222 145 29) / 0.16); }
 .tarea-en-curso.tarea-lista { border-left-color: #22c55e; background: rgba(34, 197, 94, 0.14); }
 .tarea-en-curso-fila {
   display: flex;
@@ -440,23 +455,51 @@ html.adaptive-mode .curso-posicion::before {
 .tarea-en-curso-volver {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #b44d12;
+  color: rgb(var(--c-accent-700, 168 90 13));
   text-decoration: underline;
   flex-shrink: 0;
 }
-.dark .tarea-en-curso-volver { color: #f7c948; }
-.tarea-en-curso-volver:focus-visible { outline: 2px solid #de911d; outline-offset: 2px; border-radius: 0.25rem; }
+.dark .tarea-en-curso-volver { color: rgb(var(--c-accent-300, 247 201 72)); }
+.tarea-en-curso-volver:focus-visible { outline: 2px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; border-radius: 0.25rem; }
 .tarea-en-curso-barra {
   margin-top: 0.5rem;
   height: 0.375rem;
   border-radius: 999px;
-  background: rgba(36, 59, 83, 0.15);
+  background: rgb(var(--c-brand-700, 36 59 83) / 0.15);
   overflow: hidden;
 }
-.dark .tarea-en-curso-barra { background: rgba(240, 244, 248, 0.2); }
-.tarea-en-curso-barra i { display: block; height: 100%; background: #de911d; transition: width 0.3s ease; }
+.dark .tarea-en-curso-barra { background: rgb(var(--c-brand-50, 240 244 248) / 0.2); }
+.tarea-en-curso-barra i { display: block; height: 100%; background: rgb(var(--c-accent-500, 222 145 29)); transition: width 0.3s ease; }
 .tarea-en-curso.tarea-lista .tarea-en-curso-barra i { background: #22c55e; }
 /* En Modo Adaptado la franja es de las primeras cosas que se leen, así que
    crece con el resto del texto en vez de quedarse en letra chica. */
 html.adaptive-mode .tarea-en-curso-texto strong { font-size: 1.05rem; }
 html.adaptive-mode .tarea-en-curso-detalle { font-size: 0.95rem; opacity: 1; }
+
+/* ===== Vista previa de un tema de plataforma (configuracion.html) =====
+ * Una "pantallita" de 6 colores del tema —la barra del encabezado, el fondo de
+ * la página, una tarjeta, el botón de acento y las dos casillas del tablero—
+ * para poder elegir viendo lo que va a pasar, no leyendo el nombre. Los
+ * colores los pone el JavaScript en línea desde js/temas-plataforma.js, que es
+ * la única tabla: escribir acá un rosa "parecido" dejaría la vista previa
+ * enseñando un tema y la plataforma pintando otro.
+ *
+ * Va en CSS propio y no en clases de Tailwind por la misma razón que la franja
+ * de la tarea en curso: cada clase de utilidad nueva hay que volver a
+ * compilarla (ver herramientas/css-construir.js), y una clase a medias no
+ * pinta nada sin dar ningún error.
+ */
+.tema-previa {
+  display: flex;
+  flex-direction: column;
+  height: 46px;
+  border-radius: 0.55rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  margin-bottom: 0.5rem;
+}
+.tema-previa-barra { height: 13px; flex-shrink: 0; }
+.tema-previa-cuerpo { flex: 1; display: flex; align-items: center; gap: 4px; padding: 0 5px; }
+.tema-previa-tarjeta { width: 20px; height: 13px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.tema-previa-pastilla { width: 16px; height: 8px; border-radius: 999px; }
+.tema-previa-sq { width: 12px; height: 12px; }

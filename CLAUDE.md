@@ -6870,6 +6870,139 @@ sistema y no decían nada del curso.
 - El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
   información del curso, no decoración.
 
+## El tema de toda la plataforma: "Princesas" no es un tablero rosado
+
+Los cuatro temas que ya tenía el sitio (`js/board-themes.js`,
+`js/board-color-themes.js`, `js/piece-color-themes.js`,
+`js/piece-style-themes.js`) cambian **el tablero**. Este cambia **la
+plataforma**: el encabezado, las tarjetas, los botones, los textos y los
+enlaces de las 95 páginas, más el color de las casillas y la decoración. Se
+elige en **`configuracion.html` → «Tema de la plataforma»** y hay siete:
+Clásico, Princesas, Unicornios, Sirenas, Galaxia, Bosque y Dragones.
+
+**Se pudo hacer porque la paleta dejó de estar compilada dentro de cada
+clase.** `bg-brand-800` pasó de valer `#102a43` a valer
+`rgb(var(--c-brand-800))`, así que un tema solo redefine esa variable y cambian
+de una vez las 2.628 veces que esa clase aparece escrita en el sitio. Sin eso,
+un tema nuevo sería editar las 95 páginas — o sea, no habría temas. El tema
+Clásico define esas variables con **exactamente los mismos hex de siempre**,
+así que para quien no elige nada no cambió ni un píxel.
+
+- **La tabla es `js/temas-plataforma.js` y corre en los dos lados.** La lee
+  `herramientas/css-construir.js` con `require` para escribir las variables de
+  cada tema al final de `css/tailwind.css`, y la lee el navegador para pintar
+  la rejilla de Configuración. Escrita dos veces se separarían a la primera
+  corrección, y el síntoma sería de los callados: la vista previa enseñando un
+  rosa y la plataforma pintando otro.
+- **NINGUNA PALETA SE ELIGIÓ A OJO, y eso es lo que la hace segura.** Cada tono
+  tiene la MISMA luminancia WCAG que el tono equivalente del Clásico, así que
+  los 49 pares de color que el sitio usa de verdad —`text-brand-600` sobre
+  blanco, `dark:text-brand-300` sobre `brand-900`, `text-brand-900` sobre
+  `accent-500`— dan el mismo contraste en los siete temas. Es la misma regla de
+  «el color nunca se elige a ojo», llevada a donde más fácil se rompe: un rosa
+  bonito deja el texto secundario en 3,2 y la página se ve preciosa mientras
+  hay quien ya no la puede leer. Los hex van **escritos** en la tabla y no
+  calculados al vuelo: el número que se verificó es el que se pinta.
+- **Las variables van DENTRO de `css/tailwind.css`**, al final, y no en una hoja
+  aparte: esa hoja ya la cargan las 95 páginas y un `<link>` nuevo habría que
+  ponerlo en las 95 (y acordarse en la 96). Van al final y con selectores de más
+  especificidad que una utilidad (`:root[data-tema="x"] .rounded-2xl` es 0,2,1
+  contra 0,1,0) porque la decoración tiene que ganarle a las clases que ya están
+  escritas en el HTML.
+
+### El color de casillas lo propone el tema y lo decide el alumno
+
+Princesas pone las casillas rosadas y Bosque verdes, pero **quien eligió Madera
+sigue viendo madera**. Eso no lo resuelve ningún `if`: lo resuelve la cascada.
+
+- El tema escribe `--sq-light`/`--sq-dark` en su bloque de CSS. Elegir un color
+  a mano lo escribe como **estilo en línea** sobre `<html>`
+  (`js/board-color-themes.js`), y un estilo en línea gana sobre cualquier hoja.
+  Así ninguno de los dos tiene que preguntarle nada al otro — que es lo que
+  hacía falta, porque ese script se carga en las páginas con tablero y la tabla
+  de temas no.
+- Por eso la preferencia de casillas nació con un valor nuevo, **`auto` («Como
+  el tema»)**, que es el que trae quien nunca eligió: con `auto` no se escribe
+  ninguna variable en línea. Y al volver a `auto` la variable se **quita**, no
+  se deja de poner: sin eso, quien tenía Madera se quedaría con la madera
+  escrita en línea pisando al tema para siempre, y sin ningún error a la vista.
+- Con los temas entraron cuatro colores de casilla (`rosado`, `lila`,
+  `turquesa`, `fuego`) y uno de Modo Adaptado (`rosadonegro`), que siguen
+  pudiéndose elegir a mano con cualquier tema puesto.
+
+### La decoración, y hasta dónde llega
+
+«Que sea bien decorativa» es la mitad del pedido, así que los temas con
+`decorado` traen además: un patrón de fondo (corazones, estrellas, burbujas,
+hojas, escamas), las esquinas de las tarjetas más redondas, el encabezado y el
+pie en degradado, y la letra de los **títulos** redondeada.
+
+- **El patrón va al 9-10 % de opacidad** porque queda debajo del texto de una
+  página de trabajo: un fondo que se note de más es un fondo que hay que apagar
+  para poder leer. Y NUNCA lleva información — es adorno, no dato.
+- **Son SVG escritos dentro del CSS**, no archivos de `img/`: son 400 bytes cada
+  uno, así que una petición por tema costaría más que el CSS entero.
+- **En Modo Adaptado el patrón se apaga.** Ese modo se enciende por baja visión,
+  y un fondo con figuras debajo del texto es ruido visual justo ahí — quitarlo
+  de en medio es de lo poco que este modo puede hacer. Lo que se va es el
+  adorno: el tema no se apaga, los colores se quedan.
+- **El degradado del encabezado mezcla brand-900/700/600 y nada más.** Son los
+  tres tonos que ya llevan texto blanco encima en el sitio, así que no hay
+  ningún tramo del degradado donde el contraste baje.
+- **Solo los títulos cambian de letra.** El cuerpo se queda en Inter a
+  propósito: es el texto que hay que poder leer en una tarea de veinte minutos,
+  y la fuente redondeada de un tema no se eligió por legibilidad.
+- **La fuente se baja SOLO si el tema elegido la pide.** Declararla en el
+  `<head>` de las 95 páginas la bajaría siempre, también a quien no eligió
+  ningún tema — este sitio ya recortó las fuentes a los pesos que de verdad usa.
+  Por eso el nombre de la familia se guarda también en `localStorage`: no es una
+  segunda fuente de verdad, es una copia que deja `js/temas-plataforma.js` para
+  que el script del `<head>` pueda pedirla sin bajarse la tabla entera.
+
+### El script del `<head>`, y por qué va en línea
+
+`herramientas/tema-cabecera.py` pone en las 95 páginas cuatro líneas que leen la
+preferencia y ponen `data-tema` en `<html>`. Va en el `<head>` por la misma
+razón que el script del modo oscuro que está justo arriba: puesto después, la
+página se pintaría primero azul y después rosada, en cada carga y en cada
+página. Y va **en línea** porque un archivo más pedido en el `<head>` de las 95
+bloquea el primer pintado de todas para cuatro líneas; la tabla entera solo la
+carga `configuracion.html`, que es donde se elige.
+
+- **La lista de páginas se le pide a `pwa-cabecera.py`**, no se vuelve a
+  escribir: es la misma, y este repositorio ya se comió una vez el costo de
+  tener dos listas que tenían que decir lo mismo.
+- De paso ese script **corrige el `theme-color`**, que `pwa-cabecera.py` deja
+  escrito con el azul de siempre: una barra azul del sistema encima de un
+  encabezado rosado se ve como una app a medio pintar. El color lo lee de la
+  variable que acaba de quedar puesta, no de una tabla copiada ahí.
+- **Es una preferencia POR NAVEGADOR** (`localStorage`), como el modo
+  claro/oscuro, el Modo Adaptado y los temas de tablero: es de dónde se está
+  mirando, no de quién mira. No se sincroniza con la cuenta a propósito.
+- Un id que no existe no pinta nada y la plataforma se ve como siempre, así que
+  un valor raro guardado ahí no rompe nada. `inscripcion.html` queda fuera con
+  su verde propio: es pública, sin sesión, y quien la abre todavía no es alumno
+  de nadie.
+
+**Al tocar la tabla de temas, la paleta, el generador de CSS o la tarjeta de
+Configuración, correr `node herramientas/verificar-temas-plataforma.js`** (con
+el sitio en localhost:8777 y playwright). Comprueba lo que se rompe callado, que
+acá son cuatro cosas distintas: que ningún tema se olvide un tono —una variable
+sin definir deja una declaración inválida y pinta el color heredado, sin ningún
+error—, que ninguno pierda contraste contra el Clásico en los 49 pares, que
+**`css/tailwind.css` esté al día con la tabla** —armando el bloque con la MISMA
+función que lo escribió: cambiar una paleta y no recompilar deja la vista previa
+diciendo una cosa y el sitio pintando otra—, y que el script esté en el `<head>`
+de todas y en ninguna de las que quedan fuera. Después, en un navegador de
+verdad: que tocar «Princesas» pinte el encabezado rosado **de verdad** (se mide
+el color que calculó el navegador, no la clase), que el tema alcance a las otras
+páginas y al modo oscuro, que la elección de casillas del alumno le gane al tema
+**y que el camino de vuelta funcione**, y que con el tema puesto el texto peor
+parado de la página siga llegando a su mínimo de contraste. Está probado que
+falla de verdad: con un rosa elegido a ojo saltan el contraste y el compilado,
+sin recompilar salta el compilado, y quitándole el script a una página saltan
+dos.
+
 ## El CSS va compilado, no por CDN
 
 `css/tailwind.css` lo genera `node herramientas/css-construir.js` (después de
@@ -6879,8 +7012,13 @@ CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
 parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
 el navegador cachea.
 
-- **La paleta vive en `herramientas/css-construir.js`**, no en el `<head>`.
-  Antes estaba copiada en las 73 páginas, en dos formatos distintos.
+- **La paleta ya no se compila dentro de cada clase: son variables CSS.**
+  Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
+  `herramientas/css-construir.js`, y hoy vive en `js/temas-plataforma.js` —
+  porque dejó de haber UNA paleta y hay una por tema (ver «El tema de toda la
+  plataforma»). Lo que el generador le pasa a Tailwind es
+  `rgb(var(--c-brand-800) / <alpha-value>)`, y las variables de cada tema se
+  escriben al final del archivo compilado.
 - `inscripcion.html` lleva su propio `css/tailwind-inscripcion.css`: tiene otro
   diseño y su `brand` es verde, así que los dos no pueden convivir en un mismo
   archivo.
