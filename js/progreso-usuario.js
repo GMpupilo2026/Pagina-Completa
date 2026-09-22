@@ -51,6 +51,19 @@ window.ProgresoUsuario = (function () {
       });
       return JSON.stringify(salida);
     },
+    // Objetos "id → marca donde MENOS es mejor" (jugadas para terminar): la
+    // menor de cada una. Es el espejo de maxPorClave, y hace falta aparte:
+    // fundirlos con el máximo se quedaría con la PEOR marca de los dos aparatos.
+    minPorClave(local, remoto) {
+      if (local === null) return remoto;
+      if (remoto === null) return local;
+      const a = leerObjeto(remoto), b = leerObjeto(local), salida = Object.assign({}, a);
+      Object.keys(b).forEach((k) => {
+        const x = Number(a[k]), y = Number(b[k]);
+        salida[k] = (Number.isFinite(x) && x > 0 && Number.isFinite(y) && y > 0) ? Math.min(x, y) : (b[k] !== undefined ? b[k] : a[k]);
+      });
+      return JSON.stringify(salida);
+    },
     // Mejores marcas y contadores: el número más alto.
     maxNumero(local, remoto) {
       if (local === null) return remoto;
@@ -129,6 +142,8 @@ window.ProgresoUsuario = (function () {
     { clave: "ilumina_hints_used",               fusion: "maxNumero" },
     { clave: "confites_best",                    fusion: "maxNumero" },   // Confites del caballo
     { clave: "confites_best_limpio",             fusion: "maxNumero" },
+    { clave: "sonar_estrellas_v1",               fusion: "maxPorClave" },   // El Sonar: nivel → estrellas
+    { clave: "sonar_mejor_v1",                   fusion: "minPorClave" },   // nivel → menos jugadas
     { clave: "aperturas_srs_v1",                 fusion: "srsPorLinea" },  // Aperturas y celadas
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización

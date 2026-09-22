@@ -6994,6 +6994,72 @@ quedarse sin saltos; 64 es el recorrido completo.
   el juego no es una de ellas—; el tiempo sí se registra con
   `js/tiempo-plataforma.js data-activity="confites"`, que no tiene CHECK.
 
+## El Sonar: un juego hecho para jugarse sin ver
+
+`sonar.html` (tarjeta en Juegos y sección propia en `ciegos.html`) es el primer
+juego del sitio que **no se adaptó para ciegos: se escribió así desde el
+principio**. Hay un tesoro hundido en una casilla y **no lo ve nadie** —ni quien
+usa lector de pantalla ni quien mira el monitor—. Tu pieza lo busca moviéndose
+como en ajedrez, y después de cada jugada el sonar dice a cuántas jugadas DE ESA
+PIEZA está. Como toda la información es un número y una casilla, se oye igual de
+bien que se lee: con la pantalla o sin ella es el mismo juego, y un alumno ciego
+y uno que ve compiten en igualdad. De paso enseña la geometría de la pieza (que a
+un caballo la casilla de al lado le queda a tres saltos no se aprende leyéndolo).
+
+Cuatro niveles: el rey (pasos), el caballo (saltos), dos tesoros (el sonar oye
+el más cercano) y aguas turbias (solo dice «más cerca», «más lejos» o «igual»).
+
+- **Las reglas viven en `js/sonar-motor.js`**, sin DOM, y las corre el
+  verificador en Node: lo que se comprueba es la regla que juega el alumno, no
+  una copia.
+- **Se cuenta de cuatro formas que dicen lo mismo**: la región viva (`#aviso`,
+  una sola, `role="status"` sin `aria-live` encima), tonos de Web Audio (tantos
+  pitidos como jugadas faltan, más agudos cuanto más cerca; se apagan y la
+  preferencia es del aparato), la voz del navegador si se pide
+  (`BlindNotation.setupSpeechToggle`, con su aviso de «solo si no usas lector de
+  pantalla») y el tablero pintado.
+- **El recuadro de escribir va SIEMPRE a la vista**, no solo en Modo Adaptado:
+  este juego se juega así y el tablero es la ayuda. Entiende «e4», «eva 4» y
+  «eva cuatro» —escribir lo que uno acaba de oír tiene que funcionar— y ninguna
+  letra suelta de la a a la h es un comando, porque son el principio de una
+  casilla.
+- **La memoria va escrita**: «historial» repasa cada lectura con su casilla, y
+  cada casilla del tablero dice en su nombre accesible si ya estuviste y qué
+  marcó el sonar. Quien ve tiene los números pintados delante; quien no, los
+  necesita ahí.
+- El tablero es `js/tablero-accesible.js` (una parada de tabulador, flechas,
+  Intro mueve). Se le presenta una «partida» mínima —dónde está tu pieza y a
+  dónde puede ir— para que «o», «z» y «m» contesten como en el resto del sitio.
+  **El tesoro no está en esa partida**: no lo ve nadie.
+- **La pista cuenta las casillas posibles** según lo que dijo el sonar
+  (`candidatas()`), y quita la tercera estrella. Con dos tesoros la cuenta
+  arranca en la lectura hecha AL RECOGER el primero, anotada en ese momento
+  (`desdeLectura`). Buscarla por su casilla fue el error de la primera versión:
+  volver a pisar esa casilla movía el corte y la pista olvidaba todo lo que el
+  sonar había dicho entre medio, sin ningún error a la vista.
+- **Exige sesión** (como Ilumina el tablero), así que está en `PAGINAS` de
+  `academia-cabecera.py`. `?modo=ciego` enciende el Modo Adaptado con
+  `AdaptiveMode.set()`.
+- El progreso son `sonar_estrellas_v1` (nivel → estrellas, `maxPorClave`) y
+  `sonar_mejor_v1` (nivel → menos jugadas). Esa segunda necesitó una fusión
+  nueva, **`minPorClave`**, en `js/progreso-usuario.js`: fundirla con el máximo
+  se quedaría con la PEOR marca de los dos aparatos. **No escribe en
+  `training_progress`** —esa tabla tiene el CHECK de actividades y sumar una es
+  una migración aparte—; el tiempo sí se registra con
+  `js/tiempo-plataforma.js data-activity="sonar"`.
+
+**Al tocar el motor o la página, correr `node herramientas/verificar-sonar.js`**
+(con el sitio en localhost:8777 y playwright; `--sin-navegador` corre solo las
+reglas). Comprueba las distancias contra hechos conocidos del caballo, que en 300
+partidas por nivel **el tesoro nunca salga de las casillas posibles** —si
+saliera, el sonar estaría mintiendo— y que un jugador que solo deduce (nunca
+mira el tesoro) las termine todas y pueda sacar tres estrellas. En el navegador
+juega una partida entera ESCRIBIENDO «eva 4», como la juega quien usa lector de
+pantalla, y mira qué dice la región viva, qué recuerda cada casilla, que el
+tablero sea una sola parada de tabulador y que se guarden las estrellas. Está
+probado que falla de verdad: haciendo que el sonar sume uno, saltan cinco
+comprobaciones.
+
 ## El panel de la Academia
 
 `clases.html` es por donde entra todo el mundo. Sus accesos viven en
