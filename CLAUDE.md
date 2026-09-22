@@ -376,8 +376,9 @@ lector de pantalla anunciaría dos destinos donde se ve uno.
   clase» y «Hay clase, pero tu profe todavía no puso el enlace» no son lo mismo:
   el primero se arregla solo y el segundo no, y decir lo mismo dejaría al alumno
   esperando algo que hoy no va a pasar. Bloqueado va sin `href` y con
-  `aria-disabled`, como los accesos apagados de la grilla: ni foco de teclado ni
-  destino prometido. Y va con fondo gris y borde en vez de `opacity`, que sobre
+  `aria-disabled`, como los accesos apagados de la grilla: no promete ningún
+  destino, pero se alcanza con Tab (ver «Un acceso apagado no es un enlace
+  gris»). Y va con fondo gris y borde en vez de `opacity`, que sobre
   el blanco de la tarjeta de al lado dejaba la nota casi ilegible.
 - **De quién es la llamada va escrito** («Con Karina Rojas»): con varios
   profesores el botón puede llevar a la clase de otro, y eso no se adivina.
@@ -507,8 +508,13 @@ en vivo está cerrada para el alumno. Con eso «hay clase» pasa a significar al
   botón de la videollamada que va a su lado**, y por la misma razón: sin clase
   abierta entrar solo le pintaría una pantalla vacía. Va bloqueada con la pinta
   de `VLL_APAGADO` —fondo gris y borde, no `opacity`, que sobre el blanco de la
-  tarjeta deja la nota ilegible— y **sin `href`**: ni foco de teclado ni
-  destino prometido. Se destapa sola con el aviso de Realtime, sin recargar.
+  tarjeta deja la nota ilegible— y **sin `href`**: no promete ningún destino,
+  pero se alcanza con Tab. Se destapa sola con el aviso de Realtime, sin
+  recargar, **y lo dice en voz alta**: la región viva `#aviso-clase` anuncia
+  «Karina Rojas abrió la clase: ya puedes entrar a la sesión en vivo» (y «La
+  clase en vivo terminó» al cerrarse). Quien ve la pantalla nota el cambio;
+  quien usa lector de pantalla no se enteraba hasta volver a pasar por ahí. Se
+  anuncia solo el CAMBIO, nunca al cargar: ahí la tarjeta ya lo dice.
   - Se abre si **cualquiera** de sus profesores tiene clase, igual que el botón
     de la videollamada. Si el que entra no es el que está mirando,
     `sesion.html` se lo dice y le ofrece el selector: es un camino coherente,
@@ -7165,8 +7171,13 @@ lista, y el resto se acomoda solo.
     `verificar-panel.js` lo mira con las tres caras, y a administración le pide
     lo contrario: que SÍ se le pinten los dos, o se quedaría sin ninguna puerta.
 - **Un acceso apagado no es un enlace gris.** `renderTileCard()` le pone un
-  `<div>` con `aria-disabled`, sin `href`: no recibe el foco del teclado ni
-  promete un destino que no va a abrir. Y lleva escrito POR QUÉ está apagado
+  `<div>` con `aria-disabled`, sin `href`: no promete un destino que no va a
+  abrir. **Pero SÍ recibe el foco** (`tabindex="0"`, `role="link"`), y eso se
+  cambió a propósito: antes no lo recibía, y quien usa lector de pantalla y se
+  mueve con Tab se saltaba entera la tarjeta de «Sesión en vivo» bloqueada —o
+  sea que no se enteraba de que existe ni de por qué está cerrada—. Así se
+  anuncia como «enlace, no disponible» y se lee su razón. Lo que sigue sin
+  poder existir es un `<a href>` escondido: ese sí promete un destino. Y lleva escrito POR QUÉ está apagado
   ("En mantenimiento", "Próximamente") en la propia tarjeta — un cuadro gris sin
   explicación se lee como una página rota.
 - **Cada tarjeta lleva el texto de los dos públicos: `desc` y `descProfe`.**
@@ -7615,6 +7626,22 @@ es lo que hace que un año de clases se pueda mirar. Qué mes quedó abierto viv
 en `sesionesMeses`, o repintar los cerraría todos. Y la lista se repinta entera
 desde lo que se lleva cargado, en vez de ir pegando filas: así un mes partido
 entre dos páginas queda en un solo bloque y su encabezado cuenta bien.
+
+### El panel, recorrido con lector de pantalla
+
+Además de las tarjetas bloqueadas y el aviso de la clase (arriba), el recorrido
+dejó tres arreglos que no se ven y que nada hacía fallar:
+
+- **Al terminar de cargar, el foco va al `<h1>`** («¡Bienvenido, Sofía!»), que
+  lleva `tabindex="-1"`. Sin eso, «Cargando tu panel…» desaparecía y el lector
+  de pantalla no decía nada. Solo se mueve si el foco sigue en el `<body>`:
+  arrancárselo a quien ya estaba navegando sería peor que el silencio.
+- **«Contraseña» abre un diálogo de verdad** (`role="dialog"`, `aria-modal`,
+  título enlazado): se lleva el foco al campo, Tab no se escapa, Escape lo
+  cierra y el foco vuelve al botón. Antes era un recuadro al final de la página,
+  sin foco y con un campo que solo tenía placeholder.
+- La barra de «Continúa donde ibas» es un `progressbar` con su valor, el avatar
+  (la inicial suelta) va `aria-hidden`, y los emojis de «Tu semana» también.
 
 **Al tocar el panel, correr `node herramientas/verificar-panel.js`** (con el
 sitio en localhost:8777 y playwright). Existe porque `clases.html` está detrás

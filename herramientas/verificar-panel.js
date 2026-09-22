@@ -352,7 +352,7 @@ async function pruebaAlumna(browser) {
     apagados.map((a) => a.etiqueta).sort(), []);
   if (apagados.some((a) => a.enlace || a.tag === "A" || a.tag === "BUTTON")) {
     mal("un acceso apagado sigue siendo enlace o botón: recibe el foco y promete un destino que no abre");
-  } else bien("ninguno es enlace ni botón: no recibe el foco del teclado");
+  } else bien("ninguno es enlace ni botón: no promete un destino que no abre");
   if (apagados.every((a) => /En mantenimiento/.test(a.texto))) {
     bien("cada uno dice POR QUÉ está apagado, en la propia tarjeta");
   } else mal("un acceso apagado no dice por qué: un cuadro gris sin explicación se lee como una página rota");
@@ -1540,6 +1540,9 @@ const LEER_SESION = () => {
     tag: el.tagName,
     href: el.getAttribute("href"),
     bloqueada: el.getAttribute("aria-disabled") === "true",
+    role: el.getAttribute("role"),
+    tabindex: el.tabIndex,
+    aviso: (document.getElementById("aviso-clase") || { textContent: null }).textContent,
     texto: el.innerText.replace(/\s+/g, " ").trim(),
     seVe: el.checkVisibility(),
     // Ningún enlace a la sesión colado en la grilla mientras está bloqueada:
@@ -1556,6 +1559,47 @@ async function sesionLista(page) {
   return page.evaluate(LEER_SESION);
 }
 
+/* Lo que se descubrió recorriendo el panel como lo recorre una persona ciega:
+ * al terminar de cargar no se decía nada, y «Contraseña» abría un recuadro al
+ * final de la página sin llevarse el foco, sin cerrar con Escape y con un campo
+ * sin etiqueta. Nada de eso da ningún error: quien ve la pantalla no lo nota. */
+async function pruebaLectorDePantalla(browser) {
+  console.log("\n=== El panel, recorrido con lector de pantalla ===");
+  const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(false));
+  const { page } = r;
+  igual("al terminar de cargar, el foco va al título del panel",
+    await page.evaluate(() => document.activeElement && document.activeElement.id), "panel-titulo");
+
+  await page.click("#change-pw-btn");
+  const abierto = await page.evaluate(() => {
+    const d = document.querySelector("#pw-modal [role=dialog]");
+    const campo = document.getElementById("new-password");
+    return {
+      dialogo: !!d && d.getAttribute("aria-modal") === "true" && !!document.getElementById(d.getAttribute("aria-labelledby")),
+      foco: document.activeElement && document.activeElement.id,
+      etiqueta: campo.labels.length ? campo.labels[0].textContent.trim() : "",
+    };
+  });
+  igual("«Contraseña» abre un diálogo de verdad, con su título", abierto.dialogo, "true");
+  igual("…que se lleva el foco al campo", abierto.foco, "new-password");
+  igual("…y el campo tiene una etiqueta, no solo un placeholder", abierto.etiqueta, "Nueva contraseña");
+
+  // Tab no se escapa del diálogo: desde el último botón vuelve al campo.
+  await page.focus("#pw-save-btn");
+  await page.keyboard.press("Tab");
+  igual("Tab no se sale del diálogo",
+    await page.evaluate(() => document.activeElement.id), "new-password");
+
+  await page.keyboard.press("Escape");
+  const cerrado = await page.evaluate(() => ({
+    oculto: !document.querySelector("#pw-modal [role=dialog]").checkVisibility(),
+    foco: document.activeElement && document.activeElement.id,
+  }));
+  igual("Escape lo cierra y el foco vuelve al botón que lo abrió",
+    [cerrado.oculto, cerrado.foco], [true, "change-pw-btn"]);
+  await r.ctx.close();
+}
+
 async function pruebaSesionEnVivo(browser) {
   console.log("\n=== «Sesión en vivo» se abre con la clase ===");
 
@@ -1567,6 +1611,11 @@ async function pruebaSesionEnVivo(browser) {
      promete un destino que no va a abrir. La misma regla de los apagados. */
   igual("…bloqueada, sin enlace y sin prometer destino", [t.tag, t.href, t.bloqueada], ["DIV", null, true]);
   igual("…y NO queda ningún enlace a sesion.html en la grilla", t.enlacesEnGrilla, "0");
+  /* Pero SÍ se alcanza con Tab: saltándosela, quien usa lector de pantalla no
+     se enteraba de que la sesión en vivo existe ni de por qué está cerrada. Se
+     anuncia como «enlace, no disponible» y sigue sin destino. */
+  igual("…y se alcanza con Tab, anunciada como enlace no disponible", [t.tabindex, t.role], [0, "link"]);
+  igual("…y al cargar no se anuncia nada: la tarjeta ya lo dice", t.aviso, "");
   igual("…y dice cuándo se abre, no solo que está cerrada",
     /Se abre cuando tu profe empiece la clase/.test(t.texto), "true");
 
@@ -1578,6 +1627,10 @@ async function pruebaSesionEnVivo(browser) {
   t = await r.page.evaluate(LEER_SESION);
   igual("al abrirse la clase se destapa sola, sin recargar",
     [t.tag, t.href, t.bloqueada], ["A", "sesion.html", false]);
+  /* Quien ve la pantalla nota que la tarjeta cambió; quien no la ve, solo se
+     entera si una región viva se lo dice. */
+  igual("…y se le AVISA en la región viva, con el nombre de quien la abrió",
+    /abrió la clase: ya puedes entrar/.test(t.aviso), "true");
   await r.ctx.close();
 
   // 2. Con la clase ya abierta al entrar: se entra directo.
@@ -1629,6 +1682,7 @@ if (require.main !== module) return;
     await pruebaFranjaDeClase(browser);
     await pruebaVideollamada(browser);
     await pruebaSesionEnVivo(browser);
+    await pruebaLectorDePantalla(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);
