@@ -51,7 +51,8 @@ const FICHAS = [
   { id: "cs-1", title: "Finales de rey y peón", modalidad: "presencial", created_by: "u-oscar",
     started_at: "2026-09-15T21:00:00.000Z",
     ended_at: "2026-09-15T22:00:00.000Z", notes: "Repasamos la oposición.",
-    class_attendance: [{ student_id: "u-ana" }, { student_id: "u-bruno" }] },
+    class_attendance: [{ student_id: "u-ana", minutos_tarde: 0 },
+                       { student_id: "u-bruno", minutos_tarde: 15 }] },
   { id: "cs-viva", title: "La del tablero", modalidad: "en_linea", created_by: "u-oscar",
     started_at: "2026-09-16T21:00:00.000Z", ended_at: null, notes: null, class_attendance: [] },
 ];
@@ -145,13 +146,16 @@ function pruebaReporte() {
   const mixto = armar({
     desde: "2026-09-01", hasta: "2026-09-30",
     totales: { clases: 3, clases_presenciales: 2, clases_en_linea: 1, estudiantes: 4,
-               asistencias: 9, minutos: 210, preguntas: 0, respuestas: 0, aciertos: 0 },
+               asistencias: 9, tardes: 1, minutos: 210, preguntas: 0, respuestas: 0, aciertos: 0 },
     clases: [
-      { id: "a", title: "Finales", started_at: "2026-09-03T15:00:00Z", ended_at: "2026-09-03T16:00:00Z", modalidad: "presencial", duracion_min: 60, asistentes: 4 },
-      { id: "b", title: "Táctica", started_at: "2026-09-10T15:00:00Z", ended_at: "2026-09-10T16:00:00Z", modalidad: "en_linea", duracion_min: 60, asistentes: 3 },
-      { id: "c", title: "Repaso",  started_at: "2026-09-17T15:00:00Z", ended_at: "2026-09-17T16:30:00Z", modalidad: "presencial", duracion_min: 90, asistentes: 2 },
+      { id: "a", title: "Finales", started_at: "2026-09-03T15:00:00Z", ended_at: "2026-09-03T16:00:00Z", modalidad: "presencial", duracion_min: 60, asistentes: 4, tardes: 1 },
+      { id: "b", title: "Táctica", started_at: "2026-09-10T15:00:00Z", ended_at: "2026-09-10T16:00:00Z", modalidad: "en_linea", duracion_min: 60, asistentes: 3, tardes: 0 },
+      { id: "c", title: "Repaso",  started_at: "2026-09-17T15:00:00Z", ended_at: "2026-09-17T16:30:00Z", modalidad: "presencial", duracion_min: 90, asistentes: 2, tardes: 0 },
     ],
-    estudiantes: [{ full_name: "Ana Rojas", grupo: "7A", clases: 3, clases_presenciales: 2, minutos: 150 }],
+    estudiantes: [
+      { full_name: "Ana Rojas", grupo: "7A", clases: 3, clases_presenciales: 2, tardes: 1, minutos_tarde: 20, minutos: 150 },
+      { full_name: "Bruno Mena", grupo: "7B", clases: 2, clases_presenciales: 1, tardes: 0, minutos_tarde: 0, minutos: 120 },
+    ],
     preguntas: [],
   }, {}, {});
 
@@ -172,6 +176,21 @@ function pruebaReporte() {
   cierto("por alumno se dice cuántas de las suyas fueron presenciales",
     porAlumno.encabezados.includes("De ellas presenciales"));
 
+  // ---- las tardías
+  cierto("el resumen dice cuántas asistencias fueron llegando tarde",
+    /1 fue una llegada tarde/.test(resumen.texto), "salió: " + resumen.texto);
+  cierto("la tabla de clases trae la columna «Tarde»", detalle.encabezados.includes("Tarde"));
+  igual("y dice cuántos llegaron tarde a cada una",
+    detalle ? detalle.filas.map((f) => f[6]) : null, ["1", "0", "0"]);
+  cierto("por alumno se dicen las veces Y los minutos",
+    porAlumno.encabezados.includes("Llegó tarde") &&
+    porAlumno.filas[0].includes("1 vez (20 min)"),
+    "salió: " + JSON.stringify(porAlumno.filas[0]));
+  cierto("a quien llegó siempre a tiempo no se le pinta un cero suelto",
+    porAlumno.filas[1].includes("—"), "salió: " + JSON.stringify(porAlumno.filas[1]));
+  cierto("y la nota dice que esos minutos ya están descontados",
+    mixto.bloques.some((b) => b.tipo === "nota" && /empieza a contar cuando llegó/.test(b.texto)));
+
   // Sin ninguna presencial, la columna de más no aparece: una columna entera
   // de ceros ocupa ancho y no dice nada.
   const soloEnLinea = armar({
@@ -181,9 +200,13 @@ function pruebaReporte() {
     estudiantes: [{ full_name: "Ana Rojas", grupo: "7A", clases: 1, clases_presenciales: 0, minutos: 60 }],
     preguntas: [],
   }, {}, {});
-  const porAlumno2 = soloEnLinea.bloques.filter((b) => b.tipo === "tabla").find((t) => t.encabezados[0] === "Estudiante");
+  const tablas2 = soloEnLinea.bloques.filter((b) => b.tipo === "tabla");
+  const porAlumno2 = tablas2.find((t) => t.encabezados[0] === "Estudiante");
   cierto("sin ninguna presencial, esa columna no se pinta",
     !porAlumno2.encabezados.includes("De ellas presenciales"));
+  cierto("y sin ninguna tardía, tampoco las suyas",
+    !porAlumno2.encabezados.includes("Llegó tarde") &&
+    !tablas2.find((t) => t.encabezados.includes("Dónde")).encabezados.includes("Tarde"));
 
   /* Una versión vieja de reporte_actividades() no manda el reparto. El informe
      tiene que seguir saliendo, asumiendo lo que eran todas antes de existir la
@@ -227,6 +250,13 @@ async function pruebaFicha(browser) {
     ["Ana Rojas · 7A", "Bruno Mena · 7B", "Camila Ñúñez · 7B"]);
   igual("y nadie arranca marcado",
     await page.evaluate(() => document.querySelectorAll(".alumno-chk:checked").length), 0);
+  /* Los recuadros de minutos tarde nacen escondidos, y se mide ACÁ —recién
+     abierta la página— porque más adelante el selector de subgrupos y los
+     propios `change` ya los habrán recalculado: medirlo allá daría verde
+     aunque nacieran todos a la vista. */
+  igual("y ningún recuadro de minutos tarde se ve todavía",
+    await page.evaluate(() => [...document.querySelectorAll(".tarde-min")].map((m) => m.checkVisibility())),
+    [false, false, false]);
   igual("el contador lo dice", await page.textContent("#cuenta"), "Nadie marcado");
 
   // -------- LA FECHA: lo que viaja es el instante local, no el texto
@@ -273,6 +303,7 @@ async function pruebaFicha(browser) {
   // -------- EL SUBGRUPO MARCA A LOS SUYOS Y DESMARCA AL RESTO
   console.log("\n=== «Pásale lista a los del martes» ===");
   await page.locator(".alumno-chk").nth(1).check();     // Bruno, que NO es del martes
+  await page.locator(".tarde-min").nth(1).fill("10");   // …y encima con tardanza
   await page.selectOption("#subgrupo-marcar", "sg-1");
   await page.waitForTimeout(200);
   igual("quedan marcados exactamente los del subgrupo",
@@ -287,6 +318,8 @@ async function pruebaFicha(browser) {
   await page.waitForTimeout(400);
   igual("y eso es lo que se manda",
     (await ultimoGuardado(page)).args.p_alumnos, ["u-ana", "u-cami"]);
+  igual("y sin la tardanza del que el subgrupo desmarcó",
+    (await ultimoGuardado(page)).args.p_tarde, {});
 
   // Volver a «— un subgrupo —» desmarca todo, y la cuenta tiene que enterarse:
   // el módulo no avisa en ese caso.
@@ -294,6 +327,85 @@ async function pruebaFicha(browser) {
   await page.waitForTimeout(200);
   igual("volver a «un subgrupo» desmarca a todos y el contador lo dice",
     await page.textContent("#cuenta"), "Nadie marcado");
+
+  // -------- LAS TARDÍAS
+  console.log("\n=== Quién llegó tarde ===");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator(".alumno-chk").nth(0).check();
+  igual("el recuadro de minutos SOLO se ve sobre quien está marcado",
+    await page.evaluate(() => [...document.querySelectorAll(".tarde-min")].map((m) => m.checkVisibility())),
+    [true, false, false]);
+
+  await page.locator(".tarde-min").nth(0).fill("20");
+  igual("el contador dice cuántos llegaron tarde",
+    await page.textContent("#cuenta"), "1 alumno llegó de 3 · 1 llegó tarde");
+
+  /* Desmarcar a quien tenía tardanza TIENE que borrársela, y se comprueba
+     ANTES de guardar: guardar bien llama a `limpiar()`, que vacía el mapa
+     entero, así que después de eso la prueba daría verde aunque el desmarcado
+     no borrara nada. */
+  await page.locator(".alumno-chk").nth(0).uncheck();
+  await page.locator(".alumno-chk").nth(0).check();
+  igual("desmarcar y volver a marcar deja su recuadro en blanco",
+    await page.locator(".tarde-min").nth(0).inputValue(), "");
+  // Y el contador tiene que estar de acuerdo con el recuadro: con la tardanza
+  // colgada diría «1 llegó tarde» sobre un recuadro vacío.
+  igual("y el contador no le inventa una tardía",
+    await page.textContent("#cuenta"), "1 alumno llegó de 3");
+
+  await page.locator(".tarde-min").nth(0).fill("20");
+  await page.click("#guardar");
+  await page.waitForTimeout(400);
+  igual("la tardanza viaja con sus minutos",
+    (await ultimoGuardado(page)).args.p_tarde, { "u-ana": 20 });
+
+  // Y si se desmarca a quien la tenía, no viaja ninguna: la base rechazaría el
+  // guardado entero con «hay una tardanza de alguien que no está marcado».
+  await page.locator(".alumno-chk").nth(0).check();
+  await page.locator(".tarde-min").nth(0).fill("20");
+  await page.locator(".alumno-chk").nth(0).uncheck();
+  await page.locator(".alumno-chk").nth(1).check();
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#guardar");
+  await page.waitForTimeout(400);
+  igual("al desmarcarlo, su tardanza no viaja",
+    (await ultimoGuardado(page)).args.p_tarde, {});
+
+  /* Llegar más tarde que lo que dura la clase es no haber llegado. La base lo
+     rechaza igual, pero acá se dice CON EL NOMBRE: un «no se pudo guardar»
+     sobre veinte casillas no dice cuál arreglar. */
+  // Guardar bien deja la ficha limpia, así que hay que volver a marcar.
+  await page.fill("#minutos", "60");
+  await page.locator(".alumno-chk").nth(1).check();
+  await page.locator(".tarde-min").nth(1).fill("90");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#guardar");
+  await page.waitForTimeout(300);
+  igual("una tardanza más larga que la clase no se manda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "guardar_clase_presencial").length), 0);
+  cierto("y se dice de quién es",
+    /Bruno Mena/.test(await page.textContent("#aviso")),
+    "salió: " + await page.textContent("#aviso"));
+  // Y se deja la ficha como estaba para la prueba siguiente.
+  await page.locator(".tarde-min").nth(1).fill("");
+  await page.locator(".alumno-chk").nth(1).uncheck();
+
+  /* Y los avisos de la página son los que salen. Sin `novalidate` en el
+     formulario, un número fuera de `min`/`step` lo corta el navegador con SU
+     globo —en su idioma— y el `submit` no llega a dispararse: el aviso en
+     español no aparece nunca y nadie se entera de por qué no guarda. */
+  await page.locator(".alumno-chk").nth(0).check();
+  await page.fill("#minutos", "3");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#guardar");
+  await page.waitForTimeout(300);
+  cierto("una duración imposible la rechaza la PÁGINA, en español",
+    /entre 5 y 600 minutos/.test(await page.textContent("#aviso")),
+    "salió: " + await page.textContent("#aviso"));
+  igual("y no se manda nada",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "guardar_clase_presencial").length), 0);
+  await page.fill("#minutos", "60");
+  await page.locator(".alumno-chk").nth(0).uncheck();
 
   // -------- SIN NADIE MARCADO SE PIDE UN SEGUNDO TOQUE
   console.log("\n=== Guardar una clase sin nadie ===");
@@ -320,7 +432,7 @@ async function pruebaCorregir(browser) {
 
   igual("la clase guardada se ve, con su fecha, su duración y sus asistentes",
     await page.evaluate(() => [...document.querySelectorAll("#lista p")].map((p) => p.textContent)),
-    ["Finales de rey y peón", "15 de septiembre de 2026, 15:00 · 1 h · 2 asistentes", "Repasamos la oposición."]);
+    ["Finales de rey y peón", "15 de septiembre de 2026, 15:00 · 1 h · 2 asistentes · 1 llegó tarde", "Repasamos la oposición."]);
 
   igual("la clase EN VIVO del mismo profesor no se ofrece acá",
     await page.evaluate(() => document.getElementById("lista").textContent.includes("La del tablero")), false);
@@ -337,6 +449,10 @@ async function pruebaCorregir(browser) {
   igual("y sus dos asistentes marcados",
     await page.evaluate(() => [...document.querySelectorAll(".alumno-chk")].map((c) => c.checked)),
     [true, true, false]);
+  igual("con la tardanza que tenía guardada, en el recuadro de quien la tuvo",
+    await page.evaluate(() => [...document.querySelectorAll(".tarde-min")].map((m) => m.value)),
+    ["", "15", ""]);
+  igual("y el contador la cuenta", await page.textContent("#cuenta"), "2 alumnos llegaron de 3 · 1 llegó tarde");
 
   // Se desmarca a Bruno: la función deja la lista EXACTAMENTE como llega, así
   // que lo que viaja es la lista completa sin él — no «la diferencia».

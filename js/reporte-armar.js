@@ -110,6 +110,12 @@ window.ReporteArmar = (function () {
        plataforma, que es lo que eran antes de existir la ficha. */
     const presenciales = t.clases_presenciales || 0;
     const enLinea = (t.clases_en_linea == null) ? clases - presenciales : t.clases_en_linea;
+    /* Llegar tarde no es faltar y tampoco es llegar: se cuenta aparte porque
+       es lo que distingue «vinieron todos» de «vinieron todos, la mitad media
+       hora después». El tiempo de clase ya viene descontado —el tramo de cada
+       quien arranca cuando llegó— así que este número no corrige nada, dice
+       algo que los minutos solos no dicen. */
+    const tardes = t.tardes || 0;
     const cuantasClases = (n) => n + (n === 1 ? " clase" : " clases");
 
     if (clases === 0) {
@@ -133,7 +139,11 @@ window.ReporteArmar = (function () {
       bloques.push({ tipo: "parrafo", texto:
         "Se impartieron " + cuantasClases(clases) + reparto + ", con " + (t.asistencias || 0) +
         ((t.asistencias === 1) ? " asistencia" : " asistencias") + " de " + estudiantes +
-        (estudiantes === 1 ? " estudiante" : " estudiantes distintos") + ". " +
+        (estudiantes === 1 ? " estudiante" : " estudiantes distintos") +
+        // Las tardías solo se nombran cuando hubo alguna: «y ninguna llegada
+        // tarde» es ruido en todas las visitas menos una, igual que el reparto
+        // de modalidades.
+        (tardes ? ", de las cuales " + tardes + (tardes === 1 ? " fue una llegada tarde" : " fueron llegadas tarde") : "") + ". " +
         "En total suman " + duracionLarga(t.minutos || 0) + " de trabajo en clase" +
         (t.preguntas ? ", y se plantearon " + t.preguntas + " posiciones en la pizarra" +
           (aciertos !== null ? ", con un " + aciertos + " % de respuestas correctas" : "") : "") + "." });
@@ -146,7 +156,9 @@ window.ReporteArmar = (function () {
     }
     filasResumen.push(
       ["Estudiantes distintos que asistieron", String(estudiantes)],
-      ["Asistencias registradas", String(t.asistencias || 0)],
+      ["Asistencias registradas", String(t.asistencias || 0)]);
+    if (tardes) filasResumen.push(["— de ellas, llegando tarde", String(tardes)]);
+    filasResumen.push(
       ["Tiempo total en clase", duracionLarga(t.minutos || 0)],
       ["Posiciones planteadas en pizarra", String(t.preguntas || 0)],
       ["Respuestas de los estudiantes", String(t.respuestas || 0)]);
@@ -161,15 +173,24 @@ window.ReporteArmar = (function () {
       /* La columna "Dónde" va ESCRITA y no como un color o un icono: este
          informe se imprime, se manda por correo y lo lee alguien que no sabe
          nada de la plataforma. Es la misma regla que las barras de Informes. */
+      // La columna «Tarde» solo aparece si hubo alguna: una columna entera de
+      // ceros ocupa ancho y no dice nada, igual que la de presenciales.
+      const conTardes = tardes > 0;
       bloques.push({ tipo: "tabla",
-        encabezados: ["Fecha", "Hora", "Clase", "Dónde", "Duración", "Asistentes"],
-        anchos: [1.1, 0.7, 2.3, 0.9, 0.9, 0.9],
-        filas: datos.clases.map((c) => [
-          fechaCorta(c.started_at), hora(c.started_at), c.title || "(sin título)",
-          c.modalidad === "presencial" ? "Presencial" : "Plataforma",
-          c.duracion_min ? duracionLarga(c.duracion_min) : "sin cerrar",
-          String(c.asistentes || 0),
-        ]) });
+        encabezados: conTardes
+          ? ["Fecha", "Hora", "Clase", "Dónde", "Duración", "Asistentes", "Tarde"]
+          : ["Fecha", "Hora", "Clase", "Dónde", "Duración", "Asistentes"],
+        anchos: conTardes ? [1, 0.6, 2, 0.85, 0.85, 0.85, 0.6] : [1.1, 0.7, 2.3, 0.9, 0.9, 0.9],
+        filas: datos.clases.map((c) => {
+          const fila = [
+            fechaCorta(c.started_at), hora(c.started_at), c.title || "(sin título)",
+            c.modalidad === "presencial" ? "Presencial" : "Plataforma",
+            c.duracion_min ? duracionLarga(c.duracion_min) : "sin cerrar",
+            String(c.asistentes || 0),
+          ];
+          if (conTardes) fila.push(String(c.tardes || 0));
+          return fila;
+        }) });
 
       // Lo que se trabajó en cada clase, cuando el profesor lo anotó.
       const conNotas = datos.clases.filter((c) => (c.notes || "").trim());
@@ -187,16 +208,29 @@ window.ReporteArmar = (function () {
       // La columna de presenciales solo aparece cuando hay alguna: una columna
       // entera de ceros ocupa ancho y no dice nada.
       const hayPresenciales = presenciales > 0;
+      const hayTardes = tardes > 0;
+      const encabezados = ["Estudiante", "Grupo", "Clases"];
+      const anchos = [2.4, 1, 0.7];
+      if (hayPresenciales) { encabezados.push("De ellas presenciales"); anchos.push(1); }
+      // «Llegó tarde» va con las veces Y los minutos: tres tardías de cinco
+      // minutos y tres de media hora son cosas distintas, y el número de veces
+      // solo no las separa.
+      if (hayTardes) { encabezados.push("Llegó tarde"); anchos.push(1); }
+      encabezados.push("Tiempo en clase"); anchos.push(1.1);
       bloques.push({ tipo: "tabla",
-        encabezados: hayPresenciales
-          ? ["Estudiante", "Grupo", "Clases", "De ellas presenciales", "Tiempo en clase"]
-          : ["Estudiante", "Grupo", "Clases", "Tiempo en clase"],
-        anchos: hayPresenciales ? [2.6, 1.1, 0.8, 1.1, 1.2] : [3, 1.2, 0.8, 1.3],
-        filas: datos.estudiantes.map((s) => hayPresenciales
-          ? [s.full_name || "(sin nombre)", s.grupo || "—", String(s.clases || 0),
-             String(s.clases_presenciales || 0), duracionLarga(s.minutos || 0)]
-          : [s.full_name || "(sin nombre)", s.grupo || "—",
-             String(s.clases || 0), duracionLarga(s.minutos || 0)]) });
+        encabezados: encabezados,
+        anchos: anchos,
+        filas: datos.estudiantes.map((s) => {
+          const fila = [s.full_name || "(sin nombre)", s.grupo || "—", String(s.clases || 0)];
+          if (hayPresenciales) fila.push(String(s.clases_presenciales || 0));
+          if (hayTardes) {
+            fila.push((s.tardes || 0) === 0 ? "—"
+              : (s.tardes === 1 ? "1 vez" : s.tardes + " veces") +
+                (s.minutos_tarde ? " (" + s.minutos_tarde + " min)" : ""));
+          }
+          fila.push(duracionLarga(s.minutos || 0));
+          return fila;
+        }) });
       bloques.push({ tipo: "nota", texto:
         "El tiempo en clase se cuenta uniendo los tramos que se solapan, así que dos " +
         "pestañas abiertas a la vez no lo cuentan dos veces. Es el mismo número que " +
@@ -204,6 +238,10 @@ window.ReporteArmar = (function () {
         (hayPresenciales
           ? " En las clases presenciales el tramo es la duración que anotó quien dio la clase " +
             "al pasar lista, no una medición de la plataforma."
+          : "") +
+        (hayTardes
+          ? " A quien llegó tarde ya se le descontaron esos minutos: su tiempo empieza a contar " +
+            "cuando llegó."
           : "") });
     }
 

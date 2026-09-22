@@ -56,7 +56,12 @@
             <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm" role="status" aria-live="polite"></p>
 
             <!-- ======================= la ficha ======================= -->
-            <form id="ficha" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
+            <!-- `novalidate`: sin él, un número que no cumple `min` o `step` corta el
+                 envío con el aviso del navegador —en el idioma del navegador y no
+                 en el de la página— y los avisos en español de acá no salen nunca.
+                 Los atributos se quedan puestos: los anuncia el lector de pantalla
+                 al entrar al campo. Misma decisión que `bienvenida.html`. -->
+            <form id="ficha" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
                 <h2 id="ficha-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Una clase nueva</h2>
 
                 <div class="grid sm:grid-cols-3 gap-4 mb-4">
@@ -104,6 +109,11 @@
                             <button type="button" id="marcar-ninguno" class="text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ninguno</button>
                         </div>
                     </div>
+
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">
+                        Marca a quien llegó. Si alguien llegó <strong>tarde</strong>, escribe en el recuadro de su derecha
+                        cuántos minutos: se le cuentan esos minutos de menos en su tiempo de clase, y la tardía queda en el reporte.
+                    </p>
 
                     <input type="search" id="buscar" placeholder="Buscar por nombre o grupo…" aria-label="Buscar entre tus alumnos"
                            class="w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -163,6 +173,12 @@
 let session = null;
 let alumnos = [];
 let marcados = new Set();
+/* Quién llegó tarde y cuántos minutos: `id → minutos`. Va aparte de
+   `marcados` y no como un valor dentro de él porque son dos preguntas
+   distintas —«¿vino?» y «¿a qué hora?»— y la primera se contesta marcando una
+   casilla, que es lo que se hace veinte veces seguidas. Vacío = todos a
+   tiempo, que es el caso de casi todas las clases. */
+let tarde = new Map();
 let fichas = [];
 let totalFichas = 0;
 let editando = null;          // id de la ficha que se está corrigiendo
@@ -250,21 +266,63 @@ function pintarCasillas() {
     caja.innerHTML = "";
     document.getElementById("sin-alumnos").classList.toggle("hidden", alumnos.length > 0);
     alumnos.forEach((a) => {
-        const label = el("label", "alumno-fila flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 px-1 py-1 cursor-pointer rounded hover:bg-white dark:hover:bg-brand-900");
-        label.dataset.buscar = pelado(nombreDe(a) + " " + (a.grupo || ""));
+        /* La fila es un <div> y el <label> va DENTRO, envolviendo solo la
+           casilla y el nombre. Con el recuadro de minutos dentro del label,
+           tocarlo para escribir habría desmarcado al alumno — el clic en
+           cualquier hijo de un label activa su control. */
+        const fila = el("div", "alumno-fila flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 px-1 py-1 rounded hover:bg-white dark:hover:bg-brand-900");
+        fila.dataset.buscar = pelado(nombreDe(a) + " " + (a.grupo || ""));
+
+        const label = el("label", "flex items-center gap-2 flex-1 min-w-0 cursor-pointer");
         const chk = document.createElement("input");
         chk.type = "checkbox";
-        chk.className = "alumno-chk rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+        chk.className = "alumno-chk rounded border-brand-300 text-accent-500 focus:ring-accent-400 shrink-0";
         chk.value = a.id;
         chk.checked = marcados.has(a.id);
-        chk.addEventListener("change", () => {
-            if (chk.checked) marcados.add(a.id); else marcados.delete(a.id);
-            pintarCuenta();
-        });
         label.appendChild(chk);
         // El nombre lo escribe una persona: siempre por textContent.
-        label.appendChild(el("span", null, nombreDe(a) + (a.grupo ? " · " + a.grupo : "")));
-        caja.appendChild(label);
+        label.appendChild(el("span", "truncate", nombreDe(a) + (a.grupo ? " · " + a.grupo : "")));
+        fila.appendChild(label);
+
+        const min = document.createElement("input");
+        min.type = "number";
+        min.min = "0";
+        min.inputMode = "numeric";
+        min.placeholder = "tarde";
+        min.value = tarde.has(a.id) ? String(tarde.get(a.id)) : "";
+        min.className = "tarde-min w-16 shrink-0 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-1.5 py-0.5 text-xs text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        min.dataset.alumno = a.id;
+        // El nombre va en la etiqueta accesible: con veinte recuadros iguales,
+        // «Minutos tarde» a secas no dice de quién es el que tiene el foco.
+        min.setAttribute("aria-label", "Minutos que llegó tarde " + nombreDe(a));
+        min.title = "Minutos que llegó tarde. En blanco es a tiempo.";
+        // Solo se ofrece sobre quien está marcado: preguntar a qué hora llegó
+        // quien no vino no significa nada, y la base lo rechaza.
+        min.hidden = !chk.checked;
+        min.addEventListener("input", () => {
+            const n = parseInt(min.value, 10);
+            if (min.value.trim() === "" || isNaN(n) || n <= 0) tarde.delete(a.id);
+            else tarde.set(a.id, n);
+            pintarCuenta();
+        });
+        fila.appendChild(min);
+
+        chk.addEventListener("change", () => {
+            if (chk.checked) { marcados.add(a.id); }
+            else {
+                marcados.delete(a.id);
+                /* Y se le borra la tardanza. Dejarla colgada haría que la base
+                   rechazara el guardado entero con «hay una tardanza de alguien
+                   que no está marcado», por algo que quien pasa lista ya
+                   corrigió en pantalla. */
+                tarde.delete(a.id);
+                min.value = "";
+            }
+            min.hidden = !chk.checked;
+            pintarCuenta();
+        });
+
+        caja.appendChild(fila);
     });
     caja.appendChild(el("p", "sin-coincidencias hidden text-sm text-brand-450 dark:text-brand-350 p-2 sm:col-span-2", "Ninguno coincide con eso."));
     filtrar();
@@ -289,14 +347,23 @@ function filtrar() {
    informe del mes. */
 function pintarCuenta() {
     const n = marcados.size;
-    document.getElementById("cuenta").textContent = n === 0
+    // Las tardías se cuentan solo entre los marcados: una que quedara de un
+    // alumno ya desmarcado inflaría el número y la base rechazaría el guardado.
+    const t = [...tarde.keys()].filter((id) => marcados.has(id)).length;
+    document.getElementById("cuenta").textContent = (n === 0
         ? "Nadie marcado"
-        : (n === 1 ? "1 alumno llegó" : n + " alumnos llegaron") + " de " + alumnos.length;
+        : (n === 1 ? "1 alumno llegó" : n + " alumnos llegaron") + " de " + alumnos.length)
+        + (t ? " · " + (t === 1 ? "1 llegó tarde" : t + " llegaron tarde") : "");
 }
 
 function marcarTodos(si) {
     marcados = si ? new Set(alumnos.map((a) => a.id)) : new Set();
+    if (!si) tarde = new Map();          // sin nadie marcado no hay tardanza que valga
     document.querySelectorAll(".alumno-chk").forEach((c) => { c.checked = si; });
+    document.querySelectorAll(".tarde-min").forEach((m) => {
+        m.hidden = !si;
+        if (!si) m.value = "";
+    });
     pintarCuenta();
 }
 
@@ -314,7 +381,7 @@ async function cargarFichas(desde) {
     const inicio = desde || 0;
     const { data, error, count } = await sb
         .from("class_sessions")
-        .select("id, title, started_at, ended_at, notes, class_attendance(student_id)", { count: "exact" })
+        .select("id, title, started_at, ended_at, notes, class_attendance(student_id, minutos_tarde)", { count: "exact" })
         .eq("modalidad", "presencial")
         .eq("created_by", session.user.id)
         .order("started_at", { ascending: false })
@@ -347,9 +414,11 @@ function pintarFichas() {
         const izq = el("div", "flex-1 min-w-[12rem]");
         izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", f.title || "Clase sin título"));
         const cuantos = (f.class_attendance || []).length;
+        const tardios = (f.class_attendance || []).filter((a) => (a.minutos_tarde || 0) > 0).length;
         izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
             fechaLarga(f.started_at) + " · " + duracionLarga(minutosDe(f)) + " · " +
-            (cuantos === 1 ? "1 asistente" : cuantos + " asistentes")));
+            (cuantos === 1 ? "1 asistente" : cuantos + " asistentes") +
+            (tardios ? " · " + (tardios === 1 ? "1 llegó tarde" : tardios + " llegaron tarde") : "")));
         if ((f.notes || "").trim()) {
             izq.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mt-2", f.notes.trim()));
         }
@@ -391,6 +460,9 @@ function editar(f) {
     ponerInstante(f.started_at);
     document.getElementById("minutos").value = minutosDe(f) || 60;
     marcados = new Set((f.class_attendance || []).map((a) => a.student_id));
+    tarde = new Map((f.class_attendance || [])
+        .filter((a) => (a.minutos_tarde || 0) > 0)
+        .map((a) => [a.student_id, a.minutos_tarde]));
     document.getElementById("guardar").textContent = "Guardar los cambios";
     document.getElementById("cancelar").classList.remove("hidden");
     busqueda = "";
@@ -409,6 +481,7 @@ function limpiar() {
     document.getElementById("minutos").value = 60;
     ponerInstante(null);
     marcados = new Set();
+    tarde = new Map();
     document.getElementById("guardar").textContent = "Guardar la ficha";
     document.getElementById("cancelar").classList.add("hidden");
     document.getElementById("guardar").dataset.confirmar = "no";
@@ -434,6 +507,22 @@ async function guardar(ev) {
         return avisar("La clase tiene que durar entre 5 y 600 minutos.", true);
     }
 
+    /* Solo viajan las tardanzas de quien está marcado, y solo las que caben
+       dentro de la clase. Las dos cosas las rechaza también la base —es ella
+       la que manda— pero acá se dice CON EL NOMBRE: un «no se pudo guardar»
+       sobre veinte casillas deja a quien pasó lista sin saber cuál arreglar. */
+    const tardanzas = {};
+    for (const [id, min] of tarde) {
+        if (!marcados.has(id)) continue;
+        if (min >= minutos) {
+            const quien = alumnos.find((a) => a.id === id);
+            return avisar("A " + (quien ? nombreDe(quien) : "ese alumno") + " le pusiste " + min +
+                " minutos tarde en una clase de " + minutos + ": eso no es llegar tarde, es no llegar. " +
+                "Si no vino, desmárcalo.", true);
+        }
+        tardanzas[id] = min;
+    }
+
     /* Guardar sin nadie marcado es decir «no fue nadie», y eso es una cosa que
        de verdad pasa —se cuenta la clase, la asistencia queda en cero— pero es
        también lo que sale al apretar Guardar antes de pasar lista. Se pide un
@@ -454,6 +543,7 @@ async function guardar(ev) {
         p_notas: document.getElementById("notas").value,
         p_alumnos: [...marcados],
         p_id: editando,
+        p_tarde: tardanzas,
     });
     boton.disabled = false;
     boton.textContent = textoAntes;
@@ -466,10 +556,13 @@ async function guardar(ev) {
     }
 
     const cuantos = marcados.size;
+    const tardios = Object.keys(tardanzas).length;
     avisar((editando ? "Ficha corregida. " : "Clase guardada. ") +
         (cuantos === 0 ? "Quedó registrada sin asistentes." :
             (cuantos === 1 ? "1 alumno queda" : cuantos + " alumnos quedan") +
             " con su asistencia y sus " + duracionLarga(minutos) + " de clase.") +
+        (tardios ? " " + (tardios === 1 ? "1 llegó tarde y se le cuentan" : tardios + " llegaron tarde y se les cuentan") +
+            " menos minutos." : "") +
         " Ya cuenta en Informes y en el reporte de actividades.");
     limpiar();
     if (await cargarFichas(0)) pintarFichas();
@@ -511,6 +604,16 @@ async function init() {
         if (selector) selector.addEventListener("change", () => {
             marcados = new Set([...document.querySelectorAll(".alumno-chk")]
                 .filter((c) => c.checked).map((c) => c.value));
+            /* El módulo desmarca a quien no es del subgrupo, así que sus
+               tardanzas tienen que irse con ellos: una que sobreviva hace que
+               la base rechace el guardado entero por alguien que ya no está
+               marcado. Y los recuadros se destapan o se esconden según quedó
+               cada casilla — el módulo no sabe que existen. */
+            for (const id of [...tarde.keys()]) if (!marcados.has(id)) tarde.delete(id);
+            document.querySelectorAll(".tarde-min").forEach((m) => {
+                m.hidden = !marcados.has(m.dataset.alumno);
+                if (m.hidden) m.value = "";
+            });
             // Y se limpia la búsqueda: con un filtro puesto, la mitad de los
             // que acaba de marcar el subgrupo estarían escondidos.
             busqueda = "";
