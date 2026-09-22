@@ -833,6 +833,39 @@ diagnóstico— ya las tiene siempre, así que su ausencia justo acá se nota.
   bien y es peor que no tenerlas.
 - Las **miniaturas de supervisión** del profesor siguen sin ellas a propósito: son
   de mirar de lejos y a ese tamaño las letras no se leerían.
+- **El tope de ancho se muda al envoltorio como CLASE, no como estilo en línea**, y
+  esa es la segunda vez que este mismo defecto aparece por otra puerta. Desde que
+  las coordenadas van afuera, **quien decide cuánto mide el tablero es el
+  envoltorio** —el tablero es `w-full` dentro de él— y la fila de letras se reparte
+  ese mismo ancho: un tope que se quede pegado al tablero lo encoge sin encoger la
+  fila.
+  - Lo que lo rompió fue la regla `@media (max-height: 800px)` de `css/styles.css`,
+    la que achica el tablero para que la clase en vivo quepa sin scroll en un
+    laptop de 13". Está escrita con **dos ids** justamente para ganarle a la
+    utilidad `max-w-[…]` de Tailwind… pero le seguía aplicando el tope **al
+    tablero**, que ya no era quien mandaba: en una pantalla de 800 px o menos el
+    tablero se quedaba en 420 px dentro de un envoltorio de 539 y las **ocho letras
+    quedaban repartidas sobre 539** — o sea las coordenadas señalando la columna
+    que no era, en **los tres tableros de la clase** (el de la pizarra, el de la
+    pregunta y el de la práctica). Ningún error, y solo en pantallas bajas: en un
+    monitor alto se veía perfecto.
+  - Y el estilo en línea era lo que lo hacía imposible de arreglar desde el CSS:
+    **un estilo en línea le gana a cualquier hoja**, así que mientras el envoltorio
+    llevara `style="max-width:…"` ninguna regla podía alcanzarlo. Mudando la clase,
+    el envoltorio queda sujeto a las mismas reglas que el tablero y las dos medidas
+    vuelven a salir del mismo lugar.
+  - El selector del envoltorio va **dentro de la misma regla** que los tres
+    tableros, para que el número siga escrito una sola vez.
+- **Se mide en DOS alturas de ventana, y por eso son dos.** Todo lo que cuelgue de
+  `@media (max-height: 800px)` existe solo por debajo de esa altura: con un solo
+  tamaño se mira la mitad de los casos, y fue justo por ahí que esto se rompió sin
+  que nadie se enterara. `verificar-sesion-curso.js` redimensiona y vuelve a medir,
+  lo que de paso comprueba que el tope siga saliendo del CSS y no de un número de
+  píxeles calculado una vez al montar. **Y mide también `#chessboard`**, el tercero
+  que se rotula por fuera y el único que ve toda la clase: no lo miraba ninguna
+  prueba, así que se desalineó con los otros dos en silencio. Está probado que
+  falla de verdad: dejando el tope pegado al tablero saltan 5 comprobaciones, y
+  volviendo a mudarlo como estilo en línea, las mismas 5.
 
 ### Las miniaturas de la práctica: a 16 px no se distingue una pieza
 
