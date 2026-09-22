@@ -342,6 +342,7 @@
     <script src="js/main.js"></script>
     <script src="js/clase-elegida.js"></script>
     <script src="js/videollamada.js"></script>
+    <script src="js/actualizaciones-popup.js"></script>
     <script>
         let session = null, profile = null, isTeacher = false, openSession = null;
         // A qué profesor pertenece la clase que se muestra aquí: uno mismo si es
@@ -1827,6 +1828,11 @@
                 return;
             }
             profile = profileData;
+            // Novedades de la plataforma: solo para quien administra, y no
+            // bloquea el resto del panel mientras se resuelve.
+            if (profile.is_admin && window.ActualizacionesPopup) {
+                ActualizacionesPopup.mostrarSiHayNuevas(sb, profile);
+            }
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
