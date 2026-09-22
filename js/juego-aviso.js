@@ -1,16 +1,28 @@
 /**
  * Ajedrez Integral — aviso y traslado automático a una partida recién asignada.
  *
- * Cuando el profesor asigna una partida (Crazyhouse, Ajedrez de abrazos,
- * Camaleón, A ciegas o de 4 jugadores) desde Juegos, el alumno que esté en el
- * panel de Academia o en Juegos no tiene que enterarse solo: en cuanto la
- * partida aparece en la base (realtime de Supabase), se le muestra un aviso
- * ("Tu profesor te asignó…") y unos segundos después se lo lleva a la página de
- * la partida. También sirve si el alumno abre el panel y ya tiene una partida en
- * curso que todavía no empezó (los dos sin marcar "listo").
+ * Cuando el profesor arma un pareo desde "Asignar rivales" en Juegos (o
+ * asigna un puesto de 4 jugadores), el alumno no tiene que estar mirando esa
+ * pantalla para enterarse: en cuanto la partida aparece en la base (realtime
+ * de Supabase) se le muestra un aviso ("Tu profesor te asignó…") EN
+ * CUALQUIER PÁGINA de la Academia en la que esté, y unos segundos después —o
+ * al tocar "Entrar ahora"— se lo lleva directo al tablero. También sirve si
+ * el alumno abre una página y ya tiene una partida en curso que todavía no
+ * empezó (los dos sin marcar "listo").
  *
- * Uso: JuegoAviso.iniciar({ sb, userId, esProfesor }) — a los profesores no se les
- * traslada a nada. Requiere window.sb (js/supabase-client.js).
+ * Se autoarranca en TODA página de la Academia, con el mismo patrón de
+ * `js/burbuja-en-linea.js`: busca su propia sesión y su propio rol, y si es
+ * de un profesor (o administración) no hace nada — a ellos no se les
+ * traslada a ningún lado, porque son quienes arman el pareo. La pone
+ * `herramientas/academia-cabecera.py`, con `js/burbuja-en-linea.js`, en la
+ * misma lista de páginas (menos `examen.html`, por la misma razón que la
+ * burbuja: un aviso que aparece y traslada solo es justo la distracción que
+ * el antitrampa del examen viene a evitar).
+ *
+ * Sigue admitiendo `JuegoAviso.iniciar({ sb, userId, esProfesor })` para
+ * quien ya tiene esos datos a mano (evita una segunda consulta a `profiles`);
+ * un segundo arranque —el automático o uno manual— no hace nada, porque el
+ * primero que pasa la comprobación ya se quedó con el canal.
  */
 window.JuegoAviso = (function () {
   "use strict";
@@ -21,7 +33,7 @@ window.JuegoAviso = (function () {
                      abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas", vampiro: "🧛 Ajedrez Vampiro" };
   const SEATS = ["red", "blue", "yellow", "green"];
   const ESPERA_MS = 4000;
-  let sb = null, userId = null, yaAvisado = false;
+  let sb = null, userId = null, yaAvisado = false, iniciado = false;
 
   function destinoDe(row, tabla) {
     if (tabla === "fourplayer_games") return "cuatro-jugadores.html?room=" + row.id;
@@ -103,11 +115,36 @@ window.JuegoAviso = (function () {
   }
 
   function iniciar(opts) {
-    sb = opts.sb || window.sb; userId = opts.userId;
-    if (!sb || !userId || opts.esProfesor) return;
+    if (iniciado) return;
+    const cliente = (opts && opts.sb) || window.sb;
+    const id = opts && opts.userId;
+    if (!cliente || !cliente.channel || !id || (opts && opts.esProfesor)) return;
+    sb = cliente; userId = id; iniciado = true;
     suscribir();
-    if (opts.revisarPendientes !== false) revisarPendientes();
+    if (!opts || opts.revisarPendientes !== false) revisarPendientes();
   }
+
+  /* Autoarranque: busca su propia sesión y su propio rol, igual que
+     js/notificaciones.js y js/burbuja-en-linea.js — así cualquier página que
+     cargue este script queda cubierta sin tener que acordarse de llamar a
+     iniciar() con el profile a mano. Nunca revienta la página que lo carga:
+     sin sb, sin sesión o sin perfil, se sale en silencio. */
+  async function autoIniciar() {
+    const cliente = window.sb;
+    if (!cliente || !cliente.auth || !cliente.channel) return;
+    try {
+      const r = await cliente.auth.getSession();
+      const sesion = r && r.data && r.data.session;
+      if (!sesion) return;
+      const perfil = await cliente.from("profiles").select("role, is_admin").eq("id", sesion.user.id).single();
+      if (perfil.error || !perfil.data) return;
+      // La regla permanente de la casa: lo que se hace para los profesores
+      // se hace también para quien administra — y acá eso es NO trasladarlos.
+      iniciar({ sb: cliente, userId: sesion.user.id, esProfesor: perfil.data.role === "profesor" || !!perfil.data.is_admin });
+    } catch (e) { /* sin red o sin permiso: no hay aviso, no hay traslado */ }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", autoIniciar);
+  else autoIniciar();
 
   return { iniciar };
 })();
