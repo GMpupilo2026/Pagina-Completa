@@ -58,6 +58,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     cobros_vista: ${JSON.stringify(COBROS)}.filter((c) => ${JSON.stringify(cobrosVisibles)}.includes(c.id)),
     ajustes_academia: [{ clave: "whatsapp_consultas", valor: "+506 8309-2291" }],
     cobros_contacto: [],
+    cobros_recordatorios_programados: [
+      { id: "rp-1", student_id: "u-bruno", programado_para: "2026-12-01T15:00:00.000Z", estado: "pendiente", correos: null, nota: null },
+    ],
   };
   const RPC = {
     cobros_resumen: ${JSON.stringify(RESUMEN)},
@@ -332,6 +335,45 @@ async function pruebaCoordinacion(browser) {
   igual("lo que manda «Recordar ahora»",
     await page.evaluate(() => (window.__llamadas.find((l) => l.funcion && l.funcion.action === "recordar_ahora") || {}).funcion),
     { action: "recordar_ahora", student_id: "u-ana" });
+
+  // -------- recordatorio programado: un día y hora exactos
+  const listaProgramados = await page.evaluate(() => document.getElementById("rp-lista").textContent);
+  igual("el sembrado se pinta con el nombre del alumno y «Pendiente»",
+    /Bruno Mena/.test(listaProgramados) && /Pendiente/.test(listaProgramados), "true");
+
+  await page.selectOption("#rp-alumno", "u-ana");
+  await page.fill("#rp-cuando", "2027-01-15T08:30");
+  await page.fill("#rp-correos", "mama@x.cr, papa@x.cr");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#rp-guardar");
+  await page.waitForTimeout(300);
+  const programado = await page.evaluate(() =>
+    (window.__llamadas.find((l) => l.tabla === "cobros_recordatorios_programados" && l.verbo === "insert") || {}).datos);
+  igual("programar manda el alumno, el momento en ISO y los correos",
+    programado && { student_id: programado.student_id, correos: programado.correos, creado_por: programado.creado_por },
+    { student_id: "u-ana", correos: ["mama@x.cr", "papa@x.cr"], creado_por: "u-oscar" });
+  igual("y el momento es el de verdad, no una hora distinta",
+    programado && new Date(programado.programado_para).toISOString().slice(0, 16),
+    new Date("2027-01-15T08:30").toISOString().slice(0, 16));
+
+  // Un correo mal escrito no se manda, y se dice por qué.
+  await page.fill("#rp-correos", "esto no es un correo");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#rp-guardar");
+  await page.waitForTimeout(300);
+  igual("un correo que no parece correo no se programa",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "cobros_recordatorios_programados" && l.verbo === "insert").length), 0);
+  await page.fill("#rp-correos", "");
+
+  // Cancelar el que ya estaba sembrado manda el estado, filtrado por su id.
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.locator("#rp-lista button", { hasText: "Cancelar" }).click();
+  await page.waitForTimeout(300);
+  const cancelado = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "cobros_recordatorios_programados" && l.verbo === "update"));
+  igual("cancelar manda estado=cancelado", cancelado && cancelado.datos, { estado: "cancelado" });
+  igual("y filtra por el id de ESE recordatorio",
+    await page.evaluate(() => window.__consultas.some((c) => c.tabla === "cobros_recordatorios_programados" && c.verbo === "eq" && c.col === "id" && c.val === "rp-1")),
+    "true");
 
   /* Si el correo está mal, el momento de verlo es este. El botón lleva a la
      ficha donde se corrige CON EL ALUMNO YA ELEGIDO: mandarlo a buscarlo otra

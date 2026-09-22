@@ -1,0 +1,1 @@
+revoke all on public.cobros_recordatorios_programados from anon;

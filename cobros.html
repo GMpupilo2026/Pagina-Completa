@@ -143,6 +143,39 @@
                     Van al correo que le hayas puesto a ese alumno en la ficha «Contacto»; si no le pusiste ninguno, a las personas
                     encargadas apuntadas en Informes, y solo si tampoco hay, a su propia cuenta.
                 </p>
+
+                <!-- ---- Recordatorios para un día y hora exactos ----
+                     No reemplaza la tanda automática de arriba: es un envío
+                     suelto, para cuando hace falta que le llegue justo el
+                     lunes a las 8 y no cuando toque la corrida diaria. -->
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mt-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📅 Programar un recordatorio</h2>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                        Para que le llegue un aviso de cobro en un día y una hora exactos, en vez de mandarlo ahora mismo o esperar
+                        a la tanda automática. Si dejas los correos en blanco, se manda a los mismos destinos de siempre.
+                    </p>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="lg:col-span-2">
+                            <label for="rp-alumno" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Alumno</label>
+                            <select id="rp-alumno" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="rp-cuando" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Día y hora</label>
+                            <input id="rp-cuando" type="datetime-local" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" id="rp-guardar" class="w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Programar</button>
+                        </div>
+                        <div class="sm:col-span-2 lg:col-span-4">
+                            <label for="rp-correos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">A estos correos (opcional, separados por coma)</label>
+                            <input id="rp-correos" type="text" placeholder="mama@ejemplo.com, papa@ejemplo.com" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                    </div>
+                </div>
+                <div id="rp-lista" class="space-y-3 mt-4"></div>
+                <p id="rp-vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                    Todavía no hay ningún recordatorio programado.
+                </p>
             </section>
 
             <!-- ---------------- Suscripciones ---------------- -->
@@ -349,6 +382,7 @@ async function cargarTodo() {
     pintarSuscripciones();
     await cargarCobros(true);
     await pintarMorosos();
+    await cargarRecordatoriosProgramados();
 }
 
 // -------------------------------------------------------------- tarjetas
@@ -728,6 +762,84 @@ async function pintarMorosos() {
         d.appendChild(botones);
         caja.appendChild(d);
     });
+}
+
+// ------------------------------------------ recordatorios programados
+const ESTADO_PROGRAMADO = {
+    pendiente: { texto: "Pendiente", clase: "bg-brand-100 text-brand-700 dark:bg-brand-800 dark:text-brand-200" },
+    enviado:   { texto: "Enviado",   clase: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" },
+    cancelado: { texto: "Cancelado", clase: "bg-brand-100 text-brand-450 dark:bg-brand-800 dark:text-brand-350" },
+};
+
+function fechaHora(iso) {
+    return new Date(iso).toLocaleString("es-CR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function cargarRecordatoriosProgramados() {
+    const sel = document.getElementById("rp-alumno");
+    if (sel && !sel.options.length) {
+        sel.innerHTML = '<option value="">— Elige —</option>'
+            + alumnos.map((a) => `<option value="${a.id}">${(a.full_name || a.email || "Sin nombre").replace(/[<>&"]/g, "")}</option>`).join("");
+    }
+    const caja = document.getElementById("rp-lista");
+    const { data, error } = await sb.from("cobros_recordatorios_programados")
+        .select("*").order("programado_para", { ascending: true });
+    caja.innerHTML = "";
+    if (error) { caja.appendChild(el("p", "text-sm text-red-500", "No se pudo cargar: " + error.message)); return; }
+    const lista = data || [];
+    document.getElementById("rp-vacio").classList.toggle("hidden", lista.length > 0);
+    lista.forEach((r) => {
+        const d = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div");
+        const linea = el("p", "font-semibold text-brand-800 dark:text-white");
+        linea.append(nombreDe(r.student_id) + " · " + fechaHora(r.programado_para) + " ");
+        const s = ESTADO_PROGRAMADO[r.estado] || ESTADO_PROGRAMADO.pendiente;
+        linea.appendChild(el("span", "inline-block px-2 py-0.5 rounded-full text-xs font-semibold " + s.clase, s.texto));
+        izq.appendChild(linea);
+        if (r.correos && r.correos.length) {
+            izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", "a: " + r.correos.join(", ")));
+        }
+        if (r.nota) izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", r.nota));
+        d.appendChild(izq);
+
+        if (r.estado === "pendiente") {
+            const cancelar = el("button", "border border-brand-200 dark:border-brand-700 hover:border-red-400 text-brand-600 dark:text-brand-300 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Cancelar");
+            cancelar.type = "button";
+            cancelar.addEventListener("click", async () => {
+                const { error } = await sb.from("cobros_recordatorios_programados").update({ estado: "cancelado" }).eq("id", r.id);
+                if (error) return avisar("No se pudo cancelar: " + error.message, true);
+                avisar("Recordatorio cancelado.");
+                cargarRecordatoriosProgramados();
+            });
+            d.appendChild(cancelar);
+        }
+        caja.appendChild(d);
+    });
+}
+
+async function programarRecordatorio() {
+    const studentId = document.getElementById("rp-alumno").value;
+    const cuando = document.getElementById("rp-cuando").value;
+    if (!studentId) return avisar("Elige un alumno.", true);
+    if (!cuando) return avisar("Elige el día y la hora.", true);
+    const momento = new Date(cuando);
+    if (isNaN(momento.getTime())) return avisar("Esa fecha no es válida.", true);
+    if (momento.getTime() <= Date.now()) return avisar("Elige un momento que todavía no haya pasado.", true);
+
+    const texto = document.getElementById("rp-correos").value.trim();
+    const correos = texto ? texto.split(",").map((x) => x.trim()).filter(Boolean) : null;
+    if (correos && correos.some((c) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c))) {
+        return avisar("Alguno de esos correos no parece un correo.", true);
+    }
+
+    const { error } = await sb.from("cobros_recordatorios_programados").insert({
+        student_id: studentId, programado_para: momento.toISOString(), correos, creado_por: session.user.id,
+    });
+    if (error) return avisar("No se pudo programar: " + error.message, true);
+    avisar("Recordatorio programado para " + fechaHora(momento.toISOString()) + ".");
+    document.getElementById("rp-correos").value = "";
+    document.getElementById("rp-cuando").value = "";
+    await cargarRecordatoriosProgramados();
 }
 
 async function llamarCobros(cuerpo) {
@@ -1118,6 +1230,7 @@ async function init() {
 document.querySelectorAll(".ficha-btn").forEach((b) => b.addEventListener("click", () => mostrarFicha(b.dataset.ficha)));
 document.getElementById("p-guardar").addEventListener("click", crearPlan);
 document.getElementById("s-guardar").addEventListener("click", crearSuscripcion);
+document.getElementById("rp-guardar").addEventListener("click", programarRecordatorio);
 document.getElementById("f-situacion").addEventListener("change", () => cargarCobros(true));
 document.getElementById("f-alumno").addEventListener("change", () => cargarCobros(true));
 // Al escribir se espera un momento: una consulta por letra sería una consulta
