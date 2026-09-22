@@ -22,6 +22,13 @@
         })();
     </script>
     <style>
+        /* Ocho filas IGUALES, escritas. `grid-cols-8` solo reparte las columnas:
+           las filas quedaban en `auto` y cada una medía según lo que tuviera
+           adentro, así que la fila del rey o de un número se estiraba y
+           aplastaba a las demás. Y la casilla no puede crecer por su contenido
+           (min-height: 0), o volvería a empujar su fila. */
+        #board { grid-template-rows: repeat(8, minmax(0, 1fr)); }
+        .sonar-casilla { min-width: 0; min-height: 0; overflow: hidden; }
         .sonar-casilla { position: relative; display: flex; align-items: center; justify-content: center; font-size: clamp(14px, 4.2vw, 26px); font-weight: 700; line-height: 1; border: 0; padding: 0; cursor: default; color: #102a43; }
         .sonar-casilla.clara { background: var(--sq-light, #f0d9b5); }
         .sonar-casilla.oscura { background: var(--sq-dark, #b58863); }
