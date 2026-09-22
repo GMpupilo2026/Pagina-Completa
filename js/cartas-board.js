@@ -48,6 +48,12 @@
      * @param {object} opts
      * @param {boolean} opts.interactive
      * @param {"w"|"b"} opts.myColor
+     * @param {boolean} opts.spectator - true para quien MIRA la partida sin jugarla.
+     *   Cambia una sola cosa, y es la que importa: no se le enseña ninguna mano.
+     *   `myColor` sigue haciendo falta (decide de qué lado se ve el tablero), pero
+     *   sin esto el espectador vería la mano completa de las blancas, que en un
+     *   torneo es la información por la que se gana la partida — y se la vería
+     *   quien está esperando para jugar contra ellas en la ronda siguiente.
      * @param {(info:{fen,san,gameOver,result})=>void} opts.onMove
      * @param {(cardId:string, params:object, resultado:object)=>void} opts.onCardPlayed
      * @param {(from,to,cb)=>void} opts.onPromotionNeeded - cb(piece|null)
@@ -59,6 +65,7 @@
       this.myHandEl = myHandEl;
       this.rivalHandEl = rivalHandEl;
       this.interactive = !!opts.interactive;
+      this.spectator = !!opts.spectator;
       this.myColor = opts.myColor || "w";
       this.flipped = this.myColor === "b";
       this.onMove = opts.onMove || function () {};
@@ -290,6 +297,17 @@
       this.myHandEl.innerHTML = "";
       const canPlay = this._canActNow() && !this.game.cardPlayedThisTurn;
       const mano = this.game.hands[this.myColor] || [];
+      // Quien mira no ve ninguna mano: solo cuántas cartas hay de cada lado,
+      // igual que ve cualquiera de los dos jugadores la del otro.
+      if (this.spectator) {
+        const p = document.createElement("p");
+        p.className = "text-sm text-brand-450 dark:text-brand-350";
+        p.textContent = mano.length
+          ? "🂠".repeat(mano.length) + " (" + mano.length + " carta" + (mano.length === 1 ? "" : "s") + ") — las cartas no se le enseñan a quien mira."
+          : "Sin cartas en mano.";
+        this.myHandEl.appendChild(p);
+        return;
+      }
       if (!mano.length) {
         const empty = document.createElement("p");
         empty.className = "text-xs text-brand-300 dark:text-brand-600 italic";
@@ -318,7 +336,11 @@
       this.rivalHandEl.innerHTML = "";
       const rivalColor = otherColor(this.myColor);
       const mano = this.game.hands[rivalColor] || [];
-      const puedoVer = this.game.visionUntil === this.myColor;
+      // `visionUntil` es el efecto de una carta y se lo gana quien JUEGA. Para un
+      // espectador, myColor es solo el lado desde el que se dibuja el tablero, así
+      // que sin este `!this.spectator` la carta de visión le destaparía la mano a
+      // quien no la jugó.
+      const puedoVer = !this.spectator && this.game.visionUntil === this.myColor;
       if (!mano.length) {
         this.rivalHandEl.textContent = "El rival no tiene cartas.";
         return;

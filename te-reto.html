@@ -264,7 +264,7 @@
             let count = 1;
             try { count = parseInt(localStorage.getItem(DAY_STREAK_KEY + "_count") || "1", 10) || 1; } catch (e) {}
             const el = document.getElementById("day-streak-text");
-            el.textContent = count > 1 ? "📅 Llevás " + count + " días seguidos jugando — ¡no cortes la racha!" : "";
+            el.textContent = count > 1 ? "📅 Llevas " + count + " días seguidos jugando — ¡no cortes la racha!" : "";
         }
 
         // Registra la visita de HOY (al arrancar una corrida, no solo al cargar la página)

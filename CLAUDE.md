@@ -5233,6 +5233,152 @@ las de equivalencia.
   pasaría a comparar el evaluador contra la nada y daría verde sin comprobar
   nada. Es la misma trampa que ya documentaron los dobles de Supabase.
 
+## Las partidas de un torneo se pueden VER, y el candado lo pone la base
+
+Durante una ronda, las partidas eran invisibles. El único acceso a un cruce en
+juego era un **«Ver →» por fila**, que además saca de `torneo.html`: seguir tres
+tableros era entrar y volver tres veces. Y a quien le tocó **bye** —que esa ronda
+no tiene ninguna otra cosa que hacer— no le quedaba nada que mirar.
+
+Peor: ese «Ver →» era **una promesa que el destino rompía**. Las seis páginas de
+partida cortaban con `if (!myColor && !isTeacher) showError("No formas parte de
+esta partida.")`, así que el enlace que `torneo.html` le ofrecía a todo el
+alumnado terminaba en un 🚫. No daba ningún error de nada: el enlace se pintaba
+igual, y el que no podía entrar era justo el único que no puede arreglarlo.
+
+**Y la base decía que sí desde siempre.** Comprobado impersonando roles en SQL
+sobre un torneo real: a la alumna a la que le tocó bye, `game_rooms_select` le
+devuelve **las dos salas** de su ronda. Es `es_companero()` — y no es casualidad,
+es estructural: `tournament_registrations_insert` exige `es_mi_profesor(t.created_by)`,
+o sea que **para estar en un torneo hay que tener a quien lo organiza de
+profesor**, así que dos inscritos cualesquiera comparten profesor y son
+compañeros. Quien decía que no era la pantalla, no el candado.
+
+- **Mirar lo decide la RLS.** Se quitó ese `!isTeacher` de las cinco páginas de
+  partida de a dos: si la fila llegó, se mira; si no llegó, dos líneas más arriba
+  ya se salió con «No se encontró esa partida». El segundo candado escrito en la
+  página era más cerrado que el de la base y nadie lo había notado.
+- **Jugar sigue cerrado, por los dos lados.** `interactive` cuelga de `myColor`,
+  los botones de rendirse y de «estoy listo» también, y `game_rooms_update` **no
+  nombra a `es_companero()`** — o sea que aunque la pantalla se equivocara, la
+  base rechaza la escritura. `verificar-torneo-en-vivo.js` lo mide intentándolo:
+  toca dos casillas y comprueba que no se mueva nada ni se escriba nada.
+- **`cuatro-jugadores.html` se dejó como estaba**, a propósito:
+  `fourplayer_games_select` **no** lleva `es_companero`, así que ahí la base
+  nunca le entrega la fila a un compañero y quitarle el candado a la página no
+  cambiaría nada. Escribir el mismo comentario ahí sería prometer un alcance que
+  la política no da. Y los torneos son solo de las cinco variantes de a dos.
+
+### Las dos puertas que siguen cerradas, y por qué
+
+- **Niebla de Guerra en curso no se mira desde fuera.** Es la misma regla que ya
+  escribía `tv.html`: cualquiera de los dos jugadores puede tener esa pantalla
+  abierta al lado, y con la posición real a la vista se acabó la niebla, que es
+  el juego entero. **Terminada sí**: ahí ya no queda nada que tapar, y repasarla
+  es justo lo que uno quiere. Quien da clase entra igual, que es como supervisa.
+- **En Ajedrez de Cartas, a quien mira no se le enseña NINGUNA mano.** Acá estaba
+  el error que más caro salía y el que no se ve: `CartasBoard` dibuja la mano de
+  `myColor` completa, y un espectador entra con `myColor: myColor || "w"` — o sea
+  que **le habría enseñado la mano de las blancas entera**, en un torneo, a quien
+  a lo mejor juega contra ellas la ronda siguiente. Se agregó `opts.spectator` a
+  `js/cartas-board.js`: las dos manos salen boca abajo con su conteo, y
+  `visionUntil` **también se ignora** (esa carta se la gana quien JUEGA; para un
+  espectador `myColor` solo dice de qué lado se dibuja el tablero). El rótulo
+  «Tu mano» pasa a «Las cartas de las blancas», porque ahí no hay mano suya.
+  Lo encontró el verificador, no la vista: la pantalla se veía perfecta.
+
+### El nombre de quien juega tenía que venir con el permiso de mirar
+
+`nombres_de_jugadores()` se escribió con el alcance de `game_rooms_select`
+**«menos `es_companero`»**, y dejó escrito por qué: «para mirar la partida de un
+compañero no hace falta su nombre completo». Era cierto **mientras mirarla no se
+pudiera**. Desde que la pantalla dejó de poner su candado, la frase se volvió
+falsa de la peor manera: la partida abre, el tablero se pinta, y arriba dice
+**«Jugador» contra «Jugador»** — con la lista de `torneo.html` diciendo los dos
+nombres a un clic de distancia.
+
+**No reparte nada nuevo, y por eso se arregla ahí y no con una columna más:**
+`profiles_select` ya le entrega a un compañero la **fila entera** de perfil
+(`es_companero(id)`). Comprobado con datos reales antes de escribir la migración:
+sobre los dos jugadores de un cruce, su compañera recibía **2** filas por
+`profiles` y **1** por `nombres_de_jugadores()`; después, 2 y 2. Y un alumno de
+otra clase sigue recibiendo **0, 0 y 0** — salas, nombres y perfiles.
+
+### «Las partidas, en vivo»: el lugar donde se ven
+
+Debajo de la lista de la ronda en curso, `torneo.html` pinta **un tablerito por
+cruce en juego**, que se mueve solo. Es lo que contesta «no puedo ver las
+partidas»: no hay que salir de la página ni entrar y volver por cada tablero.
+
+- **Se dibuja con el MISMO `ClasesBoard` compacto** de las miniaturas de la clase
+  en vivo, que ya es la pieza compartida para esto — y con eso se hereda lo que
+  ya costó descubrir una vez: a este tamaño el glifo Unicode de las blancas es un
+  contorno hueco que se lee negro, así que compacto dibuja con el set de
+  `js/chess-piece-svg.js`, que tiene relleno sólido.
+- **De dónde sale la posición depende de la variante, y equivocarse no da ningún
+  error**: `loadFen()` cae en la posición inicial si la FEN no carga, así que el
+  tablero se ve perfecto enseñando una partida que nadie está jugando. Por eso
+  `fenDeLaSala()`: `cartas_state.fen` para Cartas, `duelo_state.fen` para Duelo
+  (la columna `fen` de esa sala se queda en la de salida), y `fen` **sin la
+  reserva entre corchetes** para Crazyhouse, que chess.js no entiende. El
+  verificador siembra las salas con la columna `fen` puesta en OTRA posición a
+  propósito: una página que lea la columna equivocada tiene que saltar.
+- **El tope de la tarjeta es fijo (190 px), no `1/N`**, por lo mismo que las
+  miniaturas de la clase: con `1/N`, todos los tableros cambian de tamaño en
+  cuanto empieza una partida más, justo mientras se los está mirando.
+- **Una jugada NO recarga el torneo.** El canal de `game_rooms` solo repinta el
+  tablero de esa sala (`actualizarSala`): volver a pedir inscritos, rondas y
+  cruces en cada jugada de cada tablero son tres consultas por jugada y el
+  parpadeo de toda la lista. Lo que sí recarga es que la partida **termine**, que
+  llega por `tournament_pairings` con su resultado.
+- **Ese canal no se puede filtrar del lado del servidor**: `game_rooms` no lleva
+  `tournament_id`, así que llegan todas y se descartan acá — una sala que no esté
+  en `tablerosEnVivo` no pinta nada.
+- **El mapa se vacía junto con el HTML** al repintar las rondas: los tableros de
+  la vuelta anterior cuelgan de nodos que ya no están, y guardarlos dejaría que
+  una jugada se pintara donde no se ve.
+- **Niebla no se dibuja** tampoco acá, por la misma razón de arriba, y se dice
+  con todas las letras en vez de dejar un hueco.
+
+**Al tocar `torneo.html`, `js/cartas-board.js` o el arranque de cualquiera de las
+páginas de partida, correr `node herramientas/verificar-torneo-en-vivo.js`** (con
+el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`). Comprueba
+que se pinte un tablero por partida en juego y ninguno por el bye ni por la ronda
+terminada, que **cada uno dibuje SU posición** (contra la FEN que sirvió el doble,
+pieza por pieza, leyendo el DOM), que las piezas salgan dibujadas y no en glifo,
+que una jugada que llega sola repinte ese tablero **y no vuelva a pedir el torneo
+entero**, que una compañera que no juega entre de verdad a la partida y vea los
+nombres, que **no se le escape ninguna carta** ni con la de visión jugada, que no
+pueda mover ni escribir nada, y que las dos puertas cerradas sigan cerradas
+—Niebla en curso y una sala que la base no devolvió—. Está probado que falla de
+verdad: contra el código de antes saltan **16 comprobaciones**.
+
+- Ojo con cómo se escribe una comprobación de «se dibuja con SVG»: contar solo
+  los glifos da **verde sobre un tablero vacío**, que es justo lo que pasa cuando
+  el panel no se pinta. Se piden las dos cosas — que haya piezas dibujadas y que
+  no quede ni un glifo. Y todo se lee con `|| {}`: una prueba que revienta deja
+  sin correr lo que venía después, que es la mitad de lo que hay que mirar.
+- Y los tableros se comparan **con las casillas ordenadas**: el DOM las recorre
+  de a8 a h1 y chess.js de a1 a h8, así que un `JSON.stringify` a secas falla por
+  el orden de las claves y no por la posición.
+
+### El verificador de voseo no miraba la mitad del sitio
+
+Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
+desde ahí» y `verificar-voseo.py` pasaba en verde. La causa es de las que este
+archivo colecciona: `texto_visible()` **borraba los `<script>` enteros** antes de
+mirar. En la Academia casi toda la pantalla se arma con JavaScript —los avisos,
+los botones, los textos de error—, así que la comprobación estaba saltándose
+justo el texto que lee quien inició sesión.
+
+Ahora solo se borran los `<style>`. Salieron **20 ocurrencias** escondidas ahí:
+el mismo «entrá» en las seis páginas de partida y en `variante.html`, «Cuidá tu
+rey», «escribís», «llevás», «transformás» y «rendís». Las cinco que NO eran voseo
+—«encontré», «revisé», «recargué», «creé», «comprometí», «revelé»: primera
+persona del pretérito— fueron a `BLANCA`, junto a las que ya estaban por lo mismo.
+Y el verbo `entrar` se sumó a la tabla, que es la regla de siempre: **la tabla se
+completa cuando algo se escapa**.
+
 ## Retar a quien está en línea
 
 En `juegos.html`, debajo de las tarjetas, está "🟢 En línea ahora": quién más

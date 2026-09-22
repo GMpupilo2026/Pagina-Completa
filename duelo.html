@@ -295,7 +295,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entrá desde ahí."); return; }
+            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
@@ -306,7 +306,20 @@
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
             room = roomData;
             myColor = room.white_id === profile.id ? "w" : (room.black_id === profile.id ? "b" : null);
-            if (!myColor && !isTeacher) { showError("No formas parte de esta partida."); return; }
+            /* Mirar una partida lo decide la RLS, no esta pantalla. Si
+               `game_rooms_select` devolvió la fila, quien la pidió puede verla
+               —juega, es su profesor, administra, o es compañero de clase
+               (`es_companero`)—; y si no la devolvió, dos líneas más arriba ya
+               se salió con "No se encontró esa partida". El `!isTeacher` que
+               había acá era un SEGUNDO candado escrito en la página, más cerrado
+               que el de la base, y dejaba fuera justo a quien más quiere mirar:
+               en un torneo, el "Ver →" de torneo.html llevaba a todo el alumnado
+               a "No formas parte de esta partida" —incluido a quien le tocó bye
+               y no tiene otra cosa que hacer esa ronda—, y el cruce de al lado
+               no lo podía seguir nadie más que quien daba clase.
+               Jugar sigue cerrado por los dos lados: `interactive` cuelga de
+               myColor, los botones de rendirse y de "estoy listo" también, y
+               `game_rooms_update` no nombra a es_companero(). */
 
             /* El nombre de los dos lados sale de nombres_de_jugadores() y no de
                `profiles`: desde que el reto está abierto a toda la Academia el
