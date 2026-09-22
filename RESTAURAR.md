@@ -97,7 +97,7 @@ supabase db push
 Sin el CLI, se pegan una por una en el editor SQL, **en orden**: varias
 dependen de la anterior (la que agrega una columna a una tabla que otra creó).
 
-- Academia: `supabase/migraciones/` — 196 migraciones.
+- Academia: `supabase/migraciones/` — 197 migraciones.
 - Inscripciones: `supabase/migraciones-colegios/` — 5.
 
 **Después de aplicarlas, comparar contra el retrato** que está en
