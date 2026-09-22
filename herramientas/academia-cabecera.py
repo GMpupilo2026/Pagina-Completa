@@ -22,16 +22,20 @@ interruptor de tema— y un pie de una sola línea. Ni una ni otra tienen ya
 ningún enlace al sitio público: quien ya inició sesión no tiene por qué ver
 la invitación a inscribirse ni el resto del menú de marketing.
 
-Y de paso pone la burbuja de "quién está conectado" (js/burbuja-en-linea.js),
-que es lo otro que va en toda página de la Academia y en ninguna del sitio
-público. Va acá y no en un script aparte porque la lista PAGINAS es la misma:
-con dos listas, la página nueva entra en una y se olvida en la otra —que es
+Y de paso pone la burbuja de "quién está conectado" (js/burbuja-en-linea.js) y
+el aviso de partida asignada (js/juego-aviso.js) — "Cuando el profesor arma un
+pareo desde Juegos, que le llegue al alumno esté donde esté y lo lleve directo
+al tablero", que antes solo pasaba en juegos.html y clases.html. Los dos son
+lo que va en toda página de la Academia y en ninguna del sitio público. Van
+acá y no en un script aparte porque la lista PAGINAS es la misma: con dos
+listas, la página nueva entra en una y se olvida en la otra —que es
 exactamente lo que ya pasó una vez entre verificar-pwa.js y pwa-cabecera.py—.
 
 Se puede correr todas las veces que se quiera: como el nuevo encabezado y el
 nuevo pie tienen la misma forma que dejó la corrida anterior (un solo
 `<header id="header">…</header>` y un solo `<footer>…</footer>`), reemplazan
-lo que haya ahí sin necesitar marcas aparte; la burbuja sí lleva las suyas.
+lo que haya ahí sin necesitar marcas aparte; la burbuja y el aviso de partida
+sí llevan las suyas.
 
     python3 herramientas/academia-cabecera.py
 """
@@ -82,6 +86,8 @@ FOOTER_RE = re.compile(r'<footer[\s\S]*?</footer>')
 
 BURBUJA_INICIO = "<!-- burbuja: inicio -->"
 BURBUJA_FIN = "<!-- burbuja: fin -->"
+JUEGO_AVISO_INICIO = "<!-- juego-aviso: inicio -->"
+JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 
 # Dos páginas de la Academia se quedan SIN burbuja, y por razones distintas:
 #
@@ -94,6 +100,15 @@ BURBUJA_FIN = "<!-- burbuja: fin -->"
 #     distracción que el antitrampa viene a evitar, y el mensaje sigue
 #     estando cuando termine.
 SIN_BURBUJA = {"sesion.html", "examen.html"}
+
+# El aviso de partida asignada (js/juego-aviso.js) SOLO se quita de examen.html,
+# por la misma razón que ahí tampoco va la burbuja: un aviso que aparece solo y
+# traslada a otra página es justo la distracción que el antitrampa del examen
+# viene a evitar. En sesion.html sí va: ahí también hay alumnos, y "el profesor
+# te asignó una partida en Juegos" no tiene nada que ver con la clase en vivo
+# que ya ocupa esa pantalla — la única razón por la que sesion.html no lleva
+# burbuja es que YA tiene su propio chat, y eso no aplica acá.
+SIN_JUEGO_AVISO = {"examen.html"}
 
 # Dos páginas usan ejercicios de la base abierta de Lichess y su licencia
 # (CC0) exige decirlo: esa frase no es marketing, es un requisito legal, así
@@ -158,6 +173,31 @@ def poner_burbuja(ruta, s):
     return s[:cierre] + burbuja(ruta) + s[cierre:]
 
 
+def juego_aviso(ruta):
+    """Mismo criterio que la burbuja: `defer` y al final del <body>, para que
+    `window.sb` ya exista. js/juego-aviso.js se autoarranca solo — busca su
+    propia sesión y su propio rol — así que no hace falta ninguna llamada
+    aparte en el script de la página."""
+    arriba = "../" * ruta.count("/")
+    return (JUEGO_AVISO_INICIO
+            + f'<script src="{arriba}js/juego-aviso.js" defer></script>'
+            + JUEGO_AVISO_FIN)
+
+
+def poner_juego_aviso(ruta, s):
+    i = s.find(JUEGO_AVISO_INICIO)
+    if i >= 0:
+        j = s.find(JUEGO_AVISO_FIN, i)
+        s = s[:i] + s[j + len(JUEGO_AVISO_FIN):]
+    if ruta in SIN_JUEGO_AVISO:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin aviso de partida.")
+        return s
+    return s[:cierre] + juego_aviso(ruta) + s[cierre:]
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -174,6 +214,7 @@ def procesar(ruta):
         return False
 
     s = poner_burbuja(ruta, s)
+    s = poner_juego_aviso(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)

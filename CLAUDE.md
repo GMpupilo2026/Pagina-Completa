@@ -5999,6 +5999,66 @@ verdad** (`eq`, `in`, `or`): la página pide `profiles` tres veces seguidas con
 filtros distintos, y un doble que devolviera siempre la tabla entera daría por
 buena una página rota.
 
+## El aviso de un pareo asignado llega a cualquier página, no solo a Juegos
+
+`js/juego-aviso.js` existía desde antes —avisa y traslada solo cuando el
+profesor arma un pareo desde "Asignar rivales" en `juegos.html`— pero solo
+funcionaba ahí y en `clases.html`, porque eran las dos únicas páginas que
+cargaban el script y llamaban a mano `JuegoAviso.iniciar({ sb, userId,
+esProfesor })`. Un alumno resolviendo un ejercicio en `entreno/4x4.html` o
+mirando su bitácora en `informes.html` cuando el profesor lo pareaba **no se
+enteraba de nada**: la partida quedaba creada en la base, y la única forma de
+descubrirla era volver a entrar a Juegos o al panel por su cuenta. No daba
+ningún error — la partida existía y esperaba, tan campante.
+
+- **Se autoarranca, con el mismo patrón que `js/burbuja-en-linea.js` y
+  `js/notificaciones.js`**: busca su propia sesión y su propio rol
+  (`profiles.role`, `is_admin`) y solo se suscribe si quien mira NO es
+  profesor ni administración — a ellos no se les traslada a ningún lado,
+  porque son quienes arman el pareo. Así cualquier página que cargue el
+  script queda cubierta sin que nadie tenga que acordarse de invocarlo con el
+  `profile` a mano.
+- **`JuegoAviso.iniciar(opts)` se queda, pero ahora es idempotente** (una
+  bandera interna `iniciado`): si una página ya lo llama con los datos que
+  tiene a mano —evitando la consulta extra a `profiles`— y el autoarranque
+  también intenta iniciarlo, el segundo que llegue no hace nada. Sin ese
+  guardado, cargar el script dos veces (una a mano y otra por el
+  autoarranque) habría abierto dos canales de Realtime por alumno.
+- **La pone `herramientas/academia-cabecera.py`**, en la MISMA lista
+  `PAGINAS` que ya usa para la burbuja — no en una lista aparte: con dos
+  listas, la página nueva entra en una y se olvida en la otra, que es
+  exactamente lo que ya pasó una vez entre `verificar-pwa.js` y
+  `pwa-cabecera.py`. Va con `defer` y al final del `<body>`, después de donde
+  sea que la página cargue `js/supabase-client.js`, que es de quien depende
+  (`window.sb`).
+- **Solo se excluye de `examen.html`, no de `sesion.html`.** La burbuja se
+  queda afuera de las dos, pero por razones distintas y no todas aplican
+  acá: `sesion.html` no lleva burbuja porque YA tiene su propio chat con la
+  lista de conectados —el mismo destino dos veces—, y eso no tiene nada que
+  ver con un aviso de "te asignaron una partida en Juegos". `examen.html` sí
+  se excluye de las dos, por la misma razón: un aviso que aparece solo y
+  puede trasladar a otra página es justo la distracción que el antitrampa
+  del examen viene a evitar.
+- **Con `juegos.html` y `clases.html` se quitó la llamada manual y el
+  `<script>` del `<head>`**, no se dejaron las dos formas conviviendo: la
+  llamada explícita con el `profile` ya cargado sigue siendo válida (la
+  acepta `iniciar()`), pero mantenerla ahí Y agregar el autoarranque en esas
+  dos páginas habría sido la misma lógica escrita de dos maneras que se
+  van a ir separando a la primera corrección. Las dos páginas quedaron
+  cargando el script una sola vez, igual que las demás: al final del
+  `<body>`, puesto por `academia-cabecera.py`.
+
+**Al tocar `js/juego-aviso.js` o `herramientas/academia-cabecera.py`, correr
+`node herramientas/verificar-juego-aviso.js`** (con el sitio en
+localhost:8777 y playwright). Comprueba que la lista de páginas de la
+Academia lleve el script en todas menos `examen.html` (incluida
+`sesion.html`, que sí la lleva), que a un profesor o a quien administra no se
+le suscriba nada, que a un alumno en una página que NO es `juegos.html` ni
+`clases.html` —el caso que este cambio viene a resolver— le aparezca el
+aviso en cuanto llega la fila nueva de `game_rooms`/`fourplayer_games`, que
+"Entrar ahora" lleve a la página y la sala correctas, y que un cliente sin
+`channel` no deje ni un error en la consola.
+
 ## El reloj de la partida no se fía del navegador
 
 `game_rooms.white_time_left`/`black_time_left` (y el `time_left` de cada
