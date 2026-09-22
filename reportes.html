@@ -66,14 +66,14 @@
                         <input type="radio" name="modo" value="academia" checked class="mt-1 accent-accent-500">
                         <span>
                             <span class="block font-semibold text-brand-800 dark:text-white">De la Academia</span>
-                            <span class="block text-sm text-brand-500 dark:text-brand-300">Las clases dadas en la plataforma. Las fechas, las asistencias y el tiempo los saca el sitio solo.</span>
+                            <span class="block text-sm text-brand-500 dark:text-brand-300">Las clases de tus alumnos con cuenta: las de la plataforma y las presenciales a las que les pasaste lista. Las fechas, las asistencias y el tiempo los saca el sitio solo.</span>
                         </span>
                     </label>
                     <label class="flex gap-3 items-start border border-brand-200 dark:border-brand-700 rounded-xl p-4 cursor-pointer hover:border-accent-400 transition-colors">
                         <input type="radio" name="modo" value="externo" class="mt-1 accent-accent-500">
                         <span>
                             <span class="block font-semibold text-brand-800 dark:text-white">De clases dadas por fuera</span>
-                            <span class="block text-sm text-brand-500 dark:text-brand-300">Clases en una escuela o en otro lado. Todo sale de lo que subas: la asistencia del Excel y el contenido de tus documentos.</span>
+                            <span class="block text-sm text-brand-500 dark:text-brand-300">Clases a gente que no tiene cuenta en la Academia. Todo sale de lo que subas: la asistencia del Excel y el contenido de tus documentos.</span>
                         </span>
                     </label>
                 </div>
@@ -565,8 +565,15 @@
             if (error) return decir(estado, "No se pudieron traer los datos: " + error.message, true);
             datos = data;
             const t = (data && data.totales) || {};
+            /* Cuántas son presenciales se dice acá arriba y no solo dentro del
+               informe: es lo primero que se mira para saber si la ficha de
+               asistencia de la semana pasada llegó de verdad. Sin ese número,
+               una ficha que no se guardó se ve igual que una que sí. */
+            const presenciales = t.clases_presenciales || 0;
             decir(estado, t.clases
-                ? "Listo: " + t.clases + (t.clases === 1 ? " clase" : " clases") + " y " + (t.asistencias || 0) + " asistencias."
+                ? "Listo: " + t.clases + (t.clases === 1 ? " clase" : " clases") +
+                  (presenciales ? " (" + presenciales + " presencial" + (presenciales === 1 ? "" : "es") + ")" : "") +
+                  " y " + (t.asistencias || 0) + " asistencias."
                 : "No hay clases registradas en ese periodo.");
             refrescar();
         }
