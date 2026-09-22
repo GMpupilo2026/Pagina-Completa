@@ -5733,6 +5733,51 @@ where pronamespace = 'public'::regnamespace
 revoke execute on function public.<la_nueva>() from public, anon, authenticated;
 ```
 
+### `anon` sacaba el mapa de quién estudia con quién
+
+La ronda de arriba miró las funciones de TRIGGER. Hay una clase más que nace
+publicada por el mismo descuido y que **no** es de trigger: las funciones
+auxiliares que contestan una pregunta sobre OTRA persona.
+`public.profesores_de(alumno)` y `public.alumnos_de(profesor)` son
+`SECURITY DEFINER` —tienen que serlo: de ellas cuelgan las cinco que hacen
+cumplir «quién es profesor de quién»— y tenían `EXECUTE` de PUBLIC y de `anon`.
+
+**La fuga era real, no teórica.** Comprobado antes de tocar nada: con `set
+local role anon`, `alumnos_de(<un profesor cualquiera>)` devolvía sus **53
+alumnos**, y `profesores_de(<un alumno cualquiera>)` sus 2 profesores. La clave
+pública está escrita dentro del HTML, así que eso lo podía pedir **cualquiera
+desde internet, sin cuenta**: el mapa completo de quién estudia con quién, y de
+paso la lista de alumnos de cada profesor. No salen nombres ni correos —son
+uuid— pero es justo la relación que `profiles_select` acota con tanto cuidado.
+
+- **A `anon` se le quita y a `authenticated` NO.** Es la regla que ya está
+  escrita arriba: hay **cinco funciones `SECURITY INVOKER`** que las llaman
+  —`mis_clases()`, `mi_gente()`, `alumnos_del_profesor()`,
+  `alumnos_del_profesor_con_nombre()` y `grupos_de_mis_alumnos()`— y una
+  función INVOKER corre con los privilegios de quien llama. Sin ese execute,
+  `mis_clases()` falla para todo el mundo y el alumno se queda sin saber
+  quiénes son sus profesores. Ninguna POLÍTICA las nombra directamente
+  (comprobado sobre `pg_policy`), así que la RLS no se ve afectada.
+- Comprobado después: `anon` recibe **«permission denied for function
+  alumnos_de»**; el alumno sigue recibiendo sus 3 clases de `mis_clases()`; el
+  profesor sus 53 alumnos por `alumnos_del_profesor()`, sus 2 grupos y sus 54
+  perfiles; y la coordinadora su `mi_gente()`. Ninguna página del sitio las
+  llamaba por RPC — se buscó.
+
+**Lo que esto NO cierra, y queda anotado:** un alumno con sesión
+(`authenticated`) las sigue pudiendo llamar con el id de cualquiera. No se le
+puede quitar el execute sin romper esas cinco funciones, porque PostgREST
+expone por RPC todo lo que `authenticated` puede ejecutar. La salida sería
+**moverlas fuera del esquema `public`** —a uno que PostgREST no exponga—, y eso
+toca las quince funciones que las usan: es un cambio aparte, no un arreglo
+puntual. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+alguien no existe.
+
+**La regla que deja esto:** una función `SECURITY DEFINER` que conteste sobre
+una persona que NO es quien llama es una API aunque no lo parezca. Al escribir
+una, preguntarse quién tiene que poder llamarla — y si la respuesta no incluye
+al público, revocarle el execute de `public` y de `anon`.
+
 ### Lo que queda pendiente y NO se puede hacer desde acá
 
 **La protección contra contraseñas filtradas está apagada, y hoy no se puede
@@ -6375,6 +6420,162 @@ fijas la prueba se pudre sola con el almanaque.
   (`profiles.grupo`, que es como PostgREST las nombra). Sin eso ese filtro no
   encontraba nunca nada, así que el récord de racha táctica salía siempre en
   "todavía nadie" y la prueba daba verde porque no lo miraba.
+
+## La burbuja de "quién está conectado"
+
+El pedido era de quien da clase: **ver cuántos estudiantes están conectados
+ahora mismo en la plataforma, poder ver quiénes son y escribirles, «tipo
+burbuja adicional sin que estorbe en ningún lado»**. Es
+`js/burbuja-en-linea.js`, una burbuja flotante abajo a la derecha que
+`herramientas/academia-cabecera.py` pone en las páginas de la Academia.
+
+**Tiene dos caras y las dos viven en el mismo archivo**, porque son el mismo
+hilo visto desde sus dos puntas — escritas aparte se separarían a la primera
+corrección, igual que `js/videollamada.js` o `js/subgrupos-marcar.js`:
+
+- **Quien da clase** ve el conteo de sus alumnos conectados, quiénes son y en
+  qué página andan, y le escribe a cualquiera sin salir de lo que estaba
+  haciendo.
+- **El alumno** recibe ese mensaje **en la página que tenga abierta** y
+  contesta ahí mismo.
+
+**Esa segunda mitad no es un adorno.** Hasta ahora el chat solo existía dentro
+de `sesion.html`, que además exige clase abierta: un mensaje mandado a un
+alumno que estaba entrenando no lo leía nadie. Se mandaba, se guardaba, y el
+profesor se quedaba esperando una respuesta que nunca iba a venir. Un mensaje
+que no llega no es un mensaje, y eso no da ningún error.
+
+### El canal es POR PROFESOR, y lo que llega por él no se cree
+
+Un canal de presencia de Supabase **no pasa por la RLS**: lo escucha —y se
+anuncia en él— cualquiera que sepa su nombre. De ahí las dos decisiones que
+sostienen esto:
+
+- **No hay un canal global.** Un `academia-en-linea` para todos le repartiría a
+  los mil doscientos alumnos la lista de quién está conectado y en qué página
+  — que es exactamente la fuga que ya se cerró una vez, cuando el canal de
+  Juegos anunciaba con quién estudiaba cada quien. El alumno se anuncia en
+  `academia-en-linea:<profesor>`, **uno por cada profesor suyo**, y el profesor
+  escucha el suyo. Lo peor que puede oír alguien que se cuele en el canal de su
+  propio profesor son sus compañeros, que es lo que `es_companero()` ya le deja
+  ver en `profiles`. Mismo patrón que `clases-presence:<boardOwnerId>`.
+- **La lista se cruza contra `profiles` y el nombre que se pinta es el de la
+  BASE, no el del canal.** Sin ese cruce, cualquiera podría anunciarse en el
+  canal de un profesor ajeno con el nombre que quisiera y aparecerle en la
+  burbuja: la pantalla se vería perfecta y el fallo saldría recién al mandarle
+  un mensaje que la RLS rechaza, sin que nadie entienda por qué. Se pide con
+  `.in(ids)` sobre los conectados de ahora —nunca la tabla entera, que es la
+  piedra de PostgREST— y quien la base no reconoce **no se pinta**.
+- **Por el canal va lo justo: id, nombre y en qué página anda. El correo NO.**
+  En la Academia son menores de edad y ese canal lo escucha cualquiera que sepa
+  su nombre. El nombre viaja solo como respaldo; lo que se pinta sale de la base.
+- **La página se dice con el `<title>`, no con el `pathname`.** «entreno/4x4.html»
+  no le dice nada a quien lo lee; el título ya está escrito para leerse.
+
+### "Conectado" quiere decir lo mismo que en el resto del sitio
+
+Tener la pestaña abierta no es estar. `js/tiempo-plataforma.js` ya decidió qué
+cuenta como activo —60 segundos sin un clic, una tecla o un scroll, o la
+pestaña de fondo— y acá se usa **el mismo número**: al pasar de ahí se deja de
+anunciar y al volver la actividad se vuelve a anunciar. Si no, la burbuja diría
+«3 conectados» de gente que dejó la página abierta y se fue, el profesor le
+escribiría y no contestaría nadie — que es peor que no tener el conteo.
+
+### El mensaje no estrena tabla
+
+Es `class_chat_messages`, la misma del chat de la clase en vivo y con la misma
+RLS: el profesor escribe en el hilo de cualquier alumno suyo
+(`soy_profesor_de(student_id)`), el alumno solo en el suyo. **Un mensaje es un
+mensaje, no dos bandejas**: lo que se escribe desde la burbuja se lee en la
+clase en vivo y al revés. No hizo falta ninguna migración para esto.
+
+**Qué está leído vive en `localStorage`, y es del APARATO a propósito**, como
+el tema o la clase elegida. Es un aviso, no un dato: en la base pediría una
+columna que hay que mantener al día con cada lectura, y lo peor que pasa así es
+que un mensaje ya leído en la compu vuelva a avisar una vez en el celular.
+
+- **El profesor tiene una marca POR ALUMNO**, así que al arrancar pide los
+  últimos mensajes y descarta acá. Con un `gt` sobre una marca sola se perdería
+  el mensaje viejo de un alumno con el que no había hablado nunca. El alumno sí
+  filtra en el servidor: su hilo es uno.
+- **El alumno filtra el Realtime en el servidor** (`student_id=eq.<él>`); el
+  profesor no puede —son N alumnos— y descarta en el cliente contra la lista
+  que la base le reconoció.
+
+### Que no estorbe es la mitad del pedido
+
+- **Al alumno la burbuja SOLO se le pinta si tiene algo que leer.** No necesita
+  saber quién está conectado, y un botón permanente sería justo el estorbo que
+  esto no quiere ser. Al profesor se le queda siempre: el conteo es el dato, y
+  «ahora mismo no hay nadie» también es una respuesta.
+- **Un alumno sin ningún profesor no monta nada**: no hay a quién anunciarse ni
+  de quién recibir. El aviso de «pide que te asignen un profesor» ya vive en el
+  panel, que es por donde se entra.
+- **Va en `z-40`, debajo del encabezado (`z-50`).** Si empataran, al desplegarse
+  taparía el interruptor de tema.
+- Escape la cierra **y devuelve el foco al botón**: un panel que se cierra
+  dejando el foco en la nada deja perdido a quien usa teclado. El botón lleva
+  `aria-expanded` y `aria-controls`, y el contador va en una región viva.
+- **Dos páginas de la Academia se quedan SIN burbuja**, por razones distintas:
+  `sesion.html`, que ya tiene el chat de la clase y su lista de conectados en
+  un panel hecho para eso —la burbuja encima sería el mismo destino dos veces,
+  el error que el panel ya cometió con «Torneos», y sobre un tablero—; y
+  `examen.html`, que tiene reloj, una sola oportunidad por pregunta y pantalla
+  completa: un panel que se despliega ahí es la distracción que el antitrampa
+  viene a evitar, y el mensaje sigue estando cuando termine.
+- El nombre de un alumno y el texto de un mensaje **los escribe una persona**,
+  así que van siempre por `textContent` — la misma regla de la bitácora y de
+  `renderStudentsList()`.
+- **Y sobre todo: no ensucia ninguna.** Se agrega a 56 páginas que ya
+  funcionaban, así que su arranque entero va en un `catch`: lo que falle se
+  queda en una línea de consola y la burbuja no se monta. **Eso salió en la
+  primera corrida**: los dobles de Supabase de media docena de verificadores no
+  tienen canales de presencia, así que `sb.channel` no existía y el TypeError
+  salía en la consola de `informes.html` —`verificar-notas.js` lo cazó por su
+  comprobación de «sin errores en la consola»—. Un error suyo en la consola de
+  una página que no tiene nada que ver con ella es donde se esconden los
+  errores de verdad. Son **dos piezas y hacen falta las dos**: la salida limpia
+  (`if (!sb.channel) return`, porque sin canales no hay nada que montar) y el
+  `catch` detrás, que es la red. Está medido: con las dos puestas saltan las
+  comprobaciones si se quitan las dos.
+  - Por eso **NO se les agregó `channel()` a los dobles de los otros
+    verificadores**: ahí la burbuja no se monta y no tiene por qué — quien la
+    comprueba es `verificar-burbuja.js`, con su doble que sí los tiene.
+
+### Dónde se pone la línea
+
+La pone **`herramientas/academia-cabecera.py`**, con las marcas
+`<!-- burbuja: inicio -->` / `<!-- burbuja: fin -->`, así que se puede correr
+todas las veces que se quiera. Va ahí y no en un script aparte porque **la
+lista `PAGINAS` es la misma**: con dos listas, la página nueva entra en una y
+se olvida en la otra — que es exactamente lo que ya pasó entre
+`verificar-pwa.js` y `pwa-cabecera.py`. **Al agregar una página de la Academia,
+sumarla a esa lista y correr el script.**
+
+**Al tocar `js/burbuja-en-linea.js` o el generador, correr `node
+herramientas/verificar-burbuja.js`** (con el sitio en localhost:8777 y
+playwright). Su Supabase de mentira tiene **canales de presencia de verdad**:
+la prueba siembra quién está conectado y dispara el sync, como haría Realtime,
+y **anuncia también a un intruso con el nombre que él eligió** — que es lo que
+puede hacer cualquiera con sesión. Comprueba que el intruso no se pinte y que
+el nombre que salga sea el de la base; que el mensaje viaje al hilo de ESE
+alumno y firmado por quien escribe; que al alumno sin mensajes **no se le pinte
+ningún botón** (se mide `checkVisibility()`, no la clase); que se anuncie a
+**sus dos** profesores y no solo al principal; que con la pestaña de fondo deje
+de anunciarse; que un nombre con una etiqueta adentro no se ejecute **y se siga
+viendo, literal**; y que la línea esté en todas las páginas de la Academia,
+en ninguna de las dos exceptuadas, y con una ruta relativa que **llegue de
+verdad al archivo** (un 404 ahí no avisa: la burbuja simplemente no aparece).
+
+Comprueba además, con un cliente **sin canales de presencia**, que no se monte
+y que **no deje ni un error en la consola** — que es lo que de verdad la hace
+segura de poner en 56 páginas.
+
+Está probado que falla de verdad: creyéndole al canal en vez de cruzar contra
+`profiles` saltan 2 comprobaciones, anunciándose solo al profesor principal 1,
+pintando el nombre con `innerHTML` 2, pintándole la burbuja al alumno sin
+mensajes 1, y quitándole a la vez la salida limpia y el `catch` del arranque,
+las 2 del cliente recortado.
 
 ## El panel de Administración
 

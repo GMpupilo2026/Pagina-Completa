@@ -22,10 +22,16 @@ interruptor de tema— y un pie de una sola línea. Ni una ni otra tienen ya
 ningún enlace al sitio público: quien ya inició sesión no tiene por qué ver
 la invitación a inscribirse ni el resto del menú de marketing.
 
+Y de paso pone la burbuja de "quién está conectado" (js/burbuja-en-linea.js),
+que es lo otro que va en toda página de la Academia y en ninguna del sitio
+público. Va acá y no en un script aparte porque la lista PAGINAS es la misma:
+con dos listas, la página nueva entra en una y se olvida en la otra —que es
+exactamente lo que ya pasó una vez entre verificar-pwa.js y pwa-cabecera.py—.
+
 Se puede correr todas las veces que se quiera: como el nuevo encabezado y el
 nuevo pie tienen la misma forma que dejó la corrida anterior (un solo
 `<header id="header">…</header>` y un solo `<footer>…</footer>`), reemplazan
-lo que haya ahí sin necesitar marcas aparte.
+lo que haya ahí sin necesitar marcas aparte; la burbuja sí lleva las suyas.
 
     python3 herramientas/academia-cabecera.py
 """
@@ -73,6 +79,21 @@ PAGINAS = [
 HEADER_RE = re.compile(r'<header id="header"[\s\S]*?</header>')
 FOOTER_RE = re.compile(r'<footer[\s\S]*?</footer>')
 
+BURBUJA_INICIO = "<!-- burbuja: inicio -->"
+BURBUJA_FIN = "<!-- burbuja: fin -->"
+
+# Dos páginas de la Academia se quedan SIN burbuja, y por razones distintas:
+#
+#   - sesion.html ya tiene el chat de la clase y su lista de alumnos
+#     conectados, en un panel hecho para eso. La burbuja encima sería el
+#     mismo destino dos veces —el error que el panel ya cometió con
+#     "Torneos"— y encima de un tablero.
+#   - examen.html es un examen con reloj, una sola oportunidad por pregunta
+#     y pantalla completa. Un panel que se despliega ahí es justo la
+#     distracción que el antitrampa viene a evitar, y el mensaje sigue
+#     estando cuando termine.
+SIN_BURBUJA = {"sesion.html", "examen.html"}
+
 # Dos páginas usan ejercicios de la base abierta de Lichess y su licencia
 # (CC0) exige decirlo: esa frase no es marketing, es un requisito legal, así
 # que el pie mínimo la respeta en vez de aplastarla con el genérico.
@@ -110,6 +131,32 @@ def cabecera(ruta):
     )
 
 
+def burbuja(ruta):
+    """La burbuja va con `defer` y DESPUÉS del cliente de Supabase, que es de
+    quien depende (`window.sb`). Como el cliente de cada página va en el
+    cuerpo o en el head con defer, alcanza con ponerla al final del <body>:
+    para entonces `sb` ya existe."""
+    arriba = "../" * ruta.count("/")
+    return (BURBUJA_INICIO
+            + f'<script src="{arriba}js/burbuja-en-linea.js" defer></script>'
+            + BURBUJA_FIN)
+
+
+def poner_burbuja(ruta, s):
+    # Fuera lo de la corrida anterior, esté donde esté.
+    i = s.find(BURBUJA_INICIO)
+    if i >= 0:
+        j = s.find(BURBUJA_FIN, i)
+        s = s[:i] + s[j + len(BURBUJA_FIN):]
+    if ruta in SIN_BURBUJA:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin burbuja.")
+        return s
+    return s[:cierre] + burbuja(ruta) + s[cierre:]
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -124,6 +171,8 @@ def procesar(ruta):
     if n_footer != 1:
         print(f"⚠️  {ruta}: no encontré un <footer>…</footer> único, no se tocó.")
         return False
+
+    s = poner_burbuja(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)
