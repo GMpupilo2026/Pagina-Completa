@@ -69,7 +69,7 @@
                     <label for="topic-filter" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tema o actividad</label>
                     <select id="topic-filter" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Todo (resumen general)</option>
-                        <option value="inactivos">😴 Sin entrenar (7 días)</option>
+                        <option value="inactivos">😴 Sin entrenar (4 días)</option>
                         <option value="asignaciones">🚩 Asignaciones (Preguntar a la clase)</option>
                         <option value="asistencia">🏫 Asistencia y tiempo en la plataforma</option>
                         <option value="4x4">🧩 4×4</option>
@@ -88,7 +88,7 @@
             </div>
 
             <!-- Lo que pide actuar HOY, arriba de todo y antes de los números:
-                 quién lleva una semana sin entrenar, a quién le falta el
+                 quién lleva 4 días o más sin entrenar, a quién le falta el
                  diagnóstico y cuántos planes están sin compartir. Los tres datos
                  ya estaban cargados y no se decían en ninguna parte — había que
                  ir a buscarlos al filtro. Arranca oculta y solo se destapa si de
@@ -732,8 +732,8 @@
                 // vez de tumbar el informe entero — son un extra, no el dato.
                 sb.rpc("mis_subgrupos"),
                 // Misma definición de "entrenar" que panel_profesor() en clases.html
-                // (Tu semana): una fila en training_progress en los últimos 7 días.
-                sb.rpc("informes_inactivos", { p_dias: 7 }),
+                // (Tu semana): una fila en training_progress en los últimos 4 días.
+                sb.rpc("informes_inactivos", { p_dias: 4 }),
             ]);
             if (totalesRes.error) throw totalesRes.error;
             const totales = totalesRes.data || { clases_cerradas: 0, preguntas: 0, partidas: 0 };
@@ -841,7 +841,7 @@
             return String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
-        // Quién lleva 7 días o más sin entrenar, por id. Sale de informes_inactivos(),
+        // Quién lleva 4 días o más sin entrenar, por id. Sale de informes_inactivos(),
         // la misma lista que cuenta panel_profesor() en "Tu semana" de clases.html:
         // un segundo criterio escrito acá podría decir otra cosa del mismo alumno.
         function inactivosPorId() {
@@ -981,7 +981,7 @@
                 window.scrollTo({ top: 0, behavior: "smooth" });
             };
 
-            if (inactivos.length) boton(`😴 ${inactivos.length} sin entrenar hace una semana`, conFiltro("inactivos"));
+            if (inactivos.length) boton(`😴 ${inactivos.length} sin entrenar hace 4 días o más`, conFiltro("inactivos"));
             if (pendientes.length) boton(`🧭 ${pendientes.length} sin diagnóstico`, conFiltro("diagnostico"));
             // Un plan sin compartir no lo ve ni el alumno ni su casa, o sea que
             // cuenta como que no existe: es lo mismo que dice "Tu semana".
@@ -1756,7 +1756,7 @@
         });
 
         const TOPIC_LABELS = {
-            inactivos: "😴 Sin entrenar en los últimos 7 días",
+            inactivos: "😴 Sin entrenar en los últimos 4 días",
             asignaciones: "🚩 Asignaciones — precisión por alumno",
             asistencia: "🏫 Asistencia y tiempo en la plataforma",
             "4x4": "🧩 4×4 — ejercicios resueltos",
@@ -1820,15 +1820,19 @@
                 return;
             }
             // Misma lista que cuenta panel_profesor() en Tu semana (clases.html):
-            // alumnos sin ninguna fila de training_progress en los últimos 7 días.
+            // alumnos sin ninguna fila de training_progress en los últimos 4 días.
             // Ya viene ordenada por quien lleva más tiempo sin entrenar primero.
+            // Cada fila trae un botón para mandarle a la casa, con un clic, una
+            // invitación a practicar (acción "invitar_practicar" de la Edge
+            // Function) — no es el informe programado, es un empujón puntual.
             if (topic === "inactivos") {
                 const inactivos = teacherData.inactivos || [];
                 if (!inactivos.length) {
-                    body.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Nadie: toda la clase entrenó en los últimos 7 días. 🎉</p>';
+                    body.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Nadie: toda la clase entrenó en los últimos 4 días. 🎉</p>';
                 } else {
                     const hoy = Date.now();
                     inactivos.forEach((s) => {
+                        const nombre = s.full_name || s.email;
                         const cuando = s.ultima_actividad
                             ? (() => {
                                 const dias = Math.max(1, Math.round((hoy - new Date(s.ultima_actividad).getTime()) / 86400000));
@@ -1836,8 +1840,34 @@
                               })()
                             : "Nunca entrenó";
                         const row = document.createElement("div");
-                        row.className = "flex items-center justify-between text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
-                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(s.full_name || s.email)}${s.grupo ? ` <span class="text-brand-450 dark:text-brand-350 font-normal">· ${escVis(s.grupo)}</span>` : ""}</span><span class="text-red-600 dark:text-red-400">${cuando}</span>`;
+                        row.className = "flex items-center justify-between gap-3 text-sm border-b border-brand-50 dark:border-brand-800/60 last:border-0 pb-2";
+                        row.innerHTML = `<span class="font-medium text-brand-700 dark:text-brand-200">${escVis(nombre)}${s.grupo ? ` <span class="text-brand-450 dark:text-brand-350 font-normal">· ${escVis(s.grupo)}</span>` : ""}</span>`;
+
+                        const der = document.createElement("div");
+                        der.className = "flex items-center gap-3 shrink-0";
+                        const cuandoSpan = document.createElement("span");
+                        cuandoSpan.className = "text-red-600 dark:text-red-400";
+                        cuandoSpan.textContent = cuando;
+
+                        const invitar = document.createElement("button");
+                        invitar.type = "button";
+                        invitar.textContent = "✉️ Invitar a practicar";
+                        invitar.className = "text-xs whitespace-nowrap bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200 font-semibold px-3 py-1.5 rounded-lg hover:bg-brand-200 dark:hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                        invitar.addEventListener("click", async () => {
+                            if (!confirm(`¿Mandarle a la casa de ${nombre} una invitación a practicar, avisando que ${cuando.toLowerCase()}?`)) return;
+                            invitar.disabled = true; invitar.textContent = "Enviando…";
+                            try {
+                                const r = await llamarInformes({ action: "invitar_practicar", student_id: s.id });
+                                invitar.textContent = r.mandados === 1 ? "¡Enviado!" : `¡Enviado a ${r.mandados}!`;
+                                setTimeout(() => { invitar.disabled = false; invitar.textContent = "✉️ Invitar a practicar"; }, 2500);
+                            } catch (err) {
+                                alert("No se pudo enviar: " + err.message);
+                                invitar.disabled = false; invitar.textContent = "✉️ Invitar a practicar";
+                            }
+                        });
+
+                        der.append(cuandoSpan, invitar);
+                        row.appendChild(der);
                         body.appendChild(row);
                     });
                 }

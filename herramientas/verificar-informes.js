@@ -960,7 +960,27 @@ async function pruebaClaseGrande(browser) {
 
   igual("la franja dice los tres que no entrenan", await page.evaluate(() =>
     [...document.querySelectorAll("#atencion-botones button")].map((b) => b.textContent)),
-    ["😴 3 sin entrenar hace una semana", "🧭 40 sin diagnóstico", "📤 5 planes sin compartir"]);
+    ["😴 3 sin entrenar hace 4 días o más", "🧭 40 sin diagnóstico", "📤 5 planes sin compartir"]);
+
+  /* La lista de «sin entrenar» y su botón de invitar a la casa: no es el
+     informe programado, es el empujón puntual que agrega este cambio. Lo que
+     se comprueba es que el botón le pida a la función el ALUMNO CORRECTO —
+     el primero de la lista, que es quien nunca entrenó, no cualquiera. */
+  console.log("-- La lista de «sin entrenar» y el botón de invitar");
+  await page.click("#atencion-botones button");
+  await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
+  igual("el clic deja el filtro en «inactivos»", await page.inputValue("#topic-filter"), "inactivos");
+  igual("lista a los tres, el que nunca entrenó primero", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.querySelector("span").textContent.trim())),
+    ["Sofía Núñez · 7A", "Alumna 02 · 7B", "Alumna 03 · 7A"]);
+  await page.evaluate(() => { window.__funcion.length = 0; });
+  page.once("dialog", (d) => d.accept());
+  await page.click("#topic-report-body > div:first-child button");
+  await page.waitForFunction(() => window.__funcion.length > 0);
+  igual("«invitar a practicar» le pide a la función ese alumno", await page.evaluate(() => window.__funcion[0]),
+    { action: "invitar_practicar", student_id: "g45" });
+  await page.selectOption("#topic-filter", "");
+  await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
 
   /* «Nivel por alumno» corta igual que el índice: con cuarenta diagnósticos era
      una pared de barras antes de llegar a lo que de verdad se mira, que es el
