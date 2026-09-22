@@ -7,19 +7,23 @@
  * respuesta —una jugada, una casilla o la letra de una opción— y la página la
  * recibe igual que si se hubiera hecho clic.
  *
- * Ya existía el mismo recuadro escrito tres veces (Mates, Aprender, Desafíos,
- * Practicar tienen su #blind-panel; 4×4 su #cmd-form; los visores de los cursos
- * su .f100-cmd). Este archivo es para las páginas que NO lo tenían —el
- * diagnóstico, los exámenes de arbitraje, Ejercicios por tema— y para que la
- * siguiente no lo vuelva a escribir por cuarta vez.
+ * Existía el mismo recuadro escrito tres veces (Mates, Aprender, Desafíos y
+ * Practicar tenían su #blind-panel; 4×4 su #cmd-form; los visores de los cursos
+ * su .f100-cmd) y las tres versiones entendían cosas distintas: las de Entreno
+ * solo aceptaban "e1 g1" —o sea, no entendían "Cf3", que es como se escribe una
+ * jugada— y ninguna dejaba preguntar nada. Aquellas cuatro se reemplazaron por
+ * esta, así que hoy en todo Entrenamiento se escribe igual.
  *
  * Dos decisiones que conviene no deshacer:
  *
- * 1. NO REEMPLAZA AL TABLERO, SE SUMA. En Mates y sus hermanas el modo adaptado
- *    esconde el tablero y deja solo el recuadro; acá conviven. Alguien con baja
- *    visión usa las dos cosas —ve el tablero ampliado y escribe la jugada
- *    porque arrastrar una pieza de 40 px con lupa es un suplicio—, y quien
- *    acompaña a un alumno necesita ver lo que él está contestando.
+ * 1. NO REEMPLAZA AL TABLERO, SE SUMA. Mates y sus hermanas escondían el tablero
+ *    en Modo Adaptado y dejaban solo el recuadro; ya no, y era el peor de los
+ *    dos mundos: la única forma de saber qué había era oír la posición entera y
+ *    acordarse de las treinta y dos piezas. Ahora el tablero se queda y se
+ *    recorre con el teclado (js/tablero-accesible.js). Alguien con baja visión
+ *    usa las dos cosas —ve el tablero ampliado y escribe la jugada porque
+ *    arrastrar una pieza de 40 px con lupa es un suplicio—, y quien acompaña a
+ *    un alumno necesita ver lo que él está contestando.
  *
  * 2. LO QUE DECIDE SI SE VE ES EL CSS (`html.adaptive-mode`), no el JavaScript.
  *    Así encender y apagar el Modo Adaptado surte efecto al instante, sin que
@@ -97,11 +101,19 @@ window.CuadroComandos = (function () {
     return null;
   }
 
-  /* La jugada escrita, contra una posición de chess.js. Delega en el intérprete
-     que ya usan los visores de los cursos y las páginas de Juegos
-     (js/chess-move-parser.js): entiende español, inglés y los descuidos de
-     tipeo de siempre. Ojo: si acierta, la jugada QUEDA HECHA en `game`. */
+  /* La jugada escrita. La resuelve ComandosTablero.jugadaEscrita(), que la busca
+     entre las jugadas LEGALES en vez de probar el texto sobre la partida: así
+     vale también para los motores que no son chess.js —Desafíos usa el suyo,
+     porque sus posiciones no siempre tienen reyes— y no deja la partida movida
+     por el camino. Si aquel módulo no está, cae en js/chess-move-parser.js, que
+     es lo que había antes.
+     Ojo, el contrato no cambió: si acierta, la jugada QUEDA HECHA en `game`. */
   function jugadaPedida(game, texto) {
+    if (window.ComandosTablero && ComandosTablero.jugadaEscrita) {
+      var mv = ComandosTablero.jugadaEscrita(game, texto);
+      if (!mv) return null;
+      try { return game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || undefined }); } catch (e) { return null; }
+    }
     if (typeof ChessMoveParser === "undefined") return null;
     return ChessMoveParser.tryParseMove(game, texto);
   }
@@ -135,6 +147,10 @@ window.CuadroComandos = (function () {
     "  border-radius: .4rem; cursor: pointer; }",
     ".cc-ayuda { margin: .5rem 0 0; font-size: .85rem; opacity: .85; }",
     ".cc-msg { margin: .4rem 0 0; font-size: .95rem; font-weight: 600; min-height: 1.3em; }",
+    ".cc-ayuda-det { margin: .6rem 0 0; }",
+    ".cc-ayuda-det > summary { cursor: pointer; font-size: .9rem; font-weight: 600; }",
+    ".cc-ayuda-det h3 { font-size: .95rem; margin: .7rem 0 .2rem; }",
+    ".cc-ayuda-det p { margin: 0 0 .4rem; font-size: .88rem; line-height: 1.55; }",
   ].join("\n");
 
   var estiloPuesto = false;
@@ -196,11 +212,34 @@ window.CuadroComandos = (function () {
     ayuda.className = "cc-ayuda";
     caja.appendChild(ayuda);
 
+    /* El aviso va con `role="status"` y SIN un `aria-live` encima: el rol ya
+       vale por una región viva cortés, y poner los dos deja a los lectores de
+       pantalla eligiendo entre dos instrucciones que se contradicen. */
     var msg = document.createElement("p");
     msg.className = "cc-msg";
     msg.setAttribute("role", "status");
-    msg.setAttribute("aria-live", "polite");
     caja.appendChild(msg);
+
+    /* La ayuda, plegada y con encabezados de verdad. Plegada porque quien llega
+       a un ejercicio quiere contestarlo, no oír el manual; con encabezados
+       porque así se salta directo a la sección que hace falta en vez de
+       escucharla entera. La misma lección que dejó el 4×4. Y se escribe al
+       montar aunque esté cerrada: si solo se escribiera al pedirla con el
+       comando, abrirla a mano mostraría una caja vacía. */
+    var det = null, ayudaCuerpo = null;
+    if (window.ComandosTablero) {
+      det = document.createElement("details");
+      det.className = "cc-ayuda-det";
+      var sum = document.createElement("summary");
+      sum.textContent = "Qué se puede escribir: jugadas, preguntas y atajos";
+      det.appendChild(sum);
+      ayudaCuerpo = document.createElement("div");
+      ayudaCuerpo.setAttribute("role", "region");
+      ayudaCuerpo.setAttribute("aria-label", "Qué se puede escribir");
+      ayudaCuerpo.innerHTML = ComandosTablero.ayudaHTML();
+      det.appendChild(ayudaCuerpo);
+      caja.appendChild(det);
+    }
 
     destino.appendChild(caja);
 
@@ -214,6 +253,16 @@ window.CuadroComandos = (function () {
       ayuda: function (texto) { ayuda.textContent = texto || ""; return api; },
       /* La posición en palabras. Se le pasa la partida de chess.js; con un
          texto suelto, lo escribe tal cual (para un ejercicio sin tablero). */
+      abrirAyuda: function () {
+        if (!det) return api;
+        det.open = true;
+        // Vaciar y repoblar: pedir "ayuda" dos veces seguidas tiene que volver a
+        // leerla, y una región viva solo reacciona cuando el texto cambia.
+        var html = ComandosTablero.ayudaHTML();
+        ayudaCuerpo.innerHTML = "";
+        window.setTimeout(function () { ayudaCuerpo.innerHTML = html; }, 50);
+        return api;
+      },
       posicion: function (juegoOTexto) {
         pos.textContent = typeof juegoOTexto === "string"
           ? juegoOTexto
@@ -222,10 +271,43 @@ window.CuadroComandos = (function () {
       },
     };
 
+    /* Antes de tratar el texto como una jugada se mira si era una PREGUNTA
+       ("caballos", "qué hay en e4", "posición"). Va acá y no dentro de cada
+       página por lo de siempre: diez copias de lo mismo se habrían ido
+       separando. ComandosTablero devuelve `manejado: false` cuando no es
+       ninguna de sus preguntas, y entonces sigue el camino de siempre — al
+       revés, una jugada como "Ra1" se leería como la pregunta por el rey y no
+       se jugaría nunca. */
+    /* Al ENCENDER el Modo Adaptado se dice qué acaba de aparecer. Lo que destapa
+       el recuadro es el CSS, y un lector de pantalla no percibe el CSS: sin este
+       aviso, quien aprieta el interruptor no oye absolutamente nada y no tiene
+       forma de saber que ahora hay dónde escribir.
+       Solo al encenderlo, no al cargar la página con el modo ya puesto: ahí el
+       recuadro se encuentra tabulando, y repetir el aviso en cada visita es la
+       clase de cartel que se deja de leer. */
+    document.addEventListener("adaptivemode:change", function (ev2) {
+      if (!ev2.detail || !ev2.detail.activo) return;
+      msg.textContent = "";
+      window.setTimeout(function () {
+        msg.textContent = "Modo adaptado. Debajo del tablero tienes un recuadro para escribir tu jugada "
+          + "o preguntarle a la posición. Escribe \"ayuda\" para ver todo lo que se puede escribir.";
+      }, 80);
+    });
+
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       var texto = input.value;
       if (!String(texto).trim()) return;
+      if (window.ComandosTablero && (cfg.juego || cfg.tablero)) {
+        var r = ComandosTablero.interpretar(texto, { juego: cfg.juego, tablero: cfg.tablero });
+        if (r.manejado) {
+          input.value = "";
+          if (r.tipo === "ayuda") { api.abrirAyuda(); api.decir("Ayuda desplegada debajo del recuadro."); }
+          else api.decir(r.respuesta);
+          if (window.BlindNotation && BlindNotation.speak && r.respuesta) BlindNotation.speak(r.respuesta);
+          return;
+        }
+      }
       if (typeof cfg.onEnviar === "function") cfg.onEnviar(texto, api);
     });
 

@@ -263,8 +263,8 @@
         <div class="movelog" id="movelog" aria-live="polite" aria-label="Jugadas encontradas hasta ahora"></div>
 
         <form class="answer-form" id="answer-form">
-          <label class="answer-label" for="answer-input" id="answer-label">Escribe tu jugada (no se puede tocar el tablero)</label>
-          <input type="text" id="answer-input" class="answer-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ejemplo: Cf3, Dxh7+, e8=D">
+          <label class="answer-label" for="answer-input" id="answer-label">Escribe tu jugada, o una pregunta sobre la posición del tablero (no se puede tocar)</label>
+          <input type="text" id="answer-input" class="answer-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Cf3, Dxh7+, e8=D — o: caballos, qué hay en e4">
           <button type="submit" class="answer-send">Jugar</button>
         </form>
 
@@ -293,6 +293,10 @@
 <script src="../js/main.js"></script>
 <script src="../js/coordenadas-tablero.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<!-- Las preguntas que se le pueden hacer al tablero, escritas una sola vez
+     para todo Entrenamiento (ver js/comandos-tablero.js). -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/comandos-tablero.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/chess-move-parser.js"></script>
 <script src="../js/progreso-usuario.js"></script>
@@ -468,6 +472,7 @@ function showLevels(){
 let currentLevel = null;
 let currentIndex = 0;
 let game = null;              // avanza de verdad con cada jugada, aunque el tablero no se repinte
+let posicionDeSalida = null;  // la que el tablero enseña: contra ella se contestan las preguntas
 let solutionStep = 0;
 let missedThisPuzzle = false;
 let usedHintThisPuzzle = false;
@@ -584,6 +589,12 @@ function loadPuzzle(){
     return;
   }
   game = new Chess(puzzle.fen);
+  /* La posición DE PARTIDA, guardada aparte. Es contra ella que se contestan las
+     preguntas del recuadro, no contra la posición mental: preguntar "dónde están
+     mis caballos" después de tres jugadas imaginadas sería hacer trampa, y
+     preguntarlo sobre lo que el tablero está enseñando es exactamente lo que
+     hace quien lo mira. */
+  posicionDeSalida = new Chess(puzzle.fen);
   const orientation = game.turn();
   solutionStep = 0;
   missedThisPuzzle = false;
@@ -660,6 +671,20 @@ function jugarEscribiendo(texto){
 document.getElementById('answer-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const input = document.getElementById('answer-input');
+  /* Antes de tratarlo como jugada se mira si era una PREGUNTA sobre la posición
+     del tablero ("caballos", "qué hay en e4", "posición"). Acá eso no es un
+     extra: el ejercicio entero consiste en calcular sobre una posición que no se
+     puede volver a mirar pieza por pieza, y quien no ve el tablero no tenía
+     forma de repasarla salvo oír las treinta y dos de corrido otra vez.
+     Se contesta contra la posición DE SALIDA, que es la que el tablero enseña. */
+  if(window.ComandosTablero && posicionDeSalida){
+    const r = ComandosTablero.interpretar(input.value, { juego: () => posicionDeSalida });
+    if(r.manejado){
+      input.value = '';
+      setStatus(r.tipo === 'ayuda' ? 'Jugada: "Cf3", "Nf3", "Dxh7+". Pregunta sobre la posición del tablero: "caballos", "qué hay en e4", "posición".' : r.respuesta);
+      return;
+    }
+  }
   jugarEscribiendo(input.value);
 });
 

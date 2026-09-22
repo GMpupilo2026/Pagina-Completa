@@ -157,9 +157,33 @@ function jugadasDe(F) {
     await page.click("#b-final");
     igual("y llega hasta la posición final, pieza por pieza",
       ordenado(await page.evaluate(LEER_TABLERO)), ordenado(tableroEsperado(jugadas1, jugadas1.length)));
-    igual("la posición contada en palabras dice lo que hay",
-      await page.evaluate(() => { document.getElementById("en-palabras").open = true; return /Blancas:.*Negras:/.test(document.getElementById("posicion-escrita").textContent); }),
-      "true");
+    /* La posición en palabras ya no vive plegada al final: va pegada a los
+       botones que la cambian y es región viva, así que se vuelve a leer sola en
+       cada jugada. Por eso hay que ESPERARLA: se vacía y se repuebla con un
+       retraso a propósito —una región viva solo reacciona cuando el texto
+       cambia, y volver a la misma posición desde el otro lado no se anunciaría—
+       así que leerla en el mismo instante del clic la encuentra vacía. */
+    /* Lo que se lee SOLO en cada jugada es la jugada, contada: qué pieza va de
+       dónde a dónde. La posición entera NO —una apertura son doce jugadas y
+       treinta y dos piezas, o sea casi cuatrocientas casillas dictadas para ver
+       una línea que dura medio minuto, y eso no lo escucha nadie— así que queda
+       escrita ahí al lado, para leerla cuando se quiera.
+       Hay que ESPERARLA: se vacía y se repuebla con un retraso a propósito
+       —una región viva solo reacciona cuando el texto cambia— así que leerla en
+       el mismo instante del clic la encuentra vacía. */
+    await page.waitForFunction(() => /[Jj]ugada \d+ de \d+/.test(document.getElementById("posicion-escrita").textContent), null, { timeout: 3000 }).catch(() => {});
+    igual("en cada jugada se lee en qué jugada va",
+      await page.evaluate(() => /[Jj]ugada \d+ de \d+/.test(document.getElementById("posicion-escrita").textContent)), "true");
+    // La jugada contada: qué pieza va de dónde a dónde — o, si fue un enroque,
+    // que fue un enroque. La última de la española es justamente un enroque, así
+    // que una comprobación que solo mirara "va de … a …" fallaría sobre una
+    // frase perfectamente correcta.
+    igual("y la jugada contada, en palabras",
+      await page.evaluate(() => /(va de .* a |[Ee]nroque)/.test(document.getElementById("posicion-escrita").textContent)), "true");
+    igual("pero NO las treinta y dos piezas en cada paso",
+      await page.evaluate(() => /Blancas:.*Negras:/.test(document.getElementById("posicion-escrita").textContent)), "false");
+    igual("esas están ahí al lado, para leerlas cuando se quiera",
+      await page.evaluate(() => /Blancas:.*Negras:/.test(document.getElementById("posicion-completa").textContent)), "true");
 
     const enlace = await page.getAttribute("#b-practicar", "href");
     igual("el botón de practicar apunta a la línea del banco, no a la lista",
@@ -257,8 +281,16 @@ function jugadasDe(F) {
     igual("no se salta ningún nivel de encabezado", salto, 0);
     igual("las líneas del mapa son decoración y no se anuncian",
       await page.evaluate(() => document.querySelector(".mapa-lineas").getAttribute("aria-hidden")), "true");
-    igual("el tablero también: lo que se lee es la posición en palabras",
-      await page.evaluate(() => document.getElementById("tablero").getAttribute("aria-hidden")), "true");
+    /* El tablero de la ficha SE RECORRE. Era `aria-hidden`, o sea que para un
+       lector de pantalla no existía, y lo único que quedaba era un desplegable
+       al final del bloque que había que volver a abrir después de cada jugada.
+       Ahora se entra con Tab y se anda con las flechas, como el resto de los
+       tableros de Entrenamiento — lo comprueba, casilla por casilla,
+       herramientas/verificar-entreno-accesible.js. */
+    igual("el tablero de la ficha no está escondido al lector de pantalla",
+      await page.evaluate(() => document.getElementById("tablero").getAttribute("aria-hidden")), "null");
+    igual("y se recorre con el teclado: una sola parada de tabulador",
+      await page.evaluate(() => [...document.querySelectorAll("#tablero [data-square]")].filter((c) => c.tabIndex >= 0).length), "1");
     await page.click("#volver");
 
     console.log("\n=== Que la página SE VEA ===");

@@ -125,13 +125,6 @@
     font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:420px; margin-left:auto; margin-right:auto;
   }
   .position-readout p{margin:2px 0;}
-  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
-  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
-  #blind-panel input{
-    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
-    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
-  }
-  #blind-panel input:focus{border-color:var(--brass);}
 
   .turn-banner{max-width:420px; margin:14px auto 0; text-align:center; font-size:0.95rem; color:var(--text-muted);}
   .turn-banner b{color:var(--text);}
@@ -282,6 +275,13 @@
           </div>
         </div>
 
+        <!-- Donde se escribe la jugada y se le pregunta a la posición
+             (js/cuadro-comandos.js). Esta página no tenía NADA: sus 64 casillas
+             eran botones mudos —el lector de pantalla decía "botón" sesenta y
+             cuatro veces— así que la línea no se podía ni mirar ni contestar, y
+             no fallaba nada: la página se veía perfecta. -->
+        <div id="q-comandos"></div>
+
         <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
         <p class="jugadas" id="jugadas-hechas" aria-label="Jugadas de la línea"></p>
 
@@ -308,6 +308,13 @@
 <script src="../js/coordenadas-tablero.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/progreso-usuario.js"></script>
+<script src="../js/blind-notation.js"></script>
+<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
+     donde se contesta: escritos una sola vez para todo Entrenamiento. -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
 <script src="../js/aperturas-lineas.js"></script>
 <script src="../js/repaso-espaciado.js"></script>
 <script>
@@ -474,12 +481,54 @@ function dibujar() {
         span.setAttribute("aria-hidden", "true");
         btn.appendChild(span);
       }
-      if (casilla === seleccion) btn.classList.add("selected");
+      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo el
+      // estado. Antes no decían NADA, ni siquiera su nombre.
+      if (casilla === seleccion) { btn.classList.add("selected"); btn.dataset.estado = "seleccionada"; }
       btn.addEventListener("click", () => tocar(casilla));
       board.appendChild(btn);
     });
   });
   if (window.Coordenadas) Coordenadas.aplicar(board);
+  montarTeclado();
+  montarComandos();
+}
+
+/* ---------------- El teclado y el recuadro (Modo Adaptado) ----------------
+ * Memorizar una línea de memoria es justo lo que se puede hacer sin ver el
+ * tablero —son jugadas, no dibujos— y era la única página de Entrenamiento
+ * donde no había forma de intentarlo. */
+let teclado = null;
+function montarTeclado() {
+  if (teclado || !window.TableroAccesible) return;
+  teclado = TableroAccesible.montar(document.getElementById("board"), {
+    nombre: "Tablero de la línea",
+    juego: () => juego,
+  });
+}
+
+let comandos = null;
+function montarComandos() {
+  if (comandos || !window.CuadroComandos) return;
+  comandos = CuadroComandos.montar(document.getElementById("q-comandos"), {
+    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+    juego: () => juego,
+    tablero: () => teclado,
+    onEnviar: jugarEscribiendo,
+  });
+  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e2 e4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+}
+
+function jugarEscribiendo(texto, api) {
+  if (esperandoRival || promoPendiente || indice >= linea.jugadas.length || !meToca()) {
+    api.decir("Ahora no te toca mover.");
+    return;
+  }
+  // El intérprete busca la jugada entre las LEGALES y no toca la partida: quien
+  // decide si es la de la línea es intentar(), la misma puerta que el clic.
+  const mv = ComandosTablero.jugadaEscrita(juego, texto);
+  if (!mv) { api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  api.limpiar().decir("");
+  intentar({ from: mv.from, to: mv.to, promotion: mv.promotion });
 }
 
 function marcarMal(casilla) {
@@ -493,6 +542,9 @@ function decir(texto, clase) {
   const e = document.getElementById("round-status");
   e.textContent = texto;
   e.className = "round-status" + (clase ? " " + clase : "");
+  // El mismo aviso, repetido en el recuadro: quien contesta escribiendo tiene el
+  // foco ahí y el renglón del tablero le queda lejos.
+  if (comandos) comandos.decir(texto);
 }
 
 function pintarJugadas() {
@@ -533,12 +585,22 @@ function jugarRival() {
   esperandoRival = true;
   actualizarBanner();
   setTimeout(() => {
-    juego.move(linea.jugadas[indice], { sloppy: true });
+    const hecha = juego.move(linea.jugadas[indice], { sloppy: true });
     indice += 1;
     esperandoRival = false;
     seleccion = null;
     dibujar();
     pintarJugadas();
+    /* QUÉ JUGÓ EL RIVAL, DICHO. La lista de jugadas se repinta, pero no es una
+       región viva: quien no ve la pantalla oía "juega el rival…" y después "te
+       toca a ti", sin enterarse nunca de qué se había jugado — o sea sin poder
+       seguir la línea, que es el ejercicio entero. No daba ningún error.
+       Se dice con el nombre de la pieza y las columnas habladas
+       (js/blind-notation.js), no deletreando "Cf3". */
+    if (hecha && comandos) {
+      const dicha = window.BlindNotation ? BlindNotation.sanSpoken(hecha.san) : hecha.san;
+      comandos.decir("El rival juega " + dicha + ".");
+    }
     if (indice >= linea.jugadas.length) terminar();
     else actualizarBanner();
   }, 550);

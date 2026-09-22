@@ -4994,6 +4994,209 @@ falló.
   Ilumina el tablero, Aperturas y celadas, Visualización) manden de verdad su
   fila a `training_progress` al terminar un ejercicio.
 
+## Los tableros de Entrenamiento se recorren con el teclado
+
+Todos los tableros del sitio se dibujaban como 64 botones sueltos. Eso **no da
+ningún error** —se ven perfectos, el ratón funciona igual y el ejercicio se
+resuelve— y dejaba dos cosas rotas para quien no usa el ratón:
+
+- **Sesenta y cuatro paradas de tabulador.** Para pasar del tablero al botón de
+  «Pista» había que apretar Tab sesenta y cinco veces. Nadie hace eso: se
+  abandona la página.
+- **El tablero no se podía MIRAR.** Un lector de pantalla lee la casilla que
+  tiene el foco, así que la única forma de saber qué había alrededor de la dama
+  era recorrer las 64 de una en una y acordarse. Y en la mitad de las páginas ni
+  eso: **las casillas eran botones MUDOS** —Mates, Aperturas, el diagnóstico— o
+  decían todas lo mismo —Coordenadas, con sus 64 «Casilla»—.
+
+El 4×4 ya lo tenía resuelto —flechas, atajos de una tecla, la posición dictada—
+pero escrito DENTRO de su página y atado a su tablero de cuatro por cuatro. Por
+eso fue durante meses el único tablero del sitio que se podía recorrer.
+
+**`js/tablero-accesible.js` es eso mismo para cualquier tablero, escrito una
+sola vez.** Se monta con una línea sobre un tablero que ya tenga `data-square`
+en sus casillas, y da:
+
+- **una sola parada de tabulador** (el patrón de rejilla de ARIA): se entra con
+  Tab y dentro se anda con las flechas, Inicio/Fin y Re Pág/Av Pág;
+- los **atajos de una tecla** del 4×4, llevados a 8×8: `o` (qué hay acá), `z`
+  (la posición entera), `m` (a dónde puede ir esta pieza), `x` / `X` / `alt+x`
+  (las casillas de alrededor), `k q r b n p` (saltar a la siguiente pieza de ese
+  tipo; con mayúsculas, hacia atrás), `1`-`8` (ir a esa fila), `shift+1`-`8` (ir
+  a esa columna), `i` (volver al recuadro);
+- **qué dice cada casilla**, con la columna hablada («eva 4», que no se confunde
+  con «bella 4» al oírla) y el nombre de la pieza sacados de
+  `js/blind-notation.js`, que es donde viven.
+
+**Copiarlo en las diez páginas se habría separado a la primera corrección**, que
+es exactamente como el 4×4 quedó siendo el único. Por eso las páginas no
+escriben el rótulo de sus casillas: solo declaran el ESTADO en `data-estado`
+(«seleccionada», «ya marcada», «de la última jugada») y el módulo lo añade al
+final.
+
+- **Se repone solo en cada repintado.** Las páginas vacían el tablero y lo
+  vuelven a llenar en cada jugada; sin un observador, el tabindex se pierde
+  —vuelven las 64 paradas— y, peor, el foco se va al `<body>`: quien estaba en
+  e4 se queda sin saber dónde quedó, justo cuando más falta hace. Mismo patrón
+  que `js/coordenadas-tablero.js`, y por la misma razón: acordarse de llamar a
+  una función después de cada repintado es acordarse de algo que se olvida.
+- **Las flechas se mueven por el DOM, no por el alfabeto.** El tablero se puede
+  estar viendo girado —quien juega con negras lo ve al revés— así que «a la
+  derecha» es la celda siguiente en el DOM. Con la cuenta hecha sobre las letras,
+  las flechas irían al revés para la mitad de los ejercicios y no fallaría nada.
+- **En Modo Adaptado el tablero se anuncia como `application`, y no es un
+  adorno.** Con el rol de siempre, NVDA y JAWS están en su modo de lectura y se
+  quedan ellos con las teclas de una letra —«p» es «párrafo siguiente»—, así que
+  los atajos no llegarían nunca: quien los intente oye moverse el lector de
+  pantalla y no el tablero. Fuera del modo se deja el rol de grupo, para no
+  quitarle la navegación normal a quien no pidió cambiar nada. Y por eso mismo
+  **los atajos de una tecla solo valen en Modo Adaptado**: fuera de él, robarle
+  la «p» a quien está leyendo la página es peor que no tener el atajo.
+- **Cómo se navega va DICHO**, en un párrafo escondido a la vista y enganchado
+  con `aria-describedby`: un tablero que se anuncia como aplicación pero no
+  explica que se anda con las flechas es un tablero donde quien entra se queda
+  quieto.
+- **El foco tiene que VERSE.** Quien navega con teclado sin lector de pantalla no
+  tiene otra forma de saber dónde está, y los tableros pintan las casillas con su
+  propio color de fondo.
+
+### Al tablero ahora se le puede PREGUNTAR
+
+El recuadro de los ejercicios solo aceptaba jugadas, y eso alcanza para
+contestar pero no para JUGAR: frente a un tablero, antes de mover, uno mira.
+`js/comandos-tablero.js` es lo que contesta esas preguntas, escrito una vez para
+las diez páginas: `posición`, `caballos` (o cualquier pieza), `qué hay en e4`,
+`jugadas de f3`, `alrededor de e4`, `fila 4`, `columna e`, `ir a e4` (lleva el
+foco del teclado a esa casilla), `turno`, `ayuda`.
+
+Lo enchufa `js/cuadro-comandos.js`: si se le pasan `juego` y `tablero`, mira
+primero si el texto era una pregunta y solo si no lo era se lo pasa a la página
+como jugada. **Al revés —quedarse con todo— una jugada como «Ra1» se leería como
+la pregunta por el rey y no se haría nunca.**
+
+- **LA INICIAL SUELTA DE UNA PIEZA NO VALE COMO PREGUNTA, y eso no es un
+  olvido.** Las preguntas de opción —el diagnóstico de nivel, Precisión
+  posicional, los exámenes— se contestan escribiendo la LETRA de la opción, así
+  que con «c» o «d» en la tabla de nombres, contestar «C» a una pregunta de
+  cuatro opciones habría devuelto «caballos blancos en b1 y g1» y la respuesta no
+  se habría marcado nunca. No daría ningún error: el alumno escribe su letra, oye
+  algo sobre unos caballos y no entiende por qué la prueba no avanza. Para
+  preguntar por una pieza se escribe su nombre entero. Las iniciales siguen
+  valiendo donde no hay nada con qué confundirlas: como atajo de una tecla con el
+  tablero enfocado.
+- Lo mismo con los comandos: van las palabras enteras y nunca una letra suelta
+  («posición», no «t» ni «z»).
+
+### La jugada escrita se busca entre las LEGALES, no se prueba sobre la partida
+
+`ComandosTablero.jugadaEscrita()` la resuelve contra
+`moves({verbose:true})`, y eso arregla dos cosas de una:
+
+- **Funciona con cualquier motor.** Desafíos usa el suyo (MiniChess) porque sus
+  posiciones no siempre tienen reyes y chess.js los exige. El intérprete de antes
+  le pasaba el texto a `game.move("Cf3")`, que MiniChess no entiende —solo recibe
+  `{from,to}`—, así que ahí no se podía escribir ninguna jugada y no fallaba
+  nada: el recuadro contestaba siempre «no es legal».
+- **No toca la partida.** El de antes DEJABA HECHA la jugada al acertar, así que
+  quien lo llamaba tenía que acordarse de pasarle una copia; el que se olvidara
+  movía la pieza dos veces.
+
+**Ojo con «R» y con «B».** «R» es Rey en español y Rook (torre) en inglés, y «B»
+es Bishop en inglés y no es nada en español: son dos jugadas distintas escritas
+igual. Se prueban las dos lecturas y gana la que sea legal, empezando por la
+inglesa —que es el orden que ya seguía `js/chess-move-parser.js`, porque los SAN
+que devuelve chess.js y los que traen los bancos están en inglés y es lo que más
+se copia—. Leído en un solo idioma no fallaría nada: movería la pieza que no era,
+legalmente, y quien escribió su jugada vería moverse otra cosa.
+
+### El tablero ya no se esconde en Modo Adaptado
+
+Mates, Aprender, Practicar y Desafíos lo hacían desaparecer y dejaban solo el
+recuadro. Era el peor de los dos mundos: la única forma de saber qué había era
+oír la posición entera de corrido y acordarse de las treinta y dos piezas. **Un
+tablero se MIRA** —se va a una casilla, se pregunta qué hay al lado, se busca
+dónde está la dama— y eso es justo lo que el tablero escondido no deja hacer.
+Ahora se queda, se recorre con las flechas y se le puede preguntar. Quien ve poco
+además lo necesita a la vista: es la razón por la que amplía la pantalla.
+
+Con eso, sus cuatro `#blind-panel` se reemplazaron por el mismo
+`js/cuadro-comandos.js` del resto: **entendían tres cosas distintas** —«e1 g1» en
+unas, «e2e4» en otra— y ninguna entendía «Cf3», que es como se escribe una
+jugada. Hoy en todo Entrenamiento se escribe igual.
+
+- **Coordenadas es la excepción, a propósito**: su Modo Adaptado cambia el
+  ejercicio entero —en vez de «toca e4» pregunta «¿e4 es blanca o negra?»— así
+  que ahí no hay tablero que recorrer. Lo que sí se le arregló es lo de siempre:
+  sus 64 casillas decían «Casilla», todas igual.
+- **Visualización también**: su tablero se queda quieto en la posición de salida
+  porque el ejercicio consiste en NO mirarlo moverse. Ahí las preguntas se
+  contestan contra la posición **de salida** —la que el tablero enseña—, nunca
+  contra la posición mental: preguntar «dónde están mis caballos» después de tres
+  jugadas imaginadas sería hacer trampa, y preguntarlo sobre lo que el tablero
+  está enseñando es exactamente lo que hace quien lo mira.
+
+### El interruptor de la página encendía medio modo
+
+Cinco páginas traen su propio «🔊 Adaptado» y guardan en la misma clave que
+`js/adaptive-mode.js`, pero cada una llevaba su variable aparte: apretarlo
+escribía la preferencia y **NO encendía la clase `adaptive-mode` del `<html>`**,
+así que todo lo que cuelga de ella —el recuadro donde se escribe la jugada, los
+atajos del tablero, el contraste— se quedaba apagado hasta recargar. No daba
+ningún error: el botón se marcaba como activado y la mitad del modo no llegaba.
+
+Ahora las cinco pasan por `AdaptiveMode.set()`, que además **dispara el evento
+`adaptivemode:change`**, y las cinco lo escuchan para enterarse cuando el modo se
+cambia desde otra pestaña o desde el botón de la cabecera. Al encenderlo, el
+recuadro lo dice: lo que lo destapa es el CSS, y un lector de pantalla no percibe
+el CSS — sin ese aviso, quien aprieta el interruptor no oye absolutamente nada.
+
+### Estudio: el tablero de una ficha era decoración
+
+Era `aria-hidden`, o sea que para un lector de pantalla no existía, y la posición
+contada en palabras vivía plegada AL FINAL, debajo del pie de foto: recorrer una
+línea era avanzar, bajar, abrir el desplegable, cerrarlo, subir y avanzar otra
+vez. Ahora:
+
+- el tablero se recorre con el mismo teclado que el resto (sus casillas pasaron a
+  ser `<button>`: un `<div>` no recibe el foco). No hace nada al pulsarlo —una
+  ficha se mira, no se juega— pero enfocarlo es justamente lo que hace falta para
+  poder mirarla sin ver;
+- **la posición sube pegada a los botones que la cambian** y es región viva, así
+  que cada jugada se vuelve a leer sola, junto con cuál fue;
+- **la línea se recorre ESCRIBIENDO** («siguiente», «anterior», «inicio»,
+  «final», «jugada 5»): los cuatro botones ⏮ ◀ ▶ ⏭ están bien para el ratón, pero
+  quien contesta desde el recuadro tendría que salir de él, tabular hasta el
+  botón y volver, en cada jugada.
+
+### Al tocar cualquiera de estas piezas
+
+**Correr `node herramientas/verificar-entreno-accesible.js`** (con el sitio en
+localhost:8777, playwright y `npm install chess.js@0.10.3`). Abre las ocho
+páginas con tablero en un navegador de verdad y mide lo que se rompe callado:
+
+- que el tablero tenga **una sola parada de tabulador** —es un número, así que o
+  está bien o no— y que la siga teniendo después de moverse;
+- que **ninguna casilla sea muda** y que no digan todas lo mismo (64 casillas
+  diciendo «Casilla» es tan inservible como 64 mudas, y se ve igual de bien);
+- que **las flechas muevan el foco de verdad**: un `keydown` declarado que no
+  mueve nada se ve exactamente igual que un tablero que sí se recorre;
+- que los **atajos contesten**, midiendo lo que sale por la región viva —que es
+  lo que oye quien usa lector de pantalla— y que en modo normal **se callen**;
+- que el recuadro **se vea** (el `display` que calcula el navegador, no la
+  clase), conteste «caballos» y nazca con la ayuda plegada;
+- que una jugada escrita en español **se juegue de verdad** y que una imposible
+  se rechace diciéndolo;
+- y que **ninguna letra de la A a la J se lea como una pregunta**.
+
+Está probado que falla de verdad: dejando las 64 casillas en el tabulador saltan
+16 comprobaciones, devolviendo las iniciales a la tabla de nombres de pieza salta
+1, y volviendo el tablero de Estudio a `aria-hidden`, otra.
+
+**Al sumar una página con tablero**: se carga `js/tablero-accesible.js`, se llama
+a `TableroAccesible.montar()` al final de su función de dibujo y se suma a
+`CON_TABLERO` en el verificador. Y se le pasan `juego` y `tablero` al
+`CuadroComandos.montar()`, que es lo que le da las preguntas gratis.
+
 ## El hub de Entrenamiento y sus tres grupos
 
 `entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,

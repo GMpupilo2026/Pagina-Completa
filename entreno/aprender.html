@@ -143,13 +143,6 @@
   .position-readout p{margin:2px 0;}
   .position-readout h2, .position-readout h3{font-family:'Merriweather', serif; font-size:0.9rem; font-weight:700; color:var(--text); margin:8px 0 2px;}
   .position-readout h2:first-child, .position-readout h3:first-child{margin-top:0;}
-  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
-  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
-  #blind-panel input{
-    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
-    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
-  }
-  #blind-panel input:focus{border-color:var(--brass);}
 
   .lesson-status{margin-top:16px; text-align:center; font-size:0.95rem; min-height:1.4em;}
   .lesson-status.ok{color:var(--ok); font-weight:600;}
@@ -224,22 +217,13 @@
       </div>
       <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
 
-      <form id="blind-panel" style="display:none;">
-        <div id="blind-squares-group" style="display:none;">
-          <label for="blind-square-input">Escribe una casilla y presiona Enter</label>
-          <input type="text" id="blind-square-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="2">
-        </div>
-        <div id="blind-move-group" style="display:none;">
-          <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
-          <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
-        </div>
-        <!-- Botón "submit" real pero invisible: con dos campos de texto en un
-             mismo <form> el navegador no envía el formulario al presionar
-             Enter si no hay ningún botón de tipo submit (aunque solo uno de
-             los dos campos esté visible a la vez). Con este botón, Enter
-             vuelve a funcionar en ambos campos. -->
-        <button type="submit" class="sr-only">Enviar</button>
-      </form>
+      <!-- Donde se escribe la jugada y se le pregunta a la posición
+           (js/cuadro-comandos.js). Reemplazó a un recuadro propio que solo
+           aceptaba "e1 g1": no entendía "Cf3" —que es como se escribe una
+           jugada— y no había forma de preguntarle nada al tablero, así que la
+           única manera de mirarlo sin verlo era oír las treinta y dos piezas de
+           corrido y acordarse. Lo destapa el CSS en Modo Adaptado. -->
+      <div id="q-comandos"></div>
 
       <p class="lesson-status" id="lesson-status" role="status" aria-live="polite"></p>
       <div class="lesson-controls" id="quiz-controls" style="display:none;">
@@ -259,6 +243,12 @@
 <script src="../js/coordenadas-tablero.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/blind-notation.js"></script>
+<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
+     donde se contesta: escritos una sola vez para todo Entrenamiento. -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
@@ -432,16 +422,23 @@ function renderPositionReadout(){
   readout.style.display = 'block';
 }
 
+/* Aprender pide dos cosas distintas según la lección —marcar casillas o hacer
+   una jugada—, así que lo que cambia es la ETIQUETA del recuadro, no qué
+   recuadro se enseña: eran dos campos que se escondían el uno al otro, y el
+   lector de pantalla anunciaba el que estaba tapado. Uno solo, con su rótulo
+   diciendo qué toca ahora, no se puede confundir.
+   Y no se le roba el foco: quien acaba de elegir una lección espera seguir
+   donde estaba, y el aviso ya le está leyendo el enunciado. */
 function updateBlindInputVisibility(){
-  const squaresGroup = document.getElementById('blind-squares-group');
-  const moveGroup = document.getElementById('blind-move-group');
-  const showSquares = blindMode && currentLesson && currentLesson.type === 'squares';
-  const showMove = blindMode && currentLesson && currentLesson.type === 'move';
-  squaresGroup.style.display = showSquares ? 'block' : 'none';
-  moveGroup.style.display = showMove ? 'block' : 'none';
-  document.getElementById('blind-panel').style.display = (showSquares || showMove) ? 'block' : 'none';
-  if(showSquares) document.getElementById('blind-square-input').focus();
-  else if(showMove) document.getElementById('blind-move-input').focus();
+  montarComandos();
+  if(!comandos || !currentLesson) return;
+  if(currentLesson.type === 'squares'){
+    comandos.etiqueta('Escribe una casilla, o una pregunta sobre la posición');
+    comandos.ayuda('Casilla: "e4", "eva 4". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  } else {
+    comandos.etiqueta('Escribe tu jugada, o una pregunta sobre la posición');
+    comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+  }
 }
 
 // Botón "🗣️ Voz": el navegador lee en voz alta cada anuncio (además de lo que ya
@@ -451,8 +448,14 @@ const refreshSpeechToggle = window.BlindNotation
   ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
+/* EL TABLERO YA NO SE ESCONDE EN MODO ADAPTADO. Antes desaparecía y quedaba
+   solo el recuadro, así que la única forma de saber qué había era oír la
+   posición entera y acordarse. Un tablero se MIRA —se va a una casilla, se
+   pregunta qué hay al lado— y eso es lo que el tablero escondido no deja hacer.
+   Ahora se queda y se recorre con las flechas (js/tablero-accesible.js). En las
+   lecciones de "marcar casillas" eso además es media lección: lo que se aprende
+   ahí es DÓNDE está cada casilla. */
 function applyBlindModeUI(){
-  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
   if(modeNormalBtn){
     modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true');
     modeNormalBtn.classList.toggle('active', !blindMode);
@@ -467,9 +470,25 @@ function applyBlindModeUI(){
 }
 function setBlindMode(value){
   blindMode = !!value;
-  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  /* La preferencia se guarda por js/adaptive-mode.js y no escribiendo la clave
+     a mano: además de guardarla, enciende la clase `adaptive-mode` del <html>
+     —de la que cuelgan el recuadro donde se escribe la jugada, los atajos del
+     tablero y el contraste alto— y avisa al resto de la página. Escrito a mano,
+     el botón se marcaba como activado y la mitad del modo no llegaba hasta
+     recargar, sin dar ningún error. */
+  if(window.AdaptiveMode) window.AdaptiveMode.set(blindMode);
+  else try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
   applyBlindModeUI();
 }
+/* Y al revés: si el modo se enciende desde otra pestaña o desde el botón de la
+   cabecera, esta página se entera en el momento. Sin esto quedaba media página
+   en un modo y media en el otro hasta recargar. Volver a llamar a
+   setBlindMode() es seguro: AdaptiveMode no vuelve a disparar el evento cuando
+   el modo ya es el que pide. */
+document.addEventListener('adaptivemode:change', (e) => {
+  const on = !!(e.detail && e.detail.activo);
+  if(on !== blindMode) setBlindMode(on);
+});
 const modeNormalBtn = document.getElementById('mode-normal-btn');
 const modeBlindBtn = document.getElementById('mode-blind-btn');
 if(modeNormalBtn) modeNormalBtn.addEventListener('click', () => setBlindMode(false));
@@ -530,26 +549,50 @@ function blindHandleMoveGuess(raw){
   }
 }
 
-document.getElementById('blind-panel').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const squareInput = document.getElementById('blind-square-input');
-  const moveInput = document.getElementById('blind-move-input');
+/* ---------------- El recuadro donde se escribe (Modo Adaptado) ----------------
+ * Eran dos campos que se turnaban y solo entendían "e4" o "e1 g1". Ahora es uno
+ * solo (js/cuadro-comandos.js): la jugada la lee js/chess-move-parser.js, que
+ * entiende "Cf3" y "Nf3" además del origen y destino, y antes de tratarlo como
+ * respuesta el recuadro mira si era una PREGUNTA sobre la posición. */
+let comandos = null;
+function montarComandos(){
+  if(comandos || !window.CuadroComandos) return;
+  comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+    etiqueta: 'Escribe tu respuesta, o una pregunta sobre la posición',
+    juego: () => game,
+    tablero: () => teclado,
+    onEnviar: responderEscribiendo,
+  });
+}
+
+function responderEscribiendo(texto, api){
+  if(!currentLesson) return;
   if(currentLesson.type === 'squares'){
-    const square = squareInput.value.trim().toLowerCase();
-    squareInput.value = '';
-    squareInput.focus();
-    if(!/^[a-h][1-8]$/.test(square)){
-      setStatus('Esa no es una casilla válida — usa una letra de a a h y un número de 1 a 8.', 'bad');
-      return;
-    }
+    // "eva 4" tiene que llegar a e4: es como el sitio dicta las casillas, así
+    // que escribir lo que uno acaba de oír tiene que funcionar.
+    const square = CuadroComandos.casillaPedida(texto);
+    if(!square){ api.decir('Esa no es una casilla. Usa una letra de a a h y un número de 1 a 8, por ejemplo "e4".'); return; }
+    api.limpiar().decir('');
     blindHandleSquareGuess(square);
-  } else if(currentLesson.type === 'move'){
-    const value = moveInput.value;
-    moveInput.value = '';
-    moveInput.focus();
-    blindHandleMoveGuess(value);
+    return;
   }
-});
+  if(currentLesson.type === 'move'){
+    api.limpiar().decir('');
+    blindHandleMoveGuess(texto);
+  }
+}
+
+/* Una sola parada de tabulador para todo el tablero y las flechas por dentro,
+   más los atajos de una tecla en Modo Adaptado. Se monta una vez y se repone
+   solo en cada repintado. */
+let teclado = null;
+function montarTeclado(){
+  if(teclado || !window.TableroAccesible) return;
+  teclado = TableroAccesible.montar(document.getElementById('board'), {
+    nombre: 'Tablero de la lección',
+    juego: () => game,
+  });
+}
 
 /* ---------------- Progreso (localStorage, mismo patrón que entreno/index.html) ---------------- */
 function getSolvedSet(){
@@ -676,12 +719,17 @@ function drawBoard(){
         }
         btn.appendChild(span);
       }
-      if(currentLesson.type === 'squares' && foundSet.has(square)) btn.classList.add('found');
-      if(square === selectedSquare) btn.classList.add('selected');
+      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo el
+      // estado, que es lo único que esta página sabe y aquel no. En las
+      // lecciones de marcar casillas, "ya marcada" es el dato que hace falta
+      // para no volver a intentarla.
+      if(currentLesson.type === 'squares' && foundSet.has(square)){ btn.classList.add('found'); btn.dataset.estado = 'ya marcada'; }
+      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
       btn.addEventListener('click', () => onSquareClick(square, btn));
       board.appendChild(btn);
     }
   }
+  montarTeclado();
   renderPositionReadout();
 }
 
@@ -695,6 +743,12 @@ function setStatus(text, cls){
   el.textContent = text;
   el.className = 'lesson-status' + (cls ? ' ' + cls : '');
   if(window.BlindNotation) window.BlindNotation.speak(text);
+  /* El mismo aviso, repetido en el recuadro: quien contesta escribiendo tiene el
+     foco ahí y el renglón del tablero le queda lejos — y sobre todo, la respuesta
+     del rival solo se oye si se dice, porque la lista de jugadas no es región
+     viva. Sin esto se oía "espera" y después "te toca", sin enterarse nunca de
+     qué se había jugado: o sea, sin poder seguir. */
+  if(comandos) comandos.decir(text);
 }
 
 function finishLesson(){

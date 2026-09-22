@@ -157,9 +157,20 @@
   .board8{
     display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
     width:100%; aspect-ratio:1/1; border:2px solid var(--brass); box-shadow:0 8px 30px rgba(16,42,67,0.18);
+    /* Una ficha se mira, no se juega: el tablero no responde al ratón. Y eso no
+       le quita el teclado — `pointer-events` apaga el puntero y nada más—, que
+       es justo lo que hace falta para poder recorrerlo sin verlo. */
     pointer-events:none;
   }
-  .sq{position:relative; display:flex; align-items:center; justify-content:center; font-size:min(7vw,32px); user-select:none;}
+  /* Las casillas son <button> para poder recorrer el tablero con el teclado (ver
+     js/ficha-render.js): un <div> no recibe el foco. Hay que quitarles la pinta
+     de botón, o el navegador les pone su propio borde y su fondo gris y el
+     tablero deja de parecer un tablero. */
+  .sq{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:min(7vw,32px); user-select:none;
+    border:0; padding:0; margin:0; font-family:inherit; color:inherit;
+  }
   .sq.light{background:#f0f4f8;}
   .sq.dark{background:#486581;}
   .pie{color:var(--text-muted); font-size:0.85rem; line-height:1.5; margin:10px auto 0; max-width:440px; text-align:center;}
@@ -171,8 +182,10 @@
   .jugada:hover{border-color:var(--line);}
   .jugada.actual{background:var(--brass); color:#102a43; font-weight:700;}
   .en-palabras{max-width:520px; margin:12px auto 0; border:1px solid var(--line); background:var(--bg-panel); padding:10px 14px;}
-  .en-palabras summary{cursor:pointer; font-size:0.88rem; color:var(--text-muted);}
-  .en-palabras p{color:var(--text-muted); font-size:0.9rem; line-height:1.55; margin:8px 0 0;}
+  .en-palabras p{color:var(--text-cuerpo); font-size:0.9rem; line-height:1.55; margin:0;}
+  .pos-completa{margin-top:8px;}
+  .pos-completa summary{cursor:pointer; font-size:0.85rem; color:var(--text-muted);}
+  .pos-completa p{margin-top:6px; color:var(--text-muted);}
 
   .ficha-pie{display:flex; gap:10px; justify-content:center; margin-top:22px; flex-wrap:wrap;}
   .bctrl{
@@ -289,22 +302,45 @@
           <div class="nodo" id="nodo" aria-hidden="true"></div>
         </div>
 
+        <!-- EL TABLERO DE LA FICHA SE PUEDE RECORRER. Era `aria-hidden`, o sea
+             que para un lector de pantalla no existía: la única forma de saber
+             qué había era abrir un desplegable que vivía al FINAL, debajo del
+             pie de foto, y volver a abrirlo después de cada jugada. Ahora se
+             entra con Tab y se anda con las flechas, y en Modo Adaptado se le
+             puede preguntar (js/tablero-accesible.js). Es el mismo teclado que
+             el resto de Entrenamiento: una ficha se estudia igual que se
+             resuelve un ejercicio. -->
         <div class="diagrama">
-          <div class="board8" id="tablero" aria-hidden="true"></div>
+          <div class="board8" id="tablero"></div>
         </div>
-        <p class="sr-only" role="status" aria-live="polite" id="anuncio"></p>
+        <p class="sr-only" role="status" id="anuncio"></p>
         <div class="controles" id="controles">
           <button type="button" class="bctrl" id="b-inicio" aria-label="Ir a la posición inicial">⏮</button>
           <button type="button" class="bctrl" id="b-atras" aria-label="Jugada anterior">◀</button>
           <button type="button" class="bctrl" id="b-adelante" aria-label="Jugada siguiente">▶</button>
           <button type="button" class="bctrl" id="b-final" aria-label="Ir a la última jugada">⏭</button>
         </div>
+        <!-- La posición contada en palabras va JUSTO DEBAJO de los botones que la
+             cambian, y se lee sola en cada jugada (región viva). Vivía plegada al
+             final del bloque: recorrer una línea era avanzar, bajar, abrir,
+             cerrar, subir y avanzar otra vez. -->
+        <div class="en-palabras" id="en-palabras">
+          <!-- Lo que se lee SOLO en cada jugada: la jugada, contada. La posición
+               entera no —una apertura son doce jugadas y treinta y dos piezas, o
+               sea casi cuatrocientas casillas dictadas para ver una línea que
+               dura medio minuto— así que va debajo, escrita, para leerla cuando
+               se quiera o pedirla con "posición". -->
+          <p id="posicion-escrita" role="status"></p>
+          <details class="pos-completa">
+            <summary>Toda la posición, pieza por pieza</summary>
+            <p id="posicion-completa"></p>
+          </details>
+        </div>
+        <!-- Donde se le pregunta a la posición y se recorre la línea escribiendo
+             (js/cuadro-comandos.js): "siguiente", "jugada 5", "caballos". -->
+        <div id="q-comandos"></div>
         <div class="jugadas" id="jugadas"></div>
         <p class="pie" id="pie-diagrama"></p>
-        <details class="en-palabras" id="en-palabras">
-          <summary>Leer la posición en palabras</summary>
-          <p id="posicion-escrita"></p>
-        </details>
 
         <div class="ficha-pie">
           <a class="bctrl primary" id="b-practicar" href="#">🎯 Practicarla en el tablero</a>
@@ -321,6 +357,11 @@
 <script src="../js/piece-style-themes.js"></script>
 <script src="../js/chess-piece-svg.js"></script>
 <script src="../js/blind-notation.js"></script>
+<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
+     donde se escriben: escritos una sola vez para todo Entrenamiento. -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <!-- Las líneas de apertura NO se copian acá: la ficha guarda el id y las
      jugadas se leen de este banco, que es donde viven. -->
