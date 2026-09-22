@@ -190,6 +190,20 @@ async function navegador() {
     const celdas = await page.$$eval("#board [data-square]", (cs) => [cs.length, cs.filter((c) => c.tabIndex === 0).length]);
     igual("64 casillas y UNA sola parada de tabulador", celdas, [64, 1]);
 
+    // El tablero tiene que seguir siendo un TABLERO: 64 casillas cuadradas y
+    // del mismo tamaño. Con las filas en `auto`, la del rey o la de un número
+    // se estiraba y aplastaba a las demás — se veía mal y no fallaba nada.
+    // Se mide lo que calcula el navegador, antes y después de moverse, porque
+    // es al pintar una lectura cuando una fila crece.
+    const medidas = () => page.$$eval("#board [data-square]", (cs) => {
+      const rs = cs.map((c) => c.getBoundingClientRect());
+      const alt = [...new Set(rs.map((r) => Math.round(r.height)))];
+      const anc = [...new Set(rs.map((r) => Math.round(r.width)))];
+      return { alturas: alt, anchos: anc, cuadradas: alt.length === 1 && anc.length === 1 && Math.abs(alt[0] - anc[0]) <= 1 };
+    });
+    const m0 = await medidas();
+    cierto("al empezar, las 64 casillas son cuadradas e iguales", m0.cuadradas, JSON.stringify(m0));
+
     const est = await page.evaluate(() => ({ pos: partida.pos, t: partida.tesoros.slice(), pieza: partida.pieza }));
     // Una jugada imposible: la casilla más lejana del rey.
     const lejos = S.TODAS.filter((s) => S.PIEZAS.k.distancia(est.pos, s) >= 2)[0];
@@ -210,6 +224,10 @@ async function navegador() {
         cierto("después de moverse, el sonar dice la distancia de verdad", new RegExp("Fuiste a " + hablar(sig) + "\\.").test(ultimo) && (d === 1 ? /¡a 1 paso!/.test(ultimo) : new RegExp("a " + d + " pasos").test(ultimo)), ultimo);
       }
       pos = sig;
+      if (!primeraCasilla || pos === primeraCasilla) {
+        const m1 = await medidas();
+        cierto("después de moverse, las casillas siguen cuadradas e iguales", m1.cuadradas, JSON.stringify(m1));
+      }
     }
     cierto("al llegar al tesoro lo dice, con las estrellas escritas", /¡Tesoro!/.test(ultimo) && /3 estrellas de 3/.test(ultimo), ultimo.slice(0, 140));
     if (primeraCasilla) {

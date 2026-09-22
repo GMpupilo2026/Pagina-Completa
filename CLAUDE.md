@@ -7037,6 +7037,12 @@ el más cercano) y aguas turbias (solo dice «más cerca», «más lejos» o «i
   (`desdeLectura`). Buscarla por su casilla fue el error de la primera versión:
   volver a pisar esa casilla movía el corte y la pista olvidaba todo lo que el
   sonar había dicho entre medio, sin ningún error a la vista.
+- **El tablero declara sus 8 filas iguales** (`grid-template-rows: repeat(8,
+  minmax(0, 1fr))`) y la casilla lleva `min-height: 0`. `grid-cols-8` solo
+  reparte las columnas: las filas quedaban en `auto` y cada una medía según lo
+  que tuviera adentro, así que la fila del rey o de una lectura se estiraba y
+  aplastaba a las demás. No daba ningún error; el tablero simplemente dejaba de
+  ser un tablero. El verificador mide las 64 casillas antes y después de mover.
 - **Exige sesión** (como Ilumina el tablero), así que está en `PAGINAS` de
   `academia-cabecera.py`. `?modo=ciego` enciende el Modo Adaptado con
   `AdaptiveMode.set()`.
