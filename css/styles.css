@@ -306,6 +306,27 @@ html.adaptive-mode *:focus-visible {
 html.adaptive-mode body {
   background-image: none !important;
 }
+/* Y con él se van los que VUELAN (los cohetes de Galaxia, los dragones de
+   Dragones), que viven en dos capas fijas colgadas de body. Apagar el patrón y
+   dejar los cohetes cruzando la pantalla sería justo lo contrario de lo que
+   este modo hace: movimiento permanente por encima del texto. Necesita
+   !important porque la regla que las enciende lleva más especificidad
+   (`:root[data-tema="x"] body::before` es 0,2,2 contra 0,1,2). */
+html.adaptive-mode body::before,
+html.adaptive-mode body::after {
+  content: none !important;
+}
+
+/* Quien pidió menos movimiento en su sistema no pidió menos decoración: las
+   figuras se quedan, quietas, como una capa más del fondo. `animation: none` y
+   no `content: none` — apagarlas del todo le quitaría el tema a quien solo
+   quería que dejara de moverse. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-tema] body::before,
+  :root[data-tema] body::after {
+    animation: none !important;
+  }
+}
 
 /* Piezas en Modo Adaptado: redefine las 4 variables "normales" a los valores
    "-adaptive" del tema elegido (js/piece-color-themes.js). Necesita

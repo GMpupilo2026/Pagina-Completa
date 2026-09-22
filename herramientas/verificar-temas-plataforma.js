@@ -239,7 +239,8 @@ function pruebaCabecera() {
 const PERFILES = [PROFE].concat(ALUMNOS);
 
 async function abrir(navegador, url, sembrar) {
-  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: "block" });
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 1000 }, serviceWorkers: "block",
+                                          reducedMotion: (sembrar || {}).quieto ? "reduce" : "no-preference" });
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/fonts.googleapis.com/**", (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
@@ -401,6 +402,85 @@ async function pruebaCasillasElegidas(navegador) {
   await ctx.close();
 }
 
+/* Los que VUELAN (js/temas-plataforma.js → `vuelan`). Son dos capas fijas
+   colgadas de body, así que lo que se comprueba es lo que ve quien entra: que
+   estén, que se muevan DE VERDAD —una animación declarada que el navegador no
+   corre se ve exactamente igual que un fondo quieto—, que no se coman ningún
+   clic, y que las dos formas de decir «menos movimiento» hagan cada una lo
+   suyo: Modo Adaptado se las lleva enteras, y `prefers-reduced-motion` solo
+   las frena. */
+async function capasDe(page) {
+  return page.evaluate(() => {
+    const leer = (p) => {
+      const cs = getComputedStyle(document.body, p);
+      return { content: cs.content, anim: cs.animationName, z: cs.zIndex,
+               clics: cs.pointerEvents, img: cs.backgroundImage.slice(0, 30),
+               transform: cs.transform };
+    };
+    return { antes: leer("::before"), despues: leer("::after") };
+  });
+}
+
+async function pruebaVuelan(navegador) {
+  console.log("\n=== Los cohetes y los dragones cruzan el fondo ===");
+  for (const [id, tema] of Object.entries(TEMAS)) {
+    if (!tema.vuelan) continue;
+    const { page, ctx } = await abrir(navegador, "/clases.html", { tema: id });
+    const c = await capasDe(page);
+    igual(`${id}: las dos capas existen`,
+          [c.antes.content, c.despues.content].join(" · "), '"" · ""');
+    igual(`${id}: y llevan su animación`,
+          [c.antes.anim, c.despues.anim].join(" · "),
+          `vuela-${id}-lejos · vuela-${id}-cerca`);
+    cierto(`${id}: las dos van detrás del contenido y no se comen los clics`,
+           c.antes.z === "-1" && c.despues.z === "-1" &&
+           c.antes.clics === "none" && c.despues.clics === "none",
+           JSON.stringify([c.antes.z, c.antes.clics, c.despues.z, c.despues.clics]));
+    cierto(`${id}: cada capa dibuja algo`,
+           /^url\(/.test(c.antes.img) && /^url\(/.test(c.despues.img),
+           c.antes.img + " · " + c.despues.img);
+
+    // Que se MUEVAN: la matriz del transform tiene que haber cambiado sola.
+    const antes = c.antes.transform;
+    await page.waitForTimeout(1200);
+    const despues = (await capasDe(page)).antes.transform;
+    cierto(`${id}: y se mueven de verdad (el navegador corre la animación)`,
+           antes !== despues, `se quedó en ${despues}`);
+    await ctx.close();
+  }
+
+  // Un tema decorado que NO declara `vuelan` no puede traerlas: si las trajera,
+  // Princesas tendría cohetes.
+  const { page, ctx } = await abrir(navegador, "/clases.html", { tema: "princesas" });
+  const c = await capasDe(page);
+  igual("un tema sin `vuelan` no pinta ninguna capa",
+        [c.antes.content, c.despues.content].join(" · "), "none · none");
+  await ctx.close();
+}
+
+async function pruebaMenosMovimiento(navegador) {
+  console.log("\n=== Las dos formas de pedir menos movimiento ===");
+  // Modo Adaptado se las lleva enteras: apagar el patrón y dejar los cohetes
+  // cruzando la pantalla sería lo contrario de lo que hace ese modo.
+  let { page, ctx } = await abrir(navegador, "/clases.html", { tema: "galaxia" });
+  await page.evaluate(() => document.documentElement.classList.add("adaptive-mode"));
+  await page.waitForTimeout(200);
+  let c = await capasDe(page);
+  igual("en Modo Adaptado no queda ninguna capa",
+        [c.antes.content, c.despues.content].join(" · "), "none · none");
+  await ctx.close();
+
+  // prefers-reduced-motion las deja quietas, no las borra: quien pidió menos
+  // movimiento no pidió menos tema.
+  ({ page, ctx } = await abrir(navegador, "/clases.html", { tema: "galaxia", quieto: true }));
+  c = await capasDe(page);
+  igual("con «menos movimiento» del sistema, las capas siguen ahí",
+        [c.antes.content, c.despues.content].join(" · "), '"" · ""');
+  igual("pero ya no se animan",
+        [c.antes.anim, c.despues.anim].join(" · "), "none · none");
+  await ctx.close();
+}
+
 /* Lo de arriba mide colores contra la tabla; esto mide lo único que de verdad
    importa de un color: que el texto se lea sobre lo que tiene detrás. Se hace
    con la cadena entera puesta (tema + CSS compilado + navegador), porque un
@@ -458,6 +538,8 @@ async function pruebaLegibilidad(navegador) {
     await pruebaTodaLaPlataforma(navegador);
     await pruebaCasillasElegidas(navegador);
     await pruebaModoAdaptado(navegador);
+    await pruebaVuelan(navegador);
+    await pruebaMenosMovimiento(navegador);
     await pruebaLegibilidad(navegador);
   } finally {
     await navegador.close();
