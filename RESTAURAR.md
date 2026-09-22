@@ -97,12 +97,12 @@ supabase db push
 Sin el CLI, se pegan una por una en el editor SQL, **en orden**: varias
 dependen de la anterior (la que agrega una columna a una tabla que otra creó).
 
-- Academia: `supabase/migraciones/` — 202 migraciones.
+- Academia: `supabase/migraciones/` — 206 migraciones.
 - Inscripciones: `supabase/migraciones-colegios/` — 5.
 
 **Después de aplicarlas, comparar contra el retrato** que está en
-`supabase/esquema/inventario-academia.txt`: 64 tablas, 114 funciones, 181
-políticas, 21 triggers, 132 índices, 15 tablas en Realtime, 4 tareas de cron.
+`supabase/esquema/inventario-academia.txt`: 64 tablas, 115 funciones, 186
+políticas, 21 triggers, 133 índices, 15 tablas en Realtime, 4 tareas de cron.
 Si falta una política, nadie se entera hasta que a alguien se le abre algo que
 no debía, o se le cierra algo que sí. La consulta que arma ese inventario está
 en `herramientas/verificar-punto-restauracion.js`.

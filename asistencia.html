@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Asistencia presencial — Ajedrez Integral</title>
+    <meta name="description" content="Pasa lista de la clase presencial: quiénes llegaron, cuánto duró y qué se hizo. Entra sola a los informes y al reporte de actividades.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <!-- Sin `defer`, como en Tareas y Exámenes: con él corre DESPUÉS de parsear
+         el HTML, o sea después del script del cuerpo que lo llama, y el selector
+         de subgrupos no se monta — sin dar ningún error. Misma carrera que
+         js/notificaciones.js y js/adaptive-mode.js. -->
+    <script src="js/subgrupos-marcar.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es para quien da clase</h1>
+            <p class="text-brand-500 dark:text-brand-300">La ficha de asistencia la llena quien dio la clase presencial.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white">📋 Asistencia presencial</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-2">Pasa lista de la clase que diste en el aula: quiénes llegaron, cuánto duró y qué se trabajó.</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350 mb-8 bg-white dark:bg-brand-900 rounded-xl p-3">
+                Una clase presencial cuenta <strong>igual que una de la plataforma</strong>: entra sola en Informes,
+                en el «asistió a 4 de 5» que llega a la casa y en el <a href="reportes.html" class="underline hover:text-accent-500">reporte de actividades</a>.
+                No hace falta copiar nada a ninguna parte.
+            </p>
+
+            <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm" role="status" aria-live="polite"></p>
+
+            <!-- ======================= la ficha ======================= -->
+            <form id="ficha" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
+                <h2 id="ficha-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-4">Una clase nueva</h2>
+
+                <div class="grid sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label for="fecha" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Día de la clase</label>
+                        <input type="date" id="fecha" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="hora" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Hora de inicio</label>
+                        <input type="time" id="hora" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="minutos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Cuánto duró (minutos)</label>
+                        <input type="number" id="minutos" min="5" max="600" step="5" value="60" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            <button type="button" data-min="45" class="dura-btn text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">45</button>
+                            <button type="button" data-min="60" class="dura-btn text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">60</button>
+                            <button type="button" data-min="90" class="dura-btn text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">90</button>
+                            <button type="button" data-min="120" class="dura-btn text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">120</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Título de la clase</label>
+                    <input type="text" id="titulo" maxlength="120" placeholder="Ej: Finales de rey y peón — grupo del martes"
+                           class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+
+                <div class="mb-5">
+                    <label for="notas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Qué se hizo en esta clase <span class="font-normal">(si quieres)</span></label>
+                    <textarea id="notas" rows="3" maxlength="2000" placeholder="Repasamos la oposición y la regla del cuadrado. Hicimos cuatro finales en el tablero grande y quedaron de tarea los ejercicios de peón pasado."
+                              class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">
+                        Esto sale escrito en el reporte de actividades, dentro de «Lo que se trabajó». Nadie más lo ve: ni el alumno ni su casa.
+                    </p>
+                </div>
+
+                <fieldset class="border-t border-brand-100 dark:border-brand-800 pt-4">
+                    <legend class="sr-only">Quiénes llegaron</legend>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <h3 class="font-semibold text-brand-800 dark:text-white">Quiénes llegaron</h3>
+                        <div class="flex gap-2">
+                            <button type="button" id="marcar-todos" class="text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar a todos</button>
+                            <button type="button" id="marcar-ninguno" class="text-xs border border-brand-200 dark:border-brand-700 hover:border-accent-400 rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ninguno</button>
+                        </div>
+                    </div>
+
+                    <input type="search" id="buscar" placeholder="Buscar por nombre o grupo…" aria-label="Buscar entre tus alumnos"
+                           class="w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+
+                    <div id="casillas" class="max-h-80 overflow-y-auto border border-brand-200 dark:border-brand-700 rounded-lg p-2 bg-brand-50 dark:bg-brand-950 grid sm:grid-cols-2 gap-1"></div>
+                    <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 p-2">
+                        Todavía no tienes alumnos asignados, así que no hay a quién pasarle lista. Quien administra la Academia es quien te los asigna.
+                    </p>
+                </fieldset>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
+                    <p id="cuenta" class="text-sm font-semibold text-brand-600 dark:text-brand-300" role="status" aria-live="polite">Nadie marcado</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="cancelar" class="hidden border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cancelar</button>
+                        <button type="submit" id="guardar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar la ficha</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- ======================= lo ya guardado ======================= -->
+            <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">Tus clases presenciales</h2>
+            <p id="conteo-fichas" class="text-sm text-brand-450 dark:text-brand-350 mb-4"></p>
+            <div id="lista" class="space-y-3"></div>
+            <p id="vacio" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center text-brand-450 dark:text-brand-350 text-sm">
+                Todavía no has pasado lista de ninguna clase presencial. La primera se llena acá arriba.
+            </p>
+            <div class="text-center mt-4">
+                <button type="button" id="ver-mas" class="hidden border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver más clases</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+
+    <script>
+/* Ficha de asistencia presencial.
+ *
+ * UNA CLASE PRESENCIAL ES UNA `class_sessions` MÁS, no una tabla aparte, y eso
+ * es lo único importante de esta pantalla: todo lo que el sitio sabe de una
+ * clase —la asistencia, los minutos, el «asistió a 4 de 5» del informe a la
+ * casa, el reporte de actividades y el «clases este mes» del panel— cuelga de
+ * `class_sessions` + `class_attendance`. Con una tabla propia habría que tocar
+ * las cuatro funciones que las leen, y las cuatro se irían separando a la
+ * primera corrección. Acá no se agrega nada a los informes: la ficha ENTRA
+ * sola porque es el mismo tipo de fila.
+ *
+ * Lo que la distingue es `modalidad = 'presencial'` y que nace CERRADA
+ * (`ended_at` puesto), que es lo que hace que no choque con el índice único de
+ * «una sola clase abierta por profesor» ni dispare el aviso push de «Empezó la
+ * clase» — ver la migración ficha_de_asistencia_presencial.
+ *
+ * Guardar es UNA sola llamada, `guardar_clase_presencial()`: partido en dos
+ * —la clase y después la lista— si la segunda mitad falla queda una clase con
+ * cero asistentes, que en el reporte se lee como una clase a la que no fue
+ * nadie. La misma decisión de crear_tarea().
+ */
+let session = null;
+let alumnos = [];
+let marcados = new Set();
+let fichas = [];
+let totalFichas = 0;
+let editando = null;          // id de la ficha que se está corrigiendo
+let busqueda = "";
+
+const POR_PAGINA = 10;
+
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+
+/* Sin tildes, como el buscador de admin.html y el de subgrupos: quien escribe
+   "ramirez" tiene que encontrar a "Ramírez". */
+function pelado(t) {
+    return String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function nombreDe(a) { return a.full_name || a.email || "Sin nombre"; }
+
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
+    a.classList.remove("hidden");
+}
+
+function duracionLarga(min) {
+    if (!min) return "—";
+    const h = Math.floor(min / 60), m = min % 60;
+    if (!h) return m + " min";
+    return h + " h" + (m ? " " + m + " min" : "");
+}
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+    "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+function fechaLarga(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return d.getDate() + " de " + MESES[d.getMonth()] + " de " + d.getFullYear() +
+           ", " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+/* ------------------------------------------------------------ la fecha y la hora
+   Los dos campos son LOCALES —lo que el profesor tiene en su reloj— y lo que
+   viaja es un instante. Armarlo con `new Date(y, m, d, hh, mm)` usa el huso de
+   su computadora, que es el de la clase; pegar los dos textos y mandarlos como
+   si fueran UTC le correría la clase seis horas sin dar ningún error: quedaría
+   fechada el día siguiente en el informe. */
+function instante() {
+    const f = document.getElementById("fecha").value;
+    const h = document.getElementById("hora").value;
+    if (!f || !h) return null;
+    const [y, m, d] = f.split("-").map(Number);
+    const [hh, mm] = h.split(":").map(Number);
+    const fecha = new Date(y, m - 1, d, hh, mm, 0, 0);
+    return isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function ponerInstante(iso) {
+    const d = iso ? new Date(iso) : new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    document.getElementById("fecha").value = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    document.getElementById("hora").value = p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+/* ------------------------------------------------------------ pasar lista
+   LAS CASILLAS SE PINTAN TODAS UNA VEZ Y EL BUSCADOR SOLO LAS ESCONDE, no las
+   saca del DOM. Dos razones, y la segunda es la que se rompe callada:
+     · repintar en cada tecla le quitaría el foco a quien está escribiendo;
+     · `SubgruposMarcar` recorre `.alumno-chk` para marcar a los del subgrupo y
+       DESMARCAR al resto — con media lista fuera del DOM por una búsqueda, los
+       que estuvieran escondidos se quedarían marcados sin que nada lo dijera, y
+       la ficha saldría con gente que no fue.
+   Escondidas con `hidden` (o sea `display:none`), así que tampoco dejan una
+   parada de tabulador fantasma. */
+function pintarCasillas() {
+    const caja = document.getElementById("casillas");
+    caja.innerHTML = "";
+    document.getElementById("sin-alumnos").classList.toggle("hidden", alumnos.length > 0);
+    alumnos.forEach((a) => {
+        const label = el("label", "alumno-fila flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 px-1 py-1 cursor-pointer rounded hover:bg-white dark:hover:bg-brand-900");
+        label.dataset.buscar = pelado(nombreDe(a) + " " + (a.grupo || ""));
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "alumno-chk rounded border-brand-300 text-accent-500 focus:ring-accent-400";
+        chk.value = a.id;
+        chk.checked = marcados.has(a.id);
+        chk.addEventListener("change", () => {
+            if (chk.checked) marcados.add(a.id); else marcados.delete(a.id);
+            pintarCuenta();
+        });
+        label.appendChild(chk);
+        // El nombre lo escribe una persona: siempre por textContent.
+        label.appendChild(el("span", null, nombreDe(a) + (a.grupo ? " · " + a.grupo : "")));
+        caja.appendChild(label);
+    });
+    caja.appendChild(el("p", "sin-coincidencias hidden text-sm text-brand-450 dark:text-brand-350 p-2 sm:col-span-2", "Ninguno coincide con eso."));
+    filtrar();
+    pintarCuenta();
+}
+
+function filtrar() {
+    const q = pelado(busqueda);
+    let visibles = 0;
+    document.querySelectorAll(".alumno-fila").forEach((f) => {
+        const cabe = !q || f.dataset.buscar.includes(q);
+        f.hidden = !cabe;
+        if (cabe) visibles += 1;
+    });
+    const nada = document.querySelector(".sin-coincidencias");
+    if (nada) nada.classList.toggle("hidden", visibles > 0 || !alumnos.length);
+}
+
+/* Cuántos van marcados se dice SIEMPRE y al lado del botón. Pasar lista de
+   veinte alumnos es marcar veinte casillas en una caja con scroll: sin el
+   número, guardar con quince es un error que solo se descubre leyendo el
+   informe del mes. */
+function pintarCuenta() {
+    const n = marcados.size;
+    document.getElementById("cuenta").textContent = n === 0
+        ? "Nadie marcado"
+        : (n === 1 ? "1 alumno llegó" : n + " alumnos llegaron") + " de " + alumnos.length;
+}
+
+function marcarTodos(si) {
+    marcados = si ? new Set(alumnos.map((a) => a.id)) : new Set();
+    document.querySelectorAll(".alumno-chk").forEach((c) => { c.checked = si; });
+    pintarCuenta();
+}
+
+/* ------------------------------------------------------------ cargar */
+async function cargarAlumnos() {
+    const { data, error } = await sb.rpc("alumnos_del_profesor_con_nombre", { p_profesor: session.user.id });
+    // Que la consulta falle y la pantalla pinte una lista vacía es el fallo
+    // callado de siempre: se lee igual que "no tienes alumnos".
+    if (error) { avisar("No se pudo cargar tu lista de alumnos: " + error.message, true); return false; }
+    alumnos = data || [];
+    return true;
+}
+
+async function cargarFichas(desde) {
+    const inicio = desde || 0;
+    const { data, error, count } = await sb
+        .from("class_sessions")
+        .select("id, title, started_at, ended_at, notes, class_attendance(student_id)", { count: "exact" })
+        .eq("modalidad", "presencial")
+        .eq("created_by", session.user.id)
+        .order("started_at", { ascending: false })
+        .range(inicio, inicio + POR_PAGINA - 1);
+    if (error) { avisar("No se pudieron cargar tus clases presenciales: " + error.message, true); return false; }
+    totalFichas = count || 0;
+    fichas = inicio === 0 ? (data || []) : fichas.concat(data || []);
+    return true;
+}
+
+function minutosDe(f) {
+    if (!f.ended_at) return null;
+    return Math.round((new Date(f.ended_at) - new Date(f.started_at)) / 60000);
+}
+
+function pintarFichas() {
+    const caja = document.getElementById("lista");
+    caja.innerHTML = "";
+    document.getElementById("vacio").classList.toggle("hidden", fichas.length > 0);
+    document.getElementById("conteo-fichas").textContent = totalFichas
+        ? "Mostrando " + fichas.length + " de " + totalFichas
+        : "";
+    document.getElementById("ver-mas").classList.toggle("hidden", fichas.length >= totalFichas);
+
+    fichas.forEach((f) => {
+        const tarjeta = el("div", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" +
+            (editando === f.id ? " ring-2 ring-accent-400" : ""));
+        const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
+
+        const izq = el("div", "flex-1 min-w-[12rem]");
+        izq.appendChild(el("p", "font-semibold text-brand-800 dark:text-white", f.title || "Clase sin título"));
+        const cuantos = (f.class_attendance || []).length;
+        izq.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
+            fechaLarga(f.started_at) + " · " + duracionLarga(minutosDe(f)) + " · " +
+            (cuantos === 1 ? "1 asistente" : cuantos + " asistentes")));
+        if ((f.notes || "").trim()) {
+            izq.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mt-2", f.notes.trim()));
+        }
+        fila.appendChild(izq);
+
+        const der = el("div", "flex gap-2 shrink-0");
+        const btnEditar = el("button", "bg-brand-700 hover:bg-brand-800 text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "✏️ Corregir");
+        btnEditar.type = "button";
+        btnEditar.addEventListener("click", () => editar(f));
+        der.appendChild(btnEditar);
+
+        const btnBorrar = el("button", "border border-brand-200 dark:border-brand-700 hover:border-red-400 text-red-600 dark:text-red-400 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Borrar");
+        btnBorrar.type = "button";
+        btnBorrar.dataset.confirmar = "no";
+        /* La confirmación va en el propio botón y no en un diálogo del
+           navegador: esto se toca desde el celular al terminar la clase, y ahí
+           el diálogo tapa la pantalla. El segundo toque dice qué se pierde. */
+        btnBorrar.addEventListener("click", () => {
+            if (btnBorrar.dataset.confirmar === "no") {
+                btnBorrar.dataset.confirmar = "si";
+                btnBorrar.textContent = "¿Seguro? Se va del informe";
+                return;
+            }
+            borrar(f);
+        });
+        der.appendChild(btnBorrar);
+        fila.appendChild(der);
+
+        tarjeta.appendChild(fila);
+        caja.appendChild(tarjeta);
+    });
+}
+
+function editar(f) {
+    editando = f.id;
+    document.getElementById("ficha-titulo").textContent = "Corrigiendo una clase ya guardada";
+    document.getElementById("titulo").value = f.title || "";
+    document.getElementById("notas").value = f.notes || "";
+    ponerInstante(f.started_at);
+    document.getElementById("minutos").value = minutosDe(f) || 60;
+    marcados = new Set((f.class_attendance || []).map((a) => a.student_id));
+    document.getElementById("guardar").textContent = "Guardar los cambios";
+    document.getElementById("cancelar").classList.remove("hidden");
+    busqueda = "";
+    document.getElementById("buscar").value = "";
+    pintarCasillas();
+    pintarFichas();
+    document.getElementById("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("titulo").focus();
+}
+
+function limpiar() {
+    editando = null;
+    document.getElementById("ficha-titulo").textContent = "Una clase nueva";
+    document.getElementById("titulo").value = "";
+    document.getElementById("notas").value = "";
+    document.getElementById("minutos").value = 60;
+    ponerInstante(null);
+    marcados = new Set();
+    document.getElementById("guardar").textContent = "Guardar la ficha";
+    document.getElementById("cancelar").classList.add("hidden");
+    document.getElementById("guardar").dataset.confirmar = "no";
+    pintarCasillas();
+    pintarFichas();
+}
+
+async function borrar(f) {
+    const { error } = await sb.from("class_sessions").delete().eq("id", f.id);
+    if (error) return avisar("No se pudo borrar: " + error.message, true);
+    if (editando === f.id) limpiar();
+    avisar("Clase borrada. Sus asistencias se fueron con ella, así que ya no cuenta en ningún informe.");
+    if (await cargarFichas(0)) pintarFichas();
+}
+
+async function guardar(ev) {
+    ev.preventDefault();
+    const boton = document.getElementById("guardar");
+    const cuando = instante();
+    if (!cuando) return avisar("Falta el día o la hora de la clase.", true);
+    const minutos = parseInt(document.getElementById("minutos").value, 10);
+    if (!minutos || minutos < 5 || minutos > 600) {
+        return avisar("La clase tiene que durar entre 5 y 600 minutos.", true);
+    }
+
+    /* Guardar sin nadie marcado es decir «no fue nadie», y eso es una cosa que
+       de verdad pasa —se cuenta la clase, la asistencia queda en cero— pero es
+       también lo que sale al apretar Guardar antes de pasar lista. Se pide un
+       segundo toque con lo que va a pasar escrito encima, en el propio botón. */
+    if (marcados.size === 0 && boton.dataset.confirmar !== "si") {
+        boton.dataset.confirmar = "si";
+        boton.textContent = "No llegó nadie — guardar así";
+        return;
+    }
+
+    boton.disabled = true;
+    const textoAntes = editando ? "Guardar los cambios" : "Guardar la ficha";
+    boton.textContent = "Guardando…";
+    const { error } = await sb.rpc("guardar_clase_presencial", {
+        p_titulo: document.getElementById("titulo").value,
+        p_inicio: cuando.toISOString(),
+        p_minutos: minutos,
+        p_notas: document.getElementById("notas").value,
+        p_alumnos: [...marcados],
+        p_id: editando,
+    });
+    boton.disabled = false;
+    boton.textContent = textoAntes;
+    boton.dataset.confirmar = "no";
+    if (error) {
+        // El mensaje de la base es el que dice qué arreglar («la clase todavía
+        // no ha pasado»); un «no se pudo guardar» a secas deja al profesor sin
+        // saber qué cambiar.
+        return avisar("No se pudo guardar: " + error.message, true);
+    }
+
+    const cuantos = marcados.size;
+    avisar((editando ? "Ficha corregida. " : "Clase guardada. ") +
+        (cuantos === 0 ? "Quedó registrada sin asistentes." :
+            (cuantos === 1 ? "1 alumno queda" : cuantos + " alumnos quedan") +
+            " con su asistencia y sus " + duracionLarga(minutos) + " de clase.") +
+        " Ya cuenta en Informes y en el reporte de actividades.");
+    limpiar();
+    if (await cargarFichas(0)) pintarFichas();
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { location.href = "login.html?next=asistencia.html"; return; }
+
+    const { data: perfil } = await sb.from("profiles").select("role, is_admin").eq("id", session.user.id).maybeSingle();
+    const puede = !!(perfil && (perfil.role === "profesor" || perfil.is_admin));
+    document.getElementById("loading").classList.add("hidden");
+    if (!puede) { document.getElementById("denegado").classList.remove("hidden"); return; }
+
+    document.getElementById("app").classList.remove("hidden");
+    ponerInstante(null);
+    if (!(await cargarAlumnos())) return;
+    pintarCasillas();
+    if (await cargarFichas(0)) pintarFichas();
+
+    /* El mismo selector de subgrupos de Tareas y Exámenes, escrito una sola
+       vez: «pásale lista a los del martes» marca a los suyos y desmarca al
+       resto, que es justo con lo que se empieza una clase presencial. */
+    if (window.SubgruposMarcar && alumnos.length) {
+        await SubgruposMarcar.montar({
+            sb: sb,
+            antesDe: document.getElementById("buscar"),
+            casillas: ".alumno-chk",
+        });
+        /* El módulo marca y desmarca las CASILLAS; quien lleva la cuenta acá es
+           `marcados`, así que hay que volver a leerlas. Se hace escuchando su
+           selector —y no con su `alMarcar`— porque ese solo avisa cuando se
+           elige un subgrupo: al volver a «— un subgrupo —» desmarca todo y no
+           avisa, y el Set se quedaría lleno de gente que ya no está marcada.
+           Este listener se engancha después del suyo, así que el DOM ya está al
+           día cuando corre. */
+        const selector = document.getElementById("subgrupo-marcar");
+        if (selector) selector.addEventListener("change", () => {
+            marcados = new Set([...document.querySelectorAll(".alumno-chk")]
+                .filter((c) => c.checked).map((c) => c.value));
+            // Y se limpia la búsqueda: con un filtro puesto, la mitad de los
+            // que acaba de marcar el subgrupo estarían escondidos.
+            busqueda = "";
+            document.getElementById("buscar").value = "";
+            filtrar();
+            pintarCuenta();
+        });
+    }
+}
+
+document.getElementById("ficha").addEventListener("submit", guardar);
+document.getElementById("cancelar").addEventListener("click", limpiar);
+document.getElementById("marcar-todos").addEventListener("click", () => marcarTodos(true));
+document.getElementById("marcar-ninguno").addEventListener("click", () => marcarTodos(false));
+document.getElementById("buscar").addEventListener("input", (e) => {
+    busqueda = e.target.value;
+    filtrar();
+});
+document.querySelectorAll(".dura-btn").forEach((b) => {
+    b.addEventListener("click", () => { document.getElementById("minutos").value = b.dataset.min; });
+});
+document.getElementById("ver-mas").addEventListener("click", async () => {
+    if (await cargarFichas(fichas.length)) pintarFichas();
+});
+/* Si se cambia algo del formulario después de pedir el segundo toque, el botón
+   vuelve a lo suyo: el «guardar así» tiene que confirmarse sobre lo que se está
+   viendo, no sobre lo que se veía hace tres cambios. */
+document.getElementById("ficha").addEventListener("input", () => {
+    const b = document.getElementById("guardar");
+    if (b.dataset.confirmar === "si") {
+        b.dataset.confirmar = "no";
+        b.textContent = editando ? "Guardar los cambios" : "Guardar la ficha";
+    }
+});
+
+init();
+    </script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --></body>
+</html>

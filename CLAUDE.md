@@ -645,6 +645,143 @@ que ya no existe. Lo reusan `verificar-sesion-orden.js` y
 `verificar-chat-clase.js`, y acepta **filas de arranque** para sembrar una tabla
 (los mensajes de una conversación, por ejemplo).
 
+### La clase presencial también se registra, y es una `class_sessions` MÁS
+
+La clase del aula no existía para el sitio. El profesor daba su clase
+presencial, y esa clase no salía en Informes, no contaba para el «asistió a 4 de
+5» que llega a la casa, no entraba al reporte de actividades y no sumaba al
+«clases este mes» de su panel. No daba ningún error: simplemente, para la
+plataforma, el alumno que solo va presencial no entrenaba nunca.
+
+`asistencia.html` (tarjeta **«✅ Asistencia presencial»** en Herramientas, al
+lado de Planes de clase) es donde se pasa lista: el día, la hora, cuánto duró,
+qué se trabajó y quiénes llegaron.
+
+**Lo que se guarda es una `class_sessions` normal con `modalidad =
+'presencial'`, no una tabla nueva.** Esa es la decisión de fondo: todo lo que el
+sitio sabe de una clase cuelga de `class_sessions` + `class_attendance`, así que
+con una tabla aparte habría que tocar las cuatro funciones que las leen
+—`informes_resumen_alumnos()`, `informe_de_alumno()`, `reporte_actividades()` y
+`panel_profesor()`— y las cuatro se irían separando a la primera corrección.
+Siendo la misma fila, la ficha **entra sola**: no hay ni una línea que «lleve»
+la asistencia presencial a los informes.
+
+- **La ficha nace CERRADA** (`ended_at` puesto), y eso hace dos cosas de una: no
+  choca con el índice `class_sessions_una_abierta_por_profesor` —o sea que
+  llenar la ficha del martes no le impide abrir la clase en vivo de hoy— y no es
+  una clase «abierta» para ningún alumno.
+- **El aviso push tuvo que aprender a callarse.** `class_sessions_avisa_push`
+  era un `AFTER INSERT` a secas, así que guardar la ficha de ayer le habría
+  mandado a todos sus alumnos «Empezó la clase · Entra cuando puedas» con enlace
+  a `/sesion.html`, a un tablero cerrado y por una clase que ya terminó. Lleva
+  ahora su `WHEN (new.modalidad = 'en_linea' and new.ended_at is null)` — la
+  misma lección que dejó `avisar_examen_reabierto`.
+- **Pasar lista es del profesor, y eso hacía falta abrirlo.**
+  `class_attendance_insert_own` exige `auth.uid() = student_id`: la asistencia
+  en vivo la marca el alumno al conectarse. Las políticas nuevas
+  (`class_attendance_insert/update/delete_profesor`) van **acotadas a
+  `modalidad = 'presencial'`** a propósito: en una clase en vivo la asistencia la
+  registra el sistema, y dejar escribirla a mano ahí sería poder inventar que
+  alguien entró a un tablero al que nunca entró. Lo que se abre es la ficha, no
+  la asistencia entera. Y el **delete** hace falta tanto como el insert: marcar
+  a quien no fue y no poder desmarcarlo le deja una asistencia de más en el
+  informe que llega a su casa.
+- **Los minutos entran por `class_presence_log`**, un tramo por asistente, como
+  cualquier latido de la clase en vivo. Así las tres funciones que cuentan
+  minutos los suman **sin tocarlas**, y `minutos_por_tramos()` los une con los
+  demás, de modo que una presencial que se solape con una en línea no se cuenta
+  dos veces. Sin ese tramo, un alumno que solo va presencial saldría con «5
+  clases, 0 minutos» y eso no da ningún error.
+  - Eso obligó a la única excepción de `proteger_tiempos_de_presencia()`, que
+    existe para que un alumno no se infle los minutos desde la consola: en la
+    ficha el tramo **no lo mide un latido, lo DECLARA el profesor**, así que las
+    horas tienen que pasar. **La excepción se lee de la FILA** —ser el creador
+    de esa clase presencial— y no de una marca local como
+    `ajedrez.contando_invitaciones`: una marca hay que acordarse de ponerla y el
+    alumno podría poner la suya, mientras que «ser el creador» no se puede
+    falsificar. Para el alumno el trigger sigue exactamente igual de cerrado.
+- **Guardar es UNA llamada**, `guardar_clase_presencial()`, `SECURITY INVOKER`
+  como `crear_tarea()`: partido en dos —la clase y después la lista— si la
+  segunda mitad falla queda una clase con cero asistentes, que en el reporte se
+  lee como una clase a la que no fue nadie. Deja la lista **exactamente como se
+  mandó** (la regla de `set_teachers` y `equipo_set_alumnos`): pasar lista se
+  corrige, y una lista que solo suma no se puede corregir.
+  - Su `update` filtra por `modalidad = 'presencial'`: sin eso, esta pantalla
+    editaría también una clase EN VIVO —moviéndole las horas y borrándole el
+    título— desde un formulario que no sabe nada de ella.
+  - Rechaza una clase **del futuro** (una ficha se llena después de darla; el
+    día de margen es para el huso, no para agendar) y una duración fuera de 5 a
+    600 minutos, que no es una regla de negocio sino un error de dedo: 6000
+    minutos le meterían cuatro días de «tiempo en clase» a cada asistente, y eso
+    se ve perfecto en el informe que llega a su casa.
+
+Comprobado impersonando roles en SQL, 12 casos: la ficha guarda sus dos
+asistentes con su tramo de 60 minutos de verdad, desmarcar a uno lo quita de la
+asistencia **y de los minutos**, la clase futura y la de 6000 minutos se
+rechazan, la ficha queda presencial y cerrada, otro profesor no la edita, el
+alumno que intenta insertarse un tramo de veinte años se queda con **0 minutos**
+—el trigger le sigue poniendo `now()`— y no puede crear ninguna clase.
+
+#### Qué se hizo en la clase, y cómo lo dice el informe
+
+El campo «Qué se hizo en esta clase» es `class_sessions.notes`, el mismo que ya
+pinta el reporte de actividades dentro de «Lo que se trabajó». Es opcional, y la
+pantalla dice con todas las letras dónde sale y quién lo lee: nadie más que quien
+prepara el informe — ni el alumno ni su casa.
+
+**El reporte dice CUÁLES clases fueron presenciales**, y eso no es cosmético: sin
+la modalidad, las del aula entran contadas dentro de «N clases en vivo», que es
+falso, y quien lee el informe no tiene forma de separarlas. Lo dice en tres
+lugares —el párrafo del resumen, la columna **«Dónde»** de la tabla de clases y
+una columna por alumno—, siempre **escrito** y nunca con un color o un icono:
+este informe se imprime y lo lee alguien que no sabe nada de la plataforma.
+
+- El reparto solo se dice **cuando hay de las dos**: «y ninguna presencial» es
+  ruido en todas las visitas menos una. Con un solo tipo dice «todas
+  presenciales» o «todas en la plataforma».
+- La columna «De ellas presenciales» **no se pinta si no hay ninguna**: una
+  columna entera de ceros ocupa ancho y no dice nada.
+- Y si los totales llegaran **sin partir** (una versión vieja de
+  `reporte_actividades()`), se cuentan todas como de la plataforma, que es lo que
+  eran antes de existir la ficha, en vez de decir «0 y 0».
+- La nota al pie de la tabla de tiempos dice de dónde salen los minutos
+  presenciales: la duración que anotó quien dio la clase, no una medición de la
+  plataforma. Prometer que se midieron sería prometer algo que no pasó.
+
+**Al tocar `asistencia.html`, `js/reporte-armar.js` o la tabla
+`class_sessions`, correr `node herramientas/verificar-asistencia.js`** (con el
+sitio en localhost:8777 y playwright). Todo lo que se rompe acá se rompe
+callado, así que se mira desde afuera: que **la hora local viaje como el instante
+que fue** —el verificador fija la zona en `America/Costa_Rica` y comprueba que
+las 15:00 salgan como las 21:00 UTC; mandar los dos campos como si fueran UTC
+deja la clase fechada el día siguiente sin dar ningún error—, que el buscador
+**esconda las casillas en vez de sacarlas del DOM** (con media lista fuera, el
+selector de subgrupos dejaría marcada a gente que no fue), que «los del martes»
+marque a los suyos y desmarque al resto, que guardar sin nadie marcado pida un
+segundo toque, que **corregir mande la lista completa y el id de ESA ficha**, que
+la clase EN VIVO del mismo profesor no se ofrezca acá, que borrar filtre por su
+id, que a la alumna no se le pinte nada y que la página **se vea** (sin CSS
+impreso como texto y en oscuro cuando el tema está en oscuro). Está probado que
+falla de verdad: mandando la fecha como UTC salta 1, sacando las casillas del DOM
+saltan 2 y quitando la columna «Dónde» saltan 2.
+
+- **Su doble de Supabase apunta los filtros en el RESOLVER**, no dentro del
+  `delete()`: `.delete().eq("id", x)` encadena, así que uno que los capturara
+  antes daría por bueno un borrado sobre la ficha que no era — la misma trampa
+  que ya documentó `verificar-clase-registrada.js`.
+- Y sus filas llevan `modalidad` y `created_by`, que es por donde la página las
+  pide: un doble sin esas columnas daría verde sobre una página que se baja las
+  clases de todo el mundo.
+- **`js/subgrupos-marcar.js` va SIN `defer`**, como en Tareas y Exámenes: con él
+  corre después de parsear el HTML, o sea después del script del cuerpo que lo
+  llama, y el selector no se monta — sin dar ningún error. Es la misma carrera
+  que ya documentaron `js/notificaciones.js` y `js/adaptive-mode.js`.
+- Ese módulo **marca y desmarca las casillas**, y quien lleva la cuenta en esta
+  pantalla es un `Set`: hay que volver a leerlas escuchando su selector y no su
+  `alMarcar`, porque ese solo avisa al elegir un subgrupo — al volver a «— un
+  subgrupo —» desmarca todo y no avisa, y el `Set` se quedaría lleno de gente
+  que ya no está marcada.
+
 ### Vaciar el chat: la base siempre lo permitió, lo que fallaba era la pantalla
 
 «Vaciar esta conversación» parecía no funcionar: el profesor apretaba, confirmaba,

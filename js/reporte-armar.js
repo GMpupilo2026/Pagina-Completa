@@ -63,7 +63,7 @@ window.ReporteArmar = (function () {
   function duracionLarga(minutos) {
     if (!minutos) return "0 min";
     const h = Math.floor(minutos / 60), m = Math.round(minutos % 60);
-    return h ? h + " h " + (m ? m + " min" : "") : m + " min";
+    return h ? h + " h" + (m ? " " + m + " min" : "") : m + " min";
   }
 
   const tamanoLegible = (bytes) => {
@@ -98,16 +98,40 @@ window.ReporteArmar = (function () {
     // una rejilla de números obliga a quien lo lee a interpretarlo.
     const clases = t.clases || 0;
     const estudiantes = t.estudiantes || 0;
+    /* Las clases son de DOS clases y el informe tiene que decirlo: las de la
+       plataforma (el tablero en vivo, que se abre y se cierra solo) y las
+       presenciales, que el profesor anota en su ficha de asistencia. Meterlas
+       todas dentro de "N clases en vivo" —como decía este párrafo cuando lo
+       único que había era la plataforma— es decir algo que no es, y un informe
+       que miente se ve exactamente igual de bien que uno que no.
+
+       Los totales vienen partidos de reporte_actividades(); si llegaran sin
+       partir (una versión vieja de la función), se asume que todas son de la
+       plataforma, que es lo que eran antes de existir la ficha. */
+    const presenciales = t.clases_presenciales || 0;
+    const enLinea = (t.clases_en_linea == null) ? clases - presenciales : t.clases_en_linea;
+    const cuantasClases = (n) => n + (n === 1 ? " clase" : " clases");
+
     if (clases === 0) {
       bloques.push({ tipo: "parrafo", texto:
-        "En este periodo no quedó registrada ninguna clase en la plataforma. " +
-        "Si hubo clases, es que no se abrieron desde la Academia: lo que se cuenta acá " +
-        "es lo que quedó registrado, no lo que se hizo." });
+        "En este periodo no quedó registrada ninguna clase. " +
+        "Si hubo clases, es que no se abrieron desde la plataforma ni se les llenó la ficha " +
+        "de asistencia presencial: lo que se cuenta acá es lo que quedó registrado, no lo que se hizo." });
     } else {
       const aciertos = t.respuestas ? Math.round((t.aciertos / t.respuestas) * 100) : null;
+      // Cómo se reparten se dice en palabras y solo cuando hay de las dos: con
+      // un solo tipo, "y ninguna presencial" es ruido en todas las visitas.
+      let reparto = "";
+      if (presenciales && enLinea) {
+        reparto = " — " + cuantasClases(presenciales) + " presenciales y " +
+                  cuantasClases(enLinea) + " en la plataforma";
+      } else if (presenciales) {
+        reparto = ", todas presenciales";
+      } else {
+        reparto = ", todas en la plataforma";
+      }
       bloques.push({ tipo: "parrafo", texto:
-        "Se impartieron " + clases + (clases === 1 ? " clase" : " clases") +
-        " en vivo, con " + (t.asistencias || 0) +
+        "Se impartieron " + cuantasClases(clases) + reparto + ", con " + (t.asistencias || 0) +
         ((t.asistencias === 1) ? " asistencia" : " asistencias") + " de " + estudiantes +
         (estudiantes === 1 ? " estudiante" : " estudiantes distintos") + ". " +
         "En total suman " + duracionLarga(t.minutos || 0) + " de trabajo en clase" +
@@ -115,26 +139,34 @@ window.ReporteArmar = (function () {
           (aciertos !== null ? ", con un " + aciertos + " % de respuestas correctas" : "") : "") + "." });
     }
 
+    const filasResumen = [["Clases impartidas", String(clases)]];
+    if (presenciales && enLinea) {
+      filasResumen.push(["— de ellas, presenciales", String(presenciales)]);
+      filasResumen.push(["— de ellas, en la plataforma", String(enLinea)]);
+    }
+    filasResumen.push(
+      ["Estudiantes distintos que asistieron", String(estudiantes)],
+      ["Asistencias registradas", String(t.asistencias || 0)],
+      ["Tiempo total en clase", duracionLarga(t.minutos || 0)],
+      ["Posiciones planteadas en pizarra", String(t.preguntas || 0)],
+      ["Respuestas de los estudiantes", String(t.respuestas || 0)]);
     bloques.push({ tipo: "tabla",
       encabezados: ["Indicador", "Cantidad"],
       anchos: [3, 1],
-      filas: [
-        ["Clases impartidas", String(clases)],
-        ["Estudiantes distintos que asistieron", String(estudiantes)],
-        ["Asistencias registradas", String(t.asistencias || 0)],
-        ["Tiempo total en clase", duracionLarga(t.minutos || 0)],
-        ["Posiciones planteadas en pizarra", String(t.preguntas || 0)],
-        ["Respuestas de los estudiantes", String(t.respuestas || 0)],
-      ] });
+      filas: filasResumen });
 
     /* --- 2. Clase por clase: fechas y contenido -------------------------- */
     if ((datos.clases || []).length) {
       bloques.push({ tipo: "titulo", texto: "Detalle de las clases" });
+      /* La columna "Dónde" va ESCRITA y no como un color o un icono: este
+         informe se imprime, se manda por correo y lo lee alguien que no sabe
+         nada de la plataforma. Es la misma regla que las barras de Informes. */
       bloques.push({ tipo: "tabla",
-        encabezados: ["Fecha", "Hora", "Clase", "Duración", "Asistentes"],
-        anchos: [1.1, 0.7, 2.6, 0.9, 0.9],
+        encabezados: ["Fecha", "Hora", "Clase", "Dónde", "Duración", "Asistentes"],
+        anchos: [1.1, 0.7, 2.3, 0.9, 0.9, 0.9],
         filas: datos.clases.map((c) => [
           fechaCorta(c.started_at), hora(c.started_at), c.title || "(sin título)",
+          c.modalidad === "presencial" ? "Presencial" : "Plataforma",
           c.duracion_min ? duracionLarga(c.duracion_min) : "sin cerrar",
           String(c.asistentes || 0),
         ]) });
@@ -152,17 +184,27 @@ window.ReporteArmar = (function () {
     /* --- 3. Asistencia por estudiante ------------------------------------ */
     if ((datos.estudiantes || []).length) {
       bloques.push({ tipo: "titulo", texto: "Asistencia por estudiante" });
+      // La columna de presenciales solo aparece cuando hay alguna: una columna
+      // entera de ceros ocupa ancho y no dice nada.
+      const hayPresenciales = presenciales > 0;
       bloques.push({ tipo: "tabla",
-        encabezados: ["Estudiante", "Grupo", "Clases", "Tiempo en clase"],
-        anchos: [3, 1.2, 0.8, 1.3],
-        filas: datos.estudiantes.map((s) => [
-          s.full_name || "(sin nombre)", s.grupo || "—",
-          String(s.clases || 0), duracionLarga(s.minutos || 0),
-        ]) });
+        encabezados: hayPresenciales
+          ? ["Estudiante", "Grupo", "Clases", "De ellas presenciales", "Tiempo en clase"]
+          : ["Estudiante", "Grupo", "Clases", "Tiempo en clase"],
+        anchos: hayPresenciales ? [2.6, 1.1, 0.8, 1.1, 1.2] : [3, 1.2, 0.8, 1.3],
+        filas: datos.estudiantes.map((s) => hayPresenciales
+          ? [s.full_name || "(sin nombre)", s.grupo || "—", String(s.clases || 0),
+             String(s.clases_presenciales || 0), duracionLarga(s.minutos || 0)]
+          : [s.full_name || "(sin nombre)", s.grupo || "—",
+             String(s.clases || 0), duracionLarga(s.minutos || 0)]) });
       bloques.push({ tipo: "nota", texto:
         "El tiempo en clase se cuenta uniendo los tramos que se solapan, así que dos " +
         "pestañas abiertas a la vez no lo cuentan dos veces. Es el mismo número que " +
-        "muestra la página de Informes." });
+        "muestra la página de Informes." +
+        (hayPresenciales
+          ? " En las clases presenciales el tramo es la duración que anotó quien dio la clase " +
+            "al pasar lista, no una medición de la plataforma."
+          : "") });
     }
 
     /* --- 4. Lo que se subió: hojas de cálculo ---------------------------- */
