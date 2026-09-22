@@ -321,3 +321,74 @@ export function informeHtml(
 </td></tr></table>
 </body></html>`;
 }
+
+/* ---- Invitación a practicar (aviso de inactividad) ----
+   Botón de un clic desde la lista de "sin entrenar" en informes.html: el
+   profesor no escribe nada, solo aprieta, y la casa recibe una invitación
+   cálida, no un regaño — mismo criterio de tono que el resto de este archivo.
+   No lleva números de actividad ni comparaciones: es un empujón puntual, no
+   un informe. Reutiliza el mismo envoltorio visual (cabecera azul marino,
+   franja de color, pie con el contacto) para que se sienta del mismo sitio. */
+export function invitarPracticarHtml(
+  nombreCompleto: string, dias: number | null, sitio: string, contacto?: Contacto | null,
+) {
+  const nombre = String(nombreCompleto || "").trim() || "Tu hijo o hija";
+  const primerNombre = nombre.split(" ")[0];
+  const cuantoTiempo = dias == null
+    ? `${primerNombre} todavía no ha entrado a practicar a la plataforma.`
+    : `${primerNombre} lleva ${plural(dias, "día", "días")} sin entrar a practicar a la plataforma.`;
+
+  return `<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Un empujoncito para ${escapar(primerNombre)} — Ajedrez Integral</title></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:24px 12px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
+
+  <tr><td style="background:#102a43;padding:22px 24px">
+    <div style="color:#f0b429;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ajedrez Integral</div>
+    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">Un empujoncito para ${escapar(primerNombre)}</div>
+  </td></tr>
+
+  <tr><td style="padding:24px">
+    <p style="margin:0 0 20px;font-size:14px;color:#243b53;line-height:1.6">Hola,</p>
+
+    <div style="margin:0 0 20px;padding:14px 16px;background:#fffbea;border-left:4px solid #f0b429;border-radius:8px">
+      <div style="font-size:15px;font-weight:700;color:#102a43">${escapar(cuantoTiempo)}</div>
+    </div>
+
+    <p style="margin:0 0 16px;font-size:14px;color:#243b53;line-height:1.6">
+      Te escribimos porque creemos que unos minutos hoy pueden hacer una gran diferencia:
+      <strong>la constancia es, de lejos, la clave del éxito en el ajedrez</strong>. Diez o quince
+      minutos casi todos los días rinden mucho más que un rato largo de vez en cuando.
+    </p>
+    <p style="margin:0 0 24px;font-size:14px;color:#243b53;line-height:1.6">
+      Te invitamos a animar a ${escapar(primerNombre)} a que entre hoy mismo a practicar un rato.
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="background:#f0b429;border-radius:10px">
+        <a href="${sitio}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#102a43;text-decoration:none">Entrar a practicar →</a>
+      </td></tr>
+    </table>
+
+    ${contacto ? `
+    <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
+      Cualquier consulta, respondemos por WhatsApp al
+      <a href="${contacto.enlace}" style="color:#a85a0d">${escapar(contacto.texto)}</a>.
+    </p>` : `
+    <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
+      Cualquier consulta, respondenos este mismo correo.
+    </p>`}
+  </td></tr>
+
+  <tr><td style="background:#f0f4f8;padding:16px 24px;font-size:11px;color:#55708a;line-height:1.6">
+    Recibes este correo porque en la Academia figuras como persona encargada de ${escapar(nombre)}. Lo manda quien le da clase.
+    <br><a href="${sitio}" style="color:#55708a">${sitio.replace(/^https:\/\//, "")}</a>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
