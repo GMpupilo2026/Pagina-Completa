@@ -281,6 +281,9 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los PGN que subiste en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>. Al elegir uno se carga jugada a jugada: recórrelo con la clase con la navegación de jugadas de abajo del tablero.</p>
                         <p id="archivos-panel-msg" role="alert" class="text-xs text-red-600 dark:text-red-400 mb-2 min-h-[1em]"></p>
                         <p id="archivos-panel-empty" class="hidden text-xs text-brand-450 dark:text-brand-350 py-4 text-center">Todavía no has subido ningún PGN — súbelos en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>.</p>
+                        <!-- El interruptor de "ver todas las posiciones", que se pinta desde
+                             refreshArchivosPanel() solo cuando hay algo que ver. -->
+                        <div id="archivos-panel-tools"></div>
                         <div id="archivos-panel-list" class="space-y-2"></div>
                     </div>
 
@@ -1134,6 +1137,131 @@
         // el mismo mecanismo de cualquier partida (onMove → pushBoardState()).
         let archivosPanelCargados = false;
 
+        /* ---------- "Ver todas las posiciones": Archivos y Táctica ----------
+           Las dos listas de material del profesor —los PGN que subió en Archivos y los
+           ejercicios de Táctica— traen la posición de cada fila escondida detrás de su
+           propio "👁 Vista previa", y el rótulo de la fila no dice NADA de ella:
+           "Position 4, 1 Move" o "3. ELO 1397" no distinguen un mate en dos de un final
+           de torre. Así que para encontrar cuál dar había que abrir y cerrar de a una,
+           con la clase delante — que es justo lo que se pidió poder dejar de hacer.
+
+           El interruptor las destapa todas, y con él encendido cada fila NACE destapada:
+           al cambiar de tema, de dificultad o de carpeta no hay que volver a apretarlo,
+           que es lo que hace que sirva para buscar. Se recuerda en el APARATO
+           (localStorage), como el tema o la clase elegida: es de cómo se está mirando la
+           lista, no de quién mira. Y abrirlas una por una se sigue pudiendo, porque el
+           interruptor decide con qué estado nace cada fila y no le impone el suyo
+           después: con todas destapadas se puede cerrar la que estorba, y al revés.
+
+           Cada lista recuerda lo suyo, con su propia clave: son de tamaños muy distintos
+           —cientos de archivos contra treinta y pico de ejercicios— y encender en una no
+           tiene por qué encender en la otra.
+
+           EL TABLERO SE DIBUJA CUANDO LA FILA ENTRA EN PANTALLA, no al destaparla ni
+           todas de golpe, y esas son las dos fallas que este observador evita:
+
+           - Dibujar las 34 de una tanda de táctica —o los cientos de PGN de un profesor—
+             en el mismo cuadro son miles de casillas de una vez: el panel se queda
+             congelado unos segundos en medio de la clase, sin dar ningún error.
+           - Y el tamaño de la pieza se mide sobre la casilla YA renderizada (ver
+             renderTacticsPreviewBoard y sizePieces de js/article-example-board.js), así
+             que dentro de una carpeta cerrada —un <details>— esa medida es CERO y el
+             tablero saldría con las piezas del tamaño que no era. Con el observador, lo
+             que está guardado en una carpeta se dibuja al abrirla, ya medible. */
+        function crearVistaPreviaLote(clave) {
+            const dibujos = new WeakMap(); // recuadro → la función que pinta su tablero
+            let filas = [];                // las de la lista que se está mirando
+            let controles = [];            // repintar el rótulo del interruptor
+            let observador = null;
+
+            function encendido() {
+                try { return localStorage.getItem(clave) === "1"; } catch (e) { return false; }
+            }
+            function guardar(v) {
+                // En modo privado esto puede fallar: la lista funciona igual, solo que no
+                // se acuerda de cómo quedó.
+                try { if (v) localStorage.setItem(clave, "1"); else localStorage.removeItem(clave); } catch (e) {}
+            }
+            function dibujar(wrap) {
+                if (wrap.dataset.rendered) return;
+                const pintar = dibujos.get(wrap);
+                if (!pintar) return;
+                wrap.dataset.rendered = "1";
+                pintar(wrap);
+            }
+            function mirar(wrap) {
+                if (wrap.dataset.rendered) return;
+                // Sin IntersectionObserver se dibuja y ya: tarda más, pero no deja a nadie
+                // con un recuadro destapado y vacío.
+                if (typeof IntersectionObserver !== "function") { dibujar(wrap); return; }
+                if (!observador) {
+                    observador = new IntersectionObserver((entradas) => {
+                        entradas.forEach((e) => {
+                            if (!e.isIntersecting) return;
+                            observador.unobserve(e.target);
+                            dibujar(e.target);
+                        });
+                    }, { rootMargin: "300px" }); // un poco antes de que asome, para que no se vea aparecer
+                }
+                observador.observe(wrap);
+            }
+            function abrir(fila, abierta) {
+                fila.wrap.classList.toggle("hidden", !abierta);
+                fila.btn.textContent = abierta ? "🙈 Ocultar" : "👁 Vista previa";
+                fila.btn.setAttribute("aria-expanded", String(abierta));
+                if (abierta) mirar(fila.wrap);
+            }
+
+            return {
+                /* Al repintar la lista —otro tema, otra dificultad, recargar los archivos—
+                   las filas de antes cuelgan de nodos que ya no están en la página:
+                   dejarlas registradas haría que el interruptor destapara tableros que no
+                   se ven y que el observador siguiera mirando lo que se fue. */
+                reiniciar() {
+                    if (observador) { observador.disconnect(); observador = null; }
+                    filas = [];
+                    controles = [];
+                },
+                registrar(wrap, btn, pintar) {
+                    dibujos.set(wrap, pintar);
+                    const fila = { wrap: wrap, btn: btn };
+                    filas.push(fila);
+                    btn.setAttribute("aria-expanded", "false");
+                    btn.addEventListener("click", () => abrir(fila, wrap.classList.contains("hidden")));
+                    if (encendido()) abrir(fila, true);
+                },
+                /* El interruptor de la lista. Dice lo que va a pasar al apretarlo —no el
+                   estado en que está— igual que el "🙈 Ocultar" de cada fila. */
+                control() {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    const pintarse = () => {
+                        const v = encendido();
+                        btn.textContent = v ? "🙈 Ocultar las posiciones" : "👁 Ver todas las posiciones";
+                        btn.title = v
+                            ? "Volver a esconder las posiciones y abrirlas una por una"
+                            : "Destapar la posición de todas las filas de esta lista, para buscar a ojo la que vas a dar";
+                        btn.className = "shrink-0 text-xs font-semibold px-2 py-1 rounded-lg transition-colors " + (v
+                            ? "bg-accent-500 hover:bg-accent-600 text-brand-900"
+                            : "bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200");
+                    };
+                    btn.addEventListener("click", () => {
+                        const v = !encendido();
+                        guardar(v);
+                        controles.forEach((f) => f());
+                        filas.forEach((fila) => abrir(fila, v));
+                    });
+                    controles.push(pintarse);
+                    pintarse();
+                    return btn;
+                },
+            };
+        }
+
+        const vistaPreviaArchivos = crearVistaPreviaLote("sesion_vista_previa_archivos_v1");
+        const vistaPreviaTactica = crearVistaPreviaLote("sesion_vista_previa_tactica_v1");
+
+
         // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
         // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
         // acciones —Cargar, Preguntar, Practicar— para mandar la clase a la misma línea de
@@ -1192,19 +1320,14 @@
             previewWrap.className = "hidden mt-2";
             li.appendChild(previewWrap);
 
-            previewBtn.addEventListener("click", () => {
-                const opening = previewWrap.classList.contains("hidden");
-                previewWrap.classList.toggle("hidden");
-                previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
-                // Mismo motivo que en Táctica: el tablero se dibuja con el recuadro YA
-                // destapado, porque el tamaño de la pieza se mide sobre la casilla
-                // renderizada y dentro de algo oculto esa medida es cero.
-                if (opening && !previewWrap.dataset.rendered) {
-                    previewWrap.dataset.rendered = "1";
-                    const fen = archivoStartFen(a);
-                    if (fen) renderTacticsPreviewBoard(previewWrap, fen);
-                    else previewWrap.textContent = "Ese PGN no se pudo interpretar.";
-                }
+            // Destaparla y dibujarla lo lleva el lote: así esta fila hace lo mismo
+            // apretando su propio botón que cuando se destapan todas de una, y el
+            // tablero se dibuja recién cuando la fila entra en pantalla —dentro de una
+            // carpeta cerrada la casilla mide cero y la pieza saldría de otro tamaño—.
+            vistaPreviaArchivos.registrar(previewWrap, previewBtn, () => {
+                const fen = archivoStartFen(a);
+                if (fen) renderTacticsPreviewBoard(previewWrap, fen);
+                else previewWrap.textContent = "Ese PGN no se pudo interpretar.";
             });
             loadBtn.addEventListener("click", () => cargarArchivoEnClase(a));
             askBtn.addEventListener("click", () => askArchivoExercise(a));
@@ -1233,13 +1356,25 @@
             const wrap = document.getElementById("archivos-panel-list");
             const emptyEl = document.getElementById("archivos-panel-empty");
             const msgEl = document.getElementById("archivos-panel-msg");
+            const toolsEl = document.getElementById("archivos-panel-tools");
             msgEl.textContent = "";
             wrap.innerHTML = "";
+            toolsEl.innerHTML = "";
+            toolsEl.className = "";   // vacío no deja margen: la lista arranca pegada al aviso
+            vistaPreviaArchivos.reiniciar();
             const { data, error } = await sb.from("archivos_pgn").select("*")
                 .eq("profesor_id", session.user.id).order("created_at", { ascending: false });
             if (error) { msgEl.textContent = "No se pudo cargar tu lista de archivos."; return; }
             const archivos = data || [];
             emptyEl.classList.toggle("hidden", archivos.length > 0);
+            // Sin archivos no se ofrece el interruptor: un control que no cambia nada.
+            if (archivos.length) {
+                const cuenta = document.createElement("p");
+                cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
+                cuenta.textContent = archivos.length + (archivos.length === 1 ? " archivo" : " archivos");
+                toolsEl.className = "flex items-center justify-between gap-2 mb-2";
+                toolsEl.append(cuenta, vistaPreviaArchivos.control());
+            }
 
             const porCarpeta = new Map(); // "" = sin carpeta
             archivos.forEach((a) => {
@@ -3138,6 +3273,9 @@
             const body = document.getElementById("tactics-body");
             if (!tacticsData) { body.innerHTML = '<p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p>'; return; }
             body.innerHTML = "";
+            // La cascada repinta el cuerpo entero en cada paso: las filas de la vista
+            // anterior ya no están en la página.
+            vistaPreviaTactica.reiniciar();
 
             if (tacticsView.level === "themes" || tacticsView.level === "difficulty" || tacticsView.level === "exercises") {
                 const group = tacticsData.groups.find((g) => g.id === tacticsView.groupId);
@@ -3213,6 +3351,16 @@
 
             if (tacticsView.level === "exercises") {
                 const ids = tacticsThemeBuckets(tacticsView.themeKey)[tacticsView.diffIndex] || [];
+                // Cuántos son y el interruptor para verlos todos de una: el rótulo de
+                // cada fila ("3. ELO 1397") no dice nada de la posición, así que elegir
+                // cuál dar es mirarlas.
+                const barra = document.createElement("div");
+                barra.className = "flex items-center justify-between gap-2 mt-2";
+                const cuenta = document.createElement("p");
+                cuenta.className = "text-xs text-brand-450 dark:text-brand-350 min-w-0 truncate";
+                cuenta.textContent = ids.length + (ids.length === 1 ? " ejercicio" : " ejercicios");
+                barra.append(cuenta, vistaPreviaTactica.control());
+                body.appendChild(barra);
                 const list = document.createElement("ul");
                 list.className = "space-y-2 mt-2 max-h-96 overflow-y-auto pr-1";
                 ids.forEach((id, i) => {
@@ -3256,17 +3404,10 @@
                     const previewWrap = document.createElement("div");
                     previewWrap.className = "hidden mt-2";
                     li.appendChild(previewWrap);
-                    previewBtn.addEventListener("click", () => {
-                        const opening = previewWrap.classList.contains("hidden");
-                        previewWrap.classList.toggle("hidden");
-                        previewBtn.textContent = opening ? "🙈 Ocultar" : "👁 Vista previa";
-                        // El tablero se dibuja con el recuadro YA destapado: el tamaño de la
-                        // pieza se mide sobre la casilla renderizada, y dentro de algo oculto
-                        // esa medida es cero.
-                        if (opening && !previewWrap.dataset.rendered) {
-                            previewWrap.dataset.rendered = "1";
-                            renderTacticsPreviewBoard(previewWrap, ex.fen);
-                        }
+                    // Igual que en Archivos: destaparla y dibujarla lo lleva el lote, así
+                    // esta fila hace lo mismo con su botón que cuando se destapan todas.
+                    vistaPreviaTactica.registrar(previewWrap, previewBtn, () => {
+                        renderTacticsPreviewBoard(previewWrap, ex.fen);
                     });
                     sendBtn.addEventListener("click", async () => {
                         const ok = await aplicarPosicionEnClase(ex.fen, "Posición del ejercicio enviada: ya la ven todos los alumnos.");
