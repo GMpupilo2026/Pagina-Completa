@@ -666,6 +666,21 @@
         </section>
     </div>
 
+    <!-- La clase todavía no está abierta.
+         No es una decoración: sin clase abierta la RLS no le entrega el
+         tablero a un alumno, así que lo único que se podía pintar era una
+         pantalla vacía. Acá se dice POR QUÉ y de quién se está esperando. -->
+    <div id="sin-clase" class="hidden pt-20 pb-16">
+        <section class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="text-5xl block mb-3" aria-hidden="true">⏳</span>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Todavía no hay clase</h1>
+            <p id="sin-clase-texto" class="text-brand-600 dark:text-brand-300 mb-5" aria-live="polite"></p>
+            <span id="sin-clase-selector" class="hidden inline-flex items-center gap-2 mb-5"></span>
+            <p class="text-sm text-brand-450 dark:text-brand-350 mb-6">Esta página se abre sola en cuanto empiece: no hace falta que recargues.</p>
+            <a href="clases.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">← Volver a la Academia</a>
+        </section>
+    </div>
+
     <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
 
     <!-- Modal cambiar contraseña -->
@@ -1560,33 +1575,29 @@
          */
         let abriendoClase = false;
 
-        /* Cerrar la clase tiene que SIGNIFICAR cerrarla.
+        /* Cerrar la clase tiene que SIGNIFICAR cerrarla, y eso lo garantiza que
+         * NADIE más que el profesor la pueda abrir.
          *
-         * El primer disparador de arriba —"hay alguien del otro lado"— se vuelve a
-         * evaluar en cada aviso de presencia, y los alumnos no cierran su pestaña en
-         * el mismo segundo en que el profesor confirma el cierre. Así que el aviso
-         * siguiente encontraba alumnos conectados y abría una clase NUEVA, uno o dos
-         * minutos después de la que se acababa de cerrar. Y no da ningún error: la
-         * franja vuelve a verde sola, y el profesor —que ya terminó y se va— deja esa
+         * Antes el aviso de presencia la reabría: los alumnos no cierran su
+         * pestaña en el mismo segundo en que el profesor confirma el cierre, así
+         * que el aviso siguiente los encontraba conectados y abría una clase
+         * NUEVA un minuto después de la que se acababa de cerrar. La franja
+         * volvía sola a verde y el profesor —que ya terminó y se va— dejaba esa
          * fila abierta para siempre.
          *
-         * Lo caro viene después, y es lo que hace que la clase de mañana "no quede
-         * registrada": el índice `class_sessions_una_abierta_por_profesor` impide una
-         * segunda fila abierta, así que la clase del día siguiente no abre ninguna —
-         * se cuelga de la fantasma que quedó de antes. En el registro no aparece
-         * ninguna clase nueva, y la duración de la vieja crece sola.
+         * Lo caro venía al día siguiente, y es lo que se ve como "la clase no
+         * queda registrada": el índice `class_sessions_una_abierta_por_profesor`
+         * impide una segunda fila abierta, así que la clase de mañana no abre
+         * ninguna — se cuelga de la fantasma que quedó, con su fecha y su hora de
+         * hace un día. Ningún error en ninguna parte.
          *
-         * Quiénes estaban conectados al cerrar se guarda acá. Mientras solo estén
-         * ESOS, el aviso de presencia no reabre nada: son los que todavía no cerraron
-         * la pestaña, no una clase nueva. Un alumno que entre después SÍ la reabre
-         * —eso ya es otra clase—, y las dos puertas deliberadas del profesor (mandar
-         * una posición, o el botón "Abrir la clase") también, siempre: son un acto
-         * suyo, no el rastro del anterior. */
-        const alumnosAlCerrar = new Set();
+         * Ya no hay con qué reabrirla sin querer: las dos puertas que quedan son
+         * deliberadas del profesor —mandar una posición, o el botón «Abrir la
+         * clase»— y por eso tampoco hace falta acordarse de quién estaba
+         * conectado al cerrar. */
 
         async function abrirClaseSiHaceFalta() {
             if (!isTeacher || currentOpenSessionId || abriendoClase) return;
-            alumnosAlCerrar.clear();
             abriendoClase = true;
             const { data, error } = await sb.from("class_sessions")
                 .insert({ created_by: profile.id }).select().maybeSingle();
@@ -1640,10 +1651,6 @@
                 pintarEstadoDeClase();
                 return;
             }
-            // A partir de acá el aviso de presencia no vuelve a abrir una clase por los
-            // alumnos que ya estaban conectados: el profesor dijo que terminó.
-            alumnosAlCerrar.clear();
-            for (const id of onlineStudents.keys()) alumnosAlCerrar.add(id);
             currentOpenSessionId = null;
             document.getElementById("clase-titulo").value = "";
             document.getElementById("clase-notas").value = "";
@@ -1674,7 +1681,15 @@
             } else {
                 caja.className = "mb-6 rounded-xl px-5 py-3 flex items-center justify-between gap-3 flex-wrap bg-brand-100 dark:bg-brand-900";
                 texto.className = "text-sm font-semibold text-brand-600 dark:text-brand-300";
-                texto.textContent = "⚪ Todavía no hay clase abierta. Se abre sola en cuanto entre un alumno o mandes una posición al tablero.";
+                /* Dice la CONSECUENCIA, no el mecanismo: mientras la clase no
+                   esté abierta, sus alumnos no pueden entrar —lo hace cumplir la
+                   RLS, no esta pantalla— y no se registra ni la asistencia ni el
+                   tiempo. Un "todavía no hay clase abierta" a secas no le dice a
+                   un entrenador nuevo que la clase que está por dar no la va a
+                   ver nadie. */
+                texto.textContent = "⚪ La clase todavía no está abierta: tus alumnos no pueden entrar"
+                    + " y no se está registrando nada. Se abre con este botón o en cuanto mandes"
+                    + " una posición al tablero.";
                 abrir.classList.remove("hidden");
                 cerrar.classList.add("hidden");
                 campos.classList.add("hidden");
@@ -1714,14 +1729,8 @@
                             stopPresenceLog().finally(() => { window.location.href = "clases.html"; });
                         } else {
                             // La pudo cerrar desde el panel, o desde otra pestaña:
-                            // la franja de acá tiene que decir la verdad igual, y el
-                            // aviso de presencia tampoco tiene que reabrirla por los
-                            // alumnos que todavía no cerraron su pestaña (ver
-                            // alumnosAlCerrar) — cerrarla desde allá es igual de
-                            // deliberado que cerrarla desde acá.
+                            // la franja de acá tiene que decir la verdad igual.
                             currentOpenSessionId = null;
-                            alumnosAlCerrar.clear();
-                            for (const id of onlineStudents.keys()) alumnosAlCerrar.add(id);
                             pintarEstadoDeClase();
                         }
                     }
@@ -2431,13 +2440,14 @@
                 // mismo a la clase (ver renderChatStudentOptions) — cada vez que cambia
                 // quién está conectado, se refresca también esa lista.
                 if (isTeacher) renderChatStudentOptions();
-                // Primer disparador de "esto ya es una clase": hay alguien del
-                // otro lado. Sin esto, la asistencia del que acaba de entrar no
-                // se registra en ninguna parte. Pero los que quedaron de la clase
-                // que el profesor acaba de cerrar no cuentan: ver alumnosAlCerrar.
-                if (isTeacher && [...onlineStudents.keys()].some((id) => !alumnosAlCerrar.has(id))) {
-                    abrirClaseSiHaceFalta();
-                }
+                /* Acá vivía el primer disparador de "esto ya es una clase": que
+                   se conectara un alumno. Se fue cuando la clase pasó a abrirla
+                   SOLO el profesor —ver «La sesión en vivo se abre cuando el
+                   profesor la abre»—, y no por limpieza: sin clase abierta la
+                   RLS no le entrega el tablero al alumno, así que no puede
+                   conectarse, y el único que llegaba a dispararlo era el rastro
+                   de la clase recién cerrada. Reabrir por ahí dejaba una clase
+                   fantasma que crecía sola hasta el día siguiente. */
             });
             presenceChannel.on("broadcast", { event: "lower_hand" }, (msg) => {
                 if (!isTeacher && handRaised && msg.payload && msg.payload.studentId === profile.id) {
@@ -3970,6 +3980,54 @@
             renderStudentPracticeCard();
         });
 
+        // ---------- La clase todavía no empezó ----------
+        // Lo que devolvió mis_clases(): un renglón por profesor, con si tiene
+        // clase abierta ahora. Se guarda porque lo usan las dos pantallas —la
+        // de espera y el selector de arriba— y pedirlo dos veces sería la misma
+        // consulta para el mismo dato.
+        let clasesDelAlumno = [];
+
+        function mostrarSinClase() {
+            const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+            const nombre = (mia && mia.profesor) || "Tu profe";
+            // Con varios profesores, que OTRO tenga clase abierta es el dato que
+            // hace falta: si no, el alumno se queda esperando a quien hoy no va a
+            // abrir mientras su otra clase ya empezó, y eso no se adivina.
+            const otra = clasesDelAlumno.find((c) => c.clase_abierta && c.profesor_id !== boardOwnerId);
+            document.getElementById("sin-clase-texto").textContent = otra
+                ? nombre + " todavía no ha abierto la clase, pero " + otra.profesor + " sí tiene una en curso ahora mismo."
+                : nombre + " todavía no ha abierto la clase. Cuando la abra vas a entrar directo al tablero.";
+            // El selector es el mismo de arriba y solo aparece con dos o más
+            // profesores; acá es además la forma de pasarse a la clase que sí
+            // está abierta.
+            ClaseElegida.montarSelector(document.getElementById("sin-clase-selector"), clasesDelAlumno, boardOwnerId);
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("sin-clase").classList.remove("hidden");
+        }
+
+        /* Un canal por profesor, no solo por el que está mirando: la clase la
+           puede abrir cualquiera de ellos, y con un canal filtrado por
+           boardOwnerId el alumno se quedaría en esta pantalla hasta que
+           recargara — sin que nada fallara. */
+        function esperarLaClase() {
+            const ids = [...new Set(clasesDelAlumno.map((c) => c.profesor_id).filter(Boolean))];
+            ids.forEach((id) => {
+                sb.channel("clase-abre:" + id)
+                    .on("postgres_changes", { event: "*", schema: "public", table: "class_sessions", filter: "created_by=eq." + id }, async (payload) => {
+                        const abrio = payload.new && !payload.new.ended_at;
+                        // La suya y abierta: se entra. Recargar y no montar acá
+                        // es la misma decisión que cambiar de clase — todo
+                        // cuelga de boardOwnerId y montarlo a mano dejaría la
+                        // mitad sin suscribir.
+                        if (abrio && id === boardOwnerId) { window.location.reload(); return; }
+                        const { clases } = await ClaseElegida.resolver();
+                        if (clases && clases.length) clasesDelAlumno = clases;
+                        mostrarSinClase();
+                    })
+                    .subscribe();
+            });
+        }
+
         // ---------- Arranque ----------
         async function init() {
             const { data } = await sb.auth.getSession();
@@ -3986,12 +4044,25 @@
                 // Con más de un profesor, el alumno elige a cuál clase entra.
                 const { clases, elegida } = await ClaseElegida.resolver();
                 boardOwnerId = elegida;
-                ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clases, elegida);
+                clasesDelAlumno = clases;
             }
             if (!boardOwnerId) {
                 setStatus("Todavía no tienes un profesor asignado — pídele a la persona administradora que te asigne uno.");
                 document.getElementById("loading").classList.add("hidden");
                 return;
+            }
+
+            /* La sesión en vivo empieza cuando el profesor ABRE la clase.
+               Sin clase abierta la RLS no le entrega al alumno ni el tablero ni
+               las variantes (ver la migración
+               `sesion_en_vivo_solo_con_clase_abierta`), así que seguir adelante
+               solo conseguiría pintarle una pantalla vacía: el candado se vería
+               como una página rota. Y la clase ya no se abre sola cuando entra
+               un alumno — justamente para que «hay clase» signifique algo. */
+            if (!isTeacher) {
+                const mia = clasesDelAlumno.find((c) => c.profesor_id === boardOwnerId);
+                if (!mia || !mia.clase_abierta) { mostrarSinClase(); esperarLaClase(); return; }
+                ClaseElegida.montarSelector(document.getElementById("selector-clase-wrap"), clasesDelAlumno, boardOwnerId);
             }
 
             const badge = document.getElementById("role-badge");

@@ -175,8 +175,18 @@ window.__deletes = [];
       updateUser: () => Promise.resolve({ error: null }),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
+    /* clase_abierta sale de las MISMAS filas que la tabla, como en la base:
+       mis_clases() la calcula con un left join contra class_sessions. Un
+       doble que la dejara fija en false le cerraría al alumno una clase que sí
+       está abierta —hoy es lo que decide si puede entrar— y una que la dejara
+       siempre en true daría por buena una página sin candado.
+
+       Y la columna se llama "profesor", no "profesor_nombre": con el nombre
+       equivocado la pantalla de espera diría «Tu profe» y la prueba daría por
+       bueno algo que en producción no se ve así. */
     rpc: (n) => constructor(n, n === "mis_clases"
-      ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
+      ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
+           clase_abierta: SESIONES.some((c) => c.created_by === "u-profe" && !c.ended_at) }]
       : n === "alumnos_del_profesor"
       ? [{ id: "u-ana", full_name: "Ana Rojas", email: "ana@x.cr" }]
       : []),
@@ -221,7 +231,10 @@ async function abrir(browser, quien, claseAbierta, semilla) {
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   await page.goto(BASE + "/sesion.html", { waitUntil: "domcontentloaded" });
-  await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
+  /* O la sesión, o la pantalla de espera: desde que la clase la abre el
+     profesor, un alumno sin clase abierta NO monta #app — y esperarlo a secas
+     dejaría la prueba colgada treinta segundos por algo que es lo correcto. */
+  await page.waitForSelector("#app:not(.hidden), #sin-clase:not(.hidden)", { timeout: 30000 });
   return { page, ctx, errores };
 }
 
@@ -241,9 +254,15 @@ async function pruebaSinAlumnos(browser) {
 
   igual("no se abre ninguna clase por entrar", await sesionesAbiertas(page), 0);
   igual("la franja se ve de verdad", await seVe(page, "clase-estado"), "sí");
+  /* Y dice la CONSECUENCIA, no el mecanismo: mientras no la abra, sus alumnos
+     no pueden entrar y no se registra nada. Un «todavía no hay clase abierta»
+     a secas no le dice a un entrenador nuevo que la clase que está por dar no
+     la va a ver nadie. */
+  const franja = await page.textContent("#clase-estado-texto");
   igual("y dice con todas las letras que no hay clase",
-    (await page.textContent("#clase-estado-texto")).includes("Todavía no hay clase abierta") ? "lo dice" : await page.textContent("#clase-estado-texto"),
-    "lo dice");
+    /todavía no está abierta/.test(franja) ? "lo dice" : franja, "lo dice");
+  igual("…y que por eso sus alumnos no pueden entrar",
+    /no pueden entrar/.test(franja) ? "lo dice" : franja, "lo dice");
   igual("ofrece abrirla a mano", await seVe(page, "clase-abrir-btn"), "sí");
   igual("y no ofrece cerrar lo que no está abierto", await seVe(page, "clase-cerrar-btn"), "no");
 
@@ -251,17 +270,32 @@ async function pruebaSinAlumnos(browser) {
   await ctx.close();
 }
 
-async function pruebaEntraUnAlumno(browser) {
-  console.log("\n=== Entra un alumno: la clase se abre sola ===");
+/* Antes la clase la abría el primer alumno que se conectaba, y eso es
+   justamente lo que se quitó: la sesión en vivo empieza cuando el profesor la
+   abre. El disparador de presencia dejaba dos agujeros a la vez — un alumno
+   asomándose un domingo abría una clase que nadie dio, y al cerrar, el aviso
+   siguiente la reabría porque los alumnos no cierran su pestaña en el mismo
+   segundo, dejando una fila abierta que crece sola hasta el día siguiente. */
+async function pruebaLaAbreElProfesor(browser) {
+  console.log("\n=== La clase la abre el profesor, no el alumno que entra ===");
   const { page, ctx, errores } = await abrir(browser, "u-profe", null);
   await page.waitForSelector("#clase-estado:not(.hidden)", { timeout: 10000 });
   await page.waitForTimeout(400);
-  igual("antes de que entre, ninguna", await sesionesAbiertas(page), 0);
+  igual("antes de nada, ninguna", await sesionesAbiertas(page), 0);
 
   await page.evaluate(() => window.__entraAlumno());
-  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_sessions"), null, { timeout: 8000 });
+  await page.waitForTimeout(800);
+  igual("que se conecte un alumno NO abre ninguna clase", await sesionesAbiertas(page), 0);
+  await page.evaluate(() => window.__entraOtroAlumno());
+  await page.waitForTimeout(800);
+  igual("ni que se conecte un segundo", await sesionesAbiertas(page), 0);
+  igual("…y la franja sigue diciendo que está cerrada",
+    (await page.textContent("#clase-estado-texto")).includes("todavía no está abierta") ? "lo dice" : "no", "lo dice");
 
-  igual("al entrar el alumno se abre una", await sesionesAbiertas(page), 1);
+  // La puerta que sí existe: el botón. Es un acto deliberado suyo.
+  await page.click("#clase-abrir-btn");
+  await page.waitForFunction(() => window.__inserts.some((i) => i.tabla === "class_sessions"), null, { timeout: 8000 });
+  igual("el botón sí la abre", await sesionesAbiertas(page), 1);
   igual("y queda a nombre de quien da la clase", await page.evaluate(() =>
     window.__inserts.find((i) => i.tabla === "class_sessions").fila.created_by), "u-profe");
 
@@ -276,7 +310,7 @@ async function pruebaEntraUnAlumno(browser) {
      abiertas la asistencia se reparte y cada informe cuenta la mitad. */
   await page.evaluate(() => window.__entraAlumno());
   await page.waitForTimeout(500);
-  igual("un segundo aviso de presencia NO abre otra", await sesionesAbiertas(page), 1);
+  igual("un aviso de presencia con la clase abierta no abre otra", await sesionesAbiertas(page), 1);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -342,7 +376,7 @@ async function pruebaClaseYaAbierta(browser) {
   igual("y con la hora de cierre puesta", cierre.campos.ended_at ? "sí" : "no", "sí");
 
   await page.waitForFunction(() =>
-    document.getElementById("clase-estado-texto").textContent.includes("Todavía no hay clase"), null, { timeout: 8000 });
+    document.getElementById("clase-estado-texto").textContent.includes("todavía no está abierta"), null, { timeout: 8000 });
   igual("y la franja vuelve a decir la verdad", "lo dice", "lo dice");
   igual("y se dice que quedó guardada, con su nombre", await page.evaluate(() =>
     document.getElementById("status-banner").textContent.includes("Finales de rey y peón") ? "lo dice" : document.getElementById("status-banner").textContent), "lo dice");
@@ -352,7 +386,12 @@ async function pruebaClaseYaAbierta(browser) {
      presencia siguiente encontraba gente conectada y abría una clase NUEVA — que
      el profesor, ya de salida, dejaba abierta para siempre. Y con esa fila abierta
      el índice único impide abrir la del día siguiente: la clase de mañana se cuelga
-     de la fantasma y en el registro no aparece ninguna nueva. */
+     de la fantasma y en el registro no aparece ninguna nueva.
+
+     Hoy no hay con qué reabrirla sin querer —la presencia dejó de abrir clases—
+     pero la comprobación se queda: el día que a alguien se le ocurra volver a
+     enganchar ahí un disparador, esto salta en vez de descubrirse al día
+     siguiente con la clase de hoy sin registrar. */
   const abiertasAntes = await sesionesAbiertas(page);
   await page.evaluate(() => window.__avisoDePresencia());
   await page.waitForTimeout(600);
@@ -362,16 +401,48 @@ async function pruebaClaseYaAbierta(browser) {
   await page.waitForTimeout(600);
   igual("ni el mismo alumno que ya estaba conectado",
     (await sesionesAbiertas(page)) - abiertasAntes, 0);
+  await page.evaluate(() => window.__entraOtroAlumno());
+  await page.waitForTimeout(600);
+  igual("ni uno que entra después: la clase la vuelve a abrir SU profesor",
+    (await sesionesAbiertas(page)) - abiertasAntes, 0);
   await page.waitForFunction(() =>
-    document.getElementById("clase-estado-texto").textContent.includes("Todavía no hay clase"), null, { timeout: 8000 });
+    document.getElementById("clase-estado-texto").textContent.includes("todavía no está abierta"), null, { timeout: 8000 });
   igual("y la franja sigue diciendo que está cerrada", "lo dice", "lo dice");
 
-  /* Pero un alumno que NO estaba sí es una clase nueva: quedarse sin abrirla
-     sería el fallo de siempre al revés — su asistencia no se registraría. */
-  await page.evaluate(() => window.__entraOtroAlumno());
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
+/* La otra mitad del candado, y la que se rompe callado: si la pantalla del
+   alumno siguiera montándose sin clase abierta, no daría ningún error — la RLS
+   simplemente no le entrega `game_state` y él vería un tablero vacío sin
+   entender por qué. Lo que tiene que pasar es que se le diga, con el nombre de
+   quien tiene que abrirla. */
+async function pruebaAlumnaSinClase(browser) {
+  console.log("\n=== La alumna entra sin clase abierta ===");
+  const { page, ctx, errores } = await abrir(browser, "u-ana", null);
   await page.waitForTimeout(800);
-  igual("pero un alumno que entra después SÍ abre otra clase",
-    (await sesionesAbiertas(page)) - abiertasAntes, 1);
+
+  igual("no se le monta la sesión", await seVe(page, "app"), "no");
+  igual("se le dice que todavía no hay clase, y se VE de verdad",
+    await page.evaluate(() => document.getElementById("sin-clase").checkVisibility() ? "sí" : "no"), "sí");
+  // Con el nombre: «tu profe» a secas no le dice a quién esperar cuando tiene
+  // más de uno, y es el dato con el que decide si se queda o se va.
+  igual("…con el nombre de quien tiene que abrirla",
+    (await page.textContent("#sin-clase-texto")).includes("Karina Rojas") ? "lo dice" : await page.textContent("#sin-clase-texto"),
+    "lo dice");
+  igual("y desde ahí puede volverse al panel",
+    await page.evaluate(() => !!document.querySelector("#sin-clase a[href='clases.html']")), "true");
+
+  /* Lo que ya no puede pasar: que entrar él abra la clase. Era el disparador
+     de antes, y con él un alumno asomándose un domingo le dejaba al profesor
+     una clase en el registro que crecía sola. */
+  igual("y entrar NO le abre ninguna clase al profesor", await page.evaluate(() =>
+    window.__inserts.filter((i) => i.tabla === "class_sessions").length), 0);
+  // Ni se le pide el tablero: la RLS no se lo daría igual, pero pedirlo sería
+  // montar media pantalla para tirarla.
+  igual("ni se le pide el tablero, que la base no le va a dar", await page.evaluate(() =>
+    window.__inserts.filter((i) => i.tabla === "game_state").length), 0);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -407,9 +478,10 @@ if (require.main !== module) return;
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSinAlumnos(browser);
-    await pruebaEntraUnAlumno(browser);
+    await pruebaLaAbreElProfesor(browser);
     await pruebaMandaPosicion(browser);
     await pruebaClaseYaAbierta(browser);
+    await pruebaAlumnaSinClase(browser);
     await pruebaAlumna(browser);
   } finally {
     await browser.close();

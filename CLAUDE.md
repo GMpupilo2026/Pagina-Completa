@@ -324,9 +324,9 @@ lector de pantalla anunciaría dos destinos donde se ve uno.
   «solo con la clase abierta» lo dibujaría únicamente la pantalla, que se salta
   desde la consola. En una tabla aparte esa condición ES la política.
 - **El enlace es del PROFESOR, no de la clase**, y eso no es comodidad:
-  `class_sessions` se crea SOLA —al entrar un alumno o al mandarse una
-  posición—, sin pasar por ningún formulario, así que un `enlace_video` por
-  clase se quedaría en null casi siempre y el botón no se desbloquearía nunca.
+  `class_sessions` se crea con un botón o al mandarse una posición, sin pasar
+  por ningún formulario, así que un `enlace_video` por clase se quedaría en
+  null casi siempre y el botón no se desbloquearía nunca.
   No daría ningún error: un candado para siempre y nadie sabría por qué. Vive en
   `public.profesor_videollamada` (una fila por profesor y grupo) y se pone una vez, en
   **`configuracion.html` → «Videollamada de tus clases»**, que es la única
@@ -453,6 +453,94 @@ lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
 escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
 tú»— y que a la alumna no se le pinte nada de esto.
 
+### La sesión en vivo se abre cuando el profesor la abre
+
+El alumno entraba al tablero a cualquier hora. Veía la posición que hubiera
+quedado de la clase anterior y **no tenía forma de saber si había clase o no**:
+el tablero se ve exactamente igual un martes a las tres que un domingo. Y como
+la clase se abría SOLA al conectarse él, asomarse un domingo le dejaba al
+profesor una clase abierta en el registro —con su fecha y su hora— que además
+crecía sola hasta que alguien la cerrara.
+
+Ahora la clase existe porque el profesor la abrió, y hasta entonces la sesión
+en vivo está cerrada para el alumno. Con eso «hay clase» pasa a significar algo.
+
+- **El candado lo hace cumplir la base, no la pantalla.** `game_state_select` y
+  `variant_nodes_select` le entregan la fila al alumno solo con
+  `es_mi_profesor(owner_id) and clase_abierta_de(owner_id)` — la misma función
+  que ya acotaba el enlace de la videollamada, aplicada a lo que de verdad ES
+  la clase. Sin eso, bloquear la pantalla sería dibujar un candado que se salta
+  desde la consola. Comprobado impersonando roles en SQL, cinco casos: sin
+  clase el alumno recibe **0 filas** de las dos tablas, con clase abierta las
+  recibe, la profesora ve SU tablero siempre —entra antes de abrir la clase, y
+  un candado ahí le cerraría la puerta por la que tiene que entrar primero— y
+  otro profesor sigue sin verlo.
+- **La presencia dejó de abrir clases, y con ella se fue `alumnosAlCerrar`.**
+  Era el primer disparador —«hay alguien del otro lado»— y ya no puede
+  dispararse: sin clase abierta el alumno no llega a conectarse. Lo único que
+  seguía alcanzándolo era el rastro de la clase recién cerrada, que es
+  justamente lo que aquella variable existía para atajar. Quedan las **dos
+  puertas deliberadas del profesor**: mandar una posición
+  (`aplicarPosicionEnClase()`) y el botón «Abrir la clase».
+  - Eso **no deja clases sin registrar, al revés**: antes el registro dependía
+    de que entrara alguien; ahora sin abrirla no hay clase que dar, así que
+    queda garantizado por construcción.
+  - La comprobación de «después de cerrar, ningún aviso de presencia la vuelve
+    a abrir» **se queda** aunque hoy no haya con qué: el día que alguien vuelva
+    a enganchar un disparador ahí, salta en la prueba y no al día siguiente con
+    la clase de hoy sin registrar.
+- **La franja del profesor dice la CONSECUENCIA, no el mecanismo**: «⚪ La clase
+  todavía no está abierta: tus alumnos no pueden entrar y no se está
+  registrando nada». Un «todavía no hay clase abierta» a secas no le dice a un
+  entrenador nuevo que la clase que está por dar no la va a ver nadie.
+- **Al alumno se le dice quién tiene que abrirla, y la página se abre sola.**
+  `#sin-clase` reemplaza a `#app` con el nombre de su profe («Karina Rojas
+  todavía no ha abierto la clase»), el selector de clase y la vuelta al panel.
+  Un canal de Realtime **por profesor** —no solo por el que está mirando, que
+  es el error fácil: la clase la puede abrir cualquiera de ellos— recarga en
+  cuanto la suya abre, y si abre la de OTRO se lo dice en vez de dejarlo
+  esperando a quien hoy no va a abrir.
+  - **Recargar y no montar a mano** es la misma decisión que cambiar de clase:
+    todo cuelga de `boardOwnerId` y montarlo en caliente dejaría la mitad de
+    las suscripciones sin hacer.
+- **En el panel, la tarjeta «Sesión en vivo» lleva el mismo candado que el
+  botón de la videollamada que va a su lado**, y por la misma razón: sin clase
+  abierta entrar solo le pintaría una pantalla vacía. Va bloqueada con la pinta
+  de `VLL_APAGADO` —fondo gris y borde, no `opacity`, que sobre el blanco de la
+  tarjeta deja la nota ilegible— y **sin `href`**: ni foco de teclado ni
+  destino prometido. Se destapa sola con el aviso de Realtime, sin recargar.
+  - Se abre si **cualquiera** de sus profesores tiene clase, igual que el botón
+    de la videollamada. Si el que entra no es el que está mirando,
+    `sesion.html` se lo dice y le ofrece el selector: es un camino coherente,
+    no una promesa rota.
+  - La tarjeta vive dentro de un envoltorio `#sesion-wrap` con **`contents`**,
+    para poder repintarla sola sin cerrar nada de lo que haya abierto debajo.
+    `contents` la deja siendo la celda del grid: sin eso, el envoltorio se
+    comería el `sm:items-start` y la tarjeta dejaría de estirarse.
+
+**Al tocar esto, correr las dos**: `node herramientas/verificar-clase-registrada.js`
+y `node herramientas/verificar-panel.js`. La primera comprueba que conectarse un
+alumno **no abre ninguna clase** (ni uno ni dos), que el botón sí, y que la
+alumna sin clase abierta **no monta la sesión**, ve el aviso de verdad (con
+`checkVisibility()`, no la clase) con el nombre de quien tiene que abrirla, y no
+le pide el tablero a la base. La segunda, que la tarjeta esté bloqueada sin
+enlace, que **no quede ningún `a[href=sesion.html]` en la grilla** —un enlace
+invisible pero presente sigue siendo una parada de tabulador— y que **se destape
+sola** al abrirse la clase. Está probado que fallan de verdad: dejando entrar al
+alumno saltan 3 comprobaciones en una, volviendo a poner el disparador de
+presencia otras 3, y quitando el candado de la tarjeta 3 en la otra.
+
+- **Los dobles tuvieron que aprender dos cosas, y las dos daban verde sobre una
+  página rota.** `mis_clases()` devuelve la columna `profesor`, no
+  `profesor_nombre` —con el nombre equivocado la pantalla de espera dice «Tu
+  profe» y la prueba lo da por bueno— y `clase_abierta` sale de las MISMAS filas
+  de `class_sessions` que sirve el doble, como la calcula la base: dejarla fija
+  en `false` le cierra al alumno una clase que sí está abierta, y en `true` da
+  por buena una página sin candado. Y `verificar-sesion-curso.js` necesitó
+  `upsert()`: desde que hay clase abierta la alumna marca su asistencia sola, y
+  sin ese método la página muere con un TypeError que la prueba cuenta como
+  fallo suyo — era el doble el que estaba incompleto.
+
 ### La clase se registra sola, porque el botón vivía en la página que no era
 
 Todo lo que el sitio sabe de una clase —la asistencia, los minutos en clase, el
@@ -467,12 +555,13 @@ entrenador nuevo da su clase entera, con la pizarra, las preguntas y los
 alumnos conectados, y **no queda registrada ninguna**. No da ningún error: esa
 clase simplemente no existió, y eso no se puede reconstruir después.
 
-- **La clase se abre SOLA, y no al entrar** sino al primer acto de clase de
-  verdad: que **se conecte un alumno** (el `sync` del canal de presencia) o que
-  el profesor **transmita una posición** (`aplicarPosicionEnClase()`, por donde
-  pasan las tres puertas). Abrirla con solo entrar llenaría el registro de
-  clases de dos minutos que nadie dio cada vez que se asoma a preparar algo, y
-  los informes contarían de más.
+- **La clase se abre con un acto deliberado del profesor, no al entrar**: el
+  botón «Abrir la clase» o **transmitir una posición**
+  (`aplicarPosicionEnClase()`, por donde pasan las tres puertas). Abrirla con
+  solo entrar llenaría el registro de clases de dos minutos que nadie dio cada
+  vez que se asoma a preparar algo, y los informes contarían de más. Hubo un
+  tercer disparador —que se conectara un alumno— y se fue: ver «La sesión en
+  vivo se abre cuando el profesor la abre».
 - **Se engancha DESPUÉS de que la posición se haya transmitido**, no antes:
   abrir la clase por un intento que falló —una posición que la validación
   rechaza— dejaría registrada una clase que no se dio.
@@ -487,9 +576,9 @@ clase simplemente no existió, y eso no se puede reconstruir después.
   no es un fallo — es el índice haciendo su trabajo.
 - **La franja de `sesion.html` dice con todas las letras si se está registrando
   o no**, no con un color: «🔴 Clase en curso: se está registrando la asistencia
-  y el tiempo de tus alumnos» o «⚪ Todavía no hay clase abierta. Se abre sola
-  en cuanto entre un alumno o mandes una posición al tablero». Un punto gris no
-  le dice a un entrenador nuevo que la asistencia se está perdiendo.
+  y el tiempo de tus alumnos» o «⚪ La clase todavía no está abierta: tus
+  alumnos no pueden entrar y no se está registrando nada». Un punto gris no le
+  dice a un entrenador nuevo que la asistencia se está perdiendo.
 - **Cerrar pide el nombre y la nota ahí mismo**, en dos toques: el primero
   destapa los campos, el segundo cierra. Así no se cierra de un clic accidental
   en medio de la clase, y se recoge lo único que hace falta para que el registro
@@ -498,9 +587,10 @@ clase simplemente no existió, y eso no se puede reconstruir después.
 - **El botón del panel se queda**, como atajo para abrirla ANTES de entrar, pero
   ahora dice que no hace falta apretarlo. Dos botones que parecen obligatorios
   confunden más que uno que se explica.
-- Al alumno no le cambia nada: `markAttendance()` y `startPresenceLog()` ya se
-  disparaban con el INSERT que llega por Realtime, así que **la clase se puede
-  abrir en cualquier momento** y el que ya estaba conectado queda marcado igual.
+- `markAttendance()` y `startPresenceLog()` se disparan con el INSERT que llega
+  por Realtime, así que **la clase se puede abrir en cualquier momento** — pero
+  hoy el alumno solo entra con la clase ya abierta, así que ese camino es el de
+  quien está dentro cuando el profesor la cierra y la vuelve a abrir.
 
 #### Cerrar la clase tiene que SIGNIFICAR cerrarla
 
@@ -518,14 +608,15 @@ fantasma que quedó, con su fecha y su hora de hace un día. En el registro no
 aparece ninguna clase nueva y la duración de la vieja crece sola. Ningún error en
 ninguna parte.
 
-- **Quiénes estaban conectados al cerrar se guarda** (`alumnosAlCerrar`). Mientras
-  solo estén ESOS, el aviso de presencia no reabre nada: son los que todavía no
-  cerraron la pestaña, no una clase nueva. Un alumno que entre después **sí** la
-  reabre —eso ya es otra clase, y su asistencia tiene que quedar—, y las dos
-  puertas deliberadas del profesor (mandar una posición, el botón «Abrir la
-  clase») también, siempre.
+- **Se arregló primero guardando quiénes estaban conectados al cerrar**
+  (`alumnosAlCerrar`), para que el aviso siguiente no contara el rastro de la
+  clase recién cerrada. Esa variable **ya no existe**: al quitar el disparador
+  de presencia (ver «La sesión en vivo se abre cuando el profesor la abre») no
+  quedó nada que pudiera reabrirla sin querer, y las dos puertas que quedan
+  —mandar una posición, el botón «Abrir la clase»— son actos suyos.
 - Vale igual **si la cerró desde el panel o desde otra pestaña**: lo que llega por
-  Realtime es un cierre igual de deliberado.
+  Realtime es un cierre igual de deliberado, y la franja de acá tiene que decir
+  la verdad igual.
 - **El cierre se pide de vuelta con `.select()`**, y se mira si volvió alguna fila.
   Sin eso, un update que no toca ninguna fila —el id quedó viejo porque la cerraron
   desde otro lado— devuelve `error: null` y la pantalla decía "cerrada" con el
@@ -537,15 +628,15 @@ ninguna parte.
 
 **Al tocar esto, correr `node herramientas/verificar-clase-registrada.js`** (con
 el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`).
-Comprueba que entrar solo **no invente ninguna clase**, que entre un alumno la
-abra y quede a nombre de quien la da, que mandar una posición también la abra y
-que una **rechazada** no, que un segundo aviso de presencia no abra otra, que
+Comprueba que entrar solo **no invente ninguna clase**, que conectarse un
+alumno tampoco y que el botón sí la abra y a nombre de quien la da, que mandar
+una posición también la abra y que una **rechazada** no, que un segundo aviso
+de presencia no abra otra, que
 cerrar mande el título, la nota y la hora **sobre la clase que estaba abierta**,
 que después de cerrar **ningún aviso de presencia la vuelva a abrir** —ni el del
-mismo alumno que ya estaba— **pero que uno que entra después sí**, y que a la
-alumna no se le pinte la franja pero su asistencia sí se marque sola. Está probado
-que falla de verdad: con el disparador de antes (`onlineStudents.size > 0`), las
-dos comprobaciones del cierre saltan.
+mismo alumno que ya estaba ni uno que entra después—, y que a la alumna no se le
+pinte la franja pero su asistencia sí se marque sola. Está probado que falla de
+verdad: con el disparador de presencia de antes saltan tres comprobaciones.
 Su Supabase de mentira **apunta el filtro al RESOLVER y no en el `update()`**:
 `.update(x).eq("id", y)` encadena, así que uno que lo capturara antes daría por
 bueno un cierre sobre la clase que no era. Su `delete()` hace lo mismo y además
@@ -7283,6 +7374,15 @@ falla de verdad: quitando una migración y una función, saltan las dos.
 
 Un respaldo a medias no da ningún error —la carpeta está, los archivos se
 ven— y eso solo se descubre en el peor momento posible.
+
+- **El archivo respaldado es lo que se APLICÓ, byte a byte, y no una versión
+  mejor comentada.** Ya pasó una vez: una tanda aplicó su migración sin el
+  encabezado de comentarios y después guardó el archivo CON él. El respaldo se
+  lee mejor y la huella deja de cuadrar, así que a partir de ahí el verificador
+  no puede distinguir «hay algo sin respaldar» de «alguien le agregó una línea
+  al archivo». El porqué va en este archivo, que es donde se lee; la migración
+  guarda lo que corrió. (Y el md5 se calcula sobre el archivo tal cual, así que
+  tampoco lleva el salto de línea final si lo guardado no lo trae.)
 
 **Pendiente de desplegar:** `ocr-scoresheet` se bajó tal cual estaba y traía
 tres formas de voseo («Avisá al profesor», «Probá con una foto»). Se
