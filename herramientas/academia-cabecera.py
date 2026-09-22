@@ -61,6 +61,7 @@ PAGINAS = [
     "examen.html", "examenes.html",
     "planes.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "tareas.html",
+    "tienda.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
@@ -100,7 +101,13 @@ JUEGO_AVISO_FIN = "<!-- juego-aviso: fin -->"
 #     y pantalla completa. Un panel que se despliega ahí es justo la
 #     distracción que el antitrampa viene a evitar, y el mensaje sigue
 #     estando cuando termine.
-SIN_BURBUJA = {"sesion.html", "examen.html"}
+#   - tienda.html es un catálogo de venta, y la burbuja le tapaba LITERALMENTE
+#     el botón de pedido: la barra de la selección va fija abajo y la burbuja
+#     flota en esa misma esquina, así que "Pedir por WhatsApp" quedaba debajo
+#     de ella y no se podía apretar. No daba ningún error —se veía perfecto— y
+#     lo habría descubierto quien quisiera comprar. Encima, "0 alumnos en
+#     línea" no tiene nada que decir en una página de venta.
+SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
 
 # El aviso de partida asignada (js/juego-aviso.js) SOLO se quita de examen.html,
 # por la misma razón que ahí tampoco va la burbuja: un aviso que aparece solo y

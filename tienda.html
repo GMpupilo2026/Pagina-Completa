@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Tienda de materiales — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: el catálogo de materiales de la Academia, con su precio y su texto de venta, antes de abrirlo al público.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/tienda-catalogo.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <main id="main-content">
+        <div id="loading" class="text-center py-24 text-brand-500 dark:text-brand-300">Cargando…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto my-16 px-4">
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+                <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+                <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Todavía no está abierta</h1>
+                <p class="text-brand-500 dark:text-brand-300">La tienda de materiales está en preparación y por ahora solo la ve quien administra la Academia. Cuando abra, te vas a enterar.</p>
+                <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">← Volver a la Academia</a>
+            </div>
+        </div>
+
+        <div id="app" class="hidden">
+
+            <!-- ===== Lo que solo ve quien administra =====
+                 No es una nota de estilo: mientras la tienda no esté abierta,
+                 esto es lo único que separa "una página de venta lista" de
+                 "una página de venta publicada". Y lo de abajo —que los
+                 archivos de cursos/recursos/ los sirve el worker sin ningún
+                 candado— es un problema CALLADO: la tienda se ve perfecta y
+                 cualquiera con la dirección exacta se baja gratis lo que
+                 está a la venta. Va escrito acá, arriba de todo, porque es
+                 la decisión que hay que tomar ANTES de abrirla. -->
+            <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                <div class="rounded-2xl border-2 border-dashed border-accent-500 bg-accent-50 dark:bg-brand-900 p-5 sm:p-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white flex items-center gap-2">
+                        <span aria-hidden="true">🛠️</span> Esta página todavía no la ve nadie más
+                    </h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-200 mt-2">
+                        Está montada, con sus precios y su texto de venta, pero el candado es <strong>solo administración</strong>: ni el alumnado ni el equipo docente llegan acá, ni por el panel ni escribiendo la dirección. Sirve para revisarla entera antes de abrirla.
+                    </p>
+                    <p class="text-sm text-brand-600 dark:text-brand-200 mt-3">
+                        <strong>Antes de abrirla hay una cosa que resolver:</strong> hoy el sitio sirve <code class="text-xs bg-white dark:bg-brand-800 px-1.5 py-0.5 rounded">cursos/recursos/</code> y los libros de la raíz <strong>sin ningún candado</strong> — quien conozca la dirección exacta de un archivo se lo baja sin pagar, y eso no da ningún error ni queda registrado en ninguna parte. Mientras la entrega se haga a mano (por WhatsApp, después del pago) no cambia nada; el día que la tienda se abra al público, el material que se cobra tiene que mudarse detrás de un candado de verdad.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ===== El anuncio ===== -->
+            <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-950 px-6 py-10 sm:px-12 sm:py-14 shadow-xl">
+                    <div class="relative grid lg:grid-cols-[1fr_auto] gap-8 items-start">
+                        <div class="max-w-2xl">
+                            <p class="text-accent-400 font-semibold tracking-wide uppercase text-xs sm:text-sm">Materiales de la Academia</p>
+                            <h1 class="font-serif text-3xl sm:text-5xl font-bold text-white mt-2 leading-tight">
+                                ¿Eres entrenador<br class="hidden sm:block"> de ajedrez?
+                            </h1>
+                            <p class="text-brand-100 text-base sm:text-lg mt-4">
+                                Llévate un <span class="text-accent-400 font-semibold">sistema completo de enseñanza</span>, ya probado en clase, y deja de armar cada lección desde cero.
+                            </p>
+                            <ul class="mt-6 grid sm:grid-cols-3 gap-3 text-sm">
+                                <li class="flex items-start gap-2 text-white"><span class="text-accent-400 font-bold shrink-0" aria-hidden="true">✓</span><span>Prepara la clase en minutos</span></li>
+                                <li class="flex items-start gap-2 text-white"><span class="text-accent-400 font-bold shrink-0" aria-hidden="true">✓</span><span>Da la clase con seguridad</span></li>
+                                <li class="flex items-start gap-2 text-white"><span class="text-accent-400 font-bold shrink-0" aria-hidden="true">✓</span><span>Consigue mejores resultados</span></li>
+                            </ul>
+                            <p class="font-serif text-accent-400 text-lg sm:text-xl mt-6 italic">Planifica mejor. Enseña mejor. Consigue resultados.</p>
+                        </div>
+
+                        <!-- El sello: 6 módulos + 5 bonos. Los dos números salen
+                             del catálogo, no escritos acá: el día que se sume un
+                             módulo, el sello diría otra cosa que la lista de
+                             abajo y nadie se enteraría. -->
+                        <div class="justify-self-center lg:justify-self-end shrink-0 w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-brand-950 border-4 border-accent-500 flex flex-col items-center justify-center text-center px-4 shadow-2xl">
+                            <p class="text-white leading-none"><span id="sello-modulos" class="font-serif text-4xl sm:text-5xl font-bold text-accent-400"></span> <span class="text-sm font-semibold uppercase tracking-wide">módulos</span></p>
+                            <p class="text-accent-400 text-2xl font-bold leading-none my-1" aria-hidden="true">+</p>
+                            <p class="text-white leading-none"><span id="sello-bonos" class="font-serif text-4xl sm:text-5xl font-bold text-accent-400"></span> <span class="text-sm font-semibold uppercase tracking-wide">bonos</span></p>
+                            <p class="text-brand-200 text-[0.65rem] uppercase tracking-wide mt-2 leading-tight">Todo en un solo sistema</p>
+                        </div>
+                    </div>
+
+                    <div class="relative mt-10 grid sm:grid-cols-3 gap-4 border-t border-brand-700 pt-7">
+                        <div class="text-center"><p class="text-2xl mb-1" aria-hidden="true">⏱️</p><p class="text-white font-semibold text-sm uppercase tracking-wide">Ahorra horas cada semana</p></div>
+                        <div class="text-center"><p class="text-2xl mb-1" aria-hidden="true">📈</p><p class="text-white font-semibold text-sm uppercase tracking-wide">Alumnos que mejoran de verdad</p></div>
+                        <div class="text-center"><p class="text-2xl mb-1" aria-hidden="true">👥</p><p class="text-white font-semibold text-sm uppercase tracking-wide">Haz crecer tu academia</p></div>
+                    </div>
+
+                    <div class="relative mt-8 text-center">
+                        <a href="#sistema-completo" class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-7 py-3.5 rounded-xl text-base transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                            <span aria-hidden="true">🚀</span> Quiero el sistema completo <span class="hidden sm:inline" aria-hidden="true">→</span>
+                        </a>
+                        <p class="text-brand-200 text-xs uppercase tracking-[0.2em] mt-6">Mejores entrenadores · Jugadores más fuertes · Un futuro mejor para el ajedrez</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Los seis módulos ===== -->
+            <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white text-center">Los seis módulos</h2>
+                <p class="text-brand-500 dark:text-brand-300 text-center mt-2 max-w-2xl mx-auto">Cada módulo es material de clase de verdad: el cuadernillo que se lee, la hoja de ejercicios que se reparte y la presentación que se proyecta.</p>
+                <div id="modulos" class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            </section>
+
+            <!-- ===== Los bonos ===== -->
+            <section class="bg-white dark:bg-brand-900 border-y border-brand-100 dark:border-brand-800 py-12">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white text-center">Y además, <span id="bonos-cuantos"></span> bonos que no se venden aparte</h2>
+                    <p class="text-brand-500 dark:text-brand-300 text-center mt-2">Van dentro del sistema completo y no se cobran.</p>
+                    <ul id="bonos" class="mt-8 space-y-3"></ul>
+                </div>
+            </section>
+
+            <!-- ===== El sistema completo ===== -->
+            <section id="sistema-completo" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 scroll-mt-24">
+                <div class="rounded-3xl bg-gradient-to-br from-accent-500 to-accent-700 p-1 shadow-xl">
+                    <div class="rounded-[1.4rem] bg-white dark:bg-brand-900 px-6 py-9 sm:px-10 sm:py-12 text-center">
+                        <p class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-xs">El paquete completo</p>
+                        <h2 class="font-serif text-2xl sm:text-4xl font-bold text-brand-800 dark:text-white mt-2">Todo el sistema, de una vez</h2>
+                        <p id="pack-que-lleva" class="text-brand-500 dark:text-brand-300 mt-3 max-w-xl mx-auto"></p>
+
+                        <div class="mt-7 flex flex-col items-center gap-1">
+                            <p class="text-brand-450 dark:text-brand-350 text-sm">Por separado te saldría <span id="pack-suelto" class="line-through"></span></p>
+                            <p class="font-serif text-5xl sm:text-6xl font-bold text-brand-800 dark:text-white" id="pack-precio"></p>
+                            <p class="text-accent-700 dark:text-accent-400 font-semibold text-sm">Te ahorras <span id="pack-ahorro"></span></p>
+                        </div>
+
+                        <button type="button" id="pack-comprar" class="mt-7 inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-8 py-4 rounded-xl text-lg transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <span aria-hidden="true">🚀</span> Pedir el sistema completo
+                        </button>
+                        <p class="text-brand-450 dark:text-brand-350 text-xs mt-4">Se coordina por WhatsApp y se paga por SINPE Móvil o transferencia. La entrega es por correo, el mismo día.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Los materiales sueltos ===== -->
+            <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+                <div class="text-center">
+                    <h2 class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white">O llévate solo lo que necesitas</h2>
+                    <p class="text-brand-500 dark:text-brand-300 mt-2">Cada material, por su cuenta, a <span id="precio-suelto-frase" class="font-semibold text-accent-700 dark:text-accent-400"></span>. Marca los que quieras y pídelos juntos.</p>
+                </div>
+
+                <div class="mt-7 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Filtrar materiales">
+                    <button type="button" class="filtro-tienda" data-cat="todos">Todos</button>
+                    <button type="button" class="filtro-tienda" data-cat="curso">Cursos completos</button>
+                    <button type="button" class="filtro-tienda" data-cat="libro">Libros y guías</button>
+                </div>
+
+                <div id="productos" class="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            </section>
+
+            <!-- ===== Cómo se compra ===== -->
+            <section class="bg-white dark:bg-brand-900 border-t border-brand-100 dark:border-brand-800 py-12">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white text-center">Cómo se compra</h2>
+                    <ol class="mt-7 grid sm:grid-cols-3 gap-5">
+                        <li class="text-center">
+                            <p class="w-10 h-10 mx-auto rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center">1</p>
+                            <p class="font-semibold text-brand-800 dark:text-white mt-3">Escribes por WhatsApp</p>
+                            <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">El mensaje va escrito con lo que elegiste y cuánto es. Solo lo mandas.</p>
+                        </li>
+                        <li class="text-center">
+                            <p class="w-10 h-10 mx-auto rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center">2</p>
+                            <p class="font-semibold text-brand-800 dark:text-white mt-3">Pagas por SINPE</p>
+                            <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">SINPE Móvil, transferencia o efectivo. No hay formulario de tarjeta ni intermediarios.</p>
+                        </li>
+                        <li class="text-center">
+                            <p class="w-10 h-10 mx-auto rounded-full bg-accent-500 text-brand-900 font-bold flex items-center justify-center">3</p>
+                            <p class="font-semibold text-brand-800 dark:text-white mt-3">Te llega el material</p>
+                            <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Por correo, el mismo día. Se descarga, se imprime y se usa — es tuyo.</p>
+                        </li>
+                    </ol>
+                    <p id="sin-whatsapp" class="hidden mt-8 text-sm text-center rounded-xl bg-accent-50 dark:bg-brand-800 border border-accent-500 px-4 py-3 text-brand-700 dark:text-brand-100">
+                        Todavía no hay un número de WhatsApp guardado, así que los botones de pedido no llevan a ninguna parte. Se pone en <a href="cobros.html" class="underline font-semibold hover:text-accent-600">Cobros → Contacto</a>, y de ahí lo lee esta página.
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- La barra de la selección. Solo aparece con algo marcado: una barra
+         vacía diciendo "0 materiales" es ruido en todas las visitas menos
+         una. Va fija abajo porque la lista es larga y el total tiene que
+         verse sin tener que subir. -->
+    <div id="barra-seleccion" class="hidden fixed bottom-0 inset-x-0 z-40 bg-brand-900 border-t-2 border-accent-500 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-white text-sm"><span id="sel-conteo" class="font-semibold"></span> <span id="sel-total" class="text-accent-400 font-bold"></span></p>
+            <div class="flex items-center gap-2">
+                <button type="button" id="sel-limpiar" class="text-brand-200 hover:text-white text-sm underline px-2 py-1.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar todo</button>
+                <button type="button" id="sel-pedir" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white">Pedir por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        /* La tienda de materiales. Todo lo que se pinta sale de
+           js/tienda-catalogo.js: acá no hay ni un producto, ni un precio, ni
+           un número de módulo escrito a mano.
+
+           El candado es `is_admin` a secas, no `soy_coordinador()`: esto no
+           es una herramienta de coordinación sino una página de venta que
+           todavía no está abierta, y quien decide cuándo abre es quien
+           administra. Como todo filtro del sitio, decide qué se PINTA — los
+           archivos que vende siguen sirviéndose sin candado, y eso está
+           dicho con todas las letras arriba de la página. */
+        const T = window.TiendaCatalogo;
+        let waBase = null;           // el enlace de WhatsApp, o null si no hay número
+        const elegidos = new Set();  // ids marcados, en el orden en que se marcaron
+
+        /* wa.me quiere solo dígitos y CON código de país: sin él el enlace
+           abre un chat con un número que no existe, y eso se ve como un
+           enlace perfecto. Ocho dígitos es Costa Rica. Es la misma regla que
+           ya escribieron cobros.html y _compartido/contacto-academia.ts —son
+           tres tiempos de ejecución que no pueden leerse entre sí—. */
+        function enlaceWhatsapp(numero) {
+            const digitos = String(numero ?? "").replace(/\D/g, "");
+            if (!digitos) return null;
+            return "https://wa.me/" + (digitos.length === 8 ? "506" + digitos : digitos);
+        }
+
+        /* El pedido se arma UNA vez, para el botón del paquete y para el de
+           la selección. Escrito dos veces, el día que cambie el precio uno de
+           los dos mensajes iría a pedir otra cosa que la que la pantalla
+           enseña — y de eso se entera quien ya mandó el mensaje. */
+        function pedir(titulo, lineas, total) {
+            if (!waBase) {
+                document.getElementById("sin-whatsapp").classList.remove("hidden");
+                document.getElementById("sin-whatsapp").scrollIntoView({ behavior: "smooth", block: "center" });
+                return;
+            }
+            const cuerpo = ["Hola, quiero pedir de la tienda de Ajedrez Integral:", "", titulo]
+                .concat(lineas.map((l) => "· " + l))
+                .concat(["", "Total: " + T.moneda(total)])
+                .join("\n");
+            window.open(waBase + "?text=" + encodeURIComponent(cuerpo), "_blank", "noopener");
+        }
+
+        /* ===================== El anuncio ===================== */
+        function pintarAnuncio() {
+            document.getElementById("sello-modulos").textContent = T.MODULOS.length;
+            document.getElementById("sello-bonos").textContent = T.BONOS.length;
+            document.getElementById("bonos-cuantos").textContent = T.BONOS.length;
+            document.getElementById("precio-suelto-frase").textContent = T.moneda(T.PRECIO);
+            document.getElementById("pack-suelto").textContent = T.moneda(T.precioSuelto());
+            document.getElementById("pack-precio").textContent = T.moneda(T.precioPack());
+            document.getElementById("pack-ahorro").textContent = T.moneda(T.ahorroPack());
+            document.getElementById("pack-que-lleva").textContent =
+                "Los " + T.MODULOS.length + " módulos con sus " + T.PRODUCTOS.length +
+                " materiales, los " + T.BONOS.length + " bonos y más de " +
+                T.totalArchivos().toLocaleString("es-CR") + " archivos listos para dar clase.";
+        }
+
+        /* ===================== Los módulos =====================
+           Cada tarjeta dice QUÉ LLEVA, con el nombre de cada material dentro.
+           Un módulo que solo prometiera ("táctica paso a paso") y no dijera
+           de qué cursos sale es exactamente la promesa que la entrega no
+           puede cumplir. */
+        function pintarModulos() {
+            const caja = document.getElementById("modulos");
+            caja.innerHTML = "";
+            T.MODULOS.forEach((m) => {
+                const art = document.createElement("article");
+                art.className = "flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-md overflow-hidden";
+
+                const cinta = document.createElement("p");
+                cinta.className = "bg-brand-800 dark:bg-brand-950 text-accent-400 text-xs font-bold uppercase tracking-wide px-4 py-2";
+                cinta.textContent = "Módulo " + m.numero;
+
+                const cuerpo = document.createElement("div");
+                cuerpo.className = "p-5 flex flex-col flex-1";
+
+                const h = document.createElement("h3");
+                h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white leading-tight";
+                h.textContent = m.titulo;
+
+                const promesa = document.createElement("p");
+                promesa.className = "text-accent-700 dark:text-accent-400 text-sm font-semibold mt-1";
+                promesa.textContent = m.promesa;
+
+                const detalle = document.createElement("p");
+                detalle.className = "text-sm text-brand-500 dark:text-brand-300 mt-2";
+                detalle.textContent = m.detalle;
+
+                const lista = document.createElement("ul");
+                lista.className = "mt-4 space-y-1.5 text-sm flex-1";
+                let piezas = 0;
+                m.productos.forEach((id) => {
+                    const p = T.producto(id);
+                    if (!p) return;              // no puede pasar: lo comprueba el verificador
+                    piezas += T.piezasDe(p);
+                    const li = document.createElement("li");
+                    li.className = "flex items-start gap-2 text-brand-600 dark:text-brand-200";
+                    const tic = document.createElement("span");
+                    tic.className = "text-accent-600 dark:text-accent-400 shrink-0";
+                    tic.setAttribute("aria-hidden", "true");
+                    tic.textContent = "✓";
+                    const nombre = document.createElement("span");
+                    nombre.textContent = p.titulo;
+                    li.append(tic, nombre);
+                    lista.appendChild(li);
+                });
+
+                const pie = document.createElement("p");
+                pie.className = "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800 text-xs text-brand-450 dark:text-brand-350";
+                pie.textContent = piezas.toLocaleString("es-CR") + " archivos · " +
+                    m.productos.length + (m.productos.length === 1 ? " material" : " materiales");
+
+                cuerpo.append(h, promesa, detalle, lista, pie);
+                art.append(cinta, cuerpo);
+                caja.appendChild(art);
+            });
+        }
+
+        /* ===================== Los bonos ===================== */
+        function pintarBonos() {
+            const caja = document.getElementById("bonos");
+            caja.innerHTML = "";
+            T.BONOS.forEach((b) => {
+                const li = document.createElement("li");
+                li.className = "flex items-start gap-4 rounded-xl bg-brand-50 dark:bg-brand-950 border border-brand-100 dark:border-brand-800 p-4";
+                const em = document.createElement("span");
+                em.className = "text-2xl shrink-0";
+                em.setAttribute("aria-hidden", "true");
+                em.textContent = b.emoji;
+                const texto = document.createElement("div");
+                const h = document.createElement("h3");
+                h.className = "font-semibold text-brand-800 dark:text-white";
+                h.textContent = b.titulo;
+                const d = document.createElement("p");
+                d.className = "text-sm text-brand-500 dark:text-brand-300 mt-0.5";
+                d.textContent = b.detalle;
+                texto.append(h, d);
+                li.append(em, texto);
+                caja.appendChild(li);
+            });
+        }
+
+        /* ===================== Los materiales sueltos ===================== */
+        let filtroActual = "todos";
+
+        function pintarProductos() {
+            const caja = document.getElementById("productos");
+            caja.innerHTML = "";
+            const lista = filtroActual === "todos" ? T.PRODUCTOS : T.porCategoria(filtroActual);
+            lista.forEach((p) => caja.appendChild(fichaDe(p)));
+        }
+
+        function fichaDe(p) {
+            const art = document.createElement("article");
+            art.className = "flex flex-col rounded-2xl bg-white dark:bg-brand-900 border-2 border-brand-100 dark:border-brand-800 shadow-md overflow-hidden transition-colors";
+            art.dataset.id = p.id;
+
+            const cuerpo = document.createElement("div");
+            cuerpo.className = "p-5 flex flex-col flex-1";
+
+            const arriba = document.createElement("div");
+            arriba.className = "flex items-start justify-between gap-3";
+            const em = document.createElement("span");
+            em.className = "text-3xl shrink-0";
+            em.setAttribute("aria-hidden", "true");
+            em.textContent = p.emoji;
+            const nivel = document.createElement("span");
+            nivel.className = "text-[0.7rem] font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400 bg-accent-50 dark:bg-brand-800 rounded-full px-2.5 py-1 shrink-0";
+            nivel.textContent = p.nivel;
+            arriba.append(em, nivel);
+
+            const h = document.createElement("h3");
+            h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mt-3 leading-tight";
+            h.textContent = p.titulo;
+
+            const gancho = document.createElement("p");
+            gancho.className = "text-sm font-semibold text-brand-700 dark:text-brand-100 mt-2";
+            gancho.textContent = p.gancho;
+
+            const resumen = document.createElement("p");
+            resumen.className = "text-sm text-brand-500 dark:text-brand-300 mt-2 flex-1";
+            resumen.textContent = p.resumen;
+
+            /* Qué trae, contado. Es lo que separa "un curso" de "16
+               cuadernillos, 16 hojas de ejercicios y 16 presentaciones", y es
+               lo que hace que el precio se lea como poco en vez de como mucho.
+               Los números salen del catálogo y el verificador los cuenta
+               contra el disco: un número inventado nadie lo revisa, se cree,
+               y falta material que se prometió. */
+            const piezas = document.createElement("ul");
+            piezas.className = "mt-4 flex flex-wrap gap-1.5";
+            const NOMBRE = {
+                cuadernillos: ["cuadernillo", "cuadernillos"],
+                ejercicios: ["hoja de ejercicios", "hojas de ejercicios"],
+                presentaciones: ["presentación", "presentaciones"],
+                accesibles: ["versión accesible", "versiones accesibles"],
+                preguntas: ["pregunta", "preguntas"],
+                areas: ["área", "áreas"],
+                paginas: ["página", "páginas"],
+                capitulos: ["capítulo", "capítulos"],
+                apartados: ["apartado", "apartados"],
+                laminas: ["lámina", "láminas"],
+            };
+            Object.entries(p.piezas || {}).forEach(([clave, n]) => {
+                if (!n) return;                       // cero no se pinta: "0 versiones accesibles" es ruido
+                const li = document.createElement("li");
+                li.className = "text-xs bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-200 rounded-md px-2 py-1";
+                const nombres = NOMBRE[clave] || [clave, clave];
+                li.textContent = n + " " + (n === 1 ? nombres[0] : nombres[1]);
+                piezas.appendChild(li);
+            });
+
+            const pie = document.createElement("div");
+            pie.className = "mt-5 pt-4 border-t border-brand-100 dark:border-brand-800 flex items-center justify-between gap-3";
+
+            const precio = document.createElement("p");
+            precio.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white";
+            precio.textContent = T.moneda(T.PRECIO);
+
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = "boton-elegir bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            boton.setAttribute("aria-pressed", "false");
+            boton.textContent = "Lo quiero";
+            boton.addEventListener("click", () => alternar(p.id, art, boton));
+
+            pie.append(precio, boton);
+
+            /* El "ver el material" SOLO lo ve quien administra, que es quien
+               tiene que poder revisar lo que está vendiendo. Va rotulado con
+               todas las letras para que no se confunda con algo que reciba
+               quien compra — la misma línea que separa el material del
+               profesor del de la clase en sesion.html. */
+            const ver = document.createElement("a");
+            ver.href = T.vistaDe(p);
+            ver.target = "_blank";
+            ver.rel = "noopener";
+            ver.className = "mt-3 block text-xs text-brand-450 dark:text-brand-350 underline hover:text-accent-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+            ver.textContent = "👁 Revisar este material (solo lo ves tú)";
+
+            cuerpo.append(arriba, h, gancho, resumen, piezas, pie, ver);
+            art.appendChild(cuerpo);
+            if (elegidos.has(p.id)) marcarFicha(art, boton, true);
+            return art;
+        }
+
+        function marcarFicha(art, boton, activo) {
+            art.classList.toggle("border-accent-500", activo);
+            art.classList.toggle("border-brand-100", !activo);
+            art.classList.toggle("dark:border-brand-800", !activo);
+            boton.setAttribute("aria-pressed", activo ? "true" : "false");
+            /* El estado va ESCRITO en el botón y no solo en el borde: un
+               color solo no se lee con daltonismo y no se anuncia con lector
+               de pantalla. Misma regla que las barras de Informes. */
+            boton.textContent = activo ? "✓ Agregado" : "Lo quiero";
+            boton.classList.toggle("bg-accent-500", !activo);
+            boton.classList.toggle("hover:bg-accent-600", !activo);
+            boton.classList.toggle("bg-brand-800", activo);
+            boton.classList.toggle("text-white", activo);
+            boton.classList.toggle("text-brand-900", !activo);
+        }
+
+        function alternar(id, art, boton) {
+            if (elegidos.has(id)) elegidos.delete(id); else elegidos.add(id);
+            marcarFicha(art, boton, elegidos.has(id));
+            pintarBarra();
+        }
+
+        function pintarBarra() {
+            const barra = document.getElementById("barra-seleccion");
+            if (!elegidos.size) { barra.classList.add("hidden"); document.body.style.paddingBottom = ""; return; }
+            barra.classList.remove("hidden");
+            /* La barra tapa el final de la página, así que se le devuelve el
+               espacio: sin esto, el último renglón queda debajo de ella y
+               parece que la página se cortó. */
+            document.body.style.paddingBottom = barra.offsetHeight + "px";
+            document.getElementById("sel-conteo").textContent =
+                elegidos.size + (elegidos.size === 1 ? " material elegido ·" : " materiales elegidos ·");
+            document.getElementById("sel-total").textContent = T.moneda(elegidos.size * T.PRECIO);
+        }
+
+        function limpiarSeleccion() {
+            elegidos.clear();
+            pintarProductos();
+            pintarBarra();
+        }
+
+        /* ===================== Filtros ===================== */
+        function pintarFiltros() {
+            document.querySelectorAll(".filtro-tienda").forEach((b) => {
+                const activo = b.dataset.cat === filtroActual;
+                b.className = "filtro-tienda rounded-full px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
+                    (activo
+                        ? "bg-brand-800 text-white dark:bg-accent-500 dark:text-brand-900"
+                        : "bg-white dark:bg-brand-900 text-brand-600 dark:text-brand-200 border border-brand-200 dark:border-brand-700 hover:border-accent-500");
+                b.setAttribute("aria-pressed", activo ? "true" : "false");
+            });
+        }
+
+        document.querySelectorAll(".filtro-tienda").forEach((b) => {
+            b.addEventListener("click", () => { filtroActual = b.dataset.cat; pintarFiltros(); pintarProductos(); });
+        });
+
+        document.getElementById("sel-limpiar").addEventListener("click", limpiarSeleccion);
+        document.getElementById("sel-pedir").addEventListener("click", () => {
+            const lineas = T.PRODUCTOS.filter((p) => elegidos.has(p.id))
+                .map((p) => p.titulo + " — " + T.moneda(T.PRECIO));
+            pedir(lineas.length === 1 ? "Este material:" : "Estos " + lineas.length + " materiales:", lineas, elegidos.size * T.PRECIO);
+        });
+        document.getElementById("pack-comprar").addEventListener("click", () => {
+            pedir("EL SISTEMA COMPLETO — los " + T.MODULOS.length + " módulos y los " + T.BONOS.length + " bonos:",
+                T.MODULOS.map((m) => "Módulo " + m.numero + ": " + m.titulo),
+                T.precioPack());
+        });
+
+        /* ===================== Arranque ===================== */
+        async function init() {
+            const { data } = await sb.auth.getSession();
+            const session = data.session;
+            if (!session) { window.location.href = "login.html?next=tienda.html"; return; }
+
+            const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).single();
+            if (!perfil || !perfil.is_admin) {
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("denegado").classList.remove("hidden");
+                return;
+            }
+
+            /* El número de las consultas sale de la base, no escrito acá: es
+               la misma fila que ya usan los informes a la casa y los avisos
+               de cobro. Si no hay ninguno, NO se inventa uno —los botones lo
+               dicen en vez de abrir un chat con un número que no existe—. */
+            try {
+                const { data: ajuste } = await sb.from("ajustes_academia")
+                    .select("valor").eq("clave", "whatsapp_consultas").maybeSingle();
+                waBase = enlaceWhatsapp(ajuste && ajuste.valor);
+            } catch (e) {
+                waBase = null;
+            }
+            if (!waBase) document.getElementById("sin-whatsapp").classList.remove("hidden");
+
+            pintarAnuncio();
+            pintarModulos();
+            pintarBonos();
+            pintarFiltros();
+            pintarProductos();
+
+            document.getElementById("loading").classList.add("hidden");
+            document.getElementById("app").classList.remove("hidden");
+        }
+        init();
+    </script>
+<!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --></body>
+</html>
