@@ -117,21 +117,30 @@
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">No se ve en vivo hasta que apliques.</p>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mb-2">Toca una pieza de aquí abajo y luego una o varias casillas del tablero para colocarla; toca 🗑️ y luego una casilla para quitar esa pieza. Vuelve a tocar la herramienta activa para soltarla. Sin ninguna herramienta activa, tocar una pieza ya puesta y luego otra casilla la mueve ahí.</p>
 
+                        <!-- Los glifos de blancas (♔♕♖♗♘♙) son un contorno hueco: sin `.piece-white`
+                             quedan como un simple trazo oscuro, y el de negras (♚♛♜♝♞♟, relleno sólido)
+                             con el MISMO color de texto que blancas —"text-brand-800 dark:text-brand-100",
+                             el genérico de cualquier botón— se llena en modo oscuro con ese mismo color
+                             claro: un rey "negro" macizo pintado de claro se ve BLANCO, más blanco que el
+                             hueco de al lado. El profesor terminaba tocando la fila que se veía clara
+                             pensando que era la de blancas y colocando la pieza del color que no era. Con
+                             `.piece-white`/`.piece-black` (las mismas clases del tablero de verdad, ver
+                             css/styles.css) cada fila se ve del color que dice ser, en los dos temas. -->
                         <div class="flex flex-wrap gap-1 mb-1.5" role="group" aria-label="Piezas blancas para colocar">
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="k" title="Colocar rey blanco">♔</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="q" title="Colocar dama blanca">♕</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="r" title="Colocar torre blanca">♖</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="b" title="Colocar alfil blanco">♗</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="n" title="Colocar caballo blanco">♘</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="w" data-type="p" title="Colocar peón blanco">♙</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="k" title="Colocar rey blanco">♔</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="q" title="Colocar dama blanca">♕</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="r" title="Colocar torre blanca">♖</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="b" title="Colocar alfil blanco">♗</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="n" title="Colocar caballo blanco">♘</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-white" data-color="w" data-type="p" title="Colocar peón blanco">♙</button>
                         </div>
                         <div class="flex flex-wrap gap-1 mb-2">
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="k" title="Colocar rey negro">♚</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="q" title="Colocar dama negra">♛</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="r" title="Colocar torre negra">♜</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="b" title="Colocar alfil negro">♝</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="n" title="Colocar caballo negro">♞</button>
-                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100" data-color="b" data-type="p" title="Colocar peón negro">♟</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="k" title="Colocar rey negro">♚</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="q" title="Colocar dama negra">♛</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="r" title="Colocar torre negra">♜</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="b" title="Colocar alfil negro">♝</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="n" title="Colocar caballo negro">♞</button>
+                            <button type="button" class="edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 piece-black" data-color="b" data-type="p" title="Colocar peón negro">♟</button>
                             <button type="button" id="edit-trash-btn" class="w-9 h-9 flex items-center justify-center text-lg rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-red-400" title="Quitar la pieza que toques en el tablero">🗑️</button>
                         </div>
 
@@ -1899,8 +1908,13 @@
 
         // ---------- Editor visual del tablero: paleta de piezas, vaciar/posición inicial,
         // turno y enroques, o FEN/PGN (solo profesor) ----------
-        const EDIT_PIECE_INACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100";
-        const EDIT_PIECE_ACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border-2 border-accent-500 bg-accent-500/20 transition-colors text-brand-800 dark:text-brand-100";
+        // Sin color acá a propósito: lo pone renderEditToolButtons() según data-color de
+        // cada botón (piece-white/piece-black, ver el comentario del HTML de la paleta) —
+        // con un color fijo para las dos filas, la de negras se llenaba en modo oscuro con
+        // el mismo claro que blancas y un rey negro macizo terminaba viéndose más blanco
+        // que el hueco de al lado.
+        const EDIT_PIECE_INACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500";
+        const EDIT_PIECE_ACTIVE = "edit-piece-btn w-9 h-9 flex items-center justify-center text-2xl rounded-lg border-2 border-accent-500 bg-accent-500/20 transition-colors";
         const EDIT_TRASH_INACTIVE = "w-9 h-9 flex items-center justify-center text-lg rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-red-400";
         const EDIT_TRASH_ACTIVE = "w-9 h-9 flex items-center justify-center text-lg rounded-lg border-2 border-red-500 bg-red-500/20 transition-colors";
         const EDIT_TURN_ACTIVE = "edit-turn-btn text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-accent-500 text-brand-900";
@@ -1912,7 +1926,8 @@
         function renderEditToolButtons() {
             document.querySelectorAll(".edit-piece-btn").forEach((btn) => {
                 const isActive = editTool && editTool !== "trash" && editTool.color === btn.dataset.color && editTool.type === btn.dataset.type;
-                btn.className = isActive ? EDIT_PIECE_ACTIVE : EDIT_PIECE_INACTIVE;
+                const base = isActive ? EDIT_PIECE_ACTIVE : EDIT_PIECE_INACTIVE;
+                btn.className = base + (btn.dataset.color === "w" ? " piece-white" : " piece-black");
             });
             const trashBtn = document.getElementById("edit-trash-btn");
             trashBtn.className = editTool === "trash" ? EDIT_TRASH_ACTIVE : EDIT_TRASH_INACTIVE;
