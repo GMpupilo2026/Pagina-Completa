@@ -5304,8 +5304,8 @@ con la página.
 ## El Evaluador de precisión posicional: elegir el plan, no la táctica
 
 `entreno/precision-posicional.html` (tarjeta **"🧭 Precisión posicional"** en
-el grupo "Practicar" del hub de Entrenamiento) es un banco de 24 posiciones
-—3 por cada una de 8 áreas— con una pregunta de opción múltiple por posición.
+el grupo "Practicar" del hub de Entrenamiento) es un banco de 96 posiciones
+—12 por cada una de 8 áreas— con una pregunta de opción múltiple por posición.
 **Ninguna tiene una jugada que gane material o dé mate de inmediato**: lo que
 se pide es el plan correcto a largo plazo — mejorar la pieza peor colocada,
 abrir o disputar una columna o diagonal, decidir qué cambiar y qué conservar,
@@ -5320,8 +5320,20 @@ eso se parece y se diferencia del resto de los bancos a la vez:
   (`js/precision-posicional-criterio.js`) van separados**, la misma partición
   que ya usan `js/diagnostico-items.js` + `js/plan-entrenamiento.js` y
   `js/arbitraje-items.js` + `js/arbitraje-nivel.js`: el criterio (qué mide
-  cada área, qué repasar) se puede ajustar sin tocar las 24 posiciones, y al
+  cada área, qué repasar) se puede ajustar sin tocar las 96 posiciones, y al
   revés.
+- **De las 96, 24 están escritas a mano y 72 son sus ESPEJOS geométricos**
+  —columnas invertidas, filas invertidas con los colores cambiados, y las dos
+  cosas juntas—, generados con una función pura que aplica la MISMA
+  transformación al FEN y al texto (casillas, columnas, «ala de rey»/«ala de
+  dama», el lado del enroque, blancas/negras, claras/oscuras). Escribir los
+  72 espejos a mano es justo donde se coló el primer intento: confundir una
+  casilla con otra al invertir filas, o de qué lado queda el plan después de
+  cambiar los colores. La transformación mecánica no puede cometer ese error
+  —o calcula bien la casilla, o `herramientas/verificar-precision-posicional.js`
+  la delata (posición ilegal, en jaque, o con mate en una disponible)— y evita
+  escribir 72 diagramas nuevos, que además serían menos variados que espejar
+  los 24 ya pensados con cuidado.
 - **Sin cronómetro, a propósito.** Un ejercicio de táctica se cronometra
   porque la solución tiene que verse rápido o no vale; acá es justo lo
   contrario — la idea completa del entrenamiento es dar el tiempo que haga
@@ -5341,12 +5353,12 @@ eso se parece y se diferencia del resto de los bancos a la vez:
   la posición es ilustrativa.
 - **No hay ningún "nivel" ni título que estimar**, al revés que el
   diagnóstico o el examen de arbitraje. No existe un "elo posicional" que se
-  pueda medir con 24 preguntas; lo único honesto que `resumir()` calcula es
-  cuánto se acertó, por área, y un veredicto en palabras —nunca un número que
-  suene más preciso de lo que en realidad es.
+  pueda medir con un puñado de preguntas; lo único honesto que `resumir()`
+  calcula es cuánto se acertó, por área, y un veredicto en palabras —nunca un
+  número que suene más preciso de lo que en realidad es.
 - **Dos tandas, no una.** "Ronda corta" (`PrecisionPosicionalPrueba.armar(1)`)
   sortea una posición de cada una de las 8 áreas; "Banco completo"
-  (`armar()`, sin argumentos) trae las 24. Las dos se barajan, así que dos
+  (`armar()`, sin argumentos) trae las 96. Las dos se barajan, así que dos
   rondas seguidas no salen en el mismo orden.
 - **El resultado se guarda en `training_state`** (claves
   `precision_posicional_resultado_v1` / `_historial_v1`), exactamente como el
@@ -5388,7 +5400,7 @@ criterio no describa un área sin ninguna posición).
 La segunda pide playwright y el sitio en `localhost:8777`, y existe porque
 esta página está detrás del login: `verificar-css.js` abre las páginas sin
 cuenta y no ve nada de esto. Comprueba que sin sesión mande a `login.html`,
-que la ronda corta arranque con 8 posiciones y el banco completo con 24, que
+que la ronda corta arranque con 8 posiciones y el banco completo con 96, que
 el tablero dibuje de verdad 64 casillas con piezas (no un tablero vacío), que
 "Siguiente" avance y "Anterior" conserve la respuesta ya marcada, que el
 resultado muestre el marcador y las 8 filas por área, y que terminar la ronda
