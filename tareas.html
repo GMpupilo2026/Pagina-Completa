@@ -53,10 +53,15 @@
                             <p id="sin-alumnos" class="hidden text-sm text-brand-450 dark:text-brand-350 mt-2">Todavía no tienes alumnos asignados.</p>
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-4 sm:grid-cols-3">
                             <div>
                                 <label for="t-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
                                 <input id="t-titulo" type="text" maxlength="200" required placeholder="Ej. Tarea de la semana" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="t-desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Disponible desde <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                                <input id="t-desde" type="datetime-local" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">En blanco, aparece de una vez. Con fecha, el alumno no la ve hasta ese momento.</p>
                             </div>
                             <div>
                                 <label for="t-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Vence</label>
@@ -490,6 +495,16 @@ async function enviarTarea(ev) {
     const venceVal = document.getElementById("t-vence").value;
     if (!venceVal) { status.textContent = "Ponle una fecha límite."; return; }
 
+    // "Disponible desde" es opcional: en blanco, la tarea aparece de una vez,
+    // igual que siempre. Con fecha, es lo que deja al profesor prepararla con
+    // anticipación sin que el alumno la vea todavía — el candado de verdad lo
+    // pone la RLS (crear_tarea lo vuelve a comprobar del lado del servidor).
+    const desdeVal = document.getElementById("t-desde").value;
+    if (desdeVal && new Date(desdeVal) >= new Date(venceVal)) {
+        status.textContent = "La tarea tiene que empezar antes de vencer.";
+        return;
+    }
+
     const titulo = document.getElementById("t-titulo").value.trim();
     if (!titulo) { status.textContent = "Falta el título."; return; }
 
@@ -502,6 +517,7 @@ async function enviarTarea(ev) {
         p_instrucciones: document.getElementById("t-instrucciones").value.trim(),
         p_vence: new Date(venceVal).toISOString(),
         p_items: items,
+        p_disponible_desde: desdeVal ? new Date(desdeVal).toISOString() : null,
     });
     boton.disabled = false;
     if (error) { status.textContent = "No se pudo enviar: " + error.message; return; }
@@ -532,8 +548,12 @@ const COLOR_SITUACION = {
     completada: "text-green-600 dark:text-green-400",
     vencida: "text-red-600 dark:text-red-400",
     pendiente: "text-brand-500 dark:text-brand-300",
+    programada: "text-accent-700 dark:text-accent-400",
 };
-const TEXTO_SITUACION = { completada: "✔ Completada", vencida: "⏰ Vencida", pendiente: "Pendiente" };
+const TEXTO_SITUACION = {
+    completada: "✔ Completada", vencida: "⏰ Vencida", pendiente: "Pendiente",
+    programada: "🕒 Programada",
+};
 
 function tarjetaEnviada(t) {
     const div = document.createElement("div");
@@ -544,10 +564,16 @@ function tarjetaEnviada(t) {
         const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
         return `<span class="${r.cumplido ? "text-green-600 dark:text-green-400" : ""}">${r.cumplido ? "✔" : ""} ${escapeHtml(r.filtro_label || r.material_label)} ${r.hecho}/${meta}</span>`;
     }).join(" · ");
+    // Mientras esté programada, la línea de fechas dice CUÁNDO se destapa, no
+    // cuánto lleva de renglones cumplidos: el alumno todavía no la ve, así
+    // que "0 de 3" se leería como que no ha empezado a hacerla, y no es eso.
+    const lineaFecha = t.situacion === "programada"
+        ? `Para ${escapeHtml(t.alumno_nombre || "—")} · Se destapa ${formatoFecha(t.disponible_desde)} · Vence ${formatoFecha(t.vence_at)}`
+        : `Para ${escapeHtml(t.alumno_nombre || "—")} · Vence ${formatoFecha(t.vence_at)}`;
     div.innerHTML = `
         <div class="min-w-0">
             <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(t.titulo)}</p>
-            <p class="text-xs text-brand-450 dark:text-brand-350">Para ${escapeHtml(t.alumno_nombre || "—")} · Vence ${formatoFecha(t.vence_at)}</p>
+            <p class="text-xs text-brand-450 dark:text-brand-350">${lineaFecha}</p>
             <p class="text-xs text-brand-450 dark:text-brand-350 mt-0.5">${resumen}</p>
         </div>
         <div class="flex items-center gap-3 shrink-0">
