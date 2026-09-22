@@ -542,11 +542,24 @@
       if (MARK_COLORS[colorKey]) this.markColor = colorKey;
     }
 
+    /* Qué dice una casilla. Dos cosas que estaban mal y no daban ningún error:
+       - la columna iba deletreada ("e4") y no hablada ("eva 4") como en el resto
+         del sitio: "b4" y "v4" suenan igual leídos en voz alta;
+       - el color no concordaba ("torre blanco", "caballo negra"), y el lector lo
+         dice tal cual.
+       Y lo que de verdad importa: con las piezas OCULTAS la casilla no dice qué hay.
+       "Ocultar" es un ejercicio de ver el tablero de memoria; si el nombre de la
+       casilla lo contara, quien usa lector de pantalla tendría el ejercicio
+       resuelto y los demás no. */
     _squareAriaLabel(square, g) {
+      const hablada = window.BlindNotation && BlindNotation.squareSpoken
+        ? BlindNotation.squareSpoken(square) : square;
+      if (this.piecesHidden) return hablada;
       const piece = g.get(square);
-      if (!piece) return square + ", casilla vacía";
-      const color = piece.color === "w" ? "blanco" : "negra";
-      return square + ", " + PIECE_NAME[piece.type] + " " + color;
+      if (!piece) return hablada + ", vacía";
+      const femenina = piece.type === "q" || piece.type === "r";
+      const color = piece.color === "w" ? (femenina ? "blanca" : "blanco") : (femenina ? "negra" : "negro");
+      return hablada + ", " + PIECE_NAME[piece.type] + " " + color;
     }
 
     _squareClasses(square, canInteract) {
@@ -591,8 +604,13 @@
         btn.className = this._squareClasses(square, canInteract);
         btn.setAttribute("data-square", square);
         btn.setAttribute("aria-label", this._squareAriaLabel(square, g));
-        btn.tabIndex = square === this.focusSquare ? 0 : -1;
-        if (!canInteract) btn.tabIndex = -1;
+        /* Una sola parada de tabulador, TAMBIÉN cuando no se puede mover: el
+           alumno que mira la clase tiene que poder recorrer el tablero con las
+           flechas para saber qué hay. Antes, sin el control, las 64 casillas
+           quedaban fuera del teclado y quien no ve la pantalla no tenía forma de
+           mirar la posición que estaba explicando el profesor. Las miniaturas
+           (compact) sí quedan fuera: son de mirar de lejos, no de recorrer. */
+        btn.tabIndex = !this.compact && square === this.focusSquare ? 0 : -1;
 
         const piece = g.get(square);
         if (piece && !this.piecesHidden) {
@@ -667,7 +685,7 @@
 
       if (this.compact) this._sizeCompactPieces();
 
-      if (hadFocusInBoard && canInteract) {
+      if (hadFocusInBoard && !this.compact) {
         const target = this.el.querySelector('[data-square="' + this.focusSquare + '"]');
         if (target) target.focus();
       }
@@ -810,20 +828,7 @@
       if (this.selected) {
         const move = g.moves({ square: this.selected, verbose: true }).find((m) => m.to === square);
         if (move) {
-          const wasLive = !this.isViewingHistory();
-          const result = g.move({ from: this.selected, to: square, promotion: "q" });
-          this.selected = null;
-          this.render();
-          if (!result) return;
-          if (wasLive) {
-            // Seguíamos en la línea real: esto sí es la jugada en vivo de la clase.
-            this.onMove(this.game.fen(), result.san, this.game.history());
-          } else {
-            // Estábamos explorando: esto crea o extiende una variante/sub-variante,
-            // sin tocar la partida real de nadie más.
-            this.viewPath = this.viewPath.concat([result.san]);
-            this.onVariantMove(result.san, this.viewPath.slice(), this._variantContext);
-          }
+          this.jugar({ from: this.selected, to: square, promotion: "q" });
           return;
         }
       }
@@ -831,6 +836,33 @@
       const piece = g.get(square);
       this.selected = piece && piece.color === g.turn() ? square : null;
       this.render();
+    }
+
+    /* Hace una jugada por la MISMA puerta que el clic: la jugada en vivo avisa con
+       onMove y la de una variante con onVariantMove. La usa el recuadro donde se
+       escribe la jugada (js/clase-adaptada.js): si escribir tuviera su propio
+       camino, el día que el clic cambiara la jugada escrita dejaría de contar como
+       respuesta a la pregunta, o de llegarle al profesor, sin que nada fallara.
+       Devuelve la jugada hecha, o null si no se pudo. */
+    jugar(mv) {
+      if (!this.interactive || this.freeMode) return null;
+      const g = this.viewGame || this.game;
+      const wasLive = !this.isViewingHistory();
+      let result = null;
+      try { result = g.move({ from: mv.from, to: mv.to, promotion: mv.promotion || "q" }); } catch (e) { result = null; }
+      this.selected = null;
+      this.render();
+      if (!result) return null;
+      if (wasLive) {
+        // Seguíamos en la línea real: esto sí es la jugada en vivo de la clase.
+        this.onMove(this.game.fen(), result.san, this.game.history());
+      } else {
+        // Estábamos explorando: esto crea o extiende una variante/sub-variante,
+        // sin tocar la partida real de nadie más.
+        this.viewPath = this.viewPath.concat([result.san]);
+        this.onVariantMove(result.san, this.viewPath.slice(), this._variantContext);
+      }
+      return result;
     }
 
     // Tras insertar en la base de datos la jugada de variante creada en _onSquareClick,
@@ -841,7 +873,9 @@
     }
 
     _onKeydown(e) {
-      if (!this.interactive) return;
+      // Mirar no es mover: las flechas recorren el tablero siempre; solo el
+      // clic (y la jugada escrita) piden el control.
+      if (this.compact) return;
       const current = e.target && e.target.getAttribute ? e.target.getAttribute("data-square") : null;
       if (!current) return;
       const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];

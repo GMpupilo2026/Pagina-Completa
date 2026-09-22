@@ -45,7 +45,7 @@
     <div id="app" class="hidden pt-20 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
-            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes 📊</h1>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Informes <span aria-hidden="true">📊</span></h1>
             <p class="text-brand-500 dark:text-brand-300 mb-6" id="subtitle">Tu actividad y progreso en las clases.</p>
 
             <!-- Filtros del profesor: elegir un alumno puntual (ver todo su detalle) o un
@@ -124,7 +124,7 @@
                  y después se anota lo que se ve. Arranca oculto y solo se
                  destapa si de verdad hay semanas con algo. -->
             <div id="evolucion-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 id="evolucion-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📈 Cómo viene</h2>
+                <h2 id="evolucion-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📈</span> Cómo viene</h2>
                 <p id="evolucion-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Las últimas 12 semanas, para ver si sube o si se frenó.</p>
                 <div id="evolucion-body"></div>
             </div>
@@ -133,7 +133,7 @@
                  Mirando a UN alumno y solo para quien da clase; el alumno ve
                  aparte las que le compartieron (#notas-alumno-report). -->
             <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Bitácora</h2>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
                 <div id="notas-body"></div>
             </div>
@@ -142,7 +142,7 @@
                  se destapa si hay alguna: un bloque que diga "tu profesor no te
                  ha escrito nada" es ruido en todas las visitas menos una. -->
             <div id="notas-alumno-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📝 Notas de tu profesor</h2>
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Notas de tu profesor</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que te dejó anotado para que lo tengas presente.</p>
                 <div id="notas-alumno-body"></div>
             </div>
@@ -155,13 +155,13 @@
                  le saldría "0 tareas" sobre un alumno que tiene cinco. El
                  informe es del ALUMNO, no de un profesor. -->
             <div id="deberes-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 id="deberes-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">📋 Tareas y exámenes</h2>
+                <h2 id="deberes-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📋</span> Tareas y exámenes</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuenta las de todos sus profesores, no solo las tuyas.</p>
                 <div id="deberes-body"></div>
             </div>
 
             <div id="student-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4">🚩 Tus últimas asignaciones</h2>
+                <h2 id="student-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-4"><span aria-hidden="true">🚩</span> Tus últimas asignaciones</h2>
                 <ul id="student-history" class="space-y-2 text-sm"></ul>
             </div>
 
@@ -179,7 +179,7 @@
                  profile.es_coordinador/is_admin) y solo mirando a UN alumno: es de él. -->
             <details id="acceso-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">🔑 Acceso a la cuenta</h2>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline"><span aria-hidden="true">🔑</span> Acceso a la cuenta</h2>
                     <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
                 </summary>
                 <p id="acceso-info" class="text-xs text-brand-450 dark:text-brand-350 mt-4 mb-4"></p>
@@ -191,7 +191,7 @@
                  Solo aparece mirando a UN alumno: es de él. -->
             <details id="encargados-report" class="group hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">📧 Informes a la casa</h2>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline"><span aria-hidden="true">📧</span> Informes a la casa</h2>
                     <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
                 </summary>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-4 mb-4">El informe sale solo, a la hora que toque, al correo de quien esté encargado. No hace falta que tenga cuenta en el sitio.</p>
@@ -256,7 +256,7 @@
                      están abajo, plegadas, para comparar columna a columna. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <div class="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">👥 Tus alumnos</h2>
+                        <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">👥</span> Tus alumnos</h2>
                         <p id="alumnos-cuenta" class="text-xs text-brand-450 dark:text-brand-350" aria-live="polite"></p>
                     </div>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Toca a un alumno para abrir su informe completo. Para ver a toda la clase en una actividad puntual, usa el filtro «Tema o actividad» de arriba.</p>
@@ -359,7 +359,7 @@
                      vive el botón que comparte los planes que faltan. Lo pinta
                      renderDiagnosticosClase() y se reutiliza en el filtro por tema. -->
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnósticos de nivel — alumnos registrados</h2>
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🧭</span> Diagnósticos de nivel — alumnos registrados</h2>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Resultados del diagnóstico de cada alumno asignado: dónde está el grupo y dónde está cada quien.</p>
                     <div id="diagnosticos-clase"></div>
                 </div>
@@ -372,7 +372,7 @@
                 <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
                         <div>
-                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">⚖️ Exámenes de arbitraje</h2>
+                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline"><span aria-hidden="true">⚖️</span> Exámenes de arbitraje</h2>
                             <p id="arbitrajes-resumen" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Del público, desde la página abierta.</p>
                         </div>
                         <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
@@ -386,7 +386,7 @@
                 <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
                         <div>
-                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">🌐 Diagnósticos de visitantes</h2>
+                            <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline"><span aria-hidden="true">🌐</span> Diagnósticos de visitantes</h2>
                             <p id="visitantes-resumen" class="text-xs text-brand-450 dark:text-brand-350 mt-1">Personas sin cuenta, fuera del panel.</p>
                         </div>
                         <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>

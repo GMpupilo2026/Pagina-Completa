@@ -206,7 +206,7 @@
 <!-- ===== MAIN APP ===== -->
 <div id="app" class="hidden pt-20 pb-16">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-brand-200 dark:border-brand-800">
-    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Desafíos 🧠</h1>
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Desafíos <span aria-hidden="true">🧠</span></h1>
     <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
       <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
       <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
@@ -1023,9 +1023,20 @@ function openSet(set){
   document.getElementById('set-view').style.display = 'block';
   document.getElementById('play-area').style.display = 'block';
   document.getElementById('celebration').style.display = 'none';
-  document.getElementById('set-title').textContent = set.emoji + ' ' + set.title;
+  // El emoji es adorno: va escondido del lector de pantalla, que si no lo lee
+  // por su nombre ("persona corriendo") antes del título de la serie.
+  const titulo = document.getElementById('set-title');
+  titulo.textContent = '';
+  const emoji = document.createElement('span');
+  emoji.setAttribute('aria-hidden', 'true');
+  emoji.textContent = set.emoji + ' ';
+  titulo.append(emoji, set.title);
   document.getElementById('set-text').textContent = set.desc;
   loadRound();
+  // El botón de la serie desaparece con la lista y el foco se iba al <body>:
+  // se lleva al título, que se lee primero, y el siguiente Tab ya es el ejercicio.
+  titulo.setAttribute('tabindex', '-1');
+  titulo.focus();
 }
 
 document.getElementById('back-to-list').addEventListener('click', (e) => { e.preventDefault(); showList(); });

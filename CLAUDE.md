@@ -5339,6 +5339,96 @@ compartido 10, sin `oculta()` 6, y sin el guardia de `moves()` saltan 2 — con 
 verificador escribiendo en pantalla la fuga entera: «peón negro en david 5 puede
 ir a david 4 y eva 4 capturando».
 
+## La clase en vivo, sin ver la pantalla (y lo que quedaba de la Academia)
+
+Se recorrió la Academia como la recorre una persona ciega —Modo Adaptado
+encendido, solo teclado, mirando qué anuncia cada control y qué se lee solo— y
+la clase en vivo resultó ser **la única parte del sitio que no se podía seguir
+con lector de pantalla**, justo la más importante. No daba ningún error: el
+tablero se pintaba y se movía, y para quien no lo veía no pasaba nada.
+
+- **Sin el control, las 64 casillas quedaban fuera del teclado**
+  (`if (!canInteract) btn.tabIndex = -1` en `js/clases-board.js`), así que no
+  había forma de MIRAR la posición que el profesor explicaba. Ahora el tablero
+  tiene siempre una parada de tabulador y las flechas lo recorren: **mirar no es
+  mover**, solo el clic y la jugada escrita piden el control. Las miniaturas
+  (`compact`) siguen fuera, son de mirar de lejos.
+- **Las casillas decían «e4» deletreado y «torre blanco»**: ahora «eva 4, torre
+  blanca», como en el resto del sitio. Y **con las piezas ocultas la casilla no
+  dice qué hay**: «Ocultar» es un ejercicio de memoria, y si el nombre de la
+  casilla lo contara, quien usa lector de pantalla lo tendría resuelto y los
+  demás no.
+- **`js/clase-adaptada.js`** le pone a los tres tableros de la clase (pizarra,
+  pregunta y práctica) el mismo recuadro de Entrenamiento: se escribe «Cf3» o se
+  pregunta «posición», «caballos», «qué hay en e4».
+  - **La jugada escrita entra por `board.jugar()`, la MISMA puerta que el clic**
+    (se sacó de `_onSquareClick`). Con su propio camino, el día que cambiara el
+    clic la jugada escrita dejaría de contar como respuesta o de llegarle al
+    profesor.
+  - **Se anuncia la jugada, no la posición**: la posición queda escrita encima
+    del recuadro pero muda (`posicionViva: false`, opción nueva de
+    `js/cuadro-comandos.js`). Dictar treinta y dos piezas en cada jugada del
+    profesor tapa lo único que cambió — la misma corrección que ya se hizo en
+    Juegos. Qué cambió lo decide `anunciarCambio()` comparando lo que había en
+    el tablero con lo que llegó, así que el eco de la jugada propia no se anuncia
+    dos veces.
+  - **Con las piezas ocultas el recuadro tampoco las cuenta**: ni la posición ni
+    las preguntas. Se dice qué pasa y las jugadas se siguen anunciando, que es lo
+    que ven los demás.
+  - Sin el control, escribir una jugada **dice por qué no** («Ahora mueve tu
+    profe…») y no manda nada a la base.
+- **La pregunta y la práctica son diálogos** (`role="dialog"`) que **se llevan el
+  foco al abrirse**, y sus renglones de estado son regiones vivas. Ojo con el
+  foco: al cargar la página la pregunta abierta se pinta ANTES de destapar
+  `#app`, y el navegador no enfoca lo escondido — no falla nada, el foco se queda
+  donde estaba. Por eso `enfocarCuandoSeVea()`. Y `#status-banner` ahora es
+  región viva: es el que dice «¡El profesor te dio el control!».
+
+Lo demás que salió del mismo recorrido:
+
+- **Ejercicios por tema decía «Haz clic en la pieza»** también en Modo Adaptado,
+  y quién juega y qué buscar vivían en una franja que no se anuncia. Ahora el
+  aviso que se lee dice «Juegan blancas: encuentra el mate» con la instrucción de
+  cada modo, y el foco va al recuadro. Sus 80 botones decían todos «Resolver»:
+  llevan el tema y su grupo escondidos a la vista (hay temas con el mismo nombre
+  en dos grupos). Y la página tenía **dos `<body>` y dos «Saltar al contenido»**.
+- **Abrir una lección o una serie dejaba el foco en el `<body>`** (el botón se va
+  con la lista) en Aprender, Practicar y Desafíos: ahora va al título. En Temas,
+  en Modo Adaptado, directo al recuadro.
+- **En el celular el Modo Adaptado no se encendía nunca solo**: la detección es
+  por el primer Tab y por «contraste alto», y con TalkBack o VoiceOver no hay Tab.
+  `js/adaptive-mode.js` pregunta ahora UNA vez, en aparatos táctiles y solo
+  mientras la preferencia no esté elegida, justo después de «Saltar al
+  contenido». En la computadora no, que ahí la detección ya funciona.
+- **Los emojis de títulos y tarjetas se leían en voz alta** («persona levantando
+  pesas, Entrenamiento»): 107 títulos del sitio los llevan ahora en un
+  `<span aria-hidden="true">`, y los iconos de las tarjetas del panel también. Al
+  escribir un título con emoji, envolverlo.
+- «Activar voz» tiene un nombre fijo que dice para quién es («solo si no usas
+  lector de pantalla»): con lector encendido, esa voz habla encima de la suya.
+
+**Al tocar la clase en vivo, `js/clase-adaptada.js`, `js/clases-board.js`, los
+títulos o el ofrecimiento del modo, correr `node
+herramientas/verificar-clase-adaptada.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Reusa el doble de
+`verificar-clase-registrada.js`, que ahora deja empujar un cambio de la base con
+`window.__cambioEnBase(tabla, fila)` como haría Realtime —sin eso no hay forma de
+probar qué oye la alumna cuando el profesor mueve—. Comprueba la parada de
+tabulador y las flechas, qué dice una casilla, que «posición» conteste, que sin
+control no se mande nada, que la jugada del profesor se anuncie sin dictar la
+posición, que con el control la jugada escrita llegue a la base como la del
+clic, que **con las piezas ocultas no se escape ni una**, que la pregunta se
+lleve el foco y se conteste escribiendo, lo de Temas, el foco de las lecciones,
+la pregunta en el celular (y que en la computadora no salga), y que ningún h1-h3
+del sitio deje un emoji a la vista del lector. Está probado que falla de verdad:
+con el `js/clases-board.js` de antes saltan las tres primeras.
+
+Lo que **no** se cambió, a propósito: los tres botones propios de Mates, Aprender
+y Coordenadas («Modo normal», «Adaptado», «Activar voz») siguen ahí en vez del
+interruptor del encabezado, porque esas páginas los usan para más cosas que
+encender el modo; y las regiones vivas de cada lección de un curso siguen como
+estaban: están vacías hasta que se marca una lección, así que no hablan solas.
+
 ## El hub de Entrenamiento y sus tres grupos
 
 `entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,
