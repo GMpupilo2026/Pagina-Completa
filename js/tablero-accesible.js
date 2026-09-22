@@ -150,11 +150,25 @@ window.TableroAccesible = (function () {
        puede capturar ahí, es la última jugada): lo pone en `data-estado` y se
        añade al final. Un aria-label escrito a mano por la página se respeta,
        pero entonces es suyo y este módulo no lo toca más. */
+    /* Hay tableros que TAPAN casillas a propósito, y eso no se puede contar como
+       si estuvieran vacías. En Niebla de Guerra el tablero visual pinta 🌫️ sobre
+       lo que la posición no deja ver; decir ahí "vacía" no es un descuido de
+       redacción, es contarle a quien no ve la pantalla algo distinto de lo que
+       el tablero dice —y encima falso, porque ahí puede haber una pieza rival—.
+       Lo pregunta la PARTIDA (`juego().oculta(casilla)`) y no una opción de este
+       módulo, porque es ahí donde vive ese conocimiento: quien arma el tablero
+       sabe qué esconde. Una partida que no lo traiga se comporta como siempre, y
+       la variante que mañana esconda algo lo hereda sin tocar nada de acá. */
+    function escondida(sq) {
+      var g = juego();
+      try { return !!(g && g.oculta && g.oculta(sq)); } catch (e) { return false; }
+    }
     function describir(sq) {
       // Sin partida detrás —Coordenadas, por ejemplo, tiene el tablero vacío a
       // propósito— se dice solo el nombre: repetir "vacía" sesenta y cuatro
       // veces es ruido, y no aporta nada que no se sepa ya.
       if (!juego()) return casillaHablada(sq);
+      if (escondida(sq)) return casillaHablada(sq) + ", cubierta por la niebla";
       var p = pieza(sq);
       return casillaHablada(sq) + (p ? ", " + piezaDicha(p) : ", vacía");
     }
@@ -248,23 +262,36 @@ window.TableroAccesible = (function () {
       return out;
     }
 
+    /* Sobre un tablero que esconde casillas, TODO lo que se cuente es un
+       recuento de lo visible y nada más. Decirlo importa: "cuatro peones
+       blancos" sin esta coletilla se oye como el inventario de la partida, y lo
+       que hay es el de lo que se alcanza a ver — que es justo lo que en Niebla
+       de Guerra hay que deducir, no dar por sabido. */
+    function soloLoQueVes() {
+      var g = juego();
+      return g && g.oculta ? " Es solo lo que ves: la niebla tapa el resto." : "";
+    }
+
     function decirPosicion() {
       var g = juego();
       if (!g) { decir("Esta página no lleva la cuenta de la posición."); return; }
-      if (window.BlindNotation && BlindNotation.positionSentence) decir(BlindNotation.positionSentence(g));
+      if (window.BlindNotation && BlindNotation.positionSentence) decir(BlindNotation.positionSentence(g) + soloLoQueVes());
     }
 
     function decirTipo(tipo) {
       var g = juego();
       if (!g) { decir("Esta página no lleva la cuenta de la posición."); return; }
       var encontradas = piezasPorTipo(tipo);
-      if (!encontradas.length) { decir("No hay " + PLURAL[tipo] + " en el tablero."); return; }
+      if (!encontradas.length) {
+        decir(g.oculta ? "No ves ningún " + NOMBRE[tipo] + " ahora mismo." : "No hay " + PLURAL[tipo] + " en el tablero.");
+        return;
+      }
       var por = { w: [], b: [] };
       encontradas.forEach(function (x) { por[x.p.color].push(casillaHablada(x.sq)); });
       var partes = [];
       if (por.w.length) partes.push((por.w.length === 1 ? NOMBRE[tipo] + " blanc" + (FEMENINA[tipo] ? "a" : "o") : PLURAL[tipo] + " blanc" + (FEMENINA[tipo] ? "as" : "os")) + " en " + listaEspanola(por.w));
       if (por.b.length) partes.push((por.b.length === 1 ? NOMBRE[tipo] + " negr" + (FEMENINA[tipo] ? "a" : "o") : PLURAL[tipo] + " negr" + (FEMENINA[tipo] ? "as" : "os")) + " en " + listaEspanola(por.b));
-      decir(partes.join(". ") + ".");
+      decir(partes.join(". ") + "." + soloLoQueVes());
     }
 
     // "m": qué puede hacer la pieza que está bajo el foco. Es la pregunta que se
@@ -272,8 +299,18 @@ window.TableroAccesible = (function () {
     function decirJugadas(sq) {
       var g = juego();
       if (!g || !g.moves) { decir("Esta página no lleva la cuenta de las jugadas."); return; }
+      if (escondida(sq)) { decir(casillaHablada(sq) + " está cubierta por la niebla: no sabes qué hay ahí."); return; }
       var p = pieza(sq);
       if (!p) { decir(casillaHablada(sq) + " está vacía."); return; }
+      /* Con niebla, las jugadas de una pieza del RIVAL no se pueden contar: su
+         camino pasa por casillas que no ves, así que la partida visible devuelve
+         la lista vacía en cuanto le toca mover. Sin esta línea esa lista vacía se
+         anunciaba como "no tiene jugadas ahora", que es falso y se oye como
+         información buena. */
+      if (g.oculta && g.miColor && p.color !== g.miColor) {
+        decir("En " + casillaHablada(sq) + " hay " + piezaDicha(p) + ", del rival: con la niebla no puedes saber a dónde puede ir.");
+        return;
+      }
       var ms = [];
       try { ms = g.moves({ square: sq, verbose: true }) || []; } catch (e) {}
       if (!ms.length) {
@@ -307,26 +344,34 @@ window.TableroAccesible = (function () {
         DIRS.forEach(function (d) {
           var actual = vecina(sq, d[0], d[1]);
           while (actual) {
+            /* El rayo se CORTA en la niebla, no la atraviesa. Siguiendo de largo
+               se anunciaría como "la primera pieza en esa dirección" una que está
+               detrás de lo que no se ve, y con eso quien no mira la pantalla
+               jugaría dando por libre un camino que a lo mejor está tapado. */
+            if (escondida(actual)) { lejos.push(d[2] + ": niebla desde " + casillaHablada(actual)); break; }
             var p = pieza(actual);
             if (p) { lejos.push(d[2] + ": " + piezaDicha(p) + " en " + casillaHablada(actual)); break; }
             actual = vecina(actual, d[0], d[1]);
           }
         });
         decir(lejos.length
-          ? "Desde " + casillaHablada(sq) + ", la primera pieza en cada dirección — " + lejos.join("; ") + "."
+          ? "Desde " + casillaHablada(sq) + ", lo primero en cada dirección — " + lejos.join("; ") + "."
           : "Desde " + casillaHablada(sq) + " no hay ninguna pieza en ninguna dirección.");
         return;
       }
       var partes = [];
+      var tapadas = 0;
       dirs.forEach(function (d) {
         var v = vecina(sq, d[0], d[1]);
         if (!v) return;
+        if (escondida(v)) { tapadas++; return; }
         var p = pieza(v);
         if (p) partes.push(d[2] + ": " + piezaDicha(p) + " en " + casillaHablada(v));
       });
-      decir(partes.length
+      var niebla = tapadas ? " " + (tapadas === 1 ? "Una casilla de al lado está cubierta por la niebla." : tapadas + " casillas de al lado están cubiertas por la niebla.") : "";
+      decir((partes.length
         ? "Alrededor de " + casillaHablada(sq) + " — " + partes.join("; ") + "."
-        : "Alrededor de " + casillaHablada(sq) + " no hay ninguna pieza.");
+        : "Alrededor de " + casillaHablada(sq) + " no hay ninguna pieza a la vista.") + niebla);
     }
 
     // Saltar a la siguiente pieza de un tipo: minúscula adelante, mayúscula

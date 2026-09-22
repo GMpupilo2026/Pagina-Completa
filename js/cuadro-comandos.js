@@ -147,10 +147,11 @@ window.CuadroComandos = (function () {
     "  border-radius: .4rem; cursor: pointer; }",
     ".cc-ayuda { margin: .5rem 0 0; font-size: .85rem; opacity: .85; }",
     ".cc-msg { margin: .4rem 0 0; font-size: .95rem; font-weight: 600; min-height: 1.3em; }",
-    ".cc-ayuda-det { margin: .6rem 0 0; }",
-    ".cc-ayuda-det > summary { cursor: pointer; font-size: .9rem; font-weight: 600; }",
-    ".cc-ayuda-det h3 { font-size: .95rem; margin: .7rem 0 .2rem; }",
-    ".cc-ayuda-det p { margin: 0 0 .4rem; font-size: .88rem; line-height: 1.55; }",
+    /* `.cc-ayuda-det` NO va acá: vive en css/styles.css porque la usan dos
+       módulos —este y js/juegos-blind.js— y el bloque de ayuda tiene que verse
+       igual en un ejercicio de Entrenamiento y en una partida de Juegos. Puesta
+       en el estilo que inyecta este archivo, la de Juegos salía sin formato
+       —encabezados del tamaño del texto y sin separación— y no fallaba nada. */
   ].join("\n");
 
   var estiloPuesto = false;

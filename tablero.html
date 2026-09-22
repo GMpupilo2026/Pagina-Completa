@@ -154,7 +154,13 @@
                      que hace falta (por ejemplo, los atajos del tablero) en vez de escuchar todo
                      de nuevo desde el principio. -->
                 <div id="move-input-help" role="region" aria-live="polite" aria-label="Ayuda" class="hidden text-xs text-brand-450 dark:text-brand-350 mt-1 space-y-2"></div>
-                <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
+                <!-- `role="status"` a secas y NO con `aria-live="assertive"` encima: el rol ya
+                     vale por una región viva cortés, y los dos juntos se contradicen —uno dice
+                     "espera tu turno" y el otro "interrumpe lo que estés diciendo"—. JAWS corta
+                     con eso la frase que venía leyendo y VoiceOver a veces no lo lee. Acá nunca
+                     hay nada urgente que interrumpir: es la respuesta a un Intro que se acaba
+                     de pulsar, o la jugada que acaba de hacer el bot. -->
+                <div id="move-input-status" role="status" aria-atomic="true" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
                 <div id="position-readout" role="region" aria-live="polite" aria-label="Posición actual" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></div>
             </div>
             <h2 class="sr-only">Jugar contra el profe</h2>
@@ -238,6 +244,8 @@
     <script defer src="data/oscar-positions.js"></script>
     <script defer src="js/chess-bot.js"></script>
     <script defer src="js/blind-notation.js"></script>
+    <script defer src="js/tablero-accesible.js"></script>
+    <script defer src="js/comandos-tablero.js"></script>
     <script defer src="js/board-drag.js"></script>
     <script defer src="js/tablero-board.js"></script>
     <script defer src="js/main.js"></script>
