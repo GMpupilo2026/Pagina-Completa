@@ -125,6 +125,96 @@ const PATRONES = {
         `<path d='M0 20a15 15 0 0 1 30 0M30 20a15 15 0 0 1 30 0M-15 50a15 15 0 0 1 30 0M15 50a15 15 0 0 1 30 0M45 50a15 15 0 0 1 30 0' fill='none' stroke='${c}' stroke-width='1.6' opacity='${o}'/>`,
 };
 
+/* ===== Los que VUELAN =====
+ * El patrón de arriba se queda quieto (las estrellas de Galaxia, las escamas de
+ * Dragones); esto es una capa aparte que cruza la pantalla. Son dos capas y no
+ * una a propósito: con una sola, todas las figuras se mueven a la misma
+ * velocidad y lo que se ve es un papel tapiz deslizándose. Con dos —las
+ * pequeñas despacio detrás, las grandes más rápido delante— el ojo lo lee como
+ * profundidad, que es lo que hace que parezca que vuelan.
+ *
+ * Cada figura mira a la derecha y el fuego (o la llama del cohete) va en el
+ * color de ACENTO, no en el de la silueta: a esta opacidad es lo único que
+ * distingue «un dragón» de «un dragón tirando fuego».
+ */
+const VOLADORES = {
+    // El agujero de la ventana es un subpath cerrado con fill-rule evenodd: con
+    // un círculo relleno del color del fondo se vería un parche opaco, porque
+    // acá no hay un fondo fijo debajo — hay lo que traiga la página.
+    cohetes: (c, a) =>
+        `<path d='M0 9 C0 4 5 0 13 0 C22 0 31 4 36 9 C31 14 22 18 13 18 C5 18 0 14 0 9 Z` +
+        `M25 9 a3.4 3.4 0 1 0 0.01 0 Z' fill='${c}' fill-rule='evenodd'/>` +
+        `<path d='M10 2 L4 -7 L1 3 Z' fill='${c}'/>` +
+        `<path d='M10 16 L4 25 L1 15 Z' fill='${c}'/>` +
+        `<path d='M0 4 L-13 9 L0 14 C-4 12 -4 6 0 4 Z' fill='${a}'/>`,
+    dragones: (c, a) =>
+        // El ala va PRIMERO, o sea detrás: dibujada encima le corta el cuello y
+        // sus muescas se leen como agujeros en el cuerpo.
+        `<path d='M43 31 C46 14 56 4 69 0 C63 9 60 16 62 23 L54 20 L55 27 Z' fill='${c}'/>` +
+        // La cola larga y fina es la mitad de lo que hace que se lea «dragón».
+        `<path d='M29 45 C20 49 11 54 2 61 C9 58 13 57 18 55 C23 53 27 49 31 46 Z' fill='${c}'/>` +
+        `<path d='M0 63 L10 55 L9 61 L2 64 Z' fill='${c}'/>` +
+        `<path d='M26 42 C31 31 42 27 53 30 C59 32 61 36 58 41 C52 48 36 51 28 47 Z' fill='${c}'/>` +
+        `<path d='M41 48 L38 57 L46 50 Z' fill='${c}'/>` +
+        `<path d='M51 36 C54 28 59 23 65 21 L68 27 C63 29 59 33 56 40 Z' fill='${c}'/>` +
+        `<path d='M67 19 L63 10 L73 18 Z' fill='${c}'/>` +
+        // La boca va en dos mitades: el hueco entre ellas es lo que dice que
+        // está abierta, y por ahí sale el fuego.
+        `<path d='M62 19 C69 16 78 18 88 22 L76 25 L63 25 Z' fill='${c}'/>` +
+        `<path d='M64 27 C71 27 79 28 86 30 L74 31 L64 30 Z' fill='${c}'/>` +
+        // El fuego ARRANCA DENTRO de la boca: despegado se lee como otro bicho
+        // volando al lado.
+        `<path d='M82 22 C95 18 107 21 118 28 C107 26 98 27 89 31 C95 27 92 25 82 27 Z' fill='${a}'/>` +
+        `<path d='M86 17 C94 14 101 14 108 16 C100 18 94 20 89 23 Z' fill='${a}'/>`,
+};
+
+/* Cada capa es un mosaico con dos figuras puestas a mano: una sola en el
+ * centro deja un ritmo de cuadrícula que se nota enseguida. */
+const CAPAS = {
+    cohetes: {
+        lejos: { w: 420, h: 300, seg: 34, figuras: [[30, 40, 1.5, -20], [250, 190, 1.05, -14]] },
+        cerca: { w: 560, h: 380, seg: 22, figuras: [[70, 250, 2.6, -24]] },
+    },
+    dragones: {
+        lejos: { w: 460, h: 320, seg: 40, figuras: [[20, 40, 1.15, -8], [250, 200, 0.85, -4]] },
+        cerca: { w: 620, h: 400, seg: 26, figuras: [[60, 250, 1.9, -10]] },
+    },
+};
+
+function capa(nombre, capa, color, acento, opacidad) {
+    const piezas = capa.figuras
+        .map(([x, y, escala, giro]) =>
+            `<g transform='translate(${x},${y}) rotate(${giro}) scale(${escala})'>` +
+            VOLADORES[nombre](color, acento) + "</g>")
+        .join("");
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${capa.w}' height='${capa.h}' ` +
+                `viewBox='0 0 ${capa.w} ${capa.h}'><g opacity='${opacidad}'>${piezas}</g></svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+/* El recorrido de cada vuelta es UN mosaico exacto (o dos a lo ancho, para que
+ * la diagonal quede más tendida): así el bucle no tiene salto — al volver a
+ * cero la figura de al lado está justo donde estaba la anterior. */
+function vuelo(id, nombre, tema) {
+    const sel = `:root[data-tema="${id}"]`;
+    const tramos = { cohetes: 1, dragones: 2 };
+    let css =
+        `${sel} body::before,${sel} body::after{content:"";position:fixed;top:-50%;left:-50%;` +
+        `width:200%;height:200%;pointer-events:none;z-index:-1;background-repeat:repeat}`;
+    for (const cual of ["lejos", "cerca"]) {
+        const c = CAPAS[nombre][cual];
+        const clara = capa(nombre, c, tema.brand[400], tema.accent[500], 0.11);
+        const oscura = capa(nombre, c, tema.brand[300], tema.accent[400], 0.1);
+        const pseudo = cual === "lejos" ? "::before" : "::after";
+        const anim = `vuela-${id}-${cual}`;
+        css += `${sel} body${pseudo}{background-image:${clara};background-size:${c.w}px ${c.h}px;` +
+               `animation:${anim} ${c.seg}s linear infinite}` +
+               `${sel}.dark body${pseudo}{background-image:${oscura}}` +
+               `@keyframes ${anim}{to{transform:translate3d(${c.w * tramos[nombre]}px,-${c.h}px,0)}}`;
+    }
+    return css;
+}
+
 function fondo(nombre, color, opacidad) {
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'>` +
                 PATRONES[nombre](color, opacidad) + `</svg>`;
@@ -149,6 +239,7 @@ function decoracion(id, tema) {
               // encima de él, y así no hay ningún tramo donde lo baje.
               `${sel} #header{background-image:linear-gradient(120deg,rgb(var(--c-brand-900)),rgb(var(--c-brand-700)) 55%,rgb(var(--c-brand-600)))}` +
               `${sel} footer{background-image:linear-gradient(120deg,rgb(var(--c-brand-950)),rgb(var(--c-brand-800)))}`;
+    if (tema.vuelan) css += vuelo(id, tema.vuelan, tema);
     if (tema.fuente) {
         // Solo los TÍTULOS cambian de letra. El cuerpo se queda en Inter a
         // propósito: es el texto que hay que poder leer en una tarea de veinte
@@ -241,5 +332,5 @@ if (require.main === module) {
 } else {
     // herramientas/verificar-temas-plataforma.js arma el bloque con ESTA
     // función y no con una copia: comprobar una copia no comprobaría nada.
-    module.exports = { PALETA, cssDeTemas, rgb };
+    module.exports = { PALETA, cssDeTemas, rgb, CAPAS };
 }

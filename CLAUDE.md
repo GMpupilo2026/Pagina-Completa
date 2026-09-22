@@ -7606,6 +7606,43 @@ pie en degradado, y la letra de los **títulos** redondeada.
   para poder leer. Y NUNCA lleva información — es adorno, no dato.
 - **Son SVG escritos dentro del CSS**, no archivos de `img/`: son 400 bytes cada
   uno, así que una petición por tema costaría más que el CSS entero.
+
+#### Los que VUELAN: los cohetes de Galaxia y los dragones de Dragones
+
+Dos temas traen además figuras que **cruzan el fondo**: cohetes en Galaxia y
+dragones tirando fuego en Dragones. Lo declara el campo `vuelan` de la tabla, y
+el patrón de siempre (las estrellas, las escamas) se queda quieto debajo.
+
+- **Son DOS capas y no una**, `body::before` y `body::after`, con figuras de
+  distinto tamaño y distinta velocidad. Con una sola, todas se mueven igual y lo
+  que se ve es un papel tapiz deslizándose; con las pequeñas despacio detrás y
+  las grandes más rápido delante, el ojo lo lee como profundidad — que es lo
+  único que hace que parezca que vuelan.
+- **Cada vuelta recorre un mosaico exacto** (o dos a lo ancho, para que la
+  diagonal quede más tendida). Así el bucle no tiene salto: al volver a cero, la
+  figura de al lado está justo donde estaba la anterior. Un recorrido que no sea
+  múltiplo del mosaico da un tirón cada vuelta, y eso en un fondo se nota mucho
+  más que el propio movimiento.
+- **El fuego va en el color de ACENTO, no en el de la silueta.** A esta opacidad
+  es lo único que distingue «un dragón» de «un dragón tirando fuego», y la llama
+  del cohete, de un pez.
+- **El fuego tiene que ARRANCAR DENTRO de la boca.** Despegado un par de píxeles
+  se lee como otro bicho volando al lado — eso se descubrió dibujándolo y
+  mirándolo, no calculándolo. Lo mismo el ala del dragón, que va dibujada
+  PRIMERO (o sea detrás): encima le corta el cuello y sus muescas se leen como
+  agujeros en el cuerpo.
+- **Van en `z-index: -1` y `pointer-events: none`**: detrás de todo el contenido
+  y sin comerse un solo clic. Una capa fija a pantalla completa por delante sería
+  una página entera que no responde, y eso tampoco daría ningún error.
+- **Las dos formas de pedir menos movimiento hacen cosas distintas, a
+  propósito.** Modo Adaptado **se las lleva enteras** (`content: none`): apagar
+  el patrón y dejar los cohetes cruzando la pantalla sería justo lo contrario de
+  lo que ese modo hace. `prefers-reduced-motion` del sistema solo las **frena**
+  (`animation: none`) — quien pidió menos movimiento no pidió menos tema, y
+  borrárselas sería quitarle la decoración que eligió.
+- Las dos reglas viven en `css/styles.css`, junto a la que apaga el patrón, y
+  llevan `!important`: la regla que las enciende tiene más especificidad
+  (`:root[data-tema="x"] body::before` es 0,2,2 contra 0,1,2).
 - **En Modo Adaptado el patrón se apaga.** Ese modo se enciende por baja visión,
   y un fondo con figuras debajo del texto es ruido visual justo ahí — quitarlo
   de en medio es de lo poco que este modo puede hacer. Lo que se va es el
@@ -7662,10 +7699,16 @@ verdad: que tocar «Princesas» pinte el encabezado rosado **de verdad** (se mid
 el color que calculó el navegador, no la clase), que el tema alcance a las otras
 páginas y al modo oscuro, que la elección de casillas del alumno le gane al tema
 **y que el camino de vuelta funcione**, y que con el tema puesto el texto peor
-parado de la página siga llegando a su mínimo de contraste. Está probado que
+parado de la página siga llegando a su mínimo de contraste. De los que vuelan:
+que las dos capas estén, que no se coman los clics, que **se muevan de verdad**
+—una animación declarada que el navegador no corre se ve exactamente igual que
+un fondo quieto, así que se mide el `transform` dos veces y se compara—, que un
+tema sin `vuelan` no pinte ninguna, y que Modo Adaptado se las lleve mientras
+`prefers-reduced-motion` solo las frene. Está probado que
 falla de verdad: con un rosa elegido a ojo saltan el contraste y el compilado,
-sin recompilar salta el compilado, y quitándole el script a una página saltan
-dos.
+sin recompilar salta el compilado, quitándole el script a una página saltan dos,
+dejando las capas encendidas en Modo Adaptado salta una, sin la regla de
+«menos movimiento» otra, y con la animación declarada pero en pausa, dos.
 
 ## El CSS va compilado, no por CDN
 

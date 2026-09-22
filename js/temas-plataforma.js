@@ -89,11 +89,12 @@
     galaxia: {
       label: "Galaxia",
       icono: "🌌",
-      descripcion: "Violetas de noche con estrellas doradas.",
+      descripcion: "Violetas de noche, con cohetes cruzando el fondo.",
       brand: { 50: "#f5f2fb", 100: "#e5ddf7", 200: "#d1c3f1", 300: "#baa7e9", 350: "#aa92e2", 400: "#8767cf", 450: "#7a57ca", 500: "#6f49c6", 600: "#5636a1", 700: "#41297a", 800: "#2f1c5a", 900: "#231445", 950: "#190d33" },
       accent: { 50: "#fefaee", 100: "#fbf3d0", 300: "#f6cb1e", 400: "#e5b90a", 500: "#c19e10", 600: "#a08412", 700: "#836c10", 900: "#5e4d0a" },
       casillas: "morado",
       decorado: "estrellas",
+      vuelan: "cohetes",
     },
     bosque: {
       label: "Bosque",
@@ -107,11 +108,12 @@
     dragones: {
       label: "Dragones",
       icono: "🐉",
-      descripcion: "Rojos y naranjas de fuego.",
+      descripcion: "Rojos y naranjas, con dragones tirando fuego al fondo.",
       brand: { 50: "#fbf1f0", 100: "#f5dbd9", 200: "#efbeb9", 300: "#e59f98", 350: "#dd887e", 400: "#c7584c", 450: "#ba483b", 500: "#a84035", 600: "#80332b", 700: "#622721", 800: "#461b16", 900: "#361310", 950: "#270d0a" },
       accent: { 50: "#fefbf7", 100: "#fdf1e4", 300: "#fac58f", 400: "#f9ae64", 500: "#ed8924", 600: "#c96f16", 700: "#a45c14", 900: "#76410d" },
       casillas: "fuego",
       decorado: "escamas",
+      vuelan: "dragones",
     },
   };
 
