@@ -206,14 +206,21 @@ async function pruebaAtajos(browser) {
       etiquetas: Array.from(s.querySelectorAll("a span span:first-child")).map((n) => n.textContent),
     })));
 
-  igual("los cuatro grupos, en su orden", grupos.map((g) => g.titulo),
-    ["Resultados", "Formularios", "Bases de datos", "Reportes"]);
-  igual("Resultados: los dos diagnósticos y los dos exámenes", grupos[0].enlaces,
+  igual("los grupos de atajos, en su orden", grupos.map((g) => g.titulo),
+    ["Resultados", "Formularios", "Bases de datos", "Venta de materiales", "Reportes"]);
+  /* Cada grupo se busca POR NOMBRE y no por su posición: con índices, sumar un
+     grupo renumeraba media docena de comprobaciones que no tienen nada que ver
+     con el orden, y había que corregirlas a mano una por una. Es la misma
+     razón por la que clases.html busca sus grupos por título. El orden se
+     comprueba arriba, una sola vez, que es donde importa. */
+  const atajos = (t) => (grupos.find((g) => g.titulo === t) || { enlaces: ["(no está ese grupo)"] }).enlaces;
+  igual("Resultados: los dos diagnósticos y los dos exámenes", atajos("Resultados"),
     ["informes.html?tema=diagnostico", "arbitraje.html",
      "informes.html?tema=diagnostico-publico", "informes.html?tema=arbitraje"]);
-  igual("Formularios", grupos[1].enlaces, ["formularios.html", "inscripciones.html", "solicitudes.html"]);
-  igual("Bases de datos", grupos[2].enlaces, ["admin-jugador.html"]);
-  igual("Reportes", grupos[3].enlaces, ["reportes.html", "cobros.html"]);
+  igual("Formularios", atajos("Formularios"), ["formularios.html", "inscripciones.html", "solicitudes.html"]);
+  igual("Bases de datos", atajos("Bases de datos"), ["admin-jugador.html"]);
+  igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);
+  igual("Reportes", atajos("Reportes"), ["reportes.html", "cobros.html"]);
   igual("los informes de toda la plataforma siguen aparte y de primeros",
     await page.evaluate(() => {
       const a = document.querySelector('#app a[href="informes.html"]');

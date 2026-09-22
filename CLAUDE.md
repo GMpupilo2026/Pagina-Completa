@@ -4062,6 +4062,120 @@ el número de las familias salga de los ajustes y no escrito en la página, que
 un número de tres dígitos no se guarde, y qué manda la ficha de contacto al
 corregir cada uno de los tres correos.
 
+## La tienda de materiales: montada, con precio, y todavía cerrada
+
+`tienda.html` es el catálogo de venta de lo que este repositorio ya produjo:
+los doce cursos con su material de clase y los cinco libros y guías. **Cada
+material vale ₡5.000**, y los seis módulos del anuncio —«¿Eres entrenador de
+ajedrez?»— son la forma en que se presenta el paquete completo.
+
+**Hoy solo la ve quien administra**, a propósito: está montada entera para
+poder revisarla antes de abrirla, no para vender todavía. El candado es
+`is_admin` a secas y **no `soy_coordinador()`**: esto no es una herramienta de
+coordinación, es una página de venta que todavía no es de nadie, y quien decide
+cuándo abre es quien administra. En el panel el tile va con **`soloAdmin`, no
+con `mantenimientoAlumno`**: aquella palabra dice «esto vuelve» y se la seguiría
+enseñando al equipo docente, y lo que hay que decir acá es que todavía no es
+suya. El día que abra, se cambia esa palabra por el público que toque y no hace
+falta tocar nada más.
+
+### El catálogo es la única fuente, y el precio está escrito UNA vez
+
+`js/tienda-catalogo.js` tiene los productos, los seis módulos, los cinco bonos
+y el precio. La página **no tiene ni un producto ni un precio escrito a mano**:
+pegar la misma ficha diecisiete veces es exactamente como terminaron las diez
+tarjetas de `cursos.html` antes de `herramientas/cursos/catalogo.json`, y ahí
+cambiar el diseño son diecisiete ediciones y es cuestión de tiempo que una
+quede distinta.
+
+- **Un módulo no es un producto: es un grupo de productos**, y por eso solo
+  guarda sus ids. Así el anuncio no puede prometer un curso que el catálogo no
+  tiene.
+- **El precio del paquete se CALCULA**, no se escribe: es la suma de los
+  materiales menos un descuento, redondeada al millar para que se pueda pagar
+  por SINPE sin monedas. Escribir «₡51.000 en vez de ₡85.000» a mano deja las
+  dos cifras mintiendo en cuanto se sume un material más. Es la misma decisión
+  de `cobros.estado` y del avance de una tarea: lo que se deriva de una lista
+  no se guarda aparte.
+- **El «ver el material» de cada ficha se calcula igual** (un curso es su
+  portada pública, un libro es su primer archivo) en vez de escribirse
+  diecisiete veces, donde el que se olvidara quedaría con un botón que no lleva
+  a ninguna parte.
+
+### Lo que se rompe callado acá, y lo caro que sale
+
+Todo esto se ve perfecto en pantalla y lo descubre **quien ya pagó**, que es el
+único que no puede arreglarlo:
+
+- **Un producto que apunta a un archivo que ya no está.** La ficha se pinta, se
+  cobra, y no llega nada.
+- **Un número inventado** («27 cuadernillos» donde hay 24). Nadie los cuenta: se
+  leen y se creen. Por eso `piezas` **se cuenta contra el disco**, la misma
+  regla que el resultado de cada posición de un curso, que se verifica con motor
+  y no a ojo.
+- **Un curso fuera de los seis módulos** —el «sistema completo» vende algo que
+  no entrega— **o metido en dos**, que lo cobra dos veces.
+- **Un precio que dice una cosa en la ficha y otra en el mensaje de WhatsApp.**
+  Por eso el pedido se arma en UNA función para el paquete y para la selección.
+- **Un `wa.me` sin código de país**: abre un chat con un número que no existe y
+  se ve como un enlace perfecto. El número sale de `ajustes_academia`
+  (`whatsapp_consultas`), no escrito en la página, y **si no hay ninguno no se
+  inventa uno**: los botones lo dicen en vez de abrir la nada. Misma regla que
+  el informe a la casa.
+- **Y la que no se puede deshacer: que la tienda se le pinte a alguien mientras
+  está cerrada.** Por eso el verificador mide que a quien no administra no le
+  quede ni un control al que llegar con el teclado **y que no haya ni un «₡» en
+  el código de la página** — eso último vale doble: es la prueba de que ningún
+  precio está escrito a mano, porque todos salen del catálogo, que solo se
+  pinta si quien mira administra.
+
+### La burbuja le tapaba el botón de comprar
+
+`tienda.html` está en `SIN_BURBUJA` de `herramientas/academia-cabecera.py`, con
+`sesion.html` y `examen.html`. No es que sobre: **la burbuja de «quién está en
+línea» flota fija abajo a la derecha y la barra de la selección va fija abajo**,
+así que «Pedir por WhatsApp» quedaba literalmente debajo de ella y no se podía
+apretar. No daba ningún error —se veía perfecto— y lo habría descubierto quien
+quisiera comprar. Encima, «0 alumnos en línea» no tiene nada que decir en una
+página de venta. El verificador mide **quién está de verdad en el punto donde
+uno toca el botón**, no que el botón exista: cualquier cosa que algún día se
+ponga a flotar en esa esquina salta ahí.
+
+### No hay pasarela de pago, y eso ya estaba decidido
+
+Se cierra por WhatsApp y se paga por SINPE Móvil, transferencia o efectivo —lo
+mismo que las mensualidades de `cobros.html`, y por la misma razón: es como
+funciona de verdad una academia acá y no necesita ninguna credencial. La entrega
+es a mano, por correo.
+
+**Antes de abrirla al público hay UNA cosa que resolver, y está escrita arriba
+de la propia página**: hoy `worker.js` sirve `cursos/recursos/` y los libros de
+la raíz **sin ningún candado**, así que quien conozca la dirección exacta de un
+archivo se lo baja sin pagar — y eso no da ningún error ni queda registrado en
+ninguna parte. Mientras la entrega se haga a mano no cambia nada; el día que la
+tienda abra, el material que se cobra tiene que mudarse detrás de un candado de
+verdad. Va escrito EN LA PÁGINA y no solo acá porque es la decisión que hay que
+tomar antes de apretar el botón de abrir.
+
+**Al tocar `js/tienda-catalogo.js`, `tienda.html` o el material que vende,
+correr `node herramientas/verificar-tienda.js`** (con el sitio en
+localhost:8777 y playwright). Existe porque la página está detrás del login
+**y** detrás del rol: `verificar-css.js` abre las páginas sin cuenta y no ve
+nada de esto. Comprueba el catálogo contra el disco —que los diecisiete
+productos apunten a archivos que existen, que las piezas que promete cada ficha
+estén de verdad en la carpeta, y que ningún curso quede fuera de los módulos ni
+metido en dos— y después, en un navegador de verdad, que el sello del anuncio
+diga los módulos y los bonos que hay, que el pedido lleve exactamente lo que se
+marcó y el mismo total que decía la barra, que el botón de pedido no lo tape
+nada, que sin número de WhatsApp no se abra ningún chat, y que a quien no
+administra no se le pinte ni un precio. Está probado que falla de verdad:
+rompiendo la ruta de un curso, metiendo uno en dos módulos, inflando un número
+de la ficha o quitándole el 506 al `wa.me`, salta cada vez.
+
+**Al sumar un material a la venta** se escribe su ficha en `PRODUCTOS`, se lo
+mete en UNO de los seis módulos, y se corre el verificador: si la carpeta, los
+números o el módulo no cuadran, no pasa.
+
 ## Reportes de actividades para presentar
 
 `reportes.html` (botón "📄 Reportes de actividades" en `admin.html`) arma el

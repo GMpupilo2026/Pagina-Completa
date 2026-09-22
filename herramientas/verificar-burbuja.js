@@ -348,7 +348,13 @@ function pruebaPaginas() {
     .map((s) => s.slice(1, -1));
 
   igual("la lista de páginas de la Academia no está vacía", paginas.length > 40, "true");
-  igual("las dos exceptuadas están escritas", sin.slice().sort().join(","), "examen.html,sesion.html");
+  /* Las tres que van sin burbuja, escritas acá para que quitársela a una
+     cuarta sea una decisión y no un descuido: sesion.html ya tiene su propio
+     chat con la lista de conectados, examen.html no puede permitirse un panel
+     que se despliega solo, y tienda.html tenía el botón de pedido JUSTO
+     DEBAJO de ella — la burbuja flota fija en esa esquina y no dejaba
+     comprar. */
+  igual("las tres exceptuadas están escritas", sin.slice().sort().join(","), "examen.html,sesion.html,tienda.html");
 
   const malas = [], sinScript = [];
   for (const p of paginas) {
