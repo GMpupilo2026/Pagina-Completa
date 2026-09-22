@@ -722,6 +722,74 @@ rechazan, la ficha queda presencial y cerrada, otro profesor no la edita, el
 alumno que intenta insertarse un tramo de veinte años se queda con **0 minutos**
 —el trigger le sigue poniendo `now()`— y no puede crear ninguna clase.
 
+#### Llegar tarde no es faltar, y tampoco es llegar
+
+La ficha solo sabía decir «vino» o «no vino», así que a quien entró media hora
+después se le marcaba presente y quedaba con la clase entera de «tiempo en
+clase». Eso no da ningún error: el informe que llega a su casa dice 60 minutos
+donde hubo 30, y la tardanza —que es justo lo que una familia pregunta— no
+quedaba registrada en ninguna parte.
+
+Cada alumno marcado tiene ahora, a su derecha, un recuadro donde se escriben
+los **minutos** que llegó tarde. En blanco es a tiempo, que es el caso de casi
+todos.
+
+- **Se guarda en MINUTOS y no como una marca de «llegó tarde»**, por dos
+  razones que son la misma: los minutos dicen si fueron cinco o cuarenta, y son
+  lo único con lo que se puede corregir el tiempo. Una marca sola dejaría el
+  tramo mintiendo igual.
+- **`class_attendance.joined_at` ya significaba «cuándo se unió»**, así que la
+  tardanza no estrena una segunda columna de hora: es la misma desplazada, y el
+  tramo de `class_presence_log` arranca ahí. Con eso los minutos salen bien en
+  Informes, en el informe a la casa y en el reporte **sin tocar ninguna de las
+  tres funciones que los cuentan**. `minutos_tarde` se guarda aparte para poder
+  contar las veces sin restar horas.
+- **Solo lo escribe `guardar_clase_presencial()`**: en una clase en vivo la
+  asistencia la marca el alumno al conectarse y su `joined_at` ya es la hora
+  real, así que ahí la columna no significa nada y se queda en 0.
+- **Una tardanza que no cuadra se RECHAZA, no se ignora.** Llegan de la
+  pantalla, así que una de alguien que no está marcado —o más larga que la
+  clase— es un error de programación: descartarla en silencio lo dejaría
+  escondido hasta que alguien mirara el informe. Se valida **antes de escribir
+  nada**, para que un guardado no quede a medias.
+- **La pantalla valida lo mismo, pero CON EL NOMBRE.** La base es la que manda;
+  un «no se pudo guardar» sobre veinte casillas deja a quien pasó lista sin
+  saber cuál arreglar, así que acá se dice «a Bruno Mena le pusiste 90 minutos
+  tarde en una clase de 60: eso no es llegar tarde, es no llegar».
+- **Desmarcar a alguien le borra la tardanza**, y las tres puertas que
+  desmarcan tienen que hacerlo: la casilla, «Ninguno» y el selector de
+  subgrupos —que desmarca a quien no es del subgrupo y no sabe que el recuadro
+  existe—. Una tardanza colgada hace que la base rechace el guardado entero por
+  algo que en pantalla ya se corrigió.
+- **El recuadro solo se ve sobre quien está marcado**: preguntar a qué hora
+  llegó quien no vino no significa nada.
+- **La fila es un `<div>` con el `<label>` dentro**, envolviendo solo la casilla
+  y el nombre. Con el recuadro dentro del label, tocarlo para escribir habría
+  **desmarcado al alumno** — el clic en cualquier hijo de un label activa su
+  control.
+- **El formulario va con `novalidate`**, y eso lo destapó este cambio: con
+  `min`, `max` y `step` puestos, un número que no cumpla —una duración de 3
+  minutos, unos 7 minutos tarde contra un `step` de 5— lo corta el navegador con
+  SU globo, en el idioma del navegador, y el `submit` no llega a dispararse: los
+  avisos en español de la página no salen nunca y nadie entiende por qué no
+  guarda. Los atributos se quedan puestos, que es lo que anuncia el lector de
+  pantalla al entrar al campo. Misma decisión que `bienvenida.html`.
+- En el reporte, las tardías van en el resumen, en una columna **«Tarde»** por
+  clase y en una **«Llegó tarde»** por alumno con las veces Y los minutos: tres
+  tardías de cinco minutos y tres de media hora son cosas distintas. Las tres
+  solo aparecen si hubo alguna, como la columna de presenciales. Y la nota al
+  pie dice que esos minutos **ya están descontados**, o parecería que se cuentan
+  dos veces.
+
+Comprobado impersonando roles en SQL, 14 casos: quien llega 20 minutos tarde a
+una clase de 60 queda con 40 minutos de clase y su `joined_at` 20 minutos
+después del inicio; el que llegó a tiempo con los 60; corregir la ficha
+quitándole la tardanza le devuelve sus 60; una tardanza de alguien no marcado y
+otra más larga que la clase se rechazan; el reporte las cuenta en los tres
+niveles; y **queda UNA sola versión de la función** —la firma vieja se borró, o
+PostgREST resolvería una u otra según qué parámetros lleguen y la que quedara
+sin tardanzas las borraría al volver a guardar.
+
 #### Qué se hizo en la clase, y cómo lo dice el informe
 
 El campo «Qué se hizo en esta clase» es `class_sessions.notes`, el mismo que ya
@@ -759,6 +827,15 @@ deja la clase fechada el día siguiente sin dar ningún error—, que el buscado
 selector de subgrupos dejaría marcada a gente que no fue), que «los del martes»
 marque a los suyos y desmarque al resto, que guardar sin nadie marcado pida un
 segundo toque, que **corregir mande la lista completa y el id de ESA ficha**, que
+los recuadros de minutos tarde **nazcan escondidos** —medido al abrir la página y
+no más adelante, porque para entonces el selector de subgrupos y los propios
+`change` ya los habrán recalculado y daría verde aunque nacieran todos a la
+vista—, que la tardanza viaje con sus minutos, que **desmarcar y volver a marcar
+deje el recuadro Y el contador de acuerdo** —se comprueba ANTES de guardar,
+porque guardar bien llama a `limpiar()`, que vacía el mapa entero y taparía el
+fallo—, que una tardanza más larga que la clase no se mande y se diga de quién
+es, que **una duración imposible la rechace la página en español** y no el globo
+del navegador, que
 la clase EN VIVO del mismo profesor no se ofrezca acá, que borrar filtre por su
 id, que a la alumna no se le pinte nada y que la página **se vea** (sin CSS
 impreso como texto y en oscuro cuando el tema está en oscuro). Está probado que
