@@ -27,8 +27,12 @@ const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr" };
 const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr" };
 
 const PLANES = [
-  { id: "p-mes", nombre: "Mensualidad", monto: 25000, moneda: "CRC", periodicidad: "mensual", activo: true, descripcion: "Dos clases por semana", created_at: "2026-01-01T00:00:00Z" },
-  { id: "p-usd", nombre: "Clase privada", monto: 40, moneda: "USD", periodicidad: "mensual", activo: false, descripcion: null, created_at: "2026-01-02T00:00:00Z" },
+  { id: "p-mes", nombre: "Mensualidad", monto: 25000, moneda: "CRC", periodicidad: "mensual", personalizado: false, activo: true, descripcion: "Dos clases por semana", created_at: "2026-01-01T00:00:00Z" },
+  { id: "p-usd", nombre: "Clase privada", monto: 40, moneda: "USD", periodicidad: "mensual", personalizado: false, activo: false, descripcion: null, created_at: "2026-01-02T00:00:00Z" },
+  // Un plan armado a mano para un solo alumno desde "Quién paga qué": no es
+  // catálogo de nadie más, así que no puede salir ni en "Planes" ni en el
+  // selector de arriba de esa ficha.
+  { id: "p-custom", nombre: "Beca especial de Carla", monto: 5000, moneda: "CRC", periodicidad: "mensual", personalizado: true, activo: true, descripcion: null, created_at: "2026-01-03T00:00:00Z" },
 ];
 const SUSCRIPCIONES = [
   { id: "s-1", student_id: "u-ana", plan_id: "p-mes", inicio: "2026-06-01", dia_cobro: 5, descuento_pct: 10, activa: true },
@@ -56,7 +60,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     planes_cobro: ${JSON.stringify(PLANES)},
     suscripciones: ${JSON.stringify(SUSCRIPCIONES)},
     cobros_vista: ${JSON.stringify(COBROS)}.filter((c) => ${JSON.stringify(cobrosVisibles)}.includes(c.id)),
-    ajustes_academia: [{ clave: "whatsapp_consultas", valor: "+506 8309-2291" }],
+    ajustes_academia: [
+      { clave: "whatsapp_consultas", valor: "+506 8309-2291" },
+      { clave: "cobros_dias_antes", valor: "3" },
+      { clave: "cobros_dias_vencido", valor: "1" },
+      { clave: "cobros_dias_moroso", valor: "15" },
+    ],
     cobros_contacto: [],
     cobros_recordatorios_programados: [
       { id: "rp-1", student_id: "u-bruno", programado_para: "2026-12-01T15:00:00.000Z", estado: "pendiente", correos: null, nota: null },
@@ -74,7 +83,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
      techo de PostgREST que esta pantalla acaba de dejar de cruzar, y el fallo
      no se ve: la lista se pinta igual de bien hasta que hay más de mil. */
   function constructor(filas, tabla) {
-    let unica = false, conCuenta = false;
+    let unica = false, conCuenta = false, insertados = null;
     let datos = Array.isArray(filas) ? filas.slice() : filas;
     const aplicar = (fn) => { if (Array.isArray(datos)) datos = datos.filter(fn); };
     const b = {
@@ -101,7 +110,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       range(a, z) { window.__consultas.push({ tabla, verbo: "range", desde: a, hasta: z });
                     if (Array.isArray(datos)) datos = datos.slice(a, z + 1); return b; },
       is() { return b; }, not() { return b; },
-      insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v }); return b; },
+      insert(v) { window.__llamadas.push({ tabla, verbo: "insert", datos: v });
+                  insertados = Array.isArray(v) ? v : [v]; return b; },
       update(v) { window.__llamadas.push({ tabla, verbo: "update", datos: v }); return b; },
       upsert(v) { window.__llamadas.push({ tabla, verbo: "upsert", datos: v }); return b; },
       delete() { window.__llamadas.push({ tabla, verbo: "delete" }); return b; },
@@ -111,7 +121,14 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         // El total es el de ANTES de recortar, como hace PostgREST con
         // count: "exact": si fuera el de la página, "de N cobros" mentiría.
         const total = Array.isArray(filas) ? filas.length : null;
-        let d = datos;
+        // Un .insert(...).select().single() devuelve lo que se insertó, con un
+        // id nuevo — no la tabla de siempre. Sin esto, crearSuscripcion() con
+        // un cobro personalizado "funcionaría" en la prueba usando el id del
+        // primer plan del catálogo, que es justo el error que se quiere
+        // descartar (el personalizado tiene que crear SU PROPIO plan).
+        let d = insertados
+          ? insertados.map((x, i) => Object.assign({ id: "nuevo-" + tabla + "-" + i }, x))
+          : datos;
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null, count: conCuenta ? total : null }).then(res, rej);
       },
@@ -259,8 +276,15 @@ async function pruebaCoordinacion(browser) {
   await page.waitForTimeout(600);
   await abrirMeses();
 
-  // -------- crear un plan
+  // -------- el plan personalizado no es catálogo de nadie más
   await page.click('[data-ficha="planes"]');
+  igual("un plan personalizado no sale en «Planes»",
+    /Beca especial de Carla/.test(await page.evaluate(() => document.getElementById("planes-lista").textContent)), "false");
+  igual("ni en el selector de «Quién paga qué»",
+    await page.evaluate(() => [...document.getElementById("s-plan").options].some((o) => o.textContent.includes("Beca especial de Carla"))),
+    "false");
+
+  // -------- crear un plan
   await page.fill("#p-nombre", "Mensualidad nueva");
   await page.fill("#p-monto", "30000");
   await page.selectOption("#p-periodicidad", "trimestral");
@@ -288,6 +312,48 @@ async function pruebaCoordinacion(browser) {
   // La beca se ve en la lista: 25000 menos 10 % son 22.500.
   const textoSus = sinSeparadores(await page.evaluate(() => document.querySelector("#suscripciones-lista").textContent));
   igual("la beca sale aplicada en la lista", /₡22500/.test(textoSus) && /beca 10 %/.test(textoSus), "true");
+
+  // -------- cobro personalizado: sin elegir plan del catálogo
+  await page.check("#s-personalizado");
+  igual("marcarlo esconde el selector de plan y muestra los campos manuales",
+    await page.evaluate(() => ({
+      plan: document.getElementById("s-plan-cell").classList.contains("hidden"),
+      manual: document.getElementById("s-manual-cell").classList.contains("hidden"),
+    })), { plan: true, manual: false });
+
+  await page.selectOption("#s-alumno", "u-ana");
+  await page.fill("#s-manual-nombre", "Mensualidad con beca especial");
+  await page.fill("#s-manual-monto", "12000");
+  await page.selectOption("#s-manual-moneda", "USD");
+  await page.fill("#s-dia", "20");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#s-guardar");
+  await page.waitForTimeout(300);
+  const planPersonalizado = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "planes_cobro" && l.verbo === "insert"));
+  igual("crea SU PROPIO plan, marcado personalizado y no del catálogo",
+    planPersonalizado && { nombre: planPersonalizado.datos.nombre, monto: planPersonalizado.datos.monto,
+                            moneda: planPersonalizado.datos.moneda, personalizado: planPersonalizado.datos.personalizado },
+    { nombre: "Mensualidad con beca especial", monto: 12000, moneda: "USD", personalizado: true });
+  const susPersonalizada = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "suscripciones" && l.verbo === "insert"));
+  igual("y la suscripción usa el id de ESE plan recién creado, no el de otro",
+    susPersonalizada && { student_id: susPersonalizada.datos.student_id, plan_id: susPersonalizada.datos.plan_id, dia_cobro: susPersonalizada.datos.dia_cobro },
+    { student_id: "u-ana", plan_id: "nuevo-planes_cobro-0", dia_cobro: 20 });
+  igual("y después de guardar se destapa el selector de plan y se apaga la casilla",
+    await page.evaluate(() => ({
+      marcada: document.getElementById("s-personalizado").checked,
+      plan: document.getElementById("s-plan-cell").classList.contains("hidden"),
+    })), { marcada: false, plan: false });
+
+  // Sin concepto ni monto, no se manda nada.
+  await page.check("#s-personalizado");
+  await page.fill("#s-manual-nombre", "");
+  await page.fill("#s-manual-monto", "");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#s-guardar");
+  await page.waitForTimeout(300);
+  igual("sin concepto no se crea ningún plan",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "planes_cobro").length), 0);
+  await page.uncheck("#s-personalizado");
 
   // -------- registrar un pago parcial
   await page.click('[data-ficha="cobros"]');
@@ -329,6 +395,42 @@ async function pruebaCoordinacion(browser) {
     /Ana Rojas/.test(moroso) && /₡12500/.test(moroso) && /20 días de atraso/.test(moroso), "true");
   igual("dice a qué correo se le avisa",
     /se le avisa a ana@x\.cr/.test(moroso), "true");
+
+  // -------- cuándo salen los tres avisos automáticos (para TODA la Academia)
+  igual("los tres campos arrancan con lo que ya está guardado",
+    await page.evaluate(() => ({
+      antes: document.getElementById("av-antes").value,
+      vencido: document.getElementById("av-vencido").value,
+      moroso: document.getElementById("av-moroso").value,
+    })), { antes: "3", vencido: "1", moroso: "15" });
+
+  await page.fill("#av-antes", "5");
+  await page.fill("#av-vencido", "2");
+  await page.fill("#av-moroso", "20");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#av-guardar");
+  await page.waitForTimeout(300);
+  const avisos = await page.evaluate(() => window.__llamadas.find((l) => l.tabla === "ajustes_academia" && l.verbo === "upsert" && Array.isArray(l.datos) && l.datos.some((d) => d.clave === "cobros_dias_antes")));
+  igual("guardar manda las tres claves con lo escrito",
+    avisos && avisos.datos, [
+      { clave: "cobros_dias_antes", valor: "5" },
+      { clave: "cobros_dias_vencido", valor: "2" },
+      { clave: "cobros_dias_moroso", valor: "20" },
+    ]);
+
+  // El de "moroso" tiene que caer después que el de "vencido": si no, no se manda.
+  await page.fill("#av-moroso", "1");
+  await page.evaluate(() => { window.__llamadas = []; });
+  await page.click("#av-guardar");
+  await page.waitForTimeout(300);
+  igual("moroso antes o igual que vencido no se guarda",
+    await page.evaluate(() => window.__llamadas.filter((l) => l.tabla === "ajustes_academia" && l.verbo === "upsert").length), 0);
+  igual("y se dice por qué",
+    /después que el de/.test(await page.evaluate(() => document.getElementById("av-estado").textContent)), "true");
+  await page.fill("#av-antes", "3");
+  await page.fill("#av-vencido", "1");
+  await page.fill("#av-moroso", "15");
+
   await page.evaluate(() => { window.__llamadas = []; });
   await page.locator("#morosos-lista button", { hasText: "Recordar ahora" }).click();
   await page.waitForTimeout(400);

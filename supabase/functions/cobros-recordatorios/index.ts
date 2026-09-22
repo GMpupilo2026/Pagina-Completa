@@ -40,9 +40,44 @@ const SITE_URL = "https://ajedrez-integral.com";
 const DE = Deno.env.get("RESEND_FROM_COBROS") || "Ajedrez Integral <informes@ajedrez-integral.com>";
 const MAX_POR_TANDA = 300;
 
-// Cuándo avisa cada tipo, contado en días respecto del vencimiento.
+// Cuándo avisa cada tipo, contado en días respecto del vencimiento. Son los
+// valores por omisión: quien coordina los puede cambiar desde la ficha
+// «Morosidad» de cobros.html (tabla `ajustes_academia`, claves
+// `cobros_dias_antes`/`cobros_dias_vencido`/`cobros_dias_moroso`). Si la fila
+// no existe o trae algo raro, se usa el de siempre — nunca se rompe la tanda
+// por un ajuste mal escrito.
 const DIAS_ANTES_DE_VENCER = 3;
+const DIAS_VENCIDO = 1;
 const DIAS_PARA_MOROSO = 15;
+
+type ParametrosAvisos = { diasAntes: number; diasVencido: number; diasMoroso: number };
+
+async function parametrosAvisos(admin: { from: (t: string) => any }): Promise<ParametrosAvisos> {
+  const porDefecto = { diasAntes: DIAS_ANTES_DE_VENCER, diasVencido: DIAS_VENCIDO, diasMoroso: DIAS_PARA_MOROSO };
+  try {
+    const { data } = await admin.from("ajustes_academia")
+      .select("clave, valor")
+      .in("clave", ["cobros_dias_antes", "cobros_dias_vencido", "cobros_dias_moroso"]);
+    const porClave: Record<string, string> = {};
+    for (const r of data ?? []) porClave[r.clave as string] = r.valor as string;
+
+    const antes = Number(porClave.cobros_dias_antes);
+    const diasAntes = Number.isFinite(antes) && antes >= 0 ? antes : porDefecto.diasAntes;
+
+    const vencidoLeido = Number(porClave.cobros_dias_vencido);
+    const diasVencido = Number.isFinite(vencidoLeido) && vencidoLeido >= 1 ? vencidoLeido : porDefecto.diasVencido;
+
+    const moroso = Number(porClave.cobros_dias_moroso);
+    const diasMoroso = Number.isFinite(moroso) && moroso > diasVencido ? moroso : porDefecto.diasMoroso;
+
+    return { diasAntes, diasVencido, diasMoroso };
+  } catch {
+    // Que no se puedan leer los ajustes no puede costar la tanda entera: se
+    // manda con los valores de siempre, que es lo mismo que pasa si la fila
+    // nunca se llegó a escribir.
+    return porDefecto;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": SITE_URL,
@@ -66,12 +101,12 @@ type Cobro = {
 };
 
 // Qué aviso le toca a un cobro, o null si todavía no le toca ninguno.
-function tipoDe(c: Cobro, hoy: Date): Tipo | null {
+function tipoDe(c: Cobro, hoy: Date, p: ParametrosAvisos): Tipo | null {
   if (Number(c.saldo) <= 0) return null;
-  if (c.dias_atraso >= DIAS_PARA_MOROSO) return "moroso";
-  if (c.dias_atraso >= 1) return "vencido";
+  if (c.dias_atraso >= p.diasMoroso) return "moroso";
+  if (c.dias_atraso >= p.diasVencido) return "vencido";
   const faltan = Math.ceil((new Date(c.vence + "T00:00:00Z").getTime() - hoy.getTime()) / 86400000);
-  if (faltan >= 0 && faltan <= DIAS_ANTES_DE_VENCER) return "proximo";
+  if (faltan >= 0 && faltan <= p.diasAntes) return "proximo";
   return null;
 }
 
@@ -149,9 +184,11 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   const accion = body.action;
 
-  // El número al que se le pide a la familia que mande el comprobante sale de
-  // `ajustes_academia`, no de una constante: lo pone quien coordina.
+  // El número al que se le pide a la familia que mande el comprobante, y los
+  // días de cada aviso, salen de `ajustes_academia` y no de una constante:
+  // los pone quien coordina.
   const contacto = await contactoDeConsultas(admin);
+  const parametros = await parametrosAvisos(admin);
 
   // -------------------------------------------------------------- la tanda
   if (accion === "tanda") {
@@ -167,7 +204,7 @@ Deno.serve(async (req) => {
     // Se agrupa por alumno y se queda con el aviso más urgente que tenga.
     const porAlumno = new Map<string, { tipo: Tipo; disparador: Cobro; cobros: Cobro[] }>();
     for (const c of cobros) {
-      const t = tipoDe(c, hoy);
+      const t = tipoDe(c, hoy, parametros);
       const g = porAlumno.get(c.student_id) ?? { tipo: null as unknown as Tipo, disparador: c, cobros: [] };
       g.cobros.push(c);
       if (t && (!g.tipo || URGENCIA[t] > URGENCIA[g.tipo])) { g.tipo = t; g.disparador = c; }
@@ -242,7 +279,7 @@ Deno.serve(async (req) => {
 
       // Puede que para cuando le toca ya no haya nada pendiente (se pagó
       // antes, o se anuló): no es un fallo, es que ya no hacía falta.
-      const tipos = cobrosDelAlumno.map((c) => tipoDe(c, hoy)).filter((t): t is Tipo => t !== null);
+      const tipos = cobrosDelAlumno.map((c) => tipoDe(c, hoy, parametros)).filter((t): t is Tipo => t !== null);
       if (!tipos.length) {
         await marcar("No se mandó nada: ese alumno ya no tenía ningún cobro pendiente a esta hora.");
         sinNada += 1;
@@ -250,7 +287,7 @@ Deno.serve(async (req) => {
       }
       let tipo: Tipo = tipos[0];
       for (const t of tipos) if (URGENCIA[t] > URGENCIA[tipo]) tipo = t;
-      const disparador = cobrosDelAlumno.find((c) => tipoDe(c, hoy) === tipo) ?? cobrosDelAlumno[0];
+      const disparador = cobrosDelAlumno.find((c) => tipoDe(c, hoy, parametros) === tipo) ?? cobrosDelAlumno[0];
 
       // `correos` es lo que eligió a mano quien lo programó; sin eso, los
       // mismos destinos de siempre (el fijado a mano, si hay; si no sus
@@ -309,7 +346,7 @@ Deno.serve(async (req) => {
   const hoy = new Date();
   let tipo: Tipo = "proximo";
   for (const c of cobros) {
-    const t = tipoDe(c, hoy);
+    const t = tipoDe(c, hoy, parametros);
     if (t && URGENCIA[t] > URGENCIA[tipo]) tipo = t;
   }
   const nombre = await nombreDe(studentId, comoQuienLlama);
@@ -328,7 +365,7 @@ Deno.serve(async (req) => {
   if (accion === "recordar_ahora") {
     const destinos = await destinatariosDe(studentId);
     if (!destinos.length) return json({ error: "Ese alumno no tiene ningún correo al que avisarle" }, 400);
-    const disparador = cobros.find((c) => tipoDe(c, hoy) === tipo) ?? cobros[0];
+    const disparador = cobros.find((c) => tipoDe(c, hoy, parametros) === tipo) ?? cobros[0];
     let mandados = 0;
     const fallos: string[] = [];
     for (const d of destinos) {

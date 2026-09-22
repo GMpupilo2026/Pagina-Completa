@@ -1203,8 +1203,9 @@ pregunta.
 - **Quien administra da `true` siempre.** Por eso las políticas no llevan una
   segunda rama para él: `bajo_mi_coordinacion()` ya la trae.
 - **Los cobros quedaron acotados con eso** (`cobros`, `pagos`, `suscripciones`,
-  `cobros_contacto`). Los **planes** no: son las tarifas de la Academia, no de
-  un alumno, y no hay a quién atarlos.
+  `cobros_contacto`, y desde la migración `planes_cobro_personalizado_y_privados`
+  también `planes_cobro`, ver «Cobros» más abajo — antes era la única excepción,
+  compartida por toda la Academia).
   - **Cuidado con `pagos`**, que fue el error de esta tanda y se atajó en el
     momento: colgarlo solo del cobro visible abre la puerta que se quería
     cerrar, porque un alumno VE su propio cobro y podría insertar un pago sobre
@@ -3402,9 +3403,18 @@ Academia: una con alumnos vinculados ve sus cobros, pagos y suscripciones; la
 otra, sin ningún profesor vinculado todavía, recibe **cero filas** de las
 siete, y `cobros_resumen()`/`cobros_morosos()` (que son `SECURITY INVOKER`
 sobre `cobros_vista`, una vista con `security_invoker = on`) le dan **cero**
-también — no hay ningún camino que las junte. Lo único que SÍ comparten todos
-los coordinadores son los `planes_cobro`: son las tarifas de la Academia, no
-datos de un alumno, y no hay a quién atarlos (ver más abajo).
+también — no hay ningún camino que las junte.
+
+**Los `planes_cobro` también son privados por coordinador, y esto se
+revirtió.** Nacieron compartidos —eran las tarifas de la Academia, sin alumno
+al que atarlos— pero eso significaba que una coordinadora veía y podía tocar
+el catálogo entero de las demás: "Mensualidad SJ" y "Mensualidad Cenfo"
+mezclados en el mismo selector, con el desactivar de una alcanzando al plan de
+otra. La migración `planes_cobro_personalizado_y_privados` cambió
+`planes_lee_coordinacion`/`planes_escribe_coordinacion` de `soy_coordinador()`
+a secas a `bajo_mi_coordinacion(creado_por)`, el mismo patrón que el resto de
+esta página. Cada coordinadora arma y ve solo sus propios planes; quien
+administra, como siempre, todos.
 
 - **`cobros.estado` solo vale `emitido` o `anulado`.** "Pagado" y "vencido" NO
   se guardan: los calcula `public.cobros_vista` a partir de lo único que se
@@ -3434,9 +3444,11 @@ diarias: `cobros-generar` a las 11:30 UTC (5:30 de la mañana en Costa Rica) y
 `cobros-recordatorios` a las 12:30 — los cobros quedan emitidos **antes** de que
 salgan los avisos.
 
-- Tres avisos: **tres días antes** de vencer, **al día siguiente** del
-  vencimiento y **a los 15 días**. Van a los encargados apuntados en Informes y
-  a la propia cuenta del alumno.
+- Tres avisos: **días antes** de vencer, **días de atraso** para "vencido" y
+  **días de atraso** para "moroso" — de fábrica 3, 1 y 15, pero **configurables
+  para toda la Academia** (ver «Cuándo salen los tres avisos automáticos» más
+  abajo). Van a los encargados apuntados en Informes y a la propia cuenta del
+  alumno.
 - **Un correo por alumno, no uno por cobro**: a nadie le sirve recibir tres el
   mismo día. Se manda el estado de cuenta entero con el tono del aviso más
   urgente que tenga.
@@ -3451,6 +3463,35 @@ salgan los avisos.
 - **El tono no amenaza.** Ni el aviso de los 15 días habla de sacar a nadie de
   clase: dice que se hable. Quien lee puede ser una familia a la que se le
   complicó el mes.
+
+### Cuándo salen los tres avisos automáticos
+
+Los tres días —antes de vencer, de atraso para "vencido", de atraso para
+"moroso"— estaban escritos como constantes dentro de
+`supabase/functions/cobros-recordatorios/index.ts`
+(`DIAS_ANTES_DE_VENCER`, `DIAS_VENCIDO`, `DIAS_PARA_MOROSO`): cambiarlos era
+editar la función y volver a desplegarla. Ahora se editan desde la ficha
+«Morosidad» de `cobros.html`, en «⏱️ Cuándo salen los tres avisos automáticos».
+
+- **Valen para TODA la Academia, no por alumno ni por coordinador.** Es un
+  ajuste de cuándo se manda cada tipo de aviso, no de a quién — la misma
+  decisión que ya tomó `whatsapp_consultas`, guardado en la misma tabla
+  clave/valor `ajustes_academia` (claves `cobros_dias_antes`,
+  `cobros_dias_vencido`, `cobros_dias_moroso`).
+- **Si el ajuste no existe o trae algo raro, se usa el de siempre y la tanda
+  sigue.** `parametrosAvisos()` lee las tres claves con `try/catch` y valida
+  cada una (`diasAntes >= 0`, `diasVencido >= 1`, `diasMoroso > diasVencido`);
+  lo que no pase la prueba cae al valor por omisión (3 / 1 / 15). Un ajuste mal
+  guardado nunca rompe la corrida diaria — como mucho, no cambia nada.
+- **La página valida lo mismo antes de guardar**, con el mismo criterio: sin
+  eso, un "moroso" antes que "vencido" dejaría cobros marcados vencidos
+  saltando derecho a "moroso" sin pasar por el aviso del medio, y la tanda lo
+  aceptaría igual porque `parametrosAvisos()` también lo rechazaría — solo que
+  en silencio, cayendo al valor de siempre sin decir por qué el ajuste guardado
+  "no sirvió".
+- **`ajustes_academia` ya tenía RLS para que cualquiera con sesión lea y
+  `soy_coordinador()` escriba** (es la misma tabla del número de WhatsApp), así
+  que no hizo falta ninguna política nueva.
 
 ### Un recordatorio para un día y una hora exactos
 
@@ -3510,6 +3551,43 @@ estado. Lo que hace la Edge Function con la service role —recalcular el tipo,
 no mandar nada si ya no hace falta, dejar la nota— se comprobó leyendo el
 código y contra la base, como el resto de las tandas firmadas de este
 archivo.
+
+### Un cobro personalizado, sin pasar por el catálogo
+
+"Poner a un alumno en un plan" solo dejaba elegir de la lista de
+`planes_cobro`, y el caso de todos los días —una beca a la medida, un acuerdo
+puntual con una familia— obligaba a crear un plan del catálogo solo para ese
+alumno, y ese plan se quedaba ahí para siempre ofreciéndosele a cualquiera.
+
+La casilla **"Cobro personalizado"** de esa misma ficha destapa tres campos
+—concepto, monto y moneda— en vez del selector de plan. Al guardar:
+
+- **Se crea un `planes_cobro` normal, marcado `personalizado = true`, y la
+  suscripción apunta a ese plan nuevo.** No hay ninguna tubería aparte:
+  `generar_cobros()` y `cobros_resumen()` no distinguen entre un plan del
+  catálogo y uno personalizado — son la misma fila con la misma forma, así que
+  reusan exactamente el mismo camino que ya emitía y cobraba mensualidades.
+- **La periodicidad queda fija en "mensual"** y no se pregunta: un cobro
+  personalizado es casi siempre "esto en vez de la mensualidad de siempre", y
+  un campo más que llenar es un campo que se puede llenar mal.
+- **No sale ni en la pestaña «Planes» ni en el selector de plan de esta misma
+  ficha.** `pintarPlanes()` y el `<select id="s-plan">` filtran
+  `!p.personalizado`: es un plan de un alumno, no catálogo de nadie más, y
+  ofrecerlo ahí sería mezclar "las tarifas de la Academia" con un acuerdo de
+  una sola familia. El arreglo `planes` completo (con los personalizados
+  adentro) se sigue usando para resolver el nombre y el monto de cada
+  suscripción — lo que se filtra es dónde se OFRECE, no lo que existe.
+- **Es privado, como cualquier otro plan desde el cambio de arriba.** Se crea
+  con `creado_por: session.user.id`, así que `bajo_mi_coordinacion(creado_por)`
+  ya lo deja visible solo para quien lo armó (y para quien administra).
+
+**Al tocar esto, correr `node herramientas/verificar-cobros.js`** (mismo
+verificador de arriba). Comprueba que un plan `personalizado` no aparezca en
+«Planes» ni en el selector, que marcar la casilla esconda el selector y
+muestre los tres campos, que guardar cree el plan con `personalizado: true` y
+que la suscripción use el `id` de ESE plan recién creado (no el de otro plan
+cualquiera — el fallo callado sería reusar sin querer un plan ajeno), y que
+sin concepto no se cree nada.
 
 ### Los correos de una familia se corrigen en un solo lugar
 

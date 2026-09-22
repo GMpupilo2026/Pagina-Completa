@@ -391,6 +391,7 @@ columna  planes_cobro.moneda  text  not null
 columna  planes_cobro.monto  numeric  not null
 columna  planes_cobro.nombre  text  not null
 columna  planes_cobro.periodicidad  text  not null
+columna  planes_cobro.personalizado  boolean  not null
 columna  platform_activity_log.activity  text  not null
 columna  platform_activity_log.id  uuid  not null
 columna  platform_activity_log.joined_at  timestamp with time zone  not null
