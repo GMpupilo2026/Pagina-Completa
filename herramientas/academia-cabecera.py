@@ -67,6 +67,7 @@ PAGINAS = [
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
     "entreno/mates.html", "entreno/practicas.html", "entreno/temas.html",
     "entreno/visualizacion.html", "entreno/aperturas.html",
+    "entreno/precision-posicional.html",
     "cursos/academia/aperturas-y-defensas.html",
     "cursos/academia/arbitro-nacional.html",
     "cursos/academia/calculo-y-visualizacion.html",
