@@ -39,7 +39,7 @@ IMPERATIVOS = {
     "conservá": "conserva", "continuá": "continúa", "controlá": "controla",
     "contá": "cuenta", "creá": "crea", "dejá": "deja", "desconfiá": "desconfía",
     "empezá": "empieza", "empujá": "empuja", "encontrá": "encuentra",
-    "entregá": "entrega", "entrená": "entrena", "escaneá": "escanea",
+    "entrá": "entra", "entregá": "entrega", "entrená": "entrena", "escaneá": "escanea",
     "estudiá": "estudia", "evaluá": "evalúa", "evitá": "evita", "fijá": "fija",
     "fotografiá": "fotografía", "ganá": "gana", "identificá": "identifica",
     "iniciá": "inicia", "intentá": "intenta", "jugá": "juega", "llevá": "lleva",
@@ -110,6 +110,7 @@ demás porqué comité subcomité josé café caché también según razón beb�
 aperturasmás
 elistá andrés valdés josué prevé noé
 empecé aprendí entendí tomé repasé jugué estudié olvidé
+encontré revisé recargué creé comprometí revelé
 quizá
 mamá papá bebé
 dará hará podrá dispondrá será tendrá tendrás vendrá verá verás sabrás habrá saldrá
@@ -119,7 +120,16 @@ pondrá querrá irá
 def texto_visible(ruta):
     s = open(ruta, encoding="utf-8").read()
     if ruta.endswith(".html"):
-        s = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", s, flags=re.S | re.I)
+        # Las hojas de estilo no tienen prosa; los <script>, SÍ, y es la que más
+        # se lee: en la Academia casi toda la pantalla se arma con JavaScript
+        # —los avisos, los botones, los textos de error—, así que saltarse los
+        # <script> era dejar sin revisar justo lo que ve quien inició sesión.
+        # Así estuvo meses un "Vuelve a Torneos y entrá desde ahí" en
+        # torneo.html, y el mismo "entrá" en las seis páginas de partida, sin
+        # que esta comprobación dijera nada. Se les quitan las etiquetas igual
+        # que al resto, que es inofensivo: lo que el detector mira son palabras
+        # acentuadas, y un identificador de JavaScript no las lleva.
+        s = re.sub(r"<style\b[^>]*>.*?</style>", " ", s, flags=re.S | re.I)
         s = re.sub(r"<[^>]+>", " ", s)
         s = html.unescape(s)
     return s

@@ -81,7 +81,7 @@
             <!-- Justo debajo de tu nombre: así se ve de una que el botón es tuyo. -->
             <button id="ready-btn" class="hidden w-full mb-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
-            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2 mt-4">Tu mano</h2>
+            <h2 id="my-hand-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm mb-2 mt-4">Tu mano</h2>
             <div id="my-hand" class="flex flex-wrap gap-2 mb-6"></div>
 
             <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
@@ -336,7 +336,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entrá desde ahí."); return; }
+            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
@@ -347,7 +347,20 @@
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
             room = roomData;
             myColor = room.white_id === profile.id ? "w" : (room.black_id === profile.id ? "b" : null);
-            if (!myColor && !isTeacher) { showError("No formas parte de esta partida."); return; }
+            /* Mirar una partida lo decide la RLS, no esta pantalla. Si
+               `game_rooms_select` devolvió la fila, quien la pidió puede verla
+               —juega, es su profesor, administra, o es compañero de clase
+               (`es_companero`)—; y si no la devolvió, dos líneas más arriba ya
+               se salió con "No se encontró esa partida". El `!isTeacher` que
+               había acá era un SEGUNDO candado escrito en la página, más cerrado
+               que el de la base, y dejaba fuera justo a quien más quiere mirar:
+               en un torneo, el "Ver →" de torneo.html llevaba a todo el alumnado
+               a "No formas parte de esta partida" —incluido a quien le tocó bye
+               y no tiene otra cosa que hacer esa ronda—, y el cruce de al lado
+               no lo podía seguir nadie más que quien daba clase.
+               Jugar sigue cerrado por los dos lados: `interactive` cuelga de
+               myColor, los botones de rendirse y de "estoy listo" también, y
+               `game_rooms_update` no nombra a es_companero(). */
 
             /* El nombre de los dos lados sale de nombres_de_jugadores() y no de
                `profiles`: desde que el reto está abierto a toda la Academia el
@@ -363,6 +376,13 @@
                 document.getElementById("rival-hand"),
                 {
                     interactive: !!myColor && room.status === "playing" && bothReady(room),
+                    /* Quien mira no ve ninguna mano. Sin esto, `myColor: "w"` —que
+                       acá solo dice de qué lado se dibuja el tablero— le enseñaría
+                       la mano COMPLETA de las blancas: en un torneo, eso es la
+                       información con la que se gana la partida, y se la estaría
+                       viendo quien espera para jugar contra ellas en la ronda
+                       siguiente. No da ningún error: la pantalla se ve perfecta. */
+                    spectator: !myColor,
                     myColor: myColor || "w",
                     onMove: (info) => { handleLocalMove(info); },
                     onCardPlayed: () => { handleCardPlayed(); },
@@ -370,6 +390,8 @@
                     onAscensoPieceNeeded: showAscensoPicker,
                 }
             );
+            // "Tu mano" no es cierto para quien mira: ahí no hay mano suya.
+            if (!myColor) document.getElementById("my-hand-title").textContent = "Las cartas de las blancas";
             board.loadState(room.cartas_state);
             renderMoveHistory(room.moves);
             updateStatusText();

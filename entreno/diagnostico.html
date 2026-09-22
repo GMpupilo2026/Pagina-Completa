@@ -401,7 +401,7 @@ function pintarPerfil() {
         ${PE.ELO_TIPOS.map((t) => `<option value="${t.id}"${t.id === tipoActual ? ' selected' : ''}>${t.etiqueta}</option>`).join('')}
       </select>
     </div>
-    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rendís en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rendís en partida y ajusta el nivel estimado.'}</p>`;
+    <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">${perfilCuenta && perfilCuenta.elo ? `Registrado en tu perfil: ${perfilCuenta.elo}. Si cambió, corregilo acá y queda actualizado.` : sesionActual ? 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel y el plan. Queda guardado en tu perfil (Configuración).' : 'Con tu Elo, el diagnóstico compara lo que sabes con lo que rindes en partida y ajusta el nivel estimado.'}</p>`;
   box.appendChild(g);
   const inp = g.querySelector('#perfil-elo'), sel = g.querySelector('#perfil-elo-tipo');
   const guardarElo = () => {

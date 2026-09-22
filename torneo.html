@@ -28,6 +28,8 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/cartas-engine.js"></script>
     <script src="js/duelo-engine.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/clases-board.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -94,6 +96,9 @@
     <script>
         let session = null, profile = null, tournament = null, isOwner = false, amIRegistered = false;
         let registrations = [], rounds = [], pairingsByRound = {};
+        // Las salas de las partidas que se están jugando ahora, por id, y el tablerito
+        // que dibuja cada una. Se rehacen en cada render de las rondas.
+        let salasEnJuego = {}, tablerosEnVivo = {};
         const playerNames = {};
         const TOURNEY_ID = new URLSearchParams(window.location.search).get("id");
 
@@ -121,6 +126,27 @@
             if (variant === "duelo") return "duelo.html";
             if (variant === "niebla") return "niebla.html";
             return "crazyhouse.html";
+        }
+
+        /* ---------------------------------------------------------------
+           La posición de una partida NO vive siempre en la misma columna, y
+           equivocarse acá no da ningún error: chess.js rechaza la FEN, el
+           tablero se dibuja en la posición inicial y se ve perfecto — solo que
+           enseña una partida que nadie está jugando.
+             · estándar y niebla → `fen`
+             · crazyhouse        → `fen`, pero con la reserva entre corchetes
+                                   pegada al final, que chess.js no entiende
+             · cartas            → `cartas_state.fen`
+             · duelo             → `duelo_state.fen` (la columna `fen` de la
+                                   sala se queda en la posición de salida)
+           Es la misma cuenta que hace tv.html para su grilla de partidas en
+           vivo; acá se escribe otra vez porque son dos páginas sueltas sin un
+           módulo común, y la de allá lleva meses funcionando sin tocarse. */
+        function fenDeLaSala(room) {
+            if (!room) return null;
+            if (room.variant === "cartas") return room.cartas_state && room.cartas_state.fen;
+            if (room.variant === "duelo") return room.duelo_state && room.duelo_state.fen;
+            return (room.fen || "").replace(/\[[^\]]*\]/, "") || null;
         }
 
         function buildGameRoomFields(whiteId, blackId) {
@@ -333,9 +359,102 @@
             return row;
         }
 
+        /* ---------------------------------------------------------------
+           «Las partidas, en vivo»: un tablerito por cruce que se está jugando,
+           debajo de la lista de la ronda.
+
+           Existe porque hasta ahora, durante una ronda, las partidas eran
+           INVISIBLES desde acá: el único acceso era un "Ver →" por cruce que
+           además saca de esta página, así que para seguir tres tableros había
+           que entrar y volver tres veces. Y a quien le tocó bye —que esa ronda
+           no tiene ninguna otra cosa que hacer— no le quedaba nada que mirar.
+
+           Se dibuja con el MISMO ClasesBoard compacto de las miniaturas de la
+           clase en vivo (`compact: true`), que ya es la pieza compartida para
+           esto: a este tamaño el glifo de texto de las blancas es un contorno
+           hueco que se lee negro, así que compacto dibuja las piezas con el set
+           de js/chess-piece-svg.js, que tiene relleno sólido.
+
+           `interactive: false` en los dos sentidos que importan: acá no se
+           juega —jugar es entrar a la partida— y la base tampoco lo dejaría,
+           porque `game_rooms_update` no nombra a es_companero(). */
+        function renderPartidasEnVivo(pairings) {
+            const enJuego = pairings.filter((p) => !p.is_bye && p.game_room_id && !p.result && salasEnJuego[p.game_room_id]);
+            if (!enJuego.length) return null;
+
+            const caja = document.createElement("div");
+            caja.className = "mt-4 border-t border-brand-100 dark:border-brand-800 pt-3";
+            const titulo = document.createElement("h4");
+            titulo.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2";
+            titulo.textContent = "Las partidas, en vivo";
+            caja.appendChild(titulo);
+
+            const grid = document.createElement("div");
+            /* Mismo tope fijo que las miniaturas de la clase en vivo, y por la
+               misma razón: con `1/N` del ancho, dos partidas se ven enormes y
+               —peor— todas cambian de tamaño en cuanto empieza una más, justo
+               mientras se las está mirando. */
+            grid.className = "grid gap-3";
+            grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(min(190px, 100%), 190px))";
+            caja.appendChild(grid);
+
+            enJuego.forEach((p) => {
+                const sala = salasEnJuego[p.game_room_id];
+                const soyJugador = p.white_id === profile.id || p.black_id === profile.id;
+
+                const tarjeta = document.createElement("a");
+                tarjeta.href = pageFor2pVariant(tournament.variant) + "?room=" + p.game_room_id;
+                tarjeta.className = "block rounded-xl overflow-hidden border-2 border-brand-200 dark:border-brand-700 hover:border-accent-500 transition-colors bg-white dark:bg-brand-900";
+                tarjeta.setAttribute("aria-label",
+                    (soyJugador ? "Seguir jugando" : "Ver") + " la partida del tablero " + p.board_number +
+                    ": " + nameFor(p.white_id) + " con blancas contra " + nameFor(p.black_id) + " con negras");
+
+                const cabecera = document.createElement("p");
+                cabecera.className = "px-2 py-1 text-[11px] text-brand-600 dark:text-brand-200 bg-brand-50 dark:bg-brand-800 truncate";
+                cabecera.textContent = "Tablero " + p.board_number + " · " + nameFor(p.white_id) + " vs " + nameFor(p.black_id);
+                tarjeta.appendChild(cabecera);
+
+                /* Niebla de Guerra es la única que NO se dibuja mientras se
+                   juega, y es la misma regla que ya escribe tv.html: cualquiera
+                   de los dos jugadores puede tener esta página abierta al lado,
+                   y con la posición real a la vista se acabó la niebla, que es
+                   el juego entero. */
+                if (tournament.variant === "niebla") {
+                    const tapada = document.createElement("p");
+                    tapada.className = "aspect-square w-full flex items-center justify-center text-center text-xs text-brand-450 dark:text-brand-350 px-3";
+                    tapada.textContent = "🌫️ Oculta por la niebla hasta que termine";
+                    tarjeta.appendChild(tapada);
+                    grid.appendChild(tarjeta);
+                    return;
+                }
+
+                const tableroEl = document.createElement("div");
+                tableroEl.className = "grid grid-cols-8 aspect-square w-full select-none";
+                // Marca de qué sala es este tablero: la usa el verificador para
+                // comprobar que cada uno dibuje SU posición y no la del de al lado.
+                tableroEl.dataset.tableroSala = p.game_room_id;
+                tarjeta.appendChild(tableroEl);
+                grid.appendChild(tarjeta);
+
+                const tablero = new ClasesBoard(tableroEl, { interactive: false, compact: true });
+                tablero.loadFen(fenDeLaSala(sala));
+                tablerosEnVivo[p.game_room_id] = tablero;
+            });
+
+            const pie = document.createElement("p");
+            pie.className = "text-xs text-brand-450 dark:text-brand-350 mt-2";
+            pie.textContent = "Se mueven solos. Toca un tablero para verlo en grande.";
+            caja.appendChild(pie);
+            return caja;
+        }
+
         function renderRounds() {
             const container = document.getElementById("rounds-container");
             container.innerHTML = "";
+            // Se vacía el mapa junto con el HTML: los tableros de la vuelta anterior
+            // quedaron colgando de nodos que ya no están en la página, y guardarlos
+            // dejaría que una jugada que llega por Realtime se pinte donde no se ve.
+            tablerosEnVivo = {};
             rounds.forEach((round) => {
                 const pairings = (pairingsByRound[round.id] || []).slice().sort((a, b) => a.board_number - b.board_number);
                 const box = document.createElement("div");
@@ -345,6 +464,10 @@
                 heading.textContent = "Ronda " + round.round_number + (round.status === "finished" ? " ✅" : " (en curso)");
                 box.appendChild(heading);
                 pairings.forEach((p) => box.appendChild(renderPairingRow(p, round)));
+                if (round.status !== "finished") {
+                    const enVivo = renderPartidasEnVivo(pairings);
+                    if (enVivo) box.appendChild(enVivo);
+                }
                 container.appendChild(box);
             });
 
@@ -411,7 +534,37 @@
                     pairingsByRound[p.round_id].push(p);
                 });
             }
+            /* Las salas de los cruces que siguen en juego, para dibujarlas acá
+               mismo. Se piden solo las que hacen falta —ni una de las rondas ya
+               terminadas— y se pide la sala ENTERA porque de dónde sale la
+               posición depende de la variante (ver fenDeLaSala). Si la RLS no
+               devuelve alguna, esa tarjeta simplemente no se pinta: nada se
+               rompe y el "Ver →" del cruce sigue ahí. */
+            salasEnJuego = {};
+            const idsEnJuego = rounds
+                .filter((r) => r.status !== "finished")
+                .reduce((acc, r) => acc.concat(pairingsByRound[r.id] || []), [])
+                .filter((p) => !p.is_bye && p.game_room_id && !p.result)
+                .map((p) => p.game_room_id);
+            if (idsEnJuego.length) {
+                const { data: salas } = await sb.from("game_rooms").select("*").in("id", idsEnJuego);
+                (salas || []).forEach((sala) => { salasEnJuego[sala.id] = sala; });
+            }
+
             render();
+        }
+
+        /* Una jugada NO recarga el torneo entero: se repinta el tablerito de esa
+           sala y nada más. Volver a pedir inscritos, rondas y cruces en cada
+           jugada de cada tablero son tres consultas por jugada y, de paso, el
+           parpadeo de toda la lista mientras se está mirando. Lo que sí recarga
+           es que la partida TERMINE (llega por tournament_pairings, con su
+           resultado). */
+        function actualizarSala(sala) {
+            if (!sala || !sala.id) return;
+            salasEnJuego[sala.id] = sala;
+            const tablero = tablerosEnVivo[sala.id];
+            if (tablero) tablero.loadFen(fenDeLaSala(sala));
         }
 
         let reloadPending = false;
@@ -427,6 +580,13 @@
                 const filterColumn = table === "tournaments" ? "id" : "tournament_id";
                 ch.on("postgres_changes", { event: "*", schema: "public", table: table, filter: filterColumn + "=eq." + TOURNEY_ID }, scheduleReload);
             });
+            /* Las partidas de la ronda se mueven en su propia tabla, que no lleva
+               `tournament_id`: no se puede filtrar del lado del servidor, así que
+               llegan todas las de game_rooms y acá se descarta lo que no es de
+               este torneo. `actualizarSala` ya lo hace solo —una sala que no esté
+               en `tablerosEnVivo` no pinta nada—. */
+            ch.on("postgres_changes", { event: "*", schema: "public", table: "game_rooms" },
+                (payload) => actualizarSala(payload.new));
             ch.subscribe();
         }
 
@@ -434,7 +594,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!TOURNEY_ID) { showError("Falta indicar qué torneo abrir. Vuelve a Torneos y entrá desde ahí."); return; }
+            if (!TOURNEY_ID) { showError("Falta indicar qué torneo abrir. Vuelve a Torneos y entra desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }

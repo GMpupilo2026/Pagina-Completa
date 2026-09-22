@@ -135,7 +135,7 @@
                 reglas: [
                     "Nadie captura. Cuando una de tus piezas llega a la casilla de una pieza rival, las dos <strong>se abrazan</strong> y forman una unidad que pasa a ser tuya.",
                     "Una unidad mueve con las reglas de <strong>cualquiera</strong> de las piezas que la forman: caballo y torre juntos saltan como caballo o se deslizan como torre. Si abraza a otra pieza, la suma también. Un peón que llega a la última fila se vuelve dama.",
-                    "No hay jaque ni mate: <strong>gana quien abraza a la unidad que lleva al rey rival</strong>. Cuidá tu rey: cualquier unidad rival que pueda llegar a su casilla lo abraza y termina la partida.",
+                    "No hay jaque ni mate: <strong>gana quien abraza a la unidad que lleva al rey rival</strong>. Cuida tu rey: cualquier unidad rival que pueda llegar a su casilla lo abraza y termina la partida.",
                     "Anotación: CTc3♥d5 = la unión de caballo y torre de c3 abrazó en d5; Cb1-c3 = movimiento simple.",
                 ],
             },
@@ -152,7 +152,7 @@
                 titulo: "🙈 A ciegas",
                 reglas: [
                     "Ajedrez normal, pero <strong>sin ver las piezas</strong>: el tablero se muestra vacío y cada jugada se <strong>escribe</strong> en el panel (Cf3, Nf3, g1f3; enroque 0-0).",
-                    "La jugada del rival aparece escrita frente al tablero durante <strong>10 segundos</strong> y después desaparece. Si escribís una jugada ilegal, el panel te avisa y no cuenta.",
+                    "La jugada del rival aparece escrita frente al tablero durante <strong>10 segundos</strong> y después desaparece. Si escribes una jugada ilegal, el panel te avisa y no cuenta.",
                     "Cada jugador tiene <strong>5 oportunidades</strong> de desbloquear la planilla de jugadas durante <strong>20 segundos</strong> para repasar; luego se vuelve a ocultar.",
                     "Se gana por jaque mate como siempre. Al terminar la partida, el tablero y la planilla se muestran completos.",
                 ],
@@ -501,7 +501,7 @@
             const { data } = await sb.auth.getSession();
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
-            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entrá desde ahí."); return; }
+            if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { showError("No se pudo cargar tu perfil. Cierra sesión y vuelve a entrar."); return; }
