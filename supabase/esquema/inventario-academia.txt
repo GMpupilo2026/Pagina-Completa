@@ -105,6 +105,7 @@ columna  avisos_cobro.id  uuid  not null
 columna  avisos_cobro.tipo  text  not null
 columna  class_attendance.id  uuid  not null
 columna  class_attendance.joined_at  timestamp with time zone  not null
+columna  class_attendance.minutos_tarde  integer  not null
 columna  class_attendance.session_id  uuid  not null
 columna  class_attendance.student_id  uuid  not null
 columna  class_chat_messages.body  text  not null
@@ -666,7 +667,7 @@ funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
 funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=true  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
-funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid)  invoker  anon=false  auth=true
+funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid, p_tarde jsonb)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  informes_cursos_alumnos()  invoker  anon=false  auth=true
