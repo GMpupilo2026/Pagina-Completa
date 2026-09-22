@@ -119,10 +119,15 @@
                             <p id="e-salidas-nota" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
                         </div>
 
-                        <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-4 sm:grid-cols-3">
                             <div>
                                 <label for="e-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Título</label>
                                 <input id="e-titulo" type="text" maxlength="200" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="e-desde" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Disponible desde <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
+                                <input id="e-desde" type="datetime-local" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">En blanco, se puede rendir de una vez. Con fecha, el alumno no lo ve hasta ese momento.</p>
                             </div>
                             <div>
                                 <label for="e-vence" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se puede hacer hasta</label>
@@ -646,6 +651,18 @@ async function ponerExamen(ev) {
   }
   const vence = $("e-vence").value;
   if (!vence) { status.textContent = "Ponle hasta cuándo se puede hacer."; return; }
+
+  // "Disponible desde" es opcional: en blanco, se puede rendir de una vez,
+  // igual que siempre. Con fecha, deja al profesor dejarlo listo con
+  // anticipación sin que el alumno lo vea todavía — el candado de verdad lo
+  // pone la RLS (crear_examen e iniciar_examen lo vuelven a comprobar del
+  // lado del servidor).
+  const desde = $("e-desde").value;
+  if (desde && new Date(desde) >= new Date(vence)) {
+    status.textContent = "El examen tiene que empezar antes de vencer.";
+    return;
+  }
+
   const titulo = $("e-titulo").value.trim();
   if (!titulo) { status.textContent = "Falta el título."; return; }
 
@@ -663,6 +680,7 @@ async function ponerExamen(ev) {
     // lo contrario —congela a la primera— y confundirlos le cerraría el
     // examen en la cara al primer despiste.
     p_salidas_permitidas: $("e-salidas").value === "" ? null : parseInt($("e-salidas").value, 10),
+    p_disponible_desde: desde ? new Date(desde).toISOString() : null,
   });
   btn.disabled = false;
   if (error) { status.textContent = "No se pudo poner: " + error.message; return; }
@@ -707,15 +725,23 @@ function tarjetaPuesto(e) {
   const nota = e.nota != null ? Number(e.nota).toFixed(2) : "—";
   const salidas = e.salidas > 0
     ? `<span class="text-red-600 dark:text-red-400"> · salió ${e.salidas} ${e.salidas === 1 ? "vez" : "veces"}</span>` : "";
+  // Programado: sin empezar Y todavía no llega su disponible_desde. Ahí "Sin
+  // empezar" mentiría un poco —el alumno ni siquiera lo puede ver, la RLS se
+  // lo tapa— así que se dice con todas las letras y se agrega cuándo se
+  // destapa.
+  const programado = e.estado === "asignado" && e.disponible_desde && new Date(e.disponible_desde) > new Date();
+  const linea2 = programado
+    ? `Se destapa ${fecha(e.disponible_desde)} · Hasta ${fecha(e.vence_at)}`
+    : `Hasta ${fecha(e.vence_at)}`;
   div.innerHTML = `
     <div class="min-w-0">
       <p class="font-semibold text-brand-800 dark:text-white text-sm">${escapeHtml(e.titulo)}</p>
       <p class="text-xs text-brand-450 dark:text-brand-350">${escapeHtml(e.alumno_nombre || "—")} · ${e.preguntas} preguntas · ${e.minutos} min${salidas}</p>
-      <p class="text-xs text-brand-450 dark:text-brand-350">Hasta ${fecha(e.vence_at)}</p>
+      <p class="text-xs text-brand-450 dark:text-brand-350">${linea2}</p>
     </div>
     <div class="flex items-center gap-3 shrink-0">
       <div class="text-right">
-        <p class="text-xs font-semibold ${COLOR_ESTADO[e.estado]}">${TEXTO_ESTADO[e.estado]}</p>
+        <p class="text-xs font-semibold ${programado ? "text-accent-700 dark:text-accent-400" : COLOR_ESTADO[e.estado]}">${programado ? "🕒 Programado" : TEXTO_ESTADO[e.estado]}</p>
         ${e.estado === "entregado" || e.estado === "congelado"
           ? `<p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${nota}</p>` : ""}
       </div>
