@@ -3,12 +3,15 @@
 // Manda a los encargados (madre, padre, quien sea) el informe del alumno, y
 // arma el mismo informe para verlo o descargarlo desde la página.
 //
-// Tres acciones:
-//   "vista_previa" { student_id, frecuencia }  -> devuelve el HTML, no manda nada
-//   "enviar_ahora" { encargado_id }            -> arma y manda ese, ahora mismo
-//   "tanda"        {}                          -> manda a quien le toque en esta hora
+// Cuatro acciones:
+//   "vista_previa"       { student_id, frecuencia } -> devuelve el HTML, no manda nada
+//   "enviar_ahora"       { encargado_id }           -> arma y manda ese, ahora mismo
+//   "invitar_practicar"  { student_id }             -> empujoncito puntual a TODOS sus
+//                                                       encargados activos, fuera de la
+//                                                       cadencia del informe programado
+//   "tanda"              {}                         -> manda a quien le toque en esta hora
 //
-// QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde informes.html
+// QUIÉN PUEDE QUÉ. Las tres primeras las llama una persona desde informes.html
 // con su sesión, y el permiso NO se comprueba aquí a mano: se lee la fila con
 // un cliente que lleva su JWT, o sea pasando por la RLS. Si la RLS no se la
 // devuelve, no es profesor de ese alumno y se acabó. Una regla menos escrita
@@ -29,7 +32,7 @@
 // dominio verificado del sitio.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { informeHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
+import { informeHtml, invitarPracticarHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -223,6 +226,63 @@ Deno.serve(async (req) => {
     } catch (err) {
       return json({ error: err instanceof Error ? err.message : String(err) }, 500);
     }
+  }
+
+  // ------------------------------------------- invitar_practicar
+  //
+  // Botón de un clic desde la lista de "sin entrenar" en informes.html: no es
+  // el informe programado ni cuenta para su cadencia (por eso NO toca
+  // `ultimo_envio_at`, que es solo del envío periódico), es un empujón puntual
+  // a TODOS los encargados activos de ese alumno, con cuánto tiempo lleva sin
+  // entrar.
+  if (accion === "invitar_practicar") {
+    const studentId = typeof body.student_id === "string" ? body.student_id : "";
+    if (!studentId) return json({ error: "student_id es requerido" }, 400);
+
+    // El permiso lo decide la RLS: si esta consulta no devuelve la fila, quien
+    // llama no es profesor de ese alumno.
+    const { data: alumno, error: alumnoError } = await comoQuienLlama
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("id", studentId)
+      .maybeSingle();
+    if (alumnoError) return json({ error: alumnoError.message }, 400);
+    if (!alumno) return json({ error: "No se encontró ese alumno, o no es tuyo" }, 403);
+
+    const { data: encargados, error: encError } = await comoQuienLlama
+      .from("encargados")
+      .select("id, nombre, email")
+      .eq("student_id", studentId)
+      .eq("activo", true);
+    if (encError) return json({ error: encError.message }, 400);
+    if (!encargados || !encargados.length) {
+      return json({ error: "Este alumno todavía no tiene ningún encargado registrado" }, 404);
+    }
+
+    const { data: ultima } = await comoQuienLlama
+      .from("training_progress")
+      .select("created_at")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const dias = ultima?.created_at
+      ? Math.max(1, Math.round((Date.now() - new Date(ultima.created_at).getTime()) / 86400000))
+      : null;
+
+    const nombre = alumno.full_name || alumno.email || "tu hijo o hija";
+    const contacto = await contactoDeConsultas(admin);
+    const html = invitarPracticarHtml(nombre, dias, SITE_URL, contacto);
+    const asunto = `Un empujoncito para ${String(nombre).split(" ")[0]} — Ajedrez Integral`;
+
+    let mandados = 0;
+    const fallos: string[] = [];
+    for (const e of encargados) {
+      const r = await mandar(e.email, asunto, html);
+      if (r.ok) mandados += 1; else fallos.push(`${e.email}: ${r.error}`);
+    }
+    if (!mandados) return json({ error: fallos.join("; ") || "No se pudo mandar" }, 502);
+    return json({ ok: true, mandados, fallos });
   }
 
   return json({ error: "Acción desconocida" }, 400);
