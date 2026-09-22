@@ -303,7 +303,13 @@
                     </div>
 
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
-                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla la borra) · clic derecho sobre una casilla la marca con un círculo</p>
+                    <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
+                    <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
+                         js/clases-board.js#MARK_COLORS y setMarkColor). Los botones los arma
+                         initMarksColorPicker() leyendo esa misma tabla, para no repetir los
+                         cinco hex acá. Solo el profesor dibuja, así que solo a él se le
+                         destapa (junto con #arrows-hint, ver initBoardForRole). -->
+                    <div id="marks-color-picker" class="hidden items-center justify-center gap-2 mt-1.5" role="radiogroup" aria-label="Color con el que se dibuja"></div>
 
                     <!-- Lección de un curso que el profesor abrió para darla (ver
                          #lesson-picker-panel). SOLO la ve él, como el PDF: nunca se sincroniza por
@@ -1768,7 +1774,10 @@
                     await loadVariantTree();
                 },
             });
-            if (isTeacher) document.getElementById("arrows-hint").classList.remove("hidden");
+            if (isTeacher) {
+                document.getElementById("arrows-hint").classList.remove("hidden");
+                initMarksColorPicker();
+            }
             const moveNav = document.getElementById("move-nav");
             moveNav.classList.toggle("hidden", !isTeacher);
             moveNav.classList.toggle("flex", isTeacher);
@@ -1806,6 +1815,54 @@
             document.getElementById("show-coords-btn").classList.toggle("bg-accent-500", coords);
             document.getElementById("show-coords-btn").classList.toggle("text-brand-900", coords);
         });
+
+        // ---------- Color de las flechas y círculos de pizarra ----------
+        // También personal del navegador, como girar y coordenadas: no es de la clase, es de
+        // con qué color prefiere dibujar ESTE profesor. Los botones se arman leyendo
+        // ClasesBoard.MARK_COLORS (js/clases-board.js), no una lista copiada acá: los cinco
+        // hex viven en un solo lugar.
+        const MARK_COLOR_KEY = "clasesBoardMarkColor_v1";
+        const MARK_COLOR_LABELS = { naranja: "Naranja", azul: "Azul", verde: "Verde", rojo: "Rojo", negro: "Negro" };
+
+        function initMarksColorPicker() {
+            const wrap = document.getElementById("marks-color-picker");
+            let current = ClasesBoard.DEFAULT_MARK_COLOR;
+            try {
+                const saved = localStorage.getItem(MARK_COLOR_KEY);
+                if (saved && ClasesBoard.MARK_COLORS[saved]) current = saved;
+            } catch (e) {}
+            board.setMarkColor(current);
+
+            function pintarSeleccion(key) {
+                wrap.querySelectorAll("button").forEach((b) => {
+                    const elegido = b.dataset.colorKey === key;
+                    b.setAttribute("aria-pressed", elegido ? "true" : "false");
+                    b.classList.toggle("border-brand-800", elegido);
+                    b.classList.toggle("dark:border-white", elegido);
+                    b.classList.toggle("scale-110", elegido);
+                    b.classList.toggle("border-transparent", !elegido);
+                });
+            }
+
+            Object.keys(ClasesBoard.MARK_COLORS).forEach((key) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.dataset.colorKey = key;
+                btn.title = "Dibujar en " + MARK_COLOR_LABELS[key];
+                btn.setAttribute("aria-label", MARK_COLOR_LABELS[key]);
+                btn.className = "w-6 h-6 rounded-full border-2 transition-transform";
+                btn.style.backgroundColor = ClasesBoard.MARK_COLORS[key];
+                btn.addEventListener("click", () => {
+                    board.setMarkColor(key);
+                    try { localStorage.setItem(MARK_COLOR_KEY, key); } catch (e) {}
+                    pintarSeleccion(key);
+                });
+                wrap.appendChild(btn);
+            });
+            pintarSeleccion(current);
+            wrap.classList.remove("hidden");
+            wrap.classList.add("flex");
+        }
 
         // ---------- Navegar entre jugadas (solo profesor) ----------
         function currentViewedPly() {

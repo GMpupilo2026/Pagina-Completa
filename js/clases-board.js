@@ -12,6 +12,8 @@
  * derecho, solo si `allowArrows`): arrastrar dibuja una flecha alineada a
  * fila/columna/diagonal (las de forma de caballo se doblan en ángulo recto,
  * como en lichess); soltar sobre la misma casilla marca/desmarca un círculo.
+ * Cada una lleva su color (ver MARK_COLORS/setMarkColor): repetir la misma
+ * flecha/círculo en el mismo color la borra; repetirla en otro la repinta.
  *
  * El historial de jugadas se reconstruye siempre reproduciendo la lista de
  * SAN (loadMoves) en vez de cargar solo el FEN, para que el historial interno
@@ -33,7 +35,19 @@
   // esta marca chiquita encima (ver .theme-token-label en css/styles.css).
   const TYPE_LABEL = { k: "R", q: "D", r: "T", b: "A", n: "C", p: "P" };
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-  const MARK_COLOR = "#de911d"; // accent-500
+  // Colores para las flechas y círculos de pizarra. "naranja" es el de siempre (accent-500)
+  // y se queda como el que sale por defecto; los otros cuatro son el pedido de sumar más
+  // colores para distinguir ideas distintas en la misma posición (una flecha para la
+  // amenaza, otra para la defensa). Están acá y no repetidos en sesion.html porque el
+  // selector de color de la página los lee de `ClasesBoard.MARK_COLORS` — una sola fuente.
+  const MARK_COLORS = {
+    naranja: "#de911d",
+    azul: "#2563eb",
+    verde: "#16a34a",
+    rojo: "#dc2626",
+    negro: "#111827",
+  };
+  const DEFAULT_MARK_COLOR = "naranja";
 
   // Orden visual de las 64 casillas, fila por fila de arriba hacia abajo. Con `flipped`
   // se invierte el orden completo, lo que equivale exactamente a girar el tablero
@@ -65,6 +79,22 @@
     return { x: (rowCol.col + 0.5) * 12.5, y: (rowCol.row + 0.5) * 12.5 };
   }
 
+  // Un círculo puede llegar como string suelto ("e4", el formato de antes de que existieran
+  // los colores) o como {square, color} (el de ahora): las filas de game_state que ya
+  // estaban abiertas al desplegar esto todavía traen el formato viejo, y tratarlo como
+  // "sin color" en vez de reventar es gratis. Lo mismo la flecha sin color: una fila vieja
+  // trae {from, to} sin `color`.
+  function circleSquare(circle) {
+    return typeof circle === "string" ? circle : circle.square;
+  }
+  function circleColor(circle) {
+    const key = typeof circle === "string" ? null : circle.color;
+    return MARK_COLORS[key] ? key : DEFAULT_MARK_COLOR;
+  }
+  function arrowColor(arrow) {
+    return MARK_COLORS[arrow.color] ? arrow.color : DEFAULT_MARK_COLOR;
+  }
+
   class ClasesBoard {
     /**
      * @param {HTMLElement} el - contenedor #chessboard (grid de 8x8)
@@ -78,7 +108,9 @@
      *   estilos externa (o el compilador de Tailwind, que corre de forma asíncrona) termine
      *   de cargar antes o después: por eso es más confiable aquí que una regla CSS aparte.
      * @param {(fen: string, san: string, moves: string[]) => void} opts.onMove
-     * @param {(marks: {arrows: Array<{from:string,to:string}>, circles: string[]}) => void} opts.onMarksChange
+     * @param {(marks: {arrows: Array<{from:string,to:string,color:string}>, circles: Array<{square:string,color:string}>}) => void} opts.onMarksChange
+     * @param {string} [opts.markColor] - clave de MARK_COLORS con la que se dibuja al
+     *   empezar (ver setMarkColor); si no es una clave válida, se usa DEFAULT_MARK_COLOR.
      * @param {(san: string, fullPath: string[], context: {parentNodeId: string|null, rootPly: number}) => void} opts.onVariantMove
      * @param {() => void} opts.onFreeModeChange - se llama después de cada cambio al
      *   tablero en modo edición libre (ver setFreeMode)
@@ -101,6 +133,9 @@
       this.focusSquare = "e1";
       this.arrows = [];
       this.circles = [];
+      // Color con el que se dibuja la PRÓXIMA flecha/círculo (ver setMarkColor). No es de
+      // la partida ni se sincroniza: cada profesor elige el suyo desde su propio panel.
+      this.markColor = MARK_COLORS[opts.markColor] ? opts.markColor : DEFAULT_MARK_COLOR;
       this._drawingFrom = null;
       // Dibujar con el dedo (touch): sin clic derecho no hay forma de distinguir "mover
       // pieza" de "dibujar flecha", así que se usa el mismo gesto de lichess/chess.com en
@@ -492,6 +527,13 @@
       this._drawMarksOverlay();
     }
 
+    // Color con el que se dibuja la próxima flecha o círculo (ver _toggleMark). Lo elige el
+    // panel de color de sesion.html; un id que no existe en MARK_COLORS se ignora en vez de
+    // dejar el tablero dibujando en un color inválido.
+    setMarkColor(colorKey) {
+      if (MARK_COLORS[colorKey]) this.markColor = colorKey;
+    }
+
     _squareAriaLabel(square, g) {
       const piece = g.get(square);
       if (!piece) return square + ", casilla vacía";
@@ -666,34 +708,42 @@
         svg.style.pointerEvents = "none";
         this.el.appendChild(svg);
       }
-      svg.innerHTML =
-        '<defs><marker id="clases-arrowhead" viewBox="0 0 10 10" refX="7" refY="5" ' +
-        'markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse">' +
-        '<path d="M0,0 L10,5 L0,10 z" fill="' + MARK_COLOR + '"></path></marker></defs>';
+      // Un <marker> por color, siempre los cinco: es más simple que calcular cuáles hacen
+      // falta en esta jugada, y cinco <path> de flechita no cuestan nada. El id lleva el
+      // nombre del color (no el hex) para que quede legible en el propio SVG.
+      let defs = "<defs>";
+      for (const key of Object.keys(MARK_COLORS)) {
+        defs +=
+          '<marker id="clases-arrowhead-' + key + '" viewBox="0 0 10 10" refX="7" refY="5" ' +
+          'markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse">' +
+          '<path d="M0,0 L10,5 L0,10 z" fill="' + MARK_COLORS[key] + '"></path></marker>';
+      }
+      svg.innerHTML = defs + "</defs>";
 
-      for (const square of this.circles) {
+      for (const circle of this.circles) {
+        const square = circleSquare(circle);
         const rc = squareRowCol(square, this.flipped);
         if (!rc) continue;
         const c = centerPercent(rc);
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", c.x);
-        circle.setAttribute("cy", c.y);
-        circle.setAttribute("r", "4.3");
-        circle.setAttribute("fill", "none");
-        circle.setAttribute("stroke", MARK_COLOR);
-        circle.setAttribute("stroke-width", "1.4");
-        circle.setAttribute("opacity", "0.85");
-        svg.appendChild(circle);
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", c.x);
+        dot.setAttribute("cy", c.y);
+        dot.setAttribute("r", "4.3");
+        dot.setAttribute("fill", "none");
+        dot.setAttribute("stroke", MARK_COLORS[circleColor(circle)]);
+        dot.setAttribute("stroke-width", "1.4");
+        dot.setAttribute("opacity", "0.85");
+        svg.appendChild(dot);
       }
 
       for (const arrow of this.arrows) {
-        this._drawArrow(svg, arrow.from, arrow.to);
+        this._drawArrow(svg, arrow.from, arrow.to, arrowColor(arrow));
       }
     }
 
     // Dibuja una flecha alineada a fila/columna/diagonal. Si el movimiento tiene forma de "L"
     // (caballo), la dobla en ángulo recto en vez de cortar en diagonal, como en lichess.
-    _drawArrow(svg, fromSquare, toSquare) {
+    _drawArrow(svg, fromSquare, toSquare, colorKey) {
       const from = squareRowCol(fromSquare, this.flipped);
       const to = squareRowCol(toSquare, this.flipped);
       if (!from || !to) return;
@@ -719,11 +769,11 @@
         line.setAttribute("y1", points[i].y);
         line.setAttribute("x2", points[i + 1].x);
         line.setAttribute("y2", points[i + 1].y);
-        line.setAttribute("stroke", MARK_COLOR);
+        line.setAttribute("stroke", MARK_COLORS[colorKey]);
         line.setAttribute("stroke-width", "1.5");
         line.setAttribute("stroke-linecap", "round");
         line.setAttribute("opacity", "0.85");
-        if (i === points.length - 2) line.setAttribute("marker-end", "url(#clases-arrowhead)");
+        if (i === points.length - 2) line.setAttribute("marker-end", "url(#clases-arrowhead-" + colorKey + ")");
         svg.appendChild(line);
       }
     }
@@ -835,14 +885,28 @@
 
     // Agrega/quita la flecha from→to, o el círculo si from === to (soltar en la misma
     // casilla) — comparte esta lógica el clic derecho (mouse) y el toque largo (touch).
+    // Repetir la misma flecha/círculo EN EL MISMO COLOR la borra, como antes de que
+    // existieran los colores; repetirla en otro color la repinta en vez de sumar una
+    // segunda encima — así cambiar de color es dibujar de nuevo, no un tercer gesto.
     _toggleMark(from, to) {
       if (to === from) {
-        const idx = this.circles.indexOf(from);
-        this.circles = idx !== -1 ? this.circles.filter((_, i) => i !== idx) : this.circles.concat([from]);
+        const idx = this.circles.findIndex((c) => circleSquare(c) === from);
+        if (idx === -1) {
+          this.circles = this.circles.concat([{ square: from, color: this.markColor }]);
+        } else if (circleColor(this.circles[idx]) === this.markColor) {
+          this.circles = this.circles.filter((_, i) => i !== idx);
+        } else {
+          this.circles = this.circles.map((c, i) => (i === idx ? { square: from, color: this.markColor } : c));
+        }
       } else {
-        const existingIndex = this.arrows.findIndex((a) => a.from === from && a.to === to);
-        this.arrows =
-          existingIndex !== -1 ? this.arrows.filter((_, i) => i !== existingIndex) : this.arrows.concat([{ from, to }]);
+        const idx = this.arrows.findIndex((a) => a.from === from && a.to === to);
+        if (idx === -1) {
+          this.arrows = this.arrows.concat([{ from, to, color: this.markColor }]);
+        } else if (arrowColor(this.arrows[idx]) === this.markColor) {
+          this.arrows = this.arrows.filter((_, i) => i !== idx);
+        } else {
+          this.arrows = this.arrows.map((a, i) => (i === idx ? { from, to, color: this.markColor } : a));
+        }
       }
       this._drawMarksOverlay();
       this.onMarksChange({ arrows: this.arrows, circles: this.circles });
@@ -926,5 +990,9 @@
     }
   }
 
+  // Únicos colores válidos para dibujar (ver setMarkColor): sesion.html arma su selector
+  // de color leyendo esto, en vez de repetir los cinco hex a mano.
+  ClasesBoard.MARK_COLORS = MARK_COLORS;
+  ClasesBoard.DEFAULT_MARK_COLOR = DEFAULT_MARK_COLOR;
   window.ClasesBoard = ClasesBoard;
 })();
