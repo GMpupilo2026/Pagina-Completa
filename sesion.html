@@ -37,6 +37,12 @@
     <script src="js/board-color-themes.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/clases-board.js"></script>
+    <!-- La clase sin ver la pantalla: la posición en palabras, las jugadas que se
+         anuncian y el recuadro donde se escribe la jugada (ver js/clase-adaptada.js). -->
+    <script src="js/blind-notation.js"></script>
+    <script src="js/comandos-tablero.js"></script>
+    <script src="js/cuadro-comandos.js"></script>
+    <script src="js/clase-adaptada.js"></script>
     <script src="js/shared-engine.js"></script>
     <script src="js/clases-engine.js"></script>
     <script src="js/practice-engine.js"></script>
@@ -66,7 +72,7 @@
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <a id="back-to-panel-link" href="clases.html" class="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors mb-3">← 🏛️ Academia</a>
             <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
-                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo ♟️</h1>
+                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white">Sesión en vivo <span aria-hidden="true">♟️</span></h1>
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="hidden sm:inline-block text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
@@ -75,7 +81,7 @@
                 </div>
             </div>
 
-            <div id="status-banner" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
+            <div id="status-banner" role="status" class="mb-6 rounded-xl bg-brand-100 dark:bg-brand-900 px-5 py-3 text-sm text-brand-600 dark:text-brand-300"></div>
 
             <!-- Si la clase está quedando registrada o no. Va ACÁ y no en el
                  panel porque acá es donde se da la clase: el profesor entra
@@ -111,7 +117,7 @@
                          un momento y se cierra, no debería ocupar espacio fijo en la página. -->
                     <div id="board-edit-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div id="board-edit-header" class="flex items-center justify-between gap-2 mb-1 cursor-move select-none" title="Arrastra para mover este panel">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">✏️ Editando el tablero</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">✏️</span> Editando el tablero</h2>
                             <button type="button" id="board-edit-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar editor (descarta los cambios)" aria-label="Cerrar editor">✖</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">No se ve en vivo hasta que apliques.</p>
@@ -209,7 +215,7 @@
                          mandar al tablero, una por una. -->
                     <div id="lesson-picker-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Tener un curso a mano</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">📚</span> Tener un curso a mano</h2>
                             <button type="button" id="lesson-picker-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un curso y un tema: la lección se abre debajo del tablero y <strong>solo tú la ves</strong>. Cada posición del curso trae su botón para pasarla al tablero de la clase.</p>
@@ -233,7 +239,7 @@
                      al editor del tablero (ver js/pdf-diagramas.js). -->
                     <div id="pdf-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(94vw,480px)] max-h-[85vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📄 Leer un PDF en clase</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">📄</span> Leer un PDF en clase</h2>
                             <button type="button" id="pdf-panel-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Solo tú ves este PDF — no se comparte con los alumnos conectados. Si una página trae un diagrama, toca cerca de él para intentar reconocerlo y mandarlo al editor del tablero.</p>
@@ -259,7 +265,7 @@
                          editor del tablero. -->
                     <div id="pdf-diagram-review-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(94vw,420px)] max-h-[85vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">🔍 Diagrama reconocido</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">🔍</span> Diagrama reconocido</h2>
                             <button type="button" id="pdf-review-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Las casillas marcadas con "?" no se pudieron identificar. Toca una pieza de la paleta y luego las casillas que quieras corregir (corrige una vez y se corrigen solas las demás casillas iguales).</p>
@@ -284,7 +290,7 @@
                          otra partida jugada en vivo. -->
                     <div id="archivos-panel" class="hidden fixed z-40 bg-white dark:bg-brand-900 rounded-xl shadow-2xl p-4 w-[min(92vw,360px)] max-h-[80vh] overflow-y-auto" style="top:88px; right:16px;">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm">📂 Jalar un archivo a la clase</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">📂</span> Jalar un archivo a la clase</h2>
                             <button type="button" id="archivos-panel-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Cerrar" aria-label="Cerrar">✖</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Los PGN que subiste en <a href="partidas.html" target="_blank" class="underline hover:text-accent-500">Archivos</a>. Al elegir uno se carga jugada a jugada: recórrelo con la clase con la navegación de jugadas de abajo del tablero.</p>
@@ -314,6 +320,10 @@
                         </span>
                     </div>
 
+                    <!-- El recuadro del Modo Adaptado (js/clase-adaptada.js): solo se ve
+                         con ese modo encendido, lo decide el CSS. -->
+                    <div id="clase-cmd" class="max-w-[560px] mx-auto"></div>
+
                     <p id="turn-indicator" class="text-center text-brand-500 dark:text-brand-300 text-sm mt-4"></p>
                     <p id="arrows-hint" class="hidden text-center text-brand-450 dark:text-brand-350 text-xs mt-1">Clic derecho + arrastrar dibuja una flecha (repetirla en el mismo color la borra) · clic derecho sobre una casilla la marca con un círculo · elige el color abajo</p>
                     <!-- Color con el que se dibujan las PRÓXIMAS flechas/círculos (ver
@@ -330,7 +340,7 @@
                          el profesor manda al tablero con el botón de cada diagrama. -->
                     <section id="class-lesson-panel" class="hidden mt-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <h2 id="class-lesson-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm">📚 Lección</h2>
+                            <h2 id="class-lesson-title" class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">📚</span> Lección</h2>
                             <button id="class-lesson-hide-btn" type="button" class="hidden shrink-0 text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors" title="Cerrar la lección">✖ Cerrar</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">🔒 Solo tú ves esta lección — los alumnos siguen viendo únicamente el tablero. Usa el botón <strong>📥 Al tablero de la clase</strong> de cada posición para enseñarles la que estés explicando.</p>
@@ -375,7 +385,7 @@
                          pregunta, se quedaría calificado en silencio sin que el alumno lo viera
                          nunca (el overlay ya está oculto para entonces). -->
                     <div id="answer-feedback-toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] w-[min(92vw,420px)] rounded-xl shadow-2xl p-4 text-center">
-                        <p id="answer-feedback-text" class="font-semibold text-sm mb-2"></p>
+                        <p id="answer-feedback-text" role="status" class="font-semibold text-sm mb-2"></p>
                         <div class="flex justify-center gap-2">
                             <button id="answer-feedback-retry-btn" class="hidden text-xs font-bold px-3 py-1.5 rounded-lg bg-white/90 hover:bg-white text-brand-900 transition-colors">🔁 Intentar de nuevo</button>
                             <button id="answer-feedback-dismiss-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-black/10 hover:bg-black/20 text-inherit transition-colors">Entendido</button>
@@ -385,18 +395,19 @@
                     <!-- Pregunta del profesor: aparece flotando por encima del tablero, solo la ven los alumnos.
                          Overlay de pantalla completa (fixed inset-0): igual que en Práctica contra el motor,
                          el tablero puede ser tan grande como el principal en vez de quedar en tamaño de tarjeta. -->
-                    <div id="question-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+                    <div id="question-card" role="dialog" aria-modal="true" aria-labelledby="question-titulo" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
                             <div class="flex items-start justify-between gap-2 mb-1">
-                                <h2 class="font-serif font-bold text-brand-800 dark:text-white">❓ <span id="question-prompt-text"></span></h2>
+                                <h2 id="question-titulo" tabindex="-1" class="font-serif font-bold text-brand-800 dark:text-white focus:outline-none"><span aria-hidden="true">❓ </span><span class="sr-only">Pregunta de tu profe: </span><span id="question-prompt-text"></span></h2>
                                 <button type="button" id="question-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Salir por ahora (la pregunta sigue abierta, puedes volver a contestarla)" aria-label="Salir por ahora">✖</button>
                             </div>
                             <p id="question-color-hint" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1"></p>
                             <p id="question-plies-hint" class="text-xs text-brand-500 dark:text-brand-300 mb-1"></p>
-                            <p id="question-status-text" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Mueve las piezas que jugarías.</p>
+                            <p id="question-status-text" role="status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Mueve las piezas que jugarías.</p>
                             <div class="flex justify-center">
                                 <div id="question-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
+                            <div id="question-cmd" class="text-left"></div>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="question-undo-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">↶ Deshacer</button>
                                 <button id="question-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
@@ -409,17 +420,18 @@
                          Al ser un overlay de pantalla completa (fixed inset-0) sobre el resto de la clase, el
                          tablero puede ocupar bastante más que una tarjeta normal — de hecho, tanto como el
                          tablero principal (max-w-[560px]) — sin competir por espacio con nada más. -->
-                    <div id="practice-card" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+                    <div id="practice-card" role="dialog" aria-modal="true" aria-labelledby="practice-titulo" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
                         <div class="bg-white dark:bg-brand-900 border-2 border-accent-500 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto text-center">
                             <div class="flex items-start justify-between gap-2 mb-1">
-                                <h2 class="font-serif font-bold text-brand-800 dark:text-white flex-1">🎯 Práctica contra el motor</h2>
+                                <h2 id="practice-titulo" tabindex="-1" class="font-serif font-bold text-brand-800 dark:text-white flex-1 focus:outline-none"><span aria-hidden="true">🎯 </span>Práctica contra el motor</h2>
                                 <button type="button" id="practice-close-btn" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 transition-colors" title="Salir por ahora (la ronda sigue en marcha, puedes volver a tu partida)" aria-label="Salir por ahora">✖</button>
                             </div>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mb-1">Nivel: <span id="practice-card-level" class="font-semibold"></span> · Juegas con <span id="practice-card-color" class="font-semibold"></span></p>
-                            <p id="practice-card-status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Es tu turno.</p>
+                            <p id="practice-card-status" role="status" class="text-xs text-brand-450 dark:text-brand-350 mb-3">Es tu turno.</p>
                             <div class="flex justify-center">
                                 <div id="practice-board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[min(92vw,560px)] aspect-square rounded-lg overflow-hidden shadow-lg border-4 border-brand-700 select-none"></div>
                             </div>
+                            <div id="practice-cmd" class="text-left"></div>
                             <div class="flex justify-center gap-2 mt-3">
                                 <button id="practice-retry-engine-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors">🔁 Pedir jugada del motor</button>
                                 <button id="practice-resign-btn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition-colors">🏳️ Rendirse</button>
@@ -442,7 +454,7 @@
                          el profesor elige con quién está hablando. Nadie más ve estos mensajes. -->
                     <div class="mt-6 bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white">💬 Chat privado con el profesor</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">💬</span> Chat privado con el profesor</h2>
                             <button id="clear-chat-btn" type="button" class="hidden text-xs font-semibold text-red-600 dark:text-red-400 hover:underline shrink-0">Vaciar esta conversación</button>
                         </div>
                         <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Escribe tus preguntas o dudas en privado — solo lo ven el profesor y tú.</p>
@@ -498,7 +510,7 @@
                          detrás de un clic. -->
                     <div id="engine-panel" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
                         <div class="flex items-center justify-between mb-2 gap-2">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white">♞ Motor de análisis</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♞</span> Motor de análisis</h2>
                             <button id="engine-toggle-btn" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors shrink-0">Activar</button>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
@@ -545,7 +557,7 @@
                                  botones. Una pantalla que necesita explicarse es una
                                  pantalla mal ordenada: ahora los botones llevan su rótulo
                                  y el párrafo sobra. -->
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">➕ Invitar a un alumno</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">➕</span> Invitar a un alumno</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Le llega un correo con el enlace para <strong>crear su contraseña</strong> y los pasos para entrar a la plataforma.</p>
                             <form id="create-student-form" class="space-y-3">
                                 <label for="student-name" class="sr-only">Nombre del alumno</label>
@@ -640,7 +652,7 @@
                              74 temas de lichess.org/training/themes). "Preguntar" reutiliza el mismo
                              mecanismo de la pestaña Preguntar: transmite la posición y crea la pregunta. -->
                         <div id="tactics-panel" data-tab-panel="tactica" role="tabpanel" aria-labelledby="teacher-tab-tactica" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-5">
-                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2">🧩 Táctica por tema</h2>
+                            <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🧩</span> Táctica por tema</h2>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Elige un tema y una dificultad. Con <strong>Preguntar</strong> el ejercicio se transmite a todos como una pregunta nueva; con <strong>Al tablero</strong>, solo la posición, para explicarla tú.</p>
                             <div id="tactics-body"><p class="text-sm text-brand-450 dark:text-brand-350">Cargando temas…</p></div>
                         </div>
@@ -743,6 +755,21 @@
         let profile = null;
         let session = null;
         let board = null;
+        /* Llevar el foco a algo que puede no verse todavía. Al cargar la página, la
+           pregunta abierta se pinta ANTES de destapar #app, y el navegador no le da
+           el foco a lo que está escondido: no falla nada, el foco simplemente se
+           queda donde estaba y quien usa lector de pantalla no se entera de la
+           pregunta. Se espera a que se vea, un par de segundos como mucho. */
+        function enfocarCuandoSeVea(el, intentos) {
+            if (!el) return;
+            intentos = intentos === undefined ? 40 : intentos;
+            if (el.checkVisibility ? el.checkVisibility() : el.offsetParent !== null) { el.focus(); return; }
+            if (intentos > 0) setTimeout(() => enfocarCuandoSeVea(el, intentos - 1), 50);
+        }
+
+        // El recuadro del Modo Adaptado de cada tablero (js/clase-adaptada.js).
+        let claseAcc = null, preguntaAcc = null, practicaAcc = null;
+        let primerEstadoCargado = false;
         let isTeacher = false;
         let activePlayerId = null;
         // Con qué color puede mover activePlayerId: "w", "b" o "both" (los dos). Solo
@@ -962,12 +989,25 @@
 
         // ---------- Estado compartido del tablero (posición, flechas, control cedido) ----------
         function applyGameStateRow(row) {
+            // Lo que había ANTES, leído del propio tablero: así la jugada que acaba de
+            // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
+            const antes = primerEstadoCargado ? { inicio: board.startFen || "", jugadas: board.moves() } : null;
+            primerEstadoCargado = true;
             board.loadMoves(row.moves || [], row.start_fen);
             board.setMarks(row.arrows || [], row.circles || []);
             // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
             // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
+            const ocultabaAntes = board.piecesHidden;
             board.setPiecesHidden(!isTeacher && !!row.pieces_hidden);
             lastPiecesHidden = !!row.pieces_hidden;
+            if (claseAcc) {
+                claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
+                    claseAcc.decir(board.piecesHidden
+                        ? "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria."
+                        : "Tu profe volvió a mostrar las piezas. Escribe \"posición\" para oírla.");
+                }
+            }
             activePlayerId = row.active_player_id || null;
             activePlayerColor = row.active_player_color || "both";
             updateTurnIndicator();
@@ -1902,6 +1942,7 @@
                 onFreeModeChange: () => updateLiveFenDisplay(),
                 onMove: () => {
                     pushBoardState();
+                    if (claseAcc) claseAcc.actualizar();
                     updateTurnIndicator();
                     renderMoveList();
                     if (isTeacher) updateEngineEval();
@@ -1918,6 +1959,15 @@
                     await loadVariantTree();
                 },
             });
+            claseAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("clase-cmd"), () => board, {
+                etiqueta: isTeacher
+                    ? "Escribe tu jugada o una pregunta sobre la posición"
+                    : "Pregúntale a la posición, o escribe tu jugada cuando tu profe te dé el control",
+                porQueNoPuedes: () => {
+                    if (activePlayerId !== profile.id) return "Ahora mueve tu profe. Cuando te dé el control vas a oírlo, y ahí mismo escribes tu jugada acá. Mientras tanto puedes preguntar: \"posición\", \"caballos\" o \"qué hay en e4\".";
+                    return "Todavía no le toca a tu color. Espera la jugada del otro lado.";
+                },
+            }) : null;
             if (isTeacher) {
                 document.getElementById("arrows-hint").classList.remove("hidden");
                 initMarksColorPicker();
@@ -3577,7 +3627,13 @@
                     from: uci.slice(0, 2), to: uci.slice(2, 4),
                     promotion: uci.length > 4 ? uci.slice(4, 5) : "q",
                 });
-                if (move) questionBoard.render();
+                if (move) {
+                    questionBoard.render();
+                    if (preguntaAcc) {
+                        preguntaAcc.actualizar();
+                        preguntaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". Te toca.");
+                    }
+                }
             } else {
                 questionEngineLastFailed = true;
             }
@@ -3602,6 +3658,7 @@
         // última jugada permitida, se envía la respuesta de una vez (ya no hace falta un
         // botón "Enviar respuesta" aparte); si no, le toca responder al motor.
         async function onQuestionStudentMove() {
+            if (preguntaAcc) preguntaAcc.actualizar();
             questionMovesDone++;
             if (questionMovesDone >= currentQuestion.expected_plies) {
                 await submitQuestionAnswer();
@@ -3631,6 +3688,7 @@
                 return;
             }
             reopenBtn.classList.add("hidden");
+            const recienAbierta = card.classList.contains("hidden");
             card.classList.remove("hidden");
             document.getElementById("answer-feedback-toast").classList.add("hidden"); // aviso de una pregunta anterior, si quedó abierto
             document.getElementById("question-prompt-text").textContent = currentQuestion.prompt;
@@ -3651,6 +3709,12 @@
                     externalCoords: true,
                     onMove: () => onQuestionStudentMove(),
                 });
+                preguntaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("question-cmd"), () => questionBoard, {
+                    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    porQueNoPuedes: () => myAnswer
+                        ? "Ya enviaste tu respuesta. Si quieres cambiarla, usa el botón «Cambiar respuesta»."
+                        : (questionEngineBusy ? "El motor está pensando su respuesta: espera un momento." : "Ahora no te toca mover."),
+                }) : null;
             }
             // El bando del alumno es el que le toca mover en la posición de la pregunta —
             // el motor siempre juega el otro bando, respondiendo entre jugada y jugada. El
@@ -3664,6 +3728,11 @@
                 ? "Te toca jugar con ⚫ Negras"
                 : "Te toca jugar con ⚪ Blancas";
             questionBoard.loadFen(currentQuestion.fen);
+            if (preguntaAcc) preguntaAcc.actualizar();
+            // El foco va a la pregunta en cuanto aparece: sin eso, quien usa lector de
+            // pantalla se queda donde estaba —debajo de un overlay que no ve— y no se
+            // entera de que el profesor le preguntó algo.
+            if (recienAbierta) enfocarCuandoSeVea(document.getElementById("question-titulo"));
 
             const retryBtn = document.getElementById("question-retry-btn");
             if (myAnswer) {
@@ -3697,6 +3766,7 @@
         document.getElementById("question-retry-btn").addEventListener("click", () => {
             if (!currentQuestion || currentQuestion.closed_at) return;
             questionBoard.loadFen(currentQuestion.fen);
+            if (preguntaAcc) preguntaAcc.actualizar();
             questionMovesDone = 0;
             questionEngineLastFailed = false;
             myAnswer = null;
@@ -3975,6 +4045,9 @@
             return run;
         }
 
+        // De qué ronda ya se abrió el overlay: el foco se lleva a la práctica solo la
+        // primera vez que aparece, no en cada repintado (le robaría el foco al recuadro).
+        let practiceCardAbiertaPara = null;
         async function renderStudentPracticeCardNow() {
             const card = document.getElementById("practice-card");
             const reopenBtn = document.getElementById("practice-reopen-btn");
@@ -4031,9 +4104,19 @@
                     externalCoords: true,
                     onMove: (fen, san, moves) => onPracticeStudentMove(fen, moves),
                 });
+                practicaAcc = window.ClaseAdaptada ? ClaseAdaptada.montar(document.getElementById("practice-cmd"), () => practiceBoard, {
+                    etiqueta: "Escribe tu jugada, o una pregunta sobre la posición",
+                    porQueNoPuedes: () => !myPracticeGame || myPracticeGame.status !== "playing"
+                        ? "Esta partida ya terminó. Usa «Reintentar» para empezarla de nuevo."
+                        : "El motor está pensando su jugada: espera un momento.",
+                }) : null;
             }
+            const practicaRecienAbierta = practiceCardAbiertaPara !== latestPracticeSession.id && !dismissed;
+            if (!dismissed) practiceCardAbiertaPara = latestPracticeSession.id;
             practiceBoard.setFlipped(myPracticeGame.student_color === "b");
             practiceBoard.loadMoves(myPracticeGame.moves || [], latestPracticeSession.fen);
+            if (practicaAcc) practicaAcc.actualizar();
+            if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
             updatePracticeCardInteractivity();
             // Recuperación automática: si al entrar (o recargar la página a mitad de una
             // partida) resulta que le toca mover al motor y no al alumno, es que se había
@@ -4133,6 +4216,11 @@
                 });
                 if (move) {
                     practiceBoard.render();
+                    if (practicaAcc) {
+                        practicaAcc.actualizar();
+                        practicaAcc.decir("El motor jugó " + ClaseAdaptada.hablarJugada(move.san) + ". "
+                            + (practiceBoard.game.game_over() ? "" : "Te toca."));
+                    }
                     const newFen = practiceBoard.game.fen();
                     const newMoves = practiceBoard.game.history();
                     const newStatus = practiceResultForStudent(practiceBoard.game, myPracticeGame.student_color);
@@ -4147,6 +4235,7 @@
 
         async function onPracticeStudentMove(fen, moves) {
             if (!myPracticeGame) return;
+            if (practicaAcc) practicaAcc.actualizar();
             const gameIdAtMove = myPracticeGame.id;
             const attemptsAtMove = myPracticeGame.attempts || 1;
             practiceBoard.setInteractive(false);
@@ -4195,6 +4284,7 @@
         });
         document.getElementById("practice-reopen-btn").addEventListener("click", () => {
             practiceCardDismissedFor = null;
+            practiceCardAbiertaPara = null;   // que el foco vuelva a la práctica al reabrirla
             renderStudentPracticeCard();
         });
 

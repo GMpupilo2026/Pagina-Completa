@@ -180,8 +180,14 @@ window.CuadroComandos = (function () {
     // Región viva, para que cada cambio se vuelva a leer solo.
     var pos = document.createElement("p");
     pos.className = "cc-pos";
-    pos.setAttribute("aria-live", "polite");
-    pos.setAttribute("aria-atomic", "true");
+    /* `posicionViva: false` la deja escrita pero muda. Es para un tablero que se
+       mueve SOLO —la clase en vivo, donde mueve el profesor—: ahí dictar las
+       treinta y dos piezas en cada jugada ajena tapa lo único que cambió, que es
+       la jugada. Esa página anuncia la jugada y la posición se pide. */
+    if (cfg.posicionViva !== false) {
+      pos.setAttribute("aria-live", "polite");
+      pos.setAttribute("aria-atomic", "true");
+    }
     caja.appendChild(pos);
 
     var form = document.createElement("form");

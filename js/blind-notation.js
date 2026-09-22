@@ -265,7 +265,13 @@ window.BlindNotation = (function () {
       if (!visible) return;
       const on = isSpeechEnabled();
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.textContent = on ? '🗣️ Voz activada' : '🔇 Activar voz';
+      // El emoji es adorno y el nombre accesible dice PARA QUIÉN es: con un
+      // lector de pantalla encendido, esta voz habla encima de la suya y cada
+      // anuncio se oye dos veces. "Activar voz" a secas invita justo a quien no
+      // le conviene. Nombre fijo con aria-pressed, que es lo que dice si está
+      // puesto: un nombre que cambia con el estado se anuncia al revés.
+      btn.innerHTML = '<span aria-hidden="true">' + (on ? '🗣️ ' : '🔇 ') + '</span>' + (on ? 'Voz activada' : 'Activar voz');
+      btn.setAttribute('aria-label', 'Voz del navegador, solo si no usas lector de pantalla');
       btn.title = on
         ? 'El navegador lee en voz alta cada anuncio — clic para apagarlo'
         : 'Además del lector de pantalla, el navegador puede leer en voz alta cada anuncio — clic para activarlo';

@@ -183,7 +183,7 @@
 <!-- ===== MAIN APP ===== -->
 <div id="app" class="hidden pt-20 pb-16">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-brand-200 dark:border-brand-800">
-    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Aprende ♟️</h1>
+    <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Aprende <span aria-hidden="true">♟️</span></h1>
     <div class="flex gap-4 text-sm text-brand-500 dark:text-brand-300">
       <a href="index.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">← Entrenamiento</a>
       <a href="../clases.html" class="hover:text-accent-500 dark:hover:text-accent-400 transition-colors">Academia</a>
@@ -877,7 +877,9 @@ function resetLesson(){
     document.getElementById('quiz-controls').style.display = 'none';
     drawBoard();
     if(currentLesson.type === 'squares'){
-      setStatus(`Encuentra ${currentLesson.targets.length} casillas.`);
+      setStatus(`Encuentra ${currentLesson.targets.length} casillas.` + (blindMode
+        ? ' Escríbelas de a una en el recuadro, por ejemplo "e4" o "eva 4". Escribe "posición" para oír dónde está cada pieza.'
+        : ''));
     } else {
       setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Haz clic en la pieza que quieres mover.');
     }
@@ -892,6 +894,13 @@ function openLesson(lesson){
   document.getElementById('lesson-title').textContent = lesson.title;
   document.getElementById('lesson-text').textContent = lesson.text;
   resetLesson();
+  /* El botón de la lección desaparece con la lista y el foco se iba al <body>:
+     quien usa teclado se quedaba sin saber dónde estaba. El título se lee
+     primero —y con él la lección— y en Modo Adaptado el siguiente Tab ya es el
+     tablero y después el recuadro donde se contesta. */
+  const titulo = document.getElementById('lesson-title');
+  titulo.setAttribute('tabindex', '-1');
+  titulo.focus();
 }
 
 document.getElementById('back-to-list').addEventListener('click', (e) => {

@@ -154,7 +154,10 @@ window.__deletes = [];
   // El canal de presencia se puede empujar desde la prueba: __entraAlumno()
   // hace lo que haría Realtime cuando alguien se conecta a la clase.
   let estado = {};
-  const oyentes = { presence: [], broadcast: [] };
+  const oyentes = { presence: [], broadcast: [], pg: {} };
+  window.__cambioEnBase = function (tabla, fila, evento) {
+    (oyentes.pg[tabla] || []).forEach((f) => f({ eventType: evento || "UPDATE", new: fila, old: {} }));
+  };
   window.__entraAlumno = function () {
     estado["u-ana"] = [{ email: "ana@x.cr", full_name: "Ana Rojas", role: "alumno", online_at: new Date().toISOString() }];
     oyentes.presence.forEach((f) => f());
@@ -194,6 +197,12 @@ window.__deletes = [];
       on(tipo, ev, f) {
         if (tipo === "presence") oyentes.presence.push(typeof ev === "function" ? ev : f);
         if (tipo === "broadcast") oyentes.broadcast.push(f);
+        // Los cambios de la base también se pueden empujar desde la prueba
+        // (window.__cambioEnBase), como haría Realtime: así se comprueba lo que
+        // pasa en la pantalla del ALUMNO cuando el profesor mueve.
+        if (tipo === "postgres_changes" && ev && ev.table) {
+          (oyentes.pg[ev.table] = oyentes.pg[ev.table] || []).push(f);
+        }
         return this;
       },
       subscribe(cb) { if (cb) cb("SUBSCRIBED"); return this; },

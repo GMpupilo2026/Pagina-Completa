@@ -101,7 +101,7 @@
             <!-- ---------- Portada ---------- -->
             <section id="intro-view">
                 <a href="aprender.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🎓 Aprende</a>
-                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1">🧭 Diagnóstico de nivel</h1>
+                <h1 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🧭</span> Diagnóstico de nivel</h1>
                 <p class="text-brand-500 dark:text-brand-300 text-sm mb-6">63 preguntas y posiciones que miden nueve áreas del juego, de las reglas a los finales, en cinco escalones de dificultad: de lo que se aprende el primer día a lo que resuelve alguien de competencia. Se sortean de un banco más grande, así que si lo repites dentro de unas semanas no te van a tocar las mismas. Tu nivel es el escalón más alto que superes, no cuántas preguntas aciertes. No se aprueba ni se reprueba: sirve para armarte un plan.</p>
 
                 <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
@@ -512,7 +512,7 @@ function pintarItem() {
     // tres: se pide la jugada clave, no la secuencia entera. Sin decirlo, el
     // alumno juega la primera, no pasa nada y se queda sin saber si tiene que
     // seguir.
-    hint.textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
+    hint.textContent = pistaDeJugada();
   }
   opciones.appendChild(botonNoSe());
   prepararComandos(esOpcion);
@@ -657,6 +657,15 @@ function responderEscribiendo(texto, api) {
 
 // Siempre al final y con otra pinta: no compite con las opciones de contenido,
 // se ofrece como salida honesta cuando de verdad no se sabe.
+/* Cómo se contesta una pregunta de jugada. "Haz clic en la pieza" no le sirve a
+   quien no ve el tablero: en Modo Adaptado se contesta escribiendo, y la pista
+   tiene que decir eso. */
+function pistaDeJugada(){
+  return document.documentElement.classList.contains('adaptive-mode')
+    ? 'Se responde con una sola jugada: escríbela en el recuadro, por ejemplo "Cf3" o "e4".'
+    : 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
+}
+
 function botonNoSe() {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -774,7 +783,7 @@ function clicEnCasilla(square) {
   if (square === origenElegido) {
     origenElegido = null;
     pintarTablero(juego);
-    document.getElementById('q-hint').textContent = 'Se responde con una sola jugada: haz clic en la pieza y después en su casilla de destino.';
+    document.getElementById('q-hint').textContent = pistaDeJugada();
     return;
   }
   const intento = juego.move({ from: origenElegido, to: square, promotion: 'q' });

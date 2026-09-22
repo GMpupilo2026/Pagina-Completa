@@ -195,10 +195,93 @@
     updateToggleUI();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectToggle);
-  } else {
+  /* ---- En el celular se PREGUNTA, una sola vez ----
+     Las dos señales de arriba no llegan nunca en un teléfono: con TalkBack o
+     VoiceOver no hay tecla Tab, y "aumentar contraste" casi nadie lo tiene
+     puesto. O sea que en el celular el modo arrancaba SIEMPRE apagado, y quien
+     no ve la pantalla tenía que encontrar solo un botón de 36 px en el
+     encabezado cuyo nombre no puede adivinar. No daba ningún error: el alumno
+     simplemente no encontraba cómo entrenar.
+     Así que en un aparato táctil, mientras la preferencia no esté definida, se
+     pone lo primero de la página —justo después de "Saltar al contenido", que
+     es por donde empieza quien recorre la página deslizando el dedo— una
+     pregunta con dos botones. Cualquiera de las dos respuestas se guarda, así
+     que no vuelve a salir. Solo en aparatos táctiles: en la computadora ya
+     funciona la detección por Tab, y un cartel de más en cada página es la
+     clase de cosa que se deja de leer. */
+  function esTactil() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches &&
+        !window.matchMedia("(pointer: fine)").matches);
+    } catch (e) {
+      return false;
+    }
+  }
+  function ofrecerEnCelular() {
+    if (getStored() !== null || !esTactil() || !document.body) return;
+    if (document.getElementById("am-oferta")) return;
+    if (!document.getElementById("theme-toggle")) return;   // documentos sueltos sin encabezado del sitio
+    var st = document.createElement("style");
+    st.textContent =
+      "#am-oferta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem;" +
+      "padding:.75rem 1rem;background:#102a43;color:#fff;font-size:1rem;line-height:1.4;text-align:center}" +
+      "#am-oferta p{margin:0;flex:1 1 100%}" +
+      "#am-oferta button{min-height:44px;padding:.5rem 1rem;border-radius:.5rem;font-weight:700;font-size:1rem;" +
+      "border:2px solid #f0b429;cursor:pointer}" +
+      "#am-oferta .am-si{background:#f0b429;color:#102a43}#am-oferta .am-no{background:transparent;color:#fff}";
+    document.head.appendChild(st);
+    var caja = document.createElement("section");
+    caja.id = "am-oferta";
+    caja.setAttribute("aria-labelledby", "am-oferta-texto");
+    var p = document.createElement("p");
+    p.id = "am-oferta-texto";
+    p.textContent = "¿Usas lector de pantalla (TalkBack o VoiceOver)? El modo adaptado te deja entrenar escribiendo las jugadas y oyendo el tablero.";
+    var si = document.createElement("button");
+    si.type = "button";
+    si.className = "am-si";
+    si.textContent = "Sí, activar el modo adaptado";
+    var no = document.createElement("button");
+    no.type = "button";
+    no.className = "am-no";
+    no.textContent = "No, gracias";
+    caja.appendChild(p);
+    caja.appendChild(si);
+    caja.appendChild(no);
+    var salto = document.querySelector('a[href="#main-content"]');
+    if (salto && salto.parentNode === document.body) document.body.insertBefore(caja, salto.nextSibling);
+    else document.body.insertBefore(caja, document.body.firstChild);
+    function responder(on) {
+      set(on);
+      caja.remove();
+      var nota = document.createElement("div");
+      nota.setAttribute("role", "status");
+      nota.className = "sr-only";
+      document.body.appendChild(nota);
+      setTimeout(function () {
+        nota.textContent = on
+          ? "Listo: se activó el modo adaptado. Se puede apagar con el botón «Modo adaptado» de arriba."
+          : "Entendido: se queda el modo visual. Se puede cambiar con el botón «Modo adaptado» de arriba.";
+      }, 60);
+      setTimeout(function () { nota.remove(); }, 5000);
+      // El foco no puede quedarse en un botón que ya no existe.
+      var destino = document.getElementById("main-content") || document.querySelector("main");
+      if (destino) {
+        if (!destino.hasAttribute("tabindex")) destino.setAttribute("tabindex", "-1");
+        destino.focus();
+      }
+    }
+    si.addEventListener("click", function () { responder(true); });
+    no.addEventListener("click", function () { responder(false); });
+  }
+
+  function alCargar() {
     injectToggle();
+    ofrecerEnCelular();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", alCargar);
+  } else {
+    alCargar();
   }
 
   /* Si el modo se cambia en OTRA pestaña, esta se entera: la preferencia es del
