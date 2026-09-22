@@ -5,7 +5,7 @@
  * mirando la pantalla: que sin sesión mande a iniciar sesión, que con sesión
  * arranque, que el tablero dibuje la posición de la pregunta actual (no otra),
  * que responder por los botones y por el cuadro de comandos lleven a la MISMA
- * corrección, que la ronda corta traiga las 8 áreas y la completa las 24
+ * corrección, que la ronda corta traiga las 8 áreas y la completa las 96
  * posiciones, y que terminar guarde en training_state sin dejar errores en la
  * consola.
  *
@@ -103,7 +103,7 @@ async function main() {
     const { page, ctx, errores } = await abrir(browser, clienteFalso(true));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 5000 });
     const bancoTotal = await page.textContent("#tam-banco");
-    ok("dice el tamaño del banco completo", bancoTotal === "24", "salió: " + bancoTotal);
+    ok("dice el tamaño del banco completo", bancoTotal === "96", "salió: " + bancoTotal);
 
     await page.click("#start-btn"); // ronda corta por omisión
     await page.waitForSelector("#pregunta-view:not(.hidden)");
@@ -160,7 +160,7 @@ async function main() {
     await ctx.close();
   }
 
-  /* ---------- el banco completo trae las 24 ---------- */
+  /* ---------- el banco completo trae las 96 ---------- */
   {
     const { page, ctx, errores } = await abrir(browser, clienteFalso(true));
     await page.waitForSelector("#app:not(.hidden)", { timeout: 5000 });
@@ -168,7 +168,7 @@ async function main() {
     await page.click("#start-btn");
     await page.waitForSelector("#pregunta-view:not(.hidden)");
     const contador = await page.textContent("#q-counter");
-    ok("el banco completo arranca con 24 posiciones", /de 24$/.test(contador), "salió: " + contador);
+    ok("el banco completo arranca con 96 posiciones", /de 96$/.test(contador), "salió: " + contador);
     ok("sin errores en la consola (banco completo)", errores.length === 0, errores.join("\n      "));
     await ctx.close();
   }

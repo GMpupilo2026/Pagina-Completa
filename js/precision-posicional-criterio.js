@@ -7,9 +7,9 @@
  *
  * A diferencia del examen de arbitraje o del diagnóstico de nivel, ACÁ NO HAY
  * NINGÚN NIVEL NI TÍTULO QUE ESTIMAR. No existe un "elo posicional" que se
- * pueda medir con 24 preguntas: lo único honesto que se puede decir es cuánto
- * se acertó, por área, y dar un veredicto en palabras — nunca un número de
- * nivel que suene más preciso de lo que en realidad es.
+ * pueda medir con un puñado de preguntas: lo único honesto que se puede decir
+ * es cuánto se acertó, por área, y dar un veredicto en palabras — nunca un
+ * número de nivel que suene más preciso de lo que en realidad es.
  */
 window.PrecisionPosicionalCriterio = (function () {
   "use strict";
