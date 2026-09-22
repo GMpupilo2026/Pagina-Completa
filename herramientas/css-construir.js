@@ -183,6 +183,21 @@ function binario() {
 // Qué archivos mira el compilador para saber qué clases escribir. Los de datos
 // (el libro de aperturas, los bancos de preguntas) no traen clases y son
 // enormes: con ellos el extractor se queda colgado.
+//
+// El tope es de 350 KB y no de 300 KB porque `sesion.html` —la pantalla más
+// cargada del sitio— ya pasó los 300 KB. Con el tope viejo quedaba EXCLUIDA
+// del compilado sin ningún aviso: sus clases exclusivas (el ancho de los
+// paneles flotantes del profesor, con `min` y `vw`) desaparecían de
+// `tailwind.css` y esos paneles quedaban sin ancho, invadiendo el tablero.
+// 350 KB deja margen para que ese archivo siga creciendo y sigue por debajo de
+// los bancos de datos de verdad (`js/arbitraje-items.js`, 396 KB;
+// `data/puzzle-rush-data.js`, 363 KB), que son los que de verdad hay que dejar
+// afuera.
+//
+// OJO al escribir este comentario: un ancho arbitrario de Tailwind escrito
+// acá mismo, entre corchetes, es candidato a clase para el propio compilador
+// — ya generó una vez una regla inválida con puntos suspensivos adentro. Por
+// eso ninguna forma de esas va entre corchetes en este bloque.
 function contenido(excluir) {
     const fuera = new Set(excluir || []);
     const lista = [];
@@ -195,7 +210,7 @@ function contenido(excluir) {
             const rel = path.relative(RAIZ, p);
             if (fuera.has(rel)) continue;
             if (rel.startsWith("herramientas/") && !rel.startsWith("herramientas/css")) continue;
-            if (fs.statSync(p).size > 300_000) continue;
+            if (fs.statSync(p).size > 350_000) continue;
             lista.push(p);
         }
     })(RAIZ);

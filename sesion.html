@@ -57,7 +57,12 @@
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content">
 
-    <div id="app" class="hidden pt-20 pb-16">
+    <!-- El encabezado es `sticky`, no `fixed` (ver "El encabezado ocupa su
+         propio espacio" en CLAUDE.md): ya ocupa su espacio solo, así que no
+         hace falta descontarle una altura a mano. Acá quedaba un `pt-20 pb-16`
+         de cuando SÍ era `fixed` — 144px muertos antes de que empezara nada,
+         justo en la pantalla con más controles del sitio. -->
+    <div id="app" class="hidden pt-6 pb-10">
         <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <a id="back-to-panel-link" href="clases.html" class="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors mb-3">← 🏛️ Academia</a>
             <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
@@ -670,7 +675,7 @@
          No es una decoración: sin clase abierta la RLS no le entrega el
          tablero a un alumno, así que lo único que se podía pintar era una
          pantalla vacía. Acá se dice POR QUÉ y de quién se está esperando. -->
-    <div id="sin-clase" class="hidden pt-20 pb-16">
+    <div id="sin-clase" class="hidden pt-6 pb-10">
         <section class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <span class="text-5xl block mb-3" aria-hidden="true">⏳</span>
             <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Todavía no hay clase</h1>
