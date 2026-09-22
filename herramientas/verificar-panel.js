@@ -392,7 +392,7 @@ async function pruebaProfesora(browser) {
      quiere decir es que no es suyo. */
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["partidas.html", "planes.html", "subgrupos.html"]);
+    ["partidas.html", "planes.html", "asistencia.html", "subgrupos.html"]);
   igual("y ni el lector de planilla ni la guía le quedan escondidos en la página",
     await page.evaluate(() => document.querySelectorAll(
       "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html']").length), "0");
@@ -486,7 +486,7 @@ async function pruebaAdmin(browser) {
      de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "partidas.html", "planes.html", "subgrupos.html",
+    ["lector-planilla.html", "partidas.html", "planes.html", "asistencia.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
   /* La otra mitad de que los diagnósticos sean solo de administración: que a

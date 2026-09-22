@@ -121,6 +121,7 @@ columna  class_sessions.created_at  timestamp with time zone  not null
 columna  class_sessions.created_by  uuid
 columna  class_sessions.ended_at  timestamp with time zone
 columna  class_sessions.id  uuid  not null
+columna  class_sessions.modalidad  text  not null
 columna  class_sessions.notes  text
 columna  class_sessions.started_at  timestamp with time zone  not null
 columna  class_sessions.summary  jsonb
@@ -665,6 +666,7 @@ funcion  formulario_publico(p_slug text)  definer  anon=true  auth=true
 funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=true  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
+funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid)  invoker  anon=false  auth=true
 funcion  handle_new_user()  definer  anon=false  auth=false
 funcion  informe_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
 funcion  informes_cursos_alumnos()  invoker  anon=false  auth=true
@@ -740,12 +742,17 @@ politica  archivos_pgn  archivos_pgn_insert  INSERT
 politica  archivos_pgn  archivos_pgn_select  SELECT
 politica  archivos_pgn  archivos_pgn_update  UPDATE
 politica  avisos_cobro  avisos_lee_coordinacion  SELECT
+politica  class_attendance  class_attendance_delete_profesor  DELETE
 politica  class_attendance  class_attendance_insert_own  INSERT
+politica  class_attendance  class_attendance_insert_profesor  INSERT
 politica  class_attendance  class_attendance_select  SELECT
+politica  class_attendance  class_attendance_update_profesor  UPDATE
 politica  class_chat_messages  class_chat_messages_delete  DELETE
 politica  class_chat_messages  class_chat_messages_insert  INSERT
 politica  class_chat_messages  class_chat_messages_select  SELECT
+politica  class_presence_log  class_presence_log_delete_profesor  DELETE
 politica  class_presence_log  class_presence_log_insert_own  INSERT
+politica  class_presence_log  class_presence_log_insert_profesor  INSERT
 politica  class_presence_log  class_presence_log_select  SELECT
 politica  class_presence_log  class_presence_log_update_own  UPDATE
 politica  class_sessions  class_sessions_delete  DELETE
@@ -946,6 +953,7 @@ indice  class_chat_messages  class_chat_messages_pkey
 indice  class_chat_messages  class_chat_messages_student_id_idx
 indice  class_presence_log  class_presence_log_pkey
 indice  class_presence_log  class_presence_log_student_idx
+indice  class_sessions  class_sessions_modalidad_idx
 indice  class_sessions  class_sessions_pkey
 indice  class_sessions  class_sessions_una_abierta_por_profesor
 indice  cobros  cobros_consecutivo_key

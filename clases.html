@@ -1579,7 +1579,17 @@
             const tdDur = document.createElement("td"); tdDur.className = "py-2 pr-4 whitespace-nowrap";
             tdDur.textContent = s.ended_at ? fmtDuration(s.started_at, s.ended_at) : "—";
             const tdNotes = document.createElement("td"); tdNotes.className = "py-2 pr-4 text-brand-500 dark:text-brand-300";
-            tdNotes.textContent = [s.title, s.notes].filter(Boolean).join(" · ") || "—";
+            /* Una clase presencial se registra desde asistencia.html y no
+               abriendo el tablero, así que en este registro aparece sin que el
+               profesor se acuerde de haberla abierto. Va DICHO —y escrito, no
+               con un color—: si no, se lee como una clase fantasma. */
+            if (s.modalidad === "presencial") {
+                const etiqueta = document.createElement("span");
+                etiqueta.className = "inline-block mr-2 text-xs font-semibold rounded-lg px-2 py-0.5 bg-brand-100 dark:bg-brand-800 text-brand-600 dark:text-brand-300";
+                etiqueta.textContent = "Presencial";
+                tdNotes.appendChild(etiqueta);
+            }
+            tdNotes.appendChild(document.createTextNode([s.title, s.notes].filter(Boolean).join(" · ") || "—"));
             const tdActions = document.createElement("td"); tdActions.className = "py-2 text-right";
             if (isTeacher) {
                 const delBtn = document.createElement("button");
@@ -1873,6 +1883,14 @@
                    en la lista con un descProfe. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
                     { emoji: "📋", label: "Planes de clase", desc: "Prepara la clase antes de darla: las posiciones y las lecciones, en orden", href: "planes.html" },
+                    /* La clase del aula también queda registrada. Va acá, al
+                       lado de los planes, porque es el otro extremo de la misma
+                       clase: uno la prepara antes y el otro la anota después.
+                       Lo que se guarda no es una lista suelta — es una
+                       class_sessions más, así que entra sola en Informes, en el
+                       informe que llega a la casa y en el reporte de
+                       actividades. */
+                    { emoji: "✅", label: "Asistencia presencial", desc: "Pasa lista de la clase que diste en el aula y anota qué se trabajó", href: "asistencia.html" },
                     /* Tus propias listas de alumnos. No son los "equipos" de
                        Administración —esos dan permisos— ni el grupo de cada
                        alumno: son de quien las arma y solo sirven para filtrar
