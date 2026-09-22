@@ -634,6 +634,217 @@ async function pruebaMiniaturas(browser) {
   }
 }
 
+/* ----------------------------------- 6. "Ver todas las posiciones" de una lista
+   Las dos listas de material del profesor —los PGN de Archivos y los ejercicios
+   de Táctica— tienen la posición de cada fila detrás de su propio "Vista
+   previa", y el rótulo no dice nada de ella ("Position 2, 1 Move", "3. ELO
+   1397"). El interruptor las destapa todas para poder buscar a ojo cuál dar.
+
+   Lo que se comprueba es lo que se rompe callado:
+
+   - QUE CADA FILA DIBUJE LA SUYA. Destapar treinta a la vez y que todas pinten
+     la misma posición —o la del vecino— se ve perfecto: son treinta tableros
+     llenos de piezas. Se compara el patrón de casillas ocupadas de cada tablero
+     contra la FEN que le toca, calculada acá afuera.
+   - QUE SEA LA POSICIÓN DE SALIDA DEL PGN, no la final. La final se ve igual de
+     bien y es el desenlace del ejercicio.
+   - QUE LA CARPETA CERRADA ESPERE. Dentro de un <details> cerrado la casilla
+     mide cero, así que dibujar ahí deja las piezas del tamaño que no era. El
+     tablero tiene que aparecer al ABRIR la carpeta, y bien medido.
+   - QUE SIGA VALIENDO PARA BUSCAR al cambiar de tanda: si al entrar a la
+     dificultad siguiente las posiciones vuelven a taparse, hay que apretar el
+     interruptor en cada paso y deja de servir para lo que se pidió.
+   - QUE CADA LISTA RECUERDE LO SUYO: son de tamaños muy distintos y encender en
+     una no tiene por qué encender en la otra.
+   - Y que abrirlas UNA POR UNA siga funcionando, que es la mitad del pedido. */
+const FEN_MATE = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+const FEN_TORRE = "8/8/8/4k3/8/8/4P3/4K2R w K - 0 1";
+const FEN_INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const ARCHIVOS_PGN = [
+  { id: "a-1", profesor_id: "u-profe", titulo: "Italiana, 3 jugadas", nombre_archivo: "aperturas.pgn",
+    carpeta: null, move_count: 6, created_at: "2026-09-03T10:00:00Z",
+    pgn: '[Event "Italiana"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 *' },
+  { id: "a-2", profesor_id: "u-profe", titulo: "Position 2, 1 Move", nombre_archivo: "ejercicios.pgn",
+    carpeta: null, move_count: 1, created_at: "2026-09-02T10:00:00Z",
+    pgn: '[Event "Position 2, 1 Move"]\n[FEN "' + FEN_MATE + '"]\n[SetUp "1"]\n[Result "*"]\n\n1. Ra8+ *' },
+  { id: "a-3", profesor_id: "u-profe", titulo: "Rey y peón contra rey", nombre_archivo: "finales.pgn",
+    carpeta: "Finales", move_count: 1, created_at: "2026-09-01T10:00:00Z",
+    pgn: '[Event "Final"]\n[FEN "' + FEN_TORRE + '"]\n[SetUp "1"]\n[Result "*"]\n\n1. Kd2 *' },
+];
+
+/* Qué casillas están ocupadas, de a8 a h1, que es el orden en que el diagrama
+   pinta sus 64 divs. Sale de la propia FEN —su primer campo ya describe el
+   tablero— así que no hace falta chess.js para esto y no se compara la página
+   contra ella misma. */
+function ocupacionDeFen(fen) {
+  return fen.split(" ")[0].split("/")
+    .map((f) => f.replace(/\d/g, (d) => ".".repeat(+d)))
+    .join("").replace(/[^.]/g, "x");
+}
+
+/* Esperar a que algo aparezca SIN reventar la prueba si no aparece: lo que se
+   comprueba después es justamente si apareció, y un timeout que tumba el
+   proceso deja sin correr la mitad de lo que hay que mirar. */
+function esperar(page, fn) {
+  return page.waitForFunction(fn, undefined, { timeout: 8000 }).catch(() => {});
+}
+
+function filasEnPantalla(page, selector) {
+  return page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((li) => {
+    const wrap = li.lastElementChild;                    // el recuadro de la vista previa
+    const board = wrap.querySelector(".example-board");
+    const sq = board && board.querySelector(".example-sq");
+    return {
+      titulo: (li.querySelector("p") || {}).textContent || "",
+      destapada: !wrap.classList.contains("hidden"),
+      dibujada: !!board,
+      seVe: !!board && board.checkVisibility(),
+      casilla: sq ? Math.round(sq.getBoundingClientRect().width) : 0,
+      ocupacion: board
+        ? Array.from(board.querySelectorAll(".example-sq")).map((c) => (c.querySelector("span") ? "x" : ".")).join("")
+        : "",
+    };
+  }), selector);
+}
+
+async function pruebaVistaPreviaEnLote(browser) {
+  console.log("\n=== Ver todas las posiciones de una lista ===");
+  const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe", { archivos_pgn: ARCHIVOS_PGN });
+  const ARCH = "#archivos-panel-list li";
+
+  // ---------------------------------------------------------------- Archivos
+  await page.click("#toggle-archivos-btn");
+  // "attached" y no "visible": el primer <li> es el de la carpeta cerrada.
+  await page.waitForSelector(ARCH, { state: "attached" });
+  const alAbrir = await filasEnPantalla(page, ARCH);
+  igual("de fábrica no hay ninguna posición destapada", alAbrir.filter((f) => f.destapada).length, 0);
+  igual("y tampoco ningún tablero dibujado", alAbrir.filter((f) => f.dibujada).length, 0);
+
+  const verTodas = page.locator("#archivos-panel").getByRole("button", { name: "Ver todas las posiciones" });
+  igual("el interruptor está en el panel de Archivos", await verTodas.count(), 1);
+  await verTodas.click();
+  await esperar(page, () => document.querySelectorAll("#archivos-panel-list li .example-board").length >= 2);
+  const destapadas = await filasEnPantalla(page, ARCH);
+
+  igual("se destapan las tres de una vez", destapadas.filter((f) => f.destapada).length, 3);
+  // La de la carpeta cerrada se destapa pero NO se dibuja: ahí la casilla mide
+  // cero y la pieza saldría de otro tamaño.
+  const enCarpeta = destapadas.find((f) => /Rey y peón/.test(f.titulo));
+  igual("la que vive en una carpeta cerrada espera a que se abra", enCarpeta.dibujada, false);
+  igual("las dos que se ven sí se dibujaron", destapadas.filter((f) => f.dibujada).length, 2);
+
+  const italiana = destapadas.find((f) => /Italiana/.test(f.titulo));
+  const mate = destapadas.find((f) => /Position 2/.test(f.titulo));
+  igual("la vista previa del PGN es su posición de SALIDA, no la final", italiana.ocupacion, ocupacionDeFen(FEN_INICIAL));
+  igual("y cada fila dibuja LA SUYA, no la del vecino", mate.ocupacion, ocupacionDeFen(FEN_MATE));
+  if (mate.casilla >= 15) bien("sus casillas miden " + mate.casilla + "px");
+  else mal("sus casillas miden " + mate.casilla + "px: el tablero se dibujó donde no se podía medir");
+
+  // Abrir la carpeta: recién ahí se dibuja, y bien medido.
+  await page.click("#archivos-panel-list details:not([open]) summary");
+  await esperar(page, () => document.querySelectorAll("#archivos-panel-list li .example-board").length >= 3);
+  const conCarpeta = (await filasEnPantalla(page, ARCH)).find((f) => /Rey y peón/.test(f.titulo));
+  igual("al abrir la carpeta, su posición aparece", conCarpeta.seVe, true);
+  igual("y es la del archivo que guarda", conCarpeta.ocupacion, ocupacionDeFen(FEN_TORRE));
+  if (conCarpeta.casilla >= 15) bien("con sus casillas ya medibles (" + conCarpeta.casilla + "px)");
+  else mal("sus casillas miden " + conCarpeta.casilla + "px: se dibujó dentro de la carpeta cerrada");
+
+  // Apagar, y volver a abrir una sola con su propio botón.
+  await page.locator("#archivos-panel").getByRole("button", { name: "Ocultar las posiciones" }).click();
+  igual("apagarlo las tapa todas", (await filasEnPantalla(page, ARCH)).filter((f) => f.destapada).length, 0);
+  await page.locator("#archivos-panel-list details[open] li").first().getByRole("button", { name: "Vista previa" }).click();
+  const unaPorUna = await filasEnPantalla(page, ARCH);
+  igual("y una por una sigue funcionando", unaPorUna.filter((f) => f.destapada).length, 1);
+
+  // ----------------------------------------------------------------- Táctica
+  const TACT = "#tactics-body li";
+  await page.click("#teacher-tab-tactica");
+  await page.waitForSelector("#tactics-body button", { timeout: 30000 });
+  await page.click("#tactics-body div.space-y-1\\.5 button >> nth=0");     // un grupo
+  await page.waitForSelector("#tactics-body div.space-y-1\\.5 button");
+  await page.click("#tactics-body div.space-y-1\\.5 button >> nth=0");     // un tema
+  await page.waitForSelector("#tactics-body div.space-y-1\\.5 button");
+  await page.click("#tactics-body div.space-y-1\\.5 button >> nth=0");     // una dificultad
+  await page.waitForSelector(TACT);
+
+  // Encender en Archivos no enciende acá: cada lista recuerda lo suyo.
+  igual("la lista de Táctica no se destapó con la de Archivos",
+    (await filasEnPantalla(page, TACT)).filter((f) => f.destapada).length, 0);
+
+  const verTodasT = page.locator("#tactics-panel").getByRole("button", { name: "Ver todas las posiciones" });
+  igual("el interruptor también está en Táctica", await verTodasT.count(), 1);
+  /* Y que QUEPA: la columna del profesor mide 320px fijos, y ahí ya se salió
+     del panel una fila de botones una vez —cortada contra el borde y sin forma
+     de apretarla, con la lista pintándose entera igual—. Se mide el rectángulo
+     que calcula el navegador, no la clase. */
+  const cabe = await page.evaluate(() => {
+    const caja = document.getElementById("tactics-panel").getBoundingClientRect();
+    const btn = Array.from(document.querySelectorAll("#tactics-body button"))
+      .find((b) => /Ver todas las posiciones/.test(b.textContent || ""));
+    const r = btn.getBoundingClientRect();
+    return { dentro: r.right <= caja.right + 0.5 && r.left >= caja.left - 0.5, ancho: Math.round(r.width) };
+  });
+  if (cabe.dentro) bien("y cabe dentro del panel (" + cabe.ancho + "px)");
+  else mal("el interruptor se sale del panel: no se puede ni apretar");
+  await verTodasT.click();
+  await esperar(page, () => document.querySelectorAll("#tactics-body li .example-board").length >= 2);
+  const tact = await filasEnPantalla(page, TACT);
+  const total = await page.evaluate(() => document.querySelectorAll("#tactics-body li").length);
+  igual("se destapan todos los ejercicios de la tanda", tact.filter((f) => f.destapada).length, total);
+  if (tact.filter((f) => f.dibujada).length >= 2) bien("y se van dibujando a medida que entran en pantalla (" + tact.filter((f) => f.dibujada).length + " de " + total + ")");
+  else mal("solo se dibujó " + tact.filter((f) => f.dibujada).length + " tablero: la galería queda vacía");
+
+  /* Y que al bajar por la lista se sigan dibujando. Es la falla propia de este
+     diseño: la lista de Táctica tiene su propio scroll (max-h-96), así que si el
+     observador no viera lo que entra por ahí, la galería se quedaría con los dos
+     primeros tableros y el resto en blanco — destapados y vacíos, sin ningún
+     error. */
+  /* Se baja a lo largo de varias vueltas, como lo hace una persona: cada tablero
+     que aparece empuja la lista hacia abajo, así que un solo salto al final no
+     llega al último. */
+  let abajo = false;
+  for (let i = 0; i < 25 && !abajo; i += 1) {
+    abajo = await page.evaluate(() => {
+      const ul = document.querySelector("#tactics-body ul");
+      ul.scrollTop = ul.scrollHeight;
+      const lis = document.querySelectorAll("#tactics-body li");
+      return !!lis.length && !!lis[lis.length - 1].querySelector(".example-board");
+    });
+    if (!abajo) await page.waitForTimeout(150);
+  }
+  igual("bajando por la lista se llega al último ya dibujado", abajo, true);
+
+  // Cada uno el suyo, contra el banco de ejercicios que la página cargó.
+  const fens = await page.evaluate(() => {
+    const ids = tacticsThemeBuckets(tacticsView.themeKey)[tacticsView.diffIndex];
+    return ids.slice(0, 2).map((id) => tacticsData.puzzles[id].fen);
+  });
+  igual("el primer tablero es el del primer ejercicio", tact[0].ocupacion, ocupacionDeFen(fens[0]));
+  igual("y el segundo, el del segundo", tact[1].ocupacion, ocupacionDeFen(fens[1]));
+
+  /* Lo que hace que sirva para buscar: al pasar a la tanda siguiente las
+     posiciones nacen destapadas. Si hubiera que volver a apretar el interruptor
+     en cada paso de la cascada, buscar seguiría costando lo mismo que antes. */
+  await page.click("#tactics-body > button");                              // ‹ volver a las dificultades
+  await page.waitForSelector("#tactics-body div.space-y-1\\.5 button");
+  const cuantas = await page.evaluate(() => document.querySelectorAll("#tactics-body div.space-y-1\\.5 button").length);
+  await page.click("#tactics-body div.space-y-1\\.5 button >> nth=" + (cuantas > 1 ? 1 : 0));
+  await page.waitForSelector(TACT);
+  await esperar(page, () => document.querySelectorAll("#tactics-body li .example-board").length >= 1);
+  const otraTanda = await filasEnPantalla(page, TACT);
+  igual("en la tanda siguiente nacen destapadas", otraTanda.every((f) => f.destapada), true);
+
+  await page.locator("#tactics-panel").getByRole("button", { name: "Ocultar las posiciones" }).click();
+  await page.click("#tactics-body > button");
+  await page.waitForSelector("#tactics-body div.space-y-1\\.5 button");
+  await page.click("#tactics-body div.space-y-1\\.5 button >> nth=0");
+  await page.waitForSelector(TACT);
+  igual("y apagado, nacen tapadas", (await filasEnPantalla(page, TACT)).filter((f) => f.destapada).length, 0);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -642,6 +853,7 @@ async function pruebaMiniaturas(browser) {
     await pruebaTactica(browser);
     await pruebaCoordenadasDelAlumno(browser);
     await pruebaMiniaturas(browser);
+    await pruebaVistaPreviaEnLote(browser);
   } finally {
     await browser.close();
   }

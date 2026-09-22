@@ -960,6 +960,62 @@ por uno—. Antes solo tenía "Cargar" (la línea entera, jugada a jugada, con
   la pestaña Practicar —el mismo insert que `start-practice-btn`, solo que con
   el fen del archivo en vez de `board.fen()`.
 
+### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
+
+Las dos listas de material del profesor —los PGN de Archivos y los ejercicios de
+Táctica— tienen la posición de cada fila **escondida detrás de su propio «👁
+Vista previa»**, y el rótulo de la fila no dice nada de ella: «Position 4, 1
+Move» o «3. ELO 1397» no distinguen un mate en dos de un final de torre. Así que
+para encontrar cuál dar había que abrir y cerrar de a una, con la clase delante.
+No fallaba nada: la lista se pintaba entera y el ejercicio estaba ahí — solo que
+no había forma de reconocerlo sin destaparlo.
+
+El interruptor de cada lista las destapa todas, y con él encendido **cada fila
+NACE destapada**: al cambiar de tema, de dificultad o de carpeta no hay que
+volver a apretarlo. Eso es lo que hace que sirva para buscar — si se volviera a
+apagar en cada paso de la cascada, buscar costaría lo mismo que antes.
+
+- **Se recuerda en el APARATO** (`localStorage`), como el tema, el Modo Adaptado
+  o la clase elegida: es de cómo se está mirando la lista, no de quién mira.
+- **Una lista no enciende la otra**, cada una con su clave: son de tamaños muy
+  distintos —cientos de PGN contra treinta y pico de ejercicios— y no hay razón
+  para que destapar los archivos destape la táctica.
+- **Una por una se sigue pudiendo**, que es la mitad del pedido: el interruptor
+  decide con qué estado NACE cada fila y no le impone el suyo después, así que
+  con todo destapado se puede cerrar la que estorba.
+- **El interruptor dice lo que va a pasar**, no el estado en que está («👁 Ver
+  todas las posiciones» / «🙈 Ocultar las posiciones»), igual que el «🙈
+  Ocultar» de cada fila. Y no se ofrece cuando no hay archivos: un control que no
+  cambia nada.
+
+**El tablero se dibuja cuando la fila ENTRA EN PANTALLA**, no al destaparla ni
+todos de golpe (`crearVistaPreviaLote()`, un `IntersectionObserver` que las dos
+listas comparten — escrito dos veces se separaría a la primera corrección, como
+`renderTacticsPreviewBoard()`). Son dos fallas distintas y las dos son calladas:
+
+- Dibujar las 34 posiciones de una tanda de táctica —o los cientos de PGN de un
+  profesor— en el mismo cuadro son miles de casillas de una vez: el panel se
+  queda congelado unos segundos **en medio de la clase**.
+- Y el tamaño de la pieza **se mide sobre la casilla ya renderizada** (ver
+  `sizePieces()` de `js/article-example-board.js`), así que dentro de una carpeta
+  cerrada —un `<details>`, que es como se agrupan los archivos— esa medida es
+  **cero** y el tablero saldría con las piezas del tamaño que no era. Con el
+  observador, lo que está guardado en una carpeta se dibuja al abrirla, ya
+  medible.
+
+**Al tocar esto, correr `node herramientas/verificar-sesion-curso.js`.** Lo que
+mira es lo que se rompe callado: que **cada fila dibuje LA SUYA** —treinta
+tableros pintando todos la misma posición se ven perfectos, así que se compara el
+patrón de casillas ocupadas de cada uno contra la FEN que le toca, sacada del
+primer campo de la propia FEN y no de la página—, que la del PGN sea la posición
+de **salida** y no la final, que la de la **carpeta cerrada espere** a que se
+abra y aparezca medida, que **bajando por la lista se llegue al último ya
+dibujado** (la lista de Táctica tiene su propio scroll: un observador que no
+viera lo que entra por ahí dejaría la galería en blanco), que al cambiar de tanda
+**nazcan destapadas**, que una lista no encienda la otra y que abrirlas una por
+una siga funcionando. Está probado que falla de verdad: dibujándolas todas de
+golpe saltan 3 comprobaciones, sin la persistencia 1 y cruzando las posiciones 8.
+
 ## Varios profesores por alumno, cada uno con su propia clase en vivo
 
 El sitio pasó de asumir un solo profesor (Oscar) a soportar varios, cada uno
