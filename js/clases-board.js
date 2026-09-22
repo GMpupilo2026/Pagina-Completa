@@ -224,15 +224,23 @@
       const parent = this.el.parentElement;
       const outer = document.createElement("div");
       outer.className = "board-coords-outer";
-      // Mismo ancho máximo que traía el tablero directamente, para que se vea igual de
-      // grande que antes con las coordenadas ahora afuera. El tope se lee tal cual esté
-      // escrito y NO solo como un número de píxeles: los overlays de pregunta y práctica
-      // usan max-w-[min(92vw,560px)], y un patrón que solo entendiera "560px" los dejaría
-      // sin tope — el tablero se quedaría en sus 560 px y la fila de letras se estiraría a
-      // todo el ancho de la tarjeta, o sea las coordenadas señalando la columna que no era.
+      // El ancho máximo se MUDA del tablero al envoltorio: desde que las coordenadas van
+      // afuera, quien decide cuánto mide el tablero es el envoltorio —el tablero es
+      // w-full dentro de él— y la fila de letras se reparte ese mismo ancho. Un tope que
+      // se quede pegado al tablero lo encoge sin encoger la fila, o sea las coordenadas
+      // señalando la columna que no era, que se ve igual de bien y es peor que no
+      // tenerlas.
+      //
+      // Se muda la CLASE, no su valor como estilo en línea. Un estilo en línea le gana a
+      // CUALQUIER hoja, así que con él puesto el tope de `@media (max-height: 800px)` de
+      // css/styles.css —el que achica el tablero en un laptop de 13"— no podía alcanzar
+      // al envoltorio: seguía aplicándosele solo al tablero, que se quedaba en 420 px
+      // dentro de un envoltorio de 539 y desalineaba las ocho letras. Mudada como clase,
+      // el envoltorio queda sujeto a las mismas reglas que el tablero y las dos medidas
+      // vuelven a salir del mismo lugar.
       const maxWidthMatch = this.el.className.match(/max-w-\[([^\]\s]+)\]/);
       if (maxWidthMatch) {
-        outer.style.maxWidth = maxWidthMatch[1];
+        outer.classList.add(maxWidthMatch[0]);
         this.el.classList.remove(maxWidthMatch[0]);
       }
       parent.insertBefore(outer, this.el);

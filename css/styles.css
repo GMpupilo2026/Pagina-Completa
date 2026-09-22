@@ -76,7 +76,17 @@ body { -webkit-font-smoothing: antialiased; }
 @media (max-height: 800px) {
   #app #chessboard,
   #app #question-board,
-  #app #practice-board { max-width: min(92vw, 420px); }
+  #app #practice-board,
+  /* Y el envoltorio de las coordenadas de afuera, que es QUIEN DE VERDAD DECIDE el
+     ancho: los tres tableros de esta pantalla se rotulan por fuera
+     (_setupExternalCoords de js/clases-board.js), así que dentro de él el tablero es
+     w-full y la fila de letras se reparte ese mismo ancho. Topando solo al tablero, se
+     encogía él y la fila no —ocho letras repartidas sobre 539 px encima de un tablero
+     de 420—, o sea las coordenadas señalando la columna que no era: se ve igual de
+     bien y es peor que no tenerlas. Y pasaba justo en el laptop de 13" que esta regla
+     viene a atender. Va en el MISMO selector para que el número siga escrito una sola
+     vez. */
+  #app .board-coords-outer { max-width: min(92vw, 420px); }
 }
 
 /* Los glifos Unicode de piezas "blancas" (♔♕♖♗♘♙) son solo un contorno hueco: sin un color

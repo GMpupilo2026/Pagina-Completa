@@ -453,6 +453,30 @@ async function medirCoordenadas(page, id) {
   }, id);
 }
 
+/* Que las ocho letras caigan sobre sus columnas y los ocho números sobre sus
+   filas, medido contra las casillas de verdad. Se llama para cada tablero y en
+   CADA tamaño de ventana, que es lo que este verificador no hacía: ver abajo. */
+async function alineacion(page, id, donde) {
+  const m = await medirCoordenadas(page, id);
+  if (!m.hay) { mal(donde + ": no tiene las coordenadas de afuera"); return; }
+  if (m.peorLetra <= m.lado / 4) bien(donde + ": cada letra cae sobre su columna (" + Math.round(m.peorLetra) + "px de " + Math.round(m.lado) + ")");
+  else mal(donde + ": una letra no cae sobre su columna, " + Math.round(m.peorLetra) + "px de desvío en casillas de " + Math.round(m.lado));
+  if (m.peorNumero <= m.lado / 4) bien(donde + ": y cada número sobre su fila (" + Math.round(m.peorNumero) + "px)");
+  else mal(donde + ": un número no cae sobre su fila, " + Math.round(m.peorNumero) + "px de desvío");
+  if (Math.abs(m.ancho - m.alto) <= 2) bien(donde + ": el tablero sigue cuadrado (" + m.ancho + "×" + m.alto + ")");
+  else mal(donde + ": el tablero dejó de ser cuadrado, " + m.ancho + "×" + m.alto);
+}
+
+/* Las dos alturas de ventana que hay que mirar, y por qué son dos: el tope que
+   achica el tablero para que la clase en vivo quepa sin scroll en un laptop de
+   13" vive en `@media (max-height: 800px)` (css/styles.css), así que TODO lo
+   que se rompa por ese lado existe solo por debajo de esa altura. Midiendo en
+   un tamaño solo, la mitad de los casos no se mira — y fue justo por ahí que
+   las coordenadas se desalinearon en los tres tableros sin que nada fallara.
+   Redimensionar y volver a medir comprueba además que el tope siga saliendo
+   del CSS y no de un número de píxeles calculado una vez al montar. */
+const ALTURAS = [{ height: 720, nombre: "en un laptop de 13\"" }, { height: 1000, nombre: "en un monitor alto" }];
+
 /* ------------------------------------------------ 4. las coordenadas del alumno
    Los dos overlays del alumno —la pregunta y la práctica contra el motor— son
    los únicos tableros de la clase donde está SOLO: el profesor no le está
@@ -496,6 +520,11 @@ async function pruebaCoordenadasDelAlumno(browser) {
   if (Math.abs(medida.ancho - medida.alto) <= 2) bien("el tablero sigue cuadrado: " + medida.ancho + "×" + medida.alto);
   else mal("el tablero dejó de ser cuadrado: " + medida.ancho + "×" + medida.alto);
 
+  for (const v of ALTURAS) {
+    await page.setViewportSize({ width: 1280, height: v.height });
+    await alineacion(page, "question-board", "la pregunta " + v.nombre);
+  }
+
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
@@ -517,7 +546,25 @@ async function pruebaCoordenadasDelAlumno(browser) {
   else mal("una letra no cae sobre su columna: " + Math.round(m2.peorLetra) + "px");
   if (m2.hay && Math.abs(m2.ancho - m2.alto) <= 2) bien("y sigue cuadrado: " + m2.ancho + "×" + m2.alto);
   else mal("el tablero de la práctica dejó de ser cuadrado: " + m2.ancho + "×" + m2.alto);
+  for (const v of ALTURAS) {
+    await dos.page.setViewportSize({ width: 1280, height: v.height });
+    await alineacion(dos.page, "practice-board", "la práctica " + v.nombre);
+  }
   await dos.ctx.close();
+
+  /* Y el tablero de la clase, que es el TERCERO que se rotula por fuera y el
+     que ve todo el mundo — el de la pregunta y el de la práctica los ve un
+     alumno a la vez. No lo miraba ninguna prueba, así que se desalineó con los
+     otros dos y nadie se enteró. */
+  const tres = await abrir(browser, [PROFE, ALUMNA], "u-profe");
+  await tres.page.waitForFunction(() =>
+    document.querySelectorAll("#chessboard [data-square]").length === 64, null, { timeout: 15000 });
+  for (const v of ALTURAS) {
+    await tres.page.setViewportSize({ width: 1280, height: v.height });
+    await alineacion(tres.page, "chessboard", "el tablero de la clase " + v.nombre);
+  }
+  igual("sin errores en consola", tres.errores.join(" | ") || "ninguno", "ninguno");
+  await tres.ctx.close();
 }
 
 /* ---------------------------------------- 5. las miniaturas de los alumnos
