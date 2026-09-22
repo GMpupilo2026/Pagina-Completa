@@ -75,6 +75,13 @@ window.ComandosTablero = (function () {
     if (TA.listaEspanola) return TA.listaEspanola(xs);
     return xs.join(", ");
   }
+  /* Sobre un tablero con niebla, cualquier recuento es un recuento de lo
+     VISIBLE. Sin decirlo, "dos torres negras" se oye como el inventario de la
+     partida cuando es el de lo que se alcanza a ver — y deducir lo que falta es
+     justamente el juego. */
+  function soloLoQueVes(juego) {
+    return conNiebla(juego) ? " Es solo lo que ves: la niebla tapa el resto." : "";
+  }
 
   // ------------------------------------------------------------------ la ayuda
   /* Con encabezados de verdad (un h3 por sección) y no un párrafo corrido: quien
@@ -132,7 +139,11 @@ window.ComandosTablero = (function () {
 
   function dondeEsta(juego, tipo) {
     var hay = piezasDe(juego, tipo);
-    if (!hay.length) return "No hay " + PLURAL[tipo] + " en el tablero.";
+    if (!hay.length) {
+      return conNiebla(juego)
+        ? "No ves ningún " + NOMBRE[tipo] + " ahora mismo."
+        : "No hay " + PLURAL[tipo] + " en el tablero.";
+    }
     var por = { w: [], b: [] };
     hay.forEach(function (x) { por[x.p.color].push(hablada(x.sq)); });
     var partes = [];
@@ -143,19 +154,42 @@ window.ComandosTablero = (function () {
       var fin = (FEMENINA[tipo] ? "a" : "o") + (uno ? "" : "s");
       partes.push((uno ? NOMBRE[tipo] : PLURAL[tipo]) + " " + color + fin + " en " + lista(por[c]));
     });
-    return partes.join(". ") + ".";
+    return partes.join(". ") + "." + soloLoQueVes(juego);
+  }
+
+  /* Un tablero puede TAPAR casillas a propósito —la niebla de Niebla de Guerra—
+     y ahí "vacía" es una respuesta falsa: puede haber una pieza rival. Lo
+     contesta la propia partida (`juego.oculta(casilla)`) y no una opción de
+     este módulo, porque es quien arma el tablero el que sabe qué esconde; una
+     partida que no lo traiga se comporta exactamente como siempre. */
+  function tapada(juego, sq) {
+    try { return !!(juego && juego.oculta && juego.oculta(sq)); } catch (e) { return false; }
+  }
+  function conNiebla(juego) {
+    return !!(juego && juego.oculta);
   }
 
   function queHayEn(juego, sq) {
+    if (tapada(juego, sq)) return hablada(sq) + ": cubierta por la niebla, no sabes qué hay ahí.";
     var p = null;
     try { p = juego.get(sq); } catch (e) {}
     return hablada(sq) + (p ? ": " + dicha(p) + "." : ": vacía.");
   }
 
   function jugadasDe(juego, sq) {
+    if (tapada(juego, sq)) return hablada(sq) + " está cubierta por la niebla: no sabes qué hay ahí.";
     var p = null;
     try { p = juego.get(sq); } catch (e) {}
     if (!p) return hablada(sq) + " está vacía.";
+    /* Con niebla, las jugadas de una pieza del RIVAL no se pueden contar: su
+       camino pasa por casillas que no ves. La partida visible devuelve la lista
+       vacía en cuanto le toca mover al rival, y sin esta línea esa lista vacía se
+       anunciaba como "no tiene jugadas ahora" — que es rotundamente falso y, lo
+       peor, se oye como información buena. `miColor` va en la partida visible
+       junto a `oculta`, que es donde vive lo que ESTE jugador sabe. */
+    if (conNiebla(juego) && juego.miColor && p.color !== juego.miColor) {
+      return "En " + hablada(sq) + " hay " + dicha(p) + ", del rival: con la niebla no puedes saber a dónde puede ir.";
+    }
     var ms = [];
     try { ms = juego.moves({ square: sq, verbose: true }) || []; } catch (e) {}
     if (!ms.length) {
@@ -170,18 +204,23 @@ window.ComandosTablero = (function () {
   function alrededorDe(juego, sq) {
     var f = sq.charCodeAt(0) - 97, r = parseInt(sq[1], 10);
     var partes = [];
+    var tapadas = 0;
     [[-1, 1, "arriba a la izquierda"], [0, 1, "arriba"], [1, 1, "arriba a la derecha"],
      [-1, 0, "izquierda"], [1, 0, "derecha"],
      [-1, -1, "abajo a la izquierda"], [0, -1, "abajo"], [1, -1, "abajo a la derecha"]].forEach(function (d) {
       var nf = f + d[0], nr = r + d[1];
       if (nf < 0 || nf > 7 || nr < 1 || nr > 8) return;
       var v = "abcdefgh"[nf] + nr, p = null;
+      if (tapada(juego, v)) { tapadas++; return; }
       try { p = juego.get(v); } catch (e) {}
       if (p) partes.push(d[2] + ": " + dicha(p) + " en " + hablada(v));
     });
-    return partes.length
+    var niebla = tapadas
+      ? " " + (tapadas === 1 ? "Una casilla de al lado está cubierta por la niebla." : tapadas + " casillas de al lado están cubiertas por la niebla.")
+      : "";
+    return (partes.length
       ? "Alrededor de " + hablada(sq) + " — " + partes.join("; ") + "."
-      : "Alrededor de " + hablada(sq) + " no hay ninguna pieza.";
+      : "Alrededor de " + hablada(sq) + " no hay ninguna pieza a la vista.") + niebla;
   }
 
   function laLinea(juego, cual) {
@@ -197,12 +236,15 @@ window.ComandosTablero = (function () {
       "abcdefgh".split("").forEach(function (f) { casillas.push(f + cual); });
     }
     var hay = [];
+    var tapadas = 0;
     casillas.forEach(function (sq) {
+      if (tapada(juego, sq)) { tapadas++; return; }
       var p = null;
       try { p = juego.get(sq); } catch (e) {}
       if (p) hay.push(dicha(p) + " en " + hablada(sq));
     });
-    return rotulo + ": " + (hay.length ? hay.join(", ") + "." : "sin piezas.");
+    var niebla = tapadas ? " " + tapadas + (tapadas === 1 ? " casilla está cubierta" : " casillas están cubiertas") + " por la niebla." : "";
+    return rotulo + ": " + (hay.length ? hay.join(", ") + "." : (tapadas ? "sin piezas a la vista." : "sin piezas.")) + niebla;
   }
 
   function deQuienEsElTurno(juego) {
@@ -354,7 +396,7 @@ window.ComandosTablero = (function () {
          hablada de las columnas, y una segunda versión acá diría la posición de
          otra manera que el resto del sitio. */
       var frase = window.BlindNotation && BlindNotation.positionSentence
-        ? BlindNotation.positionSentence(juego)
+        ? BlindNotation.positionSentence(juego) + soloLoQueVes(juego)
         : "No se pudo leer la posición.";
       return { manejado: true, tipo: "posicion", respuesta: frase };
     }

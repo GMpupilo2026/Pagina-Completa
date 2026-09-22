@@ -553,3 +553,21 @@ html.adaptive-mode .tarea-en-curso-detalle { font-size: 0.95rem; opacity: 1; }
 .tema-previa-tarjeta { width: 20px; height: 13px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
 .tema-previa-pastilla { width: 16px; height: 8px; border-radius: 999px; }
 .tema-previa-sq { width: 12px; height: 12px; }
+
+/* ===== El bloque de ayuda del recuadro donde se escribe la jugada =====
+ *
+ * Lo pintan DOS módulos —js/cuadro-comandos.js en Entrenamiento y
+ * js/juegos-blind.js en las partidas de Juegos—, con el mismo contenido
+ * (ComandosTablero.ayudaHTML). Por eso el estilo vive acá y no dentro de uno de
+ * los dos: ahí el otro salía sin formato, con los encabezados del tamaño del
+ * texto y pegados unos a otros, y no fallaba nada — solo se veía mal justo en la
+ * pantalla que existe para explicar cómo se juega sin ver.
+ *
+ * Va en CSS propio y no en clases de Tailwind por la razón de siempre: cada
+ * utilidad nueva hay que volver a compilarla (ver herramientas/css-construir.js)
+ * y una clase a medias no pinta nada sin dar ningún error.
+ */
+.cc-ayuda-det { margin: 0.6rem 0 0; }
+.cc-ayuda-det > summary { cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+.cc-ayuda-det h3 { font-size: 0.95rem; margin: 0.7rem 0 0.2rem; font-weight: 700; }
+.cc-ayuda-det p { margin: 0 0 0.4rem; font-size: 0.88rem; line-height: 1.55; }

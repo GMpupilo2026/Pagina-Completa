@@ -5197,6 +5197,148 @@ a `TableroAccesible.montar()` al final de su función de dibujo y se suma a
 `CON_TABLERO` en el verificador. Y se le pasan `juego` y `tablero` al
 `CuadroComandos.montar()`, que es lo que le da las preguntas gratis.
 
+### Las tres páginas de Juegos, con el mismo teclado
+
+Entrenamiento quedó recorrible y `sesion.html` ya lo estaba, pero las partidas
+—que es donde se juega de verdad— seguían con lo de antes. Las tres páginas con
+tablero de Juegos (`estandar.html`, `niebla.html` y `tablero.html`, el bot) se
+pusieron al día, y lo que tenían roto eran cuatro cosas distintas, las cuatro
+calladas:
+
+- **La región viva se contradecía consigo misma.** `#move-input-status` llevaba
+  `role="status"` **y** `aria-live="assertive"` encima: el rol ya vale por una
+  región viva cortés y "assertive" manda interrumpir, así que los dos juntos
+  dicen lo contrario. JAWS corta con eso la frase que venía leyendo y VoiceOver a
+  veces directamente no lo lee — o sea que el aviso que confirma tu jugada podía
+  no llegar nunca. Queda `role="status"` con `aria-atomic="true"`: acá no hay
+  nada urgente que interrumpir, es la respuesta a un Intro que se acaba de
+  pulsar.
+- **El interruptor de la página encendía medio modo**, el mismo fallo que ya
+  tenían las cinco páginas de Entrenamiento con su propio "🔊 Adaptado":
+  `js/juegos-blind.js` y `js/tablero-board.js` escribían la preferencia en
+  `localStorage` y **no** encendían la clase `adaptive-mode` del `<html>`, así
+  que el contraste, el tamaño de letra y todo lo que cuelga de esa clase se
+  quedaba apagado hasta recargar. El botón se marcaba como activado, no fallaba
+  nada. Ahora las dos pasan por `AdaptiveMode.set()` y **escuchan
+  `adaptivemode:change`**, que es la otra mitad: el modo se puede encender desde
+  el encabezado, desde otra pestaña o porque se adivinó solo, y sin escuchar el
+  aviso la página se quedaba con el recuadro escondido mientras el resto del
+  sitio ya estaba en Adaptado.
+- **El tablero se anunciaba como grupo, así que los atajos no llegaban.** Es lo
+  más caro de los cuatro y afecta sobre todo a `tablero.html`, que es la página
+  que más atajos ofrece (o, c, l, m, i, k q r b n p, 1-8, x): con el rol de
+  siempre, NVDA y JAWS están en su modo de lectura y **se quedan ellos con todas
+  las teclas de una letra** —"p" es "párrafo siguiente"—, así que ni uno solo
+  llegaba nunca al tablero. Quien los intentaba oía moverse el lector de pantalla
+  por la página y no tenía forma de saber por qué. En Modo Adaptado el tablero
+  pasa a `application`, como ya hacía `js/tablero-accesible.js` en Entreno; fuera
+  del modo se queda en grupo, para no quitarle la navegación normal a quien no
+  pidió cambiar nada. Y el texto de `aria-describedby` cambia con el modo: fuera
+  de él prometer esos atajos sería mandar a alguien a apretar teclas que no hacen
+  nada.
+- **Las 64 casillas de `estandar.html` y `niebla.html` eran 64 paradas de
+  tabulador**, y el rótulo decía "Casilla e4", deletreado. Ahora montan el mismo
+  `js/tablero-accesible.js` de Entrenamiento —una sola parada, flechas, atajos,
+  "eva 4"— y el mismo `js/comandos-tablero.js`, así que al tablero de una partida
+  se le puede preguntar con las palabras de todo el sitio.
+
+**`tablero.html` conserva su propio teclado y sus comandos cortos**, a propósito:
+es el más viejo y el más rico (última captura, última jugada, repasar jugadas
+con shift+a / shift+d), y quien ya los usa no tiene por qué reaprenderlos. Lo que
+se le sumó es el vocabulario del resto del sitio —"posición", "caballos", "qué
+hay en e4"— como respaldo de los suyos: que en Entrenamiento se escriba
+"caballos" y acá haya que adivinar "p n" es justo el lío de tres vocabularios que
+`js/comandos-tablero.js` vino a terminar. Va **antes de los cortes por turno**:
+preguntar es solo lectura y tiene que funcionar también mientras el bot piensa o
+con la partida terminada, que es cuando más se mira el tablero.
+
+#### La posición entera dejó de dictarse en cada jugada
+
+`#position-readout` era región viva en las dos páginas de partida, así que cada
+jugada —la propia **y la del rival**— volvía a dictar las treinta y dos piezas:
+para enterarse de que el rival jugó Cf3 había que oírse el tablero completo, en
+cada jugada de una partida entera. No daba ningún error y es exactamente la misma
+falla que ya se había corregido en las fichas de Estudio.
+
+Ahora lo que se anuncia es **la jugada**, que es lo que cambió, y la posición se
+queda escrita ahí para leerla cuando se quiera, se pide con "posición" en el
+recuadro o con la tecla `z` sobre el tablero. **En `tablero.html` ese bloque sí
+sigue siendo región viva, y está bien**: ahí solo se rellena cuando se pide con
+el comando "T", nunca solo.
+
+#### La niebla no se puede escapar por el modo adaptado
+
+Es lo que hacía falta mirar con más cuidado, porque una fuga acá no se ve: la
+pantalla queda impecable y quien la tiene delante gana la partida con información
+que no le tocaba. El tablero visual de Niebla de Guerra tapa con 🌫️ lo que la
+posición no deja ver, y `getVisibleGame()` ya devolvía una partida recortada —
+pero con `get()` solamente, y eso alcanzaba mientras nadie preguntara nada.
+
+- **`oculta(casilla)` separa "ahí no hay nada" de "no sabes qué hay ahí".** Sin
+  ella, preguntar por una casilla tapada contestaba **"vacía"**: falso (puede
+  haber una pieza rival) y, peor, distinto de lo que el tablero enseña. Va en la
+  **partida visible** y no como una opción de los módulos, porque es ahí donde
+  vive ese conocimiento — quien arma el tablero sabe qué esconde. Una partida que
+  no la traiga se comporta como siempre, y la variante que mañana esconda algo
+  (la mano de Ajedrez de Cartas) lo hereda sin tocar nada.
+- **`moves()` solo contesta en tu turno.** Las jugadas de una pieza del rival
+  pasan por casillas que no ves, así que listarlas es la fuga entera de la
+  variante. Las propias no revelan nada que el tablero no enseñe ya: toda casilla
+  a la que puede ir una pieza tuya es una casilla que esa pieza **ve** —el rayo
+  de visibilidad llega hasta la primera ocupada— y el tablero visual le pinta
+  encima su punto de destino.
+- **Pero una lista vacía no se puede anunciar como "no tiene jugadas"**, que es
+  lo que salía con el guardia puesto y nadie explicándolo: es rotundamente falso
+  y se oye como información buena. Por eso la partida visible lleva también
+  **`miColor`**, y sobre una pieza del rival se dice lo que pasa de verdad — que
+  es del rival y que la niebla no deja saberlo.
+- **Todo recuento es un recuento de lo VISIBLE, y se dice.** "Es solo lo que ves:
+  la niebla tapa el resto" va detrás de la posición y de "¿dónde están mis
+  torres?": sin esa coletilla se oye como el inventario de la partida cuando es
+  el de lo que se alcanza a ver, y deducir lo que falta es justamente el juego.
+- **El rayo de "alrededor" se corta en la niebla**, no la atraviesa: siguiendo de
+  largo anunciaría como "la primera pieza en esa dirección" una que está detrás
+  de lo que no se ve, y con eso se juega dando por libre un camino tapado.
+- Y la vista se **guarda por FEN**: desde que el tablero se recorre con el
+  teclado, sus 64 casillas se vuelven a rotular en cada repintado y cada rótulo
+  pide la partida visible — sin eso, un repintado recalculaba la visibilidad 64
+  veces. No daría ningún error, solo un tablero que responde tarde, que en una
+  partida con reloj es lo que no se puede permitir.
+
+**`.cc-ayuda-det` se mudó a `css/styles.css`.** Ese bloque de ayuda lo pintan
+ahora DOS módulos —`js/cuadro-comandos.js` en Entrenamiento y
+`js/juegos-blind.js` en Juegos— y el estilo vivía dentro del primero: el de
+Juegos salía sin formato, con los encabezados del tamaño del texto y pegados unos
+a otros, sin que fallara nada.
+
+**Al tocar `js/juegos-blind.js`, `js/tablero-board.js` o cualquiera de las tres
+páginas, correr `node herramientas/verificar-juegos-accesible.js`** (con el sitio
+en localhost:8777, playwright y `npm install chess.js@0.10.3`). Existe porque
+`estandar.html` y `niebla.html` están detrás del login **y** de una sala, así que
+`verificar-css.js` no las abre nunca. Comprueba que el aviso vaya con `role` y
+**sin `aria-live` encima**, que el interruptor de la página encienda la clase del
+`<html>` y que encenderlo desde fuera la destape igual, que el tablero cambie de
+rol con el modo, que quede **una sola parada de tabulador** y ninguna casilla
+muda, que las flechas muevan el foco **de verdad** —un `keydown` declarado que no
+mueve nada se ve igual que un tablero que sí se recorre—, que "caballos" conteste
+y que una jugada escrita se **juegue** en vez de leerse como pregunta, que la
+ayuda nazca plegada, que la posición **no** sea región viva en las dos de partida
+y sí lo siga siendo en el bot, y que los comandos cortos de `tablero.html` sigan
+funcionando. De la niebla comprueba las cinco puertas por las que se escapa.
+
+Y comprueba las dos formas de jugar que este cambio podía romper sin avisar:
+**una jugada entera hecha con el teclado** (llegar a la pieza con las flechas,
+elegirla con Intro, soltarla en su destino) y **dos clics con el ratón** — montar
+un teclado encima del tablero no puede costarle la partida a quien juega con el
+ratón, y eso tampoco daría ningún error: las casillas se pintarían igual y no
+pasaría nada al tocarlas.
+
+Está probado que falla de verdad: devolviendo el `aria-live="assertive"` saltan
+4 comprobaciones, el interruptor de antes 5, el rol de grupo 7, sin el teclado
+compartido 10, sin `oculta()` 6, y sin el guardia de `moves()` saltan 2 — con el
+verificador escribiendo en pantalla la fuga entera: «peón negro en david 5 puede
+ir a david 4 y eva 4 capturando».
+
 ## El hub de Entrenamiento y sus tres grupos
 
 `entreno/index.html` reparte los ocho accesos en **Fundamentos** (Mates,

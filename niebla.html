@@ -39,6 +39,8 @@
     <script src="js/turn-alert.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/chess-move-parser.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/comandos-tablero.js"></script>
     <script src="js/juegos-blind.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
@@ -84,16 +86,32 @@
             </div>
 
             <div class="blind-mode-only hidden max-w-[480px] mx-auto mb-4">
-                <h2 class="text-sm font-serif font-bold text-brand-700 dark:text-brand-200 mb-2">Escribir jugada</h2>
+                <h2 class="text-sm font-serif font-bold text-brand-700 dark:text-brand-200 mb-2">Escribir jugada o preguntar</h2>
                 <form id="move-form" class="flex flex-col sm:flex-row gap-2 sm:items-end">
                     <div class="flex-1">
-                        <label for="move-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Escribe tu jugada (útil con lector de pantalla)</label>
-                        <input id="move-input" type="text" autocomplete="off" placeholder="Ej: e4, Cf3, Dxe5, O-O" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        <!-- La etiqueta dice las DOS cosas que acepta el recuadro: quien no ve la
+                             pantalla se entera de lo que puede escribir por acá y por ningún otro
+                             lado. Prometer solo la jugada dejaba las preguntas sin descubrir. -->
+                        <label for="move-input" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Escribe tu jugada o una pregunta sobre la posición</label>
+                        <input id="move-input" type="text" autocomplete="off" placeholder="Ej: e4, Cf3, O-O, caballos, qué hay en e4" class="w-full bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus:ring-2 focus:ring-accent-500">
                     </div>
                     <button type="submit" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors">Jugar</button>
                 </form>
-                <div id="move-input-status" role="status" aria-live="assertive" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
-                <div id="position-readout" role="region" aria-live="polite" aria-label="Lo que ves en el tablero" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></div>
+                <!-- `role="status"` a secas y NO con `aria-live="assertive"` encima: el rol ya
+                     vale por una región viva cortés, y los dos juntos se contradicen —uno dice
+                     "espera tu turno" y el otro "interrumpe lo que estés diciendo"—. JAWS corta
+                     con eso la frase que venía leyendo y VoiceOver a veces no lo lee. Acá nunca
+                     hay nada urgente que interrumpir: es la respuesta a un Intro que se acaba
+                     de pulsar, o la jugada que llegó del rival. -->
+                <div id="move-input-status" role="status" aria-atomic="true" class="text-xs text-brand-600 dark:text-brand-300 mt-1"></div>
+                <!-- La posición entera va SIN `aria-live`, a propósito. Con él, cada jugada
+                     —la propia y la del rival— volvía a dictar las treinta y dos piezas: para
+                     enterarse de que el rival jugó Cf3 había que oírse el tablero completo, y en
+                     una partida larga eso es insufrible. Lo que se anuncia es la JUGADA, que es
+                     lo que cambió; la posición se queda escrita acá para leerla cuando se quiera,
+                     y se pide a demanda con "posición" en el recuadro o con la tecla z sobre el
+                     tablero. Misma decisión que en las fichas de Estudio. -->
+                <div id="position-readout" role="region" aria-label="Lo que ves en el tablero" class="text-xs text-brand-600 dark:text-brand-300 mt-2"></div>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-2 italic">🌫️ En Niebla de Guerra, "lo que ves" solo incluye tus propias piezas y las casillas que alcanzan a atacar o defender — igual que en el tablero visual, no se revela lo que hay bajo la niebla.</p>
             </div>
 
@@ -431,17 +449,47 @@
             // Modo adaptado: "lo que ves" respeta la niebla — solo tus propias piezas y las
             // casillas que alcanzan a atacar o defender, igual que en el tablero visual. Un
             // espectador (el profesor) ve todo, sin niebla, igual que en el tablero visual.
+            let vistaVisible = null; // { fen, vista } — ver getVisibleGame más abajo
             if (window.JuegosBlind) {
                 blindCtl = JuegosBlind.init({
+                    tablero: document.getElementById("board"),
+                    nombreTablero: "Tablero de Niebla de Guerra",
                     tryMove: (text) => board.tryMove(text),
                     getVisibleGame: () => {
                         if (!myColor) return board.game;
+                        /* Se guarda la vista y se rehace solo cuando cambia la posición. Desde
+                           que el tablero se recorre con el teclado, sus 64 casillas se vuelven a
+                           rotular en CADA repintado, y cada rótulo pide la partida visible: sin
+                           esto, un repintado recalculaba la visibilidad 64 veces. No daría ningún
+                           error — solo un tablero que responde tarde, que en una partida con
+                           reloj es justo lo que no se puede permitir. */
+                        const fen = board.game.fen();
+                        if (vistaVisible && vistaVisible.fen === fen) return vistaVisible.vista;
                         const visible = NieblaGuerra.visibleSquaresFor(board.game, myColor);
-                        return {
+                        const vista = {
                             get: (sq) => (visible.has(sq) ? board.game.get(sq) : null),
                             turn: () => board.game.turn(),
                             in_check: () => board.game.in_check(),
+                            /* `oculta` es lo que separa "ahí no hay nada" de "no sabes qué hay
+                               ahí". Sin ella, preguntar por una casilla con niebla contestaba
+                               "vacía" — que es falso (puede haber una pieza rival) y además dice
+                               algo distinto de lo que el tablero visual enseña con su 🌫️. La
+                               entienden los dos módulos compartidos (js/tablero-accesible.js y
+                               js/comandos-tablero.js), así que basta con ponerla acá. */
+                            oculta: (sq) => !visible.has(sq),
+                            miColor: myColor,
+                            /* Las jugadas, SOLO cuando te toca mover: así todas las que salen son
+                               tuyas. Devolviendo también las del rival en su turno, el recuadro
+                               contaría de dónde a dónde puede ir una pieza que la niebla está
+                               tapando — la fuga entera de la variante, y se vería perfecto.
+                               Las propias no revelan nada que el tablero no enseñe ya: toda
+                               casilla a la que puede ir una pieza tuya es una casilla que esa
+                               pieza VE (el rayo de visibilidad llega hasta la primera ocupada),
+                               y el tablero visual le pinta encima su punto de destino. */
+                            moves: (o) => (board.game.turn() === myColor ? board.game.moves(o) : []),
                         };
+                        vistaVisible = { fen, vista };
+                        return vista;
                     },
                     // La niebla oculta la jugada del rival igual que oculta el panel de
                     // jugadas visual (ver renderMovesPanel) — no se anuncia qué jugó ni

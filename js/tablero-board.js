@@ -91,7 +91,7 @@
   const BLIND_MODE_KEY = "oscarBlindMode_v1";
   let blindMode = false;
   try {
-    blindMode = localStorage.getItem(BLIND_MODE_KEY) === "1";
+    blindMode = window.AdaptiveMode ? AdaptiveMode.isOn() : localStorage.getItem(BLIND_MODE_KEY) === "1";
   } catch (e) {}
   // El panel de Clases enlaza aquí con "?modo=ciego" para el icono "Robot Ciego":
   // preselecciona el modo adaptado sin tener que tocar el interruptor a mano.
@@ -146,16 +146,42 @@
     }
     if (refreshSpeechToggle) refreshSpeechToggle();
     renderBoard(); // los colores de las casillas dependen de blindMode (ver squareClasses)
+    aplicarRolDelTablero(); // el rol del tablero depende del modo — ver aplicarRolDelTablero
     if (blindMode) announceHelpFirstTimeIfNeeded();
   }
 
+  /* El interruptor de esta página escribía la preferencia a mano y NO encendía la
+     clase `adaptive-mode` del <html>. No daba ningún error: el botón se marcaba
+     como activado y la mitad del modo —el contraste, el tamaño de letra, todo lo
+     que cuelga de esa clase en css/styles.css— se quedaba apagada hasta recargar.
+     Es el mismo fallo que ya se arregló en las cinco páginas de Entrenamiento que
+     traen su propio "🔊 Adaptado". Ahora pasa por AdaptiveMode, que es quien pone
+     la clase y avisa al resto del sitio con `adaptivemode:change`. */
   function setBlindMode(value) {
     blindMode = !!value;
-    try {
-      localStorage.setItem(BLIND_MODE_KEY, blindMode ? "1" : "0");
-    } catch (e) {}
+    if (window.AdaptiveMode) {
+      AdaptiveMode.set(blindMode);
+    } else {
+      try {
+        localStorage.setItem(BLIND_MODE_KEY, blindMode ? "1" : "0");
+      } catch (e) {}
+      document.documentElement.classList.toggle("adaptive-mode", blindMode);
+    }
     applyBlindModeUI();
   }
+
+  /* Y al revés: el modo se puede encender desde el interruptor del encabezado,
+     desde otra pestaña o porque se adivinó solo (el contraste del sistema, el
+     primer Tab). Sin escuchar el aviso, esta página se quedaba con su botón
+     diciendo "Modo normal" y el recuadro escondido mientras el resto del sitio ya
+     estaba en Adaptado. */
+  document.addEventListener("adaptivemode:change", (ev) => {
+    const activo = !!(ev && ev.detail && ev.detail.activo);
+    if (activo === blindMode) return;
+    blindMode = activo;
+    applyBlindModeUI();
+    aplicarRolDelTablero();
+  });
 
   if (modeNormalBtn) modeNormalBtn.addEventListener("click", () => setBlindMode(false));
   if (modeBlindBtn) modeBlindBtn.addEventListener("click", () => setBlindMode(true));
@@ -1483,7 +1509,14 @@
         "T o R para torre, D o Q para dama, R o K para rey. Enroque: O-O (corto) u O-O-O (largo).",
     },
     {
-      title: "Comandos",
+      title: "Preguntas",
+      text:
+        "Las mismas palabras que en el resto del sitio: posición (todo lo que hay), caballos —o cualquier " +
+        "pieza, en singular o en plural— (dónde están), qué hay en e4, jugadas de f3, alrededor de e4, " +
+        "fila 4, columna e, turno, ir a e4 (lleva el foco a esa casilla del tablero).",
+    },
+    {
+      title: "Comandos cortos",
       text:
         "L o last (última jugada), T (posición actual), board o b [casilla] (ir a una casilla, e4 por defecto), " +
         "resign (rendirse), p seguido de una letra (dónde están las piezas de ese tipo; mayúscula blancas, minúscula negras), " +
@@ -1590,6 +1623,31 @@
       moveInputEl.value = "";
       announceLine(tokens[1]);
       return true;
+    }
+
+    /* Las preguntas del resto del sitio, con las palabras de siempre: "posición",
+       "caballos", "qué hay en e4", "jugadas de f3", "alrededor de e4", "turno".
+       Esta página nació antes que ComandosTablero y tiene su propio juego de
+       comandos de una letra ("T", "L", "p d", "s e"), que se queda: está en su
+       ayuda y quien ya lo usa no tiene por qué reaprenderlo. Lo que no puede ser
+       es que en Entrenamiento se escriba "caballos" y acá haya que adivinar
+       "p n" — dos vocabularios para lo mismo es justo el lío que había antes de
+       js/comandos-tablero.js. Los cryptic van primero porque son los suyos, y
+       ComandosTablero contesta lo demás.
+       Va ANTES de los cortes por turno a propósito: preguntar es solo lectura y
+       tiene que funcionar también mientras el bot piensa o con la partida
+       terminada — que es justo cuando más se mira el tablero. */
+    if (window.ComandosTablero) {
+      const preguntado = ComandosTablero.interpretar(trimmed, {
+        juego: game,
+        tablero: { enfocar: (sq) => focusBoardSquare(sq) },
+      });
+      if (preguntado.manejado) {
+        moveInputEl.value = "";
+        if (preguntado.respuesta) announceMoveInput(preguntado.respuesta);
+        // "ir a e4" ya movió el foco al tablero a propósito, igual que "board".
+        return preguntado.tipo !== "ir";
+      }
     }
 
     if (isBotThinking) {
@@ -2185,19 +2243,49 @@
   // ---------- Accesibilidad: roles/etiquetas ARIA para lector de pantalla ----------
   // Todo esto vive aquí (no en el HTML) para que aplique por igual a tablero.html y al
   // tablero compacto de index.html, que comparten este mismo script.
-  boardEl.setAttribute("role", "group");
   boardEl.setAttribute("aria-label", "Tablero de ajedrez");
+  boardEl.setAttribute("aria-roledescription", "tablero de ajedrez");
+
+  /* EN MODO ADAPTADO EL TABLERO SE ANUNCIA COMO `application`, y no es un adorno:
+     con el rol de siempre, NVDA y JAWS están en su modo de lectura y se quedan
+     ellos con las teclas de una sola letra —"p" es "párrafo siguiente", "b" es
+     "botón siguiente"—, así que ni una sola de las que esta página ofrece (o, c,
+     l, m, i, k q r b n p, 1-8, x) llegaba nunca al tablero. No fallaba nada:
+     quien las intentaba oía moverse el lector de pantalla por la página y no el
+     tablero, y no tenía forma de saber por qué. Con `application` el foco manda y
+     las teclas llegan enteras. Fuera del Modo Adaptado se deja el rol de grupo,
+     para no quitarle la navegación normal a quien no pidió cambiar nada.
+     Es la misma decisión que ya toma js/tablero-accesible.js en los tableros de
+     Entrenamiento — escrita acá porque este tablero tiene su propio teclado, más
+     rico (última captura, última jugada, repasar jugadas), que se conserva. */
+  function aplicarRolDelTablero() {
+    boardEl.setAttribute("role", blindMode ? "application" : "group");
+    const instrucciones = document.getElementById("board-instructions");
+    if (instrucciones) instrucciones.textContent = textoDeInstrucciones();
+  }
+
+  function textoDeInstrucciones() {
+    const base =
+      "Tablero de ajedrez interactivo. Usa las flechas del teclado para moverte entre las casillas, e Inicio o Fin para ir al extremo de la fila. Presiona Enter o espacio sobre una pieza propia para seleccionarla, y sobre una casilla resaltada para mover ahí. Al promocionar un peón, usa las flechas o Tab para elegir la pieza y Enter para confirmar, o Escape para cancelar. ";
+    /* Fuera del Modo Adaptado los atajos de una letra no llegan (los retiene el
+       lector de pantalla), así que prometerlos acá sería mandar a alguien a
+       apretar teclas que no hacen nada. */
+    return base + (blindMode
+      ? "Con una casilla enfocada: o dice qué hay en esta casilla, m a dónde puede ir esta pieza, x las piezas de alrededor, c la última captura, l la última jugada, las letras k, q, r, b, n y p saltan a la siguiente pieza de ese tipo, los números 1 a 8 van a esa fila y con mayúsculas a esa columna, e i vuelve al recuadro donde se escribe. Escribe ayuda en ese recuadro para la lista completa."
+      : "Activa el modo adaptado para más comandos por teclado y por texto; escribe ayuda en el recuadro de jugada para conocerlos.");
+  }
+
   if (boardEl.parentNode) {
     let instructionsEl = document.getElementById("board-instructions");
     if (!instructionsEl) {
       instructionsEl = document.createElement("p");
       instructionsEl.id = "board-instructions";
       instructionsEl.className = "sr-only";
-      instructionsEl.textContent =
-        "Tablero de ajedrez interactivo. Usa las flechas del teclado para moverte entre las casillas, e Inicio o Fin para ir al extremo de la fila. Presiona Enter o espacio sobre una pieza propia para seleccionarla, y sobre una casilla resaltada para mover ahí. Al promocionar un peón, usa las flechas o Tab para elegir la pieza y Enter para confirmar, o Escape para cancelar. Activa el modo adaptado para más comandos por teclado y por texto; escribe ayuda en el recuadro de jugada para conocerlos.";
+      instructionsEl.textContent = textoDeInstrucciones();
       boardEl.parentNode.insertBefore(instructionsEl, boardEl.nextSibling);
     }
     boardEl.setAttribute("aria-describedby", "board-instructions");
+    aplicarRolDelTablero();
   }
   if (turnEl) {
     turnEl.setAttribute("role", "status");
