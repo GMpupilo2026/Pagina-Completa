@@ -299,7 +299,13 @@
       btn.style.backgroundImage = "url(" + sq.thumb + ")";
       btn.title = sq.piece ? (sq.piece === "empty" ? "Vacía" : sq.piece.color + " " + sq.piece.type) : "Sin identificar — toca para asignar";
       const label = document.createElement("span");
-      label.className = "relative z-10 drop-shadow-[0_0_2px_white] dark:drop-shadow-[0_0_2px_black]";
+      // Un glifo de pieza va con piece-white/piece-black (mismo tratamiento que el tablero
+      // de verdad: relleno + contorno, legible encima de CUALQUIER miniatura de fondo, clara
+      // u oscura); el "?" de sin identificar no es de ningún color, así que se queda con el
+      // drop-shadow genérico de siempre.
+      const esPieza = sq.piece && sq.piece !== "empty";
+      label.className = "relative z-10 " +
+        (esPieza ? (sq.piece.color === "w" ? "piece-white" : "piece-black") : "drop-shadow-[0_0_2px_white] dark:drop-shadow-[0_0_2px_black]");
       label.textContent = sq.piece ? (sq.piece === "empty" ? "" : PIECES.find((p) => p.color === sq.piece.color && p.type === sq.piece.type).glyph) : "?";
       btn.appendChild(label);
       btn.addEventListener("click", () => applyToolToSquare(i));
@@ -328,7 +334,12 @@
     PIECES.forEach((p) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 text-brand-800 dark:text-brand-100";
+      // piece-white/piece-black (css/styles.css), no un color de texto genérico: con el
+      // mismo color para las dos filas, en modo oscuro el rey negro macizo (♚) se llenaba
+      // del mismo claro que el rey blanco hueco (♔) de al lado y terminaba viéndose MÁS
+      // blanco que él — la misma trampa que ya tenía la paleta del editor de sesion.html.
+      btn.className = "w-9 h-9 flex items-center justify-center text-2xl rounded-lg border transition-colors bg-white dark:bg-brand-800 border-brand-200 dark:border-brand-700 hover:border-accent-500 " +
+        (p.color === "w" ? "piece-white" : "piece-black");
       btn.textContent = p.glyph;
       btn.title = "Asignar " + (p.color === "w" ? "blanco" : "negro") + " " + p.type;
       btn.addEventListener("click", () => {
