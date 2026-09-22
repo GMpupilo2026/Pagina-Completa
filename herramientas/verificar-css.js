@@ -42,7 +42,7 @@ const PAGINAS = [
     // temas.html y esa dirección ahora solo redirige. Abrirla acá mediría el CSS
     // de temas.html dos veces.
     "/entreno/temas.html", "/entreno/practicas.html", "/entreno/desafios.html",
-    "/entreno/coordenadas.html", "/inscripcion.html",
+    "/entreno/coordenadas.html", "/entreno/precision-posicional.html", "/inscripcion.html",
 ];
 
 // Clases que a propósito no definen ningún estilo: son ganchos para el

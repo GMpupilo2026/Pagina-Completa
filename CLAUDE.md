@@ -5110,6 +5110,103 @@ con la página.
   esperados se calculan de las mismas filas.
 
 
+## El Evaluador de precisión posicional: elegir el plan, no la táctica
+
+`entreno/precision-posicional.html` (tarjeta **"🧭 Precisión posicional"** en
+el grupo "Practicar" del hub de Entrenamiento) es un banco de 24 posiciones
+—3 por cada una de 8 áreas— con una pregunta de opción múltiple por posición.
+**Ninguna tiene una jugada que gane material o dé mate de inmediato**: lo que
+se pide es el plan correcto a largo plazo — mejorar la pieza peor colocada,
+abrir o disputar una columna o diagonal, decidir qué cambiar y qué conservar,
+fijar y atacar una debilidad, sostener una ventaja de espacio, elegir el
+flanco de ataque, decidir sobre la estructura de peones, o transformar una
+ventaja rumbo al final.
+
+Es la primera herramienta del sitio que entrena juicio posicional puro, y por
+eso se parece y se diferencia del resto de los bancos a la vez:
+
+- **El banco (`js/precision-posicional-items.js`) y el criterio
+  (`js/precision-posicional-criterio.js`) van separados**, la misma partición
+  que ya usan `js/diagnostico-items.js` + `js/plan-entrenamiento.js` y
+  `js/arbitraje-items.js` + `js/arbitraje-nivel.js`: el criterio (qué mide
+  cada área, qué repasar) se puede ajustar sin tocar las 24 posiciones, y al
+  revés.
+- **Sin cronómetro, a propósito.** Un ejercicio de táctica se cronometra
+  porque la solución tiene que verse rápido o no vale; acá es justo lo
+  contrario — la idea completa del entrenamiento es dar el tiempo que haga
+  falta para pensar el plan, no premiar a quien contesta rápido. La página no
+  trae ningún reloj, ni de cuenta regresiva ni de cuenta corrida.
+- **Ninguna posición se presenta como si fuera de una partida real.** Son
+  posiciones ilustrativas, escritas a mano para mostrar con claridad un solo
+  motivo estratégico clásico — el mismo criterio de cualquier manual de
+  estrategia: un diagrama instructivo no necesita salir de una partida
+  concreta. Lo que este repositorio no puede repetir es el error que ya
+  cometió una vez con una «Lucena» que no era Lucena: prometer un resultado
+  que el motor no confirma. Acá no hay ningún resultado que prometer —es un
+  juicio posicional, no una combinación forzada—, así que el campo `fuente`
+  de cada ítem describe el TIPO de estructura ("peón aislado de dama",
+  "estructura Carlsbad") y **nunca** atribuye la posición a una partida ni a
+  un jugador: inventar esa cita sería peor que decir con todas las letras que
+  la posición es ilustrativa.
+- **No hay ningún "nivel" ni título que estimar**, al revés que el
+  diagnóstico o el examen de arbitraje. No existe un "elo posicional" que se
+  pueda medir con 24 preguntas; lo único honesto que `resumir()` calcula es
+  cuánto se acertó, por área, y un veredicto en palabras —nunca un número que
+  suene más preciso de lo que en realidad es.
+- **Dos tandas, no una.** "Ronda corta" (`PrecisionPosicionalPrueba.armar(1)`)
+  sortea una posición de cada una de las 8 áreas; "Banco completo"
+  (`armar()`, sin argumentos) trae las 24. Las dos se barajan, así que dos
+  rondas seguidas no salen en el mismo orden.
+- **El resultado se guarda en `training_state`** (claves
+  `precision_posicional_resultado_v1` / `_historial_v1`), exactamente como el
+  examen de arbitraje: esa tabla ya tiene su RLS (cada quien ve lo suyo) y no
+  hace falta ninguna tabla nueva. **No escribe en `training_progress`**, la
+  misma decisión que ya tomó Confites: esa tabla tiene el CHECK de
+  actividades permitidas y sumar una nueva ahí es una migración aparte que
+  esta tanda no pidió. El tiempo sí se registra, como en toda página de
+  Entreno: `js/tiempo-plataforma.js data-activity="precision-posicional"`, que
+  no tiene ningún CHECK.
+- **El cuadro de comandos (`js/cuadro-comandos.js`) reutiliza `comandos.
+  posicion(juego)`** para la lectura de la posición en Modo Adaptado, en vez
+  de escribirla de nuevo: acá SÍ hay una partida de chess.js detrás de cada
+  pregunta —cosa que el examen de arbitraje no tiene—, así que la misma
+  lectura que ya usan Mates, 4×4 y el resto sale gratis. El tablero en sí es
+  **decorativo** (`aria-hidden`, dibujado con `window.ExampleBoard.render()`,
+  el mismo diagrama de los artículos y de las fichas de Estudio): quien usa
+  lector de pantalla no necesita verlo, lo lee.
+- **La corrección llega al final, posición por posición**, como el examen de
+  arbitraje y no como Mates o 4×4 (que corrigen al toque): acá se está
+  evaluando un criterio, no entrenando reflejos, así que ver la respuesta
+  antes de terminar la ronda entera invalidaría las preguntas que faltan.
+
+**Al tocar el banco, el criterio o la página, correr las dos comprobaciones**:
+
+    node herramientas/verificar-precision-posicional.js               # el banco, con chess.js
+    node herramientas/verificar-precision-posicional-pagina.js         # la página, en un navegador (sitio en localhost:8777)
+
+La primera no necesita navegador ni red (`npm install chess.js@0.10.3`) y
+comprueba lo único que SÍ se puede verificar de un banco sin táctica: que
+**ninguna jugada legal de ninguna posición dé jaque mate** —si la hubiera, la
+premisa entera ("acá no hay táctica inmediata, hay que pensar el plan") se
+caería—, que la FEN de cada ítem sea legal y el turno declarado coincida, que
+la posición no esté ya en jaque, que las cuatro opciones no se delaten por el
+largo, que `fuente` diga siempre "Posición ilustrativa" y nunca invente una
+cita, y que el banco alcance para las 8 áreas del criterio (y al revés, que el
+criterio no describa un área sin ninguna posición).
+
+La segunda pide playwright y el sitio en `localhost:8777`, y existe porque
+esta página está detrás del login: `verificar-css.js` abre las páginas sin
+cuenta y no ve nada de esto. Comprueba que sin sesión mande a `login.html`,
+que la ronda corta arranque con 8 posiciones y el banco completo con 24, que
+el tablero dibuje de verdad 64 casillas con piezas (no un tablero vacío), que
+"Siguiente" avance y "Anterior" conserve la respuesta ya marcada, que el
+resultado muestre el marcador y las 8 filas por área, y que terminar la ronda
+guarde de verdad en `training_state` **a nombre del alumno de la sesión** —la
+misma trampa que otros verificadores del sitio ya documentaron: anotar la
+escritura en el resolver y no en el método, para no dar por buena una que
+fuera a la fila que no era.
+
+
 ## Diagnóstico y plan de entrenamiento
 
 `entreno/diagnostico.html` es la asignación de nivel (ficha "Asignaciones" en
