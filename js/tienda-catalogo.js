@@ -308,10 +308,16 @@ window.TiendaCatalogo = (function () {
      ningún producto: son las formas del material que se entregan con el
      paquete, no otra cosa que haya que comprar. */
   const BONOS = [
+    /* Este es el único bono que NO es un archivo que se descarga: los 53
+       planes viven dentro de la plataforma, cargados en la cuenta de quien da
+       clase. Va dicho con todas las letras porque prometer "53 planes" a
+       secas es prometer un PDF que no existe, y eso se descubre después de
+       pagar — que es justo el fallo callado contra el que está escrito el
+       resto de este archivo. */
     {
       emoji: "🗂️",
-      titulo: "53 planes de clase listos para dar",
-      detalle: "Doce de finales, cinco de estrategia, diez de apertura, tres de celadas, dieciséis de táctica y ocho de mates. Con 303 renglones y 262 posiciones, y ninguna inventada: todas salen de bancos ya verificados con motor.",
+      titulo: "53 planes de clase, cargados en tu cuenta de la plataforma",
+      detalle: "No es un archivo que se baja: quedan puestos dentro de la Academia, listos para dar. Doce de finales, cinco de estrategia, diez de apertura, tres de celadas, dieciséis de táctica y ocho de mates, con 303 renglones y 262 posiciones — y ninguna inventada: todas salen de bancos ya verificados con motor.",
     },
     {
       emoji: "👐",
