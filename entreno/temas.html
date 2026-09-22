@@ -304,6 +304,10 @@
 <script src="../js/board-drag.js"></script>
 <script src="../js/blind-notation.js"></script>
 <script src="../js/chess-move-parser.js"></script>
+<!-- El teclado del tablero y las preguntas que se le pueden hacer, escritos
+     una sola vez para todo Entrenamiento (ver js/tablero-accesible.js). -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/comandos-tablero.js"></script>
 <script src="../js/cuadro-comandos.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
@@ -572,22 +576,41 @@ function drawBoard(){
       btn.className = 'sq ' + (isLightSquare(square) ? 'light' : 'dark');
       btn.dataset.square = square;
       const piece = game.get(square);
-      let label = square;
       if(piece){
         const span = document.createElement('span');
         span.className = piece.color === 'w' ? 'piece-white' : 'piece-black';
         span.textContent = GLYPH[piece.color][piece.type];
         span.setAttribute('aria-hidden', 'true');
         btn.appendChild(span);
-        label += ', ' + PIECE_NAME[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro');
-        if(piece.type === 'q' || piece.type === 'r') label = label.replace('blanco', 'blanca').replace('negro', 'negra');
       }
-      btn.setAttribute('aria-label', label);
-      if(square === selectedSquare) btn.classList.add('selected');
-      if(lastMove && (square === lastMove.from || square === lastMove.to)) btn.classList.add('last');
+      /* Qué dice cada casilla lo escribe js/tablero-accesible.js, no esta
+         página: ahí las columnas van habladas ("eva 4", que no se confunde con
+         "bella 4" al oírlas) y los nombres de las piezas salen de la misma
+         tabla que el resto del sitio. Acá solo se declara el ESTADO, que es lo
+         único que esta página sabe y aquel no. */
+      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
+      if(lastMove && (square === lastMove.from || square === lastMove.to)){
+        btn.classList.add('last');
+        btn.dataset.estado = (btn.dataset.estado ? btn.dataset.estado + ', ' : '') + 'de la última jugada';
+      }
       btn.addEventListener('click', () => onSquareClick(square, btn));
       board.appendChild(btn);
     });
+  });
+  montarTeclado();
+}
+
+/* El teclado del tablero: una sola parada de tabulador y dentro las flechas,
+   más los atajos de una tecla en Modo Adaptado. Antes eran 64 botones seguidos
+   en el recorrido del tabulador, así que llegar al botón de "Pista" costaba
+   sesenta y cinco Tab — y no fallaba nada, simplemente nadie lo hacía. Se monta
+   una sola vez: a partir de ahí se repone solo en cada repintado. */
+let teclado = null;
+function montarTeclado(){
+  if(teclado || !window.TableroAccesible) return;
+  teclado = TableroAccesible.montar(document.getElementById('board'), {
+    nombre: 'Tablero del ejercicio',
+    juego: () => game,
   });
 }
 
@@ -606,22 +629,25 @@ function refrescarComandos(){
   if(!window.CuadroComandos || !game) return;
   if(!comandos){
     comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
-      etiqueta: 'Escribe tu jugada',
+      etiqueta: 'Escribe tu jugada, o una pregunta sobre la posición',
+      // Con estos dos, el mismo recuadro contesta preguntas antes de tratar el
+      // texto como jugada: "caballos", "qué hay en e4", "jugadas de f3".
+      juego: () => game,
+      tablero: () => teclado,
       onEnviar: jugarEscribiendo,
     });
-    comandos.ayuda('En español o en inglés: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D".');
+    comandos.ayuda('Jugada: "Cf3", "Nf3", "e4", "Dxh7+", "e8=D". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
   }
   comandos.posicion(game);
 }
 
 function jugarEscribiendo(texto, api){
   if(locked){ api.decir('Espera: el rival está respondiendo.'); return; }
-  // El intérprete HACE la jugada sobre la partida que se le pasa, así que se le
-  // pasa una copia: quien decide si la jugada entra es playMove(), que es la
+  // El intérprete busca la jugada entre las LEGALES y no toca la partida, así
+  // que no hace falta ninguna copia: quien decide si entra es playMove(), la
   // misma puerta por la que pasa el clic y la que corrige contra la solución.
-  const copia = new Chess(game.fen());
-  const mv = CuadroComandos.jugadaPedida(copia, texto);
-  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Revísala e inténtalo de nuevo.`); return; }
+  const mv = ComandosTablero.jugadaEscrita(game, texto);
+  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
   api.limpiar().decir('');
   playMove(mv.from, mv.to, mv.promotion);
 }

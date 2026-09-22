@@ -156,6 +156,8 @@
     <script src="../js/blind-notation.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="../js/article-example-board.js"></script>
+    <script src="../js/tablero-accesible.js"></script>
+    <script src="../js/comandos-tablero.js"></script>
     <script src="../js/cuadro-comandos.js"></script>
     <script src="../js/precision-posicional-items.js"></script>
     <script src="../js/precision-posicional-criterio.js"></script>
@@ -264,11 +266,20 @@ let comandos = null;
 function prepararComandos(item) {
   if (!window.CuadroComandos) return;
   if (!comandos) {
-    comandos = CuadroComandos.montar($('q-comandos'), { onEnviar: responderEscribiendo });
+    comandos = CuadroComandos.montar($('q-comandos'), {
+      /* Con `juego`, el mismo recuadro contesta preguntas sobre la posición
+         antes de tratar el texto como respuesta: "caballos", "qué hay en e4",
+         "jugadas de f3". Acá eso no es un extra — la pregunta es qué PLAN
+         conviene, y para contestarla hay que poder mirar la estructura. Las
+         letras de las opciones no chocan con nada: preguntar por una pieza pide
+         su nombre entero, nunca una inicial (ver js/comandos-tablero.js). */
+      juego: () => juego,
+      onEnviar: responderEscribiendo,
+    });
   }
   comandos.posicion(juego);
   comandos.etiqueta('Escribe la letra del plan que elegiste');
-  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. Puedes escribir solo la letra ("B") o "opción B".`
+  comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(item.opciones.length - 1)}. Puedes escribir solo la letra ("B") o "opción B". También puedes preguntar por la posición: "caballos", "qué hay en e4".`
     + (idx === tanda.length - 1
         ? ' Es la última: al responder se termina la ronda y se muestra el resultado.'
         : ' Al responder se pasa sola a la siguiente.'));

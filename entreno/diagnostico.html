@@ -47,6 +47,8 @@
     <script src="../js/adaptive-mode.js"></script>
     <script src="../js/blind-notation.js"></script>
     <script src="../js/chess-move-parser.js"></script>
+    <script src="../js/tablero-accesible.js"></script>
+    <script src="../js/comandos-tablero.js"></script>
     <script src="../js/cuadro-comandos.js"></script>
 
 
@@ -546,6 +548,11 @@ function prepararComandos(esOpcion) {
   if (!window.CuadroComandos) return;
   if (!comandos) {
     comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+      // Con estos dos, el mismo recuadro contesta preguntas sobre la posición
+      // antes de tratar el texto como respuesta: "caballos", "qué hay en e4".
+      // En una pregunta de tablero eso es lo único que reemplaza a mirarlo.
+      juego: () => juegoDelItem,
+      tablero: () => teclado,
       onEnviar: responderEscribiendo,
     });
   }
@@ -560,7 +567,9 @@ function prepararComandos(esOpcion) {
     const cuantas = itemActual.opciones.length;
     comandos.etiqueta('Escribe la letra de la opción');
     comandos.ayuda(`Opciones de la A a la ${CuadroComandos.letra(cuantas - 1)}. `
-      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".' + queHace);
+      + 'Puedes escribir solo la letra ("B"), "opción B", o "no lo sé".'
+      + (itemActual.fen ? ' También puedes preguntar por la posición: "caballos", "qué hay en e4".' : '')
+      + queHace);
     // En los ítems de opción CON tablero la posición también hace falta: la
     // pregunta habla de una posición que no se puede ver.
     comandos.posicion(itemActual.fen ? new Chess(itemActual.fen) : '');
@@ -715,10 +724,29 @@ function pintarTablero(juego, destacadas) {
         span.setAttribute('aria-hidden', 'true');
         btn.appendChild(span);
       }
+      // Qué dice cada casilla lo escribe js/tablero-accesible.js: eran 64
+      // botones mudos, o sea un tablero que con lector de pantalla no se podía
+      // ni mirar, en una prueba donde media docena de preguntas son de tablero.
+      if (destacadas && destacadas.includes(square)) btn.dataset.estado = 'elegida';
       if (interactivo) btn.addEventListener('click', () => clicEnCasilla(square));
       board.appendChild(btn);
     }
   }
+  montarTeclado(juego);
+}
+
+/* Una sola parada de tabulador para el tablero y las flechas por dentro, más los
+   atajos de una tecla en Modo Adaptado. Antes eran 64 paradas de tabulador entre
+   el enunciado y el botón de "Siguiente". */
+let teclado = null;
+let juegoDelItem = null;
+function montarTeclado(juego){
+  juegoDelItem = juego;
+  if (teclado || !window.TableroAccesible) return;
+  teclado = TableroAccesible.montar(document.getElementById('q-board'), {
+    nombre: 'Tablero de la pregunta',
+    juego: () => juegoDelItem,
+  });
 }
 
 function clicEnCasilla(square) {

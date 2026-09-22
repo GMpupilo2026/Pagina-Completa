@@ -65,9 +65,24 @@
 
   var toggleBtn = null;
 
+  /* Encender el modo tiene que AVISAR. Cinco páginas de Entrenamiento traen su
+     propio interruptor ("🔊 Adaptado") y guardan en esta misma clave, pero cada
+     una llevaba su variable aparte: apretarlo escribía la preferencia y NO
+     encendía la clase del <html>, así que todo lo que cuelga de ella —el
+     recuadro donde se escribe la jugada, los atajos del tablero, el contraste—
+     se quedaba apagado hasta recargar la página. No daba ningún error: el botón
+     se marcaba como activado y la mitad del modo adaptado no llegaba.
+     Ahora la clase la pone esta función y sale un evento, así que cualquier
+     pieza del sitio se entera en el momento sin tener que preguntar cada tanto.
+     Vale también entre pestañas, más abajo, por la misma razón. */
   function applyMode(on) {
+    var antes = document.documentElement.classList.contains("adaptive-mode");
     document.documentElement.classList.toggle("adaptive-mode", !!on);
     updateToggleUI();
+    if (antes === !!on) return;
+    try {
+      document.dispatchEvent(new CustomEvent("adaptivemode:change", { detail: { activo: !!on } }));
+    } catch (e) {}
   }
 
   function updateToggleUI() {
@@ -185,6 +200,14 @@
   } else {
     injectToggle();
   }
+
+  /* Si el modo se cambia en OTRA pestaña, esta se entera: la preferencia es del
+     navegador, así que dos pestañas abiertas del mismo ejercicio no pueden
+     quedar una en cada modo — quien lo encendió en una y vuelve a la otra
+     encuentra el recuadro apagado y cree que no funciona. */
+  window.addEventListener("storage", function (e) {
+    if (e && e.key === KEY) applyMode(isOn());
+  });
 
   window.AdaptiveMode = { isOn: isOn, set: set };
 })();

@@ -110,6 +110,7 @@ demás porqué comité subcomité josé café caché también según razón beb�
 aperturasmás
 elistá andrés valdés josué prevé noé
 empecé aprendí entendí tomé repasé jugué estudié olvidé
+cortés descortés
 encontré revisé recargué creé comprometí revelé
 quizá
 mamá papá bebé

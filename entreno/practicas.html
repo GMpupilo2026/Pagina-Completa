@@ -155,13 +155,6 @@
     font-size:0.85rem; color:var(--text-muted); line-height:1.6; max-width:520px; margin-left:auto; margin-right:auto;
   }
   .position-readout p{margin:2px 0;}
-  #blind-panel > div{background:var(--bg-panel); border:1px solid var(--line); padding:16px; margin:0 auto 16px; max-width:340px;}
-  #blind-panel label{display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;}
-  #blind-panel input{
-    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text);
-    font-family:'Inter', sans-serif; font-size:1.1rem; text-align:center; padding:10px; text-transform:lowercase;
-  }
-  #blind-panel input:focus{border-color:var(--brass);}
 
   .round-status{margin-top:14px; text-align:center; font-size:0.95rem; min-height:1.4em;}
   .round-status.ok{color:var(--ok); font-weight:600;}
@@ -260,13 +253,13 @@
         </div>
         <div id="position-readout" class="position-readout" role="region" aria-label="Posición actual" style="display:none;"></div>
 
-        <form id="blind-panel" style="display:none;">
-          <div>
-            <label for="blind-move-input">Escribe la jugada — casilla de origen y de destino, ej. "e1 g1" — y presiona Enter</label>
-            <input type="text" id="blind-move-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="9">
-          </div>
-          <button type="submit" class="sr-only">Enviar</button>
-        </form>
+        <!-- Donde se escribe la jugada y se le pregunta a la posición
+             (js/cuadro-comandos.js). Reemplazó a un recuadro propio que solo
+             aceptaba "e1 g1": no entendía "Cf3" —que es como se escribe una
+             jugada— y no había forma de preguntarle nada al tablero, así que la
+             única manera de mirarlo sin verlo era oír las treinta y dos piezas de
+             corrido y acordarse. Lo destapa el CSS en Modo Adaptado. -->
+        <div id="q-comandos"></div>
 
         <p class="round-status" id="round-status" role="status" aria-live="polite"></p>
         <div class="round-controls">
@@ -295,6 +288,12 @@
 <script src="../js/coordenadas-tablero.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="../js/blind-notation.js"></script>
+<!-- El teclado del tablero, las preguntas que se le pueden hacer y el recuadro
+     donde se contesta: escritos una sola vez para todo Entrenamiento. -->
+<script src="../js/tablero-accesible.js"></script>
+<script src="../js/chess-move-parser.js"></script>
+<script src="../js/comandos-tablero.js"></script>
+<script src="../js/cuadro-comandos.js"></script>
 <script src="../js/board-drag.js"></script>
 <script src="../js/entreno-progress.js"></script>
 <script src="../js/progreso-usuario.js"></script>
@@ -426,47 +425,92 @@ const refreshSpeechToggle = window.BlindNotation
   ? window.BlindNotation.setupSpeechToggle('speech-toggle-btn', () => true)
   : null;
 
+/* EL TABLERO YA NO SE ESCONDE EN MODO ADAPTADO, y es el cambio de fondo de esta
+   página. Antes desaparecía y quedaba solo el recuadro: con eso, la única forma
+   de saber qué había era oír la posición entera de corrido y acordarse de las
+   treinta y dos piezas. Un tablero se MIRA —se va a una casilla, se pregunta qué
+   hay al lado, se busca dónde está la dama— y eso es justo lo que el tablero
+   escondido no deja hacer. Ahora se queda, se recorre con las flechas y se le
+   puede preguntar (js/tablero-accesible.js). Quien ve poco además lo necesita a
+   la vista: es la razón por la que amplía la pantalla.
+   El recuadro no se enseña ni se esconde desde acá: lo destapa el CSS con la
+   clase `adaptive-mode`, así que encender el modo surte efecto al instante. */
 function applyBlindModeUI(){
-  document.getElementById('board-wrap').style.display = blindMode ? 'none' : 'block';
-  document.getElementById('blind-panel').style.display = blindMode ? 'block' : 'none';
   if(modeNormalBtn){ modeNormalBtn.setAttribute('aria-pressed', blindMode ? 'false' : 'true'); modeNormalBtn.classList.toggle('active', !blindMode); }
   if(modeBlindBtn){ modeBlindBtn.setAttribute('aria-pressed', blindMode ? 'true' : 'false'); modeBlindBtn.classList.toggle('active', blindMode); }
   if(refreshSpeechToggle) refreshSpeechToggle();
   renderPositionReadout();
-  if(blindMode) document.getElementById('blind-move-input').focus();
 }
 function setBlindMode(value){
   blindMode = !!value;
-  try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
+  /* La preferencia se guarda por js/adaptive-mode.js y no escribiendo la clave
+     a mano: además de guardarla, enciende la clase `adaptive-mode` del <html>
+     —de la que cuelgan el recuadro donde se escribe la jugada, los atajos del
+     tablero y el contraste alto— y avisa al resto de la página. Escrito a mano,
+     el botón se marcaba como activado y la mitad del modo no llegaba hasta
+     recargar, sin dar ningún error. */
+  if(window.AdaptiveMode) window.AdaptiveMode.set(blindMode);
+  else try{ localStorage.setItem(BLIND_MODE_KEY, blindMode ? '1' : '0'); }catch(e){}
   applyBlindModeUI();
 }
+/* Y al revés: si el modo se enciende desde otra pestaña o desde el botón de la
+   cabecera, esta página se entera en el momento. Sin esto quedaba media página
+   en un modo y media en el otro hasta recargar. Volver a llamar a
+   setBlindMode() es seguro: AdaptiveMode no vuelve a disparar el evento cuando
+   el modo ya es el que pide. */
+document.addEventListener('adaptivemode:change', (e) => {
+  const on = !!(e.detail && e.detail.activo);
+  if(on !== blindMode) setBlindMode(on);
+});
 const modeNormalBtn = document.getElementById('mode-normal-btn');
 const modeBlindBtn = document.getElementById('mode-blind-btn');
 modeNormalBtn.addEventListener('click', () => setBlindMode(false));
 modeBlindBtn.addEventListener('click', () => setBlindMode(true));
 
-function blindHandleMoveGuess(raw){
-  const clean = raw.trim().toLowerCase().replace(/[^a-h1-8]/g, '');
-  if(clean.length !== 4){ setStatus('Escribe la casilla de origen y la de destino, por ejemplo "e1 g1".', 'bad'); return; }
-  const from = clean.slice(0, 2), to = clean.slice(2, 4);
-  const piece = game.get(from);
-  if(!piece || piece.color !== game.turn()){ setStatus(`No hay una pieza tuya en ${window.BlindNotation.squareSpoken(from)}.`, 'bad'); return; }
-  const legal = game.moves({ square: from, verbose: true });
-  const target = legal.find((m) => m.to === to);
-  if(!target){ setStatus(`${window.BlindNotation.squareSpoken(from)} a ${window.BlindNotation.squareSpoken(to)} no es una jugada legal.`, 'bad'); return; }
-  const moveResult = game.move({ from, to, promotion: 'q' });
+/* ---------------- El recuadro donde se escribe (Modo Adaptado) ----------------
+ * Antes solo entendía "e1 g1" —cuatro caracteres, origen y destino— y eso es
+ * justo como NO se escribe una jugada: quien juega al ajedrez escribe "Cf3" o
+ * "Dxh7+". Ahora lo lee js/chess-move-parser.js, el mismo intérprete de los
+ * visores de los cursos y de Juegos, así que entiende las dos formas, en español
+ * y en inglés. Y antes de tratarlo como jugada, el recuadro mira si era una
+ * PREGUNTA ("caballos", "qué hay en e4"): eso lo resuelve js/cuadro-comandos.js
+ * con js/comandos-tablero.js, sin que esta página tenga que saber nada. */
+let comandos = null;
+function montarComandos(){
+  if(comandos || !window.CuadroComandos) return;
+  comandos = CuadroComandos.montar(document.getElementById('q-comandos'), {
+    etiqueta: 'Escribe tu jugada, o una pregunta sobre la posición',
+    juego: () => game,
+    tablero: () => teclado,
+    onEnviar: jugarEscribiendo,
+  });
+  comandos.ayuda('Jugada: "Cf3", "Nf3", "Dxh7+", "e1 g1". Pregunta: "caballos", "qué hay en e4". Escribe "ayuda" para todo.');
+}
+
+function jugarEscribiendo(texto, api){
+  // El intérprete busca la jugada entre las LEGALES y no toca la partida, así que
+  // no hace falta ninguna copia.
+  const mv = ComandosTablero.jugadaEscrita(game, texto);
+  if(!mv){ api.decir(`"${texto}" no es una jugada legal en esta posición. Escribe "ayuda" si no sabes qué se puede escribir.`); return; }
+  const moveResult = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
   if(!moveResult) return;
+  api.limpiar().decir('');
   renderPositionReadout();
   handleMoveResult(moveResult);
 }
-document.getElementById('blind-panel').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const input = document.getElementById('blind-move-input');
-  const value = input.value;
-  input.value = '';
-  input.focus();
-  blindHandleMoveGuess(value);
-});
+/* Una sola parada de tabulador para todo el tablero y las flechas por dentro,
+   más los atajos de una tecla en Modo Adaptado. Antes eran 64 botones seguidos
+   en el recorrido del tabulador —y mudos: el lector de pantalla decía "botón"
+   sesenta y cuatro veces—. Se monta una vez y se repone solo en cada repintado. */
+let teclado = null;
+function montarTeclado(){
+  if(teclado || !window.TableroAccesible) return;
+  teclado = TableroAccesible.montar(document.getElementById('board'), {
+    nombre: 'Tablero del ejercicio',
+    juego: () => game,
+  });
+}
+
 
 /* ---------------- Progreso, racha y estrellas (localStorage) ---------------- */
 function getProgress(){
@@ -583,11 +627,14 @@ function drawBoard(){
         span.setAttribute('aria-hidden', 'true');
         btn.appendChild(span);
       }
-      if(square === selectedSquare) btn.classList.add('selected');
+      // Qué dice cada casilla lo escribe js/tablero-accesible.js: acá solo se
+      // declara el estado, que es lo único que esta página sabe y aquel no.
+      if(square === selectedSquare){ btn.classList.add('selected'); btn.dataset.estado = 'seleccionada'; }
       btn.addEventListener('click', () => onSquareClick(square, btn));
       board.appendChild(btn);
     }
   }
+  montarTeclado();
   renderPositionReadout();
 }
 
@@ -600,6 +647,12 @@ function setStatus(text, cls){
   el.textContent = text;
   el.className = 'round-status' + (cls ? ' ' + cls : '');
   if(window.BlindNotation) window.BlindNotation.speak(text);
+  /* El mismo aviso, repetido en el recuadro: quien contesta escribiendo tiene el
+     foco ahí y el renglón del tablero le queda lejos — y sobre todo, la respuesta
+     del rival solo se oye si se dice, porque la lista de jugadas no es región
+     viva. Sin esto se oía "espera" y después "te toca", sin enterarse nunca de
+     qué se había jugado: o sea, sin poder seguir. */
+  if(comandos) comandos.decir(text);
 }
 function highlightTargets(square){
   const legal = game.moves({ square, verbose: true });
@@ -634,7 +687,11 @@ function loadRound(){
   drawBoard();
   buildRoundDots();
   setStatus(blindMode ? 'Escribe la jugada que quieres hacer.' : 'Encuentra la jugada. Haz clic en la pieza que quieres mover.');
-  if(blindMode) document.getElementById('blind-move-input').focus();
+  /* Se monta el recuadro pero NO se le roba el foco: quien acaba de apretar un
+     botón espera seguir donde estaba, y quien usa lector de pantalla ya tiene el
+     aviso leyéndole el ejercicio nuevo. El foco se mueve cuando la persona lo
+     pide (Tab, o el atajo "i" con el tablero enfocado). */
+  montarComandos();
 }
 
 function onSquareClick(square, btn){

@@ -160,7 +160,7 @@ async function pruebaHub(browser) {
   igual("Fundamentos", grupos[0].accesos.map((a) => a.nombre),
     ["Mates", "Aprender", "Coordenadas", "Desafíos"]);
   igual("Practicar", grupos[1].accesos.map((a) => a.nombre),
-    ["Ejercicios por tema", "Practicar"]);
+    ["Ejercicios por tema", "Practicar", "Precisión posicional"]);
   igual("Entreno", grupos[2].accesos.map((a) => a.nombre),
     ["Aperturas y celadas", "4×4", "Visualización"]);
   igual("la táctica ya no es un acceso suelto: se fue dentro de Ejercicios por tema",
@@ -191,8 +191,8 @@ async function pruebaEncabezados(browser) {
 
   igual("un solo h1, y es el título de la página",
     niveles.filter((h) => h.nivel === 1).map((h) => h.texto), ["Entrenamiento 🏋️"]);
-  igual("los nueve accesos son encabezados de verdad",
-    niveles.filter((h) => h.nivel === 3).length, "9");
+  igual("los diez accesos son encabezados de verdad",
+    niveles.filter((h) => h.nivel === 3).length, "10");
 
   // Sin saltos de nivel: de un h1 no se pasa a un h3.
   let salto = null;

@@ -67,6 +67,10 @@ window.TableroPregunta = (function () {
             span.setAttribute("aria-hidden", "true");
             btn.appendChild(span);
           }
+          // Qué dice cada casilla lo escribe js/tablero-accesible.js: eran 64
+          // botones mudos, o sea un tablero que con lector de pantalla no se
+          // podía ni mirar, en preguntas que hablan justamente de él.
+          if (destacadas && destacadas.includes(sq)) btn.dataset.estado = "elegida";
           if (!bloqueado) btn.addEventListener("click", () => clic(sq));
           nodo.appendChild(btn);
         }
@@ -74,6 +78,19 @@ window.TableroPregunta = (function () {
       // Las coordenadas se repintan solas con su observador, pero la
       // primera vez hay que pedirlas.
       if (window.Coordenadas) window.Coordenadas.aplicar(nodo);
+      montarTeclado();
+    }
+
+    /* Una sola parada de tabulador para todo el tablero y las flechas por
+       dentro, más los atajos de una tecla en Modo Adaptado. Antes eran 64
+       paradas de tabulador entre el enunciado y el botón de "Siguiente". */
+    let teclado = null;
+    function montarTeclado() {
+      if (teclado || !window.TableroAccesible) return;
+      teclado = TableroAccesible.montar(nodo, {
+        nombre: "Tablero de la pregunta",
+        juego: juego,
+      });
     }
 
     function clic(sq) {
