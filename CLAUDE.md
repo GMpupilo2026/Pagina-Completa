@@ -3392,6 +3392,20 @@ tiene por qué ver cuánto paga cada alumno. Está comprobado impersonando roles
 en SQL — un profesor sin coordinación recibe **cero filas** de `cobros_vista` y
 de `planes_cobro`; el alumno recibe la suya y ninguna más.
 
+**Y un coordinador tampoco ve los cobros de otro.** El alcance no es "coordina
+o no" sino `bajo_mi_coordinacion(student_id)` (ver «Coordinar es un alcance,
+no una llave maestra»), sobre `cobros`, `pagos`, `suscripciones`,
+`cobros_contacto`, `avisos_cobro`, `datos_facturacion` y
+`cobros_recordatorios_programados` — las siete tablas de esta página que
+tienen alumno. Re-comprobado impersonando a dos coordinadoras reales de la
+Academia: una con alumnos vinculados ve sus cobros, pagos y suscripciones; la
+otra, sin ningún profesor vinculado todavía, recibe **cero filas** de las
+siete, y `cobros_resumen()`/`cobros_morosos()` (que son `SECURITY INVOKER`
+sobre `cobros_vista`, una vista con `security_invoker = on`) le dan **cero**
+también — no hay ningún camino que las junte. Lo único que SÍ comparten todos
+los coordinadores son los `planes_cobro`: son las tarifas de la Academia, no
+datos de un alumno, y no hay a quién atarlos (ver más abajo).
+
 - **`cobros.estado` solo vale `emitido` o `anulado`.** "Pagado" y "vencido" NO
   se guardan: los calcula `public.cobros_vista` a partir de lo único que se
   escribe — que se emitió un cobro y que entró un pago. Si "pagado" fuera una
@@ -3437,6 +3451,65 @@ salgan los avisos.
 - **El tono no amenaza.** Ni el aviso de los 15 días habla de sacar a nadie de
   clase: dice que se hable. Quien lee puede ser una familia a la que se le
   complicó el mes.
+
+### Un recordatorio para un día y una hora exactos
+
+Los tres avisos de arriba salen solos, en la hora que decide el cron. Pero
+"que le llegue el lunes a las 8, después de hablar con la mamá" no es ninguno
+de los tres, así que en la ficha «Morosidad» de `cobros.html` hay un
+**«📅 Programar un recordatorio»**: se elige el alumno, el día y la hora, y
+opcionalmente a qué correos (si se dejan en blanco, los mismos destinos de
+siempre — el fijado a mano, si hay; si no sus encargados; si no, su cuenta).
+
+- **Es una fila, no una llamada.** `public.cobros_recordatorios_programados`
+  (alumno, cuándo, estado, correos opcionales, nota) se escribe **directo
+  desde el navegador** con `sb.from(...).insert(...)`: su RLS ya exige
+  `soy_coordinador() and bajo_mi_coordinacion(student_id)` para las cuatro
+  operaciones, así que no hace falta una Edge Function solo para guardar el
+  dato — la misma razón por la que `anularCobro()` y `registrarPago()`
+  escriben directo. Cancelar es la misma fila con `estado: 'cancelado'`.
+- **Mandarlo sí necesita la service role**, porque el correo tiene que salir
+  aunque quien lo programó no tenga la pestaña abierta esa hora: eso es
+  `"tanda_programados"`, una acción más de la Edge Function
+  `cobros-recordatorios` (las otras: `vista_previa`, `recordar_ahora`,
+  `tanda`). Un `pg_cron` corre cada 5 minutos —bastante seguido para que "a
+  las 3pm" salga cerca de las 3pm— y solo llama a la función si hay algo
+  `pendiente` con `programado_para <= now()`; la mayoría de las corridas no
+  cuestan ni una llamada HTTP. Va firmada con el mismo secreto que `tanda`
+  (`tanda_cobros_secreto`).
+- **El tipo de aviso (próximo/vencido/moroso) se calcula a esa hora, no al
+  programarlo.** Entre que se programa y que llega su momento pueden pasar
+  días: un cobro que era "vencido" puede haberse pagado. Por eso
+  `tanda_programados` vuelve a mirar los cobros pendientes del alumno en el
+  momento de mandar, exactamente como hace `recordar_ahora`.
+- **Si para esa hora ya no hay nada pendiente, o no hay a quién avisarle, NO
+  se manda ningún correo — pero la fila igual se marca `enviado`, con la
+  razón en `nota`.** Dejarla en `pendiente` para siempre la haría reintentar
+  cada 5 minutos sin sentido; y contarla como "falló" sería mentir, porque no
+  falló nada: ya no hacía falta. `nota` es justo lo que evita que "enviado"
+  mienta en silencio — dice a quién se le mandó, o por qué no se mandó nada.
+- **El `avisos_cobro` de siempre se sigue respetando.** Si el mismo cobro ya
+  recibió su aviso ese día por la tanda diaria o por "Recordar ahora", el
+  `upsert` con `onConflict: cobro_id,tipo,correo` no lo duplica.
+- **`anon` tenía permiso de tabla sobre esta, y las tablas hermanas no.**
+  `cobros`, `pagos`, `suscripciones`, `cobros_contacto`, `avisos_cobro` y
+  `datos_facturacion` ya le tenían revocado el `select/insert/update/delete` a
+  `anon` desde que se crearon; esta se quedó con lo que Supabase le da por
+  omisión a toda tabla nueva, porque nació sin ese paso. La RLS ya la paraba
+  igual —`anon` no tiene `auth.uid()`, así que `bajo_mi_coordinacion()` le da
+  `false` siempre— pero es la misma decisión que en `formularios` y
+  `profile_teachers`: una puerta menos que dependa de que la política esté
+  bien escrita. Se revocó (`revoke all ... from anon`).
+
+**Al tocar esto, correr `node herramientas/verificar-cobros.js`** (con el
+sitio en localhost:8777 y playwright). Comprueba qué manda el formulario al
+programar (el alumno, el momento en ISO y los correos sueltos), que un correo
+mal escrito no llegue a mandarse, que cancelar filtre por el id de ESE
+recordatorio y no de otro, y que la lista pinte el nombre del alumno y su
+estado. Lo que hace la Edge Function con la service role —recalcular el tipo,
+no mandar nada si ya no hace falta, dejar la nota— se comprobó leyendo el
+código y contra la base, como el resto de las tandas firmadas de este
+archivo.
 
 ### Los correos de una familia se corrigen en un solo lugar
 

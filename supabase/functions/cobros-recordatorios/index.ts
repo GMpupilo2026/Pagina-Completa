@@ -3,19 +3,27 @@
 // Avisa por correo cuando una mensualidad está por vencer, cuando se venció y
 // cuando lleva rato sin pagarse.
 //
-// Tres acciones:
-//   "vista_previa"   { student_id }  -> devuelve el HTML del estado de cuenta
-//   "recordar_ahora" { student_id }  -> lo manda en el momento a quien corresponda
-//   "tanda"          {}              -> la corrida diaria
+// Cuatro acciones:
+//   "vista_previa"      { student_id }  -> devuelve el HTML del estado de cuenta
+//   "recordar_ahora"    { student_id }  -> lo manda en el momento a quien corresponda
+//   "tanda"             {}              -> la corrida diaria
+//   "tanda_programados" {}              -> los recordatorios de cobros_recordatorios_programados
+//                                          que ya llegaron a su día y hora
 //
 // QUIÉN PUEDE QUÉ. Las dos primeras las llama una persona desde cobros.html con
 // su sesión, y el permiso NO se comprueba aquí a mano: se leen las filas con un
 // cliente que lleva su JWT, o sea pasando por la RLS. Si la RLS no le devuelve
 // los cobros de ese alumno, no coordina ni administra y se acabó.
 //
-// "tanda" la dispara pg_cron. Va con verify_jwt en false porque el disparador no
-// trae sesión de persona; a cambio exige el secreto que vive en el Vault, que
-// esta función vuelve a leer con la service role para compararlo.
+// "tanda" y "tanda_programados" las dispara pg_cron. Van con verify_jwt en false
+// porque el disparador no trae sesión de persona; a cambio exigen el secreto que
+// vive en el Vault, que esta función vuelve a leer con la service role para
+// compararlo — el mismo secreto para las dos, `tanda_cobros_secreto`.
+//
+// "tanda_programados" NO repite el permiso de quien programó el recordatorio:
+// eso ya lo hizo la RLS de `cobros_recordatorios_programados` en el momento de
+// guardarlo (WITH CHECK bajo_mi_coordinacion), así que para cuando esta acción
+// lo procesa, ya está autorizado. Manda con la service role, igual que "tanda".
 //
 // UN CORREO POR ALUMNO, NO UNO POR COBRO: a nadie le sirve recibir tres correos
 // el mismo día. Se manda el estado de cuenta completo, con el tono del aviso más
@@ -193,6 +201,92 @@ Deno.serve(async (req) => {
       }
     }
     return json({ ok: true, mandados, saltados, fallos });
+  }
+
+  // ------------------------------------------- los recordatorios programados
+  // Es "recordar_ahora", pero para más tarde en vez de en el momento: por eso
+  // cada uno lleva SU propio tipo (calculado de los cobros pendientes de ESE
+  // alumno a ESTA hora, no al programarlo) y respeta `correos` si quien lo
+  // programó eligió a mano a quién avisarle.
+  if (accion === "tanda_programados") {
+    const { data: esperado } = await admin.rpc("secreto_tanda_cobros");
+    if (!esperado || !jwt || jwt !== esperado) {
+      return json({ error: "Esta acción solo la dispara el programador de tareas" }, 401);
+    }
+
+    const { data: pendientes, error: errP } = await admin
+      .from("cobros_recordatorios_programados")
+      .select("id, student_id, correos")
+      .eq("estado", "pendiente")
+      .lte("programado_para", new Date().toISOString())
+      .order("programado_para", { ascending: true })
+      .limit(MAX_POR_TANDA);
+    if (errP) return json({ error: errP.message }, 500);
+
+    const hoy = new Date();
+    let mandados = 0, sinNada = 0;
+    const fallos: string[] = [];
+
+    for (const rec of pendientes ?? []) {
+      const marcar = (nota: string) => admin.from("cobros_recordatorios_programados")
+        .update({ estado: "enviado", enviado_at: new Date().toISOString(), nota }).eq("id", rec.id);
+
+      let cobrosDelAlumno: Cobro[];
+      try { cobrosDelAlumno = await cobrosPendientes(admin, rec.student_id as string); }
+      catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        fallos.push(`${rec.id}: ${msg}`);
+        await marcar(`No se pudo mandar: ${msg}`);
+        continue;
+      }
+
+      // Puede que para cuando le toca ya no haya nada pendiente (se pagó
+      // antes, o se anuló): no es un fallo, es que ya no hacía falta.
+      const tipos = cobrosDelAlumno.map((c) => tipoDe(c, hoy)).filter((t): t is Tipo => t !== null);
+      if (!tipos.length) {
+        await marcar("No se mandó nada: ese alumno ya no tenía ningún cobro pendiente a esta hora.");
+        sinNada += 1;
+        continue;
+      }
+      let tipo: Tipo = tipos[0];
+      for (const t of tipos) if (URGENCIA[t] > URGENCIA[tipo]) tipo = t;
+      const disparador = cobrosDelAlumno.find((c) => tipoDe(c, hoy) === tipo) ?? cobrosDelAlumno[0];
+
+      // `correos` es lo que eligió a mano quien lo programó; sin eso, los
+      // mismos destinos de siempre (el fijado a mano, si hay; si no sus
+      // encargados; si no, su propia cuenta).
+      const correosAMano = Array.isArray(rec.correos) ? (rec.correos as string[]).filter(Boolean) : [];
+      const destinos = correosAMano.length
+        ? correosAMano.map((email) => ({ nombre: "", email: String(email).toLowerCase() }))
+        : await destinatariosDe(rec.student_id as string);
+      if (!destinos.length) {
+        await marcar("No se mandó nada: ese alumno no tiene ningún correo al que avisarle.");
+        sinNada += 1;
+        continue;
+      }
+
+      const nombre = await nombreDe(rec.student_id as string);
+      const enviadosA: string[] = [];
+      for (const d of destinos) {
+        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros: cobrosDelAlumno, sitio: SITE_URL, contacto });
+        const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
+        if (!r.ok) { fallos.push(`${rec.id} -> ${d.email}: ${r.error}`); continue; }
+        // upsert a mano: si ya había un aviso de este tipo (por la tanda diaria
+        // o por «Recordar ahora»), no se manda dos veces el mismo día por dos
+        // caminos distintos.
+        await admin.from("avisos_cobro")
+          .upsert({ cobro_id: disparador.id, tipo, correo: d.email }, { onConflict: "cobro_id,tipo,correo" });
+        enviadosA.push(d.email);
+      }
+
+      if (enviadosA.length) {
+        await marcar(`Mandado a: ${enviadosA.join(", ")}`);
+        mandados += 1;
+      } else {
+        await marcar(`No se pudo mandar: ${fallos[fallos.length - 1] || "error desconocido"}`);
+      }
+    }
+    return json({ ok: true, mandados, sinNada, fallos });
   }
 
   // --------------------------------------------- lo que pide una persona

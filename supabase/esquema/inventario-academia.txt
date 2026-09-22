@@ -1214,13 +1214,6 @@ grant  cobros_contacto  authenticated  SELECT
 grant  cobros_contacto  authenticated  TRIGGER
 grant  cobros_contacto  authenticated  TRUNCATE
 grant  cobros_contacto  authenticated  UPDATE
-grant  cobros_recordatorios_programados  anon  DELETE
-grant  cobros_recordatorios_programados  anon  INSERT
-grant  cobros_recordatorios_programados  anon  REFERENCES
-grant  cobros_recordatorios_programados  anon  SELECT
-grant  cobros_recordatorios_programados  anon  TRIGGER
-grant  cobros_recordatorios_programados  anon  TRUNCATE
-grant  cobros_recordatorios_programados  anon  UPDATE
 grant  cobros_recordatorios_programados  authenticated  DELETE
 grant  cobros_recordatorios_programados  authenticated  INSERT
 grant  cobros_recordatorios_programados  authenticated  REFERENCES
