@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>El Sonar — Ajedrez Integral</title>
+    <meta name="description" content="Un tesoro hundido en el tablero que no ve nadie. Tu rey o tu caballo lo buscan de oído: el sonar dice a cuántas jugadas está. Un juego pensado para jugarse sin ver la pantalla.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        .sonar-casilla { position: relative; display: flex; align-items: center; justify-content: center; font-size: clamp(14px, 4.2vw, 26px); font-weight: 700; line-height: 1; border: 0; padding: 0; cursor: default; color: #102a43; }
+        .sonar-casilla.clara { background: var(--sq-light, #f0d9b5); }
+        .sonar-casilla.oscura { background: var(--sq-dark, #b58863); }
+        .sonar-casilla.pisada { background: #486581; color: #fff; }
+        .sonar-casilla.pieza { background: #de911d; color: #102a43; }
+        .sonar-casilla.tesoro { background: #0b6b3a; color: #fff; }
+        .sonar-casilla.puede { cursor: pointer; }
+        .sonar-casilla.puede::after { content: ""; position: absolute; width: 26%; height: 26%; border-radius: 9999px; background: rgba(11, 107, 58, .55); pointer-events: none; }
+        .sonar-casilla:focus-visible { outline: 3px solid #de911d; outline-offset: -3px; z-index: 1; }
+        .sonar-casilla .lectura { font-size: .8em; }
+        .coord-etiqueta { position: absolute; font-size: 9px; font-weight: 700; color: rgba(16,42,67,.55); pointer-events: none; }
+    </style>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/tiempo-plataforma.js" data-activity="sonar"></script>
+    <script src="js/tarea-en-curso.js" defer></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/progreso-usuario.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/sonar-motor.js"></script>
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+
+    <main id="main-content">
+
+    <div id="loading" class="pt-16 text-center text-brand-450 dark:text-brand-350">Cargando…</div>
+
+    <div id="app" class="hidden pt-8 pb-16">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <a href="juegos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← Juegos</a>
+            <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">El Sonar <span aria-hidden="true">🔊</span></h1>
+            <p class="text-brand-500 dark:text-brand-300 mb-4">Hay un tesoro hundido en una casilla del tablero y <strong>no lo ve nadie</strong>. Tu pieza lo busca moviéndose como en ajedrez, y después de cada jugada el sonar dice a cuántas jugadas de esa pieza está. Se juega de oído: con la pantalla o sin ella, es exactamente el mismo juego.</p>
+
+            <!-- Los niveles. Es un grupo de botones con aria-pressed y no pestañas:
+                 elegir uno empieza una partida, no destapa un panel. -->
+            <div class="mb-4" role="group" aria-labelledby="niveles-titulo">
+                <h2 id="niveles-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Niveles</h2>
+                <div id="niveles" class="grid grid-cols-2 gap-2"></div>
+            </div>
+
+            <!-- Lo que dijo el sonar. Es LA región viva de la página: una sola, con
+                 role="status" y sin aria-live encima (el rol ya es una región
+                 cortés, y los dos juntos se contradicen). -->
+            <div id="aviso" role="status" aria-atomic="true" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-200"></div>
+
+            <!-- Donde se juega escribiendo. Va SIEMPRE a la vista, no solo en Modo
+                 Adaptado: este juego es para jugarse así, y el tablero es la ayuda. -->
+            <form id="cmd-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-4" autocomplete="off" novalidate>
+                <label for="cmd-input" class="block font-semibold text-brand-800 dark:text-white mb-1">Escribe a dónde vas, o un comando</label>
+                <p id="cmd-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mb-2">Una casilla, como «e4» o «eva 4». Comandos: sonar, dónde, jugadas, historial, pista, nuevo, nivel 2, ayuda.</p>
+                <div class="flex gap-2">
+                    <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="cmd-ayuda" class="flex-1 min-w-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-950 text-brand-800 dark:text-white px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">Ir</button>
+                </div>
+            </form>
+
+            <!-- Marcador -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-accent-700 dark:text-accent-400" id="m-sonar">—</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300" id="m-sonar-rotulo">el sonar</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-jugadas">0</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">jugadas</p>
+                </div>
+                <div class="bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 text-center">
+                    <p class="text-2xl font-bold text-brand-800 dark:text-white" id="m-record">—</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">tu mejor marca</p>
+                </div>
+            </div>
+
+            <!-- Tablero. Una sola parada de tabulador (js/tablero-accesible.js): se
+                 entra con Tab y se anda con las flechas. -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 sm:p-4 mb-4">
+                <div id="board" class="grid grid-cols-8 w-full aspect-square rounded-lg overflow-hidden select-none"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-8">
+                <button type="button" id="btn-sonar" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">🔊 Sonar otra vez</button>
+                <button type="button" id="btn-historial" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">📜 Historial</button>
+                <button type="button" id="btn-pista" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">💡 Pista</button>
+                <button type="button" id="btn-nuevo" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors">↺ Nueva partida</button>
+                <button type="button" id="btn-sonido" aria-pressed="true" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">Sonidos del sonar</button>
+                <button type="button" id="btn-voz" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2.5 rounded-lg text-sm hover:border-accent-500 transition-colors">Activar voz</button>
+            </div>
+
+            <section aria-labelledby="h-como" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 id="h-como" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Cómo se juega</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                    <li><strong>Mueve tu pieza</strong> escribiendo la casilla a la que va («e4», «eva 4», «eva cuatro»), o tocándola en el tablero. Solo valen jugadas de verdad: el rey da un paso, el caballo salta en L.</li>
+                    <li><strong>Escucha el sonar.</strong> Después de cada jugada dice a cuántas jugadas de tu pieza está el tesoro. Un 1 quiere decir que la próxima puede ser la buena.</li>
+                    <li><strong>Suena, además de decirse:</strong> tantos pitidos como jugadas faltan, y más agudos cuanto más cerca. Se pueden apagar con «Sonidos del sonar».</li>
+                    <li><strong>Deduce.</strong> Dos lecturas desde dos casillas distintas ya dejan pocas casillas posibles. «historial» te recuerda todo lo que dijo el sonar y dónde.</li>
+                    <li><strong>Estrellas:</strong> tres si llegas con pocas jugadas de más y sin pedir pista. La pista dice cuántas casillas siguen siendo posibles.</li>
+                </ul>
+            </section>
+
+            <section aria-labelledby="h-teclas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 id="h-teclas" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Con el teclado</h2>
+                <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300 list-disc pl-5">
+                    <li>El recuadro de arriba recibe el foco al empezar: se puede jugar la partida entera sin salir de él.</li>
+                    <li>El tablero es una sola parada de tabulador. Dentro, las flechas mueven entre casillas e Intro mueve tu pieza ahí. Cada casilla dice si ya estuviste y qué marcó el sonar.</li>
+                    <li>Las columnas se dicen <em>anna, bella, césar, david, eva, félix, gustav y héctor</em>, como en todo el sitio: «b4» y «d4» suenan casi igual en voz alta, «bella 4» y «david 4» no.</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script src="js/main.js"></script>
+    <script>
+/* ===== El Sonar =====
+ *
+ * Las reglas viven en js/sonar-motor.js; acá solo se cuenta lo que pasa. Y se
+ * cuenta de TRES formas que dicen lo mismo: escrito (la región viva, que es lo
+ * que lee el lector de pantalla), en tonos (Web Audio: tantos pitidos como
+ * jugadas faltan) y, si se pide, con la voz del navegador. El tablero pintado
+ * es la cuarta, para quien mira.
+ *
+ * El progreso son dos claves, declaradas en CLAVES de js/progreso-usuario.js:
+ *   sonar_estrellas_v1  nivel → mejores estrellas   (maxPorClave)
+ *   sonar_mejor_v1      nivel → menos jugadas        (minPorClave)
+ * No escribe en training_progress: esa tabla tiene el CHECK de actividades y
+ * sumar una es una migración aparte. El tiempo sí se registra, con
+ * js/tiempo-plataforma.js (data-activity="sonar"), que no tiene CHECK.
+ */
+const $ = (id) => document.getElementById(id);
+const S = window.SonarMotor;
+const CLAVE_ESTRELLAS = "sonar_estrellas_v1";
+const CLAVE_MEJOR = "sonar_mejor_v1";
+const CLAVE_SONIDO = "sonar_sonido_v1";   // del aparato, como el tema: no viaja con la cuenta
+const FILAS = [8, 7, 6, 5, 4, 3, 2, 1];
+
+let partida = null;
+let nivelActual = 1;
+let tablero = null;
+
+const hablada = (sq) => (window.BlindNotation ? BlindNotation.squareSpoken(sq) : sq);
+const lista = (xs) => xs.length <= 1 ? (xs[0] || "") : xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1];
+const pieza = () => S.PIEZAS[partida.pieza];
+const cuantas = (n, p) => n === 1 ? "1 " + p.verbo : n + " " + p.verbos;
+
+/* ---------------------------------------------------------------- el sonido
+   Tonos hechos con el propio navegador, sin archivos: un pitido por cada jugada
+   que falta (hasta seis; más no se cuentan de oído) y más agudo cuanto más
+   cerca. El AudioContext se crea en el primer gesto de quien juega, que es lo
+   único que los navegadores dejan. */
+let audio = null;
+function sonidoEncendido() { try { return localStorage.getItem(CLAVE_SONIDO) !== "no"; } catch (e) { return true; } }
+function ctx() {
+  if (!sonidoEncendido()) return null;
+  try {
+    if (!audio) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; audio = new A(); }
+    if (audio.state === "suspended") audio.resume();
+    return audio;
+  } catch (e) { return null; }
+}
+function tono(freq, inicio, dur) {
+  const a = ctx(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = "sine"; o.frequency.value = freq;
+  const t = a.currentTime + inicio;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function sonarSuena(lectura) {
+  if (!lectura) return;
+  if (lectura.tendencia) {
+    // Aguas turbias: dos notas que suben (más cerca), bajan (más lejos) o se repiten.
+    if (lectura.tendencia === "cerca") { tono(440, 0, .18); tono(660, .2, .22); }
+    else if (lectura.tendencia === "lejos") { tono(660, 0, .18); tono(330, .2, .22); }
+    else if (lectura.tendencia === "igual") { tono(500, 0, .18); tono(500, .2, .18); }
+    return;
+  }
+  const d = Math.min(6, lectura.distancia);
+  const freq = 260 + (7 - d) * 90;
+  for (let i = 0; i < d; i++) tono(freq, i * 0.18, 0.12);
+}
+function fanfarria() { [523, 659, 784, 1047].forEach((f, i) => tono(f, i * 0.12, 0.2)); }
+function error() { tono(180, 0, .25); }
+
+/* --------------------------------------------------------------- avisar
+   Una sola región viva. Se vacía y se vuelve a llenar con un respiro, porque si
+   el texto es el mismo que antes (pedir «sonar» dos veces) no se anuncia. */
+function avisar(texto) {
+  const caja = $("aviso");
+  caja.textContent = "";
+  window.setTimeout(() => { caja.textContent = texto; }, 60);
+  if (window.BlindNotation) BlindNotation.speak(texto);
+}
+
+function textoLectura(l) {
+  const p = pieza();
+  if (l.tendencia) {
+    if (l.tendencia === "inicio") return "El agua está turbia: el sonar no da números. Mueve y te dirá si quedaste más cerca o más lejos.";
+    if (l.tendencia === "cerca") return "Sonar: más cerca que antes.";
+    if (l.tendencia === "lejos") return "Sonar: más lejos que antes.";
+    return "Sonar: igual de lejos que antes.";
+  }
+  if (l.distancia === 1) return "Sonar: ¡a " + cuantas(1, p) + "! La próxima puede ser la buena.";
+  return "Sonar: el tesoro " + (l.quedan > 1 ? "más cercano " : "") + "está a " + cuantas(l.distancia, p) + ".";
+}
+
+/* ---------------------------------------------------------------- pintar */
+function construirTablero() {
+  const board = $("board");
+  board.innerHTML = "";
+  FILAS.forEach((f, i) => {
+    S.COLUMNAS.forEach((c, j) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "sonar-casilla " + ((i + j) % 2 === 0 ? "clara" : "oscura");
+      b.dataset.square = c + f;
+      b.addEventListener("click", () => jugar(c + f));
+      board.appendChild(b);
+    });
+  });
+  if (window.Coordenadas) Coordenadas.aplicar(board);
+}
+
+function pintar() {
+  const p = pieza();
+  const legales = partida.terminada ? [] : S.jugadasLegales(partida);
+  const ultima = {};
+  partida.lecturas.forEach((l) => { ultima[l.casilla] = l; });
+  const glifo = partida.pieza === "k" ? "♔" : "♘";
+  document.querySelectorAll("#board .sonar-casilla").forEach((b) => {
+    const sq = b.dataset.square;
+    const aqui = sq === partida.pos;
+    const recogido = partida.recogidos.indexOf(sq) !== -1;
+    const l = ultima[sq];
+    b.classList.toggle("pieza", aqui);
+    b.classList.toggle("tesoro", recogido && !aqui);
+    b.classList.toggle("pisada", !!l && !aqui && !recogido);
+    b.classList.toggle("puede", legales.indexOf(sq) !== -1);
+    // El texto de la casilla se reemplaza, no las etiquetas de coordenadas.
+    [...b.childNodes].forEach((n) => { if (!(n.classList && n.classList.contains("coord-etiqueta"))) n.remove(); });
+    let marca = "";
+    if (aqui) marca = glifo;
+    else if (recogido) marca = "💎";
+    else if (l) marca = l.tendencia ? ({ cerca: "↓", lejos: "↑", igual: "=", inicio: "·" })[l.tendencia] : String(l.distancia);
+    if (marca) { const s = document.createElement("span"); s.className = "lectura"; s.setAttribute("aria-hidden", "true"); s.textContent = marca; b.insertBefore(s, b.firstChild); }
+    // Lo que se ANUNCIA de la casilla: el nombre lo pone js/tablero-accesible.js
+    // y el estado va acá. Es la memoria de quien no ve los números pintados.
+    const estado = [];
+    if (recogido) estado.push("tesoro recogido");
+    if (l && !aqui && !recogido) estado.push("ya estuviste, " + (l.tendencia ? ({ cerca: "marcó más cerca", lejos: "marcó más lejos", igual: "marcó igual", inicio: "saliste de acá" })[l.tendencia] : "el sonar marcó " + l.distancia));
+    if (legales.indexOf(sq) !== -1) estado.push("puedes ir");
+    if (estado.length) b.dataset.estado = estado.join(", "); else delete b.dataset.estado;
+  });
+  if (tablero) tablero.refrescar();
+
+  const l = partida.lecturas[partida.lecturas.length - 1];
+  $("m-sonar").textContent = l.tendencia ? ({ cerca: "más cerca", lejos: "más lejos", igual: "igual", inicio: "—" })[l.tendencia] : (partida.terminada ? "💎" : String(l.distancia));
+  $("m-sonar-rotulo").textContent = l.tendencia ? "el sonar, turbio" : "el sonar, en " + p.verbos;
+  $("m-jugadas").textContent = String(partida.jugadas);
+  pintarRecord();
+  pintarNiveles();
+}
+
+function leerMapa(clave) { try { const v = JSON.parse(localStorage.getItem(clave) || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } }
+
+function pintarNiveles() {
+  const estrellas = leerMapa(CLAVE_ESTRELLAS);
+  $("niveles").innerHTML = "";
+  S.NIVELES.forEach((n) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    const activo = n.id === nivelActual;
+    b.className = "text-left rounded-xl px-3 py-2 text-sm font-semibold border transition-colors " + (activo
+      ? "bg-accent-500 text-brand-900 border-accent-500"
+      : "bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 border-brand-200 dark:border-brand-700 hover:border-accent-500");
+    b.setAttribute("aria-pressed", activo ? "true" : "false");
+    const e = Number(estrellas[n.id]) || 0;
+    // Las estrellas van ESCRITAS: «2 de 3 estrellas», no solo dibujadas.
+    b.innerHTML = "";
+    const t = document.createElement("span"); t.textContent = n.id + ". " + n.titulo; b.appendChild(t);
+    const s = document.createElement("span"); s.className = "block text-xs font-normal";
+    s.textContent = e ? "★".repeat(e) + "☆".repeat(3 - e) : "sin jugar";
+    s.setAttribute("aria-hidden", "true"); b.appendChild(s);
+    const sr = document.createElement("span"); sr.className = "sr-only";
+    sr.textContent = e ? ", " + e + " de 3 estrellas" : ", sin jugar"; b.appendChild(sr);
+    b.addEventListener("click", () => empezar(n.id, true));
+    $("niveles").appendChild(b);
+  });
+}
+
+function pintarRecord() {
+  const m = leerMapa(CLAVE_MEJOR)[nivelActual];
+  $("m-record").textContent = m ? String(m) : "—";
+}
+
+/* ----------------------------------------------------------------- jugar */
+function empezar(idNivel, avisarlo) {
+  nivelActual = S.nivel(idNivel) ? Number(idNivel) : 1;
+  partida = S.nuevaPartida(nivelActual);
+  const n = S.nivel(nivelActual), p = pieza();
+  pintar();
+  const primera = partida.lecturas[0];
+  const texto = "Nivel " + n.id + ", " + n.titulo + ". " + n.resumen + " Tu " + p.nombre + " empieza en " + hablada(partida.pos) + ". " + textoLectura(primera);
+  if (avisarlo !== false) avisar(texto); else $("aviso").textContent = texto;
+  sonarSuena(primera);
+}
+
+function jugar(destino) {
+  ctx();   // el primer gesto habilita el audio
+  if (partida.terminada) { avisar("Esta partida ya terminó. Escribe «nuevo» para otra, o elige un nivel."); return; }
+  const p = pieza();
+  const antes = partida.pos;
+  const r = S.mover(partida, destino);
+  if (!r.ok) {
+    error();
+    if (r.motivo === "misma") { avisar("Tu " + p.nombre + " ya está en " + hablada(destino) + "."); return; }
+    const opciones = S.jugadasLegales(partida).map(hablada);
+    avisar("Desde " + hablada(antes) + " el " + p.nombre + " no llega a " + hablada(destino) + ". Puede ir a " + lista(opciones) + ".");
+    return;
+  }
+  pintar();
+  const verbo = partida.pieza === "k" ? "Fuiste a " : "Saltaste a ";
+  if (r.encontrado) {
+    fanfarria();
+    if (!r.terminada) {
+      avisar("¡Tesoro! Encontraste uno en " + hablada(destino) + ". Queda otro. " + textoLectura(r.lectura));
+      window.setTimeout(() => sonarSuena(r.lectura), 700);
+      return;
+    }
+    terminar();
+    return;
+  }
+  sonarSuena(r.lectura);
+  avisar(verbo + hablada(destino) + ". " + textoLectura(r.lectura));
+}
+
+function terminar() {
+  const e = S.estrellas(partida);
+  const p = pieza();
+  const estrellas = leerMapa(CLAVE_ESTRELLAS), mejor = leerMapa(CLAVE_MEJOR);
+  const record = !mejor[nivelActual] || partida.jugadas < mejor[nivelActual];
+  try {
+    if (e > (Number(estrellas[nivelActual]) || 0)) { estrellas[nivelActual] = e; localStorage.setItem(CLAVE_ESTRELLAS, JSON.stringify(estrellas)); }
+    if (record) { mejor[nivelActual] = partida.jugadas; localStorage.setItem(CLAVE_MEJOR, JSON.stringify(mejor)); }
+  } catch (err) {}
+  pintar();
+  const siguiente = S.nivel(nivelActual + 1);
+  avisar("¡Tesoro! " + (partida.recogidos.length > 1 ? "Recogiste los dos" : "Lo encontraste en " + hablada(partida.pos)) +
+    " con " + cuantas(partida.jugadas, p) + ". El camino más corto, sabiendo dónde estaba, era de " + cuantas(partida.minimo, p) + ". " +
+    e + (e === 1 ? " estrella" : " estrellas") + " de 3" + (partida.ayudas ? ", con pista" : "") + "." +
+    (record ? " ¡Es tu mejor marca en este nivel!" : "") +
+    " Escribe «nuevo» para otra partida" + (siguiente ? " o «nivel " + siguiente.id + "» para el siguiente." : "."));
+}
+
+function decirDonde() {
+  const p = pieza();
+  avisar("Tu " + p.nombre + " está en " + hablada(partida.pos) + ". Llevas " + cuantas(partida.jugadas, p) + ". " +
+    (partida.tesoros.length > 1 ? "Quedan dos tesoros. " : "") + textoLectura(partida.lecturas[partida.lecturas.length - 1]));
+}
+
+function decirJugadas() {
+  const vistas = {};
+  partida.lecturas.forEach((l) => { vistas[l.casilla] = true; });
+  const js = S.jugadasLegales(partida).map((sq) => hablada(sq) + (vistas[sq] ? " (ya estuviste)" : ""));
+  avisar("Desde " + hablada(partida.pos) + " tu " + pieza().nombre + " puede ir a " + lista(js) + ".");
+}
+
+function decirHistorial() {
+  const partes = partida.lecturas.map((l, i) => (i === 0 ? "Empezaste en " : "") + hablada(l.casilla) + ": " +
+    (l.tendencia ? ({ inicio: "salida", cerca: "más cerca", lejos: "más lejos", igual: "igual" })[l.tendencia] : (partida.recogidos.indexOf(l.casilla) !== -1 && l.distancia === 0 ? "tesoro" : l.distancia)));
+  avisar("Historial del sonar. " + partes.join(". ") + ".");
+}
+
+function pista() {
+  const c = S.candidatas(partida);
+  partida.ayudas++;
+  if (c === null) { avisar("Pista: con dos tesoros escondidos, cada lectura mide el más cercano. Busca uno moviéndote hacia donde el número baja; cuando recojas el primero, la pista podrá contar las casillas posibles."); return; }
+  if (!c.length) { avisar("Pista: con lo que dijo el sonar no queda ninguna casilla posible. Revisa el historial."); return; }
+  if (c.length <= 5) avisar("Pista: el tesoro solo puede estar en " + lista(c.map(hablada)) + ".");
+  else avisar("Pista: el tesoro todavía puede estar en " + c.length + " casillas. Muévete a una casilla nueva para escuchar otra lectura: dos lecturas desde lugares distintos descartan muchísimas.");
+}
+
+function ayuda() {
+  avisar("Escribe una casilla para mover, como e4 o eva 4. Comandos: sonar repite la última lectura; dónde dice dónde estás; jugadas dice a dónde puedes ir; historial repasa todas las lecturas; pista cuenta las casillas posibles; nuevo empieza otra partida; nivel y un número cambia de nivel, del 1 al " + S.NIVELES.length + ".");
+}
+
+$("cmd-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  ctx();
+  const input = $("cmd-input");
+  const texto = input.value;
+  const c = S.leerComando(texto);
+  input.value = "";
+  if (!c) { error(); avisar("No entendí «" + texto.trim() + "». Escribe una casilla, como e4 o eva 4, o «ayuda»."); return; }
+  if (c.cmd === "mover") jugar(c.casilla);
+  else if (c.cmd === "sonar") { const l = partida.lecturas[partida.lecturas.length - 1]; sonarSuena(l); avisar(partida.terminada ? "La partida terminó. Escribe «nuevo» para otra." : textoLectura(l)); }
+  else if (c.cmd === "donde") decirDonde();
+  else if (c.cmd === "jugadas") decirJugadas();
+  else if (c.cmd === "historial") decirHistorial();
+  else if (c.cmd === "pista") pista();
+  else if (c.cmd === "ayuda") ayuda();
+  else if (c.cmd === "nuevo") empezar(nivelActual);
+  else if (c.cmd === "nivel") {
+    if (!S.nivel(c.nivel)) { avisar("Hay niveles del 1 al " + S.NIVELES.length + "."); return; }
+    empezar(c.nivel);
+  }
+});
+
+$("btn-sonar").addEventListener("click", () => { const l = partida.lecturas[partida.lecturas.length - 1]; sonarSuena(l); avisar(partida.terminada ? "La partida terminó." : textoLectura(l)); });
+$("btn-historial").addEventListener("click", decirHistorial);
+$("btn-pista").addEventListener("click", pista);
+$("btn-nuevo").addEventListener("click", () => empezar(nivelActual));
+
+function pintarSonido() {
+  const on = sonidoEncendido();
+  $("btn-sonido").setAttribute("aria-pressed", on ? "true" : "false");
+  $("btn-sonido").innerHTML = '<span aria-hidden="true">' + (on ? "🔔 " : "🔕 ") + "</span>Sonidos del sonar";
+}
+$("btn-sonido").addEventListener("click", () => {
+  try { localStorage.setItem(CLAVE_SONIDO, sonidoEncendido() ? "no" : "si"); } catch (e) {}
+  pintarSonido();
+  if (sonidoEncendido()) tono(600, 0, .12);
+});
+
+async function init() {
+  let sesion = null;
+  try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
+  if (!sesion) {
+    $("loading").textContent = "Necesitas iniciar sesión para jugar. Redirigiendo…";
+    window.location.href = "login.html?next=" + encodeURIComponent("sonar.html");
+    return;
+  }
+  if (window.ProgresoUsuario) { try { await ProgresoUsuario.init(); } catch (e) {} }
+  // El hub de Ciegos enlaza con "?modo=ciego": entra ya en Modo Adaptado, sin
+  // tener que buscar el interruptor. Por AdaptiveMode.set(), que es lo que
+  // enciende la clase del <html> Y avisa al resto de la página.
+  if (new URLSearchParams(location.search).get("modo") === "ciego" && window.AdaptiveMode) AdaptiveMode.set(true);
+  construirTablero();
+  // Para el teclado del tablero, la partida se presenta como la pediría una
+  // de ajedrez: dónde está tu pieza y a dónde puede ir. Así "o", "z" y "m"
+  // contestan igual que en el resto del sitio. El tesoro NO está: no lo ve nadie.
+  tablero = window.TableroAccesible && TableroAccesible.montar($("board"), {
+    nombre: "Tablero del sonar",
+    cuadro: () => $("cmd-input"),
+    juego: () => partida && {
+      get: (sq) => sq === partida.pos ? { type: partida.pieza, color: "w" } : null,
+      moves: (o) => (o && o.square && o.square !== partida.pos) ? [] : S.jugadasLegales(partida).map((to) => ({ from: partida.pos, to: to, flags: "n" })),
+      turn: () => "w",
+    },
+  });
+  if (window.BlindNotation && BlindNotation.setupSpeechToggle) BlindNotation.setupSpeechToggle("btn-voz", () => true);
+  else $("btn-voz").remove();
+  pintarSonido();
+  const pedido = Number(new URLSearchParams(location.search).get("nivel"));
+  $("loading").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("cmd-input").focus();
+  // Después del foco y con un respiro: el lector lee primero el recuadro, y
+  // la región viva recién creada no se anuncia si se llena en el mismo instante.
+  empezar(S.nivel(pedido) ? pedido : 1, true);
+}
+init();
+    </script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --></body>
+</html>
