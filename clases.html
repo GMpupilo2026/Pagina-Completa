@@ -573,7 +573,13 @@
                 // razón va escrita en la tarjeta (t.nota) — un cuadro gris sin
                 // explicación se lee como una página rota.
                 el = document.createElement("div");
-                el.className = base + " bg-white/60 dark:bg-brand-900/60 opacity-60 cursor-not-allowed";
+                /* `apagado` es para el candado que SÍ se va a abrir hoy —la
+                   sesión en vivo mientras el profe no empieza—: ahí la nota
+                   explica el candado, y con `opacity` sobre el blanco de la
+                   tarjeta de al lado esa nota queda casi ilegible. Es la misma
+                   pinta que ya usa el botón de la videollamada, que va pegado. */
+                el.className = base + " cursor-not-allowed "
+                    + (t.apagado ? t.apagado.clases : "bg-white/60 dark:bg-brand-900/60 opacity-60");
                 el.setAttribute("aria-disabled", "true");
             } else {
                 el = document.createElement("a");
@@ -597,10 +603,10 @@
             const texto = document.createElement("span");
             texto.className = "flex flex-col items-center gap-1" + (destacado ? " sm:items-start" : "");
             const label = document.createElement("span");
-            label.className = "font-semibold text-brand-800 dark:text-white text-sm";
+            label.className = "font-semibold text-sm " + ((t.apagado && t.apagado.tituloClases) || "text-brand-800 dark:text-white");
             label.textContent = t.label;
             const desc = document.createElement("span");
-            desc.className = "text-xs text-brand-450 dark:text-brand-350";
+            desc.className = "text-xs " + ((t.apagado && t.apagado.notaClases) || "text-brand-450 dark:text-brand-350");
             desc.textContent = t.desc;
             texto.append(label, desc);
             if (t.nota) {
@@ -704,10 +710,10 @@
                 return [cajaVideollamada({ emoji: "📹", titulo: "Videollamada", nota: "Cargando…", ...VLL_APAGADO })];
             }
             /* Al profesor NO se le bloquea: él entra a la llamada ANTES de que
-               haya clase abierta —la clase se abre sola cuando llega alguien—,
-               así que un candado ahí le cerraría la puerta por la que tiene
-               que entrar primero. El candado es del alumno, que es quien no
-               debe entrar a una llamada que no está pasando. */
+               haya clase abierta —es él quien la abre—, así que un candado ahí
+               le cerraría la puerta por la que tiene que entrar primero. El
+               candado es del alumno, que es quien no debe entrar a una llamada
+               que no está pasando. */
             const salas = misSalas.filter((x) => Videollamada.esSeguro(x.enlace));
             if (!salas.length) {
                 return [cajaVideollamada({ emoji: "📹", titulo: "Pon tu videollamada",
@@ -726,6 +732,45 @@
                 href: sala.enlace, fuera: true,
                 clases: "bg-accent-500 hover:bg-accent-600 hover:shadow-xl hover:-translate-y-0.5",
                 tituloClases: "text-brand-900", notaClases: "text-brand-900/80" }));
+        }
+
+        /* La tarjeta «Sesión en vivo» se abre con la clase, igual que el botón
+           de la videollamada que va a su lado — y por la misma razón de fondo:
+           el candado NO lo pone esta pantalla. Sin clase abierta la RLS no le
+           entrega al alumno el tablero, así que entrar solo le pintaría una
+           pantalla vacía. Lo que se dibuja acá es ese mismo candado, dicho
+           antes de tocar, para que «hay clase» se pueda saber de un vistazo.
+
+           Al equipo docente no se le bloquea nada: la clase la abre él, así que
+           un candado ahí le cerraría la puerta por la que tiene que entrar
+           primero. */
+        let tileSesion = null;
+
+        function tarjetaSesionEnVivo() {
+            const t = tileSesion;
+            if (!t) return null;
+            const apagada = (desc, nota) => renderTileCard(
+                Object.assign({}, t, { disabled: true, desc, nota, apagado: VLL_APAGADO }), true);
+            if (esEquipoDocente()) return renderTileCard(t, true);
+            if (!videollamadaLista) return apagada(t.desc, "Viendo si hay clase…");
+            // Sin ningún profesor no hay clase que esperar, y el panel ya se lo
+            // dice con todas las letras: acá se nombra el motivo de verdad en
+            // vez de un candado que parecería que se va a abrir solo.
+            if (!misClases.length) return apagada("Pide que te asignen un profesor", "Sin profesor");
+            if (!misClases.some((c) => c.clase_abierta)) {
+                return apagada("Se abre cuando tu profe empiece la clase", "Todavía no hay clase");
+            }
+            return renderTileCard(t, true);
+        }
+
+        function pintarClaseEnVivo() {
+            const wrap = document.getElementById("sesion-wrap");
+            if (wrap) {
+                wrap.innerHTML = "";
+                const tarjeta = tarjetaSesionEnVivo();
+                if (tarjeta) wrap.appendChild(tarjeta);
+            }
+            pintarVideollamada();
         }
 
         function pintarVideollamada() {
@@ -759,7 +804,7 @@
                 misClases = data || [];
             }
             videollamadaLista = true;
-            pintarVideollamada();
+            pintarClaseEnVivo();
         }
 
         function renderTiles() {
@@ -800,20 +845,30 @@
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
-                    tilesGrid.appendChild(renderTileCard(t, !!group.destacado));
-                    if (t.videollamada) {
-                        const caja = document.createElement("div");
-                        caja.id = "videollamada-wrap";
-                        // Una celda del grid que apila lo que lleve dentro: con
-                        // una sala se ve como un botón, con tres son tres.
-                        caja.className = "flex flex-col gap-3";
-                        tilesGrid.appendChild(caja);
-                    }
+                    if (!t.videollamada) { tilesGrid.appendChild(renderTileCard(t, !!group.destacado)); return; }
+                    /* La tarjeta de la clase en vivo va dentro de un envoltorio
+                       para poder repintarla sola cuando se abre o se cierra una
+                       clase — repintar la grilla entera cerraría cualquier cosa
+                       que estuviera abierta debajo. Va con `contents`, así que
+                       para el grid la celda sigue siendo la tarjeta: sin eso, el
+                       envoltorio se comería el `sm:items-start` y la tarjeta
+                       dejaría de estirarse. */
+                    tileSesion = t;
+                    const envoltorio = document.createElement("div");
+                    envoltorio.id = "sesion-wrap";
+                    envoltorio.className = "contents";
+                    tilesGrid.appendChild(envoltorio);
+                    const caja = document.createElement("div");
+                    caja.id = "videollamada-wrap";
+                    // Una celda del grid que apila lo que lleve dentro: con
+                    // una sala se ve como un botón, con tres son tres.
+                    caja.className = "flex flex-col gap-3";
+                    tilesGrid.appendChild(caja);
                 });
                 section.append(heading, tilesGrid);
                 grid.appendChild(section);
             });
-            pintarVideollamada();
+            pintarClaseEnVivo();
         }
 
         async function doLogout() {

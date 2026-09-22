@@ -137,9 +137,14 @@ window.__consultas = [];
      cumplir la RLS de profesor_videollamada. Un doble que la mandara siempre
      daría por buena una página que ofrece entrar a una llamada que no está
      pasando. */
-  const MI_CLASE = { profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
-                     clase_abierta: !!DATOS.clase_abierta, titulo_clase: null,
-                     videollamada: DATOS.clase_abierta ? (DATOS.videollamada || null) : null };
+  /* Se arma CADA VEZ que se pide, y no una sola al inyectar, porque abrir la
+     clase en medio de la prueba es justo lo que hay que poder simular: lo que
+     se rompe callado es que el aviso llegue y la pantalla no se entere. */
+  let claseAbierta = !!DATOS.clase_abierta;
+  const MI_CLASE = () => ({ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
+                     clase_abierta: claseAbierta, titulo_clase: null,
+                     videollamada: claseAbierta ? (DATOS.videollamada || null) : null });
+  window.__abrirClase = () => { claseAbierta = true; };
 
   const TABLAS = {
     profiles: PERFILES,
@@ -176,7 +181,7 @@ window.__consultas = [];
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
     rpc: (n, args) => constructor(n, n === "mis_clases"
-      ? (DATOS.mis_clases || [MI_CLASE])
+      ? (DATOS.mis_clases || [MI_CLASE()])
       : (DATOS.rpc && DATOS.rpc[n]) || [], args),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
@@ -220,6 +225,11 @@ const LEER_GRILLA = () => Array.from(document.querySelectorAll("#tile-grid secti
      grilla: tiene sus propias reglas y su propia prueba, más abajo. */
   tiles: Array.from(s.querySelectorAll("div.grid > *"))
     .filter((el) => el.id !== "videollamada-wrap")
+    /* La tarjeta de la clase en vivo va dentro de un envoltorio `contents`
+       para poder repintarla sola: para el grid la celda sigue siendo la
+       tarjeta, y acá también tiene que serlo — leyendo el envoltorio,
+       «Sesión en vivo» saldría siempre como un acceso sin enlace. */
+    .map((el) => (el.id === "sesion-wrap" && el.firstElementChild) || el)
     .map((el) => ({
     etiqueta: el.querySelector("span > span") ? el.querySelector("span > span").textContent : "",
     etiqueta2: el.textContent,
@@ -276,8 +286,11 @@ async function pruebaAlumna(browser) {
   igual("lo que te ponen con fecha va junto, y de segundo",
     grupo(grupos, "Lo que te pone tu profesor").tiles.map((t) => t.enlace),
     ["tareas.html", "examenes.html"]);
+  /* Por índice a propósito: que vaya PRIMERA es el punto. Y se mira la
+     etiqueta y no el href, porque sin clase abierta esa tarjeta está
+     bloqueada y no tiene ninguno — eso tiene su propia prueba más abajo. */
   igual("«Clase en vivo» lleva un solo acceso, y es la sesión en vivo",
-    grupos[0].tiles.map((t) => t.enlace), ["sesion.html"]);   // por índice a propósito: que vaya PRIMERA es el punto
+    grupos[0].tiles.map((t) => t.etiqueta), ["Sesión en vivo"]);
   /* Primero donde se juega contra otra persona, después el torneo, y de último
      lo que se MIRA. Y «Racha táctica» NO está: ya es lo primero que hay dentro
      de juegos.html, y un mismo destino dos veces en el panel es el error que ya
@@ -324,7 +337,7 @@ async function pruebaAlumna(browser) {
   // Lo apagado, que es lo que se pidió: apagado para ELLA.
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
-      .filter((el) => !el.closest("#videollamada-wrap"))
+      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap"))
       .map((el) => ({
       etiqueta: el.querySelector("span > span").textContent,
       enlace: el.getAttribute("href"),
@@ -368,7 +381,7 @@ async function pruebaProfesora(browser) {
     grupos.map((g) => g.titulo).includes("Herramientas"), "true");
   const apagados = await page.evaluate(() =>
     Array.from(document.querySelectorAll("#tile-grid [aria-disabled=true]"))
-      .filter((el) => !el.closest("#videollamada-wrap"))
+      .filter((el) => !el.closest("#videollamada-wrap") && !el.closest("#sesion-wrap"))
       .map((el) => el.querySelector("span > span").textContent));
   igual("a ella no se le apaga NADA: no hay mantenimiento que le aplique ni tarjetas en espera",
     apagados, []);
@@ -1333,10 +1346,13 @@ async function pruebaPantalla(browser) {
   await page.setViewportSize({ width: 1280, height: 900 });
   const anchos = await page.evaluate(() => {
     const secciones = document.querySelectorAll("#tile-grid section");
-    return {
-      vivo: secciones[0].querySelector("div.grid > *").getBoundingClientRect().width,
-      otro: secciones[1].querySelector("div.grid > *").getBoundingClientRect().width,
+    // La tarjeta de la clase en vivo vive dentro de un envoltorio `contents`,
+    // que no tiene caja propia: lo que se mide es la tarjeta.
+    const caja = (sec) => {
+      const el = sec.querySelector("div.grid > *");
+      return ((el.id === "sesion-wrap" && el.firstElementChild) || el).getBoundingClientRect().width;
     };
+    return { vivo: caja(secciones[0]), otro: caja(secciones[1]) };
   });
   igual("«Sesión en vivo» se pinta ancha, no como un cuadrito más", anchos.vivo > anchos.otro * 2, "true");
 
@@ -1362,7 +1378,10 @@ const LEER_BOTON = () => {
   if (!caja) return { hay: false };
   const el = caja.firstElementChild;
   if (!el) return { hay: false, vacio: true };
-  const tarjeta = document.querySelector("#tile-grid a[href='sesion.html']");
+  // La tarjeta de al lado puede estar bloqueada —sin clase no es un <a>—,
+  // así que se busca por su envoltorio y no por el href.
+  const envoltorio = document.getElementById("sesion-wrap");
+  const tarjeta = envoltorio && envoltorio.firstElementChild;
   const a = tarjeta && tarjeta.getBoundingClientRect(), b = el.getBoundingClientRect();
   return {
     hay: true,
@@ -1494,6 +1513,93 @@ async function pruebaVideollamada(browser) {
   await r.ctx.close();
 }
 
+/* ---- «Sesión en vivo» se abre con la clase ------------------------------
+ *
+ * El alumno entraba al tablero a cualquier hora y veía la posición que hubiera
+ * quedado de la clase anterior, sin forma de saber si había clase o no. Peor:
+ * la clase se abría SOLA al conectarse él, así que asomarse un domingo le
+ * dejaba al profesor una clase abierta en el registro que crecía sola hasta
+ * que alguien la cerrara.
+ *
+ * Ahora la abre el profesor y el candado lo hace cumplir la RLS, no esta
+ * pantalla: sin clase abierta `game_state` no le llega. Lo que se mira acá es
+ * que el panel DIGA ese candado antes de tocar —si no, el alumno entra y se
+ * encuentra una pantalla vacía— y, sobre todo, que se destape solo cuando la
+ * clase se abre. Un candado que se queda puesto se ve exactamente igual de
+ * bien que uno que funciona. */
+const LEER_SESION = () => {
+  const envoltorio = document.getElementById("sesion-wrap");
+  const el = envoltorio && envoltorio.firstElementChild;
+  if (!el) return { hay: false };
+  return {
+    hay: true,
+    tag: el.tagName,
+    href: el.getAttribute("href"),
+    bloqueada: el.getAttribute("aria-disabled") === "true",
+    texto: el.innerText.replace(/\s+/g, " ").trim(),
+    seVe: el.checkVisibility(),
+    // Ningún enlace a la sesión colado en la grilla mientras está bloqueada:
+    // un <a> invisible pero presente sigue siendo una parada de tabulador.
+    enlacesEnGrilla: document.querySelectorAll("#tile-grid a[href='sesion.html']").length,
+  };
+};
+
+async function sesionLista(page) {
+  await page.waitForFunction(() => {
+    const c = document.getElementById("sesion-wrap");
+    return !!c && !!c.firstElementChild && !/Viendo si/.test(c.firstElementChild.innerText);
+  }, null, { timeout: 15000 });
+  return page.evaluate(LEER_SESION);
+}
+
+async function pruebaSesionEnVivo(browser) {
+  console.log("\n=== «Sesión en vivo» se abre con la clase ===");
+
+  // 1. Sin clase abierta: bloqueada, y diciendo por qué.
+  let r = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false));
+  let t = await sesionLista(r.page);
+  igual("sin clase abierta, la tarjeta está y se ve", t.hay && t.seVe, "true");
+  /* Bloqueada no es un enlace gris: sin href no recibe el foco del teclado ni
+     promete un destino que no va a abrir. La misma regla de los apagados. */
+  igual("…bloqueada, sin enlace y sin prometer destino", [t.tag, t.href, t.bloqueada], ["DIV", null, true]);
+  igual("…y NO queda ningún enlace a sesion.html en la grilla", t.enlacesEnGrilla, "0");
+  igual("…y dice cuándo se abre, no solo que está cerrada",
+    /Se abre cuando tu profe empiece la clase/.test(t.texto), "true");
+
+  /* Y lo que de verdad importa: que se DESTAPE sola. El aviso de que la clase
+     se abrió llega por Realtime y repinta; si el repintado se olvidara de la
+     tarjeta, el alumno se quedaría con el candado puesto mientras su clase ya
+     empezó, sin que nada fallara. */
+  await r.page.evaluate(() => { window.__abrirClase(); return refrescarVideollamada(); });
+  t = await r.page.evaluate(LEER_SESION);
+  igual("al abrirse la clase se destapa sola, sin recargar",
+    [t.tag, t.href, t.bloqueada], ["A", "sesion.html", false]);
+  await r.ctx.close();
+
+  // 2. Con la clase ya abierta al entrar: se entra directo.
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, Object.assign(datosAlumna(false), { clase_abierta: true }));
+  t = await sesionLista(r.page);
+  igual("con clase abierta, la tarjeta lleva al tablero", [t.tag, t.href, t.bloqueada], ["A", "sesion.html", false]);
+  await r.ctx.close();
+
+  // 3. Sin ningún profesor: el motivo de verdad, no un candado que parecería
+  //    que se va a abrir solo.
+  r = await panel(browser, [ALUMNA], "u-ana", {}, Object.assign(datosAlumna(false), { mis_clases: [] }));
+  t = await sesionLista(r.page);
+  igual("sin ningún profesor, se nombra el motivo de verdad",
+    [t.bloqueada, /Pide que te asignen un profesor/.test(t.texto)], [true, true]);
+  await r.ctx.close();
+
+  /* 4. A quien da clase NO se le bloquea: la abre él, así que un candado ahí
+     le cerraría la puerta por la que tiene que entrar primero — la misma
+     razón por la que su botón de videollamada tampoco se bloquea. */
+  r = await panel(browser, [PROFE, ALUMNA], "u-profe", {}, { profesor_videollamada: [] });
+  t = await sesionLista(r.page);
+  igual("a la profesora no se le bloquea nada, sin clase abierta tampoco",
+    [t.tag, t.href, t.bloqueada], ["A", "sesion.html", false]);
+  await r.ctx.close();
+}
+
 // Que la caja quede VACÍA, no que el botón esté escondido con una clase.
 async function page_vacio(page) {
   await page.waitForTimeout(300);
@@ -1518,6 +1624,7 @@ if (require.main !== module) return;
     await pruebaPrimerPaso(browser);
     await pruebaFranjaDeClase(browser);
     await pruebaVideollamada(browser);
+    await pruebaSesionEnVivo(browser);
     await pruebaProgresoAlumna(browser);
     await pruebaSemanaProfesora(browser);
     await pruebaProfesora(browser);

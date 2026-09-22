@@ -96,6 +96,11 @@ window.__inserts = [];   // { tabla, fila }
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
       order() { return b; }, limit() { return b; }, range() { return b; },
       insert(fila) { window.__inserts.push({ tabla: tabla, fila: fila }); pend = Object.assign({ id: 1 }, fila); filas2 = [pend]; return b; },
+      /* Desde que la clase está abierta, la alumna marca su asistencia sola
+         con un upsert: sin este método la página muere con un TypeError y la
+         prueba lo cuenta como fallo suyo — era el doble el que estaba
+         incompleto, la misma piedra de verificar-aperturas-pagina.js. */
+      upsert(fila) { window.__inserts.push({ tabla: tabla, fila: fila, upsert: true }); pend = fila; filas2 = [pend]; return b; },
       update(campos) { window.__updates.push({ tabla: tabla, campos: campos }); Object.assign(filas.length ? filas[0] : {}, campos); return b; },
       delete() { filas2 = []; return b; },
       maybeSingle() { unica = true; return b; },
@@ -113,7 +118,13 @@ window.__inserts = [];   // { tabla, fila }
     profiles: PERFILES,
     game_state: GAME_STATE,
     variant_nodes: [], questions: [], question_answers: [], question_engine_answers: [],
-    class_sessions: [], class_attendance: [], class_presence_log: [],
+    /* Hay clase abierta, que es la única situación en que esta pantalla
+       existe para un alumno: sin ella la RLS no le entrega el tablero y la
+       página le enseña la de espera. Un doble sin clase dejaría todas las
+       comprobaciones de la alumna esperando un #app que no se monta. */
+    class_sessions: [{ id: "s-1", created_by: "u-profe", ended_at: null,
+                       started_at: new Date(Date.now() - 20 * 60000).toISOString(), title: null, notes: null }],
+    class_attendance: [], class_presence_log: [],
     practice_sessions: [], practice_games: [], class_chat_messages: [], saved_games: [],
   };
   for (const t of Object.keys(SEMILLA)) TABLAS[t] = SEMILLA[t].slice();
@@ -125,8 +136,12 @@ window.__inserts = [];   // { tabla, fila }
       updateUser: () => Promise.resolve({ error: null }),
     },
     from: (t) => constructor(t, TABLAS[t] !== undefined ? TABLAS[t] : []),
+    /* clase_abierta sale de las mismas filas que la tabla, como en la base, y
+       la columna se llama "profesor": con otro nombre la pantalla se pinta
+       igual y escribe «Tu profe» en su lugar. */
     rpc: (n) => constructor(n, n === "mis_clases"
-      ? [{ profesor_id: "u-profe", profesor_nombre: "Karina Rojas", es_principal: true, clase_abierta: false }]
+      ? [{ profesor_id: "u-profe", profesor: "Karina Rojas", es_principal: true,
+           clase_abierta: TABLAS.class_sessions.some((c) => c.created_by === "u-profe" && !c.ended_at) }]
       : []),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, untrack() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
@@ -158,7 +173,9 @@ async function abrir(browser, perfiles, quien, semilla) {
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   await page.goto(BASE + "/sesion.html", { waitUntil: "domcontentloaded" });
-  await page.waitForSelector("#app:not(.hidden)", { timeout: 30000 });
+  // O la sesión, o la pantalla de espera: un alumno sin clase abierta no monta
+  // #app, y esperarlo a secas dejaría la prueba colgada por lo que es correcto.
+  await page.waitForSelector("#app:not(.hidden), #sin-clase:not(.hidden)", { timeout: 30000 });
   return { page, ctx, errores };
 }
 
