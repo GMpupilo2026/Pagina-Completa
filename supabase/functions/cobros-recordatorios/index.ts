@@ -33,6 +33,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { avisoHtml, type Tipo, ASUNTOS } from "./aviso-html.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
+import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -144,13 +145,16 @@ async function destinatariosDe(studentId: string) {
   return lista;
 }
 
-async function mandar(para: string, asunto: string, html: string) {
+async function mandar(para: string, asunto: string, html: string, remite?: Remitente) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return { ok: false, error: "Falta configurar RESEND_API_KEY" };
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: DE, to: [para], subject: asunto, html }),
+    body: JSON.stringify({
+      from: remite?.from ?? DE, to: [para], subject: asunto, html,
+      ...(remite?.replyTo.length ? { reply_to: remite.replyTo } : {}),
+    }),
   });
   if (!res.ok) return { ok: false, error: `Resend respondió ${res.status}: ${await res.text()}` };
   return { ok: true };
@@ -228,7 +232,7 @@ Deno.serve(async (req) => {
         if (yaFue) { saltados += 1; continue; }
 
         const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL, contacto });
-        const r = await mandar(d.email, ASUNTOS[g.tipo](nombre), html);
+        const r = await mandar(d.email, ASUNTOS[g.tipo](nombre), html, await remitenteDe(admin, studentId, DE));
         hechos += 1;
         if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
         // Se apunta DESPUÉS de que Resend lo aceptó: si falla, mañana se
@@ -306,7 +310,7 @@ Deno.serve(async (req) => {
       const enviadosA: string[] = [];
       for (const d of destinos) {
         const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros: cobrosDelAlumno, sitio: SITE_URL, contacto });
-        const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
+        const r = await mandar(d.email, ASUNTOS[tipo](nombre), html, await remitenteDe(admin, rec.student_id as string, DE));
         if (!r.ok) { fallos.push(`${rec.id} -> ${d.email}: ${r.error}`); continue; }
         // upsert a mano: si ya había un aviso de este tipo (por la tanda diaria
         // o por «Recordar ahora»), no se manda dos veces el mismo día por dos
@@ -339,8 +343,8 @@ Deno.serve(async (req) => {
   // cobros_vista devuelva filas no alcanza: al alumno le devuelve SUS cobros, y
   // con eso veía los correos de sus encargados y podía mandarle a su familia
   // avisos de morosidad cuantas veces quisiera. Misma regla que correos-alumno.
-  const { data: coordina } = await comoQuienLlama.rpc("soy_coordinador");
-  if (coordina !== true) return json({ error: "Esto es de coordinación" }, 403);
+  const { data: coordina } = await comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cobros" });
+  if (coordina !== true) return json({ error: "Los cobros no están entre tus funciones de coordinación" }, 403);
 
   const studentId = typeof body.student_id === "string" ? body.student_id : "";
   if (!studentId) return json({ error: "student_id es requerido" }, 400);
@@ -377,7 +381,7 @@ Deno.serve(async (req) => {
     const fallos: string[] = [];
     for (const d of destinos) {
       const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto });
-      const r = await mandar(d.email, ASUNTOS[tipo](nombre), html);
+      const r = await mandar(d.email, ASUNTOS[tipo](nombre), html, await remitenteDe(admin, studentId, DE));
       if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
       // upsert a mano: si ya había un aviso de este tipo, no se duplica la fila.
       await admin.from("avisos_cobro")

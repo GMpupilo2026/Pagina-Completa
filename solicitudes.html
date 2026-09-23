@@ -22,6 +22,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -261,6 +262,15 @@
                 return;
             }
 
+            // Quien supervisa su academia pudo haberle apagado esta función: se dice
+            // quién, en vez de enseñar una página vacía (la base la cierra igual).
+            await FuncionesCoordinacion.cargar(sb);
+            if (!FuncionesCoordinacion.puede("solicitudes")) {
+                const aqui = document.getElementById("loading");
+                aqui.classList.remove("hidden");
+                FuncionesCoordinacion.aviso(aqui, "solicitudes");
+                return;
+            }
             try {
                 await cargarSolicitudes();
             } catch (err) {

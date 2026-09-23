@@ -1746,6 +1746,121 @@ tres modos con su franja y el contenido cerrado, que un modo guardado no afecte
 a quien no administra, y que sumar un grupo a un supervisor mande la UNIÓN.
 Está probado que falla de verdad: mandando solo el grupo, salta.
 
+### Academias: la unidad del negocio
+
+El negocio se reparte en **academias**. Cada una tiene **un solo supervisor**
+—su jefe—, su gente y su nombre en los correos que les llegan a las familias.
+Un profesor, un coordinador o un alumno pueden estar en **varias** academias.
+Se maneja en `academias.html` (tarjeta «🏫 Academias» en Herramientas para quien
+administra, «🏫 Tu academia» en el grupo «Tus profesores» del panel del
+supervisor).
+
+- **`public.academias`** (nombre, `supervisor_id`, `whatsapp`,
+  `correo_respuestas`) y **`public.academia_miembros`** (academia, persona). El
+  «un supervisor por academia» lo hace cumplir el índice único
+  `academias_un_supervisor`, no la pantalla. **Ninguna de las tres tablas tiene
+  política de escritura**: escriben `academia_guardar()` y `academia_borrar()`
+  (solo administración), `academia_guardar_contacto()` (el supervisor pone el
+  WhatsApp y el correo de SU academia), `academia_set_miembros()` y
+  `academia_set_funciones_coordinador()`.
+- **La academia se SUMA al alcance que ya había**, no lo reemplaza:
+  `supervisores_de(persona)` junta las dos puertas —`supervisor_cuentas` y ser
+  supervisor de una academia de la persona— y `supervisado_por_mi()`,
+  `mis_supervisados()`, `mis_supervisores()` y el aviso del informe mensual
+  cuelgan de ahí. Todo lo que ya existía para el supervisor (informes tema por
+  tema, bitácora, supervisión de profesores, cobros) alcanza a su academia sin
+  tocar una política. El coordinador que es miembro de una academia alcanza a
+  toda su gente (rama nueva en `bajo_mi_coordinacion()`).
+- **El supervisor alcanza a los MIEMBROS, no a los alumnos de sus profesores**,
+  a propósito: un profesor puede estar en dos academias y sus alumnos de la
+  otra no son de este supervisor. Por eso `academia_set_miembros()` le deja al
+  supervisor sumar **solo alumnos de los profesores de su academia** (con el
+  número de los que no cumplen en el error), y conserva lo que no puede tocar
+  (profesores y coordinadores, que los reparte administración).
+- **Un alumno nuevo entra solo** a la academia de su profesor si ese profesor es
+  de UNA sola (trigger `profile_teachers_suma_a_la_academia`). Con dos no hay
+  forma de saber a cuál, y lo decide quien administra.
+- **La lista de gente se manda SIEMPRE completa**, con el cambio encima (la
+  regla de `set_teachers`): mandar solo lo nuevo vaciaría la academia.
+
+#### Las funciones del coordinador las decide su supervisor
+
+`public.funciones_coordinacion()` es la lista: formularios, altas (crear
+cuentas desde respuestas), solicitudes, cuentas, acceso (reenviarlo), roles,
+cobros, equipos y subgrupos. **Se guarda lo QUITADO**
+(`coordinador_funciones_quitadas`), no lo permitido: así un coordinador
+conserva todo lo que ya podía hasta que su supervisor le apague algo, y ninguno
+pierde permisos de golpe al entrar a una academia.
+
+- **`coordinador_puede('<función>')` reemplazó a `soy_coordinador()`** en todo lo
+  que se puede apagar: las políticas de cobros (las nueve tablas), formularios y
+  sus respuestas, solicitudes y subgrupos ajenos; las funciones `cambiar_rol`,
+  `coord_guardar_cuenta`, `coord_set_profesores`, `coord_equipo_*` y
+  `generar_cobros`; y las Edge Functions `inscribir-alumno` (altas),
+  `reenviar-acceso` (acceso), `correos-alumno` (cuentas **o** cobros: la ficha
+  de contacto de Cobros pasa por ahí) y `cobros-recordatorios` (cobros).
+  **`soy_coordinador()` sigue existiendo** y sigue diciendo quién entra a una
+  pantalla de coordinación; lo que cambió es qué puede hacer adentro.
+- Quien administra o supervisa da `true` siempre. **Un coordinador sin
+  academia sigue como hasta hoy** (todo), porque lo maneja administración.
+- La lista está escrita dos veces a la fuerza: en la base y en
+  `js/funciones-coordinacion.js` (el navegador). `verificar-academias.js` falla
+  si se separan: una clave que solo existiera en la pantalla sería una casilla
+  que no apaga nada.
+- En pantalla, lo apagado **no se pinta** (las tarjetas del panel, los botones
+  de `coordinacion.html`, «Crear cuenta» de Formularios) y una página entera
+  apagada dice **quién se la quitó** en vez de verse vacía. Si la consulta de
+  las funciones falla, la pantalla las muestra todas: la base rechaza igual lo
+  que no toca.
+- Comprobado impersonando roles en SQL (revertido): el coordinador pierde lo
+  apagado (`cobros` en 0 filas, `cambiar_rol` rechazado), no puede darse
+  funciones a sí mismo, el supervisor no renombra la academia ni suma un alumno
+  ajeno, un segundo supervisor para la misma persona se rechaza, un alumno no
+  crea academias, `anon` recibe `false` sin error, y el trigger suma al alumno
+  nuevo.
+
+#### Las familias le contestan al supervisor
+
+Los informes a la casa, los avisos de cobro y el informe de un examen salen
+desde `informes@ajedrez-integral.com` **con el nombre de la academia** como
+remitente, y con `reply_to` al correo de respuestas de la academia o, si está
+vacío, al del supervisor. Lo arma `_compartido/remitente-academia.ts` con
+`correos_de_supervision()` (solo la service role puede llamarla).
+
+- **Un alumno en varias academias recibe UN informe**, con la suma de lo que
+  entrenó —lo que importa es cuánto entrenó en total—: sale como «Ajedrez
+  Integral» y la respuesta va a los supervisores de todas.
+- **Sin supervisor, o si la consulta falla, el correo sale igual** con el
+  remitente de siempre y la respuesta cae en `informes@`, que Cloudflare
+  reenvía. Un nombre de más no justifica dejar a una familia sin su informe.
+
+**Al tocar las academias, las funciones del coordinador o
+`js/funciones-coordinacion.js`, correr `node herramientas/verificar-academias.js`**
+(con el sitio en localhost:8777 y playwright; `--sin-navegador` corre solo la
+comparación de la lista). Comprueba que la lista diga lo mismo que la base, que
+crear mande el nombre sin id, que sumar un grupo o los alumnos de los
+profesores mande la UNIÓN, que quitar mande la lista entera sin esa persona,
+que desmarcar una función mande las permitidas, que al supervisor no se le
+ofrezca ni el nombre, ni el supervisor, ni borrar, ni quitar a un profesor, que
+un nombre con etiquetas se vea literal, y que Formularios y Cobros apagados
+digan quién decide. Está probado que falla de verdad: haciendo que sumar mande
+solo lo nuevo, saltan 3.
+
+- **Los dobles de Supabase tuvieron que aprender `mis_funciones_coordinacion`.**
+  Contestaban `[]` a todo lo que no conocían, y la página lee `[]` como «le
+  quitaron todas»: `verificar-coordinacion.js`, `verificar-formularios.js` y
+  `verificar-cobros.js` se cayeron esperando botones que ya no se pintaban.
+  Era el doble el que estaba incompleto: en la base real, quien administra,
+  supervisa o coordina sin academia recibe la lista entera.
+
+**Lo que viene después (fases siguientes, ya decididas con el dueño):** la
+marca de cada academia dentro de la plataforma (logo y colores) y en los
+formularios públicos; la IA por academia —el botón dice **«Mejorar informe»**, el
+modelo lo elige **solo quien administra** por academia (o «sin IA»), con tope
+mensual y medición exacta del gasto desde `usage`, **sin que los profesores
+vean nada de eso**: con la IA apagada el botón simplemente no aparece—; y el
+informe mensual con el detalle por clase y por estudiante.
+
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
 
 `role` solo valía 'profesor' o 'alumno', así que quien administra estaba

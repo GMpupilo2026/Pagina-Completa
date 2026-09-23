@@ -147,10 +147,11 @@ Deno.serve(async (req) => {
     return json({ error: "El correo de la persona encargada tiene que ser uno que reciba correo" }, 400);
   }
 
-  // Quien usa el armador de formularios es quien coordina o quien administra.
-  const { data: coordina } = await callerClient.rpc("soy_coordinador");
+  // Quien usa el armador de formularios es quien coordina o quien administra,
+  // y dar de alta es una función que el supervisor de su academia puede apagar.
+  const { data: coordina } = await callerClient.rpc("coordinador_puede", { p_funcion: "altas" });
   if (!coordina) {
-    return json({ error: "Esto es de quien coordina o administra" }, 403);
+    return json({ error: "Dar de alta cuentas no está entre tus funciones de coordinación" }, 403);
   }
 
   // La RLS decide si este formulario es suyo: si no lo es, no hay fila.

@@ -26,6 +26,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/equipo-volcar.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -62,7 +63,7 @@
                  asignado uno por uno. Por eso vive acá y no en la pantalla de
                  subgrupos: un subgrupo es una etiqueta para filtrar, un equipo es
                  una llave. -->
-            <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
+            <section id="seccion-equipos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
                 <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">👥</span> Equipos</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
                     Meter a un profesor en un equipo le da acceso a <strong>todos</strong> los alumnos de ese equipo,
@@ -227,9 +228,11 @@ function tarjeta(u) {
         ficha.innerHTML = "";
         if (!abierta) montarFicha(u, ficha, linea);
     });
-    acciones.appendChild(editar);
+    /* Lo que el supervisor de su academia le apagó no se pinta: la base lo
+       rechazaría igual, pero el fallo lo descubriría quien apretó. */
+    if (FuncionesCoordinacion.puede("cuentas")) acciones.appendChild(editar);
 
-    if (u.role === "profesor") {
+    if (u.role === "profesor" && FuncionesCoordinacion.puede("subgrupos")) {
         const subs = el("a", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "👥 Sus subgrupos");
         subs.href = "subgrupos.html?profesor=" + encodeURIComponent(u.id);
         acciones.appendChild(subs);
@@ -242,10 +245,10 @@ function tarjeta(u) {
     const acceso = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "✉️ Reenviar acceso");
     acceso.type = "button";
     acceso.addEventListener("click", () => reenviar(u, acceso));
-    acciones.appendChild(acceso);
+    if (FuncionesCoordinacion.puede("acceso")) acciones.appendChild(acceso);
 
     // La cuenta master no cambia de rol desde acá, y la propia tampoco.
-    if (!u.is_admin && u.id !== session.user.id) {
+    if (!u.is_admin && u.id !== session.user.id && FuncionesCoordinacion.puede("roles")) {
         const otro = u.role === "profesor" ? "alumno" : "profesor";
         const rol = el("button", "border border-brand-200 dark:border-brand-700 hover:border-accent-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
             otro === "profesor" ? "⬆️ Hacer profesor" : "⬇️ Pasar a alumno");
@@ -881,6 +884,11 @@ async function init() {
         document.getElementById("denegado").classList.remove("hidden");
         return;
     }
+    // Qué funciones le dejó su supervisor. A quien administra o supervisa la
+    // base le contesta con todas.
+    await FuncionesCoordinacion.cargar(sb);
+    const conEquipos = FuncionesCoordinacion.puede("equipos");
+    document.getElementById("seccion-equipos").hidden = !conEquipos;
     document.getElementById("app").classList.remove("hidden");
 
     // Los conteos salen de la propia función, con el tope de cordura: pedir
@@ -911,7 +919,7 @@ async function init() {
         misAlumnos = [];
         avisar("No se pudieron cargar tus alumnos para los equipos: " + err.message, true);
     }
-    await cargarEquipos();
+    if (conEquipos) await cargarEquipos();
 
     document.getElementById("equipo-nuevo").addEventListener("submit", async (e) => {
         e.preventDefault();

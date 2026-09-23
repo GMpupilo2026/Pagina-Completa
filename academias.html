@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Academias — Ajedrez Integral</title>
+    <meta name="description" content="Las academias del negocio: su supervisor, su gente, sus datos de contacto y qué puede hacer cada coordinador.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es de quien administra o supervisa</h1>
+            <p id="denegado-texto" class="text-brand-500 dark:text-brand-300">Acá se reparten las academias: su supervisor, su gente y lo que puede hacer cada coordinador.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← <span aria-hidden="true">🏛️</span> Academia</a>
+            <h1 id="titulo" tabindex="-1" class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white focus:outline-none"><span aria-hidden="true">🏫</span> Academias</h1>
+            <p id="intro" class="text-brand-500 dark:text-brand-300 mt-1 mb-6"></p>
+
+            <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <!-- Quien administra: la lista de academias y la de crear una. -->
+            <section id="vista-lista" hidden aria-labelledby="h-lista">
+                <h2 id="h-lista" class="sr-only">Todas las academias</h2>
+                <ul id="lista" class="space-y-3 mb-8"></ul>
+
+                <form id="form-nueva" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-brand-900 dark:text-white mb-3">Nueva academia</h3>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="n-nombre" class="block text-sm font-semibold mb-1">Nombre</label>
+                            <input id="n-nombre" required minlength="2" maxlength="80" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="n-supervisor" class="block text-sm font-semibold mb-1">Supervisor</label>
+                            <select id="n-supervisor" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                    </div>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Cada academia tiene un solo supervisor. Para que alguien aparezca en la lista, primero se le marca como supervisor en Administración.</p>
+                    <button type="submit" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear la academia</button>
+                </form>
+            </section>
+
+            <!-- Una academia abierta. -->
+            <section id="vista-academia" hidden>
+                <button id="volver" type="button" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline mb-4">← Todas las academias</button>
+
+                <form id="form-datos" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-datos">
+                    <h2 id="h-datos" class="font-semibold text-lg text-brand-900 dark:text-white mb-3">Datos de la academia</h2>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div id="c-nombre">
+                            <label for="d-nombre" class="block text-sm font-semibold mb-1">Nombre</label>
+                            <input id="d-nombre" maxlength="80" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div id="c-supervisor">
+                            <label for="d-supervisor" class="block text-sm font-semibold mb-1">Supervisor</label>
+                            <select id="d-supervisor" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="d-whatsapp" class="block text-sm font-semibold mb-1">WhatsApp de la academia</label>
+                            <input id="d-whatsapp" inputmode="tel" maxlength="20" placeholder="8888 7777" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="d-correo" class="block text-sm font-semibold mb-1">Correo donde llegan las respuestas</label>
+                            <input id="d-correo" type="text" inputmode="email" autocapitalize="none" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                    </div>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">Los informes y los cobros salen desde ajedrez-integral.com con el nombre de la academia. Cuando una familia contesta, la respuesta llega a este correo; si lo dejas vacío, llega al correo del supervisor.</p>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar los datos</button>
+                        <button id="borrar" type="button" hidden class="bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar la academia</button>
+                    </div>
+                </form>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-coord">
+                    <h2 id="h-coord" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">Qué puede hacer cada coordinador</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Lo marcado lo puede hacer; lo que desmarques deja de estar a su alcance, en su pantalla y en la base.</p>
+                    <div id="coordinadores" class="space-y-5"></div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-gente">
+                    <h2 id="h-gente" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">Quién está en la academia</h2>
+                    <p id="gente-resumen" class="text-sm text-brand-500 dark:text-brand-300 mb-3"></p>
+                    <label for="buscar" class="block text-sm font-semibold mb-1">Buscar</label>
+                    <input id="buscar" type="search" autocomplete="off" placeholder="Nombre, correo o grupo" class="w-full sm:w-80 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <div id="miembros" class="space-y-4"></div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" aria-labelledby="h-sumar">
+                    <h2 id="h-sumar" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">Sumar gente</h2>
+                    <p id="sumar-texto" class="text-sm text-brand-500 dark:text-brand-300 mb-3"></p>
+                    <div id="sumar-grupo" hidden class="flex flex-wrap items-end gap-3 mb-4">
+                        <div>
+                            <label for="grupo" class="block text-sm font-semibold mb-1">Un grupo entero</label>
+                            <select id="grupo" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <button id="sumar-grupo-btn" type="button" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Sumar el grupo</button>
+                    </div>
+                    <button id="sumar-todos" type="button" hidden class="mb-4 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
+                    <label for="buscar-sumar" class="block text-sm font-semibold mb-1">Buscar a quién sumar</label>
+                    <input id="buscar-sumar" type="search" autocomplete="off" placeholder="Nombre, correo o grupo" class="w-full sm:w-80 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <ul id="candidatos" class="divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    <p id="candidatos-mas" class="text-xs text-brand-450 dark:text-brand-350 mt-2"></p>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script>
+/* Academias.
+ *
+ * Una página, dos públicos, como Informes:
+ *  - quien administra ve todas, las crea, les pone supervisor y les reparte
+ *    cualquier cuenta;
+ *  - quien supervisa ve SOLO la suya: pone su WhatsApp y su correo, suma o
+ *    quita a los alumnos de sus profesores y decide qué puede hacer cada
+ *    coordinador.
+ *
+ * Todo se escribe por funciones de la base (academia_guardar,
+ * academia_set_miembros, academia_set_funciones_coordinador…), que son las que
+ * deciden quién puede qué. Esta pantalla solo no ofrece lo que la base va a
+ * rechazar.
+ *
+ * La gente de la academia se manda SIEMPRE como lista completa, con el cambio
+ * encima (la regla de set_teachers): mandar solo lo nuevo vaciaría la academia.
+ */
+const MOSTRAR = 40;
+let session = null, perfil = null, esAdmin = false;
+let academias = [];      // las que se ven
+let perfiles = [];       // quien administra: todas las cuentas
+let abierta = null;      // la academia abierta
+let personas = [];       // academia_personas(): miembros y, para sumar, alumnos de sus profesores
+let supervisores = [];   // quien administra: cuentas marcadas como supervisoras
+let borrarPendiente = false;
+
+function el(tag, clase, texto) {
+    const n = document.createElement(tag);
+    if (clase) n.className = clase;
+    if (texto != null) n.textContent = texto;
+    return n;
+}
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
+    a.classList.remove("hidden");
+}
+function sinTildes(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+function nombreDe(p) { return (p.full_name || p.nombre || "").trim() || String(p.email || p.correo || "").split("@")[0] || "Sin nombre"; }
+function coincide(p, q) {
+    if (!q) return true;
+    return sinTildes([nombreDe(p), p.email || p.correo || "", p.grupo || ""].join(" ")).includes(q);
+}
+const ROL = { profesor: "Profesores", alumno: "Alumnos", admin: "Administración" };
+function rolDe(p) { return (p.es_coordinador ? "coordinador" : (p.rol || p.role || "alumno")); }
+
+/* PostgREST corta la respuesta sin avisar a partir de cierta cantidad de
+   filas: se pide de mil en mil. */
+async function traerTodo(armar) {
+    const todo = [];
+    for (let desde = 0; ; desde += 1000) {
+        const { data, error } = await armar().range(desde, desde + 999);
+        if (error) throw error;
+        todo.push(...(data || []));
+        if (!data || data.length < 1000) return todo;
+    }
+}
+
+// ── La lista (quien administra) ─────────────────────────────────────────
+
+async function cargarAcademias() {
+    const { data, error } = await sb.from("academias").select("*").order("nombre");
+    if (error) { avisar("No se pudieron cargar las academias: " + error.message, true); academias = []; return false; }
+    academias = data || [];
+    return true;
+}
+
+/* El emoji del título va escondido del lector de pantalla, como en todo el sitio. */
+function ponerTitulo(texto) {
+    const h = document.getElementById("titulo");
+    const e = el("span", null, "🏫");
+    e.setAttribute("aria-hidden", "true");
+    h.replaceChildren(e, document.createTextNode(" " + texto));
+}
+
+function nombreDeId(id) {
+    const p = perfiles.find((x) => x.id === id) || supervisores.find((x) => x.id === id);
+    return p ? nombreDe(p) : "";
+}
+
+function llenarSupervisores(select, actual) {
+    select.replaceChildren();
+    const nadie = el("option", null, "— sin supervisor todavía —");
+    nadie.value = "";
+    select.appendChild(nadie);
+    const ocupados = new Set(academias.filter((a) => a.id !== (abierta && abierta.id)).map((a) => a.supervisor_id).filter(Boolean));
+    supervisores.forEach((s) => {
+        const o = el("option", null, nombreDe(s) + (ocupados.has(s.id) ? " (ya supervisa otra)" : ""));
+        o.value = s.id;
+        o.disabled = ocupados.has(s.id) && s.id !== actual;
+        select.appendChild(o);
+    });
+    select.value = actual || "";
+}
+
+async function pintarLista() {
+    document.getElementById("vista-academia").hidden = true;
+    document.getElementById("vista-lista").hidden = false;
+    document.getElementById("intro").textContent = "Cada academia tiene su supervisor, su gente y su nombre en los correos que les llegan a las familias.";
+    let miembros = [];
+    try { miembros = await traerTodo(() => sb.from("academia_miembros").select("academia_id, persona_id").order("academia_id")); }
+    catch (err) { avisar("No se pudo contar la gente de cada academia: " + (err.message || err), true); }
+    const porId = new Map(perfiles.map((p) => [p.id, p]));
+    const ul = document.getElementById("lista");
+    ul.replaceChildren();
+    if (!academias.length) {
+        ul.appendChild(el("li", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 text-center text-sm text-brand-500 dark:text-brand-300", "Todavía no hay ninguna academia. Crea la primera abajo."));
+    }
+    academias.forEach((a) => {
+        const suyos = (miembros || []).filter((m) => m.academia_id === a.id).map((m) => porId.get(m.persona_id)).filter(Boolean);
+        const prof = suyos.filter((p) => p.role === "profesor").length;
+        const alum = suyos.filter((p) => p.role === "alumno").length;
+        const li = el("li", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 flex flex-wrap items-center justify-between gap-3");
+        const izq = el("div");
+        izq.appendChild(el("h3", "font-semibold text-lg text-brand-900 dark:text-white", a.nombre));
+        izq.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300",
+            (a.supervisor_id ? "Supervisa " + nombreDeId(a.supervisor_id) : "⚠️ Sin supervisor: las respuestas de las familias caen en informes@") +
+            " · " + prof + (prof === 1 ? " profesor" : " profesores") + " · " + alum + (alum === 1 ? " alumno" : " alumnos")));
+        const abrir = el("button", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Abrir");
+        abrir.type = "button";
+        abrir.setAttribute("aria-label", "Abrir " + a.nombre);
+        abrir.addEventListener("click", () => abrirAcademia(a.id));
+        li.append(izq, abrir);
+        ul.appendChild(li);
+    });
+    llenarSupervisores(document.getElementById("n-supervisor"), "");
+}
+
+document.getElementById("form-nueva").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById("n-nombre").value.trim();
+    if (nombre.length < 2) { avisar("Ponle un nombre a la academia.", true); document.getElementById("n-nombre").focus(); return; }
+    const sup = document.getElementById("n-supervisor").value || null;
+    const { data, error } = await sb.rpc("academia_guardar", { p_id: null, p_nombre: nombre, p_supervisor: sup, p_whatsapp: null, p_correo: null });
+    if (error) { avisar(error.message, true); return; }
+    document.getElementById("n-nombre").value = "";
+    await cargarAcademias();
+    avisar("Academia «" + data.nombre + "» creada. Ahora súmale su gente.");
+    await abrirAcademia(data.id);
+});
+
+// ── Una academia ────────────────────────────────────────────────────────
+
+async function abrirAcademia(id) {
+    abierta = academias.find((a) => a.id === id) || null;
+    if (!abierta) return;
+    borrarPendiente = false;
+    document.getElementById("vista-lista").hidden = true;
+    document.getElementById("vista-academia").hidden = false;
+    document.getElementById("volver").hidden = !esAdmin;
+    ponerTitulo(abierta.nombre);
+    document.getElementById("intro").textContent = esAdmin
+        ? "Su supervisor, su gente y qué puede hacer cada coordinador."
+        : "Tu academia: sus datos de contacto, quién está y qué puede hacer cada coordinador.";
+    pintarDatos();
+    await cargarPersonas();
+    pintarPersonas();
+    document.getElementById("titulo").focus({ preventScroll: false });
+}
+
+function pintarDatos() {
+    // Lo que no puede cambiar no se ofrece: nombre y supervisor son de quien administra.
+    document.getElementById("c-nombre").hidden = !esAdmin;
+    document.getElementById("c-supervisor").hidden = !esAdmin;
+    document.getElementById("borrar").hidden = !esAdmin;
+    document.getElementById("borrar").textContent = "Borrar la academia";
+    document.getElementById("d-nombre").value = abierta.nombre;
+    if (esAdmin) llenarSupervisores(document.getElementById("d-supervisor"), abierta.supervisor_id);
+    document.getElementById("d-whatsapp").value = abierta.whatsapp || "";
+    document.getElementById("d-correo").value = abierta.correo_respuestas || "";
+}
+
+async function cargarPersonas() {
+    const { data, error } = await sb.rpc("academia_personas", { p_academia: abierta.id });
+    if (error) { avisar("No se pudo leer quién está en la academia: " + error.message, true); personas = []; return; }
+    personas = data || [];
+}
+
+function miembros() { return personas.filter((p) => p.miembro); }
+
+/* Solo lo que se vería igual en pantalla y en la base: el supervisor mueve
+   alumnos; lo demás lo reparte quien administra. */
+function puedeQuitar(p) { return esAdmin || (p.rol === "alumno" && !p.es_coordinador); }
+
+function pintarPersonas() {
+    const ms = miembros();
+    const cuenta = (r) => ms.filter((p) => rolDe(p) === r).length;
+    document.getElementById("gente-resumen").textContent = ms.length
+        ? cuenta("profesor") + " profesores, " + cuenta("coordinador") + " coordinadores y " + cuenta("alumno") + " alumnos."
+        : "Todavía no hay nadie en esta academia.";
+    pintarMiembros();
+    pintarCoordinadores();
+    pintarSumar();
+}
+
+function pintarMiembros() {
+    const q = sinTildes(document.getElementById("buscar").value.trim());
+    const cont = document.getElementById("miembros");
+    cont.replaceChildren();
+    const grupos = [["coordinador", "Coordinadores"], ["profesor", "Profesores"], ["alumno", "Alumnos"]];
+    let alguno = false;
+    grupos.forEach(([rol, titulo]) => {
+        const lista = miembros().filter((p) => rolDe(p) === rol && coincide(p, q));
+        if (!lista.length) return;
+        alguno = true;
+        const bloque = el("div");
+        bloque.appendChild(el("h3", "text-sm font-semibold text-brand-600 dark:text-brand-300 mb-2", titulo + " (" + lista.length + ")"));
+        const ul = el("ul", "divide-y divide-brand-100 dark:divide-brand-800");
+        lista.slice(0, MOSTRAR).forEach((p) => {
+            const li = el("li", "flex items-center justify-between gap-3 py-2");
+            const t = el("div", "min-w-0");
+            t.appendChild(el("p", "font-medium truncate", nombreDe(p)));
+            t.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 truncate", [p.correo, p.grupo].filter(Boolean).join(" · ")));
+            li.appendChild(t);
+            if (puedeQuitar(p)) {
+                const b = el("button", "shrink-0 text-sm font-semibold text-red-700 dark:text-red-300 hover:underline px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "✕ Quitar");
+                b.type = "button";
+                b.setAttribute("aria-label", "Quitar a " + nombreDe(p) + " de la academia");
+                b.addEventListener("click", () => cambiarMiembros([], [p.id], "Quitaste a " + nombreDe(p) + "."));
+                li.appendChild(b);
+            }
+            ul.appendChild(li);
+        });
+        bloque.appendChild(ul);
+        if (lista.length > MOSTRAR) bloque.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mt-1", "Mostrando " + MOSTRAR + " de " + lista.length + ". Usa el buscador para llegar a los demás."));
+        cont.appendChild(bloque);
+    });
+    if (!alguno && miembros().length) cont.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Nadie coincide con esa búsqueda."));
+}
+
+function pintarCoordinadores() {
+    const cont = document.getElementById("coordinadores");
+    cont.replaceChildren();
+    const coords = miembros().filter((p) => p.es_coordinador);
+    if (!coords.length) {
+        cont.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Esta academia no tiene coordinadores. Quien administra marca a alguien como coordinador y lo suma aquí."));
+        return;
+    }
+    coords.forEach((c) => {
+        const fs = el("fieldset", "border border-brand-100 dark:border-brand-800 rounded-xl p-4");
+        fs.appendChild(el("legend", "px-1 font-semibold text-brand-900 dark:text-white", nombreDe(c)));
+        const tiene = new Set(c.funciones || []);
+        const grid = el("div", "grid sm:grid-cols-2 gap-2");
+        FuncionesCoordinacion.LISTA.forEach((f) => {
+            const id = "f-" + c.id + "-" + f.clave;
+            const lab = el("label", "flex items-start gap-2 text-sm");
+            lab.htmlFor = id;
+            const cb = el("input", "mt-1 h-4 w-4");
+            cb.type = "checkbox"; cb.id = id; cb.value = f.clave; cb.checked = tiene.has(f.clave);
+            const tx = el("span");
+            tx.appendChild(el("span", "font-medium", f.titulo));
+            tx.appendChild(el("span", "block text-xs text-brand-450 dark:text-brand-350", f.detalle));
+            lab.append(cb, tx);
+            grid.appendChild(lab);
+        });
+        fs.appendChild(grid);
+        const guardar = el("button", "mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Guardar sus funciones");
+        guardar.type = "button";
+        guardar.addEventListener("click", async () => {
+            const permitidas = [...grid.querySelectorAll("input:checked")].map((i) => i.value);
+            const { data, error } = await sb.rpc("academia_set_funciones_coordinador", {
+                p_academia: abierta.id, p_coordinador: c.id, p_permitidas: permitidas });
+            if (error) { avisar(error.message, true); return; }
+            c.funciones = data || permitidas;
+            const quitadas = FuncionesCoordinacion.LISTA.length - c.funciones.length;
+            avisar(nombreDe(c) + (quitadas ? " ya no puede hacer " + quitadas + (quitadas === 1 ? " función." : " funciones.") : " puede hacer todas las funciones de coordinación."));
+        });
+        fs.appendChild(guardar);
+        cont.appendChild(fs);
+    });
+}
+
+function candidatosDisponibles() {
+    const dentro = new Set(miembros().map((p) => p.id));
+    if (esAdmin) return perfiles.filter((p) => !dentro.has(p.id) && !p.is_admin);
+    return personas.filter((p) => !p.miembro);   // los alumnos de sus profesores
+}
+
+function pintarSumar() {
+    document.getElementById("sumar-texto").textContent = esAdmin
+        ? "Cualquier cuenta de la plataforma. Un profesor o un alumno puede estar en varias academias."
+        : "Los alumnos de los profesores de tu academia que todavía no están en ella. A los profesores y coordinadores los suma quien administra.";
+    document.getElementById("sumar-grupo").hidden = !esAdmin;
+    if (esAdmin) {
+        const sel = document.getElementById("grupo");
+        const grupos = [...new Set(perfiles.map((p) => (p.grupo || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+        sel.replaceChildren();
+        grupos.forEach((g) => {
+            const n = perfiles.filter((p) => (p.grupo || "").trim() === g && !p.is_admin).length;
+            const o = el("option", null, g + " (" + n + ")");
+            o.value = g;
+            sel.appendChild(o);
+        });
+    }
+    const todos = document.getElementById("sumar-todos");
+    const disp = candidatosDisponibles();
+    todos.hidden = esAdmin || disp.length === 0;
+    todos.textContent = "Sumar a los " + disp.length + " alumnos de tus profesores";
+    pintarCandidatos();
+}
+
+function pintarCandidatos() {
+    const q = sinTildes(document.getElementById("buscar-sumar").value.trim());
+    const lista = candidatosDisponibles().filter((p) => coincide(p, q));
+    const ul = document.getElementById("candidatos");
+    ul.replaceChildren();
+    lista.slice(0, MOSTRAR).forEach((p) => {
+        const li = el("li", "flex items-center justify-between gap-3 py-2");
+        const t = el("div", "min-w-0");
+        const rol = rolDe(p) === "coordinador" ? "coordina" : (p.rol || p.role) === "profesor" ? "profesor" : "alumno";
+        t.appendChild(el("p", "font-medium truncate", nombreDe(p)));
+        t.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 truncate", [rol, p.email || p.correo, p.grupo].filter(Boolean).join(" · ")));
+        const b = el("button", "shrink-0 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 font-semibold px-3 py-1.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "＋ Sumar");
+        b.type = "button";
+        b.setAttribute("aria-label", "Sumar a " + nombreDe(p) + " a la academia");
+        b.addEventListener("click", () => cambiarMiembros([p.id], [], "Sumaste a " + nombreDe(p) + "."));
+        li.append(t, b);
+        ul.appendChild(li);
+    });
+    document.getElementById("candidatos-mas").textContent = !lista.length
+        ? (q ? "Nadie coincide con esa búsqueda." : "No queda nadie por sumar.")
+        : lista.length > MOSTRAR ? "Mostrando " + MOSTRAR + " de " + lista.length + ". Escribe para buscar." : "";
+}
+
+/* SE MANDA LA LISTA COMPLETA con el cambio encima. Mandar solo lo nuevo
+   dejaría la academia con esa gente y nadie más. */
+async function cambiarMiembros(sumar, quitar, mensaje) {
+    const fuera = new Set(quitar);
+    const ids = [...new Set([...miembros().map((p) => p.id), ...sumar])].filter((id) => !fuera.has(id));
+    const { error } = await sb.rpc("academia_set_miembros", { p_academia: abierta.id, p_personas: ids });
+    if (error) { avisar(error.message, true); return; }
+    await cargarPersonas();
+    pintarPersonas();
+    avisar(mensaje);
+}
+
+document.getElementById("buscar").addEventListener("input", pintarMiembros);
+document.getElementById("buscar-sumar").addEventListener("input", pintarCandidatos);
+document.getElementById("sumar-todos").addEventListener("click", () => {
+    const disp = candidatosDisponibles();
+    cambiarMiembros(disp.map((p) => p.id), [], "Sumaste " + disp.length + (disp.length === 1 ? " alumno." : " alumnos."));
+});
+document.getElementById("sumar-grupo-btn").addEventListener("click", () => {
+    const g = document.getElementById("grupo").value;
+    const dentro = new Set(miembros().map((p) => p.id));
+    const nuevos = perfiles.filter((p) => (p.grupo || "").trim() === g && !p.is_admin && !dentro.has(p.id));
+    if (!nuevos.length) { avisar("Todo el grupo " + g + " ya está en la academia."); return; }
+    cambiarMiembros(nuevos.map((p) => p.id), [], "Sumaste " + nuevos.length + " del grupo " + g + ".");
+});
+document.getElementById("volver").addEventListener("click", async () => {
+    abierta = null;
+    ponerTitulo("Academias");
+    document.getElementById("aviso").classList.add("hidden");
+    await cargarAcademias();
+    await pintarLista();
+    document.getElementById("titulo").focus();
+});
+
+document.getElementById("form-datos").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const wa = document.getElementById("d-whatsapp").value.trim();
+    const correo = document.getElementById("d-correo").value.trim();
+    const digitos = wa.replace(/\D/g, "");
+    if (wa && (digitos.length < 8 || digitos.length > 15)) {
+        avisar("El WhatsApp tiene que tener al menos 8 dígitos (con el código de país si no es de Costa Rica).", true);
+        document.getElementById("d-whatsapp").focus(); return;
+    }
+    if (correo && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+        avisar("Ese correo no parece un correo: revisa que tenga @ y un dominio.", true);
+        document.getElementById("d-correo").focus(); return;
+    }
+    let res;
+    if (esAdmin) {
+        const nombre = document.getElementById("d-nombre").value.trim();
+        if (nombre.length < 2) { avisar("La academia necesita un nombre.", true); document.getElementById("d-nombre").focus(); return; }
+        res = await sb.rpc("academia_guardar", { p_id: abierta.id, p_nombre: nombre,
+            p_supervisor: document.getElementById("d-supervisor").value || null, p_whatsapp: wa || null, p_correo: correo || null });
+    } else {
+        res = await sb.rpc("academia_guardar_contacto", { p_id: abierta.id, p_whatsapp: wa || null, p_correo: correo || null });
+    }
+    if (res.error) { avisar(res.error.message, true); return; }
+    abierta = res.data;
+    academias = academias.map((a) => a.id === abierta.id ? abierta : a);
+    ponerTitulo(abierta.nombre);
+    pintarDatos();
+    avisar("Datos guardados.");
+});
+
+/* Borrar pide dos toques en el propio botón, con lo que va a pasar escrito. */
+document.getElementById("borrar").addEventListener("click", async (e) => {
+    const b = e.currentTarget;
+    if (!borrarPendiente) {
+        borrarPendiente = true;
+        b.textContent = "Sí, borrar «" + abierta.nombre + "»: su gente sale de la academia (las cuentas no se borran)";
+        return;
+    }
+    const { error } = await sb.rpc("academia_borrar", { p_id: abierta.id });
+    if (error) { avisar(error.message, true); return; }
+    const nombre = abierta.nombre;
+    abierta = null;
+    await cargarAcademias();
+    ponerTitulo("Academias");
+    await pintarLista();
+    avisar("Academia «" + nombre + "» borrada.");
+    document.getElementById("titulo").focus();
+});
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { location.href = "login.html?next=academias.html"; return; }
+    const { data: p } = await sb.from("profiles").select("is_admin, es_supervisor").eq("id", session.user.id).maybeSingle();
+    perfil = p;
+    document.getElementById("loading").classList.add("hidden");
+    esAdmin = !!(perfil && perfil.is_admin);
+    if (!perfil || !(esAdmin || perfil.es_supervisor)) {
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    if (!(await cargarAcademias())) { document.getElementById("app").classList.remove("hidden"); return; }
+
+    if (esAdmin) {
+        try {
+            perfiles = await traerTodo(() => sb.from("profiles")
+                .select("id, full_name, email, role, grupo, is_admin, es_coordinador, es_supervisor").order("full_name"));
+        } catch (err) {
+            avisar("No se pudieron cargar las cuentas: " + (err.message || err), true);
+        }
+        supervisores = perfiles.filter((x) => x.es_supervisor);
+        document.getElementById("app").classList.remove("hidden");
+        await pintarLista();
+        return;
+    }
+
+    // Quien supervisa: su academia, directo.
+    const suya = academias.find((a) => a.supervisor_id === session.user.id);
+    document.getElementById("app").classList.remove("hidden");
+    if (!suya) {
+        document.getElementById("intro").textContent = "Todavía no tienes una academia a tu cargo. La crea y te la asigna quien administra.";
+        return;
+    }
+    await abrirAcademia(suya.id);
+}
+
+init();
+    </script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
+</html>

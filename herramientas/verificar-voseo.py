@@ -85,6 +85,7 @@ ENCLITICOS = {
     "encontrala": "encuéntrala", "fijate": "fíjate", "hacelo": "hazlo",
     "jugala": "juégala", "jugalos": "juégalos", "marcala": "márcala",
     "reducile": "redúcele", "usalo": "úsalo",
+    "respondele": "respóndele", "respondenos": "respóndenos",
 }
 
 OTROS = {"sos": "eres"}           # "vos" se trata aparte: puede ser "tú" o "ti"

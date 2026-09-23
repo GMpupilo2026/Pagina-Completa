@@ -66,9 +66,10 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await callerClient.auth.getUser(jwt);
   if (userError || !userData?.user) return json({ error: "Token inválido" }, 401);
 
-  const { data: coordina } = await callerClient.rpc("soy_coordinador");
+  // Reenviar el acceso es una función que el supervisor de su academia puede apagar.
+  const { data: coordina } = await callerClient.rpc("coordinador_puede", { p_funcion: "acceso" });
   if (!coordina) {
-    return json({ error: "Esto es de quien coordina o administra" }, 403);
+    return json({ error: "Reenviar el acceso no está entre tus funciones de coordinación" }, 403);
   }
 
   let body: { alumno_id?: string };

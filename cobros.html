@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -1351,6 +1352,15 @@ async function init() {
         return;
     }
 
+    // Quien supervisa su academia pudo haberle apagado esta función: se dice
+    // quién, en vez de enseñar una página vacía (la base la cierra igual).
+    await FuncionesCoordinacion.cargar(sb);
+    if (!FuncionesCoordinacion.puede("cobros")) {
+        const aqui = document.getElementById("loading");
+        aqui.classList.remove("hidden");
+        FuncionesCoordinacion.aviso(aqui, "cobros");
+        return;
+    }
     // Los alumnos que uno ve: la misma función de Informes, así que el filtro
     // de quién sale es el de la RLS y no está escrito dos veces.
     const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos").order("id"));

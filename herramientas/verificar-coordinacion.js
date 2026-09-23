@@ -129,6 +129,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     },
     from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
     rpc: (n, args) => {
+      // Quien administra, supervisa o coordina sin academia recibe todas.
+      if (n === "mis_funciones_coordinacion") return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
       window.__rpc.push({ rpc: n, args: args || null });
       window.__llamadas.push({ rpc: n, args: args || null });
       if (n === "mi_gente") return constructor(gentePara(args), "rpc:mi_gente");

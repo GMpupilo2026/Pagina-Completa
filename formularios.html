@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -835,6 +836,14 @@ function celdaCuenta(r) {
             : "");
         return listo;
     }
+    // Dar de alta es una función que su supervisor le puede apagar: sin ella,
+    // la Edge Function contestaría 403, así que no se ofrece.
+    if (!FuncionesCoordinacion.puede("altas")) {
+        const no = document.createElement("span");
+        no.className = "text-xs text-brand-450 dark:text-brand-350";
+        no.textContent = "Sin cuenta";
+        return no;
+    }
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = "Crear cuenta";
@@ -1178,6 +1187,16 @@ async function init() {
         document.getElementById("denegado").classList.remove("hidden");
         return;
     }
+    // Quien supervisa su academia pudo haberle apagado esta función: se dice
+    // quién, en vez de enseñar una página vacía (la base la cierra igual).
+    await FuncionesCoordinacion.cargar(sb);
+    if (!FuncionesCoordinacion.puede("formularios")) {
+        const aqui = document.getElementById("loading");
+        aqui.classList.remove("hidden");
+        FuncionesCoordinacion.aviso(aqui, "formularios");
+        return;
+    }
+    document.getElementById("alumno-nuevo-btn").hidden = !FuncionesCoordinacion.puede("altas");
     if (perfil.is_admin) {
         document.getElementById("subtitulo").textContent =
             "Arma un formulario, compártelo por enlace y baja las respuestas en Excel. Como administras, ves todos los formularios de la plataforma.";
