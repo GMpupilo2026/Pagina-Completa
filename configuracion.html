@@ -154,6 +154,27 @@
                 <p id="avisos-msg" class="text-xs mt-3" role="status" aria-live="polite"></p>
             </div>
 
+            <!-- Baja visión en modo normal: los ajustes que hacen falta viven repartidos
+                 en cuatro tarjetas (tema de piezas, estilo de pieza, colores de casilla y
+                 color de piezas) y hay que acertar los cuatro, porque uno mal puesto tapa a
+                 los otros (un tema de emojis gana sobre el dibujo con aro). Este botón los
+                 pone juntos SIN encender Modo Adaptado, y guarda lo que había para volver. -->
+            <div id="baja-vision" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6 border-2 border-accent-400">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Ver mejor el tablero en el celular <span aria-hidden="true">👓</span></h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Para baja visión, <strong>sin tener que encender el Modo Adaptado</strong>. Con un solo toque, el tablero queda así en todo el sitio:</p>
+                <ul class="text-xs text-brand-600 dark:text-brand-300 mb-4 list-disc pl-5 space-y-1">
+                    <li>Las piezas dibujadas <strong>con aro</strong>: las negras se ven oscuras aunque el celular tenga encendido el «Texto de alto contraste», que pinta de blanco los símbolos.</li>
+                    <li>Casillas en tono medio (turquesa y vino), donde las blancas y las negras se ven sobre las dos casillas, también al sol.</li>
+                    <li>Piezas en blanco y negro de siempre, sin temas de dibujos.</li>
+                </ul>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="baja-vision-aplicar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Poner el tablero para baja visión</button>
+                    <button type="button" id="baja-vision-deshacer" class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" hidden>Volver a como lo tenía</button>
+                </div>
+                <p id="baja-vision-msg" class="text-sm text-brand-600 dark:text-brand-300 mt-3" role="status" aria-live="polite"></p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">Cada cosa se puede cambiar después, una por una, en las tarjetas de abajo.</p>
+            </div>
+
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tablero</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige con qué piezas quieres ver los tableros de Clases (Sesión en vivo). Es solo para tu pantalla — nadie más lo nota, y no cambia la partida.</p>
@@ -655,6 +676,60 @@
             });
         }
         renderPieceStyleThemeGrid();
+
+        // ---------- Baja visión en modo normal: los cuatro ajustes de una vez ----------
+        // Se guarda lo que había ANTES de tocar nada, para que «Volver» deje cada cosa como
+        // estaba y no en el valor de fábrica: quien tenía Madera tiene que volver a Madera.
+        (function () {
+            const COPIA = "baja_vision_antes_v1";
+            const PRESET = { tablero: "clasico", estilo: "aro", casillas: "celularturquesa", color: "clasico" };
+            const aplicar = document.getElementById("baja-vision-aplicar");
+            const deshacer = document.getElementById("baja-vision-deshacer");
+            const msg = document.getElementById("baja-vision-msg");
+            if (!aplicar || !window.PieceStyleThemes || !window.BoardColorThemes) return;
+            const actual = () => ({
+                tablero: window.BoardThemes ? window.BoardThemes.getPreference() : "clasico",
+                estilo: window.PieceStyleThemes.getPreference(),
+                casillas: window.BoardColorThemes.getPreference(),
+                color: window.PieceColorThemes ? window.PieceColorThemes.getPreference() : "clasico",
+            });
+            const yaPuesto = () => { const a = actual(); return Object.keys(PRESET).every((k) => a[k] === PRESET[k]); };
+            const poner = (v) => {
+                if (window.BoardThemes) window.BoardThemes.setPreference(v.tablero);
+                window.PieceStyleThemes.setPreference(v.estilo);
+                window.BoardColorThemes.setPreference(v.casillas);
+                if (window.PieceColorThemes) window.PieceColorThemes.setPreference(v.color);
+                renderBoardThemeGrid();
+                renderBoardColorThemeGrids();
+                renderPieceColorThemeGrids();
+                renderPieceStyleThemeGrid();
+            };
+            const leerCopia = () => {
+                try { return JSON.parse(localStorage.getItem(COPIA) || "null"); } catch (e) { return null; }
+            };
+            const pintar = () => {
+                aplicar.textContent = yaPuesto() ? "✅ Ya está puesto para baja visión" : "Poner el tablero para baja visión";
+                deshacer.hidden = !leerCopia();
+            };
+            aplicar.addEventListener("click", () => {
+                if (!yaPuesto()) {
+                    try { localStorage.setItem(COPIA, JSON.stringify(actual())); } catch (e) {}
+                }
+                poner(PRESET);
+                msg.textContent = "Listo: piezas dibujadas con aro y casillas turquesa y vino en todo el sitio. Si tenías abierta una página con tablero, recárgala.";
+                pintar();
+            });
+            deshacer.addEventListener("click", () => {
+                const antes = leerCopia();
+                if (!antes) return;
+                poner(antes);
+                try { localStorage.removeItem(COPIA); } catch (e) {}
+                msg.textContent = "Listo: el tablero volvió a como lo tenías.";
+                pintar();
+                aplicar.focus();
+            });
+            pintar();
+        })();
 
         // ---------- Voz de Modo Speech (preferencia local, ver js/blind-notation.js) ----------
         function populateVoiceSelect() {

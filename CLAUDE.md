@@ -8232,6 +8232,25 @@ blancas, blanco en las negras) que la separa de cualquier casilla.
   se respeta siempre, y al encender o apagar el modo (`adaptivemode:change`)
   se vuelve a poner `data-pieza`.
 
+### «Ver mejor el tablero en el celular»: lo mismo, sin Modo Adaptado
+
+Mucha gente con baja visión usa el sitio en modo normal, y ahí lo que hacía
+falta vivía repartido en CUATRO tarjetas de `configuracion.html` —tema de
+piezas, estilo de pieza, colores de casilla y color de piezas— que había que
+acertar todas: una sola mal puesta tapa a las demás (un tema de emojis gana
+sobre el dibujo con aro, y las negras vuelven a salir blancas). No daba ningún
+error: se elegía «Dibujado con aro» y el tablero seguía igual.
+
+La tarjeta **«👓 Ver mejor el tablero en el celular»**, arriba de las del
+tablero, pone las cuatro de un toque (`clasico`, `aro`, `celularturquesa`,
+`clasico`) **sin encender Modo Adaptado**.
+
+- **Guarda lo que había ANTES** (`baja_vision_antes_v1`) y «Volver a como lo
+  tenía» lo repone: quien tenía Madera vuelve a Madera, no al valor de fábrica.
+  Si ya estaba puesto, apretar de nuevo no pisa esa copia con el preset.
+- Escribe por los mismos `setPreference()` de cada módulo y repinta las cuatro
+  rejillas, así que lo que dicen las tarjetas de abajo es lo que quedó puesto.
+
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 
 Los cuatro temas que ya tenía el sitio (`js/board-themes.js`,
