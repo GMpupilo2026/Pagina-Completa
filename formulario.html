@@ -135,6 +135,110 @@
  * qué le falta antes de mandar—; quien de verdad decide es la función. */
 const slug = new URLSearchParams(location.search).get("f") || "";
 let campos = [];
+let formularioId = "";   // la carpeta de Storage donde van sus imágenes
+
+/* Las imágenes elegidas, por pregunta: { archivo, url (vista previa), ruta (ya
+   subida) }. Se suben al ENVIAR y no al elegirlas, así una foto que se cambió
+   de idea no queda subida por nada; y la ruta se recuerda, así reintentar un
+   envío que falló no la vuelve a subir. */
+const imagenes = {};
+const MAX_IMAGENES = 5;
+const LADO_MAX = 1600;
+
+/* La foto del celular pesa 4-8 MB y el bucket acepta 5: se achica a 1600 px en
+   JPEG antes de subir. De paso queda en un formato que se abre en cualquier
+   parte (un HEIC del iPhone, si el navegador lo sabe leer, sale como JPG). Si
+   no se puede dibujar, se sube tal cual solo si ya es un formato aceptado. */
+async function prepararImagen(archivo) {
+    try {
+        const bmp = await createImageBitmap(archivo);
+        const k = Math.min(1, LADO_MAX / Math.max(bmp.width, bmp.height));
+        const lienzo = document.createElement("canvas");
+        lienzo.width = Math.round(bmp.width * k);
+        lienzo.height = Math.round(bmp.height * k);
+        const ctx = lienzo.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, lienzo.width, lienzo.height);
+        ctx.drawImage(bmp, 0, 0, lienzo.width, lienzo.height);
+        const blob = await new Promise((ok) => lienzo.toBlob(ok, "image/jpeg", 0.85));
+        if (blob) return { blob, ext: "jpg", tipo: "image/jpeg" };
+    } catch (e) { /* cae abajo */ }
+    const ext = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[archivo.type];
+    if (ext && archivo.size <= 5 * 1024 * 1024) return { blob: archivo, ext, tipo: archivo.type };
+    return null;
+}
+
+function idAleatorio() {
+    return (crypto.randomUUID ? crypto.randomUUID()
+        : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12));
+}
+
+function pintarMiniaturas(c, i) {
+    const lista = document.getElementById("campo-" + i + "-lista");
+    lista.innerHTML = "";
+    (imagenes[c.id] || []).forEach((img, j) => {
+        const li = document.createElement("li");
+        li.className = "relative";
+        const foto = document.createElement("img");
+        foto.src = img.url;
+        foto.alt = "Imagen " + (j + 1) + ": " + img.archivo.name;
+        foto.className = "w-24 h-24 object-cover rounded-lg border border-brand-200 dark:border-brand-700";
+        const quitar = document.createElement("button");
+        quitar.type = "button";
+        quitar.textContent = "✕";
+        quitar.setAttribute("aria-label", "Quitar la imagen " + (j + 1) + " (" + img.archivo.name + ")");
+        quitar.className = "absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-600 text-white text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        quitar.addEventListener("click", () => {
+            URL.revokeObjectURL(img.url);
+            imagenes[c.id].splice(j, 1);
+            pintarMiniaturas(c, i);
+            document.getElementById("campo-" + i).focus();
+        });
+        li.append(foto, quitar);
+        lista.appendChild(li);
+    });
+    const n = (imagenes[c.id] || []).length;
+    const estado = document.getElementById("campo-" + i + "-estado");
+    estado.textContent = n ? (n === 1 ? "1 imagen elegida." : n + " imágenes elegidas.") : "";
+}
+
+function engancharImagen(c, i) {
+    const input = document.getElementById("campo-" + i);
+    input.addEventListener("change", () => {
+        const actuales = imagenes[c.id] || (imagenes[c.id] = []);
+        const nuevos = [...input.files].filter((a) => /^image\//.test(a.type) || /\.(heic|heif)$/i.test(a.name));
+        const caben = MAX_IMAGENES - actuales.length;
+        nuevos.slice(0, Math.max(0, caben)).forEach((archivo) => {
+            actuales.push({ archivo, url: URL.createObjectURL(archivo), ruta: null });
+        });
+        input.value = "";   // así se puede volver a elegir la misma foto
+        pintarMiniaturas(c, i);
+        if (nuevos.length > caben) {
+            const msg = document.getElementById("msg");
+            msg.textContent = "En «" + c.etiqueta + "» caben " + MAX_IMAGENES + " imágenes como máximo.";
+            msg.className = "text-sm text-red-600 dark:text-red-400";
+        }
+    });
+}
+
+/* Sube lo que falte y devuelve las rutas. Si una no se puede, se dice CUÁL:
+   un "no se pudo" a secas deja a la familia sin saber qué foto cambiar. */
+async function subirImagenes(c, avisar) {
+    const lista = imagenes[c.id] || [];
+    for (let j = 0; j < lista.length; j += 1) {
+        const img = lista[j];
+        if (img.ruta) continue;
+        avisar("Subiendo «" + img.archivo.name + "»…");
+        const preparada = await prepararImagen(img.archivo);
+        if (!preparada) throw new Error("No se pudo leer «" + img.archivo.name + "». Prueba con una foto JPG o PNG.");
+        const ruta = formularioId + "/" + idAleatorio() + "." + preparada.ext;
+        const { error } = await sb.storage.from("formulario-adjuntos")
+            .upload(ruta, preparada.blob, { contentType: preparada.tipo, upsert: false });
+        if (error) throw new Error("No se pudo subir «" + img.archivo.name + "»: " + error.message);
+        img.ruta = ruta;
+    }
+    return lista.map((x) => x.ruta);
+}
 
 const escapar = (t) => String(t == null ? "" : t)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -148,7 +252,12 @@ function pintarCampo(c, i) {
     const clasesEntrada = "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2.5 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
     let control = "";
-    if (c.tipo === "parrafo") {
+    if (c.tipo === "imagen") {
+        control = `<input type="file" id="${idHtml}" accept="image/*" multiple aria-describedby="${idHtml}-estado" class="block w-full text-sm text-brand-700 dark:text-brand-200 file:mr-3 file:bg-accent-500 file:text-brand-900 file:font-semibold file:border-0 file:rounded-lg file:px-4 file:py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-lg">
+            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Hasta ${MAX_IMAGENES} imágenes (JPG, PNG o una foto del celular).</p>
+            <p id="${idHtml}-estado" class="text-xs text-brand-600 dark:text-brand-300 mt-1" role="status"></p>
+            <ul id="${idHtml}-lista" class="flex flex-wrap gap-3 mt-2" aria-label="Imágenes elegidas"></ul>`;
+    } else if (c.tipo === "parrafo") {
         control = `<textarea id="${idHtml}" rows="4" maxlength="2000" class="${clasesEntrada}"></textarea>`;
     } else if (c.tipo === "opcion") {
         control = `<select id="${idHtml}" class="${clasesEntrada}">
@@ -193,6 +302,7 @@ function leerCampo(c, i) {
         return [...el.querySelectorAll("input:checked")].map((x) => x.value);
     }
     if (c.tipo === "si_no") return el.checked;
+    if (c.tipo === "imagen") return (imagenes[c.id] || []).length ? imagenes[c.id] : [];
     if (c.tipo === "numero") {
         const v = el.value.trim();
         return v === "" ? null : Number(v);
@@ -221,12 +331,23 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
             if (el && el.focus) el.focus();
             return;
         }
-        if (!vacio(v)) respuestas[c.id] = v;
+        if (!vacio(v) && c.tipo !== "imagen") respuestas[c.id] = v;
     }
 
     btn.disabled = true;
-    msg.textContent = "Enviando…";
     msg.className = "text-sm text-brand-500 dark:text-brand-300";
+    try {
+        for (const c of campos) {
+            if (c.tipo !== "imagen" || !(imagenes[c.id] || []).length) continue;
+            respuestas[c.id] = await subirImagenes(c, (t) => { msg.textContent = t; });
+        }
+    } catch (err) {
+        msg.textContent = err.message;
+        msg.className = "text-sm text-red-600 dark:text-red-400";
+        btn.disabled = false;
+        return;
+    }
+    msg.textContent = "Enviando…";
     const { data, error } = await sb.rpc("responder_formulario", { p_slug: slug, p_respuestas: respuestas });
     if (error || !data || !data.ok) {
         msg.textContent = (data && data.error) || (error && error.message) || "No se pudo enviar. Vuelve a intentarlo.";
@@ -250,6 +371,7 @@ async function init() {
     const f = Array.isArray(data) ? data[0] : data;
     if (error || !f) { noEsta(); return; }
 
+    formularioId = f.id || "";
     document.title = f.titulo + " — Ajedrez Integral";
     document.getElementById("titulo").textContent = f.titulo;
     if (f.grupo) {
@@ -272,6 +394,7 @@ async function init() {
     campos = (f.campos || []).filter((c) => c && c.id && c.etiqueta);
     const caja = document.getElementById("campos");
     campos.forEach((c, i) => caja.appendChild(pintarCampo(c, i)));
+    campos.forEach((c, i) => { if (c.tipo === "imagen") engancharImagen(c, i); });
 
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("formulario").classList.remove("hidden");

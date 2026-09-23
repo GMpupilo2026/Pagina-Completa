@@ -2663,6 +2663,55 @@ líneas de HTML.
   formulario público al contestar y el alta de abajo — qué dedujo de cada
   etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
 
+### Preguntas de tipo «Imagen»: la foto se sube, se ve y se descarga
+
+Un formulario puede pedir fotos (la cédula, el carné del colegio, un
+comprobante): el tipo **«Imagen (foto)»**, hasta 5 por pregunta. Lo difícil no
+es el `<input type="file">`, es que quien sube **no tiene cuenta** y lo que sube
+son documentos de menores.
+
+- **El bucket `formulario-adjuntos` es PRIVADO**, con tope de 5 MB y solo JPG,
+  PNG y WebP. Una URL pública sería repartir la cédula de un niño a cualquiera
+  que tenga el enlace.
+- **Subir (anon) lo decide `formulario_acepta_adjuntos(carpeta)`**, `SECURITY
+  DEFINER`: solo dentro de la carpeta `<id del formulario>/` de uno **abierto que
+  tenga una pregunta de imagen**. `anon` no tiene permiso de tabla sobre
+  `formularios` (se le quitó a propósito), así que la política no puede
+  consultarla directo: por eso la función. Sin política de select ni update para
+  `anon`: sube y no ve nada, ni lo suyo.
+- **Leer lo decide la RLS de `formularios`**: la política de select de Storage
+  pregunta si quien mira ve ese formulario, que es exactamente quien ve sus
+  respuestas (dueño, administración, su coordinación, a quien se lo compartieron).
+  Comprobado impersonando: un alumno ve **0** archivos, el dueño los ve.
+- **`formulario_publico()` devuelve ahora el `id`**: es el nombre de la carpeta.
+  No es un dato sensible, y sin él la página no sabe dónde subir.
+- **`responder_formulario()` valida cada ruta**: que sea de la carpeta de ESE
+  formulario, con el nombre que arma la página, y que **exista de verdad** en
+  Storage. Sin eso una respuesta podría apuntar a la foto de otro formulario —y
+  quien coordina ese otro vería una cédula ajena en sus respuestas— o a un
+  archivo que no está, que se ve como una foto rota sin que nada avise.
+- **La foto se achica en el navegador** (1600 px, JPEG): la del celular pesa más
+  que el tope, y así sale en un formato que abre cualquiera. Se sube **al
+  enviar**, no al elegirla —una foto descartada no queda subida por nada— y la
+  ruta se recuerda, así reintentar un envío fallido no la vuelve a subir.
+- **En Respuestas se bajan con `storage.download()` y se pintan como `blob:`**,
+  que es lo que la CSP ya deja pintar: una URL firmada de Supabase en un `<img>`
+  la bloquearía `img-src`. Cada una trae «Ver en grande» y «⬇ Descargar», con un
+  nombre de archivo que dice **de quién es** (el nombre del alumno, la pregunta y
+  el número): veinte `imagen.jpg` en la carpeta de descargas no los distingue
+  nadie. Una que no se pudo bajar **lo dice**, en vez de dejar un cuadro vacío.
+- En el CSV la foto se **cuenta** («2 imágenes adjuntas»), no se pega la ruta:
+  una ruta interna en Excel no le sirve a nadie.
+- **Borrar un formulario borra antes sus imágenes**: después, la política de
+  Storage ya no encuentra de quién eran y quedarían huérfanas para siempre.
+
+`verificar-formularios.js` lo comprueba: que sin la foto obligatoria no se suba
+ni se mande nada, que quitar una la saque, que se suban **solo las que quedaron,
+a la carpeta de ese formulario, como JPG y sin `upsert`**, que la respuesta lleve
+exactamente esas rutas, y del otro lado que la miniatura **se vea de verdad**
+(se mide `naturalWidth`), que se pida al bucket privado, el nombre de descarga, y
+que una rota lo diga.
+
 ### Compartir un formulario con otro coordinador
 
 Un formulario ya lo veía quien lo coordinaba (`bajo_mi_coordinacion(creado_por)`,
