@@ -115,15 +115,57 @@
     },
   };
 
+  // "personalizado": el color de cada bando elegido con el selector de
+  // Configuración. Solo en modo normal, como las casillas (ver
+  // js/board-color-themes.js). El CONTORNO no se elige: se calcula del
+  // relleno con la misma regla de toda la tabla de arriba — pieza clara,
+  // contorno oscuro; pieza oscura, contorno claro —, que es lo que la separa
+  // de cualquier casilla. Dejarlo fijo haría que una pieza blanca pintada de
+  // azul marino perdiera su borde contra la casilla oscura, sin ningún error.
+  const PERSONALIZADO = "personalizado";
+  const KEY_CUSTOM = "piece_color_custom_v1";
+  const CUSTOM_DEFAULT = { white: "#ffffff", black: "#17202a" };
+  const HEX = /^#[0-9a-f]{6}$/i;
+
+  function luminancia(hex) {
+    const c = [1, 3, 5].map((i) => {
+      const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  // Contra negro (#000) o blanco: gana el que más contraste le dé al relleno.
+  function contornoPara(hex) {
+    const l = luminancia(hex);
+    return (l + 0.05) / 0.05 >= 1.05 / (l + 0.05) ? "#1e293b" : "rgba(255, 255, 255, 0.7)";
+  }
+
+  function getCustom() {
+    let c = null;
+    try {
+      c = JSON.parse(localStorage.getItem(KEY_CUSTOM) || "null");
+    } catch (e) {}
+    const white = c && HEX.test(c.white) ? c.white : CUSTOM_DEFAULT.white;
+    const black = c && HEX.test(c.black) ? c.black : CUSTOM_DEFAULT.black;
+    return {
+      label: "A tu gusto",
+      white,
+      black,
+      whiteOutline: contornoPara(white),
+      blackOutline: contornoPara(black),
+    };
+  }
+
   function readKey(key, themes) {
     let id = "clasico";
     try {
       id = localStorage.getItem(key) || "clasico";
     } catch (e) {}
+    if (id === PERSONALIZADO && key === KEY) return id;
     return themes[id] ? id : "clasico";
   }
   function writeKey(key, id, themes) {
-    if (!themes[id]) id = "clasico";
+    if (!themes[id] && !(id === PERSONALIZADO && key === KEY)) id = "clasico";
     try {
       localStorage.setItem(key, id);
     } catch (e) {}
@@ -138,7 +180,8 @@
   }
 
   function apply() {
-    const theme = THEMES[getPreference()];
+    const pref = getPreference();
+    const theme = pref === PERSONALIZADO ? getCustom() : THEMES[pref];
     const adaptiveTheme = ADAPTIVE_THEMES[getAdaptivePreference()];
     const root = document.documentElement.style;
     root.setProperty("--piece-white", theme.white);
@@ -162,6 +205,18 @@
     return id;
   }
 
+  function setCustom(white, black) {
+    const actual = getCustom();
+    const c = {
+      white: HEX.test(white || "") ? white.toLowerCase() : actual.white,
+      black: HEX.test(black || "") ? black.toLowerCase() : actual.black,
+    };
+    try {
+      localStorage.setItem(KEY_CUSTOM, JSON.stringify(c));
+    } catch (e) {}
+    return setPreference(PERSONALIZADO);
+  }
+
   // Aplica de una vez, antes de que cualquier tablero dibuje sus piezas
   // (este script se carga en el <head>, junto a board-color-themes.js).
   apply();
@@ -169,6 +224,9 @@
   window.PieceColorThemes = {
     THEMES,
     ADAPTIVE_THEMES,
+    PERSONALIZADO,
+    getCustom,
+    setCustom,
     getPreference,
     setPreference,
     getAdaptivePreference,

@@ -95,15 +95,40 @@
   // explícita de cada quien nunca la pisa un tema.
   const AUTO = "auto";
 
+  // "personalizado" son los dos colores que la persona eligió con el
+  // selector de color de Configuración, casilla por casilla. SOLO en modo
+  // normal: Modo Adaptado se queda con su lista de pares ya medidos, porque
+  // ahí un par elegido a ojo es justo lo que puede dejar las piezas sin verse.
+  // No va dentro de THEMES a propósito: esa tabla la leen css-construir.js y
+  // verificar-temas-plataforma.js, y un "tema" cuyos colores cambian según el
+  // navegador no es una fila que se pueda compilar ni verificar.
+  const PERSONALIZADO = "personalizado";
+  const KEY_CUSTOM = "board_color_custom_v1";
+  const CUSTOM_DEFAULT = { light: "#f0d9b5", dark: "#b58863" };
+  const HEX = /^#[0-9a-f]{6}$/i;
+
+  function getCustom() {
+    let c = null;
+    try {
+      c = JSON.parse(localStorage.getItem(KEY_CUSTOM) || "null");
+    } catch (e) {}
+    return {
+      label: "A tu gusto",
+      light: c && HEX.test(c.light) ? c.light : CUSTOM_DEFAULT.light,
+      dark: c && HEX.test(c.dark) ? c.dark : CUSTOM_DEFAULT.dark,
+    };
+  }
+
   function readKey(key, themes) {
     let id = AUTO;
     try {
       id = localStorage.getItem(key) || AUTO;
     } catch (e) {}
+    if (id === PERSONALIZADO && key === KEY) return id;
     return themes[id] || id === AUTO ? id : AUTO;
   }
   function writeKey(key, id, themes) {
-    if (!themes[id]) id = AUTO;
+    if (!themes[id] && !(id === PERSONALIZADO && key === KEY)) id = AUTO;
     try {
       if (id === AUTO) localStorage.removeItem(key);
       else localStorage.setItem(key, id);
@@ -133,7 +158,9 @@
 
   function apply() {
     const root = document.documentElement.style;
-    escribir(root, ["--sq-light", "--sq-dark"], THEMES[getPreference()]);
+    const pref = getPreference();
+    escribir(root, ["--sq-light", "--sq-dark"],
+             pref === PERSONALIZADO ? getCustom() : THEMES[pref]);
     escribir(root, ["--sq-light-adaptive", "--sq-dark-adaptive"],
              ADAPTIVE_THEMES[getAdaptivePreference()]);
   }
@@ -149,8 +176,25 @@
     return id;
   }
 
+  // Guarda los dos colores elegidos y los deja puestos: elegir un color en el
+  // selector ES elegir "a tu gusto", no un paso más que haya que recordar.
+  function setCustom(light, dark) {
+    const actual = getCustom();
+    const c = {
+      light: HEX.test(light || "") ? light.toLowerCase() : actual.light,
+      dark: HEX.test(dark || "") ? dark.toLowerCase() : actual.dark,
+    };
+    try {
+      localStorage.setItem(KEY_CUSTOM, JSON.stringify(c));
+    } catch (e) {}
+    return setPreference(PERSONALIZADO);
+  }
+
   const API = {
     AUTO,
+    PERSONALIZADO,
+    getCustom,
+    setCustom,
     THEMES,
     ADAPTIVE_THEMES,
     getPreference,
