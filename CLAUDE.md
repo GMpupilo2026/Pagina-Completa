@@ -4232,12 +4232,66 @@ WhatsApp escribir.
   puerta de salida.
 - **Si la consulta FALLA, no se tapa nada.** Una función que falta o una red
   caída no pueden dejar fuera a todos los que sí pagaron.
-- **Esto no es un candado de servidor, y queda dicho con todas las letras**: las
-  tablas de entrenamiento siguen aceptando lo que un alumno con sesión mande
-  desde la consola, y el contenido de los cursos ya viaja a cualquiera con
-  sesión (ver «Cursos»). Para el caso real —una familia que dejó de pagar—
-  alcanza. Cerrarlo del todo pediría meter `mi_acceso()` en las políticas de
-  insert de `training_progress` y compañía, que es otra tanda.
+- **La pantalla es solo la cara: el candado está en la base** (ver abajo).
+
+### El candado de verdad: políticas RESTRICTIVAS
+
+`public.acceso_vigente()` contesta lo mismo que `mi_acceso()` —de hecho
+`mi_acceso()` saca su `vigente` de ahí, para que no puedan contradecirse— y
+**solo sobre quien llama**: no recibe ningún id, así que no sirve para averiguar
+si otro alumno pagó. Con `auth.uid()` nulo (la service role, las tandas de
+`pg_cron`) da `true`.
+
+- **Se sumaron políticas `AS RESTRICTIVE`, no se reescribió ninguna.** Una
+  restrictiva se combina con AND con las que ya existen, así que las 38
+  políticas de profesor quedaron intactas. Van con `(select
+  public.acceso_vigente())` para que se evalúe una vez por consulta y no por
+  fila.
+  - **Insert**: `training_progress`, `training_state`, `platform_activity_log`,
+    `class_presence_log`, `class_attendance`, `question_answers`,
+    `question_engine_answers`, `desafios`, `game_rooms`, `practice_games`,
+    `puzzle_rush_scores`, `tournament_registrations`.
+  - **Update**: las mismas que se actualizan, más `fourplayer_games` y
+    `tarea_items`.
+  - **Select**: solo lo que ES la clase en vivo —`game_state`, `variant_nodes`,
+    `questions`, `practice_sessions`—. **Su progreso lo sigue pudiendo leer**:
+    la pantalla le promete que no se pierde, y el chat con su profe queda
+    abierto para arreglarlo.
+- **Tres puertas escriben con `SECURITY DEFINER`**, que se salta la RLS:
+  `iniciar_examen()`, `responder_examen()` y `aceptar_desafio()`. En vez de
+  reescribirlas, un **trigger** (`exigir_acceso_vigente()`) en
+  `examen_respuestas`, en `examenes` al pasar de `asignado` a `en_curso` y en
+  `game_rooms` — los triggers corren aunque escriba una función con otros
+  privilegios.
+- **El profesor nunca queda atrapado**: la pregunta es sobre quien llama, así que
+  pasar lista presencial a un alumno que no pagó sigue funcionando.
+- Comprobado impersonando roles en SQL: sin exigir nada cambia; exigido y sin
+  paquete, el alumno ve **0 filas** de la clase, su insert de progreso y de
+  tiempo se rechaza con 42501, su update cambia 0 filas y el examen dice «Tu
+  acceso a la Academia no está activo»; con paquete vuelve a todo; el profesor
+  sigue viendo su tablero.
+- **Lo que la base NO alcanza son los archivos estáticos**: el contenido de los
+  cursos (`cursos/protegido/`), el material y los bancos de ejercicios los sirve
+  el worker sin candado. Cerrarlo pediría que `worker.js` valide la sesión, que
+  es justo lo que ya se probó y se abandonó (ver «Cursos»): se decide aparte.
+
+### El tiempo de entrenamiento dejó de registrarse, y nadie se enteró
+
+Probando este candado apareció un fallo que no era suyo: **del 22 de septiembre
+a las 05:01 UTC en adelante no entró ni una fila a `platform_activity_log`**. La
+migración `ficha_de_asistencia_presencial` le había sumado a
+`proteger_tiempos_de_presencia()` una excepción escrita como `TG_TABLE_NAME =
+'class_presence_log' and exists (… new.session_id …)`, y **PL/pgSQL resuelve
+`new.session_id` aunque la primera mitad sea falsa**: en `platform_activity_log`,
+que no tiene esa columna, cada insert tronaba con 42703. La página no dice nada
+—el latido falla callado— así que los minutos de entrenamiento de todos
+quedaron en cero en Informes, en Tareas y en el correo a la casa.
+
+Se arregló leyendo la columna con `to_jsonb(new)->>'session_id'`, que en esa
+tabla da null en vez de tronar. **Al escribir un trigger que comparten dos
+tablas, nunca nombrar `new.<columna>` que una de ellas no tenga**, ni detrás de
+un `and`. Los minutos de ese día y medio no se pueden recuperar: no se guardó
+nada.
 
 ### Los precios están escritos UNA vez
 
