@@ -9549,11 +9549,9 @@ lee Google.
   **`admin-manage-users` entró al repositorio por eso**, bajada tal cual del
   despliegue y sin tocarle nada más que esa palabra. Antes cambiarle una línea
   era bajarla, editarla a ciegas y volver a subirla —la misma decisión que ya se
-  había tomado con `cobros-recordatorios` e `informes-encargados`—. **Está
-  pendiente de desplegar**: hasta que se suba (`node
-  herramientas/funciones-armar.js` y el despliegue), el correo que reciben las
-  familias sigue diciendo «elegí». Nada más de esa función cambió, así que
-  desplegarla no arrastra ningún otro cambio.
+  había tomado con `cobros-recordatorios` e `informes-encargados`—. Ya quedó
+  desplegada (versión 10), junto con el rechazo de bajar a alumno a quien
+  todavía tiene alumnos.
 
 ### Y las respuestas de Claude también van en español
 
