@@ -23,12 +23,13 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/marca-academia.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/funciones-coordinacion.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
     <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
 
@@ -97,6 +98,35 @@
                         <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar los datos</button>
                         <button id="borrar" type="button" hidden class="bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar la academia</button>
                     </div>
+                </form>
+
+                <form id="form-marca" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-marca">
+                    <h2 id="h-marca" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">La marca de la academia</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">El logo y el color salen en el encabezado de la plataforma de toda su gente y en sus formularios de inscripción. Quien es de dos academias sigue viendo Ajedrez Integral.</p>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="m-logo" class="block text-sm font-semibold mb-1">Logo</label>
+                            <input id="m-logo" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-brand-100 file:text-brand-800 dark:file:bg-brand-800 dark:file:text-white">
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">PNG, JPG o WebP. Se achica solo a 512 píxeles; mejor si es cuadrado.</p>
+                            <button id="m-quitar-logo" type="button" hidden class="mt-2 text-sm font-semibold text-red-700 dark:text-red-300 underline">Quitar el logo</button>
+                        </div>
+                        <div>
+                            <label for="m-color-texto" class="block text-sm font-semibold mb-1">Color del encabezado</label>
+                            <div class="flex items-center gap-2">
+                                <input id="m-color" type="color" value="#102a43" aria-label="Elegir el color en la paleta" class="h-10 w-14 rounded border border-brand-200 dark:border-brand-700 bg-transparent">
+                                <input id="m-color-texto" type="text" maxlength="7" autocapitalize="none" placeholder="#102a43" aria-describedby="m-contraste" class="w-32 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <button id="m-sin-color" type="button" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline">Sin color propio</button>
+                            </div>
+                            <p id="m-contraste" class="text-xs mt-1 text-brand-450 dark:text-brand-350" aria-live="polite"></p>
+                        </div>
+                    </div>
+                    <p class="text-sm font-semibold mt-4 mb-1" id="m-vista-titulo">Así se va a ver</p>
+                    <div id="m-vista" class="rounded-xl px-4 py-3 flex items-center gap-2 text-white bg-brand-800" aria-labelledby="m-vista-titulo">
+                        <img id="m-vista-logo" alt="" hidden class="h-10 w-10 object-contain rounded-lg bg-white/95 p-1">
+                        <span id="m-vista-pieza" class="text-3xl" aria-hidden="true">♟️</span>
+                        <span id="m-vista-nombre" class="font-serif text-xl font-bold tracking-tight"></span>
+                    </div>
+                    <button type="submit" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar la marca</button>
                 </form>
 
                 <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-coord">
@@ -308,7 +338,163 @@ function pintarDatos() {
     if (esAdmin) llenarSupervisores(document.getElementById("d-supervisor"), abierta.supervisor_id);
     document.getElementById("d-whatsapp").value = abierta.whatsapp || "";
     document.getElementById("d-correo").value = abierta.correo_respuestas || "";
+    pintarMarca();
 }
+
+/* ── La marca ──────────────────────────────────────────────────────────────
+   El logo se achica en el navegador y se sube al ENVIAR, no al elegirlo: uno
+   descartado no queda subido por nada. El color pasa por la misma regla que la
+   base (4.5 contra el blanco), dicha antes de guardar con el número. */
+let logoNuevo = null;      // Blob ya achicado, o null
+let quitarLogo = false;
+let colorMarca = "";       // "" = sin color propio
+
+function pintarMarca() {
+    logoNuevo = null;
+    quitarLogo = false;
+    colorMarca = abierta.color || "";
+    document.getElementById("m-logo").value = "";
+    document.getElementById("m-color-texto").value = colorMarca;
+    if (colorMarca) document.getElementById("m-color").value = colorMarca;
+    pintarVistaMarca();
+}
+
+function logoVisible() {
+    if (logoNuevo) return URL.createObjectURL(logoNuevo);
+    if (quitarLogo || !abierta.logo_path) return "";
+    return MarcaAcademia.urlDelLogo(abierta.logo_path);
+}
+
+function pintarVistaMarca() {
+    const vista = document.getElementById("m-vista");
+    const img = document.getElementById("m-vista-logo");
+    const url = logoVisible();
+    img.hidden = !url;
+    if (url) img.src = url; else img.removeAttribute("src");
+    document.getElementById("m-vista-pieza").hidden = !!url;
+    document.getElementById("m-quitar-logo").hidden = !url;
+    document.getElementById("m-vista-nombre").textContent = abierta.nombre;
+    const nota = document.getElementById("m-contraste");
+    const c = colorMarca ? MarcaAcademia.contrasteConBlanco(colorMarca) : null;
+    if (!colorMarca) {
+        vista.style.backgroundColor = "";
+        nota.textContent = "Sin color propio: el encabezado queda con el azul de siempre.";
+        nota.className = "text-xs mt-1 text-brand-450 dark:text-brand-350";
+    } else if (c == null) {
+        vista.style.backgroundColor = "";
+        nota.textContent = "Escríbelo como #102a43: un numeral y seis cifras.";
+        nota.className = "text-xs mt-1 text-red-700 dark:text-red-300";
+    } else {
+        vista.style.backgroundColor = colorMarca;
+        const num = c.toFixed(1).replace(".", ",");
+        if (c >= 4.5) {
+            nota.textContent = "Contraste con el texto blanco: " + num + " a 1. Se lee bien.";
+            nota.className = "text-xs mt-1 text-brand-450 dark:text-brand-350";
+        } else {
+            nota.textContent = "Contraste con el texto blanco: " + num + " a 1. Tiene que llegar a 4,5: elige un tono más oscuro.";
+            nota.className = "text-xs mt-1 text-red-700 dark:text-red-300";
+        }
+    }
+}
+
+document.getElementById("m-color").addEventListener("input", (e) => {
+    colorMarca = e.target.value.toLowerCase();
+    document.getElementById("m-color-texto").value = colorMarca;
+    pintarVistaMarca();
+});
+document.getElementById("m-color-texto").addEventListener("input", (e) => {
+    let v = e.target.value.trim().toLowerCase();
+    if (v && v[0] !== "#") v = "#" + v;
+    colorMarca = v;
+    if (/^#[0-9a-f]{6}$/.test(v)) document.getElementById("m-color").value = v;
+    pintarVistaMarca();
+});
+document.getElementById("m-sin-color").addEventListener("click", () => {
+    colorMarca = "";
+    document.getElementById("m-color-texto").value = "";
+    pintarVistaMarca();
+});
+document.getElementById("m-quitar-logo").addEventListener("click", () => {
+    logoNuevo = null;
+    quitarLogo = true;
+    document.getElementById("m-logo").value = "";
+    pintarVistaMarca();
+});
+
+/* Achica la imagen a 512 px del lado mayor y la saca en WebP (o PNG si el
+   navegador no sabe), conservando la transparencia. */
+function achicarLogo(archivo) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(archivo);
+        img.onload = () => {
+            const lado = Math.max(img.naturalWidth, img.naturalHeight) || 1;
+            const k = Math.min(1, 512 / lado);
+            const cv = document.createElement("canvas");
+            cv.width = Math.max(1, Math.round(img.naturalWidth * k));
+            cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+            cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+            URL.revokeObjectURL(url);
+            cv.toBlob((b) => {
+                if (b && b.type === "image/webp") return resolve(b);
+                cv.toBlob((p) => p ? resolve(p) : reject(new Error("No se pudo leer la imagen.")), "image/png");
+            }, "image/webp", 0.9);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Esa imagen no se pudo abrir.")); };
+        img.src = url;
+    });
+}
+
+document.getElementById("m-logo").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(f.type)) {
+        avisar("«" + f.name + "» no es PNG, JPG ni WebP: elige una imagen de esas.", true);
+        e.target.value = ""; return;
+    }
+    try {
+        const b = await achicarLogo(f);
+        if (b.size > 512 * 1024) { avisar("Aun achicado, el logo pesa más de medio mega. Prueba con uno más simple.", true); e.target.value = ""; return; }
+        logoNuevo = b;
+        quitarLogo = false;
+        pintarVistaMarca();
+    } catch (err) {
+        avisar(err.message, true);
+        e.target.value = "";
+    }
+});
+
+document.getElementById("form-marca").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (colorMarca) {
+        const c = MarcaAcademia.contrasteConBlanco(colorMarca);
+        if (c == null || c < 4.5) {
+            avisar(c == null ? "Ese color no se entiende: escríbelo como #102a43." : "Ese color es muy claro: el nombre en blanco no se leería.", true);
+            document.getElementById("m-color-texto").focus(); return;
+        }
+    }
+    const viejo = abierta.logo_path || null;
+    let ruta = quitarLogo ? null : viejo;
+    if (logoNuevo) {
+        const ext = logoNuevo.type === "image/webp" ? "webp" : "png";
+        const azar = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/[^a-z0-9]/gi, "").toLowerCase().slice(0, 16);
+        ruta = abierta.id + "/logo-" + azar + "." + ext;
+        const { error: eSub } = await sb.storage.from(MarcaAcademia.BUCKET).upload(ruta, logoNuevo, { contentType: logoNuevo.type, upsert: false });
+        if (eSub) { avisar("No se pudo subir el logo: " + eSub.message, true); return; }
+    }
+    const { data, error } = await sb.rpc("academia_guardar_marca", { p_id: abierta.id, p_color: colorMarca || null, p_logo_path: ruta });
+    if (error) {
+        // El logo recién subido no quedó en ninguna parte: se borra.
+        if (logoNuevo && ruta) await sb.storage.from(MarcaAcademia.BUCKET).remove([ruta]);
+        avisar(error.message, true); return;
+    }
+    // El de antes ya no lo usa nadie.
+    if (viejo && viejo !== ruta) await sb.storage.from(MarcaAcademia.BUCKET).remove([viejo]);
+    abierta = data;
+    academias = academias.map((a) => a.id === abierta.id ? abierta : a);
+    pintarMarca();
+    avisar("Marca guardada. Su gente la ve la próxima vez que abra una página.");
+});
 
 async function cargarPersonas() {
     const { data, error } = await sb.rpc("academia_personas", { p_academia: abierta.id });
@@ -584,5 +770,5 @@ async function init() {
 
 init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
 </html>

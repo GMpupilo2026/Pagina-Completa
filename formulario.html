@@ -27,6 +27,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/adjuntos.js"></script>
+    <script src="js/marca-academia.js"></script>
 </head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -91,6 +92,10 @@
         </div>
 
         <form id="formulario" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 sm:p-8" novalidate>
+            <div id="marca" hidden class="-mx-6 sm:-mx-8 -mt-6 sm:-mt-8 mb-6 px-6 sm:px-8 py-4 rounded-t-2xl flex items-center gap-3 text-white bg-brand-800">
+                <img id="marca-logo" alt="" hidden class="h-12 w-12 object-contain rounded-lg bg-white/95 p-1 shrink-0">
+                <p id="marca-nombre" class="font-serif text-xl font-bold tracking-tight"></p>
+            </div>
             <h1 id="titulo" class="font-serif text-2xl sm:text-3xl font-bold text-brand-800 dark:text-white"></h1>
             <p id="equipo" class="hidden text-xs font-semibold text-accent-700 dark:text-accent-400 uppercase tracking-wide mt-1"></p>
             <p id="descripcion" class="hidden text-brand-600 dark:text-brand-300 mt-3 whitespace-pre-line"></p>
@@ -264,6 +269,26 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
+/* La marca de la academia del formulario: su nombre, su logo y su color, en
+   una franja arriba de la tarjeta. El color solo se usa si da 4.5 contra el
+   texto blanco (la base ya lo exige al guardarlo; acá se vuelve a mirar por
+   si acaso). Sin academia, la tarjeta queda como siempre. */
+function pintarMarca(f) {
+    if (!f.academia_nombre) return;
+    const caja = document.getElementById("marca");
+    document.getElementById("marca-nombre").textContent = f.academia_nombre;
+    const url = window.MarcaAcademia ? MarcaAcademia.urlDelLogo(f.academia_logo) : "";
+    const img = document.getElementById("marca-logo");
+    if (url) {
+        img.src = url;
+        img.hidden = false;
+        img.addEventListener("error", () => { img.hidden = true; });
+    }
+    const c = window.MarcaAcademia ? MarcaAcademia.contrasteConBlanco(f.academia_color) : null;
+    if (c != null && c >= 4.5) caja.style.backgroundColor = f.academia_color;
+    caja.hidden = false;
+}
+
 async function init() {
     const noEsta = () => {
         document.getElementById("loading").classList.add("hidden");
@@ -276,7 +301,8 @@ async function init() {
     if (error || !f) { noEsta(); return; }
 
     formularioId = f.id || "";
-    document.title = f.titulo + " — Ajedrez Integral";
+    document.title = f.titulo + " — " + (f.academia_nombre || "Ajedrez Integral");
+    pintarMarca(f);
     document.getElementById("titulo").textContent = f.titulo;
     if (f.grupo) {
         const g = document.getElementById("equipo");

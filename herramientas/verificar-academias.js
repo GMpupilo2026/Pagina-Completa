@@ -65,6 +65,8 @@ const TODAS = ["formularios", "altas", "solicitudes", "cuentas", "acceso", "role
 function clienteFalso(datos, yo) {
   return `
 window.__rpc = [];
+window.__subidas = []; window.__borrados = []; window.__escrituras = [];
+window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
 (function () {
   const D = ${JSON.stringify(datos)};
   const YO = ${JSON.stringify(yo)};
@@ -76,6 +78,8 @@ window.__rpc = [];
       range(a, z) { desde = a; hasta = z; return b; },
       eq(c, v) { cond.push([c, v]); return b; },
       maybeSingle() { unica = true; return b; }, single() { unica = true; return b; },
+      insert(fila) { window.__escrituras.push({ tabla: nombre, op: "insert", fila: fila }); return b; },
+      update(fila) { window.__escrituras.push({ tabla: nombre, op: "update", fila: fila }); return b; },
       then(res, rej) {
         let d = (D.tablas[nombre] || []).slice();
         cond.forEach(([c, v]) => { d = d.filter((f) => f[c] === v); });
@@ -97,6 +101,10 @@ window.__rpc = [];
   window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: YO.id }, access_token: "t" } } }) },
     from: tabla,
+    storage: { from: (bucket) => ({
+      upload(ruta, blob, opts) { window.__subidas.push({ bucket: bucket, ruta: ruta, tipo: blob.type, upsert: !!(opts && opts.upsert) }); return ok({ path: ruta }); },
+      remove(rutas) { window.__borrados.push({ bucket: bucket, rutas: rutas }); return ok([]); },
+    }) },
     channel() { return { on() { return this; }, subscribe() { return this; }, track() {}, presenceState() { return {}; } }; },
     removeChannel() {},
     rpc(n, args) {
@@ -111,6 +119,11 @@ window.__rpc = [];
         const a = D.tablas.academias.find((x) => x.id === args.p_id);
         Object.assign(a, { whatsapp: args.p_whatsapp, correo_respuestas: args.p_correo });
         return ok(a);
+      }
+      if (n === "academia_guardar_marca") {
+        const a = D.tablas.academias.find((x) => x.id === args.p_id);
+        Object.assign(a, { color: args.p_color, logo_path: args.p_logo_path });
+        return ok(Object.assign({}, a));
       }
       if (n === "academia_personas") return ok(personas(args.p_academia));
       if (n === "academia_set_miembros") {
@@ -132,6 +145,7 @@ async function abrir(browser, pagina, datos, yo, esperar) {
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await page.route("**/storage/v1/object/public/**", (r) => r.fulfill({ status: 200, contentType: "image/png", body: PNG }));
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(datos, yo) }));
   await page.goto(BASE + pagina, { waitUntil: "networkidle" });
   await page.waitForSelector(esperar || "#app:not(.hidden)", { timeout: 15000 });
@@ -251,8 +265,132 @@ async function pruebaFuncionesApagadas(browser) {
   }
 }
 
+
+// ── La marca: el contraste se cuenta igual en la pantalla y en la base ──
+function pruebaContraste() {
+  console.log("\nLa regla del color de la marca");
+  const M = require(path.join(RAIZ, "js", "marca-academia.js"));
+  // #767676 es el gris más claro que llega a 4.5 contra el blanco; #777777 ya no.
+  igual("#767676 llega a 4,5 y #777777 no", [M.contrasteConBlanco("#767676") >= 4.5, M.contrasteConBlanco("#777777") >= 4.5], [true, false]);
+  igual("el azul de siempre pasa y el ámbar no", [M.contrasteConBlanco("#102a43") >= 4.5, M.contrasteConBlanco("#f0b429") >= 4.5], [true, false]);
+  igual("lo que no es un color no se cuenta", M.contrasteConBlanco("azul"), null);
+  const dir = path.join(RAIZ, "supabase", "migraciones");
+  const sql = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()
+    .map((f) => fs.readFileSync(path.join(dir, f), "utf8")).filter((t) => /function public\.color_con_texto_blanco/.test(t)).pop() || "";
+  igual("la base usa el mismo umbral y la misma fórmula",
+    [/>= 4\.5/.test(sql), /0\.03928/.test(sql), /0\.2126 \* r \+ 0\.7152 \* g \+ 0\.0722 \* b/.test(sql)], [true, true, true]);
+  igual("la URL del logo apunta al bucket público", M.urlDelLogo("ac1/logo-abc123.webp", "https://x.supabase.co"),
+    "https://x.supabase.co/storage/v1/object/public/academia-marca/ac1/logo-abc123.webp");
+}
+
+// Un PNG de 2×2 de verdad, para el selector de archivo.
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVR4nGNk+M/wn4GBgYGJgYGBAQAb3gIC3jM7ZQAAAABJRU5ErkJggg==", "base64");
+
+async function pruebaMarca(browser) {
+  console.log("\nLa marca de la academia: el supervisor la elige");
+  const { page, errores } = await abrir(browser, "/academias.html", datosBase(), SUP, "#vista-academia:not([hidden])");
+  await page.fill("#m-color-texto", "#f0b429");
+  igual("un color claro dice que tiene que llegar a 4,5", await page.$eval("#m-contraste", (p) => p.textContent.includes("4,5")), true);
+  await page.click('#form-marca button[type="submit"]');
+  igual("y no viaja", (await llamadas(page, "academia_guardar_marca")).length, 0);
+  await page.fill("#m-color-texto", "#1b4332");
+  igual("la vista previa se pinta con ese color", await page.$eval("#m-vista", (d) => getComputedStyle(d).backgroundColor), "rgb(27, 67, 50)");
+  await page.click('#form-marca button[type="submit"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "academia_guardar_marca"));
+  igual("guarda el color por su función, sin logo", (await llamadas(page, "academia_guardar_marca"))[0],
+    { p_id: "ac1", p_color: "#1b4332", p_logo_path: null });
+
+  await page.setInputFiles("#m-logo", { name: "logo.png", mimeType: "image/png", buffer: PNG });
+  await page.waitForFunction(() => !document.getElementById("m-vista-logo").hidden);
+  igual("el logo elegido se ve en la vista previa antes de subirlo", await page.evaluate(() => window.__subidas.length), 0);
+  await page.click('#form-marca button[type="submit"]');
+  await page.waitForFunction(() => window.__rpc.filter((r) => r.n === "academia_guardar_marca").length === 2);
+  const sub = await page.evaluate(() => window.__subidas[0]);
+  const g2 = (await llamadas(page, "academia_guardar_marca"))[1];
+  igual("se sube a la carpeta de ESA academia, sin pisar nada",
+    [sub.bucket, /^ac1\/logo-[a-z0-9]{6,40}\.(webp|png)$/.test(sub.ruta), sub.upsert], ["academia-marca", true, false]);
+  igual("y se guarda exactamente la ruta que se subió", g2.p_logo_path, sub.ruta);
+
+  await page.setInputFiles("#m-logo", { name: "otro.png", mimeType: "image/png", buffer: PNG });
+  await page.waitForFunction(() => window.__subidas.length === 0 || true);
+  await page.click('#form-marca button[type="submit"]');
+  await page.waitForFunction(() => window.__rpc.filter((r) => r.n === "academia_guardar_marca").length === 3);
+  igual("cambiar el logo borra el anterior", await page.evaluate(() => window.__borrados.map((b) => b.rutas).flat()), [sub.ruta]);
+
+  await page.setInputFiles("#m-logo", { name: "virus.svg", mimeType: "image/svg+xml", buffer: Buffer.from("<svg/>") });
+  igual("un SVG no se acepta", await page.evaluate(() => window.__subidas.length), 2);
+  igual("sin errores en la página", errores, []);
+  await page.close();
+
+  console.log("\nLa marca en el encabezado de su gente");
+  const marca = { academia_id: "ac1", nombre: XSS, color: "#1b4332", logo_path: "ac1/logo-abc123.webp" };
+  const conMarca = datosBase({ rpc: { mi_marca_academia: [marca] } });
+  const cab = await abrir(browser, "/academias.html", conMarca, SUP, "#vista-academia:not([hidden])");
+  await cab.page.waitForFunction(() => document.getElementById("marca-enlace").dataset.academia === "ac1");
+  igual("el nombre de la academia se ve literal y no se ejecuta",
+    [await cab.page.$eval("#marca-enlace", (a) => a.textContent.includes('<img src=x onerror="window.__xss=1">Ana')), await cab.page.evaluate(() => !!window.__xss)], [true, false]);
+  igual("el encabezado toma el color de la academia", await cab.page.$eval("#header", (h) => getComputedStyle(h).backgroundColor), "rgb(27, 67, 50)");
+  igual("el logo sale del bucket público", await cab.page.$eval("#marca-enlace img", (i) => i.getAttribute("src")),
+    "https://bgtijpimpcokxatxxbki.supabase.co/storage/v1/object/public/academia-marca/ac1/logo-abc123.webp");
+  igual("el enlace sigue llevando al panel", await cab.page.$eval("#marca-enlace", (a) => a.getAttribute("href")), "clases.html");
+  await cab.page.close();
+
+  const conTema = await browser.newPage();
+  await conTema.addInitScript(() => localStorage.setItem("plataforma_tema_v1", "princesas"));
+  await conTema.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await conTema.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(conMarca, SUP) }));
+  await conTema.goto(BASE + "/academias.html", { waitUntil: "networkidle" });
+  await conTema.waitForFunction(() => document.getElementById("marca-enlace").dataset.academia === "ac1");
+  igual("con un tema elegido, el color de la academia no lo pisa", await conTema.$eval("#header", (h) => h.style.backgroundColor), "");
+  await conTema.close();
+
+  const sinMarca = await abrir(browser, "/academias.html", datosBase(), SUP, "#vista-academia:not([hidden])");
+  await sinMarca.page.waitForTimeout(300);
+  igual("sin marca (dos academias o ninguna) queda Ajedrez Integral", await sinMarca.page.$eval("#marca-enlace", (a) => a.textContent.includes("Integral")), true);
+  await sinMarca.page.close();
+}
+
+async function pruebaFormularioConMarca(browser) {
+  console.log("\nLos formularios con la marca de la academia");
+  const datos = datosBase({ tablas: Object.assign(datosBase().tablas, {
+    formularios: [{ id: "f1", slug: "torneo", titulo: "Torneo", campos: [{ id: "nombre", etiqueta: "Nombre", tipo: "texto" }],
+      abierto: true, creado_por: "coord", academia_id: null, grupo: null, formulario_respuestas: [{ count: 0 }] }],
+  }) });
+  const { page, errores } = await abrir(browser, "/formularios.html", datos, COORD, "#vista-lista:not(.hidden)");
+  await page.evaluate(() => abrirEditor(null));
+  igual("uno nuevo arranca con la única academia de quien lo arma",
+    [await seVe(page, "#f-academia"), await page.$eval("#f-academia", (s) => s.value)], ["sí", "ac1"]);
+  await page.evaluate(() => abrirEditor(misFormularios[0]));
+  igual("uno que ya existía sin marca la conserva vacía", await page.$eval("#f-academia", (s) => s.value), "");
+  await page.selectOption("#f-academia", "ac1");
+  await page.click("#guardar-btn");
+  await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "formularios"));
+  igual("guardar manda la academia elegida", await page.evaluate(() => window.__escrituras.find((e) => e.tabla === "formularios").fila.academia_id), "ac1");
+  igual("sin errores en la página", errores, []);
+  await page.close();
+
+  const publico = await browser.newPage();
+  const errPub = [];
+  publico.on("pageerror", (e) => errPub.push(String(e)));
+  await publico.route("**/storage/v1/object/public/**", (r) => r.fulfill({ status: 200, contentType: "image/png", body: PNG }));
+  await publico.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+    body: clienteFalso(datosBase({ rpc: { formulario_publico: [{ id: "f1", titulo: "Torneo de otoño", descripcion: null, grupo: null,
+      campos: [{ id: "nombre", etiqueta: "Nombre", tipo: "texto" }], cierra_el: null,
+      academia_nombre: "Los Reyes", academia_color: "#1b4332", academia_logo: "ac1/logo-abc123.webp" }] } }), { id: null }) }));
+  await publico.goto(BASE + "/formulario.html?f=torneo", { waitUntil: "networkidle" });
+  await publico.waitForSelector("#formulario:not(.hidden)");
+  igual("el formulario público lleva el nombre, el color y el logo de la academia",
+    [await seVe(publico, "#marca"), await publico.$eval("#marca-nombre", (p) => p.textContent),
+     await publico.$eval("#marca", (d) => getComputedStyle(d).backgroundColor), await publico.$eval("#marca-logo", (i) => i.naturalWidth > 0)],
+    ["sí", "Los Reyes", "rgb(27, 67, 50)", true]);
+  igual("y la pestaña dice de qué academia es", await publico.title(), "Torneo de otoño — Los Reyes");
+  igual("sin errores en la página", errPub, []);
+  await publico.close();
+}
+
 (async () => {
   pruebaLista();
+  pruebaContraste();
   if (process.argv.includes("--sin-navegador")) return terminar();
   const { chromium } = require("playwright");
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
@@ -261,6 +399,8 @@ async function pruebaFuncionesApagadas(browser) {
     await pruebaSupervisor(browser);
     await pruebaSinAcceso(browser);
     await pruebaFuncionesApagadas(browser);
+    await pruebaMarca(browser);
+    await pruebaFormularioConMarca(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e.stack || e));
     fallos += 1;

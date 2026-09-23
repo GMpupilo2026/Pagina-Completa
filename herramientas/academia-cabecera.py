@@ -154,7 +154,7 @@ def cabecera(ruta):
         '<header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">'
         '<nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia">'
         '<div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">'
-        f'<a href="{arriba}clases.html" class="flex items-center gap-2 text-white">'
+        f'<a id="marca-enlace" href="{arriba}clases.html" class="flex items-center gap-2 text-white min-w-0">'
         '<span class="text-3xl" aria-hidden="true">♟️</span>'
         '<span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span>'
         '<span class="sr-only"> — panel de la Academia</span>'
@@ -305,6 +305,29 @@ def poner_modo_vista(ruta, s):
             + MODO_FIN + s[cierre:])
 
 
+# La marca de la academia (js/marca-academia.js): el logo y el color de la
+# academia de quien mira, en el encabezado. Va en TODAS las páginas de la
+# Academia, en la misma lista: con dos listas, la página nueva entra en una y
+# se olvida en la otra. Busca el enlace #marca-enlace que pone cabecera().
+MARCA_INICIO = "<!-- marca: inicio -->"
+MARCA_FIN = "<!-- marca: fin -->"
+
+
+def poner_marca(ruta, s):
+    i = s.find(MARCA_INICIO)
+    if i >= 0:
+        j = s.find(MARCA_FIN, i)
+        s = s[:i] + s[j + len(MARCA_FIN):]
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin la marca de la academia.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + MARCA_INICIO
+            + f'<script src="{arriba}js/marca-academia.js" defer></script>'
+            + MARCA_FIN + s[cierre:])
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -325,6 +348,7 @@ def procesar(ruta):
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
     s = poner_modo_vista(ruta, s)
+    s = poner_marca(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)
