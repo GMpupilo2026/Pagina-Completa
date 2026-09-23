@@ -265,9 +265,21 @@ async function init() {
   $("app").classList.remove("hidden");
 }
 
+// PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
+// ningún error: lo que puede pasar de mil se pide de mil en mil.
+async function traerTodo(consulta) {
+    const PASO = 1000; let desde = 0, todo = [];
+    for (;;) {
+        const { data, error } = await consulta().range(desde, desde + PASO - 1);
+        if (error) return { data: todo, error };
+        todo = todo.concat(data || []);
+        if (!data || data.length < PASO) return { data: todo, error: null };
+        desde += PASO;
+    }
+}
 /* ---------------- Profesor: armar ---------------- */
 async function cargarAlumnos() {
-  const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+  const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
   alumnosDisponibles = data || [];
   const cont = $("lista-alumnos");
   cont.innerHTML = "";

@@ -24,3 +24,28 @@ respaldos
 
 # El video promocional se regenera con herramientas/video-promo.js
 promo/
+
+# Las notas del proyecto y las herramientas de desarrollo. CLAUDE.md explica el
+# modelo de permisos entero —por la misma razón que `supabase/`, no tiene por
+# qué estar publicado— y los scripts de herramientas/ no los pide ninguna
+# página. De esa carpeta SÍ hay que dejar herramientas/cursos/: su
+# catalogo.json lo pide el armador de planes de clase, así que se excluye lo demás
+# por partes en vez de la carpeta entera.
+CLAUDE.md
+.mcp.json
+node_modules
+package.json
+package-lock.json
+herramientas/*.js
+herramientas/*.py
+herramientas/*.sh
+herramientas/*.mts
+herramientas/*.md
+herramientas/*.html
+herramientas/css
+herramientas/guia
+herramientas/lib
+herramientas/material
+herramientas/planes
+herramientas/plantillas
+herramientas/video

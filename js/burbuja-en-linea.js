@@ -316,6 +316,7 @@
 
   async function cargarMensajes() {
     if (!hilo) return;
+    var pedido = hilo;
     /* "profiles!class_chat_messages_sender_id_fkey": la tabla tiene DOS
        relaciones con profiles (sender_id y student_id), así que hay que
        decirle a PostgREST cuál usar — sin esto la consulta es ambigua y
@@ -325,6 +326,10 @@
       .eq("student_id", hilo)
       .order("created_at", { ascending: false })
       .limit(MAX_MENSAJES);
+    // Si mientras llegaba la respuesta se abrió otro hilo, esta es de la
+    // conversación de antes: pintarla pondría los mensajes de otro alumno
+    // debajo del nombre que se está viendo.
+    if (hilo !== pedido) return;
     if (res.error) {
       pintarMensajes(null);
       return;

@@ -521,9 +521,10 @@
         }
 
         // Las tres consultas que alimentan todo lo anterior. Respetan la RLS igual que
-        // antes: un profesor recibe solo sus alumnos, quien administra todos, y un
-        // alumno mirando su propia página recibe únicamente su propio renglón. Por eso
-        // sirven para las dos vistas sin escribir la cuenta dos veces.
+        // antes: un profesor recibe solo sus alumnos y quien administra todos. Un
+        // alumno recibe lo que la RLS de profiles le deja ver —que puede incluir a sus
+        // compañeros—, así que su vista busca SU renglón por id y nunca toma el primero.
+        // Por eso sirven para las dos vistas sin escribir la cuenta dos veces.
         async function cargarResumen() {
             const [alumnos, cursos, diagnosticos] = await Promise.all([
                 traerTodo(() => sb.rpc("informes_resumen_alumnos")),
@@ -2080,8 +2081,11 @@
 
         function cabeceraDiagnosticoHTML(resumen, fecha, propio) {
             const perfil = resumen.perfil || {};
-            const contexto = [perfil.tiempo, perfil.torneos && "torneos: " + perfil.torneos.toLowerCase(), perfil.practica && "practica: " + perfil.practica.toLowerCase()]
-                .filter(Boolean).join(" · ");
+            /* El perfil lo escribe quien hace el diagnóstico —también un visitante sin
+               cuenta, en diagnosticos_publicos—, así que es texto ajeno: va escapado,
+               y pasado por String() porque tampoco está garantizado que sea texto. */
+            const contexto = escVis([perfil.tiempo, perfil.torneos && "torneos: " + String(perfil.torneos).toLowerCase(), perfil.practica && "practica: " + String(perfil.practica).toLowerCase()]
+                .filter(Boolean).join(" · "));
             return `<div class="bg-brand-50 dark:bg-brand-800 rounded-xl p-4 mb-5">
                 <p class="text-xs text-brand-450 dark:text-brand-350">Diagnóstico del ${fmtFecha(fecha)}</p>
                 <p class="font-serif text-xl font-bold text-brand-800 dark:text-white">${resumen.nivel.etiqueta} · ${resumen.porcentaje}%</p>
@@ -2411,7 +2415,7 @@
                 ${plan ? `
                     <div class="bg-accent-500/10 border border-accent-500/40 rounded-xl p-4 mb-4">
                         <p class="text-sm font-semibold text-brand-800 dark:text-white">Tu profesor te compartió un plan de entrenamiento</p>
-                        ${planCompartido.nota ? `<p class="text-sm text-brand-600 dark:text-brand-300 mt-1">“${planCompartido.nota}”</p>` : ""}
+                        ${planCompartido.nota ? `<p class="text-sm text-brand-600 dark:text-brand-300 mt-1">“${escVis(planCompartido.nota)}”</p>` : ""}
                     </div>
                     ${planHTML(plan)}`
                   : `<p class="text-sm text-brand-500 dark:text-brand-300">Tu profesor todavía no te ha compartido un plan. Mientras tanto, lo más flojo del diagnóstico es ${resumen.debilidades.length ? resumen.debilidades.map((d) => d.nombre.toLowerCase()).join(", ") : "nada en particular: sigue con tu ritmo"} — por ahí conviene empezar.</p>

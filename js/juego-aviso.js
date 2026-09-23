@@ -32,6 +32,8 @@ window.JuegoAviso = (function () {
   const ETIQUETA = { crazyhouse: "♞ Crazyhouse", estandar: "♟️ Ajedrez estándar", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra",
                      abrazos: "🤗 Ajedrez de abrazos", camaleon: "🦎 Camaleón", ciegas: "🙈 A ciegas", vampiro: "🧛 Ajedrez Vampiro" };
   const SEATS = ["red", "blue", "yellow", "green"];
+  // Las variantes cuya partida empieza cuando los dos marcan "listo".
+  const CON_LISTO = { crazyhouse: 1, estandar: 1, cartas: 1, niebla: 1, abrazos: 1, camaleon: 1, ciegas: 1, vampiro: 1 };
   const ESPERA_MS = 4000;
   let sb = null, userId = null, yaAvisado = false, iniciado = false;
 
@@ -53,8 +55,15 @@ window.JuegoAviso = (function () {
   function vista(id) { try { return sessionStorage.getItem("juego-aviso:" + id) === "1"; } catch (e) { return false; } }
   function marcarVista(id) { try { sessionStorage.setItem("juego-aviso:" + id, "1"); } catch (e) {} }
 
+  // Quien ya está en el tablero de esa partida no necesita que lo lleven a él:
+  // el aviso le taparía la partida y a los 4 s le recargaría la página.
+  function yaEstaAhi(row) {
+    try { return new URLSearchParams(location.search).get("room") === String(row.id); } catch (e) { return false; }
+  }
+
   function mostrarAviso(row, tabla) {
     if (yaAvisado) return;
+    if (yaEstaAhi(row)) { marcarVista(row.id); return; }
     yaAvisado = true;
     marcarVista(row.id);
     const destino = destinoDe(row, tabla);
@@ -103,7 +112,11 @@ window.JuegoAviso = (function () {
         .or("white_id.eq." + userId + ",black_id.eq." + userId).order("created_at", { ascending: false }).limit(1);
       const row = data && data[0];
       const miReady = row && (row.white_id === userId ? row.white_ready : row.black_ready);
-      if (row && !miReady && !vista(row.id)) { mostrarAviso(row, "game_rooms"); return; }
+      // "Nadie marcó listo" solo significa "no arrancó" en las variantes que
+      // tienen ese paso. Duelo no lo usa —sus dos banderas se quedan en false
+      // toda la partida—, así que sin este filtro se le avisaría y se le
+      // trasladaría a esa partida en cada pestaña nueva, hasta que terminara.
+      if (row && CON_LISTO[row.variant] && !miReady && !vista(row.id)) { mostrarAviso(row, "game_rooms"); return; }
     } catch (e) {}
     try {
       const { data } = await sb.from("fourplayer_games").select("*").eq("status", "playing")

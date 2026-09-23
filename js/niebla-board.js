@@ -81,14 +81,21 @@
       const prevFen = this._loadedOnce ? this.game.fen() : null;
       this.game.load(fen);
       this.selected = null;
-      if (prevFen && window.BoardFluid) {
-        const diff = BoardFluid.diffMove(prevFen, fen);
+      // Se desliza solo lo que cambió EN ESTA carga: un eco con la misma
+      // posición no tiene que volver a animar la jugada de antes.
+      let diff = null;
+      if (prevFen && prevFen !== fen && window.BoardFluid) {
+        diff = BoardFluid.diffMove(prevFen, fen);
         if (diff) this.lastMove = diff;
       }
       this._loadedOnce = true;
       this.render();
-      if (prevFen && this.lastMove && window.BoardFluid) {
-        BoardFluid.slide(this.boardEl, this.lastMove.from, this.lastMove.to, this.flipped);
+      if (diff && diff.from && window.BoardFluid) {
+        // Deslizar desde una casilla tapada delataría de dónde salió la pieza.
+        const visible = this._visibleSquares();
+        if (!visible || (visible.has(diff.from) && visible.has(diff.to))) {
+          BoardFluid.slide(this.boardEl, diff.from, diff.to, this.flipped);
+        }
       }
     }
 

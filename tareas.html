@@ -228,9 +228,21 @@ async function init() {
     document.getElementById("app").classList.remove("hidden");
 }
 
+// PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
+// ningún error: lo que puede pasar de mil se pide de mil en mil.
+async function traerTodo(consulta) {
+    const PASO = 1000; let desde = 0, todo = [];
+    for (;;) {
+        const { data, error } = await consulta().range(desde, desde + PASO - 1);
+        if (error) return { data: todo, error };
+        todo = todo.concat(data || []);
+        if (!data || data.length < PASO) return { data: todo, error: null };
+        desde += PASO;
+    }
+}
 // ---------- Vista profesor: los alumnos ----------
 async function cargarAlumnos() {
-    const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
+    const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
     alumnosDisponibles = data || [];
     const cont = document.getElementById("lista-alumnos");
     cont.innerHTML = "";
@@ -620,7 +632,12 @@ function renglonAlumno(r, tareaId) {
     const li = document.createElement("li");
     const meta = r.meta_tipo === "completar" ? 1 : r.meta_cantidad;
     const pct = Math.min(100, Math.round((100 * r.hecho) / (meta || 1)));
-    const enlace = r.material_href + (r.material_href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId);
+    // material_href lo escribe quien pone la tarea: un "javascript:" ahí se
+    // ejecutaría con la sesión del alumno al tocar "Ir". Solo valen direcciones
+    // del propio sitio (relativas) o https.
+    const href = String(r.material_href || "");
+    const seguro = !/^\s*[a-z][a-z0-9+.-]*:/i.test(href) || /^https:\/\//i.test(href.trim());
+    const enlace = seguro ? href + (href.includes("?") ? "&" : "?") + "tarea=" + encodeURIComponent(tareaId) : "tareas.html";
 
     li.className = "border-l-2 pl-3 py-1 " + (r.cumplido ? "border-green-500" : "border-brand-200 dark:border-brand-700");
     li.innerHTML = `

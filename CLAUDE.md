@@ -5218,6 +5218,11 @@ celular.
   ejercicios resueltos se unen, las mejores marcas se quedan con la mayor y lo
   que es "por dónde iba" se queda con lo más avanzado. Entrenar en dos aparatos
   suma, no pisa.
+- **La racha EN CURSO no es una marca**: `entreno_*_streak` (Mates, Táctica,
+  Temas, Practicar, Visualización) va con `ultimoLugar` y no con `maxNumero`.
+  Con el máximo, fallar en el celular dejaba la racha en 0 y la compu la
+  devolvía a 14 en la siguiente sincronización: una racha que no se puede
+  perder no mide nada. La mejor racha, que sí es marca, sigue con el máximo.
 - Las preferencias del aparato (tema, modo adaptado) **no** se sincronizan a
   propósito: son de dónde se está mirando, no de quién mira.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
@@ -7097,6 +7102,11 @@ ningún error — la partida existía y esperaba, tan campante.
   van a ir separando a la primera corrección. Las dos páginas quedaron
   cargando el script una sola vez, igual que las demás: al final del
   `<body>`, puesto por `academia-cabecera.py`.
+- **"Pendiente" solo existe en las variantes con paso de "estoy listo"**
+  (`CON_LISTO`). Duelo Simultáneo no lo tiene, así que sus banderas se quedan
+  en false la partida entera y el aviso la ofrecía una y otra vez. Y **no se
+  avisa de la partida en la que ya se está** (`?room=` de la dirección):
+  "Entrar ahora" sobre la misma sala recargaba la página que se estaba jugando.
 
 **Al tocar `js/juego-aviso.js` o `herramientas/academia-cabecera.py`, correr
 `node herramientas/verificar-juego-aviso.js`** (con el sitio en
@@ -9536,6 +9546,11 @@ trabajo, no lo que hay en git.
   directorio, así que lo que no se excluya queda publicado: las migraciones son
   el modelo de permisos completo, y publicarlas es regalarle a cualquiera el
   mapa de por dónde buscarle la vuelta. Ninguna página las pide.
+- **Y también `CLAUDE.md` y los scripts de `herramientas/`**, por la misma
+  razón: este archivo explica el modelo de permisos entero. De `herramientas/`
+  se excluye todo MENOS `herramientas/cursos/`, porque su `catalogo.json` lo
+  piden `planes.html`, la tienda y el catálogo de Tareas — excluir la carpeta
+  entera les dejaría la lista de cursos vacía, sin ningún error.
 - **Un respaldo que depende de que alguien se acuerde de correrlo, tarde o
   temprano no se corre.** La salida de verdad es el plan Pro, con sus copias
   diarias. Queda escrito acá porque un pendiente que solo vive en la cabeza de

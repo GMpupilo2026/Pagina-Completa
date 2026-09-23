@@ -369,6 +369,9 @@
  * recalculara por su lado, tarde o temprano diría algo distinto que la base.
  */
 let session = null, perfil = null, coordina = false;
+// "Hoy" es el día de Costa Rica, no el de UTC: de las 6 p. m. en adelante UTC ya
+// va por el día siguiente, y una suscripción puesta a esa hora arrancaba mañana.
+function hoyCR() { return new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" }); }
 let planes = [], suscripciones = [], cobros = [], alumnos = [];
 
 const FUNCION_COBROS = `${window.SUPABASE_URL}/functions/v1/cobros-recordatorios`;
@@ -417,11 +420,23 @@ function nombreDe(id) {
     return a ? (a.full_name || a.email || "Sin nombre") : "Alumno";
 }
 
+// PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
+// ningún error: lo que puede pasar de mil se pide de mil en mil.
+async function traerTodo(consulta) {
+    const PASO = 1000; let desde = 0, todo = [];
+    for (;;) {
+        const { data, error } = await consulta().range(desde, desde + PASO - 1);
+        if (error) return { data: todo, error };
+        todo = todo.concat(data || []);
+        if (!data || data.length < PASO) return { data: todo, error: null };
+        desde += PASO;
+    }
+}
 // ---------------------------------------------------------------- cargar
 async function cargarTodo() {
     const [p, s, r] = await Promise.all([
         sb.from("planes_cobro").select("*").order("created_at", { ascending: false }),
-        sb.from("suscripciones").select("*").eq("activa", true),
+        traerTodo(() => sb.from("suscripciones").select("*").eq("activa", true).order("id")),
         sb.rpc("cobros_resumen"),
     ]);
     for (const x of [p, s, r]) if (x.error) throw new Error(x.error.message);
@@ -549,7 +564,7 @@ function pintarSuscripciones() {
         btn.addEventListener("click", async () => {
             if (!confirm("¿Dar de baja a " + nombreDe(s.student_id) + " de este plan? Los cobros ya emitidos se quedan como están.")) return;
             const { error } = await sb.from("suscripciones")
-                .update({ activa: false, fin: new Date().toISOString().slice(0, 10) }).eq("id", s.id);
+                .update({ activa: false, fin: hoyCR() }).eq("id", s.id);
             if (error) return avisar("No se pudo: " + error.message, true);
             avisar("Dado de baja.");
             await cargarTodo();
@@ -592,7 +607,7 @@ async function crearSuscripcion() {
     const { error } = await sb.from("suscripciones").insert({
         student_id: studentId,
         plan_id: planId,
-        inicio: document.getElementById("s-inicio").value || new Date().toISOString().slice(0, 10),
+        inicio: document.getElementById("s-inicio").value || hoyCR(),
         dia_cobro: Number(document.getElementById("s-dia").value) || 5,
         descuento_pct: Number(document.getElementById("s-descuento").value) || 0,
         creado_por: session.user.id,
@@ -804,7 +819,7 @@ async function anularCobro(c) {
 async function pintarMorosos() {
     const caja = document.getElementById("morosos-lista");
     caja.innerHTML = "";
-    const { data, error } = await sb.rpc("cobros_morosos");
+    const { data, error } = await traerTodo(() => sb.rpc("cobros_morosos"));
     if (error) { caja.appendChild(el("p", "text-sm text-red-500", "No se pudo cargar: " + error.message)); return; }
     const lista = data || [];
     document.getElementById("morosos-vacio").classList.toggle("hidden", lista.length > 0);
@@ -977,7 +992,7 @@ async function bajarCsv() {
     const texto = "﻿" + [cols, ...filas].map((f) => f.map(escapar).join(";")).join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([texto], { type: "text/csv;charset=utf-8;" }));
-    a.download = "cobros-" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.download = "cobros-" + hoyCR() + ".csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1338,7 +1353,7 @@ async function init() {
 
     // Los alumnos que uno ve: la misma función de Informes, así que el filtro
     // de quién sale es el de la RLS y no está escrito dos veces.
-    const { data: gente } = await sb.rpc("informes_resumen_alumnos");
+    const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos"));
     alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email }))
         .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || "", "es"));
     const opciones = (vacio) => '<option value="">' + vacio + "</option>"
@@ -1346,7 +1361,7 @@ async function init() {
     document.getElementById("f-alumno").innerHTML = opciones("Todos");
     document.getElementById("s-alumno").innerHTML = opciones("— Elige —");
     document.getElementById("c-alumno").innerHTML = opciones("— Elige —");
-    document.getElementById("s-inicio").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("s-inicio").value = hoyCR();
 
     try {
         await cargarTodo();

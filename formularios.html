@@ -706,8 +706,9 @@ function pintarLista() {
                 // Storage ya no encuentra de quién eran y quedarían huérfanas.
                 // Cada archivo va en <formulario>/<id>/<nombre>, así que la
                 // lista de rutas sale de las respuestas, que las guardan.
-                const { data: resp } = await sb.from("formulario_respuestas")
-                    .select("respuestas").eq("formulario_id", f.id);
+                const { data: resp, error: eResp } = await traerTodo(() => sb.from("formulario_respuestas")
+                    .select("respuestas").eq("formulario_id", f.id).order("id"));
+                if (eResp) { alert("No se pudieron leer sus archivos, así que no se borró: " + eResp.message); return; }
                 const rutas = [];
                 (resp || []).forEach((r) => (f.campos || []).forEach((c) => {
                     const v = r.respuestas && r.respuestas[c.id];
@@ -724,6 +725,18 @@ function pintarLista() {
     });
 }
 
+// PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
+// ningún error: lo que puede pasar de mil se pide de mil en mil.
+async function traerTodo(consulta) {
+    const PASO = 1000; let desde = 0, todo = [];
+    for (;;) {
+        const { data, error } = await consulta().range(desde, desde + PASO - 1);
+        if (error) return { data: todo, error };
+        todo = todo.concat(data || []);
+        if (!data || data.length < PASO) return { data: todo, error: null };
+        desde += PASO;
+    }
+}
 async function cargarFormularios() {
     const { data, error } = await sb.from("formularios")
         .select("*, formulario_respuestas(count)")
@@ -739,9 +752,9 @@ async function cargarFormularios() {
 async function verRespuestas(f) {
     Adjuntos.soltar();
     document.getElementById("respuestas-titulo").textContent = "Respuestas · " + f.titulo;
-    const { data, error } = await sb.from("formulario_respuestas")
+    const { data, error } = await traerTodo(() => sb.from("formulario_respuestas")
         .select("id, respuestas, created_at, cuenta_id, cuenta_creada_at").eq("formulario_id", f.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }).order("id"));
     if (error) { alert("No se pudieron cargar: " + error.message); return; }
     respuestasActuales = { formulario: f, filas: data || [], papeles: papelesDe(f.campos) };
     pintarRespuestas();
