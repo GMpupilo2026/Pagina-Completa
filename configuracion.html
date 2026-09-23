@@ -206,6 +206,25 @@
                 <div id="piece-color-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Color de las piezas"></div>
             </div>
 
+            <div id="colores-a-tu-gusto" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎨</span> Colores a tu gusto</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Si ninguno de los pares de arriba te sirve, elige tú el color de cada casilla y de cada bando. Se usa en todos los tableros del sitio en modo normal; Modo Adaptado sigue con sus propios colores. Es solo para tu pantalla.</p>
+                <div class="flex flex-wrap items-start gap-5">
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-casilla-clara" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Casilla clara</label>
+                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-casilla-oscura" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Casilla oscura</label>
+                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-pieza-blanca" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Piezas blancas</label>
+                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-pieza-negra" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Piezas negras</label>
+                    </div>
+                    <div id="gusto-muestra" class="grid grid-cols-2 w-28 h-28 rounded-lg overflow-hidden border border-brand-200 dark:border-brand-700 text-5xl leading-none" aria-hidden="true"></div>
+                </div>
+                <p id="gusto-aviso" class="text-sm text-accent-700 dark:text-accent-400 mt-4" hidden></p>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button type="button" id="gusto-volver" class="border border-brand-200 dark:border-brand-700 hover:border-accent-400 text-brand-600 dark:text-brand-300 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a los colores de siempre</button>
+                </div>
+                <p id="gusto-msg" class="text-sm text-brand-600 dark:text-brand-300 mt-3" role="status" aria-live="polite"></p>
+            </div>
+
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Color de las piezas en Modo Adaptado</h2>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Con Modo Adaptado activado, las piezas usan este segundo par de colores en vez del de arriba — pensados para más contraste.</p>
@@ -557,19 +576,22 @@
             return v || resguardo;
         }
 
-        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars) {
+        // `custom` (opcional) es la función getCustom() del módulo: con ella la rejilla suma
+        // al final "A tu gusto", con los colores que la persona eligió en la tarjeta 🎨.
+        function renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars, custom) {
             buildPreview = buildPreview || buildColorPreviewHTML;
             const grid = document.getElementById(gridId);
             if (!grid) return;
             const current = getCurrent();
             grid.innerHTML = "";
-            const ids = vars ? ["auto"].concat(Object.keys(themes)) : Object.keys(themes);
+            let ids = vars ? ["auto"].concat(Object.keys(themes)) : Object.keys(themes);
+            if (custom) ids = ids.concat(["personalizado"]);
             ids.forEach((id) => {
                 const theme = id === "auto"
                     ? { label: "Como el tema",
                         light: colorDeVariable(vars[0], "#f0f4f8"),
                         dark: colorDeVariable(vars[1], "#486581") }
-                    : themes[id];
+                    : id === "personalizado" ? custom() : themes[id];
                 const btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = id === current ? THEME_ACTIVE : THEME_INACTIVE;
@@ -580,7 +602,7 @@
                     '<span class="block text-xs font-semibold text-brand-700 dark:text-brand-200">' + theme.label + "</span>";
                 btn.addEventListener("click", () => {
                     setCurrent(id);
-                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars);
+                    renderColorThemeGrid(gridId, themes, getCurrent, setCurrent, buildPreview, vars, custom);
                 });
                 grid.appendChild(btn);
             });
@@ -594,7 +616,8 @@
                 window.BoardColorThemes.getPreference,
                 window.BoardColorThemes.setPreference,
                 buildColorPreviewHTML,
-                ["--sq-light", "--sq-dark"]
+                ["--sq-light", "--sq-dark"],
+                window.BoardColorThemes.getCustom
             );
             renderColorThemeGrid(
                 "board-color-theme-adaptive-grid",
@@ -626,7 +649,9 @@
                 window.PieceColorThemes.THEMES,
                 window.PieceColorThemes.getPreference,
                 window.PieceColorThemes.setPreference,
-                buildPiecePreviewHTML
+                buildPiecePreviewHTML,
+                null,
+                window.PieceColorThemes.getCustom
             );
             renderColorThemeGrid(
                 "piece-color-theme-adaptive-grid",
@@ -676,6 +701,91 @@
             });
         }
         renderPieceStyleThemeGrid();
+
+        // ---------- Colores a tu gusto (modo normal) ----------
+        // Cada selector guarda en el acto con setCustom(), que además deja puesto "A tu
+        // gusto": elegir un color ES elegirlo, no un paso más que haya que acordarse de dar.
+        // Lo que no se hace es DECIDIR por la persona: si una pieza queda por debajo de 3:1
+        // contra una casilla (el mínimo de WCAG para un objeto gráfico) se le dice cuál y
+        // con qué número, pero se guarda igual — es su pantalla.
+        (function () {
+            const B = window.BoardColorThemes, P = window.PieceColorThemes;
+            if (!B || !P || !B.setCustom || !P.setCustom) return;
+            const el = (id) => document.getElementById(id);
+            const clara = el("gusto-casilla-clara"), oscura = el("gusto-casilla-oscura");
+            const blanca = el("gusto-pieza-blanca"), negra = el("gusto-pieza-negra");
+            const muestra = el("gusto-muestra"), aviso = el("gusto-aviso"), msg = el("gusto-msg");
+
+            const lum = (hex) => {
+                const c = [1, 3, 5].map((i) => {
+                    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+                    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+                });
+                return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+            };
+            const contraste = (a, b) => {
+                const x = lum(a), y = lum(b);
+                return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+            };
+            const num = (r) => r.toFixed(1).replace(".", ",");
+
+            function llenar() {
+                const c = B.getCustom(), p = P.getCustom();
+                clara.value = c.light; oscura.value = c.dark;
+                blanca.value = p.white; negra.value = p.black;
+            }
+            function pintarMuestra() {
+                const casillas = [clara.value, oscura.value, oscura.value, clara.value];
+                const piezas = [["piece-white", "♔"], ["piece-black", "♚"], ["piece-white", "♕"], ["piece-black", "♛"]];
+                muestra.innerHTML = "";
+                casillas.forEach((fondo, i) => {
+                    const sq = document.createElement("span");
+                    sq.className = "flex items-center justify-center";
+                    sq.style.background = fondo;
+                    const pz = document.createElement("span");
+                    pz.className = piezas[i][0];
+                    pz.textContent = piezas[i][1];
+                    sq.appendChild(pz);
+                    muestra.appendChild(sq);
+                });
+                const problemas = [];
+                [["La pieza blanca", blanca.value], ["La pieza negra", negra.value]].forEach(([n, pz]) => {
+                    [["la casilla clara", clara.value], ["la casilla oscura", oscura.value]].forEach(([m, sq]) => {
+                        const r = contraste(pz, sq);
+                        if (r < 3) problemas.push(n + " sobre " + m + " casi no se distingue (" + num(r) + ":1; conviene 3:1 o más).");
+                    });
+                });
+                const rc = contraste(blanca.value, negra.value);
+                if (rc < 1.5) problemas.push("Las piezas blancas y las negras se parecen demasiado (" + num(rc) + ":1): cuesta saber de quién es cada una.");
+                aviso.hidden = !problemas.length;
+                aviso.textContent = problemas.length ? "⚠️ " + problemas.join(" ") : "";
+            }
+            function guardar() {
+                B.setCustom(clara.value, oscura.value);
+                P.setCustom(blanca.value, negra.value);
+                renderBoardColorThemeGrids();
+                renderPieceColorThemeGrids();
+                pintarMuestra();
+            }
+            [clara, oscura, blanca, negra].forEach((inp) => {
+                inp.addEventListener("input", guardar);
+                inp.addEventListener("change", () => {
+                    guardar();
+                    msg.textContent = aviso.hidden
+                        ? "Guardado: los tableros usan tus colores."
+                        : "Guardado, pero revisa el aviso: alguna pieza se ve poco.";
+                });
+            });
+            el("gusto-volver").addEventListener("click", () => {
+                B.setPreference(B.AUTO);
+                P.setPreference("clasico");
+                renderBoardColorThemeGrids();
+                renderPieceColorThemeGrids();
+                msg.textContent = "Listo: los tableros volvieron a los colores de siempre. Tus colores quedan guardados por si los quieres usar otra vez.";
+            });
+            llenar();
+            pintarMuestra();
+        })();
 
         // ---------- Baja visión en modo normal: los cuatro ajustes de una vez ----------
         // Se guarda lo que había ANTES de tocar nada, para que «Volver» deje cada cosa como

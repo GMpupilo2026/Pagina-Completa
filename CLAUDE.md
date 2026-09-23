@@ -8251,6 +8251,37 @@ tablero, pone las cuatro de un toque (`clasico`, `aro`, `celularturquesa`,
 - Escribe por los mismos `setPreference()` de cada módulo y repinta las cuatro
   rejillas, así que lo que dicen las tarjetas de abajo es lo que quedó puesto.
 
+### «Colores a tu gusto»: cada casilla y cada bando, del color que se quiera
+
+Las listas de pares no alcanzan para todos — cada vista es distinta —, así que
+`configuracion.html` trae la tarjeta **«🎨 Colores a tu gusto»** con cuatro
+`<input type="color">`: casilla clara, casilla oscura, piezas blancas y piezas
+negras. **Solo en modo normal**: Modo Adaptado se queda con sus pares medidos,
+porque ahí un par elegido a ojo es justo lo que puede dejar las piezas sin verse.
+
+- **Es un id más, `personalizado`, en los dos módulos**
+  (`js/board-color-themes.js` y `js/piece-color-themes.js`), con los colores en
+  su propia clave (`board_color_custom_v1`, `piece_color_custom_v1`). **No va
+  dentro de `THEMES`** a propósito: esa tabla la leen `css-construir.js` y
+  `verificar-temas-plataforma.js`, y un «tema» que cambia según el navegador no
+  es una fila que se pueda compilar ni verificar. `readKey`/`writeKey` lo
+  aceptan solo en la clave NORMAL.
+- **Elegir un color ES elegir «A tu gusto»**: `setCustom()` guarda y deja
+  puesto `personalizado` en el mismo acto. Y las dos rejillas suman al final la
+  opción «A tu gusto» con esos colores, así se ve cuál está elegida y se puede
+  volver a ella después de probar otro par.
+- **El contorno de la pieza no se elige: se calcula** (`contornoPara()`), con la
+  regla de toda la tabla — relleno claro, contorno oscuro; relleno oscuro,
+  contorno claro —. Dejarlo fijo haría que una «blanca» pintada de azul marino
+  perdiera el borde contra la casilla oscura, sin ningún error.
+- **Se avisa, no se impide.** Si una pieza queda por debajo de 3:1 contra una
+  casilla (el mínimo de WCAG para un objeto gráfico), o los dos bandos se
+  parecen demasiado, la tarjeta dice cuál y con qué número; pero se guarda
+  igual: es su pantalla. Es la regla de «el color no se elige a ojo» llevada a
+  alguien que sí lo está eligiendo a ojo.
+- «Volver a los colores de siempre» pone `auto` y `clasico` y **no borra** lo
+  elegido: queda en la rejilla como «A tu gusto» por si se quiere volver.
+
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 
 Los cuatro temas que ya tenía el sitio (`js/board-themes.js`,
