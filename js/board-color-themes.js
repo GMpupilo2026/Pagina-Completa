@@ -29,6 +29,27 @@
   const KEY = "board_color_theme_v1";
   const KEY_ADAPTIVE = "board_color_theme_adaptive_v1";
 
+  // Los dos "Celular" existen para baja visión con el celular al sol o con el
+  // brillo al máximo. Los pares de arriba de alto contraste fallan justo ahí
+  // por la PIEZA, no por la casilla: con una casilla casi blanca la pieza
+  // blanca da 1:1 contra ella, y con una casilla negra la pieza negra también
+  // — se ve el tablero y desaparecen las piezas. El brillo del celular aplana
+  // además los tonos pastel, y la casilla clara se confunde con la blanca.
+  //
+  // Por eso las dos casillas van en tono MEDIO (ninguna casi blanca ni casi
+  // negra) y de colores opuestos: medido con la fórmula de WCAG, cada pieza
+  // queda a 3:1 o más contra las DOS casillas (el mínimo para un objeto
+  // gráfico), cuando el blanco y negro de siempre deja una de las dos en 1:1.
+  // Ámbar contra azul y turquesa contra vino son pares que se siguen
+  // distinguiendo con daltonismo (rojo-verde), porque se separan también en
+  // claridad y no solo en tono. El número se calculó, no se eligió a ojo:
+  //   ámbar/azul        blanca 3.16 y 5.57 · negra 6.65 y 3.77
+  //   turquesa/vino     blanca 3.03 y 6.55 · negra 6.93 y 3.21
+  const CELULAR = {
+    celularambar: { label: "Celular: ámbar y azul", light: "#c8820c", dark: "#3a66b8" },
+    celularturquesa: { label: "Celular: turquesa y vino", light: "#2fa2b2", dark: "#9b3a6a" },
+  };
+
   const THEMES = {
     clasico: { label: "Clásico", light: "#f0f4f8", dark: "#486581" },
     madera: { label: "Madera", light: "#f0d9b5", dark: "#b58863" },
@@ -45,6 +66,7 @@
     lila: { label: "Lila", light: "#f0e4ff", dark: "#9a6fc4" },
     turquesa: { label: "Turquesa", light: "#e0f7fa", dark: "#4a9aa8" },
     fuego: { label: "Rojo y arena", light: "#f7e6d8", dark: "#b9563f" },
+    ...CELULAR,
   };
 
   // El de alto contraste (blanco y negro) es justo lo que pidió el profesor
@@ -58,6 +80,7 @@
     morado: { label: "Morado y negro", light: "#c084fc", dark: "#000000" },
     moradooscuro: { label: "Morado oscuro y negro", light: "#9333ea", dark: "#000000" },
     rosadonegro: { label: "Rosado y negro", light: "#ffd6e8", dark: "#000000" },
+    ...CELULAR,
   };
 
   // "auto" es lo que trae cualquiera que nunca haya elegido, y quiere decir
