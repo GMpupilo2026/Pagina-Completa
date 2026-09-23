@@ -1717,6 +1717,71 @@ el id de ESE informe, y que ni la alumna ni un profesor sin supervisión entren.
 Está probado que falla de verdad: haciendo que el enviado enseñe los números de
 hoy, saltan 2.
 
+#### El detalle del informe mensual: cada clase y cada estudiante
+
+Los números del informe dicen cuánto; el detalle dice **qué clase y quién**. En
+`informe-mensual.html` (bloque «El detalle del mes») y en `supervision.html`
+(desplegable «El detalle por clase y por estudiante» de cada profesor) van dos
+tablas, con las clases en línea y las presenciales JUNTAS:
+
+- **Clase por clase**: cuándo, dónde (escrito: «En línea» o «Presencial», nunca
+  un color), el título, la duración, cuántos vinieron y cuántos llegaron tarde,
+  y qué se hizo (las notas de la clase, que es donde queda el texto de «Mejorar
+  informe»).
+- **Estudiante por estudiante**: clases en línea y presenciales, tiempo en clase
+  (los tramos unidos con `minutos_por_tramos()`, la misma cuenta de Informes;
+  en las presenciales ya va descontada la tardanza), veces y minutos tarde, y
+  los ejercicios que hizo en la plataforma ese mes.
+- Cada tabla se baja en Excel (punto y coma y BOM, como el resto del sitio).
+
+Cómo está armado, y por qué:
+
+- **Lo cuenta `detalle_mensual_crudo()`** —todo, sin filtrar— y nadie la llama
+  directo: tiene el `execute` revocado. Las puertas son dos, con el permiso de
+  siempre (el propio profesor, `supervisado_por_mi()` o administrar):
+  `detalle_mensual_profesor()` para el mes de hoy y `detalle_informe_mensual()`
+  para la foto que viajó con un informe enviado.
+- **Al supervisor se le quitan los estudiantes que no supervisa**
+  (`detalle_para_mi()`), y se le dice cuántos son. Un profesor puede estar en
+  dos academias, y el supervisor de una no tiene por qué ver los nombres de los
+  alumnos de la otra. Las clases van enteras: son números y el texto del
+  profesor, sin nombres de alumnos.
+- **La foto vive en `informes_profesor_detalle`, SIN ninguna política**, y no en
+  `informes_profesor.datos`: esa tabla se la entrega al supervisor por su RLS, y
+  con el detalle adentro le llegarían todos los nombres sin filtrar. Solo se lee
+  por `detalle_informe_mensual()`.
+- **La foto se toma en el MISMO acto que el envío** (dentro de
+  `guardar_informe_mensual()`): si fallara, falla el envío entero y no queda un
+  informe enviado sin su detalle. Un informe enviado antes de esto no tiene
+  foto, y la pantalla lo dice.
+- **Los minutos de cada clase van con un decimal** y la pantalla redondea al
+  pintar: redondeados de a uno en la base, la suma del detalle se separaba en un
+  minuto del total de `actividad_profesor()`. Comprobado con datos reales: las
+  clases, las asistencias y los minutos del detalle dan lo mismo que la tarjeta.
+- **En supervisión el detalle se pide al ABRIRLO**, no al pintar la lista: con
+  veinte profesores serían veinte consultas que nadie pidió.
+- **El permiso va envuelto en `coalesce(..., false)`.** Sin usuario, la
+  condición daba NULL y el `if not (...)` no rechazaba. Lo destapó la prueba en
+  SQL. `actividad_profesor()` tiene la misma forma desde antes; hoy solo la
+  alcanzan la service role y el cron (`anon` no tiene `execute`), pero al
+  tocarla hay que envolverla igual.
+
+Comprobado impersonando roles en SQL (revertido), 10 casos: el profesor ve sus 60
+estudiantes y sus 5 clases; el supervisor de su academia ve las 5 clases y 1
+estudiante, con 59 «fuera»; otro profesor, un alumno y una llamada sin usuario se
+rechazan; al enviar queda la foto; el supervisor la lee filtrada; y la tabla de
+fotos no se puede leer directo.
+
+**Al tocar `js/detalle-mensual.js`, las dos pantallas o las funciones del
+detalle, correr `node herramientas/verificar-informe-mensual.js`.** Comprueba que
+el detalle de hoy se pida con ese profesor y ese mes, que un informe enviado
+enseñe su foto y no el de hoy, que el resumen junte las dos modalidades, que cada
+clase diga dónde fue, que un nombre con etiquetas se vea literal, que el Excel
+salga con BOM y la fila de verdad, que en supervisión no se pida nada hasta
+abrirlo, que se diga cuántos estudiantes quedan fuera, y que de quien no envió se
+lea el de hoy. Está probado que falla de verdad: haciendo que el enviado enseñe el
+detalle de hoy, salta.
+
 ### Los modos de vista de quien administra
 
 `js/modo-vista.js`: quien administra elige ver la plataforma «como
@@ -1982,8 +2047,9 @@ lo nuevo saltan 3, subiendo el logo a otra carpeta 1, y pisando el tema 1.
   Era el doble el que estaba incompleto: en la base real, quien administra,
   supervisa o coordina sin academia recibe la lista entera.
 
-**Lo que viene después (la fase siguiente, ya decidida con el dueño):** el
-informe mensual con el detalle por clase y por estudiante.
+**Las cuatro fases que se decidieron con el dueño están hechas**: las academias
+con su supervisor y las funciones del coordinador, su marca, «Mejorar informe» y
+el detalle del informe mensual (ver «El detalle del informe mensual» más arriba).
 
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
 

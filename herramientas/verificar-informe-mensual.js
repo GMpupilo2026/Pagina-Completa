@@ -38,6 +38,20 @@ const EN_VIVO = {
 };
 const FOTO = Object.assign({}, EN_VIVO, { tareas_puestas: 7, minutos_clase: 90 });
 
+// El detalle por clase y por estudiante: el de hoy y la foto que viajó.
+const XSS = '<img src=x onerror="window.__xss=1">Ana';
+const DETALLE = { periodo: "2026-09-01", alumnos_fuera: 0,
+  clases: [
+    { id: "c1", inicio: "2026-09-02T21:00:00Z", modalidad: "en_linea", titulo: "Finales de torre", notas: "", minutos: 60.4, asistentes: 5, tarde: 0 },
+    { id: "c2", inicio: "2026-09-04T21:00:00Z", modalidad: "presencial", titulo: "Aula SJ", notas: "Repasamos la oposición.", minutos: 90, asistentes: 8, tarde: 2 },
+  ],
+  alumnos: [
+    { id: "a1", nombre: XSS, grupo: "SJ", clases_en_linea: 1, clases_presenciales: 1, minutos_clase: 130, veces_tarde: 1, minutos_tarde: 20, ejercicios: 40 },
+    { id: "a2", nombre: "Bruno Mena", grupo: null, clases_en_linea: 0, clases_presenciales: 0, minutos_clase: 0, veces_tarde: 0, minutos_tarde: 0, ejercicios: 0 },
+  ] };
+const DETALLE_FOTO = Object.assign({}, DETALLE, { alumnos_fuera: 3,
+  clases: [DETALLE.clases[0]], alumnos: [DETALLE.alumnos[1]] });
+
 function clienteFalso(datos, yo) {
   return `
 window.__rpc = [];
@@ -117,7 +131,8 @@ const llamadas = (page, n) => page.evaluate((x) => window.__rpc.filter((r) => r.
 async function pruebaProfesor(browser) {
   console.log("\nEl profesor arma y manda su informe");
   const datos = { tablas: { informes_profesor: [] }, foto: FOTO,
-    rpc: { actividad_profesor: [EN_VIVO], mis_supervisores: [{ id: "s-1", nombre: "Marta Solano" }] } };
+    rpc: { actividad_profesor: [EN_VIVO], mis_supervisores: [{ id: "s-1", nombre: "Marta Solano" }],
+           detalle_mensual_profesor: DETALLE, detalle_informe_mensual: DETALLE_FOTO } };
   const { page, errores } = await abrir(browser, "/informe-mensual.html", datos, PROFE);
   await page.waitForSelector("#numeros dl");
   const mes = await page.evaluate(() => ActividadProfesor.mesPorOmision());
@@ -127,6 +142,28 @@ async function pruebaProfesor(browser) {
   igual("pinta las tareas puestas", await dato(page, "tareas_puestas"), "19");
   igual("el tiempo de clase va en horas", await dato(page, "minutos_clase"), "4 h 2 min");
   igual("dice a quién le llega", await page.$eval("#destino", (p) => p.textContent), "Lo recibe: Marta Solano.");
+
+  await page.waitForSelector('#detalle [data-detalle="clases"]');
+  igual("el detalle de hoy se pide con ese profesor y ese mes", (await llamadas(page, "detalle_mensual_profesor"))[0].args,
+        { p_profesor: "p-1", p_periodo: mes });
+  igual("el resumen junta las dos modalidades con su tiempo",
+        await page.$eval('#detalle [data-detalle="resumen"]', (p) => p.textContent),
+        "2 clases en total, 2 h 30 min: 1 en línea (1 h) y 1 presencial (1 h 30 min).");
+  igual("cada clase dice dónde fue, escrito",
+        await page.$$eval('#detalle [data-detalle="clases"] tbody tr', (rs) => rs.map((r) => r.children[1].textContent)), ["En línea", "Presencial"]);
+  igual("y cuántos llegaron tarde", await page.$eval('#detalle [data-detalle="clases"] tbody tr:nth-child(2)', (r) => r.children[4].textContent), "8 (2 tarde)");
+  igual("un estudiante con etiquetas en el nombre se ve literal y no se ejecuta",
+        [await page.$eval('#detalle [data-detalle="alumnos"] tbody tr th', (t) => t.textContent), await page.evaluate(() => !!window.__xss)], [XSS, false]);
+  igual("su fila dice clases, tiempo y tardanza",
+        await page.$eval('#detalle [data-detalle="alumnos"] tbody tr', (r) => [...r.children].slice(2).map((c) => c.textContent)),
+        ["1", "1", "2 h 10 min", "1 vez · 20 min", "40"]);
+  const bajada = page.waitForEvent("download");
+  await page.click("text=Descargar los estudiantes (Excel)");
+  const archivo = await bajada;
+  const csv = require("fs").readFileSync(await archivo.path(), "utf8");
+  igual("el Excel de estudiantes sale con BOM, punto y coma y la fila de verdad",
+        [csv.charCodeAt(0) === 0xfeff, csv.split("\r\n")[1]],
+        [true, '"' + XSS.replace(/"/g, '""') + '";"SJ";"1";"1";"130";"1";"20";"40"']);
 
   // Un resumen corto no se manda: se dice y no viaja nada.
   await page.fill("#resumen", "poco");
@@ -170,9 +207,14 @@ async function pruebaEnviado(browser) {
       logros: "", dificultades: "", proximo_mes: "", datos: FOTO, estado: "enviado",
       enviado_at: "2026-09-02T15:00:00Z", leido_at: "2026-09-03T15:00:00Z",
       comentario: "Buen trabajo. Ojo con las tareas vencidas.", comentario_at: "2026-09-03T15:00:00Z" }] },
-    rpc: { actividad_profesor: [EN_VIVO], mis_supervisores: [] } };
+    rpc: { actividad_profesor: [EN_VIVO], mis_supervisores: [], detalle_mensual_profesor: DETALLE, detalle_informe_mensual: DETALLE_FOTO } };
   const { page, errores } = await abrir(browser, "/informe-mensual.html", datos, PROFE);
   await page.waitForSelector("#numeros dl");
+  await page.waitForSelector('#detalle [data-detalle="clases"]');
+  igual("el detalle es la foto de ESE informe, y no se pide el de hoy",
+        [(await llamadas(page, "detalle_informe_mensual"))[0].args, (await llamadas(page, "detalle_mensual_profesor")).length],
+        [{ p_informe: "inf-1" }, 0]);
+  igual("con las clases que viajaron", await page.$$eval('#detalle [data-detalle="clases"] tbody tr', (rs) => rs.length), 1);
   igual("los números son la foto del envío, no los de hoy", await dato(page, "tareas_puestas"), "7");
   igual("ni siquiera se piden los de hoy", (await llamadas(page, "actividad_profesor")).length, 0);
   igual("el comentario de la supervisión se ve", await seVe(page, "#comentario-caja"), "sí");
@@ -196,7 +238,7 @@ async function pruebaSupervisor(browser) {
         informe_id: "inf-9", enviado_at: "2026-09-02T15:00:00Z", leido_at: null, comentado: false },
       { id: "p-2", nombre: "Luis Mora", grupo: null, actividad: FOTO,
         informe_id: null, enviado_at: null, leido_at: null, comentado: false },
-    ] } };
+    ], detalle_mensual_profesor: DETALLE, detalle_informe_mensual: DETALLE_FOTO } };
   const { page, errores } = await abrir(browser, "/supervision.html", datos, SUP);
   await page.waitForSelector("#lista li");
   const mes = await page.evaluate(() => ActividadProfesor.mesPorOmision());
@@ -209,9 +251,21 @@ async function pruebaSupervisor(browser) {
   igual("el resumen del mes cuenta bien",
         (await page.$eval("#resumen", (p) => p.textContent)).startsWith("2 profesores · 1 enviaron"), true);
   igual("a quien no mandó no se le ofrece leer nada",
-        await page.$$eval('#lista li[data-profesor="p-2"] button', (b) => b.length), 0);
+        await page.$$eval('#lista li[data-profesor="p-2"] > button', (b) => b.length), 0);
 
-  await page.click('#lista li[data-profesor="p-1"] button');
+  igual("el detalle no se pide hasta abrirlo",
+        (await page.evaluate(() => window.__rpc.map((r) => r.n))).filter((n) => n.startsWith("detalle_")), []);
+  await page.click('#lista li[data-profesor="p-1"] details[data-detalle-de] summary');
+  await page.waitForSelector('#lista li[data-profesor="p-1"] [data-detalle="alumnos"]');
+  igual("de quien envió, se lee la foto de su informe", (await llamadas(page, "detalle_informe_mensual"))[0].args, { p_informe: "inf-9" });
+  igual("y se dice cuántos estudiantes no están a su cargo",
+        await page.$eval('#lista li[data-profesor="p-1"] [data-detalle="fuera"]', (p) => p.textContent.startsWith("3 estudiantes de este profesor no están a tu cargo")), true);
+  await page.click('#lista li[data-profesor="p-2"] details[data-detalle-de] summary');
+  await page.waitForSelector('#lista li[data-profesor="p-2"] [data-detalle="clases"]');
+  igual("de quien no envió, el de hoy con su id y el mes", (await llamadas(page, "detalle_mensual_profesor"))[0].args, { p_profesor: "p-2", p_periodo: mes });
+  igual("y dice que es el de hoy", await page.$eval('#lista li[data-profesor="p-2"] details[data-detalle-de]', (d) => d.textContent.includes("De hoy: todavía no envió")), true);
+
+  await page.click('#lista li[data-profesor="p-1"] > button');
   await page.waitForSelector('#lista li[data-profesor="p-1"] form');
   igual("el informe se lee entero",
         await page.$eval('#lista li[data-profesor="p-1"]', (li) => li.textContent.includes("Clases de finales en los dos grupos.")), true);
@@ -220,7 +274,7 @@ async function pruebaSupervisor(browser) {
   igual("«Marcar como leído» manda ese informe y sin comentario",
         (await llamadas(page, "revisar_informe_mensual"))[0].args, { p_id: "inf-9", p_comentario: null });
 
-  await page.click('#lista li[data-profesor="p-1"] button');
+  await page.click('#lista li[data-profesor="p-1"] > button');
   await page.waitForSelector('#lista li[data-profesor="p-1"] form');
   await page.click('#lista li[data-profesor="p-1"] form button[type="submit"]');
   igual("un comentario vacío no viaja", (await llamadas(page, "revisar_informe_mensual")).length, 1);
