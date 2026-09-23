@@ -1762,9 +1762,13 @@ Cómo está armado, y por qué:
   veinte profesores serían veinte consultas que nadie pidió.
 - **El permiso va envuelto en `coalesce(..., false)`.** Sin usuario, la
   condición daba NULL y el `if not (...)` no rechazaba. Lo destapó la prueba en
-  SQL. `actividad_profesor()` tiene la misma forma desde antes; hoy solo la
-  alcanzan la service role y el cron (`anon` no tiene `execute`), pero al
-  tocarla hay que envolverla igual.
+  SQL. `actividad_profesor()` tenía la misma forma desde antes —comprobado: sin
+  usuario devolvía los 60 alumnos de un profesor— y se corrigió igual
+  (migración `actividad_profesor_permiso`, solo cambia esa condición). Hoy solo
+  la alcanzaban la service role y el cron (`anon` no tiene `execute`), y nada
+  del sistema la llama sin usuario. **Al escribir un permiso con `if not (a or
+  b or c)` en una función `SECURITY DEFINER`, envolverlo en `coalesce(...,
+  false)`**: una sola comparación contra un `auth.uid()` nulo lo vuelve NULL.
 
 Comprobado impersonando roles en SQL (revertido), 10 casos: el profesor ve sus 60
 estudiantes y sus 5 clases; el supervisor de su academia ve las 5 clases y 1
