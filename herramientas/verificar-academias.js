@@ -125,6 +125,7 @@ window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
         Object.assign(a, { color: args.p_color, logo_path: args.p_logo_path });
         return ok(Object.assign({}, a));
       }
+      if (n === "ia_guardar_config") return ok({ academia_id: args.p_academia, modelo: args.p_modelo, tope_mensual_usd: args.p_tope });
       if (n === "academia_personas") return ok(personas(args.p_academia));
       if (n === "academia_set_miembros") {
         D.tablas.academia_miembros = D.tablas.academia_miembros.filter((m) => m.academia_id !== args.p_academia)
@@ -388,6 +389,39 @@ async function pruebaFormularioConMarca(browser) {
   await publico.close();
 }
 
+async function pruebaIA(browser) {
+  console.log("\n«Mejorar informe»: el modelo y el tope, solo para quien administra");
+  const datos = datosBase({ rpc: { ia_resumen_mes: [{ academia_id: "ac1", llamadas: 4, fallidas: 1, tokens_entrada: 900, tokens_salida: 1200, costo_usd: 0.42 }] } });
+  datos.tablas.academia_ia = [{ academia_id: "ac1", modelo: "claude-sonnet-5", tope_mensual_usd: 3 }];
+  const { page, errores } = await abrir(browser, "/academias.html", datos, ADMIN, "#vista-lista:not([hidden])");
+  await page.waitForSelector("#seccion-ia");
+  igual("hay una fila por academia y la de «sin academia»", await page.$$eval("#ia-filas fieldset legend", (ls) => ls.map((l) => l.textContent)),
+    ["Los Reyes", "Sin academia (tú y quien no es de ninguna academia)"]);
+  igual("se ve el modelo y el tope guardados", [await page.$eval("#ia-modelo-ac1", (s) => s.value), await page.$eval("#ia-tope-ac1", (i) => i.value)], ["claude-sonnet-5", "3"]);
+  igual("y cuánto lleva este mes", await page.$eval("#ia-lleva-ac1", (p) => p.textContent.includes("US$0.42 de US$3.00") && p.textContent.includes("1 no salieron")), true);
+  await page.fill("#ia-tope-ac1", "5000");
+  await page.click('button[aria-label="Guardar la IA de Los Reyes"]');
+  igual("un tope de 5000 no viaja", (await llamadas(page, "ia_guardar_config")).length, 0);
+  await page.selectOption("#ia-modelo-ac1", "claude-haiku-4-5");
+  await page.fill("#ia-tope-ac1", "2.5");
+  await page.click('button[aria-label="Guardar la IA de Los Reyes"]');
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "ia_guardar_config"));
+  igual("guardar manda la academia, el modelo y el tope", (await llamadas(page, "ia_guardar_config"))[0],
+    { p_academia: "ac1", p_modelo: "claude-haiku-4-5", p_tope: 2.5 });
+  await page.selectOption("#ia-modelo-general", "");
+  await page.click('button[aria-label="Guardar la IA de Sin academia (tú y quien no es de ninguna academia)"]');
+  await page.waitForFunction(() => window.__rpc.filter((r) => r.n === "ia_guardar_config").length === 2);
+  igual("«sin IA» en la fila general viaja como null, con academia null", (await llamadas(page, "ia_guardar_config"))[1],
+    { p_academia: null, p_modelo: null, p_tope: 5 });
+  igual("sin errores en la página", errores, []);
+  await page.close();
+
+  const sup = await abrir(browser, "/academias.html", datos, SUP, "#vista-academia:not([hidden])");
+  igual("al supervisor no le llega ni el marcado de la IA", [await sup.page.$("#seccion-ia"), await sup.page.evaluate(() => /Mejorar informe|Claude|Tope al mes/.test(document.body.innerText))], [null, false]);
+  igual("ni se le pide el gasto a la base", (await sup.page.evaluate(() => window.__rpc.map((r) => r.n))).filter((n) => n.startsWith("ia_")), []);
+  await sup.page.close();
+}
+
 (async () => {
   pruebaLista();
   pruebaContraste();
@@ -401,6 +435,7 @@ async function pruebaFormularioConMarca(browser) {
     await pruebaFuncionesApagadas(browser);
     await pruebaMarca(browser);
     await pruebaFormularioConMarca(browser);
+    await pruebaIA(browser);
   } catch (e) {
     console.log("  ✗ la prueba se cayó: " + (e.stack || e));
     fallos += 1;

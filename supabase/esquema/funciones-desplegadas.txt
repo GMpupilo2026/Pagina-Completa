@@ -16,6 +16,7 @@ enviar-resultado-arbitraje     true         manda el detalle de un examen de arb
 informe-examen                 true         manda a la casa el informe de un examen
 informes-encargados            false        la tanda diaria del informe a la casa (pg_cron)
 inscribir-alumno               true         de la respuesta del formulario a la cuenta
+mejorar-informe                true         el botón «Mejorar informe» (Claude, con tope por academia)
 notificar                      false        los avisos push (VAPID y aes128gcm a mano)
 ocr-scoresheet                 true         el lector de planilla, contra Google Vision
 recuperar-acceso               false        el olvido de contrasena de un usuario sin buzon
