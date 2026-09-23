@@ -61,6 +61,7 @@ PAGINAS = [
     "examen.html", "examenes.html",
     "planes.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "tareas.html",
+    "informe-mensual.html", "supervision.html",
     "tienda.html", "accesos.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",

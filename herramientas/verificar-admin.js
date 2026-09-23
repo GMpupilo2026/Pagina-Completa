@@ -222,7 +222,7 @@ async function pruebaAtajos(browser) {
   igual("Bases de datos", atajos("Bases de datos"), ["admin-jugador.html"]);
   igual("Acceso a la plataforma", atajos("Acceso a la plataforma"), ["accesos.html", "precios.html"]);
   igual("Venta de materiales", atajos("Venta de materiales"), ["tienda.html"]);
-  igual("Reportes", atajos("Reportes"), ["reportes.html", "cobros.html"]);
+  igual("Reportes", atajos("Reportes"), ["reportes.html", "supervision.html", "cobros.html"]);
   igual("los informes de toda la plataforma siguen aparte y de primeros",
     await page.evaluate(() => {
       const a = document.querySelector('#app a[href="informes.html"]');

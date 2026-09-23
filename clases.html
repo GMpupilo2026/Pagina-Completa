@@ -530,6 +530,9 @@
                 { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
                 { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
             ] },
+            { title: "Tus profesores", tiles: [
+                { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
+            ] },
             { title: "Qué están entrenando, tema por tema", tiles: [
                 { emoji: "♚", label: "Mates", desc: "Mates en 1, 2 y 3 resueltos", href: TEMA("mates") },
                 { emoji: "⚔️", label: "Táctica", desc: "Ejercicios de táctica resueltos", href: TEMA("tactica") },
@@ -2060,6 +2063,12 @@
                 TILE_GROUPS.find((g) => g.title === "Tu cuenta").tiles.unshift(
                     { emoji: "👑", label: "Administración", desc: "Cuentas, roles y accesos", href: "admin.html" }
                 );
+                /* Quien administra ve a TODOS los profesores con su actividad
+                   del mes y sus informes: lo mismo que un supervisor, con el
+                   alcance de siempre. */
+                TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
+                    { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes y su informe mensual", href: "supervision.html" }
+                );
             }
 
             // Herramientas del equipo docente: no se le muestran al alumnado
@@ -2087,6 +2096,10 @@
                        informe que llega a la casa y en el reporte de
                        actividades. */
                     { emoji: "✅", label: "Asistencia presencial", desc: "Pasa lista de la clase que diste en el aula y anota qué se trabajó", href: "asistencia.html" },
+                    /* El informe del mes para la supervisión. Los números se llenan
+                       solos con lo que pasó en la plataforma; el profesor escribe
+                       lo que los números no dicen. */
+                    { emoji: "🗓️", label: "Informe mensual", desc: "Cuéntale a tu supervisión qué hiciste en el mes: los números salen solos", href: "informe-mensual.html" },
                     /* Tus propias listas de alumnos. No son los "equipos" de
                        Administración —esos dan permisos— ni el grupo de cada
                        alumno: son de quien las arma y solo sirven para filtrar
