@@ -32,8 +32,9 @@ const JS = ctx.window.TiempoSecciones.SECCIONES;
 // La tabla del correo (TypeScript, se corre con --experimental-strip-types).
 const ts = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
   `import * as m from ${JSON.stringify(path.join(RAIZ, "supabase/functions/informes-encargados/informe-html.ts"))};
+   import { cabeceraCorreo } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/_compartido/marca-correo.ts"))};
    const casos = JSON.parse(process.argv[1]);
-   const html = casos.map((c) => m.informeHtml(c, "semanal", "https://ajedrez-integral.com"));
+   const html = casos.map((c) => m.informeHtml(c, "semanal", "https://ajedrez-integral.com", null, (t, k) => cabeceraCorreo(null, t, k)));
    process.stdout.write(JSON.stringify({ SECCIONES: m.SECCIONES, TITULOS: m.TITULOS_CURSOS, html }));`,
   JSON.stringify([
     { alumno: "Ana Rojas", desde: "2026-09-16T00:00:00Z", hasta: "2026-09-23T00:00:00Z", dias_activos: 4,

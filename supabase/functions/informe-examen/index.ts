@@ -23,6 +23,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeExamenHtml } from "./examen-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
+import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -101,12 +102,12 @@ Deno.serve(async (req) => {
     return json({ error: "Ese alumno no tiene ninguna persona encargada apuntada" }, 400);
   }
 
-  const html = informeExamenHtml(inf, SITE_URL, await contactoDeConsultas(admin));
-  const asunto = `Resultado del examen de ${inf.alumno ?? "tu hijo o hija"} — Ajedrez Integral`;
+  const remite = await remitenteDe(admin, inf.alumno_id, DE);
+  const html = informeExamenHtml(inf, SITE_URL, await contactoDeConsultas(admin), (t, c) => cabeceraCorreo(remite.marca, t, c));
+  const asunto = `Resultado del examen de ${inf.alumno ?? "tu hijo o hija"} — ${firmaDe(remite.marca)}`;
 
   let enviados = 0;
   const fallos: string[] = [];
-  const remite = await remitenteDe(admin, inf.alumno_id, DE);
   for (const e of encargados) {
     const r = await mandar(e.email, asunto, html, remite);
     if (r.ok) enviados += 1; else fallos.push(`${e.email}: ${r.error}`);

@@ -35,6 +35,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeHtml, invitarPracticarHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
+import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -88,7 +89,11 @@ async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin)
   });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("No se encontró ese alumno");
-  return { datos: data, html: informeHtml(data, frecuencia, SITE_URL, contacto) };
+  // El remitente trae la marca de la academia: el correo sale con su nombre,
+  // su logo y su color, y la vista previa enseña exactamente eso.
+  const remite = await remitenteDe(admin, studentId, DE);
+  return { datos: data, remite,
+    html: informeHtml(data, frecuencia, SITE_URL, contacto, (t, c) => cabeceraCorreo(remite.marca, t, c)) };
 }
 
 async function mandar(para: string, asunto: string, html: string, remite?: Remitente) {
@@ -106,8 +111,8 @@ async function mandar(para: string, asunto: string, html: string, remite?: Remit
   return { ok: true };
 }
 
-function asuntoDe(nombre: string, frecuencia: Frecuencia) {
-  return `${PERIODOS[frecuencia]?.asunto ?? "Informe"} de ${nombre} — Ajedrez Integral`;
+function asuntoDe(nombre: string, frecuencia: Frecuencia, remite: Remitente) {
+  return `${PERIODOS[frecuencia]?.asunto ?? "Informe"} de ${nombre} — ${firmaDe(remite.marca)}`;
 }
 
 Deno.serve(async (req) => {
@@ -159,9 +164,8 @@ Deno.serve(async (req) => {
         if (dias < cada - 0.5) { saltados += 1; continue; }
       }
       try {
-        const { datos, html } = await armar(e.student_id, e.frecuencia as Frecuencia);
-        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia), html,
-          await remitenteDe(admin, e.student_id, DE));
+        const { datos, html, remite } = await armar(e.student_id, e.frecuencia as Frecuencia);
+        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia, remite), html, remite);
         if (!r.ok) { fallos.push(`${e.email}: ${r.error}`); continue; }
         // Solo se marca después de que Resend lo aceptó: si falló, la próxima
         // tanda lo vuelve a intentar en vez de darlo por mandado.
@@ -223,9 +227,8 @@ Deno.serve(async (req) => {
     if (!enc) return json({ error: "No se encontró ese encargado, o no es de un alumno tuyo" }, 403);
 
     try {
-      const { datos, html } = await armar(enc.student_id, enc.frecuencia as Frecuencia);
-      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia), html,
-        await remitenteDe(admin, enc.student_id, DE));
+      const { datos, html, remite } = await armar(enc.student_id, enc.frecuencia as Frecuencia);
+      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia, remite), html, remite);
       if (!r.ok) return json({ error: r.error }, 502);
       await admin.from("encargados").update({ ultimo_envio_at: new Date().toISOString() }).eq("id", enc.id);
       return json({ ok: true, email: enc.email });
@@ -278,12 +281,12 @@ Deno.serve(async (req) => {
 
     const nombre = alumno.full_name || alumno.email || "tu hijo o hija";
     const contacto = await contactoDeConsultas(admin);
-    const html = invitarPracticarHtml(nombre, dias, SITE_URL, contacto);
-    const asunto = `Un empujoncito para ${String(nombre).split(" ")[0]} — Ajedrez Integral`;
+    const remite = await remitenteDe(admin, studentId, DE);
+    const html = invitarPracticarHtml(nombre, dias, SITE_URL, contacto, (t, c) => cabeceraCorreo(remite.marca, t, c));
+    const asunto = `Un empujoncito para ${String(nombre).split(" ")[0]} — ${firmaDe(remite.marca)}`;
 
     let mandados = 0;
     const fallos: string[] = [];
-    const remite = await remitenteDe(admin, studentId, DE);
     for (const e of encargados) {
       const r = await mandar(e.email, asunto, html, remite);
       if (r.ok) mandados += 1; else fallos.push(`${e.email}: ${r.error}`);

@@ -16,10 +16,14 @@ import type { Contacto } from "./contacto-academia.ts";
 
 export type Tipo = "proximo" | "vencido" | "moroso";
 
-export const ASUNTOS: Record<Tipo, (alumno: string) => string> = {
-  proximo: (a) => `Recordatorio de pago de ${a} — Ajedrez Integral`,
-  vencido: (a) => `Quedó pendiente el pago de ${a} — Ajedrez Integral`,
-  moroso:  (a) => `Sobre el pago pendiente de ${a} — Ajedrez Integral`,
+/* La franja de arriba la arma `cabeceraCorreo()` (_compartido/marca-correo.ts)
+   con la marca de la academia del alumno, y la firma del asunto es su nombre. */
+export type Cabecera = (tituloHtml: string, etiquetaColor?: string) => string;
+
+export const ASUNTOS: Record<Tipo, (alumno: string, firma?: string) => string> = {
+  proximo: (a, f = "Ajedrez Integral") => `Recordatorio de pago de ${a} — ${f}`,
+  vencido: (a, f = "Ajedrez Integral") => `Quedó pendiente el pago de ${a} — ${f}`,
+  moroso:  (a, f = "Ajedrez Integral") => `Sobre el pago pendiente de ${a} — ${f}`,
 };
 
 const CABECERA: Record<Tipo, { titulo: string; color: string; entrada: (a: string) => string }> = {
@@ -66,7 +70,7 @@ type Fila = {
 
 export function avisoHtml(o: {
   tipo: Tipo; alumno: string; destinatario: string; cobros: Fila[]; sitio: string;
-  contacto?: Contacto | null;
+  contacto?: Contacto | null; cabecera: Cabecera;
 }) {
   const cab = CABECERA[o.tipo] ?? CABECERA.proximo;
   const conSaldo = o.cobros.filter((c) => Number(c.saldo) > 0);
@@ -109,10 +113,7 @@ export function avisoHtml(o: {
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
 
-  <tr><td style="background:#102a43;padding:22px 24px">
-    <div style="color:${cab.color};font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ajedrez Integral</div>
-    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">${escapar(cab.titulo)}</div>
-  </td></tr>
+  ${o.cabecera(escapar(cab.titulo), cab.color)}
 
   <tr><td style="padding:24px">
     <p style="margin:0 0 12px;font-size:15px;color:#243b53">${saludo}</p>

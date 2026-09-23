@@ -34,6 +34,7 @@ import { avisoHtml, type Tipo, ASUNTOS } from "./aviso-html.ts";
 import { esCorreoInterno } from "./usuario-alumno.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
 import { remitenteDe, type Remitente } from "./remitente-academia.ts";
+import { cabeceraCorreo, firmaDe } from "./marca-correo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -231,8 +232,10 @@ Deno.serve(async (req) => {
           .eq("cobro_id", g.disparador.id).eq("tipo", g.tipo).eq("correo", d.email).maybeSingle();
         if (yaFue) { saltados += 1; continue; }
 
-        const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL, contacto });
-        const r = await mandar(d.email, ASUNTOS[g.tipo](nombre), html, await remitenteDe(admin, studentId, DE));
+        const remite = await remitenteDe(admin, studentId, DE);
+        const html = avisoHtml({ tipo: g.tipo, alumno: nombre, destinatario: d.nombre, cobros: g.cobros, sitio: SITE_URL, contacto,
+          cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
+        const r = await mandar(d.email, ASUNTOS[g.tipo](nombre, firmaDe(remite.marca)), html, remite);
         hechos += 1;
         if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
         // Se apunta DESPUÉS de que Resend lo aceptó: si falla, mañana se
@@ -309,8 +312,10 @@ Deno.serve(async (req) => {
       const nombre = await nombreDe(rec.student_id as string);
       const enviadosA: string[] = [];
       for (const d of destinos) {
-        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros: cobrosDelAlumno, sitio: SITE_URL, contacto });
-        const r = await mandar(d.email, ASUNTOS[tipo](nombre), html, await remitenteDe(admin, rec.student_id as string, DE));
+        const remite = await remitenteDe(admin, rec.student_id as string, DE);
+        const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros: cobrosDelAlumno, sitio: SITE_URL, contacto,
+          cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
+        const r = await mandar(d.email, ASUNTOS[tipo](nombre, firmaDe(remite.marca)), html, remite);
         if (!r.ok) { fallos.push(`${rec.id} -> ${d.email}: ${r.error}`); continue; }
         // upsert a mano: si ya había un aviso de este tipo (por la tanda diaria
         // o por «Recordar ahora»), no se manda dos veces el mismo día por dos
@@ -366,10 +371,12 @@ Deno.serve(async (req) => {
     // A dónde SALDRÍA, para que quien lo está por mandar lo vea antes y no
     // después: es el mismo dato que hace falta para corregirlo si está mal.
     const destinos = await destinatariosDe(studentId);
+    const remitePrevia = await remitenteDe(admin, studentId, DE);
     return json({
       ok: true, alumno: nombre,
       correos: destinos.map((d) => d.email),
-      html: avisoHtml({ tipo, alumno: nombre, destinatario: "", cobros, sitio: SITE_URL, contacto }),
+      html: avisoHtml({ tipo, alumno: nombre, destinatario: "", cobros, sitio: SITE_URL, contacto,
+        cabecera: (t, c) => cabeceraCorreo(remitePrevia.marca, t, c) }),
     });
   }
 
@@ -380,8 +387,10 @@ Deno.serve(async (req) => {
     let mandados = 0;
     const fallos: string[] = [];
     for (const d of destinos) {
-      const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto });
-      const r = await mandar(d.email, ASUNTOS[tipo](nombre), html, await remitenteDe(admin, studentId, DE));
+      const remite = await remitenteDe(admin, studentId, DE);
+      const html = avisoHtml({ tipo, alumno: nombre, destinatario: d.nombre, cobros, sitio: SITE_URL, contacto,
+        cabecera: (t, c) => cabeceraCorreo(remite.marca, t, c) });
+      const r = await mandar(d.email, ASUNTOS[tipo](nombre, firmaDe(remite.marca)), html, remite);
       if (!r.ok) { fallos.push(`${d.email}: ${r.error}`); continue; }
       // upsert a mano: si ya había un aviso de este tipo, no se duplica la fila.
       await admin.from("avisos_cobro")
