@@ -3266,7 +3266,8 @@ después se anota lo que se ve.
   racha y los del informe a la casa: quien entrena a las once de la noche no
   puede caer en la semana siguiente por el huso del servidor.
 - **Los minutos salen de `minutos_por_tramos()`**, la misma de Informes, Tareas
-  y el reporte de actividades, con la semana como partición. Comprobado contra
+  y el reporte de actividades, con la semana como partición. Suman clase +
+  ejercicios, igual que la tarjeta (ver «Cómo viene» cuenta también la clase, más abajo). Comprobado contra
   los datos reales: los minutos de la curva y los de la tarjeta de arriba dan
   **el mismo número** (472 y 472 en el alumno con más actividad).
 
@@ -3394,6 +3395,43 @@ abierta a mandarle cualquier cosa.
     CTEs vieja (diferencia 0 en todos los alumnos), y aparte la función nueva
     se comparó tramo por tramo contra la cadena vieja sobre toda
     `platform_activity_log`.
+
+### CENFO: cada ejercicio vale como mínimo 2 minutos
+
+El latido de `js/tiempo-plataforma.js` deja de contar a los 60 s sin ningún
+clic ni tecla, así que quien se queda pensando una posición sin tocar nada no
+suma. En CENFO eso daba números que no se creía nadie: **149 ejercicios contra
+38 minutos**. Pedido del dueño: para ese grupo, cada ejercicio cuenta como
+mínimo 2 minutos de tiempo en la plataforma.
+
+- **La cuenta es `greatest(minutos medidos, 2 × ejercicios hechos)`** en el
+  mismo periodo —«como mínimo»: si lo medido ya es mayor, manda lo medido—.
+  Un ejercicio hecho es una fila de `training_progress`: repetirlo cuenta otra
+  vez, porque volvió a hacerlo. Afecta solo a `minutos_ejercicios`; la clase se
+  sigue midiendo como siempre.
+- **La regla vive en UN lugar**: `public.minutos_minimos_por_ejercicio(grupo)`
+  devuelve 2 para CENFO y 0 para los demás. La usan las cuatro cuentas de
+  tiempo —`informes_resumen_alumnos()`, `informe_de_alumno()` (el correo a la
+  casa), `evolucion_alumno()` y la meta `minutos` de `tareas_con_avance()`—.
+  Si una la aplicara y otra no, la tarjeta, la curva y el correo dirían
+  números distintos del mismo alumno. Para sumar otro grupo, o cambiar los 2
+  minutos, se toca solo esa función.
+- **El grupo se compara sin mayúsculas ni espacios** (`upper(btrim(...))`):
+  «Cenfo» y «CENFO » son el mismo grupo, el mismo tropiezo que ya se llevó la
+  videollamada por grupo.
+- Comprobado aplicándola dentro de una transacción que se deshacía, antes de
+  aplicarla de verdad: cambian los 5 alumnos de CENFO (38 → 306 min, 74 → 488)
+  y **ningún otro alumno se mueve ni un minuto**.
+
+### «Cómo viene» cuenta también la clase
+
+`evolucion_alumno()` sumaba solo `platform_activity_log`, mientras la tarjeta
+«Tiempo total en la plataforma» de arriba ya sumaba clase + ejercicios: la
+curva decía menos que la tarjeta del mismo alumno. Ahora la curva suma lo
+mismo —`class_presence_log` por semana más los ejercicios (con el mínimo de
+CENFO)—, y comprobado contra los datos reales: la suma de las 12 semanas da el
+total de la tarjeta (428 y 428; 652 y 652) salvo el redondeo por semana y lo
+anterior a las 12 semanas.
 
 ### `training_progress` tenía el mismo problema, con otro nombre
 
