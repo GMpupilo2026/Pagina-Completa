@@ -28,6 +28,7 @@
     <script src="js/mejorar-informe.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/actividad-profesor.js"></script>
+    <script src="js/detalle-mensual.js"></script>
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
@@ -64,6 +65,12 @@
                 <h2 id="numeros-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tus números del mes</h2>
                 <p id="numeros-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
                 <div id="numeros"></div>
+            </section>
+
+            <section aria-labelledby="detalle-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="detalle-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">El detalle del mes</h2>
+                <p id="detalle-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+                <div id="detalle"></div>
             </section>
 
             <section id="comentario-caja" hidden aria-labelledby="comentario-titulo" class="bg-accent-50 dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6 border border-accent-400">
@@ -159,6 +166,24 @@ async function pintarNumeros() {
     caja.appendChild(ActividadProfesor.tarjetas((data && data[0]) || null));
 }
 
+/* Cada clase y cada estudiante del mes, en línea y presencial juntos. Igual
+   que los números: si ya se envió, la foto que viajó; si no, el de hoy. */
+async function pintarDetalle() {
+    const caja = document.getElementById("detalle");
+    const sub = document.getElementById("detalle-sub");
+    const inf = informeDelMes();
+    const enviado = !!(inf && inf.estado === "enviado");
+    caja.replaceChildren();
+    sub.textContent = enviado
+        ? "Clase por clase y estudiante por estudiante, tal como iban con el informe."
+        : "Clase por clase y estudiante por estudiante. Va con el informe tal como esté el día que lo envíes.";
+    const { data, error } = enviado
+        ? await sb.rpc("detalle_informe_mensual", { p_informe: inf.id })
+        : await sb.rpc("detalle_mensual_profesor", { p_profesor: session.user.id, p_periodo: mes });
+    if (error) { sub.textContent = "No se pudo armar el detalle del mes: " + error.message; return; }
+    DetalleMensual.pintar(caja, data, { archivo: "mi-informe" });
+}
+
 function pintarFormulario() {
     const inf = informeDelMes();
     const enviado = !!(inf && inf.estado === "enviado");
@@ -226,7 +251,7 @@ async function elegirMes(valor) {
     mes = valor;
     document.getElementById("mes").value = valor;
     pintarFormulario();
-    await pintarNumeros();
+    await Promise.all([pintarNumeros(), pintarDetalle()]);
 }
 
 async function guardar(enviar) {
@@ -247,7 +272,7 @@ async function guardar(enviar) {
     await cargarInformes();
     pintarFormulario();
     pintarHistorial();
-    await pintarNumeros();
+    await Promise.all([pintarNumeros(), pintarDetalle()]);
     avisar(enviar
         ? "✅ Informe de " + ActividadProfesor.textoMes(mes) + " enviado a tu supervisión."
         : "Borrador guardado. Todavía no lo ve nadie: cuando esté listo, apreta «Enviar a supervisión».");
