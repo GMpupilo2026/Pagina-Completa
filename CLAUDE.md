@@ -1937,6 +1937,28 @@ vacío, al del supervisor. Lo arma `_compartido/remitente-academia.ts` con
   remitente de siempre y la respuesta cae en `informes@`, que Cloudflare
   reenvía. Un nombre de más no justifica dejar a una familia sin su informe.
 
+**Y los tres correos llevan arriba la marca de la academia**: su color de
+fondo, su logo y su nombre, y el asunto firma con ese nombre. Con dos
+academias o ninguna, la cabecera de siempre de Ajedrez Integral (la misma regla
+del remitente). La franja la arma **una sola función**,
+`cabeceraCorreo()` de `_compartido/marca-correo.ts`, y la marca llega dentro
+del `Remitente` (`remitenteDe()` llama a `marca_de_alumno()`, que solo puede
+llamar la service role): así ningún correo tiene que acordarse de pedirla.
+
+- **Los generadores de HTML reciben la cabecera armada** (un parámetro
+  `cabecera`), no importan el compartido: `informe-html.ts` y compañía los
+  corren también las pruebas con Node, donde el compartido no está copiado al
+  lado.
+- **El color y el logo vienen de la base y terminan dentro de un atributo**,
+  así que se vuelven a comprobar: el color tiene que ser un `#rrggbb` y el logo
+  una dirección `https:` sin comillas ni espacios; si no, se cae a la cabecera
+  de siempre o se omite el logo. Sobre un color propio la etiqueta va en blanco
+  (el ámbar de siempre no está medido contra un color que eligió otra persona;
+  el blanco sí, lo exige `color_con_texto_blanco()`).
+- `verificar-informe-casa.js` lo comprueba: cabecera de siempre sin academia,
+  color, nombre y logo con una, un color malo rechazado, el nombre escapado y
+  un logo `javascript:` que no se pinta.
+
 #### La marca de cada academia: su logo y su color
 
 Quien es de una academia ve **su logo y su nombre** en el encabezado de la

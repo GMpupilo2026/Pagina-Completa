@@ -75,6 +75,15 @@ const CASOS = [
         ],
       },
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  /* Con la marca de su academia: el color, el logo y el nombre en la cabecera.
+     Y una marca con un color que no es color y un nombre con etiquetas, que es
+     texto de la base metido en un style y en el cuerpo del correo. */
+  { nombre: "con-marca", frecuencia: "semanal", marca: { nombre: "Academia San José", color: "#1b4332",
+      logoUrl: "https://bgtijpimpcokxatxxbki.supabase.co/storage/v1/object/public/academia-marca/ac1/logo-abc.webp" },
+    datos: { ...BASE, dias_activos: 5, tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
+  { nombre: "marca-mala", frecuencia: "semanal", marca: { nombre: '<img src=x onerror=alert(1)>Reyes',
+      color: 'red;background:url(https://malo.test/x)', logoUrl: 'javascript:alert(1)' },
+    datos: { ...BASE, dias_activos: 5, tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-si", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 1,
       tareas: SIN_DEBERES, examenes: { rendidos: 0, sin_hacer_hoy: 0, pendientes: 0 } } },
   { nombre: "diario-no", frecuencia: "diario", datos: { ...BASE, dias_del_periodo: 1, dias_activos: 0,
@@ -173,6 +182,22 @@ ok(!/a dónde va|Cuánto practicar|De su profe/.test(sp),
    no puede perderse al mudar el bloque. */
 const conNivel = texto("con-plan");
 ok(/Nivel medido/.test(conNivel), "el nivel no puede perderse al mudarse al bloque nuevo");
+
+// ---------- La marca de la academia ----------
+const cab = (k) => (html[k].match(/<tr><td style="background:[^"]*;padding:22px 24px">[\s\S]*?<\/td><\/tr>/) || [""])[0];
+ok(/background:#102a43/.test(cab("va-bien")) && /Ajedrez Integral/.test(cab("va-bien")),
+  "sin academia la cabecera tiene que ser la de siempre, azul y con Ajedrez Integral");
+const cm = cab("con-marca");
+ok(/background:#1b4332/.test(cm), "con academia la cabecera tiene que tomar su color");
+ok(/Academia San José/.test(cm) && !/Ajedrez Integral/.test(cm), "y decir el nombre de la academia en vez del de siempre");
+ok(/<img src="https:\/\/bgtijpimpcokxatxxbki\.supabase\.co\/storage\/v1\/object\/public\/academia-marca\/ac1\/logo-abc\.webp" alt=""/.test(cm),
+  "y llevar el logo del bucket público, con alt vacío porque el nombre va escrito al lado");
+ok(!/#f0b429/.test(cm), "sobre el color de la academia la etiqueta va en blanco: el ámbar no está medido contra ese fondo");
+const cmala = cab("marca-mala");
+ok(/background:#102a43/.test(cmala) && !/malo\.test/.test(html["marca-mala"]),
+  "un color que no es #rrggbb no entra al style: se queda el de siempre");
+ok(!/<img src=x/.test(html["marca-mala"]) && /&lt;img src=x/.test(cmala), "el nombre de la academia va escapado y se sigue viendo, literal");
+ok(!/javascript:/.test(html["marca-mala"]), "un logo que no es https no se pinta");
 
 // ---------- Los umbrales ----------
 ok(periodos.semanal.esperados > 0 && periodos.semanal.esperados < periodos.semanal.dias,

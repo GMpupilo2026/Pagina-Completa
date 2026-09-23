@@ -12,20 +12,29 @@
 //
 // Si la consulta falla, el correo sale igual con el remitente de siempre: un
 // nombre de más no justifica dejar a una familia sin su informe.
+//
+// Trae además la MARCA (marca_de_alumno: nombre, color y logo, solo si es de
+// una academia), para la cabecera del correo. Va acá y no aparte porque cada
+// correo ya pide su remitente: así la marca llega a los tres sin que ninguno
+// tenga que acordarse de pedirla.
+
+import type { Marca } from "./marca-correo.ts";
 
 type ConRpc = {
   rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
 };
 
-export type Remitente = { from: string; replyTo: string[] };
+export type Remitente = { from: string; replyTo: string[]; marca: Marca | null };
 
 export async function remitenteDe(
   admin: ConRpc,
   alumnoId: string | null | undefined,
   deBase: string,
 ): Promise<Remitente> {
-  const base: Remitente = { from: deBase, replyTo: [] };
+  const base: Remitente = { from: deBase, replyTo: [], marca: null };
   if (!alumnoId) return base;
+  const marca = await marcaDe(admin, alumnoId);
+  base.marca = marca;
   try {
     const { data, error } = await admin.rpc("correos_de_supervision", { p_alumno: alumnoId });
     if (error || !Array.isArray(data) || !data.length) return base;
@@ -35,8 +44,25 @@ export async function remitenteDe(
     const direccion = (deBase.match(/<([^>]+)>/)?.[1] ?? deBase).trim();
     // Comillas, ángulos o saltos de línea en el nombre romperían la cabecera.
     const nombre = academias.length === 1 ? academias[0].replace(/["<>\r\n]/g, "").slice(0, 80).trim() : "";
-    return { from: nombre ? `${nombre} <${direccion}>` : deBase, replyTo };
+    return { from: nombre ? `${nombre} <${direccion}>` : deBase, replyTo, marca };
   } catch {
     return base;
+  }
+}
+
+async function marcaDe(admin: ConRpc, alumnoId: string): Promise<Marca | null> {
+  try {
+    const { data, error } = await admin.rpc("marca_de_alumno", { p_alumno: alumnoId });
+    if (error || !Array.isArray(data) || data.length !== 1) return null;
+    const f = data[0] as { nombre?: string; color?: string | null; logo_path?: string | null };
+    const nombre = String(f.nombre ?? "").trim();
+    if (!nombre) return null;
+    const base = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
+    const logoUrl = f.logo_path && base
+      ? `${base}/storage/v1/object/public/academia-marca/${String(f.logo_path).split("/").map(encodeURIComponent).join("/")}`
+      : null;
+    return { nombre, color: f.color ?? null, logoUrl };
+  } catch {
+    return null;
   }
 }

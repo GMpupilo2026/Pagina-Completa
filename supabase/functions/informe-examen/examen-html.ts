@@ -12,6 +12,10 @@
 
 import type { Contacto } from "./contacto-academia.ts";
 
+/* La franja de arriba la arma `cabeceraCorreo()` (_compartido/marca-correo.ts),
+   con la marca de la academia del alumno. */
+export type Cabecera = (tituloHtml: string, etiquetaColor?: string) => string;
+
 const AREAS: Record<string, string> = {
   reglas: "Reglas y movimientos",
   material: "Valor de las piezas",
@@ -35,7 +39,7 @@ function fecha(iso: string | null) {
   return new Date(iso).toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function informeExamenHtml(d: Record<string, any>, sitio: string, contacto?: Contacto | null) {
+export function informeExamenHtml(d: Record<string, any>, sitio: string, contacto: Contacto | null | undefined, cabecera: Cabecera) {
   const nota = d.nota != null ? Number(d.nota).toFixed(2) : "—";
   const pct = Number(d.porcentaje) || 0;
   const color = pct >= 70 ? "#16a34a" : pct >= 50 ? "#de911d" : "#dc2626";
@@ -97,10 +101,7 @@ export function informeExamenHtml(d: Record<string, any>, sitio: string, contact
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
 
-  <tr><td style="background:#102a43;padding:22px 24px">
-    <div style="color:#f0b429;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ajedrez Integral</div>
-    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">Resultado de un examen</div>
-  </td></tr>
+  ${cabecera("Resultado de un examen")}
 
   <tr><td style="padding:24px">
     <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#102a43">${escapar(d.alumno)}</p>

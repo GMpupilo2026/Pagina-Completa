@@ -15,6 +15,12 @@
 
 import type { Contacto } from "./contacto-academia.ts";
 
+/* La franja de arriba la arma `cabeceraCorreo()` (_compartido/marca-correo.ts),
+   con la marca de la academia del alumno. Se recibe armada y no se importa acá
+   porque este archivo lo corren también las pruebas de herramientas/ con Node,
+   donde el compartido no está copiado al lado. */
+export type Cabecera = (tituloHtml: string, etiquetaColor?: string) => string;
+
 export type Frecuencia = "diario" | "semanal" | "mensual" | "anual";
 
 // `esperados` es en cuántos días del periodo se considera que el alumno
@@ -187,7 +193,8 @@ function comoVa(d: Record<string, any>, frecuencia: Frecuencia) {
 }
 
 export function informeHtml(
-  d: Record<string, any>, frecuencia: Frecuencia, sitio: string, contacto?: Contacto | null,
+  d: Record<string, any>, frecuencia: Frecuencia, sitio: string, contacto: Contacto | null | undefined,
+  cabecera: Cabecera,
 ) {
   const periodo = PERIODOS[frecuencia] ?? PERIODOS.semanal;
   const minutos = (Number(d.minutos_clase) || 0) + (Number(d.minutos_ejercicios) || 0);
@@ -352,10 +359,7 @@ export function informeHtml(
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
 
-  <tr><td style="background:#102a43;padding:22px 24px">
-    <div style="color:#f0b429;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ajedrez Integral</div>
-    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">Informe ${escapar(periodo.titulo)}</div>
-  </td></tr>
+  ${cabecera(`Informe ${escapar(periodo.titulo)}`)}
 
   <tr><td style="padding:24px">
     <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#102a43">${escapar(d.alumno)}</p>
@@ -415,7 +419,8 @@ export function informeHtml(
    un informe. Reutiliza el mismo envoltorio visual (cabecera azul marino,
    franja de color, pie con el contacto) para que se sienta del mismo sitio. */
 export function invitarPracticarHtml(
-  nombreCompleto: string, dias: number | null, sitio: string, contacto?: Contacto | null,
+  nombreCompleto: string, dias: number | null, sitio: string, contacto: Contacto | null | undefined,
+  cabecera: Cabecera,
 ) {
   const nombre = String(nombreCompleto || "").trim() || "Tu hijo o hija";
   const primerNombre = nombre.split(" ")[0];
@@ -431,10 +436,7 @@ export function invitarPracticarHtml(
 <tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
 
-  <tr><td style="background:#102a43;padding:22px 24px">
-    <div style="color:#f0b429;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Ajedrez Integral</div>
-    <div style="color:#ffffff;font-size:20px;font-weight:700;margin-top:4px">Un empujoncito para ${escapar(primerNombre)}</div>
-  </td></tr>
+  ${cabecera(`Un empujoncito para ${escapar(primerNombre)}`)}
 
   <tr><td style="padding:24px">
     <p style="margin:0 0 20px;font-size:14px;color:#243b53;line-height:1.6">Hola,</p>
