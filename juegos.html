@@ -30,6 +30,7 @@
     <script src="js/duelo-engine.js"></script>
     <script src="js/fourplayer-engine.js"></script>
     <script src="js/variantes-engines.js"></script>
+    <script src="js/ritmos.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -150,7 +151,7 @@
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Asignar rivales</h2>
                     <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige dos alumnos distintos y la modalidad — se crea la partida y a ambos les aparece de inmediato en su panel de Juegos.</p>
-                    <form id="create-room-form" class="space-y-3">
+                    <form id="create-room-form" class="space-y-3" novalidate>
                         <div>
                             <label for="variant-select" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Modalidad</label>
                             <select id="variant-select" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -258,33 +259,13 @@
         const SEAT_LABEL = { red: "🔴 Rojo", blue: "🔵 Azul", yellow: "🟡 Amarillo", green: "🟢 Verde" };
 
         // Tiempo asignado a cada jugador (reloj tipo Fischer: minutos + segundos que se
-        // suman después de cada jugada). "Sin límite" (initial: null) es como se jugó
-        // siempre hasta ahora — el reloj es opcional, no obligatorio.
-        const TIME_CONTROLS = [
-            { id: "none", label: "Sin límite", initial: null, increment: 0 },
-            { id: "3+0", label: "3 minutos", initial: 180, increment: 0 },
-            { id: "5+0", label: "5 minutos", initial: 300, increment: 0 },
-            { id: "5+3", label: "5 min + 3 seg", initial: 300, increment: 3 },
-            { id: "10+0", label: "10 minutos", initial: 600, increment: 0 },
-            { id: "10+5", label: "10 min + 5 seg", initial: 600, increment: 5 },
-            { id: "15+10", label: "15 min + 10 seg", initial: 900, increment: 10 },
-        ];
-
-        function timeControlLabel(initialSeconds, incrementSeconds) {
-            if (initialSeconds === null || initialSeconds === undefined) return "Sin límite";
-            const minutes = Math.round(initialSeconds / 60);
-            return incrementSeconds ? minutes + " min + " + incrementSeconds + " seg" : minutes + " minutos";
-        }
+        // suman después de cada jugada). "Sin límite" es como se jugó siempre — el
+        // reloj es opcional. La lista vive en js/ritmos.js, la misma de los torneos.
+        const timeControlLabel = Ritmos.etiqueta;
+        let ritmoPartida = null, ritmoReto = null;
 
         function populateTimeControlSelect() {
-            const select = document.getElementById("time-control-select");
-            select.innerHTML = "";
-            TIME_CONTROLS.forEach((tc) => {
-                const opt = document.createElement("option");
-                opt.value = tc.id;
-                opt.textContent = tc.label;
-                select.appendChild(opt);
-            });
+            ritmoPartida = Ritmos.montar(document.getElementById("time-control-select"));
         }
 
         function setStatus(text) {
@@ -602,8 +583,8 @@
             const msg = document.getElementById("create-room-msg");
             const fail = (text) => { msg.textContent = text; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; };
             const variant = document.getElementById("variant-select").value;
-            const timeControlId = document.getElementById("time-control-select").value;
-            const timeControl = TIME_CONTROLS.find((tc) => tc.id === timeControlId) || TIME_CONTROLS[0];
+            const timeControl = ritmoPartida.leer();
+            if (timeControl.error) { fail(timeControl.error); return; }
 
             if (variant === "4ffa" || variant === "4teams") {
                 const ids = SEATS.map((s) => document.getElementById("seat-" + s + "-select").value);
@@ -703,14 +684,7 @@
                 o.value = v.id; o.textContent = v.emoji + " " + v.label;
                 mod.appendChild(o);
             });
-            const t = document.getElementById("reto-tiempo");
-            t.innerHTML = "";
-            TIME_CONTROLS.forEach((tc) => {
-                const o = document.createElement("option");
-                o.value = tc.id; o.textContent = tc.label;
-                t.appendChild(o);
-            });
-            t.value = "10+0";
+            if (!ritmoReto) ritmoReto = Ritmos.montar(document.getElementById("reto-tiempo"), { valor: "10+0" });
         }
 
         async function iniciarPresencia() {
@@ -770,7 +744,8 @@
 
         async function retar(quien, boton) {
             const modalidad = document.getElementById("reto-modalidad").value;
-            const tc = TIME_CONTROLS.find((t) => t.id === document.getElementById("reto-tiempo").value) || TIME_CONTROLS[0];
+            const tc = ritmoReto.leer();
+            if (tc.error) { alert(tc.error); return; }
             boton.disabled = true;
             boton.textContent = "Enviado…";
             const { data, error } = await sb.from("desafios").insert({
@@ -843,7 +818,7 @@
                 nombre = (data && data[0]) ? data[0].nombre : "Alguien";
                 playerNames[reto.de_id] = nombre;
             }
-            const tc = TIME_CONTROLS.find((t) => t.initial === reto.initial_seconds && t.increment === reto.increment_seconds);
+            const tc = { label: Ritmos.etiqueta(reto.initial_seconds, reto.increment_seconds) };
             const caja = document.createElement("div");
             caja.dataset.reto = reto.id;
             caja.className = "bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 rounded-r-xl px-4 py-3";
