@@ -1717,6 +1717,34 @@ el id de ESE informe, y que ni la alumna ni un profesor sin supervisión entren.
 Está probado que falla de verdad: haciendo que el enviado enseñe los números de
 hoy, saltan 2.
 
+#### Los recordatorios: el informe que no llega se pide, no se espera
+
+Un informe que nadie manda no da ningún error: la supervisión simplemente no
+tiene nada que leer, y se entera cuando ya pasó el mes. Por eso
+`public.recordar_informes_mensuales()`, que corre con pg_cron todos los días a
+las 14:00 UTC (8 de la mañana en Costa Rica, job
+`recordar-informes-mensuales`), y en tres días del mes hace algo:
+
+- **Los días 1 y 3**, un aviso al celular a cada profesor **que tiene
+  supervisión** (`supervisores_de()` no vacío) y no mandó el informe del mes
+  anterior. A quien no tiene supervisión nadie le pide informe, así que no se le
+  recuerda. Un borrador dice «sigue en borrador: falta enviarlo», que no es lo
+  mismo que no haberlo empezado. Los dos avisos llevan la misma etiqueta, así
+  que el del día 3 reemplaza al del día 1 en la bandeja.
+- **El día 5**, a cada supervisor, cuántos faltan y quiénes («Faltan 3 informes
+  de septiembre de 2026: Ana, Bruno y Carla», con «y N más» después de tres),
+  con enlace a `supervision.html`. Sin nadie pendiente, no se le manda nada.
+- **Que no salga dos veces lo impide la clave primaria de
+  `public.recordatorios_informe`** (periodo, tipo, persona), no la hora del
+  cron: volver a correrlo el mismo día no manda nada. La tabla no tiene ninguna
+  política y se le quitaron los permisos a `anon` y `authenticated`; la función
+  tampoco la puede llamar nadie con sesión, solo el cron.
+- Recibe una fecha opcional (`p_hoy`) para poder probar cada día sin esperarlo.
+  Comprobado así en una transacción revertida: los días 1 y 3 reciben aviso el
+  que no mandó y el del borrador, con su texto cada uno, y no el que ya envió;
+  repetir el día no manda nada; el día 5 le llega la lista al supervisor; el día
+  10 no pasa nada.
+
 #### El detalle del informe mensual: cada clase y cada estudiante
 
 Los números del informe dicen cuánto; el detalle dice **qué clase y quién**. En
