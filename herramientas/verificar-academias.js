@@ -125,6 +125,12 @@ window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
         Object.assign(a, { color: args.p_color, logo_path: args.p_logo_path });
         return ok(Object.assign({}, a));
       }
+      if (n === "academia_crear_desde_grupo") {
+        const fila = { id: "ac-grupo", nombre: args.p_nombre, supervisor_id: args.p_supervisor, whatsapp: null, correo_respuestas: null };
+        D.tablas.academias = D.tablas.academias.concat([fila]);
+        D.tablas.academia_miembros = D.tablas.academia_miembros.concat(args.p_personas.map((p) => ({ academia_id: fila.id, persona_id: p })));
+        return ok({ id: fila.id, nombre: fila.nombre, miembros: args.p_personas.length });
+      }
       if (n === "ia_guardar_config") return ok({ academia_id: args.p_academia, modelo: args.p_modelo, tope_mensual_usd: args.p_tope });
       if (n === "academia_personas") return ok(personas(args.p_academia));
       if (n === "academia_set_miembros") {
@@ -208,6 +214,50 @@ async function pruebaAdmin(browser) {
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "academia_set_funciones_coordinador"));
   const f = (await llamadas(page, "academia_set_funciones_coordinador"))[0];
   igual("se mandan las funciones permitidas, sin cobros", [f.p_coordinador, f.p_permitidas], ["coord", TODAS.filter((x) => x !== "cobros")]);
+  igual("sin errores en la página", errores, []);
+  await page.close();
+}
+
+/* El asistente: crear una academia desde un grupo. Lo que se rompe callado es
+   mandar otra gente que la que se ve marcada, o crear en tres llamadas. */
+async function pruebaDesdeGrupo(browser) {
+  console.log("\nCrear una academia desde un grupo");
+  const persona = (p, extra) => Object.assign({ id: p.id, nombre: p.full_name, rol: p.role, es_coordinador: p.es_coordinador,
+    es_supervisor: p.es_supervisor, en_grupo: p.grupo === "SJ", alumnos_del_grupo: 0, academias: [] }, extra || {});
+  const gente = [persona(PROF, { alumnos_del_grupo: 2, academias: ["Los Reyes"] }), persona(COORD, { en_grupo: true }),
+    persona(A1, { academias: ["Los Reyes"] }), persona(A2), persona(A3)];
+  const { page, errores } = await abrir(browser, "/academias.html", datosBase({ rpc: { grupo_para_academia: gente } }), ADMIN, "#vista-lista:not([hidden])");
+  igual("el grupo se ofrece con cuántos alumnos tiene", await page.$eval('#g-grupo option[value="SJ"]', (o) => o.textContent), "SJ (3 alumnos)");
+  igual("antes de elegir no se destapa nada", await seVe(page, "#g-detalle"), "no");
+  await page.selectOption("#g-grupo", "SJ");
+  await page.waitForSelector("#g-detalle:not([hidden])");
+  igual("se le pregunta a la base quién está en el grupo", (await llamadas(page, "grupo_para_academia"))[0], { p_grupo: "SJ" });
+  igual("el nombre arranca con el del grupo", await page.$eval("#g-nombre", (i) => i.value), "SJ");
+  igual("se ofrecen los dos del equipo docente, marcados", await page.$$eval("#g-docentes input", (xs) => xs.map((x) => [x.value, x.checked])), [["prof", true], ["coord", true]]);
+  igual("dice a cuántos del grupo da clase y en qué academia ya está",
+    await page.$eval("#g-docentes", (d) => d.textContent.includes("da clase a 2 alumnos del grupo") && d.textContent.includes("ya está en Los Reyes")), true);
+  igual("avisa que uno de los alumnos queda en dos academias", await page.$eval("#g-alumnos-otra", (p) => p.textContent.startsWith("1 ya está en otra academia")), true);
+  igual("el supervisor que ya tiene academia no se ofrece", await page.$('#g-supervisor option[value="sup"]'), null);
+  igual("el profesor del grupo se ofrece diciendo que se lo marca", await page.$eval('#g-supervisor option[value="prof"]', (o) => o.textContent), "Karina Rojas (se marca como supervisor)");
+  igual("el botón cuenta a los cinco", await page.$eval("#g-crear", (b) => b.textContent), "Crear la academia con 5 personas");
+
+  // Sin nadie marcado no viaja nada.
+  await page.uncheck("#g-alumnos"); await page.uncheck("#g-doc-prof"); await page.uncheck("#g-doc-coord");
+  igual("sin nadie marcado el botón no se puede apretar", await page.$eval("#g-crear", (b) => b.disabled), true);
+  await page.check("#g-alumnos"); await page.check("#g-doc-prof");
+
+  await page.fill("#g-nombre", "Academia San José");
+  await page.selectOption("#g-supervisor", "prof");
+  igual("la nota dice que se lo marca como supervisor", await page.$eval("#g-supervisor-nota", (p) => p.textContent.includes("Karina Rojas queda marcado como supervisor")), true);
+  await page.click("#g-crear");
+  await page.waitForSelector("#vista-academia:not([hidden])");
+  const c = await llamadas(page, "academia_crear_desde_grupo");
+  igual("se crea en UNA llamada, sin pasar por academia_guardar ni academia_set_miembros",
+    [c.length, (await llamadas(page, "academia_guardar")).length, (await llamadas(page, "academia_set_miembros")).length], [1, 0, 0]);
+  igual("viaja el nombre escrito, el supervisor y SOLO la gente marcada",
+    [c[0].p_nombre, c[0].p_supervisor, ordenado(c[0].p_personas)], ["Academia San José", "prof", ordenado(["prof", "a1", "a2", "a3"])]);
+  igual("queda abierta la academia recién creada", await page.$eval("#titulo", (h) => h.textContent.trim()), "🏫 Academia San José");
+  igual("el aviso dice con cuántas personas nació", await page.$eval("#aviso", (a) => a.textContent), "Academia «Academia San José» creada con 4 personas.");
   igual("sin errores en la página", errores, []);
   await page.close();
 }
@@ -430,6 +480,7 @@ async function pruebaIA(browser) {
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaAdmin(browser);
+    await pruebaDesdeGrupo(browser);
     await pruebaSupervisor(browser);
     await pruebaSinAcceso(browser);
     await pruebaFuncionesApagadas(browser);

@@ -52,8 +52,42 @@
                 <h2 id="h-lista" class="sr-only">Todas las academias</h2>
                 <ul id="lista" class="space-y-3 mb-8"></ul>
 
+                <form id="form-grupo" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="h-grupo">
+                    <h3 id="h-grupo" class="font-semibold text-lg text-brand-900 dark:text-white mb-1">Crear una academia desde un grupo</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Elige un grupo y la academia nace con sus alumnos, con quien les da clase y con su supervisor, de una sola vez. Antes de crearla ves quién va a entrar y puedes sacar a quien no corresponda.</p>
+                    <label for="g-grupo" class="block text-sm font-semibold mb-1">Grupo</label>
+                    <select id="g-grupo" class="w-full sm:w-80 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    <div id="g-detalle" hidden class="mt-4">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="g-nombre" class="block text-sm font-semibold mb-1">Nombre de la academia</label>
+                                <input id="g-nombre" required minlength="2" maxlength="80" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Es el nombre con el que les llegan los correos a las familias.</p>
+                            </div>
+                            <div>
+                                <label for="g-supervisor" class="block text-sm font-semibold mb-1">Supervisor</label>
+                                <select id="g-supervisor" aria-describedby="g-supervisor-nota" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                                <p id="g-supervisor-nota" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                            </div>
+                        </div>
+                        <fieldset class="mt-4">
+                            <legend class="text-sm font-semibold mb-2">Equipo docente que entra</legend>
+                            <div id="g-docentes" class="space-y-2"></div>
+                        </fieldset>
+                        <fieldset class="mt-4">
+                            <legend class="text-sm font-semibold mb-2">Alumnos</legend>
+                            <label for="g-alumnos" class="flex items-start gap-2 text-sm">
+                                <input id="g-alumnos" type="checkbox" checked class="mt-1 h-4 w-4">
+                                <span id="g-alumnos-texto"></span>
+                            </label>
+                            <p id="g-alumnos-otra" class="text-xs text-brand-450 dark:text-brand-350 mt-1"></p>
+                        </fieldset>
+                        <button id="g-crear" type="submit" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
+                    </div>
+                </form>
+
                 <form id="form-nueva" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
-                    <h3 class="font-semibold text-lg text-brand-900 dark:text-white mb-3">Nueva academia</h3>
+                    <h3 class="font-semibold text-lg text-brand-900 dark:text-white mb-3">O una academia vacía</h3>
                     <div class="grid sm:grid-cols-2 gap-4">
                         <div>
                             <label for="n-nombre" class="block text-sm font-semibold mb-1">Nombre</label>
@@ -294,6 +328,7 @@ async function pintarLista() {
         ul.appendChild(li);
     });
     llenarSupervisores(document.getElementById("n-supervisor"), "");
+    llenarGrupos();
     if (esAdmin) await pintarIA();
 }
 
@@ -399,6 +434,169 @@ document.getElementById("form-nueva").addEventListener("submit", async (e) => {
     document.getElementById("n-nombre").value = "";
     await cargarAcademias();
     avisar("Academia «" + data.nombre + "» creada. Ahora súmale su gente.");
+    await abrirAcademia(data.id);
+});
+
+/* ── Crear una academia desde un grupo ─────────────────────────────────────
+   Quién entraría lo dice la base (grupo_para_academia): los alumnos del grupo,
+   el equipo docente con ese grupo y los profesores de esos alumnos, con
+   profesores_de() —asignación directa o equipo—, que es la única fuente de
+   «quién es profesor de quién». Crear es UNA llamada: nombrar al supervisor,
+   crear la academia y sumar a la gente son el mismo acto, y partido en tres una
+   falla a mitad dejaría una academia vacía que se ve perfecta. */
+let gGente = [];           // lo que devolvió grupo_para_academia para el grupo elegido
+let gNombreTocado = false; // si ya escribió un nombre, cambiar de grupo no se lo pisa
+let gPeticion = 0;
+
+function llenarGrupos() {
+    const sel = document.getElementById("g-grupo");
+    const cuenta = new Map();
+    perfiles.forEach((p) => {
+        const g = (p.grupo || "").trim();
+        if (!g || p.is_admin) return;
+        const k = g.toUpperCase();
+        const c = cuenta.get(k) || { nombre: g, alumnos: 0 };
+        if (p.role === "alumno") c.alumnos++;
+        cuenta.set(k, c);
+    });
+    const actual = sel.value;
+    sel.replaceChildren();
+    const nada = el("option", null, "— elige un grupo —");
+    nada.value = "";
+    sel.appendChild(nada);
+    [...cuenta.values()].sort((a, b) => b.alumnos - a.alumnos || a.nombre.localeCompare(b.nombre, "es")).forEach((c) => {
+        const o = el("option", null, c.nombre + " (" + c.alumnos + (c.alumnos === 1 ? " alumno)" : " alumnos)"));
+        o.value = c.nombre;
+        sel.appendChild(o);
+    });
+    sel.value = [...sel.options].some((o) => o.value === actual) ? actual : "";
+}
+
+function gDocentes() { return gGente.filter((p) => p.rol !== "alumno"); }
+function gAlumnos() { return gGente.filter((p) => p.rol === "alumno"); }
+
+function gSeleccion() {
+    const ids = [...document.querySelectorAll("#g-docentes input:checked")].map((i) => i.value);
+    if (document.getElementById("g-alumnos").checked) ids.push(...gAlumnos().map((p) => p.id));
+    return ids;
+}
+
+function gActualizarBoton() {
+    const n = gSeleccion().length;
+    const b = document.getElementById("g-crear");
+    b.textContent = n ? "Crear la academia con " + n + (n === 1 ? " persona" : " personas") : "Marca a alguien para crear la academia";
+    b.disabled = n === 0;
+    b.classList.toggle("opacity-60", n === 0);
+    const sup = document.getElementById("g-supervisor");
+    const elegido = gGente.find((p) => p.id === sup.value) || supervisores.find((p) => p.id === sup.value);
+    document.getElementById("g-supervisor-nota").textContent = !sup.value
+        ? "Sin supervisor, las respuestas de las familias caen en informes@. Se puede poner después."
+        : elegido && !elegido.es_supervisor
+            ? "Al crear la academia, " + nombreDe(elegido) + " queda marcado como supervisor."
+            : "A su correo llegan las respuestas de las familias.";
+}
+
+function gPintar() {
+    const docentes = gDocentes(), alumnos = gAlumnos();
+    const cont = document.getElementById("g-docentes");
+    cont.replaceChildren();
+    if (!docentes.length) cont.appendChild(el("p", "text-sm text-brand-500 dark:text-brand-300", "Nadie del equipo docente tiene este grupo ni da clase a sus alumnos."));
+    docentes.forEach((p) => {
+        const id = "g-doc-" + p.id;
+        const lab = el("label", "flex items-start gap-2 text-sm");
+        lab.htmlFor = id;
+        const cb = el("input", "mt-1 h-4 w-4");
+        cb.type = "checkbox"; cb.id = id; cb.value = p.id; cb.checked = true;
+        cb.addEventListener("change", gActualizarBoton);
+        const tx = el("span");
+        tx.appendChild(el("span", "font-medium", nombreDe(p)));
+        const detalle = [p.es_coordinador ? "coordina" : "profesor"];
+        if (p.alumnos_del_grupo) detalle.push("da clase a " + p.alumnos_del_grupo + (p.alumnos_del_grupo === 1 ? " alumno del grupo" : " alumnos del grupo"));
+        else if (p.en_grupo) detalle.push("tiene este grupo en su cuenta");
+        if ((p.academias || []).length) detalle.push("ya está en " + p.academias.join(", "));
+        tx.appendChild(el("span", "block text-xs text-brand-450 dark:text-brand-350", detalle.join(" · ")));
+        lab.append(cb, tx);
+        cont.appendChild(lab);
+    });
+    document.getElementById("g-alumnos-texto").textContent = alumnos.length
+        ? "Sumar a los " + alumnos.length + (alumnos.length === 1 ? " alumno del grupo" : " alumnos del grupo")
+        : "Este grupo no tiene alumnos.";
+    const alumnosCb = document.getElementById("g-alumnos");
+    alumnosCb.disabled = !alumnos.length;
+    alumnosCb.checked = alumnos.length > 0;
+    const enOtra = alumnos.filter((p) => (p.academias || []).length).length;
+    document.getElementById("g-alumnos-otra").textContent = enOtra
+        ? enOtra + (enOtra === 1 ? " ya está en otra academia y queda en las dos" : " ya están en otra academia y quedan en las dos") +
+          ": recibirán un solo informe, con la suma de lo que entrenaron."
+        : "";
+
+    // El supervisor: los que ya supervisan y no tienen academia, y los profesores
+    // del grupo (a esos se los marca al crear). Quien ya supervisa otra no se ofrece.
+    const sup = document.getElementById("g-supervisor");
+    const ocupados = new Set(academias.map((a) => a.supervisor_id).filter(Boolean));
+    sup.replaceChildren();
+    const nadie = el("option", null, "— sin supervisor todavía —");
+    nadie.value = "";
+    sup.appendChild(nadie);
+    const delGrupo = docentes.filter((p) => p.rol === "profesor" && !ocupados.has(p.id));
+    if (delGrupo.length) {
+        const og = el("optgroup");
+        og.label = "Del equipo de este grupo";
+        delGrupo.forEach((p) => { const o = el("option", null, nombreDe(p) + (p.es_supervisor ? "" : " (se marca como supervisor)")); o.value = p.id; og.appendChild(o); });
+        sup.appendChild(og);
+    }
+    const libres = supervisores.filter((s) => !ocupados.has(s.id) && !delGrupo.some((p) => p.id === s.id));
+    if (libres.length) {
+        const og = el("optgroup");
+        og.label = "Otros supervisores sin academia";
+        libres.forEach((s) => { const o = el("option", null, nombreDe(s)); o.value = s.id; og.appendChild(o); });
+        sup.appendChild(og);
+    }
+    gActualizarBoton();
+}
+
+document.getElementById("g-grupo").addEventListener("change", async (e) => {
+    const g = e.target.value;
+    const det = document.getElementById("g-detalle");
+    if (!g) { det.hidden = true; gGente = []; return; }
+    const marca = ++gPeticion;
+    const { data, error } = await sb.rpc("grupo_para_academia", { p_grupo: g });
+    if (marca !== gPeticion) return;   // llegó tarde: ya se eligió otro grupo
+    if (error) { avisar("No se pudo leer quién está en el grupo " + g + ": " + error.message, true); det.hidden = true; return; }
+    gGente = data || [];
+    const nombre = document.getElementById("g-nombre");
+    if (!gNombreTocado) nombre.value = g;
+    det.hidden = false;
+    gPintar();
+});
+document.getElementById("g-nombre").addEventListener("input", () => { gNombreTocado = true; });
+document.getElementById("g-alumnos").addEventListener("change", gActualizarBoton);
+document.getElementById("g-supervisor").addEventListener("change", gActualizarBoton);
+
+document.getElementById("form-grupo").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nombreIn = document.getElementById("g-nombre");
+    const nombre = nombreIn.value.trim();
+    if (nombre.length < 2) { avisar("Ponle un nombre a la academia.", true); nombreIn.focus(); return; }
+    const ids = gSeleccion();
+    if (!ids.length) { avisar("Marca al menos a una persona para que la academia no nazca vacía.", true); return; }
+    const sup = document.getElementById("g-supervisor").value || null;
+    const b = document.getElementById("g-crear");
+    b.disabled = true;
+    const { data, error } = await sb.rpc("academia_crear_desde_grupo", { p_nombre: nombre, p_supervisor: sup, p_personas: ids });
+    b.disabled = false;
+    if (error) { avisar(error.message, true); return; }
+    // El supervisor pudo quedar recién marcado: se refleja acá para que los
+    // selectores de la academia abierta lo ofrezcan.
+    if (sup) {
+        const p = perfiles.find((x) => x.id === sup);
+        if (p && !p.es_supervisor) { p.es_supervisor = true; supervisores = perfiles.filter((x) => x.es_supervisor); }
+    }
+    document.getElementById("g-grupo").value = "";
+    document.getElementById("g-detalle").hidden = true;
+    gGente = []; gNombreTocado = false;
+    await cargarAcademias();
+    avisar("Academia «" + data.nombre + "» creada con " + data.miembros + (Number(data.miembros) === 1 ? " persona." : " personas."));
     await abrirAcademia(data.id);
 });
 
