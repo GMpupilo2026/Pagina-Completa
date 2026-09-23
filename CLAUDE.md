@@ -8223,6 +8223,14 @@ blancas, blanco en las negras) que la separa de cualquier casilla.
 - **El aro lo pone el CSS** (`html[data-pieza="aro"]` sobre las clases
   `pieza-w`/`pieza-b` que ahora lleva cada `<svg>`), no cada tablero: así sale
   igual en los diez sin tocar ninguno.
+- **En Modo Adaptado es el estilo POR OMISIÓN**, mientras la persona no haya
+  elegido otro a mano. Ese modo se enciende por baja visión, que es justo
+  quien tiene encendido el alto contraste del celular, y ahí el glifo negro
+  sale blanco — con el contorno blanco que el modo le pone encima, además,
+  se ve brillando. Pedirle que vaya a Configuración a buscar el arreglo es
+  dejarle el problema: el modo ya sabe para quién es. Lo que se eligió a mano
+  se respeta siempre, y al encender o apagar el modo (`adaptivemode:change`)
+  se vuelve a poner `data-pieza`.
 
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 

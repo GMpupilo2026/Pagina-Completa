@@ -37,12 +37,27 @@
     aro: { label: "Dibujado con aro (celular en alto contraste)", dibujado: true },
   };
 
-  function getPreference() {
-    let id = "clasico";
+  // En Modo Adaptado, quien NUNCA eligió un estilo recibe el dibujado con
+  // aro y no el glifo: ese modo se enciende por baja visión, que es justo
+  // quien tiene encendido el «Texto de alto contraste» del celular, y ahí el
+  // glifo negro sale blanco (con el contorno blanco del modo encima, además,
+  // se ve brillando). Lo que la persona eligió a mano se respeta siempre.
+  function modoAdaptado() {
     try {
-      id = localStorage.getItem(KEY) || "clasico";
+      if (document.documentElement.classList.contains("adaptive-mode")) return true;
+      return localStorage.getItem("oscarBlindMode_v1") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getPreference() {
+    let id = null;
+    try {
+      id = localStorage.getItem(KEY);
     } catch (e) {}
-    return THEMES[id] ? id : "clasico";
+    if (id && THEMES[id]) return id;
+    return modoAdaptado() ? "aro" : "clasico";
   }
 
   function esDibujado() {
@@ -65,5 +80,10 @@
   }
 
   aplicar(getPreference());
+  // Encender o apagar el modo cambia el estilo POR OMISIÓN: sin volver a
+  // aplicarlo, el aro se quedaría puesto (o sin poner) hasta recargar.
+  document.addEventListener("adaptivemode:change", function () {
+    aplicar(getPreference());
+  });
   window.PieceStyleThemes = { THEMES, getPreference, setPreference, esDibujado };
 })();
