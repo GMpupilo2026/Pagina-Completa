@@ -77,7 +77,7 @@ window.__consultas = [];
 (function () {
   const DATOS = ${JSON.stringify(datos)};
   function constructor(tabla, filas) {
-    let filas2 = (filas || []).slice(), unica = false, resultado = null;
+    let filas2 = (filas || []).slice(), unica = false, resultado = null, cambio = null;
     const cmp = (a, b) => String(a) === String(b);
     const b = {
       select() { window.__consultas.push(tabla); return b; },
@@ -87,12 +87,15 @@ window.__consultas = [];
       is() { return b; }, not() { return b; }, or() { return b; },
       order() { return b; }, limit(n) { filas2 = filas2.slice(0, n); return b; }, range() { return b; },
       insert(fila) { resultado = fila; return b; },
-      update(fila) { resultado = fila; return b; },
+      // Como la base: devuelve las filas que cumplen los filtros, ya actualizadas.
+      // Las páginas encadenan .eq("status", "playing").select("id") y miran si volvió
+      // alguna: devolver el parche suelto las haría creer que no se guardó nada.
+      update(fila) { cambio = fila; return b; },
       delete() { resultado = null; return b; },
       maybeSingle() { unica = true; return b; },
       single() { unica = true; return b; },
       then(res, rej) {
-        let d = resultado !== null ? resultado : filas2;
+        let d = cambio !== null ? filas2.map((r) => Object.assign({}, r, cambio)) : (resultado !== null ? resultado : filas2);
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null }).then(res, rej);
       },
