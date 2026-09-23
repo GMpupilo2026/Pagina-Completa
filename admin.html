@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/modo-vista.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/equipo-volcar.js"></script>
 
@@ -60,6 +61,19 @@
                  entrenamiento y la actividad de Entrenamiento. Por eso va aparte y primero:
                  es la puerta grande, y las tarjetas de abajo son atajos a un apartado. -->
             <a href="informes.html" class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors mb-6">📊 Informes de toda la plataforma</a>
+
+            <!-- Ver la plataforma como la ve cada rol, sin entrar a la cuenta de
+                 nadie (js/modo-vista.js). Cambia los menús y las pantallas; los
+                 datos siguen siendo los de esta cuenta. -->
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 md:p-5 mb-6">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">👁 </span>Ver la plataforma como…</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-3">Para revisar qué ve cada rol antes de cambiar algo. Cambian los menús y las pantallas; los datos siguen siendo los de tu cuenta. Una franja arriba te recuerda en qué modo estás y te deja volver.</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" data-modo-vista="alumno" class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎒 Modo estudiante</button>
+                    <button type="button" data-modo-vista="profesor" class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🎓 Modo profesor</button>
+                    <button type="button" data-modo-vista="supervisor" class="px-4 py-2 rounded-lg text-sm font-semibold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-white hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">🧭 Modo supervisor</button>
+                </div>
+            </div>
 
             <!-- Los atajos, por grupos. Salen de ATAJOS (abajo) y no escritos a mano:
                  eran ocho botones en una sola fila, sin ningún criterio de orden, y
@@ -180,6 +194,30 @@
                     </table>
                 </div>
                 <p id="sin-profesor-aviso" class="hidden text-xs mt-3 rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200"></p>
+                </div>
+            </details>
+
+            <!-- ===== Supervisores =====
+                 Supervisar es una marca encima de "profesor", como coordinar:
+                 quien supervisa ve los informes y corrige las cuentas SOLO de
+                 lo que se le asigna acá (y de los alumnos de los profesores que
+                 se le asignen). No entrena ni da clase: su panel es otro. -->
+            <details class="group bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 open:shadow-lg transition-shadow">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white inline">Supervisores</h2>
+                    <span class="text-accent-700 dark:text-accent-400 group-open:rotate-45 transition-transform text-xl leading-none shrink-0" aria-hidden="true">+</span>
+                </summary>
+                <div class="mt-4">
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Quien <strong>supervisa</strong> tiene un panel administrativo: el informe de sus estudiantes a cargo tema por tema (qué hacen y cuánto tiempo le dedican), la corrección de sus cuentas —nombre, grupo, correo, profesores y rol—, los cobros y los formularios. <strong>Sobre quién</strong> lo decides tú: solo las cuentas que le asignes acá. Si le asignas un profesor, alcanza también a los alumnos de ese profesor. Tiene que tener el rol de profesor.</p>
+                <div class="flex flex-wrap items-end gap-3 mb-5">
+                    <div>
+                        <label for="sup-nuevo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombrar supervisor</label>
+                        <select id="sup-nuevo" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm max-w-[18rem]"></select>
+                    </div>
+                    <span id="sup-msg" role="status" class="text-xs"></span>
+                </div>
+                <div id="sup-lista" class="space-y-4"></div>
+                <p id="sup-vacio" class="hidden text-xs text-brand-450 dark:text-brand-350">Todavía no hay ningún supervisor.</p>
                 </div>
             </details>
 
@@ -1470,6 +1508,149 @@
          * lista de ids, como profesoresPorAlumno guarda la lista de un
          * alumno.
          */
+        /* ================= Supervisores =================
+           La lista de cuentas de cada supervisor se manda COMPLETA a
+           set_cuentas_del_supervisor(), que la deja exactamente así (la regla
+           de set_teachers). Por eso sumar un grupo manda la UNIÓN: mandar solo
+           el grupo le quitaría todo lo anterior sin que nadie lo pidiera. */
+        let cuentasPorSupervisor = new Map();      // supervisor_id -> [persona_id…]
+
+        async function loadSupervisores() {
+            try {
+                const filas = await traerTodo(() => sb.from("supervisor_cuentas").select("supervisor_id, persona_id"));
+                cuentasPorSupervisor = new Map();
+                filas.forEach((r) => {
+                    if (!cuentasPorSupervisor.has(r.supervisor_id)) cuentasPorSupervisor.set(r.supervisor_id, []);
+                    cuentasPorSupervisor.get(r.supervisor_id).push(r.persona_id);
+                });
+            } catch (err) {
+                document.getElementById("sup-lista").innerHTML = '<p class="text-xs text-red-600 dark:text-red-400">No se pudieron cargar los supervisores: ' + escapeHtml(err.message || err) + '</p>';
+                return;
+            }
+            renderSupervisores();
+        }
+
+        function avisoSup(texto, error) {
+            const msg = document.getElementById("sup-msg");
+            msg.textContent = texto;
+            msg.className = "text-xs " + (error ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400");
+        }
+
+        async function guardarCuentasSup(sup, lista, frase) {
+            const unicos = [...new Set(lista)];
+            const { data, error } = await sb.rpc("set_cuentas_del_supervisor", { p_supervisor: sup.id, p_cuentas: unicos });
+            if (error) { avisoSup("No se pudo guardar: " + error.message, true); return; }
+            cuentasPorSupervisor.set(sup.id, unicos);
+            renderSupervisores();
+            avisoSup(frase || ("Guardado: " + teacherLabel(sup) + " tiene " + data + " cuenta" + (data === 1 ? "" : "s") + " a su cargo."));
+        }
+
+        function renderSupervisores() {
+            const caja = document.getElementById("sup-lista");
+            caja.innerHTML = "";
+            const supervisores = allUsers.filter((u) => u.es_supervisor)
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            document.getElementById("sup-vacio").classList.toggle("hidden", supervisores.length > 0);
+
+            const nuevo = document.getElementById("sup-nuevo");
+            const candidatos = allUsers.filter((u) => u.role === "profesor" && !u.es_supervisor && !u.is_admin)
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            nuevo.innerHTML = '<option value="">— Elige un profesor —</option>' +
+                candidatos.map((u) => `<option value="${u.id}">${escapeHtml(teacherLabel(u))}</option>`).join("");
+            nuevo.onchange = async () => {
+                const id = nuevo.value;
+                if (!id) return;
+                const { error } = await sb.rpc("marcar_supervisor", { p_persona: id, p_valor: true });
+                if (error) { avisoSup("No se pudo nombrar: " + error.message, true); return; }
+                const u = allUsers.find((x) => x.id === id);
+                if (u) u.es_supervisor = true;
+                renderSupervisores();
+                avisoSup((u ? teacherLabel(u) : "La cuenta") + " ya supervisa. Ahora asígnale sus cuentas.");
+            };
+
+            const asignables = allUsers.filter((u) => !u.is_admin)
+                .sort((a, b) => teacherLabel(a).localeCompare(teacherLabel(b), "es"));
+            const porId = new Map(allUsers.map((u) => [u.id, u]));
+            const grupos = [...new Set(allUsers.filter((u) => u.role === "alumno" && u.grupo).map((u) => u.grupo))]
+                .sort((a, b) => a.localeCompare(b, "es"));
+
+            supervisores.forEach((sup) => {
+                const puestos = cuentasPorSupervisor.get(sup.id) || [];
+                const card = document.createElement("div");
+                card.className = "rounded-xl border border-brand-100 dark:border-brand-800 p-4";
+
+                const cab = document.createElement("div");
+                cab.className = "flex flex-wrap items-center justify-between gap-3 mb-3";
+                const nombre = document.createElement("h3");
+                nombre.className = "font-serif font-bold text-brand-800 dark:text-white";
+                nombre.textContent = teacherLabel(sup);
+                const nAlum = puestos.filter((id) => porId.get(id)?.role === "alumno").length;
+                const nProf = puestos.filter((id) => porId.get(id)?.role === "profesor").length;
+                const resumen = document.createElement("span");
+                resumen.className = "text-xs text-brand-500 dark:text-brand-300";
+                resumen.textContent = `${nAlum} alumno${nAlum === 1 ? "" : "s"} y ${nProf} profesor${nProf === 1 ? "" : "es"} asignados`;
+                const quitar = document.createElement("button");
+                quitar.type = "button";
+                quitar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+                quitar.textContent = "Quitar la marca de supervisor";
+                quitar.addEventListener("click", async () => {
+                    if (!confirm("¿Quitarle la marca de supervisor a " + teacherLabel(sup) + "? Sus cuentas asignadas se vacían también.")) return;
+                    if (puestos.length) {
+                        const r = await sb.rpc("set_cuentas_del_supervisor", { p_supervisor: sup.id, p_cuentas: [] });
+                        if (r.error) { avisoSup("No se pudo: " + r.error.message, true); return; }
+                    }
+                    const { error } = await sb.rpc("marcar_supervisor", { p_persona: sup.id, p_valor: false });
+                    if (error) { avisoSup("No se pudo: " + error.message, true); return; }
+                    sup.es_supervisor = false;
+                    cuentasPorSupervisor.delete(sup.id);
+                    renderSupervisores();
+                    avisoSup(teacherLabel(sup) + " ya no supervisa.");
+                });
+                const izq = document.createElement("div");
+                izq.className = "flex flex-wrap items-baseline gap-3";
+                izq.append(nombre, resumen);
+                cab.append(izq, quitar);
+
+                // Sumar un grupo entero: la unión con lo que ya tiene.
+                const filaGrupo = document.createElement("div");
+                filaGrupo.className = "flex flex-wrap items-center gap-2 mb-3";
+                const lblG = document.createElement("label");
+                lblG.className = "text-xs font-semibold text-brand-500 dark:text-brand-300";
+                lblG.textContent = "Sumar un grupo entero:";
+                const selG = document.createElement("select");
+                selG.className = "px-2 py-1 rounded bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-xs";
+                selG.id = "sup-grupo-" + sup.id;
+                lblG.setAttribute("for", selG.id);
+                selG.innerHTML = '<option value="">— un grupo —</option>' +
+                    grupos.map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)} (${allUsers.filter((u) => u.role === "alumno" && u.grupo === g).length})</option>`).join("");
+                selG.addEventListener("change", () => {
+                    const g = selG.value;
+                    if (!g) return;
+                    const delGrupo = allUsers.filter((u) => u.role === "alumno" && u.grupo === g).map((u) => u.id);
+                    const nuevos = delGrupo.filter((id) => !puestos.includes(id));
+                    if (!nuevos.length) { avisoSup("Todo el grupo " + g + " ya estaba a su cargo."); selG.value = ""; return; }
+                    guardarCuentasSup(sup, puestos.concat(nuevos),
+                        `Entraron ${nuevos.length} alumno${nuevos.length === 1 ? "" : "s"} del grupo ${g} a cargo de ${teacherLabel(sup)}.`);
+                });
+                filaGrupo.append(lblG, selG);
+
+                // Las cuentas una por una, plegadas: pueden ser cientos.
+                const det = document.createElement("details");
+                const sum = document.createElement("summary");
+                sum.className = "cursor-pointer text-xs font-semibold text-accent-700 dark:text-accent-400";
+                sum.textContent = `Ver y editar las ${puestos.length} cuenta${puestos.length === 1 ? "" : "s"} una por una`;
+                det.appendChild(sum);
+                const dentro = document.createElement("div");
+                dentro.className = "mt-2";
+                dentro.appendChild(renderEquipoTags(puestos, asignables.filter((u) => u.id !== sup.id),
+                    (lista) => guardarCuentasSup(sup, lista), "lo que supervisa " + teacherLabel(sup)));
+                det.appendChild(dentro);
+
+                card.append(cab, filaGrupo, det);
+                caja.appendChild(card);
+            });
+        }
+
         let allEquipos = [];                       // [{id, nombre}…]
         let alumnosPorEquipo = new Map();           // id de equipo -> [id de alumno…]
         let entrenadoresPorEquipo = new Map();      // id de equipo -> [id de entrenador…]
@@ -1817,8 +1998,14 @@
             }
 
             renderAtajos();
+            // Entrar a un modo de vista lleva al panel, que es donde se nota.
+            document.querySelectorAll("[data-modo-vista]").forEach((b) => b.addEventListener("click", () => {
+                if (window.ModoVista) ModoVista.fijar(b.dataset.modoVista);
+                location.href = "clases.html";
+            }));
             await loadUsers();
             await loadEquipos();
+            await loadSupervisores();
             await loadActualizaciones();
             document.getElementById("app").classList.remove("hidden");
         }

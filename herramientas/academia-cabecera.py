@@ -278,6 +278,32 @@ def poner_tiempo(ruta, s):
             + TIEMPO_FIN + s[cierre:])
 
 
+# El modo de vista de quien administra (js/modo-vista.js): la franja que dice
+# "estás viendo como estudiante" tiene que estar en TODA página de la Academia,
+# o al pasar de una a otra quien administra se queda creyendo que volvió a su
+# vista. Una página que ya lo carga a mano (clases.html e informes.html, que lo
+# necesitan antes de pintar) no lo lleva dos veces.
+MODO_INICIO = "<!-- modo-vista: inicio -->"
+MODO_FIN = "<!-- modo-vista: fin -->"
+
+
+def poner_modo_vista(ruta, s):
+    i = s.find(MODO_INICIO)
+    if i >= 0:
+        j = s.find(MODO_FIN, i)
+        s = s[:i] + s[j + len(MODO_FIN):]
+    if "modo-vista.js" in s:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin la franja del modo de vista.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + MODO_INICIO
+            + f'<script src="{arriba}js/modo-vista.js" defer></script>'
+            + MODO_FIN + s[cierre:])
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -297,6 +323,7 @@ def procesar(ruta):
     s = poner_juego_aviso(ruta, s)
     s = poner_acceso(ruta, s)
     s = poner_tiempo(ruta, s)
+    s = poner_modo_vista(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)

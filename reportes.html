@@ -625,7 +625,7 @@
             if (!sesion) { window.location.href = "login.html?next=reportes.html"; return; }
             const { data: fila, error } = await sb.from("profiles").select("*").eq("id", sesion.user.id).single();
             $("loading").classList.add("hidden");
-            if (error || !fila || !(fila.is_admin || fila.es_coordinador)) {
+            if (error || !fila || !(fila.is_admin || fila.es_coordinador || fila.es_supervisor)) {
                 $("denegado").classList.remove("hidden");
                 return;
             }
@@ -668,5 +668,5 @@
 
         init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
 </html>

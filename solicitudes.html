@@ -255,7 +255,7 @@
             // La página lo comprueba para no enseñar lo que no toca, pero quien de
             // verdad lo impide es la RLS (soy_coordinador()) y la Edge Function,
             // que vuelve a chequear is_admin/es_coordinador del lado del servidor.
-            if (!perfil || !(perfil.es_coordinador || perfil.is_admin)) {
+            if (!perfil || !(perfil.es_coordinador || perfil.es_supervisor || perfil.is_admin)) {
                 document.getElementById("loading").classList.add("hidden");
                 document.getElementById("denegado").classList.remove("hidden");
                 return;

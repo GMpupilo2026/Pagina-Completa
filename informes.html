@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/modo-vista.js"></script>
     <script src="js/plan-entrenamiento.js"></script>
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
@@ -751,15 +752,27 @@
             ]);
             if (totalesRes.error) throw totalesRes.error;
             const totales = totalesRes.data || { clases_cerradas: 0, preguntas: 0, partidas: 0 };
+            /* Quien supervisa ve por RLS también a los "compañeros" que le
+               deja profiles (sin ni un dato de actividad): el informe se queda
+               con sus estudiantes a cargo y nada más, que es lo que viene a
+               mirar. La lista la da mis_supervisados(), no la página. */
+            let alumnosDelInforme = alumnos, inactivosDelInforme = inactivosRes?.data || [];
+            if (profile.es_supervisor && !profile.is_admin) {
+                const { data: ids, error: errSup } = await sb.rpc("mis_supervisados");
+                if (errSup) throw errSup;
+                const aCargo = new Set((ids || []).map((x) => (typeof x === "string" ? x : x.mis_supervisados)));
+                alumnosDelInforme = alumnos.filter((a) => aCargo.has(a.id));
+                inactivosDelInforme = inactivosDelInforme.filter((a) => aCargo.has(a.id));
+            }
             const plansByStudent = {}, resumenPorAlumno = {};
             planes.forEach((pl) => { plansByStudent[pl.student_id] = pl; });
-            alumnos.forEach((a) => { resumenPorAlumno[a.id] = a; });
+            alumnosDelInforme.forEach((a) => { resumenPorAlumno[a.id] = a; });
             teacherData = {
                 totales, closedSessions: totales.clases_cerradas,
-                students: alumnos, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno,
+                students: alumnosDelInforme, resumenPorAlumno, cursosPorAlumno, diagnosticoPorAlumno,
                 plansByStudent, visitantes, arbitrajes,
                 subgrupos: subgruposRes?.data || [],
-                inactivos: inactivosRes?.data || [],
+                inactivos: inactivosDelInforme,
             };
         }
 
@@ -1467,7 +1480,7 @@
         const FUNCION_ACCESO = `${window.SUPABASE_URL}/functions/v1/reenviar-acceso`;
 
         function esCoordinadorOAdmin() {
-            return !!(profile && (profile.es_coordinador || profile.is_admin));
+            return !!(profile && (profile.es_coordinador || profile.es_supervisor || profile.is_admin));
         }
 
         function renderAcceso(studentId, nombreAlumno) {
@@ -3019,7 +3032,9 @@ function areasFlojasArbitraje(fila) {
             if (!session) { window.location.href = "login.html"; return; }
             const { data: profileData, error: profileError } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
             if (profileError || !profileData) { document.getElementById("loading").textContent = "No se pudo cargar tu perfil."; return; }
-            profile = profileData;
+            // En un modo de vista de administración ("como estudiante",
+            // "como supervisor"…) se pinta la página de ese rol: ver js/modo-vista.js.
+            profile = window.ModoVista ? ModoVista.perfilVisto(profileData) : profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             // Quien administra ve a todo el mundo; un profesor, solo a los alumnos
             // que tiene asignados. No es un filtro de esta página: la base de datos
@@ -3028,6 +3043,8 @@ function areasFlojasArbitraje(fila) {
             document.getElementById("subtitle").textContent = isTeacher
                 ? (profile.is_admin
                     ? "Panorama general de toda la plataforma: asistencia, participación y precisión, de todos los alumnos."
+                    : profile.es_supervisor
+                    ? "Tus estudiantes a cargo: qué están haciendo, cuánto tiempo le dedican y cómo les va, tema por tema."
                     : "Panorama general de tu clase: asistencia, participación y precisión de los alumnos que tienes asignados.")
                 : "Tu actividad y progreso en las asignaciones de clase.";
             // Si alguna consulta falla se dice; antes el error se tragaba y la página
@@ -3050,7 +3067,9 @@ function areasFlojasArbitraje(fila) {
                 if (!profile.is_admin && !(teacherData.students || []).length) {
                     const aviso = document.createElement("p");
                     aviso.className = "max-w-3xl mb-6 rounded-xl bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-4 py-3 text-sm text-brand-700 dark:text-brand-200";
-                    aviso.textContent = "Todavía no tienes alumnos asignados, así que no hay nada que mostrar. Pídele a la persona administradora que te asigne alumnos desde el panel de Administración, o invita a los tuyos desde la Academia.";
+                    aviso.textContent = profile.es_supervisor
+                        ? "Todavía no tienes estudiantes a tu cargo, así que no hay nada que mostrar. Quien administra te los asigna desde el panel de Administración › Supervisores."
+                        : "Todavía no tienes alumnos asignados, así que no hay nada que mostrar. Pídele a la persona administradora que te asigne alumnos desde el panel de Administración, o invita a los tuyos desde la Academia.";
                     const cont = document.getElementById("teacher-filters");
                     if (cont && cont.parentNode) cont.parentNode.insertBefore(aviso, cont);
                 }
