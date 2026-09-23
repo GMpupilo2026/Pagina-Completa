@@ -328,7 +328,10 @@ function compilar(nombre, paleta, archivos, extra) {
 if (require.main === module) {
     fs.mkdirSync(CSS, { recursive: true });
     compilar("tailwind", PALETA, contenido(["inscripcion.html"]), cssDeTemas());
-    compilar("tailwind-inscripcion", PALETA_INSCRIPCION, [path.join(RAIZ, "inscripcion.html")]);
+    // js/adjuntos.js pinta la lista de archivos elegidos: sus clases tienen que
+    // estar también en esta hoja, o el selector sale sin forma y sin error.
+    compilar("tailwind-inscripcion", PALETA_INSCRIPCION,
+        [path.join(RAIZ, "inscripcion.html"), path.join(RAIZ, "js", "adjuntos.js")]);
 } else {
     // herramientas/verificar-temas-plataforma.js arma el bloque con ESTA
     // función y no con una copia: comprobar una copia no comprobaría nada.

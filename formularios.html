@@ -234,6 +234,7 @@
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
     <script src="js/usuario-alumno.js"></script>
+    <script src="js/adjuntos.js"></script>
     <script>
 /* Formularios de inscripción a torneos.
  *
@@ -272,6 +273,7 @@ const TIPOS = [
     { id: "varias",   etiqueta: "Varias opciones" },
     { id: "si_no",    etiqueta: "Sí o no" },
     { id: "imagen",   etiqueta: "Imagen (foto)" },
+    { id: "archivo",  etiqueta: "Archivo (PDF, Word, Excel o foto)" },
 ];
 const TIPO_VALIDO = new Set(TIPOS.map((t) => t.id));
 
@@ -702,11 +704,16 @@ function pintarLista() {
                 if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
                 // Primero sus imágenes: borrado el formulario, la política de
                 // Storage ya no encuentra de quién eran y quedarían huérfanas.
-                const carpeta = sb.storage.from("formulario-adjuntos");
-                const { data: archivos } = await carpeta.list(f.id, { limit: 1000 });
-                if (archivos && archivos.length) {
-                    await carpeta.remove(archivos.map((a) => f.id + "/" + a.name));
-                }
+                // Cada archivo va en <formulario>/<id>/<nombre>, así que la
+                // lista de rutas sale de las respuestas, que las guardan.
+                const { data: resp } = await sb.from("formulario_respuestas")
+                    .select("respuestas").eq("formulario_id", f.id);
+                const rutas = [];
+                (resp || []).forEach((r) => (f.campos || []).forEach((c) => {
+                    const v = r.respuestas && r.respuestas[c.id];
+                    if ((c.tipo === "imagen" || c.tipo === "archivo") && Array.isArray(v)) rutas.push(...v);
+                }));
+                if (rutas.length) await sb.storage.from("formulario-adjuntos").remove(rutas);
                 const { error } = await sb.from("formularios").delete().eq("id", f.id);
                 if (error) { alert("No se pudo borrar: " + error.message); return; }
                 await cargarFormularios();
@@ -730,7 +737,7 @@ async function cargarFormularios() {
 
 // ------------------------------------------------------------------ respuestas
 async function verRespuestas(f) {
-    soltarAdjuntos();
+    Adjuntos.soltar();
     document.getElementById("respuestas-titulo").textContent = "Respuestas · " + f.titulo;
     const { data, error } = await sb.from("formulario_respuestas")
         .select("id, respuestas, created_at, cuenta_id, cuenta_creada_at").eq("formulario_id", f.id)
@@ -775,8 +782,8 @@ function pintarRespuestas() {
             td.className = "py-2 pr-4 text-brand-600 dark:text-brand-300 align-top";
             if (c.id === "__cuenta") {
                 td.appendChild(celdaCuenta(r));
-            } else if (c.tipo === "imagen") {
-                td.appendChild(celdaImagenes(r.respuestas[c.id], c, r));
+            } else if (c.tipo === "imagen" || c.tipo === "archivo") {
+                td.appendChild(celdaAdjuntos(r.respuestas[c.id], c, r));
             } else {
                 td.textContent = c.id === "__fecha"
                     ? new Date(r.created_at).toLocaleDateString("es-CR", { day: "2-digit", month: "short", year: "numeric" })
@@ -788,77 +795,18 @@ function pintarRespuestas() {
     });
 }
 
-/* ---------------------------------------------------------------- imágenes
-   Viven en el bucket PRIVADO "formulario-adjuntos": las lee solo quien ya puede
-   ver el formulario (la misma RLS que sus respuestas). Se bajan con
-   storage.download() y se enseñan como blob:, que es lo que la CSP ya deja
-   pintar — una URL firmada de Supabase en un <img> la bloquearía img-src, y
-   una URL pública sería repartir fotos de menores a quien tenga el enlace. */
-const BUCKET_ADJUNTOS = "formulario-adjuntos";
-const blobsAdjuntos = new Map();   // ruta → promesa de URL blob: (una bajada por ruta)
+/* -------------------------------------------------------------- adjuntos
+   Viven en el bucket PRIVADO "formulario-adjuntos": los lee solo quien ya puede
+   ver el formulario (la misma RLS que sus respuestas). Se bajan con la sesión
+   (storage.download) y los pinta js/adjuntos.js, igual que en Inscripciones. */
+const bajarAdjunto = (ruta) => sb.storage.from("formulario-adjuntos").download(ruta)
+    .then(({ data, error }) => { if (error) throw error; return data; });
 
-function urlAdjunto(ruta) {
-    if (!blobsAdjuntos.has(ruta)) {
-        blobsAdjuntos.set(ruta, sb.storage.from(BUCKET_ADJUNTOS).download(ruta).then(({ data, error }) => {
-            if (error || !data) { blobsAdjuntos.delete(ruta); throw error || new Error("sin datos"); }
-            return URL.createObjectURL(data);
-        }));
-    }
-    return blobsAdjuntos.get(ruta);
-}
-
-function soltarAdjuntos() {
-    blobsAdjuntos.forEach((p) => p.then((u) => URL.revokeObjectURL(u)).catch(() => {}));
-    blobsAdjuntos.clear();
-}
-
-// El nombre del archivo que se descarga dice DE QUIÉN es: veinte
-// "imagen.jpg" en la carpeta de descargas no los distingue nadie.
-function nombreDescarga(c, r, j, ruta) {
-    const f = respuestasActuales.formulario;
+function celdaAdjuntos(v, c, r) {
     const idNombre = (respuestasActuales.papeles || {}).alumno_nombre;
-    const quien = idNombre ? valorLegible(r.respuestas[idNombre]) : "";
-    const base = [quien || new Date(r.created_at).toISOString().slice(0, 10), c.etiqueta, j + 1]
-        .join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^A-Za-z0-9 ._-]+/g, "").replace(/[\s-]+/g, "-").slice(0, 80);
-    return (base || (f && f.slug) || "imagen") + "." + (ruta.split(".").pop() || "jpg");
-}
-
-function celdaImagenes(v, c, r) {
-    const caja = document.createElement("div");
-    const rutas = Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
-    if (!rutas.length) return caja;
-    caja.className = "flex flex-wrap gap-2 min-w-[7rem]";
-    rutas.forEach((ruta, j) => {
-        const fig = document.createElement("figure");
-        fig.className = "flex flex-col items-center gap-1";
-        const ver = document.createElement("a");
-        ver.target = "_blank"; ver.rel = "noopener";
-        ver.className = "block w-16 h-16 rounded-lg overflow-hidden border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
-        ver.setAttribute("aria-label", "Ver en grande: " + c.etiqueta + ", imagen " + (j + 1));
-        const img = document.createElement("img");
-        img.alt = "";
-        img.className = "w-full h-full object-cover";
-        ver.appendChild(img);
-        const bajar = document.createElement("a");
-        bajar.textContent = "⬇ Descargar";
-        bajar.download = nombreDescarga(c, r, j, ruta);
-        bajar.setAttribute("aria-label", "Descargar " + c.etiqueta + ", imagen " + (j + 1));
-        bajar.className = "text-xs text-brand-600 dark:text-brand-300 underline whitespace-nowrap hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
-        fig.append(ver, bajar);
-        caja.appendChild(fig);
-        urlAdjunto(ruta).then((u) => {
-            img.src = u; ver.href = u; bajar.href = u;
-        }).catch(() => {
-            // Se dice, no se deja un cuadro vacío: una foto que no se pudo
-            // leer y una que no existe se ven igual y son cosas distintas.
-            ver.replaceWith(Object.assign(document.createElement("span"), {
-                className: "text-xs text-red-600 dark:text-red-400", textContent: "No se pudo abrir",
-            }));
-            bajar.remove();
-        });
-    });
-    return caja;
+    const quien = idNombre ? valorLegible(r.respuestas[idNombre])
+        : new Date(r.created_at).toISOString().slice(0, 10);
+    return Adjuntos.celda(v, bajarAdjunto, quien, c.etiqueta);
 }
 
 /* Que ya se le creó la cuenta lo dice la BASE (cuenta_id de la propia
@@ -1135,10 +1083,7 @@ async function enviarAlta() {
 
 function valorLegible(v, c) {
     if (v === null || v === undefined) return "";
-    if (c && c.tipo === "imagen") {
-        const n = Array.isArray(v) ? v.length : 0;
-        return n ? (n === 1 ? "1 imagen adjunta" : n + " imágenes adjuntas") : "";
-    }
+    if (c && (c.tipo === "imagen" || c.tipo === "archivo")) return Adjuntos.contar(v);
     if (Array.isArray(v)) return v.join(", ");
     if (v === true) return "Sí";
     if (v === false) return "No";

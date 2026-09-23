@@ -2663,54 +2663,89 @@ líneas de HTML.
   formulario público al contestar y el alta de abajo — qué dedujo de cada
   etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
 
-### Preguntas de tipo «Imagen»: la foto se sube, se ve y se descarga
+### Archivos adjuntos: se suben, se ven y se descargan, en los DOS formularios
 
-Un formulario puede pedir fotos (la cédula, el carné del colegio, un
-comprobante): el tipo **«Imagen (foto)»**, hasta 5 por pregunta. Lo difícil no
-es el `<input type="file">`, es que quien sube **no tiene cuenta** y lo que sube
-son documentos de menores.
+Los dos formularios de inscripción reciben archivos —la foto de la cédula, el
+carné del colegio, un comprobante en PDF—: los que arma la coordinación
+(`formulario.html`) y el del torneo en línea (`inscripcion.html`). Hasta 5 por
+pregunta: foto, PDF, Word o Excel, de 10 MB como máximo. Lo difícil no es el
+`<input type="file">`, es que quien sube **no tiene cuenta** y lo que sube son
+documentos de menores.
 
-- **El bucket `formulario-adjuntos` es PRIVADO**, con tope de 5 MB y solo JPG,
-  PNG y WebP. Una URL pública sería repartir la cédula de un niño a cualquiera
-  que tenga el enlace.
+**`js/adjuntos.js` es la única copia** de cómo se elige, se prepara, se sube y
+se enseña un archivo, y lo usan las cuatro pantallas: las dos que reciben y las
+dos que muestran (`formularios.html`, `inscripciones.html`). Escrito cuatro
+veces, una aceptaría un `.docx` que la otra no sabe enseñar.
+
+- **La ruta es `<carpeta>/<id al azar>/<nombre-saneado>.<ext>`**: el nombre
+  original viaja DENTRO de la ruta, así que no hay que guardarlo aparte y quien
+  descarga recibe «Comprobante-SINPE.pdf» y no un uuid.
+- **La foto se achica en el navegador** (1600 px, JPEG): la del celular pesa
+  4-8 MB, y así sale en un formato que abre cualquiera. Un documento va tal cual.
+- **Se sube al ENVIAR**, no al elegirlo —un archivo descartado no queda subido
+  por nada— y la ruta se recuerda, así reintentar un envío que falló (una cédula
+  ya inscrita, por ejemplo) no lo vuelve a subir.
+- **Un formato que no se recibe se dice ANTES**, con el nombre del archivo. El
+  bucket lo rechazaría igual, pero con un error en inglés que nadie entiende.
+- **Se enseñan como `blob:`**, que es lo que la CSP ya deja pintar: una URL de
+  Supabase en un `<img>` la bloquearía `img-src`. Cada archivo trae «Abrir» y
+  «⬇ Descargar», y el nombre de descarga dice **de quién es** (el alumno, la
+  pregunta y el nombre original). Uno que no se pudo bajar **lo dice**.
+- En el CSV se **cuentan** («2 archivos adjuntos»), no se pega la ruta.
+
+#### Los formularios de la coordinación (proyecto de la Academia)
+
+Tipos de pregunta «Imagen (foto)» y «Archivo (PDF, Word, Excel o foto)».
+
+- **El bucket `formulario-adjuntos` es PRIVADO**, con tope y tipos puestos en
+  el propio bucket. Una URL pública sería repartir la cédula de un niño a
+  cualquiera que tenga el enlace.
 - **Subir (anon) lo decide `formulario_acepta_adjuntos(carpeta)`**, `SECURITY
-  DEFINER`: solo dentro de la carpeta `<id del formulario>/` de uno **abierto que
-  tenga una pregunta de imagen**. `anon` no tiene permiso de tabla sobre
+  DEFINER`: solo dentro de la carpeta `<id del formulario>/` de uno **abierto
+  que tenga una pregunta de adjunto**. `anon` no tiene permiso de tabla sobre
   `formularios` (se le quitó a propósito), así que la política no puede
-  consultarla directo: por eso la función. Sin política de select ni update para
-  `anon`: sube y no ve nada, ni lo suyo.
-- **Leer lo decide la RLS de `formularios`**: la política de select de Storage
-  pregunta si quien mira ve ese formulario, que es exactamente quien ve sus
-  respuestas (dueño, administración, su coordinación, a quien se lo compartieron).
-  Comprobado impersonando: un alumno ve **0** archivos, el dueño los ve.
-- **`formulario_publico()` devuelve ahora el `id`**: es el nombre de la carpeta.
-  No es un dato sensible, y sin él la página no sabe dónde subir.
-- **`responder_formulario()` valida cada ruta**: que sea de la carpeta de ESE
-  formulario, con el nombre que arma la página, y que **exista de verdad** en
-  Storage. Sin eso una respuesta podría apuntar a la foto de otro formulario —y
-  quien coordina ese otro vería una cédula ajena en sus respuestas— o a un
-  archivo que no está, que se ve como una foto rota sin que nada avise.
-- **La foto se achica en el navegador** (1600 px, JPEG): la del celular pesa más
-  que el tope, y así sale en un formato que abre cualquiera. Se sube **al
-  enviar**, no al elegirla —una foto descartada no queda subida por nada— y la
-  ruta se recuerda, así reintentar un envío fallido no la vuelve a subir.
-- **En Respuestas se bajan con `storage.download()` y se pintan como `blob:`**,
-  que es lo que la CSP ya deja pintar: una URL firmada de Supabase en un `<img>`
-  la bloquearía `img-src`. Cada una trae «Ver en grande» y «⬇ Descargar», con un
-  nombre de archivo que dice **de quién es** (el nombre del alumno, la pregunta y
-  el número): veinte `imagen.jpg` en la carpeta de descargas no los distingue
-  nadie. Una que no se pudo bajar **lo dice**, en vez de dejar un cuadro vacío.
-- En el CSV la foto se **cuenta** («2 imágenes adjuntas»), no se pega la ruta:
-  una ruta interna en Excel no le sirve a nadie.
-- **Borrar un formulario borra antes sus imágenes**: después, la política de
-  Storage ya no encuentra de quién eran y quedarían huérfanas para siempre.
+  consultarla directo: por eso la función. Sin select para `anon`: sube y no ve
+  nada, ni lo suyo.
+- **Leer lo decide la RLS de `formularios`**: quien ve el formulario, que es
+  exactamente quien ve sus respuestas. Comprobado impersonando: un alumno ve
+  **0** archivos, el dueño los ve. Se bajan con `storage.download()`.
+- **`formulario_publico()` devuelve el `id`**: es el nombre de la carpeta.
+- **`responder_formulario()` valida cada ruta**: de la carpeta de ESE
+  formulario, con la forma que arma la página, con una extensión que la pregunta
+  admita (una de imagen no acepta un PDF) y que **exista** en Storage. Sin eso
+  una respuesta podría apuntar al archivo de otro formulario —y quien coordina
+  ese otro vería una cédula ajena en sus respuestas—.
+- **Borrar un formulario borra antes sus archivos**, sacando las rutas de sus
+  respuestas: después, la política de Storage ya no encuentra de quién eran.
 
-`verificar-formularios.js` lo comprueba: que sin la foto obligatoria no se suba
-ni se mande nada, que quitar una la saque, que se suban **solo las que quedaron,
-a la carpeta de ese formulario, como JPG y sin `upsert`**, que la respuesta lleve
-exactamente esas rutas, y del otro lado que la miniatura **se vea de verdad**
-(se mide `naturalWidth`), que se pida al bucket privado, el nombre de descarga, y
-que una rota lo diga.
+#### El torneo en línea (proyecto «Base de Colegios»)
+
+- **El bucket `inscripcion-adjuntos` es PRIVADO** y `anon` solo puede escribir
+  en `pendientes/`, **sin ninguna política de lectura**: el formulario es
+  público y su clave está en el HTML.
+- **A `smart-function` viajan solo las rutas**, y ella —ya pasado Turnstile—
+  comprueba la forma de cada una y que el archivo **exista** antes de guardarlas
+  en `inscripciones.adjuntos` (jsonb).
+- **Los ve `inscripciones-torneo`**, que después de preguntarle a la Academia si
+  quien mira coordina, **firma cada ruta por una hora** y las devuelve en
+  `firmas`. La página las baja con `fetch` —`connect-src` ya incluye ese
+  proyecto— y las pinta como `blob:`. Si una firma no llega, ese archivo dice
+  «No se pudo abrir» y la lista sale igual.
+- **Las dos funciones viven ahora en el repositorio**, en
+  `supabase/functions-colegios/`: antes existían solo desplegadas.
+- El CSS de `inscripcion.html` se compila aparte, así que `css-construir.js`
+  lee también `js/adjuntos.js` para esa hoja: sin eso el selector saldría sin
+  forma, sin ningún error.
+
+**Al tocar `js/adjuntos.js` o cualquiera de las cuatro pantallas, correr**
+`node herramientas/verificar-formularios.js`, `node
+herramientas/verificar-admin.js` y `node
+herramientas/verificar-inscripcion-adjuntos.js` (con el sitio en
+localhost:8777 y playwright). Comprueban qué se sube y adónde (la carpeta, el
+nombre, el tipo, sin `upsert`), que viajen **exactamente** las rutas que se
+subieron, que un `.exe` no se suba, que reintentar no suba dos veces, y del
+otro lado que la foto **se vea de verdad** (`naturalWidth`), el nombre de
+descarga, y que uno que no se pudo bajar lo diga.
 
 ### Compartir un formulario con otro coordinador
 

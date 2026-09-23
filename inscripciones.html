@@ -101,6 +101,7 @@
 
 <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
     <script src="js/main.js"></script>
+    <script src="js/adjuntos.js"></script>
     <script>
 /* Las inscripciones al torneo en línea, para quien administra o coordina.
  *
@@ -125,6 +126,9 @@
 const FUNCION = "https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/inscripciones-torneo";
 
 let inscripciones = [];
+/* ruta → URL firmada por una hora, que da la Edge Function ya comprobado el
+   permiso. El bucket es privado: sin esto no se abre ningún adjunto. */
+let firmas = {};
 const POR_PAGINA = 50;
 let mostradas = POR_PAGINA;
 
@@ -139,6 +143,7 @@ async function pedirInscripciones(token) {
     });
     const cuerpo = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(cuerpo.error || "No se pudo leer las inscripciones.");
+    firmas = cuerpo.firmas || {};
     return cuerpo.inscripciones || [];
 }
 
@@ -155,6 +160,14 @@ function fmtFecha(iso) {
 }
 function nombreCompleto(i) {
     return [i.nombre, i.apellido1, i.apellido2].filter(Boolean).join(" ") || "(sin nombre)";
+}
+
+/* Un adjunto se baja por su URL firmada. Si la firma no llegó —o ya venció,
+   después de una hora con la página abierta— se dice en su lugar. */
+function bajarAdjunto(ruta) {
+    const url = firmas[ruta];
+    if (!url) return Promise.reject(new Error("sin firma"));
+    return fetch(url).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.blob(); });
 }
 
 /* ------------------------------------------------------------ los filtros */
@@ -235,6 +248,7 @@ function filaDetalle(i) {
         ["Modalidad", i.modalidad],
         ["Usuario", i.usuario],
         ["Aceptó el trato de sus datos", i.acepto_datos ? "Sí" : "No"],
+        ["Archivos adjuntos", Array.isArray(i.adjuntos) && i.adjuntos.length ? i.adjuntos : null],
     ];
     const dl = document.createElement("dl");
     dl.className = "grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 text-xs";
@@ -246,7 +260,10 @@ function filaDetalle(i) {
         dt.textContent = etiqueta + ":";
         const dd = document.createElement("dd");
         dd.className = "text-brand-700 dark:text-brand-200 break-words min-w-0";
-        if (etiqueta === "Correo" && valor) {
+        if (etiqueta === "Archivos adjuntos" && valor) {
+            fila.className = "flex gap-2 sm:col-span-2 lg:col-span-3";
+            dd.appendChild(Adjuntos.celda(valor, bajarAdjunto, nombreCompleto(i), ""));
+        } else if (etiqueta === "Correo" && valor) {
             const a = document.createElement("a");
             a.href = "mailto:" + valor; a.textContent = valor;
             a.className = "text-accent-700 dark:text-accent-400 hover:underline";
@@ -309,7 +326,8 @@ function pintar() {
         nom.textContent = nombreCompleto(i);
         const ced = document.createElement("p");
         ced.className = "text-xs text-brand-450 dark:text-brand-350";
-        ced.textContent = i.cedula ? "Cédula " + i.cedula : "—";
+        ced.textContent = (i.cedula ? "Cédula " + i.cedula : "—")
+            + (Array.isArray(i.adjuntos) && i.adjuntos.length ? " · 📎 " + Adjuntos.contar(i.adjuntos) : "");
         tdPersona.append(nom, ced);
 
         const tdEdad = document.createElement("td");
@@ -391,6 +409,7 @@ const COLUMNAS_CSV = [
     ["Modalidad", (i) => i.modalidad],
     ["Usuario", (i) => i.usuario],
     ["Aceptó el trato de sus datos", (i) => (i.acepto_datos ? "Sí" : "No")],
+    ["Archivos adjuntos", (i) => Adjuntos.contar(i.adjuntos)],
 ];
 
 function bajarCsv() {
