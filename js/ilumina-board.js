@@ -153,7 +153,7 @@
           cell.setAttribute("role", "button");
           cell.setAttribute("tabindex", "0");
 
-          const ilustrado = window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG;
+          const ilustrado = window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG;
           if (negra) {
             const span = document.createElement("span");
             if (ilustrado) { span.innerHTML = window.ChessPieceSVG.markup(negra.type, "b"); span.className = "ilumina-pieza chess-piece-illustrated"; }

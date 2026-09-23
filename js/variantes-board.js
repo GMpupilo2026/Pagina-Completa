@@ -110,7 +110,7 @@
           const fusionada = types.length > 1 || (p.veces && p.veces > 1);
           if (!fusionada) {
             const span = document.createElement("span");
-            if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+            if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
               span.innerHTML = window.ChessPieceSVG.markup(types[0], p.color);
               span.className = "chess-piece-illustrated relative";
             } else {

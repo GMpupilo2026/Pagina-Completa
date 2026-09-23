@@ -158,7 +158,7 @@
 
         if (piece) {
           const span = document.createElement("span");
-          if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+          if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
             span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
             span.className = "chess-piece-illustrated";
           } else {
