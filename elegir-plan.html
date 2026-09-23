@@ -66,7 +66,7 @@
                 <div class="grid md:grid-cols-3 gap-4 mb-6">
                     <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-lg p-6 flex flex-col">
                         <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Acceso a la plataforma</h2>
-                        <p class="text-2xl font-bold text-accent-500 mb-2">₡6.900<span class="text-sm font-medium text-brand-450 dark:text-brand-350">/mes</span></p>
+                        <p class="text-2xl font-bold text-accent-500 mb-2"><span id="precio-plataforma">₡6.900</span><span class="text-sm font-medium text-brand-450 dark:text-brand-350">/mes</span></p>
                         <p class="text-sm text-brand-500 dark:text-brand-300 flex-1 mb-4">Cursos, tableros interactivos, entrenamiento táctico y Modo Adaptado. Sin clases en vivo.</p>
                         <button type="button" data-plan="plataforma" class="plan-btn w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-lg transition-colors">Elegir este plan</button>
                     </div>
@@ -90,7 +90,14 @@
     </main>
 
     <script src="js/main.js"></script>
+    <script src="js/precios-acceso.js"></script>
     <script>
+        /* El precio de la cuenta sale de js/precios-acceso.js, el mismo de
+           precios.html y accesos.html. El que va escrito arriba es solo el de
+           respaldo, y verificar-accesos.js comprueba que diga lo mismo. */
+        if (window.PreciosAcceso) {
+            document.getElementById("precio-plataforma").textContent = PreciosAcceso.formato(PreciosAcceso.INDIVIDUAL);
+        }
         const solicitudId = new URLSearchParams(window.location.search).get("s");
 
         function mostrar(id) {

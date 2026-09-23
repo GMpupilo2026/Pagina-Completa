@@ -61,7 +61,7 @@ PAGINAS = [
     "examen.html", "examenes.html",
     "planes.html", "racha-tactica.html", "reportes.html", "sesion.html",
     "coordinacion.html", "subgrupos.html", "tareas.html",
-    "tienda.html",
+    "tienda.html", "accesos.html",
     "torneo.html", "torneos.html", "variante.html",
     "entreno/4x4.html", "entreno/aprender.html", "entreno/coordenadas.html",
     "entreno/desafios.html", "entreno/estudio.html", "entreno/index.html",
@@ -118,6 +118,15 @@ SIN_BURBUJA = {"sesion.html", "examen.html", "tienda.html"}
 # que ya ocupa esa pantalla — la única razón por la que sesion.html no lleva
 # burbuja es que YA tiene su propio chat, y eso no aplica acá.
 SIN_JUEGO_AVISO = {"examen.html"}
+
+# El control del acceso (js/acceso-vigente.js) va en todas menos dos, y las dos
+# por lo mismo: son las que alguien con el acceso vencido TIENE que poder abrir.
+# cobros.html para ver qué debe y cuándo pagó; configuracion.html para cambiar
+# su contraseña o sus avisos. Taparlas sería cerrarle justo la puerta por la
+# que se arregla. El panel (clases.html) sí lo lleva, pero ahí no tapa: avisa.
+ACCESO_INICIO = "<!-- acceso: inicio -->"
+ACCESO_FIN = "<!-- acceso: fin -->"
+SIN_ACCESO = {"cobros.html", "configuracion.html"}
 
 # Dos páginas usan ejercicios de la base abierta de Lichess y su licencia
 # (CC0) exige decirlo: esa frase no es marketing, es un requisito legal, así
@@ -207,6 +216,23 @@ def poner_juego_aviso(ruta, s):
     return s[:cierre] + juego_aviso(ruta) + s[cierre:]
 
 
+def poner_acceso(ruta, s):
+    i = s.find(ACCESO_INICIO)
+    if i >= 0:
+        j = s.find(ACCESO_FIN, i)
+        s = s[:i] + s[j + len(ACCESO_FIN):]
+    if ruta in SIN_ACCESO:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin control de acceso.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + ACCESO_INICIO
+            + f'<script src="{arriba}js/acceso-vigente.js" defer></script>'
+            + ACCESO_FIN + s[cierre:])
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -224,6 +250,7 @@ def procesar(ruta):
 
     s = poner_burbuja(ruta, s)
     s = poner_juego_aviso(ruta, s)
+    s = poner_acceso(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)
