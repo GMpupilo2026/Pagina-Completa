@@ -681,6 +681,7 @@ funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=fal
 funcion  mes_es(d date)  invoker  anon=true  auth=true
 funcion  mi_gente(p_busqueda text, p_rol text, p_limite integer, p_desde integer)  invoker  anon=true  auth=true
 funcion  mi_grupo()  definer  anon=false  auth=true
+funcion  minutos_minimos_por_ejercicio(p_grupo text)  invoker  anon=false  auth=true
 funcion  minutos_por_tramos(p_tramos tramo_crudo[])  invoker  anon=true  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=true  auth=true
