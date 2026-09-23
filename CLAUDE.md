@@ -3583,11 +3583,12 @@ herramientas/verificar-informes.js`, que mira el bloque en un navegador. Está
 probado que falla de verdad: sin la conversión de «curso» saltan 2.
 
 **`informes-encargados` ya está desplegada con esto** (versión 9): el correo
-dice el tiempo de cada sección. Ojo para la próxima vez:
-`node herramientas/funciones-armar.js` hoy se planta porque el respaldo del
-punto de restauración dejó copias de los archivos compartidos dentro de cada
-función (`informes-encargados/contacto-academia.ts`, entre otras); lo que se
-sube es `index.ts`, `informe-html.ts` y `_compartido/contacto-academia.ts`.
+dice el tiempo de cada sección. `node herramientas/funciones-armar.js` se
+plantaba porque el respaldo del punto de restauración había dejado una copia
+vieja de `contacto-academia.ts` dentro de `informes-encargados/`; se borró, y
+el compartido de `_compartido/` es otra vez la única fuente. **Un archivo
+compartido no se guarda nunca dentro de la carpeta de una función**: el armado
+lo rechaza, y con razón — dos copias se separan.
 
 ### «Cómo viene» cuenta también la clase
 
@@ -9840,11 +9841,10 @@ ven— y eso solo se descubre en el peor momento posible.
   guarda lo que corrió. (Y el md5 se calcula sobre el archivo tal cual, así que
   tampoco lleva el salto de línea final si lo guardado no lo trae.)
 
-**Pendiente de desplegar:** `ocr-scoresheet` se bajó tal cual estaba y traía
-tres formas de voseo («Avisá al profesor», «Probá con una foto»). Se
-corrigieron en el repositorio, así que hasta que se vuelva a desplegar, lo que
-el alumno ve en pantalla sigue diciendo lo de antes. Es el mismo caso que
-`admin-manage-users` con su «elegí un plan».
+`ocr-scoresheet` se bajó tal cual estaba y traía tres formas de voseo
+(«Avisá al profesor», «Probá con una foto»). Se corrigieron en el repositorio
+y ya está desplegada (versión 2), igual que `admin-manage-users` con su «elegí
+un plan».
 
 ### La etiqueta del punto de restauración se pone a mano
 
