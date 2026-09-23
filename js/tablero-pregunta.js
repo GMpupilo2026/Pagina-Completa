@@ -62,8 +62,11 @@ window.TableroPregunta = (function () {
           const pieza = g.get(sq);
           if (pieza) {
             const span = document.createElement("span");
-            span.className = pieza.color === "w" ? "piece-white" : "piece-black";
-            span.textContent = GLYPH[pieza.color][pieza.type];
+            if (window.PiezaPreferida) PiezaPreferida.pintar(span, pieza.type, pieza.color);
+            else {
+              span.className = pieza.color === "w" ? "piece-white" : "piece-black";
+              span.textContent = GLYPH[pieza.color][pieza.type];
+            }
             span.setAttribute("aria-hidden", "true");
             btn.appendChild(span);
           }

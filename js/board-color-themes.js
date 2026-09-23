@@ -156,13 +156,21 @@
     root.setProperty(nombres[1], theme.dark);
   }
 
+  // Lo que el alumno eligió NO lo cambia el Modo Adaptado. Ese modo se enciende
+  // solo (con el primer Tab, o por el contraste del sistema), así que con su
+  // lista mandando siempre, el tablero que alguien se había armado cambiaba de
+  // color de un momento a otro sin que tocara nada. La lista de Modo Adaptado
+  // manda solo si se eligió algo EN ELLA; si no, en Modo Adaptado se queda lo
+  // de arriba. Y solo si tampoco se eligió nada arriba quedan los colores de
+  // siempre del modo.
   function apply() {
     const root = document.documentElement.style;
     const pref = getPreference();
-    escribir(root, ["--sq-light", "--sq-dark"],
-             pref === PERSONALIZADO ? getCustom() : THEMES[pref]);
+    const normal = pref === PERSONALIZADO ? getCustom() : THEMES[pref];
+    const adapt = getAdaptivePreference();
+    escribir(root, ["--sq-light", "--sq-dark"], normal);
     escribir(root, ["--sq-light-adaptive", "--sq-dark-adaptive"],
-             ADAPTIVE_THEMES[getAdaptivePreference()]);
+             adapt === AUTO ? normal : ADAPTIVE_THEMES[adapt]);
   }
 
   function setPreference(id) {

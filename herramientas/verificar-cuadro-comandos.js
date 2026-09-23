@@ -199,6 +199,11 @@ async function fenDeLaPantalla(page, selTablero, selPos) {
       // texto entero daba "♔e" — una casilla que parecía vacía y una FEN sin rey.
       const g = [...c.textContent].find((ch) => glifos.indexOf(ch) !== -1);
       if (g) casillas[c.dataset.square] = g;
+      // En Modo Adaptado, sin nada elegido, la pieza sale DIBUJADA con aro (ver
+      // js/piece-style-themes.js), y desde que los ejercicios pasan por
+      // js/pieza-preferida.js la respetan: el dibujo se lee por su <use>.
+      const use = c.querySelector(".chess-piece-svg use");
+      if (use) casillas[c.dataset.square] = (use.getAttribute("xlink:href") || use.getAttribute("href") || "").slice(1);
     });
     const pos = document.querySelector(sp);
     return { casillas, texto: pos ? pos.textContent : "" };
@@ -208,7 +213,8 @@ async function fenDeLaPantalla(page, selTablero, selPos) {
     let fila = "", vacias = 0;
     for (const f of "abcdefgh") {
       const g = d.casillas[f + rank];
-      const p = g ? GLIFO[g] : null;
+      // "wK" / "bn": el id del dibujo es color + tipo.
+      const p = !g ? null : GLIFO[g] || (g.length === 2 ? (g[0] === "w" ? g[1].toUpperCase() : g[1].toLowerCase()) : null);
       if (!p) { vacias += 1; continue; }
       if (vacias) { fila += vacias; vacias = 0; }
       fila += p;

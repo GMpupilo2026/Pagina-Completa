@@ -44,21 +44,21 @@
       white: "#ffffff",
       black: "#17202a",
       whiteOutline: "#1e293b",
-      blackOutline: "rgba(255, 255, 255, 0.55)",
+      blackOutline: "transparent",
     },
     azulrojo: {
       label: "Azul y rojo",
       white: "#2563eb",
       black: "#dc2626",
       whiteOutline: "rgba(255, 255, 255, 0.6)",
-      blackOutline: "rgba(255, 255, 255, 0.6)",
+      blackOutline: "transparent",
     },
     verdemorado: {
       label: "Verde y morado",
       white: "#16a34a",
       black: "#7c3aed",
       whiteOutline: "rgba(255, 255, 255, 0.6)",
-      blackOutline: "rgba(255, 255, 255, 0.6)",
+      blackOutline: "transparent",
     },
     // Modo inverso: al revés de la convención de siempre, las piezas "blancas"
     // usan un color OSCURO y las "negras" uno CLARO. El contorno de cada una
@@ -97,21 +97,21 @@
       white: "#ffffff",
       black: "#000000",
       whiteOutline: "#000000",
-      blackOutline: "#ffffff",
+      blackOutline: "transparent",
     },
     amarillonegro: {
       label: "Amarillo y negro",
       white: "#fde047",
       black: "#000000",
       whiteOutline: "#000000",
-      blackOutline: "#fde047",
+      blackOutline: "transparent",
     },
     blancomorado: {
       label: "Blanco y morado",
       white: "#ffffff",
       black: "#7c3aed",
       whiteOutline: "#000000",
-      blackOutline: "#ffffff",
+      blackOutline: "transparent",
     },
   };
 
@@ -140,6 +140,17 @@
     return (l + 0.05) / 0.05 >= 1.05 / (l + 0.05) ? "#1e293b" : "rgba(255, 255, 255, 0.7)";
   }
 
+  // Las piezas negras van SIN borde: el contorno claro que traían se veía
+  // como un halo blanco alrededor de cada pieza negra, y es lo que se pidió
+  // quitar. Solo lo conserva una "negra" pintada de color CLARO (los temas
+  // invertidos, o un color a tu gusto claro): ahí el borde oscuro es lo único
+  // que la separa de la casilla clara, y no es el halo del que se habla.
+  const SIN_BORDE = "transparent";
+  function contornoNegras(hex) {
+    const c = contornoPara(hex);
+    return c === "#1e293b" ? c : SIN_BORDE;
+  }
+
   function getCustom() {
     let c = null;
     try {
@@ -152,7 +163,7 @@
       white,
       black,
       whiteOutline: contornoPara(white),
-      blackOutline: contornoPara(black),
+      blackOutline: contornoNegras(black),
     };
   }
 
@@ -175,14 +186,30 @@
   function getPreference() {
     return readKey(KEY, THEMES);
   }
+  // "auto" en Modo Adaptado = no se eligió nada en esa lista. Ver apply().
+  const AUTO = "auto";
+  function explicito(key) {
+    try {
+      return localStorage.getItem(key) != null;
+    } catch (e) {
+      return false;
+    }
+  }
   function getAdaptivePreference() {
-    return readKey(KEY_ADAPTIVE, ADAPTIVE_THEMES);
+    return explicito(KEY_ADAPTIVE) ? readKey(KEY_ADAPTIVE, ADAPTIVE_THEMES) : AUTO;
   }
 
+  // Lo que el alumno eligió NO lo cambia el Modo Adaptado, que se enciende
+  // solo (con el primer Tab): la lista de ese modo manda solo si se eligió algo
+  // EN ELLA. Si no, se queda el color elegido arriba; y si arriba tampoco se
+  // eligió nada, el blanco y negro de alto contraste de siempre del modo.
   function apply() {
     const pref = getPreference();
     const theme = pref === PERSONALIZADO ? getCustom() : THEMES[pref];
-    const adaptiveTheme = ADAPTIVE_THEMES[getAdaptivePreference()];
+    const adapt = getAdaptivePreference();
+    const adaptiveTheme = adapt !== AUTO
+      ? ADAPTIVE_THEMES[adapt]
+      : explicito(KEY) ? theme : ADAPTIVE_THEMES.clasico;
     const root = document.documentElement.style;
     root.setProperty("--piece-white", theme.white);
     root.setProperty("--piece-black", theme.black);
@@ -200,7 +227,13 @@
     return id;
   }
   function setAdaptivePreference(id) {
-    id = writeKey(KEY_ADAPTIVE, id, ADAPTIVE_THEMES);
+    if (id === AUTO) {
+      try {
+        localStorage.removeItem(KEY_ADAPTIVE);
+      } catch (e) {}
+    } else {
+      id = writeKey(KEY_ADAPTIVE, id, ADAPTIVE_THEMES);
+    }
     apply();
     return id;
   }
@@ -222,6 +255,7 @@
   apply();
 
   window.PieceColorThemes = {
+    AUTO,
     THEMES,
     ADAPTIVE_THEMES,
     PERSONALIZADO,

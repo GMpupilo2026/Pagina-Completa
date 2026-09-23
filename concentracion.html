@@ -32,6 +32,14 @@
     <script src="js/entreno-progress.js"></script>
     <script src="js/progreso-usuario.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <!-- tablero: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <!-- tablero: fin -->
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
@@ -306,8 +314,11 @@ function pintarTablero(visibles){
       const obj = visibles.find((o) => o.sq === square);
       if(obj){
         const span = document.createElement('span');
-        span.className = obj.color === 'w' ? 'piece-white' : 'piece-black';
-        span.textContent = GLYPH[obj.color][obj.tipo];
+        if (window.PiezaPreferida) PiezaPreferida.pintar(span, obj.tipo, obj.color);
+        else {
+          span.className = obj.color === 'w' ? 'piece-white' : 'piece-black';
+          span.textContent = GLYPH[obj.color][obj.tipo];
+        }
         span.setAttribute('aria-hidden', 'true');
         casilla.appendChild(span);
       }
@@ -418,7 +429,9 @@ function pintarOpciones(){
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'inline-flex items-center gap-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-xl px-4 py-2.5 text-sm text-brand-700 dark:text-brand-200 hover:border-accent-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
-    btn.innerHTML = `<span class="text-2xl leading-none ${obj.color === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[obj.color][obj.tipo]}</span> ${objetoNombre(obj, true)}`;
+    btn.innerHTML = (window.PiezaPreferida
+      ? PiezaPreferida.html(obj.tipo, obj.color, { clase: 'text-2xl leading-none', oculta: true })
+      : `<span class="text-2xl leading-none ${obj.color === 'w' ? 'piece-white' : 'piece-black'}" aria-hidden="true">${GLYPH[obj.color][obj.tipo]}</span>`) + ` ${objetoNombre(obj, true)}`;
     btn.addEventListener('click', () => responder(obj, btn));
     box.appendChild(btn);
   });

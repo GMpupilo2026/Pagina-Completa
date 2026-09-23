@@ -4,6 +4,9 @@
  * servidor, así que cada quien la elige para SU pantalla sin afectar lo que
  * ven los demás ni la posición real de la partida.
  *
+ * Vale en TODOS los tableros del sitio, no solo en los de Clases: cada uno
+ * pinta la pieza con js/pieza-preferida.js, que pregunta acá primero.
+ *
  * "clasico" son los glifos Unicode de siempre (♔♕♖♗♘♙): ClasesBoard los seguirá
  * dibujando exactamente como antes. Cualquier otro tema sustituye la pieza por
  * un emoji dentro de una ficha de color (blanca o negra) para poder distinguir

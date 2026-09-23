@@ -431,7 +431,9 @@
         // usando el glifo Unicode de siempre; "Clásico ilustrado" dibuja el set SVG compartido
         // (js/chess-piece-svg.js), que ya lee el color de pieza elegido (piece-color-themes.js)
         // por su cuenta — por eso ese caso no necesita la clase piece-white/piece-black.
-        if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
+        if (window.PiezaPreferida) {
+          PiezaPreferida.pintar(span, piece.type, piece.color);
+        } else if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
           span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
           span.className = "chess-piece-illustrated";
         } else {

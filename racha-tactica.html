@@ -29,6 +29,14 @@
     <script src="js/tiempo-plataforma.js" data-activity="racha"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/adaptive-mode.js"></script>
+    <!-- tablero: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <!-- tablero: fin -->
     <script src="js/blind-notation.js"></script>
     <script src="js/chess-move-parser.js"></script>
     <script src="js/cuadro-comandos.js"></script>
@@ -159,8 +167,11 @@
                 btn.setAttribute("aria-label", "Casilla " + square + ": " + pieceName);
                 if (piece) {
                     const span = document.createElement("span");
-                    span.textContent = GLYPH[piece.type][piece.color];
-                    span.className = piece.color === "w" ? "piece-white" : "piece-black";
+                    if (window.PiezaPreferida) PiezaPreferida.pintar(span, piece.type, piece.color);
+                    else {
+                      span.textContent = GLYPH[piece.type][piece.color];
+                      span.className = piece.color === "w" ? "piece-white" : "piece-black";
+                    }
                     span.setAttribute("aria-hidden", "true");
                     btn.appendChild(span);
                 }

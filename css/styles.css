@@ -23,11 +23,11 @@
   --piece-white: #ffffff;
   --piece-black: #17202a;
   --piece-white-outline: #1e293b;
-  --piece-black-outline: rgba(255, 255, 255, 0.55);
+  --piece-black-outline: transparent;
   --piece-white-adaptive: #ffffff;
   --piece-black-adaptive: #000000;
   --piece-white-outline-adaptive: #000000;
-  --piece-black-outline-adaptive: #ffffff;
+  --piece-black-outline-adaptive: transparent;
 }
 /* El atributo `hidden` tiene que ganarle a las clases de display de Tailwind.
    `[hidden]:where(...)` y `.flex` tienen la MISMA especificidad (0,1,0 — `:where`
@@ -103,14 +103,19 @@ body { -webkit-font-smoothing: antialiased; }
      1px  1px 0 var(--piece-white-outline, #1e293b),
      0 2px 3px rgba(0, 0, 0, 0.35);
 }
+/* Las negras van SIN borde: el contorno claro de antes se veía como un halo
+   blanco alrededor de cada pieza. --piece-black-outline vale `transparent` en
+   todos los temas donde la negra es oscura; solo lo trae un tema invertido,
+   donde la "negra" es clara y el borde oscuro es lo que la separa de la
+   casilla (ver js/piece-color-themes.js). */
 #chessboard .piece-black,
 .piece-black {
   color: var(--piece-black, #17202a);
   text-shadow:
-    -1px -1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
-     1px -1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
-    -1px  1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
-     1px  1px 0 var(--piece-black-outline, rgba(255, 255, 255, 0.55)),
+    -1px -1px 0 var(--piece-black-outline, transparent),
+     1px -1px 0 var(--piece-black-outline, transparent),
+    -1px  1px 0 var(--piece-black-outline, transparent),
+     1px  1px 0 var(--piece-black-outline, transparent),
      0 1px 2px rgba(0, 0, 0, 0.25);
 }
 /* Pieza dibujada (js/chess-piece-svg.js, tema "Clásico ilustrado" de
@@ -134,9 +139,12 @@ html[data-pieza="aro"] .chess-piece-svg.pieza-w,
 .aro-siempre .chess-piece-svg.pieza-w {
   filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 0 1.5px #000);
 }
+/* A las negras no se les pone aro: es el mismo halo blanco que se quitó del
+   símbolo. Lo conserva solo una "negra" clara (tema invertido), con el mismo
+   --piece-black-outline oscuro que la separa de la casilla. */
 html[data-pieza="aro"] .chess-piece-svg.pieza-b,
 .aro-siempre .chess-piece-svg.pieza-b {
-  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 0 1.5px #fff);
+  filter: drop-shadow(0 0 1px var(--piece-black-outline, transparent)) drop-shadow(0 0 1px var(--piece-black-outline, transparent)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 .radio-card-selected { background-color: rgb(var(--c-accent-400, 240 180 41) / 0.1); border-color: rgb(var(--c-accent-500, 222 145 29)); }
 
@@ -356,7 +364,7 @@ html.adaptive-mode {
   --piece-white: var(--piece-white-adaptive, #ffffff) !important;
   --piece-black: var(--piece-black-adaptive, #17202a) !important;
   --piece-white-outline: var(--piece-white-outline-adaptive, #000000) !important;
-  --piece-black-outline: var(--piece-black-outline-adaptive, #ffffff) !important;
+  --piece-black-outline: var(--piece-black-outline-adaptive, transparent) !important;
 }
 /* Además del color (ya cubierto arriba), en Modo Adaptado el contorno de las
    piezas de glifo se refuerza más grueso — no solo el color cambia. */
