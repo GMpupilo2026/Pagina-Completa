@@ -335,6 +335,13 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await comoQuienLlama.auth.getUser(jwt);
   if (userError || !userData?.user) return json({ error: "Token inválido" }, 401);
 
+  // Ver a dónde sale el aviso y mandarlo es de coordinación. Que la RLS de
+  // cobros_vista devuelva filas no alcanza: al alumno le devuelve SUS cobros, y
+  // con eso veía los correos de sus encargados y podía mandarle a su familia
+  // avisos de morosidad cuantas veces quisiera. Misma regla que correos-alumno.
+  const { data: coordina } = await comoQuienLlama.rpc("soy_coordinador");
+  if (coordina !== true) return json({ error: "Esto es de coordinación" }, 403);
+
   const studentId = typeof body.student_id === "string" ? body.student_id : "";
   if (!studentId) return json({ error: "student_id es requerido" }, 400);
 

@@ -161,6 +161,16 @@ Deno.serve(async (req) => {
     const cuerpo = String(body.cuerpo ?? "").trim();
     if (!titulo || !cuerpo) return json({ error: "El aviso necesita título y texto" }, 400);
 
+    // Avisar es de quien da clase. La RLS de profiles sola no alcanza: a un
+    // alumno también le devuelve a sus compañeros y a sus profesores, así que
+    // sin esto cualquier alumno le metía un aviso con el nombre de la Academia
+    // en el teléfono a toda su clase.
+    const { data: yo } = await comoQuienLlama
+      .from("profiles").select("role, is_admin").eq("id", quien).maybeSingle();
+    if (!yo || !(yo.is_admin || yo.role === "profesor")) {
+      return json({ error: "Solo quien da clase puede mandar avisos" }, 403);
+    }
+
     // El permiso: se leen los perfiles con el JWT de quien llama. Los que la
     // RLS no devuelva, no son suyos, y a esos no se les manda nada.
     const { data: puede } = await comoQuienLlama
@@ -168,11 +178,15 @@ Deno.serve(async (req) => {
     const permitidos = (puede ?? []).map((p: { id: string }) => p.id);
     if (!permitidos.length) return json({ error: "Ninguna de esas personas es alumno tuyo" }, 403);
 
+    // El enlace se abre al tocar el aviso: solo direcciones del propio sitio.
+    // Uno de afuera llegaría con la marca de la Academia encima.
+    const url = typeof body.url === "string" && /^\/(?![\/\\])/.test(body.url) ? body.url : "/clases.html";
+
     try {
       const r = await avisarA(permitidos, {
         titulo: titulo.slice(0, 80),
         cuerpo: cuerpo.slice(0, 200),
-        url: typeof body.url === "string" ? body.url : "/clases.html",
+        url,
       });
       return json({ ok: true, ...r, saltados: pedidos.length - permitidos.length });
     } catch (e) { return json({ error: e instanceof Error ? e.message : String(e) }, 500); }

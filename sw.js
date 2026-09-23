@@ -134,7 +134,11 @@ self.addEventListener("push", (evento) => {
    forma más rápida de perder lo que el alumno tenía a medias. */
 self.addEventListener("notificationclick", (evento) => {
   evento.notification.close();
-  const destino = (evento.notification.data && evento.notification.data.url) || "/clases.html";
+  // Solo se abre algo del propio sitio: el aviso lleva la marca de la Academia,
+  // y un enlace de afuera ahí sería la puerta perfecta para un engaño.
+  let destino = (evento.notification.data && evento.notification.data.url) || "/clases.html";
+  try { if (new URL(destino, self.location.origin).origin !== self.location.origin) destino = "/clases.html"; }
+  catch (e) { destino = "/clases.html"; }
   evento.waitUntil((async () => {
     const abiertas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const ventana of abiertas) {

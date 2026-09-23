@@ -994,12 +994,15 @@
         function applyGameStateRow(row) {
             // Lo que había ANTES, leído del propio tablero: así la jugada que acaba de
             // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
-            const antes = primerEstadoCargado ? { inicio: board.startFen || "", jugadas: board.moves() } : null;
+            // En modo libre el tablero del profesor es la posición que está armando,
+            // no la de la clase: compararla con lo que llega anunciaría cambios falsos.
+            const editando = isTeacher && board.freeMode;
+            const antes = primerEstadoCargado && !editando ? { inicio: board.startFen || "", jugadas: board.moves() } : null;
             primerEstadoCargado = true;
             // Mientras el profesor arma una posición a mano, el eco de Realtime (una
             // flecha, un cambio de control) no puede borrarle lo que lleva armado:
             // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
-            if (!(isTeacher && board.freeMode)) board.loadMoves(row.moves || [], row.start_fen);
+            if (!editando) board.loadMoves(row.moves || [], row.start_fen);
             board.setMarks(row.arrows || [], row.circles || []);
             // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
             // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
@@ -1007,7 +1010,7 @@
             board.setPiecesHidden(!isTeacher && !!row.pieces_hidden);
             lastPiecesHidden = !!row.pieces_hidden;
             if (claseAcc) {
-                claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
+                if (!editando) claseAcc.anunciarCambio(antes, { inicio: row.start_fen || "", jugadas: row.moves || [] });
                 if (!isTeacher && ocultabaAntes !== board.piecesHidden) {
                     claseAcc.decir(board.piecesHidden
                         ? "Tu profe ocultó las piezas: ahora hay que ver el tablero de memoria."
@@ -2279,6 +2282,12 @@
 
         document.getElementById("toggle-free-mode-btn").addEventListener("click", () => {
             const active = !board.freeMode;
+            // Salir con este mismo botón es descartar la edición, igual que
+            // «Cancelar»: mientras se editaba, los cambios que llegaban de la
+            // base se ignoraban, así que sin volver a leerla el tablero se
+            // quedaría con la posición armada a mano — y la próxima jugada la
+            // transmitiría sin pasar por la validación de «Aplicar».
+            if (!active) { document.getElementById("free-mode-cancel-btn").click(); return; }
             board.setFreeMode(active);
             setEditTool(null);
             if (active) resetBoardEditPanelPosition();

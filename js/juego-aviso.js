@@ -108,7 +108,11 @@ window.JuegoAviso = (function () {
   // entrar, por si el alumno no estaba conectado cuando se la asignaron.
   async function revisarPendientes() {
     try {
+      // El filtro de variante va EN la consulta, antes del limit: si la partida más
+      // nueva es un Duelo en curso, filtrarla después dejaba sin aviso a una más
+      // vieja que sí espera su "listo".
       const { data } = await sb.from("game_rooms").select("*").eq("status", "playing")
+        .in("variant", Object.keys(CON_LISTO))
         .or("white_id.eq." + userId + ",black_id.eq." + userId).order("created_at", { ascending: false }).limit(1);
       const row = data && data[0];
       const miReady = row && (row.white_id === userId ? row.white_ready : row.black_ready);

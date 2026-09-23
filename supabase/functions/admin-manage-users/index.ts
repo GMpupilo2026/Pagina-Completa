@@ -313,6 +313,23 @@ Deno.serve(async (req) => {
     // profesor sin tener que subirle el techo cada vez.
     if (body.reset_invitaciones === true) updates.invitaciones_usadas = 0;
 
+    // Bajar a alumno a quien todavía tiene alumnos se rechaza, CON EL NÚMERO,
+    // como en cambiar_rol(): sus filas de profile_teachers y de
+    // equipo_entrenadores seguirían dándole acceso a esos alumnos —informes,
+    // notas, tareas— aunque ya no tenga rol de profesor.
+    if (updates.role === "alumno") {
+      const [{ count: directos }, { count: equipos }] = await Promise.all([
+        adminClient.from("profile_teachers").select("student_id", { count: "exact", head: true }).eq("teacher_id", targetId),
+        adminClient.from("equipo_entrenadores").select("equipo_id", { count: "exact", head: true }).eq("teacher_id", targetId),
+      ]);
+      if ((directos ?? 0) > 0 || (equipos ?? 0) > 0) {
+        return json({
+          error: `Todavía tiene ${directos ?? 0} alumno(s) asignado(s) y es entrenador en ${equipos ?? 0} equipo(s). ` +
+                 "Reasígnalos antes de pasarlo a alumno.",
+        }, 400);
+      }
+    }
+
     if (Object.keys(updates).length) {
       const { error } = await adminClient.from("profiles").update(updates).eq("id", targetId);
       if (error) return json({ error: error.message }, 400);

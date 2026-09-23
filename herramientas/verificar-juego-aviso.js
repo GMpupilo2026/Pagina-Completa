@@ -54,6 +54,7 @@ window.__canales = {};
       select() { return b; },
       eq(col, val) { anotado.eq[col] = val; filas = filas.filter((r) => String(r[col]) === String(val)); return b; },
       or(expr) { anotado.or = expr; return b; },
+      in(col, vals) { anotado.in = { col: col, vals: vals }; filas = filas.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       order() { return b; },
       limit(n) { filas = filas.slice(0, n); return b; },
       single() { unica = true; return b; },

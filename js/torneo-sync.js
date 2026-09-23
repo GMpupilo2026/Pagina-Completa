@@ -54,9 +54,14 @@ window.TorneoSync = (function () {
   }
 
   async function finishTournament(sb, tournament, winnerIds, displayNames) {
-    await sb.from("tournaments").update({
+    // Condicional y pidiendo la fila de vuelta: el eco de la última partida le
+    // llega a la vez a los dos jugadores y a quien esté mirando, y cada uno
+    // cerraba el torneo e insertaba al campeón — que quedaba dos o tres veces
+    // en el salón de la fama. Solo sigue quien de verdad lo cerró.
+    const { data: cerrado } = await sb.from("tournaments").update({
       status: "finished", winner_ids: winnerIds, finished_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    }).eq("id", tournament.id);
+    }).eq("id", tournament.id).neq("status", "finished").select("id");
+    if (!cerrado || !cerrado.length) return;
     const rows = winnerIds.map((id) => ({
       tournament_id: tournament.id, tournament_name: tournament.name, format: tournament.format,
       variant: tournament.variant, display_name: displayNames[id] || "Alumno",
@@ -71,7 +76,10 @@ window.TorneoSync = (function () {
     if (!allResolved) return;
     const { data: round } = await sb.from("tournament_rounds").select("*").eq("id", roundId).single();
     if (!round || round.status === "finished") return;
-    await sb.from("tournament_rounds").update({ status: "finished" }).eq("id", roundId);
+    // Lo mismo con la ronda: la cierra UNO solo, el que la encontró abierta.
+    const { data: rondaCerrada } = await sb.from("tournament_rounds").update({ status: "finished" })
+      .eq("id", roundId).neq("status", "finished").select("id");
+    if (!rondaCerrada || !rondaCerrada.length) return;
 
     const { data: tournament } = await sb.from("tournaments").select("*").eq("id", round.tournament_id).single();
     if (!tournament || tournament.status === "finished") return;

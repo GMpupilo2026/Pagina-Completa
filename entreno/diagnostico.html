@@ -338,7 +338,10 @@ function cargarEstado() {
   estado.items = ITEMS.map((i) => i.id);
 }
 function guardarEstado() {
-  try { localStorage.setItem(ESTADO_KEY, JSON.stringify({ version: VERSION, estado })); } catch (e) {}
+  // «guardado» es lo que permite saber, en otro aparato, que esta prueba a
+  // medias quedó vieja: si hay un resultado posterior, ya se terminó (ver
+  // js/progreso-usuario.js).
+  try { localStorage.setItem(ESTADO_KEY, JSON.stringify({ version: VERSION, estado, guardado: new Date().toISOString() })); } catch (e) {}
 }
 function borrarEstado() {
   try { localStorage.removeItem(ESTADO_KEY); } catch (e) {}

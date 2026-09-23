@@ -163,7 +163,7 @@ let cerrando = false;
 let arrancoPregunta = 0;
 
 function $(id) { return document.getElementById(id); }
-function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
+function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function ahora() { return Date.now() + desfase; }
 
 /* ---------------- Entrada ---------------- */
