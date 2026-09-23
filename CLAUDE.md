@@ -3529,6 +3529,66 @@ mínimo 2 minutos de tiempo en la plataforma.
   aplicarla de verdad: cambian los 5 alumnos de CENFO (38 → 306 min, 74 → 488)
   y **ningún otro alumno se mueve ni un minuto**.
 
+### En qué se fue el tiempo, sección por sección
+
+El pedido: «que todo lo que haga el alumno le sume tiempo y salga en el
+informe: si estudia un curso, cuánto lo estuvo estudiando; si entrena
+Visualización, también cuántos ejercicios hizo; y lo que es contenido y no
+ejercicios, igual el tiempo». Había dos huecos, los dos callados:
+
+- **Medio sitio no contaba ni un minuto.** `js/tiempo-plataforma.js` solo
+  estaba escrito a mano en las páginas de Entrenamiento. **Los doce cursos de
+  la Academia, las siete páginas de partida, el torneo y el examen no lo
+  cargaban**: un alumno podía pasar una hora en un curso y el informe decía 0.
+  Ahora lo pone `herramientas/academia-cabecera.py` (marcas `<!-- tiempo: …
+  -->`, en la misma lista `PAGINAS`), con la actividad de `TIEMPO_ACTIVIDAD`.
+  **Una página que ya lo trae escrito a mano no lo recibe otra vez**: serían
+  dos filas abiertas y esa sección contada doble.
+- **El informe decía UN total.** Ahora `public.tiempo_por_seccion(alumno,
+  desde, hasta)` devuelve una fila por sección con sus minutos y sus
+  ejercicios, y la pintan el bloque «⏱️ En qué usó su tiempo» de Informes (las
+  dos vistas, con «Desde siempre / 30 días / 7 días») y «En qué trabajó» del
+  correo a la casa (`informe_de_alumno()` trae `secciones`).
+
+Detalles que importan:
+
+- **Un curso cuenta aparte de los demás**: `data-activity="curso"` se completa
+  sola con el nombre del archivo (`curso:el-mapa-de-los-finales`), con `.html`
+  o sin él. Un curso nuevo cuenta solo, sin tocar ninguna lista.
+- **La sección de un ejercicio no siempre es su `activity`**: un tema de
+  táctica se apunta `tactica` y se resuelve en Ejercicios por tema, y Desafíos
+  se apunta `practicar` con `set_id` `desafio_…`. La función los reparte; el
+  tiempo viejo de `tactica` y `fichas` va a `temas` y `estudio`.
+- **Lo que es contenido no inventa un conteo**: un curso dice «Estudió el
+  contenido», Estudio o el bot dicen el tiempo y nada más.
+- **Es `SECURITY INVOKER`** como las de informes (comprobado: el alumno recibe
+  sus 17 secciones y 0 de otro) y sin execute para `anon`.
+- **El mínimo de CENFO va POR SECCIÓN** (la regla es por ejercicio), y las
+  secciones se parten con `minutos_por_tramos()`: con dos secciones abiertas a
+  la vez la suma puede dar un poco más que la tarjeta del total, y la nota del
+  bloque lo dice. Con los datos reales: 589 min repartidos contra 588 de total.
+- **Los nombres de sección están escritos dos veces, a la fuerza**:
+  `js/tiempo-secciones.js` (navegador) y `SECCIONES`/`TITULOS_CURSOS` de
+  `informes-encargados/informe-html.ts` (Deno). Si se separan, el correo nombra
+  una sección que la pantalla no conoce. Al sumar una página que cuenta tiempo
+  con una actividad nueva, agregarla en las dos.
+- Sin `secciones` (una base de antes), el correo cae a los conteos de siempre.
+
+**Al tocar esto, correr `node herramientas/verificar-tiempo-secciones.js`** (sin
+navegador ni red): que las dos tablas digan lo mismo y los cursos se llamen como
+en el catálogo, que toda página que cuenta tiempo lo haga en una sección con
+nombre y una sola vez, que los doce cursos, las partidas y el examen cuenten,
+que «curso» se apunte con su nombre, y lo que dice el correo. Y `node
+herramientas/verificar-informes.js`, que mira el bloque en un navegador. Está
+probado que falla de verdad: sin la conversión de «curso» saltan 2.
+
+**Pendiente de desplegar `informes-encargados`**: hasta subirla, el correo sigue
+con los conteos de siempre (la base ya manda `secciones`). Ojo:
+`node herramientas/funciones-armar.js` hoy se planta porque el respaldo del
+punto de restauración dejó copias de los archivos compartidos dentro de cada
+función (`informes-encargados/contacto-academia.ts`, entre otras); lo que se
+sube es `index.ts`, `informe-html.ts` y `_compartido/contacto-academia.ts`.
+
 ### «Cómo viene» cuenta también la clase
 
 `evolucion_alumno()` sumaba solo `platform_activity_log`, mientras la tarjeta

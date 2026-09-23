@@ -233,6 +233,51 @@ def poner_acceso(ruta, s):
             + ACCESO_FIN + s[cierre:])
 
 
+# El tiempo en la plataforma (js/tiempo-plataforma.js) de las páginas que no
+# lo ponían a mano. Las de Entrenamiento lo llevan escrito en su HTML con su
+# propia actividad; estas no, y por eso el alumno que estudiaba un curso o
+# jugaba una partida no sumaba ni un minuto: el informe decía "0 min" de algo
+# que sí hizo, sin que nada fallara. La actividad dice en qué sección cuenta
+# (ver public.tiempo_por_seccion()); "curso" se completa sola con el nombre
+# del archivo, así un curso nuevo cuenta aparte sin tocar esta lista.
+TIEMPO_INICIO = "<!-- tiempo: inicio -->"
+TIEMPO_FIN = "<!-- tiempo: fin -->"
+TIEMPO_ACTIVIDAD = {
+    "estandar.html": "partidas", "niebla.html": "partidas",
+    "crazyhouse.html": "partidas", "cartas.html": "partidas",
+    "duelo.html": "partidas", "variante.html": "partidas",
+    "cuatro-jugadores.html": "partidas",
+    "torneo.html": "torneos",
+    "examen.html": "examen",
+}
+
+
+def actividad_de_tiempo(ruta):
+    if ruta.startswith("cursos/academia/") and not ruta.endswith("/index.html"):
+        return "curso"
+    return TIEMPO_ACTIVIDAD.get(ruta)
+
+
+def poner_tiempo(ruta, s):
+    i = s.find(TIEMPO_INICIO)
+    if i >= 0:
+        j = s.find(TIEMPO_FIN, i)
+        s = s[:i] + s[j + len(TIEMPO_FIN):]
+    actividad = actividad_de_tiempo(ruta)
+    # Una página que ya lo trae escrito a mano no lo lleva dos veces: serían
+    # dos filas abiertas a la vez y el tiempo de esa sección contado doble.
+    if not actividad or "tiempo-plataforma.js" in s:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin contar el tiempo.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + TIEMPO_INICIO
+            + f'<script src="{arriba}js/tiempo-plataforma.js" data-activity="{actividad}" defer></script>'
+            + TIEMPO_FIN + s[cierre:])
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -251,6 +296,7 @@ def procesar(ruta):
     s = poner_burbuja(ruta, s)
     s = poner_juego_aviso(ruta, s)
     s = poner_acceso(ruta, s)
+    s = poner_tiempo(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)
