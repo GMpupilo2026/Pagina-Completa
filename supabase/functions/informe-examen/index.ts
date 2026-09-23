@@ -22,6 +22,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeExamenHtml } from "./examen-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
+import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -43,13 +44,16 @@ function json(body: unknown, status = 200) {
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-async function mandar(para: string, asunto: string, html: string) {
+async function mandar(para: string, asunto: string, html: string, remite?: Remitente) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return { ok: false, error: "Falta configurar RESEND_API_KEY" };
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: DE, to: [para], subject: asunto, html }),
+    body: JSON.stringify({
+      from: remite?.from ?? DE, to: [para], subject: asunto, html,
+      ...(remite?.replyTo.length ? { reply_to: remite.replyTo } : {}),
+    }),
   });
   if (!res.ok) return { ok: false, error: `Resend respondió ${res.status}: ${await res.text()}` };
   return { ok: true };
@@ -102,8 +106,9 @@ Deno.serve(async (req) => {
 
   let enviados = 0;
   const fallos: string[] = [];
+  const remite = await remitenteDe(admin, inf.alumno_id, DE);
   for (const e of encargados) {
-    const r = await mandar(e.email, asunto, html);
+    const r = await mandar(e.email, asunto, html, remite);
     if (r.ok) enviados += 1; else fallos.push(`${e.email}: ${r.error}`);
   }
 

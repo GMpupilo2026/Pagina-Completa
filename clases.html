@@ -46,6 +46,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/funciones-coordinacion.js"></script>
     <script src="js/modo-vista.js"></script>
     <script src="js/notificaciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
@@ -532,6 +533,9 @@
             ] },
             { title: "Tus profesores", tiles: [
                 { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html" },
+                /* Su academia: quién está, su número y su correo, y qué puede
+                   hacer cada coordinador. */
+                { emoji: "🏫", label: "Tu academia", desc: "Quién está en tu academia, sus datos de contacto y qué puede hacer cada coordinador", href: "academias.html" },
             ] },
             { title: "Qué están entrenando, tema por tema", tiles: [
                 { emoji: "♚", label: "Mates", desc: "Mates en 1, 2 y 3 resueltos", href: TEMA("mates") },
@@ -2067,7 +2071,10 @@
                    del mes y sus informes: lo mismo que un supervisor, con el
                    alcance de siempre. */
                 TILE_GROUPS.find((g) => g.title === "Herramientas").tiles.push(
-                    { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes y su informe mensual", href: "supervision.html" }
+                    { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes y su informe mensual", href: "supervision.html" },
+                    /* El negocio se reparte en academias: cada una con su
+                       supervisor, su gente y su nombre en los correos. */
+                    { emoji: "🏫", label: "Academias", desc: "Crea las academias, ponles supervisor y reparte a su gente", href: "academias.html" }
                 );
             }
 
@@ -2129,6 +2136,14 @@
                     { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario para tu equipo, compártelo por enlace y baja las respuestas", href: "formularios.html" },
                     { emoji: "💳", label: "Cobros de la Academia", desc: "Mensualidades, pagos y morosidad. Los recordatorios salen solos", href: "cobros.html" }
                 );
+                /* Lo que el supervisor de su academia le apagó no se ofrece: la
+                   base lo rechazaría igual, pero el fallo lo descubriría quien
+                   entró. Quien administra o supervisa tiene todas. */
+                if (profile.es_coordinador && !profile.is_admin && !profile.es_supervisor && window.FuncionesCoordinacion) {
+                    await FuncionesCoordinacion.cargar(sb);
+                    const herr = TILE_GROUPS.find((g) => g.title === "Herramientas");
+                    herr.tiles = herr.tiles.filter((t) => FuncionesCoordinacion.permiteDestino(t.href));
+                }
             }
             /* LOS COBROS NO SE LE OFRECEN A NADIE MÁS QUE A COORDINACIÓN.
                Aquí vivía «Mis pagos» para el alumnado. Se fue del panel entero,

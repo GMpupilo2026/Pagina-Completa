@@ -98,8 +98,15 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await comoQuienLlama.auth.getUser(jwt);
   if (userError || !userData?.user) return json({ error: "Token inválido" }, 401);
 
-  const { data: coordina } = await comoQuienLlama.rpc("soy_coordinador");
-  if (!coordina) return json({ error: "Esto es de quien coordina o administra" }, 403);
+  // Corregir los correos lo hace quien tiene la función de cuentas o la de
+  // cobros: la ficha de contacto de Cobros pasa por aquí también.
+  const [{ data: cuentas }, { data: cobros }] = await Promise.all([
+    comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cuentas" }),
+    comoQuienLlama.rpc("coordinador_puede", { p_funcion: "cobros" }),
+  ]);
+  if (!cuentas && !cobros) {
+    return json({ error: "Corregir correos no está entre tus funciones de coordinación" }, 403);
+  }
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Cuerpo JSON inválido" }, 400); }

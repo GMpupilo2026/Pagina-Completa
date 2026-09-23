@@ -398,7 +398,7 @@ export function informeHtml(
 
   <tr><td style="background:#f0f4f8;padding:16px 24px;font-size:11px;color:#55708a;line-height:1.6">
     Recibes este correo porque en la Academia figuras como persona encargada de ${escapar(d.alumno)}.
-    Si prefieres dejar de recibirlo, o quieres cambiar cada cuánto llega, respondele a quien le da clase.
+    Si prefieres dejar de recibirlo, o quieres cambiar cada cuánto llega, respóndele a quien le da clase.
     <br><a href="${sitio}" style="color:#55708a">${sitio.replace(/^https:\/\//, "")}</a>
   </td></tr>
 
@@ -464,7 +464,7 @@ export function invitarPracticarHtml(
       <a href="${contacto.enlace}" style="color:#a85a0d">${escapar(contacto.texto)}</a>.
     </p>` : `
     <p style="margin:0;font-size:13px;color:#55708a;line-height:1.6">
-      Cualquier consulta, respondenos este mismo correo.
+      Cualquier consulta, respóndenos este mismo correo.
     </p>`}
   </td></tr>
 

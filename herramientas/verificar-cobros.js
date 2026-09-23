@@ -141,7 +141,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       signOut: () => Promise.resolve({}),
     },
     from: (t) => constructor(TABLAS[t] !== undefined ? TABLAS[t] : [], t),
-    rpc: (n, args) => { window.__llamadas.push({ rpc: n, args: args || null });
+    rpc: (n, args) => { if (n === "mis_funciones_coordinacion") return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
+                        window.__llamadas.push({ rpc: n, args: args || null });
                         return constructor(RPC[n] !== undefined ? RPC[n] : [], "rpc:" + n); },
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},

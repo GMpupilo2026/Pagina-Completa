@@ -34,6 +34,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { informeHtml, invitarPracticarHtml, PERIODOS, type Frecuencia } from "./informe-html.ts";
 import { contactoDeConsultas } from "./contacto-academia.ts";
+import { remitenteDe, type Remitente } from "./remitente-academia.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -90,13 +91,16 @@ async function armar(studentId: string, frecuencia: Frecuencia, cliente = admin)
   return { datos: data, html: informeHtml(data, frecuencia, SITE_URL, contacto) };
 }
 
-async function mandar(para: string, asunto: string, html: string) {
+async function mandar(para: string, asunto: string, html: string, remite?: Remitente) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) return { ok: false, error: "Falta configurar RESEND_API_KEY" };
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: DE, to: [para], subject: asunto, html }),
+    body: JSON.stringify({
+      from: remite?.from ?? DE, to: [para], subject: asunto, html,
+      ...(remite?.replyTo.length ? { reply_to: remite.replyTo } : {}),
+    }),
   });
   if (!res.ok) return { ok: false, error: `Resend respondió ${res.status}: ${await res.text()}` };
   return { ok: true };
@@ -156,7 +160,8 @@ Deno.serve(async (req) => {
       }
       try {
         const { datos, html } = await armar(e.student_id, e.frecuencia as Frecuencia);
-        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia), html);
+        const r = await mandar(e.email, asuntoDe(datos.alumno ?? "tu hijo o hija", e.frecuencia as Frecuencia), html,
+          await remitenteDe(admin, e.student_id, DE));
         if (!r.ok) { fallos.push(`${e.email}: ${r.error}`); continue; }
         // Solo se marca después de que Resend lo aceptó: si falló, la próxima
         // tanda lo vuelve a intentar en vez de darlo por mandado.
@@ -219,7 +224,8 @@ Deno.serve(async (req) => {
 
     try {
       const { datos, html } = await armar(enc.student_id, enc.frecuencia as Frecuencia);
-      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia), html);
+      const r = await mandar(enc.email, asuntoDe(datos.alumno ?? "tu hijo o hija", enc.frecuencia as Frecuencia), html,
+        await remitenteDe(admin, enc.student_id, DE));
       if (!r.ok) return json({ error: r.error }, 502);
       await admin.from("encargados").update({ ultimo_envio_at: new Date().toISOString() }).eq("id", enc.id);
       return json({ ok: true, email: enc.email });
@@ -277,8 +283,9 @@ Deno.serve(async (req) => {
 
     let mandados = 0;
     const fallos: string[] = [];
+    const remite = await remitenteDe(admin, studentId, DE);
     for (const e of encargados) {
-      const r = await mandar(e.email, asunto, html);
+      const r = await mandar(e.email, asunto, html, remite);
       if (r.ok) mandados += 1; else fallos.push(`${e.email}: ${r.error}`);
     }
     if (!mandados) return json({ error: fallos.join("; ") || "No se pudo mandar" }, 502);

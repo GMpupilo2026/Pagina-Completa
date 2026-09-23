@@ -180,7 +180,9 @@ window.__consultas = [];
 
        Un solo profesor en mis_clases: el selector de clase no aparece, que es
        lo correcto. */
-    rpc: (n, args) => constructor(n, n === "mis_clases"
+    rpc: (n, args) => n === "mis_funciones_coordinacion"
+      ? Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null })
+      : constructor(n, n === "mis_clases"
       ? (DATOS.mis_clases || [MI_CLASE()])
       : (DATOS.rpc && DATOS.rpc[n]) || [], args),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
@@ -202,6 +204,8 @@ function bien(t) { console.log("  ✓ " + t); }
 
 async function panel(browser, perfiles, quien, opciones, datos) {
   const ctx = await browser.newContext(opciones || {});
+  // Lo que el supervisor de su academia le dejó a un coordinador.
+  if (datos && datos.misFunciones) await ctx.addInitScript((f) => { window.__misFunciones = f; }, datos.misFunciones);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
@@ -490,7 +494,7 @@ async function pruebaAdmin(browser) {
      de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "planes.html", "asistencia.html",
+    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "academias.html", "planes.html", "asistencia.html",
      "informe-mensual.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
@@ -502,6 +506,22 @@ async function pruebaAdmin(browser) {
   igual("a administración los dos diagnósticos sí se le pintan",
     grupo(grupos, "Mide tu nivel").tiles.map((t) => t.enlace),
     ["entreno/diagnostico.html", "arbitraje.html"]);
+  await ctx.close();
+}
+
+/* El supervisor de su academia le apagó los cobros y las solicitudes: esas dos
+   tarjetas no se le pintan. La base lo rechazaría igual, pero el fallo lo
+   descubriría quien entró. Formularios, que sí tiene, se queda. */
+async function pruebaCoordinadorRecortado(browser) {
+  console.log("\n=== Un coordinador al que le apagaron funciones ===");
+  const COORD = { id: "u-luis", role: "profesor", is_admin: false, es_coordinador: true, full_name: "Luis Mora", email: "luis@x.cr", grupo: null };
+  const { page, ctx, errores } = await panel(browser, [COORD], "u-luis", null,
+    { misFunciones: ["formularios", "altas", "cuentas", "acceso", "roles", "equipos", "subgrupos"] });
+  const enlaces = grupo(await page.evaluate(LEER_GRILLA), "Herramientas").tiles.map((t) => t.enlace);
+  igual("no se le pintan ni Cobros ni Solicitudes, y sí Formularios y Coordinación",
+    ["cobros.html", "solicitudes.html", "formularios.html", "coordinacion.html"].map((x) => enlaces.includes(x)),
+    [false, false, true, true]);
+  igual("sin errores en la página", errores, []);
   await ctx.close();
 }
 
@@ -1689,6 +1709,7 @@ if (require.main !== module) return;
     await pruebaProfesora(browser);
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
+    await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
     await pruebaPantalla(browser);
   } finally {

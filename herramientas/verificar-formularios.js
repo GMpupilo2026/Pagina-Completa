@@ -98,6 +98,8 @@ window.SUPABASE_ANON_KEY = "anon-de-mentira";
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: ${JSON.stringify(usuarioId)}, }, access_token: "t" } } }) },
     from: (t) => constructor(t, DATOS.tablas[t] !== undefined ? DATOS.tablas[t] : []),
     rpc: (n, args) => {
+      // Quien administra, supervisa o coordina sin academia recibe todas.
+      if (n === "mis_funciones_coordinacion") return Promise.resolve({ data: (window.__misFunciones || ["formularios","altas","solicitudes","cuentas","acceso","roles","cobros","equipos","subgrupos"]), error: null });
       window.__rpc.push({ nombre: n, args: args || null });
       const v = DATOS.rpc[n];
       return constructor("rpc:" + n, typeof v === "function" ? v : v !== undefined ? v : []);
