@@ -1009,7 +1009,7 @@
         async function loadEntrenoProgress() {
             const { data, error } = await sb.rpc("informes_resumen_alumnos");
             if (error) return;   // deja los guiones en vez de romper el resto del panel
-            const fila = (data || []).find((f) => f.id === profile.id) || (data || [])[0];
+            const fila = (data || []).find((f) => f.id === profile.id);
             if (!fila) return;
             document.getElementById("entreno-puzzles").textContent = String(fila.puzzles || 0);
             document.getElementById("entreno-lessons").textContent = String(fila.lecciones || 0);

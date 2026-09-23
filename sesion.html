@@ -996,7 +996,10 @@
             // hacer este mismo navegador vuelve como eco idéntico y no se anuncia dos veces.
             const antes = primerEstadoCargado ? { inicio: board.startFen || "", jugadas: board.moves() } : null;
             primerEstadoCargado = true;
-            board.loadMoves(row.moves || [], row.start_fen);
+            // Mientras el profesor arma una posición a mano, el eco de Realtime (una
+            // flecha, un cambio de control) no puede borrarle lo que lleva armado:
+            // "Aplicar" la transmite y "Cancelar" vuelve a leer el estado de la base.
+            if (!(isTeacher && board.freeMode)) board.loadMoves(row.moves || [], row.start_fen);
             board.setMarks(row.arrows || [], row.circles || []);
             // Ocultar piezas es una herramienta del profesor sobre el tablero de LOS ALUMNOS:
             // en su propio tablero el profesor siempre las ve, aunque la columna esté en true.
@@ -1969,6 +1972,9 @@
                 onFreeModeChange: () => updateLiveFenDisplay(),
                 onMove: () => {
                     pushBoardState();
+                    // Con el control y un solo color, después de su jugada ya no le toca:
+                    // sin esto podía mover también por el otro lado antes de que volviera el eco.
+                    if (!isTeacher) updateAccessForRole();
                     if (claseAcc) claseAcc.actualizar();
                     updateTurnIndicator();
                     renderMoveList();
@@ -3641,11 +3647,23 @@
             questionEngineBusy = true;
             questionEngineLastFailed = false;
             updateQuestionCardStatus();
+            /* Mientras el motor piensa el profe puede plantear OTRA pregunta: la
+               jugada que vuelva es de la posición vieja, y si resultara legal en
+               la nueva movería una pieza que no corresponde. Se ata a la pregunta
+               y a la posición con que se pidió. */
+            const preguntaPedida = currentQuestion.id;
+            let fenPedida = null;
             let uci = null;
             for (let attempt = 0; attempt < 3 && !uci; attempt++) {
-                const fen = questionBoard.fen();
-                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fen, "max") : null;
+                fenPedida = questionBoard.fen();
+                uci = typeof PracticeEngine !== "undefined" ? await PracticeEngine.getMove(fenPedida, "max") : null;
                 if (!currentQuestion || currentQuestion.closed_at || myAnswer) { questionEngineBusy = false; return; }
+                if (currentQuestion.id !== preguntaPedida || questionBoard.fen() !== fenPedida) {
+                    questionEngineBusy = false;
+                    updateQuestionCardStatus();
+                    requestQuestionEngineReply();
+                    return;
+                }
             }
             questionEngineBusy = false;
 
@@ -4230,7 +4248,16 @@
                 // una nueva, o el propio alumno pudo rendirse o reintentar esta misma partida:
                 // en cualquiera de esos casos, no seguir insistiendo con datos ya viejos.
                 if (!myPracticeGame || myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove || myPracticeGame.status !== "playing") {
+                    /* La ronda nueva se pintó con el motor ocupado —el tablero
+                       quieto y «el motor está pensando»— y su propio pedido
+                       salió de inmediato por ese mismo `busy`. Sin repintar y
+                       sin volver a pedir, al alumno le tocaría mover en un
+                       tablero que no responde nunca. */
                     practiceEngineBusy = false;
+                    updatePracticeCardInteractivity();
+                    if (myPracticeGame && myPracticeGame.status === "playing") {
+                        requestEngineReply(myPracticeGame.id, myPracticeGame.attempts);
+                    }
                     return;
                 }
             }

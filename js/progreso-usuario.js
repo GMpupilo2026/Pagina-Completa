@@ -74,6 +74,9 @@ window.ProgresoUsuario = (function () {
       return String(Math.max(a, b));
     },
     // Marcadores de "dónde iba": vale el del aparato que está en uso.
+    // También las rachas ACTUALES (*_streak): bajan a 0 al fallar, así que
+    // fundirlas con el máximo resucitaba en un aparato la racha que ya se había
+    // roto en el otro. Las mejores marcas (*_best) sí van con maxNumero.
     ultimoLugar(local, remoto) {
       return local !== null ? local : remoto;
     },
@@ -124,15 +127,15 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_desafios_v2",              fusion: "maxPorClave" },
     { clave: "concentracion_objeto_perdido_v1",  fusion: "maxPorClave" },   // nivel → ejercicios
     { clave: "entreno_mates_best",               fusion: "maxNumero" },
-    { clave: "entreno_mates_streak",             fusion: "maxNumero" },
+    { clave: "entreno_mates_streak",             fusion: "ultimoLugar" },
     { clave: "entreno_tactica_best",             fusion: "maxNumero" },
-    { clave: "entreno_tactica_streak",           fusion: "maxNumero" },
+    { clave: "entreno_tactica_streak",           fusion: "ultimoLugar" },
     { clave: "entreno_temas_best",               fusion: "maxNumero" },
-    { clave: "entreno_temas_streak",             fusion: "maxNumero" },
+    { clave: "entreno_temas_streak",             fusion: "ultimoLugar" },
     { clave: "entreno_temas_done",               fusion: "maxNumero" },
     { clave: "entreno_temas_total",              fusion: "maxNumero" },
     { clave: "entreno_practicas_best",           fusion: "maxNumero" },
-    { clave: "entreno_practicas_streak",         fusion: "maxNumero" },
+    { clave: "entreno_practicas_streak",         fusion: "ultimoLugar" },
     { prefijo: "entreno_coord_best_",            fusion: "maxNumero" },     // una por modo
     { clave: "entreno_temas_last",               fusion: "ultimoLugar" },
     { clave: "diagnostico_estado_v1",            fusion: "pruebaEnCurso" },
@@ -148,7 +151,7 @@ window.ProgresoUsuario = (function () {
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
-    { clave: "entreno_visualizacion_streak",     fusion: "maxNumero" },
+    { clave: "entreno_visualizacion_streak",     fusion: "ultimoLugar" },
     { clave: "entreno_visualizacion_last",       fusion: "ultimoLugar" },
   ];
 
@@ -162,20 +165,27 @@ window.ProgresoUsuario = (function () {
   let listo = false;
   const pendientes = new Set();   // claves por subir
   let temporizador = null;
-  const guardarOriginal = window.localStorage.setItem.bind(window.localStorage);
-  const borrarOriginal = window.localStorage.removeItem.bind(window.localStorage);
+  // Con los datos del sitio bloqueados (o en una ventana privada de algunos
+  // navegadores) solo TOCAR window.localStorage lanza SecurityError: sin este
+  // try, el archivo entero moría al cargar y se llevaba la página con él.
+  let guardarOriginal = null, borrarOriginal = null;
+  try {
+    guardarOriginal = window.localStorage.setItem.bind(window.localStorage);
+    borrarOriginal = window.localStorage.removeItem.bind(window.localStorage);
+  } catch (e) {}
 
   function leerLocal(clave) {
     try { return window.localStorage.getItem(clave); } catch (e) { return null; }
   }
   function escribirLocal(clave, valor) {
-    try { if (valor === null) borrarOriginal(clave); else guardarOriginal(clave, valor); } catch (e) {}
+    try { if (!guardarOriginal) return; if (valor === null) borrarOriginal(clave); else guardarOriginal(clave, valor); } catch (e) {}
   }
 
   // Se interceptan las escrituras de las páginas para enterarse de los cambios.
   // Se hace al cargar el archivo, no en init(), para no perder lo que una página
   // guarde mientras todavía se está bajando el progreso de la nube.
   function intervenirAlmacenamiento() {
+    if (!guardarOriginal) return;
     window.localStorage.setItem = function (clave, valor) {
       guardarOriginal(clave, valor);
       if (fusionDe(String(clave))) encolar(String(clave));

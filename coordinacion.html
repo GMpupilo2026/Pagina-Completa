@@ -602,23 +602,43 @@ async function traerGente(rol) {
     return todo;
 }
 
+/* De mil en mil hasta que llega una página corta: PostgREST corta la
+   respuesta sin dar ningún error. La misma de admin.html. */
+async function traerTodo(consulta) {
+    const PASO = 1000;
+    let desde = 0, todo = [];
+    for (;;) {
+        const { data, error } = await consulta().range(desde, desde + PASO - 1);
+        if (error) throw new Error(error.message);
+        todo = todo.concat(data || []);
+        if (!data || data.length < PASO) return todo;
+        desde += PASO;
+    }
+}
+
 async function cargarEquipos() {
     const caja = document.getElementById("equipos-lista");
     try {
-        const [eq, ea, ee] = await Promise.all([
-            sb.from("equipos").select("id, nombre, created_by").order("nombre"),
-            sb.from("equipo_alumnos").select("equipo_id, alumno_id"),
-            sb.from("equipo_entrenadores").select("equipo_id, teacher_id"),
+        /* Las tres, enteras y comprobadas. coord_equipo_set_alumnos() y
+           coord_equipo_set_entrenadores() dejan la lista EXACTAMENTE como llega,
+           y lo que se manda es la unión con lo que se leyó acá: una lectura que
+           falló —o que PostgREST cortó en mil filas sin decir nada— dejaría el
+           equipo vacío en pantalla, y el siguiente volcado sacaría del equipo a
+           los que no llegaron. Por eso un error NO se ignora: sin datos no se
+           pinta ni un control que escriba. */
+        const [eqData, eaData, eeData] = await Promise.all([
+            traerTodo(() => sb.from("equipos").select("id, nombre, created_by").order("nombre").order("id")),
+            traerTodo(() => sb.from("equipo_alumnos").select("equipo_id, alumno_id").order("equipo_id").order("alumno_id")),
+            traerTodo(() => sb.from("equipo_entrenadores").select("equipo_id, teacher_id").order("equipo_id").order("teacher_id")),
         ]);
-        if (eq.error) throw new Error(eq.error.message);
-        equipos = eq.data || [];
+        equipos = eqData;
         alumnosDeEquipo = new Map();
-        (ea.data || []).forEach((r) => {
+        eaData.forEach((r) => {
             if (!alumnosDeEquipo.has(r.equipo_id)) alumnosDeEquipo.set(r.equipo_id, []);
             alumnosDeEquipo.get(r.equipo_id).push(r.alumno_id);
         });
         entrenadoresDeEquipo = new Map();
-        (ee.data || []).forEach((r) => {
+        eeData.forEach((r) => {
             if (!entrenadoresDeEquipo.has(r.equipo_id)) entrenadoresDeEquipo.set(r.equipo_id, []);
             entrenadoresDeEquipo.get(r.equipo_id).push(r.teacher_id);
         });

@@ -101,7 +101,9 @@ window.__llamadas = [];
         filas = filas.filter((r) => String(r[col]) === String(val));
         return b;
       },
-      order(col) { anotado.order = col; return b; },
+      order(col) { if (anotado.order == null) anotado.order = col; return b; },
+      // La página pide de mil en mil (traerTodo): el doble corta igual que PostgREST.
+      range(desde, hasta) { filas = filas.slice(desde, hasta + 1); return b; },
       single() { unica = true; return b; },
       then(resolve) { resolve({ data: unica ? (filas[0] || null) : filas, error: null }); },
       update(cambios) {

@@ -140,7 +140,12 @@ self.addEventListener("notificationclick", (evento) => {
     for (const ventana of abiertas) {
       if (new URL(ventana.url).origin === self.location.origin) {
         await ventana.focus();
-        if ("navigate" in ventana) { try { await ventana.navigate(destino); } catch (e) {} }
+        // navigate() falla con una ventana que este service worker no controla;
+        // en ese caso se abre el destino aparte en vez de dejar el toque en nada.
+        if ("navigate" in ventana) {
+          try { await ventana.navigate(destino); return; } catch (e) {}
+        }
+        await self.clients.openWindow(destino);
         return;
       }
     }
