@@ -152,6 +152,26 @@ async function probarCartelDeInstalar(navegador) {
   await contexto.close();
 }
 
+/* Un servidor estático propio, solo para poder APAGARLO (ver «Sin red»). */
+function servidorPropio() {
+  const http = require("http");
+  const RAIZ_SITIO = path.resolve(__dirname, "..");
+  const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
+    ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml",
+    ".webmanifest": "application/manifest+json", ".woff2": "font/woff2" };
+  const servidor = http.createServer((req, res) => {
+    const ruta = decodeURIComponent(new URL(req.url, "http://x").pathname);
+    const archivo = path.join(RAIZ_SITIO, ruta === "/" ? "index.html" : ruta);
+    if (!archivo.startsWith(RAIZ_SITIO) || !fs.existsSync(archivo) || fs.statSync(archivo).isDirectory()) {
+      res.writeHead(404); return res.end("no");
+    }
+    res.writeHead(200, { "Content-Type": TIPOS[path.extname(archivo)] || "application/octet-stream" });
+    fs.createReadStream(archivo).pipe(res);
+  });
+  return new Promise((r) => servidor.listen(0, "127.0.0.1", () =>
+    r({ servidor, base: "http://localhost:" + servidor.address().port })));
+}
+
 (async () => {
   console.log("=== El manifest ===");
   const manifest = JSON.parse(fs.readFileSync(path.join(RAIZ, "manifest.json"), "utf8"));
@@ -248,12 +268,30 @@ async function probarCartelDeInstalar(navegador) {
 
   // --- sin red, una página del sitio cae en offline.html
   console.log("\n=== Sin red ===");
-  await contexto.setOffline(true);
-  const respuesta = await pagina.goto(BASE + "/una-que-no-existe-y-no-esta-en-cache.html",
+  /* La red se corta DE VERDAD: se levanta un servidor propio, el service worker
+     toma el control y después se apaga ese servidor. Antes se usaba
+     contexto.setOffline(true), y en este Chromium eso no alcanza a las
+     peticiones que hace el propio service worker: su fetch() llegaba igual al
+     servidor, recibía el 404 de la página inexistente y nunca pasaba por la
+     rama de «sin conexión». La prueba fallaba sobre un sw.js que está bien —
+     y, peor, un sw.js roto en esa rama habría fallado exactamente igual. */
+  const { servidor, base: baseLocal } = await servidorPropio();
+  const ctxSinRed = await navegador.newContext();
+  const pSinRed = await ctxSinRed.newPage();
+  await pSinRed.goto(baseLocal + "/index.html", { waitUntil: "load" });
+  await pSinRed.evaluate(() => navigator.serviceWorker.ready);
+  await pSinRed.reload({ waitUntil: "load" });
+  await pSinRed.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 10000 }).catch(() => {});
+  await pSinRed.evaluate(async () => {
+    // Que offline.html ya esté guardada antes de cortar: la guarda el install.
+    for (let i = 0; i < 50 && !(await caches.match("/offline.html")); i++) await new Promise((r) => setTimeout(r, 100));
+  });
+  await new Promise((r) => { servidor.closeAllConnections && servidor.closeAllConnections(); servidor.close(r); });
+  const respuesta = await pSinRed.goto(baseLocal + "/una-que-no-existe-y-no-esta-en-cache.html",
     { waitUntil: "load" }).catch(() => null);
-  const texto = respuesta ? await pagina.evaluate(() => document.body.innerText) : "";
+  const texto = respuesta ? await pSinRed.evaluate(() => document.body.innerText) : "";
   igual("cae en la página de sin conexión", /sin internet/i.test(texto), "true");
-  await contexto.setOffline(false);
+  await ctxSinRed.close();
 
   if (errores.length) mal("errores en la página: " + errores.join(" | "));
   await probarCartelDeInstalar(navegador);
