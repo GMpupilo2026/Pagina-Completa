@@ -115,6 +115,15 @@ window.NotasAlumno = (function () {
         fecha.textContent = fechaCorta(nota.created_at);
         cabecera.appendChild(fecha);
 
+        /* Quién la escribió: solo viene en la vista de quien supervisa, que
+           junta la bitácora de TODOS los profesores del alumno. */
+        if (nota.autor) {
+            const autor = document.createElement("span");
+            autor.className = "text-xs font-semibold text-brand-600 dark:text-brand-300";
+            autor.textContent = "De " + nota.autor;
+            cabecera.appendChild(autor);
+        }
+
         if (nota.etiqueta) {
             const chip = document.createElement("span");
             chip.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-600 dark:text-brand-300";
@@ -342,7 +351,16 @@ window.NotasAlumno = (function () {
         contenedor.innerHTML = "";
         let notas = [];
         try {
-            notas = await listar(opciones.sb, opciones.alumnoId);
+            if (opciones.supervisor) {
+                /* Quien supervisa no escribe notas: lee las de todos los
+                   profesores del alumno, con su autor. Lo sirve una función
+                   de la base que comprueba que ese alumno esté a su cargo. */
+                const { data, error } = await opciones.sb.rpc("bitacora_supervisada", { p_alumno: opciones.alumnoId });
+                if (error) throw error;
+                notas = data || [];
+            } else {
+                notas = await listar(opciones.sb, opciones.alumnoId);
+            }
         } catch (e) {
             const p = document.createElement("p");
             p.className = "text-sm text-brand-450 dark:text-brand-350";
@@ -350,7 +368,16 @@ window.NotasAlumno = (function () {
             contenedor.appendChild(p);
             return 0;
         }
-        if (!notas.length) return 0;
+        if (!notas.length) {
+            // Quien supervisa vino a mirar: "no hay nada" también es respuesta.
+            if (opciones.supervisor) {
+                const p = document.createElement("p");
+                p.className = "text-sm text-brand-450 dark:text-brand-350";
+                p.textContent = "Sus profesores todavía no le han escrito ninguna nota.";
+                contenedor.appendChild(p);
+            }
+            return 0;
+        }
         const lista = document.createElement("ul");
         lista.className = "text-sm";
         notas.forEach((n) => lista.appendChild(pintarNota(n, { acciones: false }, () => {})));

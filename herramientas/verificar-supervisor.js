@@ -15,6 +15,10 @@
      panel de ese rol con la franja que lo dice, y que el contenido cerrado se
      vea cerrado (AccesoAdmin.esAdmin() en falso);
    - que un modo guardado en el aparato NO le cambie nada a quien no administra;
+   - que la bitácora del alumno le llegue a quien supervisa de TODOS sus
+     profesores, con el nombre de quien escribió cada nota, y sin ningún
+     control para escribir, compartir o borrar (la base lo rechazaría, pero el
+     fallo lo descubriría quien apretó);
    - y que en Administración, sumar un grupo a un supervisor mande la UNIÓN con
      lo que ya tenía, no solo el grupo — mandar el grupo solo le quitaría sus
      cuentas anteriores sin que nadie lo pidiera.
@@ -232,12 +236,64 @@ async function pruebaAdminSupervisores(browser) {
   await ctx.close();
 }
 
+/* La bitácora en modo supervisor: se monta el módulo en una página vacía con
+   un cliente de mentira que anota qué se le pidió. Que vaya por la función de
+   la base y no por la tabla es lo que importa: la RLS de notas_alumno solo le
+   devuelve a cada profesor LAS SUYAS, así que leer la tabla daría una bitácora
+   vacía que se ve igual de bien. */
+async function pruebaBitacora(browser) {
+  console.log("\nLa bitácora, para quien supervisa");
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.goto(BASE + "/offline.html");
+  await page.addScriptTag({ url: BASE + "/js/notas-alumno.js" });
+  const r = await page.evaluate(async () => {
+    const pedidos = [];
+    const filas = [
+      { id: "n1", alumno_id: "u-ana", profesor_id: "p1", autor: "Karina Rojas", texto: "Le cuesta el final de torre",
+        etiqueta: "Finales", compartida: false, created_at: "2026-09-20T15:00:00Z" },
+      { id: "n2", alumno_id: "u-ana", profesor_id: "p2", autor: "Luis <b>Mora</b>", texto: "Mejoró la apertura",
+        etiqueta: null, compartida: true, created_at: "2026-09-18T15:00:00Z" },
+    ];
+    const sb = {
+      rpc: (n, args) => { pedidos.push({ n, args }); return Promise.resolve({ data: n === "bitacora_supervisada" ? filas : [], error: null }); },
+      from: (t) => { pedidos.push({ tabla: t }); throw new Error("no se lee la tabla"); },
+    };
+    const caja = document.createElement("div");
+    document.body.appendChild(caja);
+    const cuantas = await NotasAlumno.montarLectura(caja, { sb, alumnoId: "u-ana", supervisor: true });
+    const vacia = document.createElement("div");
+    document.body.appendChild(vacia);
+    const sbVacio = { rpc: () => Promise.resolve({ data: [], error: null }) };
+    await NotasAlumno.montarLectura(vacia, { sb: sbVacio, alumnoId: "u-ana", supervisor: true });
+    return {
+      cuantas, pedidos,
+      autores: Array.from(caja.querySelectorAll("li")).map((li) => li.querySelector("div span:nth-child(2)").textContent),
+      controles: caja.querySelectorAll("button, textarea, input, select, a").length,
+      negrita: caja.querySelectorAll("b").length,
+      vacia: vacia.textContent,
+    };
+  });
+  igual("pide la bitácora a la función de la base, con ese alumno",
+        r.pedidos, [{ n: "bitacora_supervisada", args: { p_alumno: "u-ana" } }]);
+  igual("pinta las notas de los dos profesores", r.cuantas, 2);
+  igual("cada nota dice quién la escribió", r.autores, ["De Karina Rojas", "De Luis <b>Mora</b>"]);
+  igual("el nombre del autor no se ejecuta como HTML", r.negrita, 0);
+  igual("no se pinta ningún control para escribir, compartir o borrar", r.controles, 0);
+  igual("sin notas lo dice en vez de dejar el bloque en blanco", r.vacia, "Sus profesores todavía no le han escrito ninguna nota.");
+  igual("sin errores en la página", errores, []);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSupervisor(browser);
     await pruebaModosDelAdmin(browser);
     await pruebaAdminSupervisores(browser);
+    await pruebaBitacora(browser);
   } catch (e) {
     mal("la prueba se cayó: " + (e && e.stack || e));
   } finally {

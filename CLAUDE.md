@@ -1633,8 +1633,19 @@ y llega a cobros, formularios, solicitudes y reportes. No entrena ni juega.
   `SECURITY DEFINER` con `row_security off` para no morderse la cola con
   `class_attendance`). Las funciones de informes son `SECURITY INVOKER`, así
   que con eso cuentan solas; `resumen_tareas_examenes()` —que es DEFINER y
-  pregunta a mano— suma `supervisado_por_mi()`. **La bitácora (`notas_alumno`)
-  no se abrió**: sigue siendo de quien la escribe.
+  pregunta a mano— suma `supervisado_por_mi()`.
+- **La bitácora la LEE, y no con una política.** `notas_alumno` está aislada
+  por profesor, así que abrirle un `select` le daría las notas sueltas y sin
+  autor —la RLS de `profiles` no le deja ver a los profesores—. Las sirve
+  `public.bitacora_supervisada(alumno)`, `SECURITY DEFINER`: exige
+  `supervisado_por_mi()` (o administrar) y devuelve las notas de TODOS sus
+  profesores con el nombre de quien escribió cada una. Escribir, compartir y
+  borrar siguen siendo de quien la escribió: ninguna política cambió. En
+  Informes, `NotasAlumno.montarLectura(…, { supervisor: true })` la pinta sin
+  un solo control y con «De Karina Rojas» en cada nota. Comprobado
+  impersonando en SQL (revertido): con el alumno asignado ve las 2 notas de sus
+  2 profesores, por la tabla directa ve 0, su update cambia 0 filas, y con un
+  alumno ajeno —o siendo un profesor cualquiera— la función se niega.
 - **Informes filtra por `mis_supervisados()`**: la RLS de `profiles` le deja
   ver también a «compañeros» sin ni un dato, y el informe los mezclaba.
 - **Su panel se pinta ENTERO aparte** (`SUPERVISOR_GROUPS` en `clases.html`),

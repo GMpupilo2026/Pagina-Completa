@@ -146,8 +146,8 @@
                  Mirando a UN alumno y solo para quien da clase; el alumno ve
                  aparte las que le compartieron (#notas-alumno-report). -->
             <div id="notas-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
-                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
+                <h2 id="notas-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">📝</span> Bitácora</h2>
+                <p id="notas-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Lo que vas viendo de este alumno. Es tuya: un colega que comparta el alumno no la ve. Marca "Que la vea el alumno" para que le aparezca a él en su propia página.</p>
                 <div id="notas-body"></div>
             </div>
 
@@ -1368,6 +1368,16 @@
 
         function renderNotas(studentId) {
             document.getElementById("notas-report").classList.remove("hidden");
+            /* Quien supervisa no escribe en la bitácora: lee la de todos los
+               profesores del alumno, con el nombre de quien escribió cada nota. */
+            if (profile.es_supervisor && !profile.is_admin) {
+                document.getElementById("notas-sub").textContent =
+                    "Lo que anotaron sus profesores, con el nombre de quien escribió cada nota. Es de solo lectura: escribir y compartir sigue siendo de cada profesor.";
+                NotasAlumno.montarLectura(document.getElementById("notas-body"), {
+                    sb, alumnoId: studentId, supervisor: true,
+                });
+                return;
+            }
             NotasAlumno.montarPanel(document.getElementById("notas-body"), {
                 sb,
                 alumnoId: studentId,
