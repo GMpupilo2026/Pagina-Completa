@@ -8390,8 +8390,9 @@ pieza. No da ningún error y el sitio no lo puede detectar (no es
 
 La salida es el estilo de pieza **«Dibujado con aro»** (`aro` en
 `js/piece-style-themes.js`): el mismo SVG de `js/chess-piece-svg.js` —que ese
-ajuste no toca porque no es texto— con un aro del color CONTRARIO (negro en las
-blancas, blanco en las negras) que la separa de cualquier casilla.
+ajuste no toca porque no es texto— con un aro negro alrededor de las blancas
+que la separa de cualquier casilla. **Las negras van sin aro** (ver «Las piezas
+negras van sin borde» más abajo).
 
 - **Los tableros preguntan `PieceStyleThemes.esDibujado()`, nunca por el id.**
   Estaba escrito `=== "ilustrado"` en once lugares: un tercer estilo dibujado
@@ -8472,6 +8473,88 @@ porque ahí un par elegido a ojo es justo lo que puede dejar las piezas sin vers
   siempre sobre la casilla clara da 1,3:1 de relleno y se lee perfecto por su
   borde oscuro: midiendo solo el relleno, el aviso salía hasta con Madera, y un
   aviso que sale siempre deja de leerse. Usa la misma regla de `contornoPara()`.
+
+## El tablero que eligió el alumno es el mismo en TODO el sitio
+
+Configuración deja elegir cuatro cosas del tablero —el tema de piezas
+(emojis), el estilo (símbolo o dibujo), el color de las piezas y el de las
+casillas— y durante mucho tiempo **cada página respetaba las que se le
+ocurrió a quien la escribió**. El alumno elegía el dibujo, lo veía en la clase
+en vivo, abría Mates y volvía el símbolo de siempre; elegía Madera y en el
+diagnóstico las casillas salían azules. No daba ningún error: cada tablero se
+veía bien, solo que no era el suyo. Eran tres fallas distintas:
+
+- **Quince ejercicios dibujaban su propio glifo** (Mates, Temas, Aprender,
+  Practicar, Desafíos, Aperturas, Visualización, el diagnóstico,
+  Concentración, Racha táctica, ¡Te reto!, `js/tablero-pregunta.js` de los
+  exámenes…), cada uno con su `GLYPH` y sin preguntar por el estilo. Aprender
+  preguntaba, pero por el id `=== "ilustrado"`, así que el «Dibujado con aro»
+  le salía como símbolo. Ahora todos pasan por **`js/pieza-preferida.js`**, la
+  única respuesta a «¿cómo se pinta esta pieza?» (emoji → dibujo → glifo, el
+  mismo orden de `ClasesBoard`). Los tableros compartidos —`niebla-board`,
+  `duelo-board`, `cartas-board`, `crazyhouse-board`, `tablero-board`, el
+  diagrama de los artículos y las fichas de Estudio— también, así que **el
+  tema de emojis dejó de ser solo de la clase en vivo**. Con el módulo sin
+  cargar, cada uno cae en el glifo de siempre.
+- **La mitad de las páginas no cargaba los módulos de preferencias**, así que
+  aunque pintaran bien no tenían qué leer. `python3
+  herramientas/tablero-cabecera.py` pone los seis (`board-themes`,
+  `board-color-themes`, `piece-color-themes`, `piece-style-themes`,
+  `chess-piece-svg`, `pieza-preferida`) justo después de
+  `js/adaptive-mode.js`, en el `<head>`: los de color tienen que correr ANTES
+  de que se pinte la primera casilla. Qué páginas llevan tablero lo decide
+  leyendo el HTML, no una lista a mano, así que **al agregar una página con
+  tablero basta con volver a correrlo**. Solo agrega los que falten y se puede
+  correr todas las veces que se quiera (marcas `<!-- tablero: inicio -->`).
+- **El Modo Adaptado le cambiaba los colores.** Tiene su propia lista de
+  casillas y de piezas, y ese modo **se enciende solo** —con el primer Tab o
+  por el contraste del sistema—, así que el tablero que alguien se había
+  armado pasaba al blanco y fucsia sin que tocara nada. Ahora **la lista de
+  Modo Adaptado manda solo si se eligió algo en ELLA**; si no, se queda lo de
+  arriba («Igual que arriba» es la primera tarjeta de esas dos listas y lo que
+  trae quien nunca eligió). Y solo si arriba tampoco se eligió nada quedan los
+  colores de siempre del modo. En piezas, «no se eligió» es que no existe la
+  clave en `localStorage` (`getAdaptivePreference()` devuelve `"auto"`).
+
+Lo que **no** cambió, a propósito: las miniaturas `compact` de ClasesBoard
+siguen forzando el dibujo (a 16 px no se distingue una pieza), el tablero de 4
+jugadores y el 4×4 no son «blancas contra negras», y Abrazos/Camaleón pintan
+piezas fusionadas con su propia lógica.
+
+### Las piezas negras van sin borde
+
+El símbolo negro traía un contorno claro (`text-shadow` blanco al 55 %) y el
+«Dibujado con aro» un aro blanco: se veía como un halo alrededor de cada pieza
+negra, y se pidió quitarlo. `--piece-black-outline` vale ahora `transparent` en
+todos los temas donde la negra es oscura, en los dos modos, y el aro de las
+negras lee esa misma variable.
+
+- **Solo lo conserva una «negra» CLARA** —los tres temas invertidos, o un color
+  a tu gusto claro (`contornoNegras()`)—: ahí el borde es oscuro y es lo único
+  que la separa de la casilla clara. No es el halo del que se habla.
+- La sombra suave de abajo se queda: no es un borde, es lo que despega la pieza
+  de la casilla.
+- Las fichas de los temas de emojis (`.theme-token-black`) conservan su aro: ahí
+  el círculo ES la pieza.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-tablero-preferido.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`; `--sin-navegador` corre solo la
+primera parte). Comprueba que cada página con tablero cargue los seis módulos,
+que ningún archivo pinte `piece-white`/`piece-black` con su `GLYPH` sin pasar
+por `PiezaPreferida`, y en un navegador que con el dibujo, Madera y Azul y rojo
+elegidos las páginas los pinten, que **encender Modo Adaptado no los cambie**
+(se lee la variable que calculó el navegador) y que la negra salga sin borde.
+Está probado que falla de verdad: devolviéndole a ¡Te reto! su glifo propio
+salta 1, y volviendo a la regla vieja del Modo Adaptado saltan las de casillas
+de las tres páginas en los cuatro casos.
+
+- **`verificar-cuadro-comandos.js` tuvo que aprender a leer la pieza
+  dibujada.** Arma la FEN leyendo los glifos del tablero, y en Modo Adaptado,
+  sin nada elegido, el estilo por omisión es el dibujado con aro: mientras los
+  ejercicios lo ignoraban, la prueba daba verde; al respetarlo, leía un tablero
+  vacío. Ahora lee también el `<use>` del dibujo. Era el doble el que estaba
+  incompleto, no la página.
 
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 

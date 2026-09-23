@@ -64,7 +64,9 @@ window.FichaRender = (function () {
   function dibujarPieza(cont, piece) {
     const span = document.createElement("span");
     span.setAttribute("aria-hidden", "true");
-    if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
+    if (window.PiezaPreferida) {
+      PiezaPreferida.pintar(span, piece.type, piece.color);
+    } else if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
       span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
       span.className = "chess-piece-illustrated";
     } else {
