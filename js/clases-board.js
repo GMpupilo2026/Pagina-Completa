@@ -637,7 +637,7 @@
             label.textContent = TYPE_LABEL[piece.type];
             label.setAttribute("aria-hidden", "true");
             span.appendChild(label);
-          } else if (dibujada || (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG)) {
+          } else if (dibujada || (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG)) {
             span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
             span.className = "chess-piece-illustrated";
           } else {

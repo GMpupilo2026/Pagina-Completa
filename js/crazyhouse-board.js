@@ -246,7 +246,7 @@
 
         if (piece) {
           const span = document.createElement("span");
-          if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+          if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
             span.innerHTML = window.ChessPieceSVG.markup(piece.type, piece.color);
             span.className = "chess-piece-illustrated";
           } else {
@@ -290,7 +290,7 @@
             ? "border-accent-500 bg-accent-500/10"
             : "border-transparent " + (canDrop ? "hover:border-accent-400 cursor-pointer" : "cursor-default opacity-90"));
         const span = document.createElement("span");
-        if (window.PieceStyleThemes && window.PieceStyleThemes.getPreference() === "ilustrado" && window.ChessPieceSVG) {
+        if (window.PieceStyleThemes && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG) {
           span.innerHTML = window.ChessPieceSVG.markup(type, color);
           span.className = "chess-piece-illustrated";
         } else {

@@ -38,7 +38,7 @@
     injectDefs();
     const id = (color === "w" ? "w" : "b") + String(type).toUpperCase();
     return (
-      "<svg viewBox=\"0 0 45 45\" class=\"chess-piece-svg\" aria-hidden=\"true\" focusable=\"false\">" +
+      "<svg viewBox=\"0 0 45 45\" class=\"chess-piece-svg pieza-" + (color === "w" ? "w" : "b") + "\" aria-hidden=\"true\" focusable=\"false\">" +
       "<use xlink:href=\"#" + id + "\"></use>" +
       "</svg>"
     );

@@ -174,8 +174,9 @@
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Estilo de pieza</h2>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige cómo se dibuja cada pieza en todos los tableros del sitio: el símbolo de ajedrez de siempre, o el mismo dibujo detallado que ya usan los Cursos. Se aplica igual en modo normal y en Modo Adaptado.</p>
-                <div id="piece-style-theme-grid" class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Estilo de pieza"></div>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-2">Elige cómo se dibuja cada pieza en todos los tableros del sitio: el símbolo de ajedrez de siempre, o el mismo dibujo detallado que ya usan los Cursos. Se aplica igual en modo normal y en Modo Adaptado.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">¿En el celular todas las piezas se ven blancas? Pasa con el «Texto de alto contraste» del teléfono, que pinta de blanco los símbolos. Elige <strong>«Dibujado con aro»</strong>: la pieza es un dibujo que ese ajuste no cambia, y lleva un aro negro alrededor de las blancas y uno blanco alrededor de las negras.</p>
+                <div id="piece-style-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Estilo de pieza"></div>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -620,11 +621,12 @@
         // un color, es una pieza de muestra dibujada de verdad con cada estilo (un rey), para
         // que se note la diferencia real entre el símbolo de siempre y el dibujo ilustrado. ----
         function buildPieceStylePreviewHTML(id) {
-            const ilustrado = id === "ilustrado" && window.ChessPieceSVG;
+            const dibujado = window.PieceStyleThemes.THEMES[id].dibujado && window.ChessPieceSVG;
+            const ilustrado = dibujado;
             const white = ilustrado ? window.ChessPieceSVG.markup("k", "w") : '<span class="piece-white">♔</span>';
             const black = ilustrado ? window.ChessPieceSVG.markup("k", "b") : '<span class="piece-black">♚</span>';
             return (
-                '<span class="theme-preview-row text-2xl" aria-hidden="true">' +
+                '<span class="theme-preview-row text-2xl' + (id === "aro" ? " aro-siempre" : "") + '" aria-hidden="true">' +
                 '<span class="theme-preview-sq theme-preview-sq-light">' + white + "</span>" +
                 '<span class="theme-preview-sq theme-preview-sq-dark">' + black + "</span>" +
                 "</span>"

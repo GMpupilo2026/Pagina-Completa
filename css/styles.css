@@ -124,6 +124,20 @@ body { -webkit-font-smoothing: antialiased; }
   vertical-align: middle;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
+/* Estilo de pieza "Dibujado con aro" (js/piece-style-themes.js): un aro del
+   color CONTRARIO alrededor de cada pieza, para que se separe de su casilla
+   sea cual sea el color de esta. Va con drop-shadow y no con stroke: el
+   contorno del dibujo es parte del arte y el aro tiene que ir por fuera.
+   .aro-siempre es para la vista previa de Configuración, que enseña los tres
+   estilos a la vez. */
+html[data-pieza="aro"] .chess-piece-svg.pieza-w,
+.aro-siempre .chess-piece-svg.pieza-w {
+  filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 0 1.5px #000);
+}
+html[data-pieza="aro"] .chess-piece-svg.pieza-b,
+.aro-siempre .chess-piece-svg.pieza-b {
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 0 1.5px #fff);
+}
 .radio-card-selected { background-color: rgb(var(--c-accent-400, 240 180 41) / 0.1); border-color: rgb(var(--c-accent-500, 222 145 29)); }
 
 /* Tablero de "Ilumina el Tablero" (js/ilumina-board.js): la figura de cada

@@ -8204,6 +8204,26 @@ medio**, ninguna casi blanca ni casi negra, y de colores opuestos.
 - Ámbar contra azul y turquesa contra vino se siguen distinguiendo con
   daltonismo rojo-verde, porque se separan también en claridad.
 
+### «Todas las piezas se ven blancas»: el alto contraste del CELULAR
+
+El «Texto de alto contraste» de Android/Samsung repinta **todo texto** en
+blanco con borde negro, y la pieza de siempre (♚) es texto: con ese ajuste
+encendido **las negras salen blancas** y el tablero no dice de quién es cada
+pieza. No da ningún error y el sitio no lo puede detectar (no es
+`forced-colors`), así que ningún color de casilla lo arregla.
+
+La salida es el estilo de pieza **«Dibujado con aro»** (`aro` en
+`js/piece-style-themes.js`): el mismo SVG de `js/chess-piece-svg.js` —que ese
+ajuste no toca porque no es texto— con un aro del color CONTRARIO (negro en las
+blancas, blanco en las negras) que la separa de cualquier casilla.
+
+- **Los tableros preguntan `PieceStyleThemes.esDibujado()`, nunca por el id.**
+  Estaba escrito `=== "ilustrado"` en once lugares: un tercer estilo dibujado
+  habría dejado a la mitad pintando el glifo sin que nada fallara.
+- **El aro lo pone el CSS** (`html[data-pieza="aro"]` sobre las clases
+  `pieza-w`/`pieza-b` que ahora lleva cada `<svg>`), no cada tablero: así sale
+  igual en los diez sin tocar ninguno.
+
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 
 Los cuatro temas que ya tenía el sitio (`js/board-themes.js`,
