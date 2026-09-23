@@ -1852,6 +1852,40 @@ supervisor).
 - **La lista de gente se manda SIEMPRE completa**, con el cambio encima (la
   regla de `set_teachers`): mandar solo lo nuevo vaciaría la academia.
 
+#### Crear una academia desde un grupo, de una vez
+
+Había 0 academias: todo lo de arriba existía y nadie lo veía, porque armar una
+era crearla vacía, marcar al supervisor en otra pantalla y sumar la gente de a
+poco. La tarjeta **«Crear una academia desde un grupo»** de `academias.html`
+(solo quien administra) lo hace en un paso: se elige un grupo
+(`profiles.grupo`) y se ve, ANTES de crear, quién va a entrar.
+
+- **Quién entraría lo dice `public.grupo_para_academia(grupo)`**: los alumnos
+  del grupo, el equipo docente con ese grupo y los profesores de esos alumnos
+  con `profesores_de()` —asignación directa o equipo—, con cuántos alumnos del
+  grupo lleva cada uno y en qué academias ya está. El grupo se compara sin
+  mayúsculas ni espacios, como el mínimo de CENFO.
+- **Crear es UNA llamada, `public.academia_crear_desde_grupo()`**: marca al
+  supervisor si todavía no lo es, crea la academia con `academia_guardar()` y
+  suma la gente con `academia_set_miembros()`, en la misma transacción. En tres
+  llamadas, una falla a mitad dejaría una academia vacía —o un supervisor
+  marcado sin academia— que se ve perfecta. Comprobado: con un miembro que no
+  existe no queda ni la academia.
+- **Viaja SOLO lo que está marcado.** Cada docente es una casilla y los alumnos
+  van juntos en otra; el botón dice cuántas personas entran. El supervisor se
+  elige entre los profesores del grupo («se marca como supervisor») y los
+  supervisores que no tienen academia; el que ya supervisa otra no se ofrece.
+- **Se avisa quién queda en dos academias**: sigue recibiendo un solo informe,
+  con la suma.
+
+Comprobado impersonando roles en SQL (revertido), 12 casos: quien administra ve
+las 52 personas de SJ y crea la academia con ellas, el supervisor queda marcado,
+un nombre repetido, una lista vacía y una con una cuenta inexistente se rechazan
+sin dejar nada, y un profesor, un alumno y una llamada sin usuario no pueden ni
+mirar el grupo. `verificar-academias.js` comprueba qué se manda (una sola
+llamada, el nombre escrito, el supervisor y solo la gente marcada) y está probado
+que falla de verdad: mandando a todo el equipo sin mirar las casillas, saltan 3.
+
 #### Las funciones del coordinador las decide su supervisor
 
 `public.funciones_coordinacion()` es la lista: formularios, altas (crear
