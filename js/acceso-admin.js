@@ -54,6 +54,17 @@
       return promesa;
     },
     // Respuesta ya resuelta, para usar dentro de las funciones que pintan.
-    esAdmin: function () { return admin; },
+    // En un modo de vista (js/modo-vista.js: "como estudiante", "como
+    // profesor"…) quien administra quiere ver el contenido CERRADO, como lo ve
+    // ese rol: si no, el modo estudiante le enseñaría todo abierto y no serviría
+    // para revisar el camino que recorre un alumno.
+    esAdmin: function () {
+      if (!admin) return false;
+      try {
+        var modo = localStorage.getItem("modo_vista_admin_v1");
+        if (modo && modo !== "admin") return false;
+      } catch (e) {}
+      return true;
+    },
   };
 })();

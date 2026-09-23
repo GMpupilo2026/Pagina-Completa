@@ -1601,6 +1601,79 @@ La ronda de arriba dejó acotados `cobros`, `cobros_contacto`, `pagos` y
   las mismas filas; después, cada una ve solo lo suyo y ninguna ve lo de la
   otra, mientras quien administra sigue viendo todo.
 
+### El supervisor: coordinación sin entrenar, sobre lo que le asignan
+
+Quien coordina recibía el panel entero de profesor —ejercicios, juegos, la
+clase en vivo— cuando lo suyo es administrativo. El **supervisor** es ese
+papel puesto en limpio: ve el informe de sus estudiantes a cargo tema por tema
+(qué hacen y cuánto tiempo), corrige sus cuentas como lo haría quien administra
+y llega a cobros, formularios, solicitudes y reportes. No entrena ni juega.
+
+- **Es una marca encima de `role = 'profesor'`** (`profiles.es_supervisor`,
+  CHECK `profiles_supervisor_es_profesor`), por la misma razón que
+  `es_coordinador`: un tercer valor de `role` obligaría a revisar todas las
+  comprobaciones de `role === "profesor"`. La pone y la quita
+  `marcar_supervisor()`, que exige `is_admin`; el trigger de identidad la
+  revierte salvo con la marca local `ajedrez.nombrando_supervisor`, y la
+  función vuelve a leer la fila (la trampa de siempre).
+- **Sobre quién lo decide `public.supervisor_cuentas`**, que solo escribe
+  `set_cuentas_del_supervisor()` (exige `is_admin`, deja la lista EXACTAMENTE
+  como llega). Alcanza a las cuentas asignadas **y a los alumnos de los
+  profesores asignados**: la pregunta es `supervisado_por_mi(persona)`, y
+  `mis_supervisados()` da la lista.
+- **Hereda todo lo de coordinación sin tocar una política**: `soy_coordinador()`
+  da `true` a quien supervisa y `bajo_mi_coordinacion()` suma su rama
+  (`supervisado_por_mi`), así que `cambiar_rol`, `coord_guardar_cuenta`,
+  `coord_set_profesores`, `mi_gente`, cobros y formularios ya lo acotan.
+- **Leer la actividad pidió políticas nuevas**, solo `SELECT` y con el sufijo
+  `_select_supervisor`, en `training_progress`, `training_state`,
+  `platform_activity_log`, `class_attendance`, `class_presence_log`,
+  `question_answers`, `training_plans`, `course_unlocks`, `encargados`,
+  `tareas`, `examenes` y `class_sessions` (esta vía `sesion_de_supervisado()`,
+  `SECURITY DEFINER` con `row_security off` para no morderse la cola con
+  `class_attendance`). Las funciones de informes son `SECURITY INVOKER`, así
+  que con eso cuentan solas; `resumen_tareas_examenes()` —que es DEFINER y
+  pregunta a mano— suma `supervisado_por_mi()`. **La bitácora (`notas_alumno`)
+  no se abrió**: sigue siendo de quien la escribe.
+- **Informes filtra por `mis_supervisados()`**: la RLS de `profiles` le deja
+  ver también a «compañeros» sin ni un dato, y el informe los mezclaba.
+- **Su panel se pinta ENTERO aparte** (`SUPERVISOR_GROUPS` en `clases.html`),
+  no recortando el del equipo docente: cada tema de Informes es una tarjeta
+  que abre `informes.html?tema=…`, más Cuentas, Cobros, Formularios,
+  Solicitudes y Reportes. Sin clase en vivo ni registro de clases.
+- Comprobado impersonando en SQL (revertido): con un alumno asignado ve sus 514
+  filas de progreso y 0 de uno ajeno, `bajo_mi_coordinacion` da `true` y
+  `false` respectivamente, y sus secciones de tiempo salen.
+
+### Los modos de vista de quien administra
+
+`js/modo-vista.js`: quien administra elige ver la plataforma «como
+estudiante», «como profesor» o «como supervisor» —desde la tarjeta «Ver la
+plataforma como…» de `admin.html` o el selector «Ver como» del panel— sin
+entrar a la cuenta de nadie. Se guarda en el aparato (`modo_vista_admin_v1`).
+
+- **Cambia la PANTALLA, no los permisos.** `ModoVista.perfilVisto()` devuelve
+  el perfil con `role`/`is_admin`/`es_coordinador`/`es_supervisor` del modo, y
+  eso decide qué se pinta en `clases.html` e `informes.html`; la base sigue
+  viendo a quien administra, así que los datos son los de su cuenta. La franja
+  de arriba lo dice con esas palabras: prometer «ves lo que ve Sofía» sería
+  mentir.
+- La franja va en toda página de la Academia (la pone
+  `herramientas/academia-cabecera.py`, bloque `<!-- modo-vista -->`), y
+  `AccesoAdmin.esAdmin()` da `false` en un modo: en modo estudiante el
+  contenido se ve cerrado, que es lo que hay que poder revisar.
+- **Sin `is_admin` no hace nada**, aunque el modo quedara guardado en una
+  computadora compartida.
+
+**Al tocar el supervisor, los modos o `SUPERVISOR_GROUPS`, correr `node
+herramientas/verificar-supervisor.js`** (sitio en localhost:8777 y
+playwright). Reusa el doble de `verificar-panel.js`. Comprueba que al
+supervisor no le quede ningún acceso a entrenar, jugar ni dar clase, que cada
+tema abra Informes filtrado, que «sin entrenar» cuente solo a los suyos, los
+tres modos con su franja y el contenido cerrado, que un modo guardado no afecte
+a quien no administra, y que sumar un grupo a un supervisor mande la UNIÓN.
+Está probado que falla de verdad: mandando solo el grupo, salta.
+
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
 
 `role` solo valía 'profesor' o 'alumno', así que quien administra estaba

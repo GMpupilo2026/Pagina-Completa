@@ -46,6 +46,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/modo-vista.js"></script>
     <script src="js/notificaciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/logros-catalogo.js"></script>
@@ -100,6 +101,9 @@
                 <div class="flex items-center gap-3">
                     <span id="role-badge" class="text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"></span>
                     <span id="selector-clase-wrap" class="hidden items-center gap-2"></span>
+                    <!-- Solo para quien administra: mirar la plataforma como la ve
+                         cada rol, sin entrar a la cuenta de nadie (js/modo-vista.js). -->
+                    <span id="modo-vista-wrap" hidden class="inline-flex items-center gap-2"></span>
                     <button id="change-pw-btn" type="button" aria-haspopup="dialog" class="text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors">Contraseña</button>
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
                 </div>
@@ -289,6 +293,33 @@
                 <p class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-500 dark:text-brand-300" id="profe-clases">—</p>
             </div>
 
+            <!-- ===== El resumen de quien SUPERVISA =====
+                 No entrena ni da clase: al entrar necesita saber cuántos
+                 estudiantes tiene a cargo y cuántos llevan días sin hacer nada.
+                 Los números salen de la base (mi_gente() y informes_inactivos(),
+                 acotados por mis_supervisados()), no de contar filas acá. -->
+            <div id="progreso-supervisor" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-10">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">A tu cargo</h2>
+                    <a href="informes.html" class="text-sm text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver el informe completo →</a>
+                </div>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <a href="informes.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="sup-alumnos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">👥 </span>Estudiantes</div>
+                    </a>
+                    <a href="coordinacion.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold text-brand-800 dark:text-white" id="sup-profes">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🎓 </span>Profesores</div>
+                    </a>
+                    <a href="informes.html?tema=inactivos" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <div class="text-2xl font-bold" id="sup-inactivos">—</div>
+                        <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">😴 </span>Sin entrenar (4 días)</div>
+                    </a>
+                </div>
+                <p id="sup-aviso" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-600 dark:text-brand-300"></p>
+            </div>
+
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
             <div id="tile-grid" class="space-y-8 mb-10"></div>
 
@@ -297,7 +328,7 @@
                  historial se pide a la base filtrado y por páginas (nunca entero)
                  y se muestra agrupado por mes, con el mes más reciente abierto.
                  Ver cargarSesiones() más abajo. -->
-            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+            <div id="registro-clases" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                 <div class="flex items-start justify-between flex-wrap gap-4 mb-4">
                     <div>
                         <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Registro de clases</h2>
@@ -481,6 +512,77 @@
                 { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
             ] },
         ];
+
+        /* ---------- El panel de quien SUPERVISA ----------
+           No entrena, no juega y no da clase: lo suyo es administrativo. Por
+           eso no se le recorta el panel de siempre —quitarle tarjetas una por
+           una deja la mitad olvidada a la vista—, sino que se le pinta OTRO,
+           escrito entero acá. Cada tema de Informes es una tarjeta que abre
+           el informe de sus estudiantes ya filtrado por ese tema
+           (informes.html?tema=…, el mismo enlace que usa Administración). */
+        const TEMA = (tema) => "informes.html" + (tema ? "?tema=" + tema : "");
+        const SUPERVISOR_GROUPS = [
+            { title: "Cómo van tus estudiantes", tiles: [
+                { emoji: "📊", label: "Resumen general", desc: "Todos tus estudiantes a cargo, uno por fila, con su tiempo, asistencia y nivel", href: TEMA("") },
+                { emoji: "😴", label: "Sin entrenar", desc: "Quién lleva 4 días o más sin hacer nada en la plataforma", href: TEMA("inactivos") },
+                { emoji: "🏫", label: "Asistencia y tiempo", desc: "Clases a las que fue y cuánto tiempo pasó en la plataforma", href: TEMA("asistencia") },
+                { emoji: "🚩", label: "Preguntas en clase", desc: "Cómo contestan cuando el profesor pregunta en la clase en vivo", href: TEMA("asignaciones") },
+                { emoji: "🧭", label: "Diagnóstico de nivel", desc: "El nivel medido de cada uno y dónde está floja la clase", href: TEMA("diagnostico") },
+                { emoji: "🏛️", label: "Cursos", desc: "Qué temas de cada curso ya estudió", href: TEMA("cursos") },
+            ] },
+            { title: "Qué están entrenando, tema por tema", tiles: [
+                { emoji: "♚", label: "Mates", desc: "Mates en 1, 2 y 3 resueltos", href: TEMA("mates") },
+                { emoji: "⚔️", label: "Táctica", desc: "Ejercicios de táctica resueltos", href: TEMA("tactica") },
+                { emoji: "🧩", label: "4×4", desc: "Ejercicios del tablero de 4×4", href: TEMA("4x4") },
+                { emoji: "🎓", label: "Lecciones", desc: "Lecciones de Aprender terminadas", href: TEMA("aprender") },
+                { emoji: "⚡", label: "Coordenadas", desc: "Su mejor marca en Coordenadas", href: TEMA("coordenadas") },
+                { emoji: "🏆", label: "Practicar", desc: "Series de Practicar y sus estrellas", href: TEMA("practicar") },
+                { emoji: "🧠", label: "Concentración", desc: "Niveles de Concentración superados", href: TEMA("concentracion") },
+            ] },
+            { title: "Cuentas a tu cargo", tiles: [
+                { emoji: "🧭", label: "Cuentas", desc: "Corrige nombre, grupo, correo, profesores y rol de las cuentas que te asignaron", href: "coordinacion.html" },
+                { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html" },
+            ] },
+            { title: "Administración", tiles: [
+                { emoji: "💳", label: "Cobros", desc: "Mensualidades, pagos y morosidad de tus estudiantes", href: "cobros.html" },
+                { emoji: "📋", label: "Formularios de inscripción", desc: "Arma un formulario, compártelo por enlace y baja las respuestas", href: "formularios.html" },
+                { emoji: "📝", label: "Solicitudes de la Academia", desc: "Quien pidió unirse: aprobar crea la cuenta", href: "solicitudes.html" },
+            ] },
+            { title: "Tu cuenta", tiles: [
+                { emoji: "⚙️", label: "Configuración", desc: "Tu perfil y contraseña", href: "configuracion.html" },
+            ] },
+        ];
+
+        /* Quien supervisa y nada más: si además administra, manda su panel de
+           administración (salvo que esté mirando "como supervisor"). */
+        function esSupervisorSolo() { return !!(profile && profile.es_supervisor && !profile.is_admin); }
+
+        async function cargarPanelSupervisor() {
+            const conteo = async (rol) => {
+                const { data } = await sb.rpc("mi_gente", { p_busqueda: null, p_rol: rol, p_limite: 1, p_desde: 0 });
+                return data && data.length ? Number(data[0].total) : 0;
+            };
+            const [nAlumnos, nProfes, idsRes, inacRes] = await Promise.all([
+                conteo("alumno"), conteo("profesor"),
+                sb.rpc("mis_supervisados"),
+                sb.rpc("informes_inactivos", { p_dias: 4 }),
+            ]);
+            const aCargo = new Set((idsRes.data || []).map((x) => (typeof x === "string" ? x : x.mis_supervisados)));
+            const inactivos = (inacRes.data || []).filter((a) => aCargo.has(a.id)).length;
+            document.getElementById("sup-alumnos").textContent = String(nAlumnos);
+            document.getElementById("sup-profes").textContent = String(nProfes);
+            const inac = document.getElementById("sup-inactivos");
+            inac.textContent = idsRes.error || inacRes.error ? "—" : String(inactivos);
+            inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
+            const aviso = document.getElementById("sup-aviso");
+            if (profile._admin_real) {
+                aviso.textContent = "Estás mirando como supervisor desde la cuenta que administra: los números son los de esa cuenta, que no tiene ninguna asignada. Así se ve el panel; los datos los ve cada supervisor.";
+                aviso.hidden = false;
+            } else if (!nAlumnos && !nProfes) {
+                aviso.textContent = "Todavía no tienes ninguna cuenta a tu cargo. Quien administra te las asigna desde el panel de Administración › Supervisores.";
+                aviso.hidden = false;
+            }
+        }
 
         /* Un acceso "en mantenimiento" se apaga SOLO para el alumnado: el equipo
            docente lo sigue necesitando. Se apaga acá, en un solo lugar y sobre
@@ -1911,7 +2013,20 @@
                 });
                 return;
             }
-            profile = profileData;
+            /* Quien administra puede mirar el panel "como estudiante", "como
+               profesor" o "como supervisor" (js/modo-vista.js). Desde acá para
+               abajo `profile` es el del rol que se está mirando; el selector
+               sale con la cuenta real. */
+            profile = window.ModoVista ? ModoVista.perfilVisto(profileData) : profileData;
+            if (profileData.is_admin && window.ModoVista) {
+                const wrap = document.getElementById("modo-vista-wrap");
+                const lbl = document.createElement("label");
+                lbl.setAttribute("for", "modo-vista-panel");
+                lbl.className = "text-xs font-semibold text-brand-500 dark:text-brand-300";
+                lbl.textContent = "Ver como:";
+                wrap.append(lbl, ModoVista.selectorModos("modo-vista-panel"));
+                wrap.hidden = false;
+            }
             // Novedades de la plataforma: solo para quien administra, y no
             // bloquea el resto del panel mientras se resuelve.
             if (profile.is_admin && window.ActualizacionesPopup) {
@@ -1935,7 +2050,8 @@
             document.getElementById("welcome-name").textContent = displayName;
             document.getElementById("avatar").textContent = displayName.trim().charAt(0).toUpperCase();
             const badge = document.getElementById("role-badge");
-            badge.textContent = profile.is_admin ? "👑 Administrador" : (isTeacher ? "Profesor" : "Alumno");
+            badge.textContent = profile.is_admin ? "👑 Administrador"
+                : esSupervisorSolo() ? "🧭 Supervisor" : (isTeacher ? "Profesor" : "Alumno");
             badge.classList.add(isTeacher ? "bg-accent-500" : "bg-brand-600", isTeacher ? "text-brand-900" : "text-white");
 
             // Solo la persona administradora ve este acceso — el panel en sí vuelve a
@@ -2013,6 +2129,23 @@
                propios recibos si entra por la dirección: lo que se quitó es el
                camino, no el derecho a ver lo suyo. Volver a ofrecerla es
                agregar la tarjeta otra vez acá. */
+
+            /* Quien supervisa no recorre el panel del equipo docente: se le
+               pinta el suyo, entero, y nada de la clase en vivo ni del
+               registro de clases — no da clase. */
+            if (esSupervisorSolo()) {
+                TILE_GROUPS.splice(0, TILE_GROUPS.length, ...SUPERVISOR_GROUPS);
+                renderTiles();
+                document.getElementById("registro-clases").hidden = true;
+                document.getElementById("progreso-supervisor").hidden = false;
+                await cargarPanelSupervisor();
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("app").classList.remove("hidden");
+                if (!document.activeElement || document.activeElement === document.body) {
+                    document.getElementById("panel-titulo").focus({ preventScroll: true });
+                }
+                return;
+            }
 
             // Después de armar la lista y antes de pintarla: apaga para el
             // alumnado lo que está en mantenimiento, sin tocar lo del equipo

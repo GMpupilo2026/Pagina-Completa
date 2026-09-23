@@ -1173,7 +1173,7 @@ async function init() {
     perfil = p;
     // La página lo comprueba para no enseñar lo que no toca, pero quien de
     // verdad lo impide es la RLS: sin es_coordinador, el insert no pasa.
-    if (!perfil || !(perfil.es_coordinador || perfil.is_admin)) {
+    if (!perfil || !(perfil.es_coordinador || perfil.es_supervisor || perfil.is_admin)) {
         document.getElementById("loading").classList.add("hidden");
         document.getElementById("denegado").classList.remove("hidden");
         return;
@@ -1217,5 +1217,5 @@ async function init() {
 }
 init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
 </html>
