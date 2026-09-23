@@ -16,10 +16,11 @@
  * para todo el mundo — así el día que se aplicó esto no se le cerró la
  * Academia a nadie.
  *
- * LO QUE ESTO NO ES: un candado de servidor. Tapa la pantalla; las tablas de
- * entrenamiento siguen aceptando lo que un alumno con sesión les mande desde la
- * consola. Es la misma línea que ya tiene el contenido de los cursos (ver
- * CLAUDE.md). Para el caso real —una familia que dejó de pagar— alcanza.
+ * Esto es solo la CARA del candado: el candado de verdad está en la base
+ * (`acceso_vigente()` en políticas restrictivas y en tres triggers, migración
+ * acceso_exigido_en_la_base), así que saltarse esta pantalla desde la consola
+ * no sirve para escribir progreso, entrar a la clase ni rendir un examen. Lo
+ * que la base no alcanza son los archivos estáticos (ver CLAUDE.md).
  *
  * Si la consulta FALLA, no se tapa nada, a propósito: una función que falta o
  * una red caída no pueden dejar fuera a todos los alumnos que sí pagaron.
