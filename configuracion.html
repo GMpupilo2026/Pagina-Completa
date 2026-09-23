@@ -206,17 +206,48 @@
                 <div id="piece-color-theme-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Color de las piezas"></div>
             </div>
 
+            <!-- Colores a tu gusto (modo normal): vista previa del tablero entero y los
+                 cuatro colores, cada uno con su cuadrito de paleta Y su código para
+                 escribir. Lo escribe setCustom() de board-color-themes.js y
+                 piece-color-themes.js; el script está al final de la página. -->
             <div id="colores-a-tu-gusto" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🎨</span> Colores a tu gusto</h2>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Si ninguno de los pares de arriba te sirve, elige tú el color de cada casilla y de cada bando. Se usa en todos los tableros del sitio en modo normal; Modo Adaptado sigue con sus propios colores. Es solo para tu pantalla.</p>
-                <div class="flex flex-wrap items-start gap-5">
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
-                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-casilla-clara" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Casilla clara</label>
-                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-casilla-oscura" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Casilla oscura</label>
-                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-pieza-blanca" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Piezas blancas</label>
-                        <label class="flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200"><input type="color" id="gusto-pieza-negra" class="w-10 h-10 rounded border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Piezas negras</label>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Elige tú el color de cada casilla y de cada bando, y míralo en el tablero antes de jugar. Se usa en todos los tableros del sitio en modo normal; Modo Adaptado sigue con sus propios colores. Es solo para tu pantalla.</p>
+                <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2">Empieza desde un par</p>
+                <div id="gusto-pares" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-2 mb-6" role="group" aria-label="Empezar desde un par de colores de casilla"></div>
+                <div class="grid gap-6 md:grid-cols-2 items-start">
+                    <div id="gusto-tablero" class="w-full max-w-sm" aria-hidden="true"></div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="gusto-casilla-clara-hex" class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Casilla clara</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="color" id="gusto-casilla-clara" aria-label="Casilla clara: elegir en la paleta" class="w-11 h-11 shrink-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <input type="text" id="gusto-casilla-clara-hex" maxlength="7" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="gusto-hex-ayuda" class="w-full max-w-[12rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 font-mono text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gusto-casilla-oscura-hex" class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Casilla oscura</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="color" id="gusto-casilla-oscura" aria-label="Casilla oscura: elegir en la paleta" class="w-11 h-11 shrink-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <input type="text" id="gusto-casilla-oscura-hex" maxlength="7" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="gusto-hex-ayuda" class="w-full max-w-[12rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 font-mono text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gusto-pieza-blanca-hex" class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Piezas blancas</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="color" id="gusto-pieza-blanca" aria-label="Piezas blancas: elegir en la paleta" class="w-11 h-11 shrink-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <input type="text" id="gusto-pieza-blanca-hex" maxlength="7" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="gusto-hex-ayuda" class="w-full max-w-[12rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 font-mono text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gusto-pieza-negra-hex" class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Piezas negras</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="color" id="gusto-pieza-negra" aria-label="Piezas negras: elegir en la paleta" class="w-11 h-11 shrink-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-transparent cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <input type="text" id="gusto-pieza-negra-hex" maxlength="7" autocomplete="off" spellcheck="false" autocapitalize="none" aria-describedby="gusto-hex-ayuda" class="w-full max-w-[12rem] rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 font-mono text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                        </div>
+                        <p id="gusto-hex-ayuda" class="text-xs text-brand-450 dark:text-brand-350">Escribe el código del color (por ejemplo <span class="font-mono">#f0d9b5</span>) o elígelo en el cuadrito de al lado.</p>
                     </div>
-                    <div id="gusto-muestra" class="grid grid-cols-2 w-28 h-28 rounded-lg overflow-hidden border border-brand-200 dark:border-brand-700 text-5xl leading-none" aria-hidden="true"></div>
                 </div>
                 <p id="gusto-aviso" class="text-sm text-accent-700 dark:text-accent-400 mt-4" hidden></p>
                 <div class="flex flex-wrap gap-2 mt-4">
@@ -703,8 +734,13 @@
         renderPieceStyleThemeGrid();
 
         // ---------- Colores a tu gusto (modo normal) ----------
-        // Cada selector guarda en el acto con setCustom(), que además deja puesto "A tu
-        // gusto": elegir un color ES elegirlo, no un paso más que haya que acordarse de dar.
+        // Cada color se puede elegir de dos formas que dicen lo mismo: el cuadrito de la
+        // paleta y el código escrito (#f0d9b5). Las dos se mantienen iguales, y cualquiera
+        // de las dos guarda en el acto con setCustom(), que además deja puesto «A tu gusto»:
+        // elegir un color ES elegirlo, no un paso más que haya que acordarse de dar.
+        // La vista previa es un tablero ENTERO en la posición inicial, con sus coordenadas
+        // afuera, pintado con el estilo de pieza que esté elegido: un par de casillas se ve
+        // distinto de a dos que de a sesenta y cuatro.
         // Lo que no se hace es DECIDIR por la persona: si una pieza queda por debajo de 3:1
         // contra una casilla (el mínimo de WCAG para un objeto gráfico) se le dice cuál y
         // con qué número, pero se guarda igual — es su pantalla.
@@ -712,10 +748,19 @@
             const B = window.BoardColorThemes, P = window.PieceColorThemes;
             if (!B || !P || !B.setCustom || !P.setCustom) return;
             const el = (id) => document.getElementById(id);
-            const clara = el("gusto-casilla-clara"), oscura = el("gusto-casilla-oscura");
-            const blanca = el("gusto-pieza-blanca"), negra = el("gusto-pieza-negra");
-            const muestra = el("gusto-muestra"), aviso = el("gusto-aviso"), msg = el("gusto-msg");
+            const CAMPOS = ["gusto-casilla-clara", "gusto-casilla-oscura", "gusto-pieza-blanca", "gusto-pieza-negra"];
+            const color = (id) => el(id).value;
+            const tablero = el("gusto-tablero"), pares = el("gusto-pares");
+            const aviso = el("gusto-aviso"), msg = el("gusto-msg");
 
+            // "f0d9b5", "#F0D9B5", "#fdb" y " #f0d9b5 " son el mismo color escrito de
+            // cuatro formas; cualquier otra cosa no es un color.
+            function normalizar(txt) {
+                let t = String(txt || "").trim().toLowerCase();
+                if (t && t[0] !== "#") t = "#" + t;
+                if (/^#[0-9a-f]{3}$/.test(t)) t = "#" + t[1] + t[1] + t[2] + t[2] + t[3] + t[3];
+                return /^#[0-9a-f]{6}$/.test(t) ? t : null;
+            }
             const lum = (hex) => {
                 const c = [1, 3, 5].map((i) => {
                     const v = parseInt(hex.slice(i, i + 2), 16) / 255;
@@ -731,60 +776,161 @@
 
             function llenar() {
                 const c = B.getCustom(), p = P.getCustom();
-                clara.value = c.light; oscura.value = c.dark;
-                blanca.value = p.white; negra.value = p.black;
-            }
-            function pintarMuestra() {
-                const casillas = [clara.value, oscura.value, oscura.value, clara.value];
-                const piezas = [["piece-white", "♔"], ["piece-black", "♚"], ["piece-white", "♕"], ["piece-black", "♛"]];
-                muestra.innerHTML = "";
-                casillas.forEach((fondo, i) => {
-                    const sq = document.createElement("span");
-                    sq.className = "flex items-center justify-center";
-                    sq.style.background = fondo;
-                    const pz = document.createElement("span");
-                    pz.className = piezas[i][0];
-                    pz.textContent = piezas[i][1];
-                    sq.appendChild(pz);
-                    muestra.appendChild(sq);
+                const v = { "gusto-casilla-clara": c.light, "gusto-casilla-oscura": c.dark,
+                            "gusto-pieza-blanca": p.white, "gusto-pieza-negra": p.black };
+                CAMPOS.forEach((id) => {
+                    el(id).value = v[id];
+                    el(id + "-hex").value = v[id];
+                    el(id + "-hex").removeAttribute("aria-invalid");
                 });
+            }
+
+            // El tablero de muestra: la posición inicial, con las piezas del estilo elegido
+            // (dibujadas o de símbolo) y las coordenadas por fuera, como en la clase en vivo.
+            const INICIO = ["rnbqkbnr", "pppppppp", "8", "8", "8", "8", "PPPPPPPP", "RNBQKBNR"];
+            const GLIFO = { w: { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" },
+                            b: { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" } };
+            function pieza(ch) {
+                const lado = ch === ch.toUpperCase() ? "w" : "b";
+                const t = ch.toLowerCase();
+                const dibujada = window.PieceStyleThemes && window.PieceStyleThemes.esDibujado && window.PieceStyleThemes.esDibujado() && window.ChessPieceSVG;
+                if (dibujada) return window.ChessPieceSVG.markup(t, lado);
+                return '<span class="' + (lado === "w" ? "piece-white" : "piece-black") + '">' + GLIFO[lado][t] + "</span>";
+            }
+            function pintarTablero() {
+                const clara = color("gusto-casilla-clara"), oscura = color("gusto-casilla-oscura");
+                let casillas = "";
+                INICIO.forEach((fila, r) => {
+                    const celdas = fila === "8" ? "        " : fila;
+                    for (let c = 0; c < 8; c++) {
+                        const ch = celdas[c];
+                        const fondo = (r + c) % 2 === 0 ? clara : oscura;
+                        casillas += '<div style="background:' + fondo + ';aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10cqw;line-height:1">' +
+                            (ch && ch !== " " ? pieza(ch) : "") + "</div>";
+                    }
+                });
+                const numeros = [8, 7, 6, 5, 4, 3, 2, 1].map((n) => '<div class="flex items-center justify-center text-xs text-brand-500 dark:text-brand-300">' + n + "</div>").join("");
+                const letras = "abcdefgh".split("").map((l) => '<div class="text-center text-xs text-brand-500 dark:text-brand-300 pt-1">' + l + "</div>").join("");
+                tablero.innerHTML =
+                    '<div style="display:grid;grid-template-columns:1.25rem 1fr">' +
+                    '<div style="display:grid;grid-template-rows:repeat(8,minmax(0,1fr))">' + numeros + "</div>" +
+                    '<div class="rounded-md overflow-hidden border border-brand-200 dark:border-brand-700" style="container-type:inline-size;display:grid;grid-template-columns:repeat(8,minmax(0,1fr))">' + casillas + "</div>" +
+                    "<div></div>" +
+                    '<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr))">' + letras + "</div>" +
+                    "</div>";
+            }
+
+            // Los pares de casillas del sitio, como punto de partida: tocar uno lo copia a
+            // los dos colores de casilla, y desde ahí se retoca. No toca las piezas.
+            function pintarPares() {
+                const clara = color("gusto-casilla-clara"), oscura = color("gusto-casilla-oscura");
+                pares.innerHTML = "";
+                Object.keys(B.THEMES).forEach((id) => {
+                    const t = B.THEMES[id];
+                    const activo = t.light.toLowerCase() === clara && t.dark.toLowerCase() === oscura;
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "flex flex-col items-center gap-1 rounded-lg p-1 border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " +
+                        (activo ? "border-accent-500" : "border-transparent hover:border-accent-400");
+                    btn.setAttribute("aria-pressed", activo ? "true" : "false");
+                    btn.innerHTML =
+                        '<span class="flex w-16 h-8 rounded overflow-hidden border border-brand-200 dark:border-brand-700" aria-hidden="true">' +
+                        '<span class="flex-1" style="background:' + t.light + '"></span>' +
+                        '<span class="flex-1" style="background:' + t.dark + '"></span></span>' +
+                        '<span class="text-xs leading-tight text-center text-brand-600 dark:text-brand-300">' + t.label + "</span>";
+                    btn.addEventListener("click", () => {
+                        ["gusto-casilla-clara", "gusto-casilla-oscura"].forEach((cid, i) => {
+                            const v = (i === 0 ? t.light : t.dark).toLowerCase();
+                            el(cid).value = v;
+                            el(cid + "-hex").value = v;
+                            el(cid + "-hex").removeAttribute("aria-invalid");
+                        });
+                        guardar();
+                        msg.textContent = "Listo: casillas como «" + t.label + "». Puedes retocar cada color abajo.";
+                    });
+                    pares.appendChild(btn);
+                });
+            }
+
+            function pintarAviso() {
+                const casillas = [["la casilla clara", color("gusto-casilla-clara")], ["la casilla oscura", color("gusto-casilla-oscura")]];
                 const problemas = [];
-                [["La pieza blanca", blanca.value], ["La pieza negra", negra.value]].forEach(([n, pz]) => {
-                    [["la casilla clara", clara.value], ["la casilla oscura", oscura.value]].forEach(([m, sq]) => {
-                        const r = contraste(pz, sq);
+                // La pieza se ve si la separa de la casilla su relleno O su contorno: la blanca
+                // de siempre sobre la casilla clara da 1,3:1 de relleno y se lee perfecto por
+                // su borde oscuro. Contando solo el relleno, el aviso saldría hasta con Madera
+                // y un aviso que sale siempre deja de leerse. El contorno es el mismo que
+                // calcula piece-color-themes.js (contornoPara): oscuro para un relleno claro,
+                // claro para uno oscuro.
+                const contorno = (hex) => contraste(hex, "#000000") >= contraste(hex, "#ffffff") ? "#1e293b" : "#ffffff";
+                [["La pieza blanca", color("gusto-pieza-blanca")], ["La pieza negra", color("gusto-pieza-negra")]].forEach(([n, pz]) => {
+                    casillas.forEach(([m, sq]) => {
+                        const r = Math.max(contraste(pz, sq), contraste(contorno(pz), sq));
                         if (r < 3) problemas.push(n + " sobre " + m + " casi no se distingue (" + num(r) + ":1; conviene 3:1 o más).");
                     });
                 });
-                const rc = contraste(blanca.value, negra.value);
+                const rc = contraste(color("gusto-pieza-blanca"), color("gusto-pieza-negra"));
                 if (rc < 1.5) problemas.push("Las piezas blancas y las negras se parecen demasiado (" + num(rc) + ":1): cuesta saber de quién es cada una.");
                 aviso.hidden = !problemas.length;
                 aviso.textContent = problemas.length ? "⚠️ " + problemas.join(" ") : "";
             }
+            function pintar() { pintarTablero(); pintarPares(); pintarAviso(); }
+
             function guardar() {
-                B.setCustom(clara.value, oscura.value);
-                P.setCustom(blanca.value, negra.value);
+                B.setCustom(color("gusto-casilla-clara"), color("gusto-casilla-oscura"));
+                P.setCustom(color("gusto-pieza-blanca"), color("gusto-pieza-negra"));
                 renderBoardColorThemeGrids();
                 renderPieceColorThemeGrids();
-                pintarMuestra();
+                pintar();
             }
-            [clara, oscura, blanca, negra].forEach((inp) => {
-                inp.addEventListener("input", guardar);
-                inp.addEventListener("change", () => {
+            const decirGuardado = () => {
+                msg.textContent = aviso.hidden
+                    ? "Guardado: los tableros usan tus colores."
+                    : "Guardado, pero revisa el aviso: alguna pieza se ve poco.";
+            };
+
+            CAMPOS.forEach((id) => {
+                const paleta = el(id), texto = el(id + "-hex");
+                paleta.addEventListener("input", () => {
+                    texto.value = paleta.value;
+                    texto.removeAttribute("aria-invalid");
                     guardar();
-                    msg.textContent = aviso.hidden
-                        ? "Guardado: los tableros usan tus colores."
-                        : "Guardado, pero revisa el aviso: alguna pieza se ve poco.";
+                });
+                paleta.addEventListener("change", decirGuardado);
+                // Mientras se escribe, solo se guarda lo que ya es un color: "#f0d" a medias
+                // no puede pintar nada. Al salir del campo se dice qué estuvo mal.
+                texto.addEventListener("input", () => {
+                    const v = normalizar(texto.value);
+                    if (!v) return;
+                    texto.removeAttribute("aria-invalid");
+                    paleta.value = v;
+                    guardar();
+                });
+                texto.addEventListener("change", () => {
+                    const v = normalizar(texto.value);
+                    if (!v) {
+                        texto.setAttribute("aria-invalid", "true");
+                        msg.textContent = "«" + texto.value.trim() + "» no es un color: escribe un código como #f0d9b5.";
+                        return;
+                    }
+                    texto.value = v;
+                    decirGuardado();
                 });
             });
+
             el("gusto-volver").addEventListener("click", () => {
                 B.setPreference(B.AUTO);
                 P.setPreference("clasico");
                 renderBoardColorThemeGrids();
                 renderPieceColorThemeGrids();
-                msg.textContent = "Listo: los tableros volvieron a los colores de siempre. Tus colores quedan guardados por si los quieres usar otra vez.";
+                msg.textContent = "Listo: los tableros volvieron a los colores de siempre. Tus colores quedan guardados como «A tu gusto» por si los quieres usar otra vez.";
             });
+
+            // Cambiar el estilo de pieza en su tarjeta repinta también esta muestra.
+            const repintarEstilo = renderPieceStyleThemeGrid;
+            renderPieceStyleThemeGrid = function () { repintarEstilo(); pintarTablero(); };
+
             llenar();
-            pintarMuestra();
+            pintar();
         })();
 
         // ---------- Baja visión en modo normal: los cuatro ajustes de una vez ----------

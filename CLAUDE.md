@@ -8281,6 +8281,21 @@ porque ahí un par elegido a ojo es justo lo que puede dejar las piezas sin vers
   alguien que sí lo está eligiendo a ojo.
 - «Volver a los colores de siempre» pone `auto` y `clasico` y **no borra** lo
   elegido: queda en la rejilla como «A tu gusto» por si se quiere volver.
+- **La vista previa es un tablero ENTERO**, en la posición inicial, con sus
+  coordenadas por fuera y el estilo de pieza que esté elegido (dibujado o de
+  símbolo): un par de casillas se ve distinto de a dos que de a sesenta y
+  cuatro. Va `aria-hidden` porque lo que dice ya está en los cuatro campos.
+- **Cada color se elige de dos formas que dicen lo mismo**: el cuadrito de la
+  paleta y el código escrito (`#f0d9b5`), sincronizados. Mientras se escribe
+  solo se guarda lo que ya es un color —«#f0d» a medias no pinta nada— y acepta
+  el código sin `#` y en tres cifras (`fdb` es `#ffddbb`). Lo que no es un color
+  se marca con `aria-invalid` y se dice con palabras al salir del campo.
+- **«Empieza desde un par»** copia cualquier par de `THEMES` a las dos casillas,
+  para retocar desde ahí; no toca las piezas.
+- **El aviso cuenta el CONTORNO, no solo el relleno.** La pieza blanca de
+  siempre sobre la casilla clara da 1,3:1 de relleno y se lee perfecto por su
+  borde oscuro: midiendo solo el relleno, el aviso salía hasta con Madera, y un
+  aviso que sale siempre deja de leerse. Usa la misma regla de `contornoPara()`.
 
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 
