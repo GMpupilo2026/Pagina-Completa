@@ -1563,10 +1563,34 @@
         // que es la posición que el profesor tiene delante — recorriendo la línea casi nunca
         // está en la primera, y mandar la inicial cuando él está explicando la jugada 12 es
         // exactamente el fallo que no avisa: se transmite una posición, solo que la que no era.
-        const VISORES_CON_POSICION = ".f100-viewer, .cp-viewer";
-        function ponerBotonDePosicion(visor) {
+        //
+        // Los diagramas FIJOS (.cp-static: un dibujo con su pie, sin línea que recorrer) no
+        // tienen visor que publique nada, así que traen su FEN escrita en el propio HTML, en
+        // el mismo data-fen-actual. Sin ella eran lo único de la lección que el profesor no
+        // podía enseñarle a la clase, y eso no daba ningún error: simplemente no había botón.
+        const VISORES_CON_POSICION = ".f100-viewer, .cp-viewer, .cp-static[data-fen-actual]";
+        function lugarDelBoton(visor) {
             const head = visor.querySelector(".f100-head, .cp-head");
-            if (!head || head.querySelector(".lesson-send-btn")) return;
+            if (head) return head;
+            if (!visor.classList.contains("cp-static")) return null;
+            // El diagrama fijo es una rejilla de dos columnas (dibujo | pie): el botón va
+            // DEBAJO del pie, en la misma columna, y no como tercer hijo, que caería en una
+            // fila nueva debajo del dibujo.
+            let texto = visor.querySelector(".cp-static-texto");
+            if (!texto) {
+                const pie = visor.querySelector(":scope > p");
+                if (!pie) return null;
+                texto = document.createElement("div");
+                texto.className = "cp-static-texto space-y-2";
+                pie.replaceWith(texto);
+                texto.appendChild(pie);
+            }
+            return texto;
+        }
+        function ponerBotonDePosicion(visor) {
+            if (visor.querySelector(".lesson-send-btn")) return;
+            const head = lugarDelBoton(visor);
+            if (!head) return;
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "lesson-send-btn text-xs font-semibold px-2 py-1 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors";

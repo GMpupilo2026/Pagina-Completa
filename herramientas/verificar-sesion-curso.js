@@ -319,6 +319,73 @@ async function pruebaLeccionDelProfesor(browser) {
   await ctx.close();
 }
 
+// ---------------------------------------------- 3b. los diagramas FIJOS del curso
+/* Los diagramas de «Desequilibrios de material» son dibujos fijos con su pie
+   (.cp-static), sin visor que publique la posición: la traen escrita en el
+   HTML. Sin ella no había botón, y eso no da ningún error. Lo que se compara
+   es la FEN que se MANDA contra la que dice el archivo de datos para ese pie,
+   leído aparte — no contra el atributo, que sería comprobar la página contra
+   sí misma. */
+const CURSO_FIJO = "desequilibrios-de-material";
+function fenDelPie(pie) {
+  const d = JSON.parse(fs.readFileSync(path.join(RAIZ, "cursos/protegido/data", CURSO_FIJO + ".json"), "utf8"));
+  for (const p of Object.values(d.partidas || {})) {
+    for (const pos of p.posiciones || []) if (pos.nota.trim() === pie) return pos.fen;
+  }
+  return null;
+}
+async function pruebaDiagramaFijo(browser) {
+  console.log("\n=== Un diagrama fijo del curso, al tablero de la clase ===");
+  const { page, ctx, errores } = await abrir(browser, [PROFE, ALUMNA], "u-profe");
+
+  const n = await page.evaluate(async (curso) => {
+    const r = await fetch("cursos/protegido/" + curso + ".html");
+    const temp = document.createElement("div");
+    temp.innerHTML = await r.text();
+    const detalles = Array.from(temp.querySelectorAll("details")).filter((d) =>
+      !(d.parentElement && d.parentElement.closest("details")) && d.querySelector(":scope > summary"));
+    const i = detalles.findIndex((d) => d.querySelector(".cp-static"));
+    return i < 0 ? null : i + 1;
+  }, CURSO_FIJO);
+  if (!n) { mal("no se encontró ninguna lección con diagramas fijos en " + CURSO_FIJO); await ctx.close(); return; }
+
+  await page.click("#toggle-lesson-btn");
+  await page.selectOption("#lesson-curso-select", CURSO_FIJO);
+  await page.waitForFunction(() => document.getElementById("lesson-leccion-select").options.length > 1);
+  await page.selectOption("#lesson-leccion-select", String(n));
+  await page.click("#lesson-show-btn");
+  await page.waitForSelector("#class-lesson-body .cp-static .lesson-send-btn", { timeout: 20000 });
+
+  const vista = await page.evaluate(() => {
+    const fijos = Array.from(document.querySelectorAll("#class-lesson-body .cp-static"));
+    const f = fijos[0];
+    const btn = f.querySelector(".lesson-send-btn");
+    const dib = f.querySelector(".cp-static-board").getBoundingClientRect();
+    const b = btn.getBoundingClientRect();
+    return {
+      fijos: fijos.length,
+      conBoton: fijos.filter((x) => x.querySelectorAll(".lesson-send-btn").length === 1).length,
+      seVe: btn.checkVisibility(),
+      alLado: b.left >= dib.right - 1 || b.top < dib.bottom,
+      pie: (f.querySelector("p").textContent || "").trim(),
+    };
+  });
+  igual("cada diagrama fijo trae UN botón", vista.conBoton, vista.fijos);
+  igual("el botón se ve", vista.seVe, true);
+  igual("va junto al pie, no en una fila suelta debajo del dibujo", vista.alLado, true);
+
+  const esperado = fenDelPie(vista.pie);
+  if (!esperado) { mal("el archivo de datos no trae la posición del pie «" + vista.pie.slice(0, 40) + "…»"); await ctx.close(); return; }
+  await page.evaluate(() => { window.__updates = []; });
+  await page.click("#class-lesson-body .cp-static .lesson-send-btn >> nth=0");
+  await page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state"));
+  const mandado = await page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state").map((u) => u.campos.fen));
+  igual("manda la posición de ESE diagrama", mandado, [esperado]);
+
+  igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+  await ctx.close();
+}
+
 // ------------------------------------------------------- 4. la vista previa de Táctica
 async function pruebaTactica(browser) {
   console.log("\n=== La vista previa de Táctica ===");
@@ -897,6 +964,7 @@ async function pruebaVistaPreviaEnLote(browser) {
   try {
     await pruebaAlumna(browser);
     await pruebaLeccionDelProfesor(browser);
+    await pruebaDiagramaFijo(browser);
     await pruebaTactica(browser);
     await pruebaCoordenadasDelAlumno(browser);
     await pruebaMiniaturas(browser);
