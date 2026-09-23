@@ -117,11 +117,11 @@ window.__emitir = null;
     /* El canal guarda sus callbacks para que la prueba pueda DISPARAR una jugada
        como la dispararía la base. Sin esto no hay forma de comprobar que el
        tablero se mueva solo, que es la mitad de lo que promete el panel. */
-    /* Los oyentes son de TODOS los canales, no del último que se abrió: desde
-       que torneo.html carga js/juego-aviso.js hay dos canales en la página, y con
-       la lista por canal \`__emitir\` quedaba enganchado al del aviso — la jugada
-       no le llegaba nunca al del torneo y la prueba culpaba a la página. Realtime
-       le entrega el cambio a cada canal que lo escucha. */
+    /* Los oyentes son de TODOS los canales, no del último que se abrió: cada
+       página de la Academia abre además los suyos (la burbuja de conectados, el
+       aviso de partidas asignadas), y con un __emitir reescrito en cada
+       channel() la jugada iba a parar al canal de la burbuja — el tablero no se
+       movía y la prueba culpaba a la página. */
     channel: () => {
       const oyentes = window.__oyentes || (window.__oyentes = []);
       const c = {
