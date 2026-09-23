@@ -23,6 +23,11 @@ window.ActividadProfesor = (function () {
         { clave: "ejercicios_alumnos",  etiqueta: "Ejercicios de sus alumnos" },
         { clave: "clases_en_linea",     etiqueta: "Clases en línea" },
         { clave: "clases_presenciales", etiqueta: "Clases presenciales" },
+        /* «7 de 8»: de las clases de su horario que ya pasaron, cuántas tienen
+           una clase registrada ese día. Sin horario puesto dice «Sin horario»
+           y no «0 de 0», que se lee como un mes sin trabajo. Una foto enviada
+           antes de existir el horario no trae estos números: «—». */
+        { clave: "clases_programadas_dadas", etiqueta: "Clases de su horario dadas", formato: "horario", alerta: "horario" },
         { clave: "minutos_clase",       etiqueta: "Tiempo de clase", formato: "horas" },
         { clave: "asistencias",         etiqueta: "Asistencias a sus clases" },
         { clave: "tareas_puestas",      etiqueta: "Tareas puestas" },
@@ -77,6 +82,12 @@ window.ActividadProfesor = (function () {
 
     function valor(campo, datos) {
         const v = datos ? datos[campo.clave] : null;
+        if (campo.formato === "horario") {
+            const prog = datos ? datos.clases_programadas : null;
+            if (prog == null || v == null) return "—";
+            if (!Number(prog)) return "Sin horario";
+            return v + " de " + prog;
+        }
         if (campo.formato === "horas") return horas(v);
         if (campo.formato === "nota") {
             return v == null ? "—" : Number(v).toLocaleString("es-CR", { maximumFractionDigits: 2 });
@@ -98,7 +109,11 @@ window.ActividadProfesor = (function () {
             dt.textContent = c.etiqueta;
             const dd = document.createElement("dd");
             const n = datos ? Number(datos[c.clave]) : 0;
-            dd.className = "text-xl font-bold " + (c.alerta && n > 0
+            // En el horario la alerta es que falte alguna, no que haya alguna.
+            const alerta = c.alerta === "horario"
+                ? !!datos && Number(datos.clases_programadas) > n
+                : c.alerta && n > 0;
+            dd.className = "text-xl font-bold " + (alerta
                 ? "text-red-600 dark:text-red-400"
                 : "text-brand-800 dark:text-white");
             dd.textContent = valor(c, datos);
