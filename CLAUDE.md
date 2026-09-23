@@ -5126,6 +5126,17 @@ lo declaren, que el service worker tome el control y —lo que de verdad
 importa— que **no guarde** `cursos/protegido/`, `cursos/recursos/` ni nada de
 otro dominio, y que sin red una página caiga en `offline.html`.
 
+- **La red se corta apagando un servidor, no con `setOffline()`.** En el
+  Chromium de playwright, `contexto.setOffline(true)` no alcanza a las
+  peticiones que hace el propio service worker (tampoco `route()`): su
+  `fetch()` llegaba igual al servidor, recibía el 404 de la página inexistente y
+  nunca pasaba por la rama de «sin conexión». La prueba fallaba sobre un
+  `sw.js` sano — y uno roto en esa rama habría fallado igual, o sea que no
+  medía nada. Ahora esa parte levanta su propio servidor estático, deja que el
+  service worker tome el control y lo apaga: el fallo de red es de verdad.
+  Comprobado que discrimina: quitándole a `sw.js` el `caches.match("/offline.html")`,
+  salta.
+
 ### Avisos push: los manda el sitio, no la tienda
 
 **Los avisos no son de la app, son del sitio**, y por eso funcionan igual en la
@@ -6852,6 +6863,14 @@ pueda mover ni escribir nada, y que las dos puertas cerradas sigan cerradas
 —Niebla en curso y una sala que la base no devolvió—. Está probado que falla de
 verdad: contra el código de antes saltan **16 comprobaciones**.
 
+- **Los oyentes de su canal de mentira son de TODOS los canales.** El doble
+  guardaba `window.__emitir` en cada `channel()`, o sea que apuntaba al último
+  canal que se abrió. Desde que toda página de la Academia abre además los suyos
+  —la burbuja de conectados, el aviso de partidas asignadas—, la jugada de la
+  prueba iba a parar al canal de la burbuja: el tablero no se movía y la prueba
+  lo contaba como fallo de `torneo.html`. Estuvo así en rojo en `main` sin que
+  la página tuviera nada. Comprobado que sigue discriminando: quitándole el
+  `loadFen()` a `actualizarSala()`, salta.
 - Ojo con cómo se escribe una comprobación de «se dibuja con SVG»: contar solo
   los glifos da **verde sobre un tablero vacío**, que es justo lo que pasa cuando
   el panel no se pinta. Se piden las dos cosas — que haya piezas dibujadas y que
