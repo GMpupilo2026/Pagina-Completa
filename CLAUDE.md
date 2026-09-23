@@ -4068,6 +4068,108 @@ el número de las familias salga de los ajustes y no escrito en la página, que
 un número de tres dígitos no se guarde, y qué manda la ficha de contacto al
 corregir cada uno de los tres correos.
 
+## El acceso a la plataforma: paquetes, cupos y un interruptor
+
+Hasta esto, una cuenta de alumno valía para siempre: `cobros.html` registraba
+quién pagaba, pero **nada cortaba el acceso de quien no pagaba**. Cobrar por el
+acceso sin poder cortarlo es pedir una contribución voluntaria.
+
+**El modelo es uno solo: un paquete.** `paquetes_acceso` (nombre, titular,
+cupos, desde, hasta, precio) y `paquete_alumnos` (quién ocupa cada cupo). Una
+cuenta individual **es un paquete de 1 cupo**, no un segundo mecanismo: con dos,
+el día que se corrija la regla de vigencia en uno el otro seguiría diciendo lo
+de antes.
+
+- **Nadie escribe estas tablas desde el navegador** (no tienen política de
+  insert/update/delete, y el permiso de tabla se le quitó a `authenticated` y a
+  `anon`), igual que `profile_teachers` y `equipos`. Escriben cuatro funciones
+  `SECURITY DEFINER`: `paquete_guardar()` y `paquete_borrar()` (solo
+  administración), `paquete_set_alumnos()` y `acceso_set_exigido()`.
+- **`paquete_set_alumnos()` deja la lista EXACTAMENTE como llega** (la regla de
+  `set_teachers`) y **rechaza lo que no cabe en los cupos**, con los dos
+  números. El cupo lo hace cumplir la base: en la pantalla solo se avisa antes.
+- **El titular del paquete** (un profesor que compró cupos para sus alumnos)
+  también reparte, pero solo a sus propios alumnos (`soy_profesor_de()`), y **lo
+  que ya estaba y no es suyo se conserva**, como en `coord_set_profesores()`:
+  la pantalla del titular no ve a quien puso administración, y mandarle la lista
+  sin él lo sacaría sin que nadie lo pidiera. No puede tocar los cupos ni las
+  fechas: eso es lo que se pagó.
+- **Quién ve un paquete** lo contesta `puede_ver_paquete()`: administración, su
+  titular y quien coordina al titular. **El alumno NO ve la fila del paquete**
+  (su nombre, su precio): ve su propio renglón de `paquete_alumnos` y lo que le
+  diga `mi_acceso()`.
+
+### `mi_acceso()` es la única pregunta
+
+Devuelve si quien mira puede usar la Academia hoy, hasta cuándo y por qué. Las
+fechas se cuentan **en hora de Costa Rica** y `vigente_hasta` **está incluido**.
+El equipo docente y administración dan `vigente` siempre: el acceso que se
+vende es el del alumno.
+
+**`acceso_config.exigido` arranca en `false`, y eso fue lo que permitió aplicar
+esto sin cerrarle la Academia a nadie**: con el interruptor apagado,
+`mi_acceso()` contesta vigente para todo el mundo, así que los paquetes se
+pueden ir armando sin que ningún alumno note nada. Lo enciende quien administra
+desde `accesos.html`, con dos toques y con el número de cuántos quedarían fuera
+escrito en el botón.
+
+Comprobado impersonando roles en SQL, en una transacción revertida, 15 casos:
+el alumno no crea paquetes ni enciende el interruptor, el cupo se rechaza con
+sus números, el titular suma a su alumno y no a uno ajeno ni se sube los cupos,
+el alumno ve su renglón y **0 filas** de paquetes, con el interruptor encendido
+el que no tiene paquete queda fuera y el vencido también, y `anon` no puede
+llamar a nada.
+
+### Lo que tapa la pantalla, y lo que NO
+
+`js/acceso-vigente.js` va en las páginas de la Academia (lo pone
+`academia-cabecera.py`, en la MISMA lista que la burbuja) y hace lo que diga
+`mi_acceso()`: en el panel **avisa** (y avisa también 7 días antes de que
+venza); en cualquier otra página **tapa** el contenido y dice por qué y a qué
+WhatsApp escribir.
+
+- **`cobros.html` y `configuracion.html` quedan fuera a propósito**: son por
+  donde se arregla (ver qué debe, cambiar la contraseña). Taparlas cerraría la
+  puerta de salida.
+- **Si la consulta FALLA, no se tapa nada.** Una función que falta o una red
+  caída no pueden dejar fuera a todos los que sí pagaron.
+- **Esto no es un candado de servidor, y queda dicho con todas las letras**: las
+  tablas de entrenamiento siguen aceptando lo que un alumno con sesión mande
+  desde la consola, y el contenido de los cursos ya viaja a cualquiera con
+  sesión (ver «Cursos»). Para el caso real —una familia que dejó de pagar—
+  alcanza. Cerrarlo del todo pediría meter `mi_acceso()` en las políticas de
+  insert de `training_progress` y compañía, que es otra tanda.
+
+### Los precios están escritos UNA vez
+
+`js/precios-acceso.js`: una cuenta a ₡6.900 (el precio que ya ofrecía
+`elegir-plan.html`, que ahora lo lee de ahí) y cinco tramos por cantidad
+(10, 25, 50, 100 y colegio desde 300), más el profesor extra y el ciclo lectivo
+(12 meses, se pagan 10). Lo leen `precios.html`, `accesos.html` (que propone el
+precio al armar un paquete) y `elegir-plan.html`.
+
+- **El total se CALCULA, eligiendo el tramo más barato para esa cantidad**
+  (`cotizar()`): sin eso, 9 alumnos costaban más que 10, y se le cobraría de
+  más a quien no hizo la cuenta.
+- **`precios.html` no tiene ni un «₡» escrito**, y lleva `noindex`: es la tabla
+  que se le enseña a una academia o a un colegio, y publicar precios en un
+  buscador es una decisión que todavía no se tomó. Abrirla es quitar esa línea y
+  correr `sitemap.py`.
+- Los cupos de profesor de cada tramo son **informativos**: la base solo cuenta
+  cupos de alumno.
+
+**Al tocar los precios, `accesos.html`, `js/acceso-vigente.js` o las funciones
+de paquetes, correr `node herramientas/verificar-accesos.js`** (con el sitio en
+localhost:8777 y playwright; `--sin-navegador` corre solo el módulo). Comprueba
+que comprar un alumno más nunca salga más barato (de 1 a 1000), que ninguna
+página escriba un precio a mano, que el control esté en las 61 páginas y no en
+las dos que quedan abiertas, que crear un paquete mande lo que se escribió, que
+**sumar un grupo mande la UNIÓN** y que uno que no cabe no se mande, que el
+interruptor pida dos toques, que al titular no se le pinte el formulario, y que
+el control tape con el acceso vencido, no tape con el vigente y **no tape si la
+consulta falla**. Está probado que falla de verdad: haciendo que el grupo se
+mande solo, saltan 3 comprobaciones.
+
 ## La tienda de materiales: montada, con precio, y todavía cerrada
 
 `tienda.html` es el catálogo de venta de lo que este repositorio ya produjo:
