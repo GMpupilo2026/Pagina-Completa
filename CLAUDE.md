@@ -7265,6 +7265,25 @@ una persona que NO es quien llama es una API aunque no lo parezca. Al escribir
 una, preguntarse quién tiene que poder llamarla — y si la respuesta no incluye
 al público, revocarle el execute de `public` y de `anon`.
 
+**Y se volvió a colar, en dieciséis funciones más.** El linter de Supabase las
+listaba entre las 29 `SECURITY DEFINER` que `anon` podía llamar, y varias ya
+traían un `revoke ... from anon` escrito — que no sirve si no se revoca también
+de `public`, de donde `anon` lo vuelve a heredar. La fuga de verdad era
+`profesores_del_coordinador(<uuid>)`: sin cuenta devolvía qué profesores lleva
+cada coordinación, y `es_del_equipo_docente(<uuid>)` decía quién da clase. La
+migración `quitar_a_anon_las_funciones_internas` las revoca de `public, anon` y
+se las devuelve a `authenticated` y `service_role`. **Las que usa una política
+con el rol `public` NO se tocaron** (`bajo_mi_coordinacion`,
+`es_del_equipo_docente`, `equipo_docente`, `soy_dueno_del_plan`,
+`plan_compartido_conmigo`, `estoy_inscrito_en`): una política `to public` se
+evalúa también para `anon`, y sin el execute la consulta de una página pública
+tronaría con un error de permisos en vez de dar «0 filas». Esas se arreglan
+moviéndolas fuera de `public` o reescribiendo la política `to authenticated`,
+que es un cambio aparte. Las que quedan a propósito para `anon` son las de las
+páginas sin sesión: `formulario_publico`, `responder_formulario`,
+`formulario_acepta_adjuntos`, `registrar_arbitraje_publico`,
+`solicitar_academia`, `solicitud_para_elegir_plan` y `elegir_plan`.
+
 ### Lo que queda pendiente y NO se puede hacer desde acá
 
 **La protección contra contraseñas filtradas está apagada, y hoy no se puede

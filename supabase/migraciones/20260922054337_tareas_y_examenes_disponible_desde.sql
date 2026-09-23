@@ -283,14 +283,7 @@ $function$;
 revoke execute on function public.crear_examen(uuid[], text, text, integer, timestamptz, jsonb, integer, timestamptz) from anon;
 
 -- ---------------- tareas_con_avance(): dice si está programada ----------------
---
--- Se dropea y se vuelve a crear completa (y no solo `create or replace`)
--- porque agrega una columna al RETURNS TABLE, que Postgres no deja cambiar
--- con REPLACE. De paso queda escrita en el repositorio la versión que ya
--- corría en la base —con `p_limite` y el filtro por `linea_id`— que se
--- había quedado solo desplegada, sin su migración: la firma de acá abajo es
--- la que devolvía `pg_get_functiondef` en producción, no la de
--- `20260920064548_tareas_con_avance.sql`.
+
 drop function if exists public.tareas_con_avance(uuid, uuid, boolean, integer);
 
 create or replace function public.tareas_con_avance(
@@ -341,11 +334,6 @@ avance as (
         where tp.student_id = b.alumno_id
           and tp.activity = any(i.actividades)
           and tp.created_at >= b.created_at
-          -- El recorte dentro de la herramienta. Cada página nombra lo suyo
-          -- como lo nombra: 'theme' en Ejercicios por tema, 'category' en
-          -- Mates, 4x4, Aprender y Practicar, 'linea_id' en Aperturas. Se
-          -- miran los tres porque el filtro es uno solo y quien lo escribe
-          -- (tareas.html) no tiene por qué saber en qué campo cae.
           and (i.filtro_clave is null
                or tp.detail->>'theme'    = i.filtro_clave
                or tp.detail->>'category' = i.filtro_clave
@@ -402,10 +390,6 @@ final as (
     coalesce(r.items, '[]'::jsonb)      as items,
     coalesce(r.renglones, 0)::integer   as renglones,
     coalesce(r.cumplidos, 0)::integer   as cumplidos,
-    -- "programada" manda sobre completada y vencida: mientras no llegue su
-    -- disponible_desde no hay nada que el alumno haya podido cumplir —ni
-    -- siquiera la ve, la RLS se la tapa— así que ninguna de las otras dos
-    -- puede ser cierta todavía.
     case
       when b.disponible_desde > now() then 'programada'
       when coalesce(r.renglones,0) > 0 and r.cumplidos >= r.renglones then 'completada'
@@ -465,12 +449,6 @@ $$;
 revoke execute on function public.examenes_con_nota(uuid, uuid, integer) from anon;
 
 -- ---------------- iniciar_examen() y examen_para_alumno(): el candado a mano ----------------
---
--- Las dos son SECURITY DEFINER y su dueño tiene BYPASSRLS (comprobado:
--- `rolbypassrls = true` para `postgres`), así que la RLS que se acaba de
--- cambiar en `examenes_select` no las alcanza — es la misma razón por la que
--- ya comprueban `alumno_id = auth.uid()` a mano en vez de confiar en la
--- política. El chequeo de acá abajo es la misma idea, para la misma tabla.
 
 create or replace function public.iniciar_examen(p_examen uuid)
 returns jsonb
@@ -497,9 +475,6 @@ begin
     raise exception 'Se pasó la fecha para hacer este examen.';
   end if;
 
-  -- Volver a entrar NO reinicia el reloj: sigue corriendo desde la
-  -- primera vez. Si no, cerrar y abrir la pestaña regalaría el tiempo
-  -- entero otra vez, y eso no daría ningún error.
   if e.estado = 'asignado' then
     update public.examenes
        set estado = 'en_curso',
@@ -538,9 +513,6 @@ begin
     raise exception 'Todavía no está disponible este examen.';
   end if;
 
-  -- Se eligen columna por columna. Un `select *` de aquí traería la
-  -- clave: es exactamente el descuido que esta función existe para
-  -- hacer imposible.
   select coalesce(jsonb_agg(jsonb_build_object(
            'id', i.id, 'orden', i.orden, 'tipo', i.tipo,
            'area', i.area, 'peso', i.peso, 'visible', i.visible
@@ -548,9 +520,6 @@ begin
     into v_items
     from public.examen_items i where i.examen_id = p_examen;
 
-  -- Cuáles ya contestó, para poder retomar si se recarga la página.
-  -- Va sin `correcta`: mientras el examen no esté entregado, saber si
-  -- acertó no le corresponde.
   select coalesce(jsonb_agg(jsonb_build_object('item_id', r.item_id)), '[]'::jsonb)
     into v_resp
     from public.examen_respuestas r where r.examen_id = p_examen;
@@ -564,8 +533,6 @@ begin
     'vence_at', e.vence_at,
     'disponible_desde', e.disponible_desde,
     'iniciado_at', e.iniciado_at,
-    -- El reloj que vale es este, y va junto con la hora del servidor
-    -- para que la página no dependa del reloj de la computadora.
     'termina_at', e.termina_at,
     'ahora', now(),
     'salidas', e.salidas,
@@ -592,12 +559,6 @@ begin
   select coalesce(p.full_name, 'Tu profe') into profe
     from public.profiles p where p.id = new.profesor_id;
 
-  -- Si se programó para más adelante, el aviso NO sale ahora: el alumno
-  -- todavía no puede ver la tarea (la RLS se la tapa), así que avisarle ya
-  -- sería un push que lleva a una lista donde esa tarea no está. Mandarlo
-  -- justo cuando se destape pide una tanda con pg_cron, como la de los
-  -- recordatorios de cobro, y queda anotado sin hacer: por ahora esa tarea
-  -- simplemente no manda ningún aviso al llegar su fecha.
   if new.disponible_desde <= now() then
     perform public.avisar_push(
       array[new.alumno_id],
@@ -626,17 +587,12 @@ begin
   select coalesce(p.full_name, 'Tu profe') into profe
     from public.profiles p where p.id = new.profesor_id;
 
-  -- Se puede contar porque el trigger es DEFERRABLE INITIALLY DEFERRED:
-  -- crear_examen() inserta el examen antes que sus preguntas, así que un
-  -- AFTER INSERT de siempre diría "0 preguntas" sin que nada fallara.
   select count(*) into n
     from public.examen_items i where i.examen_id = new.id;
 
   s_preg := n || case when n = 1 then ' pregunta' else ' preguntas' end;
   s_min  := new.minutos || case when new.minutos = 1 then ' minuto' else ' minutos' end;
 
-  -- Mismo criterio que avisar_tarea_asignada(): programado para más
-  -- adelante es programado para no avisar todavía.
   if new.disponible_desde <= now() then
     perform public.avisar_push(
       array[new.alumno_id],
@@ -644,8 +600,6 @@ begin
       profe || ' te puso «' || new.titulo || '»: ' || s_preg || ' en ' || s_min ||
         '. Tienes hasta el ' ||
         to_char(new.vence_at at time zone 'America/Costa_Rica', 'DD/MM HH24:MI') || '.',
-      -- Directo a rendirlo, no a una lista: el examen tiene reloj y una sola
-      -- oportunidad, así que buscarlo entre otros es un paso de más.
       '/examen.html?id=' || new.id,
       'examen:' || new.id);
   end if;
@@ -654,15 +608,7 @@ end;
 $$;
 
 -- ---------------- El informe a la casa no cuenta lo que la familia no ve ----------------
---
--- resumen_tareas_examenes() ya excluía las tareas programadas de
--- "pendientes"/"sin_hacer_hoy" sin que hiciera falta tocarla: esos filtros
--- comparan contra 'pendiente'/'vencida' exactas, y una tarea programada cae
--- en 'programada', ninguna de las dos. Los exámenes sí hacía falta
--- acotarlos, porque ahí el filtro es "asignado y con tal fecha" y no mira
--- disponible_desde: sin este cambio, un examen programado para la semana
--- que viene saldría en el informe de HOY como "pendiente", y es un examen
--- que el alumno todavía ni puede abrir.
+
 create or replace function public.resumen_tareas_examenes(
   p_alumno uuid,
   p_desde  timestamptz,
@@ -680,10 +626,6 @@ declare
   v_tareas  jsonb;
   v_ex      jsonb;
 begin
-  -- Quién puede preguntar por quién va escrito acá porque la función se salta
-  -- la RLS a propósito. auth.uid() nulo es la tanda de pg_cron entrando con la
-  -- service role; a `anon` se le revoca el execute más abajo, así que no hay
-  -- una tercera forma de llegar sin sesión.
   if v_yo is not null then
     select coalesce(pr.is_admin, false) into v_admin
       from public.profiles pr where pr.id = v_yo;
@@ -692,28 +634,18 @@ begin
     end if;
   end if;
 
-  -- Las tareas se cuentan con tareas_con_avance(), la MISMA función que pintan
-  -- tareas.html y el panel. Escribir la cuenta otra vez acá sería una tercera
-  -- versión de "cuánto lleva hecho" que puede decir algo distinto del mismo
-  -- alumno. Se le pasa el alumno y NINGÚN profesor: dentro de esta función la
-  -- RLS no filtra, así que vienen las de todos sus profesores.
   with t as (
     select * from public.tareas_con_avance(p_alumno, null, false, null)
   )
   select jsonb_build_object(
-    -- Del periodo del informe: qué le pusieron y cómo le fue.
     'puestas',     count(*) filter (where created_at >= p_desde and created_at < p_hasta),
     'completadas', count(*) filter (where created_at >= p_desde and created_at < p_hasta
                                       and situacion = 'completada'),
     'vencidas',    count(*) filter (where created_at >= p_desde and created_at < p_hasta
                                       and situacion = 'vencida'),
-    -- Y cómo está HOY, que es lo que de verdad hay que mirar: una tarea de
-    -- hace tres semanas sin hacer no aparecería en el periodo y es justo la
-    -- que hay que contar.
     'sin_hacer_hoy', count(*) filter (where situacion = 'vencida'),
     'pendientes',    count(*) filter (where situacion = 'pendiente'),
     'proxima_vence', min(vence_at) filter (where situacion = 'pendiente'),
-    -- Los renglones de lo que se le pidió en el periodo, para una barra.
     'renglones',  coalesce(sum(renglones) filter (where created_at >= p_desde and created_at < p_hasta), 0),
     'cumplidos',  coalesce(sum(cumplidos) filter (where created_at >= p_desde and created_at < p_hasta), 0)
   ) into v_tareas from t;
@@ -725,12 +657,6 @@ begin
                                      and e.entregado_at >= p_desde and e.entregado_at < p_hasta)::numeric, 2),
     'mejor_nota', max(e.nota) filter (where e.estado in ('entregado','congelado')
                                      and e.entregado_at >= p_desde and e.entregado_at < p_hasta),
-    -- Igual que las tareas: lo que quedó sin hacer se cuenta HOY, no dentro
-    -- del periodo. Un examen que venció la semana pasada y nadie rindió sigue
-    -- siendo lo primero que la familia tiene que saber. Y el que todavía no
-    -- se destapó (disponible_desde en el futuro) no cuenta para ninguna de
-    -- las tres: la familia no puede hacer nada con un examen que su hijo
-    -- todavía no puede ni abrir.
     'sin_hacer_hoy', count(*) filter (where e.estado = 'asignado' and e.vence_at < now()
                                         and e.disponible_desde <= now()),
     'pendientes',    count(*) filter (where e.estado = 'asignado' and e.vence_at >= now()
