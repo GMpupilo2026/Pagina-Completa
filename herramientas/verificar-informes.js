@@ -168,6 +168,18 @@ window.__funcion = [];
 `;
 }
 
+/* En qué se fue el tiempo, tal como lo devuelve public.tiempo_por_seccion():
+   una sección con ejercicios, un curso (contenido: solo tiempo), una
+   herramienta sin conteo, y una de medio minuto sin nada hecho que NO se pinta
+   (alguien que pasó por la página no la usó). */
+const SECCIONES_ANA = [
+  { seccion: "4x4", minutos: 62.4, ejercicios: 12 },
+  { seccion: "curso:el-mapa-de-los-finales", minutos: 25, ejercicios: 0 },
+  { seccion: "estudio", minutos: 8, ejercicios: 0 },
+  { seccion: "mates", minutos: 0.2, ejercicios: 1 },
+  { seccion: "bot", minutos: 0.3, ejercicios: 0 },
+];
+
 /* Tareas y exámenes, tal como los devuelve public.resumen_tareas_examenes().
    Lleva una vencida de cada cosa a propósito: es el único renglón de ese bloque
    que pide hacer algo hoy, y el que se pinta en rojo. */
@@ -304,6 +316,7 @@ async function pruebaProfesor(browser) {
       informes_totales: { clases_cerradas: 4, preguntas: 10, partidas: 2 },
       resumen_tareas_examenes: DEBERES,
       evolucion_alumno: CURVA,
+      tiempo_por_seccion: SECCIONES_ANA,
     },
     tablas: {
       profiles: [{ id: "prof-1", role: "profesor", is_admin: true, full_name: "Oscar", email: "o@x.cr" }],
@@ -429,6 +442,33 @@ async function pruebaProfesor(browser) {
     ].join(",");
   }), "2,true,true,true,true");
   igual("ficha de diagnóstico visible", await page.evaluate(() => !document.getElementById("diagnostico-report").classList.contains("hidden")), "true");
+
+  /* En qué usó su tiempo. Lo que se rompe callado acá: un curso que no sale
+     porque no tiene ejercicios (que es justo lo que el pedido vino a sumar), un
+     conteo inventado sobre una sección de contenido, o el nombre del curso
+     escrito como su dirección. */
+  console.log("-- En qué usó su tiempo");
+  await page.waitForFunction(() => document.querySelectorAll("#tiempo-body tbody tr").length > 0);
+  igual("se ve de verdad", await page.evaluate(() =>
+    getComputedStyle(document.getElementById("tiempo-report")).display === "none" ? "no" : "sí"), "sí");
+  igual("una fila por sección usada, y la de paso no", await page.evaluate(() =>
+    [...document.querySelectorAll("#tiempo-body tbody tr")].map((tr) =>
+      [...tr.children].map((c) => c.textContent.replace(/\s+/g, " ").trim()).join(" | "))),
+    ["🧩 Ejercicios 4×4 | 1 h 2 min | 12 ejercicios",
+     "🏛️ Curso: El mapa de los finales | 25 min | Estudió el contenido",
+     "📚 Estudio (fichas) | 8 min | —",
+     "♚ Mates | menos de 1 min | 1 mate"]);
+  igual("pide el periodo de siempre al abrir y lo marca", await page.evaluate(() =>
+    document.querySelector('#tiempo-body button[aria-pressed="true"]').textContent), "Desde siempre");
+  // Se cuenta antes y después, sin vaciar la lista: lo que viene más abajo
+  // mira las consultas de esta misma visita.
+  const pedidasTiempo = () => page.evaluate(() =>
+    window.__consultas.filter((c) => c.etiqueta === "rpc:tiempo_por_seccion").length);
+  const antesTiempo = await pedidasTiempo();
+  await page.click('#tiempo-body button[data-periodo="7"]');
+  await page.waitForFunction(() => document.querySelector('#tiempo-body button[data-periodo="7"]').getAttribute("aria-pressed") === "true");
+  igual("cambiar de periodo vuelve a preguntarle a la base", (await pedidasTiempo()) - antesTiempo, 1);
+  await page.click('#tiempo-body button[data-periodo="siempre"]');
 
   /* "Cómo viene" es lo único del informe que contesta si MEJORA, y todo lo que
      se rompe acá se rompe callado: una semana vacía que desaparece hace subir

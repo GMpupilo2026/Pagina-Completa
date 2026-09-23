@@ -29,6 +29,7 @@
     <script src="js/arbitraje-nivel.js"></script>
     <script src="js/notas-alumno.js"></script>
     <script src="js/evolucion-alumno.js"></script>
+    <script src="js/tiempo-secciones.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -115,6 +116,17 @@
                 <h2 id="cursos-report-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Cursos</h2>
                 <p id="cursos-report-sub" class="text-brand-500 dark:text-brand-300 text-sm mb-4">Temas marcados como estudiados en cada curso de Academia. Las lecciones se abren en orden, así que el avance muestra hasta dónde llegó.</p>
                 <div id="cursos-report-body" class="space-y-4"></div>
+            </div>
+
+            <!-- En qué se fue el tiempo, sección por sección: cada curso, cada
+                 herramienta de Entrenamiento, las partidas y la clase en vivo,
+                 con los ejercicios que hizo en cada una. Lo que es contenido
+                 (un curso, Estudio) lleva solo el tiempo. Lo pinta
+                 js/tiempo-secciones.js para las dos vistas. -->
+            <div id="tiempo-report" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="tiempo-title" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">⏱️</span> En qué usó su tiempo</h2>
+                <p id="tiempo-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4">Cuánto tiempo pasó en cada sección de la plataforma y qué hizo ahí.</p>
+                <div id="tiempo-body"></div>
             </div>
 
             <!-- Cómo viene EN EL TIEMPO, que es lo que las tarjetas de arriba no
@@ -682,6 +694,7 @@
             mostrarBotonDeNumeros();
 
             renderCursosReport(entreno, true);
+            renderTiempo(profile.id, true, "");
             renderEvolucion(profile.id, true, "");
             renderDeberes(profile.id, true);
             renderNotasDelAlumno(profile.id);
@@ -1021,6 +1034,7 @@
             document.getElementById("acceso-report").classList.add("hidden");
             document.getElementById("encargados-report").classList.add("hidden");
             document.getElementById("deberes-report").classList.add("hidden");
+            document.getElementById("tiempo-report").classList.add("hidden");
             document.getElementById("evolucion-report").classList.add("hidden");
             document.getElementById("notas-report").classList.add("hidden");
             document.getElementById("notas-alumno-report").classList.add("hidden");
@@ -1187,6 +1201,7 @@
             mostrarBotonDeNumeros();
 
             renderCursosReport(entreno, false, name, studentId, unlocksPorCurso);
+            renderTiempo(studentId, false, name);
             renderEvolucion(studentId, false, name);
             renderDiagnosticoProfesor(studentId, name, entreno);
             renderDeberes(studentId, false);
@@ -1274,6 +1289,26 @@
            `notas_alumno`, no estas funciones. El profesor ve las que él escribió
            (un colega que comparta el alumno no las ve); el alumno, solo las que
            tienen compartida = true. */
+
+        /* "En qué usó su tiempo": cuánto rato en cada sección (cada curso,
+           cada herramienta, las partidas, la clase) y qué hizo ahí. Lo pinta
+           js/tiempo-secciones.js, que lo comparten las dos vistas. Sin nada
+           registrado el panel no se destapa, como el de "Cómo viene". */
+        async function renderTiempo(studentId, propio, nombre) {
+            const panel = document.getElementById("tiempo-report");
+            const titulo = document.getElementById("tiempo-title");
+            titulo.textContent = "";
+            const ic = document.createElement("span");
+            ic.setAttribute("aria-hidden", "true");
+            ic.textContent = "⏱️ ";
+            titulo.append(ic, document.createTextNode(propio ? "En qué usaste tu tiempo" : "En qué usó su tiempo " + nombre));
+            document.getElementById("tiempo-sub").textContent = propio
+                ? "Cuánto tiempo pasaste en cada sección de la plataforma y qué hiciste ahí."
+                : "Cuánto tiempo pasó en cada sección de la plataforma y qué hizo ahí: cada curso, cada herramienta de Entrenamiento, las partidas y la clase en vivo.";
+            panel.classList.remove("hidden");
+            const cuantas = await TiempoSecciones.montar(sb, "tiempo-body", studentId, { propio });
+            if (!cuantas) panel.classList.add("hidden");
+        }
 
         /* "Cómo viene": la curva semanal y, si hizo el diagnóstico más de una
            vez, en qué áreas mejoró. Lo pinta js/evolucion-alumno.js, que lo

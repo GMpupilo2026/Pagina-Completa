@@ -32,7 +32,15 @@
   const HEARTBEAT_MS = 20000; // igual que class_presence_log en sesion.html
 
   const scriptTag = document.currentScript;
-  const activity = (scriptTag && scriptTag.getAttribute("data-activity")) || "otro";
+  let activity = (scriptTag && scriptTag.getAttribute("data-activity")) || "otro";
+  // Un curso cuenta aparte de los demás: "curso" se completa con el nombre
+  // del archivo ("curso:el-mapa-de-los-finales"), así el informe puede decir
+  // cuánto estudió de CADA curso y uno nuevo cuenta solo, sin tocar nada.
+  // Cloudflare sirve la página con .html y sin él, por eso se le quita.
+  if (activity === "curso") {
+    const archivo = (window.location.pathname.split("/").pop() || "").replace(/\.html$/, "");
+    if (/^[a-z0-9-]{1,80}$/.test(archivo)) activity = "curso:" + archivo;
+  }
 
   let studentId = null;
   let rowId = null;

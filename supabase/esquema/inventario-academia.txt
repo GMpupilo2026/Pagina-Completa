@@ -731,6 +731,7 @@ funcion  soy_profesor_de_todos(p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  subgrupos_a_la_vista()  invoker  anon=false  auth=true
 funcion  subgrupos_de(p_profesor uuid)  invoker  anon=true  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
+funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone DEFAULT NULL::timestamp with time zone, p_hasta timestamp with time zone DEFAULT NULL::timestamp with time zone)  invoker  anon=false  auth=true
 funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  validar_marca_training_progress()  definer  anon=false  auth=false
 politica  Ejercicios Lichess  Ejercicios Lichess: lectura publica  SELECT

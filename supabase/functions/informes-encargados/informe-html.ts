@@ -47,6 +47,70 @@ const ACTIVIDADES: Record<string, { nombre: string; unidad: string; emoji: strin
   visualizacion:   { nombre: "Visualización",         unidad: "ejercicios",  emoji: "👁️" },
 };
 
+// Cómo se llama cada SECCIÓN de public.tiempo_por_seccion() cuando se la
+// cuenta a la casa. Es la misma tabla que js/tiempo-secciones.js (el navegador
+// no puede importar esto ni al revés); herramientas/verificar-tiempo-secciones.js
+// comprueba que digan lo mismo. `unidad` es [singular, plural]; sin unidad la
+// sección es de contenido y lleva solo el tiempo.
+export const SECCIONES: Record<string, { nombre: string; emoji: string; unidad?: [string, string] }> = {
+  "clase":                { nombre: "Clases en vivo",        emoji: "🏫" },
+  "4x4":                  { nombre: "Ejercicios 4×4",        emoji: "🧩", unidad: ["ejercicio", "ejercicios"] },
+  "aprender":             { nombre: "Aprender",              emoji: "🎓", unidad: ["lección", "lecciones"] },
+  "coordenadas":          { nombre: "Coordenadas",           emoji: "⚡", unidad: ["ronda", "rondas"] },
+  "practicar":            { nombre: "Practicar",             emoji: "🏆", unidad: ["serie", "series"] },
+  "desafios":             { nombre: "Desafíos",              emoji: "🔥", unidad: ["serie", "series"] },
+  "mates":                { nombre: "Mates",                 emoji: "♚", unidad: ["mate", "mates"] },
+  "temas":                { nombre: "Ejercicios por tema",   emoji: "🎯", unidad: ["ejercicio", "ejercicios"] },
+  "concentracion":        { nombre: "Concentración",         emoji: "🧠", unidad: ["ejercicio", "ejercicios"] },
+  "diagnostico":          { nombre: "Diagnóstico de nivel",  emoji: "🧭", unidad: ["prueba", "pruebas"] },
+  "aperturas":            { nombre: "Aperturas y celadas",   emoji: "📖", unidad: ["línea", "líneas"] },
+  "confites":             { nombre: "Confites del caballo",  emoji: "🍬", unidad: ["recorrido", "recorridos"] },
+  "ilumina":              { nombre: "Ilumina el tablero",    emoji: "💡", unidad: ["nivel", "niveles"] },
+  "visualizacion":        { nombre: "Visualización",         emoji: "👁️", unidad: ["ejercicio", "ejercicios"] },
+  "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
+  "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
+  "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
+  "racha":                { nombre: "Racha táctica",         emoji: "⚔️" },
+  "bot":                  { nombre: "El bot de Oscar",       emoji: "🤖" },
+  "logros":               { nombre: "Logros",                emoji: "🏅" },
+  "partidas":             { nombre: "Partidas",              emoji: "♟️" },
+  "torneos":              { nombre: "Torneos",               emoji: "🏆" },
+  "examen":               { nombre: "Exámenes",              emoji: "📝" },
+};
+
+// El título de cada curso, para nombrar "curso:<slug>". Sale de
+// herramientas/cursos/catalogo.json, que esta función no puede leer; el
+// verificador comprueba que sigan diciendo lo mismo.
+export const TITULOS_CURSOS: Record<string, string> = {
+  "fundamentos-del-ajedrez": "Fundamentos del Ajedrez",
+  "aperturas-y-defensas": "Aperturas y Defensas",
+  "calculo-y-visualizacion": "Cálculo y Visualización",
+  "finales-practicos": "Finales Prácticos",
+  "partidas-modelo": "Partidas modelo del ajedrez moderno",
+  "estrategia-y-tactica": "Estrategia y Táctica",
+  "el-mapa-de-los-finales": "El mapa de los finales",
+  "estrategia-en-el-final": "Estrategia en el final",
+  "desequilibrios-de-material": "Desequilibrios de material",
+  "preparacion-para-torneos": "Preparación para Torneos",
+  "formacion-ajedrez": "Formación Ajedrez",
+  "arbitro-nacional": "Árbitro Nacional",
+};
+
+function describirSeccion(seccion: string): { nombre: string; emoji: string; unidad?: [string, string] } {
+  if (seccion.startsWith("curso:")) {
+    const slug = seccion.slice(6);
+    const t = TITULOS_CURSOS[slug] ?? (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
+    return { nombre: "Curso: " + t, emoji: "🏛️" };
+  }
+  return SECCIONES[seccion] ?? { nombre: seccion, emoji: "•" };
+}
+
+function duracionCorta(minutos: unknown) {
+  const m = Math.round(Number(minutos) || 0);
+  if (m < 1) return "menos de 1 min";
+  return duracion(m);
+}
+
 function escapar(t: unknown) {
   return String(t == null ? "" : t)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -131,7 +195,28 @@ export function informeHtml(
   const tareas = (d.tareas ?? {}) as Record<string, any>;
   const examenes = (d.examenes ?? {}) as Record<string, any>;
 
-  const lineas = Object.keys(entreno)
+  // "En qué trabajó": una línea por sección, con el tiempo Y lo que hizo.
+  // Sale de public.tiempo_por_seccion() (la misma que pinta Informes), así el
+  // correo y la pantalla dicen lo mismo. Un curso o Estudio no tienen
+  // ejercicios que contar: llevan solo el tiempo, que es lo que se puede decir
+  // de estudiar. Si la base es de antes de esa función, se cae a los
+  // conteos de siempre.
+  const secciones = Array.isArray(d.secciones) ? d.secciones as Array<Record<string, any>> : null;
+  const lineas = secciones
+    ? secciones
+        .filter((f) => (Number(f.minutos) || 0) >= 0.5 || (Number(f.ejercicios) || 0) > 0)
+        .map((f) => {
+          const s = describirSeccion(String(f.seccion || ""));
+          const n = Number(f.ejercicios) || 0;
+          const hecho = s.unidad && n > 0 ? ` <span style="color:#55708a">· ${n} ${n === 1 ? s.unidad[0] : s.unidad[1]}</span>` : "";
+          const marca = f.seccion === "coordenadas" && entreno.coordenadas?.mejor != null
+            ? ` <span style="color:#55708a">· mejor marca: ${entreno.coordenadas.mejor}</span>` : "";
+          return `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #eef2f6;color:#243b53">${s.emoji} ${escapar(s.nombre)}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #eef2f6;text-align:right;color:#102a43;font-weight:600;white-space:nowrap">${duracionCorta(f.minutos)}${hecho}${marca}</td>
+      </tr>`;
+        }).join("")
+    : Object.keys(entreno)
     .filter((k) => ACTIVIDADES[k] && (entreno[k]?.cuantos ?? 0) > 0)
     .sort((a, b) => (entreno[b].cuantos ?? 0) - (entreno[a].cuantos ?? 0))
     .map((k) => {
