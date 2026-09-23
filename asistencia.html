@@ -22,6 +22,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/mejorar-informe.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <!-- Sin `defer`, como en Tareas y Exámenes: con él corre DESPUÉS de parsear
          el HTML, o sea después del script del cuerpo que lo llama, y el selector
@@ -579,6 +580,8 @@ async function init() {
     if (!puede) { document.getElementById("denegado").classList.remove("hidden"); return; }
 
     document.getElementById("app").classList.remove("hidden");
+    // «Mejorar informe»: solo aparece si la academia tiene IA y le queda presupuesto.
+    MejorarInforme.montar({ sb, campo: document.getElementById("notas"), tipo: "clase" });
     ponerInstante(null);
     if (!(await cargarAlumnos())) return;
     pintarCasillas();

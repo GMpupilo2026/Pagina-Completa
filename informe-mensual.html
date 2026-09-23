@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/mejorar-informe.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <script src="js/actividad-profesor.js"></script>
 
@@ -296,6 +297,8 @@ async function init() {
     });
 
     document.getElementById("app").classList.remove("hidden");
+    // «Mejorar informe»: solo aparece si la academia tiene IA y le queda presupuesto.
+    MejorarInforme.montar({ sb, campo: document.getElementById("resumen"), tipo: "informe_mensual" });
     await Promise.all([cargarInformes(), pintarDestino()]);
     pintarHistorial();
     await elegirMes(ActividadProfesor.mesPorOmision());

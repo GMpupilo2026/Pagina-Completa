@@ -294,6 +294,99 @@ async function pintarLista() {
         ul.appendChild(li);
     });
     llenarSupervisores(document.getElementById("n-supervisor"), "");
+    if (esAdmin) await pintarIA();
+}
+
+/* ── «Mejorar informe»: el modelo, el tope y el gasto de cada academia ──────
+   SOLO para quien administra, y por eso se arma acá con JavaScript y no está
+   escrito en el HTML: al supervisor no le llega ni el marcado. Los profesores
+   ven el botón y nada más (public.ia_disponible()). */
+const MODELOS_IA = [
+    { id: "", nombre: "Sin IA (el botón no aparece)" },
+    { id: "claude-haiku-4-5", nombre: "Claude Haiku 4.5 — el más económico (US$1 / US$5 por millón de tokens)" },
+    { id: "claude-sonnet-5", nombre: "Claude Sonnet 5 — intermedio (US$2 / US$10)" },
+    { id: "claude-opus-5", nombre: "Claude Opus 5 — el más capaz (US$5 / US$25)" },
+];
+const dolares = (n) => "US$" + (Number(n) || 0).toFixed(2);
+
+async function pintarIA() {
+    let seccion = document.getElementById("seccion-ia");
+    if (!seccion) {
+        seccion = el("section", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8");
+        seccion.id = "seccion-ia";
+        seccion.setAttribute("aria-labelledby", "h-ia");
+        const h = el("h2", "font-semibold text-lg text-brand-900 dark:text-white mb-1");
+        h.id = "h-ia";
+        h.innerHTML = '<span aria-hidden="true">✨</span> Mejorar informe';
+        seccion.append(h, el("p", "text-sm text-brand-500 dark:text-brand-300 mb-4",
+            "Qué modelo usa cada academia para el botón «Mejorar informe», cuánto puede gastar por mes y cuánto lleva. Esto solo lo ves tú: los profesores ven el botón, y si su academia no tiene IA o se quedó sin presupuesto, el botón no aparece. El mes se cuenta en hora de Costa Rica."));
+        const cuerpo = el("div", "space-y-4");
+        cuerpo.id = "ia-filas";
+        seccion.appendChild(cuerpo);
+        document.getElementById("lista").insertAdjacentElement("afterend", seccion);
+    }
+    const cuerpo = document.getElementById("ia-filas");
+    const [conf, gasto] = await Promise.all([
+        sb.from("academia_ia").select("academia_id, modelo, tope_mensual_usd"),
+        sb.rpc("ia_resumen_mes", { p_dia: null }),
+    ]);
+    if (conf.error || gasto.error) {
+        cuerpo.replaceChildren(el("p", "text-sm text-red-700 dark:text-red-300",
+            "No se pudo leer la configuración o el gasto de la IA: " + ((conf.error || gasto.error).message || "")));
+        return;
+    }
+    const confDe = new Map((conf.data || []).map((c) => [c.academia_id || "", c]));
+    const gastoDe = new Map((gasto.data || []).map((g) => [g.academia_id || "", g]));
+    const filas = academias.map((a) => ({ id: a.id, nombre: a.nombre }))
+        .concat([{ id: "", nombre: "Sin academia (tú y quien no es de ninguna academia)" }]);
+    let total = 0;
+    cuerpo.replaceChildren();
+    filas.forEach((f) => {
+        const c = confDe.get(f.id) || { modelo: null, tope_mensual_usd: 5 };
+        const g = gastoDe.get(f.id) || { llamadas: 0, fallidas: 0, costo_usd: 0 };
+        total += Number(g.costo_usd) || 0;
+        const clave = f.id || "general";
+        const caja = el("fieldset", "border border-brand-100 dark:border-brand-800 rounded-xl p-4");
+        caja.appendChild(el("legend", "px-1 font-semibold text-brand-900 dark:text-white", f.nombre));
+        const grid = el("div", "grid sm:grid-cols-3 gap-3 items-end");
+        const dm = el("div", "sm:col-span-2");
+        const lm = el("label", "block text-sm font-semibold mb-1", "Modelo");
+        lm.htmlFor = "ia-modelo-" + clave;
+        const sel = el("select", "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        sel.id = "ia-modelo-" + clave;
+        MODELOS_IA.forEach((m) => { const o = el("option", null, m.nombre); o.value = m.id; sel.appendChild(o); });
+        sel.value = c.modelo || "";
+        dm.append(lm, sel);
+        const dt = el("div");
+        const lt = el("label", "block text-sm font-semibold mb-1", "Tope al mes (US$)");
+        lt.htmlFor = "ia-tope-" + clave;
+        const tope = el("input", "w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+        tope.id = "ia-tope-" + clave;
+        tope.type = "number"; tope.min = "0"; tope.max = "1000"; tope.step = "0.5"; tope.inputMode = "decimal";
+        tope.value = String(Number(c.tope_mensual_usd));
+        dt.append(lt, tope);
+        grid.append(dm, dt);
+        const gastado = Number(g.costo_usd) || 0;
+        const lleva = el("p", "text-sm mt-3 " + (c.modelo && gastado >= Number(c.tope_mensual_usd) ? "text-red-700 dark:text-red-300 font-semibold" : "text-brand-600 dark:text-brand-300"),
+            "Este mes: " + dolares(gastado) + " de " + dolares(c.tope_mensual_usd) + " · " + g.llamadas + (Number(g.llamadas) === 1 ? " vez" : " veces") +
+            (Number(g.fallidas) ? " (" + g.fallidas + " no salieron)" : "") +
+            (c.modelo && gastado >= Number(c.tope_mensual_usd) ? " · Se acabó el presupuesto: el botón ya no aparece hasta el mes que viene." : ""));
+        lleva.id = "ia-lleva-" + clave;
+        const guardar = el("button", "mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Guardar");
+        guardar.type = "button";
+        guardar.setAttribute("aria-label", "Guardar la IA de " + f.nombre);
+        guardar.addEventListener("click", async () => {
+            const n = Number(String(tope.value).replace(",", "."));
+            if (!Number.isFinite(n) || n < 0 || n > 1000) { avisar("El tope mensual va de 0 a 1000 dólares.", true); tope.focus(); return; }
+            const { error } = await sb.rpc("ia_guardar_config", { p_academia: f.id || null, p_modelo: sel.value || null, p_tope: n });
+            if (error) { avisar(error.message, true); return; }
+            avisar(sel.value ? "Guardado: " + f.nombre + " usa " + sel.options[sel.selectedIndex].text.split(" —")[0] + " con un tope de " + dolares(n) + " al mes." : "Guardado: " + f.nombre + " queda sin IA.");
+            await pintarIA();
+        });
+        caja.append(grid, lleva, guardar);
+        cuerpo.appendChild(caja);
+    });
+    cuerpo.appendChild(el("p", "text-sm font-semibold text-brand-900 dark:text-white", "Total este mes: " + dolares(total)));
 }
 
 document.getElementById("form-nueva").addEventListener("submit", async (e) => {

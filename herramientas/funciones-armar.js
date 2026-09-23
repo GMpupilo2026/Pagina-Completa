@@ -48,6 +48,7 @@ const FUNCIONES = {
   "informe-examen": ["contacto-academia.ts", "remitente-academia.ts"],
   "informes-encargados": ["contacto-academia.ts", "remitente-academia.ts"],
   "cobros-recordatorios": ["usuario-alumno.ts", "contacto-academia.ts", "remitente-academia.ts"],
+  "mejorar-informe": [],
 };
 
 function armar(nombre) {

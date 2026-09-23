@@ -1885,6 +1885,78 @@ inventada; el alumno ve la marca de su academia y no puede cambiarla, y en dos
 academias no ve ninguna; el coordinador pone en su formulario la marca de su
 academia y no la de otra; y el formulario se ve con la marca sin cuenta.
 
+#### «Mejorar informe»: la IA por academia, y solo quien administra la ve
+
+Quien da clase tiene un botón **«✨ Mejorar informe»** debajo de «Qué se hizo en
+esta clase» (`asistencia.html`) y del resumen del informe mensual
+(`informe-mensual.html`). Reescribe su texto en un objetivo general, los
+objetivos específicos y lo que se trabajó. **Qué modelo usa cada academia, cuánto
+puede gastar por mes y cuánto lleva lo decide y lo ve SOLO quien administra**, en
+la sección «Mejorar informe» de `academias.html`. Los profesores ven el botón y
+nada más; si su academia no tiene IA o se quedó sin presupuesto, el botón
+simplemente no aparece.
+
+- **Dos tablas sin una sola política de escritura**: `academia_ia` (una fila por
+  academia con su `modelo` —null es «sin IA»— y su `tope_mensual_usd`; la fila
+  con `academia_id` null es la de quien administra y la de quien no es de
+  ninguna academia) y `ia_uso` (cada llamada, con sus tokens y su costo). Las dos
+  se leen solo con `soy_admin()`; las escriben `ia_guardar_config()` (exige
+  administrar) y la Edge Function con la service role.
+- **El profesor pregunta UNA cosa: `ia_disponible()`, que devuelve un booleano.**
+  Qué modelo y cuánto queda lo contesta `ia_para_usuario()`, que **solo puede
+  llamar la service role**: si la pudiera llamar el profesor, sabría el modelo
+  desde la consola, que es justo lo que se decidió que no sepa. Toma primero sus
+  academias (por nombre) y la fila general al final; solo cuentan las que tienen
+  modelo y todavía tienen presupuesto.
+- **La Edge Function `mejorar-informe`** (verify_jwt en true) llama a Claude con
+  el SDK oficial (`npm:@anthropic-ai/sdk`) y la clave `ANTHROPIC_API_KEY`, que
+  vive en los secretos de las Edge Functions de Supabase y **no en el
+  repositorio**. Sin la clave, contesta «todavía no está configurado».
+  - **Lo peor que puede costar una llamada se calcula antes**, con el
+    `max_tokens` y el precio de salida: si no cabe en lo que queda del mes, no se
+    hace. Dos llamadas simultáneas pueden pasarse del tope por lo que cuesta UNA,
+    y eso se acepta.
+  - **El gasto sale de `usage`**, con el precio del modelo que SIRVIÓ la
+    respuesta (`response.model`): con Opus 5 va el respaldo por defecto
+    (`fallbacks: "default"`), que puede responder con otro modelo si el primero
+    declina. Un modelo que no esté en la tabla `PRECIOS` se cobra al precio más
+    alto, para que el tope nunca se quede corto.
+  - **Se anota también la llamada que falló**, con costo cero si no llegó a
+    responder: el gasto que ve quien administra no esconde nada.
+  - Haiku 4.5 va sin razonamiento; Sonnet 5 y Opus 5, con esfuerzo `low`: es
+    reescribir un párrafo, no razonar un problema.
+- **Viaja SOLO el texto**, ni nombres de alumnos ni la lista de asistencia, y la
+  pantalla pide no escribir datos personales. Las instrucciones además le
+  prohíben inventar y poner nombres de personas.
+- **El texto mejorado NO pisa el del profesor**: se enseña debajo y hace falta
+  «Usar este texto» para ponerlo en el campo (y después guardar). Un texto
+  reescrito que reemplaza el original sin preguntar se pierde de una manera que
+  no se puede deshacer.
+- **La lista de modelos está escrita tres veces, a la fuerza**: el CHECK de
+  `academia_ia`, la tabla `PRECIOS` de la función y `MODELOS_IA` de
+  `academias.html`. `verificar-mejorar-informe.js` falla si se separan.
+- La sección de IA de `academias.html` **se arma con JavaScript solo para quien
+  administra**: al supervisor no le llega ni el marcado.
+
+Comprobado impersonando roles en SQL (revertido), 13 casos: sin configuración el
+botón no va; el profesor no puede configurar, lee 0 filas de configuración, no
+puede llamar a `ia_para_usuario()` ni ver el gasto; quien administra configura y
+lo ve; un modelo que no se ofrece se rechaza; el alumno no tiene botón; un
+profesor sin academia usa la fila general; y con el tope gastado el botón deja de
+aparecer.
+
+**Al tocar `js/mejorar-informe.js`, la función `mejorar-informe` o la sección de
+IA de `academias.html`, correr `node herramientas/verificar-mejorar-informe.js`**
+(con el sitio en localhost:8777 y playwright; `--sin-navegador` corre solo la
+comparación de listas) y `node herramientas/verificar-academias.js`. Comprueban
+que las tres listas de modelos digan lo mismo, que ninguna pantalla del profesor
+nombre un modelo o un tope, que un texto corto no viaje, que se mande solo el
+texto y el tipo, que **el campo siga con lo del profesor hasta que acepte**, que
+sin IA no haya botón, que si se acaba el presupuesto se vaya, que un informe ya
+enviado no ofrezca mejorarse, que guardar la configuración mande la academia, el
+modelo y el tope, y que al supervisor no se le pinte nada. Está probado que
+falla de verdad: haciendo que la propuesta pise el campo, salta.
+
 **Al tocar las academias, las funciones del coordinador o
 `js/funciones-coordinacion.js`, `js/marca-academia.js` o la marca de los
 formularios, correr `node herramientas/verificar-academias.js`**
@@ -1910,11 +1982,7 @@ lo nuevo saltan 3, subiendo el logo a otra carpeta 1, y pisando el tema 1.
   Era el doble el que estaba incompleto: en la base real, quien administra,
   supervisa o coordina sin academia recibe la lista entera.
 
-**Lo que viene después (fases siguientes, ya decididas con el dueño):** la IA
-por academia —el botón dice **«Mejorar informe»**, el
-modelo lo elige **solo quien administra** por academia (o «sin IA»), con tope
-mensual y medición exacta del gasto desde `usage`, **sin que los profesores
-vean nada de eso**: con la IA apagada el botón simplemente no aparece—; y el
+**Lo que viene después (la fase siguiente, ya decidida con el dueño):** el
 informe mensual con el detalle por clase y por estudiante.
 
 ### `role = 'admin'`: la cuenta master no es alumna de nadie
