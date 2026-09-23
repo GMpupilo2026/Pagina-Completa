@@ -1823,10 +1823,16 @@ como resuelto. Son el mismo acto, no dos contadores que puedan separarse.
   `'temas'` (ver `temasDeTactica()`). Deducirlo del slug dejaría esos diez
   ejercicios contando contra cero sin que nada fallara. Desafíos por eso **no
   ofrece `cantidad`**: sus series no se pueden distinguir de las de Practicar.
-- **El avance se cuenta desde `tareas.created_at`**, no desde siempre: lo que
-  se pide son diez ejercicios **nuevos**, no diez que ya tenía hechos. Está
-  comprobado en la base con datos reales (una tarea fechada hace 30 días cuenta
-  los 395 ejercicios de ese alumno; la misma tarea fechada ahora cuenta 0).
+- **Los ejercicios que ya tenía resueltos CUENTAN; los minutos, no.** La meta
+  `cantidad` cuenta los ejercicios distintos resueltos **desde siempre**, así
+  que si le piden 10 de ataque doble y ya había hecho 12, el renglón nace
+  cumplido. Antes contaba desde `tareas.created_at` ("diez nuevos"), y eso
+  chocaba con lo de arriba: la página de entreno arranca en el primero SIN
+  resolver, así que los ya hechos no se podían volver a sumar y la tarea
+  pedía un trabajo que el alumno ya había hecho. La meta `minutos` SÍ sigue
+  contando desde que se asigna: un rato de práctica de antes no es hacer la
+  tarea. Medido con datos reales al cambiarlo: de 199 renglones de cantidad,
+  23 subieron, varios de 0 a cumplidos (0 → 15 de 10, 0 → 26 de 20).
 - **Los minutos se cuentan con `minutos_por_tramos()`**, la misma función que
   los informes: una tarea que dijera otro número que Informes sería peor que no
   tenerla.
