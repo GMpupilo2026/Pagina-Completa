@@ -76,7 +76,8 @@ function parejasDeMentira() {
 }
 
 const INSCRIPCIONES = [
-  { id: "i-1", cedula: "118820456", nombre: "Ana", apellido1: "Ramírez", apellido2: "Mora", fecha_nacimiento: "2012-04-03", edad: 14, contacto: "88887777", correo: "ana@x.cr", tipo_centro: "Colegio", provincia: "San José", canton: "Desamparados", centro: "Liceo de Desamparados", direccion_regional: "Desamparados", grado: "Sétimo", creado_en: "2026-09-10T15:00:00Z", circuito: 3, zona: "Urbana", modalidad: "Académica", acepto_datos: true, genero: "F", usuario: null },
+  { id: "i-1", cedula: "118820456", nombre: "Ana", apellido1: "Ramírez", apellido2: "Mora", fecha_nacimiento: "2012-04-03", edad: 14, contacto: "88887777", correo: "ana@x.cr", tipo_centro: "Colegio", provincia: "San José", canton: "Desamparados", centro: "Liceo de Desamparados", direccion_regional: "Desamparados", grado: "Sétimo", creado_en: "2026-09-10T15:00:00Z", circuito: 3, zona: "Urbana", modalidad: "Académica", acepto_datos: true, genero: "F", usuario: null,
+    adjuntos: ["pendientes/aaaaaaaa-1111/cedula.jpg", "pendientes/bbbbbbbb-2222/Comprobante.pdf", "pendientes/cccccccc-3333/vencida.pdf"] },
   { id: "i-2", cedula: "402330111", nombre: "Bruno", apellido1: "Mena", apellido2: "Solís", fecha_nacimiento: "2010-01-20", edad: 16, contacto: "70001111", correo: "bruno@x.cr", tipo_centro: "Escuela", provincia: "Alajuela", canton: "Grecia", centro: "Escuela Central de Grecia", direccion_regional: "Occidente", grado: "Noveno", creado_en: "2026-09-12T15:00:00Z", circuito: 1, zona: "Rural", modalidad: "Técnica", acepto_datos: true, genero: "M", usuario: null },
 ];
 
@@ -428,6 +429,15 @@ async function pruebaElNombreNoSeCorta(browser) {
 
 /* ====================== inscripciones.html ====================== */
 
+/* Las URL firmadas que da la función. La tercera ruta NO trae firma, como
+   pasaría si Storage no la encontrara: la página tiene que decirlo. */
+const FIRMA = "https://prcfbzvshnusisczlpxl.supabase.co/storage/v1/object/sign/inscripcion-adjuntos/";
+const FIRMAS = {
+  "pendientes/aaaaaaaa-1111/cedula.jpg": FIRMA + "pendientes/aaaaaaaa-1111/cedula.jpg?token=t1",
+  "pendientes/bbbbbbbb-2222/Comprobante.pdf": FIRMA + "pendientes/bbbbbbbb-2222/Comprobante.pdf?token=t2",
+};
+const PNG_1x1 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+
 /* El doble de la Edge Function va en la RED y en el CONTEXTO, no dentro de la
    página: así se prueba TAMBIÉN el fetch —que mande la sesión en la cabecera y
    que lea bien la respuesta—, y no solo lo que la página hace después. En el
@@ -444,8 +454,17 @@ function pagInscripciones(browser, usuario, respuesta, extra) {
           body: JSON.stringify({ error: "Esta lista es solo para quien administra o coordina." }) });
       }
       ruta.fulfill({ status: 200, contentType: "application/json",
-        body: JSON.stringify({ inscripciones: respuesta }) });
+        body: JSON.stringify({ inscripciones: respuesta, firmas: FIRMAS }) });
     });
+    const firmadas = [];
+    await ctx.route("**/storage/v1/object/sign/**", (ruta) => {
+      firmadas.push(ruta.request().url());
+      const pdf = /\.pdf/.test(ruta.request().url());
+      ruta.fulfill({ status: 200, contentType: pdf ? "application/pdf" : "image/png",
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: pdf ? Buffer.from("%PDF-1.4 prueba") : PNG_1x1 });
+    });
+    pedidos.firmadas = firmadas;
     await page.goto(BASE + "/inscripciones.html", { waitUntil: "networkidle" });
     return { page, ctx, errores, pedidos };
   })();
@@ -482,6 +501,23 @@ async function pruebaInscripciones(browser) {
   igual("«Ver detalle» muestra la cédula y lo demás",
     await page.evaluate(() => /118820456/.test(document.querySelector("tr[data-detalle]").textContent)), "true");
 
+  // Los archivos adjuntos: se bajan por su URL firmada y se ofrecen para ver y descargar.
+  igual("la fila avisa que trae archivos",
+    await page.evaluate(() => /📎 3 archivos adjuntos/.test(document.getElementById("cuerpo").textContent)), "true");
+  await page.waitForFunction(() => {
+    const d = document.querySelector("tr[data-detalle]");
+    return d && d.querySelector("img[src^='blob:']") && /No se pudo abrir «vencida\.pdf»/.test(d.textContent);
+  }, { timeout: 10000 });
+  igual("se piden por la URL firmada, no por una pública",
+    pedidos.firmadas.map((u) => u.split("?")[1]).sort(), ["token=t1", "token=t2"]);
+  igual("la foto se ve de verdad",
+    await page.evaluate(() => { const i = document.querySelector("tr[data-detalle] img"); return i.complete && i.naturalWidth > 0; }), "true");
+  igual("cada archivo se descarga con el nombre de quién es",
+    await page.evaluate(() => [...document.querySelectorAll("tr[data-detalle] a[download]")].map((a) => a.download)),
+    ["Ana-Ramirez-Mora-cedula.jpg", "Ana-Ramirez-Mora-Comprobante.pdf"]);
+  igual("el PDF se ofrece por su nombre",
+    await page.evaluate(() => /📄 Comprobante\.pdf/.test(document.querySelector("tr[data-detalle]").textContent)), "true");
+
   // Los filtros se arman con lo que de verdad hay.
   igual("el selector de provincia sale de los datos, no de una lista escrita a mano",
     await page.evaluate(() => Array.from(document.getElementById("f-provincia").options).map((o) => o.value)),
@@ -515,6 +551,8 @@ async function pruebaInscripciones(browser) {
   igual("el CSV arranca con BOM (mirando los bytes, no el texto)", csv.bom, "239,187,191");
   igual("y separa con punto y coma", csv.texto.split("\r\n")[0].split(";").length > 5, "true");
   igual("con las dos inscripciones", csv.texto.trim().split("\r\n").length, "3");
+  igual("y los adjuntos contados, sin rutas internas",
+    /3 archivos adjuntos/.test(csv.texto) && !/pendientes\//.test(csv.texto), true);
 
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();

@@ -140,7 +140,7 @@ function igual(nombre, hallado, esperado) {
 async function abrir(browser, ruta, script) {
   const page = await browser.newPage();
   const errores = [];
-  page.on("pageerror", (e) => errores.push(String(e)));
+  page.on("pageerror", (e) => { errores.push(String(e)); if (process.env.DEPURAR) console.log("PAGEERR", String(e)); });
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
@@ -503,10 +503,11 @@ async function pruebaPublica(browser) {
 const PNG_1x1 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
 async function pruebaImagenes(browser) {
-  console.log("\n=== Imágenes adjuntas ===");
+  console.log("\n=== Archivos adjuntos ===");
   const CAMPOS_FOTO = [
     { id: "nombre", etiqueta: "Nombre completo", tipo: "texto", requerido: true, ayuda: "", opciones: [], papel: "alumno_nombre" },
     { id: "cedula", etiqueta: "Foto de la cédula", tipo: "imagen", requerido: true, ayuda: "", opciones: [] },
+    { id: "comprobante", etiqueta: "Comprobante de pago", tipo: "archivo", requerido: false, ayuda: "", opciones: [] },
   ];
   const ID = "0b6f0c7e-1111-4222-8333-444455556666";
   const { page, errores } = await abrir(browser, "/formulario.html?f=con-foto", clienteFalso({
@@ -518,6 +519,8 @@ async function pruebaImagenes(browser) {
   igual("la pregunta de imagen es un selector de archivos de imagen",
     await page.evaluate(() => { const i = document.getElementById("campo-1"); return [i.type, i.accept, i.multiple]; }),
     ["file", "image/*", true]);
+  igual("la de archivo acepta también PDF, Word y Excel",
+    await page.evaluate(() => document.getElementById("campo-2").accept), "image/*,.pdf,.doc,.docx,.xls,.xlsx");
 
   await page.fill("#campo-0", "Ana Rojas");
   await page.click("#enviar");
@@ -529,23 +532,37 @@ async function pruebaImagenes(browser) {
   await page.setInputFiles("#campo-1", [archivo("frente.png"), archivo("atras.png"), archivo("sobra.png")]);
   igual("las elegidas se ven antes de mandar",
     await page.evaluate(() => [...document.querySelectorAll("#campo-1-lista img")].map((i) => i.alt)),
-    ["Imagen 1: frente.png", "Imagen 2: atras.png", "Imagen 3: sobra.png"]);
-  await page.click('#campo-1-lista button[aria-label^="Quitar la imagen 3"]');
+    ["Archivo 1: frente.png", "Archivo 2: atras.png", "Archivo 3: sobra.png"]);
+  await page.click('#campo-1-lista button[aria-label^="Quitar el archivo 3"]');
   igual("quitar una la saca de la lista y lo dice",
     await page.evaluate(() => [document.querySelectorAll("#campo-1-lista img").length, document.getElementById("campo-1-estado").textContent]),
-    [2, "2 imágenes elegidas."]);
+    [2, "2 archivos elegidos."]);
+
+  // Un formato que no se recibe se dice ANTES de mandar, con su nombre.
+  await page.setInputFiles("#campo-2", [{ name: "virus.exe", mimeType: "application/octet-stream", buffer: Buffer.from("MZ") }]);
+  await page.click("#enviar");
+  await page.waitForFunction(() => /virus\.exe/.test(document.getElementById("msg").textContent));
+  igual("un .exe no se sube y se dice cuál",
+    await page.evaluate(() => [/no es un formato/.test(document.getElementById("msg").textContent),
+      window.__rpc.filter((r) => r.nombre === "responder_formulario").length]), [true, 0]);
+  await page.click('#campo-2-lista button[aria-label^="Quitar el archivo 1"]');
+  await page.setInputFiles("#campo-2", [{ name: "Comprobante SINPE.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 prueba") }]);
+  igual("un PDF se enseña con su nombre, no como miniatura",
+    await page.evaluate(() => document.getElementById("campo-2-lista").textContent.replace("✕", "").trim()), "📄 Comprobante SINPE.pdf");
 
   await page.click("#enviar");
   await page.waitForSelector("#listo:not(.hidden)");
   const subidas = await page.evaluate(() => window.__subidas);
-  igual("sube solo las que quedaron, al bucket privado",
-    subidas.map((x) => x.bucket), ["formulario-adjuntos", "formulario-adjuntos"]);
-  igual("cada una en la carpeta de ESTE formulario, como JPG achicado y sin pisar nada",
-    subidas.map((x) => new RegExp("^" + ID + "/[a-z0-9-]{8,64}\\.jpg$").test(x.ruta) && x.tipo === "image/jpeg" && x.upsert === false),
-    [true, true]);
+  igual("sube solo los que quedaron, al bucket privado",
+    subidas.map((x) => x.bucket), ["formulario-adjuntos", "formulario-adjuntos", "formulario-adjuntos"]);
+  igual("las fotos van a la carpeta de ESTE formulario, como JPG achicado, con su nombre y sin pisar nada",
+    subidas.slice(0, 2).map((x) => [new RegExp("^" + ID + "/[a-z0-9-]{8,64}/").test(x.ruta), x.ruta.split("/").pop(), x.tipo, x.upsert]),
+    [[true, "frente.jpg", "image/jpeg", false], [true, "atras.jpg", "image/jpeg", false]]);
+  igual("el PDF va tal cual, con su nombre saneado y su tipo",
+    [subidas[2].ruta.split("/").pop(), subidas[2].tipo], ["Comprobante-SINPE.pdf", "application/pdf"]);
   const envio = await page.evaluate(() => window.__rpc.find((r) => r.nombre === "responder_formulario").args);
   igual("la respuesta lleva exactamente las rutas que se subieron",
-    envio.p_respuestas.cedula, subidas.map((x) => x.ruta));
+    [envio.p_respuestas.cedula, envio.p_respuestas.comprobante], [subidas.slice(0, 2).map((x) => x.ruta), [subidas[2].ruta]]);
   errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await page.close();
 
@@ -557,7 +574,8 @@ async function pruebaImagenes(browser) {
       profiles: [{ id: "u-karina", role: "profesor", is_admin: false, es_coordinador: true, full_name: "Karina" }],
       formularios: [FORM_FOTO],
       formulario_respuestas: [{ id: "r-f", created_at: "2026-09-20T10:00:00Z", cuenta_id: null, cuenta_creada_at: null,
-        respuestas: { nombre: "Ana Rojas", cedula: [ID + "/aaaaaaaa-1.jpg", ID + "/rota-0000.jpg"] } }],
+        respuestas: { nombre: "Ana Rojas", cedula: [ID + "/aaaaaaaa-1111/frente.jpg", ID + "/rota-0000/atras.jpg"],
+                     comprobante: [ID + "/bbbbbbbb-2222/Comprobante-SINPE.pdf"] } }],
       formulario_compartidos: [],
     },
   }, "u-karina"));
@@ -568,23 +586,28 @@ async function pruebaImagenes(browser) {
   await p2.waitForFunction(() => document.querySelector("#respuestas-cuerpo img[src^='blob:']")
     && document.querySelector("#respuestas-cuerpo td").parentElement.textContent.indexOf("No se pudo abrir") !== -1);
   igual("se piden al bucket privado, no por una URL pública",
-    await p2.evaluate(() => window.__bajadas.map((b) => b.bucket)), ["formulario-adjuntos", "formulario-adjuntos"]);
+    await p2.evaluate(() => window.__bajadas.map((b) => b.bucket)), ["formulario-adjuntos", "formulario-adjuntos", "formulario-adjuntos"]);
   igual("la miniatura se ve de verdad",
     await p2.evaluate(() => { const i = document.querySelector("#respuestas-cuerpo img"); return i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().height > 0; }),
     true);
   igual("y se abre en grande y se descarga con un nombre que dice de quién es",
     await p2.evaluate(() => { const f = document.querySelector("#respuestas-cuerpo figure"); const [ver, bajar] = f.querySelectorAll("a");
       return [ver.href.startsWith("blob:"), ver.target, bajar.href === ver.href, bajar.download]; }),
-    [true, "_blank", true, "Ana-Rojas-Foto-de-la-cedula-1.jpg"]);
+    [true, "_blank", true, "Ana-Rojas-Foto-de-la-cedula-frente.jpg"]);
+  igual("el PDF se ofrece por su nombre, y se descarga con él",
+    await p2.evaluate(() => { const f = [...document.querySelectorAll("#respuestas-cuerpo figure")].pop(); const [ver, bajar] = f.querySelectorAll("a");
+      return [ver.textContent, bajar.download, !!f.querySelector("img")]; }),
+    ["📄 Comprobante-SINPE.pdf", "Ana-Rojas-Comprobante-de-pago-Comprobante-SINPE.pdf", false]);
   igual("la que no se pudo bajar lo dice, sin enlace de descarga",
-    await p2.evaluate(() => document.querySelectorAll("#respuestas-cuerpo figure a[download]").length), 1);
+    await p2.evaluate(() => [document.querySelectorAll("#respuestas-cuerpo figure a[download]").length,
+      /No se pudo abrir «atras\.jpg»/.test(document.getElementById("respuestas-cuerpo").textContent)]), [2, true]);
   const csv = await p2.evaluate(() => {
     let texto = ""; const orig = URL.createObjectURL;
     URL.createObjectURL = (b) => { b.text().then((t) => { window.__csv = t; }); return orig(b); };
     document.getElementById("csv-btn") && document.getElementById("csv-btn").click();
     return new Promise((ok) => setTimeout(() => ok(window.__csv || ""), 300));
   });
-  igual("en el CSV la foto se cuenta, no se pega una ruta", csv.indexOf("2 imágenes adjuntas") !== -1 && csv.indexOf(ID + "/") === -1, true);
+  igual("en el CSV la foto se cuenta, no se pega una ruta", csv.indexOf("2 archivos adjuntos") !== -1 && csv.indexOf(ID + "/") === -1, true);
   r2.errores.forEach((e) => { console.log("  ✗ error de la página: " + e); fallos += 1; });
   await p2.close();
 }
