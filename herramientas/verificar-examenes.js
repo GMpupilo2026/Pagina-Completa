@@ -85,6 +85,8 @@ window.__llamadas = [];
       select() { return b; },
       eq(c, v) { anotado.eq[c] = v; filas = filas.filter((r) => String(r[c]) === String(v)); return b; },
       order() { return b; },
+      // La página pide de mil en mil (traerTodo): el doble corta igual que PostgREST.
+      range(desde, hasta) { filas = filas.slice(desde, hasta + 1); return b; },
       single() { unica = true; return b; },
       then(res) { res({ data: unica ? (filas[0] || null) : filas, error: null }); },
       update(c) { anotado.update = c; return { eq(k, v) { anotado.updateEq = { k, v }; return Promise.resolve({ data: null, error: null }); } }; },
