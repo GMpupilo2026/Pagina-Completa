@@ -7228,6 +7228,76 @@ para `class_presence_log`/`platform_activity_log` con
   antes; escribir un número inventado (999999) lo rechaza con
   "Tiempo restante inválido".
 
+### La bandera la canta el servidor, y el reloj cuenta con SU hora
+
+Lo de arriba impedía **subirse** el reloj; **bajárselo al rival** quedaba
+libre, y eso es justo lo que hace una bandera: el navegador ve el reloj del
+otro en cero y escribe `status: finished` con ese reloj en 0. Y ese cero lo
+calculaba **con la hora de la computadora** contra un `clock_updated_at` que
+pone la base: una computadora cinco segundos adelantada le cantaba la bandera
+al rival cinco segundos antes de tiempo, y le quitaba cinco segundos a cada
+jugada propia. Una atrasada, al revés. Ningún error: el reloj mentía distinto
+en cada pantalla, y una partida la podía ganar el reloj de Windows.
+
+- **`js/reloj-servidor.js` mide el desfase** contra `public.hora_servidor_ms()`
+  —tres muestras, la de menor ida y vuelta, partida a la mitad— y las seis
+  páginas con reloj (`estandar`, `niebla`, `crazyhouse`, `cartas`, `variante`,
+  `cuatro-jugadores`) cuentan con `RelojServidor.desde(room.clock_updated_at)`
+  en vez de `Date.now()`. Es el mismo arreglo que ya tenía `examen.html` con su
+  `desfase`, escrito ahora una vez para todas. Se vuelve a medir cada cinco
+  minutos y al volver a la pestaña. **Si la medición falla, el desfase queda en
+  cero**, que es lo que el sitio hacía antes: nunca peor.
+- **Y la base ya no se lo cree**: el trigger rechaza que un reloj baje más de
+  lo que de verdad pasó según `now()` (con los mismos 2 s de tolerancia). Corre
+  solo el de quien tiene el turno —se lee de la FEN, o de `cartas_state.fen` en
+  Cartas, cuya columna `fen` no se actualiza—; el otro está quieto y no puede
+  bajar nada. Así una bandera cantada antes de tiempo, o un 0 escrito desde la
+  consola, sale con «Todavía le queda tiempo a las blancas». La página la
+  vuelve a intentar cada 250 ms, así que una que se adelantó por medio segundo
+  termina entrando igual, en el momento justo.
+- **Cuatro jugadores no tiene esta segunda mitad**: ahí la bandera no escribe
+  un `time_left` en cero, elimina el asiento dentro del estado de la partida, y
+  validarlo pediría leer ese estado en SQL. Tiene el desfase, que es la mitad
+  que más se notaba.
+- Comprobado en una transacción revertida, cuatro casos: la bandera cantada
+  con 50 s por delante se rechaza, la jugada legítima pasa, bajarle el reloj al
+  que no mueve se rechaza, y la bandera de verdad (61 s sobre 60) entra.
+
+### La triple repetición
+
+Nunca se detectaba en línea: el tablero se recarga con `loadFen()` en cada
+jugada del rival, y eso le borra a chess.js el historial, así que su
+`in_threefold_repetition()` no veía nunca una posición repetida. Dos jugadores
+podían repetir la misma posición veinte veces y la partida seguía.
+
+- **`js/repeticion.js` reproduce `room.moves` desde la salida** y cuenta cuántas
+  veces aparece la posición final. Una posición es la misma con las mismas
+  piezas (en Crazyhouse, la misma reserva), el mismo turno, los mismos enroques
+  y la misma captura al paso — **pero la captura al paso solo cuenta si de
+  verdad se puede hacer** (FIDE, art. 9.2). chess.js anota la casilla después
+  de cualquier avance de dos, y sin ese recorte se escaparían repeticiones de
+  verdad.
+- **Si la reproducción no llega a la FEN guardada, no se declara nada.**
+  Equivocarse hacia «no hay repetición» deja la partida como estaba; hacia el
+  otro lado le roba la partida a alguien.
+- Es automática, como en lichess, y la declara quien hace la jugada que repite:
+  va en el mismo `update` que la jugada, con `result: "draw"`. El final dice
+  «Tablas por triple repetición.» (se vuelve a contar al pintarlo: no hay
+  columna de motivo, y no hace falta una).
+- Va en `estandar`, `niebla` y `crazyhouse`, las de reglas de ajedrez de
+  siempre. **Las de `variante.html` y Cartas no la tienen**: sus motores y sus
+  cartas cambian lo que significa «la misma posición», y es otra decisión.
+
+**Al tocar el reloj, `js/reloj-servidor.js`, `js/repeticion.js` o
+`handleLocalMove` de una página de partida, correr `node
+herramientas/verificar-reloj-y-repeticion.js`** (con `npm install
+chess.js@0.10.3`; no necesita navegador ni red). Comprueba que se cuente la
+repetición con chess.js y con Crazyhouse, que una captura al paso imposible no
+separe posiciones, que ante lo que no entiende no declare tablas, que ninguna
+página calcule el reloj con `Date.now()` a secas, y que el desfase se mida
+contra un servidor que va siete segundos por delante. Está probado que falla de
+verdad: quitando el recorte de la captura al paso, salta.
+
 ## Una función de TRIGGER no es una API
 
 Postgres le da `EXECUTE` a **PUBLIC** a toda función nueva, y `anon` y
