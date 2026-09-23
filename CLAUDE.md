@@ -3582,8 +3582,8 @@ que «curso» se apunte con su nombre, y lo que dice el correo. Y `node
 herramientas/verificar-informes.js`, que mira el bloque en un navegador. Está
 probado que falla de verdad: sin la conversión de «curso» saltan 2.
 
-**Pendiente de desplegar `informes-encargados`**: hasta subirla, el correo sigue
-con los conteos de siempre (la base ya manda `secciones`). Ojo:
+**`informes-encargados` ya está desplegada con esto** (versión 9): el correo
+dice el tiempo de cada sección. Ojo para la próxima vez:
 `node herramientas/funciones-armar.js` hoy se planta porque el respaldo del
 punto de restauración dejó copias de los archivos compartidos dentro de cada
 función (`informes-encargados/contacto-academia.ts`, entre otras); lo que se
