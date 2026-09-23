@@ -392,7 +392,7 @@ async function pruebaProfesora(browser) {
      quiere decir es que no es suyo. */
   igual("las herramientas le quedan abiertas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["partidas.html", "planes.html", "asistencia.html", "subgrupos.html"]);
+    ["partidas.html", "planes.html", "asistencia.html", "informe-mensual.html", "subgrupos.html"]);
   /* La tienda de materiales entra en la misma regla: todavía no está abierta,
      así que a quien da clase no se le pinta ni escondida — un enlace
      invisible pero presente sigue siendo una parada de tabulador, y encima
@@ -490,7 +490,8 @@ async function pruebaAdmin(browser) {
      de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "tienda.html", "partidas.html", "planes.html", "asistencia.html", "subgrupos.html",
+    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "planes.html", "asistencia.html",
+     "informe-mensual.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
   /* La otra mitad de que los diagnósticos sean solo de administración: que a

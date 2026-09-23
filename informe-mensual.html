@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Informe mensual — Ajedrez Integral</title>
+    <meta name="description" content="El informe del mes que cada profesor le manda a su supervisión: los números salen solos de la plataforma.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/adaptive-mode.js"></script>
+    <script src="js/actividad-profesor.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Comprobando tu sesión…</div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es para quien da clase</h1>
+            <p class="text-brand-500 dark:text-brand-300">El informe mensual es lo que cada profesor le cuenta a su supervisión sobre su trabajo del mes.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← <span aria-hidden="true">🏛️</span> Academia</a>
+            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🗓️</span> Informe mensual</h1>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-2">Una vez al mes le cuentas a tu supervisión qué hiciste. Los números se llenan solos con lo que pasó en la plataforma; tú escribes lo que los números no dicen.</p>
+            <p id="destino" class="text-sm text-brand-600 dark:text-brand-300 mb-6"></p>
+
+            <p id="aviso" role="status" class="hidden mb-6 rounded-xl px-4 py-3 text-sm"></p>
+
+            <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mb-6 flex flex-wrap items-end gap-3">
+                <div>
+                    <label for="mes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Mes del informe</label>
+                    <select id="mes" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                </div>
+                <p id="estado" class="text-sm font-semibold text-brand-600 dark:text-brand-300"></p>
+            </div>
+
+            <section aria-labelledby="numeros-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="numeros-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Tus números del mes</h2>
+                <p id="numeros-sub" class="text-xs text-brand-450 dark:text-brand-350 mb-4"></p>
+                <div id="numeros"></div>
+            </section>
+
+            <section id="comentario-caja" hidden aria-labelledby="comentario-titulo" class="bg-accent-50 dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6 border border-accent-400">
+                <h2 id="comentario-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Lo que te contestó tu supervisión</h2>
+                <p id="comentario" class="text-sm text-brand-700 dark:text-brand-200 whitespace-pre-wrap break-words"></p>
+            </section>
+
+            <form id="form" novalidate class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8 space-y-4">
+                <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white">Lo que los números no dicen</h2>
+                <div>
+                    <label for="resumen" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Resumen del mes <span class="font-normal text-brand-450 dark:text-brand-350">(obligatorio para enviarlo)</span></label>
+                    <textarea id="resumen" rows="5" maxlength="4000" required class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" placeholder="Qué trabajaste con tus grupos, qué temas diste, cómo te fue."></textarea>
+                </div>
+                <div>
+                    <label for="logros" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Logros</label>
+                    <textarea id="logros" rows="3" maxlength="2000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" placeholder="Un alumno que subió de nivel, un torneo, un grupo que arrancó."></textarea>
+                </div>
+                <div>
+                    <label for="dificultades" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Dificultades</label>
+                    <textarea id="dificultades" rows="3" maxlength="2000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" placeholder="Lo que costó y en qué te vendría bien una mano."></textarea>
+                </div>
+                <div>
+                    <label for="proximo" class="block text-sm font-semibold text-brand-700 dark:text-brand-200 mb-1">Plan para el mes que viene</label>
+                    <textarea id="proximo" rows="3" maxlength="2000" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></textarea>
+                </div>
+                <div id="botones" class="flex flex-wrap gap-3 pt-2">
+                    <button type="button" id="guardar" class="bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar borrador</button>
+                    <button type="button" id="enviar" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enviar a supervisión</button>
+                </div>
+            </form>
+
+            <section aria-labelledby="historial-titulo">
+                <h2 id="historial-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Tus informes</h2>
+                <ul id="historial" class="space-y-2"></ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p></div></footer>
+    <script>
+/* Informe mensual — lo que cada profesor le cuenta a su supervisión.
+ *
+ * Nada de esto se escribe directo en la tabla: `informes_profesor` no tiene
+ * ninguna política de escritura. Guarda `guardar_informe_mensual()`, que es la
+ * que decide lo que no puede quedar en manos de la pantalla:
+ *   · un informe ENVIADO ya no se cambia (es lo que la supervisión leyó);
+ *   · los números que viajan con él son una foto tomada al enviar, de la misma
+ *     `actividad_profesor()` que se pinta acá — no los que diga el navegador;
+ *   · no se informa de un mes que todavía no empieza.
+ */
+const CAMPOS_TEXTO = ["resumen", "logros", "dificultades", "proximo"];
+let session = null;
+let informes = [];          // los propios, de todos los meses
+let mes = null;             // "AAAA-MM-01"
+let confirmandoEnvio = false;
+
+function avisar(texto, malo) {
+    const a = document.getElementById("aviso");
+    a.textContent = texto;
+    a.className = "mb-6 rounded-xl px-4 py-3 text-sm " + (malo
+        ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        : "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300");
+    a.classList.remove("hidden");
+}
+
+function informeDelMes() { return informes.find((i) => i.periodo === mes) || null; }
+
+async function cargarInformes() {
+    const { data, error } = await sb.from("informes_profesor")
+        .select("id, periodo, resumen, logros, dificultades, proximo_mes, datos, estado, enviado_at, leido_at, comentario, comentario_at")
+        .eq("profesor_id", session.user.id)
+        .order("periodo", { ascending: false });
+    // Una lista que no se pudo leer y una lista vacía se ven igual: se dice.
+    if (error) { avisar("No se pudieron cargar tus informes: " + error.message, true); return; }
+    informes = data || [];
+}
+
+async function pintarNumeros() {
+    const caja = document.getElementById("numeros");
+    const sub = document.getElementById("numeros-sub");
+    const inf = informeDelMes();
+    caja.innerHTML = "";
+    if (inf && inf.estado === "enviado" && inf.datos) {
+        // Enviado: se enseña lo que se mandó, no lo de hoy. Si después se
+        // corrige una clase, la supervisión sigue leyendo la foto de aquel día.
+        sub.textContent = "Los números que se enviaron con el informe, tal como estaban el " + ActividadProfesor.fecha(inf.enviado_at) + ".";
+        caja.appendChild(ActividadProfesor.tarjetas(inf.datos));
+        return;
+    }
+    sub.textContent = "Salen solos de lo que pasó en la plataforma en " + ActividadProfesor.textoMes(mes) + ". Van con el informe tal como estén el día que lo envíes.";
+    const { data, error } = await sb.rpc("actividad_profesor", { p_profesor: session.user.id, p_periodo: mes });
+    if (error) { sub.textContent = "No se pudieron contar tus números: " + error.message; return; }
+    caja.appendChild(ActividadProfesor.tarjetas((data && data[0]) || null));
+}
+
+function pintarFormulario() {
+    const inf = informeDelMes();
+    const enviado = !!(inf && inf.estado === "enviado");
+    const valores = { resumen: inf ? inf.resumen : "", logros: inf ? inf.logros : "",
+                      dificultades: inf ? inf.dificultades : "", proximo: inf ? inf.proximo_mes : "" };
+    CAMPOS_TEXTO.forEach((c) => {
+        const t = document.getElementById(c);
+        t.value = valores[c] || "";
+        // readOnly y NO disabled: un campo desactivado sale del recorrido del
+        // teclado y quien usa lector de pantalla no se enteraría de lo que mandó.
+        t.readOnly = enviado;
+    });
+    document.getElementById("botones").hidden = enviado;
+    confirmandoEnvio = false;
+    document.getElementById("enviar").textContent = "Enviar a supervisión";
+
+    const estado = document.getElementById("estado");
+    if (enviado) {
+        estado.textContent = "✅ Enviado el " + ActividadProfesor.fecha(inf.enviado_at) +
+            (inf.leido_at ? " · tu supervisión ya lo leyó" : " · todavía sin leer");
+    } else if (inf) {
+        estado.textContent = "📝 Borrador guardado: todavía no lo ve nadie.";
+    } else {
+        estado.textContent = "Todavía no has escrito nada de este mes.";
+    }
+
+    const caja = document.getElementById("comentario-caja");
+    if (enviado && inf.comentario) {
+        document.getElementById("comentario").textContent = inf.comentario;
+        caja.hidden = false;
+    } else {
+        caja.hidden = true;
+    }
+}
+
+function pintarHistorial() {
+    const ul = document.getElementById("historial");
+    ul.innerHTML = "";
+    if (!informes.length) {
+        const li = document.createElement("li");
+        li.className = "text-sm text-brand-450 dark:text-brand-350";
+        li.textContent = "Todavía no has enviado ningún informe.";
+        ul.appendChild(li);
+        return;
+    }
+    informes.forEach((i) => {
+        const li = document.createElement("li");
+        li.className = "bg-white dark:bg-brand-900 rounded-xl shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-2";
+        const nombre = document.createElement("button");
+        nombre.type = "button";
+        nombre.className = "font-semibold text-brand-800 dark:text-white hover:text-accent-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        nombre.textContent = ActividadProfesor.textoMes(i.periodo);
+        nombre.addEventListener("click", () => elegirMes(i.periodo));
+        const est = document.createElement("span");
+        est.className = "text-xs text-brand-500 dark:text-brand-300";
+        est.textContent = i.estado !== "enviado" ? "Borrador"
+            : i.comentario ? "Enviado · con comentario"
+            : i.leido_at ? "Enviado · leído" : "Enviado · sin leer";
+        li.append(nombre, est);
+        ul.appendChild(li);
+    });
+}
+
+async function elegirMes(valor) {
+    mes = valor;
+    document.getElementById("mes").value = valor;
+    pintarFormulario();
+    await pintarNumeros();
+}
+
+async function guardar(enviar) {
+    const b = {};
+    CAMPOS_TEXTO.forEach((c) => { b[c] = document.getElementById(c).value.trim(); });
+    if (enviar && b.resumen.length < 20) {
+        avisar("Escribe un resumen de lo que hiciste en el mes (unas pocas líneas) antes de enviarlo.", true);
+        document.getElementById("resumen").focus();
+        return;
+    }
+    const { error } = await sb.rpc("guardar_informe_mensual", {
+        p_periodo: mes, p_resumen: b.resumen, p_logros: b.logros,
+        p_dificultades: b.dificultades, p_proximo: b.proximo, p_enviar: !!enviar,
+    });
+    // El mensaje de la base es el que dice qué arreglar («ya se envió»): se
+    // enseña tal cual en vez de un «no se pudo» a secas.
+    if (error) { avisar(error.message, true); return; }
+    await cargarInformes();
+    pintarFormulario();
+    pintarHistorial();
+    await pintarNumeros();
+    avisar(enviar
+        ? "✅ Informe de " + ActividadProfesor.textoMes(mes) + " enviado a tu supervisión."
+        : "Borrador guardado. Todavía no lo ve nadie: cuando esté listo, apreta «Enviar a supervisión».");
+}
+
+async function pintarDestino() {
+    const p = document.getElementById("destino");
+    const { data, error } = await sb.rpc("mis_supervisores");
+    if (error) { p.textContent = ""; return; }
+    const nombres = (data || []).map((s) => s.nombre).filter(Boolean);
+    p.textContent = nombres.length
+        ? "Lo recibe: " + nombres.join(", ") + "."
+        : "Todavía no tienes una supervisora o un supervisor asignado: tus informes los lee quien administra.";
+}
+
+async function init() {
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { location.href = "login.html?next=informe-mensual.html"; return; }
+    const { data: perfil } = await sb.from("profiles").select("role, is_admin").eq("id", session.user.id).maybeSingle();
+    document.getElementById("loading").classList.add("hidden");
+    if (!perfil || !(perfil.role === "profesor" || perfil.is_admin)) {
+        document.getElementById("denegado").classList.remove("hidden");
+        return;
+    }
+    const sel = document.getElementById("mes");
+    ActividadProfesor.meses(12).forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m.valor;
+        o.textContent = m.texto.charAt(0).toUpperCase() + m.texto.slice(1);
+        sel.appendChild(o);
+    });
+    sel.addEventListener("change", () => elegirMes(sel.value));
+    document.getElementById("guardar").addEventListener("click", () => guardar(false));
+    /* Enviar pide dos toques en el propio botón, no un diálogo del navegador:
+       después de enviado no se puede cambiar, y esto se toca desde el celular. */
+    document.getElementById("enviar").addEventListener("click", () => {
+        const b = document.getElementById("enviar");
+        if (!confirmandoEnvio) {
+            confirmandoEnvio = true;
+            b.textContent = "Sí, enviarlo — después ya no se puede cambiar";
+            return;
+        }
+        confirmandoEnvio = false;
+        b.textContent = "Enviar a supervisión";
+        guardar(true);
+    });
+
+    document.getElementById("app").classList.remove("hidden");
+    await Promise.all([cargarInformes(), pintarDestino()]);
+    pintarHistorial();
+    await elegirMes(ActividadProfesor.mesPorOmision());
+}
+
+init();
+    </script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
+</html>

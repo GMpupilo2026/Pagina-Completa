@@ -1656,6 +1656,67 @@ y llega a cobros, formularios, solicitudes y reportes. No entrena ni juega.
   filas de progreso y 0 de uno ajeno, `bajo_mi_coordinacion` da `true` y
   `false` respectivamente, y sus secciones de tiempo salen.
 
+### El supervisor supervisa también a los PROFESORES, y ellos le mandan un informe mensual
+
+Leer a los alumnos de un profesor no dice qué hizo el profesor. Por eso quien
+supervisa tiene además `supervision.html` (tarjeta «Supervisión de profesores»,
+grupo «Tus profesores» de su panel; quien administra la tiene en Herramientas y
+en `admin.html` › Reportes) y cada profesor tiene `informe-mensual.html`
+(tarjeta «Informe mensual» en Herramientas, junto a Asistencia presencial).
+
+- **La actividad de un profesor en un mes la cuenta UNA función,
+  `public.actividad_profesor(profesor, mes)`**: alumnos a cargo y cuántos
+  entrenaron, ejercicios de esos alumnos, clases en línea y presenciales con su
+  tiempo y asistencias, tareas puestas/terminadas/vencidas (con
+  `tareas_con_avance()`, nunca la columna `estado`), exámenes puestos y
+  rendidos con su nota promedio, notas de bitácora y planes nuevos. La usan las
+  dos pantallas y la foto que viaja con el informe: si cada una contara por su
+  lado, el profesor mandaría unos números y su supervisora leería otros. Es
+  `SECURITY DEFINER` y pregunta arriba quién puede (el propio profesor,
+  `supervisado_por_mi()` o administrar). El mes va en hora de Costa Rica.
+- **`resumen_profesores_supervisados(mes)`** da los profesores asignados
+  directo a esa supervisión en `supervisor_cuentas` (a quien administra, todos)
+  con su actividad y si mandaron el informe. Del lado del navegador, qué es cada
+  número lo dice `js/actividad-profesor.js`, escrito una vez para las dos.
+- **`public.informes_profesor` no tiene ni una política de escritura.** Guarda
+  `guardar_informe_mensual()` —borrador o envío— y comenta
+  `revisar_informe_mensual()`. Así lo que no puede quedar en manos de la
+  pantalla lo decide la base: un informe **enviado ya no se cambia** (es lo que
+  la supervisión leyó), no se informa de un mes que no empezó, y los números que
+  viajan son una **foto tomada al enviar** (`datos`) — la pantalla del enviado
+  enseña esa foto y no los de hoy, o una clase corregida después haría que la
+  supervisora leyera otra cosa que lo que se mandó.
+- **Un borrador no lo ve nadie más que quien lo escribe**: la política de select
+  solo abre el enviado a quien lo supervisa y a quien administra. En supervisión
+  lo que no se mandó se dice «⏳ Sin enviar», escrito, igual que «📨 sin leer» y
+  «✅ leído»: un sin enviar pintado como un sin leer deja sin perseguir a quien
+  no mandó nada.
+- **Enviar pide dos toques en el propio botón** («Sí, enviarlo — después ya no se
+  puede cambiar»), como el resto del sitio, y un resumen de menos de 20
+  caracteres no viaja (la base lo rechaza igual). Ya enviado, los campos van
+  `readOnly` y **no** `disabled`, por lo de siempre con el teclado.
+- **Los avisos al celular salen de la base**: al enviar, a sus supervisores; al
+  comentar, al profesor. Van dentro de un bloque que atrapa el error, así un
+  aviso que falla no deshace el envío.
+- **A quién le llega se dice arriba**, con `mis_supervisores()`; sin nadie
+  asignado, lo lee quien administra, y se dice así.
+- Comprobado impersonando roles en SQL (revertido), 16 casos: el profesor ve sus
+  números, un resumen corto, un mes futuro y un segundo envío se rechazan, el
+  supervisor no ve el borrador pero sí el enviado, el update directo y el
+  autocomentario se rechazan, otro profesor ve 0 filas y no puede ni pedir el
+  resumen ni comentar, y un alumno no puede escribir un informe.
+
+**Al tocar `informe-mensual.html`, `supervision.html`, `js/actividad-profesor.js`
+o las funciones de arriba, correr `node herramientas/verificar-informe-mensual.js`**
+(con el sitio en localhost:8777 y playwright). Comprueba qué se MANDA —el mes,
+el texto, que un borrador no se envíe y que enviar pida dos toques—, que un
+enviado enseñe la foto y no pida los números de hoy, que el comentario llegue,
+que en supervisión el sin enviar y el sin leer se distingan por escrito, que un
+nombre con etiquetas se vea literal, que el comentario y el «leído» viajen con
+el id de ESE informe, y que ni la alumna ni un profesor sin supervisión entren.
+Está probado que falla de verdad: haciendo que el enviado enseñe los números de
+hoy, saltan 2.
+
 ### Los modos de vista de quien administra
 
 `js/modo-vista.js`: quien administra elige ver la plataforma «como

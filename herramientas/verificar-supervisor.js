@@ -66,7 +66,7 @@ async function pruebaSupervisor(browser) {
   const { page, ctx, errores } = await panel(browser, [SUP], SUP.id, null, datos);
   await page.waitForFunction(() => document.getElementById("sup-inactivos").textContent !== "—", null, { timeout: 10000 });
   const g = await page.evaluate(LEER);
-  igual("grupos del supervisor", g.grupos, ["Cómo van tus estudiantes", "Qué están entrenando, tema por tema",
+  igual("grupos del supervisor", g.grupos, ["Cómo van tus estudiantes", "Tus profesores", "Qué están entrenando, tema por tema",
                                            "Cuentas a tu cargo", "Administración", "Tu cuenta"]);
   igual("rótulo", g.badge, "🧭 Supervisor");
   const colados = g.enlaces.filter((h) => PROHIBIDOS.test(h));
