@@ -8182,6 +8182,28 @@ sistema y no decían nada del curso.
 - El `alt` de cada diagrama **dice qué se ve**, no "diagrama de ajedrez": es
   información del curso, no decoración.
 
+## Colores de casilla para el celular: la pieza tiene que verse sobre las DOS casillas
+
+Los pares de alto contraste de Modo Adaptado (blanco y negro, amarillo y negro)
+contrastan de sobra **entre casillas** y fallan justo donde importa: la pieza
+blanca sobre la casilla casi blanca da **1:1**, y la negra sobre la casilla
+negra también. Se ve el tablero y desaparecen las piezas, y con el celular al
+sol o con el brillo al máximo es peor, porque los tonos pastel se aplanan.
+
+Por eso `js/board-color-themes.js` trae dos pares «Celular» (`CELULAR`, en las
+dos listas: la normal y la de Modo Adaptado): **las dos casillas en tono
+medio**, ninguna casi blanca ni casi negra, y de colores opuestos.
+
+- **El número se calculó, no se eligió a ojo**, con la fórmula de WCAG: cada
+  pieza queda a **3:1 o más** contra las dos casillas (el mínimo para un objeto
+  gráfico). Ámbar/azul: blanca 3.16 y 5.57, negra 6.65 y 3.77. Turquesa/vino:
+  blanca 3.03 y 6.55, negra 6.93 y 3.21. El contorno de cada pieza suma encima.
+- **Aclarar la casilla clara o oscurecer la oscura rompe el par**, sin ningún
+  error: sube el contraste entre casillas y una de las dos piezas vuelve a
+  perderse. Al tocar esos cuatro colores, volver a medir los cuatro números.
+- Ámbar contra azul y turquesa contra vino se siguen distinguiendo con
+  daltonismo rojo-verde, porque se separan también en claridad.
+
 ## El tema de toda la plataforma: "Princesas" no es un tablero rosado
 
 Los cuatro temas que ya tenía el sitio (`js/board-themes.js`,
