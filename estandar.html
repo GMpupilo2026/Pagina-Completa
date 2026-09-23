@@ -26,6 +26,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/reloj-servidor.js"></script>
+    <script src="js/repeticion.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>
     <script src="js/board-drag.js"></script>
@@ -179,7 +181,7 @@
 
             let myTurnNow = false;
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.") : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
@@ -224,7 +226,7 @@
             if (stored == null) return null;
             const isRunning = room.status === "playing" && room.clock_updated_at && board.game.turn() === color;
             if (!isRunning) return stored;
-            const elapsed = (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000;
+            const elapsed = RelojServidor.desde(room.clock_updated_at);
             return Math.max(0, stored - elapsed);
         }
 
@@ -307,15 +309,25 @@
             modal.classList.remove("hidden");
         }
 
+        // Triple repetición: el tablero se recarga desde la FEN con cada jugada del
+        // rival y chess.js pierde el historial, así que se cuenta reproduciendo la
+        // lista de jugadas guardada (ver js/repeticion.js).
+        function esTripleRepeticion(jugadas, fen) {
+            return !!window.Repeticion && Repeticion.esTriple("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", jugadas, (f) => new Chess(f), fen);
+        }
+
         async function handleLocalMove(info) {
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
+                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
+            }
+            if (!info.gameOver && esTripleRepeticion(newMoves, info.fen)) {
+                info = Object.assign({}, info, { gameOver: true, result: "draw" });
             }
             if (info.gameOver) {
                 patch.status = "finished";
@@ -387,6 +399,7 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
+            RelojServidor.iniciar(sb);
             if (!session) { window.location.href = "login.html"; return; }
             if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 

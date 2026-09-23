@@ -25,6 +25,7 @@
     </script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/reloj-servidor.js"></script>
     <script src="js/fourplayer-engine.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/chess-piece-svg.js"></script>
@@ -201,7 +202,7 @@
             if (stored == null) return null;
             const isRunning = room.status === "playing" && !game.gameOver && room.clock_updated_at && game.turn === seat && game.status[seat] !== "eliminated";
             if (!isRunning) return stored;
-            const elapsed = (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000;
+            const elapsed = RelojServidor.desde(room.clock_updated_at);
             return Math.max(0, stored - elapsed);
         }
         function renderClocks() {
@@ -357,7 +358,7 @@
             const newSeats = JSON.parse(JSON.stringify(room.seats));
             const patch = {};
             if (room.initial_seconds != null) {
-                const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
+                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
                 newSeats[mySeat].time_left = Math.max(0, (room.seats[mySeat].time_left || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
@@ -417,6 +418,7 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
+            RelojServidor.iniciar(sb);
             if (!session) { window.location.href = "login.html"; return; }
             if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 

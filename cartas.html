@@ -26,6 +26,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/reloj-servidor.js"></script>
     <script src="js/cartas-engine.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>
@@ -198,7 +199,7 @@
             if (stored == null) return null;
             const isRunning = room.status === "playing" && room.clock_updated_at && board.game.turn() === color;
             if (!isRunning) return stored;
-            return Math.max(0, stored - (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000);
+            return Math.max(0, stored - RelojServidor.desde(room.clock_updated_at));
         }
         function renderClocks() {
             const topEl = document.getElementById("top-clock");
@@ -304,7 +305,7 @@
             const patch = { moves: newMoves };
             if (room.initial_seconds != null) {
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
+                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
                 patch[storedKey] = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
@@ -362,6 +363,7 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
+            RelojServidor.iniciar(sb);
             if (!session) { window.location.href = "login.html"; return; }
             if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 

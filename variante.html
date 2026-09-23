@@ -26,6 +26,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/reloj-servidor.js"></script>
     <script src="js/variantes-engines.js"></script>
     <script src="js/board-drag.js"></script>
     <script src="js/chess-piece-svg.js"></script>
@@ -340,7 +341,7 @@
             if (stored == null) return null;
             const isRunning = room.status === "playing" && room.clock_updated_at && engine.turn() === color;
             if (!isRunning) return stored;
-            const elapsed = (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000;
+            const elapsed = RelojServidor.desde(room.clock_updated_at);
             return Math.max(0, stored - elapsed);
         }
 
@@ -449,7 +450,7 @@
                 // Se "congela" su reloj: se le resta lo que pasó desde la última vez
                 // que arrancó a correr y se le suma el incremento tipo Fischer.
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
+                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
@@ -523,6 +524,7 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
+            RelojServidor.iniciar(sb);
             if (!session) { window.location.href = "login.html"; return; }
             if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 
