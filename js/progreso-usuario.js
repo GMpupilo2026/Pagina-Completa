@@ -74,11 +74,19 @@ window.ProgresoUsuario = (function () {
       return String(Math.max(a, b));
     },
     // Marcadores de "dónde iba": vale el del aparato que está en uso.
-    // También las rachas ACTUALES (*_streak): bajan a 0 al fallar, así que
-    // fundirlas con el máximo resucitaba en un aparato la racha que ya se había
-    // roto en el otro. Las mejores marcas (*_best) sí van con maxNumero.
     ultimoLugar(local, remoto) {
       return local !== null ? local : remoto;
+    },
+    // Las rachas ACTUALES (*_streak): gana la que se escribió MÁS TARDE, en
+    // cualquiera de los dos aparatos. Con el máximo, fallar en el celular
+    // (racha a 0) se deshacía al abrir la compu (racha 14); con "vale la de
+    // este aparato", la compu no se enteraba nunca ni del fallo ni de la
+    // subida hecha en el celular, y encima la pisaba en la nube. Las mejores
+    // marcas (*_best) sí van con maxNumero: esas no bajan nunca.
+    ultimaEscritura(local, remoto, tsLocal, tsRemoto) {
+      if (local === null) return remoto;
+      if (remoto === null) return local;
+      return (tsLocal || 0) >= (tsRemoto || 0) ? local : remoto;
     },
     // Prueba a medias: gana la que llegó más lejos, para no repetir preguntas.
     pruebaEnCurso(local, remoto) {
@@ -127,15 +135,15 @@ window.ProgresoUsuario = (function () {
     { clave: "entreno_desafios_v2",              fusion: "maxPorClave" },
     { clave: "concentracion_objeto_perdido_v1",  fusion: "maxPorClave" },   // nivel → ejercicios
     { clave: "entreno_mates_best",               fusion: "maxNumero" },
-    { clave: "entreno_mates_streak",             fusion: "ultimoLugar" },
+    { clave: "entreno_mates_streak",             fusion: "ultimaEscritura" },
     { clave: "entreno_tactica_best",             fusion: "maxNumero" },
-    { clave: "entreno_tactica_streak",           fusion: "ultimoLugar" },
+    { clave: "entreno_tactica_streak",           fusion: "ultimaEscritura" },
     { clave: "entreno_temas_best",               fusion: "maxNumero" },
-    { clave: "entreno_temas_streak",             fusion: "ultimoLugar" },
+    { clave: "entreno_temas_streak",             fusion: "ultimaEscritura" },
     { clave: "entreno_temas_done",               fusion: "maxNumero" },
     { clave: "entreno_temas_total",              fusion: "maxNumero" },
     { clave: "entreno_practicas_best",           fusion: "maxNumero" },
-    { clave: "entreno_practicas_streak",         fusion: "ultimoLugar" },
+    { clave: "entreno_practicas_streak",         fusion: "ultimaEscritura" },
     { prefijo: "entreno_coord_best_",            fusion: "maxNumero" },     // una por modo
     { clave: "entreno_temas_last",               fusion: "ultimoLugar" },
     { clave: "diagnostico_estado_v1",            fusion: "pruebaEnCurso" },
@@ -151,9 +159,27 @@ window.ProgresoUsuario = (function () {
     { clave: "aperturas_vistas_v1",              fusion: "maxNumero" },
     { clave: "entreno_visualizacion_solved",     fusion: "unionObjeto" },   // Visualización
     { clave: "entreno_visualizacion_best",       fusion: "maxNumero" },
-    { clave: "entreno_visualizacion_streak",     fusion: "ultimoLugar" },
+    { clave: "entreno_visualizacion_streak",     fusion: "ultimaEscritura" },
     { clave: "entreno_visualizacion_last",       fusion: "ultimoLugar" },
   ];
+
+  // Cuándo se escribió en ESTE aparato cada clave que se funde por fecha.
+  // Vive aparte de la clave (no dentro de su valor) para no cambiarle el
+  // formato a lo que la página guarda y lee.
+  const CLAVE_FECHAS = "progreso_fechas_v1";
+  // De qué cuenta es el progreso que hay guardado en este aparato.
+  const CLAVE_DUENO = "progreso_dueno_v1";
+  function nombreFusion(clave) {
+    const entrada = CLAVES.find((c) => (c.clave && c.clave === clave) || (c.prefijo && clave.indexOf(c.prefijo) === 0));
+    return entrada ? entrada.fusion : null;
+  }
+  function fechasLocales() {
+    try { return JSON.parse(window.localStorage.getItem(CLAVE_FECHAS) || "{}") || {}; } catch (e) { return {}; }
+  }
+  function anotarFecha(clave, ms) {
+    if (nombreFusion(clave) !== "ultimaEscritura" || !guardarOriginal) return;
+    try { const f = fechasLocales(); f[clave] = ms; guardarOriginal(CLAVE_FECHAS, JSON.stringify(f)); } catch (e) {}
+  }
 
   function fusionDe(clave) {
     const entrada = CLAVES.find((c) => (c.clave && c.clave === clave) || (c.prefijo && clave.indexOf(c.prefijo) === 0));
@@ -188,10 +214,12 @@ window.ProgresoUsuario = (function () {
     if (!guardarOriginal) return;
     window.localStorage.setItem = function (clave, valor) {
       guardarOriginal(clave, valor);
+      anotarFecha(String(clave), Date.now());
       if (fusionDe(String(clave))) encolar(String(clave));
     };
     window.localStorage.removeItem = function (clave) {
       borrarOriginal(clave);
+      anotarFecha(String(clave), Date.now());
       if (fusionDe(String(clave))) encolar(String(clave));
     };
   }
@@ -237,11 +265,36 @@ window.ProgresoUsuario = (function () {
       usuarioId = data && data.session ? data.session.user.id : null;
       if (!usuarioId) { listo = true; return null; }
 
-      const { data: filas, error } = await window.sb.from(TABLA).select("key, value").eq("student_id", usuarioId);
+      // Las claves de localStorage no llevan el id de nadie: en una
+      // computadora del colegio, lo que dejó Ana se habría fundido con la
+      // cuenta de Bruno al entrar él —sus ejercicios, sus marcas y hasta su
+      // diagnóstico, que Informes le pintaría a Bruno—. Así que se anota de
+      // quién es el progreso de este aparato, y si entra otra persona, lo del
+      // anterior se descarta SIN fundirlo (ya está a salvo en su cuenta).
+      const dueno = leerLocal(CLAVE_DUENO);
+      if (dueno && dueno !== usuarioId) {
+        const ajenas = [];
+        try {
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const k = window.localStorage.key(i);
+            if (k && fusionDe(k)) ajenas.push(k);
+          }
+        } catch (e) {}
+        ajenas.forEach((k) => escribirLocal(k, null));
+        escribirLocal(CLAVE_FECHAS, null);
+        pendientes.clear();
+      }
+      escribirLocal(CLAVE_DUENO, usuarioId);
+
+      const { data: filas, error } = await window.sb.from(TABLA).select("key, value, updated_at").eq("student_id", usuarioId);
       if (error) throw error;
 
-      const remoto = {};
-      (filas || []).forEach((f) => { remoto[f.key] = f.value && typeof f.value.raw === "string" ? f.value.raw : null; });
+      const remoto = {}, fechaRemota = {};
+      (filas || []).forEach((f) => {
+        remoto[f.key] = f.value && typeof f.value.raw === "string" ? f.value.raw : null;
+        fechaRemota[f.key] = f.updated_at ? Date.parse(f.updated_at) || 0 : 0;
+      });
+      const fechas = fechasLocales();
 
       // Todas las claves de progreso que existan de un lado o del otro.
       const locales = [];
@@ -257,10 +310,28 @@ window.ProgresoUsuario = (function () {
         const fusion = fusionDe(clave);
         const local = leerLocal(clave);
         const nube = Object.prototype.hasOwnProperty.call(remoto, clave) ? remoto[clave] : null;
-        const fusionado = fusion(local, nube);
-        if (fusionado !== local) escribirLocal(clave, fusionado);
+        const fusionado = fusion(local, nube, fechas[clave], fechaRemota[clave]);
+        if (fusionado !== local) {
+          escribirLocal(clave, fusionado);
+          // Lo que se trajo de la nube lleva la fecha de la nube: si no, la
+          // próxima vez parecería escrito acá "hace nada" y ganaría sin razón.
+          anotarFecha(clave, fechaRemota[clave] || 0);
+        }
         if (fusionado !== nube) pendientes.add(clave);
       });
+
+      // Terminar el diagnóstico BORRA su estado a medias, y un borrado no deja
+      // rastro: el aparato donde se había empezado conservaba el suyo, le
+      // ganaba a la nube vacía y lo volvía a subir — la página ofrecía seguir
+      // una prueba ya rendida e Informes decía «lo dejó en la pregunta 30».
+      // Si hay un resultado POSTERIOR al último guardado de la prueba, esa
+      // prueba ya se terminó.
+      const enCurso = leerObjeto(leerLocal("diagnostico_estado_v1"));
+      const hecho = leerObjeto(leerLocal("diagnostico_resultado_v1"));
+      if (enCurso.guardado && hecho.fecha && Date.parse(hecho.fecha) >= Date.parse(enCurso.guardado)) {
+        escribirLocal("diagnostico_estado_v1", null);
+        pendientes.add("diagnostico_estado_v1");
+      }
 
       listo = true;
       await sincronizar();

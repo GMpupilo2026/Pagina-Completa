@@ -283,8 +283,16 @@
                 cartas_state: board.state(),
                 updated_at: new Date().toISOString(),
             }, extraPatch || {});
-            const { error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo guardar: " + error.message); return; }
+            // Solo se guarda si la partida sigue en juego: si al rival se le cayó la
+            // bandera mientras tanto, esta jugada no puede pisar ese resultado. Y si no
+            // quedó guardada, el tablero ya la muestra: se vuelve a leer la sala para
+            // que enseñe el estado real en vez de quedarse desincronizado.
+            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            if (error || !guardada || !guardada.length) {
+                if (error) console.error(error);
+                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
+                return;
+            }
             room = Object.assign({}, room, patch);
             renderMoveHistory(room.moves);
             updateStatusText();
@@ -310,16 +318,26 @@
             await pushState({});
         }
 
-        function applyRemoteRoom(row) {
+        function applyRemoteRoom(row, forzarTablero) {
             const anterior = room ? room.cartas_state : null;
             room = row;
             const cambioEstado = JSON.stringify(anterior) !== JSON.stringify(row.cartas_state);
-            if (cambioEstado) board.loadState(row.cartas_state);
+            if (cambioEstado || forzarTablero) board.loadState(row.cartas_state);
             board.setInteractive(!!myColor && row.status === "playing" && bothReady(row));
             renderMoveHistory(row.moves);
             updateStatusText();
             renderClocks();
             TorneoSync.onRoomUpdate(sb, row);
+        }
+
+        // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando
+        // el tablero: se usa cuando una escritura propia no quedó guardada y lo que se
+        // ve en pantalla ya no es lo que hay en la base.
+        async function releerSala(mensaje) {
+            const { data: fila, error } = await sb.from("game_rooms").select("*").eq("id", ROOM_ID).single();
+            if (error || !fila) console.error(error);
+            else applyRemoteRoom(fila, true);
+            setStatus(mensaje);
         }
 
         function subscribeRoom() {
@@ -331,9 +349,14 @@
         document.getElementById("resign-btn").addEventListener("click", async () => {
             if (!myColor || room.status !== "playing") return;
             if (!window.confirm("¿Seguro que quieres rendirte?")) return;
+            // El diálogo pudo quedar abierto un buen rato: si mientras tanto la partida
+            // terminó (por ejemplo, al rival se le cayó la bandera), rendirse no puede
+            // pisar ese resultado. Por eso se vuelve a mirar, y la base lo exige también.
+            if (room.status !== "playing") { setStatus("La partida ya había terminado."); return; }
             const result = myColor === "w" ? "black" : "white";
-            const { error } = await sb.from("game_rooms").update({ status: "finished", result: result, updated_at: new Date().toISOString() }).eq("id", ROOM_ID);
-            if (error) { console.error(error); setStatus("No se pudo registrar la rendición: " + error.message); }
+            const { data: rendida, error } = await sb.from("game_rooms").update({ status: "finished", result: result, updated_at: new Date().toISOString() }).eq("id", ROOM_ID).eq("status", "playing").select("id");
+            if (error) { console.error(error); setStatus("No se pudo registrar la rendición: " + error.message); return; }
+            if (!rendida || !rendida.length) await releerSala("La partida ya había terminado: la rendición no se registró.");
         });
 
         async function init() {

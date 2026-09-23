@@ -229,7 +229,9 @@
             const secondsLeft = liveTimeLeft(turnSeat);
             if (secondsLeft === null || secondsLeft > 0) return;
             game.resign(turnSeat);
-            await persist({ turn: game.turn }, turnSeat);
+            // El reloj vuelve a arrancar desde ahora: sin esto el siguiente en jugar
+            // pagaría también el tiempo que se le fue al que se quedó sin reloj.
+            await persist({ turn: game.turn, clock_updated_at: new Date().toISOString() }, { turnoDe: turnSeat });
         }
 
         setInterval(() => {
@@ -252,7 +254,10 @@
             zombieAttemptInFlight = true;
             try {
                 const res = game.playZombieTurn();
-                if (res && res.ok) await persist({}, seat);
+                // Mismo motivo que en la caída de bandera: el reloj del siguiente
+                // arranca ahora, no cuando empezó a correr el del rey abandonado. Y la
+                // jugada automática también puede capturar o dar mate: sus puntos van.
+                if (res && res.ok) await persist({ clock_updated_at: new Date().toISOString() }, { turnoDe: seat, jugada: res });
             } finally {
                 zombieAttemptInFlight = false;
             }
@@ -291,13 +296,25 @@
             modal.classList.remove("hidden");
         }
 
-        // Aplica al `seats` local los puntos ganados y, si la partida terminó, el bono
-        // final — y guarda todo (tablero + seats + estado) en la base de datos. `patch`
-        // son campos extra a fusionar (p. ej. el reloj); `turnGuardSeat`, si se pasa, se
-        // usa como condición .eq("turn", ...) para pisadas seguras (jugadas zombi/reloj).
-        async function persist(patch, turnGuardSeat) {
+        // Suma al `seats` los puntos de la jugada y, si la partida terminó con ESTA
+        // escritura, el bono final — y guarda todo (tablero + seats + estado). Los puntos
+        // se suman acá y no en handleLocalMove porque la partida también avanza por
+        // bandera, rendición o jugada automática, y ahí se perdían. `patch` son campos
+        // extra (p. ej. el reloj); `opts.turnoDe`, si se pasa, se usa como condición
+        // .eq("turn", ...) para pisadas seguras (jugadas zombi/reloj); `opts.jugada` es
+        // lo que devolvió el motor, de donde salen los puntos; `opts.aviso` se dice si
+        // la escritura no quedó.
+        async function persist(patch, opts) {
+            opts = opts || {};
             const newSeats = JSON.parse(JSON.stringify(room.seats));
             SEATS.forEach((s) => { newSeats[s].status = game.status[s]; });
+            const puntos = (opts.jugada && opts.jugada.pointsAwarded) || {};
+            Object.keys(puntos).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + puntos[seat]; });
+            // El bono solo lo suma quien termina la partida: si la sala ya estaba
+            // terminada, ese bono ya se había sumado antes.
+            if (game.gameOver && room.status === "playing" && game.result && game.result.bonusPoints) {
+                Object.keys(game.result.bonusPoints).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + game.result.bonusPoints[seat]; });
+            }
             const fullPatch = Object.assign({
                 board: game.toJSON(),
                 turn: game.turn,
@@ -306,29 +323,46 @@
                 status: game.gameOver ? "finished" : "playing",
                 result: game.result,
                 updated_at: new Date().toISOString(),
-            }, patch);
-            let query = sb.from("fourplayer_games").update(fullPatch).eq("id", ROOM_ID);
-            if (turnGuardSeat) query = query.eq("turn", turnGuardSeat);
-            const { error } = await query;
-            if (error) { console.error(error); setStatus("No se pudo guardar: " + error.message); return; }
-            room = Object.assign({}, room, fullPatch, { seats: newSeats });
+            }, patch, { seats: newSeats });
+            // Solo se escribe sobre una partida que sigue en juego: una rendición o una
+            // jugada que llega tarde no puede pisar un final que ya quedó guardado.
+            let query = sb.from("fourplayer_games").update(fullPatch).eq("id", ROOM_ID).eq("status", "playing");
+            if (opts.turnoDe) query = query.eq("turn", opts.turnoDe);
+            const { data: guardada, error } = await query.select("id");
+            if (error || !guardada || !guardada.length) {
+                // No quedó: el tablero local ya muestra la jugada, así que se vuelve a
+                // leer la sala para que enseñe la real. Con turnoDe, cero filas es lo
+                // normal (otro navegador resolvió ese turno antes) y no se avisa.
+                if (error) console.error(error);
+                const aviso = error ? "No se pudo guardar: " + error.message : (opts.turnoDe ? null : (opts.aviso || "La partida ya había terminado: esa jugada no quedó guardada."));
+                await releerSala(aviso);
+                return;
+            }
+            room = Object.assign({}, room, fullPatch);
             renderAll();
         }
 
+        // Vuelve a leer la sala y la aplica como un cambio remoto: el `game` local se
+        // rehace desde la base, así que lo que no quedó guardado desaparece del tablero.
+        async function releerSala(mensaje) {
+            const { data: fila, error } = await sb.from("fourplayer_games").select("*").eq("id", ROOM_ID).single();
+            if (error || !fila) console.error(error);
+            else applyRemoteRoom(fila);
+            if (mensaje) setStatus(mensaje);
+        }
+
         async function handleLocalMove(res) {
+            // Los puntos (y el bono si termina) los suma persist() con `jugada`, que es
+            // el mismo camino de la bandera, la rendición y la jugada automática.
             const newSeats = JSON.parse(JSON.stringify(room.seats));
-            Object.keys(res.pointsAwarded || {}).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + res.pointsAwarded[seat]; });
-            if (game.gameOver && game.result && game.result.bonusPoints) {
-                Object.keys(game.result.bonusPoints).forEach((seat) => { newSeats[seat].score = (newSeats[seat].score || 0) + game.result.bonusPoints[seat]; });
-            }
-            const patch = { seats: newSeats };
+            const patch = {};
             if (room.initial_seconds != null) {
                 const elapsed = room.clock_updated_at ? (Date.now() - new Date(room.clock_updated_at).getTime()) / 1000 : 0;
                 newSeats[mySeat].time_left = Math.max(0, (room.seats[mySeat].time_left || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
             room = Object.assign({}, room, { seats: newSeats });
-            await persist(patch);
+            await persist(patch, { jugada: res });
         }
 
         function renderAll() {
@@ -369,8 +403,15 @@
         document.getElementById("resign-btn").addEventListener("click", async () => {
             if (!mySeat || room.status !== "playing") return;
             if (!window.confirm("¿Seguro que quieres rendirte? Tu rey seguirá moviéndose solo hasta que le den mate.")) return;
+            // El diálogo pudo quedar abierto un buen rato: si mientras tanto la partida
+            // terminó o te eliminaron, rendirse no puede pisar ese estado.
+            if (room.status !== "playing" || game.gameOver || game.status[mySeat] !== "active") { setStatus("La partida ya había terminado para ti."); return; }
+            const turnoAntes = game.turn;
             game.resign(mySeat);
-            await persist({});
+            const patch = {};
+            // Si la rendición le pasa el turno a otro, su reloj arranca ahora.
+            if (game.turn !== turnoAntes) patch.clock_updated_at = new Date().toISOString();
+            await persist(patch, { aviso: "La partida ya había terminado: la rendición no se registró." });
         });
 
         async function init() {

@@ -117,7 +117,7 @@
         function escapeHtml(text) {
             const div = document.createElement("div");
             div.textContent = text;
-            return div.innerHTML;
+            return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
         }
         function showError(text) {
             document.getElementById("loading").classList.add("hidden");
@@ -224,39 +224,54 @@
                 }
             }
 
+            // Primero TODAS las salas, y recién con todas creadas la ronda y sus cruces.
+            // Al revés, un cruce cuya sala fallaba desaparecía de la ronda: la ronda
+            // se daba por completa sin esos dos jugadores, el suizo no les sumaba nada y
+            // en eliminación directa la llave se corría. Una ronda y sus cruces no se
+            // pueden borrar desde acá, pero una sala sí: si falla alguna, se deshacen
+            // las creadas y no se abre la ronda.
+            //
+            // Las salas se piden todas a la vez: con varias decenas de jugadores,
+            // esperar cada ida y vuelta por turno se sentía como que la página se había
+            // colgado.
+            const salas = new Map();   // índice del cruce → id de su sala
+            const erroresDeSala = [];
+            await Promise.all(pairings.map(async (p, i) => {
+                if (p.isBye) return;
+                const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black)).select().single();
+                if (roomError) { console.error(roomError); erroresDeSala.push(roomError.message); return; }
+                salas.set(i, roomRow.id);
+            }));
+            if (erroresDeSala.length) {
+                const creadas = [...salas.values()];
+                if (creadas.length) await sb.from("game_rooms").delete().in("id", creadas);
+                alert("No se generó la ronda: no se pudo crear la partida de " + erroresDeSala.length +
+                      " cruce(s). Inténtalo de nuevo.\n" + erroresDeSala.join("\n"));
+                return;
+            }
+
             const { data: roundRow, error: roundError } = await sb.from("tournament_rounds").insert({
                 tournament_id: tournament.id, round_number: nextRoundNumber,
             }).select().single();
-            if (roundError) { alert("No se pudo crear la ronda: " + roundError.message); return; }
+            if (roundError) {
+                if (salas.size) await sb.from("game_rooms").delete().in("id", [...salas.values()]);
+                alert("No se pudo crear la ronda: " + roundError.message);
+                return;
+            }
 
-            // Los cruces son independientes entre sí (cada uno crea su propia game_room y su
-            // propia fila de tournament_pairings), así que se mandan todos a la vez en vez de
-            // uno por uno: con un torneo de varias decenas de jugadores, esperar cada ida y
-            // vuelta a Supabase por turno se sentía como que la página se había colgado.
-            // El número de tablero se reserva ANTES del primer await de cada cruce (map()
-            // llama a cada función de la lista en orden, de forma síncrona, hasta que topa
-            // con su primer await), así que sigue saliendo 1, 2, 3… en el mismo orden que
-            // pairings, aunque las esperas de red terminen en otro orden.
-            let boardNumber = 1;
-            const erroresDeSala = [];
-            await Promise.all(pairings.map(async (p) => {
-                const miTablero = boardNumber++;
-                if (p.isBye) {
-                    await sb.from("tournament_pairings").insert({
-                        round_id: roundRow.id, tournament_id: tournament.id, board_number: miTablero,
-                        white_id: p.white, black_id: null, is_bye: true, result: "white", finished_at: new Date().toISOString(),
-                    });
-                    return;
-                }
-                const { data: roomRow, error: roomError } = await sb.from("game_rooms").insert(buildGameRoomFields(p.white, p.black)).select().single();
-                if (roomError) { console.error(roomError); erroresDeSala.push(roomError.message); return; }
-                await sb.from("tournament_pairings").insert({
-                    round_id: roundRow.id, tournament_id: tournament.id, board_number: miTablero,
-                    white_id: p.white, black_id: p.black, is_bye: false, game_room_id: roomRow.id,
-                });
+            // El número de tablero sigue el orden de pairings: 1, 2, 3…
+            const erroresDeCruce = [];
+            await Promise.all(pairings.map(async (p, i) => {
+                const fila = p.isBye
+                    ? { round_id: roundRow.id, tournament_id: tournament.id, board_number: i + 1,
+                        white_id: p.white, black_id: null, is_bye: true, result: "white", finished_at: new Date().toISOString() }
+                    : { round_id: roundRow.id, tournament_id: tournament.id, board_number: i + 1,
+                        white_id: p.white, black_id: p.black, is_bye: false, game_room_id: salas.get(i) };
+                const { error } = await sb.from("tournament_pairings").insert(fila);
+                if (error) { console.error(error); erroresDeCruce.push(error.message); }
             }));
-            if (erroresDeSala.length) {
-                alert("No se pudo crear la partida de " + erroresDeSala.length + " cruce(s):\n" + erroresDeSala.join("\n"));
+            if (erroresDeCruce.length) {
+                alert("La ronda quedó con " + erroresDeCruce.length + " cruce(s) sin guardar:\n" + erroresDeCruce.join("\n"));
             }
 
             await sb.from("tournaments").update({ current_round: nextRoundNumber, updated_at: new Date().toISOString() }).eq("id", tournament.id);

@@ -819,7 +819,7 @@ async function anularCobro(c) {
 async function pintarMorosos() {
     const caja = document.getElementById("morosos-lista");
     caja.innerHTML = "";
-    const { data, error } = await traerTodo(() => sb.rpc("cobros_morosos"));
+    const { data, error } = await traerTodo(() => sb.rpc("cobros_morosos").order("dias_atraso", { ascending: false }).order("student_id"));
     if (error) { caja.appendChild(el("p", "text-sm text-red-500", "No se pudo cargar: " + error.message)); return; }
     const lista = data || [];
     document.getElementById("morosos-vacio").classList.toggle("hidden", lista.length > 0);
@@ -1353,7 +1353,7 @@ async function init() {
 
     // Los alumnos que uno ve: la misma función de Informes, así que el filtro
     // de quién sale es el de la RLS y no está escrito dos veces.
-    const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos"));
+    const { data: gente } = await traerTodo(() => sb.rpc("informes_resumen_alumnos").order("id"));
     alumnos = (gente || []).map((a) => ({ id: a.student_id || a.id, full_name: a.full_name, email: a.email }))
         .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || "", "es"));
     const opciones = (vacio) => '<option value="">' + vacio + "</option>"

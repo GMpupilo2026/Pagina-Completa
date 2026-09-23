@@ -79,11 +79,12 @@ Deno.serve(async (req) => {
 
   const { data: profile, error: profileError } = await callerClient
     .from("profiles")
-    .select("role")
+    .select("role, is_admin")
     .eq("id", userData.user.id)
     .single();
 
-  if (profileError || profile?.role !== "profesor") {
+  // Lo de profesores vale igual para quien administra, que además no tiene tope.
+  if (profileError || !(profile?.role === "profesor" || profile?.is_admin)) {
     return json({ error: "Solo el profesor puede invitar alumnos" }, 403);
   }
 
@@ -148,6 +149,23 @@ Deno.serve(async (req) => {
 
   // Cliente admin (service role) para gastar el cupo e invitar al usuario.
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  // Un correo que ya es de una cuenta no se vuelve a invitar. GoTrue solo
+  // rechaza a un usuario YA CONFIRMADO: con uno invitado que todavía no abrió
+  // su correo, devuelve ese mismo usuario, y más abajo quedaría asignado a quien
+  // llama —o sea, un profesor se quedaba con el alumno que acababa de invitar
+  // otra profesora—. Misma regla que inscribir-alumno.
+  if (!sinCorreo) {
+    const { data: yaExiste } = await adminClient
+      .from("profiles").select("id").ilike("email", email!.trim()).maybeSingle();
+    if (yaExiste) {
+      return json({
+        error: "Ese correo ya es de una cuenta de la Academia. Si es un hermano, " +
+               "marca «No tiene correo propio»; si es el mismo alumno, pídele a " +
+               "coordinación que te lo asigne.",
+      }, 409);
+    }
+  }
 
   // El cupo se gasta primero: así dos invitaciones simultáneas no pueden
   // pasarse del límite. La función es SECURITY DEFINER y solo la puede llamar

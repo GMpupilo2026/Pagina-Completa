@@ -312,11 +312,19 @@ Deno.serve(async (req) => {
   // ---- 5. La marca, al final ----
   // Se apunta DESPUÉS de que todo lo de arriba salió bien, nunca antes: si algo
   // falló, la respuesta se queda con su botón para volver a intentarlo.
-  await adminClient.from("formulario_respuestas").update({
+  const { error: marcaError } = await adminClient.from("formulario_respuestas").update({
     cuenta_id: alumnoId,
     cuenta_creada_at: new Date().toISOString(),
     cuenta_creada_por: quienInvita,
   }).eq("id", respuestaId);
+  // Sin la marca, volver a apretar «Crear cuenta» ya no reusaría esta cuenta:
+  // armaría otra y gastaría otra invitación. Así que un fallo acá se dice.
+  if (marcaError) {
+    return json({
+      error: "La cuenta quedó creada pero no se pudo marcar la respuesta: " + marcaError.message,
+      alumno_id: alumnoId, ya_tenia_cuenta: yaTeniaCuenta,
+    }, 500);
+  }
 
   return json({
     ok: true,

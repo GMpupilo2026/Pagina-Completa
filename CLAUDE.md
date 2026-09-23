@@ -828,6 +828,14 @@ este informe se imprime y lo lee alguien que no sabe nada de la plataforma.
   presenciales: la duración que anotó quien dio la clase, no una medición de la
   plataforma. Prometer que se midieron sería prometer algo que no pasó.
 
+- **Solo se le pasa lista a un alumno PROPIO.** Las políticas de profesor de
+  `class_attendance` y `class_presence_log` exigían ser el creador de la clase
+  presencial y nada más: con eso se le podía inventar asistencia y minutos a un
+  alumno de OTRA profesora, y le llegaba a su informe y al correo de su casa.
+  Ahora exigen además `soy_profesor_de(student_id)` o administrar
+  (migración `ficha_presencial_solo_alumnos_propios`, comprobada impersonando:
+  el propio entra, el ajeno no).
+
 **Al tocar `asistencia.html`, `js/reporte-armar.js` o la tabla
 `class_sessions`, correr `node herramientas/verificar-asistencia.js`** (con el
 sitio en localhost:8777 y playwright). Todo lo que se rompe acá se rompe
@@ -1642,7 +1650,10 @@ empieza a dar clase a los pequeños.
   quedó**: es exactamente la trampa que ya se comió `marcar_coordinador()`, que
   devolvía "listo" con el valor revertido detrás.
 - **Bajar a alumno a alguien que todavía tiene alumnos asignados se rechaza,
-  CON EL NÚMERO**: esos alumnos se quedarían sin profesor y sus informes
+  CON EL NÚMERO** — y también desde `admin.html` (`admin-manage-users`,
+  acción `update`), que no lo comprobaba: sus filas de `profile_teachers` y
+  `equipo_entrenadores` le seguían dando acceso a esos alumnos sin rol de
+  profesor: esos alumnos se quedarían sin profesor y sus informes
   dejarían de salirle a nadie, sin que nada fallara.
 - **Nunca deja poner 'admin'**: la cuenta master es una decisión de quien ya
   administra y se da con su interruptor.
@@ -2830,6 +2841,10 @@ copiar cuatro datos a mano de una pantalla a otra, dos veces por alumno.
   `formulario_respuestas` **sigue sin política de update**: una respuesta
   enviada no se toca desde el navegador, así que esas tres columnas solo las
   escribe la función con la service role.
+- **La marca se comprueba**: si el `update` final de la respuesta falla, la
+  función lo dice (500 con el `alumno_id`) en vez de devolver `ok`. Sin la
+  marca, volver a apretar «Crear cuenta» armaba otra cuenta y gastaba otra
+  invitación.
 - **El permiso no se comprueba a mano**: la fila de la respuesta se lee con el
   JWT de quien llama, o sea pasando por la RLS. Comprobado impersonando roles en
   SQL — quien administra coordina y ve la respuesta; una coordinadora que no
@@ -3005,6 +3020,13 @@ Las dos —`formularios.html` (el diálogo "Crear cuenta") y `sesion.html`
 - en el formulario, la casilla **arranca marcada cuando la respuesta no trajo
   correo del alumno**, que es lo que de verdad pasa con los pequeños: la familia
   escribe el suyo y deja ese campo vacío. Se propone, no se decide;
+- **`create-student` rechaza con un 409 un correo que ya es de una cuenta**,
+  igual que `inscribir-alumno`. GoTrue solo rechaza a un usuario YA
+  CONFIRMADO: con uno invitado que todavía no abrió su correo devuelve ese
+  mismo usuario, y más abajo quedaba asignado a quien llamaba — un profesor se
+  quedaba con el alumno que otra profesora acababa de invitar. Y acepta a quien
+  administra (`is_admin`), que desde `role = 'admin'` recibía «Solo el profesor
+  puede invitar alumnos».
 - `create-student` apunta al encargado **en la misma llamada**, no en una
   segunda del navegador: partido en dos, si la segunda mitad falla queda una
   cuenta a la que nunca se le puede escribir. Es la decisión que ya tomaba
@@ -3892,6 +3914,12 @@ salgan los avisos.
   para toda la Academia** (ver «Cuándo salen los tres avisos automáticos» más
   abajo). Van a los encargados apuntados en Informes y a la propia cuenta del
   alumno.
+- **«Vista previa» y «Recordar ahora» exigen `soy_coordinador()`.** Solo con
+  la RLS de `cobros_vista`, un alumno —que ve sus propios cobros— leía los
+  correos de sus encargados y podía mandarle a su familia avisos de morosidad
+  cuantas veces quisiera. Y `disparar_recordatorios_programados()` ya no la
+  puede llamar ninguna cuenta con sesión: es del cron, que corre como
+  `postgres`.
 - **Un correo por alumno, no uno por cobro**: a nadie le sirve recibir tres el
   mismo día. Se manda el estado de cuenta entero con el tono del aviso más
   urgente que tenga.
@@ -4064,6 +4092,10 @@ Contacto» de `cobros.html`, y los escribe la Edge Function **`correos-alumno`**
 - **Un correo que ya es de otra cuenta se rechaza con un 409 que dice qué
   hacer**, en vez de pisarla: si son hermanos, la salida es «No tiene correo
   propio», que le arma un usuario de la Academia.
+- **Pasar a «No tiene correo propio» exige un encargado activo**, y solo eso.
+  Se miraba también `correo_de_contacto()`, que devuelve el correo que la
+  cuenta tiene AHORA —justo el que se le está quitando—, así que la
+  comprobación pasaba siempre y la cuenta podía quedar muda.
 - **Corregir el correo de quien ya estaba apuntado es un UPDATE sobre su fila,
   no un alta.** De otra forma quedarían los dos —el bueno y el que tenía la
   letra mal— y a ese le seguirían saliendo los informes.
@@ -5186,6 +5218,12 @@ servidor de push lo acepta, lo reenvía y el teléfono lo descarta callado.
   `avisar`, la función lee `profiles` con el JWT de quien llama: solo se le
   manda a los ids que la RLS le devuelve. Un profesor no puede meterle una
   notificación en el teléfono a un alumno que no es suyo.
+  - **Pero antes se exige dar clase.** La RLS de `profiles` a un alumno le
+    devuelve también a sus compañeros y a sus profesores, así que sola no
+    alcanzaba: cualquier alumno podía mandarle a su clase un aviso con la
+    marca de la Academia. Y **el enlace del aviso solo puede ser del propio
+    sitio** —la función lo exige y `sw.js` lo vuelve a comprobar al abrirlo—:
+    uno de afuera con esa marca encima es la puerta perfecta para un engaño.
 - Los avisos salen solos de dos disparadores: `class_sessions` (empezó la
   clase) y `desafios` (te retaron), los dos por `pg_net`.
 - Un endpoint que responde 404 o 410 está muerto: se marca `activa = false` en
@@ -5219,10 +5257,23 @@ celular.
   que es "por dónde iba" se queda con lo más avanzado. Entrenar en dos aparatos
   suma, no pisa.
 - **La racha EN CURSO no es una marca**: `entreno_*_streak` (Mates, Táctica,
-  Temas, Practicar, Visualización) va con `ultimoLugar` y no con `maxNumero`.
-  Con el máximo, fallar en el celular dejaba la racha en 0 y la compu la
-  devolvía a 14 en la siguiente sincronización: una racha que no se puede
-  perder no mide nada. La mejor racha, que sí es marca, sigue con el máximo.
+  Temas, Practicar, Visualización) va con **`ultimaEscritura`**: gana la que se
+  escribió más tarde, en cualquiera de los dos aparatos. Con el máximo, fallar
+  en el celular dejaba la racha en 0 y la compu la devolvía a 14; con «vale la
+  de este aparato» (`ultimoLugar`, que se probó primero) la compu no se
+  enteraba ni del fallo ni de la subida hecha en el celular, y encima la pisaba
+  en la nube. La fecha local vive aparte, en `progreso_fechas_v1`, y la de la
+  nube es el `updated_at` de la fila. La mejor racha sigue con el máximo.
+- **El progreso guardado en el aparato tiene dueño** (`progreso_dueno_v1`).
+  Las claves de `localStorage` no llevan el id de nadie, así que en una
+  computadora del colegio lo que dejó Ana se fundía con la cuenta de Bruno al
+  entrar él —ejercicios, marcas y hasta su diagnóstico, que Informes le pintaba
+  a Bruno—. Si entra otra cuenta, lo del anterior se descarta sin fundirlo: ya
+  está a salvo en la suya.
+- **Un diagnóstico terminado no vuelve «a medias».** Terminarlo borra su
+  estado, y un borrado no deja rastro: el aparato donde se había empezado le
+  ganaba a la nube vacía y lo volvía a subir. El estado lleva ahora `guardado`,
+  y si hay un resultado posterior, esa prueba ya se terminó y se descarta.
 - Las preferencias del aparato (tema, modo adaptado) **no** se sincronizan a
   propósito: son de dónde se está mirando, no de quién mira.
 - Sin sesión o sin red, la página funciona igual con su `localStorage` y sube al
@@ -6855,6 +6906,19 @@ partidas»: no hay que salir de la página ni entrar y volver por cada tablero.
 - **Niebla no se dibuja** tampoco acá, por la misma razón de arriba, y se dice
   con todas las letras en vez de dejar un hueco.
 
+### Cerrar una ronda lo hace UNO solo, y una ronda nace entera
+
+- **La ronda y el torneo se cierran con una escritura condicional**
+  (`.neq("status", "finished").select("id")` en `js/torneo-sync.js`), y solo
+  sigue quien de verdad los cerró. El eco de la última partida le llega a la vez
+  a los dos jugadores y a quien esté mirando, y cada uno insertaba al campeón:
+  quedaba dos o tres veces en el salón de la fama público.
+- **`generateRound()` crea primero TODAS las salas y recién después la ronda.**
+  Al revés, un cruce cuya sala fallaba desaparecía: la ronda se daba por
+  completa sin esos dos jugadores y en eliminación la llave se corría. Una
+  ronda no se puede borrar desde el navegador (no tiene política de delete),
+  pero una sala sí: si falla alguna, se borran las creadas y no se abre nada.
+
 **Al tocar `torneo.html`, `js/cartas-board.js` o el arranque de cualquiera de las
 páginas de partida, correr `node herramientas/verificar-torneo-en-vivo.js`** (con
 el sitio en localhost:8777, playwright y `npm install chess.js@0.10.3`). Comprueba
@@ -7141,6 +7205,16 @@ para `class_presence_log`/`platform_activity_log` con
   tiempo real, más el incremento, más 2 segundos de margen" por latencia de
   red. Un cliente puede seguir siendo generoso consigo mismo por un par de
   segundos; ya no puede escribirse un reloj infinito.
+- **El reloj arranca con los dos listos aunque confirmen a la vez.** El
+  navegador solo ponía `clock_updated_at` si al confirmar veía al rival ya
+  listo en su copia; confirmando en el mismo medio segundo ninguno lo veía y
+  el reloj no arrancaba nunca. Lo pone ahora el mismo trigger cuando las dos
+  banderas quedan en `true`.
+- **Una jugada con la bandera caída se rechaza.** Quien lleva más de la
+  tolerancia en cero ya no puede mover: antes un mate que llegaba después de
+  la bandera pisaba el resultado. Y las páginas terminan la partida con
+  `.eq("status", "playing")`: rendirse con el diálogo abierto mientras al
+  rival se le caía la bandera pisaba el resultado igual.
 - **Solo valida la columna que de verdad cambia.** Una jugada normal solo
   toca el reloj de quien la hizo — el del rival queda igual porque no viene
   en el `UPDATE`, así que no hay nada que comprobar ahí (compararlo contra

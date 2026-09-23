@@ -146,10 +146,12 @@ Deno.serve(async (req) => {
       // Sin buzón propio, si no hay a quién escribirle la cuenta queda muda:
       // ningún informe, ningún aviso de cobro y ninguna forma de recuperar la
       // contraseña. Eso no da ningún error y no se entera nadie.
-      const { data: contacto } = await admin.rpc("correo_de_contacto", { p_alumno: alumnoId });
+      // Solo cuentan los encargados: correo_de_contacto() devolvería el correo
+      // que la cuenta tiene AHORA —justo el que se le está quitando—, y con eso
+      // la comprobación pasaba siempre en el caso de todos los días.
       const { data: yaHay } = await admin.from("encargados").select("id")
         .eq("student_id", alumnoId).eq("activo", true).limit(1);
-      if (!yaHay?.length && !contacto) {
+      if (!yaHay?.length) {
         return json({
           error: "Sin correo propio hace falta el de la casa: apunta primero a la persona encargada, " +
                  "o esta cuenta se queda sin ninguna forma de recibir nada.",
