@@ -55,7 +55,7 @@ const SIN_ESTILO = new Set([
     "example-card", "example-board-wrap",
     "example-mode-btn", "blind-mode-only", "normal-mode-only", "teacher-tab-btn",
     "practice-level-btn", "edit-piece-btn", "edit-turn-btn", "cf-turnstile",
-    "lesson-send-btn",
+    "lesson-send-btn", "cp-static-texto",
     "ficha-btn", "plan-btn",
     // El editor a mano del plan de entrenamiento (informes.html): cada campo
     // de cada semana lleva su marca para que leerEdicionPlan() lo encuentre con

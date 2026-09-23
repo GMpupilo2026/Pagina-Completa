@@ -287,6 +287,12 @@ que traen material a la clase la respetan igual.
   recorrer la línea y pulsar el botón manda la jugada 12 y no la 0. Mandar
   siempre la inicial no da ningún error — se transmite una posición, solo que la
   que no era.
+  - **Los diagramas FIJOS también lo llevan.** Los de «Desequilibrios de
+    material» son un dibujo con su pie (`.cp-static`), sin visor que publique
+    nada, así que traen la FEN escrita en el HTML en el mismo `data-fen-actual`,
+    sacada del archivo de datos del curso y comprobada pieza por pieza contra el
+    dibujo. Sin ella eran lo único de la lección sin botón, y eso no daba ningún
+    error. El botón va debajo del pie, en su misma columna.
   - El botón se pone con un `MutationObserver`, no recorriendo la lección una
     vez: los visores del curso se construyen **cuando se ven** (los `<details>`
     cerrados esperan a abrirse), así que el que aparezca después se quedaría sin
