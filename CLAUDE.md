@@ -6906,6 +6906,66 @@ partidas»: no hay que salir de la página ni entrar y volver por cada tablero.
 - **Niebla no se dibuja** tampoco acá, por la misma razón de arriba, y se dice
   con todas las letras en vez de dejar un hueco.
 
+### Los ritmos de juego: una sola lista, y el del torneo se puede cambiar
+
+La lista de ritmos estaba escrita dos veces —en `torneos.html` y en
+`juegos.html`— y ya se había separado: una partida amistosa podía ser 3+0 y un
+torneo no. Ahora vive en **`js/ritmos.js`** y la usan los cuatro lugares que
+eligen un ritmo: crear un torneo, cambiarle el tiempo a uno que ya existe,
+armar una partida desde «Asignar rivales» y retar a alguien en línea.
+
+- **Van agrupados por lo que son** —Bala (1+0, 1+1, 2+1), Relámpago (3+0,
+  3+2, 5+0, 5+3), Rápidas (10+0, 10+5, 15+10), Clásica (30+0, 30+20)—, que es
+  como se piensa un ritmo, y al final **«Personalizado…»**: minutos (se aceptan
+  medios, con coma o punto) y segundos por jugada a mano.
+- **El id dice lo mismo que los segundos** (`"3+2"` es 180 y 2), y el
+  verificador lo comprueba uno por uno: una opción que dice «3 min + 2 seg» y
+  manda 180 y 0 se ve perfecta y la partida se juega sin incremento.
+- **Los dos formularios pasaron a `novalidate`**: con `min`/`max` en los
+  campos del personalizado, un número fuera de rango lo cortaba el navegador con
+  SU globo y el aviso en español no salía nunca. Misma decisión que
+  `asistencia.html` y `bienvenida.html`.
+- **Los topes los hace cumplir la base** (`tournaments_ritmo_check` y
+  `game_rooms_ritmo_tope_check`): de 30 segundos a 3 horas, y hasta 3 minutos
+  de incremento. Son de cordura —atajan un error de dedo—, no de negocio.
+
+**Cambiar el tiempo de un torneo ya creado** es la tarjeta «⏱️ Tiempo por
+partida» de `torneo.html`, que solo ve quien organiza (o administra) y solo
+mientras el torneo no terminó. Las partidas se arman con el tiempo del torneo
+**al generar cada ronda**, así que cambiarlo en inscripción vale para todo el
+torneo y cambiarlo a mitad vale **desde la ronda siguiente** — la que está en
+juego sigue con su reloj, y la tarjeta lo dice con esas palabras. El tiempo se
+lee además en la cabecera del torneo y en la lista de `torneos.html`, para todo
+el mundo.
+
+- **El candado es de la base, y hacía falta**: `tournaments_update` deja
+  escribir también a los inscritos (`estoy_inscrito_en()`), porque
+  `js/torneo-sync.js` cierra rondas y torneos desde el navegador de cualquiera
+  de los jugadores. Con eso un inscrito podía cambiarle desde la consola el
+  tiempo, el nombre o la modalidad al torneo entero. El trigger
+  **`proteger_torneo()`** le revierte esas columnas en silencio a quien no
+  organiza —el patrón de `proteger_tiempos_de_presencia()`—, y a quien organiza
+  le rechaza cambiar el tiempo de un torneo terminado. Comprobado impersonando
+  roles en SQL: el update de un inscrito deja el ritmo como estaba, el del
+  organizador entra, y 5 segundos los rechaza el CHECK.
+- **La pantalla vuelve a leer lo que quedó** (`.select()` después del update) y,
+  si no coincide con lo pedido, dice «No se pudo cambiar el tiempo» en vez de
+  dar por guardado algo que la base revirtió.
+- **El selector se vuelve a poner solo si el tiempo guardado cambió**: la página
+  se repinta con cada aviso de Realtime, y sin eso le pisaría la elección a
+  quien la está haciendo.
+
+**Al tocar `js/ritmos.js`, los formularios de torneo o de partida, o la
+tarjeta del tiempo, correr `node herramientas/verificar-ritmos.js`** (con el
+sitio en localhost:8777 y playwright). Comprueba la lista sin navegador —que
+estén 1+1, 3+0 y 3+2, que ningún id se repita y que cada uno diga lo mismo que
+sus segundos, y que ninguna página vuelva a tener su propia lista— y en un
+navegador lo que se MANDA: 3+2 en una partida, un personalizado de 1,5 min + 1,
+que 500 minutos no viajen y se diga por qué, 1+1 al crear un torneo, y el
+cambio de tiempo del torneo en los dos casos — que quede y lo diga, o que la
+base lo revierta y la pantalla no mienta. A la alumna inscrita no se le pinta
+el control.
+
 ### Cerrar una ronda lo hace UNO solo, y una ronda nace entera
 
 - **La ronda y el torneo se cierran con una escritura condicional**

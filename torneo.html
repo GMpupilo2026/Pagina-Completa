@@ -32,6 +32,7 @@
     <script src="js/clases-board.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>
+    <script src="js/ritmos.js"></script>
     <script src="js/adaptive-mode.js"></script>
     <!-- tablero: inicio -->
     <script src="js/board-themes.js"></script>
@@ -61,6 +62,19 @@
             <a href="torneos.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← Torneos</a>
             <h1 id="t-name" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mb-1"></h1>
             <p id="t-meta" class="text-sm text-brand-500 dark:text-brand-300 mb-6"></p>
+
+            <section id="ritmo-seccion" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6" aria-labelledby="ritmo-titulo">
+                <h2 id="ritmo-titulo" class="font-serif font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">⏱️</span> Tiempo por partida</h2>
+                <p id="ritmo-nota" class="text-xs text-brand-450 dark:text-brand-350 mb-3"></p>
+                <div class="max-w-xs">
+                    <label for="ritmo-torneo" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Ritmo</label>
+                    <select id="ritmo-torneo" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500"></select>
+                </div>
+                <div class="flex items-center gap-3 mt-3">
+                    <button id="ritmo-guardar" type="button" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-bold px-4 py-2 rounded-xl text-sm transition-colors">Guardar el tiempo</button>
+                    <p id="ritmo-msg" role="status" class="text-xs min-h-[1em]"></p>
+                </div>
+            </section>
 
             <div id="finished-banner" class="hidden mb-6 rounded-xl bg-accent-500/15 border border-accent-500/40 px-4 py-3 text-center">
                 <p class="text-lg font-serif font-bold text-brand-800 dark:text-white">🏆 Campeón(es): <span id="champion-names"></span></p>
@@ -286,9 +300,56 @@
             await loadAll();
         }
 
+        /* Cambiar el tiempo del torneo. Es de quien lo organiza (y de quien
+           administra): la base se lo revierte a cualquier otro, y un torneo
+           terminado ya no cambia de ritmo. Las partidas se arman con el tiempo
+           del torneo al generar cada ronda, así que cambiarlo a mitad de torneo
+           vale desde la ronda siguiente: la que está en juego sigue con su reloj.
+           El selector se vuelve a poner SOLO si el tiempo guardado cambió: un
+           repintado por Realtime no puede pisarle a quien lo está eligiendo. */
+        let ritmoControl = null, ritmoPuesto = null;
+        function renderRitmo() {
+            const seccion = document.getElementById("ritmo-seccion");
+            const puede = isOwner && tournament.status !== "finished";
+            seccion.hidden = !puede;
+            if (!puede) return;
+            if (!ritmoControl) ritmoControl = Ritmos.montar(document.getElementById("ritmo-torneo"));
+            const clave = tournament.initial_seconds + "+" + tournament.increment_seconds;
+            if (clave !== ritmoPuesto) { ritmoControl.poner(tournament.initial_seconds, tournament.increment_seconds); ritmoPuesto = clave; }
+            document.getElementById("ritmo-nota").textContent = tournament.status === "registration"
+                ? "Todavía se puede cambiar: todas las partidas del torneo se van a jugar con este tiempo."
+                : "Las partidas que ya empezaron siguen con su reloj; el tiempo nuevo vale desde la próxima ronda.";
+        }
+
+        async function guardarRitmo() {
+            const msg = document.getElementById("ritmo-msg");
+            const r = ritmoControl.leer();
+            if (r.error) { msg.textContent = r.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
+            const boton = document.getElementById("ritmo-guardar");
+            boton.disabled = true;
+            const { data, error } = await sb.from("tournaments")
+                .update({ initial_seconds: r.initial, increment_seconds: r.increment, updated_at: new Date().toISOString() })
+                .eq("id", tournament.id).select("initial_seconds, increment_seconds");
+            boton.disabled = false;
+            const fila = data && data[0];
+            // Se vuelve a leer lo que quedó: la base revierte en silencio a quien no organiza.
+            if (error || !fila || fila.initial_seconds !== r.initial || fila.increment_seconds !== r.increment) {
+                msg.textContent = "No se pudo cambiar el tiempo" + (error ? ": " + error.message : ".");
+                msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]";
+                return;
+            }
+            tournament.initial_seconds = fila.initial_seconds;
+            tournament.increment_seconds = fila.increment_seconds;
+            ritmoPuesto = null;
+            render();
+            msg.textContent = "✅ Guardado: " + Ritmos.etiqueta(fila.initial_seconds, fila.increment_seconds) + ".";
+            msg.className = "text-xs text-green-700 dark:text-green-400 min-h-[1em]";
+        }
+
         function render() {
             document.getElementById("t-name").textContent = tournament.name;
-            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + (VARIANT_LABEL[tournament.variant] || tournament.variant) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
+            document.getElementById("t-meta").textContent = (FORMAT_LABEL[tournament.format] || tournament.format) + " · " + (VARIANT_LABEL[tournament.variant] || tournament.variant) + " · ⏱️ " + Ritmos.etiqueta(tournament.initial_seconds, tournament.increment_seconds) + " · " + (STATUS_LABEL[tournament.status] || tournament.status);
+            renderRitmo();
 
             document.getElementById("registration-section").classList.toggle("hidden", tournament.status !== "registration");
             if (tournament.status === "registration") renderRegistration();
@@ -529,6 +590,7 @@
 
         document.getElementById("self-register-btn").addEventListener("click", () => amIRegistered ? withdraw() : register());
         document.getElementById("start-btn").addEventListener("click", startTournament);
+        document.getElementById("ritmo-guardar").addEventListener("click", guardarRitmo);
         document.getElementById("generate-round-btn").addEventListener("click", generateRound);
 
         async function loadAll() {

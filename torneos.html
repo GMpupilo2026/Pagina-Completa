@@ -26,6 +26,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/torneo-engine.js"></script>
+    <script src="js/ritmos.js"></script>
     <script src="js/adaptive-mode.js"></script>
 
 
@@ -54,7 +55,7 @@
 
             <section id="teacher-panel" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-8">
                 <h2 class="font-serif font-bold text-brand-800 dark:text-white mb-4">Crear un torneo nuevo</h2>
-                <form id="create-form" class="grid sm:grid-cols-2 gap-3">
+                <form id="create-form" class="grid sm:grid-cols-2 gap-3" novalidate>
                     <div class="sm:col-span-2">
                         <label for="name-input" class="block text-xs font-medium text-brand-500 dark:text-brand-300 mb-1">Nombre del torneo</label>
                         <input id="name-input" type="text" required maxlength="80" placeholder="Ej: Copa de Septiembre" class="w-full text-sm bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-brand-700 dark:text-brand-200 focus:outline-none focus:ring-2 focus:ring-accent-500">
@@ -107,21 +108,10 @@
             document.getElementById("error-state").classList.remove("hidden");
         }
 
-        const TIME_CONTROLS = [
-            { id: "none", label: "Sin límite", initial: null, increment: 0 },
-            { id: "5+0", label: "5 minutos", initial: 300, increment: 0 },
-            { id: "10+0", label: "10 minutos", initial: 600, increment: 0 },
-            { id: "10+5", label: "10 min + 5 seg", initial: 600, increment: 5 },
-            { id: "15+10", label: "15 min + 10 seg", initial: 900, increment: 10 },
-        ];
+        // La lista de ritmos es la misma de las partidas amistosas: js/ritmos.js.
+        let ritmoTorneo = null;
         function populateTimeSelect() {
-            const sel = document.getElementById("time-select");
-            sel.innerHTML = "";
-            TIME_CONTROLS.forEach((tc) => {
-                const opt = document.createElement("option");
-                opt.value = tc.id; opt.textContent = tc.label;
-                sel.appendChild(opt);
-            });
+            ritmoTorneo = Ritmos.montar(document.getElementById("time-select"), { valor: "5+0" });
         }
 
         const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
@@ -151,7 +141,7 @@
                 const info = document.createElement("div");
                 info.innerHTML =
                     '<p class="font-semibold text-brand-800 dark:text-white">' + escapeHtml(t.name) + '</p>' +
-                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (FORMAT_LABEL[t.format] || t.format) + ' · ' + (VARIANT_LABEL[t.variant] || t.variant) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
+                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (FORMAT_LABEL[t.format] || t.format) + ' · ' + (VARIANT_LABEL[t.variant] || t.variant) + ' · ⏱️ ' + Ritmos.etiqueta(t.initial_seconds, t.increment_seconds) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
                 card.appendChild(info);
                 const actions = document.createElement("div");
                 actions.className = "flex items-center gap-2";
@@ -194,7 +184,8 @@
             if (!name) return;
             const format = document.getElementById("format-select").value;
             const variant = document.getElementById("variant-select").value;
-            const tc = TIME_CONTROLS.find((x) => x.id === document.getElementById("time-select").value) || TIME_CONTROLS[0];
+            const tc = ritmoTorneo.leer();
+            if (tc.error) { msg.textContent = tc.error; msg.className = "text-xs text-red-600 dark:text-red-400 min-h-[1em]"; return; }
             const { data, error } = await sb.from("tournaments").insert({
                 name: name, format: format, variant: variant,
                 initial_seconds: tc.initial, increment_seconds: tc.increment,
