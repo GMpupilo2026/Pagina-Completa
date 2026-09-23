@@ -32,7 +32,7 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a href="clases.html" class="flex items-center gap-2 text-white"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
         <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
 
@@ -84,6 +84,11 @@
                             <label for="f-grupo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Equipo</label>
                             <select id="f-grupo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                             <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">Para quién es. Sale en el formulario; no restringe quién puede contestarlo.</p>
+                        </div>
+                        <div id="c-academia" hidden>
+                            <label for="f-academia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Marca</label>
+                            <select id="f-academia" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            <p class="text-xs text-brand-450 dark:text-brand-350 mt-1">El formulario sale con el logo, el color y el nombre de esa academia.</p>
                         </div>
                         <div>
                             <label for="f-cierra" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cierra el <span class="normal-case font-normal text-brand-450 dark:text-brand-350">(opcional)</span></label>
@@ -464,6 +469,32 @@ function agregarCampo(base) {
     campos.push(c);
 }
 
+let academiasMarca = [];
+
+/* El selector de marca. Uno nuevo arranca con la academia de quien lo arma si
+   es de una sola; si el formulario ya trae una que no está en la lista (la
+   puso administración), se agrega para no borrársela sin querer. */
+function llenarAcademias(form) {
+    const caja = document.getElementById("c-academia");
+    const sel = document.getElementById("f-academia");
+    caja.hidden = !academiasMarca.length;
+    if (!academiasMarca.length) return;
+    const lista = academiasMarca.slice();
+    if (form && form.academia_id && !lista.some((a) => a.id === form.academia_id)) {
+        lista.push({ id: form.academia_id, nombre: "La academia que ya tenía" });
+    }
+    sel.replaceChildren();
+    const nada = document.createElement("option");
+    nada.value = ""; nada.textContent = "— Ajedrez Integral —";
+    sel.appendChild(nada);
+    lista.forEach((a) => {
+        const o = document.createElement("option");
+        o.value = a.id; o.textContent = a.nombre;
+        sel.appendChild(o);
+    });
+    sel.value = form ? (form.academia_id || "") : (academiasMarca.length === 1 ? academiasMarca[0].id : "");
+}
+
 async function abrirEditor(form) {
     editando = form || null;
     campos = form ? JSON.parse(JSON.stringify(form.campos || [])) : [];
@@ -472,6 +503,7 @@ async function abrirEditor(form) {
     document.getElementById("f-abierto").checked = form ? !!form.abierto : true;
     document.getElementById("f-cierra").value = form && form.cierra_el ? form.cierra_el.slice(0, 10) : "";
     document.getElementById("f-grupo").value = form ? (form.grupo || "") : "";
+    llenarAcademias(form);
     document.getElementById("guardar-msg").textContent = "";
     pintarCampos();
     mostrar("vista-editor");
@@ -616,6 +648,9 @@ async function guardar() {
         cierra_el: cierra ? new Date(cierra + "T23:59:59").toISOString() : null,
         updated_at: new Date().toISOString(),
     };
+    // Sin academias a la vista no se toca: un formulario que armó
+    // administración con marca no la pierde porque lo guarde otra persona.
+    if (academiasMarca.length) fila.academia_id = document.getElementById("f-academia").value || null;
 
     btn.disabled = true;
     msg.textContent = "Guardando…";
@@ -1212,6 +1247,16 @@ async function init() {
         '<option value="">— Sin equipo en particular —</option>' +
         grupos.map((g) => `<option value="${escapar(g)}">${escapar(g)}</option>`).join("");
 
+    // Las academias con cuya marca puede salir un formulario: las que la RLS
+    // deja ver (las propias; todas si administra). Si falla, no se ofrece.
+    try {
+        const { data: acs, error } = await sb.from("academias").select("id, nombre").order("nombre");
+        if (error) throw error;
+        academiasMarca = acs || [];
+    } catch (err) {
+        academiasMarca = [];
+    }
+
     // Con quién se puede compartir un formulario: el resto del equipo de
     // coordinación. Si falla, el bloque de compartir se queda sin opciones en
     // vez de tumbar la página entera — lo que se comparte no es lo primero
@@ -1236,5 +1281,5 @@ async function init() {
 }
 init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
 </html>

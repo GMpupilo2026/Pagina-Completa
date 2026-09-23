@@ -1834,8 +1834,60 @@ vacío, al del supervisor. Lo arma `_compartido/remitente-academia.ts` con
   remitente de siempre y la respuesta cae en `informes@`, que Cloudflare
   reenvía. Un nombre de más no justifica dejar a una familia sin su informe.
 
+#### La marca de cada academia: su logo y su color
+
+Quien es de una academia ve **su logo y su nombre** en el encabezado de la
+Academia, con el fondo en **su color**, y sus formularios de inscripción salen
+con esa misma marca. Lo eligen quien administra o el supervisor de la academia,
+en «La marca de la academia» de `academias.html`.
+
+- **La pinta `js/marca-academia.js`**, que pone `academia-cabecera.py` en las
+  mismas páginas de siempre (bloque `<!-- marca: inicio -->`) y que busca el
+  enlace `#marca-enlace` del encabezado. Qué marca le toca a quien mira lo
+  decide `public.mi_marca_academia()`: **solo si es de UNA academia** (miembro
+  o supervisor). Con dos se ve Ajedrez Integral, la misma decisión que el
+  remitente de los correos: no hay forma de saber cuál.
+- **El color es el fondo y el texto va en blanco, así que tiene que dar 4.5 de
+  contraste** (WCAG AA). Lo hace cumplir la base —`color_con_texto_blanco()`
+  en el CHECK de `academias.color` y en `academia_guardar_marca()`— y la
+  pantalla dice el número antes de guardar. `verificar-academias.js` falla si
+  la fórmula de la pantalla y la de la base se separan. Un color elegido a ojo
+  deja el nombre de la academia ilegible en cada página de su gente.
+- **El tema de la plataforma que eligió el alumno MANDA sobre el color de la
+  academia**: es su pantalla, igual que su color de casillas le gana al tema.
+  El logo y el nombre se ven siempre.
+- **El logo vive en el bucket PÚBLICO `academia-marca`**, en
+  `<id de la academia>/logo-<azar>.<ext>`: es para verse, también en un
+  formulario que se abre sin cuenta. Solo PNG, JPG o WebP y hasta medio mega
+  —un SVG puede llevar código, y abierto por su dirección se ejecutaría—, y se
+  achica en el navegador a 512 px. Escribir en la carpeta de una academia lo
+  decide `puede_marcar_academia()` (su supervisor o quien administra).
+  `academia_guardar_marca()` exige que el archivo **exista**: una ruta que no
+  apunta a nada pintaría un recuadro roto en cada página. Al cambiar el logo, el
+  de antes se borra; si guardar falla, se borra el recién subido.
+- **Por eso `img-src` de `_headers` incluye el proyecto de la Academia**: es el
+  mismo origen que ya estaba en `connect-src`.
+- **La marca se guarda en `localStorage`** (`academia_marca_v1`, con el id de
+  quien la recibió) para pintarla enseguida en la página siguiente en vez de
+  parpadear del azul al color. Si entra otra cuenta, no se usa; y si la persona
+  deja de ser de esa academia, vuelve el encabezado de siempre.
+- **Un formulario puede ser de una academia** (`formularios.academia_id`), y
+  `formulario_publico()` devuelve su nombre, color y logo. En el armador, el
+  selector «Marca» arranca con la academia de quien lo arma si es de una sola.
+  **El trigger `formularios_academia_propia` impide poner la marca de una
+  academia de la que uno no es**: sin eso, un coordinador podría vestir su
+  formulario con la marca de otra.
+
+Comprobado impersonando roles en SQL (revertido), 11 casos: el supervisor guarda
+la marca de su academia y no la de otra; un color claro y un logo que no existe
+se rechazan; puede subir a la carpeta de la suya y no a la ajena ni a una ruta
+inventada; el alumno ve la marca de su academia y no puede cambiarla, y en dos
+academias no ve ninguna; el coordinador pone en su formulario la marca de su
+academia y no la de otra; y el formulario se ve con la marca sin cuenta.
+
 **Al tocar las academias, las funciones del coordinador o
-`js/funciones-coordinacion.js`, correr `node herramientas/verificar-academias.js`**
+`js/funciones-coordinacion.js`, `js/marca-academia.js` o la marca de los
+formularios, correr `node herramientas/verificar-academias.js`**
 (con el sitio en localhost:8777 y playwright; `--sin-navegador` corre solo la
 comparación de la lista). Comprueba que la lista diga lo mismo que la base, que
 crear mande el nombre sin id, que sumar un grupo o los alumnos de los
@@ -1843,8 +1895,13 @@ profesores mande la UNIÓN, que quitar mande la lista entera sin esa persona,
 que desmarcar una función mande las permitidas, que al supervisor no se le
 ofrezca ni el nombre, ni el supervisor, ni borrar, ni quitar a un profesor, que
 un nombre con etiquetas se vea literal, y que Formularios y Cobros apagados
-digan quién decide. Está probado que falla de verdad: haciendo que sumar mande
-solo lo nuevo, saltan 3.
+digan quién decide. De la marca comprueba que un color claro no viaje, que el
+logo se suba a la carpeta de ESA academia y se guarde esa misma ruta, que
+cambiarlo borre el anterior, que un SVG no se acepte, que el encabezado tome el
+color y el logo (y que un tema elegido no se pise), que un formulario nuevo
+arranque con la academia de quien lo arma, y que el formulario público salga
+con la marca. Está probado que falla de verdad: haciendo que sumar mande solo
+lo nuevo saltan 3, subiendo el logo a otra carpeta 1, y pisando el tema 1.
 
 - **Los dobles de Supabase tuvieron que aprender `mis_funciones_coordinacion`.**
   Contestaban `[]` a todo lo que no conocían, y la página lee `[]` como «le
@@ -1853,9 +1910,8 @@ solo lo nuevo, saltan 3.
   Era el doble el que estaba incompleto: en la base real, quien administra,
   supervisa o coordina sin academia recibe la lista entera.
 
-**Lo que viene después (fases siguientes, ya decididas con el dueño):** la
-marca de cada academia dentro de la plataforma (logo y colores) y en los
-formularios públicos; la IA por academia —el botón dice **«Mejorar informe»**, el
+**Lo que viene después (fases siguientes, ya decididas con el dueño):** la IA
+por academia —el botón dice **«Mejorar informe»**, el
 modelo lo elige **solo quien administra** por academia (o «sin IA»), con tope
 mensual y medición exacta del gasto desde `usage`, **sin que los profesores
 vean nada de eso**: con la IA apagada el botón simplemente no aparece—; y el
