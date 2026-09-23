@@ -30,6 +30,7 @@
     <!-- Widget anti-bots de Cloudflare Turnstile -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="js/adaptive-mode.js"></script>
+    <script src="js/adjuntos.js"></script>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 min-h-screen py-6 px-4 sm:px-6 lg:px-8 font-sans relative overflow-x-hidden flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
@@ -243,6 +244,18 @@
                     </div>
                 </div>
 
+                <!-- Sección: Archivos adjuntos (opcional). Se suben al enviar, a un
+                     espacio privado: solo los ve quien organiza el torneo. -->
+                <div>
+                    <h2 class="text-base font-bold text-brand-600 dark:text-brand-300 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 uppercase tracking-wide">
+                        <span><span aria-hidden="true">📎</span></span> Archivos adjuntos
+                    </h2>
+                    <label for="adjuntos" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Adjunta un archivo o una foto (opcional)</label>
+                    <p id="adjuntos-formatos" class="text-xs text-slate-500 mb-2">Por ejemplo la cédula, el carné del colegio o un comprobante. Hasta 5 archivos: foto, PDF, Word o Excel, de 10 MB como máximo cada uno. Solo los ve quien organiza el torneo.</p>
+                    <input type="file" id="adjuntos" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" aria-describedby="adjuntos-formatos adjuntos-estado" class="block w-full text-sm text-slate-700 dark:text-slate-200 file:mr-3 file:bg-brand-600 file:text-white file:font-semibold file:border-0 file:rounded-lg file:px-4 file:py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-lg">
+                    <p id="adjuntos-estado" class="text-xs text-slate-600 dark:text-slate-400 mt-1" role="status"></p>
+                    <ul id="adjuntos-lista" class="flex flex-wrap gap-3 mt-2" aria-label="Archivos elegidos"></ul>
+                </div>
                 <!-- Aviso de protección de datos personales -->
                 <div class="flex items-start gap-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
                     <input type="checkbox" id="aceptoDatos" name="aceptoDatos" required class="mt-1 h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-brand-600 focus:ring-brand-500 shrink-0">
@@ -898,6 +911,20 @@
             }
         });
 
+        /* Los archivos adjuntos: los elige la familia, se suben al ENVIAR a la
+           carpeta "pendientes/" del bucket privado (la única donde el público
+           puede escribir, y sin poder leer) y a la función solo viajan las
+           rutas. Ella comprueba que existan antes de guardar. */
+        const selectorAdjuntos = Adjuntos.montarSelector(
+            document.getElementById('adjuntos'),
+            document.getElementById('adjuntos-lista'),
+            document.getElementById('adjuntos-estado'),
+            { alError: (t) => {
+                const errorMsg = document.getElementById('form-error');
+                errorMsg.textContent = '⚠️ ' + t;
+                errorMsg.classList.remove('hidden');
+            } });
+
         document.getElementById('inscription-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -957,6 +984,19 @@
             submitBtn.textContent = 'Enviando…';
 
             try {
+                if (selectorAdjuntos.cantidad()) {
+                    try {
+                        data.adjuntos = await selectorAdjuntos.subirTodo(
+                            supabaseClient.storage.from('inscripcion-adjuntos'), 'pendientes',
+                            (t) => { submitBtn.textContent = t; });
+                    } catch (errSubida) {
+                        errorMsg.textContent = '⚠️ ' + errSubida.message;
+                        errorMsg.classList.remove('hidden');
+                        successMsg.classList.add('hidden');
+                        return;
+                    }
+                    submitBtn.textContent = 'Enviando…';
+                }
                 const res = await fetch(EDGE_FUNCTION_REGISTRAR_URL, {
                     method: 'POST',
                     headers: {
@@ -973,6 +1013,7 @@
                     successMsg.classList.remove('hidden');
                     errorMsg.classList.add('hidden');
                     this.reset();
+                    selectorAdjuntos.limpiar();
                     resetSelect(provinciaSelect, 'Primero tipo de centro...', true);
                     resetSelect(cantonSelect, 'Primero provincia...', true);
                     resetSelect(institucionSelect, 'Seleccione cantón...', true);
