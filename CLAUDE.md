@@ -879,6 +879,65 @@ saltan 2 y quitando la columna «Dónde» saltan 2.
   subgrupo —» desmarca todo y no avisa, y el `Set` se quedaría lleno de gente
   que ya no está marcada.
 
+#### El horario: la ficha se llena sola, y la que falta se pide
+
+La ficha presencial se llenaba desde cero cada vez —el día, la hora, cuánto
+duró y veinte casillas— y la que no se llenaba no existía: la clase no salía en
+ningún informe y nadie se enteraba. Cada profesor tiene ahora **«🗓️ Tu
+horario»** arriba de la ficha, en `asistencia.html`: «martes 15:00, 90 min,
+grupo 7B, en el aula».
+
+- **`public.horario_clases`**: día de la semana, hora (de Costa Rica),
+  duración, `grupo` **o** `subgrupo_id`, título, modalidad y `desde`/`hasta`.
+  Cada quien escribe lo suyo (la RLS exige `profesor_id = auth.uid()` y un
+  subgrupo propio); lo leen también su supervisión y quien administra.
+- **Quitar una clase NO la borra, la cierra**: se le pone `hasta` en ayer.
+  Borrarla le quitaría al informe de los meses pasados las clases que sí
+  estaban programadas —el «7 de 8» de agosto pasaría a «7 de 0» sin que nadie
+  lo tocara—. Solo se borra de verdad la agregada hoy mismo, que no tiene
+  historia.
+- **«Pasar lista» llena la ficha con la última vez que tocaba esa clase** y
+  marca a los del grupo o del subgrupo. **Nacen marcados a propósito**: pasar
+  lista de doce es desmarcar a los dos que faltaron. Lo peligroso es guardar
+  sin mirar, y por eso el aviso no dice «listo», dice cuántos quedaron marcados
+  y «desmarca a quien no llegó».
+- **Las fechas son de Costa Rica en los dos lados** (`hoyCR()` en la página,
+  `at time zone 'America/Costa_Rica'` en la base): el aviso y el informe
+  comparan por día, y una ficha fechada con otro huso no le taparía el aviso a
+  nadie.
+
+**Cuándo tocaba clase lo cuenta UNA función, `ocurrencias_horario()`** (sin
+`execute` para nadie con sesión), y la usan las dos cosas que salen del horario:
+
+- **El aviso de la ficha que falta** (`avisar_fichas_faltantes()`, `pg_cron` a
+  los 10 de cada hora): una clase **del aula** de hoy o de ayer que terminó hace
+  más de una hora, sin **ninguna** clase de ese profesor ese día. Lleva a
+  `asistencia.html?horario=<id>&fecha=<día>`, que abre la ficha ya llena. Sale
+  una sola vez por clase y día (`avisos_ficha_faltante`, la llave primaria). Las
+  de la plataforma no avisan: se registran solas al abrir la clase en vivo, y si
+  no se abrió no hubo clase que registrar.
+- **«Clases de su horario dadas: 7 de 8»** en el informe mensual y en
+  supervisión. Son dos columnas nuevas **al final** de `actividad_profesor()`
+  (`clases_programadas`, `clases_programadas_dadas`), así entran solas en la
+  foto que viaja con el informe y en `resumen_profesores_supervisados()`. Hubo
+  que borrarla y volverla a crear —cambia lo que devuelve— y devolverle el
+  `execute` a `authenticated`.
+  - **Solo cuentan las que ya terminaron**: la de esta tarde todavía no se debe.
+  - **Se compara por día**: un día con dos clases programadas y una dada cuenta
+    una, no dos.
+  - Sin horario dice **«Sin horario»** y no «0 de 0», que se lee como un mes
+    sin trabajo; una foto enviada antes de esto dice «—».
+
+Comprobado en SQL (revertido): con una clase diaria desde el 1.° el profesor
+tiene 23 programadas y 2 dadas, el aviso sale una vez y la segunda corrida no
+manda nada; otra profesora no ve el horario ajeno (0 filas), no puede crear uno
+a nombre de otra, y un alumno no puede crear ninguno. `verificar-asistencia.js`
+comprueba que la dirección del aviso deje la ficha en ESE día con los del grupo
+marcados, que agregar mande el subgrupo a nombre de quien da clase, que quitar
+cierre con `hasta` en ayer la que tiene historia y borre la de hoy, y que una
+fecha del futuro caiga en la última que ya pasó. Está probado que falla de
+verdad: haciendo que quitar borre siempre, salta.
+
 ### Vaciar el chat: la base siempre lo permitió, lo que fallaba era la pantalla
 
 «Vaciar esta conversación» parecía no funcionar: el profesor apretaba, confirmaba,

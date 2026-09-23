@@ -57,6 +57,17 @@ const FICHAS = [
     started_at: "2026-09-16T21:00:00.000Z", ended_at: null, notes: null, class_attendance: [] },
 ];
 
+/* El horario fijo: una clase del aula con su grupo, puesta hace semanas, y
+   una de la plataforma agregada HOY — la primera se quita cerrándola (para que
+   los meses pasados sigan contando) y la segunda se borra de verdad. */
+const HOY_CR = new Intl.DateTimeFormat("en-CA", { timeZone: ZONA, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const HORARIO = [
+  { id: "h-1", profesor_id: "u-oscar", dia_semana: 2, hora: "15:00:00", duracion_min: 90, grupo: "7B",
+    subgrupo_id: null, titulo: null, modalidad: "presencial", desde: "2026-09-01", hasta: null },
+  { id: "h-2", profesor_id: "u-oscar", dia_semana: 4, hora: "17:30:00", duracion_min: 60, grupo: null,
+    subgrupo_id: null, titulo: "Táctica en línea", modalidad: "en_linea", desde: HOY_CR, hasta: null },
+];
+
 function clienteFalso(perfil) {
   return `
 window.__llamadas = [];
@@ -67,10 +78,12 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const TABLAS = {
     profiles: ${JSON.stringify([PROFE, ...ALUMNOS])},
     class_sessions: ${JSON.stringify(FICHAS)},
+    horario_clases: ${JSON.stringify(HORARIO)},
   };
   const RPC = {
     alumnos_del_profesor_con_nombre: ${JSON.stringify(ALUMNOS)},
     mis_subgrupos: ${JSON.stringify(SUBGRUPOS)},
+    grupos_de_mis_alumnos: [{ grupo: "7A", alumnos: 1 }, { grupo: "7B", alumnos: 2 }],
     guardar_clase_presencial: "cs-nueva",
   };
   function constructor(filas, tabla) {
@@ -523,14 +536,116 @@ async function pruebaSeVe(browser) {
   await contexto.close();
 }
 
+/* ==================================================================
+   El horario: la ficha se llena sola, y quitar no borra la historia
+   ================================================================== */
+async function pruebaHorario(browser) {
+  console.log("\n=== El horario ===");
+  // A donde lleva el aviso de la ficha que falta.
+  const { page, errores } = await abrir(browser, "asistencia.html?horario=h-1&fecha=2026-09-15", PROFE);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  await page.waitForFunction(() => document.getElementById("fecha").value === "2026-09-15", null, { timeout: 5000 }).catch(() => {});
+
+  igual("se pintan las dos clases del horario",
+    await page.evaluate(() => document.querySelectorAll(".horario-fila").length), 2);
+  igual("la de la plataforma no ofrece pasar lista (se registra sola)",
+    await page.evaluate(() => !!document.querySelector('[data-horario="h-2"] .horario-usar')), false);
+  igual("la dirección del aviso deja la ficha en ESE día",
+    await page.evaluate(() => [document.getElementById("fecha").value, document.getElementById("hora").value,
+                               document.getElementById("minutos").value]),
+    ["2026-09-15", "15:00", "90"]);
+  igual("y marca a los del grupo 7B, a nadie más",
+    await page.evaluate(() => [...document.querySelectorAll(".alumno-chk:checked")].map((c) => c.value)),
+    ["u-bruno", "u-cami"]);
+  cierto("el aviso dice cuántos quedaron marcados y que hay que revisar",
+    /los 2 alumnos de grupo 7b: desmarca a quien no llegó/.test(await page.textContent("#aviso")),
+    "salió: " + await page.textContent("#aviso"));
+
+  // Guardar manda la hora local como el instante que fue.
+  await page.click("#guardar");
+  await page.waitForTimeout(300);
+  const g = await ultimoGuardado(page);
+  igual("guardar manda los dos del grupo y la hora de la clase",
+    g ? [g.args.p_alumnos, g.args.p_inicio, g.args.p_minutos] : null,
+    [["u-bruno", "u-cami"], "2026-09-15T21:00:00.000Z", 90]);
+
+  // Agregar una clase con un subgrupo.
+  await page.evaluate(() => { document.getElementById("horario-agregar").open = true; });
+  await page.selectOption("#h-dia", "4");
+  await page.fill("#h-hora", "16:00");
+  await page.selectOption("#h-quienes", "s:sg-1");
+  await page.click("#h-guardar");
+  await page.waitForTimeout(300);
+  const ins = await page.evaluate(() => [...window.__llamadas].reverse().find((l) => l.tabla === "horario_clases" && l.verbo === "insert"));
+  igual("agregar manda el día, la hora, el subgrupo sin grupo, a nombre de quien da clase y desde hoy",
+    ins ? [ins.datos.profesor_id, ins.datos.dia_semana, ins.datos.hora, ins.datos.subgrupo_id, ins.datos.grupo, ins.datos.desde] : null,
+    ["u-oscar", 4, "16:00", "sg-1", null, HOY_CR]);
+  cierto("el subgrupo sin nadie no se ofrece",
+    !(await page.evaluate(() => [...document.querySelectorAll("#h-quienes option")].some((o) => o.value === "s:sg-2"))));
+
+  // Quitar la vieja la CIERRA (hasta = ayer) y no la borra.
+  const quitar = '[data-horario="h-1"] .horario-quitar';
+  await page.click(quitar);
+  cierto("quitar pide un segundo toque", /Seguro/.test(await page.textContent(quitar)));
+  await page.click(quitar);
+  await page.waitForTimeout(300);
+  const [y, m, d] = HOY_CR.split("-").map(Number);
+  const ayer = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
+  const cerrar = await page.evaluate(() => [...window.__llamadas].reverse().find((l) => l.tabla === "horario_clases" && l.verbo !== "insert"));
+  igual("quitar una clase con historia la cierra en ayer, filtrando por su id",
+    cerrar ? [cerrar.verbo, cerrar.datos && cerrar.datos.hasta, cerrar.filtros] : null,
+    ["update", ayer, [["id", "h-1"]]]);
+  await page.context().close();
+
+  // La que se agregó hoy se borra de verdad.
+  const b = await abrir(browser, "asistencia.html", PROFE);
+  await b.page.waitForSelector(".horario-fila", { timeout: 20000 });
+  await b.page.click('[data-horario="h-2"] .horario-quitar');
+  await b.page.click('[data-horario="h-2"] .horario-quitar');
+  await b.page.waitForTimeout(300);
+  const borr = await b.page.evaluate(() => [...window.__llamadas].reverse().find((l) => l.tabla === "horario_clases"));
+  igual("la agregada hoy se borra, filtrando por su id",
+    borr ? [borr.verbo, borr.filtros] : null, ["delete", [["id", "h-2"]]]);
+  await b.page.context().close();
+
+  // Una fecha del futuro no se usa: se pasa lista de lo que ya pasó.
+  const c = await abrir(browser, "asistencia.html?horario=h-1&fecha=2099-12-29", PROFE);
+  await c.page.waitForSelector(".horario-fila", { timeout: 20000 });
+  await c.page.waitForTimeout(300);
+  const f = await c.page.evaluate(() => document.getElementById("fecha").value);
+  const [fy, fm, fd] = f.split("-").map(Number);
+  cierto("con una fecha del futuro cae en el último martes que ya pasó",
+    f <= HOY_CR && new Date(Date.UTC(fy, fm - 1, fd)).getUTCDay() === 2, "salió: " + f);
+  await c.page.context().close();
+  return errores;
+}
+
+/* «dio 7 de 8»: sin horario no es «0 de 0», y una foto vieja dice «—». */
+function pruebaInformeHorario() {
+  console.log("\n=== El informe dice cuántas clases del horario se dieron ===");
+  global.window = {};
+  global.document = undefined;
+  delete require.cache[require.resolve("../js/actividad-profesor.js")];
+  require("../js/actividad-profesor.js");
+  const AP = global.window.ActividadProfesor;
+  const campo = AP.CAMPOS.find((c) => c.clave === "clases_programadas_dadas");
+  cierto("el informe mensual tiene el campo del horario", !!campo);
+  if (!campo) return;
+  igual("con horario dice «7 de 8»", AP.valor(campo, { clases_programadas: 8, clases_programadas_dadas: 7 }), "7 de 8");
+  igual("sin horario dice «Sin horario» y no «0 de 0»", AP.valor(campo, { clases_programadas: 0, clases_programadas_dadas: 0 }), "Sin horario");
+  igual("una foto de antes del horario dice «—»", AP.valor(campo, { clases_en_linea: 3 }), "—");
+}
+
 (async () => {
   pruebaReporte();
+  pruebaInformeHorario();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     const errores = await pruebaFicha(browser);
     await pruebaCorregir(browser);
     await pruebaAlumna(browser);
     await pruebaSeVe(browser);
+    errores.push(...await pruebaHorario(browser));
     if (errores.length) {
       console.log("\n  ✗ la página dejó errores en la consola:\n      " + errores.join("\n      "));
       fallos += 1;

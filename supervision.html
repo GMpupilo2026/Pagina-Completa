@@ -150,7 +150,11 @@ function tarjeta(f) {
     const a = f.actividad || {};
     const linea = el("p", "text-sm text-brand-600 dark:text-brand-300 mb-3",
         (Number(a.clases_en_linea || 0) + Number(a.clases_presenciales || 0)) + " clases (" +
-        ActividadProfesor.horas(a.minutos_clase) + ") · " +
+        ActividadProfesor.horas(a.minutos_clase) + ")" +
+        // «dio 7 de 8 de su horario» solo si tiene horario: sin él no hay contra qué medir.
+        (Number(a.clases_programadas) > 0
+            ? ", " + (a.clases_programadas_dadas || 0) + " de " + a.clases_programadas + " de su horario"
+            : "") + " · " +
         (a.tareas_puestas || 0) + " tareas puestas · " +
         (a.alumnos_activos || 0) + " de " + (a.alumnos || 0) + " alumnos entrenaron");
     li.appendChild(linea);

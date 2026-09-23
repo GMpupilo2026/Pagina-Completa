@@ -56,6 +56,59 @@
 
             <p id="aviso" class="hidden mb-6 rounded-xl px-4 py-3 text-sm" role="status" aria-live="polite"></p>
 
+            <!-- ======================= el horario ======================= -->
+            <section id="horario" aria-labelledby="horario-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 sm:p-6 mb-8">
+                <h2 id="horario-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">🗓️</span> Tu horario</h2>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">
+                    Las clases que das todas las semanas. Con eso la ficha se llena sola —el día, la hora y los alumnos del grupo—,
+                    te llega un aviso si una clase del aula pasó y no pasaste lista, y tu informe mensual dice cuántas de tus clases diste.
+                </p>
+                <ul id="horario-lista" class="space-y-2 mb-3"></ul>
+                <p id="horario-vacio" class="hidden text-sm text-brand-450 dark:text-brand-350 mb-3">Todavía no tienes clases en tu horario.</p>
+
+                <details id="horario-agregar" class="border-t border-brand-100 dark:border-brand-800 pt-3">
+                    <summary class="cursor-pointer text-sm font-semibold text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">➕ Agregar una clase a tu horario</summary>
+                    <div class="grid sm:grid-cols-3 gap-3 mt-3">
+                        <div>
+                            <label for="h-dia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Día</label>
+                            <select id="h-dia" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+                                <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="h-hora" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Hora de inicio</label>
+                            <input type="time" id="h-hora" value="15:00" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="h-minutos" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Cuánto dura (minutos)</label>
+                            <input type="number" id="h-minutos" min="5" max="600" step="5" value="60" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                        <div>
+                            <label for="h-quienes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Con quiénes</label>
+                            <select id="h-quienes" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="">— sin grupo fijo —</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="h-modalidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Dónde</label>
+                            <select id="h-modalidad" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="presencial">En el aula</option>
+                                <option value="en_linea">En la plataforma</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="h-titulo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nombre <span class="font-normal">(si quieres)</span></label>
+                            <input type="text" id="h-titulo" maxlength="120" placeholder="Ej: Grupo de la tarde" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        </div>
+                    </div>
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mt-2">
+                        Las de la plataforma se registran solas al abrir la clase en vivo, así que de esas no llega aviso: solo cuentan en el informe.
+                    </p>
+                    <button type="button" id="h-guardar" class="mt-3 bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar al horario</button>
+                </details>
+            </section>
+
             <!-- ======================= la ficha ======================= -->
             <!-- `novalidate`: sin él, un número que no cumple `min` o `step` corta el
                  envío con el aviso del navegador —en el idioma del navegador y no
@@ -184,6 +237,8 @@ let fichas = [];
 let totalFichas = 0;
 let editando = null;          // id de la ficha que se está corrigiendo
 let busqueda = "";
+let horario = [];             // las clases fijas de la semana (horario_clases vigentes)
+let subgrupos = [];           // los suyos, para «con quiénes» del horario
 
 const POR_PAGINA = 10;
 
@@ -569,6 +624,221 @@ async function guardar(ev) {
     if (await cargarFichas(0)) pintarFichas();
 }
 
+/* ------------------------------------------------------------ el horario
+   El horario es lo que hace que la ficha se llene sola. Tres cosas que no son
+   de estilo:
+     · LA FECHA SE CUENTA EN HORA DE COSTA RICA, igual que en la base: el aviso
+       de la ficha que falta y el «dio 7 de 8» del informe comparan por día de
+       Costa Rica, y una ficha llenada con el día de otro huso no le taparía el
+       aviso a nadie.
+     · QUITAR NO BORRA, CIERRA: se le pone `hasta` en ayer. Borrarlo le quitaría
+       al informe de los meses pasados las clases que sí estaban programadas, y
+       el «7 de 8» de agosto pasaría a «7 de 0» sin que nadie lo tocara. Solo se
+       borra de verdad el que se agregó hoy mismo, que no tiene historia.
+     · LOS ALUMNOS DEL GRUPO NACEN MARCADOS, y el aviso lo dice con el número:
+       pasar lista de doce es desmarcar a los dos que faltaron, no marcar a los
+       diez que vinieron. Lo peligroso de eso es guardar sin mirar, y por eso
+       el aviso no dice «listo» sino «desmarca a quien no llegó». */
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+function hoyCR() {
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit", day: "2-digit",
+    }).format(new Date());
+}
+function sumarDias(fecha, n) {
+    const [y, m, d] = fecha.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+function diaDe(fecha) {
+    const [y, m, d] = fecha.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+/* La última vez que tocaba esa clase, hoy incluido. */
+function ultimaFecha(h) {
+    const hoy = hoyCR();
+    return sumarDias(hoy, -((diaDe(hoy) - h.dia_semana + 7) % 7));
+}
+function horaCorta(h) { return String(h.hora || "").slice(0, 5); }
+function quienesDe(h) {
+    if (h.subgrupo_id) {
+        const sg = subgrupos.find((x) => x.id === h.subgrupo_id);
+        return sg ? "Subgrupo «" + sg.nombre + "»" : "";
+    }
+    return h.grupo ? "Grupo " + h.grupo : "";
+}
+function alumnosDelHorario(h) {
+    if (h.subgrupo_id) {
+        const sg = subgrupos.find((x) => x.id === h.subgrupo_id);
+        const ids = new Set(sg ? sg.alumnos || [] : []);
+        return alumnos.filter((a) => ids.has(a.id)).map((a) => a.id);
+    }
+    if (h.grupo) {
+        const g = pelado(h.grupo).trim();
+        return alumnos.filter((a) => pelado(a.grupo).trim() === g).map((a) => a.id);
+    }
+    return [];
+}
+
+function pintarHorario() {
+    const lista = document.getElementById("horario-lista");
+    lista.innerHTML = "";
+    document.getElementById("horario-vacio").classList.toggle("hidden", horario.length > 0);
+    horario.forEach((h) => {
+        const li = el("li", "horario-fila flex flex-wrap items-center justify-between gap-2 bg-brand-50 dark:bg-brand-950 rounded-xl px-3 py-2");
+        li.dataset.horario = h.id;
+        const partes = [DIAS[h.dia_semana].replace(/^./, (c) => c.toUpperCase()) + " " + horaCorta(h),
+            duracionLarga(h.duracion_min), quienesDe(h), h.modalidad === "en_linea" ? "En la plataforma" : "En el aula"]
+            .filter(Boolean);
+        const txt = el("div", "min-w-0");
+        // El título y el grupo los escribe una persona: siempre por textContent.
+        if (h.titulo) txt.appendChild(el("p", "text-sm font-semibold text-brand-800 dark:text-white", h.titulo));
+        txt.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300", partes.join(" · ")));
+        li.appendChild(txt);
+
+        const botones = el("div", "flex gap-2 shrink-0");
+        if (h.modalidad !== "en_linea") {
+            const usar = el("button", "horario-usar bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Pasar lista");
+            usar.type = "button";
+            usar.setAttribute("aria-label", "Pasar lista de la clase del " + DIAS[h.dia_semana] + " a las " + horaCorta(h));
+            usar.addEventListener("click", () => usarHorario(h, ultimaFecha(h)));
+            botones.appendChild(usar);
+        }
+        const quitar = el("button", "horario-quitar border border-brand-200 dark:border-brand-700 hover:border-red-400 text-red-600 dark:text-red-400 font-semibold px-3 py-1.5 rounded-lg text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "Quitar");
+        quitar.type = "button";
+        quitar.dataset.confirmar = "no";
+        // Dos toques en el propio botón, como borrar una ficha: esto se toca
+        // desde el celular.
+        quitar.addEventListener("click", () => {
+            if (quitar.dataset.confirmar === "no") {
+                quitar.dataset.confirmar = "si";
+                quitar.textContent = "¿Seguro? Sale de tu horario";
+                return;
+            }
+            quitarHorario(h);
+        });
+        botones.appendChild(quitar);
+        li.appendChild(botones);
+        lista.appendChild(li);
+    });
+}
+
+function usarHorario(h, fecha) {
+    limpiar();
+    document.getElementById("fecha").value = fecha;
+    document.getElementById("hora").value = horaCorta(h);
+    document.getElementById("minutos").value = h.duracion_min || 60;
+    document.getElementById("titulo").value = h.titulo || quienesDe(h) || "";
+    const ids = alumnosDelHorario(h);
+    marcados = new Set(ids);
+    pintarCasillas();
+    const [, m, d] = fecha.split("-").map(Number);
+    const cuando = "tu clase del " + DIAS[h.dia_semana] + " " + d + " de " + MESES[m - 1] + " a las " + horaCorta(h);
+    if (!h.grupo && !h.subgrupo_id) {
+        avisar("Ficha llena con " + cuando + ". Esa clase no tiene un grupo fijo: marca a quien llegó.");
+    } else if (!ids.length) {
+        avisar("Ficha llena con " + cuando + ", pero en tu lista no hay nadie de " + quienesDe(h).toLowerCase() +
+            ". Marca a quien llegó.", true);
+    } else {
+        avisar("Ficha llena con " + cuando + ". Quedaron marcados " +
+            (ids.length === 1 ? "el único alumno" : "los " + ids.length + " alumnos") + " de " +
+            quienesDe(h).toLowerCase() + ": desmarca a quien no llegó y guarda.");
+    }
+    document.getElementById("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("buscar").focus();
+}
+
+async function cargarHorario() {
+    const { data, error } = await sb.from("horario_clases")
+        .select("id, dia_semana, hora, duracion_min, grupo, subgrupo_id, titulo, modalidad, desde, hasta")
+        .eq("profesor_id", session.user.id)
+        .is("hasta", null)
+        .order("dia_semana").order("hora");
+    if (error) { avisar("No se pudo cargar tu horario: " + error.message, true); return false; }
+    // Lunes primero: la semana de clases empieza el lunes, no el domingo.
+    horario = (data || []).slice().sort((a, b) =>
+        ((a.dia_semana + 6) % 7) - ((b.dia_semana + 6) % 7) || String(a.hora).localeCompare(String(b.hora)));
+    return true;
+}
+
+async function cargarQuienes() {
+    const sel = document.getElementById("h-quienes");
+    const [g, sg] = await Promise.all([sb.rpc("grupos_de_mis_alumnos"), sb.rpc("mis_subgrupos")]);
+    subgrupos = (sg && sg.data) || [];
+    const grupos = ((g && g.data) || []).filter((x) => x.grupo);
+    if (grupos.length) {
+        const og = el("optgroup");
+        og.label = "Grupos";
+        grupos.forEach((x) => {
+            const o = el("option", null, x.grupo + " (" + x.alumnos + ")");
+            o.value = "g:" + x.grupo;
+            og.appendChild(o);
+        });
+        sel.appendChild(og);
+    }
+    const conGente = subgrupos.filter((x) => (x.cuantos || 0) > 0);
+    if (conGente.length) {
+        const og = el("optgroup");
+        og.label = "Tus subgrupos";
+        conGente.forEach((x) => {
+            const o = el("option", null, x.nombre + " (" + x.cuantos + ")");
+            o.value = "s:" + x.id;
+            og.appendChild(o);
+        });
+        sel.appendChild(og);
+    }
+}
+
+async function agregarHorario() {
+    const minutos = parseInt(document.getElementById("h-minutos").value, 10);
+    const hora = document.getElementById("h-hora").value;
+    if (!hora) return avisar("Falta la hora de la clase.", true);
+    if (!minutos || minutos < 5 || minutos > 600) return avisar("La clase tiene que durar entre 5 y 600 minutos.", true);
+    const q = document.getElementById("h-quienes").value;
+    const fila = {
+        profesor_id: session.user.id,
+        dia_semana: parseInt(document.getElementById("h-dia").value, 10),
+        hora: hora,
+        duracion_min: minutos,
+        grupo: q.startsWith("g:") ? q.slice(2) : null,
+        subgrupo_id: q.startsWith("s:") ? q.slice(2) : null,
+        titulo: document.getElementById("h-titulo").value.trim() || null,
+        modalidad: document.getElementById("h-modalidad").value,
+        desde: hoyCR(),
+    };
+    const boton = document.getElementById("h-guardar");
+    boton.disabled = true;
+    const { error } = await sb.from("horario_clases").insert(fila);
+    boton.disabled = false;
+    if (error) return avisar("No se pudo agregar al horario: " + error.message, true);
+    document.getElementById("h-titulo").value = "";
+    avisar("Listo: los " + DIAS[fila.dia_semana] + " a las " + hora + " quedaron en tu horario.");
+    if (await cargarHorario()) pintarHorario();
+}
+
+async function quitarHorario(h) {
+    const hoy = hoyCR();
+    const { error } = h.desde >= hoy
+        ? await sb.from("horario_clases").delete().eq("id", h.id)
+        : await sb.from("horario_clases").update({ hasta: sumarDias(hoy, -1) }).eq("id", h.id);
+    if (error) return avisar("No se pudo quitar: " + error.message, true);
+    avisar("Esa clase salió de tu horario. Las semanas en que sí estaba siguen contando en tus informes.");
+    if (await cargarHorario()) pintarHorario();
+}
+
+/* ?horario=<id>&fecha=AAAA-MM-DD es a donde lleva el aviso de la ficha que
+   falta. Una fecha del futuro no se usa: se pasa lista de lo que ya pasó. */
+function abrirDesdeLaDireccion() {
+    const q = new URLSearchParams(location.search);
+    const id = q.get("horario");
+    if (!id) return;
+    const h = horario.find((x) => x.id === id);
+    if (!h) { avisar("Esa clase ya no está en tu horario. Puedes llenar la ficha a mano.", true); return; }
+    let fecha = q.get("fecha") || "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha > hoyCR() || diaDe(fecha) !== h.dia_semana) fecha = ultimaFecha(h);
+    usarHorario(h, fecha);
+}
+
 async function init() {
     const { data } = await sb.auth.getSession();
     session = data.session;
@@ -585,6 +855,8 @@ async function init() {
     ponerInstante(null);
     if (!(await cargarAlumnos())) return;
     pintarCasillas();
+    await cargarQuienes();
+    if (await cargarHorario()) pintarHorario();
     if (await cargarFichas(0)) pintarFichas();
 
     /* El mismo selector de subgrupos de Tareas y Exámenes, escrito una sola
@@ -625,10 +897,12 @@ async function init() {
             pintarCuenta();
         });
     }
+    abrirDesdeLaDireccion();
 }
 
 document.getElementById("ficha").addEventListener("submit", guardar);
 document.getElementById("cancelar").addEventListener("click", limpiar);
+document.getElementById("h-guardar").addEventListener("click", agregarHorario);
 document.getElementById("marcar-todos").addEventListener("click", () => marcarTodos(true));
 document.getElementById("marcar-ninguno").addEventListener("click", () => marcarTodos(false));
 document.getElementById("buscar").addEventListener("input", (e) => {
