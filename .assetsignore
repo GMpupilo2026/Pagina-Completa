@@ -55,6 +55,6 @@ herramientas/video
 # El estado local de `wrangler dev`: no es del sitio.
 .wrangler
 
-# Las imágenes para redes sociales (herramientas/portada-facebook.js): se suben
-# a mano a Facebook, ninguna página las pide.
+# Las imágenes para redes sociales (herramientas/imagenes-redes.js): se suben
+# a mano a Facebook e Instagram, ninguna página las pide.
 img/redes
