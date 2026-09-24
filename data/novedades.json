@@ -1,6 +1,12 @@
 {
  "cambios": [
   {
+   "hash": "ea0a5ab",
+   "fecha": "2026-09-23T23:55:54-06:00",
+   "titulo": "Panel: quien administra no da clase, y tiene su propio panel",
+   "pr": 414
+  },
+  {
    "hash": "0b932e1",
    "fecha": "2026-09-23T23:36:16-06:00",
    "titulo": "Avisos propios, migas de pan, buscador del panel, selector de Informes y «?» de la guía",

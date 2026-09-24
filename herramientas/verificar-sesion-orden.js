@@ -139,11 +139,76 @@ async function pruebaAlumna(browser) {
   await ctx.close();
 }
 
+/* El modo sencillo: quien lleva menos de tres clases arranca viendo lo básico
+   (el tablero, su plan, sus alumnos e invitar), y lo demás queda a un clic.
+   Se mide con checkVisibility(), no con el atributo. */
+async function pruebaModoSencillo(browser) {
+  console.log("\n=== El modo sencillo de la clase en vivo ===");
+  const seVe = (page, sel) => page.evaluate((x) => {
+    const el = document.querySelector(x);
+    return el ? el.checkVisibility() : null;
+  }, sel);
+  const pestanas = (page) => page.evaluate(() =>
+    [...document.querySelectorAll(".teacher-tab-btn")].filter((b) => b.checkVisibility()).map((b) => b.dataset.tab));
+
+  // 1. Una profesora con su primera clase: no hay preferencia guardada, decide la cuenta.
+  let r = await abrir(browser, "u-profe", CLASE_ABIERTA, null, { modoSencillo: null });
+  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
+  igual("con una sola clase, arranca en modo sencillo: solo Mi plan, Alumnos e Invitar",
+    (await pestanas(r.page)).join(","), "plan,alumnos,controles");
+  igual("«Tu material» queda guardado", await seVe(r.page, "#toolbar-material"), false);
+  igual("pero el tablero de la clase sigue a mano", await seVe(r.page, "#reset-board-btn"), true);
+  igual("y el motor también", await seVe(r.page, "#engine-panel"), true);
+  igual("se dice qué está guardado y dónde", /Táctica, Preguntar, Practicar y tu material/.test(await r.page.textContent("#modo-sencillo-nota")), true);
+  igual("y el botón dice lo que hace", await r.page.textContent("#modo-sencillo-btn"), "🧰 Ver todas las herramientas");
+
+  await r.page.click("#modo-sencillo-btn");
+  igual("«Ver todas las herramientas» devuelve las seis pestañas",
+    (await pestanas(r.page)).join(","), "plan,tactica,preguntar,practicar,alumnos,controles");
+  igual("y «Tu material»", await seVe(r.page, "#toolbar-material"), true);
+  igual("la nota se va", await r.page.textContent("#modo-sencillo-nota"), "");
+  igual("y queda anotado en el aparato", await r.page.evaluate(() => localStorage.getItem("sesion_modo_sencillo_v1")), "0");
+
+  await r.page.click("#teacher-tab-tactica");
+  await r.page.click("#modo-sencillo-btn");
+  igual("volver al modo sencillo con Táctica abierta la cierra y abre Mi plan",
+    await r.page.evaluate(() => document.querySelector('.teacher-tab-btn[aria-selected="true"]').dataset.tab), "plan");
+  igual("y su panel es el que se ve", await seVe(r.page, "#plan-panel"), true);
+  igual("y también queda anotado", await r.page.evaluate(() => localStorage.getItem("sesion_modo_sencillo_v1")), "1");
+  igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
+  await r.ctx.close();
+
+  // 2. Quien ya da clases (tres o más): nada se mueve de lugar.
+  const VIEJA = (n) => ({ id: "s-v" + n, title: null, created_by: "u-profe", ended_at: "2026-09-1" + n + "T16:00:00Z",
+                          started_at: "2026-09-1" + n + "T15:00:00Z", notes: null });
+  r = await abrir(browser, "u-profe", CLASE_ABIERTA, { class_sessions: [CLASE_ABIERTA, VIEJA(1), VIEJA(2)] }, { modoSencillo: null });
+  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
+  igual("con tres clases dadas, todas las herramientas", (await pestanas(r.page)).length, 6);
+  igual("y el botón ofrece el modo sencillo", await r.page.textContent("#modo-sencillo-btn"), "🪶 Volver al modo sencillo");
+  await r.ctx.close();
+
+  // 3. Lo que eligió en este aparato manda sobre la cuenta.
+  r = await abrir(browser, "u-profe", CLASE_ABIERTA, { class_sessions: [CLASE_ABIERTA, VIEJA(1), VIEJA(2)] }, { modoSencillo: "1" });
+  await r.page.waitForSelector("#teacher-toolbar:not(.hidden)", { timeout: 10000 });
+  await r.page.waitForFunction(() => document.getElementById("modo-sencillo-btn").textContent !== "");
+  igual("si eligió el modo sencillo, se queda aunque ya dé clases", (await pestanas(r.page)).join(","), "plan,alumnos,controles");
+  await r.ctx.close();
+
+  // 4. A la alumna, nada de esto.
+  r = await abrir(browser, "u-ana", CLASE_ABIERTA, null, { modoSencillo: null });
+  await r.page.waitForSelector("#app:not(.hidden)", { timeout: 10000 });
+  igual("a la alumna no se le pinta el botón del modo sencillo", await seVe(r.page, "#modo-sencillo-fila"), false);
+  await r.ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfesor(browser);
     await pruebaAlumna(browser);
+    await pruebaModoSencillo(browser);
   } finally {
     await browser.close();
   }

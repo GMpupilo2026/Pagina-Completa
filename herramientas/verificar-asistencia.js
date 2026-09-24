@@ -62,6 +62,12 @@ const FICHAS = [
    una de la plataforma agregada HOY — la primera se quita cerrándola (para que
    los meses pasados sigan contando) y la segunda se borra de verdad. */
 const HOY_CR = new Intl.DateTimeFormat("en-CA", { timeZone: ZONA, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+/* La página corre con el reloj FIJO al mediodía de ese mismo día en Costa
+   Rica. Sin esto, «hoy» lo calculaban dos relojes —el del verificador al
+   arrancar y el de la página al guardar—, y una corrida que cruzaba la
+   medianoche de Costa Rica (las 06:00 UTC, en pleno horario del CI) daba el
+   23 en uno y el 24 en el otro: tres fallos sin nada roto. */
+const MEDIODIA_CR = new Date(HOY_CR + "T12:00:00-06:00");
 const HORARIO = [
   { id: "h-1", profesor_id: "u-oscar", dia_semana: 2, hora: "15:00:00", duracion_min: 90, grupo: "7B",
     subgrupo_id: null, titulo: null, modalidad: "presencial", desde: "2026-09-01", hasta: null },
@@ -246,6 +252,7 @@ async function abrir(browser, pagina, perfil) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfil) }));
+  await page.clock.setFixedTime(MEDIODIA_CR);
   await page.goto(BASE + "/" + pagina, { waitUntil: "networkidle" });
   return { page, errores };
 }

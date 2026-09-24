@@ -202,6 +202,45 @@ lector de pantalla a un sitio que no era), que abrir una herramienta propia **no
 escriba en `game_state`** —que es justo lo que promete el rótulo «solo lo ves
 tú»— y que a la alumna no se le pinte nada de esto.
 
+### El modo sencillo de la clase en vivo
+
+Aun ordenada, la pantalla del profesor tiene catorce controles delante, y la
+primera clase se da con los alumnos mirando. El modo sencillo deja a la vista lo
+que hace falta para darla y guarda el resto a un clic.
+
+- **Qué se ve en modo sencillo**: el grupo «El tablero — lo ve toda la clase»
+  (Reiniciar, Flechas, Ocultar, Guardar PGN), el motor de análisis y las
+  pestañas «Mi plan», «Alumnos» e «Invitar». **Qué se guarda**: el grupo «Tu
+  material» (Curso, Archivos, PDF, Armar posición) y las pestañas Táctica,
+  Preguntar y Practicar. Una nota encima lo dice con esas palabras, y el
+  botón «🧰 Ver todas las herramientas» las devuelve.
+- **Arranca así solo quien lleva menos de tres clases**
+  (`CLASES_PARA_TODAS_LAS_HERRAMIENTAS`). A quien ya da clases no se le mueve
+  nada de lugar. Son tres y no «ninguna» porque la clase se registra al empezar
+  (`abrirClaseSiHaceFalta`): con «ninguna», recargar a mitad de la primera
+  clase le cambiaría la pantalla en plena clase. Las clases se cuentan en la
+  base con `{ count: "exact", head: true }`. Si no se puede saber, se muestran
+  todas las herramientas.
+- **Lo que uno elige con el botón manda**: se guarda en el aparato
+  (`sesion_modo_sencillo_v1`, como la pestaña abierta) y desde ahí gana a la
+  cuenta de clases, en los dos sentidos.
+- Si la pestaña abierta se esconde (se vuelve al modo sencillo con Táctica
+  delante), se abre «Mi plan», que es la primera. Una pestaña escondida con su
+  panel abierto sería un panel al que no se puede volver.
+- **El botón va FUERA de la barra de herramientas**, en su propia fila: dentro
+  de la barra solo viven sus dos grupos, y `verificar-sesion-orden.js` no deja
+  ni un botón suelto. En modo sencillo se quita la línea que separaba los dos
+  grupos, porque no separa nada.
+- Lo prueba `pruebaModoSencillo` en `verificar-sesion-orden.js`:
+  - con una clase arranca sencillo; con tres, completo;
+  - lo elegido en el aparato manda;
+  - volver al sencillo con Táctica abierta abre «Mi plan»;
+  - a la alumna no se le pinta nada.
+
+  El doble compartido (`verificar-clase-registrada.js`) ahora sabe contar, y su
+  `abrir()` entra por defecto con todas las herramientas (preferencia `"0"`),
+  para que las pruebas de siempre encuentren cada botón.
+
 ### La sesión en vivo se abre cuando el profesor la abre
 
 El alumno entraba al tablero a cualquier hora. Veía la posición que hubiera
