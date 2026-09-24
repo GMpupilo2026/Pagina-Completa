@@ -285,12 +285,16 @@
     prog = document.getElementById("ac-progreso");
     live = document.getElementById("ac-avisos");
     var html;
+    // La cookie que mira worker.js, escrita ANTES de pedir el fragmento.
+    if (window.SesionCursos) window.SesionCursos.guardar(s);
     try {
       var r = await fetch("../protegido/" + slug + ".html", { credentials: "same-origin" });
-      if (!r.ok) throw new Error("no_content");
+      if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : "no_content");
       html = await r.text();
     } catch (e) {
-      body.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
+      body.innerHTML = e && e.message === "sin_acceso"
+        ? '<p class="text-sm text-red-500">Tu acceso a la Academia no está activo. En <a href="../../clases.html" class="underline font-semibold">tu panel</a> te decimos cómo renovarlo.</p>'
+        : '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
       return;
     }
     body.innerHTML = html;

@@ -46,8 +46,13 @@
     if (cta) { cta.hidden = false; cta.classList.remove("hidden"); }
   }
 
-  function showError() {
-    contentBody.innerHTML = '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
+  function showError(err) {
+    // 403: el worker dejó pasar la sesión pero acceso_vigente() dijo que no.
+    // "Recarga la página" ahí sería mandar a alguien a reintentar lo que no va
+    // a cambiar.
+    contentBody.innerHTML = err && err.message === "sin_acceso"
+      ? '<p class="text-sm text-red-500">Tu acceso a la Academia no está activo. En <a href="../clases.html" class="underline font-semibold">tu panel</a> te decimos cómo renovarlo.</p>'
+      : '<p class="text-sm text-red-500">No se pudo cargar el contenido de las lecciones. Recarga la página.</p>';
   }
 
   function inject(html) {
@@ -68,7 +73,7 @@
   function fetchAndInject() {
     fetch(contentUrl, { credentials: "same-origin" })
       .then(function (r) {
-        if (!r.ok) throw new Error("no_content");
+        if (!r.ok) throw new Error(r.status === 403 ? "sin_acceso" : "no_content");
         return r.text();
       })
       .then(inject)
@@ -81,6 +86,8 @@
       .getSession()
       .then(function (res) {
         var session = res && res.data && res.data.session;
+        // La cookie que mira worker.js, escrita ANTES de pedir el fragmento.
+        if (session && window.SesionCursos) window.SesionCursos.guardar(session);
         return !!session;
       })
       .catch(function () { return false; });

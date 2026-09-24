@@ -8,28 +8,73 @@ están en `CLAUDE.md`.
 
 Decisión vigente: el **temario es público** (portada, descripción y lista de
 lecciones de `cursos/<curso>.html`, visibles sin sesión) pero el **contenido
-completo de las lecciones se muestra solo con sesión de Academia iniciada**,
-a propósito, para motivar la inscripción.
-
-Se probó primero a hacer cumplir esto en el servidor (`worker.js` exigiendo
-una cookie firmada, canjeada por la sesión vía `/api/curso-auth-session`) y
-se abandonó: esa cookie dependía de la variable de entorno `COURSE_PASSWORD`
-en Cloudflare, y cuando falta (se había borrado cuando los cursos fueron
-públicos del todo) deniega a **todos**, incluidas cuentas válidas — bloqueó
-al propio profesor. Decisión explícita: no depende de nada en Cloudflare.
+completo de las lecciones y su material solo lo baja una cuenta de la Academia
+con el acceso vigente**, a propósito, para motivar la inscripción.
 
 - `cursos/<curso>.html`: portada y temario del curso — público, enlazado desde
   el menú del sitio y el pie de página.
-- `cursos/protegido/<curso>.html`: el fragmento con las lecciones completas
-  (texto, video, presentación y PDF). `js/curso-acceso.js` decide, solo en el
-  navegador, si lo pide e inyecta: si `sb.auth.getSession()` devuelve una
-  sesión, lo hace; si no, muestra un aviso invitando a iniciar sesión.
-  **No hay bloqueo de servidor** — es la misma página para todos, el
-  contenido cambia según haya sesión o no. `worker.js` solo sirve archivos.
-- `cursos/recursos/<curso>/`: presentaciones (.pptx) y hojas de ejercicios
-  (.pdf) — sin ningún bloqueo, ni siquiera informativo (se enlazan desde
-  dentro del fragmento de arriba).
-- No hace falta ninguna variable de entorno en Cloudflare para esto.
+- `cursos/protegido/<curso>.html` (y `protegido/data/`): el fragmento con las
+  lecciones completas y los datos de sus tableros.
+- `cursos/recursos/<curso>/`: cuadernillos, presentaciones y material
+  accesible.
+
+### El candado de los cursos está en el servidor, y no depende de ningún secreto
+
+**Hasta septiembre de 2026 no había candado**: `js/curso-acceso.js` decidía en
+el navegador si pedir el fragmento, y eso decide qué se **pinta**, no qué se
+puede bajar. Cualquiera con la dirección exacta se llevaba el curso entero y
+los 75 MB de material.
+
+**El primer candado se abandonó** y conviene saber por qué: `worker.js` exigía
+una cookie firmada con una variable de entorno de Cloudflare
+(`COURSE_PASSWORD`), canjeada por la sesión vía `/api/curso-auth-session`.
+Cuando la variable se perdió, dejó afuera a **todos**, incluido el profesor.
+
+**El de ahora no guarda nada en Cloudflare**:
+
+- `js/supabase-client.js` (`window.SesionCursos`) copia el token de acceso de
+  la sesión a la cookie `ai_sesion_cursos`, con `Path=/cursos/` y
+  `SameSite=Lax`: el navegador la manda solo ahí. Es el mismo token que ya está
+  en `localStorage`, así que no expone nada nuevo. Se escribe al cargar, en cada
+  cambio de sesión y **justo antes de pedir un fragmento** (`curso-acceso.js`,
+  `curso-academia.js` y `sesion.html` llaman a `SesionCursos.guardar()`), para
+  no depender del orden en que supabase-js avisa que renovó el token.
+- `worker.js` le pregunta a Supabase `acceso_vigente()` con ese token y la
+  clave pública (la misma de `supabase-client.js`; el verificador comprueba que
+  no se separen). PostgREST rechaza un token vencido, mal firmado o de otro
+  proyecto, y la función respeta el interruptor de acceso pagado (ver «El
+  candado de verdad: políticas RESTRICTIVAS»): es **la misma pregunta que ya
+  cierra la base**. La respuesta se recuerda 5 minutos por token para no
+  preguntar por cada archivo de una lección.
+- **Sin sesión: 401. Sin acceso vigente: 403.** Si era una página (abrir un PDF
+  desde un enlace), se explica en una página propia que ofrece iniciar sesión y
+  vuelve a la **portada del curso**: el login solo acepta volver a un `.html`.
+  Esa página la arma el worker, así que `_headers` no le pone nada: lleva sus
+  propias cabeceras de seguridad.
+- **Si Supabase no contesta (red, 5xx), se deja pasar**, la misma regla que
+  `acceso-vigente.js`: una caída no puede dejar sin su material a todos los que
+  pagaron. En ese caso solo pasa un token que dice ser de este proyecto y no
+  venció; una cookie cualquiera no se cuela. **Cuando Supabase contesta, decide
+  solo Supabase**: si el formato del token cambiara algún día, el worker no
+  puede repetir el error del candado anterior y dejar afuera a todo el mundo.
+- **`run_worker_first` en `wrangler.jsonc` es la mitad del candado.** Con
+  Workers Assets, un archivo que existe se sirve directo, **sin pasar por el
+  worker**: sin esa línea el código está perfecto y el candado no existe, sin
+  ningún error. Solo nombra las dos carpetas; el resto del sitio se sirve como
+  siempre.
+- Lo que queda abierto a propósito: la portada y el temario, y los libros de la
+  raíz (`guia-del-profesor.pdf`, `libro-de-diagnostico.pdf`…), que no son de
+  ningún curso.
+
+**Al tocar `worker.js`, `wrangler.jsonc` o `SesionCursos`, correr
+`node herramientas/verificar-worker.js`** (sin red: cambia `fetch` por un
+Supabase de mentira). Comprueba sin cookie, con un token vencido o inventado,
+con acceso y sin él, con Supabase caído, que la portada siga pública, que la
+URL, la clave y el nombre de la cookie sean los del sitio, y que
+`run_worker_first` nombre las dos carpetas. Para verlo con el runtime de
+Cloudflare: `npx wrangler dev` **desde una copia** del sitio sin
+`node_modules` — en la carpeta del repositorio se queda recargando en bucle,
+porque vigila `./` entero y escribe su estado en `.wrangler/`.
 
 Para armar un curso nuevo del tipo "clásico" (lecciones de texto con su
 presentación y su PDF de ejercicios) está `herramientas/curso-generar.py`: se
@@ -185,8 +230,8 @@ Sin sesión, sin red o si la consulta falla, responde que **no**: el peor caso e
 que quien administra vea la página como la ve un alumno, nunca al revés.
 
 Como todo filtro del sitio, esto decide qué se **pinta**, no qué se puede leer:
-`cursos/protegido/<curso>.html` ya viaja entero a cualquiera con sesión
-iniciada, así que abrirlo acá no destapa nada que estuviera bajo llave.
+`cursos/protegido/<curso>.html` ya viaja entero a cualquier cuenta con el
+acceso vigente, así que abrirlo acá no destapa nada que estuviera bajo llave.
 
 **Al tocar cualquiera de los cuatro candados, correr `node
 herramientas/verificar-contenido-admin.js`** (con el sitio en localhost:8777 y
@@ -273,10 +318,10 @@ texto, no en esa lista.
   bloquearla dejaría el material fuera del alcance de quien lo lee con lector de
   pantalla, que es justamente a quien esta tanda quiere incluir. Bloquear la
   impresión y la extracción a la vez sería contradecir la mitad del encargo.
-- Como todo acá, es protección del formato PDF, no una caja fuerte: quien
-  conozca la dirección lo baja igual y con una herramienta puede quitarle las
-  restricciones. `robots.txt` deja `cursos/recursos/` fuera de los buscadores
-  —un filtro informativo más, no una puerta—.
+- Es protección del formato PDF, no una caja fuerte: con una herramienta se le
+  pueden quitar las restricciones. La puerta es otra: `cursos/recursos/` solo
+  lo baja una cuenta con el acceso vigente (ver «El candado de los cursos está
+  en el servidor»), y `robots.txt` lo deja además fuera de los buscadores.
 
 ### Cómo se regenera
 

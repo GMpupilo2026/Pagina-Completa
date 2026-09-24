@@ -142,6 +142,11 @@ y hace otra cosa. Estas reglas existen por eso.
   `NOMBRE_Y_PADRE`, diciendo de cuál cuelga.
 - El worker publica **todo el directorio**: lo que no deba verse va en
   `.assetsignore` (ahí están `CLAUDE.md`, `docs/`, `supabase/`, `herramientas/`…).
+- **El worker solo corre donde lo nombra `run_worker_first`** (`wrangler.jsonc`):
+  el resto lo sirve Cloudflare directo, sin pasar por `worker.js`. Hoy son
+  `cursos/protegido/` y `cursos/recursos/`, que exigen una cuenta con el acceso
+  vigente (ver «El candado de los cursos está en el servidor»). Un candado
+  nuevo en el worker sin su línea ahí no existe.
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
   `supabase/` tal cual se aplicaron, y se corre
   `node herramientas/verificar-punto-restauracion.js`. Las funciones se arman
@@ -186,7 +191,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 | [`seguimiento-del-alumno`](docs/decisiones/seguimiento-del-alumno.md) | Tareas, plan de clase y planes de arranque, bitácora, exámenes | tareas, planes, planes-semilla, notas, examenes |
 | [`informes`](docs/decisiones/informes.md) | `informes.html`, «Cómo viene», tiempo por sección, informes a la casa, reportes de actividades | informes, informe-casa, tiempo-secciones, reportes |
 | [`cobros-acceso-y-tienda`](docs/decisiones/cobros-acceso-y-tienda.md) | Cobros y avisos de morosidad, paquetes de acceso y cupos, tienda | cobros, accesos, tienda |
-| [`cursos-y-material`](docs/decisiones/cursos-y-material.md) | Cursos (temario público, contenido con sesión), material de estudio, catálogo, guía del profesor, video, contenido abierto para admin | curso-adaptado, material, guia-profesores, contenido-admin |
+| [`cursos-y-material`](docs/decisiones/cursos-y-material.md) | Cursos (temario público, contenido con sesión y su candado en el worker), material de estudio, catálogo, guía del profesor, video, contenido abierto para admin | worker, curso-adaptado, material, guia-profesores, contenido-admin |
 | [`entrenamiento`](docs/decisiones/entrenamiento.md) | Progreso sincronizado, logros, hub de Entrenamiento, aperturas, Estudio, precisión posicional, diagnóstico, arbitraje, Confites, Sonar | entreno, aperturas, aperturas-pagina, fichas, estudio, precision-posicional, diagnostico, libro-diagnostico, arbitraje, logros, sonar |
 | [`juegos-y-torneos`](docs/decisiones/juegos-y-torneos.md) | Bot de Oscar, torneos en vivo y ritmos, retar en línea, el profesor juega, aviso de pareo, reloj y triple repetición | bot-oscar, torneo-en-vivo, ritmos, profesor-juega, juego-aviso, reloj-y-repeticion |
 | [`paneles`](docs/decisiones/paneles.md) | Panel de la Academia (`clases.html`), primeros pasos, burbuja de conectados, `admin.html`, inscripciones a torneos | panel, camino-entrenador, plan-recursos, burbuja, admin |

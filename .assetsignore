@@ -51,3 +51,6 @@ herramientas/material
 herramientas/planes
 herramientas/plantillas
 herramientas/video
+
+# El estado local de `wrangler dev`: no es del sitio.
+.wrangler
