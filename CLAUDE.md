@@ -2194,6 +2194,51 @@ lo nuevo saltan 3, subiendo el logo a otra carpeta 1, y pisando el tema 1.
   Era el doble el que estaba incompleto: en la base real, quien administra,
   supervisa o coordina sin academia recibe la lista entera.
 
+#### El tablero por academia: el negocio se mide por academia
+
+Supervisión lee profesor por profesor, pero el negocio se mide por academia.
+`tablero-academias.html` (atajo «📊 Tablero por academia» en Herramientas y en
+`admin.html` › Reportes; «📊 Tablero de tu academia» en el grupo «Tus
+profesores» del supervisor) pone **una fila por academia** con las cifras del
+mes: clases y horas (en línea y presenciales), cuántas del horario se dieron,
+alumnos que entrenaron contra inscritos, informes mensuales enviados y sin
+enviar, gasto de «Mejorar informe» contra su tope, y cobros pendientes.
+
+- **Lo arma `public.tablero_academias(mes)` y NO cuenta nada por su lado**: las
+  clases, las horas y el horario salen de `actividad_profesor()` sumada por
+  cada profesor miembro — la misma cuenta del informe mensual y de
+  supervisión. Una segunda cuenta diría otra cosa del mismo profesor.
+- **Quien administra ve todas; un supervisor, SOLO la suya y sin nada de IA.**
+  Las columnas de IA le llegan en null desde la base (la IA es solo de
+  administración) y la pantalla ni pinta su encabezado: un «US$0.00» ya diría
+  que existe. Un profesor, una llamada sin usuario y `anon` no entran
+  (comprobado en SQL). El permiso va envuelto en `coalesce(..., false)`.
+- **Quien está en dos academias cuenta en las dos**, con todas sus clases del
+  mes (la clase no dice de qué academia es). Por eso la fila de abajo se llama
+  «Suma de las filas» y una nota dice que puede ser mayor que la de la
+  plataforma.
+- **Los cobros van por moneda** (un `jsonb` con una entrada por moneda) y son
+  los pendientes de HOY, no los del mes: un cobro vencido en agosto sigue
+  pendiente en septiembre. La suma de abajo junta colones con colones.
+- Lo que pide actuar va **escrito**: «⚠ 2 sin enviar» (con «el mes no ha
+  terminado» si todavía no terminó), «⚠ 1 sin dar», «⚠ 2 vencidos»,
+  «se acabó el presupuesto». Sin horario dice «Sin horario», nunca «0 de 0».
+- Sin academias, a quien administra se le ofrece «Crear una academia desde un
+  grupo»; al supervisor sin academia se le dice que se la asigna quien
+  administra, sin pedir el tablero.
+- Cuesta ~200 ms por profesor (es `actividad_profesor()` por cada uno): con dos
+  academias y cuatro profesores tarda un segundo. El día que sean decenas, lo
+  que hay que acelerar es esa función, no escribir otra cuenta.
+
+**Al tocar la página o la función, correr `node
+herramientas/verificar-tablero-academias.js`** (con el sitio en localhost:8777
+y playwright). Comprueba que se pida el mes del selector y otra vez al
+cambiarlo, qué dice cada celda, que las monedas no se sumen entre sí, que un
+nombre con etiquetas se vea literal, que un color que no es color no se pinte,
+que en el celular la página no se salga por el costado, el vacío, el error, y
+que al supervisor no le quede ni un «US$» en la página. Está probado que falla
+de verdad: pintándole la columna de IA al supervisor, saltan 2.
+
 **Las cuatro fases que se decidieron con el dueño están hechas**: las academias
 con su supervisor y las funciones del coordinador, su marca, «Mejorar informe» y
 el detalle del informe mensual (ver «El detalle del informe mensual» más arriba).

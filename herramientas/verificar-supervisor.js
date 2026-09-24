@@ -53,7 +53,7 @@ const CON_MODO = (modo) => ({
   storageState: { cookies: [], origins: [{ origin: BASE, localStorage: [{ name: "modo_vista_admin_v1", value: modo }] }] },
 });
 
-const PROHIBIDOS = /^(entreno\/|juegos|torneos|tv|tablero|logros|sesion|tareas|examenes|articulos|cursos\/|partidas|planes|asistencia)/;
+const PROHIBIDOS = /^(entreno\/|juegos|torneos|tv|tablero\.html|logros|sesion|tareas|examenes|articulos|cursos\/|partidas|planes|asistencia)/;
 
 async function pruebaSupervisor(browser) {
   console.log("\n=== El panel de quien supervisa ===");
