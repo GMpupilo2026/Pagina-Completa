@@ -32,7 +32,6 @@ const path = require("path");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
 
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, full_name: "Karina Rojas", email: "k@x.cr" };
 const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "a@x.cr" };
@@ -166,8 +165,6 @@ window.__llamadas = [];
 
 async function contexto(navegador, initScript) {
   const ctx = await navegador.newContext({ serviceWorkers: "block" });
-  await ctx.route("**/chess.min.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());

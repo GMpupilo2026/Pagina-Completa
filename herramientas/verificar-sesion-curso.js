@@ -40,24 +40,13 @@
          node herramientas/verificar-sesion-curso.js                          */
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
 
 const CURSO = "el-mapa-de-los-finales";
-
-/* chess.js llega por CDN en la página; acá se sirve el de node_modules, igual
-   que en los demás verificadores: el navegador de la prueba no tiene por qué
-   tener internet, y la versión tiene que ser la misma que usa el sitio. */
-let CHESSJS = "";
-for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-                  .concat([path.join(RAIZ, "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
 
 const PROFE = { id: "u-profe", role: "profesor", is_admin: false, es_coordinador: false, full_name: "Karina Rojas", email: "karina@x.cr", grupo: null, invitaciones_max: 5, invitaciones_usadas: 0 };
 const ALUMNA = { id: "u-ana", role: "alumno", is_admin: false, es_coordinador: false, full_name: "Ana Rojas", email: "ana@x.cr", grupo: "7B" };
@@ -164,7 +153,6 @@ async function abrir(browser, perfiles, quien, semilla) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(perfiles, quien, semilla) }));
@@ -675,7 +663,6 @@ async function pruebaMiniaturas(browser) {
     const ctx = await browser.newContext({ serviceWorkers: "block" });
     await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
     await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-    await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
     await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
     await ctx.route("**/js/supabase-client.js", (r) =>
       r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso([PROFE, ALUMNA], "u-profe", semilla) }));

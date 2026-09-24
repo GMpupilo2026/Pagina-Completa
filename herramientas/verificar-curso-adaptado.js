@@ -31,7 +31,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install chess.js@0.10.3
          node herramientas/verificar-curso-adaptado.js                         */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
@@ -49,7 +49,6 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
 const STUB = `
 window.SUPABASE_URL = "https://ejemplo.supabase.co";
 window.SUPABASE_ANON_KEY = "clave-de-mentira";
@@ -64,7 +63,6 @@ window.sb = {
 
 async function abrirCurso(browser, curso, adaptado) {
   const ctx = await browser.newContext();
-  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());

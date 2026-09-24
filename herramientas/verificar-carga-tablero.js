@@ -42,27 +42,12 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-/* chess.js viene de un CDN que este entorno no alcanza. Se le sirve la copia
-   local: lo que se mide es el sitio, no la red de la caja donde corre. */
-function copiaLocalDeChessJs() {
-  const candidatos = [
-    process.env.CHESSJS_PATH,
-    path.join(process.cwd(), "node_modules/chess.js/chess.js"),
-  ].filter(Boolean);
-  for (const c of candidatos) if (fs.existsSync(c)) return fs.readFileSync(c, "utf8");
-  return null;
-}
-
-async function abrir(contexto, ruta, chessjs) {
+async function abrir(contexto, ruta) {
   const p = await contexto.newPage();
   const pedidos = [];
   p.on("request", (r) => pedidos.push(r.url()));
   const errores = [];
   p.on("pageerror", (e) => errores.push(String(e)));
-  if (chessjs) {
-    await p.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) =>
-      r.fulfill({ status: 200, contentType: "application/javascript", body: chessjs }));
-  }
   await p.goto(BASE + ruta, { waitUntil: "load" });
   return { p, pedidos, errores, pidio: (re) => pedidos.some((u) => re.test(u)) };
 }
@@ -74,11 +59,6 @@ async function jugar(p, desde, hasta) {
 }
 
 (async () => {
-  const chessjs = copiaLocalDeChessJs();
-  if (!chessjs) {
-    console.log("Falta chess.js. Instalalo con: npm install chess.js@0.10.3");
-    process.exit(1);
-  }
   const navegador = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   const contexto = await navegador.newContext({
     viewport: { width: 412, height: 915 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
@@ -86,7 +66,7 @@ async function jugar(p, desde, hasta) {
 
   // ------------------------------------------------------- la portada, al cargar
   console.log("=== La portada, recién cargada ===");
-  const portada = await abrir(contexto, "/index.html", chessjs);
+  const portada = await abrir(contexto, "/index.html");
   await portada.p.waitForTimeout(4000);   // tiempo de sobra para lo que arranque solo
 
   igual("el tablero se dibujó entero",
@@ -139,7 +119,7 @@ async function jugar(p, desde, hasta) {
 
   // ------------------------------------------- la página del tablero y su panel
   console.log("\n=== La página del tablero (con su panel de partidas) ===");
-  const tablero = await abrir(contexto, "/tablero.html", chessjs);
+  const tablero = await abrir(contexto, "/tablero.html");
   await tablero.p.waitForTimeout(3000);
   igual("tampoco baja la procedencia al cargar", tablero.pidio(PESADOS.procedencia), "false");
   igual("el panel de partidas está en esta página",

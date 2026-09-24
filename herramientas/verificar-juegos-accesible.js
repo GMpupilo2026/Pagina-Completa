@@ -27,16 +27,6 @@ const RAIZ = path.resolve(__dirname, "..");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
-/* chess.js llega por CDN en la página; acá se sirve el de node_modules, igual
-   que en el resto de los verificadores. Sin él las páginas de partida se quedan
-   en "Cargando…" y esta prueba no mediría nada. */
-let CHESSJS = null;
-for (const base of (module.paths || []).concat([path.join(RAIZ, "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (fs.existsSync(f)) { CHESSJS = fs.readFileSync(f, "utf8"); break; }
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
-
 const ANA   = { id: "u-ana",   full_name: "Ana Rojas",  email: "ana@x.cr",   role: "alumno", is_admin: false };
 const BRUNO = { id: "u-bruno", full_name: "Bruno Mena", email: "bruno@x.cr", role: "alumno", is_admin: false };
 const PERFILES = [ANA, BRUNO];
@@ -144,8 +134,6 @@ function igual(nombre, hallado, esperado) {
 
 async function abrir(browser, url, datos, usuarioId, modoAdaptado) {
   const ctx = await browser.newContext();
-  await ctx.route("**/cdnjs.cloudflare.com/**/chess*.js",
-    (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.addInitScript(preferencias(modoAdaptado));
   if (datos) await ctx.addInitScript(doble(datos, usuarioId));
   const page = await ctx.newPage();

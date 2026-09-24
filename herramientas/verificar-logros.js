@@ -14,7 +14,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-logros.js                */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -77,25 +77,12 @@ function clienteFalsoConInserts() {
 `;
 }
 
-function leerChessJs() {
-  const path = require("path");
-  const fs = require("fs");
-  for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-                    .concat([path.join(__dirname, "..", "node_modules")])) {
-    const f = path.join(base, "chess.js", "chess.js");
-    if (fs.existsSync(f)) return fs.readFileSync(f, "utf8");
-  }
-  return "";
-}
-const CHESSJS = leerChessJs();
-
 async function abrirConInserts(browser, ruta, esperar) {
   const page = await browser.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalsoConInserts() }));

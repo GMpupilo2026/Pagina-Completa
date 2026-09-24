@@ -11,20 +11,12 @@
          node herramientas/verificar-aperturas-pagina.js                      */
 const path = require("path");
 const fs = require("fs");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { LINEAS } = require(path.join(__dirname, "..", "js", "aperturas-lineas.js"));
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 
-// chess.js local, para saber de qué casilla a cuál va cada jugada.
-let CHESSJS = "";
-for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-                  .concat([path.join(__dirname, "..", "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
 
 const CLIENTE_FALSO = `
 window.__guardado = {};
@@ -61,7 +53,6 @@ async function abrir(browser, tema) {
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CLIENTE_FALSO }));
   await page.goto(BASE + "/entreno/aperturas.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });

@@ -165,7 +165,7 @@ async function escribir(page, texto) {
 }
 
 async function navegador() {
-  const { chromium } = require("playwright");
+  const { chromium } = require("./lib/playwright-con-sesion");
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     console.log("\n— Sin sesión —");

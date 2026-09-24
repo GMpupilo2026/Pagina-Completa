@@ -38,7 +38,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          npm install playwright chess.js@0.10.3
          node herramientas/verificar-cuadro-comandos.js                        */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
@@ -56,7 +56,6 @@ function igual(nombre, hallado, esperado) {
 function mal(t) { console.log("  ✗ " + t); fallos += 1; }
 function bien(t) { console.log("  ✓ " + t); }
 
-const CHESSJS = fs.readFileSync(require.resolve("chess.js"), "utf8");
 
 /* Supabase de mentira: estas páginas piden la sesión y el perfil al cargar, y
    sin respuesta se quedan en "Cargando…" para siempre. Devuelve un profesor
@@ -97,13 +96,7 @@ const SIN_SW = { serviceWorkers: "block" };
 
 async function abrir(browser, ruta, adaptado) {
   const ctx = await browser.newContext(SIN_SW);
-  // Ojo con el orden: playwright resuelve la ÚLTIMA ruta que encaje, así que la
-  // de chess.js va después de la de su CDN. Al revés, chess.js llegaba vacío y
-  // la página moría con "Chess is not defined" — que es justo lo que esta
-  // prueba tiene que ver en la página, no en su propio andamiaje.
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));
@@ -431,8 +424,6 @@ async function pruebaCasilla(browser) {
   console.log("\n=== Una pregunta que se contesta con una casilla ===");
   const ctx = await browser.newContext(SIN_SW);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));
@@ -473,8 +464,6 @@ async function pruebaUltimaPregunta(browser) {
   console.log("\n=== La última pregunta ===");
   const ctx = await browser.newContext(SIN_SW);
   await ctx.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: STUB }));

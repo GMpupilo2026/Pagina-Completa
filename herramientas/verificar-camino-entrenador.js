@@ -35,7 +35,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { clienteFalso, DEMO, PROFE, ALUMNOS } = require("./guia-capturas.js");
 
 const RAIZ = path.join(__dirname, "..");
@@ -103,14 +103,7 @@ async function abrir(navegador, pagina, rpc) {
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdn.jsdelivr.net/**", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  // chess.js se sirve DE VERDAD, y DESPUÉS de las dos de arriba: playwright
-  // resuelve la última ruta registrada, así que puesta antes la tapa la de
-  // cdnjs y la clase en vivo se queda en «Cargando…» para siempre.
-  await ctx.route("**/chess.js/**", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript",
-                body: fs.readFileSync(path.join(RAIZ, "node_modules/chess.js/chess.js"), "utf8") }));
+  // chess.js no se intercepta: vive en js/vendor/chess.js y lo sirve el sitio.
   await ctx.route("**/js/supabase-client.js", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript",
                 body: clienteFalso({ perfiles: PERFILES, yo: ENTRENADORA, rpc: rpc || {} }) }));

@@ -26,7 +26,7 @@
    Con el sitio en localhost:8777 y playwright:
        node herramientas/verificar-supervisor.js
 */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const P = require("./verificar-panel.js");
 
 const { panel, BASE, CHROME, PROFE, ADMIN } = P;

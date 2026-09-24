@@ -176,7 +176,7 @@ async function pruebaInformeMensual(browser) {
 (async () => {
   pruebaListas();
   if (process.argv.includes("--sin-navegador")) return terminar();
-  const { chromium } = require("playwright");
+  const { chromium } = require("./lib/playwright-con-sesion");
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaAsistencia(browser);

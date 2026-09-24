@@ -17,7 +17,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-contenido-admin.js                     */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
@@ -62,14 +62,6 @@ function clienteFalso(quien) {
 `;
 }
 
-// chess.js local, si está (npm install chess.js@0.10.3).
-let CHESSJS = "";
-for (const dir of [process.env.NODE_PATH || "", path.join(__dirname, "..", "node_modules")]) {
-  for (const base of String(dir).split(path.delimiter).filter(Boolean)) {
-    const f = path.join(base, "chess.js", "chess.js");
-    if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
-  }
-}
 
 let fallos = 0;
 function igual(nombre, hallado, esperado) {
@@ -90,9 +82,6 @@ async function abrir(browser, ruta, quien) {
   page.on("pageerror", (e) => errores.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errores.push("console: " + m.text()); });
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
-  // chess.js viene de cdnjs y acá no hay salida a internet: se sirve el que
-  // esté instalado, o nada (las listas se pintan igual).
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(quien) }));

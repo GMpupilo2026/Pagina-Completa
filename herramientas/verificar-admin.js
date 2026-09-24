@@ -31,7 +31,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-admin.js                                 */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const fs = require("fs");
 const path = require("path");

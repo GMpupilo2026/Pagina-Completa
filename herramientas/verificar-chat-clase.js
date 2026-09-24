@@ -26,7 +26,7 @@
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       npm install playwright chess.js@0.10.3
  *       node herramientas/verificar-chat-clase.js                            */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const { clienteFalso, abrir, igual, CHROME, fallos } = require("./verificar-clase-registrada.js");
 

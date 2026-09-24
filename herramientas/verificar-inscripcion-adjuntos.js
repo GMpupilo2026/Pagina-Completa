@@ -30,7 +30,7 @@ function igual(nombre, hallado, esperado) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   const page = await ctx.newPage();
   const errores = [];
-  // three.js (el fondo animado) sale de un CDN que acá va vacío: su error no es de esta prueba.
+  // three.js (el fondo animado) no es de esta prueba: si falla, no cuenta.
   page.on("pageerror", (e) => { if (!/THREE/.test(String(e))) errores.push(String(e)); });
 
   const subidas = [];
@@ -38,7 +38,6 @@ function igual(nombre, hallado, esperado) {
   let respuestaRegistro = { status: 200, body: { success: true } };
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await ctx.route("**/cdnjs.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   // Turnstile de mentira: deja el token donde lo deja el de verdad.
   await ctx.route("**/challenges.cloudflare.com/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
     body: `window.turnstile = { reset() {} };

@@ -97,15 +97,22 @@ supabase db push
 Sin el CLI, se pegan una por una en el editor SQL, **en orden**: varias
 dependen de la anterior (la que agrega una columna a una tabla que otra creó).
 
-- Academia: `supabase/migraciones/` — 208 migraciones.
+- Academia: `supabase/migraciones/` — 250 migraciones (septiembre de 2026).
 - Inscripciones: `supabase/migraciones-colegios/` — 5.
 
 **Después de aplicarlas, comparar contra el retrato** que está en
-`supabase/esquema/inventario-academia.txt`: 64 tablas, 116 funciones, 186
-políticas, 21 triggers, 133 índices, 15 tablas en Realtime, 4 tareas de cron.
-Si falta una política, nadie se entera hasta que a alguien se le abre algo que
-no debía, o se le cierra algo que sí. La consulta que arma ese inventario está
-en `herramientas/verificar-punto-restauracion.js`.
+`supabase/esquema/inventario-academia.txt` (esquemas `public` e `interno`):
+82 tablas, 189 funciones, 246 políticas, 28 triggers, 222 índices, 15 tablas en
+Realtime, 6 tareas de cron. Si falta una política, nadie se entera hasta que a
+alguien se le abre algo que no debía, o se le cierra algo que sí. Se compara
+corriendo `herramientas/inventario-esquema.sql` en la base restaurada: tiene
+que salir, línea por línea, lo mismo que el archivo.
+
+**El retrato se vuelve a armar con cada migración** (la misma consulta, y lo
+que devuelve va debajo de la cabecera del archivo, con `# al-dia-con:` puesto
+en la versión de la última migración). `verificar-punto-restauracion.js` falla
+si hay migraciones más nuevas que esa: llegó a decir 186 políticas cuando había
+252, y nada lo avisaba.
 
 **Al bajar una migración, el archivo tiene que quedar byte a byte** como
 `array_to_string(statements, E'\n\n')` —sin salto de línea al final si el

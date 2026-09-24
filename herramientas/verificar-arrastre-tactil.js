@@ -28,13 +28,6 @@ function igual(nombre, hallado, esperado) {
   else console.log("  ✓ " + nombre + ": " + a);
 }
 
-function chessjs() {
-  for (const c of [process.env.CHESSJS_PATH, path.join(process.cwd(), "node_modules/chess.js/chess.js")]) {
-    if (c && fs.existsSync(c)) return fs.readFileSync(c, "utf8");
-  }
-  return null;
-}
-
 /* Un gesto de dedo de verdad: empieza, se desliza y levanta. */
 async function dedo(ctx, p, desde, hasta) {
   const cdp = await ctx.newCDPSession(p);
@@ -72,9 +65,7 @@ window.supabase = { createClient: function () {
 } };
 `;
 
-async function conDobles(p, js) {
-  await p.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) =>
-    r.fulfill({ status: 200, contentType: "application/javascript", body: js }));
+async function conDobles(p) {
   await p.route("**/cdn.jsdelivr.net/**", (r) =>
     r.fulfill({ status: 200, contentType: "application/javascript", body: SUPABASE_FALSO }));
   await p.route("**/fonts.googleapis.com/**", (r) =>
@@ -82,11 +73,11 @@ async function conDobles(p, js) {
   await p.route("**/fonts.gstatic.com/**", (r) => r.abort());
 }
 
-async function probarTablero(navegador, js, { nombre, ruta, sel, pieza, destino, ajena, vacia, preparar }) {
+async function probarTablero(navegador, { nombre, ruta, sel, pieza, destino, ajena, vacia, preparar }) {
   console.log("\n=== " + nombre + " ===");
   const ctx = await navegador.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const p = await ctx.newPage();
-  await conDobles(p, js);
+  await conDobles(p);
   await p.goto(BASE + ruta, { waitUntil: "load" });
   await p.waitForTimeout(2500);
   if (preparar) await preparar(p);
@@ -123,13 +114,11 @@ async function probarTablero(navegador, js, { nombre, ruta, sel, pieza, destino,
 }
 
 (async () => {
-  const js = chessjs();
-  if (!js) { console.log("Falta chess.js: npm install chess.js@0.10.3"); process.exit(1); }
   const navegador = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
 
   // La portada y una página de entreno: el arreglo vive en js/board-drag.js, que
   // comparten los 16 tableros, así que con dos alcanza para ver que sirve.
-  await probarTablero(navegador, js, {
+  await probarTablero(navegador, {
     nombre: "El tablero de la portada", ruta: "/index.html", sel: "#chessboard",
     pieza: "e2", destino: "e4", ajena: "e7", vacia: "e5",
   });
@@ -162,7 +151,7 @@ async function probarTablero(navegador, js, { nombre, ruta, sel, pieza, destino,
     console.log("\n=== " + nombre + " ===");
     const ctx = await navegador.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const p = await ctx.newPage();
-    await conDobles(p, js);
+    await conDobles(p);
     await p.goto(BASE + ruta, { waitUntil: "load" });
     await p.waitForTimeout(2000);
     if (preparar) await preparar(p);

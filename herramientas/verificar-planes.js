@@ -20,26 +20,13 @@
  * Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
  *       node herramientas/verificar-planes.js
  * Necesita playwright y `npm install chess.js@0.10.3`.  */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const fs = require("fs");
 const path = require("path");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
 const RAIZ = path.join(__dirname, "..");
-
-/* chess.js llega por CDN en la página; acá se sirve el de node_modules, igual
-   que en los demás verificadores: el navegador de la prueba no tiene por qué
-   tener internet, y la versión tiene que ser la misma que usa el sitio. Sin
-   él, `PosicionValida.motivo()` revienta y el armador deja de validar — que es
-   justo lo que esta prueba viene a comprobar. */
-let CHESSJS = "";
-for (const base of String(process.env.NODE_PATH || "").split(path.delimiter).filter(Boolean)
-                  .concat([path.join(RAIZ, "node_modules")])) {
-  const f = path.join(base, "chess.js", "chess.js");
-  if (!CHESSJS && fs.existsSync(f)) CHESSJS = fs.readFileSync(f, "utf8");
-}
-if (!CHESSJS) { console.error("Falta chess.js. Instálalo con:  npm install chess.js@0.10.3"); process.exit(2); }
 
 const PROFE = { id: "prof-1", role: "profesor", is_admin: false, full_name: "Sebastián", email: "s@x.cr" };
 const ALUMNA = { id: "a-1", role: "alumno", is_admin: false, full_name: "Ana Rojas", email: "ana@x.cr" };
@@ -164,7 +151,6 @@ async function abrir(browser, pagina, datos, usuarioId) {
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(datos, usuarioId) }));
   await page.goto(BASE + pagina, { waitUntil: "networkidle" });
   try {
@@ -389,7 +375,6 @@ async function pruebaPlanAjeno(browser) {
 async function pruebaResumen(browser) {
   console.log("\n=== Cómo se lee un renglón ===");
   const page = await browser.newPage();
-  await page.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));
   // Aquí solo se lee `PlanClase.resumen()`, que es lógica pura y no toca la
   // base — pero la página sí: sin sesión se va a login.html y se lleva
   // `PlanClase` con ella. Antes esto no pasaba por un accidente (la librería

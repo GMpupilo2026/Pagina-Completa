@@ -19,7 +19,7 @@
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-asistencia.js                          */
-const { chromium } = require("playwright");
+const { chromium } = require("./lib/playwright-con-sesion");
 const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";

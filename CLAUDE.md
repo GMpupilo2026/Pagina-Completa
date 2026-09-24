@@ -150,7 +150,9 @@ y hace otra cosa. Estas reglas existen por eso.
   vigente (ver «El candado de los cursos está en el servidor»). Un candado
   nuevo en el worker sin su línea ahí no existe.
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
-  `supabase/` tal cual se aplicaron, y se corre
+  `supabase/` tal cual se aplicaron, se vuelve a armar el retrato del esquema
+  (`herramientas/inventario-esquema.sql` → `supabase/esquema/inventario-academia.txt`,
+  con su `# al-dia-con:`) y se corre
   `node herramientas/verificar-punto-restauracion.js`. Las funciones se arman
   con `node herramientas/funciones-armar.js` (copia `_compartido/`). Ver
   `RESTAURAR.md`.
@@ -165,7 +167,10 @@ y hace otra cosa. Estas reglas existen por eso.
   `getComputedStyle`/`checkVisibility()`, nunca la clase ni el atributo.
 - Los dobles de Supabase apuntan los filtros en el RESOLVER (no en `update()`),
   filtran de verdad, conocen `mis_funciones_coordinacion` y los contextos van
-  con `serviceWorkers: "block"`. Si un verificador falla por el doble, se
+  con `serviceWorkers: "block"`. Un verificador que abre páginas de la Academia
+  con el doble en `js/supabase-client.js` (no como `window.sb`) usa
+  `require("./lib/playwright-con-sesion")`: sin una sesión guardada, la guardia
+  de sesión lo manda al login antes de cargar nada. Si un verificador falla por el doble, se
   arregla el doble, no la página.
 - Un verificador nuevo entra solo al CI. Antes de dar uno por bueno, romper a
   propósito lo que comprueba y ver que salte.
@@ -186,7 +191,7 @@ el archivo de cada tema dice cuál corresponde a cada pieza.
 
 | Tema | Qué hay | Verificadores |
 |---|---|---|
-| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga y primer pintado, metadatos, encabezado, migas, «?» de la guía y Ctrl + K, avisos propios, pantallas de carga y listas vacías, punto de restauración | worker, pwa, css, vendor, carga-tablero, carga-paginas, metadatos, notificaciones, avisos, ayuda, atajo, estados, punto-restauracion |
+| [`sitio-e-infraestructura`](docs/decisiones/sitio-e-infraestructura.md) | El sitio: dominio y correo, PWA, CSS compilado, librerías propias, carga y primer pintado, metadatos, encabezado, migas, «?» de la guía y Ctrl + K, avisos propios, pantallas de carga y listas vacías, punto de restauración | worker, pwa, css, vendor, carga-tablero, carga-paginas, guardia-sesion, metadatos, notificaciones, avisos, ayuda, atajo, estados, punto-restauracion |
 | [`permisos-y-roles`](docs/decisiones/permisos-y-roles.md) | Varios profesores, equipos, subgrupos, coordinación, supervisor, academias (marca, IA, tablero), roles, funciones de trigger, texto ajeno | varios-profesores, subgrupos, coordinacion, supervisor, academias, informe-mensual, mejorar-informe, tablero-academias |
 | [`cuentas-y-formularios`](docs/decisiones/cuentas-y-formularios.md) | Formularios de inscripción y adjuntos, freno de los envíos sin cuenta, alta de cuentas, alumno sin correo, invitación y bienvenida | formularios, envios-publicos, inscripcion-adjuntos, alumno-sin-correo, bienvenida, admin |
 | [`clase-en-vivo`](docs/decisiones/clase-en-vivo.md) | `sesion.html`: material del profesor, videollamada, abrir/cerrar y registrar la clase, ficha presencial y horario, chat, coordenadas, miniaturas, Táctica y Archivos, la clase con lector de pantalla | clase-registrada, sesion-orden, sesion-curso, videollamada, asistencia, chat-clase, clase-adaptada, panel |

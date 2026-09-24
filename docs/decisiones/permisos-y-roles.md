@@ -1248,6 +1248,25 @@ que falla de verdad: haciendo que el volcado reemplace en vez de sumar, salta.
   huérfano —con su mensaje escrito y su estado viejo—: mirándolo a él, la
   prueba daría verde sobre una pantalla donde no se ve nada.
 
+## Tablas con RLS y sin ninguna política, a propósito
+
+Supabase avisa `rls_enabled_no_policy` sobre cuatro tablas. No es un olvido:
+es la forma más cerrada que hay. Con RLS encendida y ninguna política, nadie
+lee ni escribe desde el navegador, ni siquiera con permiso de tabla; y además
+`anon` y `authenticated` **no tienen permiso de tabla** sobre ellas. Solo las
+tocan funciones `SECURITY DEFINER`, que validan antes:
+
+| Tabla | La escribe o la lee | Para qué |
+|---|---|---|
+| `avisos_ficha_faltante` | `avisar_fichas_faltantes()` | Que el aviso de ficha faltante salga una vez por clase y día (la llave primaria) |
+| `avisos_ia_tope` | `avisar_tope_ia()` | Que el aviso de tope de IA salga una vez (la llave primaria, no un `if`) |
+| `informes_profesor_detalle` | `guardar_informe_mensual()`, `detalle_informe_mensual()` | La foto del informe mensual enviado: se lee solo por la función, que decide quién la ve |
+| `recordatorios_informe` | `recordar_informes_mensuales()` | Qué recordatorio de informe ya se mandó (periodo, tipo, persona) |
+
+**Una tabla nueva que solo usa una función va igual**: RLS encendida, sin
+política y sin `grant` a `anon` ni a `authenticated`. Si algún día hace falta
+leerla desde una página, se agrega una función que conteste, no una política.
+
 ## Una función de TRIGGER no es una API
 
 Postgres le da `EXECUTE` a **PUBLIC** a toda función nueva, y `anon` y
