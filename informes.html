@@ -3204,6 +3204,14 @@ function areasFlojasArbitraje(fila) {
                 if (temaPedido && [...selectorTema.options].some((o) => o.value === temaPedido)) {
                     selectorTema.value = temaPedido;
                 }
+                // Y a un alumno, informes.html?alumno=<id>: así lo abre el buscador
+                // del panel. Solo si está en la lista de quien mira —la que ya
+                // armó la base—; si no está, se queda el resumen de siempre.
+                const alumnoPedido = new URLSearchParams(location.search).get("alumno");
+                const selectorAlumno = document.getElementById("student-filter");
+                if (alumnoPedido && [...selectorAlumno.options].some((o) => o.value === alumnoPedido)) {
+                    selectorAlumno.value = alumnoPedido;
+                }
                 await applyTeacherFilters();
             } else {
                 await loadStudentReport();
@@ -3211,5 +3219,5 @@ function areasFlojasArbitraje(fila) {
         }
         init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

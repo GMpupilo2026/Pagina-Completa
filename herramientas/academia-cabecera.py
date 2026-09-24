@@ -582,6 +582,32 @@ def poner_migas(ruta, s):
     return s[:corte] + migas(ruta) + s[corte:]
 
 
+# El Ctrl + K de toda la Academia (js/atajo-buscar.js): lleva al buscador del
+# panel. No va en clases.html (tiene el suyo), ni en sesion.html (salir de la
+# clase tiene que cerrar antes la asistencia) ni en examen.html (salir del
+# examen lo congela): ver la cabecera de ese archivo.
+ATAJO_INICIO = "<!-- atajo: inicio -->"
+ATAJO_FIN = "<!-- atajo: fin -->"
+SIN_ATAJO = {"clases.html", "sesion.html", "examen.html"}
+
+
+def poner_atajo(ruta, s):
+    i = s.find(ATAJO_INICIO)
+    if i >= 0:
+        j = s.find(ATAJO_FIN, i)
+        s = s[:i] + s[j + len(ATAJO_FIN):]
+    if ruta in SIN_ATAJO:
+        return s
+    cierre = s.rfind("</body>")
+    if cierre < 0:
+        print(f"⚠️  {ruta}: no tiene </body>, se queda sin el Ctrl + K.")
+        return s
+    arriba = "../" * ruta.count("/")
+    return (s[:cierre] + ATAJO_INICIO
+            + f'<script src="{arriba}js/atajo-buscar.js" data-arriba="{arriba}" defer></script>'
+            + ATAJO_FIN + s[cierre:])
+
+
 def procesar(ruta):
     ruta_abs = os.path.join(RAIZ, ruta)
     s = open(ruta_abs, encoding="utf-8").read()
@@ -605,6 +631,7 @@ def procesar(ruta):
     s = poner_modo_vista(ruta, s)
     s = poner_marca(ruta, s)
     s = poner_ayuda(ruta, s)
+    s = poner_atajo(ruta, s)
 
     if s != original:
         open(ruta_abs, "w", encoding="utf-8").write(s)

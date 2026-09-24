@@ -210,6 +210,19 @@ async function abrir(browser, pagina, perfil, gente) {
   return { page, errores };
 }
 
+/* coordinacion.html?buscar=… : así llega el buscador del panel al tocar a un
+   profesor. La página abre con la búsqueda puesta y se la pregunta a la base. */
+async function pruebaBuscarPorEnlace(browser) {
+  console.log("\n=== Llegar a Coordinación con una búsqueda puesta ===");
+  const { page } = await abrir(browser, "coordinacion.html?buscar=Luis%20Vega", COORD);
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("el campo llega con el nombre", await page.inputValue("#buscar"), "Luis Vega");
+  // La lista de la página (de a 50); antes pide los conteos y a los docentes.
+  igual("y la primera lista que pide ya lo busca",
+    await page.evaluate(() => (window.__rpc.filter((r) => r.rpc === "mi_gente" && r.args.p_limite === 50)[0] || { args: {} }).args.p_busqueda), "Luis Vega");
+  await page.close();
+}
+
 async function pruebaPanel(browser) {
   console.log("\n=== El panel de Coordinación ===");
   const { page, errores } = await abrir(browser, "coordinacion.html", COORD);
@@ -616,6 +629,7 @@ async function pruebaEquipos(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaPanel(browser);
+    await pruebaBuscarPorEnlace(browser);
     await pruebaFicha(browser);
     await pruebaSinProfesores(browser);
     await pruebaAlumna(browser);

@@ -239,7 +239,7 @@ function igual(nombre, hallado, esperado) {
   }
 }
 
-async function abrir(browser, datos, usuarioId) {
+async function abrir(browser, datos, usuarioId, ruta) {
   const page = await browser.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -253,7 +253,7 @@ async function abrir(browser, datos, usuarioId) {
   // Las confirmaciones son de js/avisos.js: se aprietan como una persona, en
   // TODAS las páginas que abre este verificador.
   await page.addInitScript(contestarAvisos);
-  await page.goto(BASE + "/informes.html", { waitUntil: "networkidle" });
+  await page.goto(BASE + (ruta || "/informes.html"), { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   return { page, errores };
 }
@@ -1108,6 +1108,25 @@ async function pruebaClaseGrande(browser) {
    Los flujos de contenido de js/reporte-pdf.js van sin comprimir, así que se
    pueden leer sin ninguna librería: cada página dice «/Marca Do» si lleva la
    marca, y el texto va entre paréntesis en WinAnsi (o sea, en latin1). */
+/* informes.html?alumno=<id>: así llega el buscador del panel. Abre el informe
+   de ese alumno si está en la lista de quien mira; si no, el resumen. */
+async function pruebaAlumnoPorEnlace(browser) {
+  console.log("\n=== Llegar al informe de un alumno por su enlace ===");
+  const datos = () => ({
+    rpc: { informes_resumen_alumnos: [ANA, BRUNO, CARLA], informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 } },
+    tablas: { profiles: [{ id: "prof-1", role: "profesor", is_admin: false, full_name: "Karina", email: "k@x.cr" }],
+              training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [] },
+  });
+  let r = await abrir(browser, datos(), "prof-1", "/informes.html?alumno=a-1");
+  await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
+  igual("?alumno= deja elegido a ese alumno y abre su informe", await r.page.inputValue("#student-filter"), "a-1");
+  await r.page.close();
+  r = await abrir(browser, datos(), "prof-1", "/informes.html?alumno=alguien-ajeno");
+  await r.page.waitForTimeout(500);
+  igual("con un alumno que no es suyo, se queda el resumen de siempre", await r.page.inputValue("#student-filter"), "");
+  await r.page.close();
+}
+
 async function pruebaPdfVisitante(browser) {
   console.log("\n=== El diagnóstico de un visitante, en PDF ===");
   const VISITANTES = [
@@ -1177,6 +1196,7 @@ async function pruebaPdfVisitante(browser) {
     await pruebaCompartirPlanes(browser);
     await pruebaNombreAjeno(browser);
     await pruebaPdfVisitante(browser);
+    await pruebaAlumnoPorEnlace(browser);
   } finally {
     await browser.close();
   }
