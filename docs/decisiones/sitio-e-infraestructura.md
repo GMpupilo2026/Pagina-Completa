@@ -1,0 +1,653 @@
+# El sitio y su infraestructura
+
+Notas de diseño para Claude, sacadas del CLAUDE.md de la raíz: cómo se sirve, se despliega, se respalda y se encuentra el sitio.
+El índice de todos los temas y las reglas que valen para todo el sitio
+están en `CLAUDE.md`.
+
+## El dominio: `www` manda al dominio sin `www`
+
+`worker.js` redirige `www.ajedrez-integral.com` a `ajedrez-integral.com` con un
+301. **No es una preferencia de estilo.** Para el navegador son **dos orígenes
+distintos**, así que si los dos sirvieran el sitio, quien entrara por `www`
+tendría:
+
+- otro `localStorage` — o sea otro progreso, otro tema y otra clase elegida;
+- **otro service worker**, es decir una segunda app instalable con el estado en
+  blanco;
+- **otra suscripción de avisos push**, que no recibiría nada de la primera.
+
+Y de paso: todos los `canonical`, el `sitemap.xml` y el Open Graph apuntan al
+dominio sin `www`, así que servir las dos direcciones sería contenido duplicado.
+
+- **Las dos correcciones del worker se resuelven en UNA respuesta.** Quien entra
+  por `www` a una dirección vieja de "Los 100 finales" recibe un solo 301, ya
+  con el dominio y la dirección arreglados. Encadenar dos redirecciones —una
+  para el dominio y otra para la dirección— es el error natural si cada arreglo
+  devuelve lo suyo, y le cuesta un viaje de más a quien entra.
+- Lo único que hay que hacer **fuera del repositorio** es que el nombre
+  exista. En Cloudflare son dos cosas, en este orden: un **CNAME `www` →
+  `ajedrez-integral.com` con el proxy encendido** (la nube naranja; en "Solo
+  DNS" el tráfico no pasa por Cloudflare y el worker nunca ve la petición) y
+  una **ruta `www.ajedrez-integral.com/*`** apuntando al worker. La ruta
+  necesita que el nombre ya exista en el DNS, por eso ese orden.
+  El camino corto es "Añadir dominio" en la pestaña Dominios del worker, que
+  hace las dos cosas de una; pero acá ese diálogo respondía "ninguna zona
+  coincide con www.ajedrez-integral.com" aunque la zona estaba en la misma
+  cuenta, así que queda escrito el de dos pasos, que no depende de esa
+  búsqueda.
+- **Al tocar `worker.js`, correr `node herramientas/verificar-worker.js`.** No
+  necesita ni Cloudflare ni internet: el worker es una función que recibe una
+  petición y devuelve una respuesta, así que se la llama y se mira qué contesta,
+  con un `env.ASSETS` de mentira. Lo que se comprueba es lo que no se ve: que la
+  redirección **conserve la dirección completa y sus parámetros**. Una que se
+  coma lo que va después del dominio manda a la portada a quien venía a un
+  curso, y de eso no se entera nadie salvo quien se quedó mirando la página que
+  no era.
+
+### El correo del dominio
+
+El dominio **manda y recibe por caminos distintos**, y conviven porque viven en
+nombres distintos. Confundirlos es lo único que puede romper esto:
+
+- **Sale** por Resend, con sus registros en **`send.ajedrez-integral.com`** (el
+  MX y el SPF) y la firma en `resend._domainkey`. Es por donde salen los
+  informes a la casa y los avisos de cobro.
+- **Entra** por Cloudflare Email Routing, con sus tres MX, su SPF y su DKIM
+  (`cf2024-1._domainkey`) en el **dominio raíz**. No es un buzón: reenvía a una
+  cuenta de correo de siempre.
+
+**No se borran los registros de `send.` ni el `resend._domainkey`.** Sin ellos
+el sitio deja de mandar los informes y los avisos, y —como casi todo lo de
+correo— no da ningún error: simplemente dejan de llegar.
+
+- **`informes@` es la dirección que más importa.** El sitio manda desde ahí a
+  las familias, o sea que es correo que invita a contestar. Antes de esto el
+  raíz no tenía ningún MX: la respuesta de una madre rebotaba y no se enteraba
+  nadie, ni ella ni quien daba la clase.
+- **El catch-all va en "Enviar a un correo", no en "Descartar".** "Descartar"
+  no rechaza: acepta el correo y lo tira, así que quien escribió mal la
+  dirección se queda convencido de que llegó. Es la misma clase de falla
+  callada contra la que están escritas media docena de decisiones de este
+  archivo.
+- **Un solo SPF por nombre.** Si algún día manda otro servicio desde
+  `@ajedrez-integral.com`, su `include:` va DENTRO del TXT que ya está, nunca
+  en un segundo registro: con dos, los dos se invalidan y el correo empieza a
+  caer en spam sin avisar.
+- El reenvío solo trae correo. Para **responder** desde una dirección del
+  dominio hace falta además un SMTP —Gmail → "Enviar como", con
+  `smtp.resend.com` y una API key de Resend—, y eso es de cada persona, no del
+  sitio.
+
+## El sitio se instala como app (PWA)
+
+`manifest.json`, `sw.js`, `js/pwa.js` y los iconos de `img/app/` hacen que el
+sitio se pueda instalar en el celular: queda un icono, abre a pantalla completa
+sin barra del navegador y entra directo a la Academia (`start_url` es
+`/clases.html`, que ya redirige al login sin sesión).
+
+Es además **el cimiento de la app de Google Play**: la ruta elegida es una TWA
+—la app *es* esta PWA corriendo en el motor de Chrome—, así que publicar en el
+sitio actualiza la app sin pasar por la tienda. Lo que falta para eso son
+trámites, no código, y está escrito en
+`herramientas/plantillas/LEEME-app-android.md` con su `assetlinks.json` listo
+para pegarle la huella de firma.
+
+### El service worker es deliberadamente tonto
+
+**La red va SIEMPRE primero y la caché es solo la red de seguridad para cuando
+no hay señal.** Servir de la caché primero haría que el sitio arrancara más
+rápido, y abriría la puerta a la peor falla que tiene este sitio: **HTML nuevo
+con CSS viejo**. El CSS se compila y los archivos no llevan huella en el
+nombre, así que una hoja vieja en caché deja la página sin la mitad de sus
+clases — y eso **no da error**: simplemente se ve mal, que es exactamente
+contra lo que existe `verificar-css.js`.
+
+Lo que el service worker no toca nunca:
+
+- nada que no sea de este dominio (Supabase, los CDN): ni lo mira;
+- nada que no sea `GET`;
+- `cursos/protegido/` y `cursos/recursos/` — guardar el contenido de la
+  Academia o el material de uso docente sería dejarlos en el teléfono después
+  de cerrar sesión;
+- las respuestas que no vengan bien: un 404 no se guarda.
+
+**`sw.js` y `manifest.json` llevan `Cache-Control: no-cache` en `_headers`.** Si
+el navegador se queda con un `sw.js` viejo, la app deja de actualizarse y no hay
+forma de avisarle a nadie: sigue sirviendo lo de antes sin dar ningún error.
+
+### Los iconos no son el favicon
+
+El favicon del sitio es un emoji, y un emoji no sirve de icono de app: cada
+sistema lo dibuja distinto y las tiendas piden un PNG. `node
+herramientas/pwa-iconos.js` dibuja el caballo del juego de piezas que el sitio
+ya usa (leído de `js/finales-100.js` vía `lib/tablero-svg.js`), en ámbar sobre
+el azul del encabezado. **Van dos de 512 y no uno**: Android recorta el icono en
+círculo, así que el `maskable` lleva bastante más margen — sin eso le come las
+orejas al caballo.
+
+### La cabecera va en TODAS las páginas
+
+`python3 herramientas/pwa-cabecera.py` pone el `manifest`, el `theme-color`, el
+icono de iPhone y `js/pwa.js` en las 76 páginas del sitio, no solo en la
+portada: la gente entra por donde sea —un enlace a un curso, lo que le mandaron
+por WhatsApp— y el celular **solo ofrece instalar si la página por la que entró
+lo declara**. Se puede correr todas las veces que se quiera; reconoce lo suyo
+por las marcas `<!-- app: inicio -->`.
+
+El aviso de instalación de `clases.html` (`#instalar-app`) **arranca oculto** y
+`js/pwa.js` lo destapa solo cuando el navegador confirma que se puede instalar.
+Un botón que no haría nada es peor que ningún botón.
+
+**Se muestra UNA vez.** Antes salía en cada carga de la página, porque el
+navegador dispara `beforeinstallprompt` cada vez: quien entraba a diario lo veía
+a diario, y un cartel que se repite deja de leerse y empieza a molestar. Ahora
+se apunta en `localStorage` (`app_instalar_v2`, con `visto` y `rechazado`) y solo
+vuelve en un caso: **quien apretó "Ahora no" lo ve de nuevo una semana después**,
+por si en ese momento le venía mal. Quien lo dejó pasar sin tocar nada tampoco lo
+vuelve a ver — no contestar también es una respuesta. Al instalarse se borra todo,
+por si algún día la desinstala.
+
+**Y durante meses nada de eso se cumplió, porque el cartel no se escondía.** El
+atributo `hidden` y la clase `flex` de Tailwind tienen la MISMA especificidad
+(`[hidden]:where(:not([hidden=until-found]))` vale 0,1,0 — `:where` no suma
+nada), y la utilidad va después en la hoja: gana `.flex`. El cartel lleva las
+dos cosas, así que salía en cada carga y "Ahora no" no lo hacía desaparecer. Lo
+arregla una línea en `css/styles.css` — `[hidden] { display: none !important; }`
+—, que va ahí y no en la página porque el atributo tiene que significar lo mismo
+en todo el sitio.
+
+**Y no daba ningún error, ni siquiera en la comprobación**: `verificar-pwa.js`
+preguntaba por `elemento.hidden`, la propiedad, que sí estaba puesta. Daba verde
+sobre una página rota. Ahora pregunta por `getComputedStyle(...).display`, que
+es lo que ve quien entra. **Al comprobar que algo se esconde, mirar la pantalla,
+nunca el atributo.**
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-pwa.js`** (con el sitio en localhost:8777 y playwright).
+Comprueba el manifest, que los iconos midan lo que prometen, que las 77 páginas
+lo declaren, que el service worker tome el control y —lo que de verdad
+importa— que **no guarde** `cursos/protegido/`, `cursos/recursos/` ni nada de
+otro dominio, y que sin red una página caiga en `offline.html`.
+
+- **La red se corta apagando un servidor, no con `setOffline()`.** En el
+  Chromium de playwright, `contexto.setOffline(true)` no alcanza a las
+  peticiones que hace el propio service worker (tampoco `route()`): su
+  `fetch()` llegaba igual al servidor, recibía el 404 de la página inexistente y
+  nunca pasaba por la rama de «sin conexión». La prueba fallaba sobre un
+  `sw.js` sano — y uno roto en esa rama habría fallado igual, o sea que no
+  medía nada. Ahora esa parte levanta su propio servidor estático, deja que el
+  service worker tome el control y lo apaga: el fallo de red es de verdad.
+  Comprobado que discrimina: quitándole a `sw.js` el `caches.match("/offline.html")`,
+  salta.
+
+### Avisos push: los manda el sitio, no la tienda
+
+**Los avisos no son de la app, son del sitio**, y por eso funcionan igual en la
+PWA instalada desde el navegador y dentro de la TWA. (Acá quedó escrito una vez
+lo contrario —"una TWA no las trae"— y era falso: lo único que la TWA agrega es
+que salgan con el nombre y el icono de la Academia en vez de con los de Chrome,
+y eso se pide con la *delegación de notificaciones* de Bubblewrap; está en
+`herramientas/plantillas/LEEME-app-android.md`.)
+
+- **El permiso se pide SOLO al apretar el interruptor**, nunca al cargar la
+  página. El navegador deja pedirlo **una vez por aparato**: si se pide de
+  entrada y dicen que no, se perdió el único tiro y ya no hay forma de volver a
+  preguntar desde el sitio. El interruptor vive en `configuracion.html` →
+  "Avisos en el celular".
+- **La fila es por aparato, no por persona.** `push_suscripciones` se escribe
+  con `upsert ... onConflict: "endpoint"`: la compu y el celular se encienden
+  por separado, y volver a suscribir el mismo aparato actualiza en vez de dejar
+  dos filas apuntando al mismo lugar.
+- **Apagar borra la fila ANTES de darse de baja.** Al revés, si el borrado
+  falla queda un endpoint muerto al que el sitio le sigue mandando.
+- **El navegador renueva la suscripción por su cuenta** y avisa al service
+  worker (`pushsubscriptionchange`). Si no se vuelve a guardar, el aparato deja
+  de recibir **en silencio** — nadie se entera hasta que alguien pregunta por
+  qué no le llegan los avisos. `Notificaciones.atenderRenovaciones()` la vuelve
+  a guardar sola, y cualquier página que cargue `js/notificaciones.js` la
+  atiende: busca la sesión por su cuenta a propósito.
+- **`js/notificaciones.js` va SIN `defer`.** Con `defer` corre después de
+  parsear el HTML, o sea después del script del cuerpo que lo llama: la tarjeta
+  de avisos salía vacía cuando la sesión resolvía rápido, sin dar ningún error.
+  Misma carrera que `js/adaptive-mode.js`.
+
+#### El cifrado se escribió a mano, y por eso se prueba
+
+La Edge Function `notificar` implementa VAPID (RFC 8292) y el cifrado
+`aes128gcm` (RFC 8291/8188) con Web Crypto, sin ninguna dependencia de npm:
+`webpush.ts`. **Un mensaje mal cifrado no da error en ninguna parte** — el
+servidor de push lo acepta, lo reenvía y el teléfono lo descarta callado.
+
+- **El par VAPID lo genera la propia función la primera vez** y lo guarda en el
+  Vault (`push_vapid_publica` / `push_vapid_privada`). No está escrito en
+  ninguna migración, ni en el repositorio, ni se imprime nunca.
+- **La tanda va firmada**, igual que los informes a la casa y los avisos de
+  cobro: `verify_jwt` en `false` y un secreto del Vault
+  (`tanda_push_secreto`) que la función vuelve a leer con la service role.
+  Comprobado: con una firma inventada responde 401.
+- **Quién puede avisarle a quién lo decide la RLS, no un `if`.** Para la acción
+  `avisar`, la función lee `profiles` con el JWT de quien llama: solo se le
+  manda a los ids que la RLS le devuelve. Un profesor no puede meterle una
+  notificación en el teléfono a un alumno que no es suyo.
+  - **Pero antes se exige dar clase.** La RLS de `profiles` a un alumno le
+    devuelve también a sus compañeros y a sus profesores, así que sola no
+    alcanzaba: cualquier alumno podía mandarle a su clase un aviso con la
+    marca de la Academia. Y **el enlace del aviso solo puede ser del propio
+    sitio** —la función lo exige y `sw.js` lo vuelve a comprobar al abrirlo—:
+    uno de afuera con esa marca encima es la puerta perfecta para un engaño.
+- Los avisos salen solos de dos disparadores: `class_sessions` (empezó la
+  clase) y `desafios` (te retaron), los dos por `pg_net`.
+- Un endpoint que responde 404 o 410 está muerto: se marca `activa = false` en
+  vez de seguir intentándolo.
+
+**Al tocar cualquiera de estas piezas, correr `node
+herramientas/verificar-notificaciones.js`** (con el sitio en localhost:8777 y
+playwright). Son dos partes, por dos peligros distintos: cifra un mensaje con
+llaves de aparato de verdad y lo descifra de vuelta haciendo el papel del
+navegador (y comprueba que dos envíos del mismo texto salgan distintos: si
+salieran iguales, se estaría reusando la llave efímera); y abre
+`configuracion.html` en un navegador de verdad para ver **cuándo** se pide el
+permiso, qué se guarda y qué se borra. Esa segunda parte le pone un servicio de
+push de mentira porque Chromium sin cabeza no tiene ninguno detrás — lo que se
+comprueba ahí es qué hace la página, no que Chromium alcance a Google.
+
+## El CSS va compilado, no por CDN
+
+`css/tailwind.css` lo genera `node herramientas/css-construir.js` (después de
+`npm install tailwindcss@3`). Antes el sitio cargaba `cdn.tailwindcss.com`, que
+es el modo de juguete de Tailwind: baja unos 400 KB de JavaScript y **compila el
+CSS dentro del navegador, en cada carga y de cada visitante** — de ahí el
+parpadeo sin estilos al entrar. Compilado, el sitio entero son 50 KB de CSS que
+el navegador cachea.
+
+- **La paleta ya no se compila dentro de cada clase: son variables CSS.**
+  Estuvo copiada en el `<head>` de las 73 páginas, después vivió en
+  `herramientas/css-construir.js`, y hoy vive en `js/temas-plataforma.js` —
+  porque dejó de haber UNA paleta y hay una por tema (ver «El tema de toda la
+  plataforma»). Lo que el generador le pasa a Tailwind es
+  `rgb(var(--c-brand-800) / <alpha-value>)`, y las variables de cada tema se
+  escriben al final del archivo compilado.
+- `inscripcion.html` lleva su propio `css/tailwind-inscripcion.css`: tiene otro
+  diseño y su `brand` es verde, así que los dos no pueden convivir en un mismo
+  archivo.
+- **Al agregar una clase que no estaba en ninguna parte del sitio, hay que
+  volver a compilar**: el compilador solo escribe las clases que encuentra
+  leyendo el código. Ese es el riesgo de este cambio, y por eso existe la
+  comprobación de abajo.
+- Se quitó `cdn.tailwindcss.com` del `script-src` en `_headers`.
+
+### Comprobar que no falte ninguna clase
+
+`node herramientas/verificar-css.js` (con el sitio servido en localhost:8777).
+**No lee los archivos**: abre 49 páginas en un navegador de verdad, deja correr
+el JavaScript, enciende el modo oscuro y el adaptado, abre los `<details>`,
+destapa lo escondido, y recorre el DOM juntando **todas** las clases que
+quedaron puestas — unas 14.500. Después comprueba que cada una esté definida en
+alguna de las hojas que el navegador cargó.
+
+Es así porque el peligro es justamente el que no se ve leyendo el código: una
+clase armada en JavaScript, o que solo aparece después de una interacción,
+falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
+
+- Leer el CSS a mano no sirve: los caracteres raros van escapados
+  (`grid-rows-[repeat(8,minmax(0,1fr))]` se escribe con `\2c ` en lugar de la
+  coma) y Tailwind 3.4 escribe el modo oscuro como
+  `.dark\:text-white:is(.dark *)`, con los dos puntos de la variante escapados
+  y los de `:is` sin escapar. Por eso las clases conocidas se piden al
+  navegador, que ya las tiene interpretadas.
+- Las clases que **a propósito** no definen ningún estilo —marcadores de estado
+  y ganchos para `querySelectorAll`, como `filter-btn` o `color-opt`— están
+  listadas en `SIN_ESTILO`. Si aparece una nueva que no hace nada, va ahí.
+  - **Que una clase no tenga CSS no quiere decir que esté muerta.** Los cuatro
+    `total-*` de los exámenes de arbitraje parecían restos: no los encuentra
+    ningún grep, porque el nombre se **arma concatenando** (`'.total-' +
+    n.clave` sobre `NIVELES_EXAMEN`). Son ganchos vivos, y de los que importan:
+    cada `<span>` dice cuántas preguntas trae ese examen y el número lo rellena
+    el propio banco con `totalPara(techo)`, así que la página no puede prometer
+    24 preguntas y armar otra cantidad. Antes de dar una clase por muerta, hay
+    que buscarla también por pedazos.
+- La primera corrida encontró **huecos de la paleta que ya estaban muertos con
+  el CDN**: `bg-accent-50` y `hover:text-accent-300` no pintaban nada porque el
+  ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
+  `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
+
+## La librería de Supabase tampoco viene de un CDN
+
+Por la misma razón que el CSS, y con más consecuencias: `js/vendor/supabase.js`
+está **en el repositorio**, no pedido a jsDelivr. Estaba escrito así en las 77
+páginas que lo cargan:
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+Eso es un **rango**, no una versión, y sin `integrity`. O sea que cada visita
+ejecutaba lo que hubiera publicado ahí en ese momento, con la sesión de quien
+entrara —un alumno, un profesor, quien administra—, y con acceso al cliente que
+guarda el token. No es un peligro teórico: es lo que pasó con polyfill.io en
+2024. Y **no habría dado ningún error**: las páginas se seguirían viendo igual
+mientras las sesiones se van, que es el fallo callado de siempre pero con todo
+el sitio adentro.
+
+- **Vive al lado de Stockfish**, en `js/vendor/`, que ya estaba servido así.
+- Se trae con `node herramientas/vendor-supabase.js`, después de
+  `npm install @supabase/supabase-js@2`. Queda **byte a byte como viene de
+  npm** —sin cabecera de comentario— para que se pueda comparar contra el
+  paquete; la versión no se anota aparte porque el bundle la lleva dentro
+  (`supabase-js/2.116.0`).
+- **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
+  transcripción** de `reportes.html`, que importa `@huggingface/transformers`
+  desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va
+  de las dos directivas.
+- **`js/supabase-client.js` no pisa un `window.sb` que ya exista.** Dos clientes
+  en la misma página son dos suscripciones de auth y dos juegos de canales de
+  Realtime sobre la misma sesión: no falla, las cosas llegan dos veces. Y de
+  paso los verificadores pueden poner el suyo con `addInitScript` sin depender
+  —como hasta ahora— de que esa línea **reventara** por no encontrar la
+  librería. Eso último no es un detalle: media docena de verificadores pasaban
+  gracias a ese accidente, y al traer la librería al repositorio se cayeron
+  todos a la vez. `verificar-planes.js` necesitó además su doble en
+  `pruebaResumen`, que abría la página a pelo: con el cliente funcionando de
+  verdad, `planes.html` hace lo que tiene que hacer —mandar al login sin
+  sesión— y se lleva `PlanClase` con ella.
+
+**Al agregar una página que use el cliente, o al actualizar la librería, correr
+`node herramientas/verificar-vendor.js`** (no necesita navegador, ni red, ni el
+sitio servido). Comprueba que ninguna página la pida a un CDN, que la ruta
+relativa de cada una **llegue de verdad al archivo** —`js/vendor/…` escrito
+desde `entreno/`, que está un piso abajo, da un 404 que tampoco avisa: la
+página se queda en «Comprobando tu sesión…» para siempre—, que toda página que
+use `js/supabase-client.js` cargue antes la librería, y que el archivo siga
+siendo el de npm sin editar a mano.
+
+## Lo pesado se baja cuando se usa, no al entrar
+
+La portada pesaba **7,9 MB** y tardaba 16 segundos en terminar de cargar con red
+de celular. No era el diseño ni el CSS: eran tres archivos del bot que se
+bajaban al abrir la página, jugara alguien o no.
+
+- `js/oscar-book.js` traía el libro de aperturas **escrito adentro**: 2,9 MB con
+  las 94.106 posiciones de las ~32.400 partidas de Oscar.
+- `tablero-board.js` pedía al cargar la **procedencia** de cada jugada
+  (`data/oscar-book-provenance.json`, 4,2 MB) — y en `index.html` el panel que
+  la muestra **ni existe**: se bajaba entera para tirarla a la basura.
+- …y arrancaba el motor Stockfish (587 KB de WASM) con un `preload()`.
+
+Quien entra a leer que hay clases en vivo y se va sin tocar una pieza —que es
+la mayoría— se descargaba los tres. Ahora:
+
+- **El libro vive en `data/oscar-book.json`** y lo baja `chess-bot.js` con
+  `cargarLibro()`, memoizado, la primera vez que al bot le toca mover. En
+  `js/oscar-book.js` solo quedó `OSCAR_ELO_CALIB` (medio kilobyte), que sí hace
+  falta enseguida: es con lo que el bot sabe con qué Elo juega en "Difícil".
+- **La procedencia se pide cuando el bot juega su primera jugada del libro**,
+  que es el primer momento en que el panel tiene algo que decir, y **solo en las
+  páginas que tienen el panel**.
+- **El motor y el libro se precalientan al tocar el tablero**, no al cargar la
+  página. Entre que alguien agarra una pieza y la suelta hay tiempo de sobra,
+  así que para quien juega no cambia nada.
+- Los scripts del tablero van con `defer`.
+
+Resultado medido en un navegador de verdad, con 4G lenta y el procesador a un
+cuarto: **7,9 MB → 0,21 MB**, y el `load` de 16,6 s a 1,6 s.
+
+**Si la descarga del libro falla, no pasa nada, y es a propósito**:
+`getBookMoveForHash()` ya devolvía `null` para una posición que el libro no
+conoce, así que sin libro el bot juega con el motor — exactamente lo que hacía
+antes en cualquier posición fuera del repertorio.
+
+Y ahí está el peligro de todo esto: **nada de esto da error**. Si el libro no
+llega, el bot no falla — deja de jugar como Oscar y nadie se entera. Si mañana
+algo vuelve a pedir el libro al cargar, tampoco falla nada: la portada vuelve a
+pesar 8 MB en silencio. Por eso:
+
+**Al tocar el tablero, el bot o lo que carga, correr `node
+herramientas/verificar-carga-tablero.js`** (con el sitio en localhost:8777,
+playwright y `npm install chess.js@0.10.3`). Comprueba las dos mitades en un
+navegador de verdad: que al CARGAR no se pida ninguno de los tres pesos
+pesados y que la portada quepa en 1 MB; y que al JUGAR sí se pidan, que el
+libro llegue **completo** (cuenta las posiciones contra el archivo, porque un
+JSON truncado o un 404 tampoco darían error) y que el bot conteste.
+
+- **`_headers` le pone un día de caché a los dos archivos de datos.** Cambian
+  cuando se regeneran con partidas nuevas, o sea casi nunca, y sin eso quien
+  juega un par de partidas se los vuelve a bajar en cada visita. Que queden un
+  día viejos no rompe nada — ahí está la diferencia con el CSS, que si queda
+  viejo deja la página sin la mitad de sus clases (por eso `sw.js` va a la red
+  primero). Un libro viejo es un repertorio de hace unos días.
+- **El service worker no los guarda** (`/data/oscar-book` está en `NUNCA`):
+  serían 7 MB en el teléfono de quien probó el tablero una vez. Jugar sin red no
+  es algo que el sitio prometa.
+- `img/oscar-avatar-160.jpg` existe porque el de 480 px se mostraba en casillas
+  de 40 y 80 px. El grande se sigue usando donde de verdad se ve grande
+  (`sobre-oscar.html`, a 256 px).
+
+## Metadatos: que el enlace se vea y la página se encuentre
+
+Cada página pública lleva su descripción, su `canonical` y su bloque de Open
+Graph, todo junto debajo del `<title>`. **Lo del Open Graph no es un detalle
+acá**: el botón principal del sitio manda a WhatsApp, o sea que WhatsApp es por
+donde se comparte esto, y sin `og:image` el enlace sale pelado.
+
+- `img/og-ajedrez-integral.jpg` (1200×630) es la imagen que se ve al compartir.
+  **No se edita a mano**: la genera `herramientas/og-imagen.js` con los colores
+  de la paleta, así que si cambian se vuelve a correr (`node
+  herramientas/og-imagen.js`, con playwright). Va en JPEG y no en PNG porque es
+  un degradado: el mismo dibujo pesa 490 KB en PNG y 91 en JPEG, y WhatsApp
+  descarta las previsualizaciones pesadas.
+- **Las páginas que piden sesión llevan `noindex`** y no llevan `canonical`: no
+  tiene sentido indexar una pantalla de acceso, y así no compiten con las
+  públicas. Lo mismo `cursos/academia/`, que es el espejo del catálogo dentro de
+  la Academia — si se indexara, competiría con `cursos/` por el mismo contenido.
+- El `canonical` apunta a la dirección **con `.html`**, que es la que usan todos
+  los enlaces internos. Cloudflare sirve además `/cursos` con el mismo
+  contenido; el canonical le dice a Google cuál de las dos vale, sin tocar el
+  enrutamiento.
+- `sitemap.xml` **no se escribe a mano**: lo arma `herramientas/sitemap.py`
+  leyendo qué páginas NO tienen `noindex`. Si una página se abre o se cierra,
+  se vuelve a correr y el sitemap se entera solo.
+  - **Los que barren `**/*.html` tienen que saltarse `node_modules/`.**
+    `sitemap.py` y `verificar-metadatos.py` no lo hacían, y como `node_modules`
+    está en `.gitignore` la falla solo aparece en la máquina de quien siguió las
+    instrucciones de este mismo archivo y corrió `npm install`: el sitemap salía
+    ofreciéndole a Google media docena de páginas internas de playwright, y no
+    daba ningún error — quedaban escritas en el archivo y ya. `pwa-cabecera.py`
+    y `verificar-voseo.py` ya lo hacían; ahora lo hacen los cuatro.
+  - **Las dos listas de páginas exceptuadas de la app tienen que decir lo
+    mismo.** `verificar-pwa.js` exceptuaba `libro-de-diagnostico-accesible.html`
+    y `pwa-cabecera.py` no, así que el generador le ponía el `manifest` en cada
+    corrida y el verificador no se quejaba nunca. Es un documento que se abre
+    suelto, hasta por correo y sin red: declarar un `manifest` que no va a poder
+    cargar es peor que no declararlo.
+- Los datos estructurados (JSON-LD) los genera
+  `herramientas/datos-estructurados.py` desde el propio HTML —título,
+  descripción, fecha impresa del artículo, lista de cursos de la portada—, así
+  que no se pueden desincronizar del contenido. Falta a propósito `offers` y
+  `hasCourseInstance` en cada curso (precio, duración, modalidad): sin esos
+  datos Google no muestra la ficha enriquecida, y se prefiere el marcado a
+  medias antes que inventar números.
+- **Todo esto se comprueba de una corrida**, sin instalar nada:
+  `python3 herramientas/verificar-metadatos.py` (unos 330 chequeos). **Al tocar
+  metadatos, correrlo**, y volver a generar sitemap y datos estructurados.
+- Las fuentes: solo se piden los pesos que el sitio usa. Inter en 400, 500, 600
+  y 700; **Merriweather solo en 700**, porque `font-serif` aparece 963 veces y
+  siempre con `font-bold`, ni una sin peso. Antes se bajaban nueve archivos de
+  fuente y se usaban cinco.
+- `js/adaptive-mode.js` **sigue sin `defer` a propósito**: aplica la clase
+  `adaptive-mode` en el `<html>` al ejecutarse, igual que el script del tema que
+  está justo arriba. Con `defer` correría después de parsear el HTML y quien
+  tiene el modo adaptado encendido vería un parpadeo con la página sin adaptar.
+
+## El encabezado ocupa su propio espacio
+
+El encabezado del sitio es `sticky top-0`, **no `fixed`**, y esa es la razón por
+la que ninguna página tiene que compensar su altura a mano. Antes era `fixed` y
+cada página descontaba esa altura por su cuenta: `pt-16 md:pt-20` en el `<main>`,
+un `<div class="hidden lg:block h-8">` suelto, `pt-28` en los artículos, `pt-32`
+en las pantallas de carga, `pt-20 min-h-screen` en las de acceso. Seis maneras
+distintas de escribir el mismo número.
+
+El problema es que la altura real cambia de cuatro formas —en `md`, en `lg`
+cuando aparece la barra de arriba, al hacer scroll (`#header.scrolled` la baja a
+3.5rem) y en modo adaptado, que sube la tipografía a 112%—, y ninguno de esos
+números escritos a mano se entera. Con `sticky` el encabezado está en el flujo:
+ocupa su espacio solo, se pega al hacer scroll y no hay nada que descontar.
+
+- **Regla: si te encontrás compensando a mano una altura que el navegador ya
+  sabe calcular, es que hay que dejarlo calcular.**
+- `html { scroll-padding-top }` en `css/styles.css` es lo que hace que saltar a
+  un ancla no deje el destino debajo de la barra — incluye el propio "Saltar al
+  contenido principal". Sin eso, `scroll-behavior: smooth` lleva el destino
+  exactamente a donde la barra lo tapa.
+- Las alturas del encabezado son `min-h-*`, nunca `h-*`: con altura fija, en
+  modo adaptado el contenido se sale de la caja en vez de empujarla.
+- Lo que quiere ocupar la pantalla entera resta la barra en vez de sumarle
+  padding: `min-h-[calc(100vh-5rem)]`, no `pt-20 min-h-screen` (que daba una
+  página más alta que la pantalla).
+
+## Dentro de la Academia no hay encabezado de marketing
+
+Decisión: quien ya inició sesión no vuelve a ver el encabezado ni el pie del
+sitio público. Hasta este cambio los compartían las 76 páginas del sitio por
+igual — la portada, un artículo, **y también** el panel de Clases, un
+ejercicio de Entrenamiento o la partida en vivo con el profesor: Inicio,
+Cursos, Artículos, Jugar contra el profe, el botón "💬 Inscríbete" (que invita
+a inscribirse a quien ya está inscrito) y la barra de arriba con "🏆 ¡Te
+reto!" y "TV en vivo". Nada de eso rompía nada — es exactamente la clase de
+falla que no truena: un alumno resolviendo un ejercicio o mirando su registro
+de clases tenía ahí arriba seis destinos que no tienen nada que ver con lo
+que estaba haciendo, y de ahí a irse por donde no corresponde hay un clic.
+
+- **El criterio es "exige sesión", no la carpeta ni el nombre.** Una página
+  cae en esto si redirige a `login.html` sin sesión (`location.href =
+  "login.html"`) o si la pide con `requireLoginThenGate()`. Por eso
+  `entreno/diagnostico.html` y `nivel-de-arbitraje.html` **quedan afuera** a
+  propósito: se pueden hacer sin cuenta, están pensadas para llegar desde un
+  buscador, y ahí el encabezado público —con su enlace a "Cursos" y su
+  "Inscríbete"— es lo que corresponde mostrarle a quien todavía no es alumno.
+  `cobros.html` **sí** entra aunque no redirija (muestra un aviso de "inicia
+  sesión" en vez de mandar a otra página): es una página que solo tiene
+  sentido con cuenta, igual que el resto.
+- **Aplica a todo el mundo con sesión, profesor y administración incluidos.**
+  No es una regla solo para alumnos: dentro de la Academia nadie necesita el
+  menú de marketing, y tenerlo iba a la deriva por página según quién la
+  escribió — algunas ya traían un encabezado reducido a mano (`entreno/*` sin
+  "Cursos" ni la barra de arriba), otras el completo. Ahora es una sola forma.
+- **El encabezado queda en dos elementos: el logo y el interruptor de
+  tema.** El logo lleva de vuelta a `clases.html` (el panel, no `index.html`)
+  — es la puerta de salida de cualquier página de la Academia, con un
+  `sr-only` ("— panel de la Academia") para quien no lo intuye por el nombre.
+  Sin menú no hace falta el botón de hamburguesa ni el `#mobile-menu`:
+  `js/main.js` ya los busca con `if (menuToggle && mobileMenu)` antes de
+  engancharlos, así que su ausencia no rompe nada.
+- **El pie queda en una sola línea** (`&copy; 2026 Ajedrez Integral…`), la
+  misma que ya traían de antes los `entreno/*` y algunas páginas de
+  `cursos/academia/`: se pareja el resto en vez de inventar una tercera
+  forma.
+- **`herramientas/academia-cabecera.py`** hace el cambio y se puede correr
+  todas las veces que se quiera: reemplaza el único
+  `<header id="header">…</header>` y el único `<footer>…</footer>` de cada
+  página de su lista, así que una corrida encima de otra da lo mismo. **Al
+  agregar una página nueva que exige sesión, sumarla a la lista `PAGINAS` del
+  script y correrlo** — copiar el encabezado de otra página de la Academia a
+  mano es exactamente como esas 76 páginas terminaron todas con el mismo
+  encabezado de marketing.
+- Las páginas públicas (`index.html`, `cursos.html`, `cursos/<curso>.html`,
+  `tv.html`, `te-reto.html`, `bot.html`, `tablero.html`, los dos
+  diagnósticos públicos, etc.) **no se tocan**: siguen con el encabezado y el
+  pie completos, porque ahí sí hace falta poder llegar a cualquier parte del
+  sitio y la invitación a inscribirse tiene sentido.
+
+## El punto de restauración: la base no vivía en ninguna parte
+
+`RESTAURAR.md` es el documento operativo —qué hacer si algo falla— y esto es
+por qué existe. El sitio siempre estuvo respaldado: es un repositorio de git,
+se vuelve atrás con una etiqueta. Lo que no estaba respaldado era **todo lo
+demás**, y no daba ningún error porque la plataforma funcionaba igual.
+
+- **Las 179 migraciones de la Academia vivían SOLO en Supabase.** Ahí están las
+  62 tablas, las 110 funciones, las 176 políticas de RLS y los 20 triggers: o
+  sea, quién ve a quién, quién puede escribir qué y todas las decisiones que
+  este archivo explica. Si ese proyecto se perdiera o alguien borrara de más,
+  no había de dónde reconstruirlo. Ahora están en `supabase/migraciones/`
+  (y las 5 del proyecto de inscripciones en `supabase/migraciones-colegios/`),
+  bajadas de `supabase_migrations.schema_migrations` **y comprobadas una por
+  una con su md5**: una migración transcrita a medias se ve igual de bien que
+  una entera, y la diferencia solo aparece el día que hay que restaurar.
+- **Cinco Edge Functions estaban desplegadas y no estaban en el repositorio**:
+  `notificar` (el VAPID y el cifrado `aes128gcm` escritos a mano, o sea lo más
+  difícil de rehacer de todo el sitio), `chess-results-proxy`, `ocr-scoresheet`,
+  `enviar-resultado-arbitraje` y `bootstrap-admin`. Es el mismo agujero que ya
+  se había tapado de a una con `cobros-recordatorios`, `informes-encargados` y
+  `admin-manage-users`; ahora están las 14.
+- **El retrato del esquema** (`supabase/esquema/`) no restaura nada: sirve para
+  comprobar, DESPUÉS de restaurar, que no falte ninguna política ni ningún
+  trigger. Un esquema al que le falta una política se ve perfecto y deja
+  abierto —o cerrado— algo que no era.
+
+### Lo que sigue sin red, y es lo caro
+
+**Los datos de la gente no están respaldados en ninguna parte.** El esquema se
+reconstruye en minutos; los 105 perfiles, las 3.976 filas de progreso, los 80
+encargados a los que llegan los informes y los 53 planes de clase, no. Y la
+organización de Supabase está en el plan **gratuito**, que no hace copias
+automáticas de la base — igual que no deja encender la protección contra
+contraseñas filtradas, que este archivo ya tenía anotada por lo mismo.
+
+`herramientas/respaldo-datos.sh` es la salida mientras tanto: `pg_dump` con la
+cadena de conexión por variable de entorno (nunca escrita en el repositorio) y
+la salida en `respaldos/`, que está en `.gitignore` **y** en `.assetsignore`.
+Los dos candados son para el mismo descuido: ahí adentro van cédulas y correos
+de menores, de git no se borra nada, y el despliegue sube la carpeta de
+trabajo, no lo que hay en git.
+
+- **`.assetsignore` ahora excluye `supabase/` entero.** El worker sirve TODO el
+  directorio, así que lo que no se excluya queda publicado: las migraciones son
+  el modelo de permisos completo, y publicarlas es regalarle a cualquiera el
+  mapa de por dónde buscarle la vuelta. Ninguna página las pide.
+- **Y también `CLAUDE.md` y los scripts de `herramientas/`**, por la misma
+  razón: este archivo explica el modelo de permisos entero. De `herramientas/`
+  se excluye todo MENOS `herramientas/cursos/`, porque su `catalogo.json` lo
+  piden `planes.html`, la tienda y el catálogo de Tareas — excluir la carpeta
+  entera les dejaría la lista de cursos vacía, sin ningún error.
+- **Un respaldo que depende de que alguien se acuerde de correrlo, tarde o
+  temprano no se corre.** La salida de verdad es el plan Pro, con sus copias
+  diarias. Queda escrito acá porque un pendiente que solo vive en la cabeza de
+  alguien no existe.
+
+### Al aplicar una migración o desplegar una función, actualizar el respaldo
+
+**Correr `node herramientas/verificar-punto-restauracion.js`** (no necesita
+red, ni navegador, ni el sitio servido). Comprueba que no falte ninguna pieza
+—las migraciones, las 14 funciones con su código, los inventarios, los cuatro
+archivos de Cloudflare— e imprime la **huella** md5 de las migraciones, que se
+compara contra la base con la consulta que el propio script deja escrita. Si no
+coincide, hay migraciones aplicadas que no están respaldadas. Está probado que
+falla de verdad: quitando una migración y una función, saltan las dos.
+
+Un respaldo a medias no da ningún error —la carpeta está, los archivos se
+ven— y eso solo se descubre en el peor momento posible.
+
+- **El archivo respaldado es lo que se APLICÓ, byte a byte, y no una versión
+  mejor comentada.** Ya pasó una vez: una tanda aplicó su migración sin el
+  encabezado de comentarios y después guardó el archivo CON él. El respaldo se
+  lee mejor y la huella deja de cuadrar, así que a partir de ahí el verificador
+  no puede distinguir «hay algo sin respaldar» de «alguien le agregó una línea
+  al archivo». El porqué va en este archivo, que es donde se lee; la migración
+  guarda lo que corrió. (Y el md5 se calcula sobre el archivo tal cual, así que
+  tampoco lleva el salto de línea final si lo guardado no lo trae.)
+
+`ocr-scoresheet` se bajó tal cual estaba y traía tres formas de voseo
+(«Avisá al profesor», «Probá con una foto»). Se corrigieron en el repositorio
+y ya está desplegada (versión 2), igual que `admin-manage-users` con su «elegí
+un plan».
+
+### La etiqueta del punto de restauración se pone a mano
+
+`RESTAURAR.md` nombra el **commit** del estado bueno, no una etiqueta, y es a
+propósito: las credenciales de una sesión de Claude Code en la web empujan
+ramas pero reciben un **403 con `refs/tags`**, así que la etiqueta no se crea
+sola por más que el commit sí quede en `main`. Un documento que mandara a
+`git checkout restauracion-…` con esa etiqueta sin existir sería justo el fallo
+callado de siempre: se lee bien, y el día que hace falta no está.
+
+El comando queda escrito en `RESTAURAR.md` para correrlo desde una máquina con
+permiso de escribir etiquetas.
