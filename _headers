@@ -11,6 +11,10 @@
 # transcribe ahí mismo. Si algún día se quita esa función, estos tres se
 # quitan también.
 #
+# cdnjs.cloudflare.com sigue en script-src SOLO por three.js de
+# inscripcion.html. chess.js ya no sale de ahí: vive en js/vendor/chess.js (ver
+# «Lo que frena el primer pintado»). Si se trae three.js también, cdnjs se va.
+#
 # El proyecto de la Academia está en img-src por los logos de las academias
 # (bucket público academia-marca): se ven en el encabezado y en los
 # formularios públicos. Es el mismo origen que ya está en connect-src.

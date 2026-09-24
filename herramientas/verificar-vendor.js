@@ -81,5 +81,34 @@ if (!npm) console.log("  · el paquete no está instalado, no se compara (npm in
 else if (Buffer.compare(local, fs.readFileSync(npm)) === 0) bien("es byte a byte la de npm, sin editar a mano");
 else mal("NO coincide con la de npm: o está desactualizada, o alguien la editó. Corré: node herramientas/vendor-supabase.js");
 
-console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: la librería sale del repositorio, no de un CDN.");
+// ---- chess.js, igual ----
+// Se pedía a cdnjs, síncrono, desde 43 archivos: una conexión nueva a otro
+// origen antes de poder pintar nada (ver herramientas/vendor-chess.js).
+console.log("\n=== chess.js ===");
+const CHESS = "js/vendor/chess.js";
+if (!fs.existsSync(path.join(raiz, CHESS))) mal(CHESS + " no existe. Corre: node herramientas/vendor-chess.js");
+else {
+  const chessCdn = [], chessRutaMala = [];
+  let conChess = 0;
+  for (const archivo of paginas(raiz)) {
+    const html = fs.readFileSync(archivo, "utf8");
+    const rel = path.relative(raiz, archivo);
+    if (/<script[^>]+src="https?:\/\/[^"]*chess(\.min)?\.js"/.test(html)) chessCdn.push(rel);
+    for (const m of html.matchAll(/src="([^"]*js\/vendor\/chess\.js)"/g)) {
+      conChess += 1;
+      if (path.resolve(path.dirname(archivo), m[1]) !== path.join(raiz, CHESS)) chessRutaMala.push(rel + " → " + m[1]);
+    }
+  }
+  if (chessCdn.length) mal("páginas que piden chess.js a un CDN: " + chessCdn.join(", "));
+  else bien("ninguna página pide chess.js a un CDN");
+  if (chessRutaMala.length) mal("rutas a chess.js que no llegan al archivo: " + chessRutaMala.join(", "));
+  else bien(conChess + " páginas lo cargan, todas con una ruta que llega");
+  let npmChess = null;
+  try { npmChess = require.resolve("chess.js/chess.js", { paths: [raiz] }); } catch { }
+  if (!npmChess) console.log("  · el paquete no está instalado, no se compara (npm install)");
+  else if (Buffer.compare(fs.readFileSync(path.join(raiz, CHESS)), fs.readFileSync(npmChess)) === 0) bien("es byte a byte el de npm, sin editar a mano");
+  else mal("NO coincide con el de npm. Corre: node herramientas/vendor-chess.js");
+}
+
+console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: las librerías salen del repositorio, no de un CDN.");
 process.exit(fallos ? 1 : 0);
