@@ -424,6 +424,11 @@ def poner_marca(ruta, s):
         print(f"⚠️  {ruta}: no tiene </body>, se queda sin la marca de la academia.")
         return s
     arriba = "../" * ruta.count("/")
+    # academias.html ya lo carga en el <head>, porque lo usa su propio script:
+    # sumarlo de nuevo era un pedido de más (el script no corre dos veces, pero
+    # se baja y se lee igual). verificar-carga-paginas.js lo vigila.
+    if f'src="{arriba}js/marca-academia.js"' in s:
+        return s
     return (s[:cierre] + MARCA_INICIO
             + f'<script src="{arriba}js/marca-academia.js" defer></script>'
             + MARCA_FIN + s[cierre:])

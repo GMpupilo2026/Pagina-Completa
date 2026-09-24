@@ -188,10 +188,33 @@
 
   // ---------- Cargar y mostrar el PDF ----------
 
+  // pdf.js son 368 KB y la clase en vivo los cargaba al abrir, síncronos en el
+  // <head>: nadie veía la página hasta que llegaban, abriera un PDF o no (casi
+  // nunca). Ahora se piden la primera vez que el profesor elige un archivo, y
+  // la promesa queda guardada para no pedirlo dos veces. Si falla, se olvida,
+  // para que el siguiente intento lo vuelva a pedir.
+  let pdfjsCargando = null;
+  function cargarPdfjs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (!pdfjsCargando) {
+      pdfjsCargando = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "js/pdf.min.js";
+        s.onload = () => (window.pdfjsLib ? resolve(window.pdfjsLib) : reject(new Error("sin pdfjsLib")));
+        s.onerror = () => reject(new Error("no se pudo bajar pdf.js"));
+        document.head.appendChild(s);
+      }).catch((e) => { pdfjsCargando = null; throw e; });
+    }
+    return pdfjsCargando;
+  }
+
   async function onFileChosen(file) {
     setMsg("");
     if (!file) return;
-    if (!window.pdfjsLib) { setMsg("No se pudo cargar el lector de PDF."); return; }
+    if (!window.pdfjsLib) {
+      setMsg("Preparando el lector de PDF…");
+      try { await cargarPdfjs(); } catch (e) { setMsg("No se pudo cargar el lector de PDF."); return; }
+    }
     docKey = file.name + ":" + file.size;
     dict = loadDict(docKey);
     setMsg("Abriendo PDF…");

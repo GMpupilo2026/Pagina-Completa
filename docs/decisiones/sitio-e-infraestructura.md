@@ -433,13 +433,84 @@ JSON truncado o un 404 tampoco darían error) y que el bot conteste.
   de 40 y 80 px. El grande se sigue usando donde de verdad se ve grande
   (`sobre-oscar.html`, a 256 px).
 
-**`inscripcion.html` baja three.js al terminar de cargar.** Son ~600 KB que
-son solo el decorado de fondo, y se pedían con un `<script>` en el `<head>`, que
-frena el dibujo de la página hasta bajarlos enteros. Con red de celular lenta
-el formulario quedaba listo a los 5 s; ahora a los 1,9 s, y la animación
-aparece cuando llega. Si no llega, el formulario funciona igual.
-`verificar-vendor.js` reconoce también la ruta escrita en el código (no solo en
-un `src="…"`), así que sigue comprobando que llegue al archivo.
+## Lo que frena el primer pintado
+
+«Lo pesado se baja cuando se usa» arregló la portada; esto es lo mismo en el
+resto del sitio. Se midió **cada página** en un navegador de verdad, con 4G
+lenta (1,6 Mbps, 150 ms) y el procesador a un cuarto, y casi todas tardaban lo
+mismo en pintar el primer texto que en terminar de cargar: nada se ve hasta que
+llegan y corren todos los scripts síncronos del `<head>`. Lo que había ahí:
+
+- **pdf.js (368 KB) en la clase en vivo**, síncrono, para una función que se
+  usa de vez en cuando (leer un PDF y sacarle los diagramas). Ahora lo pide
+  `js/pdf-diagramas.js` la primera vez que el profesor elige un archivo; si
+  falla, avisa «No se pudo cargar el lector de PDF.» y el siguiente intento lo
+  vuelve a pedir.
+- **Los bancos de ejercicios en el `<head>`**: `data/puzzle-rush-data.js`
+  (355 KB, Racha táctica y Te reto), `js/arbitraje-items.js` (387 KB, los dos
+  de arbitraje y `examenes.html`), `js/diagnostico-items.js` (189 KB). Los usa
+  el script del final de cada página, así que van **justo antes de `main.js`**,
+  en el mismo orden: siguen llegando antes de quien los usa, pero la página ya
+  se pintó.
+- **chess.js se pedía a cdnjs** en 43 archivos: otro origen, así que antes del
+  primer byte el celular abre una conexión nueva (DNS, TCP y TLS, unos 600 ms
+  en 4G), y casi siempre síncrono, con la página en blanco mientras tanto. Ya
+  vive en `js/vendor/chess.js` (ver «La librería de Supabase tampoco viene de
+  un CDN»), y las mediciones de abajo cuentan esa mudanza.
+- **three.js (589 KB) en `inscripcion.html`**, síncrono en el `<head>`, para
+  el fondo animado de piezas: el formulario quedaba en blanco hasta bajarlo.
+  Ahora no va en ningún `<script src>`: `cargarFondo3D()` lo pide cuando la
+  página ya terminó de cargar, y la animación arranca al llegar (si no llega, el
+  formulario funciona igual). Con 4G lenta el formulario queda listo
+  (`DOMContentLoaded`) a los 1,9 s en vez de 5 s. Como la ruta va escrita en el
+  código y no en un `src="…"`, `verificar-vendor.js` la busca también entre
+  comillas, y sigue comprobando que llegue al archivo.
+- **La hoja de Google Fonts frenaba el pintado** de las 107 páginas: otro
+  origen más. Va con `media="print"` y `onload="this.media='all'"`: se baja
+  igual, pero el texto sale enseguida con la fuente del sistema y cambia a Inter
+  al llegar (que es lo que `display=swap` ya prometía). Sin JavaScript se queda
+  con la del sistema, y el sitio sin JavaScript no funciona de todos modos.
+- `nivel-de-arbitraje.html` cargaba **`main.js` dos veces**: cada botón tenía
+  dos manejadores y el menú del celular y el del modo oscuro se abrían y se
+  cerraban en el mismo clic. `academias.html` cargaba dos veces
+  `marca-academia.js` (ese se protege y no corría dos veces, pero se bajaba);
+  `academia-cabecera.py` ya no lo suma si la página lo carga.
+
+Primer pintado (FCP), mediana de 3 a 5 corridas, con el servidor comprimiendo
+como Cloudflare y los orígenes de terceros simulados con 600 ms:
+
+| Página | Antes | Después |
+|---|---|---|
+| `sesion.html` (clase en vivo) | 2,85 s | 1,94 s |
+| `racha-tactica.html` | 1,91 s | 1,21 s |
+| `te-reto.html` | 1,90 s | 1,28 s |
+| `examenes.html` | 1,93 s | 1,48 s |
+| `arbitraje.html` | 1,51 s | 1,23 s |
+| `nivel-de-arbitraje.html` | 1,60 s | 1,32 s |
+| `entreno/diagnostico.html` | 1,62 s | 1,44 s |
+| `index.html` | 1,05 s | 0,88 s |
+| `cursos.html` | 0,97 s | 0,65 s |
+| un artículo | 0,96 s | 0,78 s |
+| `tablero.html` | 1,01 s | 0,81 s |
+| `bot.html` | 1,47 s | 1,58 s |
+
+- **`bot.html` sale 0,1 s peor, y es la medición**: el archivo «de cdnjs» lo
+  entrega Playwright sin pasar por la red simulada —ancho de banda gratis—,
+  mientras que el local comparte los 1,6 Mbps con los otros 26 scripts de esa
+  página. En un celular las dos descargas pasan por la misma radio, y la de
+  cdnjs además paga la conexión.
+- **Lo que queda es Supabase**: `js/vendor/supabase.js` (213 KB, ~55 KB
+  comprimido) va síncrono en el `<head>` de 92 páginas, y ahí se lleva casi todo
+  lo que falta en la Academia (`clases.html`, Entrenamiento, Juegos: ~1,1 s).
+  No se tocó: los scripts de sesión del propio `<head>` lo usan al cargar, y
+  diferirlo es cambiar el orden de arranque de cada página, no una línea.
+
+**Al agregar un script o una página, correr
+`node herramientas/verificar-carga-paginas.js`** (sin navegador): que ningún
+script de más de 150 KB vaya síncrono en el `<head>` (salvo Supabase), que
+ninguna página cargue dos veces el mismo script y que la hoja de fuentes no
+frene el pintado. `verificar-vendor.js` vigila además que nadie vuelva a pedir
+chess.js a un CDN.
 
 ## Metadatos: que el enlace se vea y la página se encuentre
 

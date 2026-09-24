@@ -339,7 +339,9 @@
         });
     </script>
 
-    <!-- Script 3D para Piezas de Ajedrez Animadas -->
+    <!-- Script 3D para Piezas de Ajedrez Animadas. three.js (589 KB) no va en
+         el <head> ni en un <script src>: lo pide cargarFondo3D() cuando la
+         página ya cargó (ver abajo). -->
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
 
