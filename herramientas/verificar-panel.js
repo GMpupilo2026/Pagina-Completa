@@ -286,7 +286,7 @@ async function pruebaAlumna(browser) {
      de tabulador. */
   igual("ni el lector de planilla, ni la guía del profesor, ni la tienda, por ninguna parte",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html'], #tile-grid [href='tienda.html']").length), "0");
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html'], #tile-grid [href='tienda.html'], #tile-grid [href='novedades.html']").length), "0");
   /* Lo que tiene FECHA va junto y arriba: tareas y exámenes son lo mismo desde
      el lado del alumno —te lo pone otra persona y vence—, y estaban partidos
      entre "Aprender" y "Evaluaciones". El rótulo dice lo que las dos tienen en
@@ -407,7 +407,7 @@ async function pruebaProfesora(browser) {
      hacia una página que le va a decir que no. */
   igual("y ni el lector de planilla, ni la guía, ni la tienda le quedan escondidos en la página",
     await page.evaluate(() => document.querySelectorAll(
-      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html'], #tile-grid [href='tienda.html']").length), "0");
+      "#tile-grid [href='lector-planilla.html'], #tile-grid [href='guia-del-profesor-accesible.html'], #tile-grid [href='tienda.html'], #tile-grid [href='novedades.html']").length), "0");
 
   /* "Mis pagos" es el recibo de la familia del alumno: a una profesora le
      ofrecía "lo que se te ha cobrado" sobre una cuenta a la que no se le cobra
@@ -498,7 +498,7 @@ async function pruebaAdmin(browser) {
      de probar el lector para saber cuándo vuelve, y sin la guía, que es suya. */
   igual("y coordinando no aparece «Mis pagos» sino Cobros, en Herramientas",
     grupo(grupos, "Herramientas").tiles.map((t) => t.enlace),
-    ["lector-planilla.html", "tienda.html", "partidas.html", "supervision.html", "academias.html", "tablero-academias.html", "planes.html", "asistencia.html",
+    ["lector-planilla.html", "tienda.html", "novedades.html", "partidas.html", "supervision.html", "academias.html", "tablero-academias.html", "planes.html", "asistencia.html",
      "informe-mensual.html", "subgrupos.html",
      "guia-del-profesor-accesible.html",
      "coordinacion.html", "solicitudes.html", "formularios.html", "cobros.html"]);
