@@ -88,14 +88,14 @@ const IMAGENES = [
         css: `
           .lienzo { --casilla: 52px; --casilla2: 104px; }
           .contenido { width: 1109px; height: 624px; }
-          .arriba { position: absolute; top: 26px; left: 0; right: 0; text-align: center; }
-          .nombre { font-size: 84px; }
-          .lema { margin-top: 12px; font-size: 38px; }
-          .sitio { margin-top: 18px; padding: 8px 26px; font-size: 32px; }
-          .lado { position: absolute; top: 300px; width: 250px; font-size: 27px; line-height: 1.35; }
-          .lado b { display: block; color: #fff; font-size: 30px; }
-          .izq { left: 20px; text-align: right; }
-          .der { right: 20px; text-align: left; }`,
+          .arriba { position: absolute; top: 20px; left: 0; right: 0; text-align: center; }
+          .nombre { font-size: 78px; }
+          .lema { margin-top: 8px; font-size: 34px; }
+          .sitio { margin-top: 12px; padding: 6px 24px; font-size: 28px; }
+          .lado { position: absolute; top: 220px; width: 320px; font-size: 24px; line-height: 1.3; }
+          .lado b { display: block; color: #fff; font-size: 28px; }
+          .izq { left: 30px; text-align: left; }
+          .der { right: 30px; text-align: right; }`,
         cuerpo: `<div class="arriba">${NOMBRE}
                    <div class="lema">Clases de ajedrez <em>en vivo</em>, no solo videos</div>${SITIO}</div>
                  <div class="nota lado izq"><b>Oscar Angulo</b>Entrenador FIDE</div>
