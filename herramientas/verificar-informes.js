@@ -250,6 +250,9 @@ async function abrir(browser, datos, usuarioId) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(datos, usuarioId) }));
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona, en
+  // TODAS las páginas que abre este verificador.
+  await page.addInitScript(contestarAvisos);
   await page.goto(BASE + "/informes.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   return { page, errores };
@@ -589,8 +592,6 @@ async function pruebaProfesor(browser) {
       fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
               hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
-  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
-  await page.evaluate(contestarAvisos);
   await page.evaluate(() => {
     window.__funcion.length = 0;
     [...document.querySelectorAll("#encargados-lista button")].find((b) => b.textContent === "Enviar ahora").click();
