@@ -17,6 +17,7 @@
          node herramientas/verificar-informes.js
    Necesita playwright instalado.  */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 
@@ -249,6 +250,9 @@ async function abrir(browser, datos, usuarioId) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(datos, usuarioId) }));
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona, en
+  // TODAS las páginas que abre este verificador.
+  await page.addInitScript(contestarAvisos);
   await page.goto(BASE + "/informes.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
   return { page, errores };
@@ -588,7 +592,6 @@ async function pruebaProfesor(browser) {
       fila: { student_id: "a-1", nombre: "Papá de Ana", email: "papa@x.cr", frecuencia: "mensual",
               hora_envio: 7, dia_semana: null, creado_por: "prof-1" } });
 
-  page.on("dialog", (d) => d.accept());
   await page.evaluate(() => {
     window.__funcion.length = 0;
     [...document.querySelectorAll("#encargados-lista button")].find((b) => b.textContent === "Enviar ahora").click();
@@ -1014,13 +1017,36 @@ async function pruebaClaseGrande(browser) {
     [...document.querySelectorAll("#topic-report-body > div")].map((d) => d.querySelector("span").textContent.trim())),
     ["Sofía Núñez · 7A", "Alumna 02 · 7B", "Alumna 03 · 7A"]);
   await page.evaluate(() => { window.__funcion.length = 0; });
-  page.once("dialog", (d) => d.accept());
   await page.click("#topic-report-body > div:first-child button");
   await page.waitForFunction(() => window.__funcion.length > 0);
   igual("«invitar a practicar» le pide a la función ese alumno", await page.evaluate(() => window.__funcion[0]),
     { action: "invitar_practicar", student_id: "g45" });
   await page.selectOption("#topic-filter", "");
   await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
+
+  /* El selector de temas, ordenado en bloques, y las preguntas de siempre
+     encima: cada pregunta deja puesto el tema que la contesta. */
+  console.log("-- El selector en bloques y las preguntas de siempre");
+  igual("el selector va en bloques, y a un profesor no le queda el del público",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-filter optgroup")].map((g) => g.label)),
+    ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema"]);
+  igual("ningún tema se perdió al agruparlos", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
+    ["", "4x4", "aprender", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "tactica"].sort().join(","));
+  const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
+    .filter((b) => b.checkVisibility()).map((b) => b.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
+  igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),
+    ["¿Quién no está entrenando?", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
+  await page.click('#preguntas-rapidas button[data-tema="inactivos"]');
+  await page.waitForFunction(() => !document.getElementById("topic-report").classList.contains("hidden"));
+  igual("«¿Quién no está entrenando?» deja puesto su tema", await page.inputValue("#topic-filter"), "inactivos");
+  igual("y queda marcada, dicho con aria-pressed", await preguntas(),
+    ["¿Quién no está entrenando? [marcada]", "¿Quién viene a clase?", "¿Cómo contestan en clase?", "¿Qué nivel tiene cada uno?"]);
+  await page.selectOption("#topic-filter", "asistencia");
+  igual("cambiar el tema en el selector mueve la marca", (await preguntas())[1], "¿Quién viene a clase? [marcada]");
+  await page.selectOption("#topic-filter", "");
+  await page.waitForFunction(() => !document.getElementById("teacher-report").classList.contains("hidden"));
+  igual("con el resumen general, ninguna marcada", (await preguntas()).filter((t) => t.includes("[marcada]")), []);
 
   /* «Nivel por alumno» corta igual que el índice: con cuarenta diagnósticos era
      una pared de barras antes de llegar a lo que de verdad se mira, que es el
@@ -1102,6 +1128,9 @@ async function pruebaPdfVisitante(browser) {
     },
   }, "prof-1");
 
+  igual("a administración sí le queda el bloque del público en el selector",
+    await page.evaluate(() => [...document.querySelectorAll("#topic-filter optgroup")].map((g) => g.label)),
+    ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema", "Visitantes del sitio (sin cuenta)"]);
   igual("al abrir Informes no se baja el generador de PDF", await page.evaluate(() =>
     typeof window.ReportePDF + " " + typeof window.DiagnosticoVisitantePDF), "undefined undefined");
   await page.evaluate(() => document.getElementById("diagnosticos-visitantes").closest("details").querySelector("summary").click());

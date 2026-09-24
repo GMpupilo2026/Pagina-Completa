@@ -20,6 +20,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-asistencia.js                          */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -128,8 +129,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
-  window.confirm = () => true;
-  window.alert = () => {};
+  (${contestarAvisos})();
 })();
 `;
 }

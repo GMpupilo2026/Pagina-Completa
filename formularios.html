@@ -29,10 +29,12 @@
     <script src="js/adaptive-mode.js"></script>
 
 
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin -->
+    <script src="js/avisos.js"></script>
+</head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-13" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Coordinación» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Coordinación"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Formularios de inscripción</span></li></ol></nav></div><!-- migas: fin -->
         <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div id="loading" class="text-center py-20 text-brand-500 dark:text-brand-300">Cargando…</div>
 
@@ -731,20 +733,20 @@ function pintarLista() {
             boton("Copiar enlace", "bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200", async (e) => {
                 const b = e.currentTarget;
                 try { await navigator.clipboard.writeText(enlacePublico(f.slug)); b.textContent = "¡Copiado!"; }
-                catch (err) { window.prompt("Copia el enlace:", enlacePublico(f.slug)); }
+                catch (err) { await Avisos.pedir("No se pudo copiar solo: cópialo de aquí.", { titulo: "Enlace del formulario", valor: enlacePublico(f.slug), soloLectura: true, aceptar: "Listo" }); }
                 setTimeout(() => { b.textContent = "Copiar enlace"; }, 1500);
             }),
         );
         if (esMio) {
             acciones.append(boton("Borrar", "text-red-600 dark:text-red-400 underline", async () => {
-                if (!confirm(`¿Borrar "${f.titulo}" y sus ${f.n_respuestas} respuestas? No se puede deshacer.`)) return;
+                if (!(await Avisos.confirmar(`Se borran también sus ${f.n_respuestas} respuestas. No se puede deshacer.`, { titulo: `¿Borrar «${f.titulo}»?`, aceptar: "Borrar", peligro: true }))) return;
                 // Primero sus imágenes: borrado el formulario, la política de
                 // Storage ya no encuentra de quién eran y quedarían huérfanas.
                 // Cada archivo va en <formulario>/<id>/<nombre>, así que la
                 // lista de rutas sale de las respuestas, que las guardan.
                 const { data: resp, error: eResp } = await traerTodo(() => sb.from("formulario_respuestas")
                     .select("respuestas").eq("formulario_id", f.id).order("id"));
-                if (eResp) { alert("No se pudieron leer sus archivos, así que no se borró: " + eResp.message); return; }
+                if (eResp) { Avisos.avisar("No se pudieron leer sus archivos, así que no se borró: " + eResp.message, { tipo: "error" }); return; }
                 const rutas = [];
                 (resp || []).forEach((r) => (f.campos || []).forEach((c) => {
                     const v = r.respuestas && r.respuestas[c.id];
@@ -752,7 +754,7 @@ function pintarLista() {
                 }));
                 if (rutas.length) await sb.storage.from("formulario-adjuntos").remove(rutas);
                 const { error } = await sb.from("formularios").delete().eq("id", f.id);
-                if (error) { alert("No se pudo borrar: " + error.message); return; }
+                if (error) { Avisos.avisar("No se pudo borrar: " + error.message, { tipo: "error" }); return; }
                 await cargarFormularios();
             }));
         }
@@ -791,7 +793,7 @@ async function verRespuestas(f) {
     const { data, error } = await traerTodo(() => sb.from("formulario_respuestas")
         .select("id, respuestas, created_at, cuenta_id, cuenta_creada_at").eq("formulario_id", f.id)
         .order("created_at", { ascending: false }).order("id"));
-    if (error) { alert("No se pudieron cargar: " + error.message); return; }
+    if (error) { Avisos.avisar("No se pudieron cargar: " + error.message, { tipo: "error" }); return; }
     respuestasActuales = { formulario: f, filas: data || [], papeles: papelesDe(f.campos) };
     pintarRespuestas();
     mostrar("vista-respuestas");
@@ -1113,22 +1115,22 @@ async function enviarAlta() {
         const entra = out.usuario || out.email;
 
         if (out.ya_tenia_cuenta) {
-            alert(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
-                  `Entra con ${entra}.${encargado}`);
+            await Avisos.alerta(`Esta respuesta ya tenía su cuenta creada, así que no se mandó otra invitación. ` +
+                  `Entra con ${entra}.${encargado}`, { titulo: "Ya tenía cuenta" });
         } else if (out.correo_enviado === false) {
             // La cuenta quedó creada y el correo no salió: se dice, o el alumno
             // nunca aparece y nadie sabe por qué.
-            alert(`La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
-                  `Dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.${encargado}`);
+            await Avisos.alerta(`La cuenta quedó creada (entra con ${entra}), pero el correo NO salió. ` +
+                  `Dile que entre con «¿Olvidaste tu contraseña?» en la pantalla de acceso.${encargado}`, { titulo: "El correo no salió" });
         } else if (out.sin_correo) {
             // El dato nuevo es el usuario, y hay que enseñarlo: no es un correo
             // y nadie lo adivina. El correo salió hacia la casa, no hacia el
             // alumno, y quien da de alta tiene que saberlo para poder decírselo.
-            alert(`Listo. ${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
+            await Avisos.alerta(`${alumnoNombre || "El alumno"} entra con:\n\n    ${entra}\n\n` +
                   `El enlace para crear la contraseña salió a ${out.correo_destino || encargadoCorreo}, ` +
-                  `no al alumno — ese usuario no recibe correo.${encargado}`);
+                  `no al alumno — ese usuario no recibe correo.${encargado}`, { titulo: "Cuenta creada" });
         } else {
-            alert(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
+            Avisos.avisar(`Invitación enviada a ${entra}: le llega un correo para crear su ` +
                   `contraseña, con los pasos para entrar.${encargado}`);
         }
     } catch (err) {
@@ -1201,8 +1203,8 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !document.getElementById("alta-fondo").classList.contains("hidden")) cerrarAlta();
 });
 document.getElementById("campo-btn").addEventListener("click", () => { agregarCampo(); pintarCampos(); });
-document.getElementById("plantilla-btn").addEventListener("click", () => {
-    if (campos.length && !confirm("Esto reemplaza las preguntas que ya pusiste. ¿Seguir?")) return;
+document.getElementById("plantilla-btn").addEventListener("click", async () => {
+    if (campos.length && !(await Avisos.confirmar("Las preguntas que ya pusiste se cambian por las de la plantilla.", { titulo: "¿Usar la plantilla?", aceptar: "Usar la plantilla" }))) return;
     campos = [];
     PLANTILLA.forEach(agregarCampo);
     pintarCampos();
@@ -1281,5 +1283,5 @@ async function init() {
 }
 init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

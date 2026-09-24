@@ -257,7 +257,6 @@ def academia(curso):
 
     articulo = '''    <article class="pt-8 pb-16">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="index.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4"><span aria-hidden="true">←</span> Mis cursos</a> <span class="text-brand-450 dark:text-brand-350 text-sm mx-1" aria-hidden="true">·</span> <a href="../../clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-4">Panel de Academia</a>
             <span class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide">{nivel}</span>
             <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-2 mb-3">{titulo}</h1>
             <p class="text-brand-500 dark:text-brand-300 mb-6">{descripcion_larga}</p>

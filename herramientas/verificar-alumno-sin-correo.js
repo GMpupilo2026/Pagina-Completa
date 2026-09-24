@@ -25,6 +25,7 @@
  *       node herramientas/verificar-alumno-sin-correo.js
  */
 const { chromium } = require("playwright");
+const { instalarAvisos } = require("./lib/avisos-prueba.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -347,8 +348,12 @@ async function pruebaAlta(browser) {
   const page = await browser.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
-  const avisos = [];
-  page.on("dialog", (d) => { avisos.push(d.message()); d.accept(); });
+  // Lo que la página le muestra a quien da de alta (js/avisos.js) queda en
+  // window.__avisos; el diálogo se cierra apretando su botón.
+  await instalarAvisos(page);
+  const avisos = () => page.evaluate(() => window.__avisos);
+  const esperarAviso = async (antes) => page.waitForFunction((n) => window.__avisos.length > n, antes, { timeout: 10000 });
+  const cuantos = () => page.evaluate(() => window.__avisos.length);
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
@@ -395,30 +400,30 @@ async function pruebaAlta(browser) {
     await page.evaluate(() => /enlace para crear la contraseña/.test(
       document.getElementById("alta-encargado-ayuda").textContent)), "true");
 
-  const avisoDeJuan = page.waitForEvent("dialog");
+  const antesDeJuan = await cuantos();
   await page.click("#alta-enviar");
   await page.waitForFunction(() => window.__edge.length > 0);
-  await avisoDeJuan;
+  await esperarAviso(antesDeJuan);
   const deJuan = await page.evaluate(() => window.__edge[0].cuerpo);
   igual("se manda sin_correo", deJuan.sin_correo, "true");
   igual("se manda el usuario, no un correo del alumno", deJuan.usuario, "juan.munoz");
   igual("el correo del alumno va vacío", deJuan.alumno_email, "");
   igual("y va el correo de la mamá", deJuan.encargado_email, "mama@gmail.com");
   cierto("el aviso enseña el usuario con el que entra",
-    avisos.some((a) => a.includes("juan.munoz@")),
+    (await avisos()).some((a) => a.includes("juan.munoz@")),
     "quien da de alta tiene que poder decírselo a la familia: nadie lo adivina");
   cierto("y dice que el correo salió a la casa, no al alumno",
-    avisos.some((a) => a.includes("mama@gmail.com")));
+    (await avisos()).some((a) => a.includes("mama@gmail.com")));
 
   // ---- el segundo hermano, con EL MISMO correo de la mamá ----
   await page.evaluate(() => { window.__edge = []; });
   await abrirAltaDe("Sofía Muñoz");
   igual("al abrir otra respuesta, el usuario se vuelve a proponer",
     await page.evaluate(() => document.getElementById("alta-usuario").value), "sofia.munoz");
-  const avisoDeSofia = page.waitForEvent("dialog");
+  const antesDeSofia = await cuantos();
   await page.click("#alta-enviar");
   await page.waitForFunction(() => window.__edge.length > 0);
-  await avisoDeSofia;
+  await esperarAviso(antesDeSofia);
   const deSofia = await page.evaluate(() => window.__edge[0].cuerpo);
   igual("el segundo hermano manda SU propio usuario", deSofia.usuario, "sofia.munoz");
   igual("con el MISMO correo de la casa", deSofia.encargado_email, "mama@gmail.com");
@@ -428,17 +433,17 @@ async function pruebaAlta(browser) {
   /* Lo que se enseña es lo que el servidor devolvió, no lo que la pantalla
      propuso: si ya había otro "sofia.munoz", el de verdad lleva número. */
   await page.evaluate(() => { window.__edge = []; window.__usuarioQueQueda = "pedro.munoz2@alumno.ajedrez-integral.com"; });
-  avisos.length = 0;
+  await page.evaluate(() => { window.__avisos.length = 0; });
   await abrirAltaDe("Pedro Muñoz");
   igual("el tercer hermano también propone el suyo",
     await page.evaluate(() => document.getElementById("alta-usuario").value), "pedro.munoz");
-  const avisoDePedro = page.waitForEvent("dialog");
   await page.click("#alta-enviar");
   await page.waitForFunction(() => window.__edge.length > 0);
-  await avisoDePedro;
+  await esperarAviso(0);
+  const avisosDePedro = await avisos();
   cierto("si el servidor desempató, la pantalla enseña el usuario que QUEDÓ",
-    avisos.some((a) => a.includes("pedro.munoz2@")),
-    "enseñar el propuesto dejaría a la familia intentando entrar con uno que no es: " + JSON.stringify(avisos));
+    avisosDePedro.some((a) => a.includes("pedro.munoz2@")),
+    "enseñar el propuesto dejaría a la familia intentando entrar con uno que no es: " + JSON.stringify(avisosDePedro));
 
   cierto("la página no tiró ningún error", errores.length === 0, errores.join("\n      "));
   await page.close();

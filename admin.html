@@ -30,10 +30,12 @@
     <script src="js/equipo-volcar.js"></script>
 
 
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin -->
+    <script src="js/avisos.js"></script>
+</head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-14" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Administración» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Administración"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Administración</span></li></ol></nav></div><!-- migas: fin -->
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center">
@@ -52,7 +54,6 @@
         <!-- max-w-7xl y no 5xl: la lista de cuentas es una tabla ancha, y en 1024 px
              el nombre se cortaba. -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <a href="clases.html" class="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-300 hover:text-accent-500 transition-colors mb-3">← 🏛️ Academia</a>
             <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mb-1">Panel de Administración <span aria-hidden="true">👑</span></h1>
             <p class="text-brand-500 dark:text-brand-300 mb-4">Todas las cuentas de la plataforma: quién es profesor, quién es estudiante y quién administra.</p>
 
@@ -465,7 +466,7 @@
             `).join("");
             caja.querySelectorAll(".actualizacion-borrar").forEach((btn) => {
                 btn.addEventListener("click", async () => {
-                    if (!confirm("¿Borrar esta novedad? Ya no se le mostrará a nadie que no la haya visto.")) return;
+                    if (!(await Avisos.confirmar("Ya no se le mostrará a nadie que no la haya visto.", { titulo: "¿Borrar esta novedad?", aceptar: "Borrar", peligro: true }))) return;
                     await sb.from("actualizaciones_plataforma").delete().eq("id", btn.dataset.id);
                     await loadActualizaciones();
                 });
@@ -663,7 +664,7 @@
                     pintarCuentas();
                     renderProfesores();
                 } catch (err) {
-                    alert("No se pudo cambiar los profesores: " + err.message);
+                    Avisos.avisar("No se pudo cambiar los profesores: " + err.message, { tipo: "error" });
                 }
             }
 
@@ -746,7 +747,7 @@
                         await callAdmin("update", { target_id: u.id, full_name: nameInput.value.trim() });
                         u.full_name = nameInput.value.trim();
                     } catch (err) {
-                        alert("No se pudo guardar el nombre: " + err.message);
+                        Avisos.avisar("No se pudo guardar el nombre: " + err.message, { tipo: "error" });
                         nameInput.value = u.full_name || "";
                     }
                 });
@@ -774,7 +775,7 @@
                         u.role = roleSelect.value;
                         loadUsers();
                     } catch (err) {
-                        alert("No se pudo cambiar el rol: " + err.message);
+                        Avisos.avisar("No se pudo cambiar el rol: " + err.message, { tipo: "error" });
                         roleSelect.value = prev;
                     }
                 });
@@ -793,7 +794,7 @@
                         await callAdmin("update", { target_id: u.id, grupo: grupoInput.value.trim() });
                         u.grupo = grupoInput.value.trim() || null;
                     } catch (err) {
-                        alert("No se pudo guardar el grupo: " + err.message);
+                        Avisos.avisar("No se pudo guardar el grupo: " + err.message, { tipo: "error" });
                         grupoInput.value = u.grupo || "";
                     }
                 });
@@ -821,9 +822,9 @@
                 resetBtn.addEventListener("click", async () => {
                     try {
                         const result = await callAdmin("reset_password", { target_id: u.id });
-                        alert(`Correo de acceso enviado a ${result.email}.`);
+                        Avisos.avisar(`Correo de acceso enviado a ${result.email}.`);
                     } catch (err) {
-                        alert("No se pudo enviar: " + err.message);
+                        Avisos.avisar("No se pudo enviar: " + err.message, { tipo: "error" });
                     }
                 });
                 tdActions.appendChild(resetBtn);
@@ -837,12 +838,12 @@
                     makeAdminBtn.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-accent-500 hover:underline mr-3";
                     makeAdminBtn.textContent = "Hacer administrador";
                     makeAdminBtn.addEventListener("click", async () => {
-                        if (!confirm(`¿Transferir el panel de administración a ${u.email}? Perderás tu propio acceso a este panel.`)) return;
+                        if (!(await Avisos.confirmar(`Perderás tu propio acceso a este panel.`, { titulo: `¿Transferir la administración a ${u.email}?`, aceptar: "Transferir", peligro: true }))) return;
                         try {
                             await callAdmin("update", { target_id: u.id, is_admin: true });
                             loadUsers();
                         } catch (err) {
-                            alert("No se pudo transferir: " + err.message);
+                            Avisos.avisar("No se pudo transferir: " + err.message, { tipo: "error" });
                         }
                     });
                     tdActions.appendChild(makeAdminBtn);
@@ -854,12 +855,12 @@
                     delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
                     delBtn.textContent = "Eliminar";
                     delBtn.addEventListener("click", async () => {
-                        if (!confirm(`¿Eliminar la cuenta de ${u.email} por completo? Esta acción no se puede deshacer.`)) return;
+                        if (!(await Avisos.confirmar(`Esta acción no se puede deshacer.`, { titulo: `¿Eliminar la cuenta de ${u.email}?`, aceptar: "Eliminar la cuenta", peligro: true }))) return;
                         try {
                             await callAdmin("delete", { target_id: u.id });
                             loadUsers();
                         } catch (err) {
-                            alert("No se pudo eliminar: " + err.message);
+                            Avisos.avisar("No se pudo eliminar: " + err.message, { tipo: "error" });
                         }
                     });
                     tdActions.appendChild(delBtn);
@@ -1013,7 +1014,7 @@
                 await callAdmin("assign_bulk", { target_ids: alumnos, teacher_id: teacherId, modo: "agregar" });
                 await loadUsers();
             } catch (err) {
-                alert("No se pudo asignar: " + err.message);
+                Avisos.avisar("No se pudo asignar: " + err.message, { tipo: "error" });
             } finally {
                 selectEl.disabled = false;
                 selectEl.value = "";
@@ -1094,10 +1095,11 @@
                         sel.setAttribute("aria-label", "Agregar un profesor a todo el grupo " + g.nombre);
                         sel.innerHTML = '<option value="">＋ Agregar profesor a todo el grupo…</option>' +
                             teachers.map((t) => `<option value="${t.id}">${escapeHtml(teacherLabel(t))}</option>`).join("");
-                        sel.addEventListener("change", () => {
+                        sel.addEventListener("change", async () => {
                             if (!sel.value) return;
                             const quien = porId.has(sel.value) ? teacherLabel(porId.get(sel.value)) : "ese profesor";
-                            if (!confirm(`¿Agregarle ${quien} a los ${alumnos.length} alumnos de ${g.nombre}? Se SUMA a los profesores que ya tengan.`)) {
+                            if (!(await Avisos.confirmar(`Se SUMA a los profesores que ya tengan: no se le quita ninguno a nadie.`,
+                                    { titulo: `¿Agregarle ${quien} a los ${alumnos.length} alumnos de ${g.nombre}?`, aceptar: "Agregar" }))) {
                                 sel.value = "";
                                 return;
                             }
@@ -1366,7 +1368,7 @@
                 coord.addEventListener("change", async () => {
                     const antes = !coord.checked;
                     const { error } = await sb.rpc("marcar_coordinador", { p_profesor: p.id, p_valor: coord.checked });
-                    if (error) { alert("No se pudo cambiar: " + error.message); coord.checked = antes; return; }
+                    if (error) { Avisos.avisar("No se pudo cambiar: " + error.message, { tipo: "error" }); coord.checked = antes; return; }
                     p.es_coordinador = coord.checked;
                 });
                 tdCoord.appendChild(coord);
@@ -1386,7 +1388,7 @@
                     tdCoordA.appendChild(renderEquipoTags(puestos, otros, async (lista) => {
                         const { error } = await sb.rpc("set_profesores_del_coordinador",
                                                        { p_coordinador: p.id, p_profesores: lista });
-                        if (error) { alert("No se pudo guardar: " + error.message); return; }
+                        if (error) { Avisos.avisar("No se pudo guardar: " + error.message, { tipo: "error" }); return; }
                         coordinadosPor.set(p.id, lista);
                         renderProfesores();
                     }, "la coordinación de " + teacherLabel(p)));
@@ -1420,7 +1422,7 @@
                             p.invitaciones_max = Number(input.value);
                             renderProfesores();
                         } catch (err) {
-                            alert("No se pudo guardar el cupo: " + err.message);
+                            Avisos.avisar("No se pudo guardar el cupo: " + err.message, { tipo: "error" });
                             input.value = antes;
                         }
                     });
@@ -1454,13 +1456,13 @@
                     reiniciar.className = "text-xs font-semibold text-brand-600 dark:text-brand-300 underline hover:text-accent-700 dark:hover:text-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
                     reiniciar.textContent = "Reiniciar contador";
                     reiniciar.addEventListener("click", async () => {
-                        if (!confirm("¿Poner en cero las invitaciones usadas de " + teacherLabel(p) + "? Vuelve a tener su cupo completo.")) return;
+                        if (!(await Avisos.confirmar("Vuelve a tener su cupo completo.", { titulo: "¿Poner en cero las invitaciones usadas de " + teacherLabel(p) + "?", aceptar: "Poner en cero" }))) return;
                         try {
                             await callAdmin("update", { target_id: p.id, reset_invitaciones: true });
                             p.invitaciones_usadas = 0;
                             renderProfesores();
                         } catch (err) {
-                            alert("No se pudo reiniciar: " + err.message);
+                            Avisos.avisar("No se pudo reiniciar: " + err.message, { tipo: "error" });
                         }
                     });
                     tdAcc.appendChild(reiniciar);
@@ -1599,7 +1601,7 @@
                 quitar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
                 quitar.textContent = "Quitar la marca de supervisor";
                 quitar.addEventListener("click", async () => {
-                    if (!confirm("¿Quitarle la marca de supervisor a " + teacherLabel(sup) + "? Sus cuentas asignadas se vacían también.")) return;
+                    if (!(await Avisos.confirmar("Sus cuentas asignadas se vacían también.", { titulo: "¿Quitarle la marca de supervisor a " + teacherLabel(sup) + "?", aceptar: "Quitar la marca", peligro: true }))) return;
                     if (puestos.length) {
                         const r = await sb.rpc("set_cuentas_del_supervisor", { p_supervisor: sup.id, p_cuentas: [] });
                         if (r.error) { avisoSup("No se pudo: " + r.error.message, true); return; }
@@ -1732,7 +1734,7 @@
                         await callAdmin("equipo_rename", { equipo_id: eq.id, nombre: nuevo });
                         eq.nombre = nuevo;
                     } catch (err) {
-                        alert("No se pudo renombrar el equipo: " + err.message);
+                        Avisos.avisar("No se pudo renombrar el equipo: " + err.message, { tipo: "error" });
                         nombreInput.value = eq.nombre;
                     }
                 });
@@ -1742,12 +1744,12 @@
                 borrar.className = "text-xs text-brand-500 dark:text-brand-300 hover:text-red-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
                 borrar.textContent = "Borrar equipo";
                 borrar.addEventListener("click", async () => {
-                    if (!confirm(`¿Borrar el equipo "${eq.nombre}"? No borra a sus alumnos ni a sus entrenadores, solo el equipo.`)) return;
+                    if (!(await Avisos.confirmar(`No borra a sus alumnos ni a sus entrenadores, solo el equipo.`, { titulo: `¿Borrar el equipo «${eq.nombre}»?`, aceptar: "Borrar el equipo", peligro: true }))) return;
                     try {
                         await callAdmin("equipo_delete", { equipo_id: eq.id });
                         await loadEquipos();
                     } catch (err) {
-                        alert("No se pudo borrar el equipo: " + err.message);
+                        Avisos.avisar("No se pudo borrar el equipo: " + err.message, { tipo: "error" });
                     }
                 });
 
@@ -1768,7 +1770,7 @@
                             entrenadoresPorEquipo.set(eq.id, lista);
                             renderEquipos();
                         } catch (err) {
-                            alert("No se pudo cambiar los entrenadores: " + err.message);
+                            Avisos.avisar("No se pudo cambiar los entrenadores: " + err.message, { tipo: "error" });
                         }
                     },
                     `los entrenadores de ${eq.nombre}`,
@@ -1788,7 +1790,7 @@
                             alumnosPorEquipo.set(eq.id, lista);
                             renderEquipos();
                         } catch (err) {
-                            alert("No se pudo cambiar los alumnos: " + err.message);
+                            Avisos.avisar("No se pudo cambiar los alumnos: " + err.message, { tipo: "error" });
                         }
                     },
                     `los alumnos de ${eq.nombre}`,
@@ -2017,5 +2019,5 @@
 
         init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

@@ -25,6 +25,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-examenes.js                            */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -388,7 +389,7 @@ async function main() {
   {
     const ctx = await contexto(navegador, clienteFalso(ALUMNA, EXAMEN));
     const p = await ctx.newPage();
-    await p.addInitScript(() => { window.alert = () => {}; });
+    await p.addInitScript(contestarAvisos);
     await p.goto(`${BASE}/examen.html?id=ex-1`, { waitUntil: "networkidle" });
     await p.waitForSelector("#antesala:not(.hidden)", { timeout: 10000 });
     await p.click("#empezar-btn");
@@ -580,14 +581,20 @@ async function main() {
     await p.dispatchEvent("#b3-cantidad", "input");
     await p.selectOption("#b1-fuente", "areas");
     await p.waitForTimeout(300);
-    await p.fill("#b1-cantidad", "30");
+    /* El primer bloque pide TODAS las que hay en esas áreas, así que cada
+       una de las 30 del otro bloque sale repetida sí o sí. Con 30 y 30
+       sorteadas de un banco grande, que coincidiera alguna era cosa de
+       suerte: a veces no coincidía ninguna y la prueba fallaba sin que nada
+       estuviera roto. */
+    const todasLasDelArea = await p.getAttribute("#b1-cantidad", "max");
+    await p.fill("#b1-cantidad", todasLasDelArea);
     await p.dispatchEvent("#b1-cantidad", "input");
     await p.waitForTimeout(400);
     const llaves = await p.evaluate(() => prevision.items.map((i) => i.banco + "/" + i.item_id));
     ok(llaves.length === new Set(llaves).size,
       `el examen lleva ${llaves.length - new Set(llaves).size} pregunta(s) repetida(s)`);
     ok(await p.evaluate(() => prevision.repetidas > 0),
-      "pidiendo 60 preguntas de las mismas áreas deberían haberse descartado repetidas");
+      "pidiendo todas las de esas áreas y 30 más de las mismas, deberían haberse descartado repetidas");
     ok(/repetida/.test(await p.textContent("#e-minimo")),
       "cuando se quitan repetidas hay que decirlo, no dejar el examen más corto en silencio");
 

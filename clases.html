@@ -52,10 +52,12 @@
     <script src="js/adaptive-mode.js"></script>
     <script src="js/logros-catalogo.js"></script>
     <script src="js/logros.js"></script>
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin --></head>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/pwa.js" defer></script><!-- app: fin --><!-- tema: inicio --><script>(function(){try{var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');var f=localStorage.getItem('plataforma_tema_fuente_v1');if(!f||!/^[A-Za-z0-9 ]{2,32}$/.test(f))return;var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f.replace(/ /g,'+')+':wght@400;500;600;700&display=swap';document.head.appendChild(l);}catch(e){}})();</script><!-- tema: fin -->
+    <script src="js/avisos.js"></script>
+</head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></nav></header>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><span class="text-3xl" aria-hidden="true">♟️</span><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-1" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Lo primero: entrar y orientarse» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Lo primero: entrar y orientarse"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header>
     <main id="main-content">
 
     <div id="loading" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
@@ -109,6 +111,28 @@
                     <button id="logout-btn" class="text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">Cerrar sesión</button>
                 </div>
             </div>
+
+            <!-- ===== Buscador de accesos =====
+                 Quien administra ve trece grupos y casi sesenta tarjetas: para
+                 llegar a Cobros había que saber en qué grupo vivía. Escribir
+                 deja en la grilla solo lo que coincide, y Enter abre el
+                 primero. Solo filtra lo que ya está pintado: no inventa
+                 destinos ni se salta los permisos. Va arriba de todo, apenas
+                 debajo del saludo; mientras se busca, todo lo que no es la
+                 grilla se esconde para que los resultados queden justo
+                 debajo (ver «El buscador del panel» en
+                 docs/decisiones/paneles.md). -->
+            <form id="buscar-panel" role="search" aria-label="Buscar en el panel" class="mb-6">
+                <label for="buscar-panel-campo" class="block font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">¿Qué buscas?</label>
+                <div class="relative max-w-xl">
+                    <span aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔎</span>
+                    <input id="buscar-panel-campo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
+                           placeholder="Cobros, tareas, contraseña…" aria-describedby="buscar-panel-ayuda"
+                           class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
+                <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
+            </form>
 
             <!-- ===== Estado de la clase =====
                  Solo aparece cuando tiene algo que decir: si hay clase en curso
@@ -999,6 +1023,8 @@
                    cambia para el equipo docente—, así que se descubriría en el
                    panel de otra persona. */
                 heading.textContent = (esEquipoDocente() && group.titleProfe) || group.title;
+                // Lo que se busca: el rótulo que se VE, no el de la lista.
+                section.dataset.buscar = textoBuscable(heading.textContent);
                 const tilesGrid = document.createElement("div");
                 // Un grupo destacado lleva un solo acceso: en la grilla de cuatro
                 // columnas quedaría un cuadrito perdido a la izquierda, así que
@@ -1011,7 +1037,12 @@
                     ? "grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 md:gap-5"
                     : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5";
                 group.tiles.forEach((t) => {
-                    if (!t.videollamada) { tilesGrid.appendChild(renderTileCard(t, !!group.destacado)); return; }
+                    if (!t.videollamada) {
+                        const tarjeta = renderTileCard(t, !!group.destacado);
+                        tarjeta.dataset.buscar = buscableDeTile(t);
+                        tilesGrid.appendChild(tarjeta);
+                        return;
+                    }
                     /* La tarjeta de la clase en vivo va dentro de un envoltorio
                        para poder repintarla sola cuando se abre o se cierra una
                        clase — repintar la grilla entera cerraría cualquier cosa
@@ -1023,6 +1054,9 @@
                     const envoltorio = document.createElement("div");
                     envoltorio.id = "sesion-wrap";
                     envoltorio.className = "contents";
+                    // La tarjeta de adentro se repinta sola; el texto que se
+                    // busca vive en el envoltorio, que no se repinta.
+                    envoltorio.dataset.buscar = buscableDeTile(t);
                     tilesGrid.appendChild(envoltorio);
                     const caja = document.createElement("div");
                     caja.id = "videollamada-wrap";
@@ -1035,7 +1069,145 @@
                 grid.appendChild(section);
             });
             pintarClaseEnVivo();
+            aplicarBusqueda();
         }
+
+        /* ---------- El buscador de accesos ----------
+           Filtra la grilla que YA está pintada: lo que el rol de cada quien no
+           tiene no está en la grilla, así que tampoco aparece al buscar. No
+           hay una segunda lista de destinos que se pueda desordenar de la
+           primera; lo único propio es CLAVES_BUSQUEDA, las palabras con que la
+           gente pide una cosa que se llama distinto («pagos» es Cobros,
+           «contraseña» es Configuración). Van por destino (el href sin su
+           ?tema=), así que valen igual en el panel de quien supervisa. Cada
+           clave tiene que ser cierta: está porque ESA página lo tiene. */
+        const CLAVES_BUSQUEDA = {
+            "sesion.html": "clase en vivo tablero videollamada meet zoom teams pizarra",
+            "tareas.html": "deberes asignaciones pendientes fecha limite",
+            "examenes.html": "prueba pruebas evaluacion evaluaciones nota notas",
+            "entreno/index.html": "ejercicios practicar tactica mates coordenadas lecciones problemas",
+            "entreno/estudio.html": "fichas aperturas defensas repasar conceptos",
+            "cursos/academia/index.html": "curso temario lecciones",
+            "articulos.html": "leer lecturas blog",
+            "juegos.html": "partidas jugar rival crazyhouse niebla variantes retar",
+            "torneos.html": "torneo competir competencia rondas tabla",
+            "tv.html": "ver partidas en directo transmision",
+            "tablero.html": "bot motor oscar jugar contra la computadora",
+            "logros.html": "medallas racha premios",
+            "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
+            "nivel-de-arbitraje.html": "arbitro reglamento fide",
+            "arbitraje.html": "arbitro reglamento fide revisar",
+            "partidas.html": "pgn partidas guardadas carpetas subir",
+            "informes.html": "progreso estadisticas notas reportes asistencia alumnos informe a la casa encargados padres",
+            "configuracion.html": "contrasena clave perfil cuenta tema colores tablero piezas avisos notificaciones videollamada voz",
+            "admin.html": "cuentas usuarios roles crear cuenta novedades",
+            "supervision.html": "profesores informe mensual actividad",
+            "academias.html": "academia supervisor",
+            "tablero-academias.html": "cifras numeros del mes",
+            "planes.html": "planificar preparar clase posiciones",
+            "asistencia.html": "pasar lista presencial aula",
+            "informe-mensual.html": "informe del mes supervision",
+            "subgrupos.html": "listas grupos de alumnos",
+            "guia-del-profesor-accesible.html": "ayuda manual como se hace",
+            "coordinacion.html": "cuentas usuarios profesores alumnos",
+            "solicitudes.html": "aprobar nuevos unirse inscripciones",
+            "formularios.html": "inscripcion inscripciones enlace respuestas",
+            "cobros.html": "pagos pago mensualidad mensualidades dinero morosos morosidad recibos",
+            "reportes.html": "word pdf actividades periodo",
+            "accesos.html": "cupos paquetes acceso",
+        };
+
+        // Sin tildes y en minúscula: «contraseña», «contrasena» y «CONTRASEÑA»
+        // encuentran lo mismo, como el buscador de admin.html.
+        function textoBuscable(t) {
+            return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+        function buscableDeTile(t) {
+            const destino = String(t.href || "").split("?")[0];
+            return textoBuscable([t.label, t.desc, t.nota || "", CLAVES_BUSQUEDA[destino] || ""].join(" "));
+        }
+
+        const campoBusqueda = document.getElementById("buscar-panel-campo");
+        const estadoBusqueda = document.getElementById("buscar-panel-estado");
+        let primeroDeLaBusqueda = null;
+        let anuncioBusqueda = null;
+
+        function aplicarBusqueda() {
+            const escrito = campoBusqueda.value.trim();
+            const palabras = textoBuscable(escrito).split(/\s+/).filter(Boolean);
+            let total = 0;
+            primeroDeLaBusqueda = null;
+            document.querySelectorAll("#tile-grid > section").forEach((sec) => {
+                let visibles = 0, sesionVisible = true;
+                sec.querySelectorAll(".grid > [data-buscar]").forEach((celda) => {
+                    // Todas las palabras tienen que estar, en la tarjeta o en
+                    // el rótulo de su grupo: «cobros academia» encuentra una.
+                    const ok = palabras.every((p) => (celda.dataset.buscar + " " + sec.dataset.buscar).includes(p));
+                    celda.style.display = ok ? "" : "none";
+                    if (celda.id === "sesion-wrap") sesionVisible = ok;
+                    if (!ok) return;
+                    visibles += 1;
+                    const enlace = celda.matches("a[href]") ? celda : celda.querySelector("a[href]");
+                    if (!primeroDeLaBusqueda && enlace) primeroDeLaBusqueda = enlace;
+                });
+                // El botón de la videollamada va con su tarjeta.
+                const video = sec.querySelector("#videollamada-wrap");
+                if (video) video.style.display = sesionVisible ? "" : "none";
+                sec.style.display = visibles ? "" : "none";
+                total += visibles;
+            });
+
+            /* Mientras se busca, todo lo que va debajo del buscador y no es la
+               grilla (la clase en curso, la semana, el progreso, el registro de
+               clases) se hace a un lado. El buscador va arriba de todo: sin
+               esto los resultados quedaban una pantalla más abajo, y debajo de
+               ellos el registro decía «Ninguna clase coincide con el filtro»,
+               como si le contestara a la búsqueda. Es `style.display` y no
+               `hidden`, porque ese atributo ya lo maneja el código de cada
+               bloque y borrar lo escrito tiene que dejarlos como estaban. */
+            const buscando = palabras.length > 0;
+            for (let el = document.getElementById("buscar-panel").nextElementSibling; el; el = el.nextElementSibling) {
+                if (el.id !== "tile-grid") el.style.display = buscando ? "none" : "";
+            }
+
+            /* El resultado se anuncia (role="status"), pero no a cada tecla: con
+               un lector de pantalla, «tres accesos» dicho por cada letra tapa
+               lo que se está escribiendo. */
+            clearTimeout(anuncioBusqueda);
+            if (!palabras.length) { estadoBusqueda.textContent = ""; return; }
+            anuncioBusqueda = setTimeout(() => {
+                if (!total) {
+                    estadoBusqueda.textContent = `Nada con «${escrito}». Prueba con otra palabra: cobros, tareas, contraseña…`;
+                } else {
+                    const nombre = primeroDeLaBusqueda ? primeroDeLaBusqueda.querySelector("span > span").textContent : "";
+                    estadoBusqueda.textContent = `${total} ${total === 1 ? "acceso" : "accesos"} con «${escrito}».`
+                        + (nombre ? ` Enter abre «${nombre}».` : "");
+                }
+            }, 350);
+        }
+
+        campoBusqueda.addEventListener("input", aplicarBusqueda);
+        document.getElementById("buscar-panel").addEventListener("submit", (e) => {
+            e.preventDefault();
+            aplicarBusqueda();
+            if (primeroDeLaBusqueda && campoBusqueda.value.trim()) window.location.href = primeroDeLaBusqueda.href;
+        });
+        campoBusqueda.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && campoBusqueda.value) { e.preventDefault(); campoBusqueda.value = ""; aplicarBusqueda(); }
+        });
+        /* Ctrl + K (⌘ + K en Mac) o «/» llevan al buscador desde cualquier
+           parte del panel. «/» solo cuando no se está escribiendo en otro
+           campo: ahí es una barra, no un atajo. */
+        document.addEventListener("keydown", (e) => {
+            const escribiendo = e.target.closest && e.target.closest("input, textarea, select, [contenteditable]");
+            const atajo = ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k")
+                || (e.key === "/" && !escribiendo && !e.ctrlKey && !e.metaKey && !e.altKey);
+            if (!atajo || document.getElementById("app").classList.contains("hidden")) return;
+            e.preventDefault();
+            campoBusqueda.focus();
+            campoBusqueda.select();
+            campoBusqueda.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
 
         async function doLogout() {
             await sb.auth.signOut();
@@ -1767,9 +1939,9 @@
                 delBtn.className = "text-xs text-red-600 dark:text-red-400 hover:underline";
                 delBtn.textContent = "Eliminar";
                 delBtn.addEventListener("click", async () => {
-                    if (!confirm("¿Eliminar esta clase del registro? Esta acción no se puede deshacer.")) return;
+                    if (!(await Avisos.confirmar("Esta acción no se puede deshacer.", { titulo: "¿Eliminar esta clase del registro?", aceptar: "Eliminar", peligro: true }))) return;
                     const { error: delError } = await sb.from("class_sessions").delete().eq("id", s.id);
-                    if (delError) { alert("No se pudo eliminar: " + delError.message); return; }
+                    if (delError) { Avisos.avisar("No se pudo eliminar: " + delError.message, { tipo: "error" }); return; }
                     refreshSessionStatus();
                     cargarSesiones();
                 });
@@ -1921,7 +2093,7 @@
             btn.disabled = true;
             const { error } = await sb.from("class_sessions").insert({ title: title || null, created_by: profile.id });
             btn.disabled = false;
-            if (error) { alert("No se pudo iniciar la clase: " + error.message); return; }
+            if (error) { Avisos.avisar("No se pudo iniciar la clase: " + error.message, { tipo: "error" }); return; }
             document.getElementById("new-session-title").value = "";
             await refreshSessionStatus();
             await cargarSesiones();
@@ -1934,7 +2106,7 @@
             btn.disabled = true;
             const { error } = await sb.from("class_sessions").update({ ended_at: new Date().toISOString(), notes: notes || null }).eq("id", openSession.id);
             btn.disabled = false;
-            if (error) { alert("No se pudo cerrar la clase: " + error.message); return; }
+            if (error) { Avisos.avisar("No se pudo cerrar la clase: " + error.message, { tipo: "error" }); return; }
             document.getElementById("close-session-notes").value = "";
             await refreshSessionStatus();
             await cargarSesiones();
@@ -2253,5 +2425,5 @@
 
         init();
     </script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --></body>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>
 </html>

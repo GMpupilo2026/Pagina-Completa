@@ -15,6 +15,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-formularios.js                */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -218,7 +219,8 @@ async function pruebaArmador(browser) {
   // Formulario nuevo con la plantilla.
   await page.click("#nuevo-btn");
   await page.waitForSelector("#vista-editor:not(.hidden)");
-  page.on("dialog", (d) => d.accept());
+  // Las confirmaciones son de js/avisos.js: se aprietan como una persona.
+  await page.evaluate(contestarAvisos);
   await page.click("#plantilla-btn");
   igual("la plantilla pone las preguntas de una inscripción",
     await page.evaluate(() => document.querySelectorAll("#campos > div").length), 13);

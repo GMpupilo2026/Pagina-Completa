@@ -21,6 +21,7 @@
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-coordinacion.js                         */
 const { chromium } = require("playwright");
+const { contestarAvisos } = require("./lib/avisos-prueba.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || "http://localhost:8777";
@@ -183,8 +184,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     }
     return fetchReal.apply(this, arguments);
   };
-  window.confirm = () => true;
-  window.alert = () => {};
+  (${contestarAvisos})();
 })();
 `;
 }
