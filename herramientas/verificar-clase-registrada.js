@@ -89,8 +89,11 @@ window.__deletes = [];
 
   function constructor(tabla, filas) {
     let filas2 = (filas || []).slice(), unica = false, pend = null, condiciones = [], porActualizar = null, porBorrar = false;
+    let contar = false, soloContar = false;
     const b = {
-      select() { return b; },
+      // select("id", { count: "exact", head: true }): cuenta sin traer filas,
+      // como PostgREST. Sin esto el doble no contesta cuántas hay.
+      select(_cols, opts) { if (opts && opts.count) contar = true; if (opts && opts.head) soloContar = true; return b; },
       eq(col, val) { condiciones.push([col, val]); filas2 = filas2.filter((r) => String(r[col]) === String(val)); return b; },
       in(col, vals) { filas2 = filas2.filter((r) => vals.map(String).includes(String(r[col]))); return b; },
       is(col, val) { if (val === null) filas2 = filas2.filter((r) => r[col] === null || r[col] === undefined); return b; },
@@ -136,7 +139,9 @@ window.__deletes = [];
         }
         let d = pend !== null && pend !== undefined ? (unica ? pend : [pend]) : filas2;
         if (unica && Array.isArray(d)) d = d.length ? d[0] : null;
-        return Promise.resolve({ data: d, error: null }).then(res, rej);
+        const cuantas = filas2.length;
+        if (soloContar) d = null;
+        return Promise.resolve({ data: d, error: null, count: contar ? cuantas : null }).then(res, rej);
       },
     };
     return b;
@@ -227,8 +232,19 @@ function igual(nombre, hallado, esperado) {
   }
 }
 
-async function abrir(browser, quien, claseAbierta, semilla) {
+/* `modoSencillo` es la preferencia guardada en el aparato: por defecto "0"
+   (todas las herramientas, como quien ya da clases), para que las pruebas de
+   siempre encuentren cada botón. `null` no guarda nada y deja que decida la
+   cuenta de clases, que es lo que prueba verificar-sesion-orden.js. */
+async function abrir(browser, quien, claseAbierta, semilla, opciones) {
   const ctx = await browser.newContext({ serviceWorkers: "block" });
+  const modo = opciones && "modoSencillo" in opciones ? opciones.modoSencillo : "0";
+  await ctx.addInitScript((m) => {
+    try {
+      if (m === null) localStorage.removeItem("sesion_modo_sencillo_v1");
+      else localStorage.setItem("sesion_modo_sencillo_v1", m);
+    } catch (e) {}
+  }, modo);
   await ctx.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await ctx.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await ctx.route("**/cdnjs.cloudflare.com/**/chess.min.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: CHESSJS }));

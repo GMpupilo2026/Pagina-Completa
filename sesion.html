@@ -488,8 +488,18 @@
                          que él elija); los cuatro de abajo tocan el tablero que está viendo la
                          clase entera. Sin ese rótulo son ocho botones iguales y ninguna pista de
                          cuál se puede apretar con la clase mirando. -->
+                    <!-- El modo sencillo: para quien todavía no ha dado ninguna clase,
+                         la pantalla arranca con lo básico —el tablero, su plan, sus
+                         alumnos y el botón de invitar— y lo demás queda a un clic. Va
+                         FUERA de la barra: dentro de ella solo viven sus dos grupos
+                         (verificar-sesion-orden.js no deja ni un botón suelto). Ver «El
+                         modo sencillo de la clase en vivo» en docs/decisiones/clase-en-vivo.md. -->
+                    <div id="modo-sencillo-fila" class="hidden flex flex-wrap items-center justify-between gap-2">
+                        <p id="modo-sencillo-nota" class="text-xs text-brand-500 dark:text-brand-300 empty:hidden"></p>
+                        <button id="modo-sencillo-btn" type="button" aria-controls="toolbar-material teacher-tabs" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-200 hover:border-accent-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></button>
+                    </div>
                     <div id="teacher-toolbar" class="hidden bg-white dark:bg-brand-900 rounded-xl shadow-md p-3 space-y-3">
-                        <div>
+                        <div id="toolbar-material">
                             <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">Tu material — solo lo ves tú</p>
                             <div class="flex flex-wrap gap-1.5">
                                 <button id="toggle-lesson-btn" type="button" title="Abrir una lección de cualquier curso en tu pantalla, para darla con sus posiciones a mano (los alumnos no la ven)" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">📚 Curso</button>
@@ -498,7 +508,7 @@
                                 <button id="toggle-free-mode-btn" type="button" title="Armar una posición a mano, o cargarla desde un FEN o un PGN" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">✏️ Armar posición</button>
                             </div>
                         </div>
-                        <div class="border-t border-brand-100 dark:border-brand-800 pt-3">
+                        <div id="toolbar-tablero" class="border-t border-brand-100 dark:border-brand-800 pt-3">
                             <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-brand-450 dark:text-brand-350 mb-1.5">El tablero — lo ve toda la clase</p>
                             <div class="flex flex-wrap gap-1.5">
                                 <button id="reset-board-btn" type="button" title="Reiniciar tablero a la posición inicial" class="flex-1 min-w-[76px] bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-2 py-2 rounded-lg text-xs transition-colors">🔄 Reiniciar</button>
@@ -838,6 +848,57 @@
                 activateTeacherTab(btn.dataset.tab);
                 if (btn.dataset.tab === "tactica") ensureTacticsLoaded();
             });
+        });
+
+        /* ---------- El modo sencillo ----------
+           Catorce controles delante, con la clase mirando, es demasiado para la
+           primera clase. En modo sencillo se ve lo que hace falta para darla: el
+           tablero (el grupo «El tablero — lo ve toda la clase»), el motor, «Mi
+           plan», «Alumnos» e «Invitar». Táctica, Preguntar, Practicar y el grupo
+           «Tu material» quedan detrás de «Ver todas las herramientas».
+
+           Arranca en modo sencillo SOLO quien lleva menos de tres clases dadas: a
+           quien ya da clases no se le mueve nada de lugar. Tres y no una porque
+           la clase se registra al empezar (ver abrirClaseSiHaceFalta): con «ninguna»,
+           recargar la página a mitad de la primera clase le cambiaría la pantalla
+           en plena clase. Lo que uno elija con el botón se recuerda en el aparato
+           (localStorage), como la pestaña abierta, y desde ahí manda sobre la
+           cuenta de clases. */
+        const MODO_SENCILLO_KEY = "sesion_modo_sencillo_v1";
+        const CLASES_PARA_TODAS_LAS_HERRAMIENTAS = 3;
+        const TABS_AVANZADAS = ["tactica", "preguntar", "practicar"];
+        let modoSencillo = false;
+
+        function aplicarModoSencillo(activo) {
+            modoSencillo = activo;
+            document.getElementById("toolbar-material").hidden = activo;
+            // La línea que separa los dos grupos no separa nada si el de arriba no está.
+            ["border-t", "pt-3"].forEach((c) => document.getElementById("toolbar-tablero").classList.toggle(c, !activo));
+            TABS_AVANZADAS.forEach((t) => { document.getElementById("teacher-tab-" + t).hidden = activo; });
+            // Si la pestaña que estaba abierta se escondió, se vuelve a «Mi plan».
+            const abierta = document.querySelector('.teacher-tab-btn[aria-selected="true"]');
+            if (activo && abierta && TABS_AVANZADAS.includes(abierta.dataset.tab)) activateTeacherTab(TEACHER_TABS[0]);
+            document.getElementById("modo-sencillo-btn").textContent = activo
+                ? "🧰 Ver todas las herramientas" : "🪶 Volver al modo sencillo";
+            document.getElementById("modo-sencillo-nota").textContent = activo
+                ? "Modo sencillo: el tablero, tu plan y tus alumnos. Táctica, Preguntar, Practicar y tu material están a un clic."
+                : "";
+        }
+
+        async function arrancarModoSencillo() {
+            let guardado = null;
+            try { guardado = localStorage.getItem(MODO_SENCILLO_KEY); } catch (e) {}
+            if (guardado === "1" || guardado === "0") { aplicarModoSencillo(guardado === "1"); return; }
+            // Sin preferencia: ¿cuántas clases lleva? Se cuenta en la base, sin
+            // bajarse ninguna fila. Si no se puede saber, todas las herramientas.
+            const { count, error } = await sb.from("class_sessions")
+                .select("id", { count: "exact", head: true }).eq("created_by", session.user.id);
+            aplicarModoSencillo(!error && typeof count === "number" && count < CLASES_PARA_TODAS_LAS_HERRAMIENTAS);
+        }
+
+        document.getElementById("modo-sencillo-btn").addEventListener("click", () => {
+            aplicarModoSencillo(!modoSencillo);
+            try { localStorage.setItem(MODO_SENCILLO_KEY, modoSencillo ? "1" : "0"); } catch (e) {}
         });
 
         // ---------- Historial, variantes y sub-variantes ----------
@@ -4443,6 +4504,7 @@
 
             if (isTeacher) {
                 document.getElementById("teacher-toolbar").classList.remove("hidden");
+                document.getElementById("modo-sencillo-fila").classList.remove("hidden");
                 document.getElementById("engine-panel").classList.remove("hidden");
                 document.getElementById("teacher-tabs-wrap").classList.remove("hidden");
                 document.getElementById("clear-chat-btn").classList.remove("hidden");
@@ -4450,6 +4512,7 @@
                 let savedTab = TEACHER_TABS[0];
                 try { savedTab = localStorage.getItem(TEACHER_TAB_KEY) || savedTab; } catch (e) {}
                 activateTeacherTab(savedTab);
+                await arrancarModoSencillo();
                 cargarCupoInvitaciones();
                 cargarPlanesEnClase();
                 setupTeacherLessonTools();
