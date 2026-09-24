@@ -664,9 +664,17 @@ ninguna tarjeta se llama así.
   que no se repinta, porque la tarjeta de adentro se repinta sola al abrir o
   cerrar la clase. `renderTiles()` vuelve a aplicar la búsqueda al final, así
   que un repintado no devuelve lo que estaba filtrado.
-- Va encima de la grilla y no arriba de todo: el orden de la página es el de
-  las preguntas que uno se hace al entrar, y «¿a dónde voy?» es la de la grilla.
-  El atajo lo trae desde cualquier altura.
+- **Va arriba de todo, justo debajo del saludo**: es lo primero que se ve al
+  entrar, antes de la clase en curso y de «Tu semana». Primero estuvo encima de
+  la grilla, pero para quien administra eso quedaba una pantalla más abajo, y
+  el buscador existe justamente para quien más tarjetas tiene.
+- **Mientras se busca, todo lo que va debajo y no es la grilla se hace a un
+  lado** (la clase en curso, la semana, el progreso, el registro de clases).
+  Si no, los resultados quedaban lejos del campo, y debajo de ellos el registro
+  decía «Ninguna clase coincide con el filtro», como si le contestara a la
+  búsqueda. Se esconde con `style.display` y no con `hidden`, porque ese
+  atributo lo maneja el código de cada bloque. Al borrar lo escrito, cada
+  bloque queda exactamente como estaba.
 - Lo prueba `pruebaBuscador` en `verificar-panel.js`, midiendo con
   `checkVisibility()` qué tarjetas quedan a la vista.
 

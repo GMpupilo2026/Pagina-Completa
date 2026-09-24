@@ -539,7 +539,26 @@ async function pruebaBuscador(browser) {
     await page.evaluate(() => document.getElementById("buscar-panel-campo").checkVisibility()
       && document.getElementById("buscar-panel-campo").labels[0].textContent === "¿Qué buscas?"));
 
+  igual("el buscador va arriba de todo: justo después del saludo, antes de la clase y de la semana",
+    await page.evaluate(() => {
+      const f = document.getElementById("buscar-panel");
+      return f.previousElementSibling.contains(document.getElementById("panel-titulo"))
+        && !!(f.compareDocumentPosition(document.getElementById("session-status-card")) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), "true");
+  const registroAntes = await page.evaluate(() => document.getElementById("registro-clases").checkVisibility());
+  const semanaAntes = await page.evaluate(() => document.getElementById("progreso-profe")
+    ? document.getElementById("progreso-profe").checkVisibility() : null);
+
   await buscar(page, "pagos");
+  igual("mientras se busca, lo demás se hace a un lado (el registro de clases también) y los resultados quedan debajo del buscador",
+    await page.evaluate(() => {
+      const hijos = [];
+      for (let el = document.getElementById("buscar-panel").nextElementSibling; el; el = el.nextElementSibling) {
+        if (el.id !== "tile-grid") hijos.push(el);
+      }
+      return hijos.some((el) => el.id === "registro-clases") && hijos.every((el) => !el.checkVisibility())
+        && document.getElementById("tile-grid").checkVisibility();
+    }), "true");
   igual("«pagos» encuentra Cobros aunque la tarjeta no diga «pagos» en el nombre",
     await page.evaluate(VISIBLES), ["Cobros de la Academia"]);
   igual("los grupos sin nada que mostrar no se ven",
@@ -568,6 +587,10 @@ async function pruebaBuscador(browser) {
   await page.keyboard.press("Escape");
   igual("Escape borra lo escrito", await page.inputValue("#buscar-panel-campo"), "");
   igual("y vuelven todas las tarjetas", (await page.evaluate(VISIBLES)).length, todas.length);
+  cierto("el registro de clases vuelve al borrar", registroAntes === await page.evaluate(() => document.getElementById("registro-clases").checkVisibility()));
+  igual("y lo de en medio vuelve a estar como estaba",
+    await page.evaluate(() => document.getElementById("progreso-profe")
+      ? document.getElementById("progreso-profe").checkVisibility() : null), semanaAntes);
   igual("sin buscar no se anuncia nada", await page.textContent("#buscar-panel-estado"), "");
 
   await page.focus("body");

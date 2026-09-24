@@ -112,6 +112,28 @@
                 </div>
             </div>
 
+            <!-- ===== Buscador de accesos =====
+                 Quien administra ve trece grupos y casi sesenta tarjetas: para
+                 llegar a Cobros había que saber en qué grupo vivía. Escribir
+                 deja en la grilla solo lo que coincide, y Enter abre el
+                 primero. Solo filtra lo que ya está pintado: no inventa
+                 destinos ni se salta los permisos. Va arriba de todo, apenas
+                 debajo del saludo; mientras se busca, todo lo que no es la
+                 grilla se esconde para que los resultados queden justo
+                 debajo (ver «El buscador del panel» en
+                 docs/decisiones/paneles.md). -->
+            <form id="buscar-panel" role="search" aria-label="Buscar en el panel" class="mb-6">
+                <label for="buscar-panel-campo" class="block font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">¿Qué buscas?</label>
+                <div class="relative max-w-xl">
+                    <span aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔎</span>
+                    <input id="buscar-panel-campo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
+                           placeholder="Cobros, tareas, contraseña…" aria-describedby="buscar-panel-ayuda"
+                           class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                </div>
+                <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
+                <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
+            </form>
+
             <!-- ===== Estado de la clase =====
                  Solo aparece cuando tiene algo que decir: si hay clase en curso
                  (para todo el mundo) o si quien mira da clase y puede iniciar
@@ -322,25 +344,6 @@
                 </div>
                 <p id="sup-aviso" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800 text-sm text-brand-600 dark:text-brand-300"></p>
             </div>
-
-            <!-- ===== Buscador de accesos =====
-                 Quien administra ve trece grupos y casi sesenta tarjetas: para
-                 llegar a Cobros había que saber en qué grupo vivía. Escribir
-                 deja en la grilla solo lo que coincide, y Enter abre el
-                 primero. Solo filtra lo que ya está pintado: no inventa
-                 destinos ni se salta los permisos (ver «El buscador del
-                 panel» en docs/decisiones/paneles.md). -->
-            <form id="buscar-panel" role="search" aria-label="Buscar en el panel" class="mb-6">
-                <label for="buscar-panel-campo" class="block font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">¿Qué buscas?</label>
-                <div class="relative max-w-xl">
-                    <span aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 text-base pointer-events-none">🔎</span>
-                    <input id="buscar-panel-campo" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go"
-                           placeholder="Cobros, tareas, contraseña…" aria-describedby="buscar-panel-ayuda"
-                           class="w-full rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white placeholder:text-brand-450 dark:placeholder:text-brand-350 pl-10 pr-3 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                </div>
-                <p id="buscar-panel-ayuda" class="text-xs text-brand-450 dark:text-brand-350 mt-1.5">El panel deja solo lo que coincide; Enter abre el primero.<span class="hidden sm:inline"> Atajo: Ctrl + K.</span></p>
-                <p id="buscar-panel-estado" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2 empty:hidden"></p>
-            </form>
 
             <!-- ===== Grilla de accesos (agrupada por secciones, ver TILE_GROUPS) ===== -->
             <div id="tile-grid" class="space-y-8 mb-10"></div>
@@ -1148,6 +1151,19 @@
                 sec.style.display = visibles ? "" : "none";
                 total += visibles;
             });
+
+            /* Mientras se busca, todo lo que va debajo del buscador y no es la
+               grilla (la clase en curso, la semana, el progreso, el registro de
+               clases) se hace a un lado. El buscador va arriba de todo: sin
+               esto los resultados quedaban una pantalla más abajo, y debajo de
+               ellos el registro decía «Ninguna clase coincide con el filtro»,
+               como si le contestara a la búsqueda. Es `style.display` y no
+               `hidden`, porque ese atributo ya lo maneja el código de cada
+               bloque y borrar lo escrito tiene que dejarlos como estaban. */
+            const buscando = palabras.length > 0;
+            for (let el = document.getElementById("buscar-panel").nextElementSibling; el; el = el.nextElementSibling) {
+                if (el.id !== "tile-grid") el.style.display = buscando ? "none" : "";
+            }
 
             /* El resultado se anuncia (role="status"), pero no a cada tecla: con
                un lector de pantalla, «tres accesos» dicho por cada letra tapa
