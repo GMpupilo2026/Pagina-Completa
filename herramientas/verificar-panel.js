@@ -556,7 +556,9 @@ const VISIBLES = () => Array.from(document.querySelectorAll("#tile-grid .grid > 
 
 async function buscar(page, texto) {
   await page.fill("#buscar-panel-campo", texto);
-  await page.waitForTimeout(450); // el anuncio espera a que se deje de escribir
+  // El anuncio espera a que se deje de escribir y a que lleguen las personas
+  // (300 ms la consulta, 350 ms el anuncio).
+  await page.waitForTimeout(900);
 }
 
 async function pruebaBuscador(browser) {
@@ -647,6 +649,74 @@ async function pruebaBuscador(browser) {
     await profe.page.evaluate(() => document.querySelector("#sesion-wrap > *").checkVisibility()
       && document.getElementById("videollamada-wrap").style.display !== "none"));
   await profe.ctx.close();
+}
+
+/* Buscar PERSONAS: la base (mi_gente) dice a quién alcanza cada uno; el panel
+   solo pinta y decide a dónde lleva cada una. El doble no filtra por el texto,
+   así que devuelve siempre las mismas: lo que se prueba es lo que la página
+   pide, cómo lo pinta y qué ofrece según quién busca. */
+const GENTE = [
+  { id: "a-maria", full_name: "María Rojas", email: "maria@x.cr", role: "alumno", grupo: "7B", is_admin: false, total: 9 },
+  { id: "p-mario", full_name: "Mario Soto", email: "mario@x.cr", role: "profesor", grupo: null, is_admin: false, total: 9 },
+];
+const PERSONAS = () => [...document.querySelectorAll("#buscar-personas-lista a")]
+  .filter((a) => a.checkVisibility()).map((a) => [a.querySelector("span span").textContent, a.getAttribute("href")]);
+
+async function pruebaPersonas(browser) {
+  console.log("\n=== El buscador también encuentra personas ===");
+  let r = await panel(browser, [ADMIN], "u-admin", null, { rpc: { mi_gente: GENTE } });
+  await r.page.fill("#buscar-panel-campo", "mari");
+  await r.page.waitForFunction(() => !document.getElementById("buscar-personas").hidden, null, { timeout: 5000 });
+  await r.page.waitForTimeout(450);
+  igual("a quien administra le aparecen las dos, cada una a su lugar", await r.page.evaluate(PERSONAS),
+    [["María Rojas", "informes.html?alumno=a-maria"], ["Mario Soto", "coordinacion.html?buscar=Mario%20Soto"]]);
+  igual("se ven de verdad, debajo del buscador", await r.page.evaluate(() => document.getElementById("buscar-personas").checkVisibility()), true);
+  igual("lo que pide es lo escrito, de a pocas", await r.page.evaluate(() =>
+    window.__consultas.filter((c) => c.tabla === "mi_gente").map((c) => c.args).pop()),
+    { p_busqueda: "mari", p_rol: null, p_limite: 6, p_desde: 0 });
+  cierto("si hay más de las que se pintan, se dice", /Hay 9 en total/.test(await r.page.textContent("#buscar-personas-mas")));
+  cierto("y el anuncio las cuenta", /2 personas con «mari»/.test(await r.page.textContent("#buscar-panel-estado")));
+  igual("«mari» no trae la tarjeta de Cursos por decir «temario»: se compara con el comienzo de cada palabra",
+    await r.page.evaluate(VISIBLES), []);
+  igual("el nombre ajeno va como texto", await r.page.evaluate(() => document.querySelector("#buscar-personas-lista a span span").innerHTML), "María Rojas");
+  // Sin ninguna tarjeta que coincida, Enter abre la primera persona.
+  await r.page.fill("#buscar-panel-campo", "zzmari");
+  await r.page.waitForFunction(() => !document.getElementById("buscar-personas").hidden, null, { timeout: 5000 });
+  await r.page.waitForTimeout(400);
+  await Promise.all([r.page.waitForURL(/informes\.html\?alumno=a-maria$/, { timeout: 10000 }), r.page.press("#buscar-panel-campo", "Enter")]);
+  bien("sin tarjetas, Enter abre a la primera persona: " + r.page.url().replace(BASE, ""));
+  await r.ctx.close();
+
+  // Una profesora que no coordina: sus alumnos van a su informe, y a un
+  // profesor no se le ofrece Coordinación (no puede entrar ahí).
+  r = await panel(browser, [PROFE], "u-profe", null, { rpc: { mi_gente: GENTE } });
+  await r.page.fill("#buscar-panel-campo", "mari");
+  await r.page.waitForFunction(() => !document.getElementById("buscar-personas").hidden, null, { timeout: 5000 });
+  igual("a la profesora solo le sale su alumna, que va a su informe", await r.page.evaluate(PERSONAS),
+    [["María Rojas", "informes.html?alumno=a-maria"]]);
+  igual("y el campo le dice que puede buscar por nombre", await r.page.getAttribute("#buscar-panel-campo", "placeholder"),
+    "Cobros, tareas, el nombre de un alumno…");
+  await r.page.press("#buscar-panel-campo", "Escape");
+  igual("Escape también se lleva a las personas", await r.page.evaluate(() => document.getElementById("buscar-personas").checkVisibility()), false);
+  await r.ctx.close();
+
+  // La alumna no busca gente: ni se le pide a la base.
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { rpc: { mi_gente: GENTE } });
+  await r.page.fill("#buscar-panel-campo", "mari");
+  await r.page.waitForTimeout(800);
+  igual("a la alumna no se le busca gente", [await r.page.evaluate(() => document.getElementById("buscar-personas").checkVisibility()),
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "mi_gente").length)], [false, 0]);
+  await r.ctx.close();
+
+  // clases.html?buscar=… (el Ctrl + K de las demás páginas) abre ya buscando.
+  r = await panel(browser, [ADMIN], "u-admin", null, { rpc: { mi_gente: GENTE } });
+  await r.page.goto(BASE + "/clases.html?buscar=contrasena", { waitUntil: "networkidle" });
+  await r.page.waitForSelector("#app:not(.hidden)", { timeout: 20000 });
+  igual("?buscar= deja el texto puesto y el foco en el buscador",
+    await r.page.evaluate(() => [document.getElementById("buscar-panel-campo").value, document.activeElement.id]), ["contrasena", "buscar-panel-campo"]);
+  igual("y ya filtrando", await r.page.evaluate(VISIBLES), ["Configuración"]);
+  igual("la dirección queda limpia, para que recargar no vuelva a buscar", new URL(r.page.url()).search, "");
+  await r.ctx.close();
 }
 
 /* El supervisor de su academia le apagó los cobros y las solicitudes: esas dos
@@ -1849,6 +1919,7 @@ if (require.main !== module) return;
     await pruebaTextosPorRol(browser);
     await pruebaAdmin(browser);
     await pruebaBuscador(browser);
+    await pruebaPersonas(browser);
     await pruebaCoordinadorRecortado(browser);
     await pruebaRegistro(browser);
     await pruebaPantalla(browser);

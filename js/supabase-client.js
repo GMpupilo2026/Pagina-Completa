@@ -10,7 +10,7 @@
 // llevaba el sitio entero y no habría dado ningún error: las páginas seguirían
 // viéndose igual. Con el archivo en el repositorio, lo que corre es lo que está
 // commiteado, y actualizarlo es un commit que se lee en el diff.
-// Se actualiza con `node herramientas/vendor-supabase.js`, que lo copia de
+// Se actualiza con `node herramientas/vendor.js`, que lo copia de
 // node_modules y deja escrita la versión; `verificar-vendor.js` comprueba que
 // nadie haya vuelto a meter el CDN.
 window.SUPABASE_URL = "https://bgtijpimpcokxatxxbki.supabase.co";

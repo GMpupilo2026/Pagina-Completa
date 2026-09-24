@@ -175,7 +175,7 @@ def portada(curso):
             '    <link rel="stylesheet" href="../css/finales-100.css">', 1)
         salida = salida.replace(
             '    <script src="../js/curso-acceso.js"></script>',
-            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>\n'
+            '    <script src="../js/vendor/chess.js"></script>\n'
             '    <script src="../js/entreno-progress.js"></script>\n'
             '    <script src="../js/progreso-usuario.js"></script>\n'
             '    <script src="../js/shared-engine.js"></script>\n'

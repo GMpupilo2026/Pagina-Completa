@@ -164,6 +164,56 @@ subieron, que un `.exe` no se suba, que reintentar no suba dos veces, y del
 otro lado que la foto **se vea de verdad** (`naturalWidth`), el nombre de
 descarga, y que uno que no se pudo bajar lo diga.
 
+### Los envíos sin cuenta pasan por un freno
+
+Tres funciones las puede llamar cualquiera con la clave pública del HTML, y
+cada llamada es una fila nueva: `responder_formulario` (`formulario.html`),
+`registrar_arbitraje_publico` (`nivel-de-arbitraje.html`) y
+`solicitar_academia` (`unirse.html`). Hasta la migración
+`freno_envios_publicos` nada paraba a un script: podía llenar miles de
+respuestas o solicitudes en un minuto, y no daba ningún error, simplemente
+aparecían.
+
+- **El freno va en la base**, en `interno.frenar_envio_publico(tipo, ámbito,
+  correo)`, porque la página se salta desde la consola. Las tres la llaman
+  **después de validar y antes del insert**: una respuesta que rebota por un
+  campo vacío no gasta cupo. Devuelve NULL si pasa (y lo anota en
+  `interno.envios_publicos`) o el mensaje que ve quien envía. `anon` y
+  `authenticated` no pueden llamarla ni leer la tabla (comprobado
+  impersonando `anon`).
+- **Tres topes**, contados en la última hora salvo donde se dice:
+
+  | Envío | Por IP | Por correo | Total |
+  |---|---|---|---|
+  | Formulario | 40 | — | 300 por formulario |
+  | Arbitraje | 40 | 10 | 200 |
+  | Solicitud de academia | 5 | 3 por día | 30 |
+
+  **El de IP es generoso a propósito**: un colegio entero sale a internet por
+  UNA IP, y una clase haciendo el examen de arbitraje o una reunión de padres
+  llenando la inscripción son muchos envíos legítimos seguidos. El pico real,
+  al ponerlo, era 12 respuestas en una hora en un mismo formulario. El total
+  del formulario es **por formulario**: uno inundado no frena a los demás.
+- **La IP sale de `request.headers`** (`cf-connecting-ip`, `x-real-ip` o el
+  primero de `x-forwarded-for`). **Si no llega ninguna, no se cuenta por IP**:
+  juntar a todo el mundo en un cupo de «desconocida» frenaría a las personas.
+  Los otros dos topes siguen valiendo. El primero de `x-forwarded-for` lo
+  puede inventar quien llama; por eso el tope total existe.
+- Las filas de más de dos días se borran en cada envío: ya no cuentan para
+  ningún tope.
+- **Turnstile no está**, y no por olvido: comprobar el token exige su clave
+  secreta en el servidor. La tiene el proyecto de Colegios (`smart-function`),
+  no el de la Academia; ponerlo en el HTML sin comprobarlo en el servidor no
+  frena a nadie. Si algún día se agrega, va en una Edge Function que valide el
+  token y llame a estas funciones, con `TURNSTILE_SECRET_KEY` cargada en el
+  proyecto de la Academia.
+
+**Al volver a crear cualquiera de las tres, correr**
+`node herramientas/verificar-envios-publicos.js` (sin red ni base: lee
+`supabase/migraciones/`). Mira la última migración que define cada una y
+comprueba que llame al freno antes del insert y haga caso de lo que devuelve.
+Se pierde callado: basta con copiar la versión vieja de la función.
+
 ### Compartir un formulario con otro coordinador
 
 Un formulario ya lo veía quien lo coordinaba (`bajo_mi_coordinacion(creado_por)`,
