@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* Que nadie vuelva a cargar la librería de Supabase desde un CDN.
+/* Que nadie vuelva a cargar desde un CDN las librerías que viven en js/vendor/:
+ * Supabase, chess.js y three.js (la lista está en lib/librerias-vendor.js).
  *
  * No necesita navegador, ni red, ni el sitio servido.
  *
@@ -9,17 +10,17 @@
  * tercero publique, con la sesión puesta. Y al revés, una ruta relativa
  * equivocada (`js/vendor/…` desde `entreno/`, que está un piso abajo) da un 404
  * que tampoco avisa: `window.supabase` queda sin definir y la página se queda en
- * "Comprobando tu sesión…" para siempre.
+ * "Comprobando tu sesión…" para siempre, o el tablero no aparece.
  *
- * También compara el archivo contra el paquete de npm cuando está instalado: si
- * alguien lo editó a mano, la próxima corrida de `vendor-supabase.js` se lo
- * lleva por delante sin decir nada.
+ * También compara cada archivo contra el paquete de npm cuando está instalado:
+ * si alguien lo editó a mano, la próxima corrida de `vendor.js` se lo lleva por
+ * delante sin decir nada.
  */
 const fs = require("fs");
 const path = require("path");
+const LIBRERIAS = require("./lib/librerias-vendor.js");
 
 const raiz = path.join(__dirname, "..");
-const VENDOR = "js/vendor/supabase.js";
 let fallos = 0;
 
 const mal = (m) => { console.log("  ✗ " + m); fallos += 1; };
@@ -34,52 +35,63 @@ function paginas(dir, acc = []) {
   }
   return acc;
 }
+const todas = paginas(raiz).map((a) => ({ a, rel: path.relative(raiz, a), html: fs.readFileSync(a, "utf8") }));
+const escaparRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-console.log("=== La librería de Supabase ===");
+for (const lib of LIBRERIAS) {
+  console.log("=== " + lib.nombre + " ===");
+  const VENDOR = lib.archivo;
+  if (!fs.existsSync(path.join(raiz, VENDOR))) {
+    mal(VENDOR + " no existe. Corre: node herramientas/vendor.js");
+    continue;
+  }
+  const local = fs.readFileSync(path.join(raiz, VENDOR));
+  bien(VENDOR + " está");
 
-if (!fs.existsSync(path.join(raiz, VENDOR))) {
-  mal(VENDOR + " no existe. Corré: node herramientas/vendor-supabase.js");
-  process.exit(1);
+  // ---- Ninguna página la pide a un CDN ----
+  const desdeCdn = [];
+  const rutaMala = [];
+  const conLibreria = [];
+  const nombreArchivo = new RegExp('src="([^"]*js/vendor/' + escaparRe(path.basename(VENDOR)) + ')"', "g");
+  for (const { a, rel, html } of todas) {
+    if (lib.cdn.test(html)) desdeCdn.push(rel);
+    const rutas = [...html.matchAll(nombreArchivo)].map((m) => m[1]);
+    if (!rutas.length) continue;
+    conLibreria.push(rel);
+    // La ruta que escribe la página tiene que caer de verdad en el archivo.
+    for (const r of rutas) {
+      if (path.resolve(path.dirname(a), r) !== path.join(raiz, VENDOR)) rutaMala.push(rel + " → " + r);
+    }
+  }
+
+  if (desdeCdn.length) mal("páginas que la piden a un CDN: " + desdeCdn.join(", "));
+  else bien("ninguna página la pide a un CDN");
+
+  if (rutaMala.length) mal("rutas que no llegan al archivo: " + rutaMala.join(", "));
+  else bien(conLibreria.length + " páginas la cargan, todas con una ruta que llega");
+
+  // ---- Es la de npm, sin editar ----
+  let npm = null;
+  try { npm = require.resolve(lib.npm, { paths: [raiz] }); } catch { }
+  if (!npm) console.log("  · el paquete no está instalado, no se compara (npm install)");
+  else if (Buffer.compare(local, fs.readFileSync(npm)) === 0) bien("es byte a byte la de npm, sin editar a mano");
+  else mal("NO coincide con la de npm: o está desactualizada, o alguien la editó. Corre: node herramientas/vendor.js");
 }
-const local = fs.readFileSync(path.join(raiz, VENDOR));
-bien(VENDOR + " está, versión " + (local.toString().match(/supabase-js\/(\d+\.\d+\.\d+)/) || [, "?"])[1]);
 
-// ---- Ninguna página la pide a un CDN ----
-const desdeCdn = [];
-const rutaMala = [];
-const conLibreria = [];
-for (const archivo of paginas(raiz)) {
-  const html = fs.readFileSync(archivo, "utf8");
-  const rel = path.relative(raiz, archivo);
-  if (/https?:\/\/[^"']*supabase-js/.test(html)) desdeCdn.push(rel);
-  const m = html.match(/src="([^"]*js\/vendor\/supabase\.js)"/);
-  if (!m) continue;
-  conLibreria.push(rel);
-  // La ruta que escribe la página tiene que caer de verdad en el archivo.
-  const apunta = path.resolve(path.dirname(archivo), m[1]);
-  if (apunta !== path.join(raiz, VENDOR)) rutaMala.push(rel + " → " + m[1]);
-}
-
-if (desdeCdn.length) mal("páginas que la piden a un CDN: " + desdeCdn.join(", "));
-else bien("ninguna página la pide a un CDN");
-
-if (rutaMala.length) mal("rutas que no llegan al archivo: " + rutaMala.join(", "));
-else bien(conLibreria.length + " páginas la cargan, todas con una ruta que llega");
-
-// ---- Y las que usan el cliente, la cargan ----
-const sinLibreria = paginas(raiz).filter((a) => {
-  const html = fs.readFileSync(a, "utf8");
-  return /src="[^"]*js\/supabase-client\.js"/.test(html) && !/src="[^"]*js\/vendor\/supabase\.js"/.test(html);
-}).map((a) => path.relative(raiz, a));
+// ---- Y las que usan el cliente de Supabase, cargan la librería ----
+console.log("=== Cliente de Supabase ===");
+const sinLibreria = todas.filter(({ html }) =>
+  /src="[^"]*js\/supabase-client\.js"/.test(html) && !/src="[^"]*js\/vendor\/supabase\.js"/.test(html)
+).map(({ rel }) => rel);
 if (sinLibreria.length) mal("usan js/supabase-client.js sin cargar la librería: " + sinLibreria.join(", "));
 else bien("toda página que usa el cliente carga antes la librería");
 
-// ---- Es la de npm, sin editar ----
-let npm = null;
-try { npm = require.resolve("@supabase/supabase-js/dist/umd/supabase.js", { paths: [raiz] }); } catch { }
-if (!npm) console.log("  · el paquete no está instalado, no se compara (npm install @supabase/supabase-js@2)");
-else if (Buffer.compare(local, fs.readFileSync(npm)) === 0) bien("es byte a byte la de npm, sin editar a mano");
-else mal("NO coincide con la de npm: o está desactualizada, o alguien la editó. Corré: node herramientas/vendor-supabase.js");
+// ---- Ni la CSP deja la puerta abierta a cdnjs ----
+// Era el único motivo para tenerlo en script-src: si vuelve, vuelve con él la
+// posibilidad de que una página cargue de ahí sin que nadie lo note.
+const cabeceras = fs.readFileSync(path.join(raiz, "_headers"), "utf8");
+if (/cdnjs\.cloudflare\.com/.test(cabeceras)) mal("_headers todavía deja pasar cdnjs.cloudflare.com");
+else bien("la CSP de _headers ya no deja pasar cdnjs.cloudflare.com");
 
-console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: la librería sale del repositorio, no de un CDN.");
+console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron" : "\nTodo bien: las librerías salen del repositorio, no de un CDN.");
 process.exit(fallos ? 1 : 0);

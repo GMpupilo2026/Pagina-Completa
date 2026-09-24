@@ -311,7 +311,7 @@ falta en el CSS y la página se ve mal **sin que nada falle ni avise**.
   ámbar solo tenía tres tonos, y a `inscripcion.html` le faltaban `brand-300`,
   `brand-400`, `brand-950` y el ámbar entero. Se agregaron.
 
-## La librería de Supabase tampoco viene de un CDN
+## Las librerías de terceros tampoco vienen de un CDN
 
 Por la misma razón que el CSS, y con más consecuencias: `js/vendor/supabase.js`
 está **en el repositorio**, no pedido a jsDelivr. Estaba escrito así en las 77
@@ -328,11 +328,24 @@ mientras las sesiones se van, que es el fallo callado de siempre pero con todo
 el sitio adentro.
 
 - **Vive al lado de Stockfish**, en `js/vendor/`, que ya estaba servido así.
-- Se trae con `node herramientas/vendor-supabase.js`, después de
-  `npm install @supabase/supabase-js@2`. Queda **byte a byte como viene de
+- Se trae con `node herramientas/vendor.js`, después de `npm install`. Queda **byte a byte como viene de
   npm** —sin cabecera de comentario— para que se pueda comparar contra el
   paquete; la versión no se anota aparte porque el bundle la lleva dentro
   (`supabase-js/2.116.0`).
+- **chess.js (0.10.3) y three.js (r128) siguieron el mismo camino.** Venían de
+  cdnjs, con la versión fija pero sin `integrity`, en 43 páginas y en
+  `inscripcion.html`. Además del riesgo de lo que se publique ahí, el CDN caído
+  tampoco avisa: sin chess.js la portada se queda sin el tablero de prueba
+  («Falta el tablero o la librería chess.js» en la consola y nada en la
+  pantalla). Ahora viven en `js/vendor/chess.js` y `js/vendor/three.min.js`,
+  byte a byte como vienen de npm, y **cdnjs salió de la CSP**: era lo único que
+  se pedía de ahí. La lista de librerías está UNA vez, en
+  `herramientas/lib/librerias-vendor.js`: la leen `vendor.js` y el verificador.
+  `curso-generar.py` escribe también la ruta local, así que un curso nuevo no
+  vuelve a traer el CDN. Unos 25 verificadores todavía interceptan
+  `cdnjs.cloudflare.com` para servir su copia de chess.js (o nada): esas rutas
+  quedaron sin efecto, porque la página ya no pide nada ahí, y todos pasan
+  igual con la librería local. Se pueden ir quitando al tocar cada uno.
 - **jsDelivr sigue en el `script-src` de `_headers`, pero ya solo por la
   transcripción** de `reportes.html`, que importa `@huggingface/transformers`
   desde ahí (fijado a 3.3.3). Si algún día se quita esa función, jsDelivr se va
@@ -349,8 +362,8 @@ el sitio adentro.
   verdad, `planes.html` hace lo que tiene que hacer —mandar al login sin
   sesión— y se lleva `PlanClase` con ella.
 
-**Al agregar una página que use el cliente, o al actualizar la librería, correr
-`node herramientas/verificar-vendor.js`** (no necesita navegador, ni red, ni el
+**Al agregar una página que use el cliente o chess.js, o al actualizar una
+librería, correr `node herramientas/verificar-vendor.js`** (no necesita navegador, ni red, ni el
 sitio servido). Comprueba que ninguna página la pida a un CDN, que la ruta
 relativa de cada una **llegue de verdad al archivo** —`js/vendor/…` escrito
 desde `entreno/`, que está un piso abajo, da un 404 que tampoco avisa: la
