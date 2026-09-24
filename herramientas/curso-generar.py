@@ -117,7 +117,7 @@ def portada(curso):
                 <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-2">{intro_contenido}</p>
                 <p class="text-brand-200 text-sm max-w-2xl mx-auto mb-6">Las {total} lecciones completas están dentro del panel de Ajedrez Integral, en orden y con tu línea de progreso: cada lección se abre al terminar la anterior, y tu profesor ve hasta dónde llegaste.</p>
                 <div class="flex flex-wrap justify-center gap-3">
-                    <a href="https://wa.me/50683092291?text=Hola%2C%20quiero%20inscribirme%20en%20la%20Academia%20de%20Ajedrez%20Integral.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20informaci%C3%B3n%3F" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
+                    <a href="../precios.html" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">💬 Inscribirme en Ajedrez Integral</a>
                     <a href="../login.html?next=cursos/academia/{slug}.html" class="inline-block border border-brand-400 hover:border-accent-400 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors">Ya soy alumno: iniciar sesión →</a>
                 </div>
                 <p class="text-brand-200 text-sm mt-5">¿No sabes qué nivel tienes? <a href="../entreno/diagnostico.html" class="text-accent-400 hover:text-accent-300 font-semibold underline">Haz el diagnóstico de nivel gratis</a> (20 minutos, sin cuenta) y el profesor ve tu resultado.</p>
