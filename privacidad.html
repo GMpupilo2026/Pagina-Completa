@@ -148,17 +148,23 @@
             <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mt-12 mb-4 scroll-mt-28" id="quien-los-ve">Quién más ve tus datos</h2>
             <h3 class="font-semibold text-lg text-brand-800 dark:text-white mt-6 mb-2">Dentro de la plataforma</h3>
             <p class="mt-3">Cada persona ve solo lo que le toca, y eso lo controla la base de datos, no la pantalla: un alumno ve lo suyo; un profesor, lo de sus alumnos; la coordinación de una academia, lo de su academia; y la administración de Ajedrez Integral, lo necesario para dar soporte.</p>
-            <h3 class="font-semibold text-lg text-brand-800 dark:text-white mt-6 mb-2">Proveedores que nos ayudan a dar el servicio</h3>
-            <p class="mt-3">Usamos estos servicios, que tratan los datos por encargo nuestro y solo para lo que se indica:</p>
-            <ul class="mt-3 space-y-2 list-disc pl-6">
-                <li><strong>Supabase:</strong> la base de datos, las cuentas y los archivos adjuntos.</li>
-                <li><strong>Cloudflare:</strong> el alojamiento del sitio y la protección contra envíos automáticos en los formularios.</li>
-                <li><strong>Resend:</strong> el envío de los correos de la plataforma (invitaciones, informes a la casa y avisos de cobro).</li>
-                <li><strong>Google:</strong> las tipografías del sitio; la lectura de planillas escritas a mano (Google Cloud Vision), solo cuando usas el Lector de planilla, y el servicio de notificaciones del navegador, solo si las activas.</li>
-                <li><strong>Anthropic:</strong> una herramienta de inteligencia artificial que ayuda al profesor a mejorar la redacción de un informe. Solo se usa si la academia la tiene activada. Se envía el texto del informe, <strong>sin el nombre del alumno</strong>, y el proveedor no lo usa para entrenar sus modelos.</li>
-                <li><strong>Google Meet o Zoom:</strong> cuando una clase se da por videollamada, se entra con un enlace a esos servicios, que tienen sus propias políticas de privacidad.</li>
-                <li><strong>Ministerio de Hacienda:</strong> en la inscripción a torneos, la cédula se consulta en el servicio público de Hacienda solo para completar el nombre.</li>
-            </ul>
+            <!-- La lista de proveedores va plegada (así lo pidió el dueño del sitio),
+                 pero NO se borra: el artículo 5 de la Ley 8968 obliga a decir quién
+                 recibe los datos, y el 14 a pedir consentimiento para mandarlos
+                 afuera. Ver «Las páginas legales» en docs/decisiones/legal.md. -->
+            <p class="mt-3">Para dar el servicio usamos proveedores de alojamiento, base de datos, envío de correos y algunas herramientas puntuales. Tratan los datos por encargo nuestro y solo para lo que se indica en la lista.</p>
+            <details id="proveedores" class="mt-3 bg-white dark:bg-brand-900 rounded-xl shadow-sm px-4 py-3">
+                <summary class="cursor-pointer font-semibold text-brand-800 dark:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver la lista de proveedores</summary>
+                <ul class="mt-3 space-y-2 list-disc pl-6">
+                    <li><strong>Supabase:</strong> la base de datos, las cuentas y los archivos adjuntos.</li>
+                    <li><strong>Cloudflare:</strong> el alojamiento del sitio y la protección contra envíos automáticos en los formularios.</li>
+                    <li><strong>Resend:</strong> el envío de los correos de la plataforma (invitaciones, informes a la casa y avisos de cobro).</li>
+                    <li><strong>Google:</strong> las tipografías del sitio; la lectura de planillas escritas a mano (Google Cloud Vision), solo cuando usas el Lector de planilla, y el servicio de notificaciones del navegador, solo si las activas.</li>
+                    <li><strong>Anthropic:</strong> una herramienta de inteligencia artificial que ayuda al profesor a mejorar la redacción de un informe. Solo se usa si la academia la tiene activada. Se envía el texto del informe, <strong>sin el nombre del alumno</strong>, y el proveedor no lo usa para entrenar sus modelos.</li>
+                    <li><strong>Google Meet o Zoom:</strong> cuando una clase se da por videollamada, se entra con un enlace a esos servicios, que tienen sus propias políticas de privacidad.</li>
+                    <li><strong>Ministerio de Hacienda:</strong> en la inscripción a torneos, la cédula se consulta en el servicio público de Hacienda solo para completar el nombre.</li>
+                </ul>
+            </details>
             <p class="mt-3">Varios de estos proveedores tienen sus servidores fuera de Costa Rica, sobre todo en Estados Unidos. <strong>Al aceptar esta política autorizas esa transferencia internacional</strong> (artículo 14 de la Ley 8968). Solo trabajamos con proveedores que se comprometen a proteger los datos con medidas de seguridad adecuadas.</p>
             <h3 class="font-semibold text-lg text-brand-800 dark:text-white mt-6 mb-2">Autoridades</h3>
             <p class="mt-3">Solo entregamos datos a una autoridad cuando una ley o una orden judicial nos obliga.</p>

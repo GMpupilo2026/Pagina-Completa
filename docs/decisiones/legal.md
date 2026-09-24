@@ -30,6 +30,10 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
   consulta de cédula de Hacienda). **Un servicio nuevo que reciba datos de
   alumnos va a la lista**: sin eso, el envío al extranjero no está consentido
   (artículo 14).
+  - La lista va **plegada** (`<details id="proveedores">`, «Ver la lista de
+    proveedores»): el dueño del sitio no la quería a la vista. Plegada sí,
+    borrada no: el artículo 5 obliga a informar quién recibe los datos. El
+    párrafo del envío al extranjero queda afuera, siempre visible.
 - **Anthropic recibe el texto del informe sin el nombre del alumno.** Si
   `mejorar-informe` empieza a mandar nombres, la política miente.
 - **Cancelación de planes**: reembolso completo dentro de los **ocho días
