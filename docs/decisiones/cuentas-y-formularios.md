@@ -80,18 +80,19 @@ líneas de HTML.
   formulario público al contestar y el alta de abajo — qué dedujo de cada
   etiqueta, qué sale puesto en el diálogo y qué cuerpo se manda de verdad.
 
-### Archivos adjuntos: se suben, se ven y se descargan, en los DOS formularios
+### Archivos adjuntos: se suben, se ven y se descargan
 
-Los dos formularios de inscripción reciben archivos —la foto de la cédula, el
-carné del colegio, un comprobante en PDF—: los que arma la coordinación
-(`formulario.html`) y el del torneo en línea (`inscripcion.html`). Hasta 5 por
+Los formularios que arma la coordinación (`formulario.html`) reciben archivos
+—la foto de la cédula, el carné del colegio, un comprobante en PDF—. El del
+torneo en línea (`inscripcion.html`) también los recibía, **y se le quitó**:
+no hacían falta (ver «El torneo en línea» abajo). Hasta 5 por
 pregunta: foto, PDF, Word o Excel, de 10 MB como máximo. Lo difícil no es el
 `<input type="file">`, es que quien sube **no tiene cuenta** y lo que sube son
 documentos de menores.
 
 **`js/adjuntos.js` es la única copia** de cómo se elige, se prepara, se sube y
-se enseña un archivo, y lo usan las cuatro pantallas: las dos que reciben y las
-dos que muestran (`formularios.html`, `inscripciones.html`). Escrito cuatro
+se enseña un archivo, y lo usan las pantallas que reciben (`formulario.html`) y
+las dos que muestran (`formularios.html`, `inscripciones.html`). Escrito cuatro
 veces, una aceptaría un `.docx` que la otra no sabe enseñar.
 
 - **La ruta es `<carpeta>/<id al azar>/<nombre-saneado>.<ext>`**: el nombre
@@ -137,6 +138,14 @@ Tipos de pregunta «Imagen (foto)» y «Archivo (PDF, Word, Excel o foto)».
 
 #### El torneo en línea (proyecto «Base de Colegios»)
 
+**`inscripcion.html` ya no pide adjuntos**: se quitó el campo, `js/adjuntos.js`
+y la subida, porque para inscribirse no hacía falta ningún documento. Lo de
+abajo sigue en pie para las inscripciones viejas que sí los traen:
+`inscripciones.html` los enseña igual, y `smart-function` sigue aceptando un
+`adjuntos` que no llega (es opcional). `verificar-inscripcion-adjuntos.js`
+comprueba ahora lo contrario: que no haya campo de archivo, que no se suba nada
+a Storage y que a la función no viaje `adjuntos`.
+
 - **El bucket `inscripcion-adjuntos` es PRIVADO** y `anon` solo puede escribir
   en `pendientes/`, **sin ninguna política de lectura**: el formulario es
   público y su clave está en el HTML.
@@ -150,15 +159,15 @@ Tipos de pregunta «Imagen (foto)» y «Archivo (PDF, Word, Excel o foto)».
   «No se pudo abrir» y la lista sale igual.
 - **Las dos funciones viven ahora en el repositorio**, en
   `supabase/functions-colegios/`: antes existían solo desplegadas.
-- El CSS de `inscripcion.html` se compila aparte, así que `css-construir.js`
-  lee también `js/adjuntos.js` para esa hoja: sin eso el selector saldría sin
-  forma, sin ningún error.
+- El CSS de `inscripcion.html` se compila aparte. Mientras tuvo el selector,
+  `css-construir.js` leía también `js/adjuntos.js` para esa hoja; si algún día
+  vuelve, esa línea vuelve con él, o el selector sale sin forma y sin error.
 
-**Al tocar `js/adjuntos.js` o cualquiera de las cuatro pantallas, correr**
+**Al tocar `js/adjuntos.js` o cualquiera de estas pantallas, correr**
 `node herramientas/verificar-formularios.js`, `node
 herramientas/verificar-admin.js` y `node
 herramientas/verificar-inscripcion-adjuntos.js` (con el sitio en
-localhost:8777 y playwright). Comprueban qué se sube y adónde (la carpeta, el
+localhost:8777 y playwright). Los dos primeros comprueban qué se sube y adónde (la carpeta, el
 nombre, el tipo, sin `upsert`), que viajen **exactamente** las rutas que se
 subieron, que un `.exe` no se suba, que reintentar no suba dos veces, y del
 otro lado que la foto **se vea de verdad** (`naturalWidth`), el nombre de
